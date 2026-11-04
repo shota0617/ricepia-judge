@@ -166,6 +166,10 @@
   /* のんびり（くわしい説明 なし）：計器の 札・知らせ・案内・キーの 一覧・窓の 札は 出さない（キャラクターが 話す） */
   body.calm #hud, body.calm #toast, body.calm #coach, body.calm #keyHint, body.calm #badgeSt { display: none !important; }
   body.calm #artPop { display: none !important; }   /* サイクル76 総点検：のんびりでは 点数の ＋− ポップ（報酬・罰の 浮き文字）は 出さない */
+  /* サイクル117 のんびり・平和監査第1弾「点数で競わせない」：のんびりでは 挑戦・比較・点数の評価は 出さない（くわしい説明を 入れると 従来どおり 出る） */
+  body.calm #loopBox, body.calm #challenge { display: none !important; }
+  body.calm #doneScore .farmerVerdict, body.calm #doneScore > b { display: none !important; }
+  body.calm #doneScore { font-size: 0; }   /* 🔰8割などの 素の文字も 消す（あとから 足す 地図の キャンバスは そのまま 見える） */
   /* 文字を 消す：ボタンは 絵（data-i）だけ、はじめの画面は 季節・時刻・天気・絵・▶ だけ（くわしい説明を 入れると もどる） */
   body.calm .ico { font-size: 0 !important; }
   /* 操作を かんたんに：ふだんは よく使う ボタンだけ（くわしい説明を 入れると ぜんぶ 出る。キーボードの キーは いつでも 使える） */
@@ -9804,19 +9808,19 @@ const LOOP = (() => {
   const same = params.get('season') === season && params.get('art') === (ART.on ? ART.id : 'none') && (!params.has('time') || params.get('time') === TOD) && (!params.has('w') || params.get('w') === WX);
   const p = /^\d{1,3}$/.test(params.get('p')) ? +params.get('p') : -1, friend = params.get('from') === 'share' && same && p >= 0 && p <= 100 ? p : null;
   const SNAME = { haru: '春の田起こし', aki: '秋起こし', shirokaki: '代かき' };
-  if (friend !== null) {
+  if (friend !== null && DETAIL) {   // サイクル117：のんびりでは 友だちの点数で あおらない
     const el = $('challenge');
     el.textContent = `🏁 友だちが「${SNAME[season]}${ART.on ? '・田んぼアート「' + ART.name + '」' : ''}」で ${friend} 点！ きみは何点とれる？（季節・時間・天気${ART.on ? '・お題' : ''}は 友だちと同じにしてあります）`;
     el.classList.remove('hidden');
   }
   function result(score, cardUrl, text, artUrl) {
     const img = cardUrl || artUrl;                  // 田んぼアートは 上の写真をそのまま使う
-    const url = location.origin + location.pathname + `?season=${season}&time=${TOD}&art=${ART.on ? ART.id : 'none'}${WX !== 'hare' ? '&w=' + WX : ''}${RENGE_ON ? '&renge=1' : ''}&p=${score}&from=share`;   // 季節・時間・天気・お題（レンゲの田んぼも）を 友だちと そろえる
+    const url = location.origin + location.pathname + `?season=${season}&time=${TOD}&art=${ART.on ? ART.id : 'none'}${WX !== 'hare' ? '&w=' + WX : ''}${RENGE_ON ? '&renge=1' : ''}${DETAIL ? '&p=' + score + '&from=share' : ''}`;   // サイクル117：のんびりでは 点数を リンクに のせない   // 季節・時間・天気・お題（レンゲの田んぼも）を 友だちと そろえる
     if (cardUrl) { $('cardImg').src = cardUrl; $('cardImg').classList.remove('hidden'); }
     $('bSave').href = img;
     $('bX').href = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
     $('bLine').href = `https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
-    if (friend !== null) {
+    if (friend !== null && DETAIL) {   // サイクル117：のんびりでは 点数の くらべっこは しない
       const d = score - friend, el = $('vsLine');
       el.textContent = d > 0 ? `🏆 友だちの ${friend} 点を ${d} 点こえた！ 投稿して、また挑戦してもらおう` : d === 0 ? `🤝 友だちと 同じ ${friend} 点！` : `友だちは ${friend} 点。あと ${-d} 点！ もう一度 挑戦しよう`;
       el.classList.remove('hidden');
@@ -9909,7 +9913,7 @@ function finish() {
     (season === 'aki' && SNAILS.count.up + SNAILS.count.crushed > 0 ? `<br><span class="small">ジャンボタニシ：つぶした 約 ${SNAILS.count.crushed} 匹・掘り起こした 約 ${SNAILS.count.up} 匹（ゆっくり走り、浅く耕すほど よくつぶれる）</span>` : '') + heardLine() + '<br>';
   $('doneScore').appendChild(cv);
   const label = { haru: '春の田起こし', aki: '秋起こし', shirokaki: '代かき' }[season];
-  LOOP.result(total, ART.photo(null, `🚜 ${label} ${total} 点（${PLAY.up ? '5 分で ' + pctNow + '%' : fmtTime(S.elapsed)}）`), `トラクターで${label}をしたよ。${PLAY.up ? '5 分で ' + pctNow + '% 耕して ' : ''}${total} 点${EASY.used ? '（🔰 アシストあり）' : ''}。きみは何点とれる？`);
+  LOOP.result(total, ART.photo(null, DETAIL ? `🚜 ${label} ${total} 点（${PLAY.up ? '5 分で ' + pctNow + '%' : fmtTime(S.elapsed)}）` : `🚜 ${label}`), DETAIL ? `トラクターで${label}をしたよ。${PLAY.up ? '5 分で ' + pctNow + '% 耕して ' : ''}${total} 点${EASY.used ? '（🔰 アシストあり）' : ''}。きみは何点とれる？` : `トラクターで${label}をしたよ。のんびり耕せたよ`);   // サイクル117：のんびりでは 点数と挑戦の文面にしない
   $('done').classList.remove('hidden'); doneTalk();
 }
 
@@ -9917,7 +9921,7 @@ function finish() {
 const heardLine = () => `<br><span class="small">🧑‍🌾 出会った 農家の声 ${Object.keys(heard).length}/${Object.keys(VOICES).length}</span>`;
 // 田んぼアートの仕上がり：ドローンの写真・点数（上手さ × でき）・保存とシェア
 function finishArt() {
-  const r = ART.score(), url = ART.photo(r.final + ' 点' + (EASY.used ? ' 🔰' : ''));
+  const r = ART.score(), url = ART.photo(DETAIL ? r.final + ' 点' + (EASY.used ? ' 🔰' : '') : '');   // サイクル117：のんびりでは 写真の文字にも 点数を のせない
   $('artBox').classList.add('hidden');
   $('doneTitle').textContent = '🎨 田んぼアートができました！';
   $('doneText').textContent = PLAY.up ? `5 分 たちました。お題「${ART.name}」の ${Math.round(r.fill * 100)}% まで 描きました。ドローンで真上から撮った写真です。` : `お題「${ART.name}」を ${fmtTime(S.elapsed)} で描きました。ドローンで真上から撮った写真です。`;
@@ -9939,7 +9943,7 @@ function finishArt() {
     $('bNext').onclick = () => go(season, TOD, nx);
     $('bNext').classList.remove('hidden'); $('bAgain').classList.add('sub');
   }
-  LOOP.result(f, null, `トラクターで田んぼアート「${ART.name}」を描いたよ。${f} 点${EASY.used ? '（🔰 アシストあり）' : ''}。きみは何点とれる？`, url);
+  LOOP.result(f, null, DETAIL ? `トラクターで田んぼアート「${ART.name}」を描いたよ。${f} 点${EASY.used ? '（🔰 アシストあり）' : ''}。きみは何点とれる？` : `トラクターで田んぼアート「${ART.name}」を描いたよ。のんびり描けたよ`, url);   // サイクル117：のんびりでは 点数と挑戦の文面にしない
   $('done').classList.remove('hidden'); doneTalk();
 }
 

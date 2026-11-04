@@ -148,6 +148,21 @@ class KensaTests(unittest.TestCase):
                          ["1等", "1等", "2等", "1等", "2等", "2等",
                           "1等", "3等", "規格外", "規格外", "1等", "規格外"])
 
+    def test_machine_ui(self):
+        # サイクル8: 穀粒判別器は死米・着色粒だけを見る（農水省通知 元政統第1290号）
+        self.assertIn('id="machineBtn"', HTML)   # 任意の大きなボタン1つ
+        self.assertIn('id="scanBar"', HTML)      # ゆっくりした光の帯だけ（入力をふさがない）
+        self.assertIn("useMachine", HTML)
+        self.assertIn("穀粒判別器でも鑑定できます", HTML)
+        func = re.search(r"function useMachine\(\) \{.*?^\}", HTML, re.S | re.M).group(0)
+        self.assertIn(".sgrain.shini", func)     # 死米は機械の対象
+        self.assertIn(".sgrain.color", func)     # 着色粒は機械の対象
+        self.assertNotIn("mijuku", func)         # 未熟粒は目視のまま
+        self.assertNotIn("momi", func)           # もみは目視のまま
+        self.assertNotIn("higai", func)          # 被害粒等の計の鑑定は目視等（同通知）
+        self.assertNotIn("alert(", HTML)         # 流れを止める要素は作らない
+        self.assertNotIn("setInterval", HTML)    # タイマー・焦らせる仕組みを入れない
+
     def test_stamp_ui(self):
         # サイクル5「おす」: 等級証印＋日付印＋次の山（1ロット完結）
         self.assertIn('id="stampWrap"', HTML)

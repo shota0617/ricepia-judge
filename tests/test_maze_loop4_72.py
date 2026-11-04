@@ -32,7 +32,7 @@ class NoRace(unittest.TestCase):
         self.assertNotIn('g.t', line)
         self.assertNotIn('toFixed', line)
         self.assertIn('\U0001f33e${g.got.size}/${b0.grains.length}', line)
-        self.assertIn('ばね${Math.ceil(g.spring.left)}', line)
+        self.assertIn("' ばね'", line)   # サイクル75：残り秒数は出さない
 
     def test_win_advances_only_stage(self):
         w = code_only(func_body(MEIRO, 'function win()'))

@@ -4469,10 +4469,10 @@ const BIRDS = (() => {
       const want = workT > u.delay && !(u.rook && flee > 0);   // 耕しはじめて少しずつ集まってくる（逃げたミヤマガラスは しばらく来ない）
       if (u.rook && flee > 0 && b.visible) {      // 逃げていく：高く上がって 遠くで見えなくなる
         const dx = u.tx - b.position.x, dz = u.tz - b.position.z, d = Math.hypot(dx, dz);
-        b.position.x += dx / Math.max(d, 0.01) * Math.min(d, 7 * dt); b.position.z += dz / Math.max(d, 0.01) * Math.min(d, 7 * dt);
+        b.position.x += dx / Math.max(d, 0.01) * Math.min(d, (DETAIL ? 7 : 5) * dt); b.position.z += dz / Math.max(d, 0.01) * Math.min(d, (DETAIL ? 7 : 5) * dt);   // サイクル121：のんびりでは 逃げる速さも ゆっくりに
         b.position.y += (9 - b.position.y) * Math.min(1, dt * 1.5);
         b.rotation.y = Math.atan2(dx, dz);
-        u.wings.forEach((w, i) => { w.visible = true; w.rotation.z = (i ? -1 : 1) * Math.sin(performance.now() / 70 + k) * 0.8; });
+        u.wings.forEach((w, i) => { w.visible = true; w.rotation.z = (i ? -1 : 1) * (DETAIL ? Math.sin(performance.now() / 70 + k) * 0.8 : Math.sin(performance.now() / 120 + k) * 0.6); });   // サイクル121：のんびりでは 逃げる群れの羽ばたきも ゆっくり小さく
         u.legs.forEach(l => { l.rotation.x = 1.2; });
         if (d < 1) { b.visible = false; u.state = 'away'; }
         return;
@@ -4495,7 +4495,7 @@ const BIRDS = (() => {
       const dTractor = Math.hypot(b.position.x - S.x - s * -0.5, b.position.z - S.z - c * -0.5);
       if (u.state !== 'fly' && (d > 7 || dTractor < (u.crow && !u.rook ? 3.8 : 2.6))) u.state = 'fly';
       if (u.state === 'fly') {
-        const sp = 5.5, gy = TILL_Y + (SHIRO ? -0.06 : 0);
+        const sp = DETAIL ? 5.5 : 4.0, gy = TILL_Y + (SHIRO ? -0.06 : 0);   // サイクル121：のんびりでは 後を追う鳥の飛行も ゆっくりに
         b.position.x += dx / Math.max(d, 0.01) * Math.min(d, sp * dt);
         b.position.z += dz / Math.max(d, 0.01) * Math.min(d, sp * dt);
         const hy = Math.min(3, d * 0.4) + gy;
@@ -4509,7 +4509,7 @@ const BIRDS = (() => {
           }
         }
         b.rotation.y = Math.atan2(dx, dz);
-        u.wings.forEach((w, i) => { w.visible = true; w.rotation.z = (i ? -1 : 1) * Math.sin(performance.now() / (u.crow ? 80 : 110)) * 0.7; });   // カラスは はばたきが速い
+        u.wings.forEach((w, i) => { w.visible = true; w.rotation.z = (i ? -1 : 1) * (DETAIL ? Math.sin(performance.now() / (u.crow ? 80 : 110)) * 0.7 : Math.sin(performance.now() / (u.crow ? 130 : 170)) * 0.55); });   // カラスは はばたきが速い。サイクル121：のんびりでは 羽ばたきを ゆっくり小さく
         u.legs.forEach(l => { l.rotation.x = 1.2; });
       } else {
         u.wings.forEach(w => { w.visible = false; });
@@ -4606,7 +4606,7 @@ const MUKU = (() => {
         if (u.st === 'walk' && Math.hypot(u.tx - u.x, u.tz - u.z) > 1.5) u.st = 'fly';   // 群れが先へ行ったら 少し飛んで追いつく
         const dx = u.tx - u.x, dz = u.tz - u.z, d = Math.hypot(dx, dz);
         if (u.st === 'fly') {
-          const sp = 7;
+          const sp = DETAIL ? 7 : 5;   // サイクル121：のんびりでは ムクドリの群れの飛行も ゆっくりに
           u.x += dx / Math.max(d, 0.01) * Math.min(d, sp * dt); u.z += dz / Math.max(d, 0.01) * Math.min(d, sp * dt);
           u.y += (Math.min(3.5, d * 0.5) + TILL_Y - u.y) * Math.min(1, dt * (d < 1 ? 5 : 3));   // 近づくと 降りていく
           if (d > 0.05) u.yaw = Math.atan2(dx, dz);
@@ -4631,7 +4631,7 @@ const MUKU = (() => {
       for (const sx of [-1, 1]) put(cheek, k * 2 + (sx > 0 ? 1 : 0), sx * 0.022, hy - 0.004, hz + 0.004, hp, 0, 0);
       const st = walk ? Math.sin(u.t * 18) * 0.5 : 0;
       for (const sx of [-1, 1]) put(leg, k * 2 + (sx > 0 ? 1 : 0), sx * 0.012, 0, 0.005, fly ? 1.3 : sx * st, 0, 0, fly ? sc.set(1, 0.5, 1) : one);
-      const fl = Math.sin(now * 32 + k) * 0.9;     // はばたきが速い（ムクドリは 三角の翼で まっすぐ 速く飛ぶ）
+      const fl = DETAIL ? Math.sin(now * 32 + k) * 0.9 : Math.sin(now * 20 + k) * 0.6;     // はばたきが速い（ムクドリは 三角の翼で まっすぐ 速く飛ぶ）。サイクル121：のんびりでは ゆっくり小さく
       for (const sx of [-1, 1]) put(wing, k * 2 + (sx > 0 ? 1 : 0), sx * 0.09, 0.07, 0, 0, 0, sx * fl, fly ? one : zero);
     });
     for (const im of IMS) im.instanceMatrix.needsUpdate = true;
@@ -4705,7 +4705,7 @@ const SPARROWS = (() => {
       state = 'fly'; t = 0; fx = cx; fz = cz; fy = 0; [tx, tz] = pick();
     }
     if (state === 'fly') {
-      const L = Math.hypot(tx - fx, tz - fz), T = Math.max(2.5, L / 7), k = Math.min(1, t / T);
+      const L = Math.hypot(tx - fx, tz - fz), T = Math.max(2.5, L / (DETAIL ? 7 : 5)), k = Math.min(1, t / T);   // サイクル121：のんびりでは スズメの群れも ゆっくり飛ぶ
       cx = fx + (tx - fx) * k; cz = fz + (tz - fz) * k;
       fy = Math.sin(k * Math.PI) * Math.min(6, 1.5 + L * 0.12) + 0.4 * Math.sin(t * 5);   // 波をえがいて飛ぶ
       if (k >= 1) { state = 'feed'; fy = 0; }
@@ -4716,7 +4716,7 @@ const SPARROWS = (() => {
       let y = TILL_Y + 0.03, sy = 1;
       if (state === 'fly') {
         y += fy + 0.5 * Math.sin(u.ph + t * 3);
-        sy = 0.6 + 0.4 * Math.abs(Math.sin(t * 28 + u.ph));          // はばたき（つぶれて見える）
+        sy = 0.6 + 0.4 * Math.abs(DETAIL ? Math.sin(t * 28 + u.ph) : Math.sin(t * 18 + u.ph));          // はばたき（つぶれて見える）。サイクル121：のんびりでは ゆっくりに
         e.set(0, yaw + 0.3 * Math.sin(u.ph), 0);
       } else {                                      // ちょんちょん跳ねて、ついばむ
         u.hop -= dt;

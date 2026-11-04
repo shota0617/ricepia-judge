@@ -8402,6 +8402,7 @@ function drawRollPath(ox, oy, T, now) {
     const flush = () => { if (cnt && sum > 0) { ctx.lineWidth = T * 0.20 * (wsum / cnt); ctx.strokeStyle = 'rgba(' + rgb + ',' + (sum / cnt).toFixed(3) + ')'; ctx.stroke(); } };
     const rawSegs = RT.segments(rollPath.list, now);
     let segs = RT.dedupe ? RT.dedupe(rawSegs) : rawSegs;   // 同じ場所を再び転がっても1回だけ塗る（マリオペイント）
+    if (RT.dedupeSplit) segs = RT.dedupeSplit(segs);   // 重なった部分だけ落とし、はみ出した端は残す（パワーウォッシュシミュレーター。先に切り分けてから近傍の重なりを落とす＝Codex指摘・サイクル47）
     if (RT.dedupeNear) segs = RT.dedupeNear(segs);   // 端点がずれた部分的な重なりも1回だけ（ハウスフリッパー）
     let ribbonUsed = false;
     const bases = segs.map(s => rgbAt((s.x1 + s.x2) / 2, (s.y1 + s.y2) / 2));   // 小セグメントごとに地区色を調べる

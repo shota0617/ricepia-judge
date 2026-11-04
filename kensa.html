@@ -351,6 +351,8 @@ const stepChip = document.getElementById("stepChip");
 let sampled = false;
 let selectedGrade = "";
 let phase = "sas"; /* sas → hakaru → hakaru-done → miwakeru → kimeru → kimeru-done → osu → osu-done */
+/* 焦点の受け渡し（サイクル16）: 段階が進むと前の操作が隠れたり無効になったりしてキーボードの焦点が消える。
+   次の所作の主な操作へ静かに渡し、キーボードでも迷子にならないようにする（マウス／タップの流れは変えない） */
 nextBtn.addEventListener("click", () => {
   if (phase === "sas" && sampled) {
     phase = "hakaru";
@@ -358,6 +360,7 @@ nextBtn.addEventListener("click", () => {
     nextBtn.classList.remove("on");
     count.textContent = "💧 ボタンを 3回 タップ";
     document.getElementById("meterWrap").classList.add("on");
+    document.getElementById("meterBtn").focus();
   } else if (phase === "hakaru-done") {
     phase = "miwakeru";
     stepChip.textContent = "③ みわける";
@@ -365,6 +368,8 @@ nextBtn.addEventListener("click", () => {
     document.getElementById("trayWrap").style.display = "none"; /* 道具は常時1つだけ: さすの皿はしまう */
     document.getElementById("sortWrap").classList.add("on");
     buildSortGrains();
+    const firstGrain = document.querySelector("#whiteTray .sgrain");
+    if (firstGrain) firstGrain.focus(); /* サイクル16: 最初の粒へ焦点を渡す */
     count.textContent = "わるい粒を タップして よける";
     nextBtn.textContent = "④ きめる ⚖️";
     nextBtn.classList.add("on"); /* 全部よけ終わらなくても進める（brief_cycle1.md §2-3） */
@@ -375,6 +380,7 @@ nextBtn.addEventListener("click", () => {
     document.getElementById("gradeMoisture").textContent = moistureAverage(LOT.moisture).toFixed(1) + "%";
     document.getElementById("gradeSort").textContent = sortFound + " / " + sortBadTotal;
     document.getElementById("gradeWrap").classList.add("on");
+    document.querySelector(".gradeBtn").focus(); /* サイクル16: 最初の等級ボタンへ焦点を渡す */
     count.textContent = "等級を えらぶ";
     nextBtn.classList.remove("on");
   } else if (phase === "kimeru-done") {
@@ -383,6 +389,7 @@ nextBtn.addEventListener("click", () => {
     document.getElementById("gradeWrap").classList.remove("on"); /* 道具は常時1つだけ: 等級ボタンはしまう */
     document.getElementById("stampGrade").textContent = selectedGrade;
     document.getElementById("stampWrap").classList.add("on");
+    document.getElementById("stampBtn").focus(); /* サイクル16: おすボタンへ焦点を渡す */
     count.textContent = "ふくろに 証印を おす";
     nextBtn.classList.remove("on");
   } else if (phase === "osu-done") {
@@ -410,6 +417,7 @@ function pressStamp() {
   phase = "osu-done";
   nextBtn.textContent = "つぎの山 🌾";
   nextBtn.classList.add("on");
+  nextBtn.focus(); /* サイクル16: おすボタンが無効になり焦点が消えるため、次ボタンへ渡す */
 }
 document.getElementById("stampBtn").addEventListener("click", pressStamp);
 document.getElementById("stampBag").addEventListener("click", pressStamp);
@@ -469,6 +477,7 @@ function startNextLot() {
   document.getElementById("stampBtn").disabled = false;
   nextBtn.textContent = "② はかる 💧";
   nextBtn.classList.remove("on");
+  bagTap.focus(); /* サイクル16: 次の山でも最初の袋へ焦点を渡し、キーボードでそのまま続けられる */
 }
 /* きめる（サイクル4）: 大きな等級ボタンを1つタップ。合えば次へ、外れても流れを止めず皿に戻って見直せる */
 const gradeMsg = document.getElementById("gradeMsg");
@@ -490,6 +499,7 @@ document.querySelectorAll(".gradeBtn").forEach((btn) => {
       count.textContent = "等級が きまった ✓";
       nextBtn.textContent = "⑤ おす 🖐";
       nextBtn.classList.add("on");
+      nextBtn.focus(); /* サイクル16: 等級ボタンが無効になり焦点が消えるため、次ボタンへ渡す */
     } else {
       gradeMsg.textContent = "もう一度 皿をみてみよう 👀";
       gradeMsg.classList.add("on");
@@ -508,6 +518,9 @@ backToSort.addEventListener("click", () => {
   count.textContent = "わるい粒を タップして よける";
   nextBtn.textContent = "④ きめる ⚖️";
   nextBtn.classList.add("on");
+  /* サイクル16: 皿へ戻ったら、まだ残っている最初の粒へ焦点を渡す（なければ機械のボタンへ） */
+  const remain = document.querySelector("#whiteTray .sgrain:not(.away), #blackTray .sgrain:not(.away)");
+  if (remain) remain.focus(); else document.getElementById("machineBtn").focus();
 });
 /* みわける（サイクル3）: 白い皿と黒い皿（実在の鑑定）に真値連動の粒を広げ、
    整粒でない粒をタップしてよける。白い粒（死米・未熟粒）は黒い皿で、濃い粒（着色粒）は白い皿で見つけやすい。 */
@@ -606,6 +619,7 @@ meterBtn.addEventListener("click", () => {
   phase = "hakaru-done";
   nextBtn.textContent = "③ みわける 👀";
   nextBtn.classList.add("on");
+  nextBtn.focus(); /* サイクル16: はかるボタンが無効になり焦点が消えるため、次ボタンへ渡す */
 });
 bagTap.addEventListener("click", () => {
   if (sampled) return; sampled = true;
@@ -629,6 +643,8 @@ bagTap.addEventListener("click", () => {
     count.innerHTML = "とれた試料 <b>約40g</b>";
     document.getElementById("stepChip").textContent = "① さす ✓";
     document.getElementById("nextBtn").classList.add("on");
+    /* サイクル16: 次ボタンへ焦点を渡す。ただし待ち時間の間にキーボードで他へ移っていたら奪わない（Codexレビュー） */
+    if (document.activeElement === bagTap || document.activeElement === document.body) nextBtn.focus();
   }, 1500);
 });
 </script>

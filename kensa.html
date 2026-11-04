@@ -16,7 +16,7 @@
   h1 { font-size:20px; margin:6px 2px 8px; letter-spacing:.04em; }
   h1 small { font-size:12px; color:#fff; background:var(--gold); border-radius:999px; padding:2px 8px; vertical-align:3px; margin-left:6px; }
   /* 場面: 軸の写真（検査員が30kg紙袋の山から穀刺しで試料を抜く風景） */
-  #scene { position:relative; border-radius:16px; overflow:hidden; box-shadow:0 4px 16px rgba(26,24,20,.25); line-height:0; }
+  #scene { position:relative; border-radius:16px; overflow:hidden; box-shadow:0 4px 16px rgba(26,24,20,.25); line-height:0; aspect-ratio:3/2; background:#d8cfb8; }
   #scene img { width:100%; height:auto; display:block; }
   /* 刺す袋の誘い（ゆっくり光る・入力をふさがない小さな範囲だけ） */
   #bagTap { position:absolute; left:34%; top:34%; width:32%; height:34%; border:0; background:transparent; cursor:pointer; border-radius:18px; }
@@ -83,6 +83,9 @@ const tray = document.getElementById("tray");
 const count = document.getElementById("count");
 const bagTap = document.getElementById("bagTap");
 let sampled = false;
+document.getElementById("nextBtn").addEventListener("click", () => {
+  count.textContent = "💧 つぎのサイクルで はじまる";
+});
 bagTap.addEventListener("click", () => {
   if (sampled) return; sampled = true;
   bagTap.classList.add("done");

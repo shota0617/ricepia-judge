@@ -59,7 +59,7 @@ class PixelSide(unittest.TestCase):
     def test_dedupe_used(self):
         b = self.body()
         self.assertIn('RT.dedupe', b)
-        self.assertIn('const segs = RT.dedupe ? RT.dedupe(', b)
+        self.assertIn('segs = RT.dedupe ? RT.dedupe(', b)
 
     def test_tip_circle_skipped_with_ribbon(self):
         b = self.body()

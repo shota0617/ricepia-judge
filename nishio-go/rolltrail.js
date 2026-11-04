@@ -159,5 +159,25 @@
       return segs.filter((s, i) => keys[i] === null || last.get(keys[i]) === i);
     } catch (e) { return Array.isArray(segs) ? segs.slice() : []; }
   }
-  root.nishioRollTrail = { MAX, GAP, LIFE_MS, STEP, push, alive, alphaFor, segments, colorFor, mixRgb, smoothColors, ribbon, dedupe, AREA_COLORS };
+  // 端点がずれた部分的な重なりも1回だけ（第4弾サイクル46・ハウスフリッパー）：後ろ（新しい方）から走査し、残すと決めた要素と中点が STEP/2 以内かつ向きがほぼ同じ（逆向き含む）なら落とす。無効な要素（座標が不正・長さ0）はそのまま残す。入力は変えない
+  function dedupeNear(segs) {
+    try {
+      if (!Array.isArray(segs)) return [];
+      const info = segs.map(s => {
+        if (!s || !num(s.x1) || !num(s.y1) || !num(s.x2) || !num(s.y2)) return null;
+        const len = Math.hypot(s.x2 - s.x1, s.y2 - s.y1);
+        if (!(len > 0)) return null;
+        return { mx: (s.x1 + s.x2) / 2, my: (s.y1 + s.y2) / 2, dx: (s.x2 - s.x1) / len, dy: (s.y2 - s.y1) / len };
+      });
+      const kept = [], drop = new Array(segs.length).fill(false);
+      for (let i = segs.length - 1; i >= 0; i--) {
+        const c = info[i];
+        if (!c) continue;
+        if (kept.some(k => Math.hypot(c.mx - k.mx, c.my - k.my) <= STEP / 2 + 1e-9 && Math.abs(c.dx * k.dx + c.dy * k.dy) >= 0.87)) drop[i] = true;
+        else kept.push(c);
+      }
+      return segs.filter((s, i) => !drop[i]);
+    } catch (e) { return Array.isArray(segs) ? segs.slice() : []; }
+  }
+  root.nishioRollTrail = { MAX, GAP, LIFE_MS, STEP, push, alive, alphaFor, segments, colorFor, mixRgb, smoothColors, ribbon, dedupe, dedupeNear, AREA_COLORS };
 })(typeof window !== 'undefined' ? window : globalThis);

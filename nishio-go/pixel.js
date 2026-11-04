@@ -8401,7 +8401,8 @@ function drawRollPath(ox, oy, T, now) {
     let g = null, sum = 0, cnt = 0, wsum = 0, w0 = 0, rgb = CREAM, prev = null, force = true;
     const flush = () => { if (cnt && sum > 0) { ctx.lineWidth = T * 0.20 * (wsum / cnt); ctx.strokeStyle = 'rgba(' + rgb + ',' + (sum / cnt).toFixed(3) + ')'; ctx.stroke(); } };
     const rawSegs = RT.segments(rollPath.list, now);
-    const segs = RT.dedupe ? RT.dedupe(rawSegs) : rawSegs;   // 同じ場所を再び転がっても1回だけ塗る（マリオペイント）
+    let segs = RT.dedupe ? RT.dedupe(rawSegs) : rawSegs;   // 同じ場所を再び転がっても1回だけ塗る（マリオペイント）
+    if (RT.dedupeNear) segs = RT.dedupeNear(segs);   // 端点がずれた部分的な重なりも1回だけ（ハウスフリッパー）
     let ribbonUsed = false;
     const bases = segs.map(s => rgbAt((s.x1 + s.x2) / 2, (s.y1 + s.y2) / 2));   // 小セグメントごとに地区色を調べる
     const smooth = RT.smoothColors ? RT.smoothColors(bases) : null;   // 境の前後3つに広げて4段階で溶け合わせる（Journey）

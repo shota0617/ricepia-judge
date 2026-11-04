@@ -227,22 +227,35 @@
           }));
         });
         // 横にはみ出した細い帯（第4弾サイクル48・Lawn Mowing Simulator）：覆いを線でなく帯の幅（HALF×w）で数え、重ならない横の残りを細い帯として残す
+        // 複数の覆いは軸の小区間ごとに横の覆い区間を和集合にしてから引く（第4弾サイクル49・ぷよぷよ）：合わさって覆う所は二重に出さない
         const hi0 = HALF * wOf(s), nx = -c.dy, ny = c.dx;
-        bands.forEach(b => {
-          if (Math.abs(b.off) <= 0.005) return;
+        const cuts = [0, 1];
+        bands.forEach(b => { cuts.push(b.lo, b.hi); });
+        cuts.sort((p, q) => p - q);
+        for (let k = 0; k + 1 < cuts.length; k++) {
+          const lo = cuts[k], hi = cuts[k + 1];
+          if (!(hi - lo > 1e-9)) continue;
+          const here = bands.filter(b => b.lo <= lo + 1e-9 && hi <= b.hi + 1e-9);
+          if (!here.some(b => Math.abs(b.off) > 0.005)) continue;
+          const uni = [];
+          here.map(b => [b.off - b.hw, b.off + b.hw]).sort((p, q) => p[0] - q[0]).forEach(iv => {
+            const m = uni[uni.length - 1];
+            if (m && iv[0] <= m[1] + 1e-9) m[1] = Math.max(m[1], iv[1]); else uni.push([iv[0], iv[1]]);
+          });
           const lat = [];
-          if (b.off - b.hw > -hi0) lat.push([-hi0, Math.min(hi0, b.off - b.hw)]);
-          if (b.off + b.hw < hi0) lat.push([Math.max(-hi0, b.off + b.hw), hi0]);
+          let from = -hi0;
+          uni.forEach(iv => { if (iv[0] > from) lat.push([from, Math.min(hi0, iv[0])]); from = Math.max(from, iv[1]); });
+          if (from < hi0) lat.push([from, hi0]);
           lat.forEach(l => {
             if (l[1] - l[0] < 0.03 - 1e-9) return;
             const ctr = (l[0] + l[1]) / 2;
             out.push(Object.assign({}, s, {
-              x1: at(b.lo, s.x1, s.x2) + nx * ctr, y1: at(b.lo, s.y1, s.y2) + ny * ctr,
-              x2: at(b.hi, s.x1, s.x2) + nx * ctr, y2: at(b.hi, s.y1, s.y2) + ny * ctr,
+              x1: at(lo, s.x1, s.x2) + nx * ctr, y1: at(lo, s.y1, s.y2) + ny * ctr,
+              x2: at(hi, s.x1, s.x2) + nx * ctr, y2: at(hi, s.y1, s.y2) + ny * ctr,
               w: (l[1] - l[0]) / (2 * HALF)
             }));
           });
-        });
+        }
       });
       return out;
     } catch (e) { return Array.isArray(segs) ? segs.slice() : []; }

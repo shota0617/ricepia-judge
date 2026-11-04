@@ -189,6 +189,14 @@
   #scene.nextPile img { animation:nextPile 1.2s ease; }
   @keyframes nextPile { 0%{ opacity:.35; transform:translateX(14px);} 100%{ opacity:1; transform:translateX(0);} }
   footer { margin-top:16px; font-size:12px; color:#6b6353; line-height:1.7; }
+  /* サイクル15: 資料置き場（任意で開く・流れを止めない） */
+  #refBox { margin-top:14px; border:2px solid #d8cfb8; border-radius:14px; background:#f7f2e4; padding:10px 14px; }
+  #refBox summary { font-size:20px; font-weight:800; cursor:pointer; padding:6px 2px; }
+  #refBox table { width:100%; border-collapse:collapse; margin-top:8px; font-size:15px; }
+  #refBox th, #refBox td { border-bottom:1px solid #ddd2b8; padding:5px 4px; text-align:right; }
+  #refBox th:first-child, #refBox td:first-child { text-align:left; }
+  #refBox p { font-size:13px; line-height:1.7; color:#5a5344; margin:8px 0 2px; }
+  #refBox a { color:#7a5c14; }
 </style>
 </head>
 <body>
@@ -252,6 +260,23 @@
   <button id="nextBtn">② はかる 💧</button>
 
   <footer>農産物検査の仕事が題材です。試料の採取は穀刺しで1袋 約40g（標準抽出方法・平成13年農林水産省告示第443号）。水分は3回の測定の平均で判定します。粒の鑑定は同じ試料を白い皿と黒い皿の双方に入れて確認します。鑑定は視覚・触覚・臭覚・聴覚を用いて行います（鑑定方法・平成13年農林水産省告示第333号）。等級の規格は農産物規格規程（平成13年告示第244号）の水稲うるち玄米に基づきます。等級は、整粒・水分・被害粒・死米・着色粒・異種穀粒・異物の全項目がその等級の限度内にある、最も良い等級です（未熟粒は「計」に入りません）。判定した等級は等級証印として米袋に押印し、あわせて検査証明年月日の日付印を押します。死米と着色粒は、穀粒判別器でも鑑定できます。</footer>
+  <details id="refBox">
+    <summary>📖 資料（規格表）</summary>
+    <table aria-label="水稲うるち玄米の品位規格">
+      <tr><th>項目</th><th>1等</th><th>2等</th><th>3等</th></tr>
+      <tr><td>整粒（以上）</td><td>70%</td><td>60%</td><td>45%</td></tr>
+      <tr><td>水分（以下）</td><td>15.0%</td><td>15.0%</td><td>15.0%</td></tr>
+      <tr><td>計（以下）</td><td>15%</td><td>20%</td><td>30%</td></tr>
+      <tr><td>死米（以下）</td><td>7%</td><td>10%</td><td>20%</td></tr>
+      <tr><td>着色粒（以下）</td><td>0.1%</td><td>0.3%</td><td>0.7%</td></tr>
+      <tr><td>もみ（以下）</td><td>0.3%</td><td>0.5%</td><td>1.0%</td></tr>
+      <tr><td>麦（以下）</td><td>0.1%</td><td>0.3%</td><td>0.7%</td></tr>
+      <tr><td>もみ・麦以外（以下）</td><td>0.3%</td><td>0.5%</td><td>1.0%</td></tr>
+      <tr><td>異物（以下）</td><td>0.2%</td><td>0.4%</td><td>0.6%</td></tr>
+    </table>
+    <p>水分は規程の表値です。附則で、醸造用を除く玄米は当分の間この値に1.0%を加えた16.0%が最高限度とされています。ゲームのお米は、どちらの読みでも結論が変わらない水分（14%台前半か16.5%以上）だけにしています。3等の規格にも満たないものは規格外です。形質（見た目のよさ）は、本物の検査では各等級の標準品と見比べて判定します。</p>
+    <p>出典: <a href="https://www.maff.go.jp/j/kokuji_tuti/kokuji/k0001439.html" target="_blank" rel="noopener">農産物規格規程（平成13年農林水産省告示第244号）</a>／<a href="https://www.maff.go.jp/j/seisan/syoryu/kensa/attach/pdf/index-25.pdf" target="_blank" rel="noopener">農林水産省「コメの農産物検査」</a></p>
+  </details>
 </main>
 <script>
 "use strict";

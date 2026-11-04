@@ -213,6 +213,18 @@ class KensaTests(unittest.TestCase):
         self.assertNotIn("setInterval", HTML)                # タイマー・焦らせる仕組みを入れない
         self.assertNotIn("alert(", HTML)                     # 流れを止める要素は作らない
 
+    def test_cycle12_kantei_method_and_bag_print(self):
+        # サイクル12: 鑑定方法（平成13年告示第333号）を原典（農水省 hourei-10）で裏取りし、
+        # 鑑定は視覚・触覚・臭覚・聴覚を用いることをフッターに明記する
+        self.assertIn("視覚・触覚・臭覚・聴覚", HTML)
+        self.assertIn("鑑定方法・平成13年農林水産省告示第333号", HTML)
+        # 袋の印刷欄は罫線だけの薄い表現で、文字は増やさず操作もふさがない
+        self.assertIn('class="bagPrint"', HTML)
+        self.assertIn("#stampBag .bagPrint", HTML)
+        self.assertIn("pointer-events:none", HTML)
+        self.assertNotIn("setInterval", HTML)                # タイマー・焦らせる仕組みを入れない
+        self.assertNotIn("alert(", HTML)                     # 流れを止める要素は作らない
+
     def test_stamp_date_text(self):
         # 日付印は固定日付でなく、その日の日付を YYYY.M.D で作る純粋関数
         node = shutil.which("node")

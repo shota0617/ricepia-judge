@@ -68,6 +68,33 @@
   #bandMark { position:absolute; top:50%; width:22px; height:22px; border-radius:50%; background:#fff; border:4px solid var(--ink);
     transform:translate(-50%,-50%); opacity:0; transition:opacity .6s ease; }
   #bandMark.on { opacity:1; }
+  /* みわける（サイクル3）: 白い皿と黒い皿（実在の鑑定）＋よけた粒の受け皿 */
+  #sortWrap { display:none; margin-top:12px; }
+  #sortWrap.on { display:block; }
+  .plate { border-radius:50%/22px; padding:14px 10px 18px; min-height:186px; position:relative; }
+  .plate + .plate { margin-top:10px; }
+  #whiteTray { background:#f7f3e8; box-shadow:inset 0 3px 10px rgba(26,24,20,.18), 0 4px 12px rgba(26,24,20,.2); }
+  #blackTray { background:#26241f; box-shadow:inset 0 3px 10px rgba(0,0,0,.7), 0 4px 12px rgba(26,24,20,.3); }
+  .plateLabel { position:absolute; top:10px; left:32px; font-size:13px; font-weight:800; opacity:.55; }
+  #whiteTray .plateLabel { color:#6b6353; } #blackTray .plateLabel { color:#f7f3e8; }
+  .sgrain { position:absolute; width:38px; height:38px; border:0; background:transparent; cursor:pointer; padding:0;
+    display:flex; align-items:center; justify-content:center; transition:opacity .45s ease, transform .45s ease; }
+  .sgrain i { display:block; width:13px; height:21px; border-radius:50%; background:#c9a86a; box-shadow:inset -2px -3px 0 rgba(120,84,30,.45); pointer-events:none; }
+  .sgrain.shini i { background:#f0e9d2; box-shadow:inset -2px -3px 0 rgba(160,150,120,.4); border-radius:46%; }
+  .sgrain.color i { background:#7a3b2e; box-shadow:inset -2px -3px 0 rgba(40,16,10,.5); }
+  .sgrain.mijuku i { background:#bfc79b; box-shadow:inset -2px -3px 0 rgba(110,120,70,.4); }
+  .sgrain.momi i { background:repeating-linear-gradient(90deg,#d8bc7a 0 3px,#c4a55e 3px 5px); border-radius:40% 40% 50% 50%; box-shadow:inset -2px -3px 0 rgba(120,84,30,.35); }
+  .sgrain.higai i { background:linear-gradient(115deg,#c9a86a 0 44%,#5d4423 46% 54%,#b28c50 56% 100%); }
+  .sgrain.good:active i { animation:wiggle .35s ease; }
+  @keyframes wiggle { 0%,100%{ transform:rotate(0deg);} 50%{ transform:rotate(14deg);} }
+  .sgrain.away { opacity:0; transform:translateY(10px) scale(.6); pointer-events:none; }
+  #yokeWrap { margin-top:10px; background:#e3d7bd; border-radius:16px; padding:10px 12px; min-height:58px; box-shadow:inset 0 2px 6px rgba(26,24,20,.2); }
+  #yokeWrap .plateLabel { position:static; color:#6b6353; }
+  #yokeTray { display:flex; flex-wrap:wrap; gap:2px; margin-top:4px; min-height:30px; }
+  #yokeTray .sgrain { position:static; width:26px; height:26px; cursor:default; }
+  #yokeTray .sgrain i { width:10px; height:16px; }
+  #sortPct { margin:12px 2px 0; font-size:20px; font-weight:800; }
+  #sortPct b { font-size:44px; }
   footer { margin-top:16px; font-size:12px; color:#6b6353; line-height:1.7; }
 </style>
 </head>
@@ -98,9 +125,15 @@
       <div id="bandMark"></div>
     </div>
   </div>
+  <div id="sortWrap">
+    <div class="plate" id="whiteTray"><span class="plateLabel">しろい皿</span></div>
+    <div class="plate" id="blackTray"><span class="plateLabel">くろい皿</span></div>
+    <div id="yokeWrap"><span class="plateLabel">よけた粒</span><div id="yokeTray"></div></div>
+    <p id="sortPct">みわけ <b>0%</b> <span id="sortCount">0 / 10</span></p>
+  </div>
   <button id="nextBtn">② はかる 💧</button>
 
-  <footer>農産物検査の仕事が題材です。試料の採取は穀刺しで1袋 約40g（標準抽出方法・平成13年農林水産省告示第443号）。水分は3回の測定の平均で判定します。等級の規格は農産物規格規程（平成13年告示第244号）の水稲うるち玄米に基づきます。</footer>
+  <footer>農産物検査の仕事が題材です。試料の採取は穀刺しで1袋 約40g（標準抽出方法・平成13年農林水産省告示第443号）。水分は3回の測定の平均で判定します。粒の鑑定は同じ試料を白い皿と黒い皿の双方に入れて目視で確認します。等級の規格は農産物規格規程（平成13年告示第244号）の水稲うるち玄米に基づきます。</footer>
 </main>
 <script>
 "use strict";
@@ -112,9 +145,16 @@ const GRADE_TABLE = [
   { grade:"2等", seiryuMin:60, moistureMax:15.0, totalMax:20, shiniMax:10, colorMax:0.3, momiMax:0.5, mugiMax:0.3, otherMax:0.5, ibutsuMax:0.4 },
   { grade:"3等", seiryuMin:45, moistureMax:15.0, totalMax:30, shiniMax:20, colorMax:0.7, momiMax:1.0, mugiMax:0.7, otherMax:1.0, ibutsuMax:0.6 }
 ];
-/* 今回のロット（サイクル2）: 水分は解釈の割れない帯域だけを使う（brief_cycle1.md §4）。
-   3回測定の平均で判定するのが実在の手順（成分検査実施マニュアル／現場記録）。 */
-const LOT = { moisture: [14.1, 14.3, 14.2] };
+/* 今回のロット: 水分は解釈の割れない帯域だけを使う（brief_cycle1.md §4）。
+   3回測定の平均で判定するのが実在の手順（成分検査実施マニュアル／現場記録）。
+   truth は等級判定（サイクル4）に使う真値（重量%・規格規程の項目）で、合計100%になるよう設計した1等ロット。
+   sort は「みわける」皿の見本の粒数（合計50粒）。着色粒・もみなど本物の重量%ではごく僅かな粒は、
+   皿の上で見つけられるよう誇張して表す。見本の粒数%と判定に使う重量%（truth）は別物。 */
+const LOT = {
+  moisture: [14.1, 14.3, 14.2],
+  truth: { seiryu:87.5, higai:4.0, shini:3.0, mijuku:5.0, color:0.1, momi:0.2, mugi:0.0, other:0.1, ibutsu:0.1 },
+  sort: { total:50, seiryu:40, higai:3, shini:3, mijuku:2, color:1, momi:1 }
+};
 function moistureAverage(values) {
   return Math.round(values.reduce((a, b) => a + b, 0) / values.length * 10) / 10;
 }
@@ -124,7 +164,7 @@ const bagTap = document.getElementById("bagTap");
 const nextBtn = document.getElementById("nextBtn");
 const stepChip = document.getElementById("stepChip");
 let sampled = false;
-let phase = "sas"; /* sas → hakaru → hakaru-done */
+let phase = "sas"; /* sas → hakaru → hakaru-done → miwakeru → miwakeru-done */
 nextBtn.addEventListener("click", () => {
   if (phase === "sas" && sampled) {
     phase = "hakaru";
@@ -133,9 +173,69 @@ nextBtn.addEventListener("click", () => {
     count.textContent = "💧 ボタンを 3回 タップ";
     document.getElementById("meterWrap").classList.add("on");
   } else if (phase === "hakaru-done") {
+    phase = "miwakeru";
+    stepChip.textContent = "③ みわける";
+    document.getElementById("meterWrap").classList.remove("on");
+    document.getElementById("trayWrap").style.display = "none"; /* 道具は常時1つだけ: さすの皿はしまう */
+    document.getElementById("sortWrap").classList.add("on");
+    buildSortGrains();
+    count.textContent = "わるい粒を タップして よける";
+    nextBtn.textContent = "④ きめる ⚖️";
+    nextBtn.classList.add("on"); /* 全部よけ終わらなくても進める（brief_cycle1.md §2-3） */
+  } else if (phase === "miwakeru") {
+    phase = "miwakeru-done";
     count.textContent = "👀 つぎのサイクルで はじまる";
+    nextBtn.textContent = "④ きめる ⚖️（つぎのサイクルで）";
   }
 });
+/* みわける（サイクル3）: 白い皿と黒い皿（実在の鑑定）に真値連動の粒を広げ、
+   整粒でない粒をタップしてよける。白い粒（死米・未熟粒）は黒い皿で、濃い粒（着色粒）は白い皿で見つけやすい。 */
+const sortBadTotal = LOT.sort.total - LOT.sort.seiryu;
+let sortFound = 0;
+let sortBuilt = false;
+function sortProgress() {
+  document.querySelector("#sortPct b").textContent = Math.round(sortFound / sortBadTotal * 100) + "%";
+  document.getElementById("sortCount").textContent = sortFound + " / " + sortBadTotal;
+}
+function placeGrains(plate, kinds) {
+  kinds.forEach((kind, i) => {
+    const b = document.createElement("button");
+    b.className = "sgrain " + (kind || "good");
+    b.setAttribute("aria-label", kind ? "わるい粒" : "よい粒");
+    const cols = 7;
+    b.style.left = (4 + (i % cols) * 13.5 + (Math.floor(i / cols) % 2) * 4) + "%";
+    b.style.top = (30 + Math.floor(i / cols) * 37) + "px";
+    b.appendChild(document.createElement("i"));
+    b.firstChild.style.transform = "rotate(" + ((i * 47) % 70 - 35) + "deg)";
+    if (kind) {
+      b.addEventListener("click", () => {
+        if (b.classList.contains("away")) return;
+        b.classList.add("away");
+        sortFound++;
+        const mini = b.cloneNode(true);
+        mini.classList.remove("away");
+        mini.disabled = true;
+        setTimeout(() => document.getElementById("yokeTray").appendChild(mini), 200);
+        sortProgress();
+        if (sortFound >= sortBadTotal) {
+          stepChip.textContent = "③ みわける ✓";
+          count.textContent = "ぜんぶ みわけた ✓";
+        }
+      });
+    }
+    plate.appendChild(b);
+  });
+}
+function buildSortGrains() {
+  if (sortBuilt) return; sortBuilt = true;
+  const repeat = (kind, n) => Array(n).fill(kind);
+  /* 白い皿: 濃い粒が目立つ。黒い皿: 白い粒が目立つ（実在の使い分け） */
+  placeGrains(document.getElementById("whiteTray"),
+    [].concat(repeat("", 20), repeat("color", LOT.sort.color), repeat("momi", LOT.sort.momi), repeat("higai", 1)));
+  placeGrains(document.getElementById("blackTray"),
+    [].concat(repeat("", 20), repeat("shini", LOT.sort.shini), repeat("mijuku", LOT.sort.mijuku), repeat("higai", LOT.sort.higai - 1)));
+  sortProgress();
+}
 /* 水分計: 大きなボタンを3回タップ → 毎回大きな数字 → 3回目で平均が確定し色帯に印が出る */
 const meterBtn = document.getElementById("meterBtn");
 const slots = Array.from(document.querySelectorAll(".slot"));
@@ -161,7 +261,7 @@ meterBtn.addEventListener("click", () => {
   stepChip.textContent = "② はかる ✓";
   count.textContent = "へいきん が でた";
   phase = "hakaru-done";
-  nextBtn.textContent = "③ みわける 👀（つぎのサイクルで）";
+  nextBtn.textContent = "③ みわける 👀";
   nextBtn.classList.add("on");
 });
 bagTap.addEventListener("click", () => {

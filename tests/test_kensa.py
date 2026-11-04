@@ -250,6 +250,20 @@ class KensaTests(unittest.TestCase):
         self.assertNotIn("setInterval", HTML)                       # タイマー・焦らせる仕組みを入れない
         self.assertNotIn("alert(", HTML)                            # 流れを止める要素は作らない
 
+    def test_cycle15_reference_box(self):
+        # サイクル15: 資料置き場（brief §4・§6 の約束）。任意で開く details で、最初は閉じている
+        self.assertIn('<details id="refBox">', HTML)                 # open 属性なし＝閉じた状態で始まる
+        self.assertIn("資料（規格表）", HTML)
+        # 規格表の数値が GRADE_TABLE（原典値）と一致する
+        for row in ("70%", "60%", "45%", "15.0%", "15%", "20%", "30%",
+                    "7%", "10%", "0.1%", "0.3%", "0.7%", "0.5%", "1.0%", "0.2%", "0.4%", "0.6%"):
+            self.assertIn("<td>%s</td>" % row, HTML)
+        self.assertIn("16.0%", HTML)                                 # 水分附則（当分の間 +1.0%）の説明がある
+        self.assertIn("標準品と見比べて", HTML)                       # 形質は標準品比較（brief §3）
+        self.assertIn("https://www.maff.go.jp/j/kokuji_tuti/kokuji/k0001439.html", HTML)  # 原典への出典リンク
+        self.assertNotIn("setInterval", HTML)                        # タイマー・焦らせる仕組みを入れない
+        self.assertNotIn("alert(", HTML)                             # 流れを止める要素は作らない
+
     def test_stamp_date_text(self):
         # 日付印は固定日付でなく、その日の日付を YYYY.M.D で作る純粋関数
         node = shutil.which("node")

@@ -179,5 +179,53 @@
       return segs.filter((s, i) => !drop[i]);
     } catch (e) { return Array.isArray(segs) ? segs.slice() : []; }
   }
-  root.nishioRollTrail = { MAX, GAP, LIFE_MS, STEP, push, alive, alphaFor, segments, colorFor, mixRgb, smoothColors, ribbon, dedupe, dedupeNear, AREA_COLORS };
+  // 重なった部分だけ落とし、はみ出した端は残す（第4弾サイクル47・パワーウォッシュシミュレーター）：新しい要素（後ろ）が勝つ。ほぼ同じ向き（内積の絶対値0.87以上）で横ずれ0.07以下の後続が作る覆い区間を古い要素の軸上（t=0..1）で集めて引き、実長0.02以上の残り区間だけを新しい要素にする（a・w・g などは引き継ぐ）。無効な要素（座標が不正・長さ0）はそのまま残し、他にも影響しない。入力は変えない
+  const SPLIT_SIDE = 0.07, SPLIT_MIN_COVER = 0.005, SPLIT_MIN_KEEP = 0.02;
+  function dedupeSplit(segs) {
+    try {
+      if (!Array.isArray(segs)) return [];
+      const info = segs.map(s => {
+        if (!s || !num(s.x1) || !num(s.y1) || !num(s.x2) || !num(s.y2)) return null;
+        const len = Math.hypot(s.x2 - s.x1, s.y2 - s.y1);
+        if (!(len > 0)) return null;
+        return { s, len, dx: (s.x2 - s.x1) / len, dy: (s.y2 - s.y1) / len };
+      });
+      const out = [];
+      segs.forEach((seg, i) => {
+        const c = info[i];
+        if (!c) { out.push(seg); return; }
+        const s = c.s, cover = [];
+        for (let j = i + 1; j < segs.length; j++) {
+          const d = info[j];
+          if (!d || Math.abs(c.dx * d.dx + c.dy * d.dy) < 0.87) continue;
+          const mx = (d.s.x1 + d.s.x2) / 2 - s.x1, my = (d.s.y1 + d.s.y2) / 2 - s.y1;
+          if (Math.abs(mx * -c.dy + my * c.dx) > SPLIT_SIDE + 1e-9) continue;
+          const ta = ((d.s.x1 - s.x1) * c.dx + (d.s.y1 - s.y1) * c.dy) / c.len, tb = ((d.s.x2 - s.x1) * c.dx + (d.s.y2 - s.y1) * c.dy) / c.len;
+          const lo = Math.max(0, Math.min(ta, tb)), hi = Math.min(1, Math.max(ta, tb));
+          if ((hi - lo) * c.len < SPLIT_MIN_COVER) continue;
+          cover.push([lo, hi]);
+        }
+        if (!cover.length) { out.push(seg); return; }
+        cover.sort((p, q) => p[0] - q[0]);
+        const merged = [];
+        cover.forEach(iv => {
+          const m = merged[merged.length - 1];
+          if (m && iv[0] <= m[1] + 1e-9) m[1] = Math.max(m[1], iv[1]); else merged.push([iv[0], iv[1]]);
+        });
+        const rest = [];
+        let from = 0;
+        merged.forEach(iv => { if (iv[0] > from) rest.push([from, iv[0]]); from = Math.max(from, iv[1]); });
+        if (from < 1) rest.push([from, 1]);
+        const at = (t, a, b) => t <= 0 ? a : t >= 1 ? b : a + (b - a) * t;
+        rest.forEach(r => {
+          if ((r[1] - r[0]) * c.len < SPLIT_MIN_KEEP - 1e-9) return;
+          out.push(Object.assign({}, s, {
+            x1: at(r[0], s.x1, s.x2), y1: at(r[0], s.y1, s.y2), x2: at(r[1], s.x1, s.x2), y2: at(r[1], s.y1, s.y2)
+          }));
+        });
+      });
+      return out;
+    } catch (e) { return Array.isArray(segs) ? segs.slice() : []; }
+  }
+  root.nishioRollTrail = { MAX, GAP, LIFE_MS, STEP, push, alive, alphaFor, segments, colorFor, mixRgb, smoothColors, ribbon, dedupe, dedupeNear, dedupeSplit, AREA_COLORS };
 })(typeof window !== 'undefined' ? window : globalThis);

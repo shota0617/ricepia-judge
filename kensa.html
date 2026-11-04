@@ -100,6 +100,16 @@
   #yokeTray .sgrain i { width:10px; height:16px; }
   #sortPct { margin:12px 2px 0; font-size:20px; font-weight:800; }
   #sortPct b { font-size:44px; }
+  /* 穀粒判別器（サイクル8）: 死米・着色粒だけをゆっくり見直す任意の補助。流れは止めない */
+  #sortWrap { position:relative; }
+  #scanBar { position:absolute; left:6px; right:6px; top:0; height:52px; border-radius:12px; z-index:5;
+    background:linear-gradient(180deg, rgba(255,244,190,0), rgba(255,244,190,.75), rgba(255,244,190,0));
+    opacity:0; pointer-events:none; }
+  #scanBar.on { animation:scanMove 1.1s ease forwards; }
+  @keyframes scanMove { 0%{ opacity:0; transform:translateY(0);} 15%{ opacity:1; } 85%{ opacity:1; } 100%{ opacity:0; transform:translateY(420px);} }
+  #machineBtn { display:block; width:100%; margin-top:12px; border:0; border-radius:999px; background:#4a4438; color:#fff;
+    font:inherit; font-size:20px; font-weight:800; padding:14px 10px; cursor:pointer; }
+  #machineBtn:disabled { opacity:.45; cursor:default; }
   /* きめる（サイクル4）: 大きな等級ボタン4つ。流れを止めない見直し導線つき */
   #gradeWrap { display:none; margin-top:12px; background:var(--paper); border-radius:16px; padding:16px 14px 18px; box-shadow:0 4px 12px rgba(26,24,20,.18); }
   #gradeWrap.on { display:block; }
@@ -174,6 +184,8 @@
     <div class="plate" id="whiteTray"><span class="plateLabel">しろい皿</span></div>
     <div class="plate" id="blackTray"><span class="plateLabel">くろい皿</span></div>
     <div id="yokeWrap"><span class="plateLabel">よけた粒</span><div id="yokeTray"></div></div>
+    <div id="scanBar" aria-hidden="true"></div>
+    <button id="machineBtn">🔬 きかいでみる</button>
     <p id="sortPct">みわけ <b>0%</b> <span id="sortCount">0 / 10</span></p>
   </div>
   <div id="gradeWrap">
@@ -199,7 +211,7 @@
   </div>
   <button id="nextBtn">② はかる 💧</button>
 
-  <footer>農産物検査の仕事が題材です。試料の採取は穀刺しで1袋 約40g（標準抽出方法・平成13年農林水産省告示第443号）。水分は3回の測定の平均で判定します。粒の鑑定は同じ試料を白い皿と黒い皿の双方に入れて目視で確認します。等級の規格は農産物規格規程（平成13年告示第244号）の水稲うるち玄米に基づきます。等級は、整粒・水分・被害粒・死米・着色粒・異種穀粒・異物の全項目がその等級の限度内にある、最も良い等級です（未熟粒は「計」に入りません）。判定した等級は等級証印として米袋に押印し、あわせて検査証明年月日の日付印を押します。</footer>
+  <footer>農産物検査の仕事が題材です。試料の採取は穀刺しで1袋 約40g（標準抽出方法・平成13年農林水産省告示第443号）。水分は3回の測定の平均で判定します。粒の鑑定は同じ試料を白い皿と黒い皿の双方に入れて目視で確認します。等級の規格は農産物規格規程（平成13年告示第244号）の水稲うるち玄米に基づきます。等級は、整粒・水分・被害粒・死米・着色粒・異種穀粒・異物の全項目がその等級の限度内にある、最も良い等級です（未熟粒は「計」に入りません）。判定した等級は等級証印として米袋に押印し、あわせて検査証明年月日の日付印を押します。死米と着色粒は、穀粒判別器でも鑑定できます。</footer>
 </main>
 <script>
 "use strict";
@@ -366,6 +378,11 @@ function startNextLot() {
   document.querySelectorAll("#whiteTray .sgrain, #blackTray .sgrain").forEach((g) => g.remove());
   document.getElementById("yokeTray").innerHTML = "";
   sortProgress();
+  machineUsed = false;
+  const machineBtn = document.getElementById("machineBtn");
+  machineBtn.disabled = false;
+  machineBtn.textContent = "🔬 きかいでみる";
+  document.getElementById("scanBar").classList.remove("on");
   /* きめるのリセット */
   document.getElementById("gradeWrap").classList.remove("on");
   document.querySelectorAll(".gradeBtn").forEach((b) => { b.disabled = false; b.classList.remove("picked"); });
@@ -457,6 +474,26 @@ function placeGrains(plate, kinds) {
     plate.appendChild(b);
   });
 }
+/* 穀粒判別器（サイクル8）: 単独の規格項目である死米・着色粒の鑑定には穀粒判別器を活用できる
+   （農水省通知 元政統第1290号・令和元年11月29日で確認。同通知で鑑定方法＝平成13年告示第333号、
+   標準計測方法＝同第332号も確認）。被害粒等の計の鑑定は引き続き目視等のため、機械が見るのは
+   死米・着色粒だけにし、未熟粒・もみ・被害粒は目視のまま残す。任意・1ロット1回・罰なし。 */
+let machineUsed = false;
+function useMachine() {
+  if (phase !== "miwakeru" || machineUsed) return;
+  machineUsed = true;
+  const btn = document.getElementById("machineBtn");
+  btn.disabled = true;
+  btn.textContent = "🔬 ✓";
+  const bar = document.getElementById("scanBar");
+  bar.classList.remove("on");
+  void bar.offsetWidth; /* アニメーションをやり直す */
+  bar.classList.add("on");
+  const targets = document.querySelectorAll("#whiteTray .sgrain.shini, #whiteTray .sgrain.color, #blackTray .sgrain.shini, #blackTray .sgrain.color");
+  const lotAtUse = LOT; /* Codexレビュー指摘: 予約した処理は発火時にロットと場面を再確認する（切替後の誤作動防止） */
+  targets.forEach((g, i) => { if (!g.classList.contains("away")) setTimeout(() => { if (LOT === lotAtUse && phase === "miwakeru") g.click(); }, 350 + i * 140); });
+}
+document.getElementById("machineBtn").addEventListener("click", useMachine);
 function buildSortGrains() {
   if (sortBuilt) return; sortBuilt = true;
   const repeat = (kind, n) => Array(n).fill(kind);

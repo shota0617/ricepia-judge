@@ -55,8 +55,10 @@
   #count { margin:10px 2px 0; font-size:15px; font-weight:700; min-height:22px; }
   #count b { font-size:24px; }
   #nextBtn { display:none; margin-top:10px; border:0; border-radius:999px; background:var(--paper); color:var(--ink);
-    font:inherit; font-size:16px; font-weight:800; padding:12px 20px; box-shadow:0 2px 8px rgba(26,24,20,.3); cursor:pointer; }
+    font:inherit; font-size:16px; font-weight:800; padding:12px 20px; box-shadow:0 2px 8px rgba(26,24,20,.3); cursor:pointer; transition:transform .15s ease; }
   #nextBtn.on { display:inline-block; }
+  #nextBtn:active { transform:scale(.98); } /* 次へ進むボタンの触感（サイクル13）: 他の大きなボタンとそろえる */
+  #bagTap:active { transform:scale(.985); } /* さす袋の触感（サイクル13）: 押した時だけほんの少し沈む */
   /* 水分計（サイクル2「はかる」）: 大きなボタン1つ・大きな数字・15.0の線入り色帯 */
   #meterWrap { display:none; margin-top:12px; background:var(--paper); border-radius:16px; padding:16px 14px 18px; box-shadow:0 4px 12px rgba(26,24,20,.18); }
   #meterWrap.on { display:block; }
@@ -80,6 +82,13 @@
   /* 平均の印の着地（サイクル11）: 大きく跳ねず、少しだけ行き過ぎて静かに落ち着く（サイクル10の証印と同じ流儀） */
   #bandMark.on { opacity:1; animation:markLand .55s ease; }
   @keyframes markLand { 0%{ transform:translate(-50%,-50%) scale(1.45); } 55%{ transform:translate(-50%,-50%) scale(.94); } 100%{ transform:translate(-50%,-50%) scale(1); } }
+  /* 色帯の両端の数字（サイクル13）: 帯が12.0〜18.0%であることを数字だけで静かに示す（説明文は増やさない） */
+  #bandScale { display:flex; justify-content:space-between; margin-top:6px; padding:0 2px; font-size:13px; font-weight:800; color:#6b6353; }
+  /* 動きを抑える配慮（サイクル13）: 端末で「視差効果を減らす」等が有効な場合は、光る誘い・落ちる粒・着地などの動きをほぼ止める */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; }
+    #bagTap::after { animation:none; }
+  }
   /* みわける（サイクル3）: 白い皿と黒い皿（実在の鑑定）＋よけた粒の受け皿 */
   #sortWrap { display:none; margin-top:12px; }
   #sortWrap.on { display:block; }
@@ -202,6 +211,7 @@
       <div id="bandLine"><span>15.0</span></div>
       <div id="bandMark"></div>
     </div>
+    <div id="bandScale" aria-hidden="true"><span>12</span><span>18</span></div>
   </div>
   <div id="sortWrap">
     <div class="plate" id="whiteTray"><span class="plateLabel">しろい皿</span></div>

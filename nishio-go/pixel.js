@@ -4099,7 +4099,7 @@ function kotoSound(v, low) {   // 木の小さな「コトン」（音の設定�
 //   ころころ … 横へは でんぐり返って転がる（いままでの転がり方）
 //   くるくる … たて（上・下）へは、立ったまま こまのように回る（顔 → よこ → うしろ姿 → 顔）
 //   ぴょん   … とても速いと、コトンの2回に1回 とびはねる（つくと ぺたっ）
-const WADDLE_V = 1.1, HOP_V = 4.2;   // マス/秒
+const WADDLE_V = 1.1, HOP_V = 4.6;   // マス/秒（サイクル68・のんびり転がる：4.2→4.6。ROLL_MAX より 上＝ふつうの 転がりでは 速さだけで 跳ねない。転がり方スタイルの hopV は 従来どおり）
 // 転がる音（ころころ…）：小さな ざらざらの音を ずっと流し、速さで大きく、地面で音の高さを かえる（道は かるく・草は さらさら・砂は こもる）。音の設定がオフ・画面が かくれているときは 鳴らさない
 const rumble = { g: null, f: null };
 function rumbleTick(v, g) {
@@ -8047,8 +8047,8 @@ function frame(now) {
     { const mc = gochisoMunch(now); if (mc) { sy *= 1 - mc; sx *= 1 + mc * 0.5; } }   // 名物食を もぐもぐ（gochiso.js）
     const tr = roll.trail, t0 = tr[tr.length - 3], t1 = tr[tr.length - 1];
     if (roll.h > 0) { const st = Math.min(0.12, Math.abs(roll.hv) * 0.035); sy *= 1 + st; sx *= 1 - st * 0.5; }   // とんでいる：たてに のびる
-    else if (t0 && t1 && roll.v > 2) {   // 速いと、進む向きに 少し のびる
-      const st = Math.min(0.09 * (KP.stretch || 1), (roll.v - 2) * 0.025 * (KP.stretch || 1)), horiz = Math.abs(t1.x - t0.x) >= Math.abs(t1.y - t0.y);
+    else if (t0 && t1 && roll.v > 3.5) {   // 速いと、進む向きに 少し のびる（サイクル68：のんびり転がる＝最高速近くだけ ごく わずか）
+      const st = Math.min(0.05 * (KP.stretch || 1), (roll.v - 3.5) * 0.025 * (KP.stretch || 1)), horiz = Math.abs(t1.x - t0.x) >= Math.abs(t1.y - t0.y);
       if (horiz) { sx *= 1 + st; sy *= 1 - st * 0.5; } else { sy *= 1 + st; sx *= 1 - st * 0.5; }
     }
     const by = sy !== 1 ? ground - low * sy - hop : mid;
@@ -8057,7 +8057,7 @@ function frame(now) {
     const sy0 = sy / (1 + br), byB = sy0 !== 1 ? ground - low * sy0 - hop : mid;
     roll.box = [hx - 13 * u, byB - 15 * u, hx + 13 * u, byB + 9 * u];   // お米の 描く はんい（町名の 札が よける。テスト用にも）
     drawKoroTrail(ox, oy, T, u);   // 転がり方の かざり（お米の うしろ）
-    if (!fpsMeter.slow && riceBall.cv && (roll.v > 3.4 || (KP.ghost && roll.v > 0.8))) {   // のこりかげ：速いと、うしろに うすい お米が2つ（ロケットは いつも）
+    if (!fpsMeter.slow && riceBall.cv && (roll.v > 4.0 || (KP.ghost && roll.v > 0.8))) {   // のこりかげ：速いと、うしろに うすい お米が2つ（ロケットは いつも）
       for (const [k, al] of [[6, 0.14], [3, 0.26]]) {
         const p = roll.trail[roll.trail.length - 1 - k];
         if (!p) continue;
@@ -8909,9 +8909,9 @@ tiltG.deg = (() => { try { const v = +localStorage.getItem('nsg_tilt'); let m; i
 if ($('tiltSens')) { $('tiltSens').value = String(tiltG.deg); $('tiltSens').addEventListener('change', e => { const v = +e.target.value; if (!TILT_DEGS.includes(v)) return; tiltG.deg = v; try { localStorage.setItem('nsg_tilt', String(v)); localStorage.setItem('nsg_tilt_v', '2'); } catch (er) { /* noop */ } }); }
 let mzHitStop = 0;   // ヒットストップ：強く 当たった 瞬間、お米を ほんの少し 止める（手ごたえ。画面と ★の 時計は 止めない）
 const MZ_HIT_STOP = 5, MZ_HIT_STOP_MS = 45;   // これより 速く 当たったら（マス/秒）・止める 長さ
-const ROLL_ACC = 13, ROLL_MAX = 8, ROLL_BOUNCE = 0.42, ROLL_STICK = 0.6;   // マス/秒²・いちばん速い速さ（下り坂でも これまで）・はね返り・これより おそく当たったら はねずに ぴたっと止まる
-// へり方：ころがり抵抗（いつも同じだけ へる。止まる所で ぴたっと止まる）＋ 速さに比べて へる分 ＋ 空気（速いほど強い。いちばん速い速さが しぜんに決まる：道で 約6.3マス/秒）
-const ROLL_CRR = 0.9, ROLL_LIN = 0.35, ROLL_AIR = 0.2;
+const ROLL_ACC = 7, ROLL_MAX = 4.2, ROLL_BOUNCE = 0.25, ROLL_STICK = 0.6;   // サイクル68・のんびり転がる：ACC 13→7・MAX 8→4.2・BOUNCE 0.42→0.25。 マス/秒²・いちばん速い速さ（下り坂でも これまで）・はね返り・これより おそく当たったら はねずに ぴたっと止まる
+// へり方：ころがり抵抗（いつも同じだけ へる。止まる所で ぴたっと止まる）＋ 速さに比べて へる分 ＋ 空気（速いほど強い。サイクル68以降はいちばん速い速さは ROLL_MAX=4.2 で決まる）
+const ROLL_CRR = 0.9, ROLL_LIN = 0.28, ROLL_AIR = 0.12;   // サイクル68・のんびり転がる：惰性は 長く、そっと 止まる（0.35→0.28・0.2→0.12）
 // 運営者の声「傾けた時の反応をよく」：静かな 中心は 残し、少しの 傾きでも 抵抗を こえる。
 // 最大の 力・速さ・ころがり抵抗は 変えず、中央の 手ぶれは 力を 0 に もどす。
 // 運営者の声「転がりの感度を上げる」（2026-10-31）：中心の 無力は 0.08→0.05 に せばめ、小さい 傾きの 力は 0.45→0.55 に。

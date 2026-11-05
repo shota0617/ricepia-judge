@@ -3538,14 +3538,25 @@ function drawMorning(w, h) {
   g.addColorStop(0, `rgba(255,180,110,${0.22 * k})`); g.addColorStop(0.55, `rgba(255,210,150,${0.1 * k})`); g.addColorStop(1, `rgba(255,230,190,${0.05 * k})`);
   ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
 }
+// 開いた 最初の1分は 夜の 幕を うすく（サイクル95。『あつまれ どうぶつの森』の 月明かり）：町が ほんのり 見える。60秒は 通常の 3割、そこから 30秒かけて そっと 通常の 夜へ
+const START_NIGHT_MS = 90000;
+function nightStartK(ms) {
+  if (!(ms > 0) || ms < 60000) return 0.3;
+  return ms >= START_NIGHT_MS ? 1 : 0.3 + 0.7 * (ms - 60000) / (START_NIGHT_MS - 60000);
+}
+let nightK = null;   // 直近の drawNight の 係数（テスト用）
+let nightBase = null;   // 夜を はじめて 描いた 時刻（サイクル95 Codex指摘：読みこみの 待ちで 薄い 時間が 消えないよう、起点は ここ）
 function drawNight(w, h, ox, oy, T, cy, pois, now) {
   const lv = nightOn && !worldMode ? nightLevel() : 0;
   if (!lv) { nightLamps.n = nightLamps.warm = 0; return; }
+  if (nightBase === null) nightBase = now;
+  const sk = nightStartK(now - nightBase), lve = lv * sk;
+  nightK = sk;
   if (nightCv.width !== w || nightCv.height !== h) { nightCv.width = w; nightCv.height = h; }
   const x = nightCv.getContext('2d');
   x.globalCompositeOperation = 'source-over';
   x.clearRect(0, 0, w, h);
-  x.fillStyle = `rgba(8,12,36,${0.62 * lv})`; x.fillRect(0, 0, w, h);
+  x.fillStyle = `rgba(8,12,36,${0.62 * lve})`; x.fillRect(0, 0, w, h);
   x.globalCompositeOperation = 'destination-out';   // 明かりの所を くりぬく
   const light = (px, py, r, k = 1) => {
     if (px < -r || py < -r || px > w + r || py > h + r) return;
@@ -3553,7 +3564,7 @@ function drawNight(w, h, ox, oy, T, cy, pois, now) {
     g.addColorStop(0, `rgba(0,0,0,${k})`); g.addColorStop(1, 'rgba(0,0,0,0)');
     x.fillStyle = g; x.fillRect(px - r, py - r, r * 2, r * 2);
   };
-  const flick = 1 + Math.sin(now / 180) * 0.03;   // たいまつのように、少し ゆらぐ
+  const flick = (1 + Math.sin(now / 180) * 0.03) * (1 + 0.6 * (1 - sk));   // たいまつのように、少し ゆらぐ
   if (G.me || G.demo) light(w / 2 + heroScr.x, cy + heroScr.y - T * 0.25, T * 3.4 * flick);
   for (const p of pois) light(ox + p[0] * T, oy + p[1] * T - T * 0.5, T * (p[4] === 'lm' ? 1.6 : 1.3), 0.85);   // お店・駅・建物の窓の明かり
   for (const s of G.spots || []) if (s.shop) { const p = toTile(s.lat, s.lng); light(ox + p.x * T, oy + p.y * T - T, T * 3.2); }   // 当店は いちばん明るく
@@ -3574,7 +3585,7 @@ function drawNight(w, h, ox, oy, T, cy, pois, now) {
     const warm = (px, py, r, a) => {
       if (px < -r || py < -r || px > w + r || py > h + r) return 0;
       const g = ctx.createRadialGradient(px, py, 0, px, py, r);
-      g.addColorStop(0, `rgba(255,170,70,${a * lv})`); g.addColorStop(1, 'rgba(255,170,70,0)');
+      g.addColorStop(0, `rgba(255,170,70,${a * lve})`); g.addColorStop(1, 'rgba(255,170,70,0)');
       ctx.fillStyle = g; ctx.fillRect(px - r, py - r, r * 2, r * 2); return 1;
     };
     let n = 0;
@@ -12901,6 +12912,7 @@ window.nishioPixel = { meiroApi, maze: { wallTheme: () => mzWallTheme(), on: () 
   slopeAt: (x, y) => slopeAt(x, y),   // テスト用：その マスの かたむき
   idleRoll: () => ({ on: idleRoll.on, key: idleRoll.key, sec: (performance.now() - idleRoll.last) / 1000 }),   // テスト用：眺めるコロコロの 状態
   rollBlockedFrom: (fx, fy, x, y) => (mazeOn() ? mzBlocked(fx, fy, x, y) : rollBlocked(x, y)), chaHana: () => chaHanaOn(), koroArt: () => koroReady(), ambN: () => ambN(), AMB_MAX, kabuse: { on: t => kabuseOn(t), paint: (T = 32) => { const c = document.createElement('canvas'); c.width = c.height = T; const keep = ctx; ctx = c.getContext('2d'); try { drawKabuse(0, 0, 0, 0, T); } finally { ctx = keep; } const d = c.getContext('2d').getImageData(0, 0, T, T).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 100) n++; return n; } }, morning: { get k() { return morning.k; }, level: t => morningLevel(t), force: v => { morningForce = v; dirty = true; } }, sentaku: { get n() { return sentaku.n; }, on: wx => sentakuOn(wx), paint: (T = 32) => { const c = document.createElement('canvas'); c.width = c.height = T; const keep = ctx; ctx = c.getContext('2d'); try { drawSentaku(0, 0, Math.max(1, Math.round(T / 16)), 0, 0); } finally { ctx = keep; } const d = c.getContext('2d').getImageData(0, 0, T, T).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i]) n++; return n; } }, donguri: { get d() { const d = donguri.d; return d && { x: d.x, y: d.y, v: Math.hypot(d.vx, d.vy) }; }, season: () => donguriSeason(), put: (x, y, vx = 1.4, vy = 0) => { const now = performance.now(); donguri.next = now + 6e4; donguri.d = { x, y, vx, vy, t0: now, last: now, ang: 0 }; }, clear: () => { donguri.d = null; donguri.next = performance.now() + 6e4; }, ready: () => { donguri.next = 0; }, blocked: (x, y) => donBlocked(x, y), LIFE: DONGURI_LIFE }, hamon: { get list() { return hamon.list.map(r => ({ x: r.x, y: r.y })); }, put: (x, y) => { hamon.list.push({ x, y, t0: performance.now() }); }, clear: () => { hamon.list.length = 0; }, MS: HAMON_MS }, nightForce: v => { nightForce = v; dirty = true; }, get nightLamps() { return { ...nightLamps }; }, chaHanaPaint: (tx, ty, T = 32) => { const c = document.createElement('canvas'); c.width = c.height = T; const keep = ctx; ctx = c.getContext('2d'); try { drawChaHana(tx, ty, 0, 0, T); } finally { ctx = keep; } const d = c.getContext('2d').getImageData(0, 0, T, T).data; let n = 0; for (let i = 0; i < d.length; i += 4) if (d[i + 3] && d[i] > 240 && d[i + 2] > 230) n++; return n; }, tileAt: (x, y) => codeAt(Math.floor(x), Math.floor(y)), wet: () => roll.wetT, riceStreak, drawRice: (dst, X, Y, th, sq = 0, mood = 'smile', dirt = 0, dirtCol = '', u = 1, pitch = 0) => { if (!riceBall.cv) return false; drawRiceBall(X, Y, u, th, 1 + sq, 1 - sq, 0, dst, false, mood, 0, dirt, dirtCol, pitch); return true; }, setRoll, setHeightFn: fn => { heightFn = fn || null; }, mapCovered, sightBusy, sightCheck, sightForget: id => { sight.seen.delete(id); },
+  nightStartK, get nightK() { return nightK !== null ? nightK : nightStartK(performance.now()); },   // サイクル95：夜の 幕の 立ち上がり（テスト用）
   // いまの町名が新しいか（歩く地図を描いていて、いまの位置で2秒以内に確かめた。せかいちず・ふつうの地図に切り替えたあとの古い町名は使わない）
   get hereFresh() { return active && !worldMode && !!G.me && performance.now() - here.at < 2000; }, spotSprites, spriteOf: sp => spriteOf(sp)[0], npcSprite: look => (npcSprites[look] || npcSprites.man)[0], art: { hiCanvas, shopCanvas, tileRoof, spanRows, pix, genSprite, GEN_DRAW }, get towns() { return towns; }, get here() { return here; }, npcTile, rasterize, chunkQuery, chunkBox, chunkInPlay, luReady, luAt, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, centerOnMe, demFor, get worldMode() { return worldMode; }, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; }, get traffic() { return traffic; }, get driving() { return driving; }, toggleCar, floatText, onPaddy, get tapGoal() { return tapS.goal; }, trailWalk, trailHas, trailClear, get trailCells() { return TRAIL.world.size; }, get trailWorld() { return [...TRAIL.world]; },
   tileToClient(tx, ty) {   // 歩く地図のマスのまん中が、画面のどこか（台本でタップするため）

@@ -40,7 +40,7 @@ class Calm(unittest.TestCase):
 
     def test_effects(self):
         self.assertIn('roll.v > 3.5) {', PIXEL)
-        self.assertIn('(roll.v > 4.0 ||', PIXEL)
+        self.assertIn('(KP.ghost && roll.v > 0.8)', PIXEL)   # c84：のこりかげは 選んだ 転がり方だけ
         self.assertIn('Math.min(0.05 * (KP.stretch || 1), (roll.v - 3.5)', PIXEL)
 
 

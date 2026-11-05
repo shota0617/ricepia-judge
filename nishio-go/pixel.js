@@ -3994,26 +3994,8 @@ function comboEnd() {
   if (n < 5) return;
   if (G.track) G.track('roll_combo', { n, best: combo.best });
 }
-// スピード線（運営者の声「スキルを繰り返す」3回目）：びゅんパネルで 加速しても 見た目が あまり かわらず、速さを 目で 感じにくかった。
-// 1秒に 5マスより 速いと、進む 向きの うしろに 白い 線が ひゅんひゅん 流れる（速いほど 長く・こく）。点の 四角だけで 描く
-const speedFx = { k: 0, at: 0, vx: 1, vy: 0 };   // k：線の こさ（速く なると すぐ こく、おそく なると 0.4秒で うすれる）
-function drawSpeedLines(x, y, u, now) {
-  const v = Math.hypot(rp.vx, rp.vy), dt = speedFx.at ? Math.min(0.1, (now - speedFx.at) / 1000) : 0, tgt = Math.max(0, Math.min(1, (v - 5) / 2));
-  speedFx.at = now;
-  speedFx.k = tgt >= speedFx.k ? tgt : Math.max(tgt, speedFx.k - dt * 2.5);
-  if (v > 1) { speedFx.vx = rp.vx; speedFx.vy = rp.vy; }   // 向きは さいごに 動いていた 向き
-  const k = speedFx.k;
-  if (k < 0.05) return;
-  const horiz = Math.abs(speedFx.vx) >= Math.abs(speedFx.vy), sg = Math.sign(horiz ? speedFx.vx : speedFx.vy) || 1, q = Math.max(1, Math.round(u)), f = Math.floor(now / 45);
-  const al = 0.45 + 0.5 * k, w2 = 2 * q;   // 明るい 道でも 見えるよう、太めの 白に うすい かげ
-  for (let i = 0; i < 6; i++) {
-    const r1 = ((f + i * 7) * 2654435761 >>> 0) / 4294967296, r2 = ((f * 3 + i * 11) * 2246822519 >>> 0) / 4294967296;   // こまごとに かわる ばらつき
-    const side = (r1 - 0.5) * 22 * u, back = (11 + r2 * 8) * u, len = Math.round((8 + r2 * 14) * u * (0.5 + k * 0.5));
-    const X = horiz ? Math.round(x - sg * back - (sg > 0 ? len : 0)) : Math.round(x + side), Y = horiz ? Math.round(y + side) : Math.round(y - sg * back - (sg > 0 ? len : 0)), W = horiz ? len : w2, H = horiz ? w2 : len;
-    ctx.fillStyle = `rgba(0,0,0,${(0.3 * al).toFixed(2)})`; ctx.fillRect(X + q, Y + q, W, H);
-    ctx.fillStyle = `rgba(255,255,255,${al.toFixed(2)})`; ctx.fillRect(X, Y, W, H);
-  }
-}
+// 速さの演出は 穏やかに（Smushi Come Home の物差し：速く動いても スピード線は 出さず、景色と 転がりで 速さを 伝える）
+const speedFx = { k: 0, at: 0, vx: 1, vy: 0 };   // テスト用の 互換だけ（speedK は いつも 0。スピード線は 描かないので 更新する コードは ない）
 function riceFeel(dt, speed) {
   if (combo.n) { combo.quietT = speed < 0.6 ? combo.quietT + dt : 0; if (combo.quietT > 0.7) comboEnd(); }   // 止まったら おしまい
   const g = roll.gnd = roll.last ? groundAt(roll.last.x, roll.last.y) : GROUND.dirt, wx = WX_ROLL[wxKind()];
@@ -7787,7 +7769,7 @@ function howtoShow() {
 $('howtoOk').addEventListener('click', () => { howtoEl.hidden = true; tiltReset(); dirty = true; if (G.toastFlush) G.toastFlush(); });   // いまの 持ち方を「まっすぐ」に して はじめる
 $('howtoOpen').addEventListener('click', howtoShow);
 let meiroPause = false;   // めいろ（meiro.js）を遊んでいるあいだは、うしろの 歩く地図を 止める（お米も 動かない）
-let fpsMeter = { ema: 0, n: 0, fps: 0, slow: false }, fpsPrevT = 0;   // 重い 端末では 飾り（のこりかげ・スピード線）を 落とす（rollsync.js fpsStep。画面には 出さない）
+let fpsMeter = { ema: 0, n: 0, fps: 0, slow: false }, fpsPrevT = 0;   // 重い 端末では 飾り（のこりかげ）を 落とす（rollsync.js fpsStep。画面には 出さない）
 function frame(now) {
   if (!active) return;
   raf = requestAnimationFrame(frame);
@@ -8050,7 +8032,7 @@ function frame(now) {
     const sy0 = sy / (1 + br), byB = sy0 !== 1 ? ground - low * sy0 - hop : mid;
     roll.box = [hx - 13 * u, byB - 15 * u, hx + 13 * u, byB + 9 * u];   // お米の 描く はんい（町名の 札が よける。テスト用にも）
     drawKoroTrail(ox, oy, T, u);   // 転がり方の かざり（お米の うしろ）
-    if (!fpsMeter.slow && riceBall.cv && (roll.v > 4.0 || (KP.ghost && roll.v > 0.8))) {   // のこりかげ：速いと、うしろに うすい お米が2つ（ロケットは いつも）
+    if (!fpsMeter.slow && riceBall.cv && (KP.ghost && roll.v > 0.8)) {   // のこりかげ：選んだ 転がり方（ロケットなど）だけ、うしろに うすい お米が2つ
       for (const [k, al] of [[6, 0.14], [3, 0.26]]) {
         const p = roll.trail[roll.trail.length - 1 - k];
         if (!p) continue;
@@ -8059,7 +8041,6 @@ function frame(now) {
         finally { ctx.globalAlpha = 1; riceLowQ = false; }   // とちゅうで 止まっても、本体の お米まで あらく 描かない
       }
     }
-    if (!fpsMeter.slow && rollOn && rp.x !== null) drawSpeedLines(hx, by, u, now);   // とても 速い（びゅんパネル・下り坂）：うしろに スピード線
     tsutsumiStep(hx, by, u, now);   // 吉良の 田んぼで じっと すると 黄金堤を 築く（tsutsumi.js）
     chochinyoruStep(hx, by, u, now);   // 夜の 一色の 町なかで じっと すると 提灯の あかり（大提灯・提灯の れつ。chochinyoru.js。いっしきさんぽ・めぐりに 先んじる）
     isshikiStep(hx, by, u, now);   // 一色の 町なかで じっと すると 港町の ひとこま（えびせん焼き・うなぎ・養鰻・さかな広場。isshiki.js）

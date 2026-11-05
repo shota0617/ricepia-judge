@@ -75,7 +75,7 @@ class PixelWiring(unittest.TestCase):
     def test_fps(self):
         self.assertIn("RSf.fpsStep(fpsMeter", self.src)
         self.assertIn("!fpsMeter.slow && riceBall.cv", self.src)
-        self.assertIn("!fpsMeter.slow && rollOn && rp.x !== null) drawSpeedLines", self.src)
+        self.assertNotIn("drawSpeedLines", self.src)   # c84：スピード線は なくした
 
     def test_getter(self):
         self.assertIn("fps: fpsMeter.fps", self.src)

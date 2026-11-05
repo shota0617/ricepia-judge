@@ -9933,7 +9933,7 @@ $('bStart').onclick = () => {
   if (!S.started) {
     S.started = true;
     FIRSTMIN.start();   // サイクル159：のんびりでは 開始直後の表示を軽くする（DETAIL では何もしない）
-    if (LOOP.friend !== null) setTimeout(() => DETAIL ? toast('🏁 友だちは ' + LOOP.friend + ' 点。きみは何点とれる？', 5) : SAY.say('ともだちは ' + LOOP.friend + ' てん。きみは なんてん とれるかな'), 6000);
+    if (LOOP.friend !== null) setTimeout(() => { if (DETAIL) toast('🏁 友だちは ' + LOOP.friend + ' 点。きみは何点とれる？', 5); }, 6000);   // サイクル171・最初の1分: のんびりでは友だちの点数で挑戦しない（サイクル117）。共有リンクから開いても開始6秒の吹き出し・声で競わせず、まずなぞって耕す楽しさに集中させる。くわしい説明では従来どおり知らせる
     const artGo = () => {   // 田んぼアートの 地図と お題は 草かりの あとで
       if (DETAIL) { $('artBox').classList.remove('hidden'); toast('お題「' + ART.name + '」：白線の内側だけを耕そう。地図の黄色がまだの所、赤ははみ出し。できたら「📸 完成」', 7); return; }   // くわしい説明：従来どおり すぐ出す
       if (FIRSTMIN.on) FIRSTMIN.artPending = true;   // サイクル159 のんびり：地図もトーストも後出し（FIRSTMIN 終了時に 地図だけ 静かに出す）

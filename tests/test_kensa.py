@@ -1017,3 +1017,19 @@ class Cycle54NextLotSceneTopTests(unittest.TestCase):
         self.assertIn("つぎの山では、場面の先頭が見える位置へ画面を移して", HTML)
         self.assertNotIn("setInterval", HTML)
         self.assertNotIn("alert(", HTML)
+
+
+class Cycle55SortBothTraysVisibleTests(unittest.TestCase):
+    def test_cycle55_sort_shows_both_trays_from_top(self):
+        # サイクル55（継続指示「『良い』と言うまで最初の1分だけ」・みわけるへ進んだ直後の見え方）:
+        # 実測（390×844）では到着時に黒い皿が bottom 1006px と画面下端から約162pxはみ出し、
+        # わるい粒の多く（ロット1では10粒中7粒）がある黒皿が最初に見えなかった。
+        # 皿の先頭が見える位置へ画面を移してから、焦点は preventScroll で渡す（サイクル52・54と同じ流儀）
+        self.assertIn('document.getElementById("sortWrap").scrollIntoView({ block: "start" });', HTML)
+        self.assertIn('firstGrain.focus({ preventScroll: true })', HTML)
+        self.assertLess(HTML.index('document.getElementById("sortWrap").scrollIntoView({ block: "start" });'),
+                        HTML.index('firstGrain.focus({ preventScroll: true })'))
+        self.assertIn("みわけるでは、入った時に皿の先頭が見える位置へ画面を移して", HTML)
+        self.assertIn("白い皿と黒い皿の両方が一度に見えるようにして", HTML)
+        self.assertNotIn("setInterval", HTML)
+        self.assertNotIn("alert(", HTML)

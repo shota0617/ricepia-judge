@@ -793,13 +793,34 @@ class Cycle41StartFirstMinuteTests(unittest.TestCase):
         self.assertIn('<link rel="preload" as="image" href="kensa/scene_dot.webp" fetchpriority="high"/>', HTML)
         self.assertIn('<img src="kensa/scene_dot.webp" fetchpriority="high"', HTML)
         sort = HTML[HTML.index('id="sortWrap"'):HTML.index('id="gradeWrap"')]
-        self.assertEqual(sort.count('loading="lazy"'), 2)
+        # みわける見本2件＋この場面の顔1件（サイクル42で顔も lazy 化）
+        self.assertEqual(sort.count('loading="lazy"'), 3)
         self.assertIn('<img loading="lazy" src="kensa/ittomai.webp"', sort)
         self.assertIn('<img loading="lazy" src="kensa/ittomai_dot.webp"', sort)
-        # lazy は資料3件＋みわける2件の計5件だけ。さすの穀刺しペアは最初の画面で使うため lazy にしない
-        self.assertEqual(HTML.count('loading="lazy"'), 5)
+        # lazy は資料3件＋みわける2件の計5件（サイクル42で顔4件が加わり全体数はそちらで固定）。
+        # さすの穀刺しペアは最初の画面で使うため lazy にしない
+        self.assertEqual(HTML.count('loading="lazy"'), 9)
         self.assertIn('<img src="kensa/kokusashi.webp"', HTML)
         self.assertIn('<img src="kensa/kokusashi_dot.webp"', HTML)
         self.assertIn("場面の絵は最初に読み込み、「みわける」の見本はその場面で読み込むようにして、スタートを軽くしました", HTML)
+        self.assertNotIn("setInterval", HTML)
+        self.assertNotIn("alert(", HTML)
+
+
+class Cycle42StartFirstMinuteFaceLazyTests(unittest.TestCase):
+    def test_cycle42_inspector_face_lazy(self):
+        # サイクル42（恒常ルール「スタートの1分が決め手」の続き）:
+        # 検査員の顔（face_dot.webp）は はかる以降の4場面でしか使わないため、
+        # loading=lazy でその場面で読むようにし、最初の画面の取得を場面絵＋穀刺しペアだけに絞る。
+        # 顔の表示（72px・丸・穏やかな微笑み）と遊び・手順・数値は変えない
+        self.assertEqual(HTML.count('<img loading="lazy" class="inspectorFace" src="kensa/face_dot.webp"'), 4)
+        self.assertEqual(HTML.count('src="kensa/face_dot.webp"'), 4)
+        self.assertIn(".inspectorFace { width:72px; height:72px; border-radius:50%;", HTML)
+        # lazy は資料3件＋みわける見本2件＋顔4件の計9件。最初の画面で使う絵は lazy にしない
+        self.assertEqual(HTML.count('loading="lazy"'), 9)
+        self.assertIn('<img src="kensa/scene_dot.webp" fetchpriority="high"', HTML)
+        self.assertIn('<img src="kensa/kokusashi.webp"', HTML)
+        self.assertIn('<img src="kensa/kokusashi_dot.webp"', HTML)
+        self.assertIn("検査員の顔も、はかる以降の場面で読み込むようにして、スタートをさらに軽くしました", HTML)
         self.assertNotIn("setInterval", HTML)
         self.assertNotIn("alert(", HTML)

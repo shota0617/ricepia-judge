@@ -111,21 +111,23 @@
   #nextBtn:active { transform:scale(.98); } /* 次へ進むボタンの触感（サイクル13）: 他の大きなボタンとそろえる */
   #bagTap:active { transform:scale(.985); } /* さす袋の触感（サイクル13）: 押した時だけほんの少し沈む */
   /* 水分計（サイクル2「はかる」）: 大きなボタン1つ・大きな数字・15.0の線入り色帯 */
-  #meterWrap { display:none; margin-top:12px; background:var(--paper); border-radius:16px; padding:16px 14px 18px; box-shadow:0 4px 12px rgba(26,24,20,.18); }
+  #meterWrap { display:none; margin-top:12px; background:var(--paper); border-radius:16px; padding:16px 14px 18px; box-shadow:0 4px 12px rgba(26,24,20,.18);
+    background-image:radial-gradient(rgba(107,99,83,.10) 1.5px, transparent 1.7px); background-size:14px 14px; }
   #meterWrap.on { display:block; }
   #meterBtn { display:block; width:100%; border:0; border-radius:999px; background:var(--green); color:#fff;
     font:inherit; font-size:26px; font-weight:800; padding:20px 10px; cursor:pointer; transition:transform .15s ease; }
   #meterBtn:active { transform:scale(.98); } /* はかるの触感（サイクル11）: 押した時だけほんの少し沈む */
   #meterBtn:disabled { opacity:.45; cursor:default; }
   #slots { display:flex; gap:8px; margin-top:14px; }
-  .slot { flex:1; text-align:center; font-size:32px; font-weight:800; background:#f1ead8; border-radius:12px; padding:10px 2px; color:#b7ab8e; min-height:62px; }
+  .slot { flex:1; text-align:center; font-size:32px; font-weight:800; background:#f1ead8; border-radius:12px; padding:10px 2px; color:#b7ab8e; min-height:62px;
+    background-image:radial-gradient(rgba(107,99,83,.10) 1.5px, transparent 1.7px); background-size:14px 14px; }
   .slot.filled { color:var(--ink); animation:slotIn .5s ease; }
   @keyframes slotIn { 0%{ transform:scale(.92); opacity:.4; } 100%{ transform:scale(1); opacity:1; } }
   #avg { display:none; margin-top:12px; text-align:center; font-size:22px; font-weight:800; }
   #avg b { font-size:42px; }
   #avg.on { display:block; animation:slotIn .7s ease; }
   #band { position:relative; height:26px; border-radius:999px; margin-top:36px;
-    background:linear-gradient(90deg,#b7d3a8 0%,#b7d3a8 50%,#e8d9a0 50%,#e8d9a0 66.7%,#f2c9a4 66.7%,#f2c9a4 100%); }
+    background:radial-gradient(rgba(255,255,255,.35) 1.5px, transparent 1.7px), linear-gradient(90deg,#b7d3a8 0%,#b7d3a8 50%,#e8d9a0 50%,#e8d9a0 66.7%,#f2c9a4 66.7%,#f2c9a4 100%); background-size:14px 14px, 100% 100%; }
   #bandLine { position:absolute; left:50%; top:-5px; bottom:-5px; width:3px; background:var(--ink); border-radius:2px; }
   #bandLine span { position:absolute; top:-24px; left:50%; transform:translateX(-50%); font-size:16px; font-weight:800; }
   #bandMark { position:absolute; top:50%; width:22px; height:22px; border-radius:50%; background:#fff; border:4px solid var(--ink);
@@ -191,6 +193,18 @@
   #blackTray { background-image:radial-gradient(rgba(247,243,232,.10) 1.5px, transparent 1.7px); background-size:14px 14px; }
   #trayWrap { background-image:radial-gradient(rgba(247,243,232,.08) 1.5px, transparent 1.7px); background-size:14px 14px; }
   #yokeWrap { background-image:radial-gradient(rgba(107,99,83,.12) 1.5px, transparent 1.7px); background-size:14px 14px; }
+  /* 水分計と証印・袋まわりのドット絵化＋可愛いドット絵の追加（サイクル31・ドット絵化の続き＋2026-11-05 15:21指示）:
+     水分計（#meterWrap・.slot・#band）ときめる（#gradeWrap）と袋（#stampBag）・証印（#stampMark）にも、
+     粒と皿（サイクル30）と同じ硬い点の質感（radial-gradient のドット・基本14px間隔、証印のインクだけ7px）を足して
+     場面絵のドット絵にそろえる。色・形・配置は変えない。あわせて可愛いドット絵の小物を2つ添える:
+     はかる場面には水滴のドット絵（#dropPal・ボタンと表示枠の間に静かに置く）、
+     おす場面の袋の隅には芽のついた米粒のドット絵（#grainPal・証印と印刷欄の場所はふさがない左下）。
+     どちらも手描きの段々輪郭（shape-rendering:crispEdges のSVG）で、pointer-events:none・装飾のみ（aria-hidden）。
+     遊び・手順・数値は一切変えない */
+  .dotPal { line-height:0; pointer-events:none; }
+  .dotPal svg { display:block; width:100%; height:auto; }
+  #dropPal { width:36px; margin:8px auto 0; }
+  #grainPal { position:absolute; left:12px; bottom:8px; width:32px; }
   #sortPct { margin:12px 2px 0; font-size:20px; font-weight:800; }
   #sortPct b { font-size:44px; }
   /* 穀粒判別器（サイクル8）: 死米・着色粒だけをゆっくり見直す任意の補助。流れは止めない */
@@ -205,7 +219,8 @@
   #machineBtn:active { transform:scale(.98); } /* きかいでみるの触感（サイクル11）: 他の大きなボタンとそろえる */
   #machineBtn:disabled { opacity:.45; cursor:default; }
   /* きめる（サイクル4）: 大きな等級ボタン4つ。流れを止めない見直し導線つき */
-  #gradeWrap { display:none; margin-top:12px; background:var(--paper); border-radius:16px; padding:16px 14px 18px; box-shadow:0 4px 12px rgba(26,24,20,.18); }
+  #gradeWrap { display:none; margin-top:12px; background:var(--paper); border-radius:16px; padding:16px 14px 18px; box-shadow:0 4px 12px rgba(26,24,20,.18);
+    background-image:radial-gradient(rgba(107,99,83,.10) 1.5px, transparent 1.7px); background-size:14px 14px; }
   #gradeWrap.on { display:block; }
   /* 結果ラベル（サイクル26・ユーザー指示 2026-11-05 13:08「検査結果このように表示」）: 実物の穀粒判定器RN-700の
      印字ラベル（user_assets/rn700_label_ref_20261105.jpg）の様式。白い紙に項目名・割合%・粒数が行ごとに並び、
@@ -238,7 +253,8 @@
   /* おす（サイクル5）: 等級証印＋日付印を袋に押す。次の山で1ロット完結し、続けられる */
   #stampWrap { display:none; margin-top:12px; }
   #stampWrap.on { display:block; }
-  #stampBag { position:relative; background:linear-gradient(180deg,#efe3c2,#e2d0a4); border-radius:14px; min-height:190px;
+  #stampBag { position:relative; border-radius:14px; min-height:190px;
+    background:radial-gradient(rgba(138,111,60,.14) 1.5px, transparent 1.7px), linear-gradient(180deg,#efe3c2,#e2d0a4); background-size:14px 14px, 100% 100%;
     box-shadow:inset 0 3px 10px rgba(120,84,30,.25), 0 4px 12px rgba(26,24,20,.2); cursor:pointer; overflow:hidden; }
   /* 押印の触感（サイクル10）: 押した瞬間だけ袋がほんの少し沈み、影が深くなる。ゆっくり戻り、音も点滅もない */
   #stampBag.pressed { animation:bagPress .55s ease; }
@@ -252,6 +268,7 @@
   #stampMark { position:absolute; right:18px; top:44px; width:104px; height:104px; border:5px solid #b03a2e; border-radius:50%;
     color:#b03a2e; display:flex; flex-direction:column; align-items:center; justify-content:center; line-height:1;
     opacity:0; transform:scale(1.5) rotate(-10deg); pointer-events:none; background:rgba(255,252,244,.35);
+    background-image:radial-gradient(rgba(176,58,46,.14) 1.5px, transparent 1.7px); background-size:7px 7px;
     box-shadow:inset 0 0 0 2px rgba(176,58,46,.28), inset 0 0 12px rgba(176,58,46,.18); }
   /* 証印の着地（サイクル10）: 大きく跳ねず、少しだけ行き過ぎて静かに落ち着く＝紙にインクが乗る重み */
   #stampMark.on { animation:stampLand .55s ease forwards; }
@@ -307,6 +324,7 @@
   <p id="count">ふくろを タップ</p>
   <div id="meterWrap">
     <button id="meterBtn">💧 はかる</button>
+    <div class="dotPal" id="dropPal" aria-hidden="true"><svg viewBox="0 0 14 16" shape-rendering="crispEdges"><polygon points="6,0 8,0 8,2 10,4 11,6 12,8 12,11 10,14 9,15 5,15 4,14 2,11 2,8 3,6 4,4 6,2" fill="#8fc3e0"/><rect x="4" y="6" width="2" height="3" fill="#cfeaf7"/><rect x="5" y="9" width="1" height="2" fill="#1a1814"/><rect x="8" y="9" width="1" height="2" fill="#1a1814"/><rect x="3" y="11" width="2" height="1" fill="#f2a7b8"/><rect x="9" y="11" width="2" height="1" fill="#f2a7b8"/><rect x="5" y="11" width="1" height="1" fill="#1a1814"/><rect x="8" y="11" width="1" height="1" fill="#1a1814"/><rect x="6" y="12" width="2" height="1" fill="#1a1814"/></svg></div>
     <div id="slots">
       <div class="slot" aria-label="1回目">—</div>
       <div class="slot" aria-label="2回目">—</div>
@@ -357,6 +375,7 @@
     <div id="stampBag" role="button" tabindex="0" aria-label="米袋をタップして等級証印を押す">
       <span class="bagWeight">30kg</span>
       <div class="bagPrint" aria-hidden="true"></div>
+      <div class="dotPal" id="grainPal" aria-hidden="true"><svg viewBox="0 0 14 16" shape-rendering="crispEdges"><rect x="6" y="0" width="2" height="3" fill="#7aa95c"/><rect x="3" y="1" width="3" height="2" fill="#8fbf6e"/><rect x="8" y="1" width="3" height="2" fill="#8fbf6e"/><polygon points="6,3 8,3 10,5 12,8 12,12 10,15 4,15 2,12 2,8 4,5" fill="#dfbd6f" stroke="#a97e2f" stroke-width="1"/><rect x="9" y="7" width="2" height="6" fill="#d8bc7a"/><rect x="5" y="9" width="1" height="2" fill="#4a3420"/><rect x="8" y="9" width="1" height="2" fill="#4a3420"/><rect x="3" y="11" width="2" height="1" fill="#f2a7b8"/><rect x="9" y="11" width="2" height="1" fill="#f2a7b8"/><rect x="5" y="11" width="1" height="1" fill="#4a3420"/><rect x="8" y="11" width="1" height="1" fill="#4a3420"/><rect x="6" y="12" width="2" height="1" fill="#4a3420"/></svg></div>
       <div id="stampMark"><b id="stampGrade">1等</b><span>等級証印</span></div>
       <div id="dateMark"></div>
       <span class="bagHint">ふくろを タップ</span>
@@ -366,7 +385,7 @@
   </div>
   <button id="nextBtn">② はかる 💧</button>
 
-  <footer>農産物検査の仕事が題材です。試料の採取は穀刺しで1袋 約40g（標準抽出方法・平成13年農林水産省告示第443号）。「さす」の場面に載せた穀刺しの写真は、実際の検査で使う実物です。水分は3回の測定の平均で判定します。粒の鑑定は同じ試料を白い皿と黒い皿の双方に入れて確認します。鑑定は視覚・触覚・臭覚・聴覚を用いて行います（鑑定方法・平成13年農林水産省告示第333号）。等級の規格は農産物規格規程（平成13年告示第244号）の水稲うるち玄米に基づきます。等級は、整粒・水分・被害粒・死米・着色粒・異種穀粒・異物の全項目がその等級の限度内にある、最も良い等級です（未熟粒は「計」に入りません）。判定した等級は等級証印として米袋に押印し、あわせて検査証明年月日の日付印を押します。死米と着色粒は、穀粒判別器でも鑑定できます。「みわける」と資料に載せた一等米の写真は実物です。検査結果は、穀粒判定器の印字ラベルの様式で、皿の50粒の実数（粒数とその割合）で表示します。場面の絵は、検査風景の写真をもとに描いたドット絵です（写真そのものは資料に置きました）。穀刺しのドット絵も実物の写真をもとに描いたもので、写真そのものと並べて置きました。一等米のドット絵も実物の写真をもとに描いたもので、写真そのものと並べて置きました。粒と皿は、場面のドット絵に合わせて角ばった輪郭と点の質感にそろえました。</footer>
+  <footer>農産物検査の仕事が題材です。試料の採取は穀刺しで1袋 約40g（標準抽出方法・平成13年農林水産省告示第443号）。「さす」の場面に載せた穀刺しの写真は、実際の検査で使う実物です。水分は3回の測定の平均で判定します。粒の鑑定は同じ試料を白い皿と黒い皿の双方に入れて確認します。鑑定は視覚・触覚・臭覚・聴覚を用いて行います（鑑定方法・平成13年農林水産省告示第333号）。等級の規格は農産物規格規程（平成13年告示第244号）の水稲うるち玄米に基づきます。等級は、整粒・水分・被害粒・死米・着色粒・異種穀粒・異物の全項目がその等級の限度内にある、最も良い等級です（未熟粒は「計」に入りません）。判定した等級は等級証印として米袋に押印し、あわせて検査証明年月日の日付印を押します。死米と着色粒は、穀粒判別器でも鑑定できます。「みわける」と資料に載せた一等米の写真は実物です。検査結果は、穀粒判定器の印字ラベルの様式で、皿の50粒の実数（粒数とその割合）で表示します。場面の絵は、検査風景の写真をもとに描いたドット絵です（写真そのものは資料に置きました）。穀刺しのドット絵も実物の写真をもとに描いたもので、写真そのものと並べて置きました。一等米のドット絵も実物の写真をもとに描いたもので、写真そのものと並べて置きました。粒と皿は、場面のドット絵に合わせて角ばった輪郭と点の質感にそろえました。水分計と袋まわりもドット絵の点の質感にそろえ、水滴と米粒の小さなドット絵を添えました。</footer>
   <details id="refBox">
     <summary>📖 資料（規格表）</summary>
     <table aria-label="水稲うるち玄米の品位規格">

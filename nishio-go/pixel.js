@@ -836,9 +836,13 @@ const WORLD_KEY = 'nsg_world8', WORLD_FILE = 'nishio-go/world.json';
 for (let i = 1; i <= 7; i++) store.del('nsg_world' + i);
 let world = null, worldPois = [], worldLabels = [], worldImg = null, worldState = 'none';   // none | building | ok | fail
 
+// サイクル98：未読込（C.X）は 黒い穴ではなく 淡い霧。Sky の 物差し（見えない所は 柔らかい光の霧で、暗闇に しない）
+const UNREAD_BG = '#c9d6c0';
+const UNREAD_DOT = '#aebfa5';
+
 // 引いて見るときの地図の色（ドット絵タイルの代表色。道は目立つように明るく）
 const WCOL = { [C.G]: '#3f9b3c', [C.F]: PADDY_COL, [C.T]: '#d8ccaa', [C.W]: '#1f6528', [C.P]: '#55b650', [C.A]: '#2a62c9', [C.S]: '#e7cf8c',
-  [C.B]: '#b4472f', [C.R]: '#f1e6c4', [C.H]: '#f6c34a', [C.L]: '#4a3a2a', [C.D]: '#c9a66b', [C.X]: '#0d1418', [C.M]: '#8d6e4f', [C.K]: '#6cc35a',
+  [C.B]: '#b4472f', [C.R]: '#f1e6c4', [C.H]: '#f6c34a', [C.L]: '#4a3a2a', [C.D]: '#c9a66b', [C.X]: UNREAD_BG, [C.M]: '#8d6e4f', [C.K]: '#6cc35a',
   [C.E]: '#2f7a34', [C.V]: '#9a6b3f', [C.I]: '#a3a8ab', [C.J]: '#e4dfd2', [C.Y]: '#4a9a46', [C.N]: '#dfe9ee', [C.U]: PADDY_COL, [C.Q]: '#c9a27a' };
 function makeWorldImg() {
   worldNbr.clear();   // せかいちずが変わったら、つながる向きの絵を決め直す
@@ -1235,7 +1239,7 @@ const TILE_ART = {
   },
   [C.L]: (px) => { px('#8a7f72', 0, 0, 16, 16); for (let y = 1; y < 16; y += 4) px('#5a4632', 1, y, 14, 2); px('#d0d0d0', 4, 0, 1, 16); px('#d0d0d0', 11, 0, 1, 16); },
   [C.D]: (px, r) => speckle(px, r, '#c9a66b', ['#b08a50', '#dcbd88'], 12),
-  [C.X]: (px, r, f) => { px('#0d1418', 0, 0, 16, 16); px('#1a252b', (f * 8) % 16, 7, 2, 2); },
+  [C.X]: (px, r, f) => { px(UNREAD_BG, 0, 0, 16, 16); px(UNREAD_DOT, (f * 8) % 16, 7, 2, 2); },
 };
 const SHADE = ['rgba(0,0,0,.32)', 'rgba(0,0,0,.16)', '', 'rgba(255,250,220,.12)', 'rgba(255,250,220,.24)'];
 const tiles = {};   // code → [variant][frame]
@@ -12912,6 +12916,7 @@ window.nishioPixel = { meiroApi, heroGiant: () => heroGiantId, pickHeroGiant, HE
   slopeAt: (x, y) => slopeAt(x, y),   // テスト用：その マスの かたむき
   idleRoll: () => ({ on: idleRoll.on, key: idleRoll.key, sec: (performance.now() - idleRoll.last) / 1000 }),   // テスト用：眺めるコロコロの 状態
   rollBlockedFrom: (fx, fy, x, y) => (mazeOn() ? mzBlocked(fx, fy, x, y) : rollBlocked(x, y)), chaHana: () => chaHanaOn(), koroArt: () => koroReady(), ambN: () => ambN(), AMB_MAX, kabuse: { on: t => kabuseOn(t), paint: (T = 32) => { const c = document.createElement('canvas'); c.width = c.height = T; const keep = ctx; ctx = c.getContext('2d'); try { drawKabuse(0, 0, 0, 0, T); } finally { ctx = keep; } const d = c.getContext('2d').getImageData(0, 0, T, T).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 100) n++; return n; } }, morning: { get k() { return morning.k; }, level: t => morningLevel(t), force: v => { morningForce = v; dirty = true; } }, sentaku: { get n() { return sentaku.n; }, on: wx => sentakuOn(wx), paint: (T = 32) => { const c = document.createElement('canvas'); c.width = c.height = T; const keep = ctx; ctx = c.getContext('2d'); try { drawSentaku(0, 0, Math.max(1, Math.round(T / 16)), 0, 0); } finally { ctx = keep; } const d = c.getContext('2d').getImageData(0, 0, T, T).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i]) n++; return n; } }, donguri: { get d() { const d = donguri.d; return d && { x: d.x, y: d.y, v: Math.hypot(d.vx, d.vy) }; }, season: () => donguriSeason(), put: (x, y, vx = 1.4, vy = 0) => { const now = performance.now(); donguri.next = now + 6e4; donguri.d = { x, y, vx, vy, t0: now, last: now, ang: 0 }; }, clear: () => { donguri.d = null; donguri.next = performance.now() + 6e4; }, ready: () => { donguri.next = 0; }, blocked: (x, y) => donBlocked(x, y), LIFE: DONGURI_LIFE }, hamon: { get list() { return hamon.list.map(r => ({ x: r.x, y: r.y })); }, put: (x, y) => { hamon.list.push({ x, y, t0: performance.now() }); }, clear: () => { hamon.list.length = 0; }, MS: HAMON_MS }, nightForce: v => { nightForce = v; dirty = true; }, get nightLamps() { return { ...nightLamps }; }, chaHanaPaint: (tx, ty, T = 32) => { const c = document.createElement('canvas'); c.width = c.height = T; const keep = ctx; ctx = c.getContext('2d'); try { drawChaHana(tx, ty, 0, 0, T); } finally { ctx = keep; } const d = c.getContext('2d').getImageData(0, 0, T, T).data; let n = 0; for (let i = 0; i < d.length; i += 4) if (d[i + 3] && d[i] > 240 && d[i + 2] > 230) n++; return n; }, tileAt: (x, y) => codeAt(Math.floor(x), Math.floor(y)), wet: () => roll.wetT, riceStreak, drawRice: (dst, X, Y, th, sq = 0, mood = 'smile', dirt = 0, dirtCol = '', u = 1, pitch = 0) => { if (!riceBall.cv) return false; drawRiceBall(X, Y, u, th, 1 + sq, 1 - sq, 0, dst, false, mood, 0, dirt, dirtCol, pitch); return true; }, setRoll, setHeightFn: fn => { heightFn = fn || null; }, mapCovered, sightBusy, sightCheck, sightForget: id => { sight.seen.delete(id); },
+  UNREAD_BG, UNREAD_DOT,   // サイクル98：未読込は 淡い霧（テスト用）
   nightStartK, get nightK() { return nightK !== null ? nightK : nightStartK(performance.now()); },   // サイクル95：夜の 幕の 立ち上がり（テスト用）
   // いまの町名が新しいか（歩く地図を描いていて、いまの位置で2秒以内に確かめた。せかいちず・ふつうの地図に切り替えたあとの古い町名は使わない）
   get hereFresh() { return active && !worldMode && !!G.me && performance.now() - here.at < 2000; }, spotSprites, spriteOf: sp => spriteOf(sp)[0], npcSprite: look => (npcSprites[look] || npcSprites.man)[0], art: { hiCanvas, shopCanvas, tileRoof, spanRows, pix, genSprite, GEN_DRAW }, get towns() { return towns; }, get here() { return here; }, npcTile, rasterize, chunkQuery, chunkBox, chunkInPlay, luReady, luAt, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, centerOnMe, demFor, get worldMode() { return worldMode; }, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; }, get traffic() { return traffic; }, get driving() { return driving; }, toggleCar, floatText, onPaddy, get tapGoal() { return tapS.goal; }, trailWalk, trailHas, trailClear, get trailCells() { return TRAIL.world.size; }, get trailWorld() { return [...TRAIL.world]; },

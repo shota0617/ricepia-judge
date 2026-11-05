@@ -1091,3 +1091,18 @@ class Cycle58KimeruArrivalChipVisibleTests(unittest.TestCase):
         self.assertIn("案内と結果ラベルを先頭から読んでから等級を選ぶ優先順にしました", HTML)
         self.assertNotIn("setInterval", HTML)
         self.assertNotIn("alert(", HTML)
+
+    def test_cycle59_back_to_sort_shows_sort_from_top(self):
+        # サイクル59（継続指示「『良い』と言うまで最初の1分だけ」・皿へ戻る時の見え方）:
+        # 実測（390×844）では「皿をみる」で戻ると sortWrap の先頭が top -267px と見切れ、
+        # 顔と一等米の見本が見えず、前進時（サイクル55・56）と違う見え方になっていた。
+        # 戻る時も前進時と同じく sortWrap の先頭へ画面を移し、焦点は preventScroll で渡す
+        back = HTML.index('backToSort.addEventListener')
+        scroll_pos = HTML.index('document.getElementById("sortWrap").scrollIntoView({ block: "start" });', back)
+        focus_pos = HTML.index('remain.focus({ preventScroll: true })', back)
+        self.assertLess(scroll_pos, focus_pos)
+        self.assertIn('document.getElementById("machineBtn").focus({ preventScroll: true })', HTML[back:])
+        self.assertNotIn('if (remain) remain.focus();', HTML)
+        self.assertIn("きめるで外れて皿へ戻る時も、入った時と同じく皿の先頭が見える位置へ画面を移し", HTML)
+        self.assertNotIn("setInterval", HTML)
+        self.assertNotIn("alert(", HTML)

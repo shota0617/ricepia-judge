@@ -1122,3 +1122,28 @@ class Cycle58KimeruArrivalChipVisibleTests(unittest.TestCase):
         self.assertIn("小さい画面でも案内と水分計が一度に見えるようにしました", HTML)
         self.assertNotIn("setInterval", HTML)
         self.assertNotIn("alert(", HTML)
+
+
+class Cycle61SortCompactSmallScreenTests(unittest.TestCase):
+    def test_cycle61_sort_compact_on_short_screens(self):
+        # サイクル61（継続指示「『良い』と言うまで最初の1分だけ」・みわける到着時の小さい画面）:
+        # 実測（375×667）では到着時に黒い皿の下端759px・受け皿769–842pxが画面外で、
+        # よけた粒も画面外（803px）に着地した。390×844では受け皿の下端842pxで収まるため、
+        # 大きい画面は変えず、高さ780px以下の画面だけ「みわける」の中身を詰める。
+        # 顔は56px（正面の表情が読める大きさ）、見本は写真とドット絵の同寸を保ち、
+        # 皿の min-height は粒の並びの下端（白162px・黒192px）より下げない
+        self.assertIn("@media (max-height:780px)", HTML)
+        media = HTML.index("@media (max-height:780px)")
+        block = HTML[media:HTML.index("#sortPct { margin:8px 2px 4px;", media)]
+        self.assertIn("#sortWrap .inspectorFace { width:56px; height:56px; margin-bottom:4px; }", block)
+        self.assertIn("#ittoPair .ittoPhoto, #ittoPair #ittoDot { width:min(68px,34%); }", block)
+        self.assertIn("#sortWrap #whiteTray { min-height:162px; }", block)
+        self.assertIn("#sortWrap #blackTray { min-height:194px; }", block)
+        self.assertIn("#sortWrap #yokeWrap { margin-top:4px; padding:5px 12px; min-height:54px; }", block)
+        # 大きい画面の従来値は不変
+        self.assertIn(".ittoPhoto { width:min(120px,34%);", HTML)
+        self.assertIn("#whiteTray { min-height:170px; }", HTML)
+        self.assertIn("みわけるでは、小さい画面（高さが低い画面）だけ顔と見本と皿を詰めて", HTML)
+        self.assertIn("黒い皿と受け皿まで到着時の1画面に収まるようにしました", HTML)
+        self.assertNotIn("setInterval", HTML)
+        self.assertNotIn("alert(", HTML)

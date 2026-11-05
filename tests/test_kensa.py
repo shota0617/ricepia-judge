@@ -586,3 +586,21 @@ class Cycle30DotGrainsPlatesTests(unittest.TestCase):
         self.assertIn("粒と皿は、場面のドット絵に合わせて角ばった輪郭と点の質感にそろえました", HTML)
         self.assertNotIn("setInterval", HTML)
         self.assertNotIn("alert(", HTML)
+
+
+class Cycle32PlayReviewTextTests(unittest.TestCase):
+    def test_cycle32_no_prototype_short_footer_stamp_hint(self):
+        # サイクル32（実プレイレビュー・文字最小限）: 試作表示を外し、
+        # 長文フッターは1行にして全文を資料（#footNotes）へ移し、
+        # 押印後は袋の「ふくろを タップ」を消して次の山で戻す
+        self.assertNotIn("試作", HTML)
+        self.assertIn("<footer>🌾 農産物検査の仕事が題材です。くわしくは下の資料へ 📖</footer>", HTML)
+        self.assertIn('id="footNotes"', HTML)
+        ref = HTML.split('id="refBox"', 1)[1]
+        self.assertIn('id="footNotes"', ref)
+        self.assertIn("農産物検査の仕事が題材です。試料の採取は穀刺しで1袋 約40g", ref)
+        self.assertIn("#stampBag.stamped .bagHint { display:none; }", HTML)
+        self.assertIn('bag.classList.add("stamped")', HTML)
+        self.assertIn('classList.remove("stamped")', HTML)
+        self.assertNotIn("setInterval", HTML)
+        self.assertNotIn("alert(", HTML)

@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-<title>農産物検査ゲーム（試作） - らいすぴあ（近藤米穀店）</title>
-<meta name="description" content="米袋の山から穀刺しで試料を抜き、水分を測り、粒を鑑定して等級証印を押す、農産物検査の仕事を題材にしたのんびりゲームの試作です。"/>
+<title>農産物検査ゲーム - らいすぴあ（近藤米穀店）</title>
+<meta name="description" content="米袋の山から穀刺しで試料を抜き、水分を測り、粒を鑑定して等級証印を押す、農産物検査の仕事を題材にしたのんびりゲームです。"/>
 <meta name="theme-color" content="#2d2d1e"/>
 <!-- キービジュアル（サイクル7で水彩・サイクル27でドット絵に差し替え）: 軸写真を手描きの可愛いキャラクター風ドット絵に描き起こした絵。場面絵も同じドット絵（scene_dot.webp）を使い、写真そのものは資料置き場に残す -->
 <meta property="og:title" content="農産物検査ゲーム - らいすぴあ（近藤米穀店）"/>
@@ -265,6 +265,8 @@
   #stampBag .bagPrint { position:absolute; left:16px; top:64px; width:128px; height:76px; border:2px solid rgba(138,111,60,.32); border-radius:6px;
     background:repeating-linear-gradient(180deg, rgba(255,252,244,.18) 0 17px, rgba(138,111,60,.26) 17px 19px); pointer-events:none; }
   #stampBag .bagHint { position:absolute; bottom:12px; left:0; right:0; text-align:center; font-size:15px; font-weight:800; color:#8a6f3c; opacity:.8; }
+  /* サイクル32: 押印後は袋の案内を消す（実プレイレビュー） */
+  #stampBag.stamped .bagHint { display:none; }
   #stampMark { position:absolute; right:18px; top:44px; width:104px; height:104px; border:5px solid #b03a2e; border-radius:50%;
     color:#b03a2e; display:flex; flex-direction:column; align-items:center; justify-content:center; line-height:1;
     opacity:0; transform:scale(1.5) rotate(-10deg); pointer-events:none; background:rgba(255,252,244,.35);
@@ -299,7 +301,7 @@
 </head>
 <body>
 <main>
-  <h1>🌾 こめの けんさ<small>試作</small></h1>
+  <h1>🌾 こめの けんさ</h1>
 
   <div id="scene">
     <img src="kensa/scene_dot.webp" alt="検査員が30kg紙袋の山に穀刺しを刺して試料を抜く様子のドット絵"/>
@@ -385,7 +387,7 @@
   </div>
   <button id="nextBtn">② はかる 💧</button>
 
-  <footer>農産物検査の仕事が題材です。試料の採取は穀刺しで1袋 約40g（標準抽出方法・平成13年農林水産省告示第443号）。「さす」の場面に載せた穀刺しの写真は、実際の検査で使う実物です。水分は3回の測定の平均で判定します。粒の鑑定は同じ試料を白い皿と黒い皿の双方に入れて確認します。鑑定は視覚・触覚・臭覚・聴覚を用いて行います（鑑定方法・平成13年農林水産省告示第333号）。等級の規格は農産物規格規程（平成13年告示第244号）の水稲うるち玄米に基づきます。等級は、整粒・水分・被害粒・死米・着色粒・異種穀粒・異物の全項目がその等級の限度内にある、最も良い等級です（未熟粒は「計」に入りません）。判定した等級は等級証印として米袋に押印し、あわせて検査証明年月日の日付印を押します。死米と着色粒は、穀粒判別器でも鑑定できます。「みわける」と資料に載せた一等米の写真は実物です。検査結果は、穀粒判定器の印字ラベルの様式で、皿の50粒の実数（粒数とその割合）で表示します。場面の絵は、検査風景の写真をもとに描いたドット絵です（写真そのものは資料に置きました）。穀刺しのドット絵も実物の写真をもとに描いたもので、写真そのものと並べて置きました。一等米のドット絵も実物の写真をもとに描いたもので、写真そのものと並べて置きました。粒と皿は、場面のドット絵に合わせて角ばった輪郭と点の質感にそろえました。水分計と袋まわりもドット絵の点の質感にそろえ、水滴と米粒の小さなドット絵を添えました。</footer>
+  <footer>🌾 農産物検査の仕事が題材です。くわしくは下の資料へ 📖</footer>
   <details id="refBox">
     <summary>📖 資料（規格表）</summary>
     <table aria-label="水稲うるち玄米の品位規格">
@@ -428,6 +430,7 @@
     </table>
     <p>1袋から穀刺しで約40gを抜きます（十分に取れる場合は約20gでも可）。試料は合計1kgが目安で、足りない場合は1袋の量を増やします。抜く袋は無作為に選びます。</p>
     <p>水分は規程の表値です。附則で、醸造用を除く玄米は当分の間この値に1.0%を加えた16.0%が最高限度とされています。ゲームのお米は、どちらの読みでも結論が変わらない水分（14%台前半か16.5%以上）だけにしています。3等の規格にも満たないものは規格外です。形質（見た目のよさ）は、本物の検査では各等級の標準品と見比べて判定します。</p>
+    <p id="footNotes">農産物検査の仕事が題材です。試料の採取は穀刺しで1袋 約40g（標準抽出方法・平成13年農林水産省告示第443号）。「さす」の場面に載せた穀刺しの写真は、実際の検査で使う実物です。水分は3回の測定の平均で判定します。粒の鑑定は同じ試料を白い皿と黒い皿の双方に入れて確認します。鑑定は視覚・触覚・臭覚・聴覚を用いて行います（鑑定方法・平成13年農林水産省告示第333号）。等級の規格は農産物規格規程（平成13年告示第244号）の水稲うるち玄米に基づきます。等級は、整粒・水分・被害粒・死米・着色粒・異種穀粒・異物の全項目がその等級の限度内にある、最も良い等級です（未熟粒は「計」に入りません）。判定した等級は等級証印として米袋に押印し、あわせて検査証明年月日の日付印を押します。死米と着色粒は、穀粒判別器でも鑑定できます。「みわける」と資料に載せた一等米の写真は実物です。検査結果は、穀粒判定器の印字ラベルの様式で、皿の50粒の実数（粒数とその割合）で表示します。場面の絵は、検査風景の写真をもとに描いたドット絵です（写真そのものは資料に置きました）。穀刺しのドット絵も実物の写真をもとに描いたもので、写真そのものと並べて置きました。一等米のドット絵も実物の写真をもとに描いたもので、写真そのものと並べて置きました。粒と皿は、場面のドット絵に合わせて角ばった輪郭と点の質感にそろえました。水分計と袋まわりもドット絵の点の質感にそろえ、水滴と米粒の小さなドット絵を添えました。</p>
     <p>出典: <a href="https://www.maff.go.jp/j/kokuji_tuti/kokuji/k0001439.html" target="_blank" rel="noopener">農産物規格規程（平成13年農林水産省告示第244号）</a>／<a href="https://www.maff.go.jp/j/seisan/syoryu/kensa/attach/pdf/index-25.pdf" target="_blank" rel="noopener">農林水産省「コメの農産物検査」</a>／<a href="https://www.maff.go.jp/j/seisan/syoryu/kensa/attach/pdf/hourei-233.pdf" target="_blank" rel="noopener">成分検査の実施マニュアル（標準抽出方法の運用）</a></p>
   </details>
 </main>
@@ -580,6 +583,7 @@ function pressStamp() {
   const bag = document.getElementById("stampBag");
   bag.classList.remove("pressed"); void bag.offsetWidth; /* サイクル10: 袋の沈み込みを毎回やり直す */
   bag.classList.add("pressed");
+  bag.classList.add("stamped"); /* サイクル32: 押印後は「ふくろを タップ」を消す */
   document.getElementById("stampMark").classList.add("on");
   const dateEl = document.getElementById("dateMark");
   dateEl.textContent = stampDateText(new Date());
@@ -649,6 +653,7 @@ function startNextLot() {
   stampPressed = false;
   document.getElementById("stampWrap").classList.remove("on");
   document.getElementById("stampBag").classList.remove("pressed");
+  document.getElementById("stampBag").classList.remove("stamped"); /* サイクル32: 次の山では案内を戻す */
   document.getElementById("stampMark").classList.remove("on");
   document.getElementById("dateMark").classList.remove("on");
   document.getElementById("stampBtn").disabled = false;

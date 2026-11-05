@@ -308,7 +308,7 @@ class KensaTests(unittest.TestCase):
         self.assertIn("GRAIN_LABELS", HTML)
         # キーとラベルの対応そのものを固定する（入れ替えたら落ちる・Codexレビュー指摘）
         m = re.search(r"const GRAIN_LABELS = \{([^}]*)\};", HTML)
-        pairs = dict(re.findall(r'"([^"]*)":\s*"([^"]+)"', m.group(1)))
+        pairs = {(k or ""): v for k, v in re.findall(r'(?:""|(\w+)):\s*"([^"]+)"', m.group(1))}
         self.assertEqual(pairs, {"": "整粒", "higai": "被害粒", "shini": "死米",
                                  "mijuku": "未熟粒", "color": "着色粒", "momi": "もみ"})
         self.assertIn('GRAIN_LABELS[kind || ""] || "整粒"', HTML)  # 未知の種類でも "undefined" にならない

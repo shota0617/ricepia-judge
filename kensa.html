@@ -41,11 +41,14 @@
   #probe svg { display:block; width:100%; height:auto; }
   /* 実物の穀刺しの写真（サイクル21・ユーザー指示「参考資料ではなくゲームに入れて」）: 「さす」の間だけ静かに見せ、
      次の所作へ進むとしまう（道具は常時1つだけ）。写真は切り抜かず全体を見せる（縦横比3:4のまま） */
-  #kokuPhoto { width:min(240px,68%); margin:12px auto 0; background:var(--paper); border-radius:16px; overflow:hidden;
-    box-shadow:0 4px 12px rgba(26,24,20,.18); }
+  /* 写真カードの馴染み（サイクル22）: 初期表示では場面＋写真＋段階チップ＋鑑定皿が1画面に収まるようカードを小さくし、
+     場面（サイクル14）と同じ金の細枠で色味をつなぐ。出る時は kokuIn で静かに現れるだけ（reduced-motion でほぼ止まる） */
+  #kokuPhoto { width:min(168px,46%); margin:10px auto 0; background:var(--paper); border-radius:16px; overflow:hidden;
+    box-shadow:0 4px 12px rgba(26,24,20,.18), inset 0 0 0 1px rgba(184,137,58,.35); animation:kokuIn .55s ease; }
+  @keyframes kokuIn { 0%{ opacity:0; transform:translateY(6px); } 100%{ opacity:1; transform:translateY(0); } }
   #kokuPhoto.off { display:none; }
   #kokuPhoto img { display:block; width:100%; aspect-ratio:3/4; object-fit:cover; }
-  #kokuPhoto figcaption { padding:8px 6px 10px; text-align:center; font-size:15px; font-weight:800; color:#6b6353; }
+  #kokuPhoto figcaption { padding:7px 6px 9px; text-align:center; font-size:15px; font-weight:800; color:#6b6353; }
   #probe.go { animation:probeIn 1.1s ease forwards; }
   @keyframes probeIn { 0%{opacity:0; transform:translate(0,0) rotate(-24deg);} 25%{opacity:1;} 70%{opacity:1; transform:translate(88px,-30px) rotate(-24deg);} 100%{opacity:1; transform:translate(30px,-8px) rotate(-24deg);} }
   /* 穴をふさぐシール */

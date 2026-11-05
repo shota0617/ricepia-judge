@@ -343,6 +343,19 @@ class KensaTests(unittest.TestCase):
         self.assertNotIn("setInterval", HTML)                       # タイマー・焦らせる仕組みを入れない
         self.assertNotIn("alert(", HTML)                            # 流れを止める要素は作らない
 
+    def test_cycle22_koku_photo_compact(self):
+        # サイクル22: 実物写真カードを小さく馴染ませ、最初の画面で鑑定皿まで見えるようにする。
+        # 写真は切り抜かず3:4のまま・「さす」の間だけの表示切り替え（サイクル21）は維持する。
+        self.assertIn("width:min(168px,46%)", HTML)                    # 旧 min(240px,68%) から縮小
+        self.assertNotIn("width:min(240px,68%)", HTML)
+        self.assertIn("aspect-ratio:3/4", HTML)                        # 全体を見せる縦横比は不変
+        self.assertIn("@keyframes kokuIn", HTML)                       # 出る時は静かに現れるだけ
+        self.assertIn("animation:kokuIn .55s ease", HTML)
+        self.assertIn("rgba(184,137,58,.35)", HTML)                    # 場面と同じ金の細枠でつなぐ
+        self.assertIn("prefers-reduced-motion: reduce", HTML)          # 動きを減らす設定ではほぼ止まる（既存）
+        self.assertNotIn("setInterval", HTML)                          # タイマー・焦らせる仕組みを入れない
+        self.assertNotIn("alert(", HTML)                               # 流れを止める要素は作らない
+
     def test_stamp_date_text(self):
         # 日付印は固定日付でなく、その日の日付を YYYY.M.D で作る純粋関数
         node = shutil.which("node")

@@ -4360,7 +4360,7 @@ function setHeroMarker() {
   document.head.appendChild(st);
 }
 setHeroMarker();
-// 歩く地図の人（主人公と西尾の人たち）を、Blender で作った 16×16 の絵（tools/blender/people.py → nishio-go/art/people.png）に。
+// 歩く地図の人（主人公と西尾の人たち）を、手描きドット絵の 16×16 の絵（nishio-go/art/people.png）に。
 // 並びは NPC_COLORS の順に2コマずつ、そのあと主人公の 下・上・横 を2コマずつ（左は横を反転）。読めるまでは上の手描きの絵
 (() => {
   const img = new Image();

@@ -8625,7 +8625,8 @@ function step(dt) {
   placeRig(dt);
   // ロータリー：下げると爪が回り、通ったところを耕す
   const rp0 = S.rotPos;
-  S.rotPos += Math.max(-dt * 1.2, Math.min(dt * 1.2, (S.rotDown ? 0 : 1) - S.rotPos));
+  const rr162 = rotStepRate(); S.rotPos += Math.max(-dt * rr162, Math.min(dt * rr162, (S.rotDown ? 0 : 1) - S.rotPos));
+  if (S.rotPos < 0.08) S.firstDownDone = true;
   S.lift = dt > 0 ? (S.rotPos - rp0) / dt : 0;     // 作業機を上げている（+）・下げている（−）ところ
   P.Rotary.position.y = P.rotY0 - (0.02 + DEPTH * 0.0035) + S.rotPos * 0.42;   // 深く耕すほど沈む
   P.Rotary.rotation.x = -S.rotPos * 0.12;
@@ -9536,6 +9537,8 @@ const OCHI = (() => {
   const takeFixed = () => { const f = fixedNow; fixedNow = false; return f; };   // いま ゆるめたか（知らせで 1 回だけ 使う）
   return { bump, stop, takeFixed, get armed() { return armed; }, set armed(v) { armed = v; decided = true; } };
 })();
+// サイクル162・最初の1分: のんびり（calm）ではセッション最初の降下だけ 3.6/秒 にし、最初のなぞりで すぐ土の変化が返るようにする。耕しが始まった後の上げ下げと DETAIL は従来どおり 1.2/秒。
+function rotStepRate() { return !DETAIL && S.rotDown && !S.firstDownDone ? 3.6 : 1.2; }
 function toggleRotary() {
   if (INTRO.on) return;                           // 草刈りの あいだは 草刈機（ロータリーは まだ ついていない）
   if (S.scrape > 0 || BELT.fixing || COVER.fixing || GREASE.fixing || CLAW.fixing || HERI.fixing || GASU.fixing || KATA.fixing || PANKU.fixing || AIRCL.fixing) return;   // 泥落とし・直しているあいだは さわらない（降下止めをかけてある）

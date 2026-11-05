@@ -768,18 +768,38 @@ class Cycle39PlainTests(unittest.TestCase):
 class Cycle40LazyRefPhotosTests(unittest.TestCase):
     def test_cycle40_ref_photos_lazy_first_screen_light(self):
         # サイクル40: 資料置き場の写真3枚だけ loading=lazy にし、最初の画面を軽くする。
-        # 場面絵・「さす」の穀刺し写真/ドット絵・「みわける」の一等米見本はすぐ使うため lazy にしない。
+        # （サイクル41で「みわける」の見本2枚も lazy 化したため、全体数はそちらで固定し、ここでは資料内の3件を固定する）
         # 遊び・手順・数値は変えない
-        self.assertEqual(HTML.count('loading="lazy"'), 3)
         ref = HTML[HTML.index('id="refBox"'):]
         self.assertEqual(ref.count('loading="lazy"'), 3)
         self.assertIn('<img loading="lazy" src="kensa/scene.webp"', ref)
         self.assertIn('<img loading="lazy" src="kensa/ittomai.webp"', ref)
         self.assertIn('<img loading="lazy" src="kensa/ittomai_dot.webp"', ref)
-        # 最初の画面と流れで使う絵は lazy でないこと
-        self.assertIn('<img src="kensa/scene_dot.webp"', HTML)
+        # 最初の画面で使う絵は lazy でないこと（場面絵はサイクル41で fetchpriority=high を付与）
+        self.assertIn('<img src="kensa/scene_dot.webp" fetchpriority="high"', HTML)
         self.assertIn('<img src="kensa/kokusashi.webp"', HTML)
         self.assertIn('<img src="kensa/kokusashi_dot.webp"', HTML)
         self.assertIn("資料の写真は、資料を開く時だけ読み込むようにして、最初の画面を軽くしました", HTML)
+        self.assertNotIn("setInterval", HTML)
+        self.assertNotIn("alert(", HTML)
+
+
+class Cycle41StartFirstMinuteTests(unittest.TestCase):
+    def test_cycle41_scene_preload_and_sort_samples_lazy(self):
+        # サイクル41（恒常ルール「スタートの1分が決め手」2026-11-05 20:17）:
+        # 軸の場面絵を preload + fetchpriority=high で最優先にし、「みわける」の見本2枚は
+        # その場面で読むよう loading=lazy にして、最初の画面の取得を場面＋穀刺しだけに絞る。
+        # 遊び・手順・数値は変えない
+        self.assertIn('<link rel="preload" as="image" href="kensa/scene_dot.webp" fetchpriority="high"/>', HTML)
+        self.assertIn('<img src="kensa/scene_dot.webp" fetchpriority="high"', HTML)
+        sort = HTML[HTML.index('id="sortWrap"'):HTML.index('id="gradeWrap"')]
+        self.assertEqual(sort.count('loading="lazy"'), 2)
+        self.assertIn('<img loading="lazy" src="kensa/ittomai.webp"', sort)
+        self.assertIn('<img loading="lazy" src="kensa/ittomai_dot.webp"', sort)
+        # lazy は資料3件＋みわける2件の計5件だけ。さすの穀刺しペアは最初の画面で使うため lazy にしない
+        self.assertEqual(HTML.count('loading="lazy"'), 5)
+        self.assertIn('<img src="kensa/kokusashi.webp"', HTML)
+        self.assertIn('<img src="kensa/kokusashi_dot.webp"', HTML)
+        self.assertIn("場面の絵は最初に読み込み、「みわける」の見本はその場面で読み込むようにして、スタートを軽くしました", HTML)
         self.assertNotIn("setInterval", HTML)
         self.assertNotIn("alert(", HTML)

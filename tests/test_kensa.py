@@ -731,3 +731,28 @@ class Cycle37ProbePlainTests(unittest.TestCase):
         self.assertIn("「さす」の穀刺しは、場面絵の検査員の手元に重ねて小さく動かし", HTML)
         self.assertNotIn("setInterval", HTML)
         self.assertNotIn("alert(", HTML)
+
+
+class Cycle38LabelGuideTests(unittest.TestCase):
+    def test_cycle38_label_guide_weight_limits_separated(self):
+        # サイクル38（実プレイレビュー残件「結果ラベルへの限度併記」＋「素のまま」）:
+        # ラベルの%は皿50粒の粒数、判定の真値は重さ%で別物。行ごとに限度を付けると
+        # 直接比べる誤解を招くため、ラベルの下に区切って「重さのめやす」としてだけ置く。
+        # 値は GRADE_TABLE（告示第244号）そのもの。装飾は足さず文字だけ
+        self.assertIn('id="labelGuide"', HTML)
+        guide = HTML.split('id="labelGuide"', 1)[1].split("</div>", 1)[0]
+        self.assertIn("等級のめやす（重さ）", guide)
+        self.assertIn("ラベルは粒数", guide)
+        # 1等・2等・3等の限度が GRADE_TABLE と一致すること（整粒・死米・着色・もみ）
+        self.assertIn("1等 整粒70↑ 死米7↓ 着色0.1↓ もみ0.3↓", guide)
+        self.assertIn("2等 整粒60↑ 死米10↓ 着色0.3↓ もみ0.5↓", guide)
+        self.assertIn("3等 整粒45↑ 死米20↓ 着色0.7↓ もみ1.0↓", guide)
+        # ガイドはラベルの中（合計の下）にある＝「きめる」の流れの中だけ
+        label = HTML.split('id="resultLabel"', 1)[1].split('id="gradeRecap"', 1)[0]
+        self.assertIn('id="labelGuide"', label)
+        self.assertLess(label.index('id="labelTotal"'), label.index('id="labelGuide"'))
+        # 行レンダリング自体は変えていない（限度を行に混ぜない）
+        self.assertIn("function resultLabelRows(sort)", HTML)
+        self.assertIn("結果ラベルの下には、等級のめやす（重さ）を区切って併記しました", HTML)
+        self.assertNotIn("setInterval", HTML)
+        self.assertNotIn("alert(", HTML)

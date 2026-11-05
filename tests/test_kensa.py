@@ -970,6 +970,20 @@ class Cycle49SasInstantHintTests(unittest.TestCase):
         self.assertNotIn("alert(", HTML)
 
 
+class Cycle53StampCountPopTests(unittest.TestCase):
+    def test_cycle53_stamp_count_pop_on_press(self):
+        # サイクル53（継続指示「『良い』と言うまで最初の1分だけ」・おすの押印直後の反応）:
+        # 従来は証印の数がテキストで変わるだけで動きがなく、袋を見ていると変化に気づきにくかった。
+        # みわけの進み具合（サイクル47）と同じく、押すたび大きな数字が一度だけ静かに動くようにする
+        self.assertIn("#stampCount b { font-size:34px; display:inline-block; }", HTML)
+        self.assertIn("#stampCount b.pop { animation:stampPop .45s ease; }", HTML)
+        self.assertIn("@keyframes stampPop { 0%{ transform:scale(1.22); } 100%{ transform:scale(1); } }", HTML)
+        self.assertIn('stampCountB.classList.add("pop")', HTML)
+        self.assertIn("証印を押すたびに数の大きな数字が一度だけ静かに動き", HTML)
+        self.assertNotIn("setInterval", HTML)
+        self.assertNotIn("alert(", HTML)
+
+
 class Cycle52ResultLabelInstantTests(unittest.TestCase):
     def test_cycle52_result_label_readable_immediately_and_not_scrolled_off(self):
         # サイクル52（継続指示「『良い』と言うまで最初の1分だけ」・きめるへ進んだ直後の結果ラベルの出方）:

@@ -577,17 +577,17 @@ class Cycle30DotGrainsPlatesTests(unittest.TestCase):
 
 class Cycle33InspectorFaceTests(unittest.TestCase):
     def test_cycle33_inspector_face_in_later_phases(self):
-        # サイクル33（実プレイレビュー「顔を基準に」）: 場面絵のドット絵から切り出した
-        # 検査員の顔（face_dot.webp・穏やかな微笑みは場面絵そのまま）を、はかる／みわける／
-        # きめる／おすの各道具の上に72pxの丸い顔として添える。さす（最初の画面）は
-        # 鑑定皿が1画面に収まる形を崩さないため対象外。遊び・手順・数値は変えない
+        # サイクル33（実プレイレビュー「顔を基準に」）: 検査員の顔（face_dot.webp）を、
+        # はかる／みわける／きめる／おすの各道具の上に丸い顔として添える。さす（最初の画面）は
+        # 鑑定皿が1画面に収まる形を崩さないため対象外。遊び・手順・数値は変えない。
+        # 大きさはサイクル44で 88px へ更新（正面の顔・表情の読み取りやすさ）
         root = Path(__file__).resolve().parent.parent
         face = root.joinpath("kensa", "face_dot.webp")
         self.assertTrue(face.exists())
         self.assertLess(face.stat().st_size, 300_000)
         self.assertEqual(HTML.count('src="kensa/face_dot.webp"'), 4)
         self.assertEqual(HTML.count('class="inspectorFace"'), 4)
-        self.assertIn(".inspectorFace { width:72px; height:72px; border-radius:50%;", HTML)
+        self.assertIn(".inspectorFace { width:88px; height:88px; border-radius:50%;", HTML)
         self.assertIn("穏やかに微笑む検査員の顔のドット絵", HTML)
         # 各道具の中にある（はかる・みわける・きめる・おす）
         for wrap in ('id="meterWrap"', 'id="sortWrap"', 'id="gradeWrap"', 'id="stampWrap"'):
@@ -812,10 +812,10 @@ class Cycle42StartFirstMinuteFaceLazyTests(unittest.TestCase):
         # サイクル42（恒常ルール「スタートの1分が決め手」の続き）:
         # 検査員の顔（face_dot.webp）は はかる以降の4場面でしか使わないため、
         # loading=lazy でその場面で読むようにし、最初の画面の取得を場面絵＋穀刺しペアだけに絞る。
-        # 顔の表示（72px・丸・穏やかな微笑み）と遊び・手順・数値は変えない
+        # 顔の表示（丸・穏やかな微笑み。大きさはサイクル44で 88px へ）と遊び・手順・数値は変えない
         self.assertEqual(HTML.count('<img loading="lazy" class="inspectorFace" src="kensa/face_dot.webp"'), 4)
         self.assertEqual(HTML.count('src="kensa/face_dot.webp"'), 4)
-        self.assertIn(".inspectorFace { width:72px; height:72px; border-radius:50%;", HTML)
+        self.assertIn(".inspectorFace { width:88px; height:88px; border-radius:50%;", HTML)
         # lazy は資料3件＋みわける見本2件＋顔4件の計9件。最初の画面で使う絵は lazy にしない
         self.assertEqual(HTML.count('loading="lazy"'), 9)
         self.assertIn('<img src="kensa/scene_dot.webp" fetchpriority="high"', HTML)
@@ -836,5 +836,30 @@ class Cycle42StartFirstMinuteFaceLazyTests(unittest.TestCase):
         self.assertIn('["kensa/face_dot.webp", "kensa/ittomai.webp", "kensa/ittomai_dot.webp"]', HTML)
         self.assertIn("const im = new Image(); im.src = src;", HTML)
         self.assertIn("最初のタップでは穀刺しがすぐ見えるようにし、「さす」の間に次の場面の絵を先読みして、スタートの1分の待ちを減らしました", HTML)
+        self.assertNotIn("setInterval", HTML)
+        self.assertNotIn("alert(", HTML)
+
+
+class Cycle44FrontFaceFirstMinuteTests(unittest.TestCase):
+    def test_cycle44_front_facing_calm_face_larger(self):
+        # サイクル44（継続指示「『良い』と言うまで最初の1分だけ」・実プレイレビュー
+        # 2026-11-05 21:50 で顔が不合格）: 旧 face_dot.webp は場面絵からの横顔〜後ろ向きの
+        # 切り抜きで車が映り込み表情が読めなかった。正面を向いた穏やかな表情のドット絵
+        # （背景は無地・両目と微笑みが小さい表示でも読める）に作り直し、88px に大きくした。
+        # 新しい顔のファイル自体（256x256・旧ファイルより小さい＝先読みも軽い）を固定する
+        root = Path(__file__).resolve().parent.parent
+        face = root.joinpath("kensa", "face_dot.webp")
+        self.assertTrue(face.exists())
+        self.assertLess(face.stat().st_size, 20_000)
+        data = face.read_bytes()
+        # WebP (RIFF/WEBP) で 256x256 であること（VP8/VP8L/VP8X の寸法は PIL で確認する代わりに
+        # ファイルの差し替えそのものを md5 で固定しない＝絵の差し替えに弱くしないため、
+        # ここでは形式と小ささだけを固定し、正面・表情は Playwright の目視で担保する）
+        self.assertEqual(data[:4], b"RIFF")
+        self.assertEqual(data[8:12], b"WEBP")
+        self.assertIn(".inspectorFace { width:88px; height:88px; border-radius:50%;", HTML)
+        self.assertNotIn("width:72px; height:72px", HTML)
+        self.assertEqual(HTML.count('class="inspectorFace"'), 4)
+        self.assertIn("検査員の顔は、正面を向いた穏やかな表情のドット絵に作り直し、少し大きくして、最初の1分でも表情が読めるようにしました", HTML)
         self.assertNotIn("setInterval", HTML)
         self.assertNotIn("alert(", HTML)

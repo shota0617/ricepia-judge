@@ -1,4 +1,4 @@
-"""第3弾サイクル44：たいまつの 残り時間が 炎の 大きさで 見える。"""
+"""第3弾サイクル44：たいまつの 炎の 大きさ。第4弾サイクル81で 残り時間との 連動を やめ、持っていれば いつも 一定（1）に。"""
 import subprocess
 import unittest
 from pathlib import Path
@@ -19,11 +19,11 @@ def git(*a):
 
 
 class Scale(unittest.TestCase):
-    def test_pure_ratio(self):
+    def test_constant_while_held(self):
         b = func_body(PIXEL, "function mzTorchFlameScale(")
-        self.assertIn("mzTorchLeft(now) / MZ_TORCH.ms", b)
-        self.assertIn("Math.min(1", b)
-        self.assertIn("Math.max(0", b)
+        self.assertIn("mzTorch.held ? 1 : 0", b)
+        self.assertNotIn("MZ_TORCH.ms", b)
+        self.assertNotIn("mzTorchLeft", b)
 
     def test_read_only(self):
         b = func_body(PIXEL, "function mzTorchFlameScale(")
@@ -40,12 +40,10 @@ class Flame(unittest.TestCase):
         self.b = func_body(PIXEL, "function drawMzTorchFlame(")
 
     def test_guards_kept(self):
-        self.assertIn("if (!mzTorch.until || mzTorch.until <= now || rp.x === null) return;", self.b)
+        self.assertIn("if (!mzTorch.held || rp.x === null) return;", self.b)
 
     def test_scale_on_both_flames(self):
-        self.assertIn("mzTorchFlameScale(now)", self.b)
-        self.assertIn("0.45 + 0.55 * scale", self.b)
-        self.assertIn("0.6 + 0.4 * scale", self.b)
+        self.assertIn("hk = mzTorchFlameScale(), wk = hk", self.b)
         lines = [l for l in self.b.splitlines() if "mzFlamePath(" in l]
         self.assertEqual(len(lines), 2)
         for l, c in zip(lines, ("#e8590c", "#ffd84a")):
@@ -53,14 +51,13 @@ class Flame(unittest.TestCase):
             self.assertIn("* hk", l)
             self.assertIn("* wk", l)
 
-    def test_smoke_condition(self):
-        self.assertIn("if (scale <= 0.25) {", self.b)
-        self.assertIn("ctx.arc(", self.b)
-
-    def test_blink_kept(self):
-        self.assertIn("mzTorch.until - now < 6000", self.b)
-        self.assertIn("ctx.globalAlpha = last ? 0.55 : 1;", self.b)
+    def test_no_smoke_no_blink(self):
+        self.assertNotIn("scale <= 0.25", self.b)
+        self.assertNotIn("ctx.arc(", self.b)
+        self.assertNotIn("6000", self.b)
+        self.assertNotIn("globalAlpha", self.b)
         self.assertIn("#8a5a2b", self.b)
+        self.assertIn("flick", self.b)   # ゆらめきは穏やかなので維持
 
 
 class Order(unittest.TestCase):
@@ -72,7 +69,7 @@ class Order(unittest.TestCase):
 
 class Sight(unittest.TestCase):
     def test_bonus_unchanged(self):
-        self.assertIn("function mzTorchBonus() { return mzTorch.until > performance.now() ? MZ_TORCH.sight : 0; }", PIXEL)
+        self.assertIn("function mzTorchBonus() { return mzTorch.held ? MZ_TORCH.sight : 0; }", PIXEL)
 
 
 class Diff(unittest.TestCase):

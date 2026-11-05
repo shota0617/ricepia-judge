@@ -19,7 +19,7 @@ def git(*a):
 
 BODY = func_body("function drawMzTrail(")
 ADDED = [l[1:] for l in git("diff", "origin/main", "--", "nishio-go/pixel.js").splitlines()
-         if l.startswith("+") and not l.startswith("+++") and "//c17" not in l and "!G.demo" not in l]
+         if l.startswith("+") and not l.startswith("+++") and "//c17" not in l and "!G.demo" not in l and "r.pts}pt（" not in l]
 
 
 class Edge(unittest.TestCase):

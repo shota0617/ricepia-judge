@@ -73,7 +73,7 @@ class Brigade(unittest.TestCase):
         self.assertIn("🎉 おとも旅団 完成！ かおりちゃんと おとも米たち！", tag)
         self.assertIn("MZ_BRIGADE.tagMs", tag)
         self.assertIn("mzEnergy.lastCx >= 0) y0 +=", tag)
-        self.assertIn("mzTorch.until > now) y0 +=", tag)   # たいまつ札と重ならない
+        self.assertNotIn("mzTorch.", tag)   # 第4弾サイクル81：たいまつ札は無いので余白も取らない
         self.assertIn("tagMs: 6000", PIXEL)
 
     def test_state_hook(self):

@@ -20,8 +20,8 @@ class Lit(unittest.TestCase):
     def test_lit_pure(self):
         i = PIXEL.index("function mzTorchLit(")
         b = PIXEL[i:PIXEL.index("\n", i)]
-        self.assertIn("mzTorch.until >", b)
-        for w in ("G.", "floatText", "localStorage", "mzTorch.until =", "++"):
+        self.assertIn("mzTorch.held", b)
+        for w in ("G.", "floatText", "localStorage", "mzTorch.held =", "++"):
             self.assertNotIn(w, b)
 
     def test_api(self):
@@ -51,7 +51,7 @@ class Light(unittest.TestCase):
         self.assertIn("Math.max(0,", self.b)
 
     def test_no_text(self):
-        for w in ("fillText", "riceSay", "floatText", "G.", "mzTorch.until ="):
+        for w in ("fillText", "riceSay", "floatText", "G.", "mzTorch.held ="):
             self.assertNotIn(w, self.b)
 
 
@@ -72,8 +72,8 @@ class Ring(unittest.TestCase):
         self.assertIn("S * 0.35", b)
 
     def test_bonus_unchanged(self):
-        self.assertIn("function mzTorchBonus() { return mzTorch.until > performance.now() ? MZ_TORCH.sight : 0; }", PIXEL)
-        self.assertIn("function mzTorchLeft(now) { return Math.max(0, mzTorch.until - (now === undefined ? performance.now() : now)); }", PIXEL)
+        self.assertIn("function mzTorchBonus() { return mzTorch.held ? MZ_TORCH.sight : 0; }", PIXEL)
+        self.assertNotIn("function mzTorchLeft(", PIXEL)   # 第4弾サイクル81：残り時間は持たない
         self.assertIn("f.sight + bonus : 0", PIXEL)
 
     def test_node_check(self):

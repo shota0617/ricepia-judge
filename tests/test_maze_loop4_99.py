@@ -30,7 +30,7 @@ class Blink99(unittest.TestCase):
         self.assertIn("blink: 'shut cheeks smile'", PIX)
 
     def test_dot_path_draws_blink(self):
-        self.assertIn("mood === 'blink' && riceEyeAt && (fr === riceSprites.right[0] || fr === riceSprites.down[0])", PIX)
+        self.assertIn("const shutEyes = (mood === 'blink' || asleepShut()) && riceEyeAt && (fr === riceSprites.right[0] || fr === riceSprites.down[0]);", PIX)
         self.assertIn("rgb(250,249,243)", PIX)
         self.assertIn("rgb(14,14,14)", PIX)
         self.assertIn("(riceEyeAt.y + 2 - rb0.gy) * u, 2 * u, u)", PIX)
@@ -57,7 +57,7 @@ class Blink99(unittest.TestCase):
 
     def test_scope(self):
         files = set(self._diff("--name-only").split())
-        self.assertLessEqual(files, {"nishio-go/pixel.js", "tests/test_maze_loop4_99.py", "tests/test_maze_loop4_16.py", "tests/test_maze_loop4_95.py", "tests/test_maze_loop4_97.py", "tests/test_maze_loop4_98.py"})
+        self.assertLessEqual(files, {"nishio-go/pixel.js", "tests/test_maze_loop4_99.py", "tests/test_maze_loop4_100.py", "tests/test_maze_loop4_16.py", "tests/test_maze_loop4_95.py", "tests/test_maze_loop4_97.py", "tests/test_maze_loop4_98.py"})
 
 
 if __name__ == "__main__":

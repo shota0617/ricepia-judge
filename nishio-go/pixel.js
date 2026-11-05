@@ -3826,10 +3826,12 @@ function riceFaces(face, sd, N) {
 // ouchT・dizzyT・happyT などの 計時や 転がり・音の 動きは そのまま（顔にだけ 出さない）
 // まばたき：止まって いる 間、3.4秒に 1回 0.15秒だけ 目を 閉じる。笑顔のまま 目だけ 閉じる（FACE_SET.blink）。痛そう・苦しそうな顔を 使わない 原則は そのまま
 const BLINK_MS = 3400, BLINK_SHUT_MS = 150;
+const glanceShift = look => { const v = Math.round(Number(look) || 0); return v < -1 ? -1 : v > 1 ? 1 : v; };   // 見回しの 目の ずれを ドット絵の 1点以内に 丸める（サイクル100）
 const blinkOn = now => Number.isFinite(now) && now >= 0 && (now % BLINK_MS) < BLINK_SHUT_MS;
 function riceMood(now) { return (!calmMotion && roll.kind === 'stop' && blinkOn(now)) ? 'blink' : 'smile'; }
 // ねむって いる（止まって しばらく）：顔ではなく 動きの 判定。ちょうちょ・ねどこ・ゆめは これで 出る
 const riceAsleep = () => roll.kind === 'stop' && roll.idle > 12;
+const asleepShut = () => !calmMotion && roll.kind === 'stop' && roll.idle > 12;   // ねむって いる 間は 目を 閉じたまま（口と ほっぺは 笑顔のまま。サイクル100）
 const riceBreath = now => Math.sin(now / 2600 * Math.PI * 2) * (roll.idle > 12 ? 0.03 : 0.018);   // 息：2.6秒で 1回。ねむって いる ときは 少し 大きく ゆっくり 見える
 // ちょうちょ：ねむって いる お米の 頭に ひらひら 飛んで きて とまり、お米が おきると 飛んで いく（文字の ない 素朴な かわいさ。運営者の声 2026-10-28）。
 // 絵は 7×5 の 点（k ふち・y はね・b からだ）。動きを へらす 設定の 人には 出さない。遊びの じゃまに ならない よう、お米が 動き出したら すぐ 飛んで いく
@@ -3892,10 +3894,18 @@ function drawRiceBall(X, Y, u, th, sx, sy, spin, dst = ctx, gb = gbOn && !worldM
     const fr = Math.min(pk, 8 - pk) >= Math.min(sk, 8 - sk) ? riceSprites.down[pk] : riceSprites.right[sk], sm0 = dst.imageSmoothingEnabled;   // 両方の回りが あるときは 正面から 遠い方の コマを えらぶ（サイクル86 Codex指摘への対応）
     dst.save(); dst.translate(X, Y); dst.scale(sx, sy); dst.rotate(th); dst.imageSmoothingEnabled = false;
     dst.drawImage(fr, -rb0.gx * u, -rb0.gy * u, N * u, N * u);
-    if (mood === 'blink' && riceEyeAt && (fr === riceSprites.right[0] || fr === riceSprites.down[0])) {   // まばたき：正面の コマだけ（right/down の 1コマ目は 同じ 正面の 絵。止まった ときは down[0] が 選ばれるため 両方を 対象にする。サイクル99 Codex指摘への対応）。目の 箱を 体の 色で ぬり、閉じた 目の 線を 引く（目の 場所は rice-dot.png 正面コマの 実測：左目 x=12〜13・右目 x=17〜18＝左目の 左上から +5。体の 色も 絵の 実色 250,249,243）
+    const shutEyes = (mood === 'blink' || asleepShut()) && riceEyeAt && (fr === riceSprites.right[0] || fr === riceSprites.down[0]);
+    if (shutEyes) {   // まばたき：正面の コマだけ（right/down の 1コマ目は 同じ 正面の 絵。止まった ときは down[0] が 選ばれるため 両方を 対象にする。サイクル99 Codex指摘への対応）。目の 箱を 体の 色で ぬり、閉じた 目の 線を 引く（目の 場所は rice-dot.png 正面コマの 実測：左目 x=12〜13・右目 x=17〜18＝左目の 左上から +5。体の 色も 絵の 実色 250,249,243）
       for (const dx of [0, 5]) {
         dst.fillStyle = 'rgb(250,249,243)'; dst.fillRect((riceEyeAt.x + dx - rb0.gx) * u, (riceEyeAt.y - rb0.gy) * u, 2 * u, 3 * u);
         dst.fillStyle = 'rgb(14,14,14)'; dst.fillRect((riceEyeAt.x + dx - rb0.gx) * u, (riceEyeAt.y + 2 - rb0.gy) * u, 2 * u, u);
+      }
+    }
+    const gl = shutEyes ? 0 : glanceShift(look);   // きょろきょろ：止まって 眺める 間、目だけ そっと 左右へ 1点（サイクル100）
+    if (gl && riceEyeAt && (fr === riceSprites.right[0] || fr === riceSprites.down[0])) {
+      for (const dx of [0, 5]) {
+        dst.fillStyle = 'rgb(250,249,243)'; dst.fillRect((riceEyeAt.x + dx - rb0.gx) * u, (riceEyeAt.y - rb0.gy) * u, 2 * u, 3 * u);
+        dst.fillStyle = 'rgb(14,14,14)'; dst.fillRect((riceEyeAt.x + dx + gl - rb0.gx) * u, (riceEyeAt.y - rb0.gy) * u, 2 * u, 3 * u);
       }
     }
     const nD = rb0.spots ? Math.round(Math.min(1, dirt) * rb0.spots.length) : 0;
@@ -12917,7 +12927,7 @@ const meiroApi = {
   tilt: () => tiltG, tiltAsk, tiltReset, tiltNeedsPermission, koto: (v, low) => kotoSound(v, low), splash: v => splashSound(v), boing: (v, hi) => boingSound(v, hi), rumble: v => rumbleTick(v, GROUND.road),   // rumble：転がる音（速さは 地図の マス/秒）
   pause(on) { meiroPause = !!on; dirty = true; if (on && mzNext.hold) { mzNext.hold = false; if (G.toastFlush) G.toastFlush(); } },   // 止める ときは「つぎの ゴール」で 待たせた 知らせを 出す
 };
-window.nishioPixel = { blinkOn, BLINK_MS, BLINK_SHUT_MS, get riceEye() { return riceEyeAt; }, meiroApi, heroGiant: () => heroGiantId, pickHeroGiant, HERO_GIANT_RANGE, maze: { wallTheme: () => mzWallTheme(), on: () => mazeOn(), playing: () => active && mazeOn(), next: () => ({ want: mzNext.want, t0: mzNext.t0, on: mzNextOn(), labHide: !!mzNext.labHide, arrowDim: !!mzNext.arrowDim, box: mzNext.box || null }), goal: id => {   // id の 名所が いまの ゴール（か 2分 以内の 前の ゴール）なら、かかった 時間と めいろの 道のり
+window.nishioPixel = { blinkOn, BLINK_MS, BLINK_SHUT_MS, get riceEye() { return riceEyeAt; }, glanceShift, asleepShut, meiroApi, heroGiant: () => heroGiantId, pickHeroGiant, HERO_GIANT_RANGE, maze: { wallTheme: () => mzWallTheme(), on: () => mazeOn(), playing: () => active && mazeOn(), next: () => ({ want: mzNext.want, t0: mzNext.t0, on: mzNextOn(), labHide: !!mzNext.labHide, arrowDim: !!mzNext.arrowDim, box: mzNext.box || null }), goal: id => {   // id の 名所が いまの ゴール（か 2分 以内の 前の ゴール）なら、かかった 時間と めいろの 道のり
     if (!mazeOn()) return null;
     const now = performance.now(), pv = mzRt.prev, g = mzRt.gid === id ? { t0: mzRt.t0, len0: mzRt.len0, warp: mzRt.warp, moves: mzMv.n, run: { ...mzRt.run } } : pv && pv.id === id && now - pv.at < 120000 ? pv : null;
     if (!g || !g.t0) return null;

@@ -537,7 +537,7 @@ class Cycle29DotIttomaiTests(unittest.TestCase):
         # 横並び（高さは写真カードのまま＝皿の収まりを崩さない）
         self.assertIn('id="ittoPair"', HTML)
         self.assertIn("#ittoPair { display:flex;", HTML)
-        self.assertIn("#ittoDot { width:min(102px,28%);", HTML)
+        self.assertIn("#ittoDot { width:min(144px,40%);", HTML)  # サイクル35で写真と同幅に更新
         # 資料のドット絵は refBox の中だけ（写真の下）
         ref = HTML.split('id="refBox"', 1)[1]
         self.assertIn('id="ittoDotRef"', ref)
@@ -647,5 +647,36 @@ class Cycle34FirstScreenTests(unittest.TestCase):
         self.assertIn('<div id="trayLabel">かんてい皿</div>', HTML)
         self.assertIn("#trayLabel {", HTML)
         self.assertIn("最初の画面では、案内を鑑定皿の上に移し", HTML)
+        self.assertNotIn("setInterval", HTML)
+        self.assertNotIn("alert(", HTML)
+
+
+class Cycle35PairAlignmentTests(unittest.TestCase):
+    def test_cycle35_photo_dot_pairs_same_size_and_direction(self):
+        # サイクル35（実プレイレビュー）: 写真とドット絵ペアの大きさと向きが不揃い。
+        # 両ペアとも写真とドット絵を同じ幅にし、並びは stretch で高さをそろえる。
+        # 穀刺しのドット絵は写真と同じ斜め向きの画像（差し替え済みファイル）にし、
+        # 実物写真そのものの表示は維持する。遊び・手順・数値は変えない
+        self.assertIn("#kokuPair { display:flex; gap:10px; justify-content:center; align-items:stretch;", HTML)
+        self.assertIn("#kokuPhoto { width:min(168px,46%);", HTML)
+        self.assertIn("#kokuDot { width:min(168px,46%);", HTML)
+        self.assertIn("#ittoPair { display:flex; gap:10px; justify-content:center; align-items:stretch;", HTML)
+        self.assertIn("#ittoDot { width:min(144px,40%);", HTML)
+        self.assertIn("#ittoPair .ittoPhoto { margin:0; }", HTML)
+        self.assertIn(".ittoPhoto { width:min(144px,40%);", HTML)
+        # 実物写真は両ペアとも維持
+        self.assertIn('src="kensa/kokusashi.webp"', HTML)
+        self.assertIn('src="kensa/kokusashi_dot.webp"', HTML)
+        self.assertIn('src="kensa/ittomai.webp"', HTML)
+        self.assertIn('src="kensa/ittomai_dot.webp"', HTML)
+        root = Path(__file__).resolve().parent.parent
+        dot = root.joinpath("kensa", "kokusashi_dot.webp")
+        self.assertTrue(dot.exists())
+        self.assertLess(dot.stat().st_size, 300_000)
+        # 向きをそろえた版のハッシュ（縦向きの旧版 b2e8ae… とは異なる）
+        import hashlib
+        self.assertEqual(hashlib.md5(dot.read_bytes()).hexdigest(),
+                         "97e5e3b07ebf742f40037acb9f03a354")
+        self.assertIn("写真とドット絵のペアは、大きさをそろえ", HTML)
         self.assertNotIn("setInterval", HTML)
         self.assertNotIn("alert(", HTML)

@@ -942,6 +942,20 @@ class Cycle50MachineInstantResponseTests(unittest.TestCase):
         self.assertNotIn("alert(", HTML)
 
 
+class Cycle51WrongGradeTriedMarkTests(unittest.TestCase):
+    def test_cycle51_wrong_grade_tried_mark(self):
+        # サイクル51（継続指示「『良い』と言うまで最初の1分だけ」・等級を選んだ直後の反応）:
+        # 外れた等級は従来ボタンに何も残らず、案内も.6秒かけて薄く出るだけだった。
+        # 選んだボタンに金の静かな印（tried）を即時付け、案内は.35秒で出し、次の山で印を外す
+        self.assertIn(".gradeBtn.tried { border-color:var(--gold); background:#f6efdc; }", HTML)
+        self.assertIn('btn.classList.add("tried");', HTML)
+        self.assertIn('b.classList.remove("tried");', HTML)
+        self.assertIn("#gradeMsg.on { opacity:1; transition:opacity .35s ease; }", HTML)
+        self.assertIn("等級を選ぶと、選んだボタンに静かに印が付き、案内もすぐ出る", HTML)
+        self.assertNotIn("setInterval", HTML)
+        self.assertNotIn("alert(", HTML)
+
+
 class Cycle49SasInstantHintTests(unittest.TestCase):
     def test_cycle49_sas_tap_hint_changes_immediately(self):
         # サイクル49（継続指示「『良い』と言うまで最初の1分だけ」・さすのタップ直後の案内）:

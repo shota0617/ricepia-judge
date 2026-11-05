@@ -8534,7 +8534,7 @@ function step(dt) {
     const ax = S.x + Math.sin(S.yaw) * 3, az = S.z + Math.cos(S.yaw) * 3, ai = Math.floor((ax + HX) / CELL), aj = Math.floor((az + HZ) / CELL);
     const stubble = ai >= 0 && aj >= 0 && ai < NX && aj < NZ && !tilledMask[ai * NZ + aj];   // 3m 先に まだ 稲株が 残っている（耕した 所は 目印が ない）
     S.rowSkewM = stubble && off > 0.035 && off < 0.12 ? (S.rowSkewM || 0) + S.v * dt : 0;
-    if (S.rowSkewM > 8 && !S.rowTold && !S.rowChk && (S.rowTries || 0) < 3 && toastT <= 0) {
+    if (S.rowSkewM > 8 && !S.rowTold && !S.rowChk && (S.rowTries || 0) < 3 && toastT <= 0 && !startNoticeMuted()) {   // サイクル173・最初の1分: のんびりでは秋の開始直後に稲株の列の長文知らせで最初のなぞりを止めない。rowChkは立てないので1分を過ぎてなお列からずれて8m耕し知らせが空いていれば従来どおり1回出す（遅れて出す形）。くわしい説明では従来どおり開始直後から出す
       S.rowMsg = '稲株の 列を ななめに 横切っている（約 ' + Math.round(Math.asin(off) * 180 / Math.PI) + '°）。稲刈りの あとの 田んぼは、残った 稲株の 列を 目印に すると まっすぐ 走れる。列に そうよう ハンドルを 少し もどす';
       S.rowChk = true; toast(S.rowMsg, 7);
     }

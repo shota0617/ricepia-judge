@@ -4384,7 +4384,7 @@ setHeroMarker();
 const spotSprites = {};
 for (const [k, rows] of Object.entries({ ...ART, ...BUILDING_ART })) spotSprites[k] = [sprite(rows), sprite(rows, true)];
 spotSprites.store = spotSprites.shop;
-// 街並みの目印（お店・施設）の絵を、Blender で作った 32×32 の絵（tools/blender/poi.py → nishio-go/art/poi.png）に。読めるまでは上の手描きの絵
+// 街並みの目印（お店・施設）の絵を、手描きドット絵の 32×32（nishio-go/art/poi.png）に。読めるまでは上の手描きの絵
 const POI_ORDER = ['townhall', 'hospital', 'school', 'library', 'police', 'fire', 'post', 'shop', 'konbini', 'super', 'home', 'drug', 'fuel', 'bank', 'food', 'cafe', 'station'];
 (() => {
   const img = new Image();
@@ -4404,7 +4404,7 @@ const POI_ORDER = ['townhall', 'hospital', 'school', 'library', 'police', 'fire'
   img.src = 'nishio-go/art/poi.png';
 })();
 // 名所の種類ごとの絵（公園4通り・史跡・展望・名所・アート・海岸・資料館と、注目スポットの型の 鳥居・お寺・城・町）を、
-// Blender で作った 24×24 の絵（tools/blender/spots.py → nishio-go/art/spots.png）に。読めるまでは上の手描きの絵（ふつうの名所は たからばこ）
+// 手描きドット絵の 24×24（nishio-go/art/spots.png）に。読めるまでは上の手描きの絵（ふつうの名所は たからばこ）
 const SPOT_ORDER = ['park0', 'park1', 'park2', 'park3', 'historic', 'view', 'sight', 'art', 'beach', 'museum', 'torii', 'temple', 'castle', 'town'];
 (() => {
   const img = new Image();

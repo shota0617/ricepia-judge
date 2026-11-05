@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
 <title>農産物検査ゲーム（試作） - らいすぴあ（近藤米穀店）</title>
 <meta name="description" content="米袋の山から穀刺しで試料を抜き、水分を測り、粒を鑑定して等級証印を押す、農産物検査の仕事を題材にしたのんびりゲームの試作です。"/>
 <meta name="theme-color" content="#2d2d1e"/>
@@ -90,6 +90,9 @@
     *, *::before, *::after { animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; }
     #bagTap::after { animation:none; }
   }
+  /* 拡大とタップの配慮（サイクル18）: 画面の拡大を妨げず（サイクル1で全体方針の残件だった viewport の拡大制限をこのゲームでは外す）、
+     操作要素だけ二度押し拡大を抑えてタップの反応をすぐ返す。ピンチでの拡大は妨げない */
+  button, #stampBag, .sgrain, #bagTap { touch-action:manipulation; }
   /* 焦点の輪（サイクル14）: キーボードでも今どこにいるか一目で分かる穏やかな金の輪。タップ／マウスでは出さない（:focus-visible）・点滅や警告色は使わない */
   button:focus-visible, #stampBag:focus-visible { outline:3px solid var(--gold); outline-offset:3px; }
   #bagTap:focus-visible { outline:3px solid var(--gold); outline-offset:-3px; }

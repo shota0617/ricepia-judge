@@ -880,3 +880,22 @@ class Cycle45BagTapWholePileTests(unittest.TestCase):
         self.assertIn("最初のタップは、米袋の山全体で受けられるようにしました", HTML)
         self.assertNotIn("setInterval", HTML)
         self.assertNotIn("alert(", HTML)
+
+
+class Cycle46MeterNextSlotTests(unittest.TestCase):
+    def test_cycle46_meter_next_slot_and_button_count(self):
+        # サイクル46（継続指示「『良い』と言うまで最初の1分だけ」・はかる3回の手応え）:
+        # 従来は大きなボタンが3回とも同じ表示で、数字が入る枠も示されず、タップごとの
+        # 変化は上部の案内文だけだった。次に数字が入る枠へ金の内枠（点滅なし）を付け、
+        # タップのたびに移し、ボタン自体にも残り回数を出す。完了・リセットも固定する
+        self.assertIn(".slot.next { box-shadow:inset 0 0 0 3px var(--gold); }", HTML)
+        self.assertIn('slots[0].classList.add("next")', HTML)  # はかるを開いた時点で最初の枠を示す
+        self.assertIn('slots[measured].classList.remove("next")', HTML)
+        self.assertIn('slots[measured].classList.add("next")', HTML)
+        self.assertIn('meterBtn.textContent = "💧 はかる ・ あと " + (LOT.moisture.length - measured) + "回"', HTML)
+        self.assertIn('meterBtn.textContent = "💧 はかる ✓"', HTML)
+        self.assertIn('s.classList.remove("next")', HTML)  # 次の山で印も戻る
+        self.assertIn('meterBtn.textContent = "💧 はかる";', HTML)  # ボタンの表示も戻る
+        self.assertIn("次に数字が入る枠に金の内枠を付け", HTML)
+        self.assertNotIn("setInterval", HTML)
+        self.assertNotIn("alert(", HTML)

@@ -269,7 +269,7 @@ class KensaTests(unittest.TestCase):
         # 次の所作の主な操作へ静かに渡す（流れを止める要素・タイマーは入れない）
         self.assertIn('document.getElementById("meterBtn").focus()', HTML)   # さす→はかる
         self.assertIn('querySelector("#whiteTray .sgrain")', HTML)           # はかる→みわける（最初の粒）
-        self.assertIn('document.querySelector(".gradeBtn").focus()', HTML)   # みわける→きめる
+        self.assertIn('document.querySelector(".gradeBtn").focus({ preventScroll: true });', HTML)   # みわける→きめる（サイクル52: ラベルが見切れないようスクロールなし）
         self.assertIn('document.getElementById("stampBtn").focus()', HTML)   # きめる→おす
         self.assertIn("bagTap.focus()", HTML)                                # 次の山→最初の袋
         self.assertGreaterEqual(HTML.count("nextBtn.focus()"), 3)            # 平均確定・等級確定・押印で次ボタンへ
@@ -966,5 +966,25 @@ class Cycle49SasInstantHintTests(unittest.TestCase):
         self.assertLess(HTML.index('count.textContent = "穀刺しで ぬいている";'),
                         HTML.index('count.innerHTML = "とれた試料 <b>約40g</b>";'))
         self.assertIn("タップした瞬間に案内が「穀刺しで ぬいている」へ変わり", HTML)
+        self.assertNotIn("setInterval", HTML)
+        self.assertNotIn("alert(", HTML)
+
+
+class Cycle52ResultLabelInstantTests(unittest.TestCase):
+    def test_cycle52_result_label_readable_immediately_and_not_scrolled_off(self):
+        # サイクル52（継続指示「『良い』と言うまで最初の1分だけ」・きめるへ進んだ直後の結果ラベルの出方）:
+        # 実測では到着120msでラベルの opacity が約0.32（kokuIn .55秒で薄く出る途中）で、
+        # 等級ボタンへの焦点移動で画面が飛びラベル上部が top -163px と見切れていた。
+        # ラベルは等級を考える手がかりそのものなので、動きなしで即時に読めるようにし、
+        # 焦点は preventScroll で渡してラベルの上部が見切れないようにする
+        import re
+        m = re.search(r"#resultLabel \{[^}]*\}", HTML)
+        self.assertIsNotNone(m)
+        self.assertNotIn("animation", m.group(0))
+        self.assertNotIn("animation:kokuIn .55s ease; }", HTML.split("#resultLabel")[1].split("}")[0] if "#resultLabel" in HTML else "")
+        self.assertIn('document.querySelector(".gradeBtn").focus({ preventScroll: true });', HTML)
+        self.assertIn("結果ラベルを薄く出る動きなしに開いた瞬間から読めるようにし", HTML)
+        self.assertIn('document.getElementById("resultLabel").scrollIntoView({ block: "start" });', HTML)
+        self.assertIn("ラベルの先頭が見える位置へ画面を移して", HTML)
         self.assertNotIn("setInterval", HTML)
         self.assertNotIn("alert(", HTML)

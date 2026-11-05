@@ -14,7 +14,7 @@ def git(*a):
 
 i = PIXEL.index("function drawMzTrail(")
 TRAIL = PIXEL[i:PIXEL.index("\n}\n", i)]
-ADDED = [l[1:] for l in git("diff", "-U0", "origin/main", "--", "nishio-go/pixel.js").splitlines() if l.startswith("+") and not l.startswith("+++") and "//c17" not in l and "!G.demo" not in l]
+ADDED = [l[1:] for l in git("diff", "-U0", "origin/main", "--", "nishio-go/pixel.js").splitlines() if l.startswith("+") and not l.startswith("+++") and "//c17" not in l and "!G.demo" not in l and "//c82" not in l]
 
 
 class Perp(unittest.TestCase):

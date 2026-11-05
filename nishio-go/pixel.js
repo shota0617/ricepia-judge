@@ -105,11 +105,16 @@ const POI_LABEL = { townhall: '🏛️ 市役所・支所', hospital: '🏥 病�
   bank: '🏦 銀行', food: '🍜 飲食店', cafe: '☕ カフェ・パン・お菓子', store: '🛍️ お店' };
 // 街並みの目印（tools/bake-spots.js が OpenStreetMap から作った nishio-go/landmarks.json）：[マスx, マスy, 種類, 名前]
 let landmarks = [];
-fetch('nishio-go/landmarks.json').then(r => (r.ok ? r.json() : null)).then(j => {
+// 目印・絵の一覧は転がり始めには要らないので、ページの読みこみが終わって手があいてから取る（区画の読みこみと帯域・CPUを取り合わない）
+function afterLoad(fn) {
+  const go = () => { if (window.requestIdleCallback) requestIdleCallback(fn, { timeout: 3000 }); else setTimeout(fn, 1000); };
+  if (document.readyState === 'complete') go(); else window.addEventListener('load', go, { once: true });
+}
+afterLoad(() => fetch('nishio-go/landmarks.json').then(r => (r.ok ? r.json() : null)).then(j => {
   if (!j || !Array.isArray(j.items)) return;
   landmarks = j.items.filter(m => POI_LABEL[m[2]]).map(([lat, lng, kind, name]) => { const q = toTile(lat, lng); return [+q.x.toFixed(2), +q.y.toFixed(2), kind, name, 'lm']; });
   poiCache.key = ''; dirty = true;
-}).catch(() => { /* 目印なしで続行 */ });
+}).catch(() => { /* 目印なしで続行 */ }));
 // 町名（せかいちずの地名のうち町・字。world.json の l の 'tw'）：[マスx, マスy, 名前, 市町名（7市町と まわりの市町。どこでもなければ ''）]。歩く地図に町名の札を出し、いまいる町を左上に出す
 let towns = [], townsLoad = null, townsRetry = 0;
 function loadTowns() {
@@ -643,45 +648,58 @@ async function bakedChunk(cx, cy) {
   } catch (e) { return null; }
 }
 
+const PUMP_PAR = 3;   // 区画を同時に読む数
+async function loadChunk(cx, cy) {   // 区画1つ：用意した区画 → 端末の保存分 → 地図データから作る。どの段で失敗しても fail にしてワーカは止めない（並行数の上限と queue の消化を保つ）
+  const k = cx + '_' + cy;
+  chunks.set(k, { state: 'loading' });
+  try {
+  // 1) 用意した区画（いつも最新を使う。ブラウザのHTTPキャッシュが効くので2回目からは軽い。端末には保存しない）
+  const pre = await bakedChunk(cx, cy);
+  if (pre) {
+    // 土地利用で塗ってある区画（版2から）はそのまま。古い区画だけ、道の多い草地に家を並べる
+    chunks.set(k, { state: 'ok', g: pre.lu ? pre : townify(pre), pois: pre.pois }); nbrCache.clear();
+    dirty = true;
+    return;
+  }
+  // 2) 用意した区画がなければ、前にブラウザで作って端末に保存した区画
+  const saved = store.get(PX_KEY + k);
+  if (saved && saved.d && saved.d.length === CHUNK * CHUNK && Date.now() - saved.t < (saved.days || PX_DAYS) * 864e5) {
+    chunks.set(k, { state: 'ok', g: saved.lu ? dec(saved.d) : townify(dec(saved.d)), pois: saved.p || [] }); nbrCache.clear();
+    dirty = true;
+    return;
+  }
+  // 3) それもなければ、ブラウザで地図データと標高を取って作る
+  try {
+    // 地図データと標高を同時に取得（標高が取れなくても地図は作る）
+    const [json, dem] = await Promise.all([overpass(chunkQuery(chunkBox(cx, cy))), demFor(cx, cy).catch(() => null), luReady]);
+    const g = rasterize(json.elements || [], cx, cy, dem && dem.h);
+    saveChunk(k, g, dem && !dem.partial ? PX_DAYS : 1);   // 標高が欠けた区画は1日で取り直す
+    chunks.set(k, { state: 'ok', g: BAKE || g.lu ? g : townify(g), pois: g.pois || [] }); nbrCache.clear();
+  } catch (e) {
+    chunks.set(k, { state: 'fail', t: Date.now() });
+  }
+  } catch (e) {   // 用意した区画・保存分の変換などで失敗したときも、loading のまま残さない
+    chunks.set(k, { state: 'fail', t: Date.now() });
+  }
+  dirty = true;
+}
+
 async function pump() {
   if (pumping) return;
   pumping = true;
   try {
-    while (queue.length) {
-      // 現在地に近い区画から
-      const here = camTile();
-      queue.sort((a, b) => Math.hypot(a[0] - here.x / CHUNK, a[1] - here.y / CHUNK) - Math.hypot(b[0] - here.x / CHUNK, b[1] - here.y / CHUNK));
-      const [cx, cy] = queue.shift();
-      const k = cx + '_' + cy;
-      chunks.set(k, { state: 'loading' });
-      // 1) 用意した区画（いつも最新を使う。ブラウザのHTTPキャッシュが効くので2回目からは軽い。端末には保存しない）
-      const pre = await bakedChunk(cx, cy);
-      if (pre) {
-        // 土地利用で塗ってある区画（版2から）はそのまま。古い区画だけ、道の多い草地に家を並べる
-        chunks.set(k, { state: 'ok', g: pre.lu ? pre : townify(pre), pois: pre.pois }); nbrCache.clear();
-        dirty = true;
-        continue;
+    const worker = async () => {
+      while (queue.length) {
+        // 現在地に近い区画から
+        const here = camTile();
+        queue.sort((a, b) => Math.hypot(a[0] - here.x / CHUNK, a[1] - here.y / CHUNK) - Math.hypot(b[0] - here.x / CHUNK, b[1] - here.y / CHUNK));
+        const [cx, cy] = queue.shift();
+        await loadChunk(cx, cy);
       }
-      // 2) 用意した区画がなければ、前にブラウザで作って端末に保存した区画
-      const saved = store.get(PX_KEY + k);
-      if (saved && saved.d && saved.d.length === CHUNK * CHUNK && Date.now() - saved.t < (saved.days || PX_DAYS) * 864e5) {
-        chunks.set(k, { state: 'ok', g: saved.lu ? dec(saved.d) : townify(dec(saved.d)), pois: saved.p || [] }); nbrCache.clear();
-        dirty = true;
-        continue;
-      }
-      // 3) それもなければ、ブラウザで地図データと標高を取って作る
-      try {
-        // 地図データと標高を同時に取得（標高が取れなくても地図は作る）
-        const [json, dem] = await Promise.all([overpass(chunkQuery(chunkBox(cx, cy))), demFor(cx, cy).catch(() => null), luReady]);
-        const g = rasterize(json.elements || [], cx, cy, dem && dem.h);
-        saveChunk(k, g, dem && !dem.partial ? PX_DAYS : 1);   // 標高が欠けた区画は1日で取り直す
-        chunks.set(k, { state: 'ok', g: BAKE || g.lu ? g : townify(g), pois: g.pois || [] }); nbrCache.clear();
-      } catch (e) {
-        chunks.set(k, { state: 'fail', t: Date.now() });
-      }
-      dirty = true;
-    }
+    };
+    await Promise.all(Array.from({ length: PUMP_PAR }, worker));
   } finally { pumping = false; }
+  if (queue.length) pump();   // 終わるまぎわに足された区画があれば読み直す
 }
 
 async function overpass(query) {
@@ -7181,7 +7199,7 @@ GIANT_ART['f-kondo-beikoku'] = 'kondo';   // 近藤米穀店（本店）も：�
 ['hekinan-saihoji', 'hekinan-aoi-park', 'takahama-ningyo-koji'].forEach(n => { GIANT_ART['f-' + n] = n; });
 // ほかの名所（約1000か所）は、型で作った特大の絵（tools/blender/giant-gen.py。nishio-go/art/giant/<id>.png、一覧は list.json）
 let giantIds = null;
-fetch('nishio-go/art/giant/list.json').then(r => (r.ok ? r.json() : null)).then(j => { giantIds = new Set((j && j.ids) || []); dirty = true; }).catch(() => { giantIds = new Set(); });
+afterLoad(() => fetch('nishio-go/art/giant/list.json').then(r => (r.ok ? r.json() : null)).then(j => { giantIds = new Set((j && j.ids) || []); dirty = true; }).catch(() => { giantIds = new Set(); }));
 const giants = {};
 // 翔米の可愛いドット絵（自店の目印。読めるまでは描かない）
 let shomaiImg = null;
@@ -7219,7 +7237,7 @@ function giantTiles(s) {
 // 特大の絵（読めていなければ null）。load が false なら読みはじめない（タップの判定など、画面の外の名所にも使うとき）
 // 西尾の四季ドット絵（tools/blender/giant-pr.py → nishio-go/art/pr/）がある名所は、いまの季節（mapSeason）と時間帯（日本時間）の絵にする（いつもの左前の向き）
 let prIds = null;
-fetch('nishio-go/art/pr/list.json').then(r => (r.ok ? r.json() : null)).then(j => { prIds = new Set(((j && j.items) || []).filter(x => x.views.includes(0)).map(x => x.id)); dirty = true; }).catch(() => { prIds = new Set(); });
+afterLoad(() => fetch('nishio-go/art/pr/list.json').then(r => (r.ok ? r.json() : null)).then(j => { prIds = new Set(((j && j.items) || []).filter(x => x.views.includes(0)).map(x => x.id)); dirty = true; }).catch(() => { prIds = new Set(); }));
 const prTime = () => { const hr = new Date(Date.now() + 9 * 3600000).getUTCHours(); return hr >= 5 && hr < 10 ? 0 : hr >= 10 && hr < 16 ? 1 : hr >= 16 && hr < 19 ? 2 : 3; };
 function giantOf(s, load = true) {
   if (prIds && prIds.has(s.id)) return giantImg(`../pr/${s.id}/0-${mapSeason()}-${prTime()}`, load);
@@ -7245,10 +7263,10 @@ function giantImg(n, load = true) {   // nishio-go/art/giant/<n>.png を [ふつ
 // 街の主な建物（学校・病院・交番や警察署・消防署・郵便局・役所・図書館）500か所の特大の絵（tools/blender/giant-poi-list.py・giant-gen.py --poi）。
 // 一覧 nishio-go/art/giant/poi.json は [id, 種類, 名前, マスx, マスy]。目印（区画データの p）と、種類と名前が同じで3マス以内のものに描く
 const giantPois = new Map();   // '種類|名前' → [[id, x, y], …]
-fetch('nishio-go/art/giant/poi.json').then(r => (r.ok ? r.json() : null)).then(j => {
+afterLoad(() => fetch('nishio-go/art/giant/poi.json').then(r => (r.ok ? r.json() : null)).then(j => {
   for (const [id, kind, name, x, y] of (j && j.items) || []) { const k = kind + '|' + name; if (!giantPois.has(k)) giantPois.set(k, []); giantPois.get(k).push([id, x, y]); }
   poiCache.key = ''; dirty = true;
-}).catch(() => { /* 特大の絵なしで続ける */ });
+}).catch(() => { /* 特大の絵なしで続ける */ }));
 function giantPoiOf(p) {   // その目印の特大の絵の id（なければ ''）。目印ごとに覚えておく
   if (p.g === undefined && giantPois.size) {
     const c = (giantPois.get(p[2] + '|' + p[3]) || []).find(q => Math.abs(q[1] - p[0]) < 3 && Math.abs(q[2] - p[1]) < 3);
@@ -12887,7 +12905,10 @@ G.onModeChange(() => { if (driving) setDriving(false); });
 // はじめての人はドット絵（ダンジョン風）のせかいちずから
 let initial = 'px', worldOn = '1';
 try { initial = 'px'; worldOn = localStorage.getItem('nsg_world_on') ?? '1'; } catch (e) { /* noop */ }
-if (initial === 'px') { setActive(true); if (worldOn === '1') setWorld(true); }
+// 戻ってきた操作プレイヤー（はじめてでなく、モードが demo）は、せかいちずでなく歩く地図から開く（すぐ転がれる。保存した nsg_world_on は書き換えない）
+let backPlayer = false;
+try { backPlayer = !!store.get('nsg_started') && store.get('nsg_mode') === 'demo'; } catch (e) { /* noop */ }
+if (initial === 'px') { setActive(true); if (worldOn === '1' && !backPlayer) setWorld(true); }
 
 // テスト用
 // めいろ（meiro.js）が使うもの：地図のマス・盤の絵・区画の読みこみ・傾き・音・うしろの地図を止める

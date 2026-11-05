@@ -927,3 +927,17 @@ class Cycle48GoodGrainNodTests(unittest.TestCase):
         self.assertIn("よい粒をタップした時も指を離した後まで小さな揺れが見えるようにして", HTML)
         self.assertNotIn("setInterval", HTML)
         self.assertNotIn("alert(", HTML)
+
+
+class Cycle49SasInstantHintTests(unittest.TestCase):
+    def test_cycle49_sas_tap_hint_changes_immediately(self):
+        # サイクル49（継続指示「『良い』と言うまで最初の1分だけ」・さすのタップ直後の案内）:
+        # 実測ではタップ後300msでも案内が「ふくろを タップ」のままで、2.4秒の動きの間は
+        # 済んだはずの指示が残っていた。タップ直後に「穀刺しで ぬいている」へ切り替え、
+        # 完了時の「とれた試料 約40g」への上書きは従来どおりにする
+        self.assertIn('count.textContent = "穀刺しで ぬいている";', HTML)
+        self.assertLess(HTML.index('count.textContent = "穀刺しで ぬいている";'),
+                        HTML.index('count.innerHTML = "とれた試料 <b>約40g</b>";'))
+        self.assertIn("タップした瞬間に案内が「穀刺しで ぬいている」へ変わり", HTML)
+        self.assertNotIn("setInterval", HTML)
+        self.assertNotIn("alert(", HTML)

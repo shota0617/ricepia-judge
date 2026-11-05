@@ -1624,7 +1624,7 @@ const COVER = (() => {
     if (fixed && !S.parked) fixed = false;          // エンジンをかけなおした
     if (!stuck) return;
     if (working && S.v > 0.05) odo += S.v * dt;
-    if (odo > 15 && !told) { told = true; toast('なみなみに なってるね。とまって みてみよう（耕したあとが 波うっている。山と谷が くり返す。リヤカバーが なめらかに上下していないのかも。止まって ' + IMPL + 'を上げると 見ます）', 7); }
+    if (odo > 15 && !told && !startNoticeMuted()) { told = true; toast('なみなみに なってるね。とまって みてみよう（耕したあとが 波うっている。山と谷が くり返す。リヤカバーが なめらかに上下していないのかも。止まって ' + IMPL + 'を上げると 見ます）', 7); }   // サイクル175・最初の1分: のんびりでは秋の開始直後（未点検では15m耕すと出る）にリヤカバーの波の長文知らせで最初のなぞりを止めない。toldは立てないので1分を過ぎれば従来どおり出す（遅れて出す形）。くわしい説明では従来どおり開始直後から出す
     if (told && Math.abs(S.v) < 0.05 && !S.rotDown && S.rotPos > 0.9 && (S.rotorW || 0) < 1 && (!S.stalled || offFree()) && !(S.crank > 0)) {   // 爪が惰性で回っているあいだは 近づかない
       S.stalled = true; S.parked = true; S.v = 0; S.autoUp = false;
       for (const k of ['fwd', 'back', 'left', 'right']) key[k] = 0;

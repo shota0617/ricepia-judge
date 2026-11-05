@@ -998,7 +998,7 @@ class Cycle52ResultLabelInstantTests(unittest.TestCase):
         self.assertNotIn("animation:kokuIn .55s ease; }", HTML.split("#resultLabel")[1].split("}")[0] if "#resultLabel" in HTML else "")
         self.assertIn('document.querySelector(".gradeBtn").focus({ preventScroll: true });', HTML)
         self.assertIn("結果ラベルを薄く出る動きなしに開いた瞬間から読めるようにし", HTML)
-        self.assertIn('document.getElementById("resultLabel").scrollIntoView({ block: "start" });', HTML)
+        # スクロール先はサイクル58で resultLabel から stepChip へ変更（優先順位の設計・Cycle58テストで固定）
         self.assertIn("ラベルの先頭が見える位置へ画面を移して", HTML)
         self.assertNotIn("setInterval", HTML)
         self.assertNotIn("alert(", HTML)
@@ -1069,5 +1069,25 @@ class Cycle57HakaruDoneNextButtonVisibleTests(unittest.TestCase):
         self.assertLess(meter_done, scroll_pos)
         self.assertLess(scroll_pos, focus_pos)
         self.assertIn("はかるが終わると、次へ進むボタンが画面の下端で見切れないよう", HTML)
+        self.assertNotIn("setInterval", HTML)
+        self.assertNotIn("alert(", HTML)
+
+
+class Cycle58KimeruArrivalChipVisibleTests(unittest.TestCase):
+    def test_cycle58_kimeru_arrival_shows_chip_and_hint_first(self):
+        # サイクル58（継続指示「『良い』と言うまで最初の1分だけ」・きめる到着時の優先順位）:
+        # 実測（390×844）ではサイクル52のラベル先頭合わせだと段階チップ top -200px・
+        # 案内 -147px と画面外で、今どの段階かと「等級を えらぶ」が到着時に読めなかった。
+        # チップ＋案内＋ラベル544px＋ボタンは合計が画面を超え全部は同時に入らないため、
+        # 優先順位を ①チップと案内 ②ラベルの先頭から読む順 ③ボタンはラベルを読んだ後の
+        # 短いスクロール先と決め、移す先をチップにする。焦点は preventScroll のまま
+        self.assertIn('document.getElementById("stepChip").scrollIntoView({ block: "start" });', HTML)
+        self.assertNotIn('document.getElementById("resultLabel").scrollIntoView', HTML)
+        kimeru = HTML.index('phase = "kimeru";')
+        scroll_pos = HTML.index('document.getElementById("stepChip").scrollIntoView', kimeru)
+        focus_pos = HTML.index('document.querySelector(".gradeBtn").focus({ preventScroll: true });', kimeru)
+        self.assertLess(scroll_pos, focus_pos)
+        self.assertIn("きめるでは、入った時に段階の案内が見える位置へ画面を移し", HTML)
+        self.assertIn("案内と結果ラベルを先頭から読んでから等級を選ぶ優先順にしました", HTML)
         self.assertNotIn("setInterval", HTML)
         self.assertNotIn("alert(", HTML)

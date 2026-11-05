@@ -1736,7 +1736,7 @@ const HERI = (() => {
     if (fixed && !S.parked) fixed = false;          // エンジンをかけなおした
     if (!worn) return;
     if (working && S.v > 0.05) run += S.v * dt;
-    if (run > 12 && !told && !chk && tries < 3 && toastT <= 0) { chk = true; toast(MSG, 7); }   // ほかの知らせが 消えてから
+    if (run > 12 && !told && !chk && tries < 3 && toastT <= 0 && !startNoticeMuted()) { chk = true; toast(MSG, 7); }   // ほかの知らせが 消えてから。サイクル174・最初の1分: のんびりでは春の開始直後（既定の季節・未点検では12m耕すと出る）に右はし爪の長文知らせで最初のなぞりを止めない。chkは立てないので1分を過ぎて知らせが空いていれば従来どおり出す（遅れて出す形）。くわしい説明では従来どおり開始直後から出す
     if (chk) {                                      // 1.2 秒 見えていたら 気づいたことにする（上書きされたら 出しなおす）
       if ($('toast').dataset.raw !== MSG) { chk = false; tries++; }
       else if (toastT <= 7 - 1.2) { chk = false; told = true; }

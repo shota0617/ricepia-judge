@@ -41,7 +41,7 @@ class TextCut(unittest.TestCase):
         bar = func(PIXEL, 'function drawMzEnergyBar(')
         self.assertNotIn('createLinearGradient', bar)
         self.assertNotIn('pulse', bar)
-        self.assertIn('⚡ ${mzEnergy.steps}/${MZ_ENERGY.need}', bar)
+        self.assertNotIn('⚡ ${mzEnergy.steps}/${MZ_ENERGY.need}', bar)
 
     def test_guide_one_line(self):
         g = func(GAME, 'function renderGuide(')

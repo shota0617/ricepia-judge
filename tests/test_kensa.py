@@ -408,6 +408,46 @@ class KensaTests(unittest.TestCase):
         self.assertNotIn("setInterval", HTML)                          # タイマー・焦らせる仕組みを入れない
         self.assertNotIn("alert(", HTML)                               # 流れを止める要素は作らない
 
+    def test_cycle26_result_label(self):
+        # サイクル26（ユーザー指示 2026-11-05 13:08）: 検査結果を実物の穀粒判定器RN-700の印字ラベルの様式で表示。
+        # 項目名・割合%・粒数が行ごとに並び、上部に測定日付・測定粒種・ロット番号、末尾に合計粒数。
+        self.assertIn('id="resultLabel"', HTML)
+        self.assertIn("穀粒判定器 RN-700", HTML)
+        self.assertIn("測定粒種：うるち玄米", HTML)
+        self.assertIn('id="labelRows"', HTML)
+        self.assertIn('id="labelTotal"', HTML)
+        self.assertIn("renderResultLabel()", HTML)  # 「きめる」へ進む時に出す（流れを止めるモーダルにはしない）
+        # 行はゲームで実際に数える粒の分類だけ（整粒等／被害粒／死米／未熟粒／着色粒／もみ）。
+        # 砕粒・胴割粒は被害粒にまとめ、その他・異物等は粒として数えていないため行を作らない
+        m = re.search(r"const LABEL_ROWS = \[(.*?)\];", HTML, re.S)
+        self.assertIsNotNone(m)
+        pairs = re.findall(r'\["([^"]+)", "(\w+)"\]', m.group(1))
+        self.assertEqual(pairs, [("整粒等", "seiryu"), ("被害粒", "higai"), ("死米", "shini"),
+                                 ("未熟粒", "mijuku"), ("着色粒", "color"), ("もみ", "momi")])
+        self.assertNotIn("630", HTML)  # 実物の合計630粒を真似て水増ししない
+        self.assertNotIn("setInterval", HTML)  # タイマー・焦らせる仕組みを入れない
+        self.assertNotIn("alert(", HTML)       # 流れを止める要素は作らない
+
+    def test_cycle26_result_label_rows_values(self):
+        # 結果ラベルの割合は皿の50粒の実数から作る（純粋関数を node で実行して全ロット固定）
+        node = shutil.which("node")
+        self.assertIsNotNone(node, "node が必要")
+        rows_def = re.search(r"const LABEL_ROWS = \[.*?\];", HTML, re.S).group(0)
+        func = re.search(r"function resultLabelRows\(sort\) \{.*?^\}", HTML, re.S | re.M).group(0)
+        lots_func = re.search(r"const LOTS = \[.*?\n\];", HTML, re.S).group(0)
+        script = (lots_func + "\n" + rows_def + "\n" + func +
+                  "\nconsole.log(JSON.stringify(LOTS.map(l => resultLabelRows(l.sort))));\n")
+        out = subprocess.run([node, "-e", script], capture_output=True, text=True, timeout=30)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        all_rows = json.loads(out.stdout)
+        self.assertEqual(len(all_rows), 6)
+        for rows in all_rows:
+            self.assertEqual(sum(r["count"] for r in rows), 50)          # 合計は皿の50粒
+            self.assertAlmostEqual(sum(r["pct"] for r in rows), 100.0)   # 割合の合計は100%
+        # ロット1: 整粒等40粒=80.0%／着色粒1粒=2.0%
+        self.assertEqual(all_rows[0][0], {"name": "整粒等", "count": 40, "pct": 80.0})
+        self.assertEqual(all_rows[0][4], {"name": "着色粒", "count": 1, "pct": 2.0})
+
     def test_stamp_date_text(self):
         # 日付印は固定日付でなく、その日の日付を YYYY.M.D で作る純粋関数
         node = shutil.which("node")

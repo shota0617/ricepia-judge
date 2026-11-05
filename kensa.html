@@ -173,6 +173,20 @@
   /* きめる（サイクル4）: 大きな等級ボタン4つ。流れを止めない見直し導線つき */
   #gradeWrap { display:none; margin-top:12px; background:var(--paper); border-radius:16px; padding:16px 14px 18px; box-shadow:0 4px 12px rgba(26,24,20,.18); }
   #gradeWrap.on { display:block; }
+  /* 結果ラベル（サイクル26・ユーザー指示 2026-11-05 13:08「検査結果このように表示」）: 実物の穀粒判定器RN-700の
+     印字ラベル（user_assets/rn700_label_ref_20261105.jpg）の様式。白い紙に項目名・割合%・粒数が行ごとに並び、
+     上部に測定日付・測定粒種・ロット番号、末尾に合計粒数。数値は「みわける」の皿の50粒の実数だけを使う
+     （実物の合計粒数を真似て水増ししない）。全画面モーダルにはせず「きめる」の流れの中に静かに置く */
+  #resultLabel { background:#fff; border-radius:4px; padding:12px 14px 10px; margin:0 0 12px; color:#111;
+    box-shadow:0 1px 4px rgba(26,24,20,.18); animation:kokuIn .55s ease; }
+  #resultLabel .labelHead { font-size:13px; font-weight:700; line-height:1.65; border-bottom:3px solid #111; padding-bottom:6px; margin-bottom:6px; }
+  .labelRow { display:flex; justify-content:space-between; align-items:flex-end; padding:2px 0; }
+  .labelRow .lleft { display:flex; flex-direction:column; }
+  .labelRow .lk { font-size:22px; font-weight:800; line-height:1.15; }
+  .labelRow .lc { font-size:15px; font-weight:700; margin-left:44px; line-height:1.2; }
+  .labelRow .lp { font-size:28px; font-weight:800; line-height:1.1; }
+  .labelTotal { border-top:1px solid #999; margin-top:4px; padding-top:6px; }
+  .labelTotal .lp { font-size:24px; }
   #gradeRecap { margin:0 0 12px; font-size:18px; font-weight:800; text-align:center; }
   #gradeRecap b { font-size:30px; }
   #gradeBtns { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
@@ -278,6 +292,11 @@
     <p id="sortPct">みわけ <b>0%</b> <span id="sortCount">0 / 10</span></p>
   </div>
   <div id="gradeWrap">
+    <div id="resultLabel" aria-label="検査結果ラベル">
+      <div class="labelHead">《穀粒判定器 RN-700》<br/>測定日付：<span id="labelDate">—</span><br/>測定粒種：うるち玄米<br/>ロット番号：<span id="labelLot">01</span></div>
+      <div id="labelRows"></div>
+      <div class="labelRow labelTotal"><span class="lk">合　計</span><span class="lp" id="labelTotal">50粒</span></div>
+    </div>
     <p id="gradeRecap">💧 <b id="gradeMoisture">—</b>　👀 <span id="gradeSort">0 / 10</span></p>
     <div id="gradeBtns">
       <button class="gradeBtn" data-grade="1等">1等</button>
@@ -301,7 +320,7 @@
   </div>
   <button id="nextBtn">② はかる 💧</button>
 
-  <footer>農産物検査の仕事が題材です。試料の採取は穀刺しで1袋 約40g（標準抽出方法・平成13年農林水産省告示第443号）。「さす」の場面に載せた穀刺しの写真は、実際の検査で使う実物です。水分は3回の測定の平均で判定します。粒の鑑定は同じ試料を白い皿と黒い皿の双方に入れて確認します。鑑定は視覚・触覚・臭覚・聴覚を用いて行います（鑑定方法・平成13年農林水産省告示第333号）。等級の規格は農産物規格規程（平成13年告示第244号）の水稲うるち玄米に基づきます。等級は、整粒・水分・被害粒・死米・着色粒・異種穀粒・異物の全項目がその等級の限度内にある、最も良い等級です（未熟粒は「計」に入りません）。判定した等級は等級証印として米袋に押印し、あわせて検査証明年月日の日付印を押します。死米と着色粒は、穀粒判別器でも鑑定できます。「みわける」と資料に載せた一等米の写真は実物です。</footer>
+  <footer>農産物検査の仕事が題材です。試料の採取は穀刺しで1袋 約40g（標準抽出方法・平成13年農林水産省告示第443号）。「さす」の場面に載せた穀刺しの写真は、実際の検査で使う実物です。水分は3回の測定の平均で判定します。粒の鑑定は同じ試料を白い皿と黒い皿の双方に入れて確認します。鑑定は視覚・触覚・臭覚・聴覚を用いて行います（鑑定方法・平成13年農林水産省告示第333号）。等級の規格は農産物規格規程（平成13年告示第244号）の水稲うるち玄米に基づきます。等級は、整粒・水分・被害粒・死米・着色粒・異種穀粒・異物の全項目がその等級の限度内にある、最も良い等級です（未熟粒は「計」に入りません）。判定した等級は等級証印として米袋に押印し、あわせて検査証明年月日の日付印を押します。死米と着色粒は、穀粒判別器でも鑑定できます。「みわける」と資料に載せた一等米の写真は実物です。検査結果は、穀粒判定器の印字ラベルの様式で、皿の50粒の実数（粒数とその割合）で表示します。</footer>
   <details id="refBox">
     <summary>📖 資料（規格表）</summary>
     <table aria-label="水稲うるち玄米の品位規格">
@@ -404,6 +423,25 @@ function judgeGrade(truth, moisture) {
 function stampDateText(d) {
   return d.getFullYear() + "." + (d.getMonth() + 1) + "." + d.getDate();
 }
+/* 結果ラベル（サイクル26）: ラベルの日付は測定日付として年月日で出す */
+function labelDateText(d) {
+  return d.getFullYear() + "年" + String(d.getMonth() + 1).padStart(2, "0") + "月" + String(d.getDate()).padStart(2, "0") + "日";
+}
+/* 結果ラベルの項目（サイクル26）: 項目名は実物ラベルの表記に寄せ、行はゲームで実際に数える粒の分類だけにする。
+   実物ラベルの砕粒・胴割粒は、ゲームでは被害粒（割れ目の粒）としてまとめて数えるため行を分けない。
+   その他・異物等も粒として数えていないため行を作らない（数えていないものを水増しして出さない）。
+   割合は皿の50粒に対する実数（粒数÷合計×100・小数第1位）で、判定に使う真値（重量%・truth）とは別物。 */
+const LABEL_ROWS = [["整粒等", "seiryu"], ["被害粒", "higai"], ["死米", "shini"], ["未熟粒", "mijuku"], ["着色粒", "color"], ["もみ", "momi"]];
+function resultLabelRows(sort) {
+  return LABEL_ROWS.map(([name, key]) => ({ name, count: sort[key], pct: sort[key] / sort.total * 100 }));
+}
+function renderResultLabel() {
+  document.getElementById("labelDate").textContent = labelDateText(new Date());
+  document.getElementById("labelLot").textContent = String(lotIndex + 1).padStart(2, "0");
+  document.getElementById("labelRows").innerHTML = resultLabelRows(LOT.sort).map((r) =>
+    '<div class="labelRow"><span class="lleft"><span class="lk">' + r.name + '</span><span class="lc">' + r.count + '粒</span></span><span class="lp">' + r.pct.toFixed(1) + '%</span></div>').join("");
+  document.getElementById("labelTotal").textContent = LOT.sort.total + "粒";
+}
 const tray = document.getElementById("tray");
 const count = document.getElementById("count");
 const bagTap = document.getElementById("bagTap");
@@ -439,6 +477,7 @@ nextBtn.addEventListener("click", () => {
     phase = "kimeru";
     stepChip.textContent = "④ きめる";
     document.getElementById("sortWrap").classList.remove("on"); /* 道具は常時1つだけ: 皿はしまう */
+    renderResultLabel(); /* サイクル26: 「きめる」の流れの中で結果ラベルを見せる（皿の50粒の実数） */
     document.getElementById("gradeMoisture").textContent = moistureAverage(LOT.moisture).toFixed(1) + "%";
     document.getElementById("gradeSort").textContent = sortFound + " / " + sortBadTotal;
     document.getElementById("gradeWrap").classList.add("on");

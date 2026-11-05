@@ -1182,11 +1182,11 @@ class Cycle63StartCompactSmallScreenTests(unittest.TestCase):
         self.assertIn("@media (max-height:780px)", HTML)
         media = HTML.index("@media (max-height:780px)")
         block = HTML[media:HTML.index("#sortPct { margin:8px 2px 4px;", media)]
-        self.assertIn("#scene { width:86%; margin:0 auto; }", block)
+        self.assertIn("#scene { width:84%; margin:0 auto; }", block)
         self.assertIn("#kokuPhoto, #kokuDot { width:min(104px,30%); }", block)
         self.assertIn("#kokuPair figcaption { font-size:12px; padding:3px 4px 5px; }", block)
         self.assertIn("#trayWrap { padding:8px 12px 10px; }", block)
-        self.assertIn("#tray { height:88px; }", block)
+        self.assertIn("#tray { height:82px; }", block)
         # 大きい画面の従来値は不変
         self.assertIn("#kokuPhoto { width:min(168px,46%);", HTML)
         self.assertIn("#tray { position:relative; height:104px; }", HTML)

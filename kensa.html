@@ -542,7 +542,7 @@ function placeGrains(plate, kinds) {
   kinds.forEach((kind, i) => {
     const b = document.createElement("button");
     b.className = "sgrain " + (kind || "good");
-    b.setAttribute("aria-label", GRAIN_LABELS[kind || ""]);
+    b.setAttribute("aria-label", GRAIN_LABELS[kind || ""] || "整粒");
     const cols = 7;
     b.style.left = (3 + (i % cols) * 12.8 + (Math.floor(i / cols) % 2) * 4) + "%"; /* サイクル9: 大きくなったタップ範囲が小さい画面でも皿の右端に収まる間隔 */
     b.style.top = (28 + Math.floor(i / cols) * 30) + "px"; /* 粒の多いロット（サイクル6）でも皿に収まる間隔 */

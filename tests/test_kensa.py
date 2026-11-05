@@ -306,10 +306,12 @@ class KensaTests(unittest.TestCase):
         # サイクル19: 粒の読み上げラベルは「よい／わるい」という答えでなく、規程の用語（種類）そのままにする。
         # 見た目の区別（サイクル9）と同じ情報を読み上げでも伝え、種類を見て決める遊びは残す。
         self.assertIn("GRAIN_LABELS", HTML)
-        for kind, label in (("", "整粒"), ("higai", "被害粒"), ("shini", "死米"),
-                            ("mijuku", "未熟粒"), ("color", "着色粒"), ("momi", "もみ")):
-            self.assertIn(f'"{label}"', HTML)
-        self.assertIn('GRAIN_LABELS[kind || ""]', HTML)          # ラベルは種類マップから付ける
+        # キーとラベルの対応そのものを固定する（入れ替えたら落ちる・Codexレビュー指摘）
+        m = re.search(r"const GRAIN_LABELS = \{([^}]*)\};", HTML)
+        pairs = dict(re.findall(r'"([^"]*)":\s*"([^"]+)"', m.group(1)))
+        self.assertEqual(pairs, {"": "整粒", "higai": "被害粒", "shini": "死米",
+                                 "mijuku": "未熟粒", "color": "着色粒", "momi": "もみ"})
+        self.assertIn('GRAIN_LABELS[kind || ""] || "整粒"', HTML)  # 未知の種類でも "undefined" にならない
         self.assertNotIn('"わるい粒"', HTML)                      # 答えそのもののラベルは付けない
         self.assertNotIn('"よい粒"', HTML)
         self.assertNotIn("setInterval", HTML)                     # タイマー・焦らせる仕組みを入れない

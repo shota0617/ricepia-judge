@@ -3832,9 +3832,10 @@ function riceFaces(face, sd, N) {
 const BLINK_MS = 3400, BLINK_SHUT_MS = 150;
 const glanceShift = look => { const v = Math.round(Number(look) || 0); return v < -1 ? -1 : v > 1 ? 1 : v; };   // 見回しの 目の ずれを ドット絵の 1点以内に 丸める（サイクル100）
 const blinkOn = now => Number.isFinite(now) && now >= 0 && (now % BLINK_MS) < BLINK_SHUT_MS;
-function riceMood(now) { return (!calmMotion && roll.kind === 'stop' && blinkOn(now)) ? 'blink' : 'smile'; }
+function riceMood(now) { return (!calmMotion && roll.kind === 'stop' && blinkOn(now)) ? 'blink' : happyFace() ? 'happy' : 'smile'; }
 // ねむって いる（止まって しばらく）：顔ではなく 動きの 判定。ちょうちょ・ねどこ・ゆめは これで 出る
 const riceAsleep = () => roll.kind === 'stop' && roll.idle > 12;
+const happyFace = () => !calmMotion && roll.kind === 'stop' && roll.happyT > 0;   // 転がって止まった・つんされた間は ^^の うれしい顔（口は 絵の まま。サイクル105）
 const asleepShut = () => !calmMotion && roll.kind === 'stop' && roll.idle > 12;   // ねむって いる 間は 目を 閉じたまま（口と ほっぺは 笑顔のまま。サイクル100）
 const riceBreath = now => Math.sin(now / 2600 * Math.PI * 2) * (roll.idle > 12 ? 0.03 : 0.018);   // 息：2.6秒で 1回。ねむって いる ときは 少し 大きく ゆっくり 見える
 // ちょうちょ：ねむって いる お米の 頭に ひらひら 飛んで きて とまり、お米が おきると 飛んで いく（文字の ない 素朴な かわいさ。運営者の声 2026-10-28）。
@@ -3911,6 +3912,13 @@ function drawRiceBall(X, Y, u, th, sx, sy, spin, dst = ctx, gb = gbOn && !worldM
         dst.fillStyle = 'rgb(250,249,243)'; dst.fillRect((riceEyeAt.x + dx - rb0.gx) * u, (riceEyeAt.y - rb0.gy) * u, 2 * u, 3 * u);
         dst.fillStyle = 'rgb(14,14,14)'; dst.fillRect((riceEyeAt.x + dx + gl - rb0.gx) * u, (riceEyeAt.y - rb0.gy) * u, 2 * u, 3 * u);
       }
+    }
+    const happyEyes = mood === 'happy' && !asleepShut() && riceEyeAt && (fr === riceSprites.right[0] || fr === riceSprites.down[0]);
+    if (happyEyes) {   // うれしい顔：目と 両脇の 帯を 体の 色で ぬり、^^の 弧を 黒で 描く（サイクル105）
+      dst.fillStyle = 'rgb(250,249,243)';
+      for (const bx of [-1, 4]) dst.fillRect((riceEyeAt.x + bx - rb0.gx) * u, (riceEyeAt.y - rb0.gy) * u, 4 * u, 3 * u);
+      dst.fillStyle = 'rgb(14,14,14)';
+      for (const dx of [0, 5]) for (const [px, py] of [[-1, 1], [0, 0], [1, 0], [2, 1]]) dst.fillRect((riceEyeAt.x + dx + px - rb0.gx) * u, (riceEyeAt.y + py - rb0.gy) * u, u, u);
     }
     const nD = rb0.spots ? Math.round(Math.min(1, dirt) * rb0.spots.length) : 0;
     if (nD) { dst.fillStyle = `rgb(${(dirtCol || '150,120,80')})`; for (let m = 0; m < nD; m++) dst.fillRect((rb0.spots[m][0] - rb0.gx) * u, (rb0.spots[m][1] - rb0.gy) * u, u, u); }   // よごれの しみ（1点ずつ）
@@ -12931,7 +12939,7 @@ const meiroApi = {
   tilt: () => tiltG, tiltAsk, tiltReset, tiltNeedsPermission, koto: (v, low) => kotoSound(v, low), splash: v => splashSound(v), boing: (v, hi) => boingSound(v, hi), rumble: v => rumbleTick(v, GROUND.road),   // rumble：転がる音（速さは 地図の マス/秒）
   pause(on) { meiroPause = !!on; dirty = true; if (on && mzNext.hold) { mzNext.hold = false; if (G.toastFlush) G.toastFlush(); } },   // 止める ときは「つぎの ゴール」で 待たせた 知らせを 出す
 };
-window.nishioPixel = { blinkOn, BLINK_MS, BLINK_SHUT_MS, get riceEye() { return riceEyeAt; }, glanceShift, asleepShut, meiroApi, heroGiant: () => heroGiantId, pickHeroGiant, HERO_GIANT_RANGE, maze: { wallTheme: () => mzWallTheme(), on: () => mazeOn(), playing: () => active && mazeOn(), next: () => ({ want: mzNext.want, t0: mzNext.t0, on: mzNextOn(), labHide: !!mzNext.labHide, arrowDim: !!mzNext.arrowDim, box: mzNext.box || null }), goal: id => {   // id の 名所が いまの ゴール（か 2分 以内の 前の ゴール）なら、かかった 時間と めいろの 道のり
+window.nishioPixel = { blinkOn, BLINK_MS, BLINK_SHUT_MS, get riceEye() { return riceEyeAt; }, glanceShift, asleepShut, happyFace, meiroApi, heroGiant: () => heroGiantId, pickHeroGiant, HERO_GIANT_RANGE, maze: { wallTheme: () => mzWallTheme(), on: () => mazeOn(), playing: () => active && mazeOn(), next: () => ({ want: mzNext.want, t0: mzNext.t0, on: mzNextOn(), labHide: !!mzNext.labHide, arrowDim: !!mzNext.arrowDim, box: mzNext.box || null }), goal: id => {   // id の 名所が いまの ゴール（か 2分 以内の 前の ゴール）なら、かかった 時間と めいろの 道のり
     if (!mazeOn()) return null;
     const now = performance.now(), pv = mzRt.prev, g = mzRt.gid === id ? { t0: mzRt.t0, len0: mzRt.len0, warp: mzRt.warp, moves: mzMv.n, run: { ...mzRt.run } } : pv && pv.id === id && now - pv.at < 120000 ? pv : null;
     if (!g || !g.t0) return null;

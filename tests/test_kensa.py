@@ -537,7 +537,7 @@ class Cycle29DotIttomaiTests(unittest.TestCase):
         # 横並び（高さは写真カードのまま＝皿の収まりを崩さない）
         self.assertIn('id="ittoPair"', HTML)
         self.assertIn("#ittoPair { display:flex;", HTML)
-        self.assertIn("#ittoDot { width:min(144px,40%);", HTML)  # サイクル35で写真と同幅に更新
+        self.assertIn("#ittoDot { width:min(120px,34%);", HTML)  # サイクル35で写真と同幅にし、サイクル56でペア同寸のまま少し小さく更新
         # 資料のドット絵は refBox の中だけ（写真の下）
         ref = HTML.split('id="refBox"', 1)[1]
         self.assertIn('id="ittoDotRef"', ref)
@@ -648,9 +648,9 @@ class Cycle35PairAlignmentTests(unittest.TestCase):
         self.assertIn("#kokuPhoto { width:min(168px,46%);", HTML)
         self.assertIn("#kokuDot { width:min(168px,46%);", HTML)
         self.assertIn("#ittoPair { display:flex; gap:10px; justify-content:center; align-items:stretch;", HTML)
-        self.assertIn("#ittoDot { width:min(144px,40%);", HTML)
+        self.assertIn("#ittoDot { width:min(120px,34%);", HTML)
         self.assertIn("#ittoPair .ittoPhoto { margin:0; }", HTML)
-        self.assertIn(".ittoPhoto { width:min(144px,40%);", HTML)
+        self.assertIn(".ittoPhoto { width:min(120px,34%);", HTML)
         # 実物写真は両ペアとも維持
         self.assertIn('src="kensa/kokusashi.webp"', HTML)
         self.assertIn('src="kensa/kokusashi_dot.webp"', HTML)
@@ -1031,5 +1031,25 @@ class Cycle55SortBothTraysVisibleTests(unittest.TestCase):
                         HTML.index('firstGrain.focus({ preventScroll: true })'))
         self.assertIn("みわけるでは、入った時に皿の先頭が見える位置へ画面を移して", HTML)
         self.assertIn("白い皿と黒い皿の両方が一度に見えるようにして", HTML)
+        self.assertNotIn("setInterval", HTML)
+        self.assertNotIn("alert(", HTML)
+
+
+class Cycle56SortArrivalShowsYokeTests(unittest.TestCase):
+    def test_cycle56_sort_arrival_shows_yoke_tray(self):
+        # サイクル56（継続指示「『良い』と言うまで最初の1分だけ」・みわける到着時の見え方の残り）:
+        # サイクル55で両皿は1画面に入ったが、実測（390×844）では受け皿（#yokeWrap）が
+        # top 820／bottom 893px と下端の外にあり、よけた粒の行き先が見えなかった。
+        # 見本ペアは写真とドット絵の同寸（サイクル35）を保ったまま少し小さくし、
+        # 白い皿は粒の段数に余りのある分だけ低くして、受け皿まで到着時の1画面に収める。
+        # 資料置き場の見本（.ittoPhoto.ref）は従来の大きさのまま
+        self.assertIn(".ittoPhoto { width:min(120px,34%);", HTML)
+        self.assertIn("#ittoDot { width:min(120px,34%);", HTML)
+        self.assertIn(".ittoPhoto.ref { width:min(200px,60%);", HTML)
+        self.assertIn("#whiteTray { min-height:170px; }", HTML)
+        self.assertIn(".plate {", HTML)
+        self.assertIn("min-height:200px", HTML)  # 黒い皿（5段）・全体の既定は従来のまま
+        self.assertIn("みわけるでは、見本を少し小さくし、白い皿も余りの分だけ低くして", HTML)
+        self.assertIn("よけた粒の受け皿まで到着時の1画面に収まるようにしました", HTML)
         self.assertNotIn("setInterval", HTML)
         self.assertNotIn("alert(", HTML)

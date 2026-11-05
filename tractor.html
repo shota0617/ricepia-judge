@@ -8072,7 +8072,7 @@ const HINT = {
     if (!show) { box.classList.add('hidden'); return; }
     this.ensure();
     if (!this.pts || (this.at && (Math.hypot(S.x - this.at[0], S.z - this.at[1]) > 2 || Math.abs(S.yaw - this.at[2]) > 0.6))) this.pts = this.build();   // 自動運転などで位置が変わったら経路を作り直す
-    if (TRACE.drive && Math.abs(S.v) > 0.2) { this.okT += dt; if (this.okT > 0.4) { this.done = true; box.classList.add('hidden'); return; } } else this.okT = 0;   // 最初のなぞりが成功（連続0.4秒 実際に追って動く）したら消える
+    if (TRACE.drive && Math.abs(S.v) > 0.2) { this.okT += dt; if (this.okT > 0.4) { this.done = true; box.classList.add('hidden'); return; } } else this.okT = Math.max(0, this.okT - dt * 0.5);   // 最初のなぞりが成功（実際に追って動いた合計が0.4秒を超える）したら消える。サイクル166・最初の1分: 短いなぞりの繰り返しでも成功が積み上がるよう、止まっている間は okT を即0にせず 0.5/秒でゆっくり減らす（約0.8秒以上の中断で消えるので、偶発的な一瞬の動きだけでは終わらない）
     box.classList.remove('hidden');
     this.t = (this.t + dt) % 2.6;   // 2.2秒かけてなぞり、0.4秒休んで繰り返す
     const ph = this.t / 2.2, n = this.pts.length, pos = ph >= 1 ? null : ph * (n - 1), fi = pos === null ? n - 1 : Math.floor(pos), fr = pos === null ? 0 : pos - fi;

@@ -270,7 +270,7 @@ class KensaTests(unittest.TestCase):
         self.assertIn('document.getElementById("meterBtn").focus({ preventScroll: true })', HTML)   # さす→はかる（サイクル60: チップ先頭表示の後にスクロールなしで渡す）
         self.assertIn('querySelector("#whiteTray .sgrain")', HTML)           # はかる→みわける（最初の粒）
         self.assertIn('document.querySelector(".gradeBtn").focus({ preventScroll: true });', HTML)   # みわける→きめる（サイクル52: ラベルが見切れないようスクロールなし）
-        self.assertIn('document.getElementById("stampBtn").focus()', HTML)   # きめる→おす
+        self.assertIn('document.getElementById("stampBtn").focus({ preventScroll: true })', HTML)   # きめる→おす（サイクル64: チップ先頭表示の後にスクロールなしで渡す）
         self.assertIn("bagTap.focus({ preventScroll: true })", HTML)         # 次の山→最初の袋（サイクル54: 場面の先頭が見切れないようスクロールなし）
         self.assertGreaterEqual(HTML.count("nextBtn.focus()"), 3)            # 平均確定・等級確定・押印で次ボタンへ
         self.assertIn(".sgrain:not(.away)", HTML)                            # 皿へ戻ったら残っている粒へ
@@ -1192,5 +1192,25 @@ class Cycle63StartCompactSmallScreenTests(unittest.TestCase):
         self.assertIn("#tray { position:relative; height:104px; }", HTML)
         self.assertIn("最初の画面では、小さい画面（高さが低い画面）だけ場面と穀刺しのペアと鑑定皿を詰めて", HTML)
         self.assertIn("鑑定皿まで最初の1画面に収まるようにしました", HTML)
+        self.assertNotIn("setInterval", HTML)
+        self.assertNotIn("alert(", HTML)
+
+
+class Cycle64OsuArrivalChipFirstTests(unittest.TestCase):
+    def test_cycle64_osu_arrival_shows_chip_first(self):
+        # サイクル64（継続指示「『良い』と言うまで最初の1分だけ」・おす到着時）:
+        # 実測ではおす到着時に焦点任せだと段階チップが 375×667で top -49px・
+        # 360×740で -122px と画面外で、今どの段階かが見えず顔の上部も見切れた。
+        # はかる（サイクル60）・きめる（サイクル58）と同じく、チップが見える位置へ
+        # 画面を移してから、焦点は preventScroll で渡す
+        osu = HTML.index('phase = "osu";')
+        block = HTML[osu:HTML.index('count.textContent = "ふくろに 証印を おす";', osu)]
+        self.assertIn('document.getElementById("stampWrap").classList.add("on");', block)
+        self.assertIn('document.getElementById("stepChip").scrollIntoView({ block: "start" });', block)
+        self.assertIn('document.getElementById("stampBtn").focus({ preventScroll: true });', block)
+        # scrollIntoView は焦点より前（焦点で画面が飛ばない順序）
+        self.assertLess(block.index("scrollIntoView"), block.index("focus({ preventScroll: true })"))
+        self.assertIn("おすでは、入った時に段階の案内が見える位置へ画面を移し", HTML)
+        self.assertIn("小さい画面でも案内と顔と袋が一度に見えるようにしました", HTML)
         self.assertNotIn("setInterval", HTML)
         self.assertNotIn("alert(", HTML)

@@ -402,6 +402,14 @@
 </div>
 
 <!-- ホーム画面に追加のおすすめ（ごほうびを2回もらったあとに、7日に1回まで） -->
+<div class="idle-card" id="idleCard" hidden role="dialog" aria-label="おつかれさま">
+  <p>🍚 おつかれさま</p>
+  <div class="idle-btns">
+    <button type="button" class="btn mini" id="idleLike">♥ いいね</button>
+    <a class="btn mini" id="idleSite" href="https://ricepia.jp/?utm_source=nishio-go&utm_medium=game&utm_campaign=idle_card">🏠 サイトへ もどる</a>
+    <button type="button" class="btn mini ghost" id="idleKeep">つづける</button>
+  </div>
+</div>
 <div class="a2hs" id="a2hs" hidden role="dialog" aria-label="ホーム画面に追加">
   <p id="a2hsText">📲 ホーム画面に追加すると、あしたもワンタップで遊べます</p>
   <div class="a2hs-btns"><button type="button" class="btn mini" id="a2hsAdd">追加する</button><button type="button" class="btn mini ghost" id="a2hsNo">あとで</button></div>
@@ -526,5 +534,6 @@
 <script src="nishio-go/dots.js"></script>
 <script src="nishio-go/godot-field.js"></script>
 <script src="nishio-go/share.js"></script>
+<script src="nishio-go/idlecard.js"></script>
 </body>
 </html>

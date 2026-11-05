@@ -588,6 +588,31 @@ class Cycle30DotGrainsPlatesTests(unittest.TestCase):
         self.assertNotIn("alert(", HTML)
 
 
+class Cycle33InspectorFaceTests(unittest.TestCase):
+    def test_cycle33_inspector_face_in_later_phases(self):
+        # サイクル33（実プレイレビュー「顔を基準に」）: 場面絵のドット絵から切り出した
+        # 検査員の顔（face_dot.webp・穏やかな微笑みは場面絵そのまま）を、はかる／みわける／
+        # きめる／おすの各道具の上に72pxの丸い顔として添える。さす（最初の画面）は
+        # 鑑定皿が1画面に収まる形を崩さないため対象外。遊び・手順・数値は変えない
+        root = Path(__file__).resolve().parent.parent
+        face = root.joinpath("kensa", "face_dot.webp")
+        self.assertTrue(face.exists())
+        self.assertLess(face.stat().st_size, 300_000)
+        self.assertEqual(HTML.count('src="kensa/face_dot.webp"'), 4)
+        self.assertEqual(HTML.count('class="inspectorFace"'), 4)
+        self.assertIn(".inspectorFace { width:72px; height:72px; border-radius:50%;", HTML)
+        self.assertIn("穏やかに微笑む検査員の顔のドット絵", HTML)
+        # 各道具の中にある（はかる・みわける・きめる・おす）
+        for wrap in ('id="meterWrap"', 'id="sortWrap"', 'id="gradeWrap"', 'id="stampWrap"'):
+            self.assertIn("inspectorFace", HTML.split(wrap, 1)[1][:1200])
+        # 最初の画面（stepChip から trayWrap まで）には置かない＝皿の1画面収まりを崩さない
+        first_screen = HTML.split('id="stepChip"', 1)[1].split('id="trayWrap"', 1)[0]
+        self.assertNotIn("inspectorFace", first_screen)
+        self.assertIn("検査員の顔は、はかる以降の各場面にも大きく添えました", HTML)
+        self.assertNotIn("setInterval", HTML)
+        self.assertNotIn("alert(", HTML)
+
+
 class Cycle32PlayReviewTextTests(unittest.TestCase):
     def test_cycle32_no_prototype_short_footer_stamp_hint(self):
         # サイクル32（実プレイレビュー・文字最小限）: 試作表示を外し、

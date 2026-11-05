@@ -96,6 +96,13 @@
   #seal.on { transition:all .45s ease; opacity:1; transform:scale(1); }
   /* 下の道具エリア: 常時1つだけ */
   #stepChip { display:inline-block; margin:14px 2px 8px; padding:6px 14px; border-radius:999px; background:var(--green); color:#fff; font-size:17px; font-weight:800; }
+  /* 検査員の顔（サイクル33・実プレイレビュー「顔を基準に」2026-11-05 16:21）: 場面絵では顔が約50pxと小さく、
+     はかる以降は場面が視界の外へ出て顔が見えなくなっていた。場面絵のドット絵から顔まわりだけを切り出した
+     face_dot.webp を、はかる／みわける／きめる／おすの各道具の上に72pxの丸い顔として静かに添える
+     （穏やかな微笑みは場面絵そのまま・新しい表情や演出は足さない・操作はふさがない装飾）。
+     最初の画面（さす）は場面絵の顔が見え鑑定皿が1画面に収まる形（サイクル22）を崩さないため対象外 */
+  .inspectorFace { width:72px; height:72px; border-radius:50%; object-fit:cover; display:block; margin:0 auto 10px;
+    border:3px solid rgba(184,137,58,.55); background:var(--paper); box-shadow:0 2px 8px rgba(26,24,20,.18); }
   /* 黒い鑑定皿 */
   #trayWrap { background:#26241f; border-radius:50%/22px; padding:18px 14px 22px; box-shadow:inset 0 3px 10px rgba(0,0,0,.7), 0 4px 12px rgba(26,24,20,.3); }
   #tray { position:relative; height:150px; }
@@ -325,6 +332,7 @@
   <div id="trayWrap"><div id="tray" aria-label="鑑定皿"></div></div>
   <p id="count">ふくろを タップ</p>
   <div id="meterWrap">
+    <img class="inspectorFace" src="kensa/face_dot.webp" alt="穏やかに微笑む検査員の顔のドット絵"/>
     <button id="meterBtn">💧 はかる</button>
     <div class="dotPal" id="dropPal" aria-hidden="true"><svg viewBox="0 0 14 16" shape-rendering="crispEdges"><polygon points="6,0 8,0 8,2 10,4 11,6 12,8 12,11 10,14 9,15 5,15 4,14 2,11 2,8 3,6 4,4 6,2" fill="#8fc3e0"/><rect x="4" y="6" width="2" height="3" fill="#cfeaf7"/><rect x="5" y="9" width="1" height="2" fill="#1a1814"/><rect x="8" y="9" width="1" height="2" fill="#1a1814"/><rect x="3" y="11" width="2" height="1" fill="#f2a7b8"/><rect x="9" y="11" width="2" height="1" fill="#f2a7b8"/><rect x="5" y="11" width="1" height="1" fill="#1a1814"/><rect x="8" y="11" width="1" height="1" fill="#1a1814"/><rect x="6" y="12" width="2" height="1" fill="#1a1814"/></svg></div>
     <div id="slots">
@@ -340,6 +348,7 @@
     <div id="bandScale" aria-hidden="true"><span>12</span><span>18</span></div>
   </div>
   <div id="sortWrap">
+    <img class="inspectorFace" src="kensa/face_dot.webp" alt="穏やかに微笑む検査員の顔のドット絵"/>
     <div id="ittoPair">
     <figure class="ittoPhoto" id="ittoPhoto">
       <img src="kensa/ittomai.webp" alt="手のひらに載せた一等米の実物（粒がふっくら揃い、被害粒・着色粒がほぼ見当たらない）"/>
@@ -358,6 +367,7 @@
     <p id="sortPct">みわけ <b>0%</b> <span id="sortCount">0 / 10</span></p>
   </div>
   <div id="gradeWrap">
+    <img class="inspectorFace" src="kensa/face_dot.webp" alt="穏やかに微笑む検査員の顔のドット絵"/>
     <div id="resultLabel" aria-label="検査結果ラベル">
       <div class="labelHead">《穀粒判定器 RN-700》<br/>測定日付：<span id="labelDate">—</span><br/>測定粒種：うるち玄米<br/>ロット番号：<span id="labelLot">01</span></div>
       <div id="labelRows"></div>
@@ -374,6 +384,7 @@
     <button id="backToSort">👀 皿をみる</button>
   </div>
   <div id="stampWrap">
+    <img class="inspectorFace" src="kensa/face_dot.webp" alt="穏やかに微笑む検査員の顔のドット絵"/>
     <div id="stampBag" role="button" tabindex="0" aria-label="米袋をタップして等級証印を押す">
       <span class="bagWeight">30kg</span>
       <div class="bagPrint" aria-hidden="true"></div>
@@ -430,7 +441,7 @@
     </table>
     <p>1袋から穀刺しで約40gを抜きます（十分に取れる場合は約20gでも可）。試料は合計1kgが目安で、足りない場合は1袋の量を増やします。抜く袋は無作為に選びます。</p>
     <p>水分は規程の表値です。附則で、醸造用を除く玄米は当分の間この値に1.0%を加えた16.0%が最高限度とされています。ゲームのお米は、どちらの読みでも結論が変わらない水分（14%台前半か16.5%以上）だけにしています。3等の規格にも満たないものは規格外です。形質（見た目のよさ）は、本物の検査では各等級の標準品と見比べて判定します。</p>
-    <p id="footNotes">農産物検査の仕事が題材です。試料の採取は穀刺しで1袋 約40g（標準抽出方法・平成13年農林水産省告示第443号）。「さす」の場面に載せた穀刺しの写真は、実際の検査で使う実物です。水分は3回の測定の平均で判定します。粒の鑑定は同じ試料を白い皿と黒い皿の双方に入れて確認します。鑑定は視覚・触覚・臭覚・聴覚を用いて行います（鑑定方法・平成13年農林水産省告示第333号）。等級の規格は農産物規格規程（平成13年告示第244号）の水稲うるち玄米に基づきます。等級は、整粒・水分・被害粒・死米・着色粒・異種穀粒・異物の全項目がその等級の限度内にある、最も良い等級です（未熟粒は「計」に入りません）。判定した等級は等級証印として米袋に押印し、あわせて検査証明年月日の日付印を押します。死米と着色粒は、穀粒判別器でも鑑定できます。「みわける」と資料に載せた一等米の写真は実物です。検査結果は、穀粒判定器の印字ラベルの様式で、皿の50粒の実数（粒数とその割合）で表示します。場面の絵は、検査風景の写真をもとに描いたドット絵です（写真そのものは資料に置きました）。穀刺しのドット絵も実物の写真をもとに描いたもので、写真そのものと並べて置きました。一等米のドット絵も実物の写真をもとに描いたもので、写真そのものと並べて置きました。粒と皿は、場面のドット絵に合わせて角ばった輪郭と点の質感にそろえました。水分計と袋まわりもドット絵の点の質感にそろえ、水滴と米粒の小さなドット絵を添えました。</p>
+    <p id="footNotes">農産物検査の仕事が題材です。試料の採取は穀刺しで1袋 約40g（標準抽出方法・平成13年農林水産省告示第443号）。「さす」の場面に載せた穀刺しの写真は、実際の検査で使う実物です。水分は3回の測定の平均で判定します。粒の鑑定は同じ試料を白い皿と黒い皿の双方に入れて確認します。鑑定は視覚・触覚・臭覚・聴覚を用いて行います（鑑定方法・平成13年農林水産省告示第333号）。等級の規格は農産物規格規程（平成13年告示第244号）の水稲うるち玄米に基づきます。等級は、整粒・水分・被害粒・死米・着色粒・異種穀粒・異物の全項目がその等級の限度内にある、最も良い等級です（未熟粒は「計」に入りません）。判定した等級は等級証印として米袋に押印し、あわせて検査証明年月日の日付印を押します。死米と着色粒は、穀粒判別器でも鑑定できます。「みわける」と資料に載せた一等米の写真は実物です。検査結果は、穀粒判定器の印字ラベルの様式で、皿の50粒の実数（粒数とその割合）で表示します。場面の絵は、検査風景の写真をもとに描いたドット絵です（写真そのものは資料に置きました）。穀刺しのドット絵も実物の写真をもとに描いたもので、写真そのものと並べて置きました。一等米のドット絵も実物の写真をもとに描いたもので、写真そのものと並べて置きました。粒と皿は、場面のドット絵に合わせて角ばった輪郭と点の質感にそろえました。水分計と袋まわりもドット絵の点の質感にそろえ、水滴と米粒の小さなドット絵を添えました。検査員の顔は、はかる以降の各場面にも大きく添えました。</p>
     <p>出典: <a href="https://www.maff.go.jp/j/kokuji_tuti/kokuji/k0001439.html" target="_blank" rel="noopener">農産物規格規程（平成13年農林水産省告示第244号）</a>／<a href="https://www.maff.go.jp/j/seisan/syoryu/kensa/attach/pdf/index-25.pdf" target="_blank" rel="noopener">農林水産省「コメの農産物検査」</a>／<a href="https://www.maff.go.jp/j/seisan/syoryu/kensa/attach/pdf/hourei-233.pdf" target="_blank" rel="noopener">成分検査の実施マニュアル（標準抽出方法の運用）</a></p>
   </details>
 </main>

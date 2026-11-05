@@ -863,3 +863,20 @@ class Cycle44FrontFaceFirstMinuteTests(unittest.TestCase):
         self.assertIn("検査員の顔は、正面を向いた穏やかな表情のドット絵に作り直し、少し大きくして、最初の1分でも表情が読めるようにしました", HTML)
         self.assertNotIn("setInterval", HTML)
         self.assertNotIn("alert(", HTML)
+
+
+class Cycle45BagTapWholePileTests(unittest.TestCase):
+    def test_cycle45_bagtap_covers_whole_pile(self):
+        # サイクル45（継続指示「『良い』と言うまで最初の1分だけ」・実プレイレビュー
+        # 2026-11-05 21:50 改善候補2）: 旧 #bagTap は山の中央だけ（34/34/32/34%＝場面の約11%）で
+        # 山の端のタップが反応しなかった。場面絵の米袋の山全体へ広げる（22/20/64/66%＝
+        # 左22%〜右86%・上20%〜下86%）。検査員とフォークリフトは含めない・遊びは変えない
+        self.assertIn("#bagTap { position:absolute; z-index:2; left:22%; top:20%; width:64%; height:66%;", HTML)
+        self.assertNotIn("left:34%; top:34%; width:32%; height:34%", HTML)
+        # 面積が場面の4割を超える（旧約11% → 新約42%）ことを数値でも固定する
+        m = re.search(r"#bagTap \{[^}]*width:(\d+)%; height:(\d+)%", HTML)
+        self.assertIsNotNone(m)
+        self.assertGreater(int(m.group(1)) * int(m.group(2)), 4000)
+        self.assertIn("最初のタップは、米袋の山全体で受けられるようにしました", HTML)
+        self.assertNotIn("setInterval", HTML)
+        self.assertNotIn("alert(", HTML)

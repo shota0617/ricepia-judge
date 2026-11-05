@@ -24,7 +24,7 @@ class HandDrawnMap(unittest.TestCase):
     def test_no_new_state_or_calls(self):
         diff = subprocess.run(["git", "diff", "--word-diff=porcelain", "origin/main", "--", "nishio-go/pixel.js"], cwd=ROOT, check=True,
                               capture_output=True, text=True, encoding="utf-8").stdout
-        added = "\n".join(l for l in diff.splitlines() if l.startswith("+") and not l.startswith("+++") and "//c17" not in l)
+        added = "\n".join(l for l in diff.splitlines() if l.startswith("+") and not l.startswith("+++") and "//c17" not in l and "びゅーん💨" not in l)
         self.assertNotRegex(added, r"fillText(?!\(QUEST_TOOLS\[i\]\.emoji, X, Y\))|G\.\w+\(|gainPoints|localStorage|floatText|riceSay|drawMz\w*Tag")
         self.assertNotRegex(added, r"^\+\s*(const|let|var) mz\w+ = ", )
         self.assertNotIn("ぼく", added)

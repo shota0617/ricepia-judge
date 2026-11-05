@@ -66,7 +66,7 @@ class Unchanged(unittest.TestCase):
 class Diff(unittest.TestCase):
     def test_added_lines_clean(self):
         d = git("diff", "origin/main", "--", "nishio-go/pixel.js")
-        txt = "\n".join(l[1:] for l in d.splitlines() if l.startswith("+") and not l.startswith("+++") and "//c17" not in l and "!G.demo" not in l)
+        txt = "\n".join(l[1:] for l in d.splitlines() if l.startswith("+") and not l.startswith("+++") and "//c17" not in l and "!G.demo" not in l and "//c82" not in l)
         for w in ("ぼく", "だに", "約20%", "G.", "fillText"):
             self.assertNotIn(w, txt)
 

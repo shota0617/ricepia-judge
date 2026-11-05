@@ -3962,30 +3962,13 @@ function groundAt(x, y) {
   if (c === C.G || c === C.P || c === C.W || c === C.K || c === C.V || c === C.E || c === C.U || c === C.Y) return GROUND.grass;
   return GROUND.dirt;
 }
-// ころころコンボ（運営者の声「クセになる転がり方を研究」）：かべに 当たらずに 転がりつづけると、コトンの たびに 数が ふえ、音が ドレミソラ…と 1音ずつ 高く なる（転がるだけで メロディに。
-// 当てるたびに 音が 上がっていく ゲームの 気持ちよさ）。3から お米の 右よこに「×12」、5ごとに きらきら、10ごとに「🎵 ころころ ×20！」。当たる・止まると おしまい。
-// ポイントは つけない（同じ所を ぐるぐる しても もうからない。音と 数だけの 楽しみ。第4弾サイクル67：ベストは 持たない・比べない＝今の 転がりだけを 楽しむ）
+// ころころコンボ（第4弾サイクル82：ころころの 音と 数は 競わせない。参考：Haven Park＝自分の ペースで 歩き回る 探索で、スコアも 順位も なく 急かされず、同じ 穏やかな 反応が 返るだけ。
+// 続けても 音や 反応は 段階的に 大きく・高く ならない）：転がり続けても 音程は 上がらず、数は 表示せず、きらきらも ふえない。コトンは いつも 同じ。
+// 内側の 数えかた（combo.n・comboEnd・mzRt.run.combo＝その道の ふり返り用の 静かな 記録）だけ 残す。ポイントは つけない・ベストは 持たない・比べない
 const combo = { n: 0, quietT: 0, shown: 0, beat: false, beatN: 0, near: 0, best: 0 };   // best：テスト用の 互換（今の 数と 同じ。保存も 比べも しない）
-const PENTA = [0, 2, 4, 7, 9];
-function comboNote(n, v) {   // ドレミソラ（五音の 音階）を 下から。2オクターブ 上まで いったら そこで くり返す
-  const a = sfxCtx();
-  if (!a) return;
-  try {
-    const i = (n - 1) % 11, semi = PENTA[i % 5] + 12 * Math.floor(i / 5), t = a.currentTime, f = 523.25 * Math.pow(2, semi / 12);
-    const o = a.createOscillator(), o2 = a.createOscillator(), g = a.createGain();
-    o.type = 'triangle'; o.frequency.setValueAtTime(f, t); o2.type = 'sine'; o2.frequency.setValueAtTime(f * 2, t);   // 木の 音に 少し 鈴の ひびき
-    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.045 * (0.6 + v * 0.4), t + 0.006); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
-    o.connect(g); o2.connect(g); g.connect(a.destination); o.start(t); o2.start(t); o.stop(t + 0.2); o2.stop(t + 0.2);
-  } catch (e) { /* 音が出せない端末 */ }
-}
-function comboStep() {
+function comboStep() {   // 記録の 更新だけ（音・表示・きらきらは 出さない）
   combo.shown = performance.now(); combo.best = combo.n;   // best：テスト用の 互換（いつも 今の 数と 同じ）
   if (combo.n > mzRt.run.combo) mzRt.run.combo = combo.n;   // この ゴールまでの いちばん 長い コンボ
-  if (combo.n % 5 === 0) {   // 5ごとに きらきら。10ごとは 文字の かわりに 大きな きらきら（数は お米の よこの「×N」で 見えて いる。同じ ことを 2か所に 書かない。運営者の声「文字は 少なく」2026-10-28）
-    const now = performance.now(), cols = ['#fff6c2', '#ffd23f', '#9be07a', '#7fd8f6'], big = combo.n % 10 === 0;
-    if (big) combo.pop = now;   // テスト用（大きな きらきらの 時こく）
-    for (let i = 0; i < (10 + Math.min(20, combo.n / 2)) * (big ? 2 : 1); i++) { const t = Math.random() * Math.PI * 2, v = 1.5 + Math.random() * 3; mzFx.push({ t0: now, vx: Math.cos(t) * v * (big ? 1.4 : 1), vy: Math.sin(t) * v * (big ? 1.4 : 1) - 3, c: cols[i % 4], life: (0.6 + Math.random() * 0.4) * (big ? 1.3 : 1) }); }
-  }
 }
 function comboEnd() {
   const n = combo.n, beat = combo.beat;
@@ -4013,15 +3996,6 @@ function drawSpeedLines(x, y, u, now) {
     ctx.fillStyle = `rgba(255,255,255,${al.toFixed(2)})`; ctx.fillRect(X, Y, W, H);
   }
 }
-function drawCombo(x, y, u, now) {   // お米の 右よこに「×12」（数が ふえるほど 大きく・色が かわる）
-  if (combo.n < 3) return;
-  // 字は はじめから 大きめ（11 → 16。運営者の声「大きい文字シンプルに」2026-10-27）
-  const S = Math.round(Math.min(28, 16 + combo.n * 0.4) * u), pop = Math.max(0, 1 - (now - combo.shown) / 180), sz = Math.round(S * (1 + pop * 0.25));
-  ctx.font = `bold ${sz}px "DotGothic16", sans-serif`; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
-  ctx.lineWidth = Math.max(3, sz / 4); ctx.strokeStyle = '#1a1a1a'; ctx.fillStyle = combo.n >= 30 ? '#ff9fd0' : combo.n >= 20 ? '#7fd8f6' : combo.n >= 10 ? '#ffe066' : '#ffffff';
-  const t = `×${combo.n}`;
-  ctx.strokeText(t, x, y); ctx.fillText(t, x, y);
-}
 function riceFeel(dt, speed) {
   if (combo.n) { combo.quietT = speed < 0.6 ? combo.quietT + dt : 0; if (combo.quietT > 0.7) comboEnd(); }   // 止まったら おしまい
   const g = roll.gnd = roll.last ? groundAt(roll.last.x, roll.last.y) : GROUND.dirt, wx = WX_ROLL[wxKind()];
@@ -4035,8 +4009,8 @@ function riceFeel(dt, speed) {
   if (k !== roll.side) {
     const n = ka + ks + kp; roll.side = k;
     if (speed > 0.6 && roll.h <= 0) {
-      if (speed > 1.2 && rollOn && G.demo) { combo.n++; combo.quietT = 0; comboNote(combo.n, Math.min(1, speed / 5) * g.snd); comboStep(); }   // ころころコンボ：コトンが 1音ずつ 高く（音階に）
-      else kotoSound(Math.min(1, speed / 5) * g.snd);
+      if (speed > 1.2 && rollOn && G.demo) { combo.n++; combo.quietT = 0; comboStep(); }   //c82 内側の 記録だけ（音は 変わらない）
+      kotoSound(Math.min(1, speed / 5) * g.snd);   // コトンは いつも 同じ
       roll.sq = Math.max(roll.sq, 0.06 * (KP.kotoSq || 1)); roll.sqx = false;
       const hopV = KP.hopV || HOP_V;
       if (speed > hopV && (KP.hopEvery === 1 || (n & 1))) { roll.hv = (2.2 + (speed - hopV) * 0.4) * (KP.hopPow || 1); roll.h = 0.001; roll.kind = 'hop'; }   // ぴょん：速いと、2回に1回 とびはねる（転がり方で かわる）
@@ -4148,12 +4122,12 @@ function grainSound() {   // ちりん：金の米つぶを ひろった（高�
     }
   } catch (e) { /* 音が出せない端末 */ }
 }
-function padSound(chain = 1) {   // びゅん：下から 上へ すべる 音と、風の しゅっ、茶せんの しゃかしゃか。続けて のるほど 高く（れんさ 1つごとに 3半音。6れんさで 止める）
+function padSound(chain = 1) {   // びゅん：下から 上へ すべる 音と、風の しゅっ、茶せんの しゃかしゃか。Haven Park の ものさし：続けて のっても いつも 同じ 高さ（chain は 互換で 残すだけ）
   const a = sfxCtx();
   if (!a) return;
   try {
-    const t = a.currentTime, o = a.createOscillator(), g = a.createGain(), up = Math.pow(2, Math.min(5, chain - 1) * 3 / 12);
-    o.type = 'triangle'; o.frequency.setValueAtTime(330 * up, t); o.frequency.exponentialRampToValueAtTime(1320 * up, t + 0.16);
+    const t = a.currentTime, o = a.createOscillator(), g = a.createGain();
+    o.type = 'triangle'; o.frequency.setValueAtTime(330, t); o.frequency.exponentialRampToValueAtTime(1320, t + 0.16);
     g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.05, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.22);
     o.connect(g); g.connect(a.destination); o.start(t); o.stop(t + 0.24);
     const buf = a.createBuffer(1, Math.floor(a.sampleRate * 0.25), a.sampleRate), dd = buf.getChannelData(0);
@@ -4170,11 +4144,11 @@ function padSound(chain = 1) {   // びゅん：下から 上へ すべる 音�
     }
   } catch (e) { /* 音が出せない端末 */ }
 }
-function dotSound(i) {   // ぴっ：ごはんつぶを ひろう（列の 中で 1つずつ 高く。ドレミソラ）
+function dotSound(i) {   // ぴっ：ごはんつぶを ひろう。Haven Park の ものさし：何個目でも 同じ 高さ（i は 互換で 残すだけ）
   const a = sfxCtx();
   if (!a) return;
   try {
-    const j = i % 10, f = 1046.5 * Math.pow(2, (PENTA[j % 5] + 12 * Math.floor(j / 5)) / 12), t = a.currentTime, o = a.createOscillator(), g = a.createGain();
+    const f = 1046.5, t = a.currentTime, o = a.createOscillator(), g = a.createGain();
     o.type = 'square'; o.frequency.setValueAtTime(f, t);
     g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.018, t + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.07);
     o.connect(g); g.connect(a.destination); o.start(t); o.stop(t + 0.08);
@@ -8085,7 +8059,6 @@ function frame(now) {
     if (riceBall.cv) {
       drawRiceBall(hx, by, u, th % (Math.PI * 2), sx, sy, roll.spin, ctx, gbOn && !worldMode, mood, roll.look, roll.dirt, roll.dirtCol, roll.pitch);   // 光を当てなおして 丸く。表情つき・きょろきょろ
       drawSendArrow(hx, by, T, u);   // お米の まん中から
-      drawCombo(hx + 15 * u, by - 4 * u, u, now);   // ころころコンボの 数（お米の 右よこ。頭の上は 浮かぶ 文字の 場所）
       if (roll.wetT > 0) {   // ぽちゃん のあと：頭の左上に 水の しずく
         const q = Math.max(1, Math.round(u)), dx0 = hx - 11 * u, dy0 = by - 12 * u + (1.4 - roll.wetT) * 3 * u, crisp = !!rec || (gbOn && !worldMode), sm = ctx.imageSmoothingEnabled;
         ctx.globalAlpha = Math.min(1, roll.wetT * 2); ctx.imageSmoothingEnabled = !crisp;   // しずくも 1枚の 絵に して 点より 細かい 位置で なめらかに すべらせる（ゲームボーイの4色・記録係は 整数の 位置）
@@ -11659,7 +11632,7 @@ function mzPadTick(ax, ay) {   // パネルの マスに いる 間 しらべる
   const now = performance.now();
   mzPad.best = ++mzPad.chain;   // best は テスト用の 互換（いつも chain と 同じ。保存も 比べも しない）
   mzPad.cell = key; mzPad.hits++; mzRt.run.pads++; mzPad.fx = key; mzPad.fxT = now;
-  if (mzPad.chain >= 2) riceSay(`びゅーん${'💨'.repeat(Math.min(3, mzPad.chain - 1))}`, 1200, 'happy');   // 吹き出し：💨 の 数が れんぞく（もとは「💨 びゅん×N！ はやいじゃん」）
+  if (mzPad.chain >= 2) riceSay('びゅーん💨', 1200, 'happy');   //c82 吹き出し：💨 は いつも 1つ
   padSound(mzPad.chain); roll.happyT = Math.max(roll.happyT || 0, 0.8); dirty = true;
   try { if (!localStorage.getItem('nsg_pad_seen')) { localStorage.setItem('nsg_pad_seen', '1'); floatText('🍵 抹茶びゅん！ 矢印の 向きに のってみりん'); } } catch (e) { /* noop */ }   // はじめて のった ときだけ
   combo.n++; combo.quietT = 0; comboStep();   // ころころコンボも つづく

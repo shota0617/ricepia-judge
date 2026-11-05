@@ -487,3 +487,29 @@ class Cycle27DotSceneTests(unittest.TestCase):
         self.assertIn("kensa/scene.webp", ref)
         self.assertNotIn("setInterval", HTML)
         self.assertNotIn("alert(", HTML)
+
+
+class Cycle28DotKokusashiTests(unittest.TestCase):
+    def test_cycle28_dot_kokusashi_beside_photo(self):
+        # サイクル28（ドット絵化2点目・穀刺し）: ドット絵版 kokusashi_dot.webp を
+        # 実物写真（サイクル21・kokuPhoto）のとなりに並べ、写真そのものの表示は維持する。
+        # 2枚とも「さす」の間だけ見せ、はかるへ進むと一緒にしまい、次の山で一緒に戻す
+        root = Path(__file__).resolve().parent.parent
+        dot = root.joinpath("kensa", "kokusashi_dot.webp")
+        self.assertTrue(dot.exists())
+        self.assertLess(dot.stat().st_size, 300_000)
+        self.assertIn('id="kokuDot"', HTML)
+        self.assertIn('src="kensa/kokusashi_dot.webp"', HTML)
+        self.assertIn("穀刺し（ドット絵）", HTML)
+        # 写真そのものは維持（勝手に外さない）
+        self.assertIn('id="kokuPhoto"', HTML)
+        self.assertIn('src="kensa/kokusashi.webp"', HTML)
+        self.assertIn("穀刺し（ほんもの）", HTML)
+        # 横並び（高さは写真カードのまま＝鑑定皿の1画面収まりを崩さない）
+        self.assertIn('id="kokuPair"', HTML)
+        self.assertIn("#kokuPair { display:flex;", HTML)
+        # 表示の切り替えは写真と連動
+        self.assertIn('getElementById("kokuDot").classList.add("off")', HTML)
+        self.assertIn('getElementById("kokuDot").classList.remove("off")', HTML)
+        self.assertNotIn("setInterval", HTML)
+        self.assertNotIn("alert(", HTML)

@@ -3070,7 +3070,7 @@ function nakamaStep(now, ox, oy, T, w, h, dpr) {
   if (worldMode || driving || rp.x === null) { nakama.n = null; return; }
   const sp = Math.hypot(rp.vx || 0, rp.vy || 0);
   if (!nakama.n && now > otomo.next && sp > 1.5 && !mapCovered() && window.NISHIO_OTOMO && LU && howtoEl.hidden && !sightBusy() && now > riceBub.until + 2000) {   // 町の おとも（otomo.js）
-    if (!otomo.next) otomo.next = now + 20000;   // はじめは 20秒 転がってから
+    if (!otomo.next) otomo.next = now + 6000;   // はじめは 6秒 転がってから（サイクル102：最初の1分で町の仲間が来る）
     else {
       const ll = toLatLng(rp.x, rp.y);
       let near = '';
@@ -3113,7 +3113,7 @@ function deaiStep(now, ox, oy, T) {
   if (worldMode || driving || rp.x === null) { deai.d = null; return; }
   const sp = Math.hypot(rp.vx || 0, rp.vy || 0);
   if (!deai.d && now > deai.next && sp > 1.5 && !mapCovered() && window.NISHIO_DEAI && LU && howtoEl.hidden && !sightBusy() && !nakama.n && now > riceBub.until + 2500) {
-    if (!deai.next) deai.next = now + 25000;   // はじめは 25秒 転がってから
+    if (!deai.next) deai.next = now + 10000;   // はじめは 10秒 転がってから（サイクル102：おともが去ったあと最初の1分の中で出会う）
     else {
       const ll = toLatLng(rp.x, rp.y);
       let near = '';

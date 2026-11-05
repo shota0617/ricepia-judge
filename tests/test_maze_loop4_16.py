@@ -28,9 +28,9 @@ def body(src, head):
 class Smile(unittest.TestCase):
     def test_rice_mood_always_smile(self):
         m = body(PIXEL, 'function riceMood(')
-        for w in ('ouch', 'dizzy', 'wow', 'excited', 'yawn', 'sleepy', 'blink'):
+        for w in ('ouch', 'dizzy', 'wow', 'excited', 'yawn', 'sleepy'):  # c99: blink（笑顔のまま目だけ閉じる）だけは許可に変更
             self.assertNotIn("'%s'" % w, m, w)
-        self.assertIn("return 'smile'", m)
+        self.assertIn(": 'smile'", m)  # c99: 既定は笑顔のまま（まばたき時だけ 'blink'）
 
     def test_meiro_never_picks_painful_face(self):
         self.assertNotIn("'ouch'", MEIRO)

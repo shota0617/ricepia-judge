@@ -2601,7 +2601,7 @@ function chasetsuStep(hx, by, u, now) {
   c.drawn++; dirty = true;
 }
 // お米つぶの ごちそう（gochiso.js）：止まった お米の 目の 前に、いる 町と 月に 合った 西尾の 名物食が 出る。「いただきます」→ もぐもぐ → 「ごちそうさま」。
-// 150〜240秒に 1回まで（はじめは 30秒後）・西尾市の 中だけ・前と 同じ ものは つづけない。動き出すか ねむりかけたら やめる
+// 150〜240秒に 1回まで（はじめは 止まって 約3秒で）・西尾市の 中だけ・前と 同じ ものは つづけない。動き出すか ねむりかけたら やめる
 const GOCHISO_MS = 6500;
 const gochiso = { cur: null, last: '', next: 0, t0: 0, drawn: 0 };   // drawn：描いた 数（テスト用）
 function gochisoMunch(now) {   // もぐもぐ：からだが ぷるぷる ちぢむ（0〜0.05）
@@ -2614,7 +2614,7 @@ function gochisoStep(hx, by, u, now) {
   if (g.cur && !still) { g.cur = null; return; }   // 動き出した：食べかけで おしまい
   if (!g.cur) {
     if (!still || roll.idle < 1 || roll.idle > 5 || !window.NISHIO_GOCHISO || rp.x === null || mapCovered() || !howtoEl.hidden || sightBusy() || now < riceBub.until + 1500) return;
-    if (!g.next) g.next = now + 30000;   // はじめは 30秒 あそんでから
+    if (!g.next) g.next = now + 2000;   // はじめは 止まって 約3秒で（サイクル103：最初の1分で西尾のごちそうが出る）
     if (now < g.next) return;
     const d = window.NISHIO_GOCHISO.pick({ city: here.city, town: here.town, month: new Date().getMonth() + 1 }, g.last);
     if (!d) return;

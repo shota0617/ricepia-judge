@@ -7155,7 +7155,8 @@ function genSprite(id) {
   return sp;
 }
 // スポットの絵（専用の絵 → 型の絵 → ふつうの絵）
-// 代表的な名所の特大のドット絵（96×96。tools/blender/giant.py で作った nishio-go/art/giant/）。歩く地図で名所のまわり6×6マスに描く。
+// 代表的な名所の特大のドット絵（96×96。代表の名所9件と自店2件の絵は giant_dot_gen92.py の手描き風ドット絵。nishio-go/art/giant/）。歩く地図で名所のまわり6×6マスに描く。
+// （となりの市町などの残りは、これまでどおり tools/blender/ で作った絵）
 // 読めるまでは、いつもの 48×48 の絵。[ふつう, 再チェックイン待ちの灰色] の canvas にしておく（Godot の記録係は canvas を5つの引数で描く）
 const GIANT_ART = { 'f-nishio-castle': 'nishio-castle', 'f-okazaki-castle': 'okazaki-castle', 'f-iwase-bunko': 'iwase-bunko', 'f-konrenji': 'konrenji',
   'f-nishio-station': 'nishio-station', 'f-jofukuji': 'daibutsu', 'f-ohirune-house': 'ohirune', 'f-kurokabe': 'kurokabe', 'f-inariyama-chaen': 'chaen' };

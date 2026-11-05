@@ -356,6 +356,27 @@ class KensaTests(unittest.TestCase):
         self.assertNotIn("setInterval", HTML)                          # タイマー・焦らせる仕組みを入れない
         self.assertNotIn("alert(", HTML)                               # 流れを止める要素は作らない
 
+    def test_cycle23_kokusashi_motion(self):
+        # サイクル23: ユーザー提供の実演動画（約8.8秒）が手本の穀刺しモーション。
+        # 近づける→斜めに刺し込む（42%で最深）→ひと呼吸（58%まで同じ位置）→ゆっくり抜く（86%）の
+        # 一連を2.4秒の穏やかなアニメーションで再現し、抜いた後にだけ溝の米粒が現れる。
+        self.assertIn("animation:probeIn 2.4s ease forwards", HTML)
+        self.assertIn("42%{opacity:1; transform:translate(92px,-32px) rotate(-24deg);}", HTML)   # 刺し込み最深
+        self.assertIn("58%{opacity:1; transform:translate(92px,-32px) rotate(-24deg);}", HTML)   # ひと呼吸（同位置）
+        self.assertIn("86%{opacity:1; transform:translate(24px,-4px) rotate(-24deg);}", HTML)    # ゆっくり抜く
+        self.assertIn('class="probeGrains"', HTML)                       # 溝に並ぶ米粒（SVG内）
+        self.assertGreaterEqual(HTML.count("<ellipse"), 10)              # 一列に並ぶ粒
+        self.assertIn("@keyframes grainsShow", HTML)
+        self.assertIn("0%,60%{opacity:0;}", HTML)                        # 刺している間・静止中は粒を見せない（Codexレビュー反映）
+        self.assertIn("animation:grainsShow 2.4s ease forwards", HTML)
+        self.assertIn("(1.55 + Math.random() * 0.4) * motionScale", HTML)  # 粒は抜く動きが始まってから皿へ落ちる
+        self.assertIn("2050 * motionScale", HTML)                        # シールは抜き終わってから
+        self.assertIn("2400 * motionScale", HTML)                        # 完了表示はモーションの終わりに合わせる
+        self.assertIn('matchMedia("(prefers-reduced-motion: reduce)")', HTML)  # 動きを減らす設定では待ち時間も縮める
+        self.assertNotIn("animation:probeIn 1.1s", HTML)                 # 旧来の短い動きは使わない
+        self.assertNotIn("setInterval", HTML)                            # タイマー・焦らせる仕組みを入れない
+        self.assertNotIn("alert(", HTML)                                 # 流れを止める要素は作らない
+
     def test_stamp_date_text(self):
         # 日付印は固定日付でなく、その日の日付を YYYY.M.D で作る純粋関数
         node = shutil.which("node")

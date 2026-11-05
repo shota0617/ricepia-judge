@@ -629,3 +629,23 @@ class Cycle32PlayReviewTextTests(unittest.TestCase):
         self.assertIn('classList.remove("stamped")', HTML)
         self.assertNotIn("setInterval", HTML)
         self.assertNotIn("alert(", HTML)
+
+
+class Cycle34FirstScreenTests(unittest.TestCase):
+    def test_cycle34_hint_above_smaller_named_tray(self):
+        # サイクル34（実プレイレビュー）: 最初の画面で案内「ふくろを タップ」が
+        # 画面の下端で切れ、鑑定皿が約4割を占め何の皿か分かりにくかった。
+        # 案内（#count）を皿の上へ移し、皿を小さくし、「かんてい皿」と名前を付ける。
+        # 遊び・手順・数値は変えない
+        # 案内は段階チップと皿の間にある（皿より前）
+        seg = HTML.split('id="stepChip"', 1)[1].split('id="trayWrap"', 1)[0]
+        self.assertIn('id="count"', seg)
+        self.assertIn("ふくろを タップ", seg)
+        # 皿は小さく（粒エリア104px・余白も圧縮）名前付き
+        self.assertIn("#tray { position:relative; height:104px; }", HTML)
+        self.assertIn("padding:10px 14px 14px", HTML)
+        self.assertIn('<div id="trayLabel">かんてい皿</div>', HTML)
+        self.assertIn("#trayLabel {", HTML)
+        self.assertIn("最初の画面では、案内を鑑定皿の上に移し", HTML)
+        self.assertNotIn("setInterval", HTML)
+        self.assertNotIn("alert(", HTML)

@@ -103,14 +103,16 @@
      最初の画面（さす）は場面絵の顔が見え鑑定皿が1画面に収まる形（サイクル22）を崩さないため対象外 */
   .inspectorFace { width:72px; height:72px; border-radius:50%; object-fit:cover; display:block; margin:0 auto 10px;
     border:3px solid rgba(184,137,58,.55); background:var(--paper); box-shadow:0 2px 8px rgba(26,24,20,.18); }
-  /* 黒い鑑定皿 */
-  #trayWrap { background:#26241f; border-radius:50%/22px; padding:18px 14px 22px; box-shadow:inset 0 3px 10px rgba(0,0,0,.7), 0 4px 12px rgba(26,24,20,.3); }
-  #tray { position:relative; height:150px; }
+  /* 黒い鑑定皿（サイクル34・実プレイレビュー: 最初の画面で皿が約4割を占め何の皿か分かりにくく、
+     下の案内文が画面の下端で切れていた。皿を小さくし、名前を付けて、案内（#count）は皿の上へ移す） */
+  #trayWrap { background:#26241f; border-radius:50%/22px; padding:10px 14px 14px; box-shadow:inset 0 3px 10px rgba(0,0,0,.7), 0 4px 12px rgba(26,24,20,.3); }
+  #trayLabel { text-align:center; font-size:14px; font-weight:800; color:#d8cfb8; letter-spacing:.12em; padding:0 0 4px; }
+  #tray { position:relative; height:104px; }
   .grain { position:absolute; width:9px; height:15px; border-radius:50%; background:#c9a86a; box-shadow:inset -2px -3px 0 rgba(120,84,30,.45); opacity:0; }
   .grain.fall { animation:fall .8s ease forwards; }
   .grain.pale { background:#e8e0c8; } .grain.dark { background:#8a6a34; } .grain.momi { background:#d8bc7a; border-radius:40% 40% 50% 50%; }
   @keyframes fall { 0%{ opacity:0; transform:translateY(-46px) rotate(0deg);} 100%{ opacity:1; transform:translateY(0) rotate(var(--r,20deg));} }
-  #count { margin:10px 2px 0; font-size:15px; font-weight:700; min-height:22px; }
+  #count { margin:8px 2px 10px; font-size:15px; font-weight:700; min-height:22px; }
   #count b { font-size:24px; }
   #nextBtn { display:none; margin-top:10px; border:0; border-radius:999px; background:var(--paper); color:var(--ink);
     font:inherit; font-size:16px; font-weight:800; padding:12px 20px; box-shadow:0 2px 8px rgba(26,24,20,.3); cursor:pointer; transition:transform .15s ease; }
@@ -329,8 +331,8 @@
   </div>
 
   <div id="stepChip" aria-live="polite">① さす</div>
-  <div id="trayWrap"><div id="tray" aria-label="鑑定皿"></div></div>
   <p id="count">ふくろを タップ</p>
+  <div id="trayWrap"><div id="trayLabel">かんてい皿</div><div id="tray" aria-label="鑑定皿"></div></div>
   <div id="meterWrap">
     <img class="inspectorFace" src="kensa/face_dot.webp" alt="穏やかに微笑む検査員の顔のドット絵"/>
     <button id="meterBtn">💧 はかる</button>
@@ -441,7 +443,7 @@
     </table>
     <p>1袋から穀刺しで約40gを抜きます（十分に取れる場合は約20gでも可）。試料は合計1kgが目安で、足りない場合は1袋の量を増やします。抜く袋は無作為に選びます。</p>
     <p>水分は規程の表値です。附則で、醸造用を除く玄米は当分の間この値に1.0%を加えた16.0%が最高限度とされています。ゲームのお米は、どちらの読みでも結論が変わらない水分（14%台前半か16.5%以上）だけにしています。3等の規格にも満たないものは規格外です。形質（見た目のよさ）は、本物の検査では各等級の標準品と見比べて判定します。</p>
-    <p id="footNotes">農産物検査の仕事が題材です。試料の採取は穀刺しで1袋 約40g（標準抽出方法・平成13年農林水産省告示第443号）。「さす」の場面に載せた穀刺しの写真は、実際の検査で使う実物です。水分は3回の測定の平均で判定します。粒の鑑定は同じ試料を白い皿と黒い皿の双方に入れて確認します。鑑定は視覚・触覚・臭覚・聴覚を用いて行います（鑑定方法・平成13年農林水産省告示第333号）。等級の規格は農産物規格規程（平成13年告示第244号）の水稲うるち玄米に基づきます。等級は、整粒・水分・被害粒・死米・着色粒・異種穀粒・異物の全項目がその等級の限度内にある、最も良い等級です（未熟粒は「計」に入りません）。判定した等級は等級証印として米袋に押印し、あわせて検査証明年月日の日付印を押します。死米と着色粒は、穀粒判別器でも鑑定できます。「みわける」と資料に載せた一等米の写真は実物です。検査結果は、穀粒判定器の印字ラベルの様式で、皿の50粒の実数（粒数とその割合）で表示します。場面の絵は、検査風景の写真をもとに描いたドット絵です（写真そのものは資料に置きました）。穀刺しのドット絵も実物の写真をもとに描いたもので、写真そのものと並べて置きました。一等米のドット絵も実物の写真をもとに描いたもので、写真そのものと並べて置きました。粒と皿は、場面のドット絵に合わせて角ばった輪郭と点の質感にそろえました。水分計と袋まわりもドット絵の点の質感にそろえ、水滴と米粒の小さなドット絵を添えました。検査員の顔は、はかる以降の各場面にも大きく添えました。</p>
+    <p id="footNotes">農産物検査の仕事が題材です。試料の採取は穀刺しで1袋 約40g（標準抽出方法・平成13年農林水産省告示第443号）。「さす」の場面に載せた穀刺しの写真は、実際の検査で使う実物です。水分は3回の測定の平均で判定します。粒の鑑定は同じ試料を白い皿と黒い皿の双方に入れて確認します。鑑定は視覚・触覚・臭覚・聴覚を用いて行います（鑑定方法・平成13年農林水産省告示第333号）。等級の規格は農産物規格規程（平成13年告示第244号）の水稲うるち玄米に基づきます。等級は、整粒・水分・被害粒・死米・着色粒・異種穀粒・異物の全項目がその等級の限度内にある、最も良い等級です（未熟粒は「計」に入りません）。判定した等級は等級証印として米袋に押印し、あわせて検査証明年月日の日付印を押します。死米と着色粒は、穀粒判別器でも鑑定できます。「みわける」と資料に載せた一等米の写真は実物です。検査結果は、穀粒判定器の印字ラベルの様式で、皿の50粒の実数（粒数とその割合）で表示します。場面の絵は、検査風景の写真をもとに描いたドット絵です（写真そのものは資料に置きました）。穀刺しのドット絵も実物の写真をもとに描いたもので、写真そのものと並べて置きました。一等米のドット絵も実物の写真をもとに描いたもので、写真そのものと並べて置きました。粒と皿は、場面のドット絵に合わせて角ばった輪郭と点の質感にそろえました。水分計と袋まわりもドット絵の点の質感にそろえ、水滴と米粒の小さなドット絵を添えました。検査員の顔は、はかる以降の各場面にも大きく添えました。最初の画面では、案内を鑑定皿の上に移し、皿は小さくして「かんてい皿」と名前を付けました。</p>
     <p>出典: <a href="https://www.maff.go.jp/j/kokuji_tuti/kokuji/k0001439.html" target="_blank" rel="noopener">農産物規格規程（平成13年農林水産省告示第244号）</a>／<a href="https://www.maff.go.jp/j/seisan/syoryu/kensa/attach/pdf/index-25.pdf" target="_blank" rel="noopener">農林水産省「コメの農産物検査」</a>／<a href="https://www.maff.go.jp/j/seisan/syoryu/kensa/attach/pdf/hourei-233.pdf" target="_blank" rel="noopener">成分検査の実施マニュアル（標準抽出方法の運用）</a></p>
   </details>
 </main>

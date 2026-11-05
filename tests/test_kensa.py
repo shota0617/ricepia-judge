@@ -551,19 +551,9 @@ class Cycle31DotMeterStampTests(unittest.TestCase):
         # 水分計・きめる・袋・証印にも粒と皿（サイクル30）と同じ点の質感を足し、
         # 水滴（#dropPal）と米粒（#grainPal）の手描きドット絵の小物を添える。
         # 色・形・配置・遊び・手順・数値は変えない
+        # サイクル39で点の質感と小物は外した（素のまま）ため、ここでは残る土台だけを確認する
         self.assertIn("#meterWrap { display:none; margin-top:12px; background:var(--paper);", HTML)
-        self.assertIn("background-image:radial-gradient(rgba(107,99,83,.10) 1.5px, transparent 1.7px); background-size:14px 14px;", HTML)
-        self.assertIn("background:radial-gradient(rgba(255,255,255,.35) 1.5px, transparent 1.7px), linear-gradient(90deg,#b7d3a8 0%,#b7d3a8 50%", HTML)
-        self.assertIn("background:radial-gradient(rgba(138,111,60,.14) 1.5px, transparent 1.7px), linear-gradient(180deg,#efe3c2,#e2d0a4); background-size:14px 14px, 100% 100%;", HTML)
-        self.assertIn("background-image:radial-gradient(rgba(176,58,46,.14) 1.5px, transparent 1.7px); background-size:7px 7px;", HTML)
-        # 可愛いドット絵の小物2つ（装飾のみ・操作をふさがない・手描きの段々輪郭）
-        self.assertIn('id="dropPal"', HTML)
-        self.assertIn('id="grainPal"', HTML)
-        self.assertEqual(HTML.count('shape-rendering="crispEdges"'), 3)  # サイクル37で穀刺しSVGにも追加
-        self.assertIn(".dotPal { line-height:0; pointer-events:none; }", HTML)
-        self.assertIn("#dropPal { width:36px; margin:8px auto 0; }", HTML)
-        self.assertIn("#grainPal { position:absolute; left:12px; bottom:8px; width:32px; }", HTML)
-        self.assertIn("水分計と袋まわりもドット絵の点の質感にそろえ、水滴と米粒の小さなドット絵を添えました", HTML)
+        self.assertEqual(HTML.count('shape-rendering="crispEdges"'), 1)  # 穀刺しSVGのみ（サイクル39で小物2つを外した）
         self.assertNotIn("setInterval", HTML)
         self.assertNotIn("alert(", HTML)
 
@@ -574,16 +564,13 @@ class Cycle30DotGrainsPlatesTests(unittest.TestCase):
         # 角を段々に落とした clip-path の輪郭にし、皿は14px間隔のドット質感を足す。
         # 種類ごとの見分け（サイクル9）・遊び・手順・数値は変えない
         self.assertIn(".grain, .sgrain i { clip-path:polygon(32% 0, 68% 0", HTML)
-        self.assertIn("#whiteTray { background-image:radial-gradient(rgba(107,99,83,.13) 1.5px, transparent 1.7px); background-size:14px 14px; }", HTML)
-        self.assertIn("#blackTray { background-image:radial-gradient(rgba(247,243,232,.10) 1.5px, transparent 1.7px); background-size:14px 14px; }", HTML)
-        self.assertIn("#trayWrap { background-image:radial-gradient(rgba(247,243,232,.08) 1.5px, transparent 1.7px); background-size:14px 14px; }", HTML)
-        self.assertIn("#yokeWrap { background-image:radial-gradient(rgba(107,99,83,.12) 1.5px, transparent 1.7px); background-size:14px 14px; }", HTML)
+        # 皿の点の質感はサイクル39で外した（素のまま）
         # サイクル9の種類ごとの見分けは維持
         self.assertIn(".sgrain.shini i {", HTML)
         self.assertIn(".sgrain.color i {", HTML)
         self.assertIn(".sgrain.momi i {", HTML)
         self.assertIn(".sgrain.higai i {", HTML)
-        self.assertIn("粒と皿は、場面のドット絵に合わせて角ばった輪郭と点の質感にそろえました", HTML)
+        self.assertIn("粒は、場面のドット絵に合わせて角ばった輪郭にしました", HTML)
         self.assertNotIn("setInterval", HTML)
         self.assertNotIn("alert(", HTML)
 
@@ -754,5 +741,25 @@ class Cycle38LabelGuideTests(unittest.TestCase):
         # 行レンダリング自体は変えていない（限度を行に混ぜない）
         self.assertIn("function resultLabelRows(sort)", HTML)
         self.assertIn("結果ラベルの下には、等級のめやす（重さ）を区切って併記しました", HTML)
+        self.assertNotIn("setInterval", HTML)
+        self.assertNotIn("alert(", HTML)
+
+
+class Cycle39PlainTests(unittest.TestCase):
+    def test_cycle39_plain_no_dot_texture_no_pals(self):
+        # サイクル39（素のまま・ユーザー指示 2026-11-05 18:28）: サイクル30・31で足した
+        # 点の質感（UI面の radial-gradient ドット）と水滴・米粒の飾りを外す。
+        # 着色粒の芯（見分け・サイクル9）の radial-gradient は残す。遊び・手順・数値は変えない
+        self.assertNotIn('id="dropPal"', HTML)
+        self.assertNotIn('id="grainPal"', HTML)
+        self.assertNotIn("dotPal", HTML)
+        # UI面のドット質感の具体値が残っていないこと
+        self.assertNotIn("1.5px, transparent 1.7px); background-size:14px 14px", HTML)
+        self.assertNotIn("background-size:7px 7px", HTML)
+        # 土台の単色・グラデーションは残る
+        self.assertIn("background:linear-gradient(90deg,#b7d3a8", HTML)
+        self.assertIn("background:linear-gradient(180deg,#efe3c2,#e2d0a4)", HTML)
+        self.assertIn(".grain, .sgrain i { clip-path:polygon(32% 0", HTML)
+        self.assertIn("水分計や皿、袋などの道具まわりは、点の質感や小さな飾りを外して素のままにしました", HTML)
         self.assertNotIn("setInterval", HTML)
         self.assertNotIn("alert(", HTML)

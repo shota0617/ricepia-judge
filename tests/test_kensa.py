@@ -1064,7 +1064,8 @@ class Cycle57HakaruDoneNextButtonVisibleTests(unittest.TestCase):
         self.assertIn("scroll-margin-bottom:16px;", HTML)
         self.assertIn('nextBtn.scrollIntoView({ block: "nearest" });', HTML)
         meter_done = HTML.index('phase = "hakaru-done";')
-        scroll_pos = HTML.index('nextBtn.scrollIntoView({ block: "nearest" });')
+        # サイクル65で同文字列がみわけ完了側（ファイル前方）にも増えたため、検索は meter_done 以降に限定する
+        scroll_pos = HTML.index('nextBtn.scrollIntoView({ block: "nearest" });', meter_done)
         focus_pos = HTML.index('nextBtn.focus({ preventScroll: true });', meter_done)
         self.assertLess(meter_done, scroll_pos)
         self.assertLess(scroll_pos, focus_pos)
@@ -1212,5 +1213,27 @@ class Cycle64OsuArrivalChipFirstTests(unittest.TestCase):
         self.assertLess(block.index("scrollIntoView"), block.index("focus({ preventScroll: true })"))
         self.assertIn("おすでは、入った時に段階の案内が見える位置へ画面を移し", HTML)
         self.assertIn("小さい画面でも案内と顔と袋が一度に見えるようにしました", HTML)
+        self.assertNotIn("setInterval", HTML)
+        self.assertNotIn("alert(", HTML)
+
+
+class Cycle65SortCompleteNextButtonVisibleTests(unittest.TestCase):
+    def test_cycle65_sort_complete_next_button_fully_visible(self):
+        # サイクル65（継続指示「『良い』と言うまで最初の1分だけ」・みわけ完了時）:
+        # 実測ではみわけ完了時に次ボタン「④ きめる」が 390×844で top 921／bottom 969px・
+        # 375×667で 738／786px と全サイズで画面外で、100%になっても進み方が見えなかった。
+        # はかる完了（サイクル57）と同じく、完了した時だけボタン全体が見える位置へ画面を
+        # 移し（scroll-margin-bottom で下端の余白は既存のまま）、焦点は preventScroll で渡す。
+        # 機械経由の完了も同じクリック処理を通る
+        done = HTML.index('count.textContent = "ぜんぶ みわけた ✓";')
+        block = HTML[done:HTML.index("}", done)]
+        # 完了ブロックの中に scrollIntoView → preventScroll focus の順で入っている
+        self.assertIn('nextBtn.scrollIntoView({ block: "nearest" });', HTML[done:done + 2000])
+        scroll_pos = HTML.index('nextBtn.scrollIntoView({ block: "nearest" });', done)
+        focus_pos = HTML.index('nextBtn.focus({ preventScroll: true });', done)
+        self.assertLess(scroll_pos, focus_pos)
+        # scrollIntoView は完了判定（sortFound >= sortBadTotal）の中だけ: 到着時などでは発火しない
+        self.assertIn("if (sortFound >= sortBadTotal)", HTML)
+        self.assertIn("みわけるでは、全部みわけ終わると、次へ進むボタンが画面の下端で見切れないよう", HTML)
         self.assertNotIn("setInterval", HTML)
         self.assertNotIn("alert(", HTML)

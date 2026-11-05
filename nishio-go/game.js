@@ -2690,7 +2690,7 @@ function badgeDefs() {
     { id: 'walk42', i: '🏃', n: 'フルマラソン', d: '合計42.195km歩く', cur: km, goal: 42.195 },
     { id: 'alley10', i: '🔍', n: '路地はかせ', d: '歩く地図で、路地の行き止まりを10か所 しらべる', cur: (S.alleys || []).length, goal: 10 },   // 夜の開発の しくみのバッジ
     { id: 'h100', i: '👣', n: 'たんけん名人', d: '100歩たんけんで、はじめての道を50マス 歩く', cur: S.h100best || 0, goal: 50 },
-    { id: 'chain4', i: '🔗', n: 'めぐりの達人', d: 'ちがう名所を 4か所つづけて めぐる（めぐりの れんさ 4）', cur: (S.chain && S.chain.best) || 0, goal: 4 },
+    // れんさの達成バッジは置かない（サイクル91・Feather：目標ではなく、動くこと自体が遊び）
     { id: 'streak7', i: '📅', n: '1週間つづけた', d: '7日連続でチェックイン', cur: S.streak.max || 0, goal: 7 },
     { id: 'meibutsu', i: '🍵', n: '西尾の名物めぐり', d: `${MB_NISHIO.map(m => m.name).join('・')}にゆかりの場所をそれぞれ訪ねる`, cur: MB_NISHIO.filter(m => m.spots.some(id => S.visits['f-' + id])).length, goal: Math.max(MB_NISHIO.length, 1) },
     { id: 'meibutsu2', i: '🧭', n: 'となりまちの名物めぐり', d: `${MB_NEAR.map(m => m.name).join('・')}にゆかりの場所をそれぞれ訪ねる`, cur: MB_NEAR.filter(m => m.spots.some(id => S.visits['f-' + id])).length, goal: Math.max(MB_NEAR.length, 1), ready: MB_NEAR.length > 0 },
@@ -3457,7 +3457,7 @@ function areaArt(id) { return AREA_ART.has(id) ? `nishio-go/art/area-${id}.png` 
 
 // バッジのメダルの絵（文字を少なく：ふだん）。地区の制覇は旗
 const BADGE_PI = { critterall: 'book', first: 'feet', spot10: 'map', spot30: 'compass', spot100: 'medal', shrine: 'torii', temple: 'temple', park: 'tree', castle: 'castle', featall: 'star',
-  walk5: 'walker', walk42: 'walker', streak7: 'fire', meibutsu: 'tea', meibutsu2: 'tea', memo10: 'book', memo50: 'book', npc5: 'talk', npcall: 'face', npcnear: 'face', voice1: 'talk', voice3: 'home', react10: 'talk', alley10: 'book', h100: 'feet', chain4: 'compass' };
+  walk5: 'walker', walk42: 'walker', streak7: 'fire', meibutsu: 'tea', meibutsu2: 'tea', memo10: 'book', memo50: 'book', npc5: 'talk', npcall: 'face', npcnear: 'face', voice1: 'talk', voice3: 'home', react10: 'talk', alley10: 'book', h100: 'feet' };
 $('badgeGrid').addEventListener('click', e => { const b = e.target.closest('[data-badge="clear"]'); if (b && S.cleared) endingWhenFree(); });   // 殿堂入りのバッジから、エンディングの記録をもう一度
 function renderBadges() {
   const got = new Set(S.badges), defs = badgeDefs();

@@ -62,7 +62,7 @@ class DrawNight95(unittest.TestCase):
 
     def test_scope(self):
         files = set(self._diff("--name-only").split())
-        self.assertLessEqual(files, {"nishio-go/pixel.js", "tests/test_maze_loop4_95.py"})
+        self.assertLessEqual(files, {"nishio-go/pixel.js", "tests/test_maze_loop4_95.py", "tests/test_maze_loop4_96.py"})
 
 
 if __name__ == "__main__":

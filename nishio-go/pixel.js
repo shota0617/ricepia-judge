@@ -7315,6 +7315,19 @@ const bigOf = (s, load = true) => (giantTiles(s) >= 6 ? giantOf(s, load) : null)
 const spotSize = (s, spr, T) => dotSize(spr[0], T) * (s.shop && spr[0].width <= 48 ? 2 : 1);
 // 近づくと大きく迫る名所の絵（biglandmark.js）：描くときも タップの判定も この大きさを使う。特大の絵（giant）は二重に大きくしない・めいろ中・モジュールなしは等倍
 const bigHero = { x: null, y: null };   // お米のいる所（毎こま描くときに入れる）
+// サイクル96：最初の1分の目印。主人公にいちばん近い注目スポット（か自店）の特大の絵を、密集地でも6マスで描く（大きくするのは常に1か所）
+const HERO_GIANT_RANGE = 18;
+let heroGiantId = null;
+function pickHeroGiant(list, hx, hy) {
+  if (hx === null || hy === null || hx === undefined || hy === undefined) return null;
+  let best = null, bd = Infinity;
+  for (const s of list || []) {
+    if (!(s.featured || s.shop) || !(GIANT_ART[s.id] || (giantIds && giantIds.has(s.id)))) continue;
+    const q = toTile(s.lat, s.lng), d = Math.hypot(q.x - hx, q.y - hy);
+    if (d <= HERO_GIANT_RANGE && d < bd) { best = s; bd = d; }
+  }
+  return best;
+}
 const bigSpotSize = (s, spr, T, giant) => {
   const base = spotSize(s, spr, T), B = window.nishioBigLandmark;
   if (!B || bigHero.x === null || mazeOn() || !B.isBig(s)) return base;
@@ -7911,10 +7924,12 @@ function frame(now) {
   }
   const me = G.me;
   let nearest = null, nearestD = Infinity;
+  const heroGiant = mazeOn() ? null : pickHeroGiant(spots, bigHero.x, bigHero.y);
+  heroGiantId = heroGiant ? heroGiant.id : null;
   for (const s of spots) {
     const p = toTile(s.lat, s.lng);
     const near = ox + p.x * T > -T * 4 && ox + p.x * T < w + T * 4 && oy + p.y * T > -T * 2 && oy + p.y * T < h + T * 5;   // 画面に入るかもしれない名所だけ、特大の絵を読む
-    const giant = near ? bigOf(s) : null;
+    const giant = near ? (s === heroGiant ? giantOf(s) : bigOf(s)) : null;
     const spr = giant || spriteOf(s);
     const size = bigSpotSize(s, spr, T, giant);
     const sx = ox + p.x * T - size / 2, sy = oy + p.y * T - size * (giant ? 0.72 : 0.5);   // 特大の絵は、地面が名所の場所にくるように上へずらす
@@ -12902,7 +12917,7 @@ const meiroApi = {
   tilt: () => tiltG, tiltAsk, tiltReset, tiltNeedsPermission, koto: (v, low) => kotoSound(v, low), splash: v => splashSound(v), boing: (v, hi) => boingSound(v, hi), rumble: v => rumbleTick(v, GROUND.road),   // rumble：転がる音（速さは 地図の マス/秒）
   pause(on) { meiroPause = !!on; dirty = true; if (on && mzNext.hold) { mzNext.hold = false; if (G.toastFlush) G.toastFlush(); } },   // 止める ときは「つぎの ゴール」で 待たせた 知らせを 出す
 };
-window.nishioPixel = { meiroApi, maze: { wallTheme: () => mzWallTheme(), on: () => mazeOn(), playing: () => active && mazeOn(), next: () => ({ want: mzNext.want, t0: mzNext.t0, on: mzNextOn(), labHide: !!mzNext.labHide, arrowDim: !!mzNext.arrowDim, box: mzNext.box || null }), goal: id => {   // id の 名所が いまの ゴール（か 2分 以内の 前の ゴール）なら、かかった 時間と めいろの 道のり
+window.nishioPixel = { meiroApi, heroGiant: () => heroGiantId, pickHeroGiant, HERO_GIANT_RANGE, maze: { wallTheme: () => mzWallTheme(), on: () => mazeOn(), playing: () => active && mazeOn(), next: () => ({ want: mzNext.want, t0: mzNext.t0, on: mzNextOn(), labHide: !!mzNext.labHide, arrowDim: !!mzNext.arrowDim, box: mzNext.box || null }), goal: id => {   // id の 名所が いまの ゴール（か 2分 以内の 前の ゴール）なら、かかった 時間と めいろの 道のり
     if (!mazeOn()) return null;
     const now = performance.now(), pv = mzRt.prev, g = mzRt.gid === id ? { t0: mzRt.t0, len0: mzRt.len0, warp: mzRt.warp, moves: mzMv.n, run: { ...mzRt.run } } : pv && pv.id === id && now - pv.at < 120000 ? pv : null;
     if (!g || !g.t0) return null;

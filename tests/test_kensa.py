@@ -929,6 +929,19 @@ class Cycle48GoodGrainNodTests(unittest.TestCase):
         self.assertNotIn("alert(", HTML)
 
 
+class Cycle50MachineInstantResponseTests(unittest.TestCase):
+    def test_cycle50_machine_first_grain_moves_soon(self):
+        # サイクル50（継続指示「『良い』と言うまで最初の1分だけ」・きかいでみるの初動）:
+        # 従来は最初の粒が動くまで350msあり、光の帯も165msまで見えなかった。
+        # 帯は6%（約66ms）で見え、最初の粒は90msから動き始め、間隔140msの穏やかさは保つ
+        self.assertIn("90 + i * 140", HTML)
+        self.assertNotIn("350 + i * 140", HTML)
+        self.assertIn("6%{ opacity:1; }", HTML)
+        self.assertIn("押した直後から光の帯が見え、最初の粒がすぐ動き始める", HTML)
+        self.assertNotIn("setInterval", HTML)
+        self.assertNotIn("alert(", HTML)
+
+
 class Cycle49SasInstantHintTests(unittest.TestCase):
     def test_cycle49_sas_tap_hint_changes_immediately(self):
         # サイクル49（継続指示「『良い』と言うまで最初の1分だけ」・さすのタップ直後の案内）:

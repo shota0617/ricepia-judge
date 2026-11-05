@@ -824,3 +824,17 @@ class Cycle42StartFirstMinuteFaceLazyTests(unittest.TestCase):
         self.assertIn("検査員の顔も、はかる以降の場面で読み込むようにして、スタートをさらに軽くしました", HTML)
         self.assertNotIn("setInterval", HTML)
         self.assertNotIn("alert(", HTML)
+
+    def test_cycle43_probe_instant_and_prefetch_next_images(self):
+        # サイクル43（恒常ルール「スタートの1分が決め手」・継続指示で最初の1分のみ）:
+        # ①最初のタップで穀刺しが最初のフレームから見える（probeIn 0% が opacity:1・手前から滑り込む）。
+        #   2.4秒の穏やかな速さと抜く順序（サイクル23）は変えない
+        self.assertIn("0%{opacity:1; transform:translate(-8px,-3px) rotate(10deg);}", HTML)
+        self.assertIn("animation:probeIn 2.4s ease forwards", HTML)
+        # ②「さす」の間に次の場面の絵（顔・一等米の見本2枚）を先読みし、場面が変わる時の待ちをなくす（1回だけ）
+        self.assertIn("let nextImagesWarmed = false;", HTML)
+        self.assertIn('["kensa/face_dot.webp", "kensa/ittomai.webp", "kensa/ittomai_dot.webp"]', HTML)
+        self.assertIn("const im = new Image(); im.src = src;", HTML)
+        self.assertIn("最初のタップでは穀刺しがすぐ見えるようにし、「さす」の間に次の場面の絵を先読みして、スタートの1分の待ちを減らしました", HTML)
+        self.assertNotIn("setInterval", HTML)
+        self.assertNotIn("alert(", HTML)

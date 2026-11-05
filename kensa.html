@@ -462,7 +462,7 @@
     <p>出典: <a href="https://www.maff.go.jp/j/kokuji_tuti/kokuji/k0001439.html" target="_blank" rel="noopener">農産物規格規程（平成13年農林水産省告示第244号）</a>／<a href="https://www.maff.go.jp/j/seisan/syoryu/kensa/attach/pdf/index-25.pdf" target="_blank" rel="noopener">農林水産省「コメの農産物検査」</a>／<a href="https://www.maff.go.jp/j/seisan/syoryu/kensa/attach/pdf/hourei-233.pdf" target="_blank" rel="noopener">成分検査の実施マニュアル（標準抽出方法の運用）</a></p>
   </details>
 </main>
-<div id="idleCard" aria-live="polite">
+<div id="idleCard" aria-live="polite" inert>
   <p class="idleMsg">おつかれさま 🌾</p>
   <div class="idleBtns">
     <button id="likeBtn">👍 いいね</button>
@@ -888,17 +888,26 @@ function sendTap(tap) {
 }
 function showIdleCard() {
   if (sessionStorage.getItem("kensaLiked") === "1") { likeBtn.disabled = true; likeBtn.textContent = "ありがとう 🌾"; }
+  idleCard.inert = false;
   idleCard.classList.add("on");
+}
+function hideIdleCard() {
+  idleCard.classList.remove("on");
+  idleCard.inert = true; /* 隠れている間はTab移動の対象にもしない（Codexレビュー） */
 }
 function armIdle() {
   clearTimeout(idleTimer);
   idleTimer = setTimeout(showIdleCard, IDLE_MS);
 }
 document.addEventListener("pointerdown", (e) => {
-  if (!e.target.closest || !e.target.closest("#idleCard")) idleCard.classList.remove("on");
+  if (!e.target.closest || !e.target.closest("#idleCard")) hideIdleCard();
   armIdle();
 }, { passive: true });
-document.addEventListener("keydown", () => { idleCard.classList.remove("on"); armIdle(); });
+document.addEventListener("keydown", (e) => {
+  /* カードの中のキー操作（Tab・Enterなど）では消さない。カードの外のキー操作は「遊びに戻った」として消す */
+  if (!e.target.closest || !e.target.closest("#idleCard")) hideIdleCard();
+  armIdle();
+});
 likeBtn.addEventListener("click", () => {
   if (sessionStorage.getItem("kensaLiked") === "1") return;
   sessionStorage.setItem("kensaLiked", "1");

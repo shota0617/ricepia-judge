@@ -152,7 +152,12 @@ async function storeKensa(x, now) {
   if (today) { n = today.number; if (today.comments >= cap) return 'daily'; }
   if (!n) {
     await ensureLabels(['kensa-taps']);
-    n = (await gh('/issues', { method: 'POST', body: JSON.stringify({ title, labels: ['kensa-taps'], body: '農産物検査ゲームの「手が止まったときのカード」のタップ（1日ぶん）。いいね／サイトへもどるの数を、遊んだ人数の目安として数えます。' }) })).number;
+    const mine = (await gh('/issues', { method: 'POST', body: JSON.stringify({ title, labels: ['kensa-taps'], body: '農産物検査ゲームの「手が止まったときのカード」のタップ（1日ぶん）。いいね／サイトへもどるの数を、遊んだ人数の目安として数えます。' }) })).number;
+    // その日の最初のタップが同時に来ると、どちらも「まだない」と見て2つ作る。作ったあとに一番小さい番号へまとめ、あとは閉じる（storePlay と同じ流儀）
+    const firstList = await gh('/issues?labels=kensa-taps&state=open&sort=created&direction=desc&per_page=20');
+    const first = firstList.filter(i => i.title === title).sort((a, b) => a.number - b.number)[0];
+    n = first ? first.number : mine;
+    if (n !== mine) await gh(`/issues/${mine}`, { method: 'PATCH', body: JSON.stringify({ state: 'closed', state_reason: 'not_planned' }) });
   }
   kensaIssue.d = d; kensaIssue.n = n;
   await gh(`/issues/${n}/comments`, { method: 'POST', body: JSON.stringify({ body: `${KENSA_TAPS[x.tap]}\n<!-- kensa-tap:${Buffer.from(JSON.stringify(x)).toString('base64')} -->` }) });

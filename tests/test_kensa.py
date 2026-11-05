@@ -693,6 +693,8 @@ class Cycle36IdleCardTests(unittest.TestCase):
         self.assertIn('id="returnLink" href="https://ricepia.jp/"', HTML)
         self.assertIn("const IDLE_MS = 45000;", HTML)
         self.assertIn("setTimeout(showIdleCard, IDLE_MS)", HTML)
+        self.assertIn("idleCard.inert = false", HTML)  # 表示時だけフォーカス対象にする
+        self.assertIn("function hideIdleCard()", HTML)
         self.assertIn('sendTap("like")', HTML)
         self.assertIn('sendTap("return")', HTML)
         self.assertIn('kind: "kensa"', HTML)

@@ -392,6 +392,22 @@ class KensaTests(unittest.TestCase):
         self.assertNotIn("setInterval", HTML)                          # タイマー・焦らせる仕組みを入れない
         self.assertNotIn("alert(", HTML)                               # 流れを止める要素は作らない
 
+    def test_cycle25_sampling_reference(self):
+        # サイクル25: 資料置き場に試料の採取（標準抽出方法・平成13年告示第443号）を追加。
+        # 数値は brief_cycle1.md §1 で原典（成分検査実施マニュアル hourei-233）確認済みのものだけを使う。
+        self.assertIn('id="sampleTable"', HTML)
+        self.assertIn("標準抽出方法・平成13年農林水産省告示第443号", HTML)
+        self.assertIn("約40g", HTML)
+        self.assertIn("合計1kgが目安", HTML)
+        self.assertIn("無作為に選びます", HTML)
+        self.assertIn("hourei-233.pdf", HTML)
+        # 抽出個数表の代表値（荷口→抜く袋）: 2〜15=全部／201〜1,000=32／35,001以上=200
+        self.assertIn("<td>2〜15</td><td>全部</td>", HTML)
+        self.assertIn("<td>201〜1,000</td><td>32</td>", HTML)
+        self.assertIn("<td>35,001以上</td><td>200</td>", HTML)
+        self.assertNotIn("setInterval", HTML)                          # タイマー・焦らせる仕組みを入れない
+        self.assertNotIn("alert(", HTML)                               # 流れを止める要素は作らない
+
     def test_stamp_date_text(self):
         # 日付印は固定日付でなく、その日の日付を YYYY.M.D で作る純粋関数
         node = shutil.which("node")

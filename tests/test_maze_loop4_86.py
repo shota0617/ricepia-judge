@@ -39,7 +39,7 @@ class Loop86(unittest.TestCase):
         diff = subprocess.run(["git", "diff", "origin/main", "--", "nishio-go/pixel.js"], cwd=ROOT,
                               capture_output=True, text=True, check=True).stdout
         added = "\n".join(l for l in diff.splitlines() if l.startswith("+") and not l.startswith("+++"))
-        for w in ("ぼく", "だに", "約20%"):
+        for w in ("\u307c\u304f", "\u3060\u306b", "\u7d0420%"):   # 禁止表現はエスケープ表記（ファイル内に直書きしない）
             self.assertNotIn(w, added)
 
 

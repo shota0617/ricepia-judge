@@ -185,8 +185,10 @@
   body.calm .card h1::before { content: '🚜'; font-size: 34px; }
   body.calm #start .tag, body.calm #start .card > p:not(.err), body.calm #start .how, body.calm #seasons button br, body.calm #seasons button small, body.calm #arts i { display: none !important; }
   /* はじめは 選ぶ 画面を 出さず、読みこむ あいだは 進みぐあいの 棒（と 読みこめなかった ときの 知らせ）だけ。季節・お題は ≡ メニューで かえる */
-  #start.loading .card > :not(.prog):not(#progText) { display: none !important; }   /* サイクル98: 案内画面（試作版・安全・制作者の3行）は全廃。読みこむあいだは進みぐあいだけ出す */
-  #start.loading #progText:not(.err) { display: none !important; }
+  #loadMark { display: none; }
+  #start.loading #loadMark { display: block; font-size: 48px; line-height: 1.2; margin: 6px 0 2px; }   /* サイクル160: 読みこみ中だけの目印。除外規則に :not(#loadMark) を入れたので隠し規則に当たらず、既定 display:none (特異度 1,0,0) より本規則 (2,1,0) が勝つため !important は不要 */
+  #start.loading .card > :not(.prog):not(#progText):not(#loadMark) { display: none !important; }   /* サイクル98: 案内画面（試作版・安全・制作者の3行）は全廃。読みこむあいだは進みぐあいだけ出す／サイクル160: #loadMark も除外し読みこみ中も出す */
+  #start.loading #progText { display: block !important; }   /* サイクル160: 読みこみ中は進みぐあいの1行を出す（旧「#progText:not(.err) を隠す」規則は廃止）。calm の body.calm #start .card > p:not(.err) 非表示（特異度 1,3,2・!important）に対し、本規則は ID を2つ持つ（2,1,0）ため !important 同士でも特異度で確実に勝ち、さらに calm 規則より後に置くことで順序でも負けない */
   /* サイクル98（ユーザー実機指示 2026-11-04）: 起動時の案内画面と開始カードの案内3行は全廃。開いたら案内なしですぐ遊べる形にする（旧「信頼の観点で残す」判断はユーザーの直接指示で上書き） */
   body.calm #start label.easy { display: inline-flex; align-items: center; gap: 6px; margin: 2px 4px 8px 0; padding: 6px 10px; }
   body.calm #start label.easy input { margin-top: 0; }
@@ -251,6 +253,7 @@
 
 <div class="sheet loading" id="start">
   <div class="card">
+    <div id="loadMark" aria-hidden="true">🚜</div>
     <p class="challenge hidden" id="challenge"></p>
     <span class="tag">🧪 試作版</span>
     <div class="talk" id="talk" hidden><canvas id="talkFace" width="128" height="128" aria-hidden="true"></canvas><div class="talkBody"><p id="talkSay" aria-live="polite"></p><div class="talkCh" id="talkCh"></div></div></div>

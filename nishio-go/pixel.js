@@ -7326,6 +7326,7 @@ function fieldT(dpr) {
 }
 // 絵を描く大きさ：絵の1点が、マスの1ドットと同じ大きさになるように（16×16 の絵は1マス、24×24 は1.5マス、48×48 は3マス、96×96 は6マス）
 const dotSize = (img, T) => img.width * T / 16;
+const RICE_BIG = 1.45;   // サイクル94：主人公（歩く地図・めいろ）の 拡大率。最初の1分で かおりちゃんの顔（目・ほっぺ・にっこり）が読める大きさに。物理・当たり判定は そのまま
 // ポケモン赤・緑（ゲームボーイ）の4色：歩く地図を 白・うす・こい・黒 の4つの色（緑がかったゲームボーイの画面の色）だけで描く。
 // せってい「ゲームボーイの4色」で切りかえ（はじめはオフ＝色つき）。絵は はじめて描くときに4色に直してとっておき、塗る色も4色のどれかにする
 const GB_COLS = ['#e0f8d0', '#88c070', '#346856', '#081820'];
@@ -8004,13 +8005,13 @@ function frame(now) {
   // 主人公（車に乗っているときは車）
   if (driving) ctx.drawImage(carSprites[facing], Math.round(w / 2 - T / 2), Math.round(cy - T / 2), T, T);
   else if ((me || G.demo) && riceSprites.ready) {   // お米（影をつけて、転がった道のりで回す）
-    const img = riceSprites.right[0], sz = dotSize(img, T), u = sz / 32;
+    const img = riceSprites.right[0], sz0 = dotSize(img, T), sz = sz0 * RICE_BIG, u = sz / 32;   // サイクル94：顔が読める大きさに（sz0＝拡大前。接地は sz0 で出して足もとを 動かさない）
     let hx = ox + roll.last.x * T, hcy = oy + roll.last.y * T;   // お米の画面での位置（転がしているときは 少し まん中から ずれる）
     if (KP.wobble && roll.v > 0.5) hx += Math.sin(roll.d * 2.4) * KP.wobble * T * Math.min(1, roll.v / 2);   // くねくね
     if (KP.shake && roll.v > 0.5) { hx += Math.round((Math.random() - 0.5) * u * 1.6 * KP.shake); hcy += Math.round((Math.random() - 0.5) * u * 1.2 * KP.shake); }   // ぶるぶる
     heroScr = { x: hx - w / 2 - shk, y: hcy - cy };
     const A = 10 * u, B = 13.5 * u, th = roll.ang;   // つぶの よこ・たての半分（絵の点で）。寝ころぶほど まん中が下がる
-    const low = Math.sqrt((A * Math.sin(th)) ** 2 + (B * riceTall(roll.pitch) * Math.cos(th)) ** 2), ground = hcy + T * 0.4 - sz / 2 + B, hop = roll.h * T, mid = ground - low - hop;
+    const low = Math.sqrt((A * Math.sin(th)) ** 2 + (B * riceTall(roll.pitch) * Math.cos(th)) ** 2), ground = hcy + T * 0.4 - sz0 / 2 + 13.5 * sz0 / 32, hop = roll.h * T, mid = ground - low - hop;
     for (const p of roll.dust) {   // 土ぼこり（うしろに ふわっと。地面の色。葉っぱ・しぶきは はねて落ちる）
       const a = 1 - p.t / 0.45, r = Math.max(1, Math.round(T * (p.bit ? 0.07 : 0.12) * p.s * (1 + (p.bit ? 0 : p.t * 2))));
       const up = p.bit ? (p.t * 2.2 - p.t * p.t * 9) * T : p.t * T * 0.4;
@@ -8577,8 +8578,8 @@ function drawWorld(now, w, h, dpr) {
   // 主人公
   if (me) {
     const p = llToW(me.lat, me.lng), hs = Math.max(T * 2, 18 * dpr);
-    if (riceBall.cv) drawRiceBall(ox + p.x * T, oy + p.y * T - hs * 0.8 + hs * 17.5 / 32, hs / 32, f ? 0.14 : -0.14, 1, 1, 0);   // 歩く地図と同じ 丸いお米（左右に ゆらゆら）
-    else ctx.drawImage(riceSprites.ready ? riceSprites.right[f] : heroSprites.down[f], Math.round(ox + p.x * T - hs / 2), Math.round(oy + p.y * T - hs * 0.8), hs, hs);
+    if (riceBall.cv) drawRiceBall(ox + p.x * T, oy + p.y * T - hs * 0.8 + hs * 17.5 / 32 - 13.5 * hs / 32 * (RICE_BIG - 1), hs * RICE_BIG / 32, f ? 0.14 : -0.14, 1, 1, 0);   // 歩く地図と同じ 丸いお米（左右に ゆらゆら）
+    else ctx.drawImage(riceSprites.ready ? riceSprites.right[f] : heroSprites.down[f], Math.round(ox + p.x * T - hs * RICE_BIG / 2), Math.round(oy + p.y * T - hs * 0.8 - hs * (RICE_BIG - 1)), hs * RICE_BIG, hs * RICE_BIG);   // サイクル94：読み込み中の仮の絵も 同じ大きさ・同じ足もとに
   }
   const msg = worldState === 'building' || worldState === 'none' ? 'せかいちずを つくっています…\n（はじめの1回だけ 少し時間がかかります）'
     : worldState === 'fail' ? 'せかいちずを つくれなかった。\nしばらくして もういちど ためしてね。' : '';

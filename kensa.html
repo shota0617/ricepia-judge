@@ -56,7 +56,7 @@
   /* 抜いた後にだけ溝に並ぶ米粒（サイクル23）: 刺している間は見せず、抜く動き（58%以降）で静かに現れる */
   .probeGrains { opacity:0; }
   #probe.go .probeGrains { animation:grainsShow 2.4s ease forwards; }
-  @keyframes grainsShow { 0%,56%{opacity:0;} 72%,100%{opacity:1;} }
+  @keyframes grainsShow { 0%,60%{opacity:0;} 78%,100%{opacity:1;} }
   /* 穴をふさぐシール */
   #seal { position:absolute; z-index:3; left:56%; top:56%; width:30px; height:30px; border-radius:50%; background:#3f7fbf; color:#fff;
     font-size:15px; font-weight:800; display:flex; align-items:center; justify-content:center; line-height:1;
@@ -659,6 +659,8 @@ meterBtn.addEventListener("click", () => {
 });
 bagTap.addEventListener("click", () => {
   if (sampled) return; sampled = true;
+  /* サイクル23（Codexレビュー反映）: 動きを減らす設定ではアニメーションがほぼ止まるため、連動する待ち時間も同じ割合で縮める */
+  const motionScale = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0.2 : 1;
   bagTap.classList.add("done");
   document.getElementById("probe").classList.add("go");
   /* 穀刺しで抜いた試料が鑑定皿へ落ちる（約40gのイメージで粒を60粒） */
@@ -670,18 +672,18 @@ bagTap.addEventListener("click", () => {
     g.style.left = (4 + Math.random() * 90) + "%";
     g.style.top = (8 + Math.random() * 76) + "%";
     g.style.setProperty("--r", (Math.random() * 160 - 80) + "deg");
-    g.style.animationDelay = (1.35 + Math.random() * 0.5) + "s"; /* サイクル23: 抜く動きが終わる頃に粒が皿へ落ちる */
+    g.style.animationDelay = (1.55 + Math.random() * 0.4) * motionScale + "s"; /* サイクル23: 抜く動きが始まってから粒が皿へ落ちる */
     tray.appendChild(g);
     requestAnimationFrame(() => g.classList.add("fall"));
   }
-  setTimeout(() => document.getElementById("seal").classList.add("on"), 2050); /* サイクル23: 抜き終わってから穴をシールでふさぐ */
+  setTimeout(() => document.getElementById("seal").classList.add("on"), 2050 * motionScale); /* サイクル23: 抜き終わってから穴をシールでふさぐ */
   setTimeout(() => {
     count.innerHTML = "とれた試料 <b>約40g</b>";
     document.getElementById("stepChip").textContent = "① さす ✓";
     document.getElementById("nextBtn").classList.add("on");
     /* サイクル16: 次ボタンへ焦点を渡す。ただし待ち時間の間にキーボードで他へ移っていたら奪わない（Codexレビュー） */
     if (document.activeElement === bagTap || document.activeElement === document.body) nextBtn.focus();
-  }, 2400);
+  }, 2400 * motionScale);
 });
 </script>
 </body>

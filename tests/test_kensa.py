@@ -367,11 +367,12 @@ class KensaTests(unittest.TestCase):
         self.assertIn('class="probeGrains"', HTML)                       # 溝に並ぶ米粒（SVG内）
         self.assertGreaterEqual(HTML.count("<ellipse"), 10)              # 一列に並ぶ粒
         self.assertIn("@keyframes grainsShow", HTML)
-        self.assertIn("0%,56%{opacity:0;}", HTML)                        # 刺している間は粒を見せない
+        self.assertIn("0%,60%{opacity:0;}", HTML)                        # 刺している間・静止中は粒を見せない（Codexレビュー反映）
         self.assertIn("animation:grainsShow 2.4s ease forwards", HTML)
-        self.assertIn("(1.35 + Math.random() * 0.5)", HTML)              # 粒は抜く動きの後に皿へ落ちる
-        self.assertIn(", 2050)", HTML)                                   # シールは抜き終わってから
-        self.assertIn(", 2400)", HTML)                                   # 完了表示はモーションの終わりに合わせる
+        self.assertIn("(1.55 + Math.random() * 0.4) * motionScale", HTML)  # 粒は抜く動きが始まってから皿へ落ちる
+        self.assertIn("2050 * motionScale", HTML)                        # シールは抜き終わってから
+        self.assertIn("2400 * motionScale", HTML)                        # 完了表示はモーションの終わりに合わせる
+        self.assertIn('matchMedia("(prefers-reduced-motion: reduce)")', HTML)  # 動きを減らす設定では待ち時間も縮める
         self.assertNotIn("animation:probeIn 1.1s", HTML)                 # 旧来の短い動きは使わない
         self.assertNotIn("setInterval", HTML)                            # タイマー・焦らせる仕組みを入れない
         self.assertNotIn("alert(", HTML)                                 # 流れを止める要素は作らない

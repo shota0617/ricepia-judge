@@ -271,7 +271,7 @@ class KensaTests(unittest.TestCase):
         self.assertIn('querySelector("#whiteTray .sgrain")', HTML)           # はかる→みわける（最初の粒）
         self.assertIn('document.querySelector(".gradeBtn").focus({ preventScroll: true });', HTML)   # みわける→きめる（サイクル52: ラベルが見切れないようスクロールなし）
         self.assertIn('document.getElementById("stampBtn").focus()', HTML)   # きめる→おす
-        self.assertIn("bagTap.focus()", HTML)                                # 次の山→最初の袋
+        self.assertIn("bagTap.focus({ preventScroll: true })", HTML)         # 次の山→最初の袋（サイクル54: 場面の先頭が見切れないようスクロールなし）
         self.assertGreaterEqual(HTML.count("nextBtn.focus()"), 3)            # 平均確定・等級確定・押印で次ボタンへ
         self.assertIn(".sgrain:not(.away)", HTML)                            # 皿へ戻ったら残っている粒へ
         self.assertNotIn("setInterval", HTML)                                # タイマー・焦らせる仕組みを入れない
@@ -1000,5 +1000,20 @@ class Cycle52ResultLabelInstantTests(unittest.TestCase):
         self.assertIn("結果ラベルを薄く出る動きなしに開いた瞬間から読めるようにし", HTML)
         self.assertIn('document.getElementById("resultLabel").scrollIntoView({ block: "start" });', HTML)
         self.assertIn("ラベルの先頭が見える位置へ画面を移して", HTML)
+        self.assertNotIn("setInterval", HTML)
+        self.assertNotIn("alert(", HTML)
+
+
+class Cycle54NextLotSceneTopTests(unittest.TestCase):
+    def test_cycle54_next_lot_shows_scene_from_top(self):
+        # サイクル54（継続指示「『良い』と言うまで最初の1分だけ」・つぎの山へ進んだ直後の見え方）:
+        # 実測では従来 bagTap への焦点移動だけが画面を動かし、袋の位置（場面の20%下）に
+        # 合わせるため場面の上部が約49px見切れたまま次のロットが始まった。
+        # 場面の先頭が見える位置へ移してから、焦点は preventScroll で渡す
+        self.assertIn('scene.scrollIntoView({ block: "start" });', HTML)
+        self.assertIn('bagTap.focus({ preventScroll: true });', HTML)
+        self.assertLess(HTML.index('scene.scrollIntoView({ block: "start" });'),
+                        HTML.index('bagTap.focus({ preventScroll: true });'))
+        self.assertIn("つぎの山では、場面の先頭が見える位置へ画面を移して", HTML)
         self.assertNotIn("setInterval", HTML)
         self.assertNotIn("alert(", HTML)

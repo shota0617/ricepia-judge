@@ -763,3 +763,23 @@ class Cycle39PlainTests(unittest.TestCase):
         self.assertIn("水分計や皿、袋などの道具まわりは、点の質感や小さな飾りを外して素のままにしました", HTML)
         self.assertNotIn("setInterval", HTML)
         self.assertNotIn("alert(", HTML)
+
+
+class Cycle40LazyRefPhotosTests(unittest.TestCase):
+    def test_cycle40_ref_photos_lazy_first_screen_light(self):
+        # サイクル40: 資料置き場の写真3枚だけ loading=lazy にし、最初の画面を軽くする。
+        # 場面絵・「さす」の穀刺し写真/ドット絵・「みわける」の一等米見本はすぐ使うため lazy にしない。
+        # 遊び・手順・数値は変えない
+        self.assertEqual(HTML.count('loading="lazy"'), 3)
+        ref = HTML[HTML.index('id="refBox"'):]
+        self.assertEqual(ref.count('loading="lazy"'), 3)
+        self.assertIn('<img loading="lazy" src="kensa/scene.webp"', ref)
+        self.assertIn('<img loading="lazy" src="kensa/ittomai.webp"', ref)
+        self.assertIn('<img loading="lazy" src="kensa/ittomai_dot.webp"', ref)
+        # 最初の画面と流れで使う絵は lazy でないこと
+        self.assertIn('<img src="kensa/scene_dot.webp"', HTML)
+        self.assertIn('<img src="kensa/kokusashi.webp"', HTML)
+        self.assertIn('<img src="kensa/kokusashi_dot.webp"', HTML)
+        self.assertIn("資料の写真は、資料を開く時だけ読み込むようにして、最初の画面を軽くしました", HTML)
+        self.assertNotIn("setInterval", HTML)
+        self.assertNotIn("alert(", HTML)

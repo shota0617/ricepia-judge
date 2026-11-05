@@ -534,11 +534,15 @@ function sortProgress() {
   document.querySelector("#sortPct b").textContent = Math.round(sortFound / sortBadTotal * 100) + "%";
   document.getElementById("sortCount").textContent = sortFound + " / " + sortBadTotal;
 }
+/* 粒の名前（サイクル19）: 読み上げでも見た目（サイクル9）と同じく種類が分かるよう、
+   規程の用語そのまま（整粒／被害粒／死米／未熟粒／着色粒／もみ）を付ける。
+   「よい／わるい」という答えは付けず、種類を見てよけるかどうかを決める遊びはそのまま残す */
+const GRAIN_LABELS = { "": "整粒", higai: "被害粒", shini: "死米", mijuku: "未熟粒", color: "着色粒", momi: "もみ" };
 function placeGrains(plate, kinds) {
   kinds.forEach((kind, i) => {
     const b = document.createElement("button");
     b.className = "sgrain " + (kind || "good");
-    b.setAttribute("aria-label", kind ? "わるい粒" : "よい粒");
+    b.setAttribute("aria-label", GRAIN_LABELS[kind || ""] || "整粒");
     const cols = 7;
     b.style.left = (3 + (i % cols) * 12.8 + (Math.floor(i / cols) % 2) * 4) + "%"; /* サイクル9: 大きくなったタップ範囲が小さい画面でも皿の右端に収まる間隔 */
     b.style.top = (28 + Math.floor(i / cols) * 30) + "px"; /* 粒の多いロット（サイクル6）でも皿に収まる間隔 */

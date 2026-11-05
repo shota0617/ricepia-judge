@@ -302,6 +302,21 @@ class KensaTests(unittest.TestCase):
         self.assertNotIn("setInterval", HTML)                        # タイマー・焦らせる仕組みを入れない
         self.assertNotIn("alert(", HTML)                             # 流れを止める要素は作らない
 
+    def test_cycle19_grain_kind_labels(self):
+        # サイクル19: 粒の読み上げラベルは「よい／わるい」という答えでなく、規程の用語（種類）そのままにする。
+        # 見た目の区別（サイクル9）と同じ情報を読み上げでも伝え、種類を見て決める遊びは残す。
+        self.assertIn("GRAIN_LABELS", HTML)
+        # キーとラベルの対応そのものを固定する（入れ替えたら落ちる・Codexレビュー指摘）
+        m = re.search(r"const GRAIN_LABELS = \{([^}]*)\};", HTML)
+        pairs = {(k or ""): v for k, v in re.findall(r'(?:""|(\w+)):\s*"([^"]+)"', m.group(1))}
+        self.assertEqual(pairs, {"": "整粒", "higai": "被害粒", "shini": "死米",
+                                 "mijuku": "未熟粒", "color": "着色粒", "momi": "もみ"})
+        self.assertIn('GRAIN_LABELS[kind || ""] || "整粒"', HTML)  # 未知の種類でも "undefined" にならない
+        self.assertNotIn('"わるい粒"', HTML)                      # 答えそのもののラベルは付けない
+        self.assertNotIn('"よい粒"', HTML)
+        self.assertNotIn("setInterval", HTML)                     # タイマー・焦らせる仕組みを入れない
+        self.assertNotIn("alert(", HTML)                          # 流れを止める要素は作らない
+
     def test_stamp_date_text(self):
         # 日付印は固定日付でなく、その日の日付を YYYY.M.D で作る純粋関数
         node = shutil.which("node")

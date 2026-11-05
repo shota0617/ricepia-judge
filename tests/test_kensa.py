@@ -267,7 +267,7 @@ class KensaTests(unittest.TestCase):
     def test_cycle16_focus_handoff(self):
         # サイクル16: 焦点の受け渡し。段階が進むと前の操作が隠れたり無効になって焦点が消えるため、
         # 次の所作の主な操作へ静かに渡す（流れを止める要素・タイマーは入れない）
-        self.assertIn('document.getElementById("meterBtn").focus()', HTML)   # さす→はかる
+        self.assertIn('document.getElementById("meterBtn").focus({ preventScroll: true })', HTML)   # さす→はかる（サイクル60: チップ先頭表示の後にスクロールなしで渡す）
         self.assertIn('querySelector("#whiteTray .sgrain")', HTML)           # はかる→みわける（最初の粒）
         self.assertIn('document.querySelector(".gradeBtn").focus({ preventScroll: true });', HTML)   # みわける→きめる（サイクル52: ラベルが見切れないようスクロールなし）
         self.assertIn('document.getElementById("stampBtn").focus()', HTML)   # きめる→おす
@@ -1104,5 +1104,21 @@ class Cycle58KimeruArrivalChipVisibleTests(unittest.TestCase):
         self.assertIn('document.getElementById("machineBtn").focus({ preventScroll: true })', HTML[back:])
         self.assertNotIn('if (remain) remain.focus();', HTML)
         self.assertIn("きめるで外れて皿へ戻る時も、入った時と同じく皿の先頭が見える位置へ画面を移し", HTML)
+        self.assertNotIn("setInterval", HTML)
+        self.assertNotIn("alert(", HTML)
+
+    def test_cycle60_hakaru_arrival_shows_chip_first(self):
+        # サイクル60（継続指示「『良い』と言うまで最初の1分だけ」・はかる到着時の見え方）:
+        # 実測（375×667）では焦点任せだと到着時に段階チップが top -39px と画面外で、
+        # 今どの段階かが見えなかった（390×844では top 132px で見え、画面の高さに依存した）。
+        # きめる（サイクル58）と同じくチップが見える位置へ画面を移してから、焦点は
+        # preventScroll で水分計ボタンへ渡す（移す先はチップ・動きは付けない）
+        hakaru = HTML.index('phase = "hakaru";')
+        scroll_pos = HTML.index('document.getElementById("stepChip").scrollIntoView({ block: "start" });', hakaru)
+        focus_pos = HTML.index('document.getElementById("meterBtn").focus({ preventScroll: true });', hakaru)
+        self.assertLess(scroll_pos, focus_pos)
+        self.assertNotIn('document.getElementById("meterBtn").focus();', HTML)
+        self.assertIn("はかるでは、入った時に段階の案内が見える位置へ画面を移し", HTML)
+        self.assertIn("小さい画面でも案内と水分計が一度に見えるようにしました", HTML)
         self.assertNotIn("setInterval", HTML)
         self.assertNotIn("alert(", HTML)

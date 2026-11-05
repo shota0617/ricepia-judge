@@ -3656,16 +3656,18 @@ carSprites.right = sprite(rotCW(CAR_UP)); carSprites.down = sprite(rotCW(rotCW(C
 const heroMarkerStyle = document.createElement('style');
 // 主人公の「お米」（tools/blender/rice.py → nishio-go/art/rice.png）：32×32 が 横8 × たて2（1行め：右へ でんぐり返る、2行め：手前へ転がる）。歩く地図には 2マスで描く（ドットの大きさは ほかの絵と同じ）。
 // 左は右の反転、上は手前の逆の順。転がった道のり（roll.d、マス）で コマを進める（1マスで ひとまわり）。止まっているときは1コマめ（こっちを見ている）
-const riceSprites = { right: [], left: [], down: [], up: [], ready: false };
+const riceSprites = { right: [], left: [], down: [], up: [], ready: false, dot: false };   // dot：手描きドット絵のシートが 使えるか
 const idleRoll = { last: performance.now(), on: false, key: '', skip: [], fails: [], guideKey: '' };   // 眺めるコロコロ（M5）：last＝最後の 手動入力の 時刻・on＝ひとりで 転がり中・key＝いま向かう/さっき着いた 名所・skip＝着いた/届かなかった 名所（除外リスト）・fails＝届かなかった 名所（その回のあいだ 覚える。一巡しても 消さない。第4弾サイクル33）・guideKey＝済みにした 目的地（skip の上限で 消えないよう 別に持つ。第4弾サイクル29 Codexレビュー）
 function idleTouch() { idleRoll.last = performance.now(); idleRoll.on = false; idleRoll.skip = []; idleRoll.fails = []; idleRoll.guideKey = ''; idleRoll.anchor = null; }
 document.addEventListener('pointerdown', idleTouch, true);   // 画面に さわったら すぐ 手動に もどる
 const roll = { d: 0, last: null, lastK: null, ang: 0, av: 0, side: 0, sq: 0, sqv: 0, sqx: false, shake: 0, dust: [], dustT: 0, kind: 'stop', wad: 0, spin: 0, sv: 0, pitch: 0, pv: 0, vert: false, h: 0, hv: 0, gnd: null, back: null, trail: [], fx: [], fxAcc: 0, fxN: 0, sendT: 0, sendA: 0, sends: 0, flat: 0, wetT: 0, jumpCd: 0, zg: null, jumps: 0, look: 0, dirt: 0, dirtCol: '150,120,80', v: 0, peak: 0, idle: 0, ouchT: 0, happyT: 0, spinT: 0, dizzyT: 0 };   // d：転がった道のり（マス）・lastK：転がり方の 道のりを 数える 前の こまの 行き先・ang：いまの回り（ラジアン）・av：回る速さ・side：寝た回数（コトン）・sq：つぶれ・shake：画面のゆれ・dust：土ぼこり
 // v：いまの速さ・peak：止まるまでの いちばんの速さ・idle：止まっている時間・ouchT・happyT・dizzyT：表情（いたい・うれしい・目が回る）の のこり時間・spinT：くるくるしている時間
 // kind：いまの転がり方（stop・よちよち waddle・ころころ tumble・くるくる spin・ぴょん hop）・wad：よちよちの ゆれ・spin：くるくるの回り・sv：その速さ・h：とんだ高さ（マス）・gnd：足もとの地面・back：うしろ姿の絵
-(() => {
+(() => {   // 手描きドット絵（rice-dot.png）を先に読み、読めなかったときだけ 従来の rice.png に もどす（第4弾サイクル86）
+  const load = (src, dot) => {
   const img = new Image();
   img.onload = () => {
+    riceSprites.dot = dot;
     const N = img.height / 2;   // 1コマの大きさ
     const cut = (i, r, flip) => {
       const c = document.createElement('canvas'); c.width = c.height = N;
@@ -3685,7 +3687,10 @@ const roll = { d: 0, last: null, lastK: null, ang: 0, av: 0, side: 0, sq: 0, sqv
     riceBallInit(cut(0, 0));
     riceSprites.ready = true; setHeroMarker(); dirty = true;
   };
-  img.src = 'nishio-go/art/rice.png';
+  if (dot) img.onerror = () => load('nishio-go/art/rice.png', false);
+  img.src = src;
+  };
+  load('nishio-go/art/rice-dot.png', true);
 })();
 // 丸く見せる：お米を 画面の 細かさで 回し、光を いつも左上から当てなおす（つぶを たまごの形とみて、点ごとに 面の向きを出す）。
 // 回っても てかりは左上・影は右下のままなので、紙を回したようにならず、ころんと丸く見える。影は 段なしの 連続、ふちどりは回したあとに描きなおす（くわしくは drawRiceBall・docs/korokoro.md「なめらかに ころころ」）
@@ -3862,6 +3867,16 @@ const riceTall = pitch => Math.sqrt(Math.cos(pitch) ** 2 + (0.88 * (riceBall.a |
 function drawRiceBall(X, Y, u, th, sx, sy, spin, dst = ctx, gb = gbOn && !worldMode, mood = 'smile', look = 0, dirt = 0, dirtCol = '', pitch = 0) {
   // なめらかに ころころ（運営者の声 2026-10-28「この キャラクターくらい 滑らかに」）：画面の 細かさで 描き、影は 段でなく 連続に、ふちは なめらかに、
   // 位置は 整数に 丸めない（点より 細かい ずれも 絵の 中で 描く）。ゲームボーイの4色の ときだけは これまでどおり 絵の 点の 細かさで
+  if (riceSprites.dot && !gb && riceSprites.right.length === 8) {   // 手描きドット絵：回りから コマ（0〜7）を えらび、点の まま 描く（顔は 絵の にっこり固定。mood は ドット経路では つかわない）
+    const rb0 = riceBall, N = riceSprites.right[0].width, q = Math.PI * 2, pk = ((Math.round(pitch / q * 8) % 8) + 8) % 8, sk = ((Math.round(spin / q * 8) % 8) + 8) % 8;
+    const fr = pk ? riceSprites.down[pk] : riceSprites.right[sk], sm0 = dst.imageSmoothingEnabled;
+    dst.save(); dst.translate(X, Y); dst.scale(sx, sy); dst.rotate(th); dst.imageSmoothingEnabled = false;
+    dst.drawImage(fr, -rb0.gx * u, -rb0.gy * u, N * u, N * u);
+    const nD = rb0.spots ? Math.round(Math.min(1, dirt) * rb0.spots.length) : 0;
+    if (nD) { dst.fillStyle = `rgb(${(dirtCol || '150,120,80')})`; for (let m = 0; m < nD; m++) dst.fillRect((rb0.spots[m][0] - rb0.gx) * u, (rb0.spots[m][1] - rb0.gy) * u, u, u); }   // よごれの しみ（1点ずつ）
+    dst.imageSmoothingEnabled = sm0; dst.restore();
+    return;
+  }
   const rb = riceBall, o = rb.x, H = RB / 2, cs = Math.cos(spin), sn = Math.sin(spin), cp = Math.cos(pitch), sp = Math.sin(pitch);
   const bw = Math.sqrt(cs * cs + (0.88 * sn) ** 2), mx = cs < 0 ? -1 : 1, kx = sx * bw * mx;   // くるくる：横を向いても つぶの厚み（88%）は残る。うしろを向いたら くぼみは反対がわ
   const my = cp < 0 ? -1 : 1, ky = sy * riceTall(pitch) * my;   // たての ころころ：前に 寝ると 短く（はしから 見える）。うしろを 向くと 上下 さかさ

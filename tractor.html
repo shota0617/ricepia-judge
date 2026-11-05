@@ -1939,7 +1939,7 @@ const DANKI = (() => {
     const now = working && Math.abs(S.v) > 0.05 && k() > 0 && !S.stalled && Math.abs(S.x) < HX && Math.abs(S.z) < HZ;
     if (now) coldT += dt;
     if (coldT > 1.5) pend = true;
-    if (pend && k() > 0 && !told && !chk && tries < 3 && toastT <= 0) { chk = true; toast(msg, 7); }
+    if (pend && k() > 0 && !told && !chk && tries < 3 && toastT <= 0 && !dankiMuted()) { chk = true; toast(msg, 7); }
     if (chk) {                                     // 1.2 秒 見えていたら 読めたことに する（ほかの 知らせに 消されたら 3 回まで 出しなおす）
       if ($('toast').dataset.raw !== msg) { chk = false; tries++; }
       else if (toastT <= 7 - 1.2) { chk = false; told = true; setTimeout(() => voice('danki'), 6500); }
@@ -9548,6 +9548,8 @@ function traceMinRun() { return !DETAIL && !HINT.done && !FIRSTMIN.over ? 0.12 :
 function traceStep() { return !DETAIL && !HINT.done && !FIRSTMIN.over ? 0.10 : 0.25; }
 // サイクル168・最初の1分: のんびり（calm）では朝・雨・夜の開始の窓の曇りを早く晴らし（約23秒→約6秒）、最初のなぞりの前に田んぼがはっきり見えるようにする。くわしい説明（DETAIL）では実物らしい晴れ方（従来どおり約23秒）を残す。
 function fogDiv() { return DETAIL ? 14 : 3.5; }
+// サイクル169・最初の1分: のんびり（calm）では開始1分は暖機の知らせ（トースト・声・COACHの暖機行）を出さず、冷えた朝・夜でもまずなぞって耕す楽しさに集中させる。冷えたまま耕した時間（coldT）の計測と回転・負荷の効きは従来どおり残し、くわしい説明（DETAIL）では実物どおり知らせる。
+function dankiMuted() { return !DETAIL && S.elapsed < 60; }
 function toggleRotary() {
   if (INTRO.on) return;                           // 草刈りの あいだは 草刈機（ロータリーは まだ ついていない）
   if (S.scrape > 0 || BELT.fixing || COVER.fixing || GREASE.fixing || CLAW.fixing || HERI.fixing || GASU.fixing || KATA.fixing || PANKU.fixing || AIRCL.fixing) return;   // 泥落とし・直しているあいだは さわらない（降下止めをかけてある）
@@ -10259,7 +10261,7 @@ const COACH = (() => {
     if (art && !EASY.on && S.rotDown && S.v > 0.2 && (here.out > 0 || artAt(0.4 + Math.max(1.2, S.v * 1.5)).out > 0))   // はしが 1 か所でも はみ出しそう・はみ出したら。🔰 アシストのときは 自動で上がる
       return ['3', K('白線が近い：<kbd>スペース</kbd>で上げる（外は耕さない）', '白線が近い：ボタンで上げる（外は耕さない）')];
     if (inNow && S.everMoved && liftYaw !== null && Math.abs(dYaw(S.yaw, liftYaw)) > 2.6) return ['5', K('白線の内側に入った：<kbd>スペース</kbd>で下げる', '白線の内側に入った：ボタンで下げる')];
-    if (!S.everDown && DANKI.cold()) return ['🌡', '寒い' + (TOD === 'yoru' ? '夜' : '朝') + '：エンジンが 冷えている。水温計が 青いあいだは 止まって 暖機（変速を 中立・駐車ブレーキ。ゲームでは 30 秒ほど）'];
+    if (!S.everDown && DANKI.cold() && !dankiMuted()) return ['🌡', '寒い' + (TOD === 'yoru' ? '夜' : '朝') + '：エンジンが 冷えている。水温計が 青いあいだは 止まって 暖機（変速を 中立・駐車ブレーキ。ゲームでは 30 秒ほど）'];
     if (!S.rotDown) {
       if (!S.everDown) return ['1', '田んぼを ゆびで なぞる（なぞった あとを トラクターが 耕していく）'];
       if (liftYaw === null) return null;

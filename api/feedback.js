@@ -133,6 +133,37 @@ function parsePlay(b) {   // 数は 数の 型だけ（オブジェクト・配�
   if (typeof b.st === 'number' && Number.isInteger(b.st) && b.st >= 0 && b.st <= 3) out.st = b.st;
   return out;
 }
+// 農産物検査ゲームの手が止まったときのカードのタップ（いいね／サイトへもどる）：1日1つの Issue（ラベル kensa-taps）にコメントで足す。
+// 送るのは tap の種類だけ（個人を特定する情報は送らない・書かない）。遊んだ人数の目安として数える
+const KENSA_TAPS = { like: '👍 いいね', return: '🏠 サイトへもどる' };
+const KENSA_PER_IP = 60, KENSA_MIN_MS = 300;
+function parseKensa(b) {
+  if (!b || typeof b !== 'object' || Array.isArray(b)) return null;
+  if (typeof b.tap !== 'string' || !Object.hasOwn(KENSA_TAPS, b.tap)) return null;
+  return { tap: b.tap };
+}
+const kensaIssue = { d: '', n: 0 };
+async function storeKensa(x, now) {
+  const d = new Date(now + 9 * 3600e3).toISOString().slice(0, 10), title = `[けんさ] ${d}`;
+  const cap = Math.max(10, Math.min(5000, Number(process.env.FEEDBACK_KENSA_DAILY_MAX) || 2000));
+  let n = kensaIssue.d === d ? kensaIssue.n : 0;
+  const list = await gh('/issues?labels=kensa-taps&state=open&sort=created&direction=desc&per_page=10');
+  const today = list.find(i => i.title === title);
+  if (today) { n = today.number; if (today.comments >= cap) return 'daily'; }
+  if (!n) {
+    await ensureLabels(['kensa-taps']);
+    const mine = (await gh('/issues', { method: 'POST', body: JSON.stringify({ title, labels: ['kensa-taps'], body: '農産物検査ゲームの「手が止まったときのカード」のタップ（1日ぶん）。いいね／サイトへもどるの数を、遊んだ人数の目安として数えます。' }) })).number;
+    // その日の最初のタップが同時に来ると、どちらも「まだない」と見て2つ作る。作ったあとに一番小さい番号へまとめ、あとは閉じる（storePlay と同じ流儀）
+    const firstList = await gh('/issues?labels=kensa-taps&state=open&sort=created&direction=desc&per_page=20');
+    const first = firstList.filter(i => i.title === title).sort((a, b) => a.number - b.number)[0];
+    n = first ? first.number : mine;
+    if (n !== mine) await gh(`/issues/${mine}`, { method: 'PATCH', body: JSON.stringify({ state: 'closed', state_reason: 'not_planned' }) });
+  }
+  kensaIssue.d = d; kensaIssue.n = n;
+  await gh(`/issues/${n}/comments`, { method: 'POST', body: JSON.stringify({ body: `${KENSA_TAPS[x.tap]}\n<!-- kensa-tap:${Buffer.from(JSON.stringify(x)).toString('base64')} -->` }) });
+  return '';
+}
+
 const playIssue = { d: '', n: 0 };
 // その日の Issue（同じ 題が いくつか あれば いちばん 番号の 小さい もの）
 const playToday = async title => (await gh('/issues?labels=play-ratings&state=open&sort=created&direction=desc&per_page=20')).filter(i => i.title === title).sort((a, b) => a.number - b.number)[0] || null;
@@ -188,8 +219,17 @@ module.exports = async function handler(req, res) {
   let b = req.body;
   if (typeof b === 'string') { if (b.length > MAX_BODY) return res.status(413).json({ error: 'size' }); try { b = JSON.parse(b); } catch (_) { b = null; } }
   // わな（人には見えない欄）に何か入っている・早すぎる送信は、受けとったふりをして捨てる
-  const isReact = !!b && typeof b === 'object' && b.kind === 'react', isPlay = !!b && typeof b === 'object' && b.kind === 'play';
-  if (b && typeof b === 'object' && ((typeof b.hp === 'string' && b.hp) || !(Number(b.t) >= (isReact ? REACT_MIN_MS : isPlay ? PLAY_MIN_MS : MIN_FILL_MS)))) return res.status(200).json({ ok: true });
+  const isReact = !!b && typeof b === 'object' && b.kind === 'react', isPlay = !!b && typeof b === 'object' && b.kind === 'play', isKensa = !!b && typeof b === 'object' && b.kind === 'kensa';
+  if (b && typeof b === 'object' && ((typeof b.hp === 'string' && b.hp) || !(Number(b.t) >= (isReact || isKensa ? REACT_MIN_MS : isPlay ? PLAY_MIN_MS : MIN_FILL_MS)))) return res.status(200).json({ ok: true });
+  if (isKensa) {
+    const x = parseKensa(b);
+    if (!x) return res.status(400).json({ error: 'bad' });
+    const ip = String(req.headers['x-real-ip'] || req.headers['x-forwarded-for'] || '').split(',')[0].trim() || 'unknown';
+    if (!rateOk(ip, Date.now(), 'k', KENSA_PER_IP)) return res.status(429).json({ error: 'rate' });
+    try { if (await storeKensa(x, Date.now())) return res.status(429).json({ error: 'daily' }); }
+    catch (e) { console.error('kensa:', e.message); return res.status(502).json({ error: 'store' }); }
+    return res.status(200).json({ ok: true });
+  }
   if (isPlay) {
     const x = parsePlay(b);
     if (!x) return res.status(400).json({ error: 'bad' });
@@ -238,6 +278,7 @@ module.exports = async function handler(req, res) {
   return res.status(200).json({ ok: true });
 };
 module.exports.parse = parse;
+module.exports.parseKensa = parseKensa;
 module.exports.parseReact = parseReact;
 module.exports.parsePlay = parsePlay;
 module.exports.REACTS = REACTS;

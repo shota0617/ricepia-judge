@@ -915,3 +915,15 @@ class Cycle47SortProgressAboveTraysTests(unittest.TestCase):
         self.assertIn("進み具合の大きな数字を皿の上に置き", HTML)
         self.assertNotIn("setInterval", HTML)
         self.assertNotIn("alert(", HTML)
+
+
+class Cycle48GoodGrainNodTests(unittest.TestCase):
+    def test_cycle48_good_grain_nod_feedback(self):
+        # サイクル48（継続指示「『良い』と言うまで最初の1分だけ」・みわけるでよい粒の手応え）:
+        # よい粒は従来 :active の間だけ揺れ、指を離すと無反応に見えた。クリックで .nod を
+        # 付け直し（外す→リフロー→付ける）、揺れを最後まで見せる。数・判定は変えない
+        self.assertIn(".sgrain.good.nod i { animation:wiggle .5s ease; }", HTML)
+        self.assertIn('b.classList.remove("nod"); void b.offsetWidth; b.classList.add("nod");', HTML)
+        self.assertIn("よい粒をタップした時も指を離した後まで小さな揺れが見えるようにして", HTML)
+        self.assertNotIn("setInterval", HTML)
+        self.assertNotIn("alert(", HTML)

@@ -2636,7 +2636,7 @@ function gochisoStep(hx, by, u, now) {
   g.drawn++; dirty = true;
 }
 // お米つぶの おてだま（otedama.js）：お米が ぴょんと とびはねた とき、いる 町と 月に 合った 西尾の 名物を あたまの 上に ぽーんと ほうりなげ、おちて きたら キャッチして ひと言。
-// 30〜50秒に 1回まで（はじめは 10秒後）・西尾市の 中だけ・前と 同じ ものは つづけない。ほうっている あいだも お米の あたまの 上に ついてくる
+// 30〜50秒に 1回まで（はじめの とびはねから）・西尾市の 中だけ・前と 同じ ものは つづけない。ほうっている あいだも お米の あたまの 上に ついてくる
 const OTEDAMA_MS = 1300;
 const otedama = { cur: null, last: '', next: 0, prevH: 0, t0: 0, drawn: 0 };   // drawn：描いた 数（テスト用）
 function otedamaStart(now) {   // ほうる：町と 月に 合う ものを 1つ。ほうれなければ false
@@ -2656,7 +2656,7 @@ function otedamaStep(hx, by, u, now) {
   if (worldMode || driving || rp.x === null) { o.cur = null; return; }
   if (!o.cur) {
     if (!up || mapCovered() || !howtoEl.hidden || sightBusy() || now < riceBub.until) return;
-    if (!o.next) o.next = now + 10000;   // はじめは 10秒 あそんでから
+    if (!o.next) o.next = now;   // はじめの とびはねから（サイクル104：最初の1分で西尾の名物をほうる）
     if (now < o.next || !otedamaStart(now)) return;
     o.next = now + 30000 + Math.random() * 20000;
   }

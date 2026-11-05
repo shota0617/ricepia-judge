@@ -519,11 +519,6 @@
 <script src="nishio-go/postcard.js"></script>
 <script src="nishio-go/shogo.js"></script>
 <script src="nishio-go/game.js"></script>
-<script src="nishio-go/runner.js"></script>
-<script src="nishio-go/harvest.js"></script>
-<script src="nishio-go/movie.js"></script>
-<script src="nishio-go/dankyu.js"></script>
-<script src="nishio-go/hiryoyama.js"></script>
 <script src="nishio-go/oldmap.js"></script>
 <script src="nishio-go/kirara.js"></script>
 <script src="nishio-go/yatsumushi.js"></script>
@@ -531,9 +526,25 @@
 <script src="nishio-go/korostyle.js"></script>
 <script src="nishio-go/pixel.js"></script>
 <script src="nishio-go/meiro.js"></script>
-<script src="nishio-go/dots.js"></script>
-<script src="nishio-go/godot-field.js"></script>
 <script src="nishio-go/share.js"></script>
 <script src="nishio-go/idlecard.js"></script>
+<script>
+/* スタートの1分：転がるのに要らない任意機能（ミニゲーム・ムービー・ドット絵帳・Godot 描画）は、load のあとに 1本ずつ順に読む。
+   入口は game.js / pixel.js 側の window.X && ... で守られているので、読み込み前は何もしない。失敗しても console に残すだけ */
+(function () {
+  var files = ["runner", "harvest", "movie", "dankyu", "hiryoyama", "dots", "godot-field"];
+  var i = 0;
+  function next() {
+    if (i >= files.length) { window.__nsgLazyDone = true; return; }
+    var el = document.createElement('script');
+    el.src = 'nishio-go/' + files[i++] + '.js';
+    el.async = false;
+    el.onload = next;
+    el.onerror = function () { try { console.warn('lazy load failed: ' + el.src); } catch (e) { /* noop */ } next(); };
+    document.body.appendChild(el);
+  }
+  if (document.readyState === 'complete') next(); else window.addEventListener('load', next);
+})();
+</script>
 </body>
 </html>

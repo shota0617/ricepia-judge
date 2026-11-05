@@ -899,3 +899,19 @@ class Cycle46MeterNextSlotTests(unittest.TestCase):
         self.assertIn("次に数字が入る枠に金の内枠を付け", HTML)
         self.assertNotIn("setInterval", HTML)
         self.assertNotIn("alert(", HTML)
+
+
+class Cycle47SortProgressAboveTraysTests(unittest.TestCase):
+    def test_cycle47_sort_progress_above_trays_and_pop(self):
+        # サイクル47（継続指示「『良い』と言うまで最初の1分だけ」・みわける最初のタップの手応え）:
+        # 実測では到着時に進み具合（#sortPct）が画面外（top 1108px／画面844px）で、
+        # 最初のタップの変化が見えなかった。#sortPct を皿の上へ移し（要素は1つだけ）、
+        # よけた数が増えた時だけ大きな数字が一度静かに動く（開始・リセット時は動かさない）
+        self.assertEqual(HTML.count('id="sortPct"'), 1)
+        self.assertLess(HTML.index('id="sortPct"'), HTML.index('id="whiteTray"'))
+        self.assertIn("#sortPct b.pop { animation:sortPop .45s ease; }", HTML)
+        self.assertIn("@keyframes sortPop { 0%{ transform:scale(1.22); } 100%{ transform:scale(1); } }", HTML)
+        self.assertIn('if (sortFound > 0) { pctB.classList.remove("pop"); void pctB.offsetWidth; pctB.classList.add("pop"); }', HTML)
+        self.assertIn("進み具合の大きな数字を皿の上に置き", HTML)
+        self.assertNotIn("setInterval", HTML)
+        self.assertNotIn("alert(", HTML)

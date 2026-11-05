@@ -9546,6 +9546,8 @@ function rotStepRate() { return !DETAIL && S.rotDown && !S.firstDownDone ? 3.6 :
 function traceMinRun() { return !DETAIL && !HINT.done && !FIRSTMIN.over ? 0.12 : 0.35; }
 // サイクル165・最初の1分: のんびりでは最初のなぞりが成功する（HINT.done）まで、点の間隔を 0.10m に細かくし、線の伸びと追従が指に滑らかに付いてくるようにする。最初の1分が終わった（FIRSTMIN.over）あとと DETAIL は従来どおり 0.25m。
 function traceStep() { return !DETAIL && !HINT.done && !FIRSTMIN.over ? 0.10 : 0.25; }
+// サイクル168・最初の1分: のんびり（calm）では朝・雨・夜の開始の窓の曇りを早く晴らし（約23秒→約6秒）、最初のなぞりの前に田んぼがはっきり見えるようにする。くわしい説明（DETAIL）では実物らしい晴れ方（従来どおり約23秒）を残す。
+function fogDiv() { return DETAIL ? 14 : 3.5; }
 function toggleRotary() {
   if (INTRO.on) return;                           // 草刈りの あいだは 草刈機（ロータリーは まだ ついていない）
   if (S.scrape > 0 || BELT.fixing || COVER.fixing || GREASE.fixing || CLAW.fixing || HERI.fixing || GASU.fixing || KATA.fixing || PANKU.fixing || AIRCL.fixing) return;   // 泥落とし・直しているあいだは さわらない（降下止めをかけてある）
@@ -10710,7 +10712,7 @@ function frame(now) {
   HYDRANT.update(dt);
   WIPE.value = RAIN ? (performance.now() / 1000) % WIPE_P : 9;   // 間欠ワイパー
   if (P.Wiper) P.Wiper.rotation.z = Math.PI / 2 + Math.PI * bladeTh(WIPE.value);   // 車体のワイパーを、ガラスのふいた所と同じ動きで回す
-  if (FOG0) FOG_CLEAR.value = S.started ? Math.min(1.8, 0.15 + S.elapsed / 14) : 0;   // デフロスターで だんだん晴れる
+  if (FOG0) FOG_CLEAR.value = S.started ? Math.min(1.8, 0.15 + S.elapsed / fogDiv()) : 0;   // デフロスターで だんだん晴れる。サイクル168・最初の1分: のんびりでは fogDiv() で曇りを早く晴らし、最初のなぞりの前に田んぼがはっきり見えるようにする（DETAILは従来どおり）
   FX.update(dt);
   T5.update(dt);                                  // T5：耕し切りの光（終わったあとも ゆっくり続ける）
   WASH.update(dt);

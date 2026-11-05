@@ -49,6 +49,14 @@
   #kokuPhoto.off { display:none; }
   #kokuPhoto img { display:block; width:100%; aspect-ratio:3/4; object-fit:cover; }
   #kokuPhoto figcaption { padding:7px 6px 9px; text-align:center; font-size:15px; font-weight:800; color:#6b6353; }
+  /* 一等米の実物写真（サイクル24・2026-11-05提供）: 穀刺し写真（サイクル21）と同じ流儀で実物そのものを見せる。
+     「みわける」では見本として小さく（sortWrap の表示に連動して出る／しまう・JS追加なし）、
+     資料置き場では読みたい人が開いた時に少し大きく見せる。写真は切り抜かず全体を見せる（縦横比3:4のまま） */
+  .ittoPhoto { width:min(144px,40%); margin:0 auto 10px; background:var(--paper); border-radius:16px; overflow:hidden;
+    box-shadow:0 4px 12px rgba(26,24,20,.18), inset 0 0 0 1px rgba(184,137,58,.35); animation:kokuIn .55s ease; }
+  .ittoPhoto img { display:block; width:100%; aspect-ratio:3/4; object-fit:cover; }
+  .ittoPhoto figcaption { padding:7px 6px 9px; text-align:center; font-size:15px; font-weight:800; color:#6b6353; }
+  .ittoPhoto.ref { width:min(200px,60%); margin:12px auto 4px; }
   /* 穀刺しモーション（サイクル23・ユーザー提供の実演動画 約8.8秒が手本）: 袋へ近づける→斜めに刺し込む→
      ひと呼吸おく→ゆっくり抜くと、溝（中央の線）に米粒が一列に並んで入っている。速く激しい動きにはしない */
   #probe.go { animation:probeIn 2.4s ease forwards; }
@@ -258,6 +266,10 @@
     <div id="bandScale" aria-hidden="true"><span>12</span><span>18</span></div>
   </div>
   <div id="sortWrap">
+    <figure class="ittoPhoto" id="ittoPhoto">
+      <img src="kensa/ittomai.webp" alt="手のひらに載せた一等米の実物（粒がふっくら揃い、被害粒・着色粒がほぼ見当たらない）"/>
+      <figcaption>一等米（ほんもの）</figcaption>
+    </figure>
     <div class="plate" id="whiteTray"><span class="plateLabel">しろい皿</span></div>
     <div class="plate" id="blackTray"><span class="plateLabel">くろい皿</span></div>
     <div id="yokeWrap"><span class="plateLabel">よけた粒</span><div id="yokeTray"></div></div>
@@ -289,7 +301,7 @@
   </div>
   <button id="nextBtn">② はかる 💧</button>
 
-  <footer>農産物検査の仕事が題材です。試料の採取は穀刺しで1袋 約40g（標準抽出方法・平成13年農林水産省告示第443号）。「さす」の場面に載せた穀刺しの写真は、実際の検査で使う実物です。水分は3回の測定の平均で判定します。粒の鑑定は同じ試料を白い皿と黒い皿の双方に入れて確認します。鑑定は視覚・触覚・臭覚・聴覚を用いて行います（鑑定方法・平成13年農林水産省告示第333号）。等級の規格は農産物規格規程（平成13年告示第244号）の水稲うるち玄米に基づきます。等級は、整粒・水分・被害粒・死米・着色粒・異種穀粒・異物の全項目がその等級の限度内にある、最も良い等級です（未熟粒は「計」に入りません）。判定した等級は等級証印として米袋に押印し、あわせて検査証明年月日の日付印を押します。死米と着色粒は、穀粒判別器でも鑑定できます。</footer>
+  <footer>農産物検査の仕事が題材です。試料の採取は穀刺しで1袋 約40g（標準抽出方法・平成13年農林水産省告示第443号）。「さす」の場面に載せた穀刺しの写真は、実際の検査で使う実物です。水分は3回の測定の平均で判定します。粒の鑑定は同じ試料を白い皿と黒い皿の双方に入れて確認します。鑑定は視覚・触覚・臭覚・聴覚を用いて行います（鑑定方法・平成13年農林水産省告示第333号）。等級の規格は農産物規格規程（平成13年告示第244号）の水稲うるち玄米に基づきます。等級は、整粒・水分・被害粒・死米・着色粒・異種穀粒・異物の全項目がその等級の限度内にある、最も良い等級です（未熟粒は「計」に入りません）。判定した等級は等級証印として米袋に押印し、あわせて検査証明年月日の日付印を押します。死米と着色粒は、穀粒判別器でも鑑定できます。「みわける」と資料に載せた一等米の写真は実物です。</footer>
   <details id="refBox">
     <summary>📖 資料（規格表）</summary>
     <table aria-label="水稲うるち玄米の品位規格">
@@ -304,6 +316,10 @@
       <tr><td>もみ・麦以外（以下）</td><td>0.3%</td><td>0.5%</td><td>1.0%</td></tr>
       <tr><td>異物（以下）</td><td>0.2%</td><td>0.4%</td><td>0.6%</td></tr>
     </table>
+    <figure class="ittoPhoto ref" id="ittoRefPhoto">
+      <img src="kensa/ittomai.webp" alt="手のひらに載せた一等米の実物（粒がふっくら揃い、被害粒・着色粒がほぼ見当たらない）"/>
+      <figcaption>一等米（ほんもの）</figcaption>
+    </figure>
     <p>水分は規程の表値です。附則で、醸造用を除く玄米は当分の間この値に1.0%を加えた16.0%が最高限度とされています。ゲームのお米は、どちらの読みでも結論が変わらない水分（14%台前半か16.5%以上）だけにしています。3等の規格にも満たないものは規格外です。形質（見た目のよさ）は、本物の検査では各等級の標準品と見比べて判定します。</p>
     <p>出典: <a href="https://www.maff.go.jp/j/kokuji_tuti/kokuji/k0001439.html" target="_blank" rel="noopener">農産物規格規程（平成13年農林水産省告示第244号）</a>／<a href="https://www.maff.go.jp/j/seisan/syoryu/kensa/attach/pdf/index-25.pdf" target="_blank" rel="noopener">農林水産省「コメの農産物検査」</a></p>
   </details>

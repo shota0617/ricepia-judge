@@ -377,6 +377,21 @@ class KensaTests(unittest.TestCase):
         self.assertNotIn("setInterval", HTML)                            # タイマー・焦らせる仕組みを入れない
         self.assertNotIn("alert(", HTML)                                 # 流れを止める要素は作らない
 
+    def test_cycle24_ittomai_photo_sample(self):
+        # サイクル24: 一等米の実物写真（2026-11-05提供）を穀刺し写真と同じ流儀で実物そのものを見せる。
+        # 「みわける」の見本（sortWrap内＝その段階だけ表示）と資料置き場の2か所で同じ写真を使う。
+        self.assertIn('id="ittoPhoto"', HTML)
+        self.assertIn('id="ittoRefPhoto"', HTML)
+        self.assertGreaterEqual(HTML.count('src="kensa/ittomai.webp"'), 2)
+        photo = Path(__file__).resolve().parent.parent.joinpath("kensa", "ittomai.webp")
+        self.assertTrue(photo.exists())
+        self.assertLess(photo.stat().st_size, 300_000)
+        self.assertIn("aspect-ratio:3/4", HTML)                        # 全体を見せる縦横比（穀刺し写真と共通）
+        self.assertIn("一等米（ほんもの）", HTML)
+        self.assertIn("一等米の写真は実物です", HTML)                    # フッターで実物であることを明記
+        self.assertNotIn("setInterval", HTML)                          # タイマー・焦らせる仕組みを入れない
+        self.assertNotIn("alert(", HTML)                               # 流れを止める要素は作らない
+
     def test_stamp_date_text(self):
         # 日付印は固定日付でなく、その日の日付を YYYY.M.D で作る純粋関数
         node = shutil.which("node")

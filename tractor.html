@@ -8015,7 +8015,7 @@ const TRACE = {
     while (this.ctx > 2) { this.pts.shift(); this.ctx--; }   // 通過済みの生点は文脈用の2個を残して捨てる（512点の上限と描画バッファは「残りの軌跡」に対して効く。Codex指摘）
     if (!this.cps.length) { this.drive = false; return false; }
     let remaining = this.rlen();   // 軌跡の残りの長さ
-    if (remaining < 0.35) { this.drive = false; return false; }   // 終端で止まる（過ぎてから終点を追って回りつづけない。Codex指摘で追加）
+    if (remaining < traceMinRun()) { this.drive = false; return false; }   // 終端で止まる（過ぎてから終点を追って回りつづけない。Codex指摘で追加）。サイクル164: 閾値は traceMinRun()（のんびりの最初の1分だけ 0.12、それ以外は従来どおり 0.35）
     // ---- サイクル116「指の動きにトラクターがついてくるように」（ユーザー実機指示 2026-11-04 21:55）----
     // 物差し（ループ側 scripts/sim_follow116.js）: 直線2.5m/s 到着遅れ 10.27→4.40秒／S字 横ずれ 0.54→0.56m・遅れ 26.79→18.42秒／途中静止 追い越し0・周回なし／離して停止 0.35m
     if (performance.now() - this.fT > 150) this.fv *= Math.max(0, 1 - dt * 5);   // 指が止まれば（イベントが来なければ）指速は0へ寄せる
@@ -9541,6 +9541,8 @@ const OCHI = (() => {
 })();
 // サイクル162・最初の1分: のんびり（calm）ではセッション最初の降下だけ 3.6/秒 にし、最初のなぞりで すぐ土の変化が返るようにする。耕しが始まった後の上げ下げと DETAIL は従来どおり 1.2/秒。
 function rotStepRate() { return !DETAIL && S.rotDown && !S.firstDownDone ? 3.6 : 1.2; }
+// サイクル164・最初の1分: のんびりでは最初のなぞりが成功する（HINT.done）まで、なぞり追従の打ち切りを 0.12m に下げ、短い試しのひと筆でも動きと土の変化が返るようにする。最初の1分が終わった（FIRSTMIN.over）あとと DETAIL は従来どおり 0.35m で、終端で回りつづけない。
+function traceMinRun() { return !DETAIL && !HINT.done && !FIRSTMIN.over ? 0.12 : 0.35; }
 function toggleRotary() {
   if (INTRO.on) return;                           // 草刈りの あいだは 草刈機（ロータリーは まだ ついていない）
   if (S.scrape > 0 || BELT.fixing || COVER.fixing || GREASE.fixing || CLAW.fixing || HERI.fixing || GASU.fixing || KATA.fixing || PANKU.fixing || AIRCL.fixing) return;   // 泥落とし・直しているあいだは さわらない（降下止めをかけてある）

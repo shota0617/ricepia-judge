@@ -1170,3 +1170,27 @@ class Cycle62GradeCompactSmallScreenTests(unittest.TestCase):
         self.assertIn("結果ラベル全体が到着時の1画面に収まるようにしました", HTML)
         self.assertNotIn("setInterval", HTML)
         self.assertNotIn("alert(", HTML)
+
+
+class Cycle63StartCompactSmallScreenTests(unittest.TestCase):
+    def test_cycle63_start_compact_on_short_screens(self):
+        # サイクル63（継続指示「『良い』と言うまで最初の1分だけ」・最初の画面の小さい画面）:
+        # 実測（375×667）では到着時に鑑定皿の下端805pxが画面外で、袋をタップして
+        # 落ちる試料の粒が最初に見えなかった（360×740でも下端786pxで僅かに外れた）。
+        # 390×844では皿が収まるため、大きい画面は変えず、高さ780px以下の画面だけ
+        # 最初の画面（場面・穀刺しペア・鑑定皿）を詰める。穀刺しペアは同寸を保つ
+        self.assertIn("@media (max-height:780px)", HTML)
+        media = HTML.index("@media (max-height:780px)")
+        block = HTML[media:HTML.index("#sortPct { margin:8px 2px 4px;", media)]
+        self.assertIn("#scene { width:84%; margin:0 auto; }", block)
+        self.assertIn("#kokuPhoto, #kokuDot { width:min(104px,30%); }", block)
+        self.assertIn("#kokuPair figcaption { font-size:12px; padding:3px 4px 5px; }", block)
+        self.assertIn("#trayWrap { padding:8px 12px 10px; }", block)
+        self.assertIn("#tray { height:82px; }", block)
+        # 大きい画面の従来値は不変
+        self.assertIn("#kokuPhoto { width:min(168px,46%);", HTML)
+        self.assertIn("#tray { position:relative; height:104px; }", HTML)
+        self.assertIn("最初の画面では、小さい画面（高さが低い画面）だけ場面と穀刺しのペアと鑑定皿を詰めて", HTML)
+        self.assertIn("鑑定皿まで最初の1画面に収まるようにしました", HTML)
+        self.assertNotIn("setInterval", HTML)
+        self.assertNotIn("alert(", HTML)

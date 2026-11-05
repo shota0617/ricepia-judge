@@ -326,6 +326,23 @@ class KensaTests(unittest.TestCase):
         self.assertNotIn("setInterval", HTML)                     # タイマー・焦らせる仕組みを入れない
         self.assertNotIn("alert(", HTML)                          # 流れを止める要素は作らない
 
+    def test_cycle21_kokusashi_photo_and_shape(self):
+        # サイクル21: ユーザー指示「参考資料ではなくゲームに入れて」。実物の穀刺しの写真そのものを
+        # 「さす」の場面で見せ（次の所作ではしまう＝道具は常時1つだけ）、絵の穀刺しも実物の形に寄せる
+        # （長い金属の二重管・先端のギザギザ・柄近くの細長い窓・金属の口金・木の持ち手）。
+        self.assertIn('id="kokuPhoto"', HTML)
+        self.assertIn('src="kensa/kokusashi.webp"', HTML)
+        photo = Path(__file__).resolve().parent.parent.joinpath("kensa", "kokusashi.webp")
+        self.assertTrue(photo.exists())
+        self.assertLess(photo.stat().st_size, 300_000)
+        self.assertIn('document.getElementById("kokuPhoto").classList.add("off")', HTML)     # はかるへ進むとしまう
+        self.assertIn('document.getElementById("kokuPhoto").classList.remove("off")', HTML)  # 次の山で戻す
+        self.assertIn('id="probeMetal"', HTML)                      # 絵の穀刺しは金属の管のSVG
+        self.assertIn('id="probeWood"', HTML)                       # 木の持ち手
+        self.assertNotIn("🗡️", HTML)                                # 旧来の絵文字の穀刺しは使わない
+        self.assertNotIn("setInterval", HTML)                       # タイマー・焦らせる仕組みを入れない
+        self.assertNotIn("alert(", HTML)                            # 流れを止める要素は作らない
+
     def test_stamp_date_text(self):
         # 日付印は固定日付でなく、その日の日付を YYYY.M.D で作る純粋関数
         node = shutil.which("node")

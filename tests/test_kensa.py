@@ -680,3 +680,28 @@ class Cycle35PairAlignmentTests(unittest.TestCase):
         self.assertIn("写真とドット絵のペアは、大きさをそろえ", HTML)
         self.assertNotIn("setInterval", HTML)
         self.assertNotIn("alert(", HTML)
+
+
+class Cycle36IdleCardTests(unittest.TestCase):
+    def test_cycle36_idle_card_with_like_and_return_counting(self):
+        # サイクル36（ユーザー指示 2026-11-05 17:54）: 手が止まったところで小さなカードを出し、
+        # サイトへ戻る導線といいねボタンを置く。いいね／もどるのタップは /api/feedback（kind:kensa）で数える。
+        # 全画面モーダルにはしない（カードの外をさわれば消えて遊びに戻れる）
+        self.assertIn('id="idleCard"', HTML)
+        self.assertIn('id="likeBtn"', HTML)
+        self.assertIn("👍 いいね", HTML)
+        self.assertIn('id="returnLink" href="https://ricepia.jp/"', HTML)
+        self.assertIn("const IDLE_MS = 45000;", HTML)
+        self.assertIn("setTimeout(showIdleCard, IDLE_MS)", HTML)
+        self.assertIn('sendTap("like")', HTML)
+        self.assertIn('sendTap("return")', HTML)
+        self.assertIn('kind: "kensa"', HTML)
+        self.assertIn("navigator.sendBeacon", HTML)
+        self.assertIn('sessionStorage.getItem("kensaLiked")', HTML)  # いいねは1人1回まで（競わせない）
+        self.assertIn("#idleCard { position:fixed;", HTML)
+        self.assertNotIn("alert(", HTML)
+        root = Path(__file__).resolve().parent.parent
+        api = root.joinpath("api", "feedback.js").read_text(encoding="utf-8")
+        self.assertIn("function parseKensa(b)", api)
+        self.assertIn("kensa-taps", api)
+        self.assertIn("KENSA_TAPS", api)

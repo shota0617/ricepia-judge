@@ -1053,3 +1053,21 @@ class Cycle56SortArrivalShowsYokeTests(unittest.TestCase):
         self.assertIn("よけた粒の受け皿まで到着時の1画面に収まるようにしました", HTML)
         self.assertNotIn("setInterval", HTML)
         self.assertNotIn("alert(", HTML)
+
+
+class Cycle57HakaruDoneNextButtonVisibleTests(unittest.TestCase):
+    def test_cycle57_hakaru_done_next_button_fully_visible(self):
+        # サイクル57（継続指示「『良い』と言うまで最初の1分だけ」・はかる完了時の見え方）:
+        # 実測（390×844）では完了時に次ボタンが top 797／bottom 845px と画面下端（844px）を
+        # 1pxはみ出して見切れた。ボタン全体が見える位置へ画面を移し（サイクル52・54・55と
+        # 同じ流儀）、下端の余白は scroll-margin-bottom で残し、焦点は preventScroll で渡す
+        self.assertIn("scroll-margin-bottom:16px;", HTML)
+        self.assertIn('nextBtn.scrollIntoView({ block: "nearest" });', HTML)
+        meter_done = HTML.index('phase = "hakaru-done";')
+        scroll_pos = HTML.index('nextBtn.scrollIntoView({ block: "nearest" });')
+        focus_pos = HTML.index('nextBtn.focus({ preventScroll: true });', meter_done)
+        self.assertLess(meter_done, scroll_pos)
+        self.assertLess(scroll_pos, focus_pos)
+        self.assertIn("はかるが終わると、次へ進むボタンが画面の下端で見切れないよう", HTML)
+        self.assertNotIn("setInterval", HTML)
+        self.assertNotIn("alert(", HTML)

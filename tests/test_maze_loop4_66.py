@@ -22,7 +22,7 @@ class Loop66(unittest.TestCase):
 
     def test_no_30min_text(self):
         self.assertNotIn("30分以内", SRC)
-        self.assertIn("ちがう名所を 4か所つづけて めぐる（めぐりの れんさ 4）", SRC)
+        self.assertNotIn("ちがう名所を 4か所つづけて めぐる（めぐりの れんさ 4）", SRC)   # サイクル91で chain4 バッジごと撤去
         self.assertNotIn("chainMult", SRC)   # サイクル85で 倍率ボーナスを 廃止
 
     def test_guide_has_no_countdown(self):

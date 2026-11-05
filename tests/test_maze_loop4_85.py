@@ -24,7 +24,7 @@ class Loop85(unittest.TestCase):
         self.assertIn("return { n: c.n };", body)
         self.assertIn("c.id !== s.id ? c.n + 1 : 1", body)
         self.assertIn("c.best = Math.max(c.best || 0, c.n)", body)
-        self.assertIn("id: 'chain4'", GAME)
+        self.assertNotIn("id: 'chain4'", GAME)   # サイクル91で達成バッジは撤去
 
     def test_guide_has_no_chain(self):
         self.assertNotIn("れんさ <b>", GAME)

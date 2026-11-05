@@ -176,6 +176,7 @@
   body.calm .ico { font-size: 0 !important; }
   /* 操作を かんたんに：ふだんは よく使う ボタンだけ（くわしい説明を 入れると ぜんぶ 出る。キーボードの キーは いつでも 使える） */
   body.calm #bEco, body.calm #bAssist, body.calm #bFast, body.calm #bHelp, body.calm:not(.needDepth) #bShallow, body.calm:not(.needDepth) #bDeep { display: none !important; }   /* 深さは 案内が 浅くと 言ったら 出す（needDepth） */
+  body.calm.firstmin #bCam, body.calm.firstmin #bSnd, body.calm.firstmin #bGear, body.calm.firstmin #bArt, body.calm.firstmin #padB, body.calm.firstmin #padD { display: none !important; }   /* サイクル159 最初の1分：開始直後は 上のボタンと下のパッドを絞り、残すのは 🔰 🌙 ≡ の3つと padC だけ（キーは従来どおり効く。FIRSTMIN 終了で 静かに もどる） */
   body.calm .ico::before { content: attr(data-i); font-size: 18px; }
   body.calm .pad .ico::before { font-size: 26px; }
   body.calm #bStart.ico::before { font-size: 30px; }
@@ -8081,6 +8082,29 @@ const HINT = {
     });
   }
 };
+// ---- 最初の1分（サイクル159、最初の1分改善 第2弾「開始直後の表示を軽くする」）----
+// のんびり（calm）だけ：開始直後は body に firstmin を付け、CSS で上のボタン・下のパッドを絞る（残るのは 🔰 🌙 ≡ と padC）。
+// 最初のなぞりが返る（HINT.done）・耕しが始まる（lastPct>0）・60秒経つ、のどれかで 1 回だけ外し、
+// 後出しにしていた ミニ地図（artBox）があれば トーストなしで 静かに出す。以後は戻さない（R・リセットでも戻らない）。
+const FIRSTMIN = {
+  t: 0, on: false, over: false, artPending: false,
+  start() {   // ゲーム開始（bStart で S.started が立つ初回）だけ。くわしい説明（DETAIL）では何もしない
+    if (DETAIL || this.on || this.over) return;
+    this.on = true; this.t = 0;
+    document.body.classList.add('firstmin');
+  },
+  update(dt) {   // frame() の HINT.update(dt) の直後で毎フレーム（lastPct は前フレーム値でよい）
+    if (!this.on) return;
+    this.t += dt;
+    if (HINT.done || lastPct > 0 || this.t >= 60) this.finish();
+  },
+  finish() {   // 終了は1回だけ
+    if (!this.on) return;
+    this.on = false; this.over = true;
+    document.body.classList.remove('firstmin');
+    if (this.artPending) { this.artPending = false; $('artBox').classList.remove('hidden'); }   // 静かに出す（トーストは出さない）
+  }
+};
 // ---- のんびり自動運転（サイクル75、ユーザー指示 2026-11-03 21:20「平和でのんびり自動運転」・21:23「転がりつづける」）----
 // ボタン1つ（🌙自動・J）で、T4の列にそって ゆっくり（0.85m/s）自動で耕す。眺めているだけでのんびりできる形で、競争・タイマー・失敗は入れない。
 // 列は step 本ずつ飛ばして巡回し、列間隔3.9m以上の半円ターン（半径1.95m以上＝最小旋回半径1.84mを満たす）で往復する。区間の切れ目（西端→東端）は端沿いの直線と2つの弧でつなぐ。
@@ -9888,8 +9912,13 @@ $('bStart').onclick = () => {
   if (!MOBILE && !params.has('pad')) $('keyHint').classList.remove('hidden');   // パソコン：はじめのうちは 画面の左下に いちばん使うキー
   if (!S.started) {
     S.started = true;
+    FIRSTMIN.start();   // サイクル159：のんびりでは 開始直後の表示を軽くする（DETAIL では何もしない）
     if (LOOP.friend !== null) setTimeout(() => DETAIL ? toast('🏁 友だちは ' + LOOP.friend + ' 点。きみは何点とれる？', 5) : SAY.say('ともだちは ' + LOOP.friend + ' てん。きみは なんてん とれるかな'), 6000);
-    const artGo = () => { $('artBox').classList.remove('hidden'); toast('お題「' + ART.name + '」：白線の内側だけを耕そう。地図の黄色がまだの所、赤ははみ出し。できたら「📸 完成」', 7); };   // 田んぼアートの 地図と お題は 草かりの あとで
+    const artGo = () => {   // 田んぼアートの 地図と お題は 草かりの あとで
+      if (DETAIL) { $('artBox').classList.remove('hidden'); toast('お題「' + ART.name + '」：白線の内側だけを耕そう。地図の黄色がまだの所、赤ははみ出し。できたら「📸 完成」', 7); return; }   // くわしい説明：従来どおり すぐ出す
+      if (FIRSTMIN.on) FIRSTMIN.artPending = true;   // サイクル159 のんびり：地図もトーストも後出し（FIRSTMIN 終了時に 地図だけ 静かに出す）
+      else $('artBox').classList.remove('hidden');   // 草かりの あとなど、最初の1分が もう終わっていたら 地図だけ 静かに出す
+    };
     if (ART.on) INTRO.on ? INTRO.after(artGo) : artGo();
     // はじめの「下げて前へ」は、画面下の案内（COACH）が出す
     setTimeout(() => voice('car'), ART.on ? 12000 : 9000);
@@ -10188,7 +10217,7 @@ const COACH = (() => {
     // 田んぼアート：白線の外では下げない（耕した土はもどせない）。白線の内側に入ってから下げ、白線の手前で上げる
     const art = ART.on, here = art && artAt(0.28);   // 耕す所の いちばん前
     const inNow = art && !S.rotDown && here.out === 0 && artAt(-0.32).out === 0 && artAt(0).mid;   // 耕す所ぜんぶ（前後・左右）が はみ出しにならない所
-    if (art && !S.everDown) return inNow ? ['1', K('白線の内側に入った：<kbd>スペース</kbd>で ' + IMPL + 'を下げる', '白線の内側に入った：ボタンで ' + IMPL + 'を下げる')]
+    if (art && !S.everDown) return inNow ? ['1', '田んぼを ゆびで なぞる（なぞった あとを トラクターが 耕していく）']   // サイクル159：開始位置は区域内（サイクル158）。なぞれば作業機は自動で下がるので、非お題時のはじめの行と同じ文にする
       : ['1', K('まず 白線の内側（地図の黄色）へ。<kbd>↑</kbd><kbd>←</kbd><kbd>→</kbd> で走る（白線の外では下げない）', 'まず 白線の内側（地図の黄色）へ。▲ ◀ ▶ で走る（白線の外では下げない）')];
     if (!S.rotDown && lastPct >= 90 && MUD.level >= 0.3 && S.x > 4 && S.x < HX && S.z > 17 && S.z < 23 && Math.sin(S.yaw) > 0.5)   // 耕し終わって 坂（道への出口）へ向かうとき
       return ['!', K('道へ出る前に：止まって <kbd>V</kbd> で タイヤの泥を落とす', '道へ出る前に：止まって「泥落とし」で タイヤの泥を落とす')];
@@ -10652,7 +10681,7 @@ function frame(now) {
   if (!P.Rotary) { renderer.render(scene, camera); return; }
   const running = S.started && $('start').classList.contains('hidden') && $('help').classList.contains('hidden') && !S.done;
   if (!running) { key.fwd = key.back = key.left = key.right = 0; TRACE.end(); }
-  TRACE.tick(dt); HINT.update(dt);
+  TRACE.tick(dt); HINT.update(dt); FIRSTMIN.update(dt);   // サイクル159：最初の1分の終わり判定（HINT.done / lastPct / 60秒）
   if (!drag && camMode === 0) { look.yaw *= 1 - Math.min(1, dt * 1.5); look.pitch *= 1 - Math.min(1, dt * 1.5); }
   // 止まっているあいだ（メニュー・操作の表・おわり）は、トラクターの動き・時間・燃料を進めない。始める前はエンジンをかける所だけ進める
   let pct = lastPct;

@@ -317,6 +317,15 @@ class KensaTests(unittest.TestCase):
         self.assertNotIn("setInterval", HTML)                     # タイマー・焦らせる仕組みを入れない
         self.assertNotIn("alert(", HTML)                          # 流れを止める要素は作らない
 
+    def test_cycle20_refbox_focus_and_touch(self):
+        # サイクル20: 資料の見出し（summary）と出典リンク（a）は button でないため、
+        # サイクル14の焦点の輪が届かなかった。同じ穏やかな金の輪をこの2つにも付け、
+        # 見出しのタップ反応も操作要素とそろえる（サイクル18）。表示・進行は変えない。
+        self.assertIn("#refBox summary:focus-visible, #refBox a:focus-visible", HTML)
+        self.assertIn("#refBox summary { touch-action:manipulation; }", HTML)
+        self.assertNotIn("setInterval", HTML)                     # タイマー・焦らせる仕組みを入れない
+        self.assertNotIn("alert(", HTML)                          # 流れを止める要素は作らない
+
     def test_stamp_date_text(self):
         # 日付印は固定日付でなく、その日の日付を YYYY.M.D で作る純粋関数
         node = shutil.which("node")

@@ -98,6 +98,10 @@
   #bagTap:focus-visible { outline:3px solid var(--gold); outline-offset:-3px; }
   .sgrain:focus-visible { outline:3px solid var(--gold); outline-offset:1px; border-radius:50%; }
   .gradeBtn:focus-visible { outline-offset:2px; }
+  /* 資料の見出しと出典リンクの焦点（サイクル20）: summary と a は button でないためサイクル14の輪が届かなかった。
+     開くだけの見出しと原典へのリンクにも同じ穏やかな金の輪を付け、見出しのタップ反応も操作要素とそろえる */
+  #refBox summary:focus-visible, #refBox a:focus-visible { outline:3px solid var(--gold); outline-offset:2px; }
+  #refBox summary { touch-action:manipulation; }
   /* みわける（サイクル3）: 白い皿と黒い皿（実在の鑑定）＋よけた粒の受け皿 */
   #sortWrap { display:none; margin-top:12px; }
   #sortWrap.on { display:block; }

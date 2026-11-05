@@ -42,7 +42,7 @@ class Glance100(unittest.TestCase):
     def test_mood_unchanged(self):
         m = re.search(r"function riceMood\(now\) \{(.*?)\n", PIX).group(1)
         self.assertIn("!calmMotion && roll.kind === 'stop' && blinkOn(now)", m)
-        self.assertEqual(set(re.findall(r"'(\w+)'", m)), {"stop", "blink", "smile"})
+        self.assertEqual(set(re.findall(r"'(\w+)'", m)), {"stop", "blink", "happy", "smile"})
         self.assertIn("blink: 'shut cheeks smile'", PIX)
 
     def test_exposed(self):
@@ -64,7 +64,7 @@ class Glance100(unittest.TestCase):
 
     def test_scope(self):
         files = set(self._diff("--name-only").split())
-        self.assertLessEqual(files, {"nishio-go/pixel.js", "tests/test_maze_loop4_101.py", "tests/test_maze_loop4_102.py", "tests/test_maze_loop4_103.py", "tests/test_maze_loop4_104.py", "tests/test_maze_loop4_100.py", "tests/test_maze_loop4_99.py", "tests/test_maze_loop4_95.py", "tests/test_maze_loop4_97.py", "tests/test_maze_loop4_98.py"})
+        self.assertLessEqual(files, {"nishio-go/pixel.js", "tests/test_maze_loop4_105.py", "tests/test_maze_loop4_101.py", "tests/test_maze_loop4_102.py", "tests/test_maze_loop4_103.py", "tests/test_maze_loop4_104.py", "tests/test_maze_loop4_100.py", "tests/test_maze_loop4_99.py", "tests/test_maze_loop4_95.py", "tests/test_maze_loop4_97.py", "tests/test_maze_loop4_98.py"})
 
 
 if __name__ == "__main__":

@@ -1147,3 +1147,26 @@ class Cycle61SortCompactSmallScreenTests(unittest.TestCase):
         self.assertIn("黒い皿と受け皿まで到着時の1画面に収まるようにしました", HTML)
         self.assertNotIn("setInterval", HTML)
         self.assertNotIn("alert(", HTML)
+
+
+class Cycle62GradeCompactSmallScreenTests(unittest.TestCase):
+    def test_cycle62_grade_compact_on_short_screens(self):
+        # サイクル62（継続指示「『良い』と言うまで最初の1分だけ」・きめる到着時の小さい画面）:
+        # 実測（375×667）では到着時に結果ラベルの下端746pxが画面外で、等級を考える
+        # 肝心な行・合計・めやすが見えなかった。390×844ではラベルが収まるため、
+        # 大きい画面は変えず、高さ780px以下の画面だけ「きめる」の中身を詰める。
+        # 顔は56px（正面の表情が読める大きさ）、ラベルの割合の数字は22pxまで
+        self.assertIn("@media (max-height:780px)", HTML)
+        media = HTML.index("@media (max-height:780px)")
+        block = HTML[media:HTML.index("#sortPct { margin:8px 2px 4px;", media)]
+        self.assertIn("#gradeWrap .inspectorFace { width:56px; height:56px; margin-bottom:4px; }", block)
+        self.assertIn("#gradeWrap #resultLabel { padding:8px 12px 6px; margin-bottom:8px; }", block)
+        self.assertIn("#gradeWrap .labelRow .lp { font-size:22px; }", block)
+        self.assertIn("#gradeWrap .gradeBtn { padding:14px 6px; font-size:28px; }", block)
+        # 大きい画面の従来値は不変
+        self.assertIn("#resultLabel { background:#fff; border-radius:4px; padding:12px 14px 10px;", HTML)
+        self.assertIn(".labelRow .lp { font-size:28px;", HTML)
+        self.assertIn("きめるでは、小さい画面（高さが低い画面）だけ顔と結果ラベルを詰めて", HTML)
+        self.assertIn("結果ラベル全体が到着時の1画面に収まるようにしました", HTML)
+        self.assertNotIn("setInterval", HTML)
+        self.assertNotIn("alert(", HTML)

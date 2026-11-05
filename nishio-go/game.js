@@ -1150,16 +1150,14 @@ function shopInfoHtml(s) {   // 当店の窓：営業時間・電話・来店ス
       <a class="btn mini line" href="${esc(lineUrl('card'))}" target="_blank" rel="noopener">LINEで友だち追加</a></p></div>`;
 }
 const SHOP_STAMP = { 3: 100, 5: 200, 10: 500 };   // 来店スタンプ（当店に来た日の数）のごほうびポイント
-// めぐりの れんさ（落ちものパズルの「まとめて消すほど 大きく得をする」から）：ちがう名所でチェックインすると
-// れんさが つながり、2つめは ×1.2・3つめは ×1.5・4つめからは ×2（スポットのポイントに）。時間では きれない（Alba：自分の ペースで めぐる）。同じ名所の くりかえしで 1 に もどる。いちばん長い れんさを覚える
-const CHAIN = { mult: [1, 1, 1.2, 1.5, 2] };
-const chainMult = n => CHAIN.mult[Math.min(Math.max(n, 0), CHAIN.mult.length - 1)];
+// めぐりの れんさ：ちがう名所でチェックインすると つながる、静かな記録だけ（バッジ・きろくに使う）。
+// 倍率ボーナスと 画面の 表示は やめた（サイクル85・Dordogne：訪れた場所と 集めた 思い出が そのまま 残る。れんさや 時間で 優劣を つけない）。同じ名所の くりかえしで 1 に もどる。いちばん長い れんさを覚える
 function chainStep(s, now) {
   const c = S.chain || { n: 0, last: 0, id: '', best: 0 };
   c.n = c.last && c.id !== s.id ? c.n + 1 : 1;
   c.last = now; c.id = s.id; c.best = Math.max(c.best || 0, c.n);
   S.chain = c;
-  return { n: c.n, bonus: c.n >= 2 ? Math.round(ptsOf(s) * (chainMult(c.n) - 1)) : 0 };
+  return { n: c.n };
 }
 
 // めいろの ゴールは「着いた」だけで じゅうぶん（Alba：時間・★・近さ比では 評価しない）
@@ -1349,7 +1347,7 @@ function mazeGoal(id, name, lines) {
   lines.push('🍵 おつかれさま。ここで おわっても だいじょうぶ（つづけるなら つぎの ゴールへ）');   // 基本 5分で 1回 おわる
   mzShare = { name, sec: gl.sec, stars: 0, m: gl.m || 0, run: gl.run || null, img: snapMaze(), t: Date.now(), city: (me && (cityNear(me.lat, me.lng) || {}).name) || '' };   // ゴールの ごほうびに シェアの ボタン（画面を 投稿する）。city：シェアの 文で 西尾市の 外を「西尾の」と 言わない ため
   MZ.goalFx(gl.m ? `めいろ ${fmtM(gl.m)}` : '🏁 めいろ ゴール！');
-  track('maze_goal', { spot: name, sec: Math.round(gl.sec), m: Math.round(gl.m), stars: 0, way: gl.way ? Math.round(gl.way * 10) / 10 : 0 });
+  track('maze_goal', { spot: name, sec: Math.round(gl.sec), m: Math.round(gl.m), stars: 0, way: 0 });
   return total;
 }
 // めいろの ゴールの 名所に 着いた（pixel.js）：その 名所で チェックイン（近くに ほかの 注目スポットが あって 下の 札が そちらでも）。
@@ -1378,8 +1376,7 @@ function checkin() {
   const base = ptsOf(s), theme = weekTheme(), inTheme = inThemeOf(s, theme);
   total += base; lines.push(`${iconOf(s)} スポット +${base}`);
   if (inTheme) { total += base; lines.push(`🎌 今週は${theme.icon}${theme.name}の週（ポイント2倍） +${base}`); }
-  const ch = chainStep(s, now);   // めぐりの れんさ：ちがう名所へ着くと、スポットのポイントが ×1.2・×1.5・×2
-  if (ch.bonus) { total += ch.bonus; lines.push(`🔗 めぐりの れんさ ${ch.n} ×${chainMult(ch.n)} +${ch.bonus}`); }
+  const ch = chainStep(s, now);   // めぐりの れんさ：記録だけ（ポイントの 倍率は ない。Dordogne：どこへ着いても 同じ形）
   if (!v) {
     const b = s.featured ? CFG.pts.firstFeatured : CFG.pts.first;
     total += b; lines.push(`🆕 はじめての訪問 +${b}`);
@@ -2623,8 +2620,8 @@ function refreshNearby() {
     else if (spotsLoading && !spots.length) msgs.push('スポットを読み込んでいます…');
     else if (!spots.length) msgs.push('スポットがありません。「せってい」から再読み込みしてください。');
   }
-  // めぐりの れんさ：2か所 いじょう つながって いる ときだけ「れんさ N」（時間は 出さない・1か所目は 何も 出さない）
-  const cn = S.chain && S.chain.n >= 2 && S.chain.last && ymd(new Date(S.chain.last)) === ymd() ? S.chain.n : 0, h1 = dayState().h100, chain = [cn ? `${simple() ? PIA('compass', 'めぐりの れんさ') : '🔗'} れんさ <b>${cn}</b>` : '',
+  // れんさの 常時表示は しない（サイクル85・Dordogne：続けた数で 優劣を つけない）
+  const h1 = dayState().h100, chain = [
     h1 && !h1.done ? `${simple() ? PIA('feet', '100歩たんけん') : '👣'} たんけん <b>${h1.steps}</b>/100` : ''].filter(Boolean).join('　');   // 100歩たんけんの とちゅうも（何歩目か）
   if (!msgs.length && simple()) { setStatus(chain, true); return; }   // 文字を少なく（ふだん）：気をつけることがないときは、下のパネルは行き先の札だけ（数は きろく・とくてん に）
   if (!msgs.length) {
@@ -3922,7 +3919,7 @@ const playQ = { pending: null, r: 0, shown: 0, sent: false, t: 0 };
 const PLAY_MIN_MS = 900;   // api/feedback.js の PLAY_MIN_MS（800）より すこし 長く
 function playAsk(mz) {
   if (store.get('nsg_play_ask', '') === ymd()) return;
-  playQ.pending = { sec: Math.round(mz.sec), st: mz.stars || 0, mz };   // mz：★4〜5 の ときの「友だちに」で シェアする ゴール（takeMzShare）
+  playQ.pending = { sec: Math.round(mz.sec), st: 0, mz };   // mz：★4〜5 の ときの「友だちに」で シェアする ゴール（takeMzShare）
   react.pending = null;   // 名所の ひとこと は こんどに（2つ つづけて たずねない）
 }
 // 人が ゴールの めいろ：話の 窓（pxInfo）を とじた あとに 出す（名所の ゴールは ごほうびの 窓を とじた あと＝hideReward）。

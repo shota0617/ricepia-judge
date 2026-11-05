@@ -23,12 +23,12 @@ class Loop66(unittest.TestCase):
     def test_no_30min_text(self):
         self.assertNotIn("30分以内", SRC)
         self.assertIn("ちがう名所を 4か所つづけて めぐる（めぐりの れんさ 4）", SRC)
-        self.assertIn("`🔗 めぐりの れんさ ${ch.n} ×${chainMult(ch.n)} +${ch.bonus}`", SRC)
+        self.assertNotIn("chainMult", SRC)   # サイクル85で 倍率ボーナスを 廃止
 
     def test_guide_has_no_countdown(self):
         self.assertNotIn("次の名所 → れんさ", SRC)
         self.assertIsNone(re.search(r"のこり\$\{Math\.ceil\(cl", SRC))
-        self.assertIn("S.chain.n >= 2 && S.chain.last && ymd(new Date(S.chain.last)) === ymd() ? S.chain.n : 0", SRC)
+        self.assertNotIn("S.chain.n >= 2 && S.chain.last && ymd(new Date(S.chain.last)) === ymd() ? S.chain.n : 0", SRC)   # サイクル85：ガイドの れんさ表示を 廃止
 
     def test_maze_goal_no_speed_scoring(self):
         g = fn("mazeGoal")

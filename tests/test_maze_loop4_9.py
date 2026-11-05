@@ -24,8 +24,8 @@ class TextCut(unittest.TestCase):
         self.assertNotIn('S *', foot)
         draw = func(PIXEL, 'function drawMzClock(')
         self.assertRegex(draw, r'function drawMzClock\(w, dpr, now\) \{\n  return;')
-        self.assertIn('const mzStars = ', PIXEL)   # 到着時の ★判定は 残す
-        self.assertIn('mzPar = ', PIXEL)
+        self.assertNotIn('mzStars', PIXEL)   # サイクル85で ★判定を 廃止
+        self.assertNotIn('mzPar', PIXEL)
 
     def test_banner_not_drawn(self):
         self.assertNotIn('`〜 ${here.banner} 〜`', PIXEL)

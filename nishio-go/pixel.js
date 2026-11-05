@@ -7843,7 +7843,7 @@ function frame(now) {
   if (!mazeOn() && (mzRescue.sx >= 0 || mzRescue.joined || mzRescue.doneAt)) mzRescueReset();   // 救助クエストも 同じく はじめから（転がすブロックの外にも）
   if (!mazeOn() && (mzCube.sx >= 0 || mzCube.got)) mzCubeReset();   // 回転キューブも 同じく はじめから（転がすブロックの外にも）
   if (!mazeOn() && (mzBrigade.sx >= 0 || mzBrigade.count)) mzBrigadeReset();   // おとも旅団も 同じく はじめから
-  if (!mazeOn() && (mzTorch.sx >= 0 || mzTorch.until)) mzTorchReset();   // たいまつも 同じく はじめから（転がすブロックの外にも）
+  if (!mazeOn() && (mzTorch.sx >= 0 || mzTorch.held)) mzTorchReset();   // たいまつも 同じく はじめから（転がすブロックの外にも）
   if (!mazeOn() && mzTiles.size) mzTiles.clear();   // はまった タイルも 迷路を 出たら はじめから
   if (!mazeOn() && mzMini.seen.size) mzMini.seen.clear();   // 探索マップの しるしも 迷路を 出たら はじめから
   if (!mazeOn() && mzDino.sx >= 0) mzDinoReset();   // きょうりゅうの あしあとも 同じく はじめから（転がすブロックの外にも）   // どうぐクエストも 同じく はじめから（転がすブロックの外にも）
@@ -10389,12 +10389,14 @@ function drawMzShelf(w, dpr, now) {   // 迷路の 上の ピース棚（3枠。
   ctx.globalAlpha = 1;
 }
 // 見晴らし台（A Short Hike の「頂上の 見晴らし台」）：迷路の 中の 通路に 木の 見晴らし台が 1つ 出て、ころがって 着くと +15pt。
-// その場で 海・田んぼ・町の パノラマが 出て、30秒間だけ 迷路の もやが 晴れて 全体が よく 見える。1つの 迷路で 1回だけ。くだもの・ピースとは マスを わける。
-// 位置と 霧晴れは この 画面の 間だけ（セーブは 増やさない。ポイントだけ game.js の mzView が 保存）
-const MZ_VIEW = { min: 8, reach: 18, pts: 15, panoMs: 6000, clearMs: 30000 };   // スタートからの 歩数の 下限・さがす はんい（歩数）・ポイント・パノラマを 出す 時間・霧晴れの 時間
-const mzView = { done: false, cx: -1, cy: -1, sx: -1, sy: -1, next: 0, panoAt: 0, clearUntil: 0 };   // done：もう 着いた・cx cy：いま 出ている マス（-1 なし）・sx sy：スタートの マス・panoAt：パノラマを 出した 時刻・clearUntil：霧晴れが 終わる 時刻
-function mzViewReset() { Object.assign(mzView, { done: false, cx: -1, cy: -1, sx: -1, sy: -1, next: 0, panoAt: 0, clearUntil: 0 }); }
-function mzViewClear(now) { return mzView.clearUntil > now; }   // 霧晴れの 間だけ 真
+// その場で 海・田んぼ・町の パノラマが 出て、その 迷路の 間ずっと もやが 晴れたまま 全体が よく 見える。1つの 迷路で 1回だけ。くだもの・ピースとは マスを わける。
+// Eastshade（島を 歩いて 景色の よい 場所に イーゼルを 立てる 探索。制限時間も 失敗も なく、景色は 自分の ペースで 眺め続けられる）の 物差し：
+// 良い 景色は 時間で 消えない。着いたら、その 迷路を 回り終わるまで 眺め続けられる。残りは 秒数の 札ではなく、晴れた 景色そのもので わかる。
+// パノラマ帯（約6秒）は「眺める 絵」で、効果の 期限ではない。位置と 霧晴れは この 画面の 間だけ（セーブは 増やさない。ポイントだけ game.js の mzView が 保存）
+const MZ_VIEW = { min: 8, reach: 18, pts: 15, panoMs: 6000 };   // スタートからの 歩数の 下限・さがす はんい（歩数）・ポイント・パノラマを 出す 時間
+const mzView = { done: false, cx: -1, cy: -1, sx: -1, sy: -1, next: 0, panoAt: 0 };   // done：もう 着いた（＝この 迷路の 間 もやが 晴れている）・cx cy：いま 出ている マス（-1 なし）・sx sy：スタートの マス・panoAt：パノラマを 出した 時刻
+function mzViewReset() { Object.assign(mzView, { done: false, cx: -1, cy: -1, sx: -1, sy: -1, next: 0, panoAt: 0 }); }
+function mzViewClear() { return mzView.done; }   // 着いてから 迷路が 終わる（mzViewReset）まで 真
 function mzViewPick() {   // くだもの・ピースと 同じ 条件（壁・ゴール・戸・参道・小物・生きもの 以外）で、スタートから 8歩以上 はなれた 通路。みかん・ピースの マスは よける
   const sx = mzView.sx, sy = mzView.sy, rx = Math.floor(rp.x / MZ_K), ry = Math.floor(rp.y / MZ_K);
   if (sx < 0) return null;
@@ -10425,9 +10427,9 @@ function mzViewTick(now) {
   if (a !== mzView.cx || b !== mzView.cy) return;
   const r = G.mzView && G.mzView();
   if (!r) return;
-  mzView.done = true; mzView.cx = mzView.cy = -1; mzView.panoAt = now; mzView.clearUntil = now + MZ_VIEW.clearMs;
+  mzView.done = true; mzView.cx = mzView.cy = -1; mzView.panoAt = now;
   grainSound(); roll.happyT = 1.2; dirty = true;
-  floatText(`🔭 見晴らし台に ついた！ +${r.pts}pt（30秒間 もやが 晴れるよ）`);
+  floatText(`🔭 見晴らし台に ついた！ +${r.pts}pt（もやが 晴れるよ）`);
   const cols = ['#7fc4e8', '#9ccc4f', '#e8d8a8'];
   for (let i = 0; i < 18; i++) { const t = Math.random() * Math.PI * 2, v = 1.5 + Math.random() * 3; mzFx.push({ t0: now, vx: Math.cos(t) * v, vy: Math.sin(t) * v - 3, c: cols[i % 3], life: 0.6 + Math.random() * 0.4 }); }
 }
@@ -10457,14 +10459,6 @@ function drawMzViewPanorama(w, dpr, now) {   // パノラマ帯（約6秒。海�
   ctx.fillStyle = '#fffaf0'; ctx.beginPath(); ctx.arc(kx, ky, kr, 0, Math.PI * 2); ctx.fill();
   ctx.fillStyle = '#1a1a1a'; ctx.beginPath(); ctx.arc(kx - kr * 0.3, ky - kr * 0.2, Math.max(1, kr * 0.12), 0, Math.PI * 2); ctx.arc(kx + kr * 0.3, ky - kr * 0.2, Math.max(1, kr * 0.12), 0, Math.PI * 2); ctx.fill();
   ctx.globalAlpha = 1;
-}
-function drawMzViewClearTag(w, dpr, now) {   // 見晴らし中の 小さな 札（パノラマが 終わってから 霧晴れが 終わるまで。ピース棚の 下）
-  if (!mzViewClear(now) || (mzView.panoAt && now - mzView.panoAt < MZ_VIEW.panoMs) || mzView.sx < 0 || mapCovered(true) || mzBanner.t0) return;
-  const S = Math.round(MZ_CLOCK_PX * dpr), gap = Math.round(S * 0.35), y0 = mzViewShelfY(w, dpr, now), t = `🔭 見晴らし中 あと ${Math.ceil((mzView.clearUntil - now) / 1000)}秒`;
-  ctx.font = `${Math.round(14 * dpr)}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  const bw = Math.round(ctx.measureText(t).width) + gap * 4, bh = Math.round(S * 1.4);
-  ctx.fillStyle = 'rgba(10,20,30,.6)'; ctx.fillRect(Math.round(w / 2 - bw / 2), y0, bw, bh);
-  ctx.fillStyle = '#cfeaff'; ctx.fillText(t, w / 2, y0 + bh / 2);
 }
 // かくし宝箱（Geocaching の「手がかりだけで かくされた 宝を さがす」）：迷路の 中の 通路に 宝箱を 1つ かくす。宝箱は ふつう 描かず、手がかり札の「あと ○歩くらい」と「あつい／つめたい」だけを 頼りに さがす。
 // 3歩以内に 近づいた ときだけ うすい 紫の 光が 出る。着くと +20pt。位置と 歩数は この 画面の 間だけ（セーブは 増やさない。ポイントだけ game.js の mzCache が 保存）
@@ -10636,7 +10630,6 @@ function drawMzQuestTag(w, dpr, now) {   // クエスト札（迷路の 間だ�
   const S = Math.round(MZ_CLOCK_PX * dpr), gap = Math.round(S * 0.35);
   let y0 = mzViewShelfY(w, dpr, now);
   if (mzView.panoAt && now - mzView.panoAt < MZ_VIEW.panoMs) y0 += Math.round(S * 1.6) + gap * 2;
-  else if (mzViewClear(now)) y0 += Math.round(S * 1.4) + gap;
   if (mzCache.cx >= 0 && mzCache.sx >= 0) y0 += Math.round(S * 1.4) + gap;   // 手がかり札が 出ている 間は その 下
   const t = fin ? '🎉 どうぐ そろった！ かおりちゃんの どうぐセット 完成！' : '🧰 どうぐクエスト ' + QUEST_TOOLS.map((o, i) => `${o.name} ${i < mzQuest.got ? '✓' : i === mzQuest.got ? '◎' : '◯'}`).join(' ');
   ctx.font = `${Math.round(13 * dpr)}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -10759,7 +10752,6 @@ function drawMzDinoTag(w, dpr, now) {   // 足跡札（迷路の 間だけ。農
   const S = Math.round(MZ_CLOCK_PX * dpr), gap = Math.round(S * 0.35);
   let y0 = mzViewShelfY(w, dpr, now);
   if (mzView.panoAt && now - mzView.panoAt < MZ_VIEW.panoMs) y0 += Math.round(S * 1.6) + gap * 2;
-  else if (mzViewClear(now)) y0 += Math.round(S * 1.4) + gap;
   if (mzCache.cx >= 0 && mzCache.sx >= 0) y0 += Math.round(S * 1.4) + gap;   // 手がかり札の 下
   if (mzQuest.sx >= 0 && (mzQuest.got < QUEST_TOOLS.length || (mzQuest.doneAt && now - mzQuest.doneAt < 6000))) y0 += Math.round(S * 1.4) + gap;   // クエスト札の 下
   const t = fin ? '🦕 きょうりゅうと であった！ かおりちゃんも びっくり！' : '🦕 きょうりゅうの あしあとを たどろう！' + (mzDino.trail.length ? ` あしあと ${mzDino.trail.length}こ` : '');
@@ -11050,15 +11042,15 @@ function drawMzEnergyBar(w, dpr, now) {   // 迷路の 間 いつも 出す 大�
   ctx.font = `${Math.round(13 * dpr)}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillStyle = burst ? '#fff3b0' : '#e8f5d0'; ctx.fillText(t, x0 + bw / 2, y0 + Math.round(bh * 0.28), bw - gap);
 }
-// たいまつ（Legend of Grimrock の 明かりの 輪）：迷路の 通路に たいまつが 1本 立ち、ころがって 着くと かおりちゃんが 持って 45秒間 フォグの 視界が +3マス ひろがる。+10pt。
-// 持っている 間に 次の 1本が 出て、取ると 残りが 45秒に 張りなおし（足さない）。ズーム1（フォグなし）でも 取得・ポイント・札・炎は 同じ。敵・ゴーストは 出さない。操作も 止めない（札と 炎は 表示だけ）。
-// 位置と 残り時間は この 画面の 間だけ（セーブは 増やさない。ポイントと 取得回数だけ game.js の mzTorch が 保存）。柄と 縦長の 炎で、みかん・ゴールの 金の わとは 形で 見分ける
-const MZ_TORCH = { sight: 3, ms: 45000, pts: 10, min: 6, reach: 18 };   // 視界の ふえる マス数・効果の 長さ・ポイント・スタートからの 歩数の 下限・さがす はんい（歩数）
-const mzTorch = { cx: -1, cy: -1, sx: -1, sy: -1, last: null, next: 0, until: 0, got: 0 };   // cx cy：立っている マス・sx sy：スタートの マス・until：明かりの 切れる 時刻（0 なし）・got：この 画面で 取った 本数
-function mzTorchReset() { Object.assign(mzTorch, { cx: -1, cy: -1, sx: -1, sy: -1, last: null, next: 0, until: 0, got: 0 }); }
-function mzTorchLeft(now) { return Math.max(0, mzTorch.until - (now === undefined ? performance.now() : now)); }
-function mzTorchLit(now) { return mzTorch.until > (now === undefined ? performance.now() : now) ? 1 : 0; }   // たいまつ 所持中 1（明かりの 描き分け用。読むだけ）
-function mzTorchBonus() { return mzTorch.until > performance.now() ? MZ_TORCH.sight : 0; }   // フォグの 視界に 足す マス数
+// たいまつ（Legend of Grimrock の 明かりの 輪）：迷路の 通路に たいまつが 1本 立ち、ころがって 着くと かおりちゃんが 持って、その 迷路の 間ずっと フォグの 視界が +3マス ひろがる。+10pt。
+// Eastshade（制限時間も 失敗も なく、景色を 自分の ペースで 眺め続けられる）の 物差し：明かりは 時間で 消えない。残りは 札の 秒数では なく、持っている 炎そのもので わかる（炎は いつも 穏やかな 大きさ）。
+// 持っている 間は 次の 1本は 出ない（1つの 迷路で 持てる 明かりは 1つ）。ズーム1（フォグなし）でも 取得・ポイント・炎は 同じ。敵・ゴーストは 出さない。操作も 止めない（炎は 表示だけ）。
+// 位置と 持っているかは この 画面の 間だけ（セーブは 増やさない。ポイントと 取得回数だけ game.js の mzTorch が 保存）。柄と 縦長の 炎で、みかん・ゴールの 金の わとは 形で 見分ける
+const MZ_TORCH = { sight: 3, pts: 10, min: 6, reach: 18 };   // 視界の ふえる マス数・ポイント・スタートからの 歩数の 下限・さがす はんい（歩数）
+const mzTorch = { cx: -1, cy: -1, sx: -1, sy: -1, last: null, next: 0, held: false, got: 0 };   // cx cy：立っている マス・sx sy：スタートの マス・held：持っている（迷路が 終わるまで）・got：この 画面で 取った 本数
+function mzTorchReset() { Object.assign(mzTorch, { cx: -1, cy: -1, sx: -1, sy: -1, last: null, next: 0, held: false, got: 0 }); }
+function mzTorchLit() { return mzTorch.held ? 1 : 0; }   // たいまつ 所持中 1（明かりの 描き分け用。読むだけ）
+function mzTorchBonus() { return mzTorch.held ? MZ_TORCH.sight : 0; }   // フォグの 視界に 足す マス数
 function mzTorchPick() {   // くだものと 同じ 条件（mzFruitOk）で、ほかの ボーナスの マス・お米の すぐ 近く・さっき 取った 所は よける
   const sx = mzTorch.sx, sy = mzTorch.sy, rx = Math.floor(rp.x / MZ_K), ry = Math.floor(rp.y / MZ_K);
   if (sx < 0) return null;
@@ -11079,9 +11071,8 @@ function mzTorchTick(now) {
   if (rp.x === null) return;
   const a = Math.floor(rp.x / MZ_K), b = Math.floor(rp.y / MZ_K);
   if (mzTorch.sx < 0) { mzTorch.sx = a; mzTorch.sy = b; }   // 迷路の スタート（ゴールが きまった ときの お米の マス）
-  if (mzTorch.until) { dirty = true; if (mzTorch.until <= now) mzTorch.until = 0; }   // 残り秒の 札を 動かす・燃え尽きたら 視界は 元に もどる
-  if (mzTorch.cx < 0) {   // まだ 立っていない：地図が 読めるまで 0.5秒ごとに さがす（持っている 間も 次の 1本が 出る）
-    if (now < mzTorch.next) return;
+  if (mzTorch.cx < 0) {   // まだ 立っていない：地図が 読めるまで 0.5秒ごとに さがす（持っている 間は 次の 1本は 出ない）
+    if (mzTorch.held || now < mzTorch.next) return;
     mzTorch.next = now + 500;
     const c = mzTorchPick();
     if (c) { mzTorch.cx = c[0]; mzTorch.cy = c[1]; dirty = true; }
@@ -11090,17 +11081,17 @@ function mzTorchTick(now) {
   if (a !== mzTorch.cx || b !== mzTorch.cy) return;
   const r = G.mzTorch && G.mzTorch();
   if (!r) return;
-  mzTorch.got++; mzTorch.last = [a, b]; mzTorch.cx = mzTorch.cy = -1; mzTorch.next = now; mzTorch.until = now + MZ_TORCH.ms;
+  mzTorch.got++; mzTorch.last = [a, b]; mzTorch.cx = mzTorch.cy = -1; mzTorch.next = now; mzTorch.held = true;
   grainSound(); roll.happyT = 1.2; dirty = true;
-  floatText(`🔥 たいまつ ゲット！ +${r.pts}pt（${MZ_TORCH.ms / 1000}秒間 ひろく 見えるよ）`);
+  floatText(`🔥 たいまつ ゲット！ +${r.pts}pt（ひろく 見えるよ）`);
   const cols = ['#ff8c1a', '#ffd84a', '#fff3b0'];
   for (let i = 0; i < 14; i++) { const t = Math.random() * Math.PI * 2, v = 1.5 + Math.random() * 3; mzFx.push({ t0: now, vx: Math.cos(t) * v, vy: Math.sin(t) * v - 3, c: cols[i % 3], life: 0.6 + Math.random() * 0.4 }); }
 }
-function mzTorchState() {   // テスト用：立っている マス・スタート・持っている 残り(ms)・取った 本数・足される 視界
+function mzTorchState() {   // テスト用：立っている マス・スタート・持っているか・取った 本数・足される 視界
   const now = performance.now();
-  return { at: mzTorch.cx < 0 ? null : [mzTorch.cx, mzTorch.cy], start: mzTorch.sx < 0 ? null : [mzTorch.sx, mzTorch.sy], left: mzTorchLeft(now), held: mzTorch.until > now, got: mzTorch.got, bonus: mzTorchBonus() };
+  return { at: mzTorch.cx < 0 ? null : [mzTorch.cx, mzTorch.cy], start: mzTorch.sx < 0 ? null : [mzTorch.sx, mzTorch.sy], held: mzTorch.held, got: mzTorch.got, bonus: mzTorchBonus() };
 }
-function mzTorchFlameScale(now) { return Math.min(1, Math.max(0, mzTorchLeft(now) / MZ_TORCH.ms)); }   // たいまつの 残り 0〜1（炎の 大きさに 使う。読むだけ）
+function mzTorchFlameScale() { return mzTorch.held ? 1 : 0; }   // 炎の 大きさ：持っていれば いつも 一定（1）。残り時間では 縮まない
 function mzFlamePath(X, Y, h, w, sway) {   // 縦長の 炎（しずく形）の 輪郭。Y：根もと
   ctx.beginPath(); ctx.moveTo(X - w, Y); ctx.quadraticCurveTo(X - w * 1.1, Y - h * 0.55, X + sway, Y - h); ctx.quadraticCurveTo(X + w * 1.1, Y - h * 0.55, X + w, Y); ctx.closePath();
 }
@@ -11119,41 +11110,12 @@ function drawMzTorch(ox, oy, T, now) {   // 立っている たいまつ：木�
   ctx.fillStyle = '#fff3b0'; mzFlamePath(X, Y - r * 0.2, r * 0.5, r * 0.16, 0); ctx.fill();
 }
 function drawMzTorchFlame(ox, oy, T, now) {   // 持っている 間：かおりちゃんの 横に 小さな 炎。もやの あとに 描く（いつも 見える）
-  if (!mzTorch.until || mzTorch.until <= now || rp.x === null) return;
+  if (!mzTorch.held || rp.x === null) return;
   const on = mzOn(rp.x, rp.y), r = Math.max(5, T * 0.5), q = Math.max(1, Math.round(T / 8)), X = Math.round(ox + on[0] * T + r * 1.15), Y = Math.round(oy + on[1] * T + r * 0.35), flick = Math.sin(now / 80) + Math.sin(now / 47);
-  const last = mzTorch.until - now < 6000 && Math.floor(now / 250) % 2;   // 切れる まぎわは ちかちか
-  ctx.globalAlpha = last ? 0.55 : 1;
   ctx.fillStyle = '#8a5a2b'; ctx.fillRect(X - q, Y - q, q * 2, Math.round(r * 0.7));   // 小さな 柄
-  const scale = mzTorchFlameScale(now), hk = 0.45 + 0.55 * scale, wk = 0.6 + 0.4 * scale;   // 残りが 少ないほど 炎が 小さい
+  const hk = mzTorchFlameScale(), wk = hk;   // 炎は いつも 一定の 穏やかな 大きさ
   ctx.fillStyle = '#e8590c'; mzFlamePath(X, Y - q, r * (0.85 + 0.06 * flick) * hk, r * 0.34 * wk, flick * q * 0.3); ctx.fill();
   ctx.fillStyle = '#ffd84a'; mzFlamePath(X, Y - q, r * 0.5 * hk, r * 0.18 * wk, 0); ctx.fill();
-  if (scale <= 0.25) {   // 最後の 1/4：煙が ふわっと 上へ
-    const u = (now / 1400) % 1;
-    ctx.globalAlpha = (last ? 0.55 : 1) * 0.5 * (1 - u); ctx.fillStyle = '#9a9a9a';
-    ctx.beginPath(); ctx.arc(X + Math.sin(now / 300) * q, Y - q - r * (0.95 * hk + 0.5 * u), Math.max(1.5, r * 0.16 * (1 + u)), 0, Math.PI * 2); ctx.fill();
-  }
-  ctx.globalAlpha = 1;
-}
-function drawMzTorchTag(w, dpr, now) {   // 残り秒の 札（迷路の 間だけ。エネルギーゲージの 下）
-  if (!mzTorch.until || mzTorch.until <= now || mapCovered(true) || mzBanner.t0) return;
-  const S = Math.round(MZ_CLOCK_PX * dpr), gap = Math.round(S * 0.35);
-  let y0 = mzViewShelfY(w, dpr, now);
-  if (mzView.panoAt && now - mzView.panoAt < MZ_VIEW.panoMs) y0 += Math.round(S * 1.6) + gap * 2;
-  else if (mzViewClear(now)) y0 += Math.round(S * 1.4) + gap;
-  if (mzCache.cx >= 0 && mzCache.sx >= 0) y0 += Math.round(S * 1.4) + gap;
-  if (mzQuest.sx >= 0 && (mzQuest.got < QUEST_TOOLS.length || (mzQuest.doneAt && now - mzQuest.doneAt < 6000))) y0 += Math.round(S * 1.4) + gap;
-  if (mzDino.sx >= 0 && (mzDino.found ? now - mzDino.foundAt < 6000 : mzDino.cx >= 0)) y0 += Math.round(S * 1.4) + gap;
-  if (mzEnergy.lastCx >= 0) y0 += Math.round(S * 1.7) + gap;   // エネルギーゲージの 下
-  const t = `🔥 たいまつ あと${Math.ceil((mzTorch.until - now) / 1000)}秒　視界が ひろいよ`;
-  ctx.font = `${Math.round(13 * dpr)}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  let bw = Math.round(ctx.measureText(t).width) + gap * 4;
-  if (bw > w - gap * 2) {   // 狭い画面では文字を小さくして札を画面内に収める
-    const fs = Math.max(8, Math.floor(13 * dpr * (w - gap * 2) / bw));
-    ctx.font = `${fs}px sans-serif`; bw = Math.round(ctx.measureText(t).width) + gap * 4;
-  }
-  const bh = Math.round(S * 1.4);
-  ctx.fillStyle = 'rgba(90,40,0,.75)'; ctx.fillRect(Math.round(w / 2 - bw / 2), y0, bw, bh);
-  ctx.fillStyle = '#ffd9a0'; ctx.fillText(t, w / 2, y0 + bh / 2);
 }
 // おとも旅団（ルフランの地下迷宮と魔女ノ旅団：人形兵を 旅団に 編成）：迷路の 通路に 小さな「おとも米」が 1つずつ 出て、取るたびに かおりちゃんの まわり（後ろ・左右）に 集まって 一緒に 進む。
 // 1迷路で 3つまで（1つ +5pt）。3つ そろうと 旅団 完成（+15pt）。取ると 別の 通路へ 湧き直し、3つ そろったら その迷路では もう 出さない。ズーム1（フォグなし）でも 同じ。敵・ゴーストは 出さない。操作も 止めない（札と おともは 表示だけ）。
@@ -11234,19 +11196,17 @@ function drawMzBrigadeMates(ox, oy, T, now) {   // 集めた おとも：かお�
     } else mzMateRice(Math.round(ox + on[0] * T + slots[i][0] * u), Math.round(oy + on[1] * T + slots[i][1] * u + bob), r, q);
   }
 }
-function drawMzBrigadeTag(w, dpr, now) {   // 旅団札（迷路の 間だけ。たいまつ札の 下）。完成の あと 約6秒は 金色
+function drawMzBrigadeTag(w, dpr, now) {   // 旅団札（迷路の 間だけ）。完成の あと 約6秒は 金色
   const done = mzBrigade.doneAt && now - mzBrigade.doneAt < MZ_BRIGADE.tagMs;
   if (!done && (mzBrigade.count >= MZ_BRIGADE.n || (!mzBrigade.count && mzBrigade.cx < 0))) return;
   if (mapCovered(true) || mzBanner.t0) return;
   const S = Math.round(MZ_CLOCK_PX * dpr), gap = Math.round(S * 0.35);
   let y0 = mzViewShelfY(w, dpr, now);
   if (mzView.panoAt && now - mzView.panoAt < MZ_VIEW.panoMs) y0 += Math.round(S * 1.6) + gap * 2;
-  else if (mzViewClear(now)) y0 += Math.round(S * 1.4) + gap;
   if (mzCache.cx >= 0 && mzCache.sx >= 0) y0 += Math.round(S * 1.4) + gap;
   if (mzQuest.sx >= 0 && (mzQuest.got < QUEST_TOOLS.length || (mzQuest.doneAt && now - mzQuest.doneAt < 6000))) y0 += Math.round(S * 1.4) + gap;
   if (mzDino.sx >= 0 && (mzDino.found ? now - mzDino.foundAt < 6000 : mzDino.cx >= 0)) y0 += Math.round(S * 1.4) + gap;
   if (mzEnergy.lastCx >= 0) y0 += Math.round(S * 1.7) + gap;   // エネルギーゲージの 下
-  if (mzTorch.until && mzTorch.until > now) y0 += Math.round(S * 1.4) + gap;   // たいまつ札の 下
   const t = done ? '🎉 おとも旅団 完成！ かおりちゃんと おとも米たち！' : `🎒 おとも旅団 ${mzBrigade.count}/${MZ_BRIGADE.n}　おとも米 ${Array.from({ length: MZ_BRIGADE.n }, (_, i) => (i < mzBrigade.count ? '✓' : '◯')).join('')}`;
   ctx.font = `${Math.round(13 * dpr)}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   let bw = Math.round(ctx.measureText(t).width) + gap * 4;
@@ -11356,12 +11316,10 @@ function drawMzPurifyTag(w, dpr, now) {   // 進み具合の 札（浄化マス�
   const S = Math.round(MZ_CLOCK_PX * dpr), gap = Math.round(S * 0.35);
   let y0 = mzViewShelfY(w, dpr, now);
   if (mzView.panoAt && now - mzView.panoAt < MZ_VIEW.panoMs) y0 += Math.round(S * 1.6) + gap * 2;
-  else if (mzViewClear(now)) y0 += Math.round(S * 1.4) + gap;
   if (mzCache.cx >= 0 && mzCache.sx >= 0) y0 += Math.round(S * 1.4) + gap;
   if (mzQuest.sx >= 0 && (mzQuest.got < QUEST_TOOLS.length || (mzQuest.doneAt && now - mzQuest.doneAt < 6000))) y0 += Math.round(S * 1.4) + gap;
   if (mzDino.sx >= 0 && (mzDino.found ? now - mzDino.foundAt < 6000 : mzDino.cx >= 0)) y0 += Math.round(S * 1.4) + gap;
   if (mzEnergy.lastCx >= 0) y0 += Math.round(S * 1.7) + gap;
-  if (mzTorch.until && mzTorch.until > now) y0 += Math.round(S * 1.4) + gap;
   if ((mzBrigade.doneAt && now - mzBrigade.doneAt < MZ_BRIGADE.tagMs) || !(mzBrigade.count >= MZ_BRIGADE.n || (!mzBrigade.count && mzBrigade.cx < 0))) y0 += Math.round(S * 1.4) + gap;   // 旅団札の 下
   const t = done ? '🎉 ぜんぶ浄化！ 金の 花が さいた' : `💜 浄化 ${mzPurify.count}/${n}`;
   ctx.font = `${Math.round(13 * dpr)}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -11511,12 +11469,10 @@ function drawMzRescueTag(w, dpr, now) {   // 救助札（迷路の 間だけ。�
   const S = Math.round(MZ_CLOCK_PX * dpr), gap = Math.round(S * 0.35);
   let y0 = mzViewShelfY(w, dpr, now);
   if (mzView.panoAt && now - mzView.panoAt < MZ_VIEW.panoMs) y0 += Math.round(S * 1.6) + gap * 2;
-  else if (mzViewClear(now)) y0 += Math.round(S * 1.4) + gap;
   if (mzCache.cx >= 0 && mzCache.sx >= 0) y0 += Math.round(S * 1.4) + gap;
   if (mzQuest.sx >= 0 && (mzQuest.got < QUEST_TOOLS.length || (mzQuest.doneAt && now - mzQuest.doneAt < 6000))) y0 += Math.round(S * 1.4) + gap;
   if (mzDino.sx >= 0 && (mzDino.found ? now - mzDino.foundAt < 6000 : mzDino.cx >= 0)) y0 += Math.round(S * 1.4) + gap;
   if (mzEnergy.lastCx >= 0) y0 += Math.round(S * 1.7) + gap;   // エネルギーゲージの 下
-  if (mzTorch.until && mzTorch.until > now) y0 += Math.round(S * 1.4) + gap;   // たいまつ札の 下
   if ((mzBrigade.doneAt && now - mzBrigade.doneAt < MZ_BRIGADE.tagMs) || !(mzBrigade.count >= MZ_BRIGADE.n || (!mzBrigade.count && mzBrigade.cx < 0))) y0 += Math.round(S * 1.4) + gap;   // 旅団札の 下
   if (mzPurify.cells.length && (mzPurify.count < mzPurify.cells.length || (mzPurify.doneAt && now - mzPurify.doneAt < MZ_PURIFY.tagMs))) y0 += Math.round(S * 1.4) + gap;   // 浄化札の 下
   const t = done ? '🎉 救助完了！ +30pt　かおりちゃん、ありがとう！' : mzRescue.joined ? '🆘 救助中　お米が ついてきてるよ　ゴールまで いっしょに！' : `🆘 救助クエスト　迷子のお米${mzRescue.dist >= 0 ? ` あと ${mzRescue.dist}歩くらい` : ''}`;

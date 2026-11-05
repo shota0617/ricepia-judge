@@ -6,7 +6,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 PIXEL = (ROOT / "nishio-go/pixel.js").read_text(encoding="utf-8")
 GAME = (ROOT / "nishio-go/game.js").read_text(encoding="utf-8")
-TAGS = ("ViewClearTag", "CacheHint", "QuestTag", "DinoTag", "TorchTag", "BrigadeTag", "PurifyTag", "RescueTag")
+TAGS = ("CacheHint", "QuestTag", "DinoTag", "BrigadeTag", "PurifyTag", "RescueTag")
 
 
 def func_body(head, src):

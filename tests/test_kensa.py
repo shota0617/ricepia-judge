@@ -545,6 +545,29 @@ class Cycle29DotIttomaiTests(unittest.TestCase):
         self.assertNotIn("alert(", HTML)
 
 
+class Cycle31DotMeterStampTests(unittest.TestCase):
+    def test_cycle31_dot_meter_stamp_and_cute_pals(self):
+        # サイクル31（ドット絵化の続き・水分計と証印・袋まわり＋可愛いドット絵の追加）:
+        # 水分計・きめる・袋・証印にも粒と皿（サイクル30）と同じ点の質感を足し、
+        # 水滴（#dropPal）と米粒（#grainPal）の手描きドット絵の小物を添える。
+        # 色・形・配置・遊び・手順・数値は変えない
+        self.assertIn("#meterWrap { display:none; margin-top:12px; background:var(--paper);", HTML)
+        self.assertIn("background-image:radial-gradient(rgba(107,99,83,.10) 1.5px, transparent 1.7px); background-size:14px 14px;", HTML)
+        self.assertIn("background:radial-gradient(rgba(255,255,255,.35) 1.5px, transparent 1.7px), linear-gradient(90deg,#b7d3a8 0%,#b7d3a8 50%", HTML)
+        self.assertIn("background:radial-gradient(rgba(138,111,60,.14) 1.5px, transparent 1.7px), linear-gradient(180deg,#efe3c2,#e2d0a4); background-size:14px 14px, 100% 100%;", HTML)
+        self.assertIn("background-image:radial-gradient(rgba(176,58,46,.14) 1.5px, transparent 1.7px); background-size:7px 7px;", HTML)
+        # 可愛いドット絵の小物2つ（装飾のみ・操作をふさがない・手描きの段々輪郭）
+        self.assertIn('id="dropPal"', HTML)
+        self.assertIn('id="grainPal"', HTML)
+        self.assertEqual(HTML.count('shape-rendering="crispEdges"'), 2)
+        self.assertIn(".dotPal { line-height:0; pointer-events:none; }", HTML)
+        self.assertIn("#dropPal { width:36px; margin:8px auto 0; }", HTML)
+        self.assertIn("#grainPal { position:absolute; left:12px; bottom:8px; width:32px; }", HTML)
+        self.assertIn("水分計と袋まわりもドット絵の点の質感にそろえ、水滴と米粒の小さなドット絵を添えました", HTML)
+        self.assertNotIn("setInterval", HTML)
+        self.assertNotIn("alert(", HTML)
+
+
 class Cycle30DotGrainsPlatesTests(unittest.TestCase):
     def test_cycle30_dot_grains_and_plates(self):
         # サイクル30（ドット絵化の続き・粒と皿）: 粒はなめらかな楕円をやめて

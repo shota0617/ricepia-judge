@@ -8001,7 +8001,7 @@ const TRACE = {
     if (fspan > 0.15) this.fv = Math.min(6, Math.hypot(h.x - fh0[1], h.z - fh0[2]) / fspan);
     this.fT = tms; this.fPos = [h.x, h.z];
     const l = this.pts[this.pts.length - 1];
-    if (l && Math.hypot(h.x - l[0], h.z - l[1]) < 0.25) return;   // 0.25m ごとに点を取る（サイクル116: 0.35から細かく）
+    if (l && Math.hypot(h.x - l[0], h.z - l[1]) < traceStep()) return;   // 点を取る間隔（サイクル116: 0.35→0.25。サイクル165: 最初の1分だけ traceStep() で 0.10）
     if (this.pts.length < 512) { this.pts.push([h.x, h.z]); this.sync(); this.draw(); }
   },
   end() { if (!this.on) return; this.on = false; if (this.drive && Math.abs(S.v) > 0.9) this.stopBoost = 0.8; this.drive = false; this.pts = []; this.cps = []; this.ctx = 0; this.fade = 1; this.fv = 0; },   // 指を離す: 跡を消して止まる。速く追っていたときは 0.8秒だけ減速を強めて スッと止める（サイクル116）
@@ -9543,6 +9543,8 @@ const OCHI = (() => {
 function rotStepRate() { return !DETAIL && S.rotDown && !S.firstDownDone ? 3.6 : 1.2; }
 // サイクル164・最初の1分: のんびりでは最初のなぞりが成功する（HINT.done）まで、なぞり追従の打ち切りを 0.12m に下げ、短い試しのひと筆でも動きと土の変化が返るようにする。最初の1分が終わった（FIRSTMIN.over）あとと DETAIL は従来どおり 0.35m で、終端で回りつづけない。
 function traceMinRun() { return !DETAIL && !HINT.done && !FIRSTMIN.over ? 0.12 : 0.35; }
+// サイクル165・最初の1分: のんびりでは最初のなぞりが成功する（HINT.done）まで、点の間隔を 0.10m に細かくし、線の伸びと追従が指に滑らかに付いてくるようにする。最初の1分が終わった（FIRSTMIN.over）あとと DETAIL は従来どおり 0.25m。
+function traceStep() { return !DETAIL && !HINT.done && !FIRSTMIN.over ? 0.10 : 0.25; }
 function toggleRotary() {
   if (INTRO.on) return;                           // 草刈りの あいだは 草刈機（ロータリーは まだ ついていない）
   if (S.scrape > 0 || BELT.fixing || COVER.fixing || GREASE.fixing || CLAW.fixing || HERI.fixing || GASU.fixing || KATA.fixing || PANKU.fixing || AIRCL.fixing) return;   // 泥落とし・直しているあいだは さわらない（降下止めをかけてある）

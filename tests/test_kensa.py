@@ -337,8 +337,8 @@ class KensaTests(unittest.TestCase):
         self.assertLess(photo.stat().st_size, 300_000)
         self.assertIn('document.getElementById("kokuPhoto").classList.add("off")', HTML)     # はかるへ進むとしまう
         self.assertIn('document.getElementById("kokuPhoto").classList.remove("off")', HTML)  # 次の山で戻す
-        self.assertIn('id="probeMetal"', HTML)                      # 絵の穀刺しは金属の管のSVG
-        self.assertIn('id="probeWood"', HTML)                       # 木の持ち手
+        self.assertIn('fill="#ccd1d4"', HTML)  # サイクル37で単色化（旧 probeMetal グラデーションは廃止）                      # 絵の穀刺しは金属の管のSVG
+        self.assertIn('fill="#c68a3a"', HTML)  # サイクル37で単色化                       # 木の持ち手
         self.assertNotIn("🗡️", HTML)                                # 旧来の絵文字の穀刺しは使わない
         self.assertNotIn("setInterval", HTML)                       # タイマー・焦らせる仕組みを入れない
         self.assertNotIn("alert(", HTML)                            # 流れを止める要素は作らない
@@ -361,9 +361,9 @@ class KensaTests(unittest.TestCase):
         # 近づける→斜めに刺し込む（42%で最深）→ひと呼吸（58%まで同じ位置）→ゆっくり抜く（86%）の
         # 一連を2.4秒の穏やかなアニメーションで再現し、抜いた後にだけ溝の米粒が現れる。
         self.assertIn("animation:probeIn 2.4s ease forwards", HTML)
-        self.assertIn("42%{opacity:1; transform:translate(92px,-32px) rotate(-24deg);}", HTML)   # 刺し込み最深
-        self.assertIn("58%{opacity:1; transform:translate(92px,-32px) rotate(-24deg);}", HTML)   # ひと呼吸（同位置）
-        self.assertIn("86%{opacity:1; transform:translate(24px,-4px) rotate(-24deg);}", HTML)    # ゆっくり抜く
+        self.assertIn("42%{opacity:1; transform:translate(22px,5px) rotate(10deg);}", HTML)   # 刺し込み最深（サイクル37で手元に重ねる小さな動きへ変更）
+        self.assertIn("58%{opacity:1; transform:translate(22px,5px) rotate(10deg);}", HTML)   # ひと呼吸（同位置）
+        self.assertIn("86%{opacity:1; transform:translate(6px,1px) rotate(10deg);}", HTML)    # ゆっくり抜く
         self.assertIn('class="probeGrains"', HTML)                       # 溝に並ぶ米粒（SVG内）
         self.assertGreaterEqual(HTML.count("<ellipse"), 10)              # 一列に並ぶ粒
         self.assertIn("@keyframes grainsShow", HTML)
@@ -559,7 +559,7 @@ class Cycle31DotMeterStampTests(unittest.TestCase):
         # 可愛いドット絵の小物2つ（装飾のみ・操作をふさがない・手描きの段々輪郭）
         self.assertIn('id="dropPal"', HTML)
         self.assertIn('id="grainPal"', HTML)
-        self.assertEqual(HTML.count('shape-rendering="crispEdges"'), 2)
+        self.assertEqual(HTML.count('shape-rendering="crispEdges"'), 3)  # サイクル37で穀刺しSVGにも追加
         self.assertIn(".dotPal { line-height:0; pointer-events:none; }", HTML)
         self.assertIn("#dropPal { width:36px; margin:8px auto 0; }", HTML)
         self.assertIn("#grainPal { position:absolute; left:12px; bottom:8px; width:32px; }", HTML)
@@ -707,3 +707,27 @@ class Cycle36IdleCardTests(unittest.TestCase):
         self.assertIn("function parseKensa(b)", api)
         self.assertIn("kensa-taps", api)
         self.assertIn("KENSA_TAPS", api)
+
+
+class Cycle37ProbePlainTests(unittest.TestCase):
+    def test_cycle37_probe_aligned_flat_and_plain(self):
+        # サイクル37（実プレイレビュー「さすモーションの二重見え」＋ユーザー指示 2026-11-05 18:28「素のまま」）:
+        # 大きな穀刺しが場面絵の穀刺しと二重に見えたため、場面絵の検査員の手元に重なる
+        # 小さな位置・動きにし、色はグラデーションをやめて単色（素）にした。
+        # 左右を反転して持ち手が手元（左）・先端が袋（右）を向くようにし、場面絵の穀刺しを覆う
+        self.assertIn("#probe { position:absolute; z-index:3; left:29%; top:56%; width:80px;", HTML)
+        self.assertIn("transform:rotate(10deg); opacity:0; pointer-events:none; }", HTML)
+        self.assertNotIn("drop-shadow", HTML)  # 光沢・影の加工をやめる
+        self.assertIn('shape-rendering="crispEdges"', HTML)
+        self.assertIn('transform="translate(220 0) scale(-1 1)"', HTML)
+        probe_svg = HTML.split('id="probe"', 1)[1].split("</svg>", 1)[0]
+        self.assertNotIn("linearGradient", probe_svg)
+        self.assertNotIn("url(#probeMetal)", probe_svg)
+        self.assertIn('fill="#ccd1d4"', probe_svg)   # 金属は単色
+        self.assertIn('fill="#c68a3a"', probe_svg)   # 木の持ち手も単色
+        # 動きは2.4秒の穏やかなまま（サイクル23）、移動量だけ小さく
+        self.assertIn("animation:probeIn 2.4s ease forwards", HTML)
+        self.assertIn("42%{opacity:1; transform:translate(22px,5px) rotate(10deg);}", HTML)
+        self.assertIn("「さす」の穀刺しは、場面絵の検査員の手元に重ねて小さく動かし", HTML)
+        self.assertNotIn("setInterval", HTML)
+        self.assertNotIn("alert(", HTML)

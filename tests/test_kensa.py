@@ -38,7 +38,7 @@ class KensaTests(unittest.TestCase):
         self.assertEqual(_vals("ibutsuMax"), [0.2, 0.4, 0.6])
 
     def test_scene_and_no_timer(self):
-        self.assertIn("kensa/scene.webp", HTML)
+        self.assertIn("kensa/scene_dot.webp", HTML)  # サイクル27: 場面絵はドット絵（写真は資料の sceneRefPhoto）
         self.assertNotIn("setInterval", HTML)  # タイマー・焦らせる仕組みを入れない
 
     def _lots(self):
@@ -470,3 +470,20 @@ class KeyVisualTests(unittest.TestCase):
         kv = Path(__file__).resolve().parent.parent.joinpath("kensa", "kv.webp")
         self.assertTrue(kv.exists())
         self.assertLess(kv.stat().st_size, 300_000)
+
+
+class Cycle27DotSceneTests(unittest.TestCase):
+    def test_cycle27_dot_scene_and_photo_in_ref(self):
+        # サイクル27（ドット絵化1点目・検査風景）: 場面絵はドット絵 scene_dot.webp、
+        # 写真そのものは資料置き場の sceneRefPhoto に残し、KV（kv.webp）も同じドット絵に差し替える
+        root = Path(__file__).resolve().parent.parent
+        dot = root.joinpath("kensa", "scene_dot.webp")
+        self.assertTrue(dot.exists())
+        self.assertLess(dot.stat().st_size, 300_000)
+        self.assertIn('src="kensa/scene_dot.webp"', HTML)
+        self.assertIn('id="sceneRefPhoto"', HTML)
+        ref = HTML.split('id="refBox"', 1)[1]
+        self.assertIn('id="sceneRefPhoto"', ref)  # 写真は資料の中だけ（場面との重複を避ける）
+        self.assertIn("kensa/scene.webp", ref)
+        self.assertNotIn("setInterval", HTML)
+        self.assertNotIn("alert(", HTML)

@@ -11753,7 +11753,7 @@ function mzMichikusa(now) {
   const M = window.NISHIO_MICHIKUSA;
   if (!M || !LU || now < michi.next || now < riceBub.until + 3000 || !howtoEl.hidden || mapCovered() || sightBusy() || worldMode || driving || rp.x === null || Math.hypot(rp.vx, rp.vy) < 0.2) return;
   if (!michi.seen) { try { michi.seen = JSON.parse(localStorage.getItem(MICHI_KEY)) || []; } catch (e) { michi.seen = []; } }
-  if (!michi.next) { michi.next = now + 15000; return; }   // はじめは 15秒 転がってから
+  if (!michi.next) michi.next = now;   // はじめの 転がりから（サイクル106：最初の1分で みちくさが はたらく）
   const ll = toLatLng(rp.x, rp.y);
   let near = '';
   for (const a of [-1, 0, 1]) for (const b of [-1, 0, 1]) near += luAt(ll.lat + a * LU.dLat, ll.lng + b * LU.dLng);   // まわり100mメッシュ9つ
@@ -11761,7 +11761,7 @@ function mzMichikusa(now) {
   if (!r) { michi.next = now + 5000; return; }
   michi.seen = r.seen; try { localStorage.setItem(MICHI_KEY, JSON.stringify(r.seen)); } catch (e) { /* noop */ }
   michi.next = now + 45000 + Math.random() * 30000;
-  riceSay(r.item.say, 2400);
+  riceSay(r.item.say, 2400, 'happy');
   if (G.track) G.track('kome_michikusa', { id: r.item.id });
 }
 function mzDotTick() {   // ふれた つぶを ひろう（まいコマ）

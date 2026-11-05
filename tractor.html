@@ -8708,6 +8708,8 @@ function step(dt) {
       if (!b || d2 < b.d2) best.set(cc, { d2, ci, cj, lx });
     }
     for (const b of best.values()) newCells += tillCell(b.ci, b.cj, b.lx) || 0;
+    // サイクル163・最初の1分: のんびりではセッションで初めて土が変わった瞬間だけ顔が1.6秒にっこりし、最初のなぞりの成功が顔にも返るようにする。流れは止めない・音なし。DETAILと2回目以降は従来どおり。
+    if (newCells > 0 && !DETAIL && !S.firstTillJoy) { S.firstTillJoy = true; BADGE.joy(1.6); }
   }
   // 逆転のまま まだ耕していない硬い所へ入った：とても重い（盛り上がった所の土寄せだけに使う）
   let hard = 0;                                   // ロータリーのすぐ前で、まだ耕していない所の割合

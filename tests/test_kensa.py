@@ -513,3 +513,33 @@ class Cycle28DotKokusashiTests(unittest.TestCase):
         self.assertIn('getElementById("kokuDot").classList.remove("off")', HTML)
         self.assertNotIn("setInterval", HTML)
         self.assertNotIn("alert(", HTML)
+
+
+class Cycle29DotIttomaiTests(unittest.TestCase):
+    def test_cycle29_dot_ittomai_beside_photo(self):
+        # サイクル29（ドット絵化3点目・一等米）: ドット絵版 ittomai_dot.webp を
+        # 実物写真（サイクル24・ittoPhoto）のとなりに並べ、写真そのものの表示は維持する。
+        # 「みわける」では sortWrap の表示に連動し（JS追加なし）、資料置き場にも同じドット絵を置く。
+        # これで実物写真3点（検査風景・穀刺し・一等米）のドット絵化が揃う
+        root = Path(__file__).resolve().parent.parent
+        dot = root.joinpath("kensa", "ittomai_dot.webp")
+        self.assertTrue(dot.exists())
+        self.assertLess(dot.stat().st_size, 300_000)
+        self.assertIn('id="ittoDot"', HTML)
+        self.assertIn('id="ittoDotRef"', HTML)
+        self.assertGreaterEqual(HTML.count('src="kensa/ittomai_dot.webp"'), 2)
+        self.assertIn("一等米（ドット絵）", HTML)
+        # 写真そのものは維持（勝手に外さない）
+        self.assertIn('id="ittoPhoto"', HTML)
+        self.assertIn('id="ittoRefPhoto"', HTML)
+        self.assertGreaterEqual(HTML.count('src="kensa/ittomai.webp"'), 2)
+        self.assertIn("一等米（ほんもの）", HTML)
+        # 横並び（高さは写真カードのまま＝皿の収まりを崩さない）
+        self.assertIn('id="ittoPair"', HTML)
+        self.assertIn("#ittoPair { display:flex;", HTML)
+        self.assertIn("#ittoDot { width:min(102px,28%);", HTML)
+        # 資料のドット絵は refBox の中だけ（写真の下）
+        ref = HTML.split('id="refBox"', 1)[1]
+        self.assertIn('id="ittoDotRef"', ref)
+        self.assertNotIn("setInterval", HTML)
+        self.assertNotIn("alert(", HTML)

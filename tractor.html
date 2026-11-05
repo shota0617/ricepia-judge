@@ -9887,9 +9887,10 @@ function nextVoice() {
 
 // 予熱（グロー）：冷えたディーゼルは、キーを回すと予熱ランプが点き、消えてからセルを回す。暖かいと 2〜3 秒、寒いと 5〜6 秒
 // （小型トラクターの持ち主たちの話：TractorByNet フォーラム）。ゲームは寒い朝で 3 秒ほど。冷えているとセルも長めに回り、かかると白い湯気が多い
-function startCrank() {
+function startCrank(first) {
   const cold = Math.max(0, Math.min(1, (0.45 - (S.cool ?? COOL0)) / 0.4));
   S.cold = cold; S.glow = cold > 0 ? 0.8 + 2.4 * cold : 0; S.crank = 1.7 + 0.6 * cold; S.flare = 0;
+  if (!DETAIL && first) { S.glow = 0; S.crank = Math.min(S.crank, 0.9); }   // サイクル161（最初の1分）: のんびりでは 開いてすぐの始動（bStart からの初回だけ）予熱なし・セル0.9秒までにし、最初のなぞりに すぐ動きが返るようにする（朝は従来 glow+crank で約5.3秒 動けなかった）。0.9 は かかった瞬間の排気（crank が 0.6 を横切ると flare が立つ）を残す長さ。かけなおし（引数なし）と くわしい説明（DETAIL）は従来どおり
   S.glowClick = false;
   if (S.glow && !S.started) toast((TOD === 'yoru' ? '夜' : '朝') + 'の冷えたエンジンなので、まず予熱。予熱ランプが消えるとセルが回ってかかります', 3.5);
 }
@@ -9908,7 +9909,7 @@ $('bStart').onclick = () => {
     try { sessionStorage.setItem('tractorStartOpts', JSON.stringify(Object.fromEntries(START_OPTS.map(id => [id, $(id).checked])))); } catch (e) {}
     location.reload(); return;
   }    // 終わったあとは、同じ田んぼ・お題で始めから
-  if (!S.started) startCrank();  // エンジンをかける：（冷えていれば予熱）→ セル（1.1 秒）→ かかる → 回転が上がって落ちつく
+  if (!S.started) startCrank(true);  // エンジンをかける：（冷えていれば予熱）→ セル（1.1 秒）→ かかる → 回転が上がって落ちつく。サイクル161: 初回だけ true（のんびりでは始動を短くする）
   if (camMode !== 0) { camMode = 0; look.yaw = look.pitch = 0; $('bCam').textContent = '👁 ' + CAMS[0]; }   // サイクル118: 始まりは運転席視点（洗車などで外から見た後でも）
   $('start').classList.add('hidden');
   for (const id of MOBILE || params.has('pad') ? ['hud', 'bar', 'badge', 'padC', 'padB', 'padD'] : ['hud', 'bar', 'badge']) $(id).classList.remove('hidden');   // サイクル98: 運転パッドは全廃済み（DOMなし）。運転はなぞり操作のみ（キーボードは予備として残す）

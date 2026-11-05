@@ -25,9 +25,10 @@ class Loop86(unittest.TestCase):
             self.assertIn((246, 160, 176), cols)
 
     def test_back_frame_has_no_face(self):
-        cols = {p[:3] for p in self.im.crop((4 * 32, 0, 5 * 32, 32)).getdata() if p[3]}
-        self.assertNotIn((14, 14, 14), cols)
-        self.assertNotIn((246, 160, 176), cols)
+        for row in (0, 1):
+            cols = {p[:3] for p in self.im.crop((4 * 32, row * 32, 5 * 32, row * 32 + 32)).getdata() if p[3]}
+            self.assertNotIn((14, 14, 14), cols)
+            self.assertNotIn((246, 160, 176), cols)
 
     def test_pixel_js_dot_path(self):
         self.assertIn("nishio-go/art/rice-dot.png", PX)

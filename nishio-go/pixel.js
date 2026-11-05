@@ -3869,7 +3869,7 @@ function drawRiceBall(X, Y, u, th, sx, sy, spin, dst = ctx, gb = gbOn && !worldM
   // 位置は 整数に 丸めない（点より 細かい ずれも 絵の 中で 描く）。ゲームボーイの4色の ときだけは これまでどおり 絵の 点の 細かさで
   if (riceSprites.dot && !gb && riceSprites.right.length === 8) {   // 手描きドット絵：回りから コマ（0〜7）を えらび、点の まま 描く（顔は 絵の にっこり固定。mood は ドット経路では つかわない）
     const rb0 = riceBall, N = riceSprites.right[0].width, q = Math.PI * 2, pk = ((Math.round(pitch / q * 8) % 8) + 8) % 8, sk = ((Math.round(spin / q * 8) % 8) + 8) % 8;
-    const fr = pk ? riceSprites.down[pk] : riceSprites.right[sk], sm0 = dst.imageSmoothingEnabled;
+    const fr = Math.min(pk, 8 - pk) >= Math.min(sk, 8 - sk) ? riceSprites.down[pk] : riceSprites.right[sk], sm0 = dst.imageSmoothingEnabled;   // 両方の回りが あるときは 正面から 遠い方の コマを えらぶ（サイクル86 Codex指摘への対応）
     dst.save(); dst.translate(X, Y); dst.scale(sx, sy); dst.rotate(th); dst.imageSmoothingEnabled = false;
     dst.drawImage(fr, -rb0.gx * u, -rb0.gy * u, N * u, N * u);
     const nD = rb0.spots ? Math.round(Math.min(1, dirt) * rb0.spots.length) : 0;

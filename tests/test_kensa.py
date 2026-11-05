@@ -543,3 +543,23 @@ class Cycle29DotIttomaiTests(unittest.TestCase):
         self.assertIn('id="ittoDotRef"', ref)
         self.assertNotIn("setInterval", HTML)
         self.assertNotIn("alert(", HTML)
+
+
+class Cycle30DotGrainsPlatesTests(unittest.TestCase):
+    def test_cycle30_dot_grains_and_plates(self):
+        # サイクル30（ドット絵化の続き・粒と皿）: 粒はなめらかな楕円をやめて
+        # 角を段々に落とした clip-path の輪郭にし、皿は14px間隔のドット質感を足す。
+        # 種類ごとの見分け（サイクル9）・遊び・手順・数値は変えない
+        self.assertIn(".grain, .sgrain i { clip-path:polygon(32% 0, 68% 0", HTML)
+        self.assertIn("#whiteTray { background-image:radial-gradient(rgba(107,99,83,.13) 1.5px, transparent 1.7px); background-size:14px 14px; }", HTML)
+        self.assertIn("#blackTray { background-image:radial-gradient(rgba(247,243,232,.10) 1.5px, transparent 1.7px); background-size:14px 14px; }", HTML)
+        self.assertIn("#trayWrap { background-image:radial-gradient(rgba(247,243,232,.08) 1.5px, transparent 1.7px); background-size:14px 14px; }", HTML)
+        self.assertIn("#yokeWrap { background-image:radial-gradient(rgba(107,99,83,.12) 1.5px, transparent 1.7px); background-size:14px 14px; }", HTML)
+        # サイクル9の種類ごとの見分けは維持
+        self.assertIn(".sgrain.shini i {", HTML)
+        self.assertIn(".sgrain.color i {", HTML)
+        self.assertIn(".sgrain.momi i {", HTML)
+        self.assertIn(".sgrain.higai i {", HTML)
+        self.assertIn("粒と皿は、場面のドット絵に合わせて角ばった輪郭と点の質感にそろえました", HTML)
+        self.assertNotIn("setInterval", HTML)
+        self.assertNotIn("alert(", HTML)

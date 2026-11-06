@@ -903,7 +903,7 @@ plate.addEventListener("pointermove", (e) => {
     return;
   }
   if (!sortDrag) return;
-  if (Math.hypot(e.clientX - sortDrag.x, e.clientY - sortDrag.y) > 7) sortDrag.moved = true;
+  if (Math.hypot(e.clientX - sortDrag.x, e.clientY - sortDrag.y) > 12) sortDrag.moved = true; /* 指が少しずれてもタップ（Chrome のタップのゆるさ 15px に近づける） */
   if (sortDrag.moved) {
     if (Z.s > 1.001) { /* 寄っている間は、指で見る場所を動かす */
       Z.tx += e.clientX - sortDrag.lx; Z.ty += e.clientY - sortDrag.ly;

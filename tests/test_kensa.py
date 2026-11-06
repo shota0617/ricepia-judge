@@ -120,6 +120,10 @@ class FlowTests(unittest.TestCase):
     def test_first_bag_shows_bad_grains_soon(self):
         self.assertIn("armHint(lotIndex === 0 ? 1200 : 6000);", HTML)
 
+    def test_tap_allows_a_little_finger_drift(self):
+        # わるい粒のタップは、指が12pxまでずれても効く（7px では実機の指のぶれで空振りしやすい）
+        self.assertIn("Math.hypot(e.clientX - sortDrag.x, e.clientY - sortDrag.y) > 12) sortDrag.moved = true;", HTML)
+
     def test_touching_good_grain_keeps_hint_timer(self):
         fn = HTML[HTML.index("function tapGrain(g) {"):HTML.index("g.gone = true; badLeft--;")]
         self.assertNotIn("armHint", fn)

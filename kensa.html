@@ -322,6 +322,7 @@ function lotGrade(lot) {
 
 const $ = id => document.getElementById(id);
 const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)").matches; /* マウスの PC */
 const motion = reduced ? 0.15 : 1;
 const STEPS = ["ぬく", "はかる", "みわける", "きめる", "おす"];
 
@@ -785,7 +786,11 @@ function zoomTo(s, px, py) {
 function updateSortHint() {
   if (step !== 2) return;
   if (!spread) { hint.textContent = "👋 なでて ひろげる"; guideAt("sweep", plate); }
-  else if (!everZoomed) { hint.textContent = "🔍 ふたゆびで ズーム"; guideAt("pinch", plate); armHint(6000); } /* 寄らない人にも、しばらくしたらわるい粒がふくらんで知らせる */
+  else if (!everZoomed) { /* 指のない PC では、ふたゆびの代わりに 🔍 を押す */
+    if (finePointer) { hint.textContent = "🔍 で 寄る"; guideAt("press", zoomBtn); }
+    else { hint.textContent = "🔍 ふたゆびで ズーム"; guideAt("pinch", plate); }
+    armHint(6000); /* 寄らない人にも、しばらくしたらわるい粒がふくらんで知らせる */
+  }
   else {
     guideOff();
     hint.textContent = "わるい粒を つまむ";

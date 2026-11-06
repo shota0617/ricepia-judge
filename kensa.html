@@ -746,7 +746,6 @@ function applyZoom() {
     grains.forEach(g => { if (!g.gone) g.img.src = grainSprite(g.kind, near ? "normal" : "far"); });
     if (near && step === 2) {
       tick();
-      setFace("happy", 700);
       if (!everZoomed) { everZoomed = true; updateSortHint(); }
     }
   }

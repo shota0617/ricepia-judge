@@ -72,8 +72,8 @@ class FlowTests(unittest.TestCase):
         self.assertIn('const STEPS = ["ぬく", "はかる", "みわける", "きめる", "おす"];', HTML)
 
     def test_real_photos_stay_photos(self):
-        self.assertRegex(HTML, r'class="photo" src="kensa/kokusashi\.webp"')
-        self.assertRegex(HTML, r'class="photo" src="kensa/ittomai\.webp"')
+        self.assertRegex(HTML, r'class="photo" data-src="kensa/kokusashi\.webp"')
+        self.assertRegex(HTML, r'class="photo" data-src="kensa/ittomai\.webp"')
         self.assertIn(".photo { image-rendering:auto; }", HTML)
 
     def test_nothing_stops_the_flow(self):
@@ -286,6 +286,13 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
 
     def test_landscape_has_compact_layout(self):
         self.assertIn("@media (orientation:landscape) and (max-height:500px)", HTML)
+
+    def test_face_loads_before_photos(self):
+        # 遅い回線でも物差しの顔が先に出る（3G相当で 4.0秒→約1秒）。写真は後回し
+        self.assertIn('<link rel="preload" as="image" href="kensa/face_dot.webp" fetchpriority="high"/>', HTML)
+        self.assertEqual(HTML.count('class="photo" data-src="kensa/'), 2)
+        self.assertIn('faceImg.addEventListener("load", loadPhotos);', HTML)
+        self.assertIn("setTimeout(loadPhotos, 2500);", HTML)
 
     def test_assets_exist(self):
         for name in set(re.findall(r'kensa/[a-z_]+\.webp', HTML)):

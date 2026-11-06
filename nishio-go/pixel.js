@@ -9473,10 +9473,9 @@ if ($('mzHelpToggle')) { mzHelpSync(); $('mzHelpToggle').addEventListener('chang
 // ・窓・あそびかた・人の 話の 間は 止まる。せっていの「🐦 めいろの カラス」で 出さない ことも できる（nsg_mzcrow：'off'）
 // ・かかし（ほかの 迷路ゲームの「とると 立場が 入れかわる」しくみ）：カラスが いると、お米の 近くの 通路に かかしが 立つ。とると 8秒、
 //   カラスが こわがって にげる（青く ふるえ、おそく なる。おわりの 2秒は ちかちか）。その あいだに さわると おいはらえる（+3pt。時計は すすまない）
-const mzCrow = { list: [], last: 0, hitT: 0, next: 0, told: false, hits: 0, seq: 0, shoo: 0 };
+const mzCrow = { list: [], last: 0, hitT: 0, next: 0, hits: 0, seq: 0, shoo: 0 };   // hits・hitT：つつかれた 数・時刻（にしおサイクル119 から つつかないので いつも 0。テスト用の API が ふれるので のこす）
 const mzScare = { cx: 0, cy: 0, on: false, t0: 0, until: 0, next: 0, told: false, got: 0 };   // on：かかしが 立っている。until：こわがる 時間の おわり
 const MZ_SCARE_MS = 8000;
-const MZ_CROW_PEN = 5;   // 当たったときに すすむ 時計（秒）
 const mzCrowOn = () => lsGet('nsg_mzcrow', 'on') !== 'off';
 const MZ_DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
 function mzCrowSpawn(rc, rr) {
@@ -9487,7 +9486,7 @@ function mzCrowSpawn(rc, rr) {
   }
   return null;
 }
-function mzCrowStep(c, rc, rr) {   // つぎの マス：近ければ（めいろの 道で 10マス以内）お米へ、遠ければ ひきかえさずに うろうろ
+function mzCrowStep(c, rc, rr) {   // つぎの マス：ひきかえさずに うろうろ（にしおサイクル119：お米を 追いかけない・つつかない。雲と 同じ ただ いる 景色。かかしを こわがって にげるのは そのまま）
   const open = MZ_DIRS.filter(([dx, dy]) => mzOpen(c.cx, c.cy, dx, dy) && mzType(c.cx + dx, c.cy + dy) === 1);
   if (!open.length) return [0, 0];
   c.chase = false;
@@ -9495,20 +9494,6 @@ function mzCrowStep(c, rc, rr) {   // つぎの マス：近ければ（めい�
     const fw = open.filter(([dx, dy]) => !(dx === -c.dx && dy === -c.dy)), cand = fw.length ? fw : open;
     const far = ([dx, dy]) => Math.abs(c.cx + dx - rc) + Math.abs(c.cy + dy - rr) + Math.random() * 0.5;
     return cand.reduce((a, b) => (far(b) > far(a) ? b : a));
-  }
-  if (Math.abs(c.cx - rc) + Math.abs(c.cy - rr) <= 8) {   // めいろの 道で お米まで（はばさがし 10マスまで）。見つかったら その 道の 1歩目へ
-    const seen = new Set([c.cx + ',' + c.cy]), q = open.map(([dx, dy]) => [c.cx + dx, c.cy + dy, 1, dx, dy]);
-    q.forEach(([x, y]) => seen.add(x + ',' + y));
-    for (let h = 0; h < q.length; h++) {
-      const [x, y, d, fx, fy] = q[h];
-      if (x === rc && y === rr) { c.chase = true; return [fx, fy]; }
-      if (d >= 10) continue;
-      for (const [dx, dy] of MZ_DIRS) {
-        const k = (x + dx) + ',' + (y + dy);
-        if (seen.has(k) || !mzOpen(x, y, dx, dy) || mzType(x + dx, y + dy) !== 1) continue;
-        seen.add(k); q.push([x + dx, y + dy, d + 1, fx, fy]);
-      }
-    }
   }
   const fw = open.filter(([dx, dy]) => !(dx === -c.dx && dy === -c.dy));
   const pick = (fw.length ? fw : open)[Math.floor(Math.random() * (fw.length ? fw : open).length)];
@@ -9527,7 +9512,7 @@ function mzCrowTick(now) {
   const fx = rp.x / MZ_K, fy = rp.y / MZ_K, scared = now < mzScare.until;
   for (const c of mzCrow.list.slice()) {
     if (c.scared !== scared) { c.scared = scared; if (scared && (c.dx || c.dy)) { [c.cx, c.nx] = [c.nx, c.cx]; [c.cy, c.ny] = [c.ny, c.cy]; c.t = 1 - c.t; c.dx = -c.dx; c.dy = -c.dy; } }   // こわがった とたんに ふりむいて にげる
-    c.t += dt * spd * (scared ? 0.7 : c.chase ? 1.15 : 1);
+    c.t += dt * spd * (scared ? 0.7 : 1);
     while (c.t >= 1) {
       c.cx = c.nx; c.cy = c.ny;
       const [dx, dy] = mzCrowStep(c, rc, rr);
@@ -9536,9 +9521,7 @@ function mzCrowTick(now) {
       if (!dx && !dy) break;
     }
     const x = c.cx + (c.nx - c.cx) * c.t + 0.5, y = c.cy + (c.ny - c.cy) * c.t + 0.5, d = Math.hypot(fx - x, fy - y);
-    if (!mzCrow.told && d < 8) { mzCrow.told = true; G.toast(`🐦 カラスに 当たると ${MZ_CROW_PEN}秒 おそくなるよ`); }
-    if (scared && d < 0.6) mzCrowShoo(c, now);
-    else if (!scared && d < 0.55 && now > mzCrow.hitT) mzCrowHit(c, fx - x, fy - y, now);
+    if (scared && d < 0.6) mzCrowShoo(c, now);   // つつかない（にしおサイクル119）：当たっても はじかれず・ぶるっとせず・知らせも 出ない。かかしで 青く なった カラスを おいはらうのは そのまま
   }
 }
 function mzScareTick(now, rc, rr) {   // かかし：カラスが いる ときだけ、お米から めいろの 6〜14マスの 通路に 1つ 立てる。とったら 45秒 たつまで 次は 立たない
@@ -9604,16 +9587,6 @@ function mzCrowShoo(c, now) {   // こわがって いる カラスに さわっ
   floatText(`🐦 おいはらった！${r ? ` +${r.pts}pt` : ''}`);
   const cols = ['#9fd0ff', '#ffffff', '#5a8fd8'];
   for (let i = 0; i < 12; i++) { const t = Math.random() * Math.PI * 2, v = 1.5 + Math.random() * 3; mzFx.push({ t0: now, vx: Math.cos(t) * v, vy: Math.sin(t) * v - 3, c: cols[i % 3], life: 0.6 + Math.random() * 0.4 }); }   // はね（青い きらきら）
-  dirty = true;
-}
-function mzCrowHit(c, ax, ay, now) {   // つつかれた：お米を カラスと 反対へ はじき、時計を すすめ、カラスは 飛んで いく
-  const L = Math.hypot(ax, ay) || 1;
-  rp.vx = ax / L * 6; rp.vy = ay / L * 6;
-  if (mzRt.t0) mzRt.t0 -= MZ_CROW_PEN * 1000;
-  mzCrow.hitT = now + 2500; mzCrow.next = now + 6000; mzCrow.hits++;
-  mzCrow.list = mzCrow.list.filter(o => o !== c);
-  riceSay('うわっ カラス！', 1400);   // 吹き出し（もとは「🐦 カァ！ ＋5秒」。すすんだ 時計は 時計の 札で 見える）
-  if (navigator.vibrate) navigator.vibrate(40);
   dirty = true;
 }
 // 生け垣の 上の 小さな 生きもの（10/28 店主「西尾らしい 素朴な かわいさ」）：通路の マスの とじた さかい（生け垣）に ときどき ちょこんと すわっていて、

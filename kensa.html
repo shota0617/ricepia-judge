@@ -140,9 +140,10 @@
   #hint { font-size:23px; font-weight:800; text-align:center; }
   #nextBtn { display:none; height:56px; touch-action:manipulation; padding:0 30px; border-radius:30px; background:var(--green); color:#fff; font-size:21px; font-weight:800; }
   #nextBtn.on { display:block; }
-  #idleCard { position:absolute; left:0; right:0; top:8px; display:flex; gap:8px; opacity:0; pointer-events:none; transition:opacity .4s ease; background:var(--bg); }
+  #idleSay { flex:0 0 100%; margin:0; text-align:center; font-size:16px; font-weight:800; line-height:1; }
+  #idleCard { position:absolute; left:0; right:0; top:0; display:flex; flex-wrap:wrap; gap:5px 8px; opacity:0; pointer-events:none; transition:opacity .4s ease; background:var(--bg); }
   #idleCard.on { opacity:1; pointer-events:auto; }
-  #likeBtn,#returnLink { flex:1; height:56px; border-radius:30px; display:flex; align-items:center; justify-content:center; font-size:17px; font-weight:800; text-decoration:none; }
+  #likeBtn,#returnLink { flex:1; height:48px; border-radius:30px; display:flex; align-items:center; justify-content:center; font-size:17px; font-weight:800; text-decoration:none; }
   #likeBtn { background:#f1dfb0; color:var(--ink); }
   #returnLink { background:var(--green); color:#fff; }
 
@@ -179,7 +180,8 @@
     .rowName b { font-size:15px; }
     .dot { width:16px; height:16px; }
     .gradeBtn { height:44px; font-size:19px; }
-    #idleCard { top:3px; }
+    #idleCard { top:3px; flex-wrap:nowrap; align-items:center; }
+    #idleSay { flex:none; font-size:14px; }
     #likeBtn,#returnLink { height:40px; }
   }
   @media (prefers-reduced-motion: reduce) {
@@ -236,6 +238,7 @@
     <div id="hint" aria-live="polite">ふくろを タップ</div>
     <button id="nextBtn">つぎの ふくろ 🌾 →</button>
     <div id="idleCard" aria-live="polite" inert>
+      <p id="idleSay">お疲れ様です 🌾</p>
       <button id="likeBtn">👍 いいね</button>
       <a id="returnLink" href="https://ricepia.jp/">🏠 サイトへ もどる</a>
     </div>

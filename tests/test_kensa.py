@@ -98,6 +98,7 @@ class FlowTests(unittest.TestCase):
         # 皿や袋にかぶせない
         foot = HTML[HTML.index('<div id="foot">'):HTML.index("</main>")]
         self.assertIn('id="idleCard"', foot)
+        self.assertIn("お疲れ様です", foot)
 
     def test_first_bag_shows_bad_grains_soon(self):
         self.assertIn("armHint(lotIndex === 0 ? 1200 : 6000);", HTML)

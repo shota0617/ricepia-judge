@@ -1344,7 +1344,7 @@ function mazeGoal(id, name, lines) {
     if (parts.length) lines.push(`この 道で がんばったじゃん：${parts.join('・')}`);
   }
   total += glowArrive(id, lines);   // 光るゴール +20・近くの 寄り道を 光らせる
-  lines.push('🍵 おつかれさま。ここで おわっても だいじょうぶ（つづけるなら つぎの ゴールへ）');   // 基本 5分で 1回 おわる
+  lines.push('🍵 お疲れ様です。ここで おわっても だいじょうぶ（つづけるなら つぎの ゴールへ）');   // 基本 5分で 1回 おわる
   mzShare = { name, sec: gl.sec, stars: 0, m: gl.m || 0, run: gl.run || null, img: snapMaze(), t: Date.now(), city: (me && (cityNear(me.lat, me.lng) || {}).name) || '' };   // ゴールの ごほうびに シェアの ボタン（画面を 投稿する）。city：シェアの 文で 西尾市の 外を「西尾の」と 言わない ため
   MZ.goalFx(gl.m ? `めいろ ${fmtM(gl.m)}` : '🏁 めいろ ゴール！');
   track('maze_goal', { spot: name, sec: Math.round(gl.sec), m: Math.round(gl.m), stars: 0, way: 0 });

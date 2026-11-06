@@ -38,7 +38,7 @@ class Loop66(unittest.TestCase):
         self.assertNotIn("MZ_WAY", SRC)
         self.assertIn("🏁 めいろ ゴール！${gl.m ?", g)
         self.assertIn("stars: 0", g)
-        self.assertIn("🍵 おつかれさま", g)
+        self.assertIn("🍵 お疲れ様です", g)
 
     def test_mzspeed_records_nothing(self):
         self.assertIn("function mzSpeed() { return ''; }", SRC)

@@ -9724,7 +9724,7 @@ const SAY = (() => {
     if (talkT > 0) talkT -= dt;
     if (t > 0 && (t -= dt) <= 0) { t = 0; kind = ''; render(); }
     if (!S.started) return;
-    if (S.done && !doneSaid) { doneSaid = true; say('おつかれさま！', 8); }
+    if (S.done && !doneSaid) { doneSaid = true; say('お疲れ様です！', 8); }
     if (!S.done && pi < STEPS.length && lastPct >= STEPS[pi][0] && !busy() && !DETAIL) { show(STEPS[pi][1], 3, 'step'); pi++; }   // 知らせの あいだは 待つ
   }
   function tap() {                                 // さわると：知らせの とちゅうは そのまま。案内が あれば もう一度 話す。なければ 雑談
@@ -10022,7 +10022,7 @@ function doneTalk() {
   let n = 1;
   try { n = (+localStorage.getItem('tractorPlays') || 0) + 1; localStorage.setItem('tractorPlays', String(n)); } catch (e) {}
   const nx = nextMeet(n);
-  $('doneSay').textContent = (PLAY.up ? '5 ふん たったね。' : '') + (n >= 2 ? `${n} かいめ だね。また きてくれて ありがとう！` : 'おつかれさま！ たのしかったね。') +
+  $('doneSay').textContent = (PLAY.up ? '5 ふん たったね。' : '') + (n >= 2 ? `${n} かいめ だね。また きてくれて ありがとう！` : 'お疲れ様です！ たのしかったね。') +
     `つぎは ${nx.where}で ${nx.name}に あえるかも。お米屋さん「らいすぴあ」の LINE なら きせつの おしらせも とどくよ`;
   if ($('bNext').classList.contains('hidden')) {   // 田んぼアートの「次のお題」が 出て いない とき（アートを 70 点 未満・最後の お題 でも）
     $('bNext').textContent = `▶ ${nx.where}へ（${nx.name}）`;
@@ -10035,7 +10035,7 @@ function finish() {
   S.done = true;
   if (ART.on) return finishArt();
   const fieldName = { haru: '春の田んぼ', aki: '秋の稲刈りあとの田んぼ', shirokaki: '代かきの田んぼ' }[season], pctNow = Math.min(100, Math.floor(tilledCount / workCount * 100));
-  $('doneText').textContent = PLAY.up ? `5 分 たちました。${fieldName}の ${pctNow}% を 耕しました。おつかれさまでした！` : `${fieldName}を ${fmtTime(S.elapsed)} で耕しました。おつかれさまでした！`;
+  $('doneText').textContent = PLAY.up ? `5 分 たちました。${fieldName}の ${pctNow}% を 耕しました。お疲れ様です！` : `${fieldName}を ${fmtTime(S.elapsed)} で耕しました。お疲れ様です！`;
   const sm = SCORE.summary();
   // 耕し残し：田んぼの中（畦から 50cm より内）で耕していないます目を数え、地図に赤でしるす（本物は外周を 3 周して、やり残しなく仕上げる）
   let left = 0;
@@ -10415,7 +10415,7 @@ const BADGE = (() => {
     for (const a of [-0.75, 0.75]) { g.beginPath(); g.arc(Math.sin(a) * 40, -Math.cos(a) * 40, 7.5, 0, 7); g.fill(); g.stroke(); }   // ふわふわの 手
     g.restore();
     // サイクル76 総点検：窓のふちの 残り時間の 輪は 廃止（時間制限そのものを 無くしたため。土台の 薄い円も 描かない）
-    const l = S.done ? 'おつかれさま' : sleep ? 'ひとやすみ' : INTRO.on && Math.abs(S.v) > 0.05 ? INTRO.label : working ? (SHIRO ? 'しろかき中' : 'たがやし中') : idle ? 'のんびり' : 'おさんぽ';
+    const l = S.done ? 'お疲れ様です' : sleep ? 'ひとやすみ' : INTRO.on && Math.abs(S.v) > 0.05 ? INTRO.label : working ? (SHIRO ? 'しろかき中' : 'たがやし中') : idle ? 'のんびり' : 'おさんぽ';
     if (l !== label) { label = l; stEl.textContent = l; }
   }
   function peek(x, z, sec = 3, feel = 'wow', up = 0) { peekX = x; peekZ = z; peekT = sec; upT = up ? sec : 0; if (feel === 'wow') { wowT = 0.7; joyT = 2.6; } else if (feel === 'joy') joyT = Math.max(joyT, 1.5); }   // 生きもの：びっくり → うれしい

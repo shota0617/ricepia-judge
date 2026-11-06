@@ -2079,7 +2079,7 @@ async function walkTo(page, id) {
     const helpA = await w.page.evaluate(() => nishioPixel.maze.help());
     const helpB = await w.page.evaluate(async () => { const t = document.getElementById('mzHelpToggle'); const was = t.checked; t.checked = false; t.dispatchEvent(new Event('change')); await new Promise(r => setTimeout(r, 400)); const off = nishioPixel.maze.help(); t.checked = true; t.dispatchEvent(new Event('change')); await new Promise(r => setTimeout(r, 400)); const on = nishioPixel.maze.help(); localStorage.removeItem('nsg_mzhelp'); localStorage.setItem('nsg_mzgoals', '3'); await new Promise(r => setTimeout(r, 400)); const auto3 = nishioPixel.maze.help(); localStorage.setItem('nsg_mzgoals', '0'); return { was, off, on, auto3 }; });
     R.checks.mzHelp = { helpA, ...helpB, ok: helpA.on && helpA.dots > 0 && helpB.was && !helpB.off.on && helpB.off.dots === 0 && helpB.off.dead === 0 && helpB.on.on && !helpB.auto3.on };
-    // めいろの カラス：うろうろ 動き、お米の となりに 来ると はじいて 時計が すすむ。せっていで オフに すると いなくなる
+    // めいろの カラス：うろうろ 動く だけ（にしおサイクル119：お米の マスに 来ても つつかない・はじかない）。せっていで オフに すると いなくなる
     const crowA = await w.page.evaluate(async () => {
       const M = nishioPixel.maze, r = nishioPixel.roll, K = M.K, a = Math.floor(r.x / K), b = Math.floor(r.y / K);
       for (let i = 0; i < 20 && !M.crows().list.length; i++) await new Promise(res => setTimeout(res, 300));   // 1羽 出るまで
@@ -2087,7 +2087,7 @@ async function walkTo(page, id) {
       await new Promise(res => setTimeout(res, 1500));
       const moved = M.crows().list.some((c, i) => before[i] && (c.cx !== before[i][0] || c.cy !== before[i][1] || Math.abs(c.t - before[i][2]) > 0.05));
       const h0 = M.crows().hits, s0 = M.clock() ? M.clock().sec : 0;
-      M.crowPut(a, b);   // お米の マスに 1羽（すぐ 当たる）
+      M.crowPut(a, b);   // お米の マスに 1羽（つつかれない）
       await new Promise(res => setTimeout(res, 600));
       const h1 = M.crows().hits, s1 = M.clock() ? M.clock().sec : 0;
       const t = document.getElementById('mzCrowToggle'); t.checked = false; t.dispatchEvent(new Event('change'));
@@ -2102,7 +2102,7 @@ async function walkTo(page, id) {
       const helpN = M.crows().list.length;
       return { n: before.length, moved, hit: h1 - h0, jump: Math.round((s1 - s0) * 10) / 10, offN, offOn, many, helpN };
     });
-    R.checks.mzCrow = { ...crowA, ok: crowA.n >= 1 && crowA.moved && crowA.hit === 1 && crowA.jump >= 5 && crowA.offN === 0 && !crowA.offOn && crowA.many >= 2 && crowA.helpN <= 1 };
+    R.checks.mzCrow = { ...crowA, ok: crowA.n >= 1 && crowA.moved && crowA.hit === 0 && Math.abs(crowA.jump) < 1 && crowA.offN === 0 && !crowA.offOn && crowA.many >= 2 && crowA.helpN <= 1 };
     // かかし：カラスが いると 近くに 立つ。とると カラスが こわがって にげ、さわると おいはらえる（時計は すすまない）。ゴールでは 通った 道の 倍率
     const scareA = await w.page.evaluate(async () => {
       const M = nishioPixel.maze, r = nishioPixel.roll, K = M.K, a = Math.floor(r.x / K), b = Math.floor(r.y / K), wait = ms => new Promise(res => setTimeout(res, ms));

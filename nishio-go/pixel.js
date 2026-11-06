@@ -7981,9 +7981,9 @@ function frame(now) {
       ctx.lineWidth = lw; ctx.strokeStyle = 'rgba(255,213,79,.9)'; ctx.beginPath(); ctx.arc(rx, ry, rr, 0, Math.PI * 2); ctx.stroke(); //c17
     } //c17
     if (s.shop) gbPause++;
-    ctx.drawImage(spr[cool ? 1 : 0], Math.round(sx), Math.round(sy), size, size);
+    ctx.drawImage(spr[0], Math.round(sx), Math.round(sy), size, size);   // 訪れたあとも、目印は元の色のまま
     if (s.shop) gbPause--;
-    if (giant) { giantHits.push([sx, sy, size, s, giant[0]]); depthArt.push([spr[cool ? 1 : 0], Math.round(sx), Math.round(sy), size, sy + size * 0.72, !!s.shop]); }   // タップは、描いた順の逆（手前の絵から）に調べる
+    if (giant) { giantHits.push([sx, sy, size, s, giant[0]]); depthArt.push([spr[0], Math.round(sx), Math.round(sy), size, sy + size * 0.72, !!s.shop]); }   // タップは、描いた順の逆（手前の絵から）に調べる
     if (s.featured && !cool && f) {   // 注目スポットはきらきら
       ctx.fillStyle = '#fff59d';
       const u = Math.min(size, 3 * T) / 16, kx = sx + size * 13 / 16, ky = sy + size / 16;   // 大きさは いつもの絵（3マス）まで。特大の絵の大きさに合わせると 1マスより大きな 十字になっていた

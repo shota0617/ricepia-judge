@@ -118,6 +118,11 @@ class FlowTests(unittest.TestCase):
         self.assertIn('sendTap("return")', HTML)
         self.assertIn('id="returnLink" href="https://ricepia.jp/"', HTML)
 
+    def test_idle_card_never_falls_off_screen(self):
+        # 文字を大きくしてカードが2段になっても、下端に合わせて上へ伸びる（「サイトへ もどる」が画面の外に出ない）
+        self.assertRegex(HTML, r"#idleCard \{[^}]*bottom:calc\(5px \+ env\(safe-area-inset-bottom\)\)")
+        self.assertNotRegex(HTML, r"#idleCard \{[^}]*top:0")
+
     def test_foot_grows_with_large_text(self):
         # 文字200%の端末では案内が2行になる。下の枠は最低74pxで、必要な分だけ伸びて皿に重ならない
         self.assertRegex(HTML, r"#foot \{[^}]*min-height:calc\(74px \+ env\(safe-area-inset-bottom\)\)")

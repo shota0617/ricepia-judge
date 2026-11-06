@@ -156,7 +156,8 @@
   #guide.press { animation:gPress .9s ease-in-out infinite; }
   @keyframes gPress { 0%,100% { translate:0 -10px; } 50% { translate:0 8px; } }
   #idleSay { flex:0 0 100%; margin:0; text-align:center; font-size:16px; font-weight:800; line-height:1; }
-  #idleCard { position:absolute; left:0; right:0; top:0; display:flex; flex-wrap:wrap; gap:5px 8px; opacity:0; pointer-events:none; transition:opacity .4s ease; background:var(--bg); }
+  /* 手が止まったカードは枠の下端に合わせる。文字を大きくして背が高くなっても画面の外に出ず、上へ伸びる */
+  #idleCard { position:absolute; left:0; right:0; bottom:calc(5px + env(safe-area-inset-bottom)); display:flex; flex-wrap:wrap; gap:5px 8px; opacity:0; pointer-events:none; transition:opacity .4s ease; background:var(--bg); }
   #idleCard.on { opacity:1; pointer-events:auto; }
   #likeBtn,#returnLink { flex:1 1 auto; white-space:nowrap; height:48px; border-radius:30px; display:flex; align-items:center; justify-content:center; font-size:17px; font-weight:800; text-decoration:none; } /* 文字の幅で分け合い、320px幅でも折れない */
   #likeBtn { background:#f1dfb0; color:var(--ink); }
@@ -200,7 +201,7 @@
     .rowName b { font-size:15px; }
     .dot { width:16px; height:16px; }
     .gradeBtn { height:44px; font-size:19px; }
-    #idleCard { top:3px; flex-wrap:nowrap; align-items:center; }
+    #idleCard { bottom:calc(3px + env(safe-area-inset-bottom)); flex-wrap:nowrap; align-items:center; }
     #idleSay { flex:none; font-size:14px; }
     #likeBtn,#returnLink { height:40px; }
   }

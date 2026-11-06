@@ -10815,8 +10815,9 @@ function mzChaseWay(sx, sy, tx, ty) {   // 雲から かおりちゃんまでの
   }
   return [];
 }
+const chaseFirstGoal = () => { try { return !(Number(lsGet('nsg_mzgoals', '0')) >= 1); } catch (e) { return false; } };   // はじめての ゴールの 前か（nsg_mzgoals は mzGoalsDone と 同じ 鍵。読めなければ これまでどおり 出す）
 function mzChaseTick(now) {
-  if (rp.x === null) return;
+  if (rp.x === null || chaseFirstGoal()) return;   // にしおサイクル121：はじめての ゴールに 着くまで（最初の 1分）は 夕立雲を 出さない（はじめての 人の 足もとに 灰色の 雨雲が 来ない。2回目からは これまでどおり）
   const a = Math.floor(rp.x / MZ_K), b = Math.floor(rp.y / MZ_K);
   if (mzChase.sx < 0) { mzChase.sx = a; mzChase.sy = b; mzChase.last = now; }   // 迷路の スタート（ゴールが きまった ときの お米の マス）
   mzChase.last = now;

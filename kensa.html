@@ -926,7 +926,7 @@ function endPlatePointer(e, cancelled) {
         if (g.kind === "seiryu") lastGoodTap = tapNow;
         tapGrain(g);
       } else knockPlate();
-    } else if (d.moved && !cancelled && step === 2 && d.startG && performance.now() - d.t0 < 260 && Math.hypot(e.clientX - d.x, e.clientY - d.y) > 24) {
+    } else if (d.moved && !cancelled && step === 2 && Z.s <= 1.001 && d.startG && performance.now() - d.t0 < 260 && Math.hypot(e.clientX - d.x, e.clientY - d.y) > 24) {
       flickGrain(d.startG, e.clientX - d.x, e.clientY - d.y);
     }
   }

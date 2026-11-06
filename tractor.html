@@ -9672,10 +9672,18 @@ let drag = null;
 const viewPts = new Map();
 let viewPinch = null;
 function viewPtsDist() { const [a, b] = [...viewPts.values()]; return Math.hypot(a.x - b.x, a.y - b.y) || 1; }
+let viewAuto = { was: false, t: 0 };   // 2本指で寄るだけなら 自動運転を やめない
 canvas.addEventListener('pointerdown', e => {
+  if (e.isPrimary) { viewPts.clear(); viewPinch = null; viewAuto = { was: AUTO.on, t: performance.now() }; }   // 1本目の指：取り残された指の 記録を 消す
   viewPts.set(e.pointerId, { x: e.clientX, y: e.clientY });
-  if (viewPts.size === 2) { viewPinch = { d0: viewPtsDist(), z0: fovZoom }; drag = null; TRACE.end(); }
+  if (viewPts.size === 2) {
+    viewPinch = { d0: viewPtsDist(), z0: fovZoom }; drag = null; TRACE.end();
+    if (viewAuto.was && !AUTO.on && performance.now() - viewAuto.t < 450) AUTO.toggle();
+  }
 });
+const viewPtsClear = () => { viewPts.clear(); viewPinch = null; };
+window.addEventListener('blur', viewPtsClear);
+document.addEventListener('visibilitychange', viewPtsClear);
 canvas.addEventListener('pointerdown', e => { if (viewPts.size >= 2) return; if (TRACE.begin(e)) { AUTO.off(); drag = null; canvas.setPointerCapture(e.pointerId); return; } drag = { x: e.clientX, y: e.clientY, yaw: look.yaw, pitch: look.pitch }; canvas.setPointerCapture(e.pointerId); });
 canvas.addEventListener('pointermove', e => {
   if (viewPts.has(e.pointerId)) viewPts.set(e.pointerId, { x: e.clientX, y: e.clientY });

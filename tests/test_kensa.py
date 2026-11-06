@@ -171,6 +171,12 @@ class FlowTests(unittest.TestCase):
         # iPhone は許可の画面が出るので、振るは使わない
         self.assertIn('typeof DeviceMotionEvent.requestPermission === "function"', HTML)
 
+    def test_probe_inserts_with_a_short_push(self):
+        # 先が袋に1/3入ったら「さした」（手本の指は46pxしか動かないのに、以前は124px押す必要があった）。引く長さは入れた深さから
+        self.assertIn("P.inAt = bag.offsetLeft + bag.offsetWidth * 0.66;", HTML)
+        self.assertIn("if (x <= P.inAt) {", HTML)
+        self.assertIn("(x - P.deep) / (P.rest - P.deep) - 0.08", HTML)
+
     def test_failed_tries_also_count_toward_auto(self):
         # タップだけでなく「進まなかった試し」（違う向きの引き・届かない運び・短い引き上げ・短いおろし）も3回で自動
         self.assertIn("if (P.done || P.inserted) return; /* さす前に指を離したら", HTML)

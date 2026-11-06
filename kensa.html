@@ -500,7 +500,7 @@ function startLot() {
   zoomBtn.hidden = true;
   resetZoom();
   buildGrains();
-  P.inserted = false; P.done = false; P.released = 0; P.drag = null;
+  P.inserted = false; P.done = false; P.released = 0; P.drag = null; P.deep = 0;
   $("probe").style.opacity = "1";
   layoutProbe();
   setStep(0, "穀刺しを ふくろへ さす ←");
@@ -569,12 +569,13 @@ function guideAt(kind, el, gx, gy) {
 }
 
 /* ぬく: 穀刺しを指で押し込み、引き抜くと、引いた分だけ粒が落ちる */
-const P = { x:0, rest:0, inX:0, y:0, L:0, inserted:false, done:false, released:0, drag:null };
+const P = { x:0, rest:0, inX:0, inAt:0, deep:0, y:0, L:0, inserted:false, done:false, released:0, drag:null };
 let bagTaps = 0;
 function layoutProbe() {
   const scene = $("sceneBag"), bag = $("bagBtn"), probe = $("probe");
   P.rest = bag.offsetLeft + bag.offsetWidth + 6;
-  P.inX = bag.offsetLeft + bag.offsetWidth * 0.32;
+  P.inX = bag.offsetLeft + bag.offsetWidth * 0.32; /* いちばん深く入る所 */
+  P.inAt = bag.offsetLeft + bag.offsetWidth * 0.66; /* 先が袋に1/3入ったら「さした」。手本の指の動きと同じくらいの短い押しで足りる */
   P.L = Math.min(scene.clientWidth - P.rest - 6, 190);
   P.y = bag.offsetTop + bag.offsetHeight * 0.62;
   probe.style.width = P.L + "px";
@@ -594,8 +595,9 @@ function moveProbe(x) {
   x = Math.min(Math.max(x, P.inX), P.rest + 12);
   setProbe(x);
   if (!P.inserted) {
-    if (x <= P.inX + span * 0.1) {
+    if (x <= P.inAt) {
       P.inserted = true;
+      P.deep = x;
       tone(150, 0.1, 0.1, "sine");
       $("bagBtn").classList.add("squash");
       setTimeout(() => $("bagBtn").classList.remove("squash"), 120);
@@ -603,7 +605,8 @@ function moveProbe(x) {
     }
     return;
   }
-  const want = Math.floor(Math.max(0, (x - P.inX) / span - 0.08) / 0.84 * PLATE_GRAINS);
+  P.deep = Math.min(P.deep, x); /* さらに押し込んだ分だけ、引く長さも伸びる */
+  const want = Math.floor(Math.max(0, (x - P.deep) / (P.rest - P.deep) - 0.08) / 0.84 * PLATE_GRAINS); /* 入れた深さから引き抜いた分だけ粒が落ちる */
   while (P.released < Math.min(want, PLATE_GRAINS)) pourOne(grains[P.released++]);
   if (P.released >= PLATE_GRAINS) finishProbe();
 }

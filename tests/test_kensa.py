@@ -126,6 +126,12 @@ class FlowTests(unittest.TestCase):
             self.assertIn("guideAt(" + kind, HTML)
         self.assertIn('pointer-events:none; opacity:0; transition:opacity', HTML)
 
+    def test_flick_knock_twist(self):
+        # はじく・トントン・ひねる。タップも残す
+        for needle in ("function flickGrain(g, dx, dy)", "function knockPlate()", "function twistPlate(deg)", "if (g) tapGrain(g);"):
+            self.assertIn(needle, HTML)
+        self.assertIn("twistDone = false;", HTML)
+
     def test_crack_only_shows_when_zoomed(self):
         self.assertIn('if (kind === "higai" && !far) px(', HTML)
         self.assertIn('if (far) return spriteCache[key] = c.toDataURL();', HTML)

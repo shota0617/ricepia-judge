@@ -482,7 +482,7 @@ function startLot() {
   hint.style.display = "";
   showTop("sceneBag");
   $("dish").textContent = "";
-  measured = 0; meterTaps = 0; bagTaps = 0; hankoTaps = 0; spread = false; stamped = false; inked = false;
+  measured = 0; meterTaps = 0; bagTaps = 0; hankoTaps = 0; spread = false; stamped = false; inked = false; twistDone = false;
   token.hidden = true;
   $("lcd").textContent = "--.-";
   $("meterBtn").classList.remove("high");
@@ -793,7 +793,7 @@ function checkSpread() {
   for (let i = 0; i < live.length; i++) for (let j = i + 1; j < live.length; j++) {
     if (Math.hypot(live[i].x - live[j].x, live[i].y - live[j].y) < near) overlaps++;
   }
-  const now = overlaps <= 2;
+  const now = overlaps <= 4;
   if (now !== spread && now) { spread = true; updateSortHint(); }
 }
 /* なでる: 指先で粒を押し、押された粒がとなりの粒も押す */
@@ -866,7 +866,7 @@ function plateXY(cx, cy) {
 function startPinch() {
   const [a, b] = [...pts.values()];
   const mid = plateXY((a.x + b.x) / 2, (a.y + b.y) / 2);
-  pinch = { d0:Math.hypot(a.x - b.x, a.y - b.y) || 1, s0:Z.s, lx:(mid.x - Z.tx) / Z.s, ly:(mid.y - Z.ty) / Z.s };
+  pinch = { d0:Math.hypot(a.x - b.x, a.y - b.y) || 1, s0:Z.s, lx:(mid.x - Z.tx) / Z.s, ly:(mid.y - Z.ty) / Z.s, ang:Math.atan2(b.y - a.y, b.x - a.x), twist:0 };
   sortDrag = null;
 }
 plate.addEventListener("pointerdown", (e) => {
@@ -874,7 +874,7 @@ plate.addEventListener("pointerdown", (e) => {
   capture(plate, e);
   if (spread === false) guideOff();
   pts.set(e.pointerId, { x:e.clientX, y:e.clientY });
-  if (pts.size === 1) sortDrag = { x:e.clientX, y:e.clientY, lx:e.clientX, ly:e.clientY, moved:false };
+  if (pts.size === 1) sortDrag = { x:e.clientX, y:e.clientY, lx:e.clientX, ly:e.clientY, moved:false, t0:performance.now(), startG:grainAt(toLocal(e.clientX, e.clientY)) };
   else if (pts.size === 2) startPinch();
 });
 plate.addEventListener("pointermove", (e) => {
@@ -887,6 +887,13 @@ plate.addEventListener("pointermove", (e) => {
     Z.s = s < 1.04 ? 1 : s;
     Z.tx = mid.x - pinch.lx * Z.s; Z.ty = mid.y - pinch.ly * Z.s;
     applyZoom();
+    const ang = Math.atan2(b.y - a.y, b.x - a.x);
+    let turn = (ang - pinch.ang) * 180 / Math.PI;
+    if (turn > 180) turn -= 360;
+    if (turn < -180) turn += 360;
+    pinch.ang = ang;
+    pinch.twist += turn;
+    if (turn) twistPlate(turn);
     return;
   }
   if (!sortDrag) return;
@@ -911,7 +918,49 @@ function endPlatePointer(e, cancelled) {
     if (!d.moved && !cancelled && step === 2) {
       const g = grainAt(toLocal(e.clientX, e.clientY));
       if (g) tapGrain(g);
+      else knockPlate();
+    } else if (d.moved && !cancelled && step === 2 && d.startG && performance.now() - d.t0 < 260 && Math.hypot(e.clientX - d.x, e.clientY - d.y) > 24) {
+      flickGrain(d.startG, e.clientX - d.x, e.clientY - d.y);
     }
+  }
+}
+/* はじく: 粒の上からさっと払う。わるい粒は小皿へ飛び、良い粒は少し転がる */
+function flickGrain(g, dx, dy) {
+  if (g.gone) return;
+  if (g.kind !== "seiryu") { tapGrain(g); return; }
+  const d = Math.hypot(dx, dy) || 1, k = Math.min(70, d) / Z.s;
+  g.x += dx / d * k; g.y += dy / d * k;
+  g.r += dx > 0 ? 40 : -40;
+  g.awake = 16;
+  tick();
+  startSim();
+}
+/* トントン: 粒のない所をたたくと、粒が小さくはねて少し広がる */
+function knockPlate() {
+  tick();
+  const live = grains.filter(g => !g.gone);
+  const cx = live.reduce((a, g) => a + g.x, 0) / (live.length || 1), cy = live.reduce((a, g) => a + g.y, 0) / (live.length || 1);
+  live.forEach(g => {
+    const dx = g.x - cx, dy = g.y - cy, d = Math.hypot(dx, dy) || 1;
+    g.x += dx / d * 7 + (Math.random() - .5) * 4;
+    g.y += dy / d * 7 + (Math.random() - .5) * 4;
+    g.r += (Math.random() - .5) * 26;
+    g.awake = 10;
+    g.img.classList.remove("wig"); void g.img.offsetWidth; g.img.classList.add("wig");
+  });
+  startSim();
+}
+/* ひねる: 2本指で回すと粒がころんと回り、わるい粒が気づいてもらおうと揺れる */
+let twistDone = false;
+function twistPlate(deg) {
+  grains.forEach(g => { if (!g.gone) { g.r += deg; renderGrain(g); } });
+  if (twistDone) return;
+  const p = pinch;
+  if (p && Math.abs(p.twist) >= 35) {
+    twistDone = true;
+    tick();
+    setFace("happy", 500);
+    if (step === 2) grains.filter(g => !g.gone && g.kind !== "seiryu").forEach(g => g.img.classList.add("hint"));
   }
 }
 plate.addEventListener("pointerup", (e) => endPlatePointer(e, false));

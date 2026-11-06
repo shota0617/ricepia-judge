@@ -3679,7 +3679,7 @@ const heroMarkerStyle = document.createElement('style');
 // 左は右の反転、上は手前の逆の順。転がった道のり（roll.d、マス）で コマを進める（1マスで ひとまわり）。止まっているときは1コマめ（こっちを見ている）
 const riceSprites = { right: [], left: [], down: [], up: [], ready: false };
 const idleRoll = { last: performance.now(), on: false, key: '', skip: [], fails: [], guideKey: '' };   // 眺めるコロコロ（M5）：last＝最後の 手動入力の 時刻・on＝ひとりで 転がり中・key＝いま向かう/さっき着いた 名所・skip＝着いた/届かなかった 名所（除外リスト）・fails＝届かなかった 名所（その回のあいだ 覚える。一巡しても 消さない。第4弾サイクル33）・guideKey＝済みにした 目的地（skip の上限で 消えないよう 別に持つ。第4弾サイクル29 Codexレビュー）
-function idleTouch() { idleRoll.last = performance.now(); idleRoll.on = false; idleRoll.skip = []; idleRoll.fails = []; idleRoll.guideKey = ''; idleRoll.anchor = null; }
+function idleTouch() { idleRoll.last = performance.now(); idleRoll.on = false; idleRoll.skip = []; idleRoll.fails = []; idleRoll.guideKey = ''; idleRoll.anchor = null; if (typeof mzRt !== 'undefined') mzRt.touched = true; }   // touched：この ゴールで 手で 動かした（傾き・矢印キー・画面の タップ。にしおサイクル126：道しるべの 知らせは それから）
 document.addEventListener('pointerdown', idleTouch, true);   // 画面に さわったら すぐ 手動に もどる
 const roll = { d: 0, last: null, lastK: null, ang: 0, av: 0, side: 0, sq: 0, sqv: 0, sqx: false, shake: 0, dust: [], dustT: 0, kind: 'stop', wad: 0, spin: 0, sv: 0, pitch: 0, pv: 0, vert: false, h: 0, hv: 0, gnd: null, back: null, trail: [], fx: [], fxAcc: 0, fxN: 0, sendT: 0, sendA: 0, sends: 0, flat: 0, wetT: 0, jumpCd: 0, zg: null, jumps: 0, look: 0, dirt: 0, dirtCol: '150,120,80', v: 0, peak: 0, idle: 0, ouchT: 0, happyT: 0, spinT: 0, dizzyT: 0 };   // d：転がった道のり（マス）・lastK：転がり方の 道のりを 数える 前の こまの 行き先・ang：いまの回り（ラジアン）・av：回る速さ・side：寝た回数（コトン）・sq：つぶれ・shake：画面のゆれ・dust：土ぼこり
 // v：いまの速さ・peak：止まるまでの いちばんの速さ・idle：止まっている時間・ouchT・happyT・dizzyT：表情（いたい・うれしい・目が回る）の のこり時間・spinT：くるくるしている時間
@@ -9362,7 +9362,7 @@ function mzRoute(now) {
     mzCubeReset();   // 回転キューブも 迷路（ゴール）ごとに はじめから（組み上がった 金の キューブも 消える）
     mzTiles.clear();   // はまった タイルも ゴールごとに はじめから
     const bc = npcBump.carry; if (bc) npcBump.carry = bc.from === mzRt.gkey ? { id: bc.id, to: gkey } : null;   // ゴールの 人に 着いて 話した：あいさつ ずみは その すぐ 次の ゴールへ だけ もちこす（動く 前に 行き先を また かえたら すてる）
-    mzRt.gkey = gkey; mzRt.best = Infinity; mzRt.bestT = now; mzRt.showUntil = 0; mzRt.hints = 0; mzRt.t0 = now; mzRt.clockT = now; mzRt.len0 = 0;
+    mzRt.gkey = gkey; mzRt.best = Infinity; mzRt.bestT = now; mzRt.showUntil = 0; mzRt.hints = 0; mzRt.t0 = now; mzRt.clockT = now; mzRt.len0 = 0; mzRt.touched = false;
     mzNext.name = g.name || ''; mzNext.want = true;   // 「🏁 つぎの ゴール」を 出す（道のりが 分かってから）
   }
   mzRt.gid = g.id || g.name;
@@ -9447,6 +9447,7 @@ function mzArriveTick(now) {
 }
 function mzHintTick(now) {   // 25秒 行き先に 近づけていない（めいろの 道のりが へらない）ときだけ 道すじを 見せる（おたすけの ときは いつも 出ているので いらない）
   if (!mzRt.path || mzRt.path.length < 3 || now < mzRt.showUntil || mzHelpOn()) return;
+  if (!mzRt.touched) { mzRt.bestT = now; return; }   // にしおサイクル126：まだ 手で 動かして いない（開いて 眺めている だけ）なら 迷っていない。25秒は 手で 動かしはじめてから 数える
   if (now - mzRt.bestT > 25000) {
     mzRt.showUntil = now + 6000; mzRt.bestT = now; mzRt.hints = (mzRt.hints || 0) + 1;
     // 知らせは ゴールごとに 1回目だけ（自分で 遊んで 分かった：迷って いる 間、25秒ごとに 同じ 知らせが 上を ふさいでいた。光る 点は 毎回 出す）。

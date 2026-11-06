@@ -8017,6 +8017,13 @@ const TRACE = {
     this.fT = tms; this.fPos = [h.x, h.z];
     const l = this.pts[this.pts.length - 1];
     if (l && Math.hypot(h.x - l[0], h.z - l[1]) < traceStep()) return;   // 点を取る間隔（サイクル116: 0.35→0.25。サイクル165: 最初の1分だけ traceStep() で 0.10）
+    // サイクル191（最初の1分）: 指を同じ道で戻すと、線は戻った所まで消える（戻りの道を線の続きにしない）。
+    // それまでは戻りの道が「折り返し」として線に足され、トラクターがハンドルいっぱいで回れ右をしていた
+    // （物差し ループ側 scratchpad/steer.js: 上へ滑らせて同じ道を戻すと 最大切れ角 0.85rad・向き 23° 回り、指から 1.45m 離れたまま）。
+    // 線の終わりから 2 つ以上前の点の 0.5m 以内に指が来たら、そこまで線を縮めて終点を指に置きかえる（通過済みの点より前へは縮めない）
+    { let bi = -1, bd = 0.5;
+      for (let i = this.pts.length - 3; i >= Math.max(this.ctx, this.pts.length - 60); i--) { const d = Math.hypot(h.x - this.pts[i][0], h.z - this.pts[i][1]); if (d < bd) { bd = d; bi = i; } }
+      if (bi >= 0) { this.pts.length = bi + 1; this.pts[bi] = [h.x, h.z]; this.sync(); this.passMin = 1e9; this.draw(); return; } }
     if (this.pts.length < 512) { this.pts.push([h.x, h.z]); this.sync(); this.passMin = 1e9; this.draw(); }
   },
   end() { if (!this.on) return; this.on = false; if (this.drive && Math.abs(S.v) > 0.9) this.stopBoost = 0.8; this.drive = false; this.pts = []; this.cps = []; this.ctx = 0; this.fade = 1; this.fv = 0; },   // 指を離す: 跡を消して止まる。速く追っていたときは 0.8秒だけ減速を強めて スッと止める（サイクル116）

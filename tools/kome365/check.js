@@ -40,12 +40,19 @@ const CHECKS = {
       swipe('right', 260, true); const q = K3.V.flipQueue; const d2 = K3.S.day; flush(); const d3 = K3.S.day;
       // はじいて パラパラの とちゅうで ← を 入れると 止まる
       swipe('right', 260, true); steps(3); const dq = K3.S.day; swipe('left', 80, false); const q2 = K3.V.flipQueue; steps(60); const d4 = K3.S.day;
-      return { d0, d1, d1b, q, d2, d3, dq, q2, d4, date: document.getElementById('date').textContent, dayNo: document.getElementById('dayNo').textContent };
+      // 引いて、止めて、はなす：はじきでは ない（3周目）
+      const cx = innerWidth/2, cy = innerHeight/2; ev('pointerdown', 1, cx-100, cy); for (let i=1;i<=3;i++){ ev('pointermove', 1, cx-100+i*60, cy); K3.step(1/60); } steps(40); ev('pointerup', 1, cx+80, cy); const qHold = K3.V.flipQueue; flush();
+      // 速さごとの 日数（実機の はじき 1.5〜3px/ms が 4〜9日）
+      const days = v => { const d0 = K3.S.day; const n = 4, len = v*n*16.7; ev('pointerdown', 1, cx-len/2, cy); K3.step(1/60); for (let i=1;i<=n;i++){ ev('pointermove', 1, cx-len/2+len*i/n, cy); K3.step(1/60); } ev('pointerup', 1, cx+len/2, cy); flush(); return K3.S.day - d0; };
+      const dv = [1, 1.5, 3].map(days);
+      return { d0, d1, d1b, q, d2, d3, dq, q2, d4, qHold, dv, dayEnd: K3.S.day, date: document.getElementById('date').textContent, dayNo: document.getElementById('dayNo').textContent };
     });
     ok(r.d1 === r.d0 + 1 && r.d1b === r.d1, 'ゆっくり →：1日 だけ 進む', r);
     ok(r.q >= 3 && r.d3 - r.d2 === r.q, 'はじく →：つづけて 何日も めくれる（慣性）', r);
     ok(r.q2 === 0 && r.d4 <= r.dq + 1, 'めくれて いる とちゅうの ← で 止まる', r);
-    ok(/日$/.test(r.date) && r.dayNo === r.d4 + '日目', 'HUD の 日づけが 進む', r);
+    ok(r.qHold === 0, '引いて 止めてから はなすと 1日 だけ', r.qHold);
+    ok(r.dv[0] <= 3 && r.dv[1] >= 3 && r.dv[1] <= 5 && r.dv[2] >= 7 && r.dv[2] <= 10, 'はじきの 速さと 日数：1px/ms ≤3日・1.5 で 3〜5日・3 で 7〜10日', r.dv);
+    ok(/日$/.test(r.date) && r.dayNo === r.dayEnd + '日目', 'HUD の 日づけが 進む', r);
     await p.screenshot({ path: path.join(OUT, 'swipe.png') });
   },
   // ↑ で 水が 入り、↓ で 落ちる。スワイプの 長さで 量が かわる。水面は ばねで ついてくる
@@ -124,9 +131,20 @@ const CHECKS = {
     });
     ok(r.card && r.cardOn && r.cardOff, '← 見る で 1株の 札が 出て、消える', r);
     ok(r.m0 === 25 && r.m1 <= 15.5 && r.m1 >= 14 && r.q === 0, 'はじいても 15% で 止まる（乾燥機の 仕上がり）', r);
-    ok(r.m2 < 14 && r.left === 'けんさ', 'もう一度 → すると 乾かしすぎ（それでも 検査へ 行ける）', r);
+    ok(r.m2 < r.m1 && r.m2 >= 13 && r.left === 'けんさ', 'もう一度 → すると 少し 乾かしすぎ（1日 0.8%。それでも 検査へ 行ける）', r);
     ok(/あす/.test(r.wx), 'HUD に あすの 天気', r.wx);
     await p.screenshot({ path: path.join(OUT, 'dry.png') });
+  },
+  // 中干しの 合図が 出る。水が ない 間は 追肥できない（3周目）
+  async cue(b){
+    const p = await page(b, 390, 844);
+    const r = await p.evaluate(() => {
+      K3.manual = true; K3.fixedSeed = 11; K3.jump('tiller'); const f = K3.S.f; let cue = null; for (let i=0;i<30 && !cue;i++){ f.water = Math.max(f.water, 2); K3.advanceDay(); if (/中干し/.test(document.getElementById('say').textContent)) cue = f.dat; }
+      f.water = 0; f.dat = 42; const dryLeft = K3.actions().left; f.water = 3; const wetLeft = K3.actions().left;
+      return { cue, T: Math.round(f.T), dryLeft, wetLeft };
+    });
+    ok(r.cue != null && r.cue <= 40, '中干しの 合図が 40日目 までに 出る', r);
+    ok(r.dryLeft !== '追肥' && r.wetLeft === '追肥', '追肥は 水が ある 時だけ', r);
   },
   // なにも しないで 1年 すぎると「おわり」
   async idle(b){

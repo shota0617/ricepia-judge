@@ -11396,6 +11396,7 @@ function mzRescueDist(a, b) {   // かおりちゃんの マスから 迷子の 
   }
   return -1;
 }
+const rescueFirstGoal = () => { try { return !(Number(lsGet('nsg_mzgoals', '0')) >= 1); } catch (e) { return false; } };   // はじめての ゴールの 前か（nsg_mzgoals は mzGoalsDone と 同じ 鍵。読めなければ これまでどおり 出す）
 function mzRescueTick(now) {
   if (rp.x === null) return;
   const a = Math.floor(rp.x / MZ_K), b = Math.floor(rp.y / MZ_K);
@@ -11407,6 +11408,7 @@ function mzRescueTick(now) {
   if (!mzRescue.spawned) {   // まだ 出ていない：地図が 読めるまで 0.5秒ごとに さがす
     if (now < mzRescue.next) return;
     mzRescue.next = now + 500;
+    if (rescueFirstGoal()) return;   // にしおサイクル124：めいろの はじめての ゴールに 着くまで（最初の 1分）は 迷子の お米（「🆘 たすけて！」）を 出さない。2回目からは これまでどおり
     const c = mzRescuePick();
     if (c) { mzRescue.cx = c[0]; mzRescue.cy = c[1]; mzRescue.spawned = true; mzRescue.dkey = ''; dirty = true; }
     return;

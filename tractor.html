@@ -18,6 +18,7 @@
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { margin: 0; height: 100%; overflow: hidden; background: #9fb9d6; color: var(--ink);
     font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Noto Sans JP", Meiryo, sans-serif; }
+  body.firstmin #padC { display: none !important; }   /* サイクル185・最初の1分: 作業機は なぞると自動で下りるので、ボタンは1分すぎてから */
   canvas#view { display: block; width: 100vw; height: 100vh; height: 100dvh; touch-action: none; }
   .hidden { display: none !important; }
   #vignette { position: fixed; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 45%, rgba(0,0,0,0) 55%, rgba(20,14,6,.28) 100%); }
@@ -10274,7 +10275,7 @@ const COACH = (() => {
     // 田んぼアート：白線の外では下げない（耕した土はもどせない）。白線の内側に入ってから下げ、白線の手前で上げる
     const art = ART.on, here = art && artAt(0.28);   // 耕す所の いちばん前
     const inNow = art && !S.rotDown && here.out === 0 && artAt(-0.32).out === 0 && artAt(0).mid;   // 耕す所ぜんぶ（前後・左右）が はみ出しにならない所
-    if (art && !S.everDown) return inNow ? ['1', '田んぼを ゆびで なぞる（なぞった あとを トラクターが 耕していく）']   // サイクル159：開始位置は区域内（サイクル158）。なぞれば作業機は自動で下がるので、非お題時のはじめの行と同じ文にする
+    if (art && !S.everDown) return inNow ? ['1', '田んぼを ゆびで なぞる']   // サイクル159：開始位置は区域内（サイクル158）。なぞれば作業機は自動で下がるので、非お題時のはじめの行と同じ文にする
       : ['1', K('まず 白線の内側（地図の黄色）へ。<kbd>↑</kbd><kbd>←</kbd><kbd>→</kbd> で走る（白線の外では下げない）', 'まず 白線の内側（地図の黄色）へ。▲ ◀ ▶ で走る（白線の外では下げない）')];
     if (!S.rotDown && lastPct >= 90 && MUD.level >= 0.3 && S.x > 4 && S.x < HX && S.z > 17 && S.z < 23 && Math.sin(S.yaw) > 0.5)   // 耕し終わって 坂（道への出口）へ向かうとき
       return ['!', K('道へ出る前に：止まって <kbd>V</kbd> で タイヤの泥を落とす', '道へ出る前に：止まって「泥落とし」で タイヤの泥を落とす')];
@@ -10302,7 +10303,7 @@ const COACH = (() => {
     if (inNow && S.everMoved && liftYaw !== null && Math.abs(dYaw(S.yaw, liftYaw)) > 2.6) return ['5', K('白線の内側に入った：<kbd>スペース</kbd>で下げる', '白線の内側に入った：ボタンで下げる')];
     if (!S.everDown && DANKI.cold() && !dankiMuted()) return ['🌡', '寒い' + (TOD === 'yoru' ? '夜' : '朝') + '：エンジンが 冷えている。水温計が 青いあいだは 止まって 暖機（変速を 中立・駐車ブレーキ。ゲームでは 30 秒ほど）'];
     if (!S.rotDown) {
-      if (!S.everDown) return ['1', '田んぼを ゆびで なぞる（なぞった あとを トラクターが 耕していく）'];
+      if (!S.everDown) return ['1', '田んぼを ゆびで なぞる'];
       if (liftYaw === null) return null;
       if (art && Math.abs(dYaw(S.yaw, liftYaw)) > 2.6) return ['5', K('白線の内側まで進んでから、<kbd>スペース</kbd>で下げる', '白線の内側まで進んでから、ボタンで下げる')];
       if (Math.abs(dYaw(S.yaw, liftYaw)) > 2.6 && !leveeAhead()) return ['5', K('となりの耕した跡にならんだら、<kbd>スペース</kbd>で下げる', 'となりの耕した跡にならんだら、ボタンで下げる')];

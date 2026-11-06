@@ -55,12 +55,21 @@
   #kokuPhoto { position:absolute; right:0; top:0; height:50%; aspect-ratio:3/4; object-fit:cover; border-radius:10px; box-shadow:0 2px 8px rgba(26,24,20,.25); pointer-events:none; }
 
   /* 水分計 */
-  #meterBtn { position:relative; height:100%; max-height:190px; aspect-ratio:1.5/1; border-radius:18px; background:#2c63a8;
+  #sceneMeter { touch-action:none; gap:10px; }
+  #crank { flex:none; position:relative; height:min(80%, 128px); aspect-ratio:1; border-radius:50%; background:#2c63a8; box-shadow:inset 0 -6px 0 #1d4a82, 0 3px 10px rgba(26,24,20,.3); }
+  #crankArm { position:absolute; inset:0; display:block; }
+  #crankArm::before { content:""; position:absolute; left:50%; top:50%; width:12%; height:30%; margin:-30% 0 0 -6%; background:#e8e2d2; }
+  #crankArm::after { content:""; position:absolute; left:50%; top:5%; width:32%; height:32%; margin:0 0 0 -16%; border-radius:50%; background:#d9a441; box-shadow:inset 0 -3px 0 #a87a22; }
+  #meterBtn { position:relative; flex:1; min-width:0; height:100%; max-height:190px; border-radius:18px; background:#2c63a8;
     box-shadow:inset 0 -8px 0 #1d4a82, 0 3px 10px rgba(26,24,20,.3); padding:12px; display:flex; flex-direction:column; gap:6px; transition:transform .08s ease;
     touch-action:none; -webkit-touch-callout:none; }
-  #meterBtn.press { transform:scale(.95,.93); }
-  #holdTrack { flex:none; height:6px; border-radius:3px; background:#1d4a82; overflow:hidden; }
-  #holdBar { display:block; height:100%; width:0; background:#f4c27a; }
+  #senseToken { position:absolute; z-index:40; left:50%; top:62%; width:96px; height:96px; margin:-48px 0 0 -48px; border-radius:50%; background:var(--paper); box-shadow:0 3px 14px rgba(26,24,20,.4); font-size:52px; line-height:96px; text-align:center; touch-action:none; transition:scale .12s ease; }
+  #senseToken img { display:block; width:72px; height:40px; margin:28px auto 0; }
+  #senseToken.squeeze { scale:.78; }
+  #face { position:relative; z-index:45; }
+  #face.big { transform:scale(1.4) translate(10%,10%); }
+  #face.call { animation:call 1s ease-in-out infinite; }
+  @keyframes call { 50% { box-shadow:0 0 0 7px rgba(184,137,58,.45); } }
   #lcd { flex:1; min-height:0; border-radius:8px; background:#cfe0b4; color:#22301a; display:flex; align-items:center; justify-content:center;
     font:800 clamp(38px, 11vh, 62px)/1 ui-monospace,Menlo,monospace; box-shadow:inset 0 3px 0 rgba(0,0,0,.18); }
   #lcd small { font-size:.5em; margin-left:3px; }
@@ -103,7 +112,7 @@
   @keyframes ping { 50% { transform:scale(1.5); background:var(--gold); } }
   #gradeBtns { display:grid; grid-template-columns:96px repeat(4,1fr); }
   #gradeBtns::before { content:""; }
-  .gradeBtn { height:clamp(58px, 11vh, 84px); margin:0 2px; border-radius:12px; background:var(--paper); border:3px solid var(--green); font-size:24px; font-weight:800; color:var(--green); transition:transform .1s ease; }
+  .gradeBtn { touch-action:none; height:clamp(58px, 11vh, 84px); margin:0 2px; border-radius:12px; background:var(--paper); border:3px solid var(--green); font-size:24px; font-weight:800; color:var(--green); transition:transform .1s ease; }
   .gradeBtn:active { transform:scale(.95); }
   .gradeBtn.small { font-size:15px; }
   .gradeBtn.shake { animation:shake .3s ease; }
@@ -123,11 +132,13 @@
   #hanko { position:absolute; left:50%; top:30%; width:96px; margin-left:-48px; pointer-events:none; z-index:2; }
   #hanko i { display:block; width:40px; height:62px; margin:0 auto; border-radius:18px 18px 4px 4px; background:#7a4f28; box-shadow:inset -6px 0 0 #5e3b1c; }
   #hanko b { display:block; height:24px; border-radius:6px; background:#3b2a18; box-shadow:0 3px 6px rgba(26,24,20,.35); }
+  #hanko.inked b { background:var(--stamp); }
+  #pad { position:absolute; left:50%; width:112px; height:18px; margin-left:-56px; border-radius:6px; background:var(--stamp); box-shadow:0 2px 0 #7a1712; z-index:1; }
 
   /* 下: 案内。手が止まったカードも同じ場所に出し、皿や袋にはかぶせない */
   #foot { flex:none; height:calc(74px + env(safe-area-inset-bottom)); padding-bottom:env(safe-area-inset-bottom); display:flex; align-items:center; justify-content:center; position:relative; }
   #hint { font-size:23px; font-weight:800; text-align:center; }
-  #nextBtn { display:none; height:56px; padding:0 30px; border-radius:30px; background:var(--green); color:#fff; font-size:21px; font-weight:800; }
+  #nextBtn { display:none; height:56px; touch-action:manipulation; padding:0 30px; border-radius:30px; background:var(--green); color:#fff; font-size:21px; font-weight:800; }
   #nextBtn.on { display:block; }
   #idleCard { position:absolute; left:0; right:0; top:8px; display:flex; gap:8px; opacity:0; pointer-events:none; transition:opacity .4s ease; background:var(--bg); }
   #idleCard.on { opacity:1; pointer-events:auto; }
@@ -152,7 +163,11 @@
     #top { flex:0 0 34%; }
     #bagBtn { height:auto; width:50%; margin-left:0; }
     #kokuPhoto { height:36%; }
-    #meterBtn { height:auto; width:100%; }
+    #sceneMeter { flex-direction:column; gap:4px; }
+    #meterBtn { flex:1 1 0; height:auto; width:100%; padding:6px; }
+    #crank { height:38%; }
+    #senseToken { width:72px; height:72px; margin:-36px 0 0 -36px; font-size:38px; line-height:72px; }
+    #senseToken img { width:54px; height:30px; margin:21px auto 0; }
     #sceneSort { flex-direction:column; gap:6px; }
     #ittoPhoto { height:45%; }
     #dish { flex:0 0 40%; width:100%; margin:0; border-radius:24px; padding:4px 8px; }
@@ -193,7 +208,8 @@
         <span id="poke" aria-hidden="true">👆</span>
       </div>
       <div class="topScene" id="sceneMeter">
-        <button id="meterBtn" aria-label="水分計"><div id="lcd">--.-</div><div id="holdTrack"><i id="holdBar"></i></div><div id="slots"><span></span><span></span><span></span></div></button>
+        <button id="meterBtn" aria-label="水分計"><div id="lcd">--.-</div><div id="slots"><span></span><span></span><span></span></div></button>
+        <div id="crank" aria-hidden="true"><i id="crankArm"></i></div>
       </div>
       <div class="topScene" id="sceneSort">
         <img id="ittoPhoto" class="photo" src="kensa/ittomai.webp" alt="一等米の実物の写真"/>
@@ -201,6 +217,7 @@
       </div>
     </div>
     <div id="plate" aria-label="鑑定皿"><div id="plateInner"></div><button id="zoomBtn" aria-label="ズーム" hidden>🔍</button></div>
+    <button id="senseToken" aria-label="はこぶ" hidden></button>
     <div id="decide" inert>
       <div id="rows"></div>
       <div id="gradeBtns">
@@ -210,13 +227,14 @@
     <div id="osu" inert>
       <button id="bagBig" aria-label="ふくろに おす"><canvas id="bagBigCanvas" width="48" height="60"></canvas>
         <div id="mark"></div>
+        <div id="pad" aria-hidden="true"></div>
         <div id="hanko" aria-hidden="true"><i></i><b></b></div>
       </button>
     </div>
   </div>
   <div id="foot">
     <div id="hint" aria-live="polite">ふくろを タップ</div>
-    <button id="nextBtn">つぎの ふくろ 🌾</button>
+    <button id="nextBtn">つぎの ふくろ 🌾 →</button>
     <div id="idleCard" aria-live="polite" inert>
       <button id="likeBtn">👍 いいね</button>
       <a id="returnLink" href="https://ricepia.jp/">🏠 サイトへ もどる</a>
@@ -227,6 +245,7 @@
   <h2>🌾 農産物検査のしくみ</h2>
   <p>農産物検査の仕事が題材です。手順は、穀刺しで袋から試料をぬき（1袋 約40g）、水分を3回はかって平均し、白い皿と黒い皿で粒を見て、等級をきめ、証印をおす流れです。写真の穀刺しと一等米は実物です。</p>
   <p>等級は水稲うるち玄米の規格どおりに、整粒・水分・死米・着色粒・計（被害粒＋死米＋着色粒＋異種穀粒＋異物）のうち、いちばん悪い項目で決まります。未熟粒は整粒を減らしますが、計には入りません。水分は規格表の15.0%に、当分の間の1.0%加算を入れた16.0%までを適合としています。</p>
+  <p>鑑定は視覚・触覚・臭覚・聴覚を用いて行います（鑑定方法・平成13年農林水産省告示第333号）。におう・かむ・にぎるは、それをゲームの動きにしたものです。水分計のハンドルは、粒をつぶして測る水分計の形にならいました。</p>
   <p>ゲームでは分かりやすくするため、皿は20粒で1粒＝5%と数えます（実際の検査の粒数や重量の割合とは違います）。形質（標準品との比較）、異種穀粒、異物は皿には出していません。ゲームの等級は遊びのためのもので、実際の格付けではありません。</p>
   <p>出典: <a href="https://www.maff.go.jp/j/seisan/syoryu/kensa/kome/k_kikaku/" target="_blank" rel="noopener">農林水産省「玄米の検査規格」</a>／<a href="https://www.maff.go.jp/j/seisan/syoryu/kensa/hourei.html" target="_blank" rel="noopener">農産物検査法及び関係通知等</a>／<a href="https://www.maff.go.jp/j/seisan/syoryu/kensa/attach/pdf/index-25.pdf" target="_blank" rel="noopener">農林水産省「コメの農産物検査」</a></p>
   <p><a href="https://ricepia.jp/">らいすぴあ（近藤米穀店）のサイトへ</a></p>
@@ -447,7 +466,8 @@ function startLot() {
   hint.style.display = "";
   showTop("sceneBag");
   $("dish").textContent = "";
-  measured = 0; meterTaps = 0; bagTaps = 0; hankoTaps = 0; spread = false; stamped = false;
+  measured = 0; meterTaps = 0; bagTaps = 0; hankoTaps = 0; spread = false; stamped = false; inked = false;
+  token.hidden = true;
   $("lcd").textContent = "--.-";
   $("meterBtn").classList.remove("high");
   [...$("slots").children].forEach(s => { s.textContent = ""; });
@@ -606,12 +626,11 @@ $("sceneBag").addEventListener("pointerup", endBagDrag);
 $("sceneBag").addEventListener("pointercancel", () => { P.drag = null; });
 $("bagBtn").addEventListener("click", (e) => { if (e.detail === 0) autoProbe(); }); /* キーボードの Enter はそのまま進める */
 
-/* はかる: 水分計をぎゅっと長押し。おさえ終わると数字が出る */
-const HOLD_MS = 600;
-let meterTaps = 0, holding = null;
+/* はかる: 水分計のハンドルをぐるぐる回す。1周で1回はかれる */
+let meterTaps = 0, crankDrag = null, crankAngle = 0;
 function toHakaru() {
   showTop("sceneMeter");
-  setStep(1, "💧 ぎゅっと おさえる");
+  setStep(1, "💧 ぐるぐる まわす");
   $("meterBtn").disabled = false;
   $("meterBtn").focus({ preventScroll:true });
 }
@@ -623,38 +642,45 @@ function takeReading() {
   if (measured === LOT.moisture.length) setTimeout(showAverage, 240 * motion);
   else hint.textContent = "💧 あと " + (LOT.moisture.length - measured) + "回";
 }
-function stopHold() {
-  holding = null;
-  $("meterBtn").classList.remove("press");
-  $("holdBar").style.width = "0";
+function crankPointer(e) {
+  const r = $("crank").getBoundingClientRect();
+  const dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2);
+  return { a:Math.atan2(dy, dx) * 180 / Math.PI, far:Math.hypot(dx, dy) > 8 };
 }
-$("meterBtn").addEventListener("pointerdown", (e) => {
-  if (step !== 1 || measured >= LOT.moisture.length || holding) return;
-  capture($("meterBtn"), e);
-  $("meterBtn").classList.add("press");
-  const h = holding = { t0:performance.now(), done:false };
-  const run = () => {
-    if (holding !== h) return;
-    const p = (performance.now() - h.t0) / (HOLD_MS * motion);
-    if (p >= 1) { h.done = true; $("holdBar").style.width = "0"; takeReading(); return; }
-    $("holdBar").style.width = p * 100 + "%";
-    $("lcd").textContent = (12 + Math.random() * 6).toFixed(1);
-    requestAnimationFrame(run);
-  };
-  run();
+$("sceneMeter").addEventListener("pointerdown", (e) => {
+  if (step !== 1 || measured >= LOT.moisture.length) return;
+  capture($("sceneMeter"), e);
+  crankDrag = { last:crankPointer(e).a, turned:0, sum:0, x:e.clientX, y:e.clientY, moved:false };
 });
-function releaseMeter() {
-  if (!holding) return;
-  const early = !holding.done;
-  stopHold();
-  if (!early || measured >= LOT.moisture.length) return;
+$("sceneMeter").addEventListener("pointermove", (e) => {
+  if (!crankDrag || measured >= LOT.moisture.length) return;
+  if (Math.hypot(e.clientX - crankDrag.x, e.clientY - crankDrag.y) > 6) crankDrag.moved = true;
+  const p = crankPointer(e);
+  if (!p.far) return;
+  let d = p.a - crankDrag.last;
+  if (d > 180) d -= 360;
+  if (d < -180) d += 360;
+  crankDrag.last = p.a;
+  crankAngle += d;
+  crankDrag.turned += Math.abs(d);
+  crankDrag.sum += Math.abs(d);
+  $("crankArm").style.transform = "rotate(" + crankAngle + "deg)";
+  $("lcd").textContent = (12 + Math.random() * 6).toFixed(1);
+  if (crankDrag.sum >= 45) { crankDrag.sum = 0; tick(); }
+  if (crankDrag.turned >= 360) { crankDrag.turned = 0; takeReading(); }
+});
+function endCrank() {
+  if (!crankDrag) return;
+  const tapped = !crankDrag.moved;
+  crankDrag = null;
+  if (measured >= LOT.moisture.length) return;
   $("lcd").textContent = measured ? LOT.moisture[measured - 1].toFixed(1) : "--.-";
+  if (!tapped) return;
   if (++meterTaps >= NUDGE_LIMIT) { meterTaps = 0; takeReading(); return; }
-  hint.textContent = "💧 はなさず おさえる";
+  $("crankArm").animate([{ transform:"rotate(" + crankAngle + "deg)" }, { transform:"rotate(" + (crankAngle + 60) + "deg)" }, { transform:"rotate(" + crankAngle + "deg)" }], { duration:380 * motion, easing:"ease-in-out" });
 }
-$("meterBtn").addEventListener("pointerup", releaseMeter);
-$("meterBtn").addEventListener("pointercancel", releaseMeter);
-$("meterBtn").addEventListener("contextmenu", (e) => e.preventDefault());
+$("sceneMeter").addEventListener("pointerup", endCrank);
+$("sceneMeter").addEventListener("pointercancel", () => { crankDrag = null; });
 $("meterBtn").addEventListener("click", (e) => {
   if (e.detail === 0 && step === 1 && measured < LOT.moisture.length) takeReading();
 });
@@ -903,7 +929,7 @@ function tapGrain(g) {
     setTimeout(() => {
       resetZoomForSmiles();
     }, 300 * motion);
-    setTimeout(toKimeru, 1050 * motion);
+    setTimeout(toSense, 1050 * motion);
   }
 }
 function resetZoomForSmiles() {
@@ -912,6 +938,98 @@ function resetZoomForSmiles() {
     o.img.classList.add("wig");
   }, i * 22 * motion));
 }
+
+/* におう・かむ・にぎる: 袋ごとに交代で、粒を顔まで運んだり手でにぎったりする */
+const SENSES = ["niou", "kamu", "nigiru"];
+const NIGIRU_MS = 600;
+let senseKind = "niou", senseDrag = null, senseHold = null, senseTaps = 0;
+const token = $("senseToken");
+function placeToken(x, y) {
+  token.style.transform = "translate(" + x + "px," + y + "px)";
+}
+function toSense() {
+  senseKind = SENSES[lotIndex % SENSES.length];
+  senseTaps = 0;
+  resetZoom();
+  token.textContent = "";
+  if (senseKind === "kamu") {
+    const im = document.createElement("img");
+    im.src = grainSprite("seiryu", "happy"); im.alt = "";
+    token.appendChild(im);
+  } else token.textContent = "🤲";
+  token.hidden = false;
+  token.className = senseKind;
+  placeToken(0, 0);
+  hint.textContent = { niou:"🤲 はなへ はこぶ ↖", kamu:"粒を くちへ はこぶ ↖", nigiru:"🤲 ぎゅっと にぎる" }[senseKind];
+  $("face").classList.toggle("call", senseKind !== "nigiru");
+  token.focus({ preventScroll:true });
+}
+function senseDone() {
+  if (token.hidden) return;
+  senseDrag = null; senseHold = null;
+  token.hidden = true;
+  const wet = itemGrades(lotPercents(LOT)).moisture === 3;
+  $("face").classList.remove("call");
+  $("face").classList.add("big");
+  setTimeout(() => $("face").classList.remove("big"), 900 * motion);
+  if (senseKind === "niou") {
+    tone(520, 0.2, 0.03, "sine");
+    setFace("happy", 900);
+    hint.textContent = "くんくん… いい におい";
+  } else if (senseKind === "kamu") {
+    if (wet) { tone(170, 0.2, 0.09, "sine"); setFace("wow", 900); hint.textContent = "むにゅ… やわらかい"; }
+    else { tone(2300, 0.05, 0.06, "square"); setFace("happy", 900); hint.textContent = "カリッ！ かたい"; }
+  } else {
+    tick(); setTimeout(tick, 70); setTimeout(tick, 140);
+    setFace("happy", 900);
+    hint.textContent = "さらさら…";
+  }
+  setTimeout(toKimeru, 1100 * motion);
+}
+function tokenNearFace() {
+  const t = token.getBoundingClientRect(), f = $("face").getBoundingClientRect();
+  return Math.hypot(t.left + t.width / 2 - (f.left + f.width / 2), t.top + t.height / 2 - (f.top + f.height / 2)) < f.width * 0.9;
+}
+function autoSense() {
+  if (senseKind === "nigiru") { senseDone(); return; }
+  const t = token.getBoundingClientRect(), f = $("face").getBoundingClientRect();
+  token.animate([{ transform:"none" }, { transform:"translate(" + (f.left + f.width / 2 - (t.left + t.width / 2)) + "px," + (f.top + f.height / 2 - (t.top + t.height / 2)) + "px)" }],
+    { duration:360 * motion, easing:"ease-in-out" }).onfinish = senseDone;
+}
+token.addEventListener("pointerdown", (e) => {
+  capture(token, e);
+  if (senseKind === "nigiru") {
+    token.classList.add("squeeze");
+    const h = senseHold = {};
+    h.timer = setTimeout(() => { if (senseHold === h) { token.classList.remove("squeeze"); senseDone(); } }, NIGIRU_MS * motion);
+    return;
+  }
+  senseDrag = { x:e.clientX, y:e.clientY, moved:false };
+});
+token.addEventListener("pointermove", (e) => {
+  if (!senseDrag) return;
+  const dx = e.clientX - senseDrag.x, dy = e.clientY - senseDrag.y;
+  if (Math.hypot(dx, dy) > 6) senseDrag.moved = true;
+  placeToken(dx, dy);
+  if (tokenNearFace()) senseDone();
+});
+function endToken() {
+  if (senseHold) {
+    senseHold = null;
+    token.classList.remove("squeeze");
+    if (++senseTaps >= NUDGE_LIMIT) { senseDone(); return; }
+    hint.textContent = "🤲 はなさず にぎる";
+    return;
+  }
+  if (!senseDrag) return;
+  const tapped = !senseDrag.moved;
+  senseDrag = null;
+  placeToken(0, 0);
+  if (tapped && ++senseTaps >= NUDGE_LIMIT) autoSense();
+}
+token.addEventListener("pointerup", endToken);
+token.addEventListener("pointercancel", endToken);
+token.addEventListener("click", (e) => { if (e.detail === 0) autoSense(); });
 
 /* きめる: 項目ごとに ● が下の等級の列へ落ちる */
 function toKimeru() {
@@ -929,10 +1047,11 @@ function toKimeru() {
     [0, 1, 2, 3].map(c => '<div class="cell' + (c === 3 ? " last" : "") + '">' + (c === g ? '<i class="dot" data-g="' + g + '"></i>' : "") + "</div>").join("")).join("");
   layer($("decide"), true);
   showTop(null);
-  setStep(3, new Set(rows.map(r => r[2])).size > 1 ? "いちばん右の ● の 下を タップ" : "● の 下を タップ");
+  setStep(3, new Set(rows.map(r => r[2])).size > 1 ? "いちばん右の ● の下を 上へ ↑" : "● の下を 上へ ↑");
   $("rows").querySelectorAll(".dot").forEach((d, i) => setTimeout(() => { d.classList.add("on"); tick(); }, (120 + i * 110) * motion));
 }
-document.querySelectorAll(".gradeBtn").forEach(btn => btn.addEventListener("click", () => {
+/* 等級の印を上へひきあげて選ぶ。2回タップでも選べる */
+function pickGrade(btn) {
   if (step !== 3) return;
   const pick = Number(btn.dataset.i), right = lotGrade(LOT);
   if (pick !== right) {
@@ -944,10 +1063,36 @@ document.querySelectorAll(".gradeBtn").forEach(btn => btn.addEventListener("clic
   pop();
   setFace("happy", 700);
   toOsu();
-}));
+}
+document.querySelectorAll(".gradeBtn").forEach(btn => {
+  let drag = null, taps = 0;
+  btn.addEventListener("pointerdown", (e) => {
+    if (step !== 3) return;
+    capture(btn, e);
+    drag = { y:e.clientY, moved:false };
+  });
+  btn.addEventListener("pointermove", (e) => {
+    if (!drag) return;
+    const dy = Math.min(0, e.clientY - drag.y);
+    if (dy < -6) drag.moved = true;
+    btn.style.transform = "translateY(" + dy + "px)";
+    if (dy <= -34) { drag = null; btn.style.transform = ""; pickGrade(btn); }
+  });
+  btn.addEventListener("pointerup", () => {
+    if (!drag) return;
+    const tapped = !drag.moved;
+    drag = null;
+    btn.style.transform = "";
+    if (tapped && ++taps >= 2) { taps = 0; pickGrade(btn); }
+    else if (tapped) btn.animate([{ transform:"none" }, { transform:"translateY(-12px)" }, { transform:"none" }], { duration:260 * motion, easing:"ease-out" });
+  });
+  btn.addEventListener("pointercancel", () => { drag = null; btn.style.transform = ""; });
+  btn.addEventListener("click", (e) => { if (e.detail === 0) pickGrade(btn); });
+});
 
-/* おす: はんこを指で下ろして、ドン */
-let hankoTaps = 0, stamped = false, hankoDrag = null, hankoMax = 0, hankoBob = null;
+/* おす: 朱肉にぎゅっと押してから、はんこを指で下ろして、ドン。押した袋は横へ流す */
+const INK_MS = 450;
+let hankoTaps = 0, stamped = false, inked = false, hankoDrag = null, hankoMax = 0, hankoBob = null, inkHold = null, bagSwipe = null, leaving = false;
 function setHanko(y) {
   $("hanko").style.transform = "translateY(" + y + "px)";
 }
@@ -963,13 +1108,26 @@ function toOsu() {
   $("mark").innerHTML = grade + "<small>" + d.getFullYear() + "." + (d.getMonth() + 1) + "." + d.getDate() + "</small>";
   $("mark").className = grade === "規格外" ? "small" : "";
   $("hanko").style.opacity = "1";
+  $("hanko").classList.remove("inked");
+  $("pad").style.display = "";
   setHanko(0);
   layer($("osu"), true);
-  setStep(4, "はんこを おろす ⬇");
-  const mark = $("mark").getBoundingClientRect(), hk = $("hanko").getBoundingClientRect();
-  hankoMax = mark.top + mark.height / 2 - (hk.top + hk.height) + 10;
+  setStep(4, "朱肉に ぎゅっと");
+  const bag = $("bagBig").getBoundingClientRect(), hk = $("hanko").getBoundingClientRect(), mark = $("mark").getBoundingClientRect();
+  $("pad").style.top = hk.bottom - bag.top + 2 + "px";
+  hankoMax = mark.top + mark.height / 2 - hk.bottom + 10;
   bobHanko();
   $("bagBig").focus({ preventScroll:true });
+}
+function inkDone() {
+  inked = true;
+  inkHold = null;
+  pop();
+  $("hanko").classList.add("inked");
+  $("pad").style.display = "none";
+  setHanko(0);
+  hint.textContent = "はんこを おろす ⬇";
+  bobHanko();
 }
 function stampNow() {
   if (stamped || step !== 4) return;
@@ -990,16 +1148,32 @@ function stampNow() {
 }
 function dropHanko() {
   stopBob();
+  if (!inked) inkDone();
+  stopBob();
   $("hanko").animate([{ transform:"translateY(0)" }, { transform:"translateY(" + hankoMax + "px)" }],
     { duration:130 * motion, easing:"cubic-bezier(.6,0,1,.7)" }).onfinish = stampNow;
 }
 $("bagBig").addEventListener("pointerdown", (e) => {
-  if (step !== 4 || stamped) return;
+  if (step !== 4 || leaving) return;
   capture($("bagBig"), e);
+  if (stamped) { bagSwipe = { x:e.clientX }; return; }
   stopBob();
+  if (!inked) {
+    /* 朱肉: 離さず押さえるとインクがつく */
+    setHanko(10);
+    const h = inkHold = {};
+    h.timer = setTimeout(() => { if (inkHold === h) inkDone(); }, INK_MS * motion);
+    return;
+  }
   hankoDrag = { cy:e.clientY, moved:false };
 });
 $("bagBig").addEventListener("pointermove", (e) => {
+  if (bagSwipe) {
+    const dx = e.clientX - bagSwipe.x;
+    $("bagBig").style.transform = "translateX(" + Math.max(0, dx) + "px) rotate(" + Math.max(0, dx) / 30 + "deg)";
+    if (dx > 70) { bagSwipe = null; leaveBag(); }
+    return;
+  }
   if (!hankoDrag) return;
   const dy = e.clientY - hankoDrag.cy;
   if (Math.abs(dy) > 5) hankoDrag.moved = true;
@@ -1009,6 +1183,15 @@ $("bagBig").addEventListener("pointermove", (e) => {
   if (y >= hankoMax - 1) stampNow();
 });
 function endHanko() {
+  if (bagSwipe) { bagSwipe = null; $("bagBig").style.transform = ""; return; }
+  if (inkHold) {
+    inkHold = null;
+    setHanko(0);
+    if (++hankoTaps >= NUDGE_LIMIT) { hankoTaps = 0; inkDone(); return; }
+    hint.textContent = "はなさず ぎゅっと";
+    bobHanko();
+    return;
+  }
   if (!hankoDrag) return;
   const tapped = !hankoDrag.moved;
   hankoDrag = null;
@@ -1020,11 +1203,21 @@ function endHanko() {
 $("bagBig").addEventListener("pointerup", endHanko);
 $("bagBig").addEventListener("pointercancel", endHanko);
 $("bagBig").addEventListener("click", (e) => { if (e.detail === 0 && step === 4 && !stamped) dropHanko(); });
-nextBtn.addEventListener("click", () => {
+function goNext() {
   $("hanko").getAnimations().forEach(a => a.cancel());
+  $("bagBig").style.transform = "";
+  leaving = false;
   lotIndex++;
   startLot();
-});
+}
+function leaveBag() {
+  if (leaving) return;
+  leaving = true;
+  tick();
+  $("bagBig").animate([{ transform:$("bagBig").style.transform || "none" }, { transform:"translateX(130%) rotate(10deg)" }],
+    { duration:240 * motion, easing:"ease-in", fill:"forwards" }).onfinish = function () { this.cancel(); goNext(); };
+}
+nextBtn.addEventListener("click", () => { if (!leaving) leaveBag(); });
 window.addEventListener("resize", () => {
   layoutProbe();
   PW = inner.clientWidth; PH = inner.clientHeight;

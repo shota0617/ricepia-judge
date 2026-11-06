@@ -107,9 +107,16 @@ class FlowTests(unittest.TestCase):
         self.assertNotIn("armHint", fn)
 
     def test_motions_are_not_only_taps(self):
-        # さす（押し込んで引き抜く）・おさえる（長押し）・なでる・ズーム・おす（はんこを下ろす）
-        for needle in ("function moveProbe(x)", "const HOLD_MS = 600;", "function brush(from, to)", "function startPinch()", "function stampNow()"):
+        # さす・まわす・なでる・ズーム・におう/かむ/にぎる・ひきあげる・朱肉・おろす・スワイプ
+        for needle in ("function moveProbe(x)", "function crankPointer(e)", "function brush(from, to)", "function startPinch()",
+                       'const SENSES = ["niou", "kamu", "nigiru"];', "function pickGrade(btn)", "function inkDone()", "function stampNow()", "function leaveBag()"):
             self.assertIn(needle, HTML)
+
+    def test_bite_tells_moisture(self):
+        # 水分の高い袋（2袋目）はかむ番で、やわらかい
+        self.assertEqual(run_rules("LOTS[1].moisture[2] > 16.0"), True)
+        self.assertIn('"niou", "kamu", "nigiru"', HTML)
+        self.assertIn("むにゅ", HTML)
 
     def test_crack_only_shows_when_zoomed(self):
         self.assertIn('if (kind === "higai" && !far) px(', HTML)
@@ -118,7 +125,7 @@ class FlowTests(unittest.TestCase):
     def test_motion_has_fallback(self):
         # 動かし方が分からなくても止まらない。キーボードでも進める
         self.assertIn("const NUDGE_LIMIT = 3;", HTML)
-        for needle in ('if (e.detail === 0) autoProbe();', 'e.detail === 0 && step === 1', 'e.detail === 0 && step === 4'):
+        for needle in ('if (e.detail === 0) autoProbe();', 'e.detail === 0 && step === 1', 'e.detail === 0 && step === 4', 'if (e.detail === 0) autoSense();', 'if (e.detail === 0) pickGrade(btn);'):
             self.assertIn(needle, HTML)
 
     def test_page_zoom_does_not_fight_pinch(self):

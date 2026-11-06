@@ -1411,6 +1411,7 @@ function loadDeco() {
     }
     return;
   }
+  if (!DECO.go) return;   // にしおサイクル129：地図が 動きだす（お米の 絵が できて こまが 回る）まで 読まない（遅い 回線で 0.5MB が 先に 流れて、動きだしが 2.5秒 おくれていた）。こまの 中で DECO.go を 立てて 呼びなおす
   const s = decoSeason();
   if (s === DECO.s) return;
   DECO.s = s;
@@ -7845,6 +7846,7 @@ function frame(now) {
   if (rec) { ctx = rec; rec.begin(w, h); }
   const T = fieldT(dpr);
   const dt = Math.min(0.1, (now - (lastT || now)) / 1000);
+  if (!DECO.go && riceSprites.ready) { if (!DECO.goAt) DECO.goAt = now; else if (now - DECO.goAt > 3000) { DECO.go = true; loadDeco(); } }   // にしおサイクル129：地図が 動きだして 3秒 たってから 小物の 絵（deco-N.webp 0.5MB）を 読む（遅い 回線で 動きだしの 読みこみと 取りあわない）
   koro = window.NISHIO_KOROSTYLE ? window.NISHIO_KOROSTYLE.current() : null; KP = koro ? koro.motion.p : {};   // いまの転がり方
   lastT = now;
 

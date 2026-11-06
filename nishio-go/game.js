@@ -4607,12 +4607,6 @@ renderHeader();
 loadSpots(false);
 loadAreas();
 if (ED.shops) { loadRewards(); loadCampaigns(); }
-// 累計プレイ人数（nishio-go/stats.json：Google アナリティクスから毎日数える）。100人をこえたら、はじめの画面に出す
-fetch('nishio-go/stats.json', { cache: 'no-cache' }).then(r => (r.ok ? r.json() : null)).then(j => {
-  if (!j || !(j.players >= 100) || !$('playerCount')) return;
-  $('playerCount').textContent = `👥 これまでに ${Math.floor(j.players / 10) * 10}人以上が遊んでいます（${j.updated.slice(5).replace('-', '/')}時点）`;
-  $('playerCount').hidden = false;
-}).catch(() => { /* なしで続ける */ });
 if (store.get('nsg_started', false)) {
   // この計測より前から遊んでいる人：はじめて遊んだ日・はじめてのごほうびは「わからない」にしておく（数字にまぜない）
   if (!store.get('nsg_first_day', '')) store.set('nsg_first_day', 'unknown');
@@ -4629,6 +4623,13 @@ else {
     document.addEventListener('DOMContentLoaded', introHero);
   } else $('intro').hidden = true;
 }
+// 累計プレイ人数（nishio-go/stats.json：Google アナリティクスから毎日数える）。100人をこえたら、はじめの画面に出す。
+// にしおサイクル131：はじめの画面を 出す ときだけ 読む（開いたら すぐ 始まる 今は ほぼ 出ないのに、毎回 読みに いって 404 を 出していた）
+if (!$('intro').hidden) fetch('nishio-go/stats.json', { cache: 'no-cache' }).then(r => (r.ok ? r.json() : null)).then(j => {
+  if (!j || !(j.players >= 100) || !$('playerCount')) return;
+  $('playerCount').textContent = `👥 これまでに ${Math.floor(j.players / 10) * 10}人以上が遊んでいます（${j.updated.slice(5).replace('-', '/')}時点）`;
+  $('playerCount').hidden = false;
+}).catch(() => { /* なしで続ける */ });
 setInterval(() => { renderMarkers(); refreshNearby(); }, 10000);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) { renderMarkers(); refreshNearby(); idleCheck(); } else idleMark(); });
 window.addEventListener('pagehide', idleMark);

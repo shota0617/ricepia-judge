@@ -23,11 +23,15 @@
   // 方向転換（M3）：向きの変わり方は TURN_PER_SEC rad/秒まで。速さは変えず、向きだけを上限の角度まで回す（弧を描いて曲がる）。
   // サイクル68・のんびり転がる：5.5→3.8。向きは ゆっくり 変わり、弧は 大きく 曲がる（半回転で 約0.8秒）。
   const TURN_PER_SEC = 3.8;
+  // 切り返しの ひっかかり（にしおサイクル118）：上限は 速さが ある ときの 弧の ため。TURN_MIN_V（マス/秒）より おそい ときは 上限を かけない。
+  //   前は 0.05 だったので、反対へ 押す 力が 1こま（1/120秒）で 速さを 0.1 以上 かえる とき（傾き 7 ＋ 急な 坂。合わせて 12 以上）に、速さが 0 を またぐ こまで
+  //   前後の 速さが どちらも 0.05 以上に なり、180° の 向きかえが 1こま 0.032rad ずつに なって、0.5秒 ほど その場で 止まった ように 見えた。0.5 なら 弧の 半径は 0.13マス（見えない）
+  const TURN_MIN_V = 0.5;
   function limitTurn(vx, vy, pvx, pvy, maxRad) {
     try {
       const x = num(vx), y = num(vy), px = num(pvx), py = num(pvy);
       const sp = Math.hypot(x, y), psp = Math.hypot(px, py);
-      if (sp < 0.05 || psp < 0.05 || typeof maxRad !== 'number' || !isFinite(maxRad) || maxRad < 0) return { vx: x, vy: y };
+      if (sp < TURN_MIN_V || psp < TURN_MIN_V || typeof maxRad !== 'number' || !isFinite(maxRad) || maxRad < 0) return { vx: x, vy: y };
       const cross = px * y - py * x, dot = px * x + py * y;
       const diff = Math.atan2(cross, dot);   // 前の向き→新しい向きの符号つき角度（最短弧）
       if (Math.abs(diff) <= maxRad) return { vx: x, vy: y };
@@ -152,5 +156,5 @@
     }
     return v;
   }
-  root.nishioRollSync = { GLIDE_SOFT, STOP_V, GLIDE_H, glideSpeed, FPS_SLOW, FPS_MIN, FPS_RECOVER, shadowStretch, fpsStep, IDLE_START, IDLE_SPEED, IDLE_ACC, idleDue, idleTarget, nextIdleTarget, idleNoteFail, idleExclude, idleFailed, idleForce, R, advance, turnsFor, frameFor, TURN_PER_SEC, limitTurn, AREA_FEEL, groundFeel };
+  root.nishioRollSync = { TURN_MIN_V, GLIDE_SOFT, STOP_V, GLIDE_H, glideSpeed, FPS_SLOW, FPS_MIN, FPS_RECOVER, shadowStretch, fpsStep, IDLE_START, IDLE_SPEED, IDLE_ACC, idleDue, idleTarget, nextIdleTarget, idleNoteFail, idleExclude, idleFailed, idleForce, R, advance, turnsFor, frameFor, TURN_PER_SEC, limitTurn, AREA_FEEL, groundFeel };
 })(typeof window !== 'undefined' ? window : globalThis);

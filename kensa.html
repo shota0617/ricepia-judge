@@ -138,7 +138,7 @@
   #pad { position:absolute; left:50%; width:112px; height:18px; margin-left:-56px; border-radius:6px; background:var(--stamp); box-shadow:0 2px 0 #7a1712; z-index:1; }
 
   /* 下: 案内。手が止まったカードも同じ場所に出し、皿や袋にはかぶせない */
-  #foot { flex:none; height:calc(74px + env(safe-area-inset-bottom)); padding-bottom:env(safe-area-inset-bottom); display:flex; align-items:center; justify-content:center; position:relative; }
+  #foot { flex:none; min-height:calc(74px + env(safe-area-inset-bottom)); padding-bottom:env(safe-area-inset-bottom); /* 文字を大きくした端末では案内の分だけ伸び、皿に重ならない */ display:flex; align-items:center; justify-content:center; position:relative; }
   #hint { font-size:23px; font-weight:800; text-align:center; }
   #nextBtn { display:none; height:56px; touch-action:manipulation; padding:0 30px; border-radius:30px; background:var(--green); color:#fff; font-size:21px; font-weight:800; }
   #nextBtn.on { display:block; }
@@ -192,7 +192,7 @@
     #sceneSort { flex-direction:column; gap:6px; }
     #ittoPhoto { height:45%; }
     #dish { flex:0 0 40%; width:100%; margin:0; border-radius:24px; padding:4px 8px; }
-    #foot { height:calc(46px + env(safe-area-inset-bottom)); }
+    #foot { min-height:calc(46px + env(safe-area-inset-bottom)); }
     #hint { font-size:17px; }
     #nextBtn { height:40px; font-size:17px; }
     #decide { gap:4px; }

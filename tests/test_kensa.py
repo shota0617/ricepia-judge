@@ -118,6 +118,11 @@ class FlowTests(unittest.TestCase):
         self.assertIn('sendTap("return")', HTML)
         self.assertIn('id="returnLink" href="https://ricepia.jp/"', HTML)
 
+    def test_foot_grows_with_large_text(self):
+        # 文字200%の端末では案内が2行になる。下の枠は最低74pxで、必要な分だけ伸びて皿に重ならない
+        self.assertRegex(HTML, r"#foot \{[^}]*min-height:calc\(74px \+ env\(safe-area-inset-bottom\)\)")
+        self.assertNotRegex(HTML, r"#foot \{[^}]*[^-]height:calc\(74px")
+
     def test_idle_card_stays_in_foot(self):
         # 皿や袋にかぶせない
         foot = HTML[HTML.index('<div id="foot">'):HTML.index("</main>")]

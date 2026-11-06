@@ -187,6 +187,7 @@
   body.calm #start .tag, body.calm #start .card > p:not(.err), body.calm #start .how, body.calm #seasons button br, body.calm #seasons button small, body.calm #arts i { display: none !important; }
   /* はじめは 選ぶ 画面を 出さず、読みこむ あいだは 進みぐあいの 棒（と 読みこめなかった ときの 知らせ）だけ。季節・お題は ≡ メニューで かえる */
   #loadMark { display: none; }
+  #start.loading { background: #dfe7e4; }   /* サイクル187: 読みこみ中は、作りかけの3Dを透かさない。 */
   #start.loading #loadMark { display: block; font-size: 48px; line-height: 1.2; margin: 6px 0 2px; }   /* サイクル160: 読みこみ中だけの目印。除外規則に :not(#loadMark) を入れたので隠し規則に当たらず、既定 display:none (特異度 1,0,0) より本規則 (2,1,0) が勝つため !important は不要 */
   #start.loading .card > :not(.prog):not(#progText):not(#loadMark) { display: none !important; }   /* サイクル98: 案内画面（試作版・安全・制作者の3行）は全廃。読みこむあいだは進みぐあいだけ出す／サイクル160: #loadMark も除外し読みこみ中も出す */
   #start.loading #progText:not(.err) { display: none !important; }   /* 最初のなぞりまでに読む文字を減らす。読みこみの進みぐあいは棒だけで伝える。 */
@@ -753,15 +754,16 @@ scene.add(sun, sun.target);
 // ---- 読みこみ ----
 const loader = new THREE.GLTFLoader();
 const prog = { t: 0, f: 0 };
+const PROG_SIZE = { t: 3.8e6, f: 5.4e6 };        // サイクル187: 圧縮配信だと全体の大きさが届かない（e.total が 0）。およその大きさで棒を進める
 let LOAD_ST = 'wait';                            // 読みこみ：wait（じゅんび中）・ok・ng（失敗。そのあと 進みぐあいで「もう一度 よむ」を 消さない）
 function showProg() {
   if (LOAD_ST === 'ng') return;
-  const p = Math.round((prog.t + prog.f) / 2 * 100);
+  const p = Math.round((prog.t * PROG_SIZE.t + prog.f * PROG_SIZE.f) / (PROG_SIZE.t + PROG_SIZE.f) * 100);
   $('progBar').style.width = p + '%';
   $('progText').textContent = p < 100 ? `⏳ トラクターを 田んぼへ はこんでいるよ… ${p}%（はじめは 8MB ほど）` : '🌱 じゅんび できたよ';
 }
 function load(url, key) {
-  return new Promise((ok, ng) => loader.load(ASSET + url, ok, e => { if (e.total) { prog[key] = e.loaded / e.total; showProg(); } }, ng));
+  return new Promise((ok, ng) => loader.load(ASSET + url, ok, e => { prog[key] = Math.min(1, e.loaded / (e.total || PROG_SIZE[key] || e.loaded)); showProg(); }, ng));
 }
 const rig = new THREE.Group();                 // トラクター（とロータリー）全体。position＝後輪車軸の真下
 scene.add(rig);

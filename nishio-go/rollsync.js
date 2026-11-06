@@ -22,11 +22,15 @@
   }
   // 方向転換（M3）：向きの変わり方は TURN_PER_SEC rad/秒まで。速さは変えず、向きだけを上限の角度まで回す（弧を描いて曲がる）。
   const TURN_PER_SEC = 5.5;
+  // 切り返しの ひっかかり（第4弾サイクル64。運営者の声「転がす楽しさ」の「傾きへの 反応」）：上限は 速さが ある ときの 弧の ため。
+  //   TURN_MIN_V（マス/秒）より おそい ときは 上限を かけない。前は 0.05 だったので、反対へ 傾けて 速さが 0 を またぐ こまで 前後の 速さが どちらも 0.05 以上だと
+  //   180° の 向きかえが 1こま 0.046rad ずつに なり、0.5秒 ほど その場で 止まった ように 見えた（全力の 切り返しの 約7%）。0.5 なら 弧の 半径は 0.09マス（見えない）
+  const TURN_MIN_V = 0.5;
   function limitTurn(vx, vy, pvx, pvy, maxRad) {
     try {
       const x = num(vx), y = num(vy), px = num(pvx), py = num(pvy);
       const sp = Math.hypot(x, y), psp = Math.hypot(px, py);
-      if (sp < 0.05 || psp < 0.05 || typeof maxRad !== 'number' || !isFinite(maxRad) || maxRad < 0) return { vx: x, vy: y };
+      if (sp < TURN_MIN_V || psp < TURN_MIN_V || typeof maxRad !== 'number' || !isFinite(maxRad) || maxRad < 0) return { vx: x, vy: y };
       const cross = px * y - py * x, dot = px * x + py * y;
       const diff = Math.atan2(cross, dot);   // 前の向き→新しい向きの符号つき角度（最短弧）
       if (Math.abs(diff) <= maxRad) return { vx: x, vy: y };
@@ -166,5 +170,5 @@
       return { fx: ux * PULL_ACC * w, fy: uy * PULL_ACC * w, dist, on: true, pick };
     } catch (e) { return { fx: 0, fy: 0, dist: Infinity, on: false, pick: false }; }
   }
-  root.nishioRollSync = { PULL_R, PULL_ACC, PULL_V, PULL_PICK, pullForce, GLIDE_SOFT, STOP_V, GLIDE_H, glideSpeed, FPS_SLOW, FPS_MIN, FPS_RECOVER, shadowStretch, fpsStep, IDLE_START, IDLE_SPEED, IDLE_ACC, idleDue, idleTarget, nextIdleTarget, idleNoteFail, idleExclude, idleFailed, idleForce, R, advance, turnsFor, frameFor, TURN_PER_SEC, limitTurn, AREA_FEEL, groundFeel };
+  root.nishioRollSync = { TURN_MIN_V, PULL_R, PULL_ACC, PULL_V, PULL_PICK, pullForce, GLIDE_SOFT, STOP_V, GLIDE_H, glideSpeed, FPS_SLOW, FPS_MIN, FPS_RECOVER, shadowStretch, fpsStep, IDLE_START, IDLE_SPEED, IDLE_ACC, idleDue, idleTarget, nextIdleTarget, idleNoteFail, idleExclude, idleFailed, idleForce, R, advance, turnsFor, frameFor, TURN_PER_SEC, limitTurn, AREA_FEEL, groundFeel };
 })(typeof window !== 'undefined' ? window : globalThis);

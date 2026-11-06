@@ -672,7 +672,7 @@ renderer.shadowMap.enabled = !params.has('noshadow');
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(60, 1, 0.05, 2500);
-let baseFov = 60, fovZoom = 1;
+let baseFov = 60, fovZoom = 1, autoQuiet = false;   // autoQuiet：のんびり自動運転の間は 知らせを出さない（眺めるモード）
 const SKY = LIGHT.sky || { haru: [0x5f8fd0, 0xc9d8e6], aki: [0x5684c4, 0xd8d6c8], shirokaki: [0x5a90d6, 0xcfdeea] }[season];
 scene.fog = new THREE.Fog(SKY[1], LIGHT.fog[0], LIGHT.fog[1]);
 
@@ -3504,7 +3504,7 @@ const HAMARU = (() => {
       return;
     }
     if (!S.stuck) {
-      const hard = wetHere() && Math.abs(S.steer) > 0.45 && Math.abs(S.v) > 0.05 && S.rotDown && S.rotPos < 0.1;   // ぬかるみで 耕しながら大きく旋回（爪が泥をかいて 後輪が掘れる）
+      const hard = !AUTO.on && wetHere() && Math.abs(S.steer) > 0.45 && Math.abs(S.v) > 0.05 && S.rotDown && S.rotPos < 0.1;   // ぬかるみで 耕しながら大きく旋回（爪が泥をかいて 後輪が掘れる）
       const grip = S.diffLock && Math.abs(S.steer) < 0.3 && Math.abs(S.v) > 0.05;   // デフロックで まっすぐ出る：左右の後輪が いっしょに回って 泥をつかむ
       acc = Math.max(0, acc + (hard ? dt : grip ? -dt * 1.2 : -dt * 0.05));
       if (acc > 0.8 && !slipTold) {                // 片方の後輪が 空回りしはじめた（まだ はまってはいない）
@@ -8119,7 +8119,7 @@ const FIRSTMIN = {
 const AUTO = {
   pts: [], on: false, drive: false, cap: 0.85, stuckT: 0, ZLIM: 19.5,
   build() {
-    const ls = T4.lanes(), pitch = TILL_W - 0.1, step = Math.max(2, Math.ceil(3.9 / pitch));
+    const ls = T4.lanes().filter(x => Math.abs(x) <= 11), pitch = TILL_W - 0.1, step = Math.max(2, Math.ceil(3.9 / pitch));   // 外周の列は 回るときに 鼻先が畦に当たるので 自動では通らない
     let si = 0; for (let i = 0; i < ls.length; i++) if (Math.abs(ls[i] - S.x) < Math.abs(ls[si] - S.x)) si = i;
     const cls = ((si % step) + step) % step, segs = [];
     { const s0 = []; for (let i = si; i >= 0; i -= step) s0.push(i); segs.push(s0); }
@@ -8155,20 +8155,26 @@ const AUTO = {
   },
   toggle() {
     if (this.on) { this.off(); return; }
-    if (!S.started || S.done || INTRO.on || ART.on || !$('start').classList.contains('hidden')) return;   // 田んぼアート（白線の下絵）では使わない
+    if (!S.started || S.done || INTRO.on || !$('start').classList.contains('hidden')) return;   // 田んぼアート（既定の四角など）でも使える。白線の外では作業機を上げて通る（下の 🔰 と同じ）
     this.build();
     if (this.pts.length < 2) return;
-    this.on = true; this.stuckT = 0;
+    this.on = true; this.stuckT = 0; this.stallT = 0; this.reLower = false; autoQuiet = true;
     if (camMode !== 0) { camMode = 0; look.yaw = look.pitch = 0; $('bCam').textContent = '👁 ' + CAMS[0]; }   // サイクル118: 自動運転も運転席から眺める
     if (!S.rotDown && !S.stalled) toggleRotary();   // 下りていなければ 自動で下ろす（開始時だけ。エンスト中は下げない）
     $('bAuto').classList.add('on');
   },
-  off() { this.on = false; this.drive = false; this.pts = []; const b = $('bAuto'); if (b) b.classList.remove('on'); },
+  off() { this.on = false; autoQuiet = false; this.drive = false; this.pts = []; const b = $('bAuto'); if (b) b.classList.remove('on'); },
   follow(dt) {                                          // step から毎フレーム: 追従するなら true（TRACE と同じ制御。速度だけ のんびり 0.85）
     if (!this.on) { this.drive = false; return false; }
     if (key.fwd || key.back || key.left || key.right) { this.off(); return false; }   // 操作に触れたら手動にもどる（エンスト中の操作でも解除する。Codex指摘）
     if (S.done) { this.off(); return false; }   // 終わったら自動も切る（T5の耕し切り・タイマー終了と統合）
-    if (S.stalled) { this.drive = false; return false; }   // エンスト中は追従も詰まり計時もしない
+    if (S.stalled) {                                    // エンスト中は追従も詰まり計時もしない。作業機を上げて かけなおす（下りたままでは かからない）
+      this.drive = false;
+      if (S.rotDown) { S.rotDown = false; setRotBtn(); this.reLower = true; }
+      if ((this.stallT = (this.stallT || 0) + dt) > 12) { this.off(); toast('自動運転を 止めました。なぞって 動かそう', 4); }   // 手入れが要るときは 手動へ もどして 知らせる
+      return false;
+    }
+    this.stallT = 0;
     let bi = 0, bd = 1e9;
     for (let i = 0, n = Math.min(this.pts.length, 60); i < n; i++) { const dd = Math.hypot(this.pts[i][0] - S.x, this.pts[i][1] - S.z); if (dd < bd) { bd = dd; bi = i; } }
     if (bi) this.pts.splice(0, bi); else if (this.pts.length > 1 && bd < 0.5) this.pts.shift();
@@ -8474,7 +8480,7 @@ function step(dt) {
     const cap = S.rotDown ? 3.0 / 3.6 : onSlope ? 1.4 : Infinity;
     if (want > cap) { want = cap; EASY.used = true; EASY.tell('speed', S.rotDown ? '耕すときは時速 3km までにおさえています（速いと土が粗くなる）' : '坂はゆっくり。速さをおさえています'); }
   }
-  if (EASY.on && S.started && (want !== 0 || Math.abs(S.v) > 0.05)) {   // 🔰 畦の手前で止まる：止まれる長さ＋ゆとりの先に畦があれば、ゆっくり（6cm 先も畦なら止まる）。アクセルをはなして惰性で進むあいだも見る
+  if (EASY.on && S.started && !AUTO.on && (want !== 0 || Math.abs(S.v) > 0.05)) {   // のんびり自動運転の道すじは 畦にかからないので、止めない。🔰 畦の手前で止まる：止まれる長さ＋ゆとりの先に畦があれば、ゆっくり（6cm 先も畦なら止まる）。アクセルをはなして惰性で進むあいだも見る
     // ハンドルを切っていれば曲がった先で見る。せまい所でも少しずつ動いて抜けられる（動けなくならない）
     // 曲がる道すじを 5cm ずつたどって、途中のどこかで畦にかかるかを見る（オートブレーキの小回りと、代かきの泥で曲がりにくいのもふくめる）
     // 曲がり方は、じっさいの動き（turnRate）と同じ式で。止まるまでに遅くなると曲がり方が変わり、ハンドルを切りつづけていればもっと切れるので、
@@ -8583,11 +8589,17 @@ function step(dt) {
   }
   // 旋回アップ（U で入切。はじめは切）：耕しながらハンドルを大きく切ると、作業機が自動で上がる（下げるのは手で）。
   // 判定はキーではなく 実際のハンドルの切れ角で。1 回の旋回で 1 回だけ（ハンドルをもどすと また働く）
-  else if (!tracing && S.turnUp && S.rotDown && S.rotPos < 0.08 && Math.abs(S.steer) > 0.45 && S.v > 0.05 && !S.turnLatch) {
+  else if (!tracing && !AUTO.on && S.turnUp && S.rotDown && S.rotPos < 0.08 && Math.abs(S.steer) > 0.45 && S.v > 0.05 && !S.turnLatch) {
     S.rotDown = false; S.turnLatch = true; S.turnUpHold = true; setRotBtn();
     toast('旋回アップ：ハンドルを大きく切ったので ' + IMPL + 'が上がりました。回ったら下げる');
   }
-  if (EASY.on && ART.on && S.v > 0.1) {            // 🔰 田んぼアート：白線をこえそうなら上げ、絵の中にもどったら下げる
+  if (AUTO.on && ART.on) {                         // のんびり自動運転の田んぼアート：作業機が 白線の中なら下げ、外なら上げて通る（手放しで 絵が 描ける）
+    const sd = ART.sdAt(S.x + Math.sin(S.yaw) * ROTARY_Z, S.z + Math.cos(S.yaw) * ROTARY_Z);
+    if (S.rotDown && sd > 0.3) { S.rotDown = false; setRotBtn(); }
+    else if (!S.rotDown && sd < -0.3 && !S.stalled && !OCHI.armed) { S.rotDown = true; setRotBtn(); }
+  } else if (AUTO.on && AUTO.reLower && !S.stalled && !(S.crank > 0) && !OCHI.armed) {   // エンストで上げた作業機を、かかったら下ろす
+    AUTO.reLower = false; S.rotDown = true; setRotBtn();
+  } else if (EASY.on && ART.on && S.v > 0.1) {            // 🔰 田んぼアート：白線をこえそうなら上げ、絵の中にもどったら下げる
     const [out, inn] = EASY.ahead();
     if (S.rotDown && S.rotPos < 0.08 && out >= 2) { S.rotDown = false; EASY.autoUp = true; EASY.used = true; setRotBtn(); EASY.tell('artUp', '白線をこえるので ' + IMPL + 'を上げました。絵の中にもどると下がります'); }
     else if (!S.rotDown && EASY.autoUp && inn >= 2 && Math.abs(S.steer) < 0.2 && !OCHI.armed) { S.rotDown = true; EASY.autoUp = false; setRotBtn(); }
@@ -9782,7 +9794,8 @@ function showToast(t, sec) { const el = $('toast'); el.dataset.raw = t; el.textC
 $('detailBox').checked = DETAIL;
 $('detailBox').onchange = e => { DETAIL = e.target.checked; document.body.classList.toggle('calm', !DETAIL); SAY.refresh(); try { localStorage.setItem('tractorDetail', DETAIL ? '1' : '0'); } catch (err) {} };
 $('badgeCv').addEventListener('pointerdown', e => { e.stopPropagation(); SAY.tap(); });
-function toast(t, sec = 2.2) {                    // 農家の声を読んでいる途中にほかの知らせが来たら、声はあとでもう一度出す
+function toast(t, sec = 2.2) {
+  if (autoQuiet && !S.done) return;                    // 農家の声を読んでいる途中にほかの知らせが来たら、声はあとでもう一度出す
   if (curVoice && toastT > 1) voiceQ.unshift(curVoice);
   curVoice = null;
   showToast(t, sec);

@@ -671,6 +671,7 @@ renderer.shadowMap.enabled = !params.has('noshadow');
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(60, 1, 0.05, 2500);
+let baseFov = 60, fovZoom = 1;
 const SKY = LIGHT.sky || { haru: [0x5f8fd0, 0xc9d8e6], aki: [0x5684c4, 0xd8d6c8], shirokaki: [0x5a90d6, 0xcfdeea] }[season];
 scene.fog = new THREE.Fog(SKY[1], LIGHT.fog[0], LIGHT.fog[1]);
 
@@ -8835,7 +8836,7 @@ function resize() {
   const w = innerWidth, h = innerHeight;
   renderer.setSize(w, h, false);
   camera.aspect = w / h;
-  camera.fov = w / h < 1 ? Math.min(82, 2 * Math.atan(Math.tan(32 * Math.PI / 180) / (w / h)) * 180 / Math.PI) : 60;   // 縦長の画面でも横が見えるように
+  baseFov = w / h < 1 ? Math.min(82, 2 * Math.atan(Math.tan(32 * Math.PI / 180) / (w / h)) * 180 / Math.PI) : 60; camera.fov = baseFov / fovZoom;   // 縦長の画面でも横が見えるように
   camera.updateProjectionMatrix();
 }
 addEventListener('resize', resize);
@@ -9667,14 +9668,28 @@ $('bArt').onclick = () => { if (S.started && !S.done) finish(); };
 $('bOther').onclick = () => { $('done').classList.add('hidden'); $('start').classList.remove('hidden'); };
 // なぞる（サイクル70）: 運転中は canvas をなぞると跡を追って耕し、離すと止まる。サイクル101: 地面の上なら どこで始めても なぞりになり、まわりを見るのは空のドラッグだけ
 let drag = null;
-canvas.addEventListener('pointerdown', e => { if (TRACE.begin(e)) { AUTO.off(); drag = null; canvas.setPointerCapture(e.pointerId); return; } drag = { x: e.clientX, y: e.clientY, yaw: look.yaw, pitch: look.pitch }; canvas.setPointerCapture(e.pointerId); });
+// 2本指で寄って見る（運転の操作は増やさない。景色を見るだけ）: 2本目の指で なぞりを やめ、指の開き具合で 画角を せばめる
+const viewPts = new Map();
+let viewPinch = null;
+function viewPtsDist() { const [a, b] = [...viewPts.values()]; return Math.hypot(a.x - b.x, a.y - b.y) || 1; }
+canvas.addEventListener('pointerdown', e => {
+  viewPts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (viewPts.size === 2) { viewPinch = { d0: viewPtsDist(), z0: fovZoom }; drag = null; TRACE.end(); }
+});
+canvas.addEventListener('pointerdown', e => { if (viewPts.size >= 2) return; if (TRACE.begin(e)) { AUTO.off(); drag = null; canvas.setPointerCapture(e.pointerId); return; } drag = { x: e.clientX, y: e.clientY, yaw: look.yaw, pitch: look.pitch }; canvas.setPointerCapture(e.pointerId); });
 canvas.addEventListener('pointermove', e => {
+  if (viewPts.has(e.pointerId)) viewPts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (viewPinch && viewPts.size >= 2) {
+    fovZoom = Math.max(1, Math.min(2.2, viewPinch.z0 * viewPtsDist() / viewPinch.d0));
+    camera.fov = baseFov / fovZoom; camera.updateProjectionMatrix();
+    return;
+  }
   if (TRACE.on) { TRACE.add(e); return; }
   if (!drag) return;
   look.yaw = Math.max(-2.2, Math.min(2.2, drag.yaw - (e.clientX - drag.x) * 0.005));
   look.pitch = Math.max(-0.6, Math.min(0.5, drag.pitch - (e.clientY - drag.y) * 0.004));
 });
-const endDrag = () => { drag = null; TRACE.end(); };
+const endDrag = e => { viewPts.delete(e.pointerId); if (viewPts.size < 2) viewPinch = null; drag = null; TRACE.end(); };
 canvas.addEventListener('pointerup', endDrag); canvas.addEventListener('pointercancel', endDrag);
 let toastT = 0, curVoice = null;
 // のんびり：画面の 知らせは はじめの 一文だけ（かっこ書きは キーの 案内だけ 残す）＋ あとの 文に 操作の 案内（押す・ゆるめる・解除・「O で」など）が あれば その 1 文。はじめの画面の「📖 くわしい説明」を 入れると ぜんぶ 出す。

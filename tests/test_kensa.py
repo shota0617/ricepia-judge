@@ -138,7 +138,7 @@ class FlowTests(unittest.TestCase):
         self.assertIn('typeof DeviceMotionEvent.requestPermission === "function"', HTML)
 
     def test_first_bag_crank_is_short(self):
-        self.assertIn("crankDrag.turned >= (lotIndex === 0 ? 180 : 360)", HTML)
+        self.assertIn("crankDrag.turned >= (lotIndex === 0 ? 170 : 350)", HTML)
         # タップだけで進めない: 代替は3回のまま
         self.assertIn("if (++bagTaps >= NUDGE_LIMIT) { autoProbe(); return; }", HTML)
 

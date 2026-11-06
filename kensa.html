@@ -707,7 +707,7 @@ $("sceneMeter").addEventListener("pointermove", (e) => {
   crankDrag.sum += Math.abs(d);
   $("crankArm").style.transform = "rotate(" + crankAngle + "deg)";
   if (crankDrag.sum >= 45) { crankDrag.sum = 0; tick(); }
-  if (crankDrag.turned >= (lotIndex === 0 ? 180 : 360)) { crankDrag.turned = 0; takeReading(); } /* 最初の袋は半周で1回はかれる */
+  if (crankDrag.turned >= (lotIndex === 0 ? 170 : 350)) { crankDrag.turned = 0; takeReading(); } /* 最初の袋は半周で1回はかれる */
 });
 function endCrank(e) {
   if (!crankDrag || e.pointerId !== crankDrag.id) return;

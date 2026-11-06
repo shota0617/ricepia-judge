@@ -1776,6 +1776,7 @@ let firstPick = null;   // { cands, done, opt }：えらんでいる途中
 function pickFirst(cands, done, opt = {}) {
   const D = window.NISHIO_DOTS;
   firstPick = { cands, done, opt };
+  if (!opt.title) { finishFirst(cands[0]); return; }   // はじめの1枚は 窓を出さず そのまま もらう（ループ4サイクル114・転がりを止めない）
   const open = () => {
     if (!firstPick || firstPick.cands !== cands) return;
     $('pxInfoBody').innerHTML = `<div class="pick-first"><h4>${PIA('card', '')} ${esc(opt.title || 'はじめの1枚を えらぼう')}</h4><p>${esc(opt.sub || 'えらんだ絵が、西尾ドット絵帳の1枚目になります')}</p>

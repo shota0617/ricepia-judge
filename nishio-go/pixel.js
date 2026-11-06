@@ -11940,6 +11940,18 @@ function mzHudRects(now) {   // 地図の 上に 重なる ボタン・札の �
   return mzHud.r;
 }
 const MZ_TAP_K = 0.5;   // 矢印の「🗺 タップ」の 字の 大きさ（矢印の 大きさ U に かける。U は 24点 から なので 12点 より 大きい。0.36 で 9点ほどの 小さい 字 だった。運営者の声「大きい文字シンプルに」）
+// 画面の 外の ゴールへの 矢印が お米に かぶらない ように（にしおサイクル127。自分で 遊んで 分かった：横向き 844×390 では 上の 縁が お米の すぐ 上なので、矢印と 🏁 の 旗が かおりちゃんの 顔に かぶった）：
+//   お米の まん中（w/2, cy）から U×3 より 近ければ、上下の 縁なら 横へ（ゴールの ある がわへ）、左右の 縁なら 縦へ ずらす。向き（a）は かえない。純関数
+function mzArrowClear(qx, qy, w, cy, vh, U, m, mt, a) {
+  const need = U * 3, dx = qx - w / 2, dy = qy - cy;
+  if (!(Math.hypot(dx, dy) < need)) return [qx, qy];
+  if (qy <= mt + 0.5 || qy >= vh - m - 0.5) {   // 上か 下の 縁：横へ
+    const s = Math.sqrt(Math.max(0, need * need - dy * dy)), dir = Math.cos(a) < 0 ? -1 : 1;
+    return [Math.max(m, Math.min(w - m, w / 2 + dir * s)), qy];
+  }
+  const s = Math.sqrt(Math.max(0, need * need - dx * dx)), dir = Math.sin(a) < 0 ? -1 : 1;   // 左か 右の 縁：縦へ
+  return [qx, Math.max(mt, Math.min(vh - m, cy + dir * s))];
+}
 function drawMzGoal(gt, ox, oy, T, w, vh, cy, dpr, now) {
   const p = toTile(gt.lat, gt.lng), ex = ox + p.x * T, ey = oy + p.y * T, U = Math.min(Math.max(T, Math.round(24 * dpr)), Math.round(32 * dpr)), pulse = (Math.sin(now / 260) + 1) / 2;   // U：絵の 大きさの もと（地図を 小さく していても 見える 大きさ。大きく しても 画面の 32点まで）
   const far = mzRt.path ? (mzRt.path.length - 1) * MZ_K * TILE_M : Math.hypot(p.x - (rp.x === null ? p.x : rp.x), p.y - (rp.y === null ? p.y : rp.y)) * TILE_M;
@@ -11987,6 +11999,7 @@ function drawMzGoal(gt, ox, oy, T, w, vh, cy, dpr, now) {
     const down = r[3] + R, up = r[1] - R;
     qy = down <= vh - m && (up < mt || down - qy <= qy - up) ? down : Math.max(mt, up);
   }
+  [qx, qy] = mzArrowClear(qx, qy, w, cy, vh, U, m, mt, a);   // にしおサイクル127：お米に かぶらない ように 縁に そって ずらす（横向きの 画面で 矢印と 旗が 顔に かぶっていた）
   mzMap.pin = [qx, qy, R, a];   // 矢印の 位置（テスト用）
   // 「🏁 つぎの ゴール」の 札（同じ こまで 先に 描く）に 矢印が かかる 間は うすく 描く（向きは 見えて、札の 字は 読める。
   //   自分で 遊んで 分かった：スマホを 横に した 740×360 で、上の ゴールの 矢印が 札の「つぎの」の 字に かぶって 読めなかった）

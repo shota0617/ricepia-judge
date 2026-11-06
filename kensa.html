@@ -1174,7 +1174,7 @@ function toKimeru() {
     [0, 1, 2, 3].map(c => '<div class="cell' + (c === 3 ? " last" : "") + '">' + (c === g ? '<i class="dot" data-g="' + g + '"></i>' : "") + "</div>").join("")).join("");
   layer($("decide"), true);
   showTop(null);
-  setStep(3, new Set(rows.map(r => r[2])).size > 1 ? "いちばん右の ● の下を 上へ ↑" : "● の下を 上へ ↑");
+  setStep(3, new Set(rows.map(r => r[2])).size > 1 ? "右の ● の下を 上へ ↑" : "● の下を 上へ ↑");
   $("rows").querySelectorAll(".dot").forEach((d, i) => setTimeout(() => { d.classList.add("on"); tick(); }, (120 + i * 110) * motion));
   guideAt("move", document.querySelectorAll(".gradeBtn")[worst], 0, -48);
 }

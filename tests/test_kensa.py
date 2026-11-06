@@ -222,6 +222,11 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertRegex(HTML, r"#plate \{[^}]*touch-action:none")
         self.assertIn('addEventListener("gesturestart"', HTML)
 
+    def test_decide_hint_fits_small_phone(self):
+        # 320px幅で1行に収まる長さ（「いちばん右の…」は「↑」だけが2行目に落ちていた）
+        self.assertIn('"右の ● の下を 上へ ↑"', HTML)
+        self.assertNotIn('"いちばん右の', HTML)
+
     def test_idle_card_buttons_do_not_wrap(self):
         # 320px幅で「サイトへ もどる」が2行に折れてはみ出さない
         self.assertRegex(HTML, r"#likeBtn,#returnLink \{[^}]*flex:1 1 auto; white-space:nowrap")

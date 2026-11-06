@@ -7,6 +7,9 @@
 }
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;overflow:hidden}
+#bootCover{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:var(--bg);transition:opacity .3s}
+#bootCover.off{opacity:0;pointer-events:none}
+#bootCover img{max-width:70%;height:auto}
 body{word-break:auto-phrase;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP","Yu Gothic",sans-serif;color:var(--ink);background:var(--bg);-webkit-tap-highlight-color:transparent}
 button{font:inherit;color:inherit;cursor:pointer}
 [hidden]{display:none!important}

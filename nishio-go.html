@@ -74,6 +74,18 @@
 <link rel="stylesheet" href="nishio-go/style.css"/>
 </head>
 <body>
+<script>/* 読みこみ中は 画面を切り替えず、題字だけを見せる（サイクル116）。スクリプトが読めなくても DOMContentLoaded で開く */
+(function () {
+  var c = document.createElement('div');
+  c.id = 'bootCover';
+  c.setAttribute('aria-hidden', 'true');
+  c.innerHTML = '<img src="nishio-go/logo.svg" alt="" width="272" height="40"/>';
+  document.body.appendChild(c);
+  document.addEventListener('DOMContentLoaded', function () {
+    setTimeout(function () { c.classList.add('off'); setTimeout(function () { c.remove(); }, 350); }, 50);
+  });
+})();
+</script>
 <script>/* 文字を少なく（ふだん）。せってい の「文字を多めに出す」をオンにすると外す */try{if(localStorage.getItem('nsg_text_more')!=='1')document.body.classList.add('simple')}catch(e){document.body.classList.add('simple')}</script>
 
 <header class="bar">

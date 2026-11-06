@@ -166,8 +166,15 @@ class FlowTests(unittest.TestCase):
         # iPhone は許可の画面が出るので、振るは使わない
         self.assertIn('typeof DeviceMotionEvent.requestPermission === "function"', HTML)
 
+    def test_crank_turning_carries_over_between_strokes(self):
+        # まっすぐなでるだけ（真ん中を外す）でも、角度が持ち越されていずれはかれる。袋ごと・1回はかるごとに戻す
+        self.assertIn("crankTurned += Math.abs(d);", HTML)
+        self.assertIn("crankTurned = 0; takeReading();", HTML)
+        self.assertIn("meterTaps = 0; crankTurned = 0;", HTML)
+        self.assertNotIn("turned:0", HTML)
+
     def test_first_bag_crank_is_short(self):
-        self.assertIn("crankDrag.turned >= (lotIndex === 0 ? 170 : 350)", HTML)
+        self.assertIn("crankTurned >= (lotIndex === 0 ? 170 : 350)", HTML)
         # タップだけで進めない: 代替は3回のまま
         self.assertIn("if (++bagTaps >= NUDGE_LIMIT) { autoProbe(); return; }", HTML)
 
@@ -186,7 +193,7 @@ const elements = {lcd, slots:{children:[{}, {}, {}]}, crankArm:{style:{}},
 const $ = id => elements[id];
 const pop = () => {}, tick = () => {};
 const crankPointer = e => ({a:e.angle, far:true});
-let crankDrag = {id:1, last:0, turned:0, sum:0, x:0, y:0, moved:false};
+let crankTurned = 0, crankDrag = {id:1, last:0, sum:0, x:0, y:0, moved:false};
 """ + reading + move + """
 onMove({pointerId:1, clientX:10, clientY:0, angle:90});
 assert.equal(measured, 0);

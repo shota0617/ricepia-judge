@@ -489,7 +489,7 @@ function startLot() {
   hint.style.display = "";
   showTop("sceneBag");
   $("dish").textContent = "";
-  measured = 0; meterTaps = 0; bagTaps = 0; hankoTaps = 0; spread = false; stamped = false; inked = false; twistDone = false;
+  measured = 0; meterTaps = 0; crankTurned = 0; bagTaps = 0; hankoTaps = 0; spread = false; stamped = false; inked = false; twistDone = false;
   token.hidden = true;
   $("lcd").textContent = "--.-";
   $("meterBtn").classList.remove("high");
@@ -670,7 +670,7 @@ $("sceneBag").addEventListener("pointercancel", (e) => { if (P.drag && e.pointer
 $("bagBtn").addEventListener("click", (e) => { if (e.detail === 0) autoProbe(); }); /* キーボードの Enter はそのまま進める */
 
 /* はかる: 水分計のハンドルをぐるぐる回す。1周で1回はかれる */
-let meterTaps = 0, crankDrag = null, crankAngle = 0;
+let meterTaps = 0, crankDrag = null, crankAngle = 0, crankTurned = 0; /* 回した角度は指を離しても持ち越す。まっすぐなでるだけでも、いずれはかれる */
 function toHakaru() {
   showTop("sceneMeter");
   setStep(1, "💧 ぐるぐる まわす");
@@ -696,11 +696,11 @@ $("sceneMeter").addEventListener("pointerdown", (e) => {
   if (crankDrag) return; /* 2本目の指は混ぜない */
   capture($("sceneMeter"), e);
   guideOff();
-  crankDrag = { id:e.pointerId, last:crankPointer(e).a, turned:0, sum:0, x:e.clientX, y:e.clientY, moved:false };
+  crankDrag = { id:e.pointerId, last:crankPointer(e).a, sum:0, x:e.clientX, y:e.clientY, moved:false };
 });
 $("sceneMeter").addEventListener("pointermove", (e) => {
   if (step !== 1 || measured >= LOT.moisture.length || !e.buttons && e.pointerType === "mouse") return;
-  if (!crankDrag) crankDrag = { id:e.pointerId, last:crankPointer(e).a, turned:0, sum:0, x:e.clientX, y:e.clientY, moved:true }; /* 先の指を離しても、残った指で続ける */
+  if (!crankDrag) crankDrag = { id:e.pointerId, last:crankPointer(e).a, sum:0, x:e.clientX, y:e.clientY, moved:true }; /* 先の指を離しても、残った指で続ける */
   if (e.pointerId !== crankDrag.id) return;
   if (Math.hypot(e.clientX - crankDrag.x, e.clientY - crankDrag.y) > 6) crankDrag.moved = true;
   const p = crankPointer(e);
@@ -710,11 +710,11 @@ $("sceneMeter").addEventListener("pointermove", (e) => {
   if (d < -180) d += 360;
   crankDrag.last = p.a;
   crankAngle += d;
-  crankDrag.turned += Math.abs(d);
+  crankTurned += Math.abs(d);
   crankDrag.sum += Math.abs(d);
   $("crankArm").style.transform = "rotate(" + crankAngle + "deg)";
   if (crankDrag.sum >= 45) { crankDrag.sum = 0; tick(); }
-  if (crankDrag.turned >= (lotIndex === 0 ? 170 : 350)) { crankDrag.turned = 0; takeReading(); } /* 最初の袋は半周で1回はかれる */
+  if (crankTurned >= (lotIndex === 0 ? 170 : 350)) { crankTurned = 0; takeReading(); } /* 最初の袋は半周で1回はかれる */
 });
 function endCrank(e) {
   if (!crankDrag || e.pointerId !== crankDrag.id) return;

@@ -8882,8 +8882,14 @@ function updateCamera(dt) {
   sun.target.position.copy(rig.position);
   sky.position.copy(camera.getWorldPosition(tmpV));
 }
+let wasPortrait = innerWidth < innerHeight;   // サイクル195: 縦か横か（向きが変わったときだけ なぞりをやめる）
 function resize() {
   const w = innerWidth, h = innerHeight;
+  // サイクル195（最初の1分）: なぞりの途中で画面の向きが変わったら、指を離したのと同じに線を消して止まる。
+  // 回したあとは同じ指の位置が別の地面を指すので、そのまま続けると線が 5m ほど飛んでトラクターが急に走った（ループ側 scratchpad/cond195.js rotate）。
+  // ツールバーの出入りなど向きの変わらない大きさの変化では やめない
+  const portrait = w < h;
+  if (portrait !== wasPortrait) { wasPortrait = portrait; if (TRACE.on) TRACE.end(); }
   renderer.setSize(w, h, false);
   camera.aspect = w / h;
   baseFov = w / h < 1 ? Math.min(82, 2 * Math.atan(Math.tan(32 * Math.PI / 180) / (w / h)) * 180 / Math.PI) : 60; camera.fov = baseFov / fovZoom;   // 縦長の画面でも横が見えるように

@@ -8554,7 +8554,7 @@ function step(dt) {
   // 代かきの 前に ハローを 上げて 田んぼの 中を 25m 走ると（まだ かいていない 泥に 跡を つけた）：S の字の 跡の 話
   if (SHIRO && !S.rotDown && !softAt(S.x, S.z) && Math.abs(S.x) < HX - 1 && Math.abs(S.z) < HZ - 1 && Math.abs(S.v) > 0.3 && (S.workT || 0) < 3 && !S.preTold) {
     S.preTrackM = (S.preTrackM || 0) + Math.abs(S.v) * dt;
-    if (S.preTrackM > 25 && !S.preChk && (S.preTries || 0) < 3 && toastT <= 0) {
+    if (S.preTrackM > 25 && !S.preChk && (S.preTries || 0) < 3 && toastT <= 0 && !startNoticeMuted()) {   // サイクル178・最初の1分: のんびり走る間は 話を 出さない（1分をすぎてから）
       S.preChk = true; toast(S.preMsg = 'かく前の 泥に タイヤの 跡が ついた。かくと 跡が 消えるので、先に S の字に 跡を つけておくと、水が 濁っても かいた 所と まだの 所が わかる', 7);
     }
   }
@@ -8665,8 +8665,8 @@ function step(dt) {
       if (!S.dpfLowTold) { S.dpfLowTold = true; toast('DPF の自動再生中。' + setRpm() + ' 回転のままでは 排気の温度が上がらず、再生が進みません。' + (PTOREV ? 'O で 正転にもどすか、' : '') + '回転を ' + REGEN_RPM + ' 以上に上げる（' + (PTOREV ? '' : 'I・') + '⛽）', 6); voice('pto2nenpi'); }
     } else if (S.dpfT > 0) { if ((S.dpfT -= dt) <= 0) S.dpfLoad = 0; }
     else if ((S.dpfLoad = (S.dpfLoad || 0) + dt * AIRCL.sootK()) > 200) { S.dpfT = 90; if (!S.dpfTold) { S.dpfTold = true; toast('DPF（排気のすすをこしとるフィルター）を自動で再生しています。そのまま作業できます'); } }
-    if (S.fineT > 4 && !S.fineTold) { S.fineTold = true; toast('秋起こしで 土を 細かくしすぎています（耕うんピッチ ' + Math.round(S.pitch) + 'cm）。田んぼは 荒く起こして、塊のすきまで 乾きやすくする（冬の霜と雨で くだける）。速さを上げるか PTO を 1 速に', 6); setTimeout(() => voice('arakuaki'), 6500); }
-    if (S.fastT > 3 && !S.fastTold && !SHIRO && season !== 'aki') {   // 秋起こしは 粗めでよいので 言わない
+    if (S.fineT > 4 && !S.fineTold && !startNoticeMuted()) { S.fineTold = true; toast('秋起こしで 土を 細かくしすぎています（耕うんピッチ ' + Math.round(S.pitch) + 'cm）。田んぼは 荒く起こして、塊のすきまで 乾きやすくする（冬の霜と雨で くだける）。速さを上げるか PTO を 1 速に', 6); setTimeout(() => voice('arakuaki'), 6500); }
+    if (S.fastT > 3 && !S.fastTold && !SHIRO && season !== 'aki' && !startNoticeMuted()) {   // 秋起こしは 粗めでよいので 言わない
       S.fastTold = true; toast('速すぎて土が粗くなっています（耕うんピッチ ' + Math.round(S.pitch) + 'cm）。1〜2 速でゆっくり走ると細かく砕けます'); }
   }
   // 爪軸の回転：PTO が入ると回りはじめ、上げて PTO が切れても すぐには止まらず、はずみで しばらく回る

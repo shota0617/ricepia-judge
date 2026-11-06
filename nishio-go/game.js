@@ -177,10 +177,15 @@ if (!window.L) {
 const map = L.map('map', { zoomControl: false, minZoom: 11, maxZoom: 19,
   maxBounds: L.latLngBounds([playBounds[0][0] - 0.15, playBounds[0][1] - 0.15], [playBounds[1][0] + 0.15, playBounds[1][1] + 0.15]), maxBoundsViscosity: 0.8 })
   .setView(CFG.center, 15);
-L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png', {
+const gsiTiles = L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png', {
   minZoom: 5, maxNativeZoom: 18, maxZoom: 19,
   attribution: '<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank" rel="noopener">地理院タイル</a> | スポット © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>',
-}).addTo(map);
+});
+// にしおサイクル130：地理院タイルは 地図が 見えている ときだけ 読む。めいろ（body.px）の 間は #map が visibility:hidden で 見えないのに、開いた 直後に 12〜18枚 読んでいた（遅い 回線で 最初の 1分の 読みこみと 取りあう）。
+//   歩く 地図（px でない）に なったら 足し、めいろに もどったら はずす。はじめは ページの 読みこみが 終わって 0.5秒 後に 見る（pixel.js が px を 立てる 前に 読みはじめない）
+const gsiSync = () => { const show = !document.body.classList.contains('px'); if (show && !map.hasLayer(gsiTiles)) gsiTiles.addTo(map); else if (!show && map.hasLayer(gsiTiles)) map.removeLayer(gsiTiles); };
+new MutationObserver(gsiSync).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+window.addEventListener('load', () => setTimeout(gsiSync, 500), { once: true });
 L.control.zoom({ position: 'topright' }).addTo(map);
 
 let follow = true;

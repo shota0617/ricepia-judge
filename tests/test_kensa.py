@@ -166,6 +166,13 @@ class FlowTests(unittest.TestCase):
         # iPhone は許可の画面が出るので、振るは使わない
         self.assertIn('typeof DeviceMotionEvent.requestPermission === "function"', HTML)
 
+    def test_failed_tries_also_count_toward_auto(self):
+        # タップだけでなく「進まなかった試し」（違う向きの引き・届かない運び・短い引き上げ・短いおろし）も3回で自動
+        self.assertIn("if (P.done || P.inserted) return; /* さす前に指を離したら", HTML)
+        self.assertIn("if (++senseTaps >= NUDGE_LIMIT) autoSense();", HTML)
+        self.assertIn("if (++taps >= 2) { taps = 0; pickGrade(btn); }", HTML)
+        self.assertIn("if (++hankoTaps >= NUDGE_LIMIT) { dropHanko(); return; }", HTML)
+
     def test_crank_turning_carries_over_between_strokes(self):
         # まっすぐなでるだけ（真ん中を外す）でも、角度が持ち越されていずれはかれる。袋ごと・1回はかるごとに戻す
         self.assertIn("crankTurned += Math.abs(d);", HTML)

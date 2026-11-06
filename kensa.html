@@ -658,11 +658,10 @@ $("sceneBag").addEventListener("pointermove", (e) => {
 });
 function endBagDrag(e) {
   if (!P.drag || e.pointerId !== P.drag.id) return;
-  const tapped = !P.drag.moved;
   P.drag = null;
-  if (!tapped || P.done) return;
+  if (P.done || P.inserted) return; /* さす前に指を離したら、タップでも違う向きの引きでも1回と数える */
   if (++bagTaps >= NUDGE_LIMIT) { autoProbe(); return; }
-  /* タップだけだと、動かし方を穀刺しが見せる */
+  /* 進まなかったときは、動かし方を穀刺しが見せる */
   $("probe").animate([{ transform:"translate(" + P.x + "px," + P.y + "px)" }, { transform:"translate(" + (P.x - 18) + "px," + P.y + "px)" }, { transform:"translate(" + P.x + "px," + P.y + "px)" }], { duration:320 * motion, easing:"ease-in-out" });
 }
 $("sceneBag").addEventListener("pointerup", endBagDrag);
@@ -1149,10 +1148,9 @@ function endToken() {
     return;
   }
   if (!senseDrag) return;
-  const tapped = !senseDrag.moved;
   senseDrag = null;
   placeToken(0, 0);
-  if (tapped && ++senseTaps >= NUDGE_LIMIT) autoSense();
+  if (++senseTaps >= NUDGE_LIMIT) autoSense(); /* 顔に届かなかった運びもタップも数える */
 }
 token.addEventListener("pointerup", endToken);
 token.addEventListener("pointercancel", endToken);
@@ -1209,11 +1207,10 @@ document.querySelectorAll(".gradeBtn").forEach(btn => {
   });
   btn.addEventListener("pointerup", () => {
     if (!drag) return;
-    const tapped = !drag.moved;
     drag = null;
     btn.style.transform = "";
-    if (tapped && ++taps >= 2) { taps = 0; pickGrade(btn); }
-    else if (tapped) btn.animate([{ transform:"none" }, { transform:"translateY(-12px)" }, { transform:"none" }], { duration:260 * motion, easing:"ease-out" });
+    if (++taps >= 2) { taps = 0; pickGrade(btn); } /* 届かなかった引き上げもタップも数える */
+    else btn.animate([{ transform:"none" }, { transform:"translateY(-12px)" }, { transform:"none" }], { duration:260 * motion, easing:"ease-out" });
   });
   btn.addEventListener("pointercancel", () => { drag = null; btn.style.transform = ""; });
   btn.addEventListener("click", (e) => { if (e.detail === 0) pickGrade(btn); });
@@ -1326,10 +1323,9 @@ function endHanko() {
     return;
   }
   if (!hankoDrag) return;
-  const tapped = !hankoDrag.moved;
   hankoDrag = null;
   if (stamped) return;
-  if (tapped && ++hankoTaps >= NUDGE_LIMIT) { dropHanko(); return; }
+  if (++hankoTaps >= NUDGE_LIMIT) { dropHanko(); return; } /* 届かなかったおろしもタップも数える */
   setHanko(0);
   bobHanko();
 }

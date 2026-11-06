@@ -702,7 +702,7 @@ $("sceneMeter").addEventListener("pointermove", (e) => {
   $("crankArm").style.transform = "rotate(" + crankAngle + "deg)";
   $("lcd").textContent = (12 + Math.random() * 6).toFixed(1);
   if (crankDrag.sum >= 45) { crankDrag.sum = 0; tick(); }
-  if (crankDrag.turned >= 360) { crankDrag.turned = 0; takeReading(); }
+  if (crankDrag.turned >= (lotIndex === 0 ? 180 : 360)) { crankDrag.turned = 0; takeReading(); } /* 最初の袋は半周で1回はかれる */
 });
 function endCrank() {
   if (!crankDrag) return;

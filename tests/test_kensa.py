@@ -137,6 +137,11 @@ class FlowTests(unittest.TestCase):
         # iPhone は許可の画面が出るので、振るは使わない
         self.assertIn('typeof DeviceMotionEvent.requestPermission === "function"', HTML)
 
+    def test_first_bag_crank_is_short(self):
+        self.assertIn("crankDrag.turned >= (lotIndex === 0 ? 180 : 360)", HTML)
+        # タップだけで進めない: 代替は3回のまま
+        self.assertIn("if (++bagTaps >= NUDGE_LIMIT) { autoProbe(); return; }", HTML)
+
     def test_crack_only_shows_when_zoomed(self):
         self.assertIn('if (kind === "higai" && !far) px(', HTML)
         self.assertIn('if (far) return spriteCache[key] = c.toDataURL();', HTML)

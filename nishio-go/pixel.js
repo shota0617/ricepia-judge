@@ -10487,7 +10487,7 @@ function mzCubeShelfH(dpr) { const S = Math.round(MZ_CLOCK_PX * dpr), s = Math.r
 function mzViewShelfY(w, dpr, now) {   // ピース棚の 下（パノラマ・見晴らし中の 札を 置く 高さ）。棚の 計算と 同じ 行数・高さ
   const S = Math.round(MZ_CLOCK_PX * dpr), gap = Math.round(Math.round(S * 0.9) * 0.35), rows = 1 + (mzScare.until > now ? 1 : 0) + (mzSpring.until > now ? 1 : 0);
   const done = mzPiece.doneAt && now - mzPiece.doneAt < MZ_PIECE.showMs, shelfH = Math.round(S * 0.9 * (done ? 1.8 : 1));
-  return Math.round(S * 1.5 + S * 1.9 * (rows - 1) + S * 1.35) + shelfH + gap * 2 + (mzCube.sx >= 0 ? mzCubeShelfH(dpr) : 0);   // 金の キューブ棚（ピース棚の すぐ 下）の ぶんも 下げる
+  return Math.round(S * 1.5 + S * 1.9 * (rows - 1) + S * 1.35) + shelfH + gap * 2 + (mzCube.sx >= 0 && !cubeFirstGoal() ? mzCubeShelfH(dpr) : 0);   // 金の キューブ棚（ピース棚の すぐ 下）の ぶんも 下げる
 }
 function drawMzViewPanorama(w, dpr, now) {   // パノラマ帯（約6秒。海・田んぼ・町の 3つの 景色が 横に 並び、端に かおりちゃんのお米が 立つ。ピース棚の 下）
   if (!mzView.panoAt || now - mzView.panoAt >= MZ_VIEW.panoMs || mzView.sx < 0 || mapCovered(true) || mzBanner.t0) return;
@@ -11541,6 +11541,7 @@ function mzCubeReveal() {   // 視点が 回って 隠れていた 印が 見え
   for (const [cx, cy, col] of mzMiniMarks()) { mzMini.seen.set(cx + ',' + cy, col); n++; }
   return n;
 }
+const cubeFirstGoal = () => { try { return !(Number(lsGet('nsg_mzgoals', '0')) >= 1); } catch (e) { return false; } };   // はじめての ゴールの 前か（nsg_mzgoals は mzGoalsDone と 同じ 鍵。読めなければ これまでどおり 出す）
 function mzCubeTick(now) {
   if (rp.x === null) return;
   const a = Math.floor(rp.x / MZ_K), b = Math.floor(rp.y / MZ_K);
@@ -11549,6 +11550,7 @@ function mzCubeTick(now) {
   if (mzCube.cx < 0) {   // まだ 出ていない：地図が 読めるまで 0.5秒ごとに さがす。4つ 取ったら もう 出ない
     if (mzCube.got >= MZ_CUBE.n || now < mzCube.next) return;
     mzCube.next = now + 500;
+    if (cubeFirstGoal()) return;   // にしおサイクル125：めいろの はじめての ゴールに 着くまで（最初の 1分）は 金の キューブの かけらを 出さない（上の 空の 棚も 出ない）。2回目からは これまでどおり
     const c = mzCubePick();
     if (c) { mzCube.cx = c[0]; mzCube.cy = c[1]; dirty = true; }
     return;
@@ -11600,7 +11602,7 @@ function drawMzCubeBig(ox, oy, T, now) {   // 完成した 大きな 金の キ�
   ctx.restore();
 }
 function drawMzCubeShelf(w, dpr, now) {   // 迷路の 上の キューブ棚（4つの 小さな 立方体の 絵。取った 分は 金・まだは 輪郭だけ）。文字・数字は 書かない。ピース棚の すぐ 下
-  if (mzCube.sx < 0 || mapCovered(true) || mzBanner.t0) return;
+  if (mzCube.sx < 0 || mapCovered(true) || mzBanner.t0 || cubeFirstGoal()) return;   // はじめての ゴールまでは 棚も 出さない（にしおサイクル125）
   const S = Math.round(MZ_CLOCK_PX * dpr), s = Math.round(S * 0.9), gap = Math.round(s * 0.35), tot = s * MZ_CUBE.n + gap * (MZ_CUBE.n - 1), x0 = Math.round(w / 2 - tot / 2);
   const rows = 1 + (mzScare.until > now ? 1 : 0) + (mzSpring.until > now ? 1 : 0), pieceDone = mzPiece.doneAt && now - mzPiece.doneAt < MZ_PIECE.showMs, shelfH = Math.round(S * 0.9 * (pieceDone ? 1.8 : 1));
   const y0 = Math.round(S * 1.5 + S * 1.9 * (rows - 1) + S * 1.35) + shelfH + gap * 2 - gap;

@@ -613,7 +613,7 @@ const CHECKS = {
     ok(nf.cls && +nf.h1 >= 700 && +nf.btn >= 700 && nf.start <= nf.H, '字が とどかない ときは 見出しと ボタンを 太い かわりの 字で・ボタンは 1画面目', nf);
     // 147周目：字が とどいたら 太字を やめる（この 環境で Google Fonts に つながる とき だけ 見る）・とどく 前も にせの 太字に しない
     const p2 = await page(b, 360, 560, ''); const on = await p2.evaluate(async () => { for (let i = 0; i < 60; i++){ if ([...document.fonts].some(f => /Dela Gothic One/.test(f.family) && f.status === 'loaded')) break; await new Promise(r => setTimeout(r, 100)); }
-      const loaded = [...document.fonts].some(f => /Dela Gothic One/.test(f.family) && f.status === 'loaded'); await new Promise(r => setTimeout(r, 100)); return { loaded, cls: document.documentElement.classList.contains('nofont'), synth: getComputedStyle(document.querySelector('#title h1')).fontSynthesis }; });
+      const loaded = [...document.fonts].some(f => /Dela Gothic One/.test(f.family) && f.status === 'loaded'); for (let i = 0; i < 30 && loaded && document.documentElement.classList.contains('nofont'); i++) await new Promise(r => setTimeout(r, 100)); /* 3200周目：とどいた 知らせ（loadingdone）は 少し おくれる。重い ときに 100ms では 落ちた ので、外れる まで 3秒 待つ */ return { loaded, cls: document.documentElement.classList.contains('nofont'), synth: getComputedStyle(document.querySelector('#title h1')).fontSynthesis }; });
     if (on.loaded) ok(!on.cls, '字が とどいたら 太字を やめる', on); else console.log('  （Google Fonts に つながらない ので「とどいたら やめる」は 見ない）');
     ok(/none/.test(nf.synth || 'none'), '太字の 間も にせの 太字に しない', nf);
   },

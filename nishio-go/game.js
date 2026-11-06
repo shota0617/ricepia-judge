@@ -2742,7 +2742,7 @@ function clearGive(n) {
   track('game_clear', { days: dayN(), spots: Object.keys(S.visits).length, mode: demo ? 'play' : 'walk' });
   const key = stateKey();
   badgesSoon();   // バッジ（殿堂入り）は すぐ。知らせは ごほうびの画面が出ている間は閉じてから出る（toastQ）
-  setTimeout(() => endingWhenFree(key), 900);
+  setTimeout(() => { if (stateKey() === key) toastAfter('👑 殿堂入り！ 記録は きろく の バッジ「👑 殿堂入り」から 見られるよ'); }, 900);   // 運営者の声（2026-11-06）：止まる 窓は 自動で 開かない
   if (ktOn()) setTimeout(() => KT.say([{ t: 'ぜんぶの 地区を めぐったね！ いっしょに 歩けて うれしかったよ。', mood: 'happy' }, 'このあとも、また いっしょに さんぽ しよう。'], { busy: ktBusy, key: 'clear' }), 1500);
   return true;
 }
@@ -3038,61 +3038,22 @@ const starRow = n => `<div class="stars" aria-label="めずらしさ ${n}">${'<i
 const react = { pending: null, shown: 0, t: 0 };
 // イベントの窓が開いている間に来た ごほうびは、閉じてから出す（イベントの下で出て、答えている間に消えないように）
 const medashiOpen = () => !!document.querySelector('.medashi:not([hidden]), #howto:not([hidden])');   // イベントの窓（古い地図・雲母石。どれも .medashi）と「あそびかた」。開いている 間の ごほうびは 待って、とじてから 出す
-function showReward(total, name, lines, lvUp, fact, dot, waited, mz, tip) {   // mz：めいろの ゴールの シェア（takeMzShare）
-  if (medashiOpen()) {   // 待っている ごほうびは来た順に1つずつ（閉じたあと、前のごほうびが消えてから次）
-    const q = showReward.pending || (showReward.pending = []);
-    q.push([total, name, lines, lvUp, fact, dot, waited, mz, tip]);
-    if (q.length === 1) setTimeout(function drain() {
-      if (medashiOpen() || $('reward').classList.contains('show') || showReward.waiting) { setTimeout(drain, 600); return; }
-      const args = q.shift();
-      showReward(...args);
-      if (q.length) setTimeout(drain, 600);
-    }, 600);
-    return;
-  }
-  const el = $('reward'), D = window.NISHIO_DOTS;
-  if (waited !== true) {
-    const gen = showReward.gen = (showReward.gen || 0) + 1;   // あとから来たごほうびが先。読みこみを待っている古いごほうびは出さない
-    if (dot && D && D.ready && !D.ready([dot.id])) { showReward.waiting = gen; D.load([dot.id]).then(() => { if (showReward.waiting === gen) showReward.waiting = 0; if (gen === showReward.gen) showReward(total, name, lines, lvUp, fact, dot, true, mz, tip); }); return; }   // Blender の絵のシートを読んでから出す（読めなければ前の描き方の絵）
-  }
-  showReward.waiting = 0;
+// 運営者の声（2026-11-06）「ゲームが止まるカードは廃止」：ごほうびの 大きなカード（地図の まんなかに 出て、めいろの 時計も 止めていた）は 出さない。
+// 知らせは 主人公の まわりの 浮き文字と、上の 1行だけ（たからばこ・到着と 同じ）。ポイント・記録・ドット絵・まちメモ・袋は 呼ぶ前に もう 残してある
+function showReward(total, name, lines, lvUp, fact, dot) {
+  const D = window.NISHIO_DOTS, P = window.nishioPixel;
+  let f = null;
+  try { f = dot && D && D.info ? D.info(dot.id) : null; } catch (e) { f = null; }
   sound.jingle(lvUp ? 'levelup' : 'checkin');
-  // うれしい場面（はじめて見つけた絵・レベルアップ）には「シェア」のボタン（share.js。押すとシェアの窓）
-  const shareKind = dot && (dot.fresh || dot.kira) && D ? 'dot' : lvUp ? 'lvup' : mz ? 'mzgoal' : '';   // めいろの ゴール：遊んだ 画面を シェア
-  showReward.mz = shareKind === 'mzgoal' ? mz : null;
-  const shareBtn = shareKind ? `<button type="button" class="btn mini rw-share" data-rw-share="${shareKind}"${shareKind === 'dot' ? ` data-dot="${dot.id}"` : ''}>📣 シェア</button>` : '';
-  const tipHtml = tip ? `<button type="button" class="rw-tip" data-rw-tip aria-expanded="false" aria-label="名物のひとこと">💡</button><p class="rw-tipline" hidden>${esc(tip)}</p>` : '';   // ふだんは 💡だけ。押したときに 1行
-  const stay = shareKind ? 7000 : 0;   // シェアのボタンがあるときは長めに出す（.rw.long の7秒のアニメーションに合わせる）
-  if (simple()) {
-    // 絵が主役：ドット絵を大きく、金の額縁に。はじめての絵には NEW のリボンと、めずらしさの星
-    // いちばん上に、どこで何があったか（チェックインした名所・たからばこ など）。絵の題名は額縁の下の札（絵の題名を、着いた所とまちがえないように）
-    const f = dot && D ? D.info(dot.id) : null;
-    el.innerHTML = f
-      ? `<div class="rw hero long${dot.kira ? ' kira' : ''}">${dot.kira ? '<span class="ribbon kira">キラ</span>' : dot.fresh ? '<span class="ribbon">NEW</span>' : ''}
-        <div class="place">${esc(name)}</div>
-        <div class="frame"><img class="dot-card" src="${D.dataUrl(dot.id)}" alt="${esc(f.name)}" width="192" height="192"/></div>
-        ${starRow(dotStars(f))}<div class="banner">${PIA('card', 'もらった絵')} ${esc(f.title)}</div>
-        <div class="sub">${ART32('stat-coin', 'ポイント')}<b>+${total}</b></div>
-        ${rewardChips(lines, fact, total, true)}
-        ${lvUp ? `<div class="lvup">${PIA('star', 'レベルアップ')} Lv${lvUp}</div>` : ''}${tipHtml}${shareBtn}</div>`
-      : `<div class="rw${shareKind ? ' long' : ''}"><div class="big">${ART32('stat-coin', 'ポイント')}+${total}</div><div class="nm">${esc(name)}</div>
-        ${lines.some(l => l.startsWith('🍚 当店に来てくれて')) ? '<div class="thanks">来てくれて ありがとう！</div>' : ''}
-        ${rewardChips(lines, fact)}
-        ${lvUp ? `<div class="lvup">${PIA('star', 'レベルアップ')} Lv${lvUp}</div>` : ''}${tipHtml}${shareBtn}</div>`;
-    if (navigator.vibrate) navigator.vibrate([60, 40, 120]);
-    toastHold(); el.classList.add('show');
-    clearTimeout(showReward.t); showReward.t = setTimeout(hideReward, stay || (dot ? 5000 : 2700));
-    afterReward();
-    return;
-  }
-  el.innerHTML = `<div class="rw${fact || dot || shareKind ? ' long' : ''}"><div class="big">+${total}pt</div><div class="nm">${esc(name)}</div>
-    ${dot && D ? `<img class="dot-card${dot.kira ? ' kira' : ''}" src="${D.dataUrl(dot.id)}" alt="${esc(D.info(dot.id).name)}" width="144" height="144"/>` : ''}
-    <ul>${lines.map(l => `<li>${esc(l)}</li>`).join('')}</ul>
-    ${fact ? `<p class="fact">💡 ${esc(fact)}</p>` : ''}
-    ${lvUp ? `<div class="lvup">🎉 レベルアップ！<br/><span>Lv${lvUp}「${esc(titleOf(lvUp))}」</span></div>` : ''}${tipHtml}${shareBtn}</div>`;
   if (navigator.vibrate) navigator.vibrate([60, 40, 120]);
-  toastHold(); el.classList.add('show');
-  clearTimeout(showReward.t); showReward.t = setTimeout(hideReward, Math.max(stay, fact || dot ? 7000 : 2700));
+  if (P && P.floatText) {
+    P.floatText(`+${total}`);
+    if (f) P.floatText(dot.kira ? '🖼 キラ' : dot.fresh ? '🖼 NEW' : '🖼 +1');
+    if (lvUp) P.floatText(`⭐ Lv${lvUp}`);
+  }
+  const art = f ? `　🖼 ${dot.kira ? 'キラ ' : dot.fresh ? 'NEW ' : ''}${f.title}` : '';
+  toast(`${name.replace(/！.*$/, '！')}　+${total}pt${art}${lvUp ? `　⭐ レベル${lvUp}！` : ''}`);
+  lines.filter(l => l.startsWith('🧭')).forEach(toastAfter);   // はじめての ごほうびの「つぎは ○○へ」は 続けて 1行
   afterReward();
 }
 // ごほうびの画面は、どこかをタップすると消える（タップは下の地図やボタンには届かない）

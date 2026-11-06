@@ -961,6 +961,7 @@ function gainPoints(n) {
   session.gained += n;   // 1回に遊んだ間にふえたポイント（session_end）
   S.log = S.log.slice(0, 200);
   renderHeader();
+  if (demo && !(store.get('nsg_mzgoals', 0) >= 1)) return 0;   // にしおサイクル122：転がして 遊ぶ 人は、めいろの はじめての ゴールに 着くまで（最初の 1分）レベルが 上がっても 知らせない（⭐ の 知らせ・音・🎉 Lv。レベル表示は サイクル113 で しまってあり、レベルの 記録は そのまま 上がる。2回目からは これまでどおり。歩いて 遊ぶ 人は かわらない）
   return levelOf(S.total) > before ? levelOf(S.total) : 0;
 }
 

@@ -7491,7 +7491,10 @@ function riceSay(t, ms = 1400, mood = '') {   // t は もう 使わない（呼
   dirty = true;
 }
 function drawRiceSay() { /* 吹き出しは 描かない */ }
+const QUIET_NUM = /[+＋]\d|\d+\s?pt|\d+(\.\d+)?\s?km|\d+\s?m[！!]|×\d/;   // にしおサイクル123：数の 浮き文字（+5・+20pt・500m・1km・×3 など。game.js の toast と 同じ 形）
+function quietNumText(t) { return !!G.demo && !(Number(lsGet('nsg_mzgoals', '0')) >= 1) && QUIET_NUM.test(String(t)); }   // 転がして 遊ぶ 人は、めいろの はじめての ゴールに 着くまで（最初の 1分）数の 浮き文字を 出さない（記録は そのまま 上がる）
 function floatText(t) {   // 「ゴール！」の あと 待っていた 文字を 順に 出している 間（floatQEnd まで）に 来た 文字は、列の 最後に（重ねない）
+  if (quietNumText(t)) return;   // にしおサイクル123：最初の 1分の 数の 浮き文字は 出さない
   // つづけて 来た 文字は 前の 文字が 消えてから 出す（字を 大きく したら、同じ 所に 2つ 重なって 読めなかった 2026-10-27）
   const now = performance.now(), at = Math.max(now, floatQEnd, floatLast + FLOAT_GAP);
   if (floatQEnd > now) floatQEnd += 1300;

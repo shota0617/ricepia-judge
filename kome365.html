@@ -30,11 +30,11 @@ canvas#cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-a
 /* HUD：きょうの 日づけ・天気・いまの 数（水 cm など）。さわれない */
 #hud{position:absolute;left:0;right:0;top:0;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;pointer-events:none;
   padding-top:calc(10px + env(safe-area-inset-top,0px));padding-left:max(14px,env(safe-area-inset-left,0px));padding-right:max(14px,env(safe-area-inset-right,0px))}
-.hcell{display:flex;flex-direction:column;gap:2px;min-width:0}
+.hcell{display:flex;flex-direction:column;gap:2px;flex:0 0 auto} /* 日づけと 水の 数は ちぢめない（字が 切れない） */
 .hcell.r{align-items:flex-end;text-align:right}
 .hlab{font-size:12px;letter-spacing:.12em;color:var(--ink-dim);white-space:nowrap}
 .hval{font-family:var(--display);font-size:22px;line-height:1;font-variant-numeric:tabular-nums;white-space:nowrap;text-shadow:0 1px 0 #131a2e}
-#wx{font-size:14px;font-weight:700;color:var(--ink);white-space:nowrap;text-align:center;align-self:center}
+#wx{font-size:13px;font-weight:700;color:var(--ink);white-space:nowrap;margin-top:2px}
 #stage{font-size:12px;letter-spacing:.1em;color:var(--kraft);font-weight:700;white-space:nowrap}
 /* こめつぶとの 会話（字の かべを やめて、吹き出しで） */
 .talk{display:flex;gap:8px;align-items:flex-end;text-align:left}
@@ -90,8 +90,7 @@ button.sound[aria-pressed="false"]{color:var(--ink-dim);border-color:rgba(169,17
 <div id="app">
   <canvas id="cv" aria-label="田んぼ"></canvas>
   <div id="hud" aria-live="off">
-    <div class="hcell"><span class="hlab" id="dayNo">1日目</span><span class="hval" id="date">4月1日</span></div>
-    <div id="wx"></div>
+    <div class="hcell"><span class="hlab" id="dayNo">1日目</span><span class="hval" id="date">4月1日</span><span id="wx"></span></div>
     <div class="hcell r"><span id="stage">たねもみ</span><span class="hval" id="stat">みず 0cm</span></div>
   </div>
   <div id="talk" class="talk" aria-live="polite"><div class="who" id="who"></div><p class="say" id="say"></p></div>
@@ -286,6 +285,7 @@ function finalize(S){
 /* ========== ゲームの 状態 ========== */
 let S = newState((Date.now() ^ Math.floor(Math.random()*1e9))>>>0);
 let soundOn = true; try{ soundOn = localStorage.getItem('k365_sound') !== 'off'; }catch(e){}
+const now = () => (K3.manual ? V.t*1000 : performance.now());
 const V = { /* 見た目の 動き（モデルとは 別）：水面の ばね・めくれ・ゆれ */
   water: 0, waterV: 0, page: 0, pageV: 0, flipQueue: 0, flipTimer: 0, flipGap: 0.09, flipN: 0,
   drag: null, preview: null, shake: 0, hint: 1, stamps: [], particles: [], cutAnim: 0, t: 0, lastSay: '', toast: null, flash: 0,
@@ -315,7 +315,7 @@ let W = 0, H = 0, DPR = 1;
 function resize(){ DPR = Math.min(2, window.devicePixelRatio||1); W = cv.clientWidth; H = cv.clientHeight; cv.width = Math.round(W*DPR); cv.height = Math.round(H*DPR); ctx.setTransform(DPR,0,0,DPR,0,0); }
 window.addEventListener('resize', resize);
 function layout(){ /* 田んぼの 場所（低い 画面でも 吹き出しと かさならない） */
-  const top = Math.max(64, H*0.12), talkH = $('talk').offsetHeight || 80;
+  const top = Math.max(92, H*0.12), talkH /* HUD は 3行（日・日づけ・天気）。暦は その 下 */ = $('talk').offsetHeight || 80;
   const bottom = H - talkH - 24;
   const fieldTop = top + (bottom-top)*0.36, fieldBot = top + (bottom-top)*0.86;
   return { top, bottom, fieldTop, fieldBot, cx: W/2 };
@@ -655,12 +655,12 @@ function doDown(){
 /* ========== スワイプ ========== */
 function pointerDown(e){
   if (S.over) return; SND.init();
-  V.drag = { id: e.pointerId, x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY, t0: performance.now(), kind: null, amt: 0, startWater: S.phase==='field' ? S.f.water : (S.phase==='nursery' ? S.nur.moist*15 : V.water), hist: [[performance.now(), e.clientX, e.clientY]] };
+  V.drag = { id: e.pointerId, x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY, t0: now(), kind: null, amt: 0, startWater: S.phase==='field' ? S.f.water : (S.phase==='nursery' ? S.nur.moist*15 : V.water), hist: [[now(), e.clientX, e.clientY]] };
   V.flipQueue = 0; /* 指を おくと めくりは 止まる（ブレーキ） */
 }
 function pointerMove(e){
   const d = V.drag; if (!d || e.pointerId !== d.id) return;
-  d.x = e.clientX; d.y = e.clientY; const now = performance.now(); d.hist.push([now, d.x, d.y]); if (d.hist.length > 8) d.hist.shift();
+  d.x = e.clientX; d.y = e.clientY; d.hist.push([now(), d.x, d.y]); if (d.hist.length > 8) d.hist.shift();
   const dx = d.x - d.x0, dy = d.y - d.y0;
   if (!d.kind && Math.hypot(dx, dy) > 10) d.kind = Math.abs(dx) > Math.abs(dy) ? 'day' : 'water';
   if (d.kind==='day'){ d.amt = clamp(dx/90, -1, 1); }
@@ -672,9 +672,10 @@ function pointerMove(e){
     if (S.phase==='field' || S.phase==='nursery' || S.phase==='seed'){ V.waterTarget = d.target; }
   }
 }
-function pointerUp(e){
+function pointerUp(e){ pointerUpInner(e); syncUI(); }
+function pointerUpInner(e){
   const d = V.drag; if (!d || e.pointerId !== d.id) return; V.drag = null;
-  const dx = d.x - d.x0, dy = d.y - d.y0, dt = Math.max(1, performance.now() - d.t0);
+  const dx = d.x - d.x0, dy = d.y - d.y0;
   const first = d.hist[0], last = d.hist[d.hist.length-1], vdt = Math.max(16, last[0]-first[0]);
   const vx = (last[1]-first[1])/vdt, vy = (last[2]-first[2])/vdt; /* px/ms（指を はなす 直前の 速さ） */
   const L = layout(); const a = actions();
@@ -720,7 +721,7 @@ window.addEventListener('keydown', e => { /* パソコンの 人の ため：矢
   if (k==='ArrowRight'){ V.flipQueue = e.shiftKey ? 6 : 0; advanceDay(); } else if (k==='ArrowLeft'){ V.flipQueue = 0; doLeft(L); }
   else if (k==='ArrowUp'){ const a = actions(); if (S.phase==='seed' && a.up){ S.seed_.soaked = true; V.water = 10; say('つけました。→で 日を すすめて。'); } else if (S.phase==='nursery'){ S.nur.moist = 1; } else if (a.up){ S.f.water = clamp(S.f.water + 3, 0, 15); S.f.flowToday = true; V.waterV = .6; SND.chapu(); } }
   else if (k==='ArrowDown'){ if (S.phase==='seed'){ doDown(); } else if (actions().down){ S.f.water = clamp(S.f.water - 3, 0, 15); V.waterV = -.5; SND.zaa(); } }
-  else return; e.preventDefault();
+  else return; e.preventDefault(); syncUI();
 });
 
 /* ========== おわり ========== */

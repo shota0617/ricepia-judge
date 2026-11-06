@@ -16,7 +16,7 @@ const HELPERS = () => {
   // dir: 'up'|'down'|'left'|'right'。len は px、fast は はじく（点の 間を 大きく）
   window.swipe = (dir, len, fast) => {
     const W = innerWidth, H = innerHeight, cx = W/2, cy = H*0.5; const dx = dir==='right'?1:dir==='left'?-1:0, dy = dir==='down'?1:dir==='up'?-1:0;
-    const n = fast ? 3 : 8; ev('pointerdown', 1, cx - dx*len/2, cy - dy*len/2);
+    const n = fast ? 3 : 24; ev('pointerdown', 1, cx - dx*len/2, cy - dy*len/2); /* ゆっくり＝24コマ（0.4秒）、はじく＝3コマ */
     for (let i=1;i<=n;i++){ ev('pointermove', 1, cx - dx*len/2 + dx*len*i/n, cy - dy*len/2 + dy*len*i/n); K3.step(1/60); }
     ev('pointerup', 1, cx + dx*len/2, cy + dy*len/2); K3.step(1/60);
   };
@@ -131,8 +131,8 @@ const CHECKS = {
         out.scenes = {};
         for (const s of scenes){ K3.jump(s); steps(30); const hud = ['date','wx','stat','stage','dayNo'].map(id => document.getElementById(id)); const say = document.getElementById('say'); const talk = document.getElementById('talk');
           const L = K3.layout(); const tr = talk.getBoundingClientRect();
-          out.scenes[s] = { hud: hud.every(inside), say: inside(say) && vis(say), talkTop: Math.round(tr.top), fieldBot: Math.round(L.fieldBot), sayH: Math.round(say.getBoundingClientRect().height), text: say.textContent.slice(0, 20) }; }
-        K3.jump('result'); out.result = ['rank', 'rYield', 'rTawara', 'rSeiryu', 'rTaste', 'rSay', 'rSay2'].every(id => inside(document.getElementById(id)) || document.getElementById(id).getBoundingClientRect().top > innerHeight);
+          out.scenes[s] = { hud: hud.every(inside), hudBad: hud.filter(el => !inside(el)).map(el => el.id + ':' + el.textContent), say: inside(say) && vis(say), talkTop: Math.round(tr.top), fieldBot: Math.round(L.fieldBot), sayH: Math.round(say.getBoundingClientRect().height), text: say.textContent.slice(0, 20) }; }
+        K3.jump('result'); out.result = ['rank', 'rYield', 'rTawara', 'rSeiryu', 'rTaste', 'rSay', 'rSay2'].every(id => { const el = document.getElementById(id); el.scrollIntoView({ block:'center' }); return inside(el); });
         const again = document.getElementById('againBtn'); document.getElementById('result').scrollTop = 1e6; out.again = inside(again);
         return out;
       });

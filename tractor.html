@@ -8089,7 +8089,7 @@ const HINT = {
 };
 // ---- 最初の1分（サイクル159、最初の1分改善 第2弾「開始直後の表示を軽くする」）----
 // のんびり（calm）だけ：開始直後は body に firstmin を付け、CSS で上のボタン・下のパッドを絞る（残るのは 🔰 🌙 ≡ と padC）。
-// 最初のなぞりが返る（HINT.done）・耕しが始まる（lastPct>0）・60秒経つ、のどれかで 1 回だけ外し、
+// なぞりや耕しが始まっても表示を増やさず、60秒経ってから 1 回だけ外し、
 // 後出しにしていた ミニ地図（artBox）があれば トーストなしで 静かに出す。以後は戻さない（R・リセットでも戻らない）。
 const FIRSTMIN = {
   t: 0, on: false, over: false, artPending: false,
@@ -8098,10 +8098,10 @@ const FIRSTMIN = {
     this.on = true; this.t = 0;
     document.body.classList.add('firstmin');
   },
-  update(dt) {   // frame() の HINT.update(dt) の直後で毎フレーム（lastPct は前フレーム値でよい）
+  update(dt) {   // frame() の HINT.update(dt) の直後で毎フレーム
     if (!this.on) return;
     this.t += dt;
-    if (HINT.done || lastPct > 0 || this.t >= 60) this.finish();
+    if (this.t >= 60) this.finish();
   },
   finish() {   // 終了は1回だけ
     if (!this.on) return;
@@ -10724,7 +10724,7 @@ function frame(now) {
   if (!P.Rotary) { renderer.render(scene, camera); return; }
   const running = S.started && $('start').classList.contains('hidden') && $('help').classList.contains('hidden') && !S.done;
   if (!running) { key.fwd = key.back = key.left = key.right = 0; TRACE.end(); }
-  TRACE.tick(dt); HINT.update(dt); FIRSTMIN.update(dt);   // サイクル159：最初の1分の終わり判定（HINT.done / lastPct / 60秒）
+  TRACE.tick(dt); HINT.update(dt); FIRSTMIN.update(dt);   // 最初の1分の終わり判定（60秒）
   if (!drag && camMode === 0) { look.yaw *= 1 - Math.min(1, dt * 1.5); look.pitch *= 1 - Math.min(1, dt * 1.5); }
   // 止まっているあいだ（メニュー・操作の表・おわり）は、トラクターの動き・時間・燃料を進めない。始める前はエンジンをかける所だけ進める
   let pct = lastPct;

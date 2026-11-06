@@ -112,6 +112,22 @@ const CHECKS = {
     console.log('    （' + r.day + '日目・スワイプ ' + r.swipes + '回・' + JSON.stringify(r.result) + '）');
     await p.waitForTimeout(500); await p.screenshot({ path: path.join(OUT, 'year-result.png') });
   },
+  // 乾燥：はじいても 15% で めくりが 止まる。もう一度 → すると 乾かしすぎ。← 見る で 1株の 札が 出る
+  async dry(b){
+    const p = await page(b, 390, 844);
+    const r = await p.evaluate(() => {
+      K3.manual = true; K3.fixedSeed = 11; K3.jump('heading'); swipe('left', 120, false); const card = !!K3.V.card; steps(20); const cardOn = !!K3.V.card; steps(200); const cardOff = !K3.V.card;
+      K3.jump('harvest'); while (!K3.S.hv.done) K3.doLeft(); const m0 = K3.S.hv.moisture;
+      swipe('right', 260, true); flush(); const m1 = K3.S.hv.moisture, q = K3.V.flipQueue; const stat = document.getElementById('stat').textContent;
+      swipe('right', 100, false); flush(); const m2 = K3.S.hv.moisture;
+      return { card, cardOn, cardOff, m0, m1, q, stat, m2, left: K3.actions().left, wx: document.getElementById('wx').textContent };
+    });
+    ok(r.card && r.cardOn && r.cardOff, '← 見る で 1株の 札が 出て、消える', r);
+    ok(r.m0 === 25 && r.m1 <= 15.5 && r.m1 >= 14 && r.q === 0, 'はじいても 15% で 止まる（乾燥機の 仕上がり）', r);
+    ok(r.m2 < 14 && r.left === 'けんさ', 'もう一度 → すると 乾かしすぎ（それでも 検査へ 行ける）', r);
+    ok(/あす/.test(r.wx), 'HUD に あすの 天気', r.wx);
+    await p.screenshot({ path: path.join(OUT, 'dry.png') });
+  },
   // なにも しないで 1年 すぎると「おわり」
   async idle(b){
     const p = await page(b, 390, 844);

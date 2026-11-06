@@ -1,13 +1,16 @@
 # ricepia.jp トップページの更新
 
-ricepia.jp（さくらのレンタルサーバ）の `www/index.html` に、にしおさんぽGO のお知らせ欄（`game-section.html`）と、トラクターで田んぼを耕そう のお知らせ欄（`tractor-section.html`）を入れます。
+ricepia.jp（さくらのレンタルサーバ）の `www/index.html` の「らいすぴあのゲーム」の並びに、ミシン糸 一本どり のカード（`mishin-card.html`）を入れます。農産物検査ゲームのカードの すぐ前です（運営者の 指示：2026-11-06「サイトの農産物検査ゲームの上に公開」）。
+
+2026-11-05 に 店主の 指示で、にしおさんぽGO・トラクターの 大きな お知らせ欄は 4つの ゲームの カードの 並びに まとめられました。`tools/build-ricepia-jp.py` は もう その お知らせ欄（`game-section.html`・`tractor-section.html`）を 入れません（入れると 消した 欄が もどる）。
 
 | ファイル | 中身 |
 | --- | --- |
-| `game-section.html` | にしおさんぽGO のお知らせ欄。「動画で見る らいすぴあ」の欄のすぐ上に入れる |
-| `tractor-section.html` | トラクターのゲーム（go.ricepia.jp/tractor.html）のお知らせ欄。にしおさんぽGO の欄のすぐ下に入れる。絵は go.ricepia.jp/tractor/shots/ |
+| `mishin-card.html` | ミシン糸 一本どり のカード（go.ricepia.jp/mishin.html）。「らいすぴあのゲーム」の並びで、農産物検査ゲームの すぐ前に入れる。絵は go.ricepia.jp/mishin-pop/card.webp（main に 入って から 見える） |
+| `game-section.html` | （2026-11-05 まで）にしおさんぽGO のお知らせ欄。いまは 入れない |
+| `tractor-section.html` | （2026-11-05 まで）トラクターのゲームのお知らせ欄。いまは 入れない |
 | `current.html` | 公開中のトップページを保存したもの（`.github/workflows/ricepia-jp-snapshot.yml` が保存） |
-| `index.html` | `current.html` にお知らせ欄を入れた案（`python3 tools/build-ricepia-jp.py` で作る）。確認用で、手でアップロードするときはこれを使う |
+| `index.html` | `current.html` にカードを入れた案（`python3 tools/build-ricepia-jp.py` で作る）。確認用で、手でアップロードするときはこれを使う |
 
 ## GitHub Actions でアップロードする
 
@@ -20,7 +23,7 @@ ricepia.jp（さくらのレンタルサーバ）の `www/index.html` に、に�
 
 ## 元に戻す
 
-サーバーの `www/index.html.bak-日時` を `www/index.html` に名前を戻します。お知らせ欄だけ消すときは、`<!-- nishio-go:start` から `<!-- nishio-go:end -->` まで（トラクターは `<!-- tractor:start` から `<!-- tractor:end -->` まで）を消します。
+サーバーの `www/index.html.bak-日時` を `www/index.html` に名前を戻します。カードだけ消すときは、`<!-- mishin-card:start` から `<!-- mishin-card:end -->` までを消します。
 
 ## 記録
 

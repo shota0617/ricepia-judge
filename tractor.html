@@ -214,6 +214,7 @@
 <!-- 外から読む部品は 版を決めて、改ざんチェック（integrity）つきで（three.js は npm の 0.128.0 と同じ中身を jsDelivr から） -->
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js" integrity="sha384-CI3ELBVUz9XQO+97x6nwMDPosPR5XvsxW2ua7N1Xeygeh1IxtgqtCkGfQY9WWdHu" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js" integrity="sha384-fljlqkjWlmSFjkESkQvm77heIZpoWmXEOzlCA7kOpGUH+95Zk0yGfQieWM2q136E" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/DRACOLoader.js" integrity="sha384-TNRcLasZnnfIJJskDY5XlrfmsKTjBSy98MtyLuX+3rQWRbpSQvtFIdikNpcOh3SN" crossorigin="anonymous"></script><!-- サイクル193: 車体と田んぼの glb は Draco 圧縮（遅い回線の最初の待ちを減らす）。復号器は同じ CDN の three@0.128.0 から読む -->
 </head>
 <body>
 <canvas id="view"></canvas>
@@ -753,14 +754,18 @@ scene.add(sun, sun.target);
 
 // ---- 読みこみ ----
 const loader = new THREE.GLTFLoader();
+// サイクル193: 車体（tractor_yt.glb）と田んぼ（field_tanbo*.glb）は Draco 圧縮（tools/tractor/README.md「glb の圧縮」。bpy は使わず gltf-transform で後処理）。
+// 作業機の glb は圧縮なしのまま。同じ loader で両方読める（圧縮のある glb だけ復号器を使う）
+const draco = new THREE.DRACOLoader(); draco.setDecoderPath('https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/libs/draco/'); loader.setDRACOLoader(draco);
 const prog = { t: 0, f: 0 };
-const PROG_SIZE = { t: 3.8e6, f: 4.6e6 };        // サイクル187: 圧縮配信だと全体の大きさが届かない（e.total が 0）。およその大きさで棒を進める
+const PROG_SIZE = { t: 0.52e6, f: 2.3e6 };        // サイクル187: 圧縮配信だと全体の大きさが届かない（e.total が 0）。およその大きさで棒を進める。サイクル193: Draco 圧縮後の大きさ（春）
+if (season === 'aki') PROG_SIZE.f = 2.9e6; else if (season === 'shirokaki') PROG_SIZE.f = 2.5e6;   // 季節ごとの田んぼの大きさ
 let LOAD_ST = 'wait';                            // 読みこみ：wait（じゅんび中）・ok・ng（失敗。そのあと 進みぐあいで「もう一度 よむ」を 消さない）
 function showProg() {
   if (LOAD_ST === 'ng') return;
   const p = Math.round((prog.t * PROG_SIZE.t + prog.f * PROG_SIZE.f) / (PROG_SIZE.t + PROG_SIZE.f) * 100);
   $('progBar').style.width = p + '%';
-  $('progText').textContent = p < 100 ? `⏳ トラクターを 田んぼへ はこんでいるよ… ${p}%（はじめは 8MB ほど）` : '🌱 じゅんび できたよ';
+  $('progText').textContent = p < 100 ? `⏳ トラクターを 田んぼへ はこんでいるよ… ${p}%（はじめは 3MB ほど）` : '🌱 じゅんび できたよ';
 }
 function load(url, key) {
   return new Promise((ok, ng) => loader.load(ASSET + url, ok, e => { prog[key] = Math.min(1, e.loaded / (e.total || PROG_SIZE[key] || e.loaded)); showProg(); }, ng));

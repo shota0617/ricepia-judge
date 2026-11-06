@@ -219,3 +219,16 @@ scene.add(stubble);
 
 - glTF Validator：3 つともエラー 0。警告は「法線の絵に接線が入っていない」というもので、three.js は自分で計算するので問題ない。
 - three.js r128 の `GLTFLoader` で、3 つの季節それぞれ田んぼ・トラクターをいっしょに読みこみ、上のやり方（耕した帯・切り株の InstancedMesh）で表示できることを確認した。
+
+## glb の圧縮（サイクル193）
+
+車体 `tractor_yt.glb` と田んぼ `field_tanbo*.glb` は、Blender で書き出したあとに Draco で圧縮してから置く（bpy は使わない。`tractor.html` は DRACOLoader を付けた GLTFLoader で読む。作業機の glb は圧縮なしのまま）。
+遅い回線（1.5Mbps）で始められるまでの待ちを減らすため。書き出しなおしたら、同じ手順で圧縮しなおす：
+
+```sh
+npx -y @gltf-transform/cli@4 draco tractor_yt.glb tractor_yt.glb --method edgebreaker --quantize-position 14 --quantize-normal 10 --quantize-color 8
+npx -y @gltf-transform/cli@4 draco field_tanbo.glb field_tanbo.glb --method sequential --quantize-position 14 --quantize-normal 10 --quantize-color 8   # aki・shirokaki も同じ
+```
+
+- 田んぼは `sequential`（頂点の順番を変えない）。草の株・ヒガンバナは「4 頂点ずつの板」の順番を前提に読んでいる（RENGE・FENCE.mow）ため、`edgebreaker` は使わない。
+- 大きさ（gzip 配信）：車体 1014KB→392KB、田んぼ（春）2357KB→1905KB。

@@ -142,6 +142,38 @@ class FlowTests(unittest.TestCase):
         # タップだけで進めない: 代替は3回のまま
         self.assertIn("if (++bagTaps >= NUDGE_LIMIT) { autoProbe(); return; }", HTML)
 
+    def test_crank_keeps_reading_until_next_measurement(self):
+        node = shutil.which("node")
+        if not node:
+            self.skipTest("node がないので実行の確認は飛ばす")
+        reading = HTML[HTML.index("function takeReading() {"):HTML.index("function crankPointer(e) {")]
+        move = HTML[HTML.index('$("sceneMeter").addEventListener("pointermove",'):HTML.index("function endCrank() {")]
+        script = RULES + """
+const assert = require('node:assert/strict');
+let onMove, measured = 0, lotIndex = 0, crankAngle = 0;
+const LOT = LOTS[0], hint = {}, lcd = {textContent:'--.-'};
+const elements = {lcd, slots:{children:[{}, {}, {}]}, crankArm:{style:{}},
+  sceneMeter:{addEventListener:(_, fn) => { onMove = fn; }}};
+const $ = id => elements[id];
+const pop = () => {}, tick = () => {};
+const crankPointer = e => ({a:e.angle, far:true});
+const crankDrag = {last:0, turned:0, sum:0, x:0, y:0, moved:false};
+""" + reading + move + """
+onMove({clientX:10, clientY:0, angle:90});
+assert.equal(measured, 0);
+assert.equal(lcd.textContent, '--.-');
+onMove({clientX:20, clientY:0, angle:180});
+assert.equal(measured, 1);
+assert.equal(lcd.textContent, LOT.moisture[0].toFixed(1));
+onMove({clientX:30, clientY:0, angle:-90});
+assert.equal(measured, 1);
+assert.equal(lcd.textContent, LOT.moisture[0].toFixed(1));
+onMove({clientX:40, clientY:0, angle:0});
+assert.equal(measured, 2);
+assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
+"""
+        subprocess.run([node, "-e", script], capture_output=True, text=True, check=True)
+
     def test_crack_only_shows_when_zoomed(self):
         self.assertIn('if (kind === "higai" && !far) px(', HTML)
         self.assertIn('if (far) return spriteCache[key] = c.toDataURL();', HTML)

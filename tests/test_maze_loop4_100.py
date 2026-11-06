@@ -30,14 +30,12 @@ class Glance100(unittest.TestCase):
         self.assertIn("const asleepShut = () => !calmMotion && roll.kind === 'stop' && roll.idle > 12;", PIX)
         self.assertGreater(PIX.index("const asleepShut"), PIX.index("const riceAsleep"))
 
-    def test_shut_eyes_and_glance_drawing(self):
-        self.assertIn("const shutEyes = (mood === 'blink' || asleepShut()) && riceEyeAt && (fr === riceSprites.right[0] || fr === riceSprites.down[0]);", PIX)
-        self.assertIn("if (shutEyes) {", PIX)
-        self.assertIn("const gl = shutEyes ? 0 : glanceShift(look);", PIX)
-        self.assertIn("if (gl && riceEyeAt && (fr === riceSprites.right[0] || fr === riceSprites.down[0])) {", PIX)
-        self.assertIn("dst.fillStyle = 'rgb(14,14,14)'; dst.fillRect((riceEyeAt.x + dx + gl - rb0.gx) * u, (riceEyeAt.y - rb0.gy) * u, 2 * u, 3 * u);", PIX)
-        i = PIX.index("const gl = shutEyes")
-        self.assertIn("rgb(250,249,243)", PIX[i:i + 700])
+    def test_glance_drawn_by_program_face(self):
+        # ユーザー指示 2026-11-06（米粒の姿と動きを元に戻す）に追随：ドット絵経路の目の上書き描画は廃止。
+        # きょろきょろはプログラム描画経路が look で顔全体を少し横へずらして描く（定義・公開は従来どおり残る）
+        self.assertNotIn("riceSprites.dot", PIX)
+        self.assertIn("dst.translate((sn * rb.a * 0.7 + look) * u, sp * rb.b * 0.6 * u);", PIX)
+        self.assertIn("const fc = (rb.faces && rb.faces[mood]) || rb.face;", PIX)
 
     def test_mood_unchanged(self):
         m = re.search(r"function riceMood\(now\) \{(.*?)\n", PIX).group(1)
@@ -64,7 +62,7 @@ class Glance100(unittest.TestCase):
 
     def test_scope(self):
         files = set(self._diff("--name-only").split())
-        self.assertLessEqual(files, {"nishio-go/pixel.js", "tests/test_maze_loop4_105.py", "tests/test_maze_loop4_106.py", "tests/test_maze_loop4_101.py", "tests/test_maze_loop4_102.py", "tests/test_maze_loop4_103.py", "tests/test_maze_loop4_104.py", "tests/test_maze_loop4_100.py", "tests/test_maze_loop4_99.py", "tests/test_maze_loop4_95.py", "tests/test_maze_loop4_97.py", "tests/test_maze_loop4_98.py"})
+        self.assertLessEqual(files, {"nishio-go/pixel.js", "tests/test_maze_loop4_86.py", "tests/test_maze_loop4_105.py", "tests/test_maze_loop4_106.py", "tests/test_maze_loop4_101.py", "tests/test_maze_loop4_102.py", "tests/test_maze_loop4_103.py", "tests/test_maze_loop4_104.py", "tests/test_maze_loop4_100.py", "tests/test_maze_loop4_99.py", "tests/test_maze_loop4_95.py", "tests/test_maze_loop4_97.py", "tests/test_maze_loop4_98.py"})
 
 
 if __name__ == "__main__":

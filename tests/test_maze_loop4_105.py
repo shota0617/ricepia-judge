@@ -27,24 +27,21 @@ class TestHappyFace(unittest.TestCase):
         for bad in ("ouch", "dizzy", "wow", "excited", "yawn", "sleepy"):
             self.assertNotIn(f"'{bad}'", m)
 
-    def test_happy_eyes_block(self):
-        self.assertIn("const happyEyes = mood === 'happy' && !asleepShut() && riceEyeAt && (fr === riceSprites.right[0] || fr === riceSprites.down[0]);", PIX)
-        i = PIX.index("const happyEyes")
-        self.assertGreater(i, PIX.index("const gl = shutEyes"))
-        self.assertLess(i, PIX.index("const nD = rb0.spots"))
+    def test_happy_face_drawn_by_program_face(self):
+        # ユーザー指示 2026-11-06（米粒の姿と動きを元に戻す）に追随：ドット絵経路の ^^ 上書き描画は廃止。
+        # うれしい顔はプログラム描画経路が rb.faces の happy（arcUp cheeks open）を mood で選んで描く
+        self.assertNotIn("riceSprites.dot", PIX)
+        self.assertIn("happy: 'arcUp cheeks open'", PIX)
+        self.assertIn("const fc = (rb.faces && rb.faces[mood]) || rb.face;", PIX)
 
-    def test_arc_points_and_colors(self):
-        i = PIX.index("if (happyEyes)")
-        blk = PIX[i:PIX.index("const nD = rb0.spots")]
-        self.assertIn("for (const bx of [-1, 4])", blk)
-        self.assertIn("4 * u, 3 * u", blk)
-        self.assertIn("[[-1, 1], [0, 0], [1, 0], [2, 1]]", blk)
-        self.assertIn("for (const dx of [0, 5])", blk)
-        self.assertLess(blk.index("rgb(250,249,243)"), blk.index("rgb(14,14,14)"))
+    def test_happy_face_parts(self):
+        # 復元に追随：^^ の弧は FACE_SET の happy（arcUp）が担う。部品定義が残っていることを見る
+        self.assertIn("happy: 'arcUp cheeks open'", PIX)
+        self.assertIn("const happyFace = () => !calmMotion && roll.kind === 'stop' && roll.happyT > 0;", PIX)
 
     def test_existing_strings_unchanged(self):
-        self.assertIn("const shutEyes = (mood === 'blink' || asleepShut()) && riceEyeAt && (fr === riceSprites.right[0] || fr === riceSprites.down[0]);", PIX)
-        self.assertIn("const gl = shutEyes ? 0 : glanceShift(look);", PIX)
+        # 復元に追随：ドット絵経路の文字列は廃止したが、共有の定義・公開は従来どおり残る
+        self.assertNotIn("riceSprites.dot", PIX)
         self.assertIn("glanceShift, asleepShut, happyFace,", PIX)
 
     def test_physics_unchanged(self):
@@ -62,7 +59,7 @@ class TestHappyFace(unittest.TestCase):
 
     def test_scope(self):
         files = set(self._diff("--name-only").split())
-        allowed = {"nishio-go/pixel.js", "tests/test_maze_loop4_105.py"} | {"tests/test_maze_loop4_%d.py" % n for n in (95, 97, 98, 99, 100, 101, 102, 103, 104, 106)}
+        allowed = {"nishio-go/pixel.js", "tests/test_maze_loop4_86.py", "tests/test_maze_loop4_105.py"} | {"tests/test_maze_loop4_%d.py" % n for n in (95, 97, 98, 99, 100, 101, 102, 103, 104, 106)}
         self.assertLessEqual(files, allowed)
 
 

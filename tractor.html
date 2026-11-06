@@ -1905,7 +1905,7 @@ const AIRCL = (() => {
     if (fixed && !S.parked) fixed = false;          // エンジンをかけなおした
     if (clog <= 0) return;
     if (working && Math.abs(S.v) > 0.05 && !full()) clog = Math.min(1, clog + dt / 200);   // 耕すと 土ぼこりを 吸う
-    if (full() && working && Math.abs(S.v) > 0.1 && !told && toastT <= 0) { told = true; toast('エンジンの 回転が 上がりにくい。ぬかるみで すぐ 重くなる。エアクリーナーが 土ぼこりで 詰まっているのかも。止まって ' + IMPL + 'を上げると 見ます', 7); }
+    if (full() && working && Math.abs(S.v) > 0.1 && !told && toastT <= 0 && !startNoticeMuted()) { told = true; toast('エンジンの 回転が 上がりにくい。ぬかるみで すぐ 重くなる。エアクリーナーが 土ぼこりで 詰まっているのかも。止まって ' + IMPL + 'を上げると 見ます', 7); }
     if (full() && Math.abs(S.v) < 0.05 && !S.rotDown && S.rotPos > 0.9 && (S.rotorW || 0) < 1 && (!S.stalled || offFree()) && !(S.crank > 0)) {   // 詰まっていれば（知らせを 読めなくても）爪が止まってから
       S.stalled = true; S.parked = true; S.v = 0; S.autoUp = false;
       for (const k of ['fwd', 'back', 'left', 'right']) key[k] = 0;
@@ -5083,7 +5083,7 @@ const KERI = (() => {
     birds, NEST, nest, get alarm() { return alarmT > 0; },
     update(dt) {
       if (nest && nest.visible) {
-        if (!nestTold && S.started && Math.hypot(S.x - NEST[0], S.z - NEST[1]) < 9) { nestTold = true; toast('ケリの巣（地面に卵が 4 つ）があります。巣とそのまわりは耕さずに残し、タイヤとロータリーを近づけない', 5); }
+        if (!nestTold && S.started && Math.hypot(S.x - NEST[0], S.z - NEST[1]) < 9 && !startNoticeMuted()) { nestTold = true; toast('ケリの巣（地面に卵が 4 つ）があります。巣とそのまわりは耕さずに残し、タイヤとロータリーを近づけない', 5); }
         if (tilledMask[ni * NZ + nj]) { nest.visible = false; toast('ケリの巣を耕してしまった…。本物は 巣のまわりを残して よける', 5); }
       }
       alarmT = Math.hypot(S.x - NEST[0], S.z - NEST[1]) < 14 ? 6 : alarmT - dt;   // 巣から 14m 以内に来たら騒ぐ（はなれて 6 秒で落ちつく）
@@ -5618,7 +5618,7 @@ const LEAK = (() => {
       m.rotation.y -= dt * 2.2;                                  // 渦が回る
       m.position.y = tilledMask[i0 * NZ + j0] ? TILL_Y + 0.012 : 0.03;
       if ((gT -= dt) <= 0) { gT = 0.15 + Math.random() * (Math.random() < 0.3 ? 0.1 : 0.9); gurgle(); }
-      if (!told && S.started && Math.hypot(S.x - X, S.z - Z) < 5) { told = true; toast('🕳 畦の穴から 水もれ（ザリガニの巣穴）', 4); }
+      if (!told && S.started && Math.hypot(S.x - X, S.z - Z) < 5 && !startNoticeMuted()) { told = true; toast('🕳 畦の穴から 水もれ（ザリガニの巣穴）', 4); }
     }
   };
 })();

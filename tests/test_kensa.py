@@ -128,9 +128,14 @@ class FlowTests(unittest.TestCase):
 
     def test_flick_knock_twist(self):
         # はじく・トントン・ひねる。タップも残す
-        for needle in ("function flickGrain(g, dx, dy)", "function knockPlate()", "function twistPlate(deg)", "if (g) tapGrain(g);"):
+        for needle in ("function flickGrain(g, dx, dy)", "function knockPlate()", "function twistPlate(deg)", "tapGrain(g);"):
             self.assertIn(needle, HTML)
         self.assertIn("twistDone = false;", HTML)
+
+    def test_double_tap_and_shake(self):
+        self.assertIn("tapNow - lastGoodTap < 320", HTML)
+        # iPhone は許可の画面が出るので、振るは使わない
+        self.assertIn('typeof DeviceMotionEvent.requestPermission === "function"', HTML)
 
     def test_crack_only_shows_when_zoomed(self):
         self.assertIn('if (kind === "higai" && !far) px(', HTML)

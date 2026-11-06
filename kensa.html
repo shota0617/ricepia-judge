@@ -917,12 +917,29 @@ function endPlatePointer(e, cancelled) {
     sortDrag = null;
     if (!d.moved && !cancelled && step === 2) {
       const g = grainAt(toLocal(e.clientX, e.clientY));
-      if (g) tapGrain(g);
-      else knockPlate();
+      const tapNow = performance.now();
+      if (g && g.kind === "seiryu" && tapNow - lastGoodTap < 320) { /* ダブルタップで寄る。もう一度で戻る */
+        lastGoodTap = 0;
+        if (Z.s > 1.001) resetZoom();
+        else { const pz = plateXY(e.clientX, e.clientY); zoomTo(2.4, pz.x, pz.y); }
+      } else if (g) {
+        if (g.kind === "seiryu") lastGoodTap = tapNow;
+        tapGrain(g);
+      } else knockPlate();
     } else if (d.moved && !cancelled && step === 2 && d.startG && performance.now() - d.t0 < 260 && Math.hypot(e.clientX - d.x, e.clientY - d.y) > 24) {
       flickGrain(d.startG, e.clientX - d.x, e.clientY - d.y);
     }
   }
+}
+/* 振る: 許可の画面を出さない端末だけ、スマホを振ると粒がはねて広がる */
+let lastGoodTap = 0, shakeAt = 0;
+if (!(window.DeviceMotionEvent && typeof DeviceMotionEvent.requestPermission === "function")) {
+  window.addEventListener("devicemotion", (e) => {
+    const a = e.accelerationIncludingGravity;
+    if (!a || step !== 2) return;
+    const t = performance.now();
+    if (Math.hypot(a.x || 0, a.y || 0, a.z || 0) > 24 && t - shakeAt > 700) { shakeAt = t; knockPlate(); }
+  });
 }
 /* はじく: 粒の上からさっと払う。わるい粒は小皿へ飛び、良い粒は少し転がる */
 function flickGrain(g, dx, dy) {

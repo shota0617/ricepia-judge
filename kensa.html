@@ -4,1005 +4,697 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
 <title>農産物検査ゲーム - らいすぴあ（近藤米穀店）</title>
-<meta name="description" content="米袋の山から穀刺しで試料を抜き、水分を測り、粒を鑑定して等級証印を押す、農産物検査の仕事を題材にしたのんびりゲームです。"/>
-<meta name="theme-color" content="#2d2d1e"/>
-<!-- キービジュアル（サイクル7で水彩・サイクル27でドット絵に差し替え）: 軸写真を手描きの可愛いキャラクター風ドット絵に描き起こした絵。場面絵も同じドット絵（scene_dot.webp）を使い、写真そのものは資料置き場に残す -->
+<meta name="description" content="袋から穀刺しで粒をぬき、水分をはかり、わるい粒をみわけて、等級の証印をおす。農産物検査の仕事を題材にしたのんびりゲームです。"/>
+<meta name="theme-color" content="#e9e2d2"/>
 <meta property="og:title" content="農産物検査ゲーム - らいすぴあ（近藤米穀店）"/>
-<meta property="og:description" content="米袋の山から穀刺しで試料を抜き、水分を測り、粒を鑑定して等級証印を押す、農産物検査の仕事を題材にしたのんびりゲームです。"/>
+<meta property="og:description" content="袋から穀刺しで粒をぬき、水分をはかり、わるい粒をみわけて、等級の証印をおす。農産物検査の仕事を題材にしたのんびりゲームです。"/>
 <meta property="og:image" content="https://go.ricepia.jp/kensa/kv.webp"/>
 <meta name="twitter:card" content="summary_large_image"/>
-<!-- スタートの1分（サイクル41・恒常ルール 2026-11-05 20:17）: 軸の場面絵を最優先で読み込み、すぐ遊べるようにする -->
-<link rel="preload" as="image" href="kensa/scene_dot.webp" fetchpriority="high"/>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8C%BE%3C/text%3E%3C/svg%3E"/>
 <style>
-  :root { --ink:#1a1814; --paper:#fbf8f0; --green:#1f4d2b; --gold:#b8893a; }
+  :root { --ink:#1a1814; --paper:#fbf8f0; --bg:#e9e2d2; --green:#1f4d2b; --gold:#b8893a; --stamp:#b3261e; }
   * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-  html,body { margin:0; min-height:100%; background:#e9e2d2; color:var(--ink);
-    font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Noto Sans JP",Meiryo,sans-serif; }
-  main { max-width:560px; margin:0 auto; padding:10px 10px 28px; }
-  h1 { font-size:20px; margin:6px 2px 8px; letter-spacing:.04em; }
-  h1 small { font-size:12px; color:#fff; background:var(--gold); border-radius:999px; padding:2px 8px; vertical-align:3px; margin-left:6px; }
-  /* 場面（サイクル27・ドット絵化1点目）: 軸の写真（検査員が30kg紙袋の山から穀刺しで試料を抜く風景）を
-     手描きの可愛いキャラクター風ドット絵に作り直した場面絵。写真そのものは資料置き場の #sceneRefPhoto に残す */
-  #scene { position:relative; border-radius:16px; overflow:hidden; box-shadow:0 4px 16px rgba(26,24,20,.25); line-height:0; aspect-ratio:3/2; background:#d8cfb8; }
-  #scene img { width:100%; height:auto; display:block; }
-  /* 場面の馴染み（サイクル10）: 写真の縁をページの地色へ柔らかく溶かし、硬い切り抜き感をなくす。操作はふさがない */
-  /* サイクル14: 上端の溶かしを少しだけ温かくし、KV（水彩・金）の色に寄せた細い内枠を足して写真と紹介絵の色味をつなぐ */
-  #scene::after { content:""; position:absolute; inset:0; z-index:1; pointer-events:none;
-    background:linear-gradient(180deg, rgba(233,226,210,.16) 0%, rgba(233,226,210,0) 22%, rgba(233,226,210,0) 68%, rgba(233,226,210,.55) 100%);
-    box-shadow:inset 0 0 0 1px rgba(184,137,58,.22), inset 0 0 28px rgba(26,24,20,.22), inset 0 -18px 24px rgba(233,226,210,.35); }
-  /* 刺す袋の誘い（ゆっくり光る・入力をふさがない小さな範囲だけ） */
-  /* サイクル45（スタートの1分・実プレイレビュー 2026-11-05 21:50 改善候補2）: 旧判定は山の中央だけ
-     （left:34%・top:34%・width:32%・height:34%＝場面の約11%）で、山の端をタップしても反応せず
-     最初の1タップを逃していた。場面絵の米袋の山全体（左端約22%〜右端約86%・上端約20%〜下端約86%）へ広げ、
-     山のどこをタップしても「さす」が始まるようにした。検査員（左側）とフォークリフト（右端）は含めない */
-  #bagTap { position:absolute; z-index:2; left:22%; top:20%; width:64%; height:66%; border:0; background:transparent; cursor:pointer; border-radius:18px; }
-  #bagTap::after { content:""; position:absolute; inset:0; border-radius:18px;
-    box-shadow:inset 0 0 0 3px rgba(255,216,74,.0); animation:breathe 2.6s ease-in-out infinite; }
-  @keyframes breathe { 0%,100%{ box-shadow:inset 0 0 0 3px rgba(255,216,74,0);} 50%{ box-shadow:inset 0 0 0 3px rgba(255,216,74,.85);} }
-  #bagTap.done { pointer-events:none; }
-  #bagTap.done::after { animation:none; }
-  /* 穀刺し（サイクル37・実プレイレビュー＋「素のまま」指示）: 大きく動く穀刺しが場面絵の穀刺しと二重に見えたため、
-     場面絵の検査員の手元に重なる小さな位置（left:29%・top:56%・幅80px）に置き、SVGは左右反転して持ち手を手元へ向け、
-     色はグラデーションと影をやめて単色にした。動きの速さ・所作の順はサイクル23のまま */
-  /* 穀刺し（サイクル21）: 絵は実物の形に寄せたSVG（長い金属の二重管・先端のギザギザ・柄近くの細長い窓・金属の口金・木の持ち手）。
-     実物の写真そのものは下の #kokuPhoto で「さす」の間だけ見せる */
-  #probe { position:absolute; z-index:3; left:29%; top:56%; width:80px; line-height:1; transform:rotate(10deg); opacity:0; pointer-events:none; }
-  #probe svg { display:block; width:100%; height:auto; }
-  /* 実物の穀刺しの写真（サイクル21・ユーザー指示「参考資料ではなくゲームに入れて」）: 「さす」の間だけ静かに見せ、
-     次の所作へ進むとしまう（道具は常時1つだけ）。写真は切り抜かず全体を見せる（縦横比3:4のまま） */
-  /* 写真カードの馴染み（サイクル22）: 初期表示では場面＋写真＋段階チップ＋鑑定皿が1画面に収まるようカードを小さくし、
-     場面（サイクル14）と同じ金の細枠で色味をつなぐ。出る時は kokuIn で静かに現れるだけ（reduced-motion でほぼ止まる） */
-  /* 穀刺しの写真とドット絵の並び（サイクル28）: 横並びにして高さは写真カードのままに保ち、鑑定皿が1画面に収まる形を崩さない */
-  /* 写真とドット絵ペアの整え（サイクル35・実プレイレビュー）: 大きさと向きが不揃いだったため、
-     両ペアとも写真とドット絵を同じ幅・同じ高さ（align-items:stretch）にそろえ、
-     穀刺しのドット絵は写真と同じ斜め（先端が左上・持ち手が右下）になるよう画像自体を傾けた */
-  #kokuPair { display:flex; gap:10px; justify-content:center; align-items:stretch; margin-top:10px; }
-  #kokuPhoto { width:min(168px,46%); margin:0; background:var(--paper); border-radius:16px; overflow:hidden;
-    box-shadow:0 4px 12px rgba(26,24,20,.18), inset 0 0 0 1px rgba(184,137,58,.35); animation:kokuIn .55s ease; }
-  /* 穀刺しのドット絵（サイクル28・ドット絵化2点目）: 実物写真をもとに手描きの可愛いキャラクター風ドット絵に描き起こした版。
-     写真そのものの表示（サイクル21）はそのまま残し、となりへ小さく静かに並べるだけにする（重複が煩くならない置き方） */
-  #kokuDot { width:min(168px,46%); margin:0; background:var(--paper); border-radius:16px; overflow:hidden;
-    box-shadow:0 4px 12px rgba(26,24,20,.18), inset 0 0 0 1px rgba(184,137,58,.35); animation:kokuIn .55s ease; }
-  #kokuDot.off { display:none; }
-  #kokuDot img { display:block; width:100%; aspect-ratio:3/4; object-fit:cover; }
-  #kokuDot figcaption { padding:7px 6px 9px; text-align:center; font-size:15px; font-weight:800; color:#6b6353; }
-  @keyframes kokuIn { 0%{ opacity:0; transform:translateY(6px); } 100%{ opacity:1; transform:translateY(0); } }
-  #kokuPhoto.off { display:none; }
-  #kokuPhoto img { display:block; width:100%; aspect-ratio:3/4; object-fit:cover; }
-  #kokuPhoto figcaption { padding:7px 6px 9px; text-align:center; font-size:15px; font-weight:800; color:#6b6353; }
-  /* 一等米の実物写真（サイクル24・2026-11-05提供）: 穀刺し写真（サイクル21）と同じ流儀で実物そのものを見せる。
-     「みわける」では見本として小さく（sortWrap の表示に連動して出る／しまう・JS追加なし）、
-     資料置き場では読みたい人が開いた時に少し大きく見せる。写真は切り抜かず全体を見せる（縦横比3:4のまま） */
-  /* みわける見本の大きさ（サイクル56・最初の1分）: 到着時に受け皿が画面下端の外（bottom 893px・390×844実測）で、
-     よけた粒の行き先が見えなかった。見本ペアは写真とドット絵の同寸（サイクル35）を保ったまま少し小さくし、
-     受け皿まで1画面に収める（資料置き場の .ittoPhoto.ref は従来の大きさのまま） */
-  .ittoPhoto { width:min(120px,34%); margin:0 auto 10px; background:var(--paper); border-radius:16px; overflow:hidden;
-    box-shadow:0 4px 12px rgba(26,24,20,.18), inset 0 0 0 1px rgba(184,137,58,.35); animation:kokuIn .55s ease; }
-  .ittoPhoto img { display:block; width:100%; aspect-ratio:3/4; object-fit:cover; }
-  .ittoPhoto figcaption { padding:7px 6px 9px; text-align:center; font-size:15px; font-weight:800; color:#6b6353; }
-  .ittoPhoto.ref { width:min(200px,60%); margin:12px auto 4px; }
-  /* 一等米の写真とドット絵の並び（サイクル29・ドット絵化3点目）: 実物写真をもとに手描きの可愛いキャラクター風ドット絵に描き起こした版を、
-     写真そのものの表示（サイクル24）はそのまま残し、「みわける」ではとなりへ小さく静かに並べる（高さは写真カードのまま＝皿の収まりを崩さない）。
-     資料置き場では写真の下に同じドット絵を .ittoPhoto.ref の大きさで置き、読みたい人が見比べられるようにする */
-  #ittoPair { display:flex; gap:10px; justify-content:center; align-items:stretch; margin-bottom:2px; } /* サイクル56: 受け皿まで1画面に収めるため余白も少しだけ詰める */
-  #ittoPair .ittoPhoto { margin:0; }
-  #ittoDot { width:min(120px,34%); margin:0; background:var(--paper); border-radius:16px; overflow:hidden;
-    box-shadow:0 4px 12px rgba(26,24,20,.18), inset 0 0 0 1px rgba(184,137,58,.35); animation:kokuIn .55s ease; }
-  #ittoDot img { display:block; width:100%; aspect-ratio:3/4; object-fit:cover; }
-  #ittoDot figcaption { padding:7px 6px 9px; text-align:center; font-size:15px; font-weight:800; color:#6b6353; }
-  /* 検査風景の実物写真（サイクル27）: 場面絵がドット絵になった後も、写真そのものは資料置き場で見返せるように残す（横長3:2のまま） */
-  .refPhoto { width:min(280px,84%); margin:12px auto 4px; background:var(--paper); border-radius:16px; overflow:hidden;
-    box-shadow:0 4px 12px rgba(26,24,20,.18), inset 0 0 0 1px rgba(184,137,58,.35); }
-  .refPhoto img { display:block; width:100%; aspect-ratio:3/2; object-fit:cover; }
-  .refPhoto figcaption { padding:7px 6px 9px; text-align:center; font-size:15px; font-weight:800; color:#6b6353; }
-  /* 穀刺しモーション（サイクル23・ユーザー提供の実演動画 約8.8秒が手本）: 袋へ近づける→斜めに刺し込む→
-     ひと呼吸おく→ゆっくり抜くと、溝（中央の線）に米粒が一列に並んで入っている。速く激しい動きにはしない */
-  /* サイクル43（スタートの1分・即時反応）: 穀刺しはタップの最初のフレームから見えるようにし、手前から滑り込む形にした（2.4秒の穏やかな速さは不変） */
-  #probe.go { animation:probeIn 2.4s ease forwards; }
-  @keyframes probeIn { 0%{opacity:1; transform:translate(-8px,-3px) rotate(10deg);} 12%{opacity:1; transform:translate(4px,1px) rotate(10deg);} 42%{opacity:1; transform:translate(22px,5px) rotate(10deg);} 58%{opacity:1; transform:translate(22px,5px) rotate(10deg);} 86%{opacity:1; transform:translate(6px,1px) rotate(10deg);} 100%{opacity:1; transform:translate(4px,1px) rotate(10deg);} }
-  /* 抜いた後にだけ溝に並ぶ米粒（サイクル23）: 刺している間は見せず、抜く動き（58%以降）で静かに現れる */
-  .probeGrains { opacity:0; }
-  #probe.go .probeGrains { animation:grainsShow 2.4s ease forwards; }
-  @keyframes grainsShow { 0%,60%{opacity:0;} 78%,100%{opacity:1;} }
-  /* 穴をふさぐシール */
-  #seal { position:absolute; z-index:3; left:56%; top:56%; width:30px; height:30px; border-radius:50%; background:#3f7fbf; color:#fff;
-    font-size:15px; font-weight:800; display:flex; align-items:center; justify-content:center; line-height:1;
-    opacity:0; transform:scale(.4); box-shadow:0 1px 4px rgba(0,0,0,.35); pointer-events:none; }
-  #seal.on { transition:all .45s ease; opacity:1; transform:scale(1); }
-  /* 下の道具エリア: 常時1つだけ */
-  #stepChip { display:inline-block; margin:14px 2px 8px; padding:6px 14px; border-radius:999px; background:var(--green); color:#fff; font-size:17px; font-weight:800; }
-  /* 検査員の顔（サイクル33・実プレイレビュー「顔を基準に」2026-11-05 16:21）: 場面絵では顔が約50pxと小さく、
-     はかる以降は場面が視界の外へ出て顔が見えなくなっていた。検査員の顔を、はかる／みわける／
-     きめる／おすの各道具の上に丸い顔として静かに添える（操作はふさがない装飾）。
-     最初の画面（さす）は場面絵の顔が見え鑑定皿が1画面に収まる形（サイクル22）を崩さないため対象外。
-     サイクル42（スタートの1分）: 顔ははかる以降でしか使わないため loading=lazy でその場面で読む。
-     サイクル44（スタートの1分・実プレイレビュー 2026-11-05 21:50 で表情が読めず不合格）: 旧顔は横顔〜後ろ向きの
-     切り抜きで車が映り込み表情が読めなかったため、正面を向いた穏やかな表情のドット絵に作り直し（背景は無地）、
-     88px に少し大きくして、最初の1分（はかる到達時）でも両目と微笑みが読めるようにした */
-  .inspectorFace { width:88px; height:88px; border-radius:50%; object-fit:cover; display:block; margin:0 auto 10px;
-    border:3px solid rgba(184,137,58,.55); background:var(--paper); box-shadow:0 2px 8px rgba(26,24,20,.18); }
-  /* 黒い鑑定皿（サイクル34・実プレイレビュー: 最初の画面で皿が約4割を占め何の皿か分かりにくく、
-     下の案内文が画面の下端で切れていた。皿を小さくし、名前を付けて、案内（#count）は皿の上へ移す） */
-  #trayWrap { background:#26241f; border-radius:50%/22px; padding:10px 14px 14px; box-shadow:inset 0 3px 10px rgba(0,0,0,.7), 0 4px 12px rgba(26,24,20,.3); }
-  #trayLabel { text-align:center; font-size:14px; font-weight:800; color:#d8cfb8; letter-spacing:.12em; padding:0 0 4px; }
-  #tray { position:relative; height:104px; }
-  .grain { position:absolute; width:9px; height:15px; border-radius:50%; background:#c9a86a; box-shadow:inset -2px -3px 0 rgba(120,84,30,.45); opacity:0; }
-  .grain.fall { animation:fall .8s ease forwards; }
-  .grain.pale { background:#e8e0c8; } .grain.dark { background:#8a6a34; } .grain.momi { background:#d8bc7a; border-radius:40% 40% 50% 50%; }
-  @keyframes fall { 0%{ opacity:0; transform:translateY(-46px) rotate(0deg);} 100%{ opacity:1; transform:translateY(0) rotate(var(--r,20deg));} }
-  #count { margin:8px 2px 10px; font-size:15px; font-weight:700; min-height:22px; }
-  #count b { font-size:24px; }
-  #nextBtn { display:none; margin-top:10px; border:0; border-radius:999px; background:var(--paper); color:var(--ink);
-    font:inherit; font-size:16px; font-weight:800; padding:12px 20px; box-shadow:0 2px 8px rgba(26,24,20,.3); cursor:pointer; transition:transform .15s ease;
-    scroll-margin-bottom:16px; } /* サイクル57（最初の1分）: 次ボタンが見える位置へ移す時に、下端に少し余白を残す */
-  #nextBtn.on { display:inline-block; }
-  #nextBtn:active { transform:scale(.98); } /* 次へ進むボタンの触感（サイクル13）: 他の大きなボタンとそろえる */
-  #bagTap:active { transform:scale(.985); } /* さす袋の触感（サイクル13）: 押した時だけほんの少し沈む */
-  /* 水分計（サイクル2「はかる」）: 大きなボタン1つ・大きな数字・15.0の線入り色帯 */
-  #meterWrap { display:none; margin-top:12px; background:var(--paper); border-radius:16px; padding:16px 14px 18px; box-shadow:0 4px 12px rgba(26,24,20,.18); }
-  #meterWrap.on { display:block; }
-  #meterBtn { display:block; width:100%; border:0; border-radius:999px; background:var(--green); color:#fff;
-    font:inherit; font-size:26px; font-weight:800; padding:20px 10px; cursor:pointer; transition:transform .15s ease; }
-  #meterBtn:active { transform:scale(.98); } /* はかるの触感（サイクル11）: 押した時だけほんの少し沈む */
-  #meterBtn:disabled { opacity:.45; cursor:default; }
-  #slots { display:flex; gap:8px; margin-top:14px; }
-  .slot { flex:1; text-align:center; font-size:32px; font-weight:800; background:#f1ead8; border-radius:12px; padding:10px 2px; color:#b7ab8e; min-height:62px; }
-  .slot.filled { color:var(--ink); animation:slotIn .5s ease; }
-  /* 次に数字が入る枠（サイクル46・スタートの1分）: 点滅させず金の内枠だけを静かに付け、タップのたびに次の枠へ移す。
-     どこに次が出るかが一目で分かり、3回の手応えが枠の移動でも伝わる */
-  .slot.next { box-shadow:inset 0 0 0 3px var(--gold); }
-  @keyframes slotIn { 0%{ transform:scale(.92); opacity:.4; } 100%{ transform:scale(1); opacity:1; } }
-  #avg { display:none; margin-top:12px; text-align:center; font-size:22px; font-weight:800; }
-  #avg b { font-size:42px; }
-  #avg.on { display:block; animation:slotIn .7s ease; }
-  #band { position:relative; height:26px; border-radius:999px; margin-top:36px;
-    background:linear-gradient(90deg,#b7d3a8 0%,#b7d3a8 50%,#e8d9a0 50%,#e8d9a0 66.7%,#f2c9a4 66.7%,#f2c9a4 100%); }
-  #bandLine { position:absolute; left:50%; top:-5px; bottom:-5px; width:3px; background:var(--ink); border-radius:2px; }
-  #bandLine span { position:absolute; top:-24px; left:50%; transform:translateX(-50%); font-size:16px; font-weight:800; }
-  #bandMark { position:absolute; top:50%; width:22px; height:22px; border-radius:50%; background:#fff; border:4px solid var(--ink);
-    transform:translate(-50%,-50%); opacity:0; transition:opacity .6s ease; }
-  /* 平均の印の着地（サイクル11）: 大きく跳ねず、少しだけ行き過ぎて静かに落ち着く（サイクル10の証印と同じ流儀） */
-  #bandMark.on { opacity:1; animation:markLand .55s ease; }
-  @keyframes markLand { 0%{ transform:translate(-50%,-50%) scale(1.45); } 55%{ transform:translate(-50%,-50%) scale(.94); } 100%{ transform:translate(-50%,-50%) scale(1); } }
-  /* 色帯の両端の数字（サイクル13）: 帯が12.0〜18.0%であることを数字だけで静かに示す（説明文は増やさない） */
-  #bandScale { display:flex; justify-content:space-between; margin-top:6px; padding:0 2px; font-size:13px; font-weight:800; color:#6b6353; }
-  /* 動きを抑える配慮（サイクル13）: 端末で「視差効果を減らす」等が有効な場合は、光る誘い・落ちる粒・着地などの動きをほぼ止める */
+  html,body { margin:0; background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif; }
+  button { font:inherit; color:inherit; background:none; border:0; padding:0; cursor:pointer; touch-action:manipulation; }
+  img,canvas { image-rendering:pixelated; -webkit-user-select:none; user-select:none; -webkit-user-drag:none; }
+  .photo { image-rendering:auto; }
+
+  #app { height:100vh; height:100dvh; max-width:520px; margin:0 auto; display:flex; flex-direction:column;
+    padding:max(6px, env(safe-area-inset-top)) 12px 0; -webkit-user-select:none; user-select:none; overflow:hidden; }
+
+  /* 上: 顔と今の段階 */
+  #head { flex:none; display:flex; align-items:center; gap:10px; height:66px; }
+  #face { width:60px; height:60px; border-radius:50%; background:#fdf0d8; flex:none; transition:transform .18s ease; }
+  #face.hop { transform:translateY(-5px) rotate(-4deg); }
+  #face.tilt { transform:rotate(9deg); }
+  #headText { flex:1; min-width:0; }
+  h1 { margin:0; font-size:12px; font-weight:700; color:#6b6252; }
+  #stepName { font-size:28px; font-weight:800; line-height:1.15; }
+  #pips { display:flex; gap:5px; margin-top:3px; }
+  #pips i { width:18px; height:5px; border-radius:3px; background:#cfc6b1; }
+  #pips i.done { background:var(--gold); }
+  #pips i.now { background:var(--green); }
+  #notesLink { flex:none; font-size:22px; text-decoration:none; padding:8px 2px 8px 8px; opacity:.75; }
+
+  /* 舞台 */
+  #stage { flex:1; min-height:0; position:relative; display:flex; flex-direction:column; gap:8px; }
+  #top { flex:0 0 33%; min-height:0; position:relative; }
+  .topScene { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; gap:14px;
+    opacity:0; transform:translateX(26px); pointer-events:none; transition:opacity .22s ease, transform .22s ease; }
+  .topScene.on { opacity:1; transform:none; pointer-events:auto; }
+
+  #bagBtn { position:relative; height:100%; aspect-ratio:48/60; }
+  #bagBtn canvas { width:100%; height:100%; display:block; transition:transform .1s ease; }
+  #bagBtn.squash canvas { transform:scale(1.05,.94); }
+  #poke { position:absolute; right:-6px; bottom:6%; font-size:38px; animation:poke 1s ease-in-out infinite; pointer-events:none; }
+  @keyframes poke { 0%,100% { transform:translate(0,0); } 50% { transform:translate(-10px,-10px); } }
+  #probe { position:absolute; left:0; top:0; width:132px; height:18px; transform-origin:0 50%; opacity:0; pointer-events:none; z-index:3; }
+  #kokuPhoto { width:78px; aspect-ratio:3/4; object-fit:cover; border-radius:10px; box-shadow:0 2px 8px rgba(26,24,20,.25); }
+
+  /* 水分計 */
+  #meterBtn { position:relative; height:100%; max-height:190px; aspect-ratio:1.5/1; border-radius:18px; background:#2c63a8;
+    box-shadow:inset 0 -8px 0 #1d4a82, 0 3px 10px rgba(26,24,20,.3); padding:12px; display:flex; flex-direction:column; gap:8px; transition:transform .08s ease; }
+  #meterBtn:active { transform:scale(.97); }
+  #lcd { flex:1; min-height:0; border-radius:8px; background:#cfe0b4; color:#22301a; display:flex; align-items:center; justify-content:center;
+    font:800 clamp(38px, 11vh, 62px)/1 ui-monospace,Menlo,monospace; box-shadow:inset 0 3px 0 rgba(0,0,0,.18); }
+  #lcd small { font-size:.5em; margin-left:3px; }
+  #meterBtn.high #lcd { background:#f4c27a; color:#5a2c08; }
+  #slots { flex:none; display:flex; gap:6px; }
+  #slots span { flex:1; height:24px; border-radius:6px; background:#1d4a82; color:#fff; font:700 14px/24px ui-monospace,Menlo,monospace; text-align:center; }
+
+  /* みわける上段: 見本とよけた粒 */
+  #ittoPhoto { height:100%; max-height:112px; aspect-ratio:1; object-fit:cover; border-radius:10px; box-shadow:0 2px 8px rgba(26,24,20,.25); }
+  #dish { flex:1; align-self:stretch; max-height:112px; margin:auto 0; border-radius:50px; background:#f4eee0; border:3px solid #cdbf9f;
+    display:flex; flex-wrap:wrap; align-items:center; justify-content:center; align-content:center; padding:8px 14px; gap:2px; }
+  #dish img { width:36px; height:20px; }
+
+  /* 鑑定皿: 白と黒の2つで同じ試料を見る */
+  #plate { flex:1; min-height:0; position:relative; border-radius:18px; border:4px solid #4a4136;
+    background:linear-gradient(90deg,#fbf8ef 0 50%,#1c1a16 50% 100%); transition:opacity .2s ease; }
+  .grain { position:absolute; display:block; transform:translate(-50%,-50%) rotate(var(--r)); }
+  .grain::before { content:""; position:absolute; inset:-9px; }
+  .grain img { display:block; width:100%; height:100%; }
+  .grain.wig { animation:wig .32s ease; }
+  @keyframes wig { 0%,100% { transform:translate(-50%,-50%) rotate(var(--r)); } 30% { transform:translate(-50%,-68%) rotate(calc(var(--r) - 12deg)); } 65% { transform:translate(-50%,-50%) rotate(calc(var(--r) + 8deg)); } }
+  .grain.hint { animation:hint 1s ease-in-out infinite; }
+  @keyframes hint { 0%,100% { transform:translate(-50%,-50%) rotate(var(--r)) scale(1); } 50% { transform:translate(-50%,-50%) rotate(var(--r)) scale(1.22); } }
+
+  /* きめる: 行ごとの ● が下のボタンと同じ列に落ちる。いちばん右の ● が等級 */
+  #decide, #osu { position:absolute; inset:0; background:var(--bg); opacity:0; pointer-events:none; transition:opacity .2s ease; }
+  #decide.on, #osu.on { opacity:1; pointer-events:auto; }
+  #decide { display:flex; flex-direction:column; justify-content:center; gap:10px; }
+  #rows { display:grid; grid-template-columns:96px repeat(4,1fr); row-gap:3px; }
+  .rowName { display:flex; flex-direction:column; justify-content:center; line-height:1.1; font-size:12px; font-weight:700; color:#6b6252; min-height:48px; }
+  .rowName b { font-size:21px; color:var(--ink); font-weight:800; }
+  .cell { display:flex; align-items:center; justify-content:center; background:#f4eee0; }
+  .cell.last { border-radius:0 8px 8px 0; }
+  .dot { width:22px; height:22px; border-radius:50%; background:var(--green); transform:scale(0); transition:transform .14s cubic-bezier(.3,1.7,.6,1); }
+  .dot.on { transform:scale(1); }
+  .dot.ping { animation:ping .5s ease 2; }
+  @keyframes ping { 50% { transform:scale(1.5); background:var(--gold); } }
+  #gradeBtns { display:grid; grid-template-columns:96px repeat(4,1fr); }
+  #gradeBtns::before { content:""; }
+  .gradeBtn { height:clamp(58px, 11vh, 84px); margin:0 2px; border-radius:12px; background:var(--paper); border:3px solid var(--green); font-size:24px; font-weight:800; color:var(--green); transition:transform .1s ease; }
+  .gradeBtn:active { transform:scale(.95); }
+  .gradeBtn.small { font-size:15px; }
+  .gradeBtn.shake { animation:shake .3s ease; }
+  @keyframes shake { 25% { transform:translateX(-5px); } 75% { transform:translateX(5px); } }
+
+  /* おす */
+  #osu { display:flex; align-items:center; justify-content:center; }
+  #bagBig { position:relative; height:min(100%, 440px); aspect-ratio:48/60; }
+  #bagBig canvas { width:100%; height:100%; display:block; }
+  #bagBig.squash canvas { animation:squash .22s ease; }
+  @keyframes squash { 30% { transform:scale(1.06,.92); } }
+  #mark { position:absolute; left:50%; top:69%; width:40%; aspect-ratio:1; margin:-20% 0 0 -20%; border:5px solid var(--stamp); border-radius:50%; color:var(--stamp);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; font-weight:900; font-size:clamp(26px, 6vh, 42px); line-height:1; background:rgba(255,250,240,.35); transform:rotate(-8deg); opacity:0; }
+  #mark.small { font-size:clamp(17px, 3.6vh, 26px); }
+  #mark small { font-size:11px; font-weight:800; margin-top:4px; }
+  #mark.on { opacity:1; }
+  #hanko { position:absolute; left:50%; top:30%; width:96px; margin-left:-48px; pointer-events:none; z-index:2; }
+  #hanko i { display:block; width:40px; height:62px; margin:0 auto; border-radius:18px 18px 4px 4px; background:#7a4f28; box-shadow:inset -6px 0 0 #5e3b1c; }
+  #hanko b { display:block; height:24px; border-radius:6px; background:#3b2a18; box-shadow:0 3px 6px rgba(26,24,20,.35); }
+
+  /* 下: 案内。手が止まったカードも同じ場所に出し、皿や袋にはかぶせない */
+  #foot { flex:none; height:calc(74px + env(safe-area-inset-bottom)); padding-bottom:env(safe-area-inset-bottom); display:flex; align-items:center; justify-content:center; position:relative; }
+  #hint { font-size:23px; font-weight:800; text-align:center; }
+  #nextBtn { display:none; height:56px; padding:0 30px; border-radius:30px; background:var(--green); color:#fff; font-size:21px; font-weight:800; }
+  #nextBtn.on { display:block; }
+  #idleCard { position:absolute; left:0; right:0; top:8px; display:flex; gap:8px; opacity:0; pointer-events:none; transition:opacity .4s ease; background:var(--bg); }
+  #idleCard.on { opacity:1; pointer-events:auto; }
+  #likeBtn,#returnLink { flex:1; height:56px; border-radius:30px; display:flex; align-items:center; justify-content:center; font-size:17px; font-weight:800; text-decoration:none; }
+  #likeBtn { background:#f1dfb0; color:var(--ink); }
+  #returnLink { background:var(--green); color:#fff; }
+
+  #notes { max-width:520px; margin:0 auto; padding:24px 16px 48px; font-size:13px; line-height:1.75; color:#4a4136; }
+  #notes h2 { font-size:15px; margin:0 0 6px; }
+  #notes a { color:var(--green); }
+  #notes p { margin:0 0 10px; }
+
+  /* 横向きの低い画面: 上段と皿を左右に並べ、きめるの表も詰める */
+  @media (orientation:landscape) and (max-height:500px) {
+    #app { max-width:760px; }
+    #head { height:42px; }
+    #face { width:40px; height:40px; }
+    h1 { display:none; }
+    #stepName { font-size:20px; }
+    #pips { margin-top:1px; }
+    #stage { flex-direction:row; }
+    #top { flex:0 0 34%; }
+    #bagBtn { height:auto; width:56%; }
+    #kokuPhoto { width:34%; }
+    #meterBtn { height:auto; width:100%; }
+    #sceneSort { flex-direction:column; gap:6px; }
+    #ittoPhoto { height:45%; }
+    #dish { flex:0 0 40%; width:100%; margin:0; border-radius:24px; padding:4px 8px; }
+    #foot { height:calc(46px + env(safe-area-inset-bottom)); }
+    #hint { font-size:17px; }
+    #nextBtn { height:40px; font-size:17px; }
+    #decide { gap:4px; }
+    .rowName { min-height:26px; flex-direction:row; align-items:center; justify-content:flex-start; gap:6px; }
+    .rowName b { font-size:15px; }
+    .dot { width:16px; height:16px; }
+    .gradeBtn { height:44px; font-size:19px; }
+    #idleCard { top:3px; }
+    #likeBtn,#returnLink { height:40px; }
+  }
   @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after { animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; }
-    #bagTap::after { animation:none; }
+    #poke,.grain.hint,.grain.wig,.dot.ping { animation:none; }
+    .grain.hint { outline:3px solid var(--gold); }
   }
-  /* 拡大とタップの配慮（サイクル18）: 画面の拡大を妨げず（サイクル1で全体方針の残件だった viewport の拡大制限をこのゲームでは外す）、
-     操作要素だけ二度押し拡大を抑えてタップの反応をすぐ返す。ピンチでの拡大は妨げない */
-  button, #stampBag, .sgrain, #bagTap { touch-action:manipulation; }
-  /* 焦点の輪（サイクル14）: キーボードでも今どこにいるか一目で分かる穏やかな金の輪。タップ／マウスでは出さない（:focus-visible）・点滅や警告色は使わない */
-  button:focus-visible, #stampBag:focus-visible { outline:3px solid var(--gold); outline-offset:3px; }
-  #bagTap:focus-visible { outline:3px solid var(--gold); outline-offset:-3px; }
-  .sgrain:focus-visible { outline:3px solid var(--gold); outline-offset:1px; border-radius:50%; }
-  .gradeBtn:focus-visible { outline-offset:2px; }
-  /* 資料の見出しと出典リンクの焦点（サイクル20）: summary と a は button でないためサイクル14の輪が届かなかった。
-     開くだけの見出しと原典へのリンクにも同じ穏やかな金の輪を付け、見出しのタップ反応も操作要素とそろえる */
-  #refBox summary:focus-visible, #refBox a:focus-visible { outline:3px solid var(--gold); outline-offset:2px; }
-  #refBox summary { touch-action:manipulation; }
-  /* みわける（サイクル3）: 白い皿と黒い皿（実在の鑑定）＋よけた粒の受け皿 */
-  #sortWrap { display:none; margin-top:12px; }
-  #sortWrap.on { display:block; }
-  .plate { border-radius:50%/22px; padding:14px 10px 18px; min-height:200px; position:relative; } /* サイクル9: 大きくなった粒が5段のロットでも皿に収まる高さ */
-  /* 白い皿だけ少し低く（サイクル56・最初の1分）: 白皿の粒は全ロットで最大4段（粒の下端162px）までで、
-     200pxには余りがあった。その分だけ低くして受け皿を1画面に入れる。黒皿は5段（192px）があるため200pxのまま */
-  #whiteTray { min-height:170px; }
-  .plate + .plate { margin-top:10px; }
-  #whiteTray { background:#f7f3e8; box-shadow:inset 0 3px 10px rgba(26,24,20,.18), 0 4px 12px rgba(26,24,20,.2); }
-  #blackTray { background:#26241f; box-shadow:inset 0 3px 10px rgba(0,0,0,.7), 0 4px 12px rgba(26,24,20,.3); }
-  .plateLabel { position:absolute; top:10px; left:32px; font-size:13px; font-weight:800; opacity:.55; }
-  #whiteTray .plateLabel { color:#6b6353; } #blackTray .plateLabel { color:#f7f3e8; }
-  .sgrain { position:absolute; width:44px; height:44px; border:0; background:transparent; cursor:pointer; padding:0;
-    display:flex; align-items:center; justify-content:center; transition:opacity .45s ease, transform .45s ease; }
-  .sgrain i { display:block; width:17px; height:26px; border-radius:50%; background:#c9a86a; box-shadow:inset -2px -3px 0 rgba(120,84,30,.45); pointer-events:none; }
-  /* みわけの見分けやすさ（サイクル9）: わるい粒は種類ごとに形と模様をはっきり変える。
-     死米=粉状に白く丸い／着色粒=濃い茶に暗い芯／未熟粒=細く青い／もみ=殻の縞が太く幅広／被害粒=太い割れ目 */
-  .sgrain.shini i { width:19px; height:23px; background:#fdfaf0; box-shadow:inset -2px -3px 0 rgba(160,150,120,.45); border-radius:48% 48% 46% 46%; }
-  .sgrain.color i { background:radial-gradient(circle at 50% 42%, #3d1810 0 34%, #7a3b2e 36% 100%); box-shadow:inset -2px -3px 0 rgba(40,16,10,.5); }
-  .sgrain.mijuku i { width:12px; height:27px; background:#9db56e; box-shadow:inset -2px -3px 0 rgba(90,105,55,.45); }
-  .sgrain.momi i { width:20px; height:29px; background:repeating-linear-gradient(90deg,#d8bc7a 0 4px,#a9853e 4px 7px); border-radius:46% 46% 50% 50% / 62% 62% 38% 38%; box-shadow:inset -2px -3px 0 rgba(120,84,30,.35); }
-  .sgrain.higai i { background:linear-gradient(115deg,#c9a86a 0 40%,#3d2a14 40% 60%,#b28c50 60% 100%); }
-  .sgrain:active { transform:scale(.93); } /* みわけるの触感（サイクル11）: どの粒も押した時だけほんの少し沈む（罰なし・音なし） */
-  /* よい粒の手応え（サイクル48・最初の1分）: 従来は :active の間だけ揺れて指を離すと無反応だった。
-     クリックで付け直す .nod だけにアニメーションを寄せ（押している間は粒全体の沈み込み＝サイクル11で反応）、
-     指を離した後も小さく揺れて見えるようにした（罰なし・数・色は変えない。Codexレビュー指摘で :active との二重適用を解消） */
-  .sgrain.good.nod i { animation:wiggle .5s ease; }
-  @keyframes wiggle { 0%,100%{ transform:rotate(0deg);} 35%{ transform:rotate(13deg);} 70%{ transform:rotate(-9deg);} }
-  .sgrain.away { opacity:0; transform:translateY(10px) scale(.6); pointer-events:none; }
-  #yokeWrap { margin-top:10px; background:#e3d7bd; border-radius:16px; padding:10px 12px; min-height:58px; box-shadow:inset 0 2px 6px rgba(26,24,20,.2); }
-  #yokeWrap .plateLabel { position:static; color:#6b6353; }
-  #yokeTray { display:flex; flex-wrap:wrap; gap:2px; margin-top:4px; min-height:30px; }
-  #yokeTray .sgrain { position:static; width:28px; height:28px; cursor:default; animation:yokeIn .45s ease; } /* よけた粒が受け皿へ静かに落ち着く（サイクル11） */
-  @keyframes yokeIn { 0%{ opacity:0; transform:translateY(6px) scale(.6); } 100%{ opacity:1; transform:translateY(0) scale(1); } }
-  #yokeTray .sgrain i { width:12px; height:19px; }
-  /* 粒と皿のドット絵化（サイクル30・ドット絵化の続き）: 実物写真3点（サイクル27〜29）の次は、残る粒と皿を
-     場面絵のドット絵にそろえる。粒はなめらかな楕円（border-radius:50%）をやめ、角を段々に落とした
-     clip-path の輪郭にしてドット絵の粒らしくする（種類ごとの色・模様＝サイクル9の見分けはそのまま）。
-     皿の色と形は変えない。遊び・手順・数値は一切変えない。サイクル39で皿の点の質感は素のままのため外した */
-  .grain, .sgrain i { clip-path:polygon(32% 0, 68% 0, 88% 14%, 100% 38%, 96% 72%, 78% 100%, 22% 100%, 4% 72%, 0 38%, 12% 14%); }
-  /* 素のままへの整理（サイクル39・ユーザー指示 2026-11-05 18:28「できるだけ加工せず、素のまま」）:
-     サイクル30・31で足した点の質感（radial-gradient のドット）と、水滴・米粒の小さな飾りは外した。
-     道具まわりは単色のままにし、場面絵と粒の輪郭だけを残す。遊び・手順・数値は一切変えない */
-  /* 小さい画面のみわける（サイクル61・最初の1分）: 実測（375×667）では到着時に黒い皿の下端が759px・
-     受け皿が769–842pxと画面外で、よけた粒の行き先が見えず、タップした粒も画面外（803px）に着地した。
-     大きい画面（390×844で受け皿の下端842px・収まる）は変えず、高さ780px以下の画面だけ
-     「みわける」の中身（顔・見本・進み具合・皿・受け皿）を詰めて、受け皿まで到着時の1画面に収める。
-     顔は56pxでも正面の両目と微笑みが読める大きさに留め、見本は写真とドット絵の同寸（サイクル35）を保つ。
-     皿の min-height は粒の並びの下端（白162px・黒192px＝粒の置き方 placeGrains の行間30px×段数＋44px）より
-     下げない（白162／黒194）。粒のタップ範囲（44px）と行間は変えない */
-  @media (max-height:780px) {
-    #sortWrap .inspectorFace { width:56px; height:56px; margin-bottom:4px; }
-    #ittoPair .ittoPhoto, #ittoPair #ittoDot { width:min(68px,34%); }
-    #ittoPair figcaption { font-size:12px; padding:3px 4px 5px; }
-    #sortWrap #sortPct { margin:2px 2px; }
-    #sortWrap #sortPct b { font-size:32px; }
-    #sortWrap #whiteTray { min-height:162px; }
-    #sortWrap #blackTray { min-height:194px; }
-    #sortWrap .plate + .plate { margin-top:4px; }
-    #sortWrap #yokeWrap { margin-top:4px; padding:5px 12px; min-height:54px; }
-    #sortWrap #yokeTray { min-height:26px; }
-    /* 小さい画面のきめる（サイクル62・最初の1分）: 実測（375×667）では到着時に結果ラベルの下端が746pxと
-       画面外で、等級を考える肝心な行・合計・めやすが見えなかった（360×740でも下端746pxで僅かに外れた）。
-       大きい画面（390×844）は変えず、高さ780px以下の画面だけ「きめる」の中身（顔・結果ラベル・振り返り・
-       等級ボタン）を詰めて、結果ラベル全体が到着時の1画面に収まるようにする。顔はみわける（サイクル61）と
-       同じ56px（正面の両目と微笑みが読める大きさ）に留め、ラベルの数字は22pxまで（大きな数字の原則は保つ）。
-       等級ボタンはラベルの後の短いスクロール先という優先順位（サイクル58）は変えない */
-    #gradeWrap { padding:12px 12px 14px; }
-    #gradeWrap .inspectorFace { width:56px; height:56px; margin-bottom:4px; }
-    #gradeWrap #resultLabel { padding:8px 12px 6px; margin-bottom:8px; }
-    #gradeWrap #resultLabel .labelHead { font-size:12px; line-height:1.5; padding-bottom:4px; margin-bottom:4px; }
-    #gradeWrap .labelRow { padding:1px 0; }
-    #gradeWrap .labelRow .lk { font-size:18px; }
-    #gradeWrap .labelRow .lc { font-size:13px; margin-left:32px; }
-    #gradeWrap .labelRow .lp { font-size:22px; }
-    #gradeWrap .labelTotal .lp { font-size:20px; }
-    #gradeWrap .labelGuide { margin-top:6px; padding-top:4px; font-size:11px; line-height:1.55; }
-    #gradeWrap .labelGuide b { font-size:12px; }
-    #gradeWrap #gradeRecap { margin-bottom:8px; font-size:16px; }
-    #gradeWrap #gradeRecap b { font-size:24px; }
-    #gradeWrap .gradeBtn { padding:14px 6px; font-size:28px; }
-    /* 小さい画面の最初の画面（サイクル63・最初の1分）: 実測（375×667）では到着時に鑑定皿の下端が805pxと
-       画面外で、袋をタップして落ちる試料の粒が最初に見えなかった（360×740でも下端786pxで僅かに外れた）。
-       大きい画面（390×844で皿の下端822px・収まる）は変えず、高さ780px以下の画面だけ最初の画面
-       （場面・穀刺しペア・段階チップ・案内・鑑定皿）を詰めて、皿まで到着時の1画面に収める。
-       場面は幅84%にしても米袋の山と検査員は判別でき、穀刺しペアは写真とドット絵の同寸（サイクル35）を
-       保ったまま小さくする。皿の粒は割合（%）で置かれるため、高さを詰めても並びは崩れない */
-    #scene { width:84%; margin:0 auto; }
-    #kokuPair { margin-top:6px; }
-    #kokuPhoto, #kokuDot { width:min(104px,30%); }
-    #kokuPair figcaption { font-size:12px; padding:3px 4px 5px; }
-    #trayWrap { padding:8px 12px 10px; }
-    #tray { height:82px; }
-  }
-  #sortPct { margin:8px 2px 4px; font-size:20px; font-weight:800; } /* サイクル56: 受け皿まで1画面に収めるため余白だけ少し詰める */
-  #sortPct b { font-size:44px; display:inline-block; }
-  /* みわけの手応え（サイクル47・最初の1分）: 進み具合は皿の上に置き（HTML側で移動）、
-     よけた粒が増えるたび大きな数字が一度だけ静かに動く。点滅・色変え・音はなし */
-  #sortPct b.pop { animation:sortPop .45s ease; }
-  @keyframes sortPop { 0%{ transform:scale(1.22); } 100%{ transform:scale(1); } }
-  /* 穀粒判別器（サイクル8）: 死米・着色粒だけをゆっくり見直す任意の補助。流れは止めない */
-  #sortWrap { position:relative; }
-  #scanBar { position:absolute; left:6px; right:6px; top:0; height:52px; border-radius:12px; z-index:5;
-    background:linear-gradient(180deg, rgba(255,244,190,0), rgba(255,244,190,.75), rgba(255,244,190,0));
-    opacity:0; pointer-events:none; }
-  #scanBar.on { animation:scanMove 1.1s ease forwards; }
-  @keyframes scanMove { 0%{ opacity:0; transform:translateY(0);} 6%{ opacity:1; } 85%{ opacity:1; } 100%{ opacity:0; transform:translateY(420px);} }
-  #machineBtn { display:block; width:100%; margin-top:12px; border:0; border-radius:999px; background:#4a4438; color:#fff;
-    font:inherit; font-size:20px; font-weight:800; padding:14px 10px; cursor:pointer; transition:transform .15s ease; }
-  #machineBtn:active { transform:scale(.98); } /* きかいでみるの触感（サイクル11）: 他の大きなボタンとそろえる */
-  #machineBtn:disabled { opacity:.45; cursor:default; }
-  /* きめる（サイクル4）: 大きな等級ボタン4つ。流れを止めない見直し導線つき */
-  #gradeWrap { display:none; margin-top:12px; background:var(--paper); border-radius:16px; padding:16px 14px 18px; box-shadow:0 4px 12px rgba(26,24,20,.18); }
-  #gradeWrap.on { display:block; }
-  /* 結果ラベル（サイクル26・ユーザー指示 2026-11-05 13:08「検査結果このように表示」）: 実物の穀粒判定器RN-700の
-     印字ラベル（user_assets/rn700_label_ref_20261105.jpg）の様式。白い紙に項目名・割合%・粒数が行ごとに並び、
-     上部に測定日付・測定粒種・ロット番号、末尾に合計粒数。数値は「みわける」の皿の50粒の実数だけを使う
-     （実物の合計粒数を真似て水増ししない）。全画面モーダルにはせず「きめる」の流れの中に静かに置く */
-  /* サイクル52（最初の1分）: 結果ラベルは「きめる」で等級を考える手がかりそのものなので、
-     薄く出る kokuIn（.55秒・到着直後は opacity が約0.3）は外し、開いた瞬間から読めるようにする */
-  #resultLabel { background:#fff; border-radius:4px; padding:12px 14px 10px; margin:0 0 12px; color:#111;
-    box-shadow:0 1px 4px rgba(26,24,20,.18); }
-  #resultLabel .labelHead { font-size:13px; font-weight:700; line-height:1.65; border-bottom:3px solid #111; padding-bottom:6px; margin-bottom:6px; }
-  .labelRow { display:flex; justify-content:space-between; align-items:flex-end; padding:2px 0; }
-  .labelRow .lleft { display:flex; flex-direction:column; }
-  .labelRow .lk { font-size:22px; font-weight:800; line-height:1.15; }
-  .labelRow .lc { font-size:15px; font-weight:700; margin-left:44px; line-height:1.2; }
-  .labelRow .lp { font-size:28px; font-weight:800; line-height:1.1; }
-  .labelTotal { border-top:1px solid #999; margin-top:4px; padding-top:6px; }
-  .labelTotal .lp { font-size:24px; }
-  /* 限度併記（サイクル38・実プレイレビュー）: 行ごとに直接比べると粒数%と重さ%を取り違えるため、
-     ラベルの下に区切って「重さのめやす」としてだけ置く。値は GRADE_TABLE（告示第244号）と同一・装飾なし */
-  .labelGuide { border-top:1px dashed #999; margin-top:8px; padding-top:6px; font-size:12px; line-height:1.7; color:#444; }
-  .labelGuide b { font-size:13px; color:#111; }
-  #gradeRecap { margin:0 0 12px; font-size:18px; font-weight:800; text-align:center; }
-  #gradeRecap b { font-size:30px; }
-  #gradeBtns { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-  .gradeBtn { border:3px solid #d8cfb8; border-radius:16px; background:#fff; color:var(--ink);
-    font:inherit; font-size:34px; font-weight:800; padding:22px 6px; cursor:pointer; }
-  .gradeBtn:active { transform:scale(.97); }
-  .gradeBtn.picked { border-color:var(--green); background:#e6efdf; }
-  /* サイクル51: 外れた等級にも静かな印を付け、タップが伝わったことをその場で示す（赤・罰なし） */
-  .gradeBtn.tried { border-color:var(--gold); background:#f6efdc; }
-  .gradeBtn:disabled { opacity:.55; cursor:default; }
-  .gradeBtn.picked:disabled { opacity:1; }
-  #gradeMsg { min-height:28px; margin:12px 2px 0; text-align:center; font-size:18px; font-weight:800; color:var(--green); opacity:0; }
-  #gradeMsg.on { opacity:1; transition:opacity .35s ease; }
-  #backToSort { display:none; margin:10px auto 0; border:0; border-radius:999px; background:#e3d7bd; color:var(--ink);
-    font:inherit; font-size:16px; font-weight:800; padding:10px 18px; cursor:pointer; }
-  #backToSort.on { display:block; }
-  /* おす（サイクル5）: 等級証印＋日付印を袋に押す。次の山で1ロット完結し、続けられる */
-  #stampWrap { display:none; margin-top:12px; }
-  #stampWrap.on { display:block; }
-  #stampBag { position:relative; border-radius:14px; min-height:190px;
-    background:linear-gradient(180deg,#efe3c2,#e2d0a4);
-    box-shadow:inset 0 3px 10px rgba(120,84,30,.25), 0 4px 12px rgba(26,24,20,.2); cursor:pointer; overflow:hidden; }
-  /* 押印の触感（サイクル10）: 押した瞬間だけ袋がほんの少し沈み、影が深くなる。ゆっくり戻り、音も点滅もない */
-  #stampBag.pressed { animation:bagPress .55s ease; }
-  @keyframes bagPress { 0%{ transform:scale(1); } 35%{ transform:scale(.985) translateY(2px); box-shadow:inset 0 5px 14px rgba(120,84,30,.35), 0 2px 6px rgba(26,24,20,.18); } 100%{ transform:scale(1); } }
-  #stampBag:active { transform:scale(.99); }
-  #stampBag .bagWeight { position:absolute; top:14px; left:16px; font-size:34px; font-weight:800; color:#8a6f3c; }
-  /* 袋の印刷欄（サイクル12）: 紙袋の印刷欄を罫線だけで薄く表す（文字は増やさない・証印の場所はふさがない） */
-  #stampBag .bagPrint { position:absolute; left:16px; top:64px; width:128px; height:76px; border:2px solid rgba(138,111,60,.32); border-radius:6px;
-    background:repeating-linear-gradient(180deg, rgba(255,252,244,.18) 0 17px, rgba(138,111,60,.26) 17px 19px); pointer-events:none; }
-  #stampBag .bagHint { position:absolute; bottom:12px; left:0; right:0; text-align:center; font-size:15px; font-weight:800; color:#8a6f3c; opacity:.8; }
-  /* サイクル32: 押印後は袋の案内を消す（実プレイレビュー） */
-  #stampBag.stamped .bagHint { display:none; }
-  #stampMark { position:absolute; right:18px; top:44px; width:104px; height:104px; border:5px solid #b03a2e; border-radius:50%;
-    color:#b03a2e; display:flex; flex-direction:column; align-items:center; justify-content:center; line-height:1;
-    opacity:0; transform:scale(1.5) rotate(-10deg); pointer-events:none; background:rgba(255,252,244,.35);
-    box-shadow:inset 0 0 0 2px rgba(176,58,46,.28), inset 0 0 12px rgba(176,58,46,.18); }
-  /* 証印の着地（サイクル10）: 大きく跳ねず、少しだけ行き過ぎて静かに落ち着く＝紙にインクが乗る重み */
-  #stampMark.on { animation:stampLand .55s ease forwards; }
-  @keyframes stampLand { 0%{ opacity:0; transform:scale(1.55) rotate(-14deg); } 55%{ opacity:.94; transform:scale(.96) rotate(-10deg); } 100%{ opacity:.92; transform:scale(1) rotate(-10deg); } }
-  #stampMark b { font-size:38px; }
-  #stampMark span { font-size:12px; font-weight:800; margin-top:5px; }
-  #dateMark { position:absolute; right:26px; top:158px; font-size:17px; font-weight:800; color:#4a4438;
-    border:2px solid #4a4438; border-radius:6px; padding:2px 8px; opacity:0; transform:rotate(-3deg); pointer-events:none; background:rgba(255,252,244,.4); }
-  #dateMark.on { transition:opacity .6s ease .25s; opacity:.85; }
-  #stampBtn { display:block; width:100%; margin-top:12px; border:0; border-radius:999px; background:var(--green); color:#fff;
-    font:inherit; font-size:26px; font-weight:800; padding:20px 10px; cursor:pointer; transition:transform .15s ease; }
-  #stampBtn:active { transform:scale(.98); }
-  #stampBtn:disabled { opacity:.45; cursor:default; }
-  #stampCount { margin:12px 2px 0; text-align:center; font-size:18px; font-weight:800; }
-  #stampCount b { font-size:34px; display:inline-block; }
-  /* 押印の手応え（サイクル53・最初の1分）: 証印の数は従来テキストが変わるだけで動きがなく、
-     袋を見ていると数の変化に気づきにくかった。みわけの進み具合（サイクル47）と同じく、
-     押すたび大きな数字が一度だけ静かに動くようにする（点滅・色変え・音はなし） */
-  #stampCount b.pop { animation:stampPop .45s ease; }
-  @keyframes stampPop { 0%{ transform:scale(1.22); } 100%{ transform:scale(1); } }
-  #scene.nextPile img { animation:nextPile 1.2s ease; }
-  @keyframes nextPile { 0%{ opacity:.35; transform:translateX(14px);} 100%{ opacity:1; transform:translateX(0);} }
-  footer { margin-top:16px; font-size:12px; color:#6b6353; line-height:1.7; }
-  /* 手が止まったときの小さなカード（サイクル36・ユーザー指示 2026-11-05 17:54）: 操作が45秒止んだら画面の下に小さく出すだけ。
-     全画面モーダルにはせず、入力はふさがない。遊びに戻りたければそのまま画面をさわれば静かに消える */
-  #idleCard { position:fixed; left:50%; bottom:14px; transform:translate(-50%,18px); width:min(430px,94%); z-index:60;
-    background:var(--paper); border-radius:18px; box-shadow:0 8px 28px rgba(26,24,20,.35), inset 0 0 0 1px rgba(184,137,58,.4);
-    padding:14px 16px 16px; text-align:center; opacity:0; pointer-events:none; transition:opacity .55s ease, transform .55s ease; }
-  #idleCard.on { opacity:1; transform:translate(-50%,0); pointer-events:auto; }
-  #idleCard .idleMsg { font-size:22px; font-weight:800; margin:2px 0 10px; }
-  #idleCard .idleBtns { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
-  #likeBtn { border:0; border-radius:999px; background:#f3e3b8; color:var(--ink); font:inherit; font-size:19px; font-weight:800; padding:12px 20px; cursor:pointer; touch-action:manipulation; }
-  #likeBtn:disabled { opacity:.75; cursor:default; }
-  #returnLink { border-radius:999px; background:var(--green); color:#fff; font-size:19px; font-weight:800; padding:12px 20px; text-decoration:none; touch-action:manipulation; }
-  #idleCard button:focus-visible, #idleCard a:focus-visible { outline:3px solid var(--gold); outline-offset:2px; }
-  /* サイクル15: 資料置き場（任意で開く・流れを止めない） */
-  #refBox { margin-top:14px; border:2px solid #d8cfb8; border-radius:14px; background:#f7f2e4; padding:10px 14px; }
-  #refBox summary { font-size:20px; font-weight:800; cursor:pointer; padding:6px 2px; }
-  #refBox table { width:100%; border-collapse:collapse; margin-top:8px; font-size:15px; }
-  #refBox th, #refBox td { border-bottom:1px solid #ddd2b8; padding:5px 4px; text-align:right; }
-  #refBox th:first-child, #refBox td:first-child { text-align:left; }
-  #refBox p { font-size:13px; line-height:1.7; color:#5a5344; margin:8px 0 2px; }
-  #refBox a { color:#7a5c14; }
 </style>
 </head>
 <body>
-<main>
-  <h1>🌾 こめの けんさ</h1>
-
-  <div id="scene">
-    <img src="kensa/scene_dot.webp" fetchpriority="high" alt="検査員が30kg紙袋の山に穀刺しを刺して試料を抜く様子のドット絵"/>
-    <button id="bagTap" aria-label="米袋をタップして穀刺しを刺す"></button>
-    <div id="probe" aria-hidden="true"><svg viewBox="0 0 220 36" role="img" aria-label="穀刺し" shape-rendering="crispEdges"><g transform="translate(220 0) scale(-1 1)"><polygon points="7,12 2,15.5 6.5,17 3,19.5 7,21 4,24 24,26 24,10" fill="#ccd1d4" stroke="#8f979e" stroke-width="1"/><rect x="24" y="10" width="134" height="16" rx="3" fill="#ccd1d4" stroke="#8f979e" stroke-width="1"/><line x1="30" y1="18" x2="152" y2="18" stroke="#9aa2a8" stroke-width="2"/><line x1="30" y1="13.5" x2="152" y2="13.5" stroke="#e8ebec" stroke-width="1.5"/><g class="probeGrains" aria-hidden="true"><ellipse cx="37" cy="18" rx="3.4" ry="1.7" fill="#ead9a4" stroke="#b28c50" stroke-width=".6"/><ellipse cx="46" cy="17.4" rx="3.4" ry="1.7" fill="#e2cd8e" stroke="#b28c50" stroke-width=".6"/><ellipse cx="55" cy="18.5" rx="3.4" ry="1.7" fill="#ead9a4" stroke="#b28c50" stroke-width=".6"/><ellipse cx="64" cy="17.6" rx="3.4" ry="1.7" fill="#e8d49c" stroke="#b28c50" stroke-width=".6"/><ellipse cx="73" cy="18.4" rx="3.4" ry="1.7" fill="#e2cd8e" stroke="#b28c50" stroke-width=".6"/><ellipse cx="82" cy="17.5" rx="3.4" ry="1.7" fill="#ead9a4" stroke="#b28c50" stroke-width=".6"/><ellipse cx="91" cy="18.5" rx="3.4" ry="1.7" fill="#e8d49c" stroke="#b28c50" stroke-width=".6"/><ellipse cx="100" cy="17.6" rx="3.4" ry="1.7" fill="#ead9a4" stroke="#b28c50" stroke-width=".6"/><ellipse cx="109" cy="18.4" rx="3.4" ry="1.7" fill="#e2cd8e" stroke="#b28c50" stroke-width=".6"/><ellipse cx="118" cy="17.8" rx="3.4" ry="1.7" fill="#ead9a4" stroke="#b28c50" stroke-width=".6"/></g><rect x="126" y="14.5" width="23" height="7" rx="3.5" fill="#4c4237"/><rect x="158" y="9" width="14" height="18" rx="2" fill="#ccd1d4" stroke="#7e868d" stroke-width="1"/><rect x="172" y="8.5" width="45" height="19" rx="8" fill="#c68a3a" stroke="#9c6a24" stroke-width="1"/><path d="M178 14 Q194 12.5 211 14 M178 21 Q194 22.5 211 21" stroke="#a96f27" stroke-width="1.4" fill="none" stroke-opacity=".7"/></g></svg></div>
-    <div id="seal" aria-hidden="true">済</div>
-  </div>
-
-  <div id="kokuPair">
-  <figure id="kokuPhoto">
-    <img src="kensa/kokusashi.webp" alt="手に持った実物の穀刺し（長い金属の管の先にギザギザがあり、木の持ち手の近くに細長い窓がある）"/>
-    <figcaption>穀刺し（ほんもの）</figcaption>
-  </figure>
-  <figure id="kokuDot">
-    <img src="kensa/kokusashi_dot.webp" alt="実物の穀刺しをドット絵に描き起こした絵（長い金属の二重管、柄の近くの細長い窓、木の持ち手）"/>
-    <figcaption>穀刺し（ドット絵）</figcaption>
-  </figure>
-  </div>
-
-  <div id="stepChip" aria-live="polite">① さす</div>
-  <p id="count">ふくろを タップ</p>
-  <div id="trayWrap"><div id="trayLabel">かんてい皿</div><div id="tray" aria-label="鑑定皿"></div></div>
-  <div id="meterWrap">
-    <img loading="lazy" class="inspectorFace" src="kensa/face_dot.webp" alt="穏やかに微笑む検査員の顔のドット絵"/>
-    <button id="meterBtn">💧 はかる</button>
-    <div id="slots">
-      <div class="slot" aria-label="1回目">—</div>
-      <div class="slot" aria-label="2回目">—</div>
-      <div class="slot" aria-label="3回目">—</div>
+<main id="app">
+  <div id="head">
+    <canvas id="face" width="256" height="256" aria-hidden="true"></canvas>
+    <div id="headText">
+      <h1>農産物検査</h1>
+      <div id="stepName" aria-live="polite">ぬく</div>
+      <div id="pips" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
     </div>
-    <p id="avg" aria-live="polite">平均 <b></b></p>
-    <div id="band" aria-label="水分の色帯（15.0に線）">
-      <div id="bandLine"><span>15.0</span></div>
-      <div id="bandMark"></div>
-    </div>
-    <div id="bandScale" aria-hidden="true"><span>12</span><span>18</span></div>
+    <a id="notesLink" href="#notes" aria-label="検査のしくみと出典">📖</a>
   </div>
-  <div id="sortWrap">
-    <img loading="lazy" class="inspectorFace" src="kensa/face_dot.webp" alt="穏やかに微笑む検査員の顔のドット絵"/>
-    <div id="ittoPair">
-    <figure class="ittoPhoto" id="ittoPhoto">
-      <img loading="lazy" src="kensa/ittomai.webp" alt="手のひらに載せた一等米の実物（粒がふっくら揃い、被害粒・着色粒がほぼ見当たらない）"/>
-      <figcaption>一等米（ほんもの）</figcaption>
-    </figure>
-    <figure id="ittoDot">
-      <img loading="lazy" src="kensa/ittomai_dot.webp" alt="手のひらに載せた一等米をドット絵に描き起こした絵（粒がふっくら揃った玄米）"/>
-      <figcaption>一等米（ドット絵）</figcaption>
-    </figure>
+  <div id="stage">
+    <div id="top">
+      <div class="topScene on" id="sceneBag">
+        <button id="bagBtn" aria-label="ふくろ"><canvas id="bagCanvas" width="48" height="60"></canvas><span id="poke" aria-hidden="true">👆</span></button>
+        <img id="kokuPhoto" class="photo" src="kensa/kokusashi.webp" alt="穀刺しの実物の写真"/>
+      </div>
+      <div class="topScene" id="sceneMeter">
+        <button id="meterBtn" aria-label="水分計"><div id="lcd">--.-</div><div id="slots"><span></span><span></span><span></span></div></button>
+      </div>
+      <div class="topScene" id="sceneSort">
+        <img id="ittoPhoto" class="photo" src="kensa/ittomai.webp" alt="一等米の実物の写真"/>
+        <div id="dish" aria-label="よけた粒"></div>
+      </div>
+      <canvas id="probe" width="44" height="6" aria-hidden="true"></canvas>
     </div>
-    <p id="sortPct">みわけ <b>0%</b> <span id="sortCount">0 / 10</span></p>
-    <div class="plate" id="whiteTray"><span class="plateLabel">しろい皿</span></div>
-    <div class="plate" id="blackTray"><span class="plateLabel">くろい皿</span></div>
-    <div id="yokeWrap"><span class="plateLabel">よけた粒</span><div id="yokeTray"></div></div>
-    <div id="scanBar" aria-hidden="true"></div>
-    <button id="machineBtn">🔬 きかいでみる</button>
+    <div id="plate" aria-label="鑑定皿"></div>
+    <div id="decide" inert>
+      <div id="rows"></div>
+      <div id="gradeBtns">
+        <button class="gradeBtn" data-i="0">1等</button><button class="gradeBtn" data-i="1">2等</button><button class="gradeBtn" data-i="2">3等</button><button class="gradeBtn small" data-i="3">規格外</button>
+      </div>
+    </div>
+    <div id="osu" inert>
+      <button id="bagBig" aria-label="ふくろに おす"><canvas id="bagBigCanvas" width="48" height="60"></canvas>
+        <div id="mark"></div>
+        <div id="hanko" aria-hidden="true"><i></i><b></b></div>
+      </button>
+    </div>
   </div>
-  <div id="gradeWrap">
-    <img loading="lazy" class="inspectorFace" src="kensa/face_dot.webp" alt="穏やかに微笑む検査員の顔のドット絵"/>
-    <div id="resultLabel" aria-label="検査結果ラベル">
-      <div class="labelHead">《穀粒判定器 RN-700》<br/>測定日付：<span id="labelDate">—</span><br/>測定粒種：うるち玄米<br/>ロット番号：<span id="labelLot">01</span></div>
-      <div id="labelRows"></div>
-      <div class="labelRow labelTotal"><span class="lk">合　計</span><span class="lp" id="labelTotal">50粒</span></div>
-      <div class="labelGuide" id="labelGuide"><b>等級のめやす（重さ）</b> ・ ラベルは粒数<br/>1等 整粒70↑ 死米7↓ 着色0.1↓ もみ0.3↓<br/>2等 整粒60↑ 死米10↓ 着色0.3↓ もみ0.5↓<br/>3等 整粒45↑ 死米20↓ 着色0.7↓ もみ1.0↓</div>
+  <div id="foot">
+    <div id="hint" aria-live="polite">ふくろを タップ</div>
+    <button id="nextBtn">つぎの ふくろ 🌾</button>
+    <div id="idleCard" aria-live="polite" inert>
+      <button id="likeBtn">👍 いいね</button>
+      <a id="returnLink" href="https://ricepia.jp/">🏠 サイトへ もどる</a>
     </div>
-    <p id="gradeRecap">💧 <b id="gradeMoisture">—</b>　👀 <span id="gradeSort">0 / 10</span></p>
-    <div id="gradeBtns">
-      <button class="gradeBtn" data-grade="1等">1等</button>
-      <button class="gradeBtn" data-grade="2等">2等</button>
-      <button class="gradeBtn" data-grade="3等">3等</button>
-      <button class="gradeBtn" data-grade="規格外">規格外</button>
-    </div>
-    <p id="gradeMsg" aria-live="polite"></p>
-    <button id="backToSort">👀 皿をみる</button>
   </div>
-  <div id="stampWrap">
-    <img loading="lazy" class="inspectorFace" src="kensa/face_dot.webp" alt="穏やかに微笑む検査員の顔のドット絵"/>
-    <div id="stampBag" role="button" tabindex="0" aria-label="米袋をタップして等級証印を押す">
-      <span class="bagWeight">30kg</span>
-      <div class="bagPrint" aria-hidden="true"></div>
-      <div id="stampMark"><b id="stampGrade">1等</b><span>等級証印</span></div>
-      <div id="dateMark"></div>
-      <span class="bagHint">ふくろを タップ</span>
-    </div>
-    <button id="stampBtn">🖐 おす</button>
-    <p id="stampCount" aria-live="polite">🖐 <b>0</b></p>
-  </div>
-  <button id="nextBtn">② はかる 💧</button>
-
-  <footer>🌾 農産物検査の仕事が題材です。くわしくは下の資料へ 📖</footer>
-  <details id="refBox">
-    <summary>📖 資料（規格表）</summary>
-    <table aria-label="水稲うるち玄米の品位規格">
-      <tr><th>項目</th><th>1等</th><th>2等</th><th>3等</th></tr>
-      <tr><td>整粒（以上）</td><td>70%</td><td>60%</td><td>45%</td></tr>
-      <tr><td>水分（以下）</td><td>15.0%</td><td>15.0%</td><td>15.0%</td></tr>
-      <tr><td>計（以下）</td><td>15%</td><td>20%</td><td>30%</td></tr>
-      <tr><td>死米（以下）</td><td>7%</td><td>10%</td><td>20%</td></tr>
-      <tr><td>着色粒（以下）</td><td>0.1%</td><td>0.3%</td><td>0.7%</td></tr>
-      <tr><td>もみ（以下）</td><td>0.3%</td><td>0.5%</td><td>1.0%</td></tr>
-      <tr><td>麦（以下）</td><td>0.1%</td><td>0.3%</td><td>0.7%</td></tr>
-      <tr><td>もみ・麦以外（以下）</td><td>0.3%</td><td>0.5%</td><td>1.0%</td></tr>
-      <tr><td>異物（以下）</td><td>0.2%</td><td>0.4%</td><td>0.6%</td></tr>
-    </table>
-    <!-- 資料の写真（サイクル40）: 最初の画面を軽くするため、資料を開く時だけ読み込む（loading=lazy）。場面絵と「さす」「みわける」の写真はすぐ使うため対象外 -->
-    <figure class="ittoPhoto ref" id="ittoRefPhoto">
-      <img loading="lazy" src="kensa/ittomai.webp" alt="手のひらに載せた一等米の実物（粒がふっくら揃い、被害粒・着色粒がほぼ見当たらない）"/>
-      <figcaption>一等米（ほんもの）</figcaption>
-    </figure>
-    <figure class="ittoPhoto ref" id="ittoDotRef">
-      <img loading="lazy" src="kensa/ittomai_dot.webp" alt="手のひらに載せた一等米をドット絵に描き起こした絵（粒がふっくら揃った玄米）"/>
-      <figcaption>一等米（ドット絵）</figcaption>
-    </figure>
-    <figure class="refPhoto" id="sceneRefPhoto">
-      <img loading="lazy" src="kensa/scene.webp" alt="検査員が30kg紙袋の山に穀刺しを刺して試料を抜く様子（実物の写真）"/>
-      <figcaption>けんさの風景（ほんもの）</figcaption>
-    </figure>
-    <p><b>試料の抜き方（標準抽出方法・平成13年農林水産省告示第443号）</b></p>
-    <table id="sampleTable" aria-label="試料の抽出個数（荷口の大きさ別）">
-      <tr><th>荷口（袋の数）</th><th>抜く袋</th></tr>
-      <tr><td>2〜15</td><td>全部</td></tr>
-      <tr><td>16〜25</td><td>13</td></tr>
-      <tr><td>26〜50</td><td>15</td></tr>
-      <tr><td>51〜100</td><td>18</td></tr>
-      <tr><td>101〜200</td><td>20</td></tr>
-      <tr><td>201〜1,000</td><td>32</td></tr>
-      <tr><td>1,001〜3,000</td><td>50</td></tr>
-      <tr><td>3,001〜10,000</td><td>80</td></tr>
-      <tr><td>10,001〜35,000</td><td>125</td></tr>
-      <tr><td>35,001以上</td><td>200</td></tr>
-    </table>
-    <p>1袋から穀刺しで約40gを抜きます（十分に取れる場合は約20gでも可）。試料は合計1kgが目安で、足りない場合は1袋の量を増やします。抜く袋は無作為に選びます。</p>
-    <p>水分は規程の表値です。附則で、醸造用を除く玄米は当分の間この値に1.0%を加えた16.0%が最高限度とされています。ゲームのお米は、どちらの読みでも結論が変わらない水分（14%台前半か16.5%以上）だけにしています。3等の規格にも満たないものは規格外です。形質（見た目のよさ）は、本物の検査では各等級の標準品と見比べて判定します。</p>
-    <p id="footNotes">農産物検査の仕事が題材です。試料の採取は穀刺しで1袋 約40g（標準抽出方法・平成13年農林水産省告示第443号）。「さす」の場面に載せた穀刺しの写真は、実際の検査で使う実物です。水分は3回の測定の平均で判定します。粒の鑑定は同じ試料を白い皿と黒い皿の双方に入れて確認します。鑑定は視覚・触覚・臭覚・聴覚を用いて行います（鑑定方法・平成13年農林水産省告示第333号）。等級の規格は農産物規格規程（平成13年告示第244号）の水稲うるち玄米に基づきます。等級は、整粒・水分・被害粒・死米・着色粒・異種穀粒・異物の全項目がその等級の限度内にある、最も良い等級です（未熟粒は「計」に入りません）。判定した等級は等級証印として米袋に押印し、あわせて検査証明年月日の日付印を押します。死米と着色粒は、穀粒判別器でも鑑定できます。「みわける」と資料に載せた一等米の写真は実物です。検査結果は、穀粒判定器の印字ラベルの様式で、皿の50粒の実数（粒数とその割合）で表示します。場面の絵は、検査風景の写真をもとに描いたドット絵です（写真そのものは資料に置きました）。穀刺しのドット絵も実物の写真をもとに描いたもので、写真そのものと並べて置きました。一等米のドット絵も実物の写真をもとに描いたもので、写真そのものと並べて置きました。粒は、場面のドット絵に合わせて角ばった輪郭にしました。水分計や皿、袋などの道具まわりは、点の質感や小さな飾りを外して素のままにしました。検査員の顔は、はかる以降の各場面にも大きく添えました。最初の画面では、案内を鑑定皿の上に移し、皿は小さくして「かんてい皿」と名前を付けました。写真とドット絵のペアは、大きさをそろえ、穀刺しのドット絵は写真と同じ斜めの向きにしました。手が止まってしばらくすると、小さなカードが出てサイトへ戻れます。カードの「いいね」と「サイトへもどる」のタップ数は、遊んだ人数の目安として数えます。「さす」の穀刺しは、場面絵の検査員の手元に重ねて小さく動かし、色も場面絵に合わせた単色にしました。結果ラベルの下には、等級のめやす（重さ）を区切って併記しました（ラベルは粒数、めやすは重さで、取り違えないよう分けています）。資料の写真は、資料を開く時だけ読み込むようにして、最初の画面を軽くしました。場面の絵は最初に読み込み、「みわける」の見本はその場面で読み込むようにして、スタートを軽くしました。検査員の顔も、はかる以降の場面で読み込むようにして、スタートをさらに軽くしました。最初のタップでは穀刺しがすぐ見えるようにし、「さす」の間に次の場面の絵を先読みして、スタートの1分の待ちを減らしました。検査員の顔は、正面を向いた穏やかな表情のドット絵に作り直し、少し大きくして、最初の1分でも表情が読めるようにしました。最初のタップは、米袋の山全体で受けられるようにしました。はかるでは、次に数字が入る枠に金の内枠を付け、タップのたびに次の枠へ移し、ボタンにも残りの回数を出すようにして、最初の1分で3回の手応えが伝わるようにしました。みわけるでは、進み具合の大きな数字を皿の上に置き、よけるたびに数字が一度だけ静かに動くようにして、最初の1分でもタップの手応えがその場で伝わるようにしました。みわけるで、よい粒をタップした時も指を離した後まで小さな揺れが見えるようにして、最初の1分でどの粒も無反応にならないようにしました。さすでは、タップした瞬間に案内が「穀刺しで ぬいている」へ変わり、最初の1分でもタップが伝わったことがすぐ分かるようにしました。きかいでみるでは、押した直後から光の帯が見え、最初の粒がすぐ動き始めるようにして、最初の1分でもタップの反応がすぐ伝わるようにしました。等級を選ぶと、選んだボタンに静かに印が付き、案内もすぐ出るようにして、最初の1分でもタップの反応が伝わるようにしました。きめるでは、結果ラベルを薄く出る動きなしに開いた瞬間から読めるようにし、入った時にラベルの先頭が見える位置へ画面を移して、最初の1分でも考える手がかりがすぐ伝わるようにしました。おすでは、証印を押すたびに数の大きな数字が一度だけ静かに動き、最初の1分でも押した手応えがその場で伝わるようにしました。つぎの山では、場面の先頭が見える位置へ画面を移してから次の袋へ焦点を渡し、次の「さす」が場面全体が見える形ですぐ分かるようにしました。みわけるでは、入った時に皿の先頭が見える位置へ画面を移してから最初の粒へ焦点を渡し、白い皿と黒い皿の両方が一度に見えるようにして、最初の1分でもよける場所を探さなくて済むようにしました。みわけるでは、見本を少し小さくし、白い皿も余りの分だけ低くして、よけた粒の受け皿まで到着時の1画面に収まるようにしました。はかるが終わると、次へ進むボタンが画面の下端で見切れないよう、少し余白を残してボタン全体が見える位置へ画面を移すようにしました。きめるでは、入った時に段階の案内が見える位置へ画面を移し、案内と結果ラベルを先頭から読んでから等級を選ぶ優先順にしました。きめるで外れて皿へ戻る時も、入った時と同じく皿の先頭が見える位置へ画面を移し、顔と見本と両方の皿と受け皿が一度に見える形で見直せるようにしました。はかるでは、入った時に段階の案内が見える位置へ画面を移し、小さい画面でも案内と水分計が一度に見えるようにしました。みわけるでは、小さい画面（高さが低い画面）だけ顔と見本と皿を詰めて、黒い皿と受け皿まで到着時の1画面に収まるようにしました。きめるでは、小さい画面（高さが低い画面）だけ顔と結果ラベルを詰めて、結果ラベル全体が到着時の1画面に収まるようにしました。最初の画面では、小さい画面（高さが低い画面）だけ場面と穀刺しのペアと鑑定皿を詰めて、袋をタップして落ちる試料が見えるよう、鑑定皿まで最初の1画面に収まるようにしました。おすでは、入った時に段階の案内が見える位置へ画面を移し、小さい画面でも案内と顔と袋が一度に見えるようにしました。みわけるでは、全部みわけ終わると、次へ進むボタンが画面の下端で見切れないよう、少し余白を残してボタン全体が見える位置へ画面を移すようにしました。</p>
-    <p>出典: <a href="https://www.maff.go.jp/j/kokuji_tuti/kokuji/k0001439.html" target="_blank" rel="noopener">農産物規格規程（平成13年農林水産省告示第244号）</a>／<a href="https://www.maff.go.jp/j/seisan/syoryu/kensa/attach/pdf/index-25.pdf" target="_blank" rel="noopener">農林水産省「コメの農産物検査」</a>／<a href="https://www.maff.go.jp/j/seisan/syoryu/kensa/attach/pdf/hourei-233.pdf" target="_blank" rel="noopener">成分検査の実施マニュアル（標準抽出方法の運用）</a></p>
-  </details>
 </main>
-<div id="idleCard" aria-live="polite" inert>
-  <p class="idleMsg">おつかれさま 🌾</p>
-  <div class="idleBtns">
-    <button id="likeBtn">👍 いいね</button>
-    <a id="returnLink" href="https://ricepia.jp/">🏠 サイトへ もどる</a>
-  </div>
-</div>
+<section id="notes">
+  <h2>🌾 農産物検査のしくみ</h2>
+  <p>農産物検査の仕事が題材です。手順は、穀刺しで袋から試料をぬき（1袋 約40g）、水分を3回はかって平均し、白い皿と黒い皿で粒を見て、等級をきめ、証印をおす流れです。写真の穀刺しと一等米は実物です。</p>
+  <p>等級は水稲うるち玄米の規格どおりに、整粒・水分・死米・着色粒・計（被害粒＋死米＋着色粒＋異種穀粒＋異物）のうち、いちばん悪い項目で決まります。未熟粒は整粒を減らしますが、計には入りません。水分は規格表の15.0%に、当分の間の1.0%加算を入れた16.0%までを適合としています。</p>
+  <p>ゲームでは分かりやすくするため、皿は20粒で1粒＝5%と数えます（実際の検査の粒数や重量の割合とは違います）。形質（標準品との比較）、異種穀粒、異物は皿には出していません。ゲームの等級は遊びのためのもので、実際の格付けではありません。</p>
+  <p>出典: <a href="https://www.maff.go.jp/j/seisan/syoryu/kensa/kome/k_kikaku/" target="_blank" rel="noopener">農林水産省「玄米の検査規格」</a>／<a href="https://www.maff.go.jp/j/seisan/syoryu/kensa/hourei.html" target="_blank" rel="noopener">農産物検査法及び関係通知等</a>／<a href="https://www.maff.go.jp/j/seisan/syoryu/kensa/attach/pdf/index-25.pdf" target="_blank" rel="noopener">農林水産省「コメの農産物検査」</a></p>
+  <p><a href="https://ricepia.jp/">らいすぴあ（近藤米穀店）のサイトへ</a></p>
+</section>
 <script>
 "use strict";
-/* 等級規格（水稲うるち玄米）: 農産物規格規程 平成13年農林水産省告示第244号で本サイクルに原典確認済み。
-   水分は表値15.0%。同規程の附により当分の間は各等級とも+1.0%（16.0%）が運用上限だが、
-   ゲームのロットは解釈の割れない帯域だけを使う（設計書 brief_cycle1.md §4）。判定は judgeGrade（サイクル4）。 */
+/* KENSA-RULES-START */
+/* 水稲うるち玄米の品位（農産物規格規程。農林水産省「玄米の検査規格」2026-11-06確認）。
+   水分は表の15.0%に附の「当分の間 1.0%加算」を入れて16.0%まで。ロットは15.0〜16.0%の帯を使わない */
+const GRADES = ["1等", "2等", "3等", "規格外"];
 const GRADE_TABLE = [
-  { grade:"1等", seiryuMin:70, moistureMax:15.0, totalMax:15, shiniMax:7,  colorMax:0.1, momiMax:0.3, mugiMax:0.1, otherMax:0.3, ibutsuMax:0.2 },
-  { grade:"2等", seiryuMin:60, moistureMax:15.0, totalMax:20, shiniMax:10, colorMax:0.3, momiMax:0.5, mugiMax:0.3, otherMax:0.5, ibutsuMax:0.4 },
-  { grade:"3等", seiryuMin:45, moistureMax:15.0, totalMax:30, shiniMax:20, colorMax:0.7, momiMax:1.0, mugiMax:0.7, otherMax:1.0, ibutsuMax:0.6 }
+  { seiryuMin:70, moistureMax:15.0, totalMax:15, shiniMax:7,  colorMax:0.1, ishuMax:0.4, ibutsuMax:0.2 },
+  { seiryuMin:60, moistureMax:15.0, totalMax:20, shiniMax:10, colorMax:0.3, ishuMax:0.8, ibutsuMax:0.4 },
+  { seiryuMin:45, moistureMax:15.0, totalMax:30, shiniMax:20, colorMax:0.7, ishuMax:1.7, ibutsuMax:0.6 }
 ];
-/* ロット6件（サイクル6・brief_cycle1.md §2）: 水分は解釈の割れない帯域だけを使う（同 §4）。
-   3回測定の平均で判定するのが実在の手順（成分検査実施マニュアル／現場記録）。
-   truth は等級判定（サイクル4）に使う真値（重量%・規格規程の項目）で、どのロットも合計100%。
-   正解はすべて judgeGrade(truth, 平均水分) で決まる（テストで6件とも固定）。
-   sort は「みわける」皿の見本の粒数（合計50粒）。着色粒・もみなど本物の重量%ではごく僅かな粒は、
-   皿の上で見つけられるよう誇張して表す。見本の粒数%と判定に使う重量%（truth）は別物。 */
+const MOISTURE_ADD = 1.0;
+const PLATE_GRAINS = 20; /* 1粒 = 5% */
+/* わるい粒の数（のこりが整粒）。等級はこの粒数と水分だけで決まる */
 const LOTS = [
-  /* 1: きれいな1等 */
-  { moisture: [14.1, 14.3, 14.2],
-    truth: { seiryu:87.5, higai:4.0, shini:3.0, mijuku:5.0, color:0.1, momi:0.2, mugi:0.0, other:0.1, ibutsu:0.1 },
-    sort: { total:50, seiryu:40, higai:3, shini:3, mijuku:2, color:1, momi:1 } },
-  /* 2: 着色粒0.2%だけが1等を割る → 2等 */
-  { moisture: [13.8, 14.0, 13.9],
-    truth: { seiryu:90.4, higai:3.0, shini:2.0, mijuku:4.0, color:0.2, momi:0.2, mugi:0.0, other:0.1, ibutsu:0.1 },
-    sort: { total:50, seiryu:38, higai:3, shini:2, mijuku:2, color:4, momi:1 } },
-  /* 3: 水分だけ高い（平均16.9%・附則の16.0%でも超える）→ 他が1等でも規格外 */
-  { moisture: [16.8, 17.0, 16.9],
-    truth: { seiryu:87.5, higai:4.0, shini:3.0, mijuku:5.0, color:0.1, momi:0.2, mugi:0.0, other:0.1, ibutsu:0.1 },
-    sort: { total:50, seiryu:40, higai:3, shini:3, mijuku:2, color:1, momi:1 } },
-  /* 4: 未熟・死米の多い → 3等（死米15%・計22.2%） */
-  { moisture: [14.4, 14.2, 14.3],
-    truth: { seiryu:65.8, higai:5.0, shini:15.0, mijuku:12.0, color:0.5, momi:0.5, mugi:0.3, other:0.5, ibutsu:0.4 },
-    sort: { total:50, seiryu:28, higai:4, shini:8, mijuku:7, color:1, momi:2 } },
-  /* 5: 規格外寸前ではなく一歩外（死米21%・計30.2%が3等を割る）→ 規格外 */
-  { moisture: [14.0, 14.2, 14.1],
-    truth: { seiryu:61.8, higai:6.0, shini:21.0, mijuku:8.0, color:0.6, momi:0.8, mugi:0.5, other:0.8, ibutsu:0.5 },
-    sort: { total:50, seiryu:26, higai:4, shini:9, mijuku:6, color:2, momi:3 } },
-  /* 6: 境界ぎりぎり2等（整粒60・計20.0・死米10・着色0.3がすべて2等の限度ちょうど） */
-  { moisture: [14.5, 14.6, 14.4],
-    truth: { seiryu:60.0, higai:8.0, shini:10.0, mijuku:20.0, color:0.3, momi:0.5, mugi:0.3, other:0.5, ibutsu:0.4 },
-    sort: { total:50, seiryu:30, higai:5, shini:5, mijuku:6, color:2, momi:2 } }
+  { moisture:[14.1, 14.3, 14.2], higai:1, shini:1, mijuku:0, color:0 }, /* 1等: まずは2粒だけ */
+  { moisture:[16.8, 17.0, 16.9], higai:0, shini:1, mijuku:1, color:0 }, /* 規格外: 粒はきれいでも水分が高い */
+  { moisture:[14.0, 13.8, 13.9], higai:0, shini:2, mijuku:5, color:0 }, /* 2等: 整粒65%・死米10% */
+  { moisture:[14.4, 14.2, 14.3], higai:2, shini:3, mijuku:5, color:0 }, /* 3等: 整粒50%・死米15%・計25% */
+  { moisture:[14.5, 14.6, 14.4], higai:0, shini:0, mijuku:1, color:1 }, /* 規格外: 着色粒1粒が5% */
+  { moisture:[14.0, 14.2, 14.1], higai:0, shini:1, mijuku:5, color:0 }  /* 1等: 整粒70%ちょうど。未熟粒は計に入らない */
 ];
-let lotIndex = 0;
-let LOT = LOTS[0];
 function moistureAverage(values) {
   return Math.round(values.reduce((a, b) => a + b, 0) / values.length * 10) / 10;
 }
-/* 等級判定（サイクル4・brief_cycle1.md §3）: 1等から順に全項目が限度内かを見て、最初に満たした等級が正解。
-   計 = 被害粒+死米+着色粒+異種穀粒（もみ+麦+その他）+異物。未熟粒は計に入らない。
-   形質（標準品との比較）は数値化できないため判定には入れない。どれも満たさなければ規格外。 */
-function judgeGrade(truth, moisture) {
-  const total = truth.higai + truth.shini + truth.color + truth.momi + truth.mugi + truth.other + truth.ibutsu; /* 丸めずに比較する（Codexレビュー指摘・サイクル4）。浮動小数の誤差は下の 1e-9 の余裕で吸収 */
-  for (const g of GRADE_TABLE) {
-    if (truth.seiryu >= g.seiryuMin - 1e-9 && moisture <= g.moistureMax + 1e-9 && total <= g.totalMax + 1e-9 &&
-        truth.shini <= g.shiniMax + 1e-9 && truth.color <= g.colorMax + 1e-9 && truth.momi <= g.momiMax + 1e-9 &&
-        truth.mugi <= g.mugiMax + 1e-9 && truth.other <= g.otherMax + 1e-9 && truth.ibutsu <= g.ibutsuMax + 1e-9) {
-      return g.grade;
-    }
-  }
-  return "規格外";
+function lotPercents(lot) {
+  const p = 100 / PLATE_GRAINS;
+  const bad = lot.higai + lot.shini + lot.mijuku + lot.color;
+  return { moisture:moistureAverage(lot.moisture), seiryu:(PLATE_GRAINS - bad) * p, shini:lot.shini * p, color:lot.color * p,
+    total:(lot.higai + lot.shini + lot.color) * p };
 }
-/* 日付印（サイクル5）: 検査証明年月日をその日の日付で押す（実在の所作・brief_cycle1.md §1/§2-5） */
-function stampDateText(d) {
-  return d.getFullYear() + "." + (d.getMonth() + 1) + "." + d.getDate();
+/* 項目ごとの等級（0=1等 … 3=規格外）。等級はこのいちばん悪いもの */
+function itemGrades(pc) {
+  const rank = ok => { const i = GRADE_TABLE.findIndex(ok); return i < 0 ? 3 : i; };
+  return {
+    moisture: rank(g => pc.moisture <= g.moistureMax + MOISTURE_ADD),
+    seiryu: rank(g => pc.seiryu >= g.seiryuMin),
+    shini: rank(g => pc.shini <= g.shiniMax),
+    color: rank(g => pc.color <= g.colorMax),
+    total: rank(g => pc.total <= g.totalMax)
+  };
 }
-/* 結果ラベル（サイクル26）: ラベルの日付は測定日付として年月日で出す */
-function labelDateText(d) {
-  return d.getFullYear() + "年" + String(d.getMonth() + 1).padStart(2, "0") + "月" + String(d.getDate()).padStart(2, "0") + "日";
+function lotGrade(lot) {
+  return Math.max(...Object.values(itemGrades(lotPercents(lot))));
 }
-/* 結果ラベルの項目（サイクル26）: 項目名は実物ラベルの表記に寄せ、行はゲームで実際に数える粒の分類だけにする。
-   実物ラベルの砕粒・胴割粒は、ゲームでは被害粒（割れ目の粒）としてまとめて数えるため行を分けない。
-   その他・異物等も粒として数えていないため行を作らない（数えていないものを水増しして出さない）。
-   割合は皿の50粒に対する実数（粒数÷合計×100・小数第1位）で、判定に使う真値（重量%・truth）とは別物。 */
-const LABEL_ROWS = [["整粒等", "seiryu"], ["被害粒", "higai"], ["死米", "shini"], ["未熟粒", "mijuku"], ["着色粒", "color"], ["もみ", "momi"]];
-function resultLabelRows(sort) {
-  return LABEL_ROWS.map(([name, key]) => ({ name, count: sort[key], pct: sort[key] / sort.total * 100 }));
-}
-function renderResultLabel() {
-  document.getElementById("labelDate").textContent = labelDateText(new Date());
-  document.getElementById("labelLot").textContent = String(lotIndex + 1).padStart(2, "0");
-  document.getElementById("labelRows").innerHTML = resultLabelRows(LOT.sort).map((r) =>
-    '<div class="labelRow"><span class="lleft"><span class="lk">' + r.name + '</span><span class="lc">' + r.count + '粒</span></span><span class="lp">' + r.pct.toFixed(1) + '%</span></div>').join("");
-  document.getElementById("labelTotal").textContent = LOT.sort.total + "粒";
-}
-const tray = document.getElementById("tray");
-const count = document.getElementById("count");
-const bagTap = document.getElementById("bagTap");
-const nextBtn = document.getElementById("nextBtn");
-const stepChip = document.getElementById("stepChip");
-let sampled = false;
-let nextImagesWarmed = false; /* サイクル43: 次の場面の絵の先読みは1回だけ */
-let selectedGrade = "";
-let phase = "sas"; /* sas → hakaru → hakaru-done → miwakeru → kimeru → kimeru-done → osu → osu-done */
-/* 焦点の受け渡し（サイクル16）: 段階が進むと前の操作が隠れたり無効になったりしてキーボードの焦点が消える。
-   次の所作の主な操作へ静かに渡し、キーボードでも迷子にならないようにする（マウス／タップの流れは変えない） */
-nextBtn.addEventListener("click", () => {
-  if (phase === "sas" && sampled) {
-    phase = "hakaru";
-    stepChip.textContent = "② はかる";
-    nextBtn.classList.remove("on");
-    count.textContent = "💧 ボタンを 3回 タップ";
-    document.getElementById("kokuPhoto").classList.add("off"); /* サイクル21: 実物の写真は「さす」の間だけ（道具は常時1つだけ） */
-    document.getElementById("kokuDot").classList.add("off"); /* サイクル28: ドット絵版も写真と一緒にしまう */
-    document.getElementById("meterWrap").classList.add("on");
-    slots[0].classList.add("next"); /* サイクル46: 最初の数字が入る枠を最初から示す */
-    document.getElementById("stepChip").scrollIntoView({ block: "start" }); /* サイクル60（最初の1分）: 実測（375×667）では焦点任せだと段階チップが top -39px と画面外で、今どの段階かが見えなかった。きめる（サイクル58）と同じくチップが見える位置へ画面を移してから（動きは付けない・素のまま）、焦点は preventScroll で渡す */
-    document.getElementById("meterBtn").focus({ preventScroll: true }); /* サイクル16: 水分計ボタンへ焦点を渡す／サイクル60: 焦点で画面が飛んでチップが見切れないよう、スクロールはさせない */
-  } else if (phase === "hakaru-done") {
-    phase = "miwakeru";
-    stepChip.textContent = "③ みわける";
-    document.getElementById("meterWrap").classList.remove("on");
-    document.getElementById("trayWrap").style.display = "none"; /* 道具は常時1つだけ: さすの皿はしまう */
-    document.getElementById("sortWrap").classList.add("on");
-    buildSortGrains();
-    document.getElementById("sortWrap").scrollIntoView({ block: "start" }); /* サイクル55（最初の1分）: 実測では到着時に黒い皿が下端から約162pxはみ出し、わるい粒の多くがある黒皿が最初に見えなかった。皿の先頭が見える位置へ画面を移し（動きは付けない・素のまま）、白い皿と黒い皿の両方が一度に見えるようにする */
-    const firstGrain = document.querySelector("#whiteTray .sgrain");
-    if (firstGrain) firstGrain.focus({ preventScroll: true }); /* サイクル16: 最初の粒へ焦点を渡す／サイクル55: 焦点で画面が飛んで皿が見切れないよう、スクロールはさせない */
-    count.textContent = "わるい粒を タップして よける";
-    nextBtn.textContent = "④ きめる ⚖️";
-    nextBtn.classList.add("on"); /* 全部よけ終わらなくても進める（brief_cycle1.md §2-3） */
-  } else if (phase === "miwakeru") {
-    phase = "kimeru";
-    stepChip.textContent = "④ きめる";
-    document.getElementById("sortWrap").classList.remove("on"); /* 道具は常時1つだけ: 皿はしまう */
-    renderResultLabel(); /* サイクル26: 「きめる」の流れの中で結果ラベルを見せる（皿の50粒の実数） */
-    document.getElementById("gradeMoisture").textContent = moistureAverage(LOT.moisture).toFixed(1) + "%";
-    document.getElementById("gradeSort").textContent = sortFound + " / " + sortBadTotal;
-    document.getElementById("gradeWrap").classList.add("on");
-    document.getElementById("stepChip").scrollIntoView({ block: "start" }); /* サイクル58（最初の1分・優先順位の設計）: 実測（390×844）ではサイクル52のラベル先頭合わせだと段階チップが top -200px・案内が -147px と画面外で、今どの段階かと「等級を えらぶ」が到着時に読めなかった。チップ＋案内＋ラベル544px＋ボタンは合計が画面を超え全部は同時に入らないため、優先順位を ①段階チップと案内 ②ラベルの先頭から読む順 ③等級ボタンはラベルを読んだ後の短いスクロール先、と決め、移す先をチップにした（動きは付けない・素のまま。ラベルの即時表示はサイクル52のまま） */
-    document.querySelector(".gradeBtn").focus({ preventScroll: true }); /* サイクル16: 最初の等級ボタンへ焦点を渡す／サイクル52: 焦点で画面が飛んでラベルが見切れないよう、スクロールはさせない */
-    count.textContent = "等級を えらぶ";
-    nextBtn.classList.remove("on");
-  } else if (phase === "kimeru-done") {
-    phase = "osu";
-    stepChip.textContent = "⑤ おす";
-    document.getElementById("gradeWrap").classList.remove("on"); /* 道具は常時1つだけ: 等級ボタンはしまう */
-    document.getElementById("stampGrade").textContent = selectedGrade;
-    document.getElementById("stampWrap").classList.add("on");
-    document.getElementById("stepChip").scrollIntoView({ block: "start" }); /* サイクル64（最初の1分）: 実測ではおす到着時に焦点任せだと段階チップが 375×667で top -49px・360×740で -122px と画面外で、今どの段階かが見えず、顔の上部も見切れた。はかる（サイクル60）・きめる（サイクル58）と同じくチップが見える位置へ画面を移してから（動きは付けない・素のまま）、焦点は preventScroll で渡す */
-    document.getElementById("stampBtn").focus({ preventScroll: true }); /* サイクル16: おすボタンへ焦点を渡す／サイクル64: 焦点で画面が飛んでチップが見切れないよう、スクロールはさせない */
-    count.textContent = "ふくろに 証印を おす";
-    nextBtn.classList.remove("on");
-  } else if (phase === "osu-done") {
-    startNextLot();
-  }
-});
-/* おす（サイクル5）: 等級証印＋日付印を袋に押す。ボタンでも袋タップでも押せる。1回だけ・罰なし */
-let stampPressed = false;
-let stampTotal = 0;
-function pressStamp() {
-  if (phase !== "osu" || stampPressed) return;
-  stampPressed = true;
-  const bag = document.getElementById("stampBag");
-  bag.classList.remove("pressed"); void bag.offsetWidth; /* サイクル10: 袋の沈み込みを毎回やり直す */
-  bag.classList.add("pressed");
-  bag.classList.add("stamped"); /* サイクル32: 押印後は「ふくろを タップ」を消す */
-  document.getElementById("stampMark").classList.add("on");
-  const dateEl = document.getElementById("dateMark");
-  dateEl.textContent = stampDateText(new Date());
-  dateEl.classList.add("on");
-  document.getElementById("stampBtn").disabled = true;
-  stampTotal++;
-  const stampCountB = document.querySelector("#stampCount b");
-  stampCountB.textContent = stampTotal;
-  /* サイクル53（最初の1分）: 数が増えた時だけ大きな数字を一度静かに動かし、押した手応えをその場で伝える */
-  stampCountB.classList.remove("pop"); void stampCountB.offsetWidth; stampCountB.classList.add("pop");
-  stepChip.textContent = "⑤ おす ✓";
-  count.textContent = "証印を おした ✓";
-  phase = "osu-done";
-  nextBtn.textContent = "つぎの山 🌾";
-  nextBtn.classList.add("on");
-  nextBtn.focus(); /* サイクル16: おすボタンが無効になり焦点が消えるため、次ボタンへ渡す */
-}
-document.getElementById("stampBtn").addEventListener("click", pressStamp);
-document.getElementById("stampBag").addEventListener("click", pressStamp);
-/* キーボードでも押せる（サイクル14）: 袋に焦点がある時に Enter／Space で押印する（Space のスクロールは止める・流れは止めない） */
-document.getElementById("stampBag").addEventListener("keydown", (e) => {
-  if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pressStamp(); }
-});
-/* 次の山（サイクル5）: ゆっくり運ばれてくる演出のあと、最初の所作へ戻る。証印の数だけ残る（競わない） */
-function startNextLot() {
-  lotIndex = (lotIndex + 1) % LOTS.length; /* ロットは6件を順に繰り返す（終わりなし） */
-  LOT = LOTS[lotIndex];
-  sortBadTotal = LOT.sort.total - LOT.sort.seiryu;
-  const scene = document.getElementById("scene");
-  scene.classList.remove("nextPile");
-  void scene.offsetWidth; /* アニメーションをやり直す */
-  scene.classList.add("nextPile");
-  phase = "sas";
-  sampled = false;
-  selectedGrade = "";
-  bagTap.classList.remove("done");
-  document.getElementById("probe").classList.remove("go");
-  document.getElementById("kokuPhoto").classList.remove("off"); /* サイクル21: 次の山では実物の写真も戻す */
-  document.getElementById("kokuDot").classList.remove("off"); /* サイクル28: ドット絵版も写真と一緒に戻す */
-  document.getElementById("seal").classList.remove("on");
-  tray.innerHTML = "";
-  document.getElementById("trayWrap").style.display = "";
-  stepChip.textContent = "① さす";
-  count.textContent = "ふくろを タップ";
-  /* はかるのリセット */
-  measured = 0;
-  document.getElementById("meterWrap").classList.remove("on");
-  slots.forEach((s) => { s.textContent = "—"; s.classList.remove("filled"); s.classList.remove("next"); }); /* サイクル46: 次の枠の印も戻す */
-  document.getElementById("avg").classList.remove("on");
-  document.getElementById("bandMark").classList.remove("on");
-  meterBtn.disabled = false;
-  meterBtn.textContent = "💧 はかる"; /* サイクル46: ボタンの残り回数表示も戻す */
-  /* みわけるのリセット */
-  sortFound = 0;
-  sortBuilt = false;
-  document.getElementById("sortWrap").classList.remove("on");
-  document.querySelectorAll("#whiteTray .sgrain, #blackTray .sgrain").forEach((g) => g.remove());
-  document.getElementById("yokeTray").innerHTML = "";
-  sortProgress();
-  machineUsed = false;
-  const machineBtn = document.getElementById("machineBtn");
-  machineBtn.disabled = false;
-  machineBtn.textContent = "🔬 きかいでみる";
-  document.getElementById("scanBar").classList.remove("on");
-  /* きめるのリセット */
-  document.getElementById("gradeWrap").classList.remove("on");
-  document.querySelectorAll(".gradeBtn").forEach((b) => { b.disabled = false; b.classList.remove("picked"); b.classList.remove("tried"); });
-  gradeMsg.classList.remove("on");
-  backToSort.classList.remove("on");
-  /* おすのリセット */
-  stampPressed = false;
-  document.getElementById("stampWrap").classList.remove("on");
-  document.getElementById("stampBag").classList.remove("pressed");
-  document.getElementById("stampBag").classList.remove("stamped"); /* サイクル32: 次の山では案内を戻す */
-  document.getElementById("stampMark").classList.remove("on");
-  document.getElementById("dateMark").classList.remove("on");
-  document.getElementById("stampBtn").disabled = false;
-  nextBtn.textContent = "② はかる 💧";
-  nextBtn.classList.remove("on");
-  scene.scrollIntoView({ block: "start" }); /* サイクル54（最初の1分）: 従来は bagTap への焦点移動だけが画面を動かし、袋の位置（場面の20%下）に合わせるため場面の上部が約49px見切れたまま次のロットが始まった。場面の先頭が見える位置へ移してから焦点を渡し、次の「さす」が場面全体が見える形ですぐ分かるようにする */
-  bagTap.focus({ preventScroll: true }); /* サイクル16: 次の山でも最初の袋へ焦点を渡し、キーボードでそのまま続けられる／サイクル54: 焦点で画面が袋の位置へ飛んで場面の先頭が見切れないよう、スクロールはさせない */
-}
-/* きめる（サイクル4）: 大きな等級ボタンを1つタップ。合えば次へ、外れても流れを止めず皿に戻って見直せる */
-const gradeMsg = document.getElementById("gradeMsg");
-const backToSort = document.getElementById("backToSort");
-document.querySelectorAll(".gradeBtn").forEach((btn) => {
-  btn.addEventListener("click", () => {
-    if (phase !== "kimeru") return;
-    const answer = judgeGrade(LOT.truth, moistureAverage(LOT.moisture));
-    if (btn.dataset.grade === answer) {
-      selectedGrade = answer;
-      phase = "kimeru-done";
-      document.querySelectorAll(".gradeBtn").forEach((b) => { b.disabled = true; });
-      btn.classList.add("picked");
-      btn.disabled = false; /* 選んだ等級だけ大きく残す */
-      gradeMsg.textContent = "✓ " + answer;
-      gradeMsg.classList.add("on");
-      backToSort.classList.remove("on");
-      stepChip.textContent = "④ きめる ✓";
-      count.textContent = "等級が きまった ✓";
-      nextBtn.textContent = "⑤ おす 🖐";
-      nextBtn.classList.add("on");
-      nextBtn.focus(); /* サイクル16: 等級ボタンが無効になり焦点が消えるため、次ボタンへ渡す */
-    } else {
-      btn.classList.add("tried"); /* サイクル51: 選んだボタンに静かな印を付け、反応をすぐ返す */
-      gradeMsg.textContent = "もう一度 皿をみてみよう 👀";
-      gradeMsg.classList.add("on");
-      backToSort.classList.add("on"); /* 罰なし・回数制限なし: 皿に戻って見直せるだけ */
-    }
-  });
-});
-backToSort.addEventListener("click", () => {
-  if (phase !== "kimeru") return;
-  phase = "miwakeru";
-  stepChip.textContent = sortFound >= sortBadTotal ? "③ みわける ✓" : "③ みわける";
-  document.getElementById("gradeWrap").classList.remove("on");
-  document.getElementById("sortWrap").classList.add("on");
-  gradeMsg.classList.remove("on");
-  backToSort.classList.remove("on");
-  count.textContent = "わるい粒を タップして よける";
-  nextBtn.textContent = "④ きめる ⚖️";
-  nextBtn.classList.add("on");
-  document.getElementById("sortWrap").scrollIntoView({ block: "start" }); /* サイクル59（最初の1分）: 実測（390×844）では皿へ戻る時に sortWrap の先頭が top -267px と見切れ、顔と見本が見えず、前進時（サイクル55・56）と違う見え方で戻っていた。前進時と同じく皿の先頭が見える位置へ画面を移し（動きは付けない・素のまま）、顔・見本・進み具合・両方の皿・受け皿が一度に見える形で見直せるようにする */
-  /* サイクル16: 皿へ戻ったら、まだ残っている最初の粒へ焦点を渡す（なければ機械のボタンへ）／サイクル59: 焦点で画面が粒の位置へ飛んで先頭が見切れないよう、スクロールはさせない */
-  const remain = document.querySelector("#whiteTray .sgrain:not(.away), #blackTray .sgrain:not(.away)");
-  if (remain) remain.focus({ preventScroll: true }); else document.getElementById("machineBtn").focus({ preventScroll: true });
-});
-/* みわける（サイクル3）: 白い皿と黒い皿（実在の鑑定）に真値連動の粒を広げ、
-   整粒でない粒をタップしてよける。白い粒（死米・未熟粒）は黒い皿で、濃い粒（着色粒）は白い皿で見つけやすい。 */
-let sortBadTotal = LOT.sort.total - LOT.sort.seiryu;
-let sortFound = 0;
-let sortBuilt = false;
-function sortProgress() {
-  const pctB = document.querySelector("#sortPct b");
-  pctB.textContent = Math.round(sortFound / sortBadTotal * 100) + "%";
-  document.getElementById("sortCount").textContent = sortFound + " / " + sortBadTotal;
-  /* サイクル47: よけた数が増えた時だけ大きな数字を一度静かに動かす（開始時・リセット時は動かさない） */
-  if (sortFound > 0) { pctB.classList.remove("pop"); void pctB.offsetWidth; pctB.classList.add("pop"); }
-}
-/* 粒の名前（サイクル19）: 読み上げでも見た目（サイクル9）と同じく種類が分かるよう、
-   規程の用語そのまま（整粒／被害粒／死米／未熟粒／着色粒／もみ）を付ける。
-   「よい／わるい」という答えは付けず、種類を見てよけるかどうかを決める遊びはそのまま残す */
-const GRAIN_LABELS = { "": "整粒", higai: "被害粒", shini: "死米", mijuku: "未熟粒", color: "着色粒", momi: "もみ" };
-function placeGrains(plate, kinds) {
-  kinds.forEach((kind, i) => {
-    const b = document.createElement("button");
-    b.className = "sgrain " + (kind || "good");
-    b.setAttribute("aria-label", GRAIN_LABELS[kind || ""] || "整粒");
-    const cols = 7;
-    b.style.left = (3 + (i % cols) * 12.8 + (Math.floor(i / cols) % 2) * 4) + "%"; /* サイクル9: 大きくなったタップ範囲が小さい画面でも皿の右端に収まる間隔 */
-    b.style.top = (28 + Math.floor(i / cols) * 30) + "px"; /* 粒の多いロット（サイクル6）でも皿に収まる間隔 */
-    b.appendChild(document.createElement("i"));
-    b.firstChild.style.transform = "rotate(" + ((i * 47) % 70 - 35) + "deg)";
-    if (kind) {
-      b.addEventListener("click", () => {
-        if (b.classList.contains("away")) return;
-        b.classList.add("away");
-        sortFound++;
-        const mini = b.cloneNode(true);
-        mini.classList.remove("away");
-        mini.disabled = true;
-        setTimeout(() => document.getElementById("yokeTray").appendChild(mini), 200);
-        sortProgress();
-        if (sortFound >= sortBadTotal) {
-          stepChip.textContent = "③ みわける ✓";
-          count.textContent = "ぜんぶ みわけた ✓";
-          nextBtn.scrollIntoView({ block: "nearest" }); /* サイクル65（最初の1分）: 実測ではみわけ完了時に次ボタンが 390×844で top 921／bottom 969px・375×667で 738／786px と全サイズで画面外で、完了しても進み方が見えなかった。はかる完了（サイクル57）と同じくボタン全体が見える位置へ画面を移し（動きは付けない・素のまま、下端の余白は scroll-margin-bottom で残る）、焦点は preventScroll で渡す。機械（きかいでみる）経由の完了も、このクリック処理を通るため同じく効く */
-          nextBtn.focus({ preventScroll: true }); /* サイクル65: 完了時に次ボタンへ焦点を渡し、キーボードでもそのまま進める／焦点で画面が飛んでボタンが見切れないよう、スクロールはさせない */
-        }
-      });
-    } else {
-      /* サイクル48（最初の1分）: よい粒はタップしても何も起きず無反応に見えたため、
-         クリックのたび .nod を付け直して小さな揺れを最後まで見せる（数えない・罰なし） */
-      b.addEventListener("click", () => {
-        if (b.classList.contains("away")) return;
-        b.classList.remove("nod"); void b.offsetWidth; b.classList.add("nod");
-      });
-    }
-    plate.appendChild(b);
-  });
-}
-/* 穀粒判別器（サイクル8）: 単独の規格項目である死米・着色粒の鑑定には穀粒判別器を活用できる
-   （農水省通知 元政統第1290号・令和元年11月29日で確認。同通知で鑑定方法＝平成13年告示第333号、
-   標準計測方法＝同第332号も確認）。被害粒等の計の鑑定は引き続き目視等のため、機械が見るのは
-   死米・着色粒だけにし、未熟粒・もみ・被害粒は目視のまま残す。任意・1ロット1回・罰なし。 */
-let machineUsed = false;
-function useMachine() {
-  if (phase !== "miwakeru" || machineUsed) return;
-  machineUsed = true;
-  const btn = document.getElementById("machineBtn");
-  btn.disabled = true;
-  btn.textContent = "🔬 ✓";
-  const bar = document.getElementById("scanBar");
-  bar.classList.remove("on");
-  void bar.offsetWidth; /* アニメーションをやり直す */
-  bar.classList.add("on");
-  const targets = document.querySelectorAll("#whiteTray .sgrain.shini, #whiteTray .sgrain.color, #blackTray .sgrain.shini, #blackTray .sgrain.color");
-  const lotAtUse = LOT; /* Codexレビュー指摘: 予約した処理は発火時にロットと場面を再確認する（切替後の誤作動防止） */
-  targets.forEach((g, i) => { if (!g.classList.contains("away")) setTimeout(() => { if (LOT === lotAtUse && phase === "miwakeru") g.click(); }, 90 + i * 140); });
-}
-document.getElementById("machineBtn").addEventListener("click", useMachine);
-function buildSortGrains() {
-  if (sortBuilt) return; sortBuilt = true;
-  const repeat = (kind, n) => Array(n).fill(kind);
-  /* 白い皿: 濃い粒が目立つ。黒い皿: 白い粒が目立つ（実在の使い分け）。
-     よい粒はロットの整粒数に合わせて半分ずつ分け、皿に出る粒の合計を sort.total にそろえる */
-  const whiteGood = Math.ceil(LOT.sort.seiryu / 2);
-  placeGrains(document.getElementById("whiteTray"),
-    [].concat(repeat("", whiteGood), repeat("color", LOT.sort.color), repeat("momi", LOT.sort.momi), repeat("higai", 1)));
-  placeGrains(document.getElementById("blackTray"),
-    [].concat(repeat("", LOT.sort.seiryu - whiteGood), repeat("shini", LOT.sort.shini), repeat("mijuku", LOT.sort.mijuku), repeat("higai", LOT.sort.higai - 1)));
-  sortProgress();
-}
-/* 水分計: 大きなボタンを3回タップ → 毎回大きな数字 → 3回目で平均が確定し色帯に印が出る */
-const meterBtn = document.getElementById("meterBtn");
-const slots = Array.from(document.querySelectorAll(".slot"));
-let measured = 0;
-meterBtn.addEventListener("click", () => {
-  if (measured >= LOT.moisture.length) return;
-  const v = LOT.moisture[measured];
-  slots[measured].textContent = v.toFixed(1) + "%";
-  slots[measured].classList.add("filled");
-  slots[measured].classList.remove("next"); /* サイクル46: 埋まった枠の印を外す */
-  measured++;
-  if (measured < LOT.moisture.length) {
-    slots[measured].classList.add("next"); /* サイクル46: 次に数字が入る枠へ印を移す */
-    meterBtn.textContent = "💧 はかる ・ あと " + (LOT.moisture.length - measured) + "回"; /* サイクル46: ボタン自体にも残り回数を出し、見る場所を1つにする */
-    count.textContent = "💧 あと " + (LOT.moisture.length - measured) + "回";
-    return;
-  }
-  meterBtn.textContent = "💧 はかる ✓"; /* サイクル46: 3回終わったこともボタンで伝える */
-  const avg = moistureAverage(LOT.moisture);
-  const avgEl = document.getElementById("avg");
-  avgEl.querySelector("b").textContent = avg.toFixed(1) + "%";
-  avgEl.classList.add("on");
-  const mark = document.getElementById("bandMark");
-  mark.style.left = ((avg - 12) / 6 * 100) + "%"; /* 色帯は12.0〜18.0% */
-  mark.classList.add("on");
-  meterBtn.disabled = true;
-  stepChip.textContent = "② はかる ✓";
-  count.textContent = "へいきん が でた";
-  phase = "hakaru-done";
-  nextBtn.textContent = "③ みわける 👀";
-  nextBtn.classList.add("on");
-  nextBtn.scrollIntoView({ block: "nearest" }); /* サイクル57（最初の1分）: 実測では完了時に次ボタンが top 797／bottom 845px と画面下端（844px）で見切れた。ボタン全体が見える位置へ画面を移し（動きは付けない・素のまま）、下端の余白は scroll-margin-bottom で残す */
-  nextBtn.focus({ preventScroll: true }); /* サイクル16: はかるボタンが無効になり焦点が消えるため、次ボタンへ渡す／サイクル57: 焦点で画面が飛んでボタンが見切れないよう、スクロールはさせない */
-});
-bagTap.addEventListener("click", () => {
-  if (sampled) return; sampled = true;
-  count.textContent = "穀刺しで ぬいている"; /* サイクル49（最初の1分）: タップ直後に案内を切り替え、2.4秒の動きの間も「もうタップが伝わった」ことが分かるようにする（完了時は従来どおり「とれた試料 約40g」へ上書き） */
-  /* サイクル23（Codexレビュー反映）: 動きを減らす設定ではアニメーションがほぼ止まるため、連動する待ち時間も同じ割合で縮める */
-  const motionScale = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0.2 : 1;
-  bagTap.classList.add("done");
-  document.getElementById("probe").classList.add("go");
-  /* サイクル43（スタートの1分）: 「さす」の動きを見ている間に、次の場面の絵（検査員の顔・一等米の見本）を先読みし、場面が変わる時の待ちをなくす（1回だけ） */
-  if (!nextImagesWarmed) { nextImagesWarmed = true; ["kensa/face_dot.webp", "kensa/ittomai.webp", "kensa/ittomai_dot.webp"].forEach(src => { const im = new Image(); im.src = src; }); }
-  /* 穀刺しで抜いた試料が鑑定皿へ落ちる（約40gのイメージで粒を60粒） */
-  const kinds = ["", "", "", "", "", "", "pale", "dark", "momi"];
-  for (let i = 0; i < 60; i++) {
-    const g = document.createElement("div");
-    const kind = kinds[Math.floor(Math.random() * kinds.length)];
-    g.className = "grain" + (kind ? " " + kind : "");
-    g.style.left = (4 + Math.random() * 90) + "%";
-    g.style.top = (8 + Math.random() * 76) + "%";
-    g.style.setProperty("--r", (Math.random() * 160 - 80) + "deg");
-    g.style.animationDelay = (1.55 + Math.random() * 0.4) * motionScale + "s"; /* サイクル23: 抜く動きが始まってから粒が皿へ落ちる */
-    tray.appendChild(g);
-    requestAnimationFrame(() => g.classList.add("fall"));
-  }
-  setTimeout(() => document.getElementById("seal").classList.add("on"), 2050 * motionScale); /* サイクル23: 抜き終わってから穴をシールでふさぐ */
-  setTimeout(() => {
-    count.innerHTML = "とれた試料 <b>約40g</b>";
-    document.getElementById("stepChip").textContent = "① さす ✓";
-    document.getElementById("nextBtn").classList.add("on");
-    /* サイクル16: 次ボタンへ焦点を渡す。ただし待ち時間の間にキーボードで他へ移っていたら奪わない（Codexレビュー） */
-    if (document.activeElement === bagTap || document.activeElement === document.body) nextBtn.focus();
-  }, 2400 * motionScale);
-});
-/* 手が止まったときのカード（サイクル36・ユーザー指示 2026-11-05 17:54）: 操作が45秒止んだら小さなカードを出す。
-   モーダルにはしない（入力はふさがない）: カードの外をさわれば静かに消えて遊びに戻れる。
-   「いいね」と「サイトへもどる」のタップは /api/feedback（kind:kensa）へ送り、その日のIssueにコメントとして数える（遊んだ人数の目安） */
-const idleCard = document.getElementById("idleCard");
-const likeBtn = document.getElementById("likeBtn");
-const returnLink = document.getElementById("returnLink");
-const IDLE_MS = 45000;
-const pageStart = Date.now();
-let idleTimer = null;
-function sendTap(tap) {
-  const body = JSON.stringify({ kind: "kensa", tap, t: Date.now() - pageStart });
+/* KENSA-RULES-END */
+
+const $ = id => document.getElementById(id);
+const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const motion = reduced ? 0.15 : 1;
+const STEPS = ["ぬく", "はかる", "みわける", "きめる", "おす"];
+
+/* 音: ごく小さく。最初のタップから鳴らせる */
+let ac = null;
+function tone(freq, dur, vol, type) {
   try {
-    if (navigator.sendBeacon && tap === "return") { navigator.sendBeacon("/api/feedback", new Blob([body], { type: "application/json" })); return; }
-    fetch("/api/feedback", { method: "POST", headers: { "Content-Type": "application/json" }, body, keepalive: true }).catch(() => {});
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    if (ac.state === "suspended") ac.resume();
+    const o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime;
+    o.type = type || "triangle";
+    o.frequency.setValueAtTime(freq, t);
+    g.gain.setValueAtTime(vol, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g).connect(ac.destination);
+    o.start(t); o.stop(t + dur);
   } catch (_) {}
 }
+const tick = () => tone(1100 + Math.random() * 900, 0.03, 0.025);
+const pop = () => tone(620, 0.08, 0.05, "sine");
+function thump() {
+  tone(110, 0.16, 0.14, "sine");
+  tone(70, 0.22, 0.1, "sine");
+  if (navigator.vibrate) { try { navigator.vibrate(18); } catch (_) {} }
+}
+
+/* 粒のドット絵: O=ふち B=地 H=光 S=かげ。顔はあとから描く */
+const GRAIN_ROWS = [
+  "....OOOOOOOOOO....",
+  "..OOHHHHHBBBBBOO..",
+  ".OHHBBBBBBBBBBBBO.",
+  "OHBBBBBBBBBBBBBBSO",
+  "OBBBBBBBBBBBBBBBSO",
+  "OBBBBBBBBBBBBBBBSO",
+  "OBBBBBBBBBBBBBBSSO",
+  ".OBBBBBBBBBBBBSSO.",
+  "..OOSSSSSSSSSSOO..",
+  "....OOOOOOOOOO...."
+];
+const GRAIN_COLORS = {
+  seiryu: { O:"#7c5c2c", B:"#e2bd7c", H:"#f5e1b2", S:"#c79c58", eye:"#3a2a14" },
+  shini:  { O:"#a39a88", B:"#f6f3ea", H:"#ffffff", S:"#ddd7c8", eye:"#6b6252" },
+  higai:  { O:"#7c5c2c", B:"#d9b06c", H:"#ecd19a", S:"#b98d4c", eye:"#3a2a14" },
+  mijuku: { O:"#5f7a3a", B:"#c2d68c", H:"#e0ecb8", S:"#9fb66a", eye:"#33441c" },
+  color:  { O:"#3d2614", B:"#7c5230", H:"#9a6e45", S:"#5c3a1e", eye:"#f3e4c8" }
+};
+const spriteCache = {};
+function grainSprite(kind, mood) {
+  const key = kind + "/" + mood;
+  if (spriteCache[key]) return spriteCache[key];
+  const c = document.createElement("canvas");
+  c.width = 18; c.height = 10;
+  const x = c.getContext("2d"), pal = GRAIN_COLORS[kind];
+  const px = (color, ...pts) => { x.fillStyle = color; pts.forEach(([a, b]) => x.fillRect(a, b, 1, 1)); };
+  GRAIN_ROWS.forEach((row, y) => [...row].forEach((ch, i) => { if (ch !== ".") px(pal[ch], [i, y]); }));
+  if (kind === "higai") px("#5a3d18", [12, 1], [12, 2], [13, 3], [13, 4], [12, 5], [13, 6], [13, 7], [14, 8]); /* 割れ目 */
+  if (kind === "color") px("#2c1a0c", [3, 3], [4, 3], [3, 4], [4, 5], [13, 2], [14, 2], [14, 6], [13, 7]); /* 色のしみ */
+  const e = pal.eye;
+  if (mood === "happy") { /* ^ ^ */
+    px(e, [5, 4], [6, 3], [7, 4], [11, 4], [12, 3], [13, 4], [8, 6], [9, 7], [10, 6]);
+  } else if (kind === "shini") { /* ねむそう */
+    px(e, [6, 4], [7, 4], [11, 4], [12, 4], [9, 6]);
+  } else if (kind === "higai") { /* いたそう */
+    px(e, [6, 3], [7, 4], [6, 5], [11, 3], [10, 4], [11, 5], [8, 6], [9, 6]);
+  } else if (kind === "mijuku") { /* あおくて小さい */
+    px(e, [7, 4], [11, 4], [9, 6]);
+  } else if (kind === "color") {
+    px(e, [7, 3], [7, 4], [11, 3], [11, 4], [8, 6], [9, 6], [10, 6]);
+  } else {
+    px(e, [7, 3], [7, 4], [11, 3], [11, 4], [8, 6], [9, 7], [10, 6]);
+  }
+  return spriteCache[key] = c.toDataURL();
+}
+
+/* 袋のドット絵 */
+function drawBag(canvas) {
+  const x = canvas.getContext("2d");
+  const r = (c, a, b, w, h) => { x.fillStyle = c; x.fillRect(a, b, w, h); };
+  r("#6b4a24", 4, 3, 40, 55); r("#6b4a24", 2, 8, 44, 46); r("#6b4a24", 6, 1, 8, 3); r("#6b4a24", 34, 1, 8, 3);
+  r("#dcb47f", 5, 4, 38, 53); r("#dcb47f", 3, 9, 42, 44); r("#dcb47f", 7, 2, 6, 3); r("#dcb47f", 35, 2, 6, 3);
+  r("#c79c62", 39, 8, 6, 45); r("#c79c62", 5, 53, 38, 4); r("#ecd0a2", 5, 8, 5, 40);
+  for (let i = 7; i < 41; i += 3) r("#8a6a3a", i, 6, 2, 1); /* 口のぬい目 */
+  r("#2d7a4a", 12, 12, 24, 3); r("#2d7a4a", 15, 17, 18, 2); r("#2d7a4a", 15, 21, 18, 2);
+  r("#f5ecd6", 10, 27, 28, 25); r("#2d7a4a", 10, 27, 28, 1); r("#2d7a4a", 10, 51, 28, 1); r("#2d7a4a", 10, 27, 1, 25); r("#2d7a4a", 37, 27, 1, 25);
+}
+/* 穀刺しのドット絵（動きに使う。写真の実物は袋の横に置く） */
+(function drawProbe() {
+  const x = $("probe").getContext("2d");
+  const r = (c, a, b, w, h) => { x.fillStyle = c; x.fillRect(a, b, w, h); };
+  r("#8a8f94", 2, 2, 30, 2); r("#d7dbde", 2, 1, 30, 1); r("#6b7075", 2, 4, 30, 1); r("#d7dbde", 0, 2, 2, 2);
+  r("#3a3f44", 12, 2, 9, 1);
+  r("#b5763a", 32, 0, 12, 6); r("#8f5a28", 32, 4, 12, 2);
+})();
+drawBag($("bagCanvas")); drawBag($("bagBigCanvas"));
+
+/* 検査員の顔: 元の絵に目と口を描きかえて3つの表情にする */
+const faceCtx = $("face").getContext("2d");
+const faceImg = new Image();
+let faceSkin = "#f6cfa8", faceTimer = null;
+function drawFace(mood) {
+  if (!faceImg.complete || !faceImg.naturalWidth) return;
+  faceCtx.imageSmoothingEnabled = false;
+  faceCtx.clearRect(0, 0, 256, 256);
+  faceCtx.drawImage(faceImg, 0, 0, 256, 256);
+  const r = (c, a, b, w, h) => { faceCtx.fillStyle = c; faceCtx.fillRect(a, b, w, h); };
+  const ink = "#2a1c12";
+  if (mood === "happy") {
+    r(faceSkin, 72, 132, 44, 30); r(faceSkin, 140, 132, 44, 30);
+    [[76, 150], [84, 142], [92, 138], [100, 142], [108, 150]].forEach(([a, b]) => r(ink, a, b, 8, 8));
+    [[148, 150], [156, 142], [164, 138], [172, 142], [180, 150]].forEach(([a, b]) => r(ink, a, b, 8, 8));
+    r(faceSkin, 100, 192, 56, 20);
+    r("#8c3a2c", 108, 194, 40, 12); r("#8c3a2c", 116, 206, 24, 6); r("#fff6ea", 112, 194, 32, 4);
+  } else if (mood === "wow") {
+    r(faceSkin, 100, 192, 56, 20);
+    r("#8c3a2c", 120, 192, 16, 18);
+  }
+}
+function setFace(mood, ms) {
+  clearTimeout(faceTimer);
+  drawFace(mood);
+  const el = $("face");
+  el.classList.toggle("hop", mood === "happy");
+  el.classList.toggle("tilt", mood === "wow");
+  if (ms) faceTimer = setTimeout(() => setFace("normal"), ms);
+}
+faceImg.onload = () => {
+  faceCtx.drawImage(faceImg, 0, 0, 256, 256);
+  try { const d = faceCtx.getImageData(128, 172, 1, 1).data; faceSkin = "rgb(" + d[0] + "," + d[1] + "," + d[2] + ")"; } catch (_) {}
+  drawFace("normal");
+};
+faceImg.src = "kensa/face_dot.webp";
+
+/* 進行 */
+let lotIndex = 0, LOT = LOTS[0], step = 0, grains = [], badLeft = 0, measured = 0, hintTimer = null;
+const plate = $("plate"), hint = $("hint"), nextBtn = $("nextBtn");
+function setStep(i, text) {
+  step = i;
+  $("stepName").textContent = STEPS[i];
+  [...$("pips").children].forEach((p, k) => { p.className = k < i ? "done" : k === i ? "now" : ""; });
+  hint.textContent = text;
+  document.documentElement.dataset.step = STEPS[i];
+}
+function showTop(id) {
+  document.querySelectorAll(".topScene").forEach(s => s.classList.toggle("on", s.id === id));
+}
+function layer(el, on) {
+  el.classList.toggle("on", on);
+  el.inert = !on;
+}
+function shuffle(a) {
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  return a;
+}
+function startLot() {
+  LOT = LOTS[lotIndex % LOTS.length];
+  layer($("decide"), false); layer($("osu"), false);
+  nextBtn.classList.remove("on");
+  hint.style.display = "";
+  showTop("sceneBag");
+  plate.textContent = "";
+  $("dish").textContent = "";
+  grains = []; measured = 0;
+  $("lcd").textContent = "--.-";
+  $("meterBtn").classList.remove("high");
+  [...$("slots").children].forEach(s => { s.textContent = ""; });
+  $("mark").className = ""; $("mark").textContent = "";
+  $("hanko").style.opacity = "1";
+  $("bagBtn").disabled = false;
+  $("poke").style.display = lotIndex === 0 ? "" : "none";
+  setStep(0, "ふくろを タップ");
+  setFace("normal");
+  if (lotIndex > 0) $("bagBtn").animate([{ transform:"translateX(120%)" }, { transform:"none" }], { duration:260 * motion, easing:"ease-out" });
+}
+
+/* ぬく: さわった場所に穀刺しが入り、粒が皿へ降ってくる */
+$("bagBtn").addEventListener("click", (e) => {
+  if (step !== 0 || $("bagBtn").disabled) return;
+  $("bagBtn").disabled = true;
+  pop(); /* iPhoneはタップの中で最初の音を出さないと以後も鳴らない */
+  $("poke").style.display = "none";
+  hint.textContent = "ざらざら…";
+  const bag = $("bagBtn").getBoundingClientRect(), topBox = $("top").getBoundingClientRect();
+  const px = e.clientX > 0 ? Math.min(Math.max(e.clientX, bag.left + bag.width * .25), bag.right - bag.width * .2) : bag.left + bag.width / 2;
+  const py = e.clientY > 0 ? Math.min(Math.max(e.clientY, bag.top + bag.height * .3), bag.bottom - bag.height * .25) : bag.top + bag.height * .6;
+  const probe = $("probe");
+  const at = (dx, dy) => "translate(" + (px - topBox.left + dx) + "px," + (py - topBox.top + dy) + "px) rotate(-16deg)";
+  probe.style.opacity = "1";
+  probe.animate([{ transform:at(90, -26) }, { transform:at(0, 0) }], { duration:150 * motion, easing:"ease-in", fill:"forwards" });
+  setTimeout(() => {
+    $("bagBtn").classList.add("squash");
+    pourGrains(px, py);
+    setTimeout(() => $("bagBtn").classList.remove("squash"), 120);
+  }, 150 * motion);
+  setTimeout(() => {
+    probe.animate([{ transform:at(0, 0) }, { transform:at(110, -32) }], { duration:200 * motion, easing:"ease-out", fill:"forwards" })
+      .onfinish = () => { probe.style.opacity = "0"; };
+  }, 1050 * motion);
+  setTimeout(toHakaru, 1500 * motion);
+});
+function pourGrains(sx, sy) {
+  const kinds = [];
+  ["higai", "shini", "mijuku", "color"].forEach(k => { for (let i = 0; i < LOT[k]; i++) kinds.push(k); });
+  badLeft = kinds.length;
+  while (kinds.length < PLATE_GRAINS) kinds.push("seiryu");
+  shuffle(kinds);
+  const box = plate.getBoundingClientRect();
+  const scale = Math.max(2, Math.min(Math.round(box.width / 117), Math.floor(box.height / 70)));
+  const w = 18 * scale, h = 10 * scale;
+  const order = shuffle(kinds.map((_, i) => i));
+  kinds.forEach((kind, i) => {
+    const col = i % 5, row = Math.floor(i / 5);
+    const left = 10 + (col + 0.5) / 5 * 80 + (Math.random() * 4 - 2);
+    const top = 9 + (row + 0.5) / 4 * 82 + (Math.random() * 5 - 2.5);
+    const b = document.createElement("button");
+    b.className = "grain";
+    b.style.cssText = "left:" + left + "%;top:" + top + "%;width:" + w + "px;height:" + h + "px;--r:" + Math.round(Math.random() * 60 - 30) + "deg;";
+    b.setAttribute("aria-label", "粒");
+    b.disabled = true;
+    const img = document.createElement("img");
+    img.src = grainSprite(kind, "normal"); img.alt = "";
+    b.appendChild(img);
+    plate.appendChild(b);
+    const g = { el:b, img, kind, gone:false };
+    grains.push(g);
+    b.addEventListener("click", () => tapGrain(g));
+    /* 穀刺しの場所から落ちてきて、皿で小さくはねる */
+    const tx = sx - (box.left + box.width * left / 100), ty = sy - (box.top + box.height * top / 100);
+    const r = b.style.getPropertyValue("--r");
+    const base = "translate(-50%,-50%) ";
+    const delay = order[i] * 42 * motion;
+    b.animate([
+      { transform:base + "translate(" + tx + "px," + ty + "px) rotate(" + (Math.random() * 360) + "deg)", offset:0, easing:"cubic-bezier(.35,0,.85,.55)" },
+      { transform:base + "rotate(" + r + ")", offset:.72, easing:"ease-out" },
+      { transform:base + "translateY(-13px) rotate(" + r + ")", offset:.86, easing:"ease-in" },
+      { transform:base + "rotate(" + r + ")", offset:1 }
+    ], { duration:520 * motion, delay, fill:"backwards" });
+    setTimeout(tick, delay + 375 * motion);
+  });
+}
+
+/* はかる: 水分計をトントンと3回 */
+function toHakaru() {
+  showTop("sceneMeter");
+  setStep(1, "💧 3回 タップ");
+  $("meterBtn").disabled = false;
+  $("meterBtn").focus({ preventScroll:true });
+}
+$("meterBtn").addEventListener("click", () => {
+  if (step !== 1 || measured >= LOT.moisture.length) return;
+  const i = measured++, value = LOT.moisture[i], lcd = $("lcd");
+  pop();
+  const t0 = performance.now();
+  const roll = () => {
+    if (performance.now() - t0 < 220 * motion) { lcd.textContent = (12 + Math.random() * 6).toFixed(1); requestAnimationFrame(roll); return; }
+    lcd.textContent = value.toFixed(1);
+    $("slots").children[i].textContent = value.toFixed(1);
+    if (i === LOT.moisture.length - 1) setTimeout(showAverage, 240 * motion);
+    else hint.textContent = "💧 あと " + (LOT.moisture.length - i - 1) + "回";
+  };
+  roll();
+});
+function showAverage() {
+  const avg = moistureAverage(LOT.moisture), high = itemGrades(lotPercents(LOT)).moisture === 3;
+  $("lcd").innerHTML = avg.toFixed(1) + "<small>%</small>";
+  $("meterBtn").classList.toggle("high", high);
+  $("meterBtn").disabled = true;
+  hint.textContent = high ? "水分が 高い！" : "ちょうどいい";
+  setFace(high ? "wow" : "happy", high ? 1700 : 900);
+  tone(high ? 330 : 880, 0.14, 0.05, "sine");
+  setTimeout(toMiwakeru, (high ? 1700 : 950) * motion);
+}
+
+/* みわける: さわると粒が反応する。わるい粒はぴょんと小皿へ */
+function toMiwakeru() {
+  showTop("sceneSort");
+  setStep(2, "わるい粒を タップ");
+  grains.forEach(g => { g.el.disabled = false; });
+  armHint(lotIndex === 0 ? 350 : 6000); /* 最初の袋は探させず、わるい粒をすぐ揺らす */
+}
+function armHint(ms) {
+  clearTimeout(hintTimer);
+  hintTimer = setTimeout(() => {
+    const rest = grains.filter(g => !g.gone && g.kind !== "seiryu");
+    if (step === 2) rest.forEach(g => g.el.classList.add("hint"));
+  }, ms);
+}
+function tapGrain(g) {
+  if (step !== 2 || g.gone) return;
+  if (g.kind === "seiryu") {
+    tick();
+    g.img.src = grainSprite("seiryu", "happy");
+    g.el.classList.remove("wig"); void g.el.offsetWidth; g.el.classList.add("wig");
+    setTimeout(() => { g.el.classList.remove("wig"); g.img.src = grainSprite("seiryu", "normal"); }, 520);
+    return;
+  }
+  g.gone = true; badLeft--;
+  g.el.classList.remove("hint");
+  if (lotIndex > 0) { grains.forEach(o => o.el.classList.remove("hint")); armHint(6000); }
+  pop();
+  setFace("happy", 500);
+  const from = g.el.getBoundingClientRect(), to = $("dish").getBoundingClientRect();
+  const dx = to.left + to.width / 2 - (from.left + from.width / 2), dy = to.top + to.height / 2 - (from.top + from.height / 2);
+  const base = "translate(-50%,-50%) ";
+  g.el.animate([
+    { transform:base + "rotate(" + g.el.style.getPropertyValue("--r") + ")", easing:"ease-out" },
+    { transform:base + "translate(" + dx * .5 + "px," + (dy * .5 - 34) + "px) rotate(170deg)", easing:"ease-in" },
+    { transform:base + "translate(" + dx + "px," + dy + "px) rotate(340deg) scale(.66)" }
+  ], { duration:330 * motion, fill:"forwards" }).onfinish = () => {
+    g.el.style.visibility = "hidden";
+    const mini = document.createElement("img");
+    mini.src = grainSprite(g.kind, "happy"); mini.alt = "";
+    $("dish").appendChild(mini);
+  };
+  if (badLeft === 0) {
+    clearTimeout(hintTimer);
+    grains.forEach(o => { o.el.disabled = true; });
+    hint.textContent = "きれいに なった！";
+    setTimeout(() => {
+      grains.filter(o => !o.gone).forEach((o, i) => setTimeout(() => {
+        o.img.src = grainSprite("seiryu", "happy");
+        o.el.classList.add("wig");
+      }, i * 22 * motion));
+    }, 300 * motion);
+    setTimeout(toKimeru, 1050 * motion);
+  }
+}
+
+/* きめる: 項目ごとに ● が下の等級の列へ落ちる */
+function toKimeru() {
+  const pc = lotPercents(LOT), it = itemGrades(pc);
+  const rows = [
+    ["水分", pc.moisture.toFixed(1) + "%", it.moisture],
+    ["整粒", pc.seiryu + "%", it.seiryu],
+    ["死米", pc.shini + "%", it.shini],
+    ["着色粒", pc.color + "%", it.color],
+    ["計", pc.total + "%", it.total]
+  ].filter(([name, , g]) => name === "水分" || name === "整粒" || g === lotGrade(LOT) && g > 0); /* 水分と整粒のほかは、等級を下げた項目だけ出す */
+  $("rows").innerHTML = rows.map(([name, value, g]) =>
+    '<div class="rowName">' + name + "<b>" + value + "</b></div>" +
+    [0, 1, 2, 3].map(c => '<div class="cell' + (c === 3 ? " last" : "") + '">' + (c === g ? '<i class="dot" data-g="' + g + '"></i>' : "") + "</div>").join("")).join("");
+  layer($("decide"), true);
+  showTop(null);
+  setStep(3, new Set(rows.map(r => r[2])).size > 1 ? "いちばん右の ● の 下を タップ" : "● の 下を タップ");
+  $("rows").querySelectorAll(".dot").forEach((d, i) => setTimeout(() => { d.classList.add("on"); tick(); }, (120 + i * 110) * motion));
+}
+document.querySelectorAll(".gradeBtn").forEach(btn => btn.addEventListener("click", () => {
+  if (step !== 3) return;
+  const pick = Number(btn.dataset.i), right = lotGrade(LOT);
+  if (pick !== right) {
+    btn.classList.remove("shake"); void btn.offsetWidth; btn.classList.add("shake");
+    setFace("wow", 800);
+    $("rows").querySelectorAll('.dot[data-g="' + right + '"]').forEach(d => { d.classList.remove("ping"); void d.offsetWidth; d.classList.add("ping"); });
+    return;
+  }
+  pop();
+  setFace("happy", 700);
+  toOsu();
+}));
+
+/* おす: ドン */
+function toOsu() {
+  const grade = GRADES[lotGrade(LOT)];
+  const d = new Date();
+  $("mark").innerHTML = grade + "<small>" + d.getFullYear() + "." + (d.getMonth() + 1) + "." + d.getDate() + "</small>";
+  $("mark").className = grade === "規格外" ? "small" : "";
+  $("hanko").style.opacity = "1";
+  $("hanko").style.transform = "";
+  $("bagBig").disabled = false;
+  layer($("osu"), true);
+  setStep(4, "ふくろを タップ");
+  $("hanko").animate([
+    { transform:"translateY(0)" }, { transform:"translateY(-8px)" }, { transform:"translateY(0)" }
+  ], { duration:900, iterations:Infinity, easing:"ease-in-out" });
+  $("bagBig").focus({ preventScroll:true });
+}
+$("bagBig").addEventListener("click", () => {
+  if (step !== 4 || $("bagBig").disabled) return;
+  $("bagBig").disabled = true;
+  const hanko = $("hanko"), mark = $("mark").getBoundingClientRect(), hk = hanko.getBoundingClientRect();
+  hanko.getAnimations().forEach(a => a.cancel());
+  const dy = mark.top + mark.height / 2 - (hk.top + hk.height - 12);
+  hanko.animate([{ transform:"translateY(-14px)" }, { transform:"translateY(" + dy + "px)" }],
+    { duration:120 * motion, easing:"cubic-bezier(.6,0,1,.7)", fill:"forwards" }).onfinish = () => {
+    thump();
+    $("mark").classList.add("on");
+    $("bagBig").classList.add("squash");
+    setTimeout(() => $("bagBig").classList.remove("squash"), 240);
+    setFace("happy", 1800);
+    hanko.animate([{ transform:"translateY(" + dy + "px)" }, { transform:"translateY(-90px)", opacity:0 }],
+      { duration:320 * motion, delay:150 * motion, easing:"ease-out", fill:"forwards" });
+    hint.style.display = "none";
+    nextBtn.classList.add("on");
+    nextBtn.focus({ preventScroll:true });
+  };
+});
+nextBtn.addEventListener("click", () => {
+  $("hanko").getAnimations().forEach(a => a.cancel());
+  lotIndex++;
+  startLot();
+});
+
+/* 手が止まったらカード（入力はふさがない・舞台にもかぶせない）。タップ数は /api/feedback（kind:kensa）で数える */
+const idleCard = $("idleCard"), likeBtn = $("likeBtn"), returnLink = $("returnLink");
+const IDLE_MS = 45000, pageStart = Date.now();
+let idleTimer = null;
+function sendTap(tap, onFail) {
+  const body = JSON.stringify({ kind:"kensa", tap, t:Date.now() - pageStart });
+  try {
+    if (tap === "return" && navigator.sendBeacon && navigator.sendBeacon("/api/feedback", new Blob([body], { type:"application/json" }))) return;
+    fetch("/api/feedback", { method:"POST", headers:{ "Content-Type":"application/json" }, body, keepalive:true })
+      .then(r => { if (!r.ok && onFail) onFail(); }, () => { if (onFail) onFail(); });
+  } catch (_) { if (onFail) onFail(); }
+}
+function liked() {
+  try { return sessionStorage.getItem("kensaLiked") === "1"; } catch (_) { return false; }
+}
 function showIdleCard() {
-  if (sessionStorage.getItem("kensaLiked") === "1") { likeBtn.disabled = true; likeBtn.textContent = "ありがとう 🌾"; }
+  if (liked()) { likeBtn.disabled = true; likeBtn.textContent = "ありがとう 🌾"; }
   idleCard.inert = false;
   idleCard.classList.add("on");
 }
 function hideIdleCard() {
   idleCard.classList.remove("on");
-  idleCard.inert = true; /* 隠れている間はTab移動の対象にもしない（Codexレビュー） */
+  idleCard.inert = true;
 }
 function armIdle() {
   clearTimeout(idleTimer);
@@ -1011,21 +703,27 @@ function armIdle() {
 document.addEventListener("pointerdown", (e) => {
   if (!e.target.closest || !e.target.closest("#idleCard")) hideIdleCard();
   armIdle();
-}, { passive: true });
+}, { passive:true });
 document.addEventListener("keydown", (e) => {
-  /* カードの中のキー操作（Tab・Enterなど）では消さない。カードの外のキー操作は「遊びに戻った」として消す */
   if (!e.target.closest || !e.target.closest("#idleCard")) hideIdleCard();
   armIdle();
 });
 likeBtn.addEventListener("click", () => {
-  if (sessionStorage.getItem("kensaLiked") === "1") return;
-  sessionStorage.setItem("kensaLiked", "1");
+  if (liked()) return;
+  try { sessionStorage.setItem("kensaLiked", "1"); } catch (_) {}
   likeBtn.disabled = true;
   likeBtn.textContent = "ありがとう 🌾";
-  sendTap("like");
+  setFace("happy", 900);
+  setTimeout(hideIdleCard, 900); /* つぎの ふくろ へすぐ戻れるように閉じる */
+  sendTap("like", () => { /* 届かなかったら押し直せるように戻す */
+    try { sessionStorage.removeItem("kensaLiked"); } catch (_) {}
+    likeBtn.disabled = false;
+    likeBtn.textContent = "👍 いいね";
+  });
 });
 returnLink.addEventListener("click", () => sendTap("return"));
 armIdle();
+startLot();
 </script>
 </body>
 </html>

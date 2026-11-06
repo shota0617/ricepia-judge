@@ -9,7 +9,7 @@ FN = FN[:FN.index("\n}\n") + 3]
 
 class TestFirstCritterSoon(unittest.TestCase):
     def test_first_meet_is_three_steps(self):
-        self.assertIn("CRITTER_FIRST_STEPS = 3;", PIX)
+        self.assertIn("CRITTER_FIRST_STEPS = 3,", PIX)
         self.assertIn("if (!where || critterS.steps < CRITTER_FIRST_STEPS) return;", FN)
 
     def test_later_meetings_unchanged(self):

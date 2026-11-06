@@ -119,6 +119,13 @@ class FlowTests(unittest.TestCase):
         self.assertIn('"niou", "kamu", "nigiru"', HTML)
         self.assertIn("むにゅ", HTML)
 
+    def test_first_bag_guide(self):
+        # 最初の袋だけ、動かし方を指で見せる
+        self.assertIn("if (lotIndex !== 0) return;", HTML)
+        for kind in ('"circle"', '"sweep"', '"pinch"', '"move"', '"press"'):
+            self.assertIn("guideAt(" + kind, HTML)
+        self.assertIn('pointer-events:none; opacity:0; transition:opacity', HTML)
+
     def test_crack_only_shows_when_zoomed(self):
         self.assertIn('if (kind === "higai" && !far) px(', HTML)
         self.assertIn('if (far) return spriteCache[key] = c.toDataURL();', HTML)

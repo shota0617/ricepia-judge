@@ -140,6 +140,18 @@
   #hint { font-size:23px; font-weight:800; text-align:center; }
   #nextBtn { display:none; height:56px; touch-action:manipulation; padding:0 30px; border-radius:30px; background:var(--green); color:#fff; font-size:21px; font-weight:800; }
   #nextBtn.on { display:block; }
+  #guide { position:fixed; left:0; top:0; z-index:60; font-size:40px; line-height:1; margin:-6px 0 0 -14px; pointer-events:none; opacity:0; transition:opacity .2s ease; filter:drop-shadow(0 2px 3px rgba(0,0,0,.35)); }
+  #guide.on { opacity:1; }
+  #guide.circle { animation:gCircle 1.5s linear infinite; }
+  @keyframes gCircle { 0% { translate:34px 0; } 25% { translate:0 34px; } 50% { translate:-34px 0; } 75% { translate:0 -34px; } 100% { translate:34px 0; } }
+  #guide.sweep { animation:gSweep 1.4s ease-in-out infinite; }
+  @keyframes gSweep { 0%,100% { translate:-70px 10px; } 50% { translate:70px -10px; } }
+  #guide.pinch { animation:gPinch 1.3s ease-in-out infinite; }
+  @keyframes gPinch { 0%,100% { scale:.8; opacity:.75; } 50% { scale:1.45; opacity:1; } }
+  #guide.move { animation:gMove 1.4s ease-in-out infinite; }
+  @keyframes gMove { 0% { translate:0 0; opacity:1; } 75% { translate:var(--gx) var(--gy); opacity:1; } 100% { translate:var(--gx) var(--gy); opacity:0; } }
+  #guide.press { animation:gPress .9s ease-in-out infinite; }
+  @keyframes gPress { 0%,100% { translate:0 -10px; } 50% { translate:0 8px; } }
   #idleSay { flex:0 0 100%; margin:0; text-align:center; font-size:16px; font-weight:800; line-height:1; }
   #idleCard { position:absolute; left:0; right:0; top:0; display:flex; flex-wrap:wrap; gap:5px 8px; opacity:0; pointer-events:none; transition:opacity .4s ease; background:var(--bg); }
   #idleCard.on { opacity:1; pointer-events:auto; }
@@ -185,7 +197,7 @@
     #likeBtn,#returnLink { height:40px; }
   }
   @media (prefers-reduced-motion: reduce) {
-    #poke,.grain img.hint,.grain img.wig,.dot.ping { animation:none; }
+    #poke,#guide,.grain img.hint,.grain img.wig,.dot.ping { animation:none; }
     .grain img.hint { outline:3px solid var(--gold); }
   }
 </style>
@@ -237,6 +249,7 @@
   <div id="foot">
     <div id="hint" aria-live="polite">ふくろを タップ</div>
     <button id="nextBtn">つぎの ふくろ 🌾 →</button>
+    <div id="guide" aria-hidden="true">👆</div>
     <div id="idleCard" aria-live="polite" inert>
       <p id="idleSay">お疲れ様です 🌾</p>
       <button id="likeBtn">👍 いいね</button>
@@ -531,6 +544,23 @@ function toLocal(cx, cy) {
   return { x:(cx - rect.left - plate.clientLeft - Z.tx) / Z.s, y:(cy - rect.top - plate.clientTop - Z.ty) / Z.s };
 }
 
+/* 指の手本: 最初の袋だけ、それぞれの動かし方を指で見せる。動かすと消える */
+const guideEl = $("guide");
+function guideOff() {
+  guideEl.className = "";
+}
+function guideAt(kind, el, gx, gy) {
+  guideOff();
+  if (lotIndex !== 0) return;
+  const r = el.getBoundingClientRect();
+  guideEl.style.left = r.left + r.width / 2 + "px";
+  guideEl.style.top = r.top + r.height / 2 + "px";
+  guideEl.style.setProperty("--gx", (gx || 0) + "px");
+  guideEl.style.setProperty("--gy", (gy || 0) + "px");
+  void guideEl.offsetWidth;
+  guideEl.className = "on " + kind;
+}
+
 /* ぬく: 穀刺しを指で押し込み、引き抜くと、引いた分だけ粒が落ちる */
 const P = { x:0, rest:0, inX:0, y:0, L:0, inserted:false, done:false, released:0, drag:null };
 let bagTaps = 0;
@@ -634,6 +664,7 @@ let meterTaps = 0, crankDrag = null, crankAngle = 0;
 function toHakaru() {
   showTop("sceneMeter");
   setStep(1, "💧 ぐるぐる まわす");
+  guideAt("circle", $("crank"));
   $("meterBtn").disabled = false;
   $("meterBtn").focus({ preventScroll:true });
 }
@@ -653,6 +684,7 @@ function crankPointer(e) {
 $("sceneMeter").addEventListener("pointerdown", (e) => {
   if (step !== 1 || measured >= LOT.moisture.length) return;
   capture($("sceneMeter"), e);
+  guideOff();
   crankDrag = { last:crankPointer(e).a, turned:0, sum:0, x:e.clientX, y:e.clientY, moved:false };
 });
 $("sceneMeter").addEventListener("pointermove", (e) => {
@@ -733,9 +765,10 @@ function zoomTo(s, px, py) {
 }
 function updateSortHint() {
   if (step !== 2) return;
-  if (!spread) hint.textContent = "👋 なでて ひろげる";
-  else if (!everZoomed) hint.textContent = "🔍 ふたゆびで ズーム";
+  if (!spread) { hint.textContent = "👋 なでて ひろげる"; guideAt("sweep", plate); }
+  else if (!everZoomed) { hint.textContent = "🔍 ふたゆびで ズーム"; guideAt("pinch", plate); }
   else {
+    guideOff();
     hint.textContent = "わるい粒を つまむ";
     armHint(lotIndex === 0 ? 1200 : 6000);
   }
@@ -839,6 +872,7 @@ function startPinch() {
 plate.addEventListener("pointerdown", (e) => {
   if (step !== 2 || e.target === zoomBtn) return;
   capture(plate, e);
+  if (spread === false) guideOff();
   pts.set(e.pointerId, { x:e.clientX, y:e.clientY });
   if (pts.size === 1) sortDrag = { x:e.clientX, y:e.clientY, lx:e.clientX, ly:e.clientY, moved:false };
   else if (pts.size === 2) startPinch();
@@ -965,11 +999,17 @@ function toSense() {
   placeToken(0, 0);
   hint.textContent = { niou:"🤲 はなへ はこぶ ↖", kamu:"粒を くちへ はこぶ ↖", nigiru:"🤲 ぎゅっと にぎる" }[senseKind];
   $("face").classList.toggle("call", senseKind !== "nigiru");
+  if (senseKind === "nigiru") guideAt("press", token);
+  else {
+    const tk = token.getBoundingClientRect(), fc = $("face").getBoundingClientRect();
+    guideAt("move", token, fc.left + fc.width / 2 - (tk.left + tk.width / 2), fc.top + fc.height / 2 - (tk.top + tk.height / 2));
+  }
   token.focus({ preventScroll:true });
 }
 function senseDone() {
   if (token.hidden) return;
   senseDrag = null; senseHold = null;
+  guideOff();
   token.hidden = true;
   const wet = itemGrades(lotPercents(LOT)).moisture === 3;
   $("face").classList.remove("call");
@@ -1001,6 +1041,7 @@ function autoSense() {
 }
 token.addEventListener("pointerdown", (e) => {
   capture(token, e);
+  guideOff();
   if (senseKind === "nigiru") {
     token.classList.add("squeeze");
     const h = senseHold = {};
@@ -1052,6 +1093,7 @@ function toKimeru() {
   showTop(null);
   setStep(3, new Set(rows.map(r => r[2])).size > 1 ? "いちばん右の ● の下を 上へ ↑" : "● の下を 上へ ↑");
   $("rows").querySelectorAll(".dot").forEach((d, i) => setTimeout(() => { d.classList.add("on"); tick(); }, (120 + i * 110) * motion));
+  guideAt("move", document.querySelectorAll(".gradeBtn")[worst], 0, -48);
 }
 /* 等級の印を上へひきあげて選ぶ。2回タップでも選べる */
 function pickGrade(btn) {
@@ -1072,6 +1114,7 @@ document.querySelectorAll(".gradeBtn").forEach(btn => {
   btn.addEventListener("pointerdown", (e) => {
     if (step !== 3) return;
     capture(btn, e);
+    guideOff();
     drag = { y:e.clientY, moved:false };
   });
   btn.addEventListener("pointermove", (e) => {
@@ -1120,12 +1163,14 @@ function toOsu() {
   $("pad").style.top = hk.bottom - bag.top + 2 + "px";
   hankoMax = mark.top + mark.height / 2 - hk.bottom + 10;
   bobHanko();
+  guideAt("press", $("pad"));
   $("bagBig").focus({ preventScroll:true });
 }
 function inkDone() {
   inked = true;
   inkHold = null;
   pop();
+  guideAt("move", $("hanko"), 0, hankoMax);
   $("hanko").classList.add("inked");
   $("pad").style.display = "none";
   setHanko(0);
@@ -1148,6 +1193,7 @@ function stampNow() {
   hint.style.display = "none";
   nextBtn.classList.add("on");
   nextBtn.focus({ preventScroll:true });
+  guideAt("move", $("bagBig"), 90, 0);
 }
 function dropHanko() {
   stopBob();
@@ -1159,6 +1205,7 @@ function dropHanko() {
 $("bagBig").addEventListener("pointerdown", (e) => {
   if (step !== 4 || leaving) return;
   capture($("bagBig"), e);
+  guideOff();
   if (stamped) { bagSwipe = { x:e.clientX }; return; }
   stopBob();
   if (!inked) {
@@ -1207,6 +1254,7 @@ $("bagBig").addEventListener("pointerup", endHanko);
 $("bagBig").addEventListener("pointercancel", endHanko);
 $("bagBig").addEventListener("click", (e) => { if (e.detail === 0 && step === 4 && !stamped) dropHanko(); });
 function goNext() {
+  guideOff();
   $("hanko").getAnimations().forEach(a => a.cancel());
   $("bagBig").style.transform = "";
   leaving = false;

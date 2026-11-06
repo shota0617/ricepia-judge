@@ -7975,11 +7975,10 @@ function frame(now) {
     const cool = G.cooldownLeft(s) > 0;
     if (me && !cool) { const d = G.dist(me, s); if (d < nearestD) { nearest = s; nearestD = d; } }
     if (sx > w || sy > h || sx + size < 0 || sy + size < 0) continue;
-    if (s.shop) {   // 自店は 地図の目印：絵の下に 金色の 脈打つ輪（光るゴールの輪と 同じ流儀） //c17
-      const pu = (Math.sin(now / 400) + 1) / 2, rr = size * 0.62, rx = sx + size / 2, ry = sy + size * 0.6, lw = Math.max(2, Math.round(dpr * 2)); //c17
+    if (s.shop) {   // 自店は 地図の目印：絵の下に 金色の 輪（ループ4サイクル111・点滅はやめて 目印だけ残す） //c17
+      const rr = size * 0.62, rx = sx + size / 2, ry = sy + size * 0.6, lw = Math.max(2, Math.round(dpr * 2)); //c17
       ctx.lineWidth = lw + Math.max(2, Math.round(dpr * 2)); ctx.strokeStyle = 'rgba(26,26,26,.75)'; ctx.beginPath(); ctx.arc(rx, ry, rr, 0, Math.PI * 2); ctx.stroke(); //c17
-      ctx.lineWidth = lw; ctx.strokeStyle = `rgba(255,213,79,${0.55 + pu * 0.45})`; ctx.beginPath(); ctx.arc(rx, ry, rr, 0, Math.PI * 2); ctx.stroke(); //c17
-      dirty = true; //c17
+      ctx.lineWidth = lw; ctx.strokeStyle = 'rgba(255,213,79,.9)'; ctx.beginPath(); ctx.arc(rx, ry, rr, 0, Math.PI * 2); ctx.stroke(); //c17
     } //c17
     if (s.shop) gbPause++;
     ctx.drawImage(spr[cool ? 1 : 0], Math.round(sx), Math.round(sy), size, size);

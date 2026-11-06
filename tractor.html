@@ -164,6 +164,11 @@
   #say::before { content: ''; position: absolute; top: -6px; right: 30px; border: 6px solid transparent; border-top: 0; border-bottom-color: rgba(251,248,240,.97); }
   #say.off { opacity: 0; }
   .sayCoach { font-size: 13px; color: #6a5536; }   /* 下の だん：いま やること */
+  /* サイクル194: のんびりでは 吹き出しを 窓の「下」ではなく「左どなり」に出す。下だと 運転席から見える田んぼ（なぞる所）に かぶり、
+     小さい画面（320×568）や文字 200% では なぞり方ヒントの点まで隠していた。左どなりなら 屋根と空の高さに収まる */
+  body.calm #badge { flex-direction: row-reverse; align-items: flex-start; }
+  body.calm #say { margin-top: 10px; margin-right: 8px; }
+  body.calm #say::before { top: 12px; right: -6px; left: auto; border: 6px solid transparent; border-right: 0; border-top-color: transparent; border-bottom-color: transparent; border-left-color: rgba(251,248,240,.97); }
   /* のんびり（くわしい説明 なし）：計器の 札・知らせ・案内・キーの 一覧・窓の 札は 出さない（キャラクターが 話す） */
   body.calm #hud, body.calm #toast, body.calm #coach, body.calm #keyHint, body.calm #badgeSt { display: none !important; }
   body.calm #artPop { display: none !important; }   /* サイクル76 総点検：のんびりでは 点数の ＋− ポップ（報酬・罰の 浮き文字）は 出さない */
@@ -205,6 +210,7 @@
   @media (orientation: portrait) and (pointer: coarse) { #rotateHint { display: block; } }
   /* せまい画面（縦のスマホ）：上のボタンは 2 段に折り返し、地図と案内は下の操作ボタンの上に重ねずに置く */
   @media (max-width: 640px) { #bar { flex-wrap: wrap; } #hud { top: 96px; right: 76px; } #badge, body.touch #badge { right: 8px; top: 96px; } #badgeCv { width: 52px; height: 52px; } }   /* 縦：窓は 計器の 右はし（計器は 右を あけて 折り返す。知らせは 下なので 重ならない） */
+  @media (max-width: 640px) { body.calm #badge { top: calc(max(8px, env(safe-area-inset-top)) + 48px); } }   /* サイクル194: のんびりでは 計器が出ないので、縦でも 窓と吹き出しを ボタン列のすぐ下へ上げる（田んぼに かぶらないように） */
   @media (max-width: 640px) and (orientation: portrait) {
     body.touch #artBox { bottom: calc(max(14px, env(safe-area-inset-bottom)) + 204px); width: 120px; }
     body.touch #coach { top: auto; bottom: calc(max(14px, env(safe-area-inset-bottom)) + 312px); max-width: calc(100vw - 24px); }

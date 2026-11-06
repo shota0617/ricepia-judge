@@ -20,8 +20,8 @@ class Lit(unittest.TestCase):
     def test_lit_pure(self):
         i = PIXEL.index("function mzTorchLit(")
         b = PIXEL[i:PIXEL.index("\n", i)]
-        self.assertIn("mzTorch.until >", b)
-        for w in ("G.", "floatText", "localStorage", "mzTorch.until =", "++"):
+        self.assertIn("mzTorch.held", b)
+        for w in ("G.", "floatText", "localStorage", "mzTorch.held =", "++"):
             self.assertNotIn(w, b)
 
     def test_api(self):
@@ -51,7 +51,7 @@ class Light(unittest.TestCase):
         self.assertIn("Math.max(0,", self.b)
 
     def test_no_text(self):
-        for w in ("fillText", "riceSay", "floatText", "G.", "mzTorch.until ="):
+        for w in ("fillText", "riceSay", "floatText", "G.", "mzTorch.held ="):
             self.assertNotIn(w, self.b)
 
 
@@ -72,8 +72,8 @@ class Ring(unittest.TestCase):
         self.assertIn("S * 0.35", b)
 
     def test_bonus_unchanged(self):
-        self.assertIn("function mzTorchBonus() { return mzTorch.until > performance.now() ? MZ_TORCH.sight : 0; }", PIXEL)
-        self.assertIn("function mzTorchLeft(now) { return Math.max(0, mzTorch.until - (now === undefined ? performance.now() : now)); }", PIXEL)
+        self.assertIn("function mzTorchBonus() { return mzTorch.held ? MZ_TORCH.sight : 0; }", PIXEL)
+        self.assertNotIn("function mzTorchLeft(", PIXEL)   # 第4弾サイクル81：残り時間は持たない
         self.assertIn("f.sight + bonus : 0", PIXEL)
 
     def test_node_check(self):
@@ -90,7 +90,7 @@ class Diff(unittest.TestCase):
 
     def test_changed_files(self):
         out = git("diff", "--name-only", "origin/main").split()
-        self.assertTrue(set(f for f in out if not f.startswith("tests/")) <= {"nishio-go/pixel.js", "nishio-go/game.js", "nishio-go/style.css", "nishio-go/postcard.js", "nishio-go/photoquiz.js", "nishio-go/daystamp.js", "nishio-go/picross.js", "nishio-go/shopmap.js", "nishio-go/bingo.js", "nishio-go/memory.js", "nishio-go/slidepuzzle.js", "nishio-go/janken.js", "nishio-go/rollsync.js", "nishio-go/landscape.js", "nishio-go/biglandmark.js", "nishio-go/rolltrail.js", "nishio-go/meiro.js", "nishio-go.html", "tests/test_maze_loop4_1.py", "tests/test_maze_loop4_3.py", "tests/test_maze_loop4_6.py", "tests/test_maze_loop3_47.py", "tests/test_maze_loop3_48.py", "tests/test_maze_loop3_49.py", "tests/test_maze_loop3_50.py", "tests/test_maze_loop3_51.py", "tests/test_maze_loop3_52.py", "tests/test_maze_loop3_53.py", "tests/test_maze_loop3_54.py", "tests/test_maze_loop3_55.py", "tests/test_maze_loop3_56.py", "tests/test_maze_loop3_57.py", "tests/test_maze_loop3_58.py", "tests/test_maze_loop3_59.py", "tests/test_maze_loop3_60.py", "tests/test_maze_loop3_61.py", "tests/test_maze_loop3_62.py", "tests/test_maze_loop3_63.py", "tests/test_maze_loop3_64.py", "tests/test_maze_loop3_65.py", "tests/test_maze_loop3_66.py", "tests/test_maze_loop3_67.py", "tests/test_maze_loop3_68.py", "tests/test_maze_loop3_35.py", "tests/test_maze_fog.py", "tests/test_maze_loop3_41.py", "tests/test_maze_loop3_33.py", "tests/test_maze_loop3_34.py", "tests/test_maze_loop3_40.py", "tests/test_maze_loop3_46.py", "tests/test_maze_loop3_36.py", "tests/test_maze_loop3_44.py", "tests/test_maze_loop3_45.py", "tests/test_maze_loop3_12.py", "tests/test_maze_loop3_13.py", "tests/test_maze_loop3_14.py", "tests/test_maze_loop3_15.py", "tests/test_maze_loop3_16.py", "tests/test_maze_loop3_17.py"}, out)
+        self.assertTrue(set(f for f in out if not f.startswith("tests/")) <= {"nishio-go/pixel.js", "nishio-go/game.js", "nishio-go/style.css", "nishio-go/postcard.js", "nishio-go/photoquiz.js", "nishio-go/daystamp.js", "nishio-go/picross.js", "nishio-go/shopmap.js", "nishio-go/bingo.js", "nishio-go/memory.js", "nishio-go/slidepuzzle.js", "nishio-go/janken.js", "nishio-go/rollsync.js", "nishio-go/landscape.js", "nishio-go/biglandmark.js", "nishio-go/rolltrail.js", "nishio-go/meiro.js", "nishio-go/share.js", "nishio-go/shomai.js", "nishio-go/art/shomai-cute.png", "nishio-go/art/rice-dot.png", "nishio-go/art/poi.png", "nishio-go/art/spots.png", "nishio-go/art/people.png", "nishio-go/art/cat-art.png", "nishio-go/art/cat-beach.png", "nishio-go/art/cat-castle.png", "nishio-go/art/cat-historic.png", "nishio-go/art/cat-library.png", "nishio-go/art/cat-museum.png", "nishio-go/art/cat-park.png", "nishio-go/art/cat-shrine.png", "nishio-go/art/cat-sight.png", "nishio-go/art/cat-station.png", "nishio-go/art/cat-temple.png", "nishio-go/art/cat-townhall.png", "nishio-go/art/cat-view.png", "nishio-go/art/cat-worship.png", "nishio-go/art/giant/nishio-castle.png", "nishio-go/art/giant/okazaki-castle.png", "nishio-go/art/giant/iwase-bunko.png", "nishio-go/art/giant/konrenji.png", "nishio-go/art/giant/nishio-station.png", "nishio-go/art/giant/daibutsu.png", "nishio-go/art/giant/ohirune.png", "nishio-go/art/giant/kurokabe.png", "nishio-go/art/giant/chaen.png", "nishio-go/art/giant/ricepia.png", "nishio-go/art/giant/kondo.png", "nishio-go/dankyu.js", "nishio-go/harvest.js", "nishio-go/hiryoyama.js", "nishio-go/idlecard.js", "nishio-go.html", "tests/test_maze_loop4_1.py", "tests/test_maze_loop4_3.py", "tests/test_maze_loop4_6.py", "tests/test_maze_loop3_47.py", "tests/test_maze_loop3_48.py", "tests/test_maze_loop3_49.py", "tests/test_maze_loop3_50.py", "tests/test_maze_loop3_51.py", "tests/test_maze_loop3_52.py", "tests/test_maze_loop3_53.py", "tests/test_maze_loop3_54.py", "tests/test_maze_loop3_55.py", "tests/test_maze_loop3_56.py", "tests/test_maze_loop3_57.py", "tests/test_maze_loop3_58.py", "tests/test_maze_loop3_59.py", "tests/test_maze_loop3_60.py", "tests/test_maze_loop3_61.py", "tests/test_maze_loop3_62.py", "tests/test_maze_loop3_63.py", "tests/test_maze_loop3_64.py", "tests/test_maze_loop3_65.py", "tests/test_maze_loop3_66.py", "tests/test_maze_loop3_67.py", "tests/test_maze_loop3_68.py", "tests/test_maze_loop3_35.py", "tests/test_maze_fog.py", "tests/test_maze_loop3_41.py", "tests/test_maze_loop3_33.py", "tests/test_maze_loop3_34.py", "tests/test_maze_loop3_40.py", "tests/test_maze_loop3_46.py", "tests/test_maze_loop3_36.py", "tests/test_maze_loop3_44.py", "tests/test_maze_loop3_45.py", "tests/test_maze_loop3_12.py", "tests/test_maze_loop3_13.py", "tests/test_maze_loop3_14.py", "tests/test_maze_loop3_15.py", "tests/test_maze_loop3_16.py", "tests/test_maze_loop3_17.py"}, out)
 
 
 if __name__ == "__main__":

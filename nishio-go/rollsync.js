@@ -21,7 +21,8 @@
     return f < 0 ? f + 8 : f;
   }
   // 方向転換（M3）：向きの変わり方は TURN_PER_SEC rad/秒まで。速さは変えず、向きだけを上限の角度まで回す（弧を描いて曲がる）。
-  const TURN_PER_SEC = 5.5;
+  // サイクル68・のんびり転がる：5.5→3.8。向きは ゆっくり 変わり、弧は 大きく 曲がる（半回転で 約0.8秒）。
+  const TURN_PER_SEC = 3.8;
   function limitTurn(vx, vy, pvx, pvy, maxRad) {
     try {
       const x = num(vx), y = num(vy), px = num(pvx), py = num(pvy);
@@ -124,8 +125,8 @@
   const FPS_SLOW = 42, FPS_MIN = 90, FPS_RECOVER = 48;   // 飾りを 落とす 境界（42）と もどす 境界（48）を ずらす：境界の 近くで 出たり 消えたりを くり返さない
   function shadowStretch(v) {
     if (typeof v !== 'number' || !isFinite(v)) return 1;
-    if (v <= 1.5) return 1;
-    return Math.min(1.3, 1 + (v - 1.5) * 0.05);
+    if (v <= 2.5) return 1;   // サイクル68・のんびり転がる：のび始め 1.5→2.5、上限 1.3→1.15、係数も 0.05→0.06 で 最高速でも 旧より のびない（Codex指摘）
+    return Math.min(1.15, 1 + (v - 2.5) * 0.06);
   }
   function fpsStep(state, dtMs) {
     const ok = state && typeof state === 'object' && isFinite(state.ema) && isFinite(state.n);

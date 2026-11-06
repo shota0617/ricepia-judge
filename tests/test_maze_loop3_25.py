@@ -6,7 +6,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 PIXEL = (ROOT / "nishio-go/pixel.js").read_text(encoding="utf-8")
 GAME = (ROOT / "nishio-go/game.js").read_text(encoding="utf-8")
-TAGS = ("ViewClearTag", "CacheHint", "QuestTag", "DinoTag", "ChaseTag", "TorchTag", "BrigadeTag", "PurifyTag", "RescueTag")
+TAGS = ("CacheHint", "QuestTag", "DinoTag", "BrigadeTag", "PurifyTag", "RescueTag")
 
 
 def func_body(head, src):
@@ -16,12 +16,13 @@ def func_body(head, src):
 
 class MinimalText(unittest.TestCase):
     def test_no_always_on_text_tags(self):
-        line = next(l for l in PIXEL.splitlines() if "drawMzEnergyBar(w, dpr, now);" in l and "drawMzMini(" in l)
+        line = next(l for l in PIXEL.splitlines() if "drawMzEnergyBar(w, dpr, now);" in l and "drawMzCubeShelf(" in l)
         for t in TAGS:
             self.assertNotIn(f"drawMz{t}(", line)
             self.assertIn(f"function drawMz{t}(", PIXEL)   # 関数は 未使用のまま 残す
-        for k in ("drawMzShelf(", "drawMzViewPanorama(", "drawMzMini("):
+        for k in ("drawMzShelf(", "drawMzViewPanorama("):
             self.assertIn(k, line)
+        self.assertNotIn("drawMzMini(", line)   # サイクル64：ミニマップ廃止
 
     def test_no_tag_call_anywhere(self):
         for t in TAGS:
@@ -29,7 +30,9 @@ class MinimalText(unittest.TestCase):
 
     def test_energy_chip_is_numbers_only(self):
         h = func_body("function drawMzEnergyBar(", PIXEL)
-        self.assertIn("`⚡ ${", h)
+        self.assertNotIn("fillText", h)   # サイクル97：数字は描かない（バーだけ）
+        self.assertNotIn("⚡ ${", h)
+        self.assertIn("fillRect(bx, by, fill, bbh)", h)
         self.assertNotIn("さんぽエネルギー", h)
         self.assertNotIn("createLinearGradient", h)   # 第4弾サイクル9：単色の静かなゲージ
 
@@ -43,12 +46,9 @@ class MinimalText(unittest.TestCase):
         self.assertNotIn("guideChips(", g)
 
     def test_cache_chip_icon_number_only(self):
-        h = func_body("function drawMzCacheChip(", PIXEL)
-        self.assertIn("`🔍 ${mzCache.dist}`", h)   # アイコン＋数字だけ
-        for w in ("あつい", "つめたい", "かくし宝箱"):
-            self.assertNotIn(w, h)   # 文章は 描かない
-        line = next(l for l in PIXEL.splitlines() if "drawMzEnergyBar(w, dpr, now);" in l and "drawMzMini(" in l)
-        self.assertIn("drawMzCacheChip(w, dpr, now);", line)   # 描画行に 配線されている
+        self.assertNotIn("drawMzCacheChip", PIXEL)   # サイクル97：定義も呼び出しも無い
+        self.assertIn("function mzPulseSignal(", PIXEL)
+        self.assertIn("function mzCacheGlow(", PIXEL)
         e = func_body("function drawMzEnergyBar(", PIXEL)
         self.assertNotIn("mzViewClear(now)) y0", e)   # 消した 見晴らし札の 余白を 残さない
 

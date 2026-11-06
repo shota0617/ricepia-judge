@@ -1,0 +1,1408 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<title>農産物検査ゲーム - らいすぴあ（近藤米穀店）</title>
+<meta name="description" content="袋から穀刺しで粒をぬき、水分をはかり、わるい粒をみわけて、等級の証印をおす。農産物検査の仕事を題材にしたのんびりゲームです。"/>
+<meta name="theme-color" content="#e9e2d2"/>
+<meta property="og:title" content="農産物検査ゲーム - らいすぴあ（近藤米穀店）"/>
+<meta property="og:description" content="袋から穀刺しで粒をぬき、水分をはかり、わるい粒をみわけて、等級の証印をおす。農産物検査の仕事を題材にしたのんびりゲームです。"/>
+<meta property="og:image" content="https://go.ricepia.jp/kensa/kv.webp"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8C%BE%3C/text%3E%3C/svg%3E"/>
+<style>
+  :root { --ink:#1a1814; --paper:#fbf8f0; --bg:#e9e2d2; --green:#1f4d2b; --gold:#b8893a; --stamp:#b3261e; }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { margin:0; background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif; }
+  button { font:inherit; color:inherit; background:none; border:0; padding:0; cursor:pointer; touch-action:manipulation; }
+  [hidden] { display:none !important; }
+  img,canvas { image-rendering:pixelated; -webkit-user-select:none; user-select:none; -webkit-user-drag:none; }
+  .photo { image-rendering:auto; }
+
+  #app { height:100vh; height:100dvh; max-width:520px; margin:0 auto; display:flex; flex-direction:column;
+    padding:max(6px, env(safe-area-inset-top)) 12px 0; -webkit-user-select:none; user-select:none; overflow:hidden; }
+
+  /* 上: 顔と今の段階 */
+  #head { flex:none; display:flex; align-items:center; gap:10px; height:66px; }
+  #face { width:60px; height:60px; border-radius:50%; background:#fdf0d8; flex:none; transition:transform .18s ease; }
+  #face.hop { transform:translateY(-5px) rotate(-4deg); }
+  #face.tilt { transform:rotate(9deg); }
+  #headText { flex:1; min-width:0; }
+  h1 { margin:0; font-size:12px; font-weight:700; color:#6b6252; }
+  #stepName { font-size:28px; font-weight:800; line-height:1.15; }
+  #pips { display:flex; gap:5px; margin-top:3px; }
+  #pips i { width:18px; height:5px; border-radius:3px; background:#cfc6b1; }
+  #pips i.done { background:var(--gold); }
+  #pips i.now { background:var(--green); }
+  #notesLink { flex:none; font-size:22px; text-decoration:none; padding:8px 2px 8px 8px; opacity:.75; }
+
+  /* 舞台 */
+  #stage { flex:1; min-height:0; position:relative; display:flex; flex-direction:column; gap:8px; }
+  #top { flex:0 0 33%; min-height:0; position:relative; }
+  .topScene { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; gap:14px;
+    opacity:0; transform:translateX(26px); pointer-events:none; transition:opacity .22s ease, transform .22s ease; }
+  .topScene.on { opacity:1; transform:none; pointer-events:auto; }
+
+  #sceneBag { justify-content:flex-start; touch-action:none; }
+  #bagBtn { position:relative; z-index:2; height:100%; aspect-ratio:48/60; margin-left:4%; pointer-events:none; }
+  #bagBtn canvas { width:100%; height:100%; display:block; transition:transform .1s ease; }
+  #bagBtn.squash canvas { transform:scale(1.05,.94); }
+  #poke { position:absolute; z-index:4; font-size:34px; animation:poke 1.3s ease-in-out infinite; pointer-events:none; }
+  @keyframes poke { 0%,100% { transform:translateX(0); } 55% { transform:translateX(-46px); } }
+  #probe { position:absolute; left:0; top:0; z-index:1; pointer-events:none; } /* 袋の後ろを通るので、押すと袋に入って見える */
+  #kokuPhoto { position:absolute; right:0; top:0; height:50%; aspect-ratio:3/4; object-fit:cover; border-radius:10px; box-shadow:0 2px 8px rgba(26,24,20,.25); pointer-events:none; }
+
+  /* 水分計 */
+  #sceneMeter { touch-action:none; gap:10px; }
+  #crank { flex:none; position:relative; height:min(80%, 128px); aspect-ratio:1; border-radius:50%; background:#2c63a8; box-shadow:inset 0 -6px 0 #1d4a82, 0 3px 10px rgba(26,24,20,.3); }
+  #crankArm { position:absolute; inset:0; display:block; }
+  #crankArm::before { content:""; position:absolute; left:50%; top:50%; width:12%; height:30%; margin:-30% 0 0 -6%; background:#e8e2d2; }
+  #crankArm::after { content:""; position:absolute; left:50%; top:5%; width:32%; height:32%; margin:0 0 0 -16%; border-radius:50%; background:#d9a441; box-shadow:inset 0 -3px 0 #a87a22; }
+  #meterBtn { position:relative; flex:1; min-width:0; height:100%; max-height:190px; border-radius:18px; background:#2c63a8;
+    box-shadow:inset 0 -8px 0 #1d4a82, 0 3px 10px rgba(26,24,20,.3); padding:12px; display:flex; flex-direction:column; gap:6px; transition:transform .08s ease;
+    touch-action:none; -webkit-touch-callout:none; }
+  #senseToken { position:absolute; z-index:40; left:50%; top:62%; width:96px; height:96px; margin:-48px 0 0 -48px; border-radius:50%; background:var(--paper); box-shadow:0 3px 14px rgba(26,24,20,.4); font-size:52px; line-height:96px; text-align:center; touch-action:none; transition:scale .12s ease; }
+  #senseToken img { display:block; width:72px; height:40px; margin:28px auto 0; }
+  #senseToken.squeeze { scale:.78; }
+  #face { position:relative; z-index:45; }
+  #face.big { transform:scale(1.4) translate(10%,10%); }
+  #face.call { animation:call 1s ease-in-out infinite; }
+  @keyframes call { 50% { box-shadow:0 0 0 7px rgba(184,137,58,.45); } }
+  #lcd { flex:1; min-height:0; border-radius:8px; background:#cfe0b4; color:#22301a; display:flex; align-items:center; justify-content:center;
+    font:800 clamp(38px, 11vh, 62px)/1 ui-monospace,Menlo,monospace; box-shadow:inset 0 3px 0 rgba(0,0,0,.18); }
+  #lcd small { font-size:.5em; margin-left:3px; }
+  #meterBtn.high #lcd { background:#f4c27a; color:#5a2c08; }
+  #slots { flex:none; display:flex; gap:6px; }
+  #slots span { flex:1; height:24px; border-radius:6px; background:#1d4a82; color:#fff; font:700 14px/24px ui-monospace,Menlo,monospace; text-align:center; }
+
+  /* みわける上段: 見本とよけた粒 */
+  #ittoPhoto { height:100%; max-height:112px; aspect-ratio:1; object-fit:cover; border-radius:10px; box-shadow:0 2px 8px rgba(26,24,20,.25); }
+  #dish { flex:1; align-self:stretch; max-height:112px; margin:auto 0; border-radius:50px; background:#f4eee0; border:3px solid #cdbf9f;
+    display:flex; flex-wrap:wrap; align-items:center; justify-content:center; align-content:center; padding:8px 14px; gap:2px; }
+  #dish img { width:36px; height:20px; }
+
+  /* 鑑定皿: 白と黒の2つで同じ試料を見る */
+  #plate { flex:1; min-height:0; position:relative; border-radius:18px; border:4px solid #4a4136; touch-action:none; background:#1c1a16; }
+  #plate.zoomed { overflow:hidden; }
+  #plateInner { position:absolute; inset:0; border-radius:14px; transform-origin:0 0;
+    background:linear-gradient(90deg,#fbf8ef 0 50%,#1c1a16 50% 100%); }
+  #zoomBtn { position:absolute; right:8px; bottom:8px; z-index:30; width:46px; height:46px; border-radius:50%; background:var(--paper); font-size:22px; box-shadow:0 2px 6px rgba(0,0,0,.4); }
+  .grain { position:absolute; left:0; top:0; display:block; pointer-events:none; }
+  .grain img { display:block; width:100%; height:100%; }
+  .grain img.wig { animation:wig .32s ease; }
+  @keyframes wig { 0%,100% { transform:none; } 30% { transform:translateY(-22%) rotate(-12deg); } 65% { transform:rotate(8deg); } }
+  .grain img.hint { animation:hint 1s ease-in-out infinite; }
+  @keyframes hint { 0%,100% { transform:scale(1); } 50% { transform:scale(1.25); } }
+  .flyGrain { position:fixed; z-index:50; pointer-events:none; }
+
+  /* きめる: 行ごとの ● が下のボタンと同じ列に落ちる。いちばん右の ● が等級 */
+  #decide, #osu { position:absolute; inset:0; background:var(--bg); opacity:0; pointer-events:none; transition:opacity .2s ease; }
+  #decide.on, #osu.on { opacity:1; pointer-events:auto; }
+  #decide { display:flex; flex-direction:column; justify-content:center; gap:10px; }
+  #rows { display:grid; grid-template-columns:96px repeat(4,1fr); row-gap:3px; }
+  .rowName { display:flex; flex-direction:column; justify-content:center; line-height:1.1; font-size:12px; font-weight:700; color:#6b6252; min-height:48px; }
+  .rowName b { font-size:21px; color:var(--ink); font-weight:800; }
+  .cell { display:flex; align-items:center; justify-content:center; background:#f4eee0; }
+  .cell.last { border-radius:0 8px 8px 0; }
+  .dot { width:22px; height:22px; border-radius:50%; background:var(--green); transform:scale(0); transition:transform .14s cubic-bezier(.3,1.7,.6,1); }
+  .dot.on { transform:scale(1); }
+  .dot.ping { animation:ping .5s ease 2; }
+  @keyframes ping { 50% { transform:scale(1.5); background:var(--gold); } }
+  #gradeBtns { display:grid; grid-template-columns:96px repeat(4,1fr); }
+  #gradeBtns::before { content:""; }
+  .gradeBtn { touch-action:none; height:clamp(58px, 11vh, 84px); margin:0 2px; border-radius:12px; background:var(--paper); border:3px solid var(--green); font-size:24px; font-weight:800; color:var(--green); transition:transform .1s ease; }
+  .gradeBtn:active { transform:scale(.95); }
+  .gradeBtn.small { font-size:15px; }
+  .gradeBtn.shake { animation:shake .3s ease; }
+  @keyframes shake { 25% { transform:translateX(-5px); } 75% { transform:translateX(5px); } }
+
+  /* おす */
+  #osu { display:flex; align-items:center; justify-content:center; }
+  #bagBig { position:relative; height:min(100%, 440px); aspect-ratio:48/60; touch-action:none; }
+  #bagBig canvas { width:100%; height:100%; display:block; }
+  #bagBig.squash canvas { animation:squash .22s ease; }
+  @keyframes squash { 30% { transform:scale(1.06,.92); } }
+  #mark { position:absolute; left:50%; top:69%; width:40%; aspect-ratio:1; margin:-20% 0 0 -20%; border:5px solid var(--stamp); border-radius:50%; color:var(--stamp);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; font-weight:900; font-size:clamp(26px, 6vh, 42px); line-height:1; background:rgba(255,250,240,.35); transform:rotate(-8deg); opacity:0; }
+  #mark.small { font-size:clamp(17px, 3.6vh, 26px); }
+  #mark small { font-size:11px; font-weight:800; margin-top:4px; }
+  #mark.on { opacity:1; }
+  #hanko { position:absolute; left:50%; top:30%; width:96px; margin-left:-48px; pointer-events:none; z-index:2; }
+  #hanko i { display:block; width:40px; height:62px; margin:0 auto; border-radius:18px 18px 4px 4px; background:#7a4f28; box-shadow:inset -6px 0 0 #5e3b1c; }
+  #hanko b { display:block; height:24px; border-radius:6px; background:#3b2a18; box-shadow:0 3px 6px rgba(26,24,20,.35); }
+  #hanko.inked b { background:var(--stamp); }
+  #pad { position:absolute; left:50%; width:112px; height:18px; margin-left:-56px; border-radius:6px; background:var(--stamp); box-shadow:0 2px 0 #7a1712; z-index:1; }
+
+  /* 下: 案内。手が止まったカードも同じ場所に出し、皿や袋にはかぶせない */
+  #foot { flex:none; height:calc(74px + env(safe-area-inset-bottom)); padding-bottom:env(safe-area-inset-bottom); display:flex; align-items:center; justify-content:center; position:relative; }
+  #hint { font-size:23px; font-weight:800; text-align:center; }
+  #nextBtn { display:none; height:56px; touch-action:manipulation; padding:0 30px; border-radius:30px; background:var(--green); color:#fff; font-size:21px; font-weight:800; }
+  #nextBtn.on { display:block; }
+  #guide { position:fixed; left:0; top:0; z-index:60; font-size:40px; line-height:1; margin:-6px 0 0 -14px; pointer-events:none; opacity:0; transition:opacity .2s ease; filter:drop-shadow(0 2px 3px rgba(0,0,0,.35)); }
+  #guide.on { opacity:1; }
+  #guide.circle { animation:gCircle 1.5s linear infinite; }
+  @keyframes gCircle { 0% { translate:34px 0; } 25% { translate:0 34px; } 50% { translate:-34px 0; } 75% { translate:0 -34px; } 100% { translate:34px 0; } }
+  #guide.sweep { animation:gSweep 1.4s ease-in-out infinite; }
+  @keyframes gSweep { 0%,100% { translate:-70px 10px; } 50% { translate:70px -10px; } }
+  #guide.pinch { animation:gPinch 1.3s ease-in-out infinite; }
+  @keyframes gPinch { 0%,100% { scale:.8; opacity:.75; } 50% { scale:1.45; opacity:1; } }
+  #guide.move { animation:gMove 1.4s ease-in-out infinite; }
+  @keyframes gMove { 0% { translate:0 0; opacity:1; } 75% { translate:var(--gx) var(--gy); opacity:1; } 100% { translate:var(--gx) var(--gy); opacity:0; } }
+  #guide.press { animation:gPress .9s ease-in-out infinite; }
+  @keyframes gPress { 0%,100% { translate:0 -10px; } 50% { translate:0 8px; } }
+  #idleSay { flex:0 0 100%; margin:0; text-align:center; font-size:16px; font-weight:800; line-height:1; }
+  #idleCard { position:absolute; left:0; right:0; top:0; display:flex; flex-wrap:wrap; gap:5px 8px; opacity:0; pointer-events:none; transition:opacity .4s ease; background:var(--bg); }
+  #idleCard.on { opacity:1; pointer-events:auto; }
+  #likeBtn,#returnLink { flex:1; height:48px; border-radius:30px; display:flex; align-items:center; justify-content:center; font-size:17px; font-weight:800; text-decoration:none; }
+  #likeBtn { background:#f1dfb0; color:var(--ink); }
+  #returnLink { background:var(--green); color:#fff; }
+
+  #notes { max-width:520px; margin:0 auto; padding:24px 16px 48px; font-size:13px; line-height:1.75; color:#4a4136; }
+  #notes h2 { font-size:15px; margin:0 0 6px; }
+  #notes a { color:var(--green); }
+  #notes p { margin:0 0 10px; }
+
+  /* 横向きの低い画面: 上段と皿を左右に並べ、きめるの表も詰める */
+  @media (orientation:landscape) and (max-height:500px) {
+    #app { max-width:760px; }
+    #head { height:42px; }
+    #face { width:40px; height:40px; }
+    h1 { display:none; }
+    #stepName { font-size:20px; }
+    #pips { margin-top:1px; }
+    #stage { flex-direction:row; }
+    #top { flex:0 0 34%; }
+    #bagBtn { height:auto; width:50%; margin-left:0; }
+    #kokuPhoto { height:36%; }
+    #sceneMeter { flex-direction:column; gap:4px; }
+    #meterBtn { flex:1 1 0; height:auto; width:100%; padding:6px; }
+    #crank { height:38%; }
+    #senseToken { width:72px; height:72px; margin:-36px 0 0 -36px; font-size:38px; line-height:72px; }
+    #senseToken img { width:54px; height:30px; margin:21px auto 0; }
+    #sceneSort { flex-direction:column; gap:6px; }
+    #ittoPhoto { height:45%; }
+    #dish { flex:0 0 40%; width:100%; margin:0; border-radius:24px; padding:4px 8px; }
+    #foot { height:calc(46px + env(safe-area-inset-bottom)); }
+    #hint { font-size:17px; }
+    #nextBtn { height:40px; font-size:17px; }
+    #decide { gap:4px; }
+    .rowName { min-height:26px; flex-direction:row; align-items:center; justify-content:flex-start; gap:6px; }
+    .rowName b { font-size:15px; }
+    .dot { width:16px; height:16px; }
+    .gradeBtn { height:44px; font-size:19px; }
+    #idleCard { top:3px; flex-wrap:nowrap; align-items:center; }
+    #idleSay { flex:none; font-size:14px; }
+    #likeBtn,#returnLink { height:40px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #poke,#guide,.grain img.hint,.grain img.wig,.dot.ping { animation:none; }
+    .grain img.hint { outline:3px solid var(--gold); }
+  }
+</style>
+</head>
+<body>
+<main id="app">
+  <div id="head">
+    <canvas id="face" width="256" height="256" aria-hidden="true"></canvas>
+    <div id="headText">
+      <h1>農産物検査</h1>
+      <div id="stepName" aria-live="polite">ぬく</div>
+      <div id="pips" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+    </div>
+    <a id="notesLink" href="#notes" aria-label="検査のしくみと出典">📖</a>
+  </div>
+  <div id="stage">
+    <div id="top">
+      <div class="topScene on" id="sceneBag">
+        <canvas id="probe" width="44" height="6" aria-hidden="true"></canvas>
+        <button id="bagBtn" aria-label="ふくろに 穀刺しを さす"><canvas id="bagCanvas" width="48" height="60"></canvas></button>
+        <img id="kokuPhoto" class="photo" src="kensa/kokusashi.webp" alt="穀刺しの実物の写真"/>
+        <span id="poke" aria-hidden="true">👆</span>
+      </div>
+      <div class="topScene" id="sceneMeter">
+        <button id="meterBtn" aria-label="水分計"><div id="lcd">--.-</div><div id="slots"><span></span><span></span><span></span></div></button>
+        <div id="crank" aria-hidden="true"><i id="crankArm"></i></div>
+      </div>
+      <div class="topScene" id="sceneSort">
+        <img id="ittoPhoto" class="photo" src="kensa/ittomai.webp" alt="一等米の実物の写真"/>
+        <div id="dish" aria-label="よけた粒"></div>
+      </div>
+    </div>
+    <div id="plate" aria-label="鑑定皿"><div id="plateInner"></div><button id="zoomBtn" aria-label="ズーム" hidden>🔍</button></div>
+    <button id="senseToken" aria-label="はこぶ" hidden></button>
+    <div id="decide" inert>
+      <div id="rows"></div>
+      <div id="gradeBtns">
+        <button class="gradeBtn" data-i="0">1等</button><button class="gradeBtn" data-i="1">2等</button><button class="gradeBtn" data-i="2">3等</button><button class="gradeBtn small" data-i="3">規格外</button>
+      </div>
+    </div>
+    <div id="osu" inert>
+      <button id="bagBig" aria-label="ふくろに おす"><canvas id="bagBigCanvas" width="48" height="60"></canvas>
+        <div id="mark"></div>
+        <div id="pad" aria-hidden="true"></div>
+        <div id="hanko" aria-hidden="true"><i></i><b></b></div>
+      </button>
+    </div>
+  </div>
+  <div id="foot">
+    <div id="hint" aria-live="polite">ふくろを タップ</div>
+    <button id="nextBtn">つぎの ふくろ 🌾 →</button>
+    <div id="guide" aria-hidden="true">👆</div>
+    <div id="idleCard" aria-live="polite" inert>
+      <p id="idleSay">お疲れ様です 🌾</p>
+      <button id="likeBtn">👍 いいね</button>
+      <a id="returnLink" href="https://ricepia.jp/">🏠 サイトへ もどる</a>
+    </div>
+  </div>
+</main>
+<section id="notes">
+  <h2>🌾 農産物検査のしくみ</h2>
+  <p>農産物検査の仕事が題材です。手順は、穀刺しで袋から試料をぬき（1袋 約40g）、水分を3回はかって平均し、白い皿と黒い皿で粒を見て、等級をきめ、証印をおす流れです。写真の穀刺しと一等米は実物です。</p>
+  <p>等級は水稲うるち玄米の規格どおりに、整粒・水分・死米・着色粒・計（被害粒＋死米＋着色粒＋異種穀粒＋異物）のうち、いちばん悪い項目で決まります。未熟粒は整粒を減らしますが、計には入りません。水分は規格表の15.0%に、当分の間の1.0%加算を入れた16.0%までを適合としています。</p>
+  <p>鑑定は視覚・触覚・臭覚・聴覚を用いて行います（鑑定方法・平成13年農林水産省告示第333号）。におう・かむ・にぎるは、それをゲームの動きにしたものです。水分計のハンドルは、粒をつぶして測る水分計の形にならいました。</p>
+  <p>ゲームでは分かりやすくするため、皿は20粒で1粒＝5%と数えます（実際の検査の粒数や重量の割合とは違います）。形質（標準品との比較）、異種穀粒、異物は皿には出していません。ゲームの等級は遊びのためのもので、実際の格付けではありません。</p>
+  <p>出典: <a href="https://www.maff.go.jp/j/seisan/syoryu/kensa/kome/k_kikaku/" target="_blank" rel="noopener">農林水産省「玄米の検査規格」</a>／<a href="https://www.maff.go.jp/j/seisan/syoryu/kensa/hourei.html" target="_blank" rel="noopener">農産物検査法及び関係通知等</a>／<a href="https://www.maff.go.jp/j/seisan/syoryu/kensa/attach/pdf/index-25.pdf" target="_blank" rel="noopener">農林水産省「コメの農産物検査」</a></p>
+  <p><a href="https://ricepia.jp/">らいすぴあ（近藤米穀店）のサイトへ</a></p>
+</section>
+<script>
+"use strict";
+/* KENSA-RULES-START */
+/* 水稲うるち玄米の品位（農産物規格規程。農林水産省「玄米の検査規格」2026-11-06確認）。
+   水分は表の15.0%に附の「当分の間 1.0%加算」を入れて16.0%まで。ロットは15.0〜16.0%の帯を使わない */
+const GRADES = ["1等", "2等", "3等", "規格外"];
+const GRADE_TABLE = [
+  { seiryuMin:70, moistureMax:15.0, totalMax:15, shiniMax:7,  colorMax:0.1, ishuMax:0.4, ibutsuMax:0.2 },
+  { seiryuMin:60, moistureMax:15.0, totalMax:20, shiniMax:10, colorMax:0.3, ishuMax:0.8, ibutsuMax:0.4 },
+  { seiryuMin:45, moistureMax:15.0, totalMax:30, shiniMax:20, colorMax:0.7, ishuMax:1.7, ibutsuMax:0.6 }
+];
+const MOISTURE_ADD = 1.0;
+const PLATE_GRAINS = 20; /* 1粒 = 5% */
+/* わるい粒の数（のこりが整粒）。等級はこの粒数と水分だけで決まる */
+const LOTS = [
+  { moisture:[14.1, 14.3, 14.2], higai:1, shini:1, mijuku:0, color:0 }, /* 1等: まずは2粒だけ */
+  { moisture:[16.8, 17.0, 16.9], higai:0, shini:1, mijuku:1, color:0 }, /* 規格外: 粒はきれいでも水分が高い */
+  { moisture:[14.0, 13.8, 13.9], higai:0, shini:2, mijuku:5, color:0 }, /* 2等: 整粒65%・死米10% */
+  { moisture:[14.4, 14.2, 14.3], higai:2, shini:3, mijuku:5, color:0 }, /* 3等: 整粒50%・死米15%・計25% */
+  { moisture:[14.5, 14.6, 14.4], higai:0, shini:0, mijuku:1, color:1 }, /* 規格外: 着色粒1粒が5% */
+  { moisture:[14.0, 14.2, 14.1], higai:0, shini:1, mijuku:5, color:0 }  /* 1等: 整粒70%ちょうど。未熟粒は計に入らない */
+];
+function moistureAverage(values) {
+  return Math.round(values.reduce((a, b) => a + b, 0) / values.length * 10) / 10;
+}
+function lotPercents(lot) {
+  const p = 100 / PLATE_GRAINS;
+  const bad = lot.higai + lot.shini + lot.mijuku + lot.color;
+  return { moisture:moistureAverage(lot.moisture), seiryu:(PLATE_GRAINS - bad) * p, shini:lot.shini * p, color:lot.color * p,
+    total:(lot.higai + lot.shini + lot.color) * p };
+}
+/* 項目ごとの等級（0=1等 … 3=規格外）。等級はこのいちばん悪いもの */
+function itemGrades(pc) {
+  const rank = ok => { const i = GRADE_TABLE.findIndex(ok); return i < 0 ? 3 : i; };
+  return {
+    moisture: rank(g => pc.moisture <= g.moistureMax + MOISTURE_ADD),
+    seiryu: rank(g => pc.seiryu >= g.seiryuMin),
+    shini: rank(g => pc.shini <= g.shiniMax),
+    color: rank(g => pc.color <= g.colorMax),
+    total: rank(g => pc.total <= g.totalMax)
+  };
+}
+function lotGrade(lot) {
+  return Math.max(...Object.values(itemGrades(lotPercents(lot))));
+}
+/* KENSA-RULES-END */
+
+const $ = id => document.getElementById(id);
+const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const motion = reduced ? 0.15 : 1;
+const STEPS = ["ぬく", "はかる", "みわける", "きめる", "おす"];
+
+/* 音: ごく小さく。最初のタップから鳴らせる */
+let ac = null;
+function tone(freq, dur, vol, type) {
+  try {
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    if (ac.state === "suspended") ac.resume();
+    const o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime;
+    o.type = type || "triangle";
+    o.frequency.setValueAtTime(freq, t);
+    g.gain.setValueAtTime(vol, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g).connect(ac.destination);
+    o.start(t); o.stop(t + dur);
+  } catch (_) {}
+}
+const tick = () => tone(1100 + Math.random() * 900, 0.03, 0.025);
+const pop = () => tone(620, 0.08, 0.05, "sine");
+function thump() {
+  tone(110, 0.16, 0.14, "sine");
+  tone(70, 0.22, 0.1, "sine");
+  if (navigator.vibrate) { try { navigator.vibrate(18); } catch (_) {} }
+}
+
+/* 粒のドット絵: O=ふち B=地 H=光 S=かげ。顔はあとから描く */
+const GRAIN_ROWS = [
+  "....OOOOOOOOOO....",
+  "..OOHHHHHBBBBBOO..",
+  ".OHHBBBBBBBBBBBBO.",
+  "OHBBBBBBBBBBBBBBSO",
+  "OBBBBBBBBBBBBBBBSO",
+  "OBBBBBBBBBBBBBBBSO",
+  "OBBBBBBBBBBBBBBSSO",
+  ".OBBBBBBBBBBBBSSO.",
+  "..OOSSSSSSSSSSOO..",
+  "....OOOOOOOOOO...."
+];
+const GRAIN_COLORS = {
+  seiryu: { O:"#7c5c2c", B:"#e2bd7c", H:"#f5e1b2", S:"#c79c58", eye:"#3a2a14" },
+  shini:  { O:"#a39a88", B:"#f6f3ea", H:"#ffffff", S:"#ddd7c8", eye:"#6b6252" },
+  higai:  { O:"#7c5c2c", B:"#d9b06c", H:"#ecd19a", S:"#b98d4c", eye:"#3a2a14" },
+  mijuku: { O:"#5f7a3a", B:"#c2d68c", H:"#e0ecb8", S:"#9fb66a", eye:"#33441c" },
+  color:  { O:"#3d2614", B:"#7c5230", H:"#9a6e45", S:"#5c3a1e", eye:"#f3e4c8" }
+};
+const spriteCache = {};
+function grainSprite(kind, mood) {
+  const key = kind + "/" + mood;
+  if (spriteCache[key]) return spriteCache[key];
+  const c = document.createElement("canvas");
+  c.width = 18; c.height = 10;
+  const far = mood === "far"; /* 遠目では顔も割れ目も見えない。寄ると見える */
+  const x = c.getContext("2d"), pal = GRAIN_COLORS[far && kind === "higai" ? "seiryu" : kind];
+  const px = (color, ...pts) => { x.fillStyle = color; pts.forEach(([a, b]) => x.fillRect(a, b, 1, 1)); };
+  GRAIN_ROWS.forEach((row, y) => [...row].forEach((ch, i) => { if (ch !== ".") px(pal[ch], [i, y]); }));
+  if (kind === "higai" && !far) px("#5a3d18", [12, 1], [12, 2], [13, 3], [13, 4], [12, 5], [13, 6], [13, 7], [14, 8]); /* 割れ目 */
+  if (kind === "color") px("#2c1a0c", [3, 3], [4, 3], [3, 4], [4, 5], [13, 2], [14, 2], [14, 6], [13, 7]); /* 色のしみ */
+  if (far) return spriteCache[key] = c.toDataURL();
+  const e = pal.eye;
+  if (mood === "happy") { /* ^ ^ */
+    px(e, [5, 4], [6, 3], [7, 4], [11, 4], [12, 3], [13, 4], [8, 6], [9, 7], [10, 6]);
+  } else if (kind === "shini") { /* ねむそう */
+    px(e, [6, 4], [7, 4], [11, 4], [12, 4], [9, 6]);
+  } else if (kind === "higai") { /* いたそう */
+    px(e, [6, 3], [7, 4], [6, 5], [11, 3], [10, 4], [11, 5], [8, 6], [9, 6]);
+  } else if (kind === "mijuku") { /* あおくて小さい */
+    px(e, [7, 4], [11, 4], [9, 6]);
+  } else if (kind === "color") {
+    px(e, [7, 3], [7, 4], [11, 3], [11, 4], [8, 6], [9, 6], [10, 6]);
+  } else {
+    px(e, [7, 3], [7, 4], [11, 3], [11, 4], [8, 6], [9, 7], [10, 6]);
+  }
+  return spriteCache[key] = c.toDataURL();
+}
+
+/* 袋のドット絵 */
+function drawBag(canvas) {
+  const x = canvas.getContext("2d");
+  const r = (c, a, b, w, h) => { x.fillStyle = c; x.fillRect(a, b, w, h); };
+  r("#6b4a24", 4, 3, 40, 55); r("#6b4a24", 2, 8, 44, 46); r("#6b4a24", 6, 1, 8, 3); r("#6b4a24", 34, 1, 8, 3);
+  r("#dcb47f", 5, 4, 38, 53); r("#dcb47f", 3, 9, 42, 44); r("#dcb47f", 7, 2, 6, 3); r("#dcb47f", 35, 2, 6, 3);
+  r("#c79c62", 39, 8, 6, 45); r("#c79c62", 5, 53, 38, 4); r("#ecd0a2", 5, 8, 5, 40);
+  for (let i = 7; i < 41; i += 3) r("#8a6a3a", i, 6, 2, 1); /* 口のぬい目 */
+  r("#2d7a4a", 12, 12, 24, 3); r("#2d7a4a", 15, 17, 18, 2); r("#2d7a4a", 15, 21, 18, 2);
+  r("#f5ecd6", 10, 27, 28, 25); r("#2d7a4a", 10, 27, 28, 1); r("#2d7a4a", 10, 51, 28, 1); r("#2d7a4a", 10, 27, 1, 25); r("#2d7a4a", 37, 27, 1, 25);
+}
+/* 穀刺しのドット絵（動きに使う。写真の実物は袋の横に置く） */
+(function drawProbe() {
+  const x = $("probe").getContext("2d");
+  const r = (c, a, b, w, h) => { x.fillStyle = c; x.fillRect(a, b, w, h); };
+  r("#8a8f94", 2, 2, 30, 2); r("#d7dbde", 2, 1, 30, 1); r("#6b7075", 2, 4, 30, 1); r("#d7dbde", 0, 2, 2, 2);
+  r("#3a3f44", 12, 2, 9, 1);
+  r("#b5763a", 32, 0, 12, 6); r("#8f5a28", 32, 4, 12, 2);
+})();
+drawBag($("bagCanvas")); drawBag($("bagBigCanvas"));
+
+/* 検査員の顔: 元の絵に目と口を描きかえて3つの表情にする */
+const faceCtx = $("face").getContext("2d");
+const faceImg = new Image();
+let faceSkin = "#f6cfa8", faceTimer = null;
+function drawFace(mood) {
+  if (!faceImg.complete || !faceImg.naturalWidth) return;
+  faceCtx.imageSmoothingEnabled = false;
+  faceCtx.clearRect(0, 0, 256, 256);
+  faceCtx.drawImage(faceImg, 0, 0, 256, 256);
+  const r = (c, a, b, w, h) => { faceCtx.fillStyle = c; faceCtx.fillRect(a, b, w, h); };
+  const ink = "#2a1c12";
+  if (mood === "happy") {
+    r(faceSkin, 72, 132, 44, 30); r(faceSkin, 140, 132, 44, 30);
+    [[76, 150], [84, 142], [92, 138], [100, 142], [108, 150]].forEach(([a, b]) => r(ink, a, b, 8, 8));
+    [[148, 150], [156, 142], [164, 138], [172, 142], [180, 150]].forEach(([a, b]) => r(ink, a, b, 8, 8));
+    r(faceSkin, 100, 192, 56, 20);
+    r("#8c3a2c", 108, 194, 40, 12); r("#8c3a2c", 116, 206, 24, 6); r("#fff6ea", 112, 194, 32, 4);
+  } else if (mood === "wow") {
+    r(faceSkin, 100, 192, 56, 20);
+    r("#8c3a2c", 120, 192, 16, 18);
+  }
+}
+function setFace(mood, ms) {
+  clearTimeout(faceTimer);
+  drawFace(mood);
+  const el = $("face");
+  el.classList.toggle("hop", mood === "happy");
+  el.classList.toggle("tilt", mood === "wow");
+  if (ms) faceTimer = setTimeout(() => setFace("normal"), ms);
+}
+faceImg.onload = () => {
+  faceCtx.drawImage(faceImg, 0, 0, 256, 256);
+  try { const d = faceCtx.getImageData(128, 172, 1, 1).data; faceSkin = "rgb(" + d[0] + "," + d[1] + "," + d[2] + ")"; } catch (_) {}
+  drawFace("normal");
+};
+faceImg.src = "kensa/face_dot.webp";
+
+/* 進行 */
+let lotIndex = 0, LOT = LOTS[0], step = 0, grains = [], badLeft = 0, measured = 0, hintTimer = null;
+const plate = $("plate"), inner = $("plateInner"), hint = $("hint"), nextBtn = $("nextBtn"), zoomBtn = $("zoomBtn");
+function setStep(i, text) {
+  step = i;
+  $("stepName").textContent = STEPS[i];
+  [...$("pips").children].forEach((p, k) => { p.className = k < i ? "done" : k === i ? "now" : ""; });
+  hint.textContent = text;
+  document.documentElement.dataset.step = STEPS[i];
+}
+function showTop(id) {
+  document.querySelectorAll(".topScene").forEach(s => s.classList.toggle("on", s.id === id));
+}
+function layer(el, on) {
+  el.classList.toggle("on", on);
+  el.inert = !on;
+}
+function shuffle(a) {
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  return a;
+}
+function capture(el, e) {
+  try { el.setPointerCapture(e.pointerId); } catch (_) {}
+}
+/* 指の動きはどれも止まらないように、3回タップされたら自動でやってみせる */
+const NUDGE_LIMIT = 3;
+function startLot() {
+  LOT = LOTS[lotIndex % LOTS.length];
+  layer($("decide"), false); layer($("osu"), false);
+  nextBtn.classList.remove("on");
+  hint.style.display = "";
+  showTop("sceneBag");
+  $("dish").textContent = "";
+  measured = 0; meterTaps = 0; bagTaps = 0; hankoTaps = 0; spread = false; stamped = false; inked = false; twistDone = false;
+  token.hidden = true;
+  $("lcd").textContent = "--.-";
+  $("meterBtn").classList.remove("high");
+  [...$("slots").children].forEach(s => { s.textContent = ""; });
+  $("mark").className = ""; $("mark").textContent = "";
+  $("hanko").style.opacity = "1";
+  $("poke").style.display = lotIndex === 0 ? "" : "none";
+  zoomBtn.hidden = true;
+  resetZoom();
+  buildGrains();
+  P.inserted = false; P.done = false; P.released = 0; P.drag = null;
+  $("probe").style.opacity = "1";
+  layoutProbe();
+  setStep(0, "穀刺しを ふくろへ さす ←");
+  setFace("normal");
+  if (lotIndex > 0) $("bagBtn").animate([{ transform:"translateX(120%)" }, { transform:"none" }], { duration:260 * motion, easing:"ease-out" });
+}
+
+/* 皿の粒: 位置は皿の中の px で持ち、指でなでると動く */
+let GW = 36, GH = 20, PW = 0, PH = 0;
+function renderGrain(g) {
+  g.el.style.transform = "translate(" + (g.x - GW / 2) + "px," + (g.y - GH / 2) + "px) rotate(" + g.r + "deg)";
+}
+function buildGrains() {
+  inner.textContent = "";
+  grains = [];
+  PW = inner.clientWidth; PH = inner.clientHeight;
+  const scale = Math.max(2, Math.round(PW / 180));
+  GW = 18 * scale; GH = 10 * scale;
+  const kinds = [];
+  ["higai", "shini", "mijuku", "color"].forEach(k => { for (let i = 0; i < LOT[k]; i++) kinds.push(k); });
+  badLeft = kinds.length;
+  while (kinds.length < PLATE_GRAINS) kinds.push("seiryu");
+  const reach = Math.min(PW, PH) * 0.2;
+  kinds.forEach((kind, i) => {
+    /* 山の形に落ちる。わるい粒は山の真ん中の下に隠れる */
+    const bad = kind !== "seiryu";
+    const a = Math.random() * Math.PI * 2, d = Math.sqrt(Math.random()) * reach * (bad ? 0.5 : 1);
+    const b = document.createElement("button");
+    b.className = "grain";
+    b.setAttribute("aria-label", "粒");
+    b.disabled = true;
+    b.hidden = true;
+    b.style.width = GW + "px"; b.style.height = GH + "px";
+    const img = document.createElement("img");
+    img.src = grainSprite(kind, "far"); img.alt = "";
+    b.appendChild(img);
+    const g = { el:b, img, kind, x:PW / 2 + Math.cos(a) * d, y:PH / 2 + Math.sin(a) * d * 0.8, r:Math.round(Math.random() * 120 - 60), z:bad ? 1 : 2 + i, gone:false, awake:0 };
+    b.style.zIndex = g.z;
+    b.addEventListener("click", () => { tapGrain(g); });
+    inner.appendChild(b);
+    renderGrain(g);
+    grains.push(g);
+  });
+  shuffle(grains); /* 落ちる順はばらばらに */
+}
+function toLocal(cx, cy) {
+  const rect = plate.getBoundingClientRect();
+  return { x:(cx - rect.left - plate.clientLeft - Z.tx) / Z.s, y:(cy - rect.top - plate.clientTop - Z.ty) / Z.s };
+}
+
+/* 指の手本: 最初の袋だけ、それぞれの動かし方を指で見せる。動かすと消える */
+const guideEl = $("guide");
+function guideOff() {
+  guideEl.className = "";
+}
+function guideAt(kind, el, gx, gy) {
+  guideOff();
+  if (lotIndex !== 0) return;
+  const r = el.getBoundingClientRect();
+  guideEl.style.left = r.left + r.width / 2 + "px";
+  guideEl.style.top = r.top + r.height / 2 + "px";
+  guideEl.style.setProperty("--gx", (gx || 0) + "px");
+  guideEl.style.setProperty("--gy", (gy || 0) + "px");
+  void guideEl.offsetWidth;
+  guideEl.className = "on " + kind;
+}
+
+/* ぬく: 穀刺しを指で押し込み、引き抜くと、引いた分だけ粒が落ちる */
+const P = { x:0, rest:0, inX:0, y:0, L:0, inserted:false, done:false, released:0, drag:null };
+let bagTaps = 0;
+function layoutProbe() {
+  const scene = $("sceneBag"), bag = $("bagBtn"), probe = $("probe");
+  P.rest = bag.offsetLeft + bag.offsetWidth + 6;
+  P.inX = bag.offsetLeft + bag.offsetWidth * 0.32;
+  P.L = Math.min(scene.clientWidth - P.rest - 6, 190);
+  P.y = bag.offsetTop + bag.offsetHeight * 0.62;
+  probe.style.width = P.L + "px";
+  probe.style.height = P.L * 6 / 44 + "px";
+  const poke = $("poke");
+  poke.style.left = P.rest + P.L * 0.72 + "px";
+  poke.style.top = P.y - 6 + "px";
+  if (!P.inserted) setProbe(P.rest);
+}
+function setProbe(x) {
+  P.x = x;
+  $("probe").style.transform = "translate(" + x + "px," + P.y + "px)";
+}
+function moveProbe(x) {
+  if (P.done) return;
+  const span = P.rest - P.inX;
+  x = Math.min(Math.max(x, P.inX), P.rest + 12);
+  setProbe(x);
+  if (!P.inserted) {
+    if (x <= P.inX + span * 0.1) {
+      P.inserted = true;
+      tone(150, 0.1, 0.1, "sine");
+      $("bagBtn").classList.add("squash");
+      setTimeout(() => $("bagBtn").classList.remove("squash"), 120);
+      hint.textContent = "ひきぬく →";
+    }
+    return;
+  }
+  const want = Math.floor(Math.max(0, (x - P.inX) / span - 0.08) / 0.84 * PLATE_GRAINS);
+  while (P.released < Math.min(want, PLATE_GRAINS)) pourOne(grains[P.released++]);
+  if (P.released >= PLATE_GRAINS) finishProbe();
+}
+function pourOne(g) {
+  const scene = $("sceneBag").getBoundingClientRect();
+  const from = toLocal(scene.left + Math.max(P.rest - 4, P.x + P.L * 0.3), scene.top + P.y);
+  g.el.hidden = false;
+  const end = g.el.style.transform;
+  const sx = from.x - GW / 2, sy = from.y - GH / 2;
+  g.el.animate([
+    { transform:"translate(" + sx + "px," + sy + "px) rotate(" + Math.random() * 360 + "deg)", offset:0, easing:"cubic-bezier(.4,0,.9,.6)" },
+    { transform:end, offset:.76, easing:"ease-out" },
+    { transform:end + " translateY(-9px)", offset:.88, easing:"ease-in" },
+    { transform:end, offset:1 }
+  ], { duration:430 * motion });
+  setTimeout(tick, 320 * motion);
+}
+function finishProbe() {
+  P.done = true; P.drag = null;
+  hint.textContent = "ざらざら…";
+  $("probe").animate([{ opacity:1 }, { opacity:0 }], { duration:280 * motion, fill:"forwards" }).onfinish = function () { this.cancel(); $("probe").style.opacity = "0"; };
+  setTimeout(toHakaru, 560 * motion);
+}
+function autoProbe() {
+  if (P.done || step !== 0) return;
+  $("poke").style.display = "none";
+  const t0 = performance.now(), start = P.x;
+  const dIn = P.inserted ? 0 : 240 * motion, dOut = 620 * motion;
+  const run = () => {
+    if (step !== 0 || P.done) return;
+    const t = performance.now() - t0;
+    if (t < dIn) moveProbe(start + (P.inX - start) * (t / dIn));
+    else moveProbe(P.inX + (P.rest - P.inX) * Math.min(1, (t - dIn) / dOut));
+    requestAnimationFrame(run);
+  };
+  if (!P.inserted) moveProbe(P.inX);
+  run();
+}
+$("sceneBag").addEventListener("pointerdown", (e) => {
+  if (step !== 0 || P.done) return;
+  if (P.drag) return; /* 2本目の指は混ぜない */
+  P.drag = { id:e.pointerId, cx:e.clientX, x0:P.x, moved:false };
+  capture($("sceneBag"), e);
+});
+$("sceneBag").addEventListener("pointermove", (e) => {
+  if (step !== 0 || P.done || !e.buttons && e.pointerType === "mouse") return;
+  if (!P.drag) P.drag = { id:e.pointerId, cx:e.clientX, x0:P.x, moved:true }; /* 先の指を離しても、残った指で続ける */
+  if (e.pointerId !== P.drag.id) return;
+  const dx = e.clientX - P.drag.cx;
+  if (Math.abs(dx) > 5) { P.drag.moved = true; $("poke").style.display = "none"; }
+  if (P.drag.moved) moveProbe(P.drag.x0 + dx);
+});
+function endBagDrag(e) {
+  if (!P.drag || e.pointerId !== P.drag.id) return;
+  const tapped = !P.drag.moved;
+  P.drag = null;
+  if (!tapped || P.done) return;
+  if (++bagTaps >= NUDGE_LIMIT) { autoProbe(); return; }
+  /* タップだけだと、動かし方を穀刺しが見せる */
+  $("probe").animate([{ transform:"translate(" + P.x + "px," + P.y + "px)" }, { transform:"translate(" + (P.x - 18) + "px," + P.y + "px)" }, { transform:"translate(" + P.x + "px," + P.y + "px)" }], { duration:320 * motion, easing:"ease-in-out" });
+}
+$("sceneBag").addEventListener("pointerup", endBagDrag);
+$("sceneBag").addEventListener("pointercancel", (e) => { if (P.drag && e.pointerId === P.drag.id) P.drag = null; });
+$("bagBtn").addEventListener("click", (e) => { if (e.detail === 0) autoProbe(); }); /* キーボードの Enter はそのまま進める */
+
+/* はかる: 水分計のハンドルをぐるぐる回す。1周で1回はかれる */
+let meterTaps = 0, crankDrag = null, crankAngle = 0;
+function toHakaru() {
+  showTop("sceneMeter");
+  setStep(1, "💧 ぐるぐる まわす");
+  guideAt("circle", $("crank"));
+  $("meterBtn").disabled = false;
+  $("meterBtn").focus({ preventScroll:true });
+}
+function takeReading() {
+  const i = measured++, value = LOT.moisture[i];
+  pop();
+  $("lcd").textContent = value.toFixed(1);
+  $("slots").children[i].textContent = value.toFixed(1);
+  if (measured === LOT.moisture.length) setTimeout(showAverage, 240 * motion);
+  else hint.textContent = "💧 あと " + (LOT.moisture.length - measured) + "回";
+}
+function crankPointer(e) {
+  const r = $("crank").getBoundingClientRect();
+  const dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2);
+  return { a:Math.atan2(dy, dx) * 180 / Math.PI, far:Math.hypot(dx, dy) > 8 };
+}
+$("sceneMeter").addEventListener("pointerdown", (e) => {
+  if (step !== 1 || measured >= LOT.moisture.length) return;
+  if (crankDrag) return; /* 2本目の指は混ぜない */
+  capture($("sceneMeter"), e);
+  guideOff();
+  crankDrag = { id:e.pointerId, last:crankPointer(e).a, turned:0, sum:0, x:e.clientX, y:e.clientY, moved:false };
+});
+$("sceneMeter").addEventListener("pointermove", (e) => {
+  if (step !== 1 || measured >= LOT.moisture.length || !e.buttons && e.pointerType === "mouse") return;
+  if (!crankDrag) crankDrag = { id:e.pointerId, last:crankPointer(e).a, turned:0, sum:0, x:e.clientX, y:e.clientY, moved:true }; /* 先の指を離しても、残った指で続ける */
+  if (e.pointerId !== crankDrag.id) return;
+  if (Math.hypot(e.clientX - crankDrag.x, e.clientY - crankDrag.y) > 6) crankDrag.moved = true;
+  const p = crankPointer(e);
+  if (!p.far) return;
+  let d = p.a - crankDrag.last;
+  if (d > 180) d -= 360;
+  if (d < -180) d += 360;
+  crankDrag.last = p.a;
+  crankAngle += d;
+  crankDrag.turned += Math.abs(d);
+  crankDrag.sum += Math.abs(d);
+  $("crankArm").style.transform = "rotate(" + crankAngle + "deg)";
+  if (crankDrag.sum >= 45) { crankDrag.sum = 0; tick(); }
+  if (crankDrag.turned >= (lotIndex === 0 ? 170 : 350)) { crankDrag.turned = 0; takeReading(); } /* 最初の袋は半周で1回はかれる */
+});
+function endCrank(e) {
+  if (!crankDrag || e.pointerId !== crankDrag.id) return;
+  const tapped = !crankDrag.moved;
+  crankDrag = null;
+  if (measured >= LOT.moisture.length) return;
+  $("lcd").textContent = measured ? LOT.moisture[measured - 1].toFixed(1) : "--.-";
+  if (!tapped) return;
+  if (++meterTaps >= NUDGE_LIMIT) { meterTaps = 0; takeReading(); return; }
+  $("crankArm").animate([{ transform:"rotate(" + crankAngle + "deg)" }, { transform:"rotate(" + (crankAngle + 60) + "deg)" }, { transform:"rotate(" + crankAngle + "deg)" }], { duration:380 * motion, easing:"ease-in-out" });
+}
+$("sceneMeter").addEventListener("pointerup", endCrank);
+$("sceneMeter").addEventListener("pointercancel", (e) => { if (crankDrag && e.pointerId === crankDrag.id) crankDrag = null; });
+$("meterBtn").addEventListener("click", (e) => {
+  if (e.detail === 0 && step === 1 && measured < LOT.moisture.length) takeReading();
+});
+function showAverage() {
+  const avg = moistureAverage(LOT.moisture), high = itemGrades(lotPercents(LOT)).moisture === 3;
+  $("lcd").innerHTML = avg.toFixed(1) + "<small>%</small>";
+  $("meterBtn").classList.toggle("high", high);
+  $("meterBtn").disabled = true;
+  hint.textContent = high ? "水分が 高い！" : "ちょうどいい";
+  setFace(high ? "wow" : "happy", high ? 1700 : 900);
+  tone(high ? 330 : 880, 0.14, 0.05, "sine");
+  setTimeout(toMiwakeru, (high ? 1700 : 950) * motion);
+}
+
+/* みわける: なでて広げる／ズームして見る／つまんで小皿へ */
+const Z = { s:1, tx:0, ty:0 };
+const ZOOM_MAX = 3.4, FACE_AT = 1.5;
+let isNear = false, everZoomed = false, spread = false;
+function applyZoom() {
+  const maxX = 0, minX = PW * (1 - Z.s), minY = PH * (1 - Z.s);
+  Z.tx = Math.min(maxX, Math.max(minX, Z.tx));
+  Z.ty = Math.min(0, Math.max(minY, Z.ty));
+  inner.style.transform = "translate(" + Z.tx + "px," + Z.ty + "px) scale(" + Z.s + ")";
+  plate.classList.toggle("zoomed", Z.s > 1.001);
+  zoomBtn.textContent = Z.s > 1.001 ? "➖" : "🔍";
+  const near = Z.s >= FACE_AT;
+  if (near !== isNear) {
+    isNear = near;
+    grains.forEach(g => { if (!g.gone) g.img.src = grainSprite(g.kind, near ? "normal" : "far"); });
+    if (near && step === 2) {
+      tick();
+      if (!everZoomed) { everZoomed = true; updateSortHint(); }
+    }
+  }
+}
+function resetZoom() {
+  Z.s = 1; Z.tx = 0; Z.ty = 0;
+  applyZoom();
+}
+function zoomTo(s, px, py) {
+  /* px,py（皿の枠の中の場所）の下にある粒が動かないように寄る */
+  const lx = (px - Z.tx) / Z.s, ly = (py - Z.ty) / Z.s;
+  Z.s = s < 1.04 ? 1 : Math.min(ZOOM_MAX, s);
+  Z.tx = px - lx * Z.s; Z.ty = py - ly * Z.s;
+  applyZoom();
+}
+function updateSortHint() {
+  if (step !== 2) return;
+  if (!spread) { hint.textContent = "👋 なでて ひろげる"; guideAt("sweep", plate); }
+  else if (!everZoomed) { hint.textContent = "🔍 ふたゆびで ズーム"; guideAt("pinch", plate); }
+  else {
+    guideOff();
+    hint.textContent = "わるい粒を つまむ";
+    armHint(lotIndex === 0 ? 1200 : 6000);
+  }
+}
+function armHint(ms) {
+  clearTimeout(hintTimer);
+  hintTimer = setTimeout(() => {
+    if (step === 2) grains.filter(g => !g.gone && g.kind !== "seiryu").forEach(g => g.img.classList.add("hint"));
+  }, ms);
+}
+function toMiwakeru() {
+  showTop("sceneSort");
+  setStep(2, "");
+  grains.forEach(g => { g.el.disabled = false; });
+  zoomBtn.hidden = false;
+  checkSpread();
+  updateSortHint();
+}
+function checkSpread() {
+  const live = grains.filter(g => !g.gone), near = GW * 0.74;
+  let overlaps = 0;
+  for (let i = 0; i < live.length; i++) for (let j = i + 1; j < live.length; j++) {
+    if (Math.hypot(live[i].x - live[j].x, live[i].y - live[j].y) < near) overlaps++;
+  }
+  const now = overlaps <= 4;
+  if (now !== spread && now) { spread = true; updateSortHint(); }
+}
+/* なでる: 指先で粒を押し、押された粒がとなりの粒も押す */
+let simOn = false, lastBrushSound = 0;
+function brush(from, to) {
+  const R = GW * 0.8, dist = Math.hypot(to.x - from.x, to.y - from.y), steps = Math.max(1, Math.ceil(dist / 6));
+  let moved = false;
+  for (let k = 1; k <= steps; k++) {
+    const fx = from.x + (to.x - from.x) * k / steps, fy = from.y + (to.y - from.y) * k / steps;
+    grains.forEach(g => {
+      if (g.gone) return;
+      const dx = g.x - fx, dy = g.y - fy, d = Math.hypot(dx, dy) || 1;
+      if (d >= R) return;
+      g.x = fx + dx / d * R; g.y = fy + dy / d * R;
+      g.r += (R - d) * (dx > 0 ? 0.5 : -0.5);
+      g.awake = 16;
+      moved = true;
+    });
+  }
+  if (moved) {
+    const t = performance.now();
+    if (t - lastBrushSound > 70) { lastBrushSound = t; tick(); }
+    startSim();
+  }
+}
+function startSim() {
+  if (simOn) return;
+  simOn = true;
+  requestAnimationFrame(simFrame);
+}
+function simFrame() {
+  const live = grains.filter(g => !g.gone), minD = GW * 0.82;
+  let any = false;
+  for (let i = 0; i < live.length; i++) for (let j = i + 1; j < live.length; j++) {
+    const a = live[i], b = live[j];
+    if (!a.awake && !b.awake) continue;
+    const dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || 1;
+    if (d >= minD) continue;
+    const push = (minD - d) * 0.32, ux = dx / d, uy = dy / d;
+    a.x -= ux * push; a.y -= uy * push; b.x += ux * push; b.y += uy * push;
+    if (push > 0.6) { a.awake = Math.max(a.awake, 6); b.awake = Math.max(b.awake, 6); }
+  }
+  live.forEach(g => {
+    g.x = Math.min(PW - GW * 0.55, Math.max(GW * 0.55, g.x));
+    g.y = Math.min(PH - GW * 0.4, Math.max(GW * 0.4, g.y));
+    renderGrain(g);
+    if (g.awake > 0) { g.awake--; any = true; }
+  });
+  if (any) requestAnimationFrame(simFrame);
+  else simOn = false;
+  checkSpread();
+}
+function grainAt(p) {
+  const pad = 6 / Z.s;
+  let best = null;
+  grains.forEach(g => {
+    if (g.gone || g.el.hidden) return;
+    const a = g.r * Math.PI / 180, dx = p.x - g.x, dy = p.y - g.y;
+    const u = dx * Math.cos(a) + dy * Math.sin(a), v = -dx * Math.sin(a) + dy * Math.cos(a);
+    if (Math.abs(u) <= GW / 2 + pad && Math.abs(v) <= GH / 2 + pad && (!best || g.z > best.z)) best = g;
+  });
+  return best;
+}
+const pts = new Map();
+let sortDrag = null, pinch = null;
+function plateXY(cx, cy) {
+  const rect = plate.getBoundingClientRect();
+  return { x:cx - rect.left - plate.clientLeft, y:cy - rect.top - plate.clientTop };
+}
+function startPinch() {
+  const [a, b] = [...pts.values()];
+  const mid = plateXY((a.x + b.x) / 2, (a.y + b.y) / 2);
+  pinch = { d0:Math.hypot(a.x - b.x, a.y - b.y) || 1, s0:Z.s, lx:(mid.x - Z.tx) / Z.s, ly:(mid.y - Z.ty) / Z.s, ang:Math.atan2(b.y - a.y, b.x - a.x), twist:0 };
+  sortDrag = null;
+}
+plate.addEventListener("pointerdown", (e) => {
+  if (step !== 2 || e.target === zoomBtn) return;
+  capture(plate, e);
+  if (spread === false) guideOff();
+  pts.set(e.pointerId, { x:e.clientX, y:e.clientY });
+  if (pts.size === 1) sortDrag = { x:e.clientX, y:e.clientY, lx:e.clientX, ly:e.clientY, moved:false, t0:performance.now(), startG:grainAt(toLocal(e.clientX, e.clientY)) };
+  else if (pts.size === 2) startPinch();
+});
+plate.addEventListener("pointermove", (e) => {
+  if (!pts.has(e.pointerId)) return;
+  pts.set(e.pointerId, { x:e.clientX, y:e.clientY });
+  if (pts.size >= 2 && pinch) {
+    const [a, b] = [...pts.values()];
+    const mid = plateXY((a.x + b.x) / 2, (a.y + b.y) / 2);
+    const s = Math.max(1, Math.min(ZOOM_MAX, pinch.s0 * Math.hypot(a.x - b.x, a.y - b.y) / pinch.d0));
+    Z.s = s < 1.04 ? 1 : s;
+    Z.tx = mid.x - pinch.lx * Z.s; Z.ty = mid.y - pinch.ly * Z.s;
+    applyZoom();
+    const ang = Math.atan2(b.y - a.y, b.x - a.x);
+    let turn = (ang - pinch.ang) * 180 / Math.PI;
+    if (turn > 180) turn -= 360;
+    if (turn < -180) turn += 360;
+    pinch.ang = ang;
+    pinch.twist += turn;
+    if (turn) twistPlate(turn);
+    return;
+  }
+  if (!sortDrag) return;
+  if (Math.hypot(e.clientX - sortDrag.x, e.clientY - sortDrag.y) > 7) sortDrag.moved = true;
+  if (sortDrag.moved) {
+    if (Z.s > 1.001) { /* 寄っている間は、指で見る場所を動かす */
+      Z.tx += e.clientX - sortDrag.lx; Z.ty += e.clientY - sortDrag.ly;
+      applyZoom();
+    } else {
+      brush(toLocal(sortDrag.lx, sortDrag.ly), toLocal(e.clientX, e.clientY));
+    }
+  }
+  sortDrag.lx = e.clientX; sortDrag.ly = e.clientY;
+});
+function endPlatePointer(e, cancelled) {
+  if (!pts.has(e.pointerId)) return;
+  pts.delete(e.pointerId);
+  if (pts.size < 2) pinch = null;
+  if (pts.size === 1 && !sortDrag) { /* ズームのあと片方を離しても、残った指で見る場所を動かせる */
+    const [p] = pts.values();
+    sortDrag = { x:p.x, y:p.y, lx:p.x, ly:p.y, moved:true, t0:0, startG:null };
+  }
+  if (pts.size === 0 && sortDrag) {
+    const d = sortDrag;
+    sortDrag = null;
+    if (!d.moved && !cancelled && step === 2) {
+      const g = grainAt(toLocal(e.clientX, e.clientY));
+      const tapNow = performance.now();
+      if (g && g.kind === "seiryu" && tapNow - lastGoodTap < 320) { /* ダブルタップで寄る。もう一度で戻る */
+        lastGoodTap = 0;
+        if (Z.s > 1.001) resetZoom();
+        else { const pz = plateXY(e.clientX, e.clientY); zoomTo(2.4, pz.x, pz.y); }
+      } else if (g) {
+        if (g.kind === "seiryu") lastGoodTap = tapNow;
+        tapGrain(g);
+      } else knockPlate();
+    } else if (d.moved && !cancelled && step === 2 && Z.s <= 1.001 && d.startG && performance.now() - d.t0 < 260 && Math.hypot(e.clientX - d.x, e.clientY - d.y) > 24) {
+      flickGrain(d.startG, e.clientX - d.x, e.clientY - d.y);
+    }
+  }
+}
+/* 振る: 許可の画面を出さない端末だけ、スマホを振ると粒がはねて広がる */
+let lastGoodTap = 0, shakeAt = 0;
+if (!(window.DeviceMotionEvent && typeof DeviceMotionEvent.requestPermission === "function")) {
+  window.addEventListener("devicemotion", (e) => {
+    const a = e.accelerationIncludingGravity;
+    if (!a || step !== 2) return;
+    const t = performance.now();
+    if (Math.hypot(a.x || 0, a.y || 0, a.z || 0) > 24 && t - shakeAt > 700) { shakeAt = t; knockPlate(); }
+  });
+}
+/* はじく: 粒の上からさっと払う。わるい粒は小皿へ飛び、良い粒は少し転がる */
+function flickGrain(g, dx, dy) {
+  if (g.gone) return;
+  if (g.kind !== "seiryu") { tapGrain(g); return; }
+  const d = Math.hypot(dx, dy) || 1, k = Math.min(70, d) / Z.s;
+  g.x += dx / d * k; g.y += dy / d * k;
+  g.r += dx > 0 ? 40 : -40;
+  g.awake = 16;
+  tick();
+  startSim();
+}
+/* トントン: 粒のない所をたたくと、粒が小さくはねて少し広がる */
+function knockPlate() {
+  tick();
+  const live = grains.filter(g => !g.gone);
+  const cx = live.reduce((a, g) => a + g.x, 0) / (live.length || 1), cy = live.reduce((a, g) => a + g.y, 0) / (live.length || 1);
+  live.forEach(g => {
+    const dx = g.x - cx, dy = g.y - cy, d = Math.hypot(dx, dy) || 1;
+    g.x += dx / d * 7 + (Math.random() - .5) * 4;
+    g.y += dy / d * 7 + (Math.random() - .5) * 4;
+    g.r += (Math.random() - .5) * 26;
+    g.awake = 10;
+    g.img.classList.remove("wig"); void g.img.offsetWidth; g.img.classList.add("wig");
+  });
+  startSim();
+}
+/* ひねる: 2本指で回すと粒がころんと回り、わるい粒が気づいてもらおうと揺れる */
+let twistDone = false;
+function twistPlate(deg) {
+  grains.forEach(g => { if (!g.gone) { g.r += deg; renderGrain(g); } });
+  if (twistDone) return;
+  const p = pinch;
+  if (p && Math.abs(p.twist) >= 35) {
+    twistDone = true;
+    tick();
+    setFace("happy", 500);
+    if (step === 2) grains.filter(g => !g.gone && g.kind !== "seiryu").forEach(g => g.img.classList.add("hint"));
+  }
+}
+plate.addEventListener("pointerup", (e) => endPlatePointer(e, false));
+plate.addEventListener("pointercancel", (e) => endPlatePointer(e, true));
+document.addEventListener("gesturestart", (e) => e.preventDefault()); /* iPhoneのページ拡大と取り合わない */
+zoomBtn.addEventListener("click", () => {
+  if (step !== 2) return;
+  if (Z.s > 1.001) resetZoom();
+  else zoomTo(2.4, PW / 2, PH / 2);
+});
+function tapGrain(g) {
+  if (step !== 2 || g.gone) return;
+  if (g.kind === "seiryu") {
+    tick();
+    if (isNear) g.img.src = grainSprite("seiryu", "happy");
+    g.img.classList.remove("wig"); void g.img.offsetWidth; g.img.classList.add("wig");
+    setTimeout(() => { g.img.classList.remove("wig"); if (!g.gone) g.img.src = grainSprite("seiryu", isNear ? "normal" : "far"); }, 520);
+    return;
+  }
+  g.gone = true; badLeft--;
+  pop();
+  setFace("happy", 500);
+  grains.forEach(o => o.img.classList.remove("hint"));
+  if (everZoomed) armHint(lotIndex === 0 ? 1200 : 6000);
+  /* つまんだ粒だけ皿の外へ飛ばせるよう、皿の上に写しを出して小皿まで運ぶ */
+  const from = g.el.getBoundingClientRect(), to = $("dish").getBoundingClientRect();
+  const cw = GW * Z.s, ch = GH * Z.s;
+  const fly = document.createElement("img");
+  fly.className = "flyGrain";
+  fly.src = grainSprite(g.kind, "happy"); fly.alt = "";
+  fly.style.cssText = "left:" + (from.left + from.width / 2 - cw / 2) + "px;top:" + (from.top + from.height / 2 - ch / 2) + "px;width:" + cw + "px;height:" + ch + "px;";
+  document.body.appendChild(fly);
+  g.el.hidden = true;
+  const dx = to.left + to.width / 2 - (from.left + from.width / 2), dy = to.top + to.height / 2 - (from.top + from.height / 2);
+  const shrink = 36 / cw;
+  fly.animate([
+    { transform:"rotate(" + g.r + "deg)", easing:"ease-out" },
+    { transform:"translate(" + dx * .5 + "px," + (dy * .5 - 34) + "px) rotate(170deg)", easing:"ease-in" },
+    { transform:"translate(" + dx + "px," + dy + "px) rotate(340deg) scale(" + shrink + ")" }
+  ], { duration:330 * motion, fill:"forwards" }).onfinish = () => {
+    fly.remove();
+    const mini = document.createElement("img");
+    mini.src = grainSprite(g.kind, "happy"); mini.alt = "";
+    $("dish").appendChild(mini);
+  };
+  if (badLeft === 0) {
+    clearTimeout(hintTimer);
+    grains.forEach(o => { o.el.disabled = true; });
+    hint.textContent = "きれいに なった！";
+    pts.clear(); sortDrag = null; pinch = null;
+    zoomBtn.hidden = true;
+    setTimeout(() => {
+      resetZoomForSmiles();
+    }, 300 * motion);
+    setTimeout(toSense, 1050 * motion);
+  }
+}
+function resetZoomForSmiles() {
+  grains.filter(o => !o.gone).forEach((o, i) => setTimeout(() => {
+    o.img.src = grainSprite("seiryu", "happy");
+    o.img.classList.add("wig");
+  }, i * 22 * motion));
+}
+
+/* におう・かむ・にぎる: 袋ごとに交代で、粒を顔まで運んだり手でにぎったりする */
+const SENSES = ["niou", "kamu", "nigiru"];
+const NIGIRU_MS = 600;
+let senseKind = "niou", senseDrag = null, senseHold = null, senseTaps = 0;
+const token = $("senseToken");
+function placeToken(x, y) {
+  token.style.transform = "translate(" + x + "px," + y + "px)";
+}
+function toSense() {
+  senseKind = SENSES[lotIndex % SENSES.length];
+  senseTaps = 0;
+  resetZoom();
+  token.textContent = "";
+  if (senseKind === "kamu") {
+    const im = document.createElement("img");
+    im.src = grainSprite("seiryu", "happy"); im.alt = "";
+    token.appendChild(im);
+  } else token.textContent = "🤲";
+  token.hidden = false;
+  token.className = senseKind;
+  placeToken(0, 0);
+  hint.textContent = { niou:"🤲 はなへ はこぶ ↖", kamu:"粒を くちへ はこぶ ↖", nigiru:"🤲 ぎゅっと にぎる" }[senseKind];
+  $("face").classList.toggle("call", senseKind !== "nigiru");
+  if (senseKind === "nigiru") guideAt("press", token);
+  else {
+    const tk = token.getBoundingClientRect(), fc = $("face").getBoundingClientRect();
+    guideAt("move", token, fc.left + fc.width / 2 - (tk.left + tk.width / 2), fc.top + fc.height / 2 - (tk.top + tk.height / 2));
+  }
+  token.focus({ preventScroll:true });
+}
+function senseDone() {
+  if (token.hidden) return;
+  senseDrag = null; senseHold = null;
+  guideOff();
+  token.hidden = true;
+  const wet = itemGrades(lotPercents(LOT)).moisture === 3;
+  $("face").classList.remove("call");
+  $("face").classList.add("big");
+  setTimeout(() => $("face").classList.remove("big"), 900 * motion);
+  if (senseKind === "niou") {
+    tone(520, 0.2, 0.03, "sine");
+    setFace("happy", 900);
+    hint.textContent = "くんくん… いい におい";
+  } else if (senseKind === "kamu") {
+    if (wet) { tone(170, 0.2, 0.09, "sine"); setFace("wow", 900); hint.textContent = "むにゅ… やわらかい"; }
+    else { tone(2300, 0.05, 0.06, "square"); setFace("happy", 900); hint.textContent = "カリッ！ かたい"; }
+  } else {
+    tick(); setTimeout(tick, 70); setTimeout(tick, 140);
+    setFace("happy", 900);
+    hint.textContent = "さらさら…";
+  }
+  setTimeout(toKimeru, 1100 * motion);
+}
+function tokenNearFace() {
+  const t = token.getBoundingClientRect(), f = $("face").getBoundingClientRect();
+  return Math.hypot(t.left + t.width / 2 - (f.left + f.width / 2), t.top + t.height / 2 - (f.top + f.height / 2)) < f.width * 0.9;
+}
+function autoSense() {
+  if (senseKind === "nigiru") { senseDone(); return; }
+  const t = token.getBoundingClientRect(), f = $("face").getBoundingClientRect();
+  token.animate([{ transform:"none" }, { transform:"translate(" + (f.left + f.width / 2 - (t.left + t.width / 2)) + "px," + (f.top + f.height / 2 - (t.top + t.height / 2)) + "px)" }],
+    { duration:360 * motion, easing:"ease-in-out" }).onfinish = senseDone;
+}
+token.addEventListener("pointerdown", (e) => {
+  capture(token, e);
+  guideOff();
+  if (senseKind === "nigiru") {
+    token.classList.add("squeeze");
+    const h = senseHold = {};
+    h.timer = setTimeout(() => { if (senseHold === h) { token.classList.remove("squeeze"); senseDone(); } }, NIGIRU_MS * motion);
+    return;
+  }
+  senseDrag = { x:e.clientX, y:e.clientY, moved:false };
+});
+token.addEventListener("pointermove", (e) => {
+  if (!senseDrag) return;
+  const dx = e.clientX - senseDrag.x, dy = e.clientY - senseDrag.y;
+  if (Math.hypot(dx, dy) > 6) senseDrag.moved = true;
+  placeToken(dx, dy);
+  if (tokenNearFace()) senseDone();
+});
+function endToken() {
+  if (senseHold) {
+    senseHold = null;
+    token.classList.remove("squeeze");
+    if (++senseTaps >= NUDGE_LIMIT) { senseDone(); return; }
+    hint.textContent = "🤲 はなさず にぎる";
+    return;
+  }
+  if (!senseDrag) return;
+  const tapped = !senseDrag.moved;
+  senseDrag = null;
+  placeToken(0, 0);
+  if (tapped && ++senseTaps >= NUDGE_LIMIT) autoSense();
+}
+token.addEventListener("pointerup", endToken);
+token.addEventListener("pointercancel", endToken);
+token.addEventListener("click", (e) => { if (e.detail === 0) autoSense(); });
+
+/* きめる: 項目ごとに ● が下の等級の列へ落ちる */
+function toKimeru() {
+  const pc = lotPercents(LOT), it = itemGrades(pc), worst = lotGrade(LOT);
+  resetZoom();
+  const rows = [
+    ["水分", pc.moisture.toFixed(1) + "%", it.moisture],
+    ["整粒", pc.seiryu + "%", it.seiryu],
+    ["死米", pc.shini + "%", it.shini],
+    ["着色粒", pc.color + "%", it.color],
+    ["計", pc.total + "%", it.total]
+  ].filter(([name, , g]) => name === "水分" || name === "整粒" || (g === worst && g > 0)); /* 水分と整粒のほかは、等級を下げた項目だけ出す */
+  $("rows").innerHTML = rows.map(([name, value, g]) =>
+    '<div class="rowName">' + name + "<b>" + value + "</b></div>" +
+    [0, 1, 2, 3].map(c => '<div class="cell' + (c === 3 ? " last" : "") + '">' + (c === g ? '<i class="dot" data-g="' + g + '"></i>' : "") + "</div>").join("")).join("");
+  layer($("decide"), true);
+  showTop(null);
+  setStep(3, new Set(rows.map(r => r[2])).size > 1 ? "いちばん右の ● の下を 上へ ↑" : "● の下を 上へ ↑");
+  $("rows").querySelectorAll(".dot").forEach((d, i) => setTimeout(() => { d.classList.add("on"); tick(); }, (120 + i * 110) * motion));
+  guideAt("move", document.querySelectorAll(".gradeBtn")[worst], 0, -48);
+}
+/* 等級の印を上へひきあげて選ぶ。2回タップでも選べる */
+function pickGrade(btn) {
+  if (step !== 3) return;
+  const pick = Number(btn.dataset.i), right = lotGrade(LOT);
+  if (pick !== right) {
+    btn.classList.remove("shake"); void btn.offsetWidth; btn.classList.add("shake");
+    setFace("wow", 800);
+    $("rows").querySelectorAll('.dot[data-g="' + right + '"]').forEach(d => { d.classList.remove("ping"); void d.offsetWidth; d.classList.add("ping"); });
+    return;
+  }
+  pop();
+  setFace("happy", 700);
+  toOsu();
+}
+document.querySelectorAll(".gradeBtn").forEach(btn => {
+  let drag = null, taps = 0;
+  btn.addEventListener("pointerdown", (e) => {
+    if (step !== 3) return;
+    capture(btn, e);
+    guideOff();
+    drag = { y:e.clientY, moved:false };
+  });
+  btn.addEventListener("pointermove", (e) => {
+    if (!drag) return;
+    const dy = Math.min(0, e.clientY - drag.y);
+    if (dy < -6) drag.moved = true;
+    btn.style.transform = "translateY(" + dy + "px)";
+    if (dy <= -34) { drag = null; btn.style.transform = ""; pickGrade(btn); }
+  });
+  btn.addEventListener("pointerup", () => {
+    if (!drag) return;
+    const tapped = !drag.moved;
+    drag = null;
+    btn.style.transform = "";
+    if (tapped && ++taps >= 2) { taps = 0; pickGrade(btn); }
+    else if (tapped) btn.animate([{ transform:"none" }, { transform:"translateY(-12px)" }, { transform:"none" }], { duration:260 * motion, easing:"ease-out" });
+  });
+  btn.addEventListener("pointercancel", () => { drag = null; btn.style.transform = ""; });
+  btn.addEventListener("click", (e) => { if (e.detail === 0) pickGrade(btn); });
+});
+
+/* おす: 朱肉にぎゅっと押してから、はんこを指で下ろして、ドン。押した袋は横へ流す */
+const INK_MS = 450;
+let hankoTaps = 0, stamped = false, inked = false, hankoDrag = null, hankoMax = 0, hankoBob = null, inkHold = null, bagSwipe = null, leaving = false;
+function setHanko(y) {
+  $("hanko").style.transform = "translateY(" + y + "px)";
+}
+function bobHanko() {
+  hankoBob = $("hanko").animate([{ transform:"translateY(0)" }, { transform:"translateY(-8px)" }, { transform:"translateY(0)" }], { duration:900, iterations:Infinity, easing:"ease-in-out" });
+}
+function stopBob() {
+  if (hankoBob) { hankoBob.cancel(); hankoBob = null; }
+}
+function toOsu() {
+  const grade = GRADES[lotGrade(LOT)];
+  const d = new Date();
+  $("mark").innerHTML = grade + "<small>" + d.getFullYear() + "." + (d.getMonth() + 1) + "." + d.getDate() + "</small>";
+  $("mark").className = grade === "規格外" ? "small" : "";
+  $("hanko").style.opacity = "1";
+  $("hanko").classList.remove("inked");
+  $("pad").style.display = "";
+  setHanko(0);
+  layer($("osu"), true);
+  setStep(4, "朱肉に ぎゅっと");
+  const bag = $("bagBig").getBoundingClientRect(), hk = $("hanko").getBoundingClientRect(), mark = $("mark").getBoundingClientRect();
+  $("pad").style.top = hk.bottom - bag.top + 2 + "px";
+  hankoMax = mark.top + mark.height / 2 - hk.bottom + 10;
+  bobHanko();
+  guideAt("press", $("pad"));
+  $("bagBig").focus({ preventScroll:true });
+}
+function inkDone() {
+  inked = true;
+  inkHold = null;
+  pop();
+  guideAt("move", $("hanko"), 0, hankoMax);
+  $("hanko").classList.add("inked");
+  $("pad").style.display = "none";
+  setHanko(0);
+  hint.textContent = "はんこを おろす ⬇";
+  bobHanko();
+}
+function stampNow() {
+  if (stamped || step !== 4) return;
+  stamped = true;
+  hankoDrag = null;
+  stopBob();
+  setHanko(hankoMax);
+  thump();
+  $("mark").classList.add("on");
+  $("bagBig").classList.add("squash");
+  setTimeout(() => $("bagBig").classList.remove("squash"), 240);
+  setFace("happy", 1800);
+  $("hanko").animate([{ transform:"translateY(" + hankoMax + "px)" }, { transform:"translateY(-90px)", opacity:0 }],
+    { duration:320 * motion, delay:150 * motion, easing:"ease-out", fill:"forwards" });
+  hint.style.display = "none";
+  nextBtn.classList.add("on");
+  nextBtn.focus({ preventScroll:true });
+  guideAt("move", $("bagBig"), 90, 0);
+}
+function dropHanko() {
+  stopBob();
+  if (!inked) inkDone();
+  stopBob();
+  $("hanko").animate([{ transform:"translateY(0)" }, { transform:"translateY(" + hankoMax + "px)" }],
+    { duration:130 * motion, easing:"cubic-bezier(.6,0,1,.7)" }).onfinish = stampNow;
+}
+$("bagBig").addEventListener("pointerdown", (e) => {
+  if (step !== 4 || leaving) return;
+  capture($("bagBig"), e);
+  guideOff();
+  if (stamped) { bagSwipe = { x:e.clientX }; return; }
+  stopBob();
+  if (!inked) {
+    /* 朱肉: 離さず押さえるとインクがつく */
+    setHanko(10);
+    const h = inkHold = {};
+    h.timer = setTimeout(() => { if (inkHold === h) inkDone(); }, INK_MS * motion);
+    return;
+  }
+  hankoDrag = { cy:e.clientY, moved:false };
+});
+$("bagBig").addEventListener("pointermove", (e) => {
+  if (bagSwipe) {
+    const dx = e.clientX - bagSwipe.x;
+    $("bagBig").style.transform = "translateX(" + Math.max(0, dx) + "px) rotate(" + Math.max(0, dx) / 30 + "deg)";
+    if (dx > 70) { bagSwipe = null; leaveBag(); }
+    return;
+  }
+  if (!hankoDrag) return;
+  const dy = e.clientY - hankoDrag.cy;
+  if (Math.abs(dy) > 5) hankoDrag.moved = true;
+  if (!hankoDrag.moved) return;
+  const y = Math.max(0, Math.min(hankoMax, dy));
+  setHanko(y);
+  if (y >= hankoMax - 1) stampNow();
+});
+function endHanko() {
+  if (bagSwipe) { bagSwipe = null; $("bagBig").style.transform = ""; return; }
+  if (inkHold) {
+    inkHold = null;
+    setHanko(0);
+    if (++hankoTaps >= NUDGE_LIMIT) { hankoTaps = 0; inkDone(); return; }
+    hint.textContent = "はなさず ぎゅっと";
+    bobHanko();
+    return;
+  }
+  if (!hankoDrag) return;
+  const tapped = !hankoDrag.moved;
+  hankoDrag = null;
+  if (stamped) return;
+  if (tapped && ++hankoTaps >= NUDGE_LIMIT) { dropHanko(); return; }
+  setHanko(0);
+  bobHanko();
+}
+$("bagBig").addEventListener("pointerup", endHanko);
+$("bagBig").addEventListener("pointercancel", endHanko);
+$("bagBig").addEventListener("click", (e) => { if (e.detail === 0 && step === 4 && !stamped) dropHanko(); });
+function goNext() {
+  guideOff();
+  $("hanko").getAnimations().forEach(a => a.cancel());
+  $("bagBig").style.transform = "";
+  leaving = false;
+  lotIndex++;
+  startLot();
+}
+function leaveBag() {
+  if (leaving) return;
+  leaving = true;
+  tick();
+  $("bagBig").animate([{ transform:$("bagBig").style.transform || "none" }, { transform:"translateX(130%) rotate(10deg)" }],
+    { duration:240 * motion, easing:"ease-in", fill:"forwards" }).onfinish = function () { this.cancel(); goNext(); };
+}
+nextBtn.addEventListener("click", () => { if (!leaving) leaveBag(); });
+window.addEventListener("resize", () => {
+  layoutProbe();
+  PW = inner.clientWidth; PH = inner.clientHeight;
+  grains.forEach(g => { g.awake = 1; });
+  startSim();
+  applyZoom();
+});
+
+/* 手が止まったらカード（入力はふさがない・舞台にもかぶせない）。タップ数は /api/feedback（kind:kensa）で数える */
+const idleCard = $("idleCard"), likeBtn = $("likeBtn"), returnLink = $("returnLink");
+const IDLE_MS = 45000, pageStart = Date.now();
+let idleTimer = null;
+function sendTap(tap, onFail) {
+  const body = JSON.stringify({ kind:"kensa", tap, t:Date.now() - pageStart });
+  try {
+    if (tap === "return" && navigator.sendBeacon && navigator.sendBeacon("/api/feedback", new Blob([body], { type:"application/json" }))) return;
+    fetch("/api/feedback", { method:"POST", headers:{ "Content-Type":"application/json" }, body, keepalive:true })
+      .then(r => { if (!r.ok && onFail) onFail(); }, () => { if (onFail) onFail(); });
+  } catch (_) { if (onFail) onFail(); }
+}
+function liked() {
+  try { return sessionStorage.getItem("kensaLiked") === "1"; } catch (_) { return false; }
+}
+function showIdleCard() {
+  if (liked()) { likeBtn.disabled = true; likeBtn.textContent = "ありがとう 🌾"; }
+  idleCard.inert = false;
+  idleCard.classList.add("on");
+}
+function hideIdleCard() {
+  idleCard.classList.remove("on");
+  idleCard.inert = true;
+}
+function armIdle() {
+  clearTimeout(idleTimer);
+  idleTimer = setTimeout(showIdleCard, IDLE_MS);
+}
+document.addEventListener("pointerdown", (e) => {
+  if (!e.target.closest || !e.target.closest("#idleCard")) hideIdleCard();
+  armIdle();
+}, { passive:true });
+document.addEventListener("keydown", (e) => {
+  if (!e.target.closest || !e.target.closest("#idleCard")) hideIdleCard();
+  armIdle();
+});
+likeBtn.addEventListener("click", () => {
+  if (liked()) return;
+  try { sessionStorage.setItem("kensaLiked", "1"); } catch (_) {}
+  likeBtn.disabled = true;
+  likeBtn.textContent = "ありがとう 🌾";
+  setFace("happy", 900);
+  setTimeout(hideIdleCard, 900); /* つぎの ふくろ へすぐ戻れるように閉じる */
+  sendTap("like", () => { /* 届かなかったら押し直せるように戻す */
+    try { sessionStorage.removeItem("kensaLiked"); } catch (_) {}
+    likeBtn.disabled = false;
+    likeBtn.textContent = "👍 いいね";
+  });
+});
+returnLink.addEventListener("click", () => sendTap("return"));
+armIdle();
+startLot();
+</script>
+</body>
+</html>

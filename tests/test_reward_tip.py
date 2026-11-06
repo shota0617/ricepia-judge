@@ -58,16 +58,17 @@ class RewardTipTests(unittest.TestCase):
             self.assertNotIn('20%', t)
             self.assertLessEqual(len(t), 40)   # 1行
 
-    def test_wiring_hidden_until_tapped(self):
+    def test_no_stopping_card(self):
+        # 運営者の声（2026-11-06）「ゲームが止まるカードは廃止」：ごほうびは 浮き文字と 上の1行だけ
         g = self.game
-        self.assertIn('<p class="rw-tipline" hidden>', g)   # 初期は閉じている
-        self.assertEqual(g.count('${tipHtml}${shareBtn}'), 3)   # 絵つき・絵なし・ふつう表示の3か所
-        i = g.index("$('reward').addEventListener('click'")
-        self.assertLess(g.index('data-rw-tip', i), g.index("data-rw-share", i))   # 💡は とじる処理より前で受けて return
-        self.assertIn('function showReward(', g)   # サイクル16：名所到着では カードを出さない（checkin は showReward を呼ばない）。関数は ほかの ごほうびで残す
-        css = (GO / 'style.css').read_text(encoding='utf-8')
-        self.assertIn('.rw-tipline[hidden]{display:none}', css)
-
+        i = g.index('function showReward(')
+        body = g[i:g.index('\n}\n', i)]
+        self.assertNotIn("classList.add('show')", body)
+        self.assertNotIn('innerHTML', body)
+        self.assertIn('floatText', body)
+        self.assertIn('toast(', body)
+        self.assertIn('rewardBusy', g)
+        self.assertNotIn("setTimeout(() => endingWhenFree(key), 900)", g)   # 殿堂入りの 記録は 自動で 開かない（バッジから）
 
 if __name__ == '__main__':
     unittest.main()

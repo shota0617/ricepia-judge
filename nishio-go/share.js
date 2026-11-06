@@ -6,6 +6,7 @@
 //   おたよりが反映されたシェア（voice）は「みんなの声で名所がふえる」ことを伝える
 // ・広告やQRのリンクのパラメータ：?c=キャンペーンのid ／ ?spot=スポットのid（そのスポットを見せる）／ ?play=1（操作して遊ぶで始める）／ ?meiro=daily（☀️ きょうの めいろ。meiro.js が ひらく）・?meiro=1（めいろ）／ ?from=どこから（チラシ・POP など）
 //   来た人は analytics.js の landing イベントで数える（utm_* もいっしょに）
+// ・参考：Alba: A Wildlife Adventure。西尾めいろのシェアは 面の進み具合や 金の米つぶの 達成度を 載せず、「どの名所まで ついたか」の 様子だけを 届ける
 (() => {
 'use strict';
 const G = window.nishioGo;
@@ -13,19 +14,15 @@ if (!G) return;
 const $ = id => document.getElementById(id);
 const SITE = 'https://go.ricepia.jp/';
 const track = (n, p) => { try { G.track(n, p); } catch (e) { /* noop */ } };
-const fmtSec = sec => (sec < 60 ? `${Math.round(sec)}秒` : `${Math.floor(sec / 60)}分${String(Math.round(sec % 60)).padStart(2, '0')}秒`);
 
 /* ---------- 広告・QR・シェアから来た人 ---------- */
 const q = new URLSearchParams(location.search);
 const land = {};
-for (const k of ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'c', 'spot', 'from', 'play', 'meiro', 'vs', 'vst']) if (q.get(k)) land[k] = q.get(k).slice(0, 60);
+for (const k of ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'c', 'spot', 'from', 'play', 'meiro']) if (q.get(k)) land[k] = q.get(k).slice(0, 60);
 // 友だちのシェアから来た、まだ遊んだことのない人：はじめて遊ぶときに game.js が +20pt（nsg_friend：1＝これから、2＝もらった）
 if (land.utm_source === 'share' && !G.started) { try { if (!localStorage.getItem('nsg_friend')) localStorage.setItem('nsg_friend', '1'); } catch (e) { /* noop */ } }
-// 友だちの めいろの ゴールの シェア（?vs=秒&vst=★）から 来た 人：友だちの タイムを 見せて さそい、はじめての ゴールで ならべて 見せる（game.js の mazeGoal・nsg_vs）。
-// 数だけ（名前・場所は のせない）
-const vsSec = Math.round(Number(land.vs)), vsSt = Math.max(0, Math.min(3, Math.round(Number(land.vst)) || 0));
-if (land.utm_source === 'share' && vsSec >= 4 && vsSec <= 3600) { try { localStorage.setItem('nsg_vs', JSON.stringify({ sec: vsSec, st: vsSt })); } catch (e) { /* noop */ } }
-if (land.vs || land.vst) {   // 受けとったら アドレスから のぞく（読みこみなおしで また 1回目の あつかいに ならないように）
+// 古い シェアの リンクに ついている ?vs=・?vst= は 使わない（タイムは 比べない）。
+if (q.has('vs') || q.has('vst')) {   // 受けとったら アドレスから のぞく（読みこみなおしで また 1回目の あつかいに ならないように）
   try { const u = new URL(location.href); u.searchParams.delete('vs'); u.searchParams.delete('vst'); history.replaceState(history.state, '', u.pathname + u.search + u.hash); } catch (e) { /* noop */ }
 }
 if (Object.keys(land).length) {
@@ -34,7 +31,6 @@ if (Object.keys(land).length) {
   if (land.play === '1') {   // 広告から「操作して遊ぶ」ですぐ始める（はじめての人は始め、もう始めている人は切り替える）
     if (document.getElementById('intro') && !document.getElementById('intro').hidden) G.begin(true); else G.playMode();
   }
-  if (land.utm_source === 'share' && vsSec >= 4 && vsSec <= 3600 && G.toastAfter) G.toastAfter(`👋 友だちは めいろの ゴールまで ${fmtSec(vsSec)}${vsSt ? ` ${'★'.repeat(vsSt)}` : ''}。きみも ころころ やってみりん`);
   if (land.spot) {   // スポットの読み込みを待って見せる（最大20秒）
     let n = 0;
     const t = setInterval(() => { if (G.focusSpot(land.spot) || ++n > 40) clearInterval(t); }, 500);
@@ -50,8 +46,8 @@ if (Object.keys(land).length) {
 
 /* ---------- シェア ---------- */
 // 西尾市版（提案用デモ）でシェアしたときは、受け取った人も西尾市版で開くように ed=city を付ける
-const shareUrl = kind => `${SITE}?${window.NSG_EDITION && !window.NSG_EDITION.shops ? `ed=${window.NSG_EDITION.id}&` : ''}${kind === 'spot' && curSpot ? `spot=${encodeURIComponent(curSpot.id)}&` : ''}${kind === 'meiro' && curMeiro ? `meiro=${curMeiro.daily ? 'daily' : '1'}&` : ''}${kind === 'koro' ? 'play=1&' : ''}${kind === 'mzgoal' ? `play=1&${curMz ? `vs=${Math.round(curMz.sec)}&vst=${curMz.stars || 0}&` : ''}` : ''}utm_source=share&utm_medium=social&utm_campaign=${encodeURIComponent(kind)}`;
-let cur = 'log', curDot = null, curSpot = null, curVoice = '', curMeiro = null, curMz = null, curKoro = null;   // curKoro：ころころの きろく（コンボの ベスト・きょうの つぶ・びゅん れんさ）   // curMz：地図の めいろの ゴール（game.js の mzShare。見た 人は ?play=1 で すぐ 遊べる）
+const shareUrl = kind => `${SITE}?${window.NSG_EDITION && !window.NSG_EDITION.shops ? `ed=${window.NSG_EDITION.id}&` : ''}${kind === 'spot' && curSpot ? `spot=${encodeURIComponent(curSpot.id)}&` : ''}${kind === 'meiro' && curMeiro ? `meiro=${curMeiro.daily ? 'daily' : '1'}&` : ''}${kind === 'koro' ? 'play=1&' : ''}${kind === 'mzgoal' ? 'play=1&' : ''}utm_source=share&utm_medium=social&utm_campaign=${encodeURIComponent(kind)}`;
+let cur = 'log', curDot = null, curSpot = null, curVoice = '', curMeiro = null, curMz = null, curKoro = null;   // curKoro：ころころの きろく（きょうの つぶ）   // curMz：地図の めいろの ゴール（game.js の mzShare。見た 人は ?play=1 で すぐ 遊べる）
 // 西尾の名物（「抹茶とうなぎのまち」）。名前は meibutsu.js（西尾市観光協会などの出典）から。X の字数に入るよう短く
 const meibutsuShort = () => { const m = (window.NISHIO_MEIBUTSU || []).filter(x => !x.area).slice(0, 2).map(x => x.name.replace(/^(西尾の|一色産)/, '')); return m.length ? `${m.join('と')}のまち・` : ''; };
 // 名所のある市町（西尾市の外の名所を「西尾の」と言わないように）と、その地区（注目スポットの area）
@@ -73,17 +69,17 @@ function shareText() {
     const city = cityOf(curSpot), a = areaOf(curSpot);
     return `${city ? `${city}の` : ''}「${curSpot.name}」📍${a && a.catch ? `\n${a.name}は「${a.catch}」` : ''}\nにしおさんぽGOで、西尾とまわりのまちの名所をめぐろう\n${tags}`;
   }
-  if (cur === 'meiro' && curMeiro) {   // 西尾めいろの ゴール（きょうの めいろ は だれでも 同じ 名所なので、タイムを くらべられる）
+  if (cur === 'meiro' && curMeiro) {   // 西尾めいろの ゴール（きょうの めいろ は だれでも 同じ 名所なので、同じ 名所を いっしょに たのしめる）
     const m = curMeiro;
-    return `にしおさんぽGOの「西尾めいろ」${m.daily ? '☀️きょうの めいろ' : `${m.n}面`}で「${m.name}」まで ${m.sec.toFixed(1)}秒 ${'★'.repeat(m.stars)}🌀${m.grains && m.got === m.grains ? '（金の米つぶ ぜんぶ）' : ''}\nスマホを傾けて、お米を 西尾の地図の めいろの 名所へ\n${tags}`;
+    return `にしおさんぽGOの「西尾めいろ」${m.daily ? '☀️きょうの めいろ' : ''}で「${m.name}」まで ついた🌀\nスマホを傾けて、お米を 西尾の地図の めいろの 名所へ\n${tags}`;
   }
-  if (cur === 'mzgoal' && curMz) {   // 地図の めいろの ゴール：遊んだ 画面と、タイム・★・この 道の がんばり。見た 人が すぐ 遊べる（?play=1）
+  if (cur === 'mzgoal' && curMz) {   // 地図の めいろの ゴール：遊んだ 画面と、この 道の がんばり。見た 人が すぐ 遊べる（?play=1）
     const m = curMz, run = mzRunLine(m.run);
-    return `にしおさんぽGOで、${mzTown(m)}が めいろに🌀「${m.name}」まで ${fmtSec(m.sec)} ${'★'.repeat(m.stars)}${run ? `\n${run}` : ''}\nスマホを 傾けると お米が ころころ。${invite}\n${tags}`;
+    return `にしおさんぽGOで、${mzTown(m)}が めいろに🌀「${m.name}」まで ついた${run ? `\n${run}` : ''}\nスマホを 傾けると お米が ころころ。${invite}\n${tags}`;
   }
-  if (cur === 'koro' && curKoro) {   // ころころの きろく（きろくの タブから）：コンボの ベストを 自慢して、見た 人が すぐ 遊べる（?play=1）
+  if (cur === 'koro' && curKoro) {   // ころころの きろく（きろくの タブから）：ころころ あそんだ 様子を 伝えて、見た 人が すぐ 遊べる（?play=1）
     const k = curKoro;
-    return `にしおさんぽGOで、お米を ころころ🎵 コンボ ベスト ×${k.combo}${k.speed ? `・はやさ 1秒に ${k.speed}m` : ''}${k.dots ? `・きょう ひろった つぶ ${k.dots}` : ''}\n西尾の まちが めいろ。スマホを 傾けると お米が ころころ。${invite}\n${tags}`;
+    return `にしおさんぽGOで、お米を ころころ🎵${k.dots ? ` きょう ひろった つぶ ${k.dots}` : ''}\n西尾の まちが めいろ。スマホを 傾けると お米が ころころ。${invite}\n${tags}`;
   }
   if (cur === 'voice' && curVoice) {   // おたよりが反映された
     return `わたしの声で、にしおさんぽGOが かわりました📮「${clip(curVoice, 34)}」\nみんなの声で、名所がふえていきます\n${tags}`;
@@ -131,8 +127,8 @@ function drawCard() {
     line('にしおさんぽGOで、名所をめぐろう', 30, 356);
   } else if (cur === 'meiro' && curMeiro) {
     const m = curMeiro;
-    line(`🌀 ${m.name} まで ${m.sec.toFixed(1)}秒`, 62, 240, true);
-    line(`西尾めいろ ${m.daily ? '☀️ きょうの めいろ' : `${m.n}面`} ${'★'.repeat(m.stars)}${'☆'.repeat(3 - m.stars)}${m.grains ? ` ・ 🌾 ${m.got}/${m.grains}` : ''}`, 36, 306);
+    line(`🌀 ${m.name} まで ついた`, 62, 240, true);
+    line(`西尾めいろ${m.daily ? ' ☀️ きょうの めいろ' : ''}`, 36, 306);
     line('スマホを 傾けると、お米が 名所へ ころころ', 30, 358);
     if (mz) {
       const sh = 372, sw = Math.round(sh * mz.width / mz.height), dx = W - sw - 60, dy = 112;
@@ -142,13 +138,13 @@ function drawCard() {
     }
   } else if (cur === 'mzgoal' && curMz) {   // 遊んだ 画面（ゴールの とき とった もの）を 右に 抹茶色の わくで
     const m = curMz, run = mzRunLine(m.run);
-    line(`🏁 ${m.name} まで ${fmtSec(m.sec)}`, 60, 240, true);
-    line(`${'★'.repeat(m.stars)}${'☆'.repeat(3 - m.stars)}${run ? `  ${run}` : ''}`, 40, 306);
+    line(`🏁 ${m.name} まで ついた`, 60, 240, true);
+    if (run) line(run, 40, 306);
     line(`${m.city && m.city !== '西尾市' ? m.city : '西尾'}の まちが めいろ。スマホを 傾けると、お米が ころころ`, 28, 360);
   } else if (cur === 'koro' && curKoro) {
     const k = curKoro;
-    line(`🎵 ころころ コンボ ×${k.combo}`, 64, 240, true);
-    line([k.speed ? `🏃 1秒に ${k.speed}m` : '', k.dots ? `🍚 つぶ ${k.dots}` : '', k.chain >= 2 ? `🍵 びゅん れんさ ×${k.chain}` : ''].filter(Boolean).join(' ・ ') || '西尾の まちが めいろ', 36, 306);
+    line('🎵 お米を ころころ', 64, 240, true);
+    line(k.dots ? `🍚 つぶ ${k.dots}` : '西尾の まちが めいろ', 36, 306);
     line('スマホを 傾けると、お米が ころころ', 30, 360);
   } else if (cur === 'voice' && curVoice) {
     line('📮 わたしの声が反映されました', 56, 230, true);
@@ -178,7 +174,7 @@ function openShare(kind, opt) {
   curMeiro = opt && opt.meiro ? opt.meiro : null;
   curMz = opt && opt.mzgoal ? opt.mzgoal : null;
   const P = window.nishioPixel;
-  curKoro = kind === 'koro' && P && P.combo && P.combo.best >= 3 ? { combo: P.combo.best, dots: P.maze && P.maze.dots ? P.maze.dots.n : 0, chain: P.maze && P.maze.padChain ? P.maze.padChain.best : 0, speed: (() => { try { return Number(localStorage.getItem('nsg_mz_speed')) || 0; } catch (e) { return 0; } })(), img: G.snapMaze ? G.snapMaze() : null } : null;   // 画像には さいごに 描いた ドット絵の 地図
+  curKoro = kind === 'koro' && P ? { dots: P.maze && P.maze.dots ? P.maze.dots.n : 0, img: G.snapMaze ? G.snapMaze() : null } : null;   // 画像には さいごに 描いた ドット絵の 地図
   const text = shareText(), url = shareUrl(kind);
   drawCard();
   $('shareText').textContent = `${text}\n${url}`;

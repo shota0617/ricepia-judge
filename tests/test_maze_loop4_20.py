@@ -56,10 +56,10 @@ class LimitTurn(unittest.TestCase):
         self.assertGreater(t['y'], 0)
 
     def test_half_turn_time(self):
-        self.assertEqual(run('r.TURN_PER_SEC'), 5.5)
+        self.assertEqual(run('r.TURN_PER_SEC'), 3.8)
         n = run('(()=>{let v={vx:3,vy:0},n=0;const m=r.TURN_PER_SEC/60;while(n<1000){v=r.limitTurn(-3,0,v.vx,v.vy,m);n++;if(Math.abs(Math.atan2(v.vy,v.vx))>Math.PI-1e-6)break}return n})()')
-        self.assertGreaterEqual(n / 60, 0.4)
-        self.assertLessEqual(n / 60, 0.8)
+        self.assertGreaterEqual(n / 60, 0.6)
+        self.assertLessEqual(n / 60, 1.1)
 
     def test_safe_inputs(self):
         for e in ['r.limitTurn(0,0,3,0,0.5)', 'r.limitTurn(3,0,0,0,0.5)', 'r.limitTurn(0,3,3,0,0)',
@@ -78,7 +78,7 @@ class Static(unittest.TestCase):
         self.assertLess(body.index('const pvx = rp.vx'), body.index('RS.limitTurn'))
 
     def test_constant(self):
-        self.assertIn('TURN_PER_SEC = 5.5', RS_SRC)
+        self.assertIn('TURN_PER_SEC = 3.8', RS_SRC)
 
     def test_no_forbidden_words(self):
         words = [chr(0x307c) + chr(0x304f), chr(0x3060) + chr(0x306b), chr(0x7d04) + '20%']

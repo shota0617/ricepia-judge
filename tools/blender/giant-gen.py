@@ -81,6 +81,8 @@ def tree(n, x, y, s, kind):
 def trees(rng, n, spots, kinds, s=(0.8, 1.15)):
     """木を n 本。桜と紅葉はたまにだけ（一年じゅう出るので）"""
     rng.shuffle(spots)
+    if TOUCH.get('nishio'):   # 西尾の街の建物：桜の かわりに 黒松も（城下町と 三河湾の 松）
+        kinds = ['pine' if k in ('sakura', 'round') and rng.random() < 0.6 else k for k in kinds] + ['pine', 'pine']
     green = [k for k in kinds if k not in ('sakura', 'momiji')] or ['round']
     for i, (x, y) in enumerate(spots[:n]):
         k = rng.choice(kinds) if rng.random() < 0.25 else rng.choice(green)
@@ -782,11 +784,150 @@ def m_post(rng, R, W, A):
     return dict(target=(0, 0, 0.09), scale=0.8, el=rng.uniform(30, 36), az=rng.uniform(-40, -28), size=96)
 
 
+# ---------- 西尾らしさ（運営者の声 2026-11-06「西尾らしさがない」） ----------
+# 街の主な建物（学校・病院・交番・消防・郵便局・役所・図書館）の型に、西三河の 三州瓦の 黒い板塀と、西尾の 抹茶の 茶の木の 生け垣を足す。
+# どの地区かは、歩く地図の マス（nishio-go/art/giant/poi.json）から いちばん近い 地区の中心（areas.json）で決める
+TOUCH = {}
+TOWN_K = {'school', 'hospital', 'police', 'fire', 'post', 'townhall', 'library'}
+NISHIO_AREAS = {'nishio', 'isshiki', 'kira', 'hazu', 'sakushima'}
+
+
+def _areas():
+    if '_a' in TOUCH:
+        return TOUCH['_a']
+    root = os.path.abspath(os.path.join(HERE, '..', '..'))
+    m_lng = 111320 * math.cos(34.86 * math.pi / 180)
+    try:
+        ar = json.load(open(os.path.join(root, 'nishio-go', 'areas.json'), encoding='utf-8'))['areas']
+        cen = [(a['id'], (a['lng'] - 136.9) * m_lng / 8, (35.0 - a['lat']) * 110950 / 8) for a in ar]
+    except (OSError, ValueError, KeyError):
+        cen = []
+    try:
+        at = {p[0]: (p[3], p[4]) for p in json.load(open(os.path.join(root, 'nishio-go', 'art', 'giant', 'poi.json'), encoding='utf-8'))['items']}
+    except (OSError, ValueError, KeyError):
+        at = {}
+    TOUCH['_a'] = (cen, at)
+    return TOUCH['_a']
+
+
+def area_of(eid):
+    cen, at = _areas()
+    if eid not in at or not cen:
+        return 'nishio'
+    x, y = at[eid]
+    return min(cen, key=lambda c: (c[1] - x) ** 2 + (c[2] - y) ** 2)[0]
+
+
+def kawara_bei(n, x0, y0, x1, y1, h=0.055):
+    """三州瓦の 黒い板塀：黒い板の 塀に、いぶし銀の 瓦の 笠（切妻）"""
+    L, ang = math.hypot(x1 - x0, y1 - y0), math.atan2(y1 - y0, x1 - x0)
+    cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
+    box(f'bei{n}', 'kurokabe', (L, 0.014, h), (cx, cy, h / 2), (0, 0, ang))
+    box(f'beiS{n}', 'shikkui', (L, 0.016, h * 0.28), (cx, cy, h * 0.80), (0, 0, ang))   # 上は しっくいの 白
+    gable(f'beiY{n}', 'kawaraG', L + 0.01, 0.04, 0.022, h, cx, cy, ang)
+
+
+def chanoki(n, x0, x1, y, rng):
+    """茶の木の 生け垣（茶畑の 畝のように かまぼこ形に 刈りこんだ 列。上の 新芽は 明るい 緑）"""
+    L = x1 - x0
+    o = cyl(f'cha{n}', 'cha', 0.04, L, ((x0 + x1) / 2, y, 0.0), (0, math.pi / 2, 0), 16)
+    o.scale = (1.0, 1.0, 1.0)
+    o2 = cyl(f'chaL{n}', 'chaL', 0.030, L - 0.01, ((x0 + x1) / 2, y, 0.012), (0, math.pi / 2, 0), 16)
+    for i in range(max(2, int(L / 0.09))):   # 丸い 株の ふくらみ
+        sphere(f'chaB{n}_{i}', 'cha', 0.032, (x0 + (i + 0.5) * L / max(2, int(L / 0.09)), y - 0.012, 0.022), (1.0, 0.8, 0.8))
+
+
+def chanokiY(n, x, y0, y1):
+    """左の へりの 茶の木の 列（奥へ のびる 畝）"""
+    L = y1 - y0
+    cyl(f'chaY{n}', 'cha', 0.04, L, (x, (y0 + y1) / 2, 0.0), (math.pi / 2, 0, 0), 16)
+    cyl(f'chaYL{n}', 'chaL', 0.030, L - 0.01, (x, (y0 + y1) / 2, 0.012), (math.pi / 2, 0, 0), 16)
+
+
+def jokamachi(rng):
+    """城下町の 見た目：白い壁の 下に 黒い 下見板（西尾城・佐久島の 黒壁）。低い 建物の 平らな 屋上は 三州瓦の 寄棟に"""
+    from mathutils import Vector
+    pa.bpy.context.view_layer.update()   # 作ったばかりの 物の 位置（matrix_world）を 確かにする
+    for o in list(pa.bpy.data.objects):   # 西尾の 病院は ヘリポートの かわりに 瓦屋根の 塔屋（屋上の 機械も）
+        if o.name.startswith(('heli', 'kikai')) or o.name in ('Hm', 'H-0.025', 'H0.025'):
+            pa.bpy.data.objects.remove(o)
+    objs = list(pa.bpy.data.objects)
+    has_heli = False
+    for i, o in enumerate(objs):
+        if o.type != 'MESH' or not o.data.materials:
+            continue
+        m = o.data.materials[0].name
+        bb = [o.matrix_world @ Vector(c) for c in o.bound_box]
+        x0, x1 = min(v.x for v in bb), max(v.x for v in bb)
+        y0, y1 = min(v.y for v in bb), max(v.y for v in bb)
+        z0, z1 = min(v.z for v in bb), max(v.z for v in bb)
+        if m == 'wallP' and z0 < 0.01 and z1 > 0.05:
+            kh = min(0.065, (z1 - z0) * 0.34)
+            box(f'koshi{i}', 'kurokabe', (x1 - x0 + 0.006, y1 - y0 + 0.006, kh), ((x0 + x1) / 2, (y0 + y1) / 2, z0 + kh / 2))
+        elif o.name.startswith('okujo') and m == 'roofP':
+            if z1 < 0.25 and not has_heli:
+                gable(f'kawara{i}', 'kawaraG', x1 - x0 + 0.05, y1 - y0 + 0.05, min(0.06, (y1 - y0) * 0.35), z1 - 0.004, (x0 + x1) / 2, (y0 + y1) / 2)   # 切妻の 三州瓦
+            else:   # 高い 建物：屋上に 白壁と 瓦屋根の 小さな 塔屋（ヘリポートの ある 屋上は そのまま）
+                o.data.materials[0] = pa.material('kawaraG')
+                if not has_heli:
+                    tx, ty = (x0 + x1) / 2 - (x1 - x0) * 0.18, (y0 + y1) / 2 + (y1 - y0) * 0.1
+                    box(f'toya{i}', 'shikkui', (0.13, 0.09, 0.05), (tx, ty, z1 + 0.025))
+                    box(f'toyaK{i}', 'kurokabe', (0.132, 0.092, 0.016), (tx, ty, z1 + 0.008))
+                    gable(f'toyaY{i}', 'kawaraG', 0.16, 0.12, 0.05, z1 + 0.05, tx, ty)
+        elif o.name == 'hisashi':   # 玄関の ひさしも 瓦に
+            o.data.materials[0] = pa.material('kawaraG')
+            gable(f'hisaY{i}', 'kawaraG', x1 - x0 + 0.02, y1 - y0 + 0.02, 0.03, z1 - 0.002, (x0 + x1) / 2, (y0 + y1) / 2)
+        elif o.name in ('low', 'taiiku'):
+            gable(f'kawara{i}', 'kawaraG', x1 - x0 + 0.04, y1 - y0 + 0.04, 0.035, z1 - 0.004, (x0 + x1) / 2, (y0 + y1) / 2)
+
+
+def chochin(x, y):
+    """一色の 大提灯（やぐらに 赤い 大きな 提灯）"""
+    for dx in (-0.05, 0.05):
+        cyl(f'chP{dx}', 'miki', 0.007, 0.26, (x + dx, y, 0.13), verts=6)
+    box('chK', 'miki', (0.13, 0.012, 0.01), (x, y, 0.255))
+    sphere('chB', 'kyuR', 0.04, (x, y, 0.17), (1, 1, 1.5))
+    for dz in (-0.055, 0.055):
+        cyl(f'chW{dz}', 'kuro', 0.028, 0.008, (x, y, 0.17 + dz), verts=12)
+
+
+def nishio_touch(rng, k, area):
+    big = k in ('school', 'hospital', 'fire', 'townhall', 'library') or (k == 'police' and TOUCH.get('station'))
+    hw, hd = (0.45, 0.35) if big else (0.27, 0.22)
+    kawara_bei('B', -hw, hd, hw, hd)   # うしろの 塀（建物の 奥に 瓦の 線が 見える）
+    kawara_bei('R', hw, -hd * 0.2, hw, hd)   # 右の 塀
+    if area in NISHIO_AREAS:
+        jokamachi(rng)
+        chanoki('F', -hw * 0.95, -hw * 0.10, -hd - 0.01, rng)   # 前の 左に 茶の木の 生け垣（出入りは 右）
+        chanokiY('L', -hw - 0.005, -hd * 0.6, hd * 0.7)   # 左の へりにも（茶畑の 畝）
+        if area == 'isshiki':
+            chochin(hw - 0.06, -hd + 0.02)
+        if area == 'sakushima':
+            pa.MATS['wallP'] = jitter('#3a3634', rng, 6)   # 佐久島の 黒壁の 集落
+
+
 def build(e):
     rng = random.Random(e['id'])
     base = BASE[BASE_OF.get(e['k'], 'historic')]
     cols = [c if isinstance(c, str) and len(c) == 7 else base[i] for i, c in enumerate((e['c'] + [0, 0, 0])[:3])]
     pa.MATS['roofP'], pa.MATS['wallP'], pa.MATS['accP'] = jitter(cols[0], rng), jitter(cols[1], rng, 8), jitter(cols[2], rng, 10)
+    k = e['k']
+    TOUCH['nishio'] = False
+    if k in TOWN_K:
+        area = area_of(e['id'])
+        TOUCH['nishio'] = area in NISHIO_AREAS
+        TOUCH['station'] = e.get('sub') == 'station'
+        if area == 'sakushima':
+            nishio_touch(rng, k, area)   # 壁の色を 先に（型が wallP を使う 前に）
+            r = model(e, rng, cols)
+        else:
+            r = model(e, rng, cols)
+            nishio_touch(rng, k, area)
+        return r
+    return model(e, rng, cols)
+
+
+def model(e, rng, cols):
     k = e['k']
     if k == 'shrine':
         return m_shrine(rng, *cols)

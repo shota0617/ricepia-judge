@@ -53,7 +53,6 @@ class Rescue(unittest.TestCase):
     def test_goal_hook_after_guard(self):
         body = func_body("function mazeGoal(", GAME)
         self.assertLess(body.index("gl.sec <= 3"), body.index("MZ.rescueGoal(id)"))
-        self.assertLess(body.index("MZ.chaseGoal(id)"), body.index("MZ.rescueGoal(id)"))
         self.assertIn("rescueGoal: id => mzRescueGoal(id)", PIXEL)
         self.assertIn("rescue: () => mzRescueState()", PIXEL)
 
@@ -94,7 +93,7 @@ class Rescue(unittest.TestCase):
         self.assertIn("🆘 たすけて！", func_body("function drawMzRescue("))
 
     def test_non_blocking(self):
-        seg = PIXEL[PIXEL.index("// 迷路の 救助クエスト（ポケモン"):PIXEL.index("// 手描き探索マップ")]
+        seg = PIXEL[PIXEL.index("// 迷路の 救助クエスト（ポケモン"):PIXEL.index("// 見えたしるしの記録（表示はサイクル64で廃止")]
         for w in ("addEventListener", "confirm(", "alert(", "modal"):
             self.assertNotIn(w, seg)
 

@@ -1,17 +1,16 @@
 // にしおさんぽGO：ミニゲーム「コンバインで稲刈り」
 // ・ドット絵の地図で田んぼの上にいるとき、地図の右上の列の「稲刈り」ボタンから遊べる（pixel.js の pxHarvest。あるいて移動でも）
 // ・黄金色の田んぼを、コンバインで1マスずつ刈る。矢印（◀▲▼▶・キーボードの矢印や WASD）を押すと、その向きへ1マス進む
-// ・成功の条件：①刈り残しがない ②刈ったあとのマスを通らない（むだ走り0） ③曲がる回数が目安＋2回まで（目安はいちばん少ない刈り方の回数）
-//   どれかひとつでもだめなら不成功。目安ちょうどなら「名人」。長い辺にそった往復や、外側からの回り刈りだと、曲がる回数が少なくなる
+// ・成功の条件：①刈り残しがない ②刈ったあとのマスを通らない（むだ走り0）。どちらかだめなら不成功。曲がる回数は成否に関係なく、数だけ見せる（目安とは比べない）
+//   ★での優劣はつけない（Spiritfarer・Cozy Grove：頼みは自分のペースで叶え、できたこと自体が進み具合）。成功すれば一律のごほうびと「できた」印（✓）だけ
 // ・田んぼは3枚（だんだん広くなる）。成功すると次の田んぼへ。ごほうびは game.js の harvestReward（1日1回）
-// ・倉庫番のゲームのように：「↶ もどす」（Z・Backspace）で1マスずつ取り消せる（取り消した分は数えない）。田んぼごとの自己ベストを残し、
+// ・倉庫番のゲームのように：「↶ もどす」（Z・Backspace）で1マスずつ取り消せる（取り消した分は数えない）。田んぼごとの記録を静かに残し（結果では比べない。Townscaper）、
 //   開くと まだ成功していない田んぼから。結果の画面で、成功した田んぼと その次の田んぼを えらべる（game.js の miniBest）
 // ・絵は Blender で作ったもの：田んぼ（nishio-go/maptiles/paddy-gold.png・paddy-stubble.png）、コンバインと軽トラ（sprites.png）
 (() => {
   'use strict';
   const W = 192, H = 144, T = 16;   // 画面（12×9マス）
   const FIELDS = [{ w: 5, h: 4, name: '1枚目（小さな田んぼ）' }, { w: 7, h: 5, name: '2枚目（ふつうの田んぼ）' }, { w: 9, h: 6, name: '3枚目（広い田んぼ）' }];
-  const SLACK = 2;   // 曲がる回数は、目安より2回多いところまで成功
   const DIRS = { up: [0, -1], right: [1, 0], down: [0, 1], left: [-1, 0] };
   const ORDER = ['up', 'right', 'down', 'left'];
   const KEYMAP = { ArrowUp: 'up', w: 'up', W: 'up', ArrowRight: 'right', d: 'right', D: 'right', ArrowDown: 'down', s: 'down', S: 'down', ArrowLeft: 'left', a: 'left', A: 'left' };
@@ -30,7 +29,7 @@
     get('nishio-go/maptiles/sprites.png', 'spr');
   }
 
-  /* ---------- 目安（いちばん少ない曲がる回数）：回り刈り（右回り・左回り）と、往復刈り（たて・よこ）で数えて、少ないほう ---------- */
+  /* ---------- par（いちばん少ない曲がる回数。info・track 用の内部値）：回り刈り（右回り・左回り）と、往復刈り（たて・よこ）で数えて、少ないほう ---------- */
   function turnsOf(path, startDir) {
     let d = startDir, n = 0;
     for (let i = 1; i < path.length; i++) {
@@ -76,7 +75,7 @@
     pos = [0, F.h]; dir = 'up';   // 入口：左下のマスの下（道の上）
     moves = 0; waste = 0; turns = 0; done = false; shown = false; gen++; queue = []; parts = []; anim = null; hist = [];
     par = parOf(F.w, F.h);
-    say(`${F.name}。曲がる回数を少なく`);
+    say(F.name);
     if (root) root.querySelector('.jump-result').hidden = true;
   }
   function say(t) { msg = t; msgT = performance.now(); }
@@ -110,43 +109,40 @@
     pos = h.pos; dir = h.dir; turns = h.turns; waste = h.waste; moves--;
     say('1マス もどしました');
   }
-  // 田んぼをえらぶボタン：成功した田んぼと、その次の田んぼ（★は自己ベスト）
+  // 田んぼをえらぶボタン：成功した田んぼと、その次の田んぼ（✓はできた印）
   function levelBtns() {
     const G = window.nishioGo;
     if (!G || !G.miniRecords) return '';
     const rec = G.miniRecords('harvest');
     let open = 0; while (open < FIELDS.length - 1 && rec[open]) open++;   // えらべるのは、まだ成功していない いちばん前の田んぼまで
-    return `<span class="mini-levels">${FIELDS.map((f, i) => i > open && !rec[i] ? '' : `<button type="button" class="btn mini${i === lv ? ' now' : ''}" data-hv="lv" data-lv="${i}" aria-label="${i + 1}枚目の田んぼ">${i + 1}枚目 ${rec[i] ? '★'.repeat(rec[i].s) + '☆'.repeat(3 - rec[i].s) : '—'}</button>`).join('')}</span>`;
+    return `<span class="mini-levels">${FIELDS.map((f, i) => i > open && !rec[i] ? '' : `<button type="button" class="btn mini${i === lv ? ' now' : ''}" data-hv="lv" data-lv="${i}" aria-label="${i + 1}枚目の田んぼ">${i + 1}枚目 ${rec[i] ? '✓' : '—'}</button>`).join('')}</span>`;
   }
 
   function judge() {
     const rest = left();
-    const ok = rest === 0 && waste === 0 && turns <= par + SLACK;
+    const ok = rest === 0 && waste === 0;
     const reasons = [];
     if (rest) reasons.push(`刈り残しが ${rest}マス あります`);
     if (waste) reasons.push(`刈ったあとを ${waste}回 走りました（むだ走り）`);
-    if (turns > par + SLACK) reasons.push(`曲がった回数 ${turns}回 は多すぎます（目安 ${par}回）`);
-    const stars = !ok ? 0 : turns <= par ? 3 : turns <= par + 1 ? 2 : 1;
-    return { ok, rest, stars, reasons };
+    return { ok, rest, reasons };
   }
   function finish(gaveUp) {
     if (shown) return;
     shown = true; done = true;
     const r = judge(), G = window.nishioGo;
-    const got = r.ok && G && G.harvestReward ? G.harvestReward(r.stars, lv) : null;
-    const mb = G && G.miniBest ? G.miniBest('harvest', lv, r.stars, turns, true) : null;
+    const got = r.ok && G && G.harvestReward ? G.harvestReward(lv) : null;
+    if (r.ok && G && G.miniBest) G.miniBest('harvest', lv, 1, 0, false);   // 記録は成功したときだけ静かに残す（Codex指摘・サイクル74）
     const res = root.querySelector('.jump-result');
-    const head = r.ok ? (r.stars === 3 ? '名人の刈り方！' : '刈り取り成功！') : (gaveUp && r.rest ? '刈り残しがあります' : '不成功');
+    const head = r.ok ? '刈り取り成功！' : (gaveUp && r.rest ? '刈り残しがあります' : '不成功');
     res.innerHTML = `<b>${head}</b>`
-      + (r.ok ? `<span>${'★'.repeat(r.stars)}${'☆'.repeat(3 - r.stars)}　曲がった回数 ${turns}回（目安 ${par}回）</span>` : r.reasons.map(t => `<span>${t}</span>`).join(''))
-      + (!r.ok ? '<span class="harvest-tip">ヒント：長い辺にそってまっすぐ往復するか、外がわからうずまきのように回ると、むだなく少ない曲がりで刈れます</span>' : '')
-      + (mb && mb.best ? `<span>${mb.fresh ? '自己ベスト更新！ ' : '自己ベスト '}${'★'.repeat(mb.best.s)}${'☆'.repeat(3 - mb.best.s)}　曲がった回数 ${mb.best.v}回</span>` : '')
+      + (r.ok ? `<span>曲がった回数 ${turns}回</span>` : r.reasons.map(t => `<span>${t}</span>`).join(''))
+      + (!r.ok ? '<span class="harvest-tip">まっすぐ往復するか、外がわから回ると むだなく刈れます</span>' : '')
       + (got > 0 ? `<span>きょうのごほうび +${got}pt</span>` : r.ok && got === null && G && G.harvestReward ? '<span>きょうのごほうびは、もうもらいました（あしたまた）</span>' : '')
       + levelBtns()
       + `<span class="jump-btns"><button type="button" class="btn" data-hv="again">もういちど</button>${r.ok && lv < FIELDS.length - 1 ? '<button type="button" class="btn" data-hv="next">つぎの田んぼ</button>' : ''}<button type="button" class="btn" data-hv="close">もどる</button></span>`;
     res.hidden = false;
     sound(r.ok ? 'clear' : 'fail');
-    if (G && G.track) G.track(r.ok ? 'harvest_clear' : 'harvest_fail', { level: lv + 1, turns, par, waste, rest: r.rest, stars: r.stars });
+    if (G && G.track) G.track(r.ok ? 'harvest_clear' : 'harvest_fail', { level: lv + 1, turns, par, waste, rest: r.rest });
   }
 
   /* ---------- 音（BGM の設定がオフなら鳴らさない） ---------- */
@@ -194,7 +190,7 @@
     // 数字と ひとこと は、絵の上下の文字で（絵の中の 8px の文字では、ドット文字の漢字がつぶれて読めなかった）
     const total = F.w * F.h;
     hud('cut', `刈った ${total - left()}/${total}`, false);
-    hud('turn', `曲がる ${turns}（目安${par}）`, turns > par + SLACK);
+    hud('turn', `曲がる ${turns}`, false);
     hud('waste', `むだ ${waste}`, !!waste);
     hud('msg', msg && now - msgT < 2600 ? msg : '', false);
   }
@@ -223,7 +219,7 @@
       <div class="harvest-hud"><span data-h="cut"></span><span data-h="turn"></span><span data-h="waste"></span></div>
       <div class="jump-stage"><canvas width="${W}" height="${H}" aria-label="ミニゲーム コンバインで稲刈り"></canvas><div class="jump-result" hidden></div></div>
       <p class="harvest-msg" data-h="msg"></p>
-      <p class="jump-help">矢印で1マスずつ進んで刈る。刈り残し・刈ったあとを走る・曲がりすぎ は不成功。長い辺にそって進むのがコツ。まちがえたら ↶ で1マスもどせる</p>
+      <p class="jump-help">矢印で1マスずつ進んで刈る。刈り残し・刈ったあとを走る は不成功。まちがえたら ↶ で1マスもどせる</p>
       <div class="harvest-pad"><button type="button" class="hv-undo" data-hv="undo" aria-label="1マスもどす">↶</button><button type="button" data-dir="up" aria-label="上へ">▲</button><button type="button" data-dir="left" aria-label="左へ">◀</button><button type="button" data-dir="down" aria-label="下へ">▼</button><button type="button" data-dir="right" aria-label="右へ">▶</button></div>`;
     document.body.appendChild(root);
     cv = root.querySelector('canvas'); ctx = cv.getContext('2d'); ctx.imageSmoothingEnabled = false;
@@ -267,7 +263,7 @@
     if (root) root.hidden = true;
     document.body.classList.remove('jump-open');
   }
-  // テスト用：動かす・ようすを見る・目安のこたえ（回り刈り）
+  // テスト用：動かす・ようすを見る・いちばん少ない刈り方のこたえ（回り刈り）
   window.NISHIO_HARVEST = {
     open, close, reset, undo, move(d) { anim = null; queue = []; move(d); anim = null; },
     get info() { return F ? { level: lv, w: F.w, h: F.h, pos: pos.slice(), dir, moves, waste, turns, par, left: left(), done, result: done ? judge() : null } : null; },

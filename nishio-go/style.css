@@ -1032,3 +1032,8 @@ img.pq-art{display:block;width:144px;height:144px;margin:6px auto 10px;image-ren
 /* きろくの 店への 導線（大きなボタン。影・グラデーションなし） */
 .shop-links{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
 .shop-links .btn{min-height:44px;display:inline-flex;align-items:center;justify-content:center;text-decoration:none}
+
+/* 開いた直後の手本（アイコンだけ・入力はふさがない） */
+#tiltHint{position:fixed;left:50%;bottom:calc(var(--tabs-h) + var(--safe-b) + var(--sheet-h,80px) + 28px);margin-left:-26px;width:52px;text-align:center;font-size:44px;line-height:1;z-index:30;pointer-events:none;filter:drop-shadow(0 2px 3px rgba(0,0,0,.45));animation:tiltHintRock 1.6s ease-in-out infinite;transform-origin:50% 80%}
+@keyframes tiltHintRock{0%,100%{transform:rotate(-16deg)}50%{transform:rotate(16deg)}}
+@media (prefers-reduced-motion:reduce){#tiltHint{animation:none}}

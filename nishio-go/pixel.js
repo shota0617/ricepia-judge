@@ -9062,6 +9062,27 @@ window.addEventListener('devicemotion', e => {
   if (strength < 12) return;
   riceTouch.shakeAt = now; ricePlayHop();
 }, { passive: true });
+// 開いた直後の 手本（ループ4サイクル115）：文字は出さず アイコンだけ。許可が要る端末は まず 👆、ほかは 📱 が ゆれる。転がすか 手を動かすと 消える
+const tiltHint = { el: null, timer: null };
+function tiltHintOff() {
+  clearTimeout(tiltHint.timer);
+  if (tiltHint.el) { tiltHint.el.remove(); tiltHint.el = null; }
+}
+function tiltHintShow() {
+  if (!rollOn || worldMode || !howtoEl.hidden || mapCovered()) return;
+  const el = tiltHint.el = document.createElement('div');
+  el.id = 'tiltHint'; el.setAttribute('aria-hidden', 'true');
+  const { on: tiltIsOn } = tiltG;
+  el.textContent = tiltNeedsPermission() && !tiltIsOn ? '👆' : '📱';
+  document.body.appendChild(el);
+  document.addEventListener('pointerdown', () => {   // 👆 のあとは 傾きへ。📱 なら もう 手が 動いたので 消す
+    if (!tiltHint.el) return;
+    if (tiltHint.el.textContent === '👆') { tiltHint.el.textContent = '📱'; tiltHint.timer = setTimeout(tiltHintOff, 5000); } else tiltHintOff();
+  }, { capture: true, passive: true });
+  window.addEventListener('deviceorientation', () => { const { x, y } = tiltG; if (Math.hypot(x, y) > 0.2) tiltHintOff(); }, { passive: true });
+  window.addEventListener('keydown', tiltHintOff, { once: true });
+}
+setTimeout(tiltHintShow, 1200);
 function tiltAsk(event) {   // 本当の タップで 1回だけ（はじめの画面の「あそぶ」・地図のタップ・めいろを開くボタンなど）。拒否・例外でも タップや 矢印キーで 遊べる。
   if (!event || !event.isTrusted || tiltG.asked || !tiltNeedsPermission()) return;   // userActivation が ない 端末でも、自動表示・合成クリックからは 求めない
   tiltG.asked = true; tiltG.retry = false;

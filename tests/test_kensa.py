@@ -254,6 +254,11 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertIn("setTimeout(hideIdleCard, 900);", HTML)
         self.assertIn('sessionStorage.removeItem("kensaLiked")', HTML)
 
+    def test_stamp_layout_follows_rotation(self):
+        # 回転しても朱肉がはんこの真下に来て、おろす距離も測り直す
+        self.assertIn("if (step === 4 && !stamped) layoutStamp();", HTML)
+        self.assertIn('$("pad").style.top = hkBottom + 2 + "px";', HTML)
+
     def test_landscape_has_compact_layout(self):
         self.assertIn("@media (orientation:landscape) and (max-height:500px)", HTML)
 

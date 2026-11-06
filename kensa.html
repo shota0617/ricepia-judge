@@ -1229,6 +1229,13 @@ function bobHanko() {
 function stopBob() {
   if (hankoBob) { hankoBob.cancel(); hankoBob = null; }
 }
+/* 朱肉の場所とおろす距離。袋の中の位置で測るので、上下の揺れや指の途中でも狂わない。回転しても測り直す */
+function layoutStamp() {
+  const hk = $("hanko"), mark = $("mark");
+  const hkBottom = hk.offsetTop + hk.offsetHeight;
+  $("pad").style.top = hkBottom + 2 + "px";
+  hankoMax = mark.offsetTop + mark.offsetHeight / 2 - hkBottom + 10;
+}
 function toOsu() {
   const grade = GRADES[lotGrade(LOT)];
   const d = new Date();
@@ -1240,9 +1247,7 @@ function toOsu() {
   setHanko(0);
   layer($("osu"), true);
   setStep(4, "朱肉に ぎゅっと");
-  const bag = $("bagBig").getBoundingClientRect(), hk = $("hanko").getBoundingClientRect(), mark = $("mark").getBoundingClientRect();
-  $("pad").style.top = hk.bottom - bag.top + 2 + "px";
-  hankoMax = mark.top + mark.height / 2 - hk.bottom + 10;
+  layoutStamp();
   bobHanko();
   guideAt("press", $("pad"));
   focusIfKeys($("bagBig"));
@@ -1353,6 +1358,7 @@ nextBtn.addEventListener("click", (e) => { if (e.detail === 0) leaveBag(); }); /
 window.addEventListener("scroll", () => { document.documentElement.classList.toggle("scrolled", window.scrollY > 0); }, { passive:true });
 window.addEventListener("resize", () => {
   layoutProbe();
+  if (step === 4 && !stamped) layoutStamp();
   PW = inner.clientWidth; PH = inner.clientHeight;
   grains.forEach(g => { g.awake = 1; });
   startSim();

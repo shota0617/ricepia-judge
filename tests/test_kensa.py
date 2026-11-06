@@ -152,6 +152,10 @@ class FlowTests(unittest.TestCase):
         self.assertIn('"niou", "kamu", "nigiru"', HTML)
         self.assertIn("むにゅ", HTML)
 
+    def test_upward_guide_starts_from_bottom_edge(self):
+        # 上へ引く手本（等級）は、ボタンの字を指で隠さないよう下のふちから始める
+        self.assertIn('(kind === "move" && gy < 0 ? 0.82 : 0.5)', HTML)
+
     def test_first_bag_guide(self):
         # 最初の袋だけ、動かし方を指で見せる
         self.assertIn("if (lotIndex !== 0) return;", HTML)

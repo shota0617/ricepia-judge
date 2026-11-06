@@ -566,7 +566,7 @@ function guideAt(kind, el, gx, gy) {
   if (lotIndex !== 0) return;
   const r = el.getBoundingClientRect();
   guideEl.style.left = r.left + r.width / 2 + "px";
-  guideEl.style.top = r.top + r.height / 2 + "px";
+  guideEl.style.top = r.top + r.height * (kind === "move" && gy < 0 ? 0.82 : 0.5) + "px"; /* 上へ引く手本は下のふちから。ボタンの字を指で隠さない */
   guideEl.style.setProperty("--gx", (gx || 0) + "px");
   guideEl.style.setProperty("--gy", (gy || 0) + "px");
   void guideEl.offsetWidth;

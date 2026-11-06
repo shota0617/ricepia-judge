@@ -147,32 +147,37 @@ class FlowTests(unittest.TestCase):
         if not node:
             self.skipTest("node がないので実行の確認は飛ばす")
         reading = HTML[HTML.index("function takeReading() {"):HTML.index("function crankPointer(e) {")]
-        move = HTML[HTML.index('$("sceneMeter").addEventListener("pointermove",'):HTML.index("function endCrank() {")]
+        move = HTML[HTML.index('$("sceneMeter").addEventListener("pointermove",'):HTML.index("function endCrank(e) {")]
         script = RULES + """
 const assert = require('node:assert/strict');
-let onMove, measured = 0, lotIndex = 0, crankAngle = 0;
+let onMove, measured = 0, lotIndex = 0, crankAngle = 0, step = 1;
 const LOT = LOTS[0], hint = {}, lcd = {textContent:'--.-'};
 const elements = {lcd, slots:{children:[{}, {}, {}]}, crankArm:{style:{}},
   sceneMeter:{addEventListener:(_, fn) => { onMove = fn; }}};
 const $ = id => elements[id];
 const pop = () => {}, tick = () => {};
 const crankPointer = e => ({a:e.angle, far:true});
-const crankDrag = {last:0, turned:0, sum:0, x:0, y:0, moved:false};
+let crankDrag = {id:1, last:0, turned:0, sum:0, x:0, y:0, moved:false};
 """ + reading + move + """
-onMove({clientX:10, clientY:0, angle:90});
+onMove({pointerId:1, clientX:10, clientY:0, angle:90});
 assert.equal(measured, 0);
 assert.equal(lcd.textContent, '--.-');
-onMove({clientX:20, clientY:0, angle:180});
+onMove({pointerId:1, clientX:20, clientY:0, angle:180});
 assert.equal(measured, 1);
 assert.equal(lcd.textContent, LOT.moisture[0].toFixed(1));
-onMove({clientX:30, clientY:0, angle:-90});
+onMove({pointerId:1, clientX:30, clientY:0, angle:-90});
 assert.equal(measured, 1);
 assert.equal(lcd.textContent, LOT.moisture[0].toFixed(1));
-onMove({clientX:40, clientY:0, angle:0});
+onMove({pointerId:1, clientX:40, clientY:0, angle:0});
 assert.equal(measured, 2);
 assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
 """
         subprocess.run([node, "-e", script], capture_output=True, text=True, check=True)
+
+    def test_second_finger_does_not_mix(self):
+        self.assertIn("if (e.pointerId !== P.drag.id) return;", HTML)
+        self.assertIn("if (e.pointerId !== crankDrag.id) return;", HTML)
+        self.assertIn("if (pts.size === 1 && !sortDrag) {", HTML)
 
     def test_crack_only_shows_when_zoomed(self):
         self.assertIn('if (kind === "higai" && !far) px(', HTML)

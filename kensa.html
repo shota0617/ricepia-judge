@@ -637,17 +637,20 @@ function autoProbe() {
 }
 $("sceneBag").addEventListener("pointerdown", (e) => {
   if (step !== 0 || P.done) return;
-  P.drag = { cx:e.clientX, x0:P.x, moved:false };
+  if (P.drag) return; /* 2本目の指は混ぜない */
+  P.drag = { id:e.pointerId, cx:e.clientX, x0:P.x, moved:false };
   capture($("sceneBag"), e);
 });
 $("sceneBag").addEventListener("pointermove", (e) => {
-  if (!P.drag) return;
+  if (step !== 0 || P.done || !e.buttons && e.pointerType === "mouse") return;
+  if (!P.drag) P.drag = { id:e.pointerId, cx:e.clientX, x0:P.x, moved:true }; /* 先の指を離しても、残った指で続ける */
+  if (e.pointerId !== P.drag.id) return;
   const dx = e.clientX - P.drag.cx;
   if (Math.abs(dx) > 5) { P.drag.moved = true; $("poke").style.display = "none"; }
   if (P.drag.moved) moveProbe(P.drag.x0 + dx);
 });
-function endBagDrag() {
-  if (!P.drag) return;
+function endBagDrag(e) {
+  if (!P.drag || e.pointerId !== P.drag.id) return;
   const tapped = !P.drag.moved;
   P.drag = null;
   if (!tapped || P.done) return;
@@ -656,7 +659,7 @@ function endBagDrag() {
   $("probe").animate([{ transform:"translate(" + P.x + "px," + P.y + "px)" }, { transform:"translate(" + (P.x - 18) + "px," + P.y + "px)" }, { transform:"translate(" + P.x + "px," + P.y + "px)" }], { duration:320 * motion, easing:"ease-in-out" });
 }
 $("sceneBag").addEventListener("pointerup", endBagDrag);
-$("sceneBag").addEventListener("pointercancel", () => { P.drag = null; });
+$("sceneBag").addEventListener("pointercancel", (e) => { if (P.drag && e.pointerId === P.drag.id) P.drag = null; });
 $("bagBtn").addEventListener("click", (e) => { if (e.detail === 0) autoProbe(); }); /* キーボードの Enter はそのまま進める */
 
 /* はかる: 水分計のハンドルをぐるぐる回す。1周で1回はかれる */
@@ -683,12 +686,15 @@ function crankPointer(e) {
 }
 $("sceneMeter").addEventListener("pointerdown", (e) => {
   if (step !== 1 || measured >= LOT.moisture.length) return;
+  if (crankDrag) return; /* 2本目の指は混ぜない */
   capture($("sceneMeter"), e);
   guideOff();
-  crankDrag = { last:crankPointer(e).a, turned:0, sum:0, x:e.clientX, y:e.clientY, moved:false };
+  crankDrag = { id:e.pointerId, last:crankPointer(e).a, turned:0, sum:0, x:e.clientX, y:e.clientY, moved:false };
 });
 $("sceneMeter").addEventListener("pointermove", (e) => {
-  if (!crankDrag || measured >= LOT.moisture.length) return;
+  if (step !== 1 || measured >= LOT.moisture.length || !e.buttons && e.pointerType === "mouse") return;
+  if (!crankDrag) crankDrag = { id:e.pointerId, last:crankPointer(e).a, turned:0, sum:0, x:e.clientX, y:e.clientY, moved:true }; /* 先の指を離しても、残った指で続ける */
+  if (e.pointerId !== crankDrag.id) return;
   if (Math.hypot(e.clientX - crankDrag.x, e.clientY - crankDrag.y) > 6) crankDrag.moved = true;
   const p = crankPointer(e);
   if (!p.far) return;
@@ -703,8 +709,8 @@ $("sceneMeter").addEventListener("pointermove", (e) => {
   if (crankDrag.sum >= 45) { crankDrag.sum = 0; tick(); }
   if (crankDrag.turned >= (lotIndex === 0 ? 180 : 360)) { crankDrag.turned = 0; takeReading(); } /* 最初の袋は半周で1回はかれる */
 });
-function endCrank() {
-  if (!crankDrag) return;
+function endCrank(e) {
+  if (!crankDrag || e.pointerId !== crankDrag.id) return;
   const tapped = !crankDrag.moved;
   crankDrag = null;
   if (measured >= LOT.moisture.length) return;
@@ -714,7 +720,7 @@ function endCrank() {
   $("crankArm").animate([{ transform:"rotate(" + crankAngle + "deg)" }, { transform:"rotate(" + (crankAngle + 60) + "deg)" }, { transform:"rotate(" + crankAngle + "deg)" }], { duration:380 * motion, easing:"ease-in-out" });
 }
 $("sceneMeter").addEventListener("pointerup", endCrank);
-$("sceneMeter").addEventListener("pointercancel", () => { crankDrag = null; });
+$("sceneMeter").addEventListener("pointercancel", (e) => { if (crankDrag && e.pointerId === crankDrag.id) crankDrag = null; });
 $("meterBtn").addEventListener("click", (e) => {
   if (e.detail === 0 && step === 1 && measured < LOT.moisture.length) takeReading();
 });
@@ -910,6 +916,10 @@ function endPlatePointer(e, cancelled) {
   if (!pts.has(e.pointerId)) return;
   pts.delete(e.pointerId);
   if (pts.size < 2) pinch = null;
+  if (pts.size === 1 && !sortDrag) { /* ズームのあと片方を離しても、残った指で見る場所を動かせる */
+    const [p] = pts.values();
+    sortDrag = { x:p.x, y:p.y, lx:p.x, ly:p.y, moved:true, t0:0, startG:null };
+  }
   if (pts.size === 0 && sortDrag) {
     const d = sortDrag;
     sortDrag = null;

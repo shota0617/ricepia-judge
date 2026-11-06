@@ -92,6 +92,7 @@ class FlowTests(unittest.TestCase):
         # ● を上へ引く・はんこを下ろす指で、ページが下の説明へ流れない。📖で下へ行ったあとは指で戻れる
         self.assertIn("html:not(.scrolled) { touch-action:none; }", HTML)
         self.assertIn('classList.toggle("scrolled", window.scrollY > 0)', HTML)
+        self.assertIn("html.scrolled #guide { visibility:hidden; }", HTML)  # 説明を読む間は手本の指が浮かない
 
     def test_long_press_shows_no_ios_sheet(self):
         # 一等米の写真・🤲・はんこを長押ししても「画像を保存」などのシートが出ない（#app から継承）

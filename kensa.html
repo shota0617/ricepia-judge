@@ -143,6 +143,7 @@
   #nextBtn.on { display:block; }
   #guide { position:fixed; left:0; top:0; z-index:60; font-size:40px; line-height:1; margin:-6px 0 0 -14px; pointer-events:none; opacity:0; transition:opacity .2s ease; filter:drop-shadow(0 2px 3px rgba(0,0,0,.35)); }
   #guide.on { opacity:1; }
+  html.scrolled #guide { visibility:hidden; } /* 📖で下の説明を読んでいる間は、手本の指を浮かせない */
   #guide.circle { animation:gCircle 1.5s linear infinite; }
   @keyframes gCircle { 0% { translate:34px 0; } 25% { translate:0 34px; } 50% { translate:-34px 0; } 75% { translate:0 -34px; } 100% { translate:34px 0; } }
   #guide.sweep { animation:gSweep 1.4s ease-in-out infinite; }

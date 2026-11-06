@@ -9711,7 +9711,7 @@ canvas.addEventListener('pointermove', e => {
   look.yaw = Math.max(-2.2, Math.min(2.2, drag.yaw - (e.clientX - drag.x) * 0.005));
   look.pitch = Math.max(-0.6, Math.min(0.5, drag.pitch - (e.clientY - drag.y) * 0.004));
 });
-const endDrag = e => { viewPts.delete(e.pointerId); if (viewPts.size < 2) viewPinch = null; drag = null; TRACE.end(); };
+const endDrag = e => { viewPts.delete(e.pointerId); if (viewPts.size < 2) viewPinch = null; else if (viewPinch) viewPinch = { d0: viewPtsDist(), z0: fovZoom }; drag = null; TRACE.end(); };   // 3本目以降の指が残るときは、残った指で 測りなおす
 canvas.addEventListener('pointerup', endDrag); canvas.addEventListener('pointercancel', endDrag);
 let toastT = 0, curVoice = null;
 // のんびり：画面の 知らせは はじめの 一文だけ（かっこ書きは キーの 案内だけ 残す）＋ あとの 文に 操作の 案内（押す・ゆるめる・解除・「O で」など）が あれば その 1 文。はじめの画面の「📖 くわしい説明」を 入れると ぜんぶ 出す。

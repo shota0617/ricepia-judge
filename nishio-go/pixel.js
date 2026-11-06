@@ -3381,7 +3381,7 @@ function suzumeStep(now, ox, oy, T, w, h, dpr) {
   if (chirp) chunSound();
   dirty = true;
 }
-const CRITTER_SURE = 100;
+const CRITTER_SURE = 100, CRITTER_FIRST_STEPS = 3;
 // のこりの数（マインスイーパーの「まわりに いくつ あるかの数字」から。数字があると 運まかせでなく 考えて開けられる）：
 // 田んぼ・水べに入ったとき、いまの季節に そこで会える生きもののうち まだ手帳にない数を出す（どこに いるかは言わない）。
 // 0 なら「ぜんぶ会えた」で、ほかの場所へ行く目安になる。同じ場所の知らせは 10分に1回まで。その日の出会いが おわったら出さない
@@ -3457,11 +3457,11 @@ function critterStep(x, y) {
   if (where) critterS.steps++;   // 田んぼ・水べのイベントが始まる1歩も 出会いまでの歩数に数える
   if (where !== critterS.where && (!where || critterCount(where))) critterS.where = where;   // 知らせを出せなかったら、次の1歩で もう一度
   // はじめての出会いは かならず・待ちすぎない（マインスイーパーの「1手目で地雷を ふんで終わる」・ブロックくずしの「打ちだしてすぐ落とす」から。
-  // はじめの1回の運の悪さで やめてしまわないように）：まだ1回も会っていなければ 25歩目で、会ったことがあっても 100歩で かならず出会う
+  // はじめの1回の運の悪さで やめてしまわないように）：まだ1回も会っていなければ 3歩目で（ループ4サイクル107・最初の1分で会える）、会ったことがあっても 100歩で かならず出会う
   // （1/40 の運だけだと、10人に1人は 115歩より長く待っていた）
-  if (!where || critterS.steps < 25) return;
+  if (!where || critterS.steps < CRITTER_FIRST_STEPS) return;
   const sure = critterS.steps >= CRITTER_SURE || !!(G.critterFirst && G.critterFirst());
-  if (!sure && Math.random() >= 1 / 40) return;
+  if (!sure && (critterS.steps < 25 || Math.random() >= 1 / 40)) return;
   if (sure && (mapCovered() || sightBusy())) return;   // かならずの出会いは、窓・パネルを閉じたあとの1歩へ持ちこす
   critterS.steps = 0;
   const m = G.meetCritter(where);

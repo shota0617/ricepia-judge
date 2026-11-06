@@ -146,6 +146,19 @@ const CHECKS = {
     ok(r.cue != null && r.cue <= 40, '中干しの 合図が 40日目 までに 出る', r);
     ok(r.dryLeft !== '追肥' && r.wetLeft === '追肥', '追肥は 水が ある 時だけ', r);
   },
+  // お客さん目線：吹き出しの 矢印 だけを 見て 遊ぶ（矢印が なければ →）。ルールを 読まなくても 収穫まで 行ける（4周目）
+  async customer(b){
+    const p = await page(b, 390, 844);
+    const r = await p.evaluate(() => {
+      K3.manual = true; K3.fixedSeed = 3; K3.start(); const S = K3.S; const seen = new Set();
+      for (let i=0;i<700 && !S.over;i++){ const t = document.getElementById('say').textContent; seen.add(t.slice(0, 12));
+        const dir = /↑/.test(t) ? 'up' : /↓/.test(t) ? 'down' : /←/.test(t) ? 'left' : 'right'; swipe(dir, dir==='right' ? 110 : 160, false); flush(); }
+      return { over: S.over, day: S.day, done: S.hv.done, grade: S.result && S.result.grade, yield: S.result && Math.round(S.result.yieldKg), swipes: S.swipes, hoshi: S.f.hoshiDays, A1: S.f.A1, A2: S.f.A2, lines: seen.size };
+    });
+    ok(r.over && r.done && r.day <= 200, '吹き出しの 矢印 だけで 収穫・検査まで 行ける', r);
+    ok(r.hoshi >= 5 && r.A1 > 0 && r.A2 > 0, 'その 途中で 中干し・追肥・穂肥も 言われて できる', r);
+    ok(r.grade && r.grade !== '規格外' && r.swipes <= 400, '言われた とおりで 三等 以上・スワイプ 400回 いない', r);
+  },
   // なにも しないで 1年 すぎると「おわり」
   async idle(b){
     const p = await page(b, 390, 844);

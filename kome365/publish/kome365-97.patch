@@ -1,0 +1,13 @@
+diff --git a/game/index.html b/game/index.html
+index 1d8a747..0e102ca 100644
+--- a/game/index.html
++++ b/game/index.html
+@@ -2799,7 +2799,7 @@ renderTitle();
+       var ahHtml = ah.tomorrow ? '<span data-ahead="tomorrow" class="' + (ah.tomorrow.warn ? 'gold' : '') + '">あした ' + ah.tomorrow.icon + ' ' + ah.tomorrow.text + (ah.tomorrow.warn ? '！' : '') + '</span>' : '';
+       ae.innerHTML = ahHtml;
+       try { var awe = $('swAheadWx');   /* あしたの空(サイクル56): 同じ ah.tomorrow の読み取りのみ。今日の天気の下へ少し小さい丸で常時出す(絵文字のみ・文字なし・warnでも色や点滅で脅さない) */
+-        if (awe) { if (ah.tomorrow) { var ak2 = ah.tomorrow.icon === '🌀' ? 'typhoon' : ah.tomorrow.icon === '🌧️' ? 'rain' : ah.tomorrow.icon === '🔥' ? 'hot' : ah.tomorrow.icon === '☀️' ? 'sunhot' : ah.tomorrow.icon === '🥶' ? 'cold' : ah.tomorrow.icon === '☁️' ? 'cloud' : ah.tomorrow.icon === '🌬️' ? 'wind' : 'fair'; aheadWxInfo = { icon: ah.tomorrow.icon, key: ak2, text: ah.tomorrow.text, warn: ah.tomorrow.warn }; pixWxSet(awe.querySelector('.ahIc'), ak2); pixWxSet(awe.querySelector('.ahBadge'), 'sunrise'); awe.setAttribute('data-wx', ak2); awe.style.display = ''; } else { aheadWxInfo = { icon: '', key: '', text: '', warn: 0 }; awe.style.display = 'none'; } } } catch (e) {} } catch (e) {}
++        if (awe) { if (ah.tomorrow) { var ak2 = ah.tomorrow.icon === '🌀' ? 'typhoon' : ah.tomorrow.icon === '🌧️' ? 'rain' : ah.tomorrow.icon === '🔥' ? 'hot' : ah.tomorrow.icon === '☀️' ? 'sunhot' : ah.tomorrow.icon === '🥶' ? 'cold' : ah.tomorrow.icon === '☁️' ? 'cloud' : ah.tomorrow.icon === '🌬️' ? 'wind' : 'fair'; aheadWxInfo = { icon: ah.tomorrow.icon, key: ak2, text: ah.tomorrow.text, warn: ah.tomorrow.warn }; pixWxSet(awe.querySelector('.ahIc'), ak2); pixWxSet(awe.querySelector('.ahBadge'), 'sunrise'); awe.setAttribute('data-wx', ak2); awe.style.display = ak2 === skyWxInfo.key ? 'none' : '';   /* 周回97: あしたが今日と同じ空なら、同じ絵の丸を2つ並べない */ } else { aheadWxInfo = { icon: '', key: '', text: '', warn: 0 }; awe.style.display = 'none'; } } } catch (e) {} } catch (e) {}
+     try { var dc = danceCalc(), de = $('swDance');   /* 応援団バー: 見つけた生きものが1種以上いるときだけ出す */
+       if (!dc.count) { de.style.display = 'none'; de.innerHTML = ''; }
+       else { de.style.display = 'flex'; de.innerHTML = '<span class="dLabel">🎵</span>' + dc.shown.map(function(m, i){ return '<span class="dMember" style="animation-delay:' + (i * 0.13) + 's">' + m.icon + '</span>'; }).join('') + '<span class="dCount">' + '×' + dc.count + '</span><span class="dSpark" aria-hidden="true">✨✨✨</span>'; } } catch (e) {}

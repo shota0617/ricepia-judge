@@ -1,0 +1,18 @@
+diff --git a/game/index.html b/game/index.html
+index 228e4e7..958fc5d 100644
+--- a/game/index.html
++++ b/game/index.html
+@@ -626,6 +626,13 @@ a{color:var(--acc)}
+ #swVib,#swJudge,#swBanner,#swMonth,#swHint,#swLog,#swRewind,#swDetailBtn,#swCard.hinting #swHint{display:none!important}   /* 総点検(サイクル19): 判定ポップ/全画面ごほうび/月末まとめは.showとkeyframesも撤去し復活不能に。整理・廃止(サイクル11): スワイプ画面はカードと田んぼだけ。DOMと*State APIは検証互換で残す */
+ #swTop button{pointer-events:auto;background:rgba(255,253,247,.9);border:0;border-radius:10px;padding:8px 12px;font:inherit;font-size:20px;min-height:40px;cursor:pointer}
+ @media (prefers-reduced-motion: reduce){.swBack{transition:none}#swCard,#swCard.enter,#swCard.fly,#swCard.hinting.wig{transition:none;animation:none}#swSt span.pulse{animation:none;background:#d6eed0;outline:2px solid #3f9d3a}#swSt span.pulse.dn{background:#f8d8cc;outline-color:#c84628}#sGame.swipeMode.fieldTick canvas#field{animation:none}#sGame.fxGood #swFieldFx,#sGame.fxBad #swFieldFx,#sGame.swipeMode.fxGood canvas#field,#sGame.swipeMode.fxBad canvas#field{animation:none}#sGame.fxGood #swFieldFx,#sGame.fxBad #swFieldFx{opacity:.45}}
++/* 小さい画面(周回93): 選ぶ部分をスクロールなしで画面に収める。足すのではなく、低い画面でだけ減らす。日付(48px)と田んぼ(全面)はそのまま */
++body:has(#sGame.swipeMode:not(.hidden)){padding-bottom:0}   /* ページ下の40pxの余白がゲーム中もページを画面より高くしていた */
++#swipe{overflow-y:clip}   /* 横向きで太陽の光の円盤(#swSunLight)が下にはみ出してページを伸ばしていた */
++@media (max-height:660px){#swGuide{margin-top:44px}}
++@media (max-height:600px){#swNextMile.on{display:none}#swIc{min-height:60px;max-height:64px}#swIc .icPix{width:56px;height:56px}#swIc .icEmoji{font-size:48px}}
++@media (max-height:440px){#swGuide,#swSeasonStrip,#swIc{display:none!important}#swTop{margin-bottom:2px}#swCard{padding-top:6px;padding-bottom:6px}#swTitle{margin:0 0 2px}#swText{line-height:1.4}#swEdge{margin-top:4px}#swEdge>span{padding:6px 9px}}
++@media (max-height:440px) and (min-width:660px){#swMood{left:calc(10px - (100vw - 480px) / 2)}#swGrow{left:calc(8px - (100vw - 480px) / 2)}#swKakashi{right:calc(10px - (100vw - 480px) / 2)}#swSkyWx{right:calc(8px - (100vw - 480px) / 2)}#swAheadWx{right:calc(14px - (100vw - 480px) / 2)}}   /* 横向き: 顔・かかし・天気は左右の空きへ(カードの字に重ねない) */
+ </style>
+ </head>
+ <body>

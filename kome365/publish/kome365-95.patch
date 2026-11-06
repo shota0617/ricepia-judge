@@ -1,0 +1,13 @@
+diff --git a/game/index.html b/game/index.html
+index 223f1b9..566262f 100644
+--- a/game/index.html
++++ b/game/index.html
+@@ -2780,7 +2780,7 @@ renderTitle();
+       else if (mt) { ct.firstChild.innerHTML = '🌾<i>' + lf + '</i>日'; ct.classList.add('on'); countInfo = { days: lf }; }
+       else { ct.classList.remove('on'); countInfo = null; } } catch (e) {}
+     try { var nm = $('swNextMile'), mi = mileCalc(); mileInfo = mi;   /* 時期の道しるべ: 次の節目を大きなアイコン+大きな日数だけで(サイクル45・読み取りのみ) */
+-      if (mi) { pixMileSet(nm.querySelector('.nmIc'), mi.key, mi.icon); var nn = nm.querySelector('.nmNum'), nd = nm.querySelector('.nmDay'); nn.textContent = mi.days; nd.textContent = '日'; nm.classList.add('on'); }
++      if (mi && mi.days <= 60) { pixMileSet(nm.querySelector('.nmIc'), mi.key, mi.icon);   /* 周回94→95: 2か月より先の節目は日数を出さない(冬の最初の1分に「114日」の待ち時間が日付と並んでいた) */ var nn = nm.querySelector('.nmNum'), nd = nm.querySelector('.nmDay'); nn.textContent = mi.days; nd.textContent = '日'; nm.classList.add('on'); }
+       else { nm.classList.remove('on'); pixMileClear(nm.querySelector('.nmIc')); nm.querySelector('.nmNum').textContent = ''; nm.querySelector('.nmDay').textContent = ''; } } catch (e) {}
+     try { var gs = goalCalc(), gb = '';   /* 今月のお題: tally の読み取りだけ(新しい状態・保存なし) */
+       for (var gi = 0; gi < gs.target; gi++) gb += gi < gs.good ? '●' : '○';

@@ -2433,6 +2433,7 @@ function checkGuide() {
   if (dist(me, g) > farLimit && fixOk()) { setGuide(decideGuide(null)); return; }
   if (g.kind === 'npc') return;
   if (dist(me, g) > guideRadius(g) || !fixOk()) return;
+  { const PX = window.nishioPixel; if (PX && PX.maze && PX.maze.goalHold && PX.maze.goalHold()) return; }   // ゴールの 減速（第4弾サイクル65）：転がして 輪に 入った お米が すーっと 止まるまで（0.8秒まで）着いたに しない（pixel.js mzGoalInTick）
   const pts = guideReward(g);
   const next = decideGuide(null);
   setGuide(next);

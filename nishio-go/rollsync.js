@@ -170,5 +170,18 @@
       return { fx: ux * PULL_ACC * w, fy: uy * PULL_ACC * w, dist, on: true, pick };
     } catch (e) { return { fx: 0, fy: 0, dist: Infinity, on: false, pick: false }; }
   }
-  root.nishioRollSync = { TURN_MIN_V, PULL_R, PULL_ACC, PULL_V, PULL_PICK, pullForce, GLIDE_SOFT, STOP_V, GLIDE_H, glideSpeed, FPS_SLOW, FPS_MIN, FPS_RECOVER, shadowStretch, fpsStep, IDLE_START, IDLE_SPEED, IDLE_ACC, idleDue, idleTarget, nextIdleTarget, idleNoteFail, idleExclude, idleFailed, idleForce, R, advance, turnsFor, frameFor, TURN_PER_SEC, limitTurn, AREA_FEEL, groundFeel };
+  // ゴールの 減速（第4弾サイクル65：M7。運営者の声「転がす楽しさ」の「ゴールに 吸いこまれる 感じ」「ゴール直前の 減速と 演出」）：
+  //   ゴールの 輪（チェックインの 近さ）に 入ったら、傾きを はなれて すーっと 止まり（1秒に SETTLE_B の 割合で 速さが 減る：7 なら 0.35秒で 7 → 0.6）、
+  //   SETTLE_V より おそく なるか SETTLE_MS 経ったら「ゴール！」。前は 輪に 入った こまで 窓が 開いて ぴたっと 止まった。純関数：係数と おわりの 判定だけ。
+  const SETTLE_B = 7, SETTLE_V = 0.6, SETTLE_MS = 800;
+  function settleK(dt) {
+    try { return typeof dt === 'number' && isFinite(dt) && dt > 0 ? Math.exp(-SETTLE_B * Math.min(dt, 0.1)) : 1; } catch (e) { return 1; }
+  }
+  function settleDone(speed, elapsedMs) {
+    try {
+      const v = typeof speed === 'number' && isFinite(speed) ? Math.abs(speed) : 0, ms = typeof elapsedMs === 'number' && isFinite(elapsedMs) ? elapsedMs : 0;
+      return v < SETTLE_V || ms >= SETTLE_MS;
+    } catch (e) { return true; }
+  }
+  root.nishioRollSync = { SETTLE_B, SETTLE_V, SETTLE_MS, settleK, settleDone, TURN_MIN_V, PULL_R, PULL_ACC, PULL_V, PULL_PICK, pullForce, GLIDE_SOFT, STOP_V, GLIDE_H, glideSpeed, FPS_SLOW, FPS_MIN, FPS_RECOVER, shadowStretch, fpsStep, IDLE_START, IDLE_SPEED, IDLE_ACC, idleDue, idleTarget, nextIdleTarget, idleNoteFail, idleExclude, idleFailed, idleForce, R, advance, turnsFor, frameFor, TURN_PER_SEC, limitTurn, AREA_FEEL, groundFeel };
 })(typeof window !== 'undefined' ? window : globalThis);

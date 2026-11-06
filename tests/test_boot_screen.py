@@ -24,6 +24,12 @@ class TestTractorProgress(unittest.TestCase):
         self.assertLess(abs(f - real_f) / real_f, 0.2)
 
 
+class TestTractorAutoQuiet(unittest.TestCase):
+    def test_no_coach_bubble_while_auto(self):
+        src = (ROOT / 'tractor.html').read_text(encoding='utf8')
+        self.assertIn("function coach(x) { if (autoQuiet) x = '';", src)
+
+
 class TestNishioCover(unittest.TestCase):
     def setUp(self):
         self.html = (ROOT / 'nishio-go.html').read_text(encoding='utf8')
@@ -32,6 +38,10 @@ class TestNishioCover(unittest.TestCase):
         head = self.html[self.html.index('<body>'):self.html.index('id="intro"')]
         self.assertIn("c.id = 'bootCover'", head)
         self.assertIn("addEventListener('DOMContentLoaded'", head)
+
+    def test_hidden_shots_do_not_load_during_boot(self):
+        css = (ROOT / 'nishio-go/style.css').read_text(encoding='utf8')
+        self.assertIn('#bootCover~#intro .intro-shots{display:none}', css)
 
     def test_cover_comes_from_script_only(self):
         self.assertNotIn('id="bootCover"', self.html)

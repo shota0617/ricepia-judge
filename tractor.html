@@ -754,7 +754,7 @@ scene.add(sun, sun.target);
 // ---- 読みこみ ----
 const loader = new THREE.GLTFLoader();
 const prog = { t: 0, f: 0 };
-const PROG_SIZE = { t: 3.8e6, f: 5.4e6 };        // サイクル187: 圧縮配信だと全体の大きさが届かない（e.total が 0）。およその大きさで棒を進める
+const PROG_SIZE = { t: 3.8e6, f: 4.6e6 };        // サイクル187: 圧縮配信だと全体の大きさが届かない（e.total が 0）。およその大きさで棒を進める
 let LOAD_ST = 'wait';                            // 読みこみ：wait（じゅんび中）・ok・ng（失敗。そのあと 進みぐあいで「もう一度 よむ」を 消さない）
 function showProg() {
   if (LOAD_ST === 'ng') return;
@@ -9758,7 +9758,7 @@ const SAY = (() => {
     mainText = x; kind = k; t = sec; talk(x); render(); return true;
   }
   const say = (x, sec = 4) => show(x, sec, 'toast');
-  function coach(x) { if (x !== coachLine) { coachLine = x; if (x && !DETAIL) talk(x); render(); } }   // 案内は 中身を いつも 覚えておく（くわしい説明から もどったとき すぐ 出せる）
+  function coach(x) { if (autoQuiet) x = ''; if (x !== coachLine) { coachLine = x; if (x && !DETAIL) talk(x); render(); } }   // 案内は 中身を いつも 覚えておく（くわしい説明から もどったとき すぐ 出せる）
   function update(dt) {
     if (talkT > 0) talkT -= dt;
     if (t > 0 && (t -= dt) <= 0) { t = 0; kind = ''; render(); }

@@ -1486,7 +1486,7 @@ const MUDDROP = (() => {
       put(w[k][0] + (Math.random() - 0.5) * 0.4, w[k][1] + (Math.random() - 0.5) * 0.4, 0.07 + Math.random() * 0.12 * (0.5 + MUD.level));
       MUD.level = Math.max(0, MUD.level - 0.006); road++;
     }
-    if (!told && road > 6) { told = true; toast('道に 泥が おちちゃったね。田んぼの 中で 止まって ' + (MOBILE ? '「泥落とし」' : 'V') + ' で 泥を おとしてから 出ようね（本物も 田んぼの 中で 泥を 落としてから 道に 出る）'); }
+    if (!told && road > 6 && !startNoticeMuted()) { told = true; toast('道に 泥が おちちゃったね。田んぼの 中で 止まって ' + (MOBILE ? '「泥落とし」' : 'V') + ' で 泥を おとしてから 出ようね（本物も 田んぼの 中で 泥を 落としてから 道に 出る）'); }
   }
   return { step, put, mesh, get road() { return road; } };
 })();
@@ -1662,7 +1662,7 @@ const GREASE = (() => {
     moving = m;
     if (m && (t -= dt) <= 0) { t = 0.42; if (audio && soundOn) squeak(audio.ac, audio.out, 0.6 + 0.4 * Math.random()); }   // 動いているあいだ ギーッ、ギーッ
     if (!m) t = 0;
-    if (moves >= 3 && !m && !told) { told = true; toast('ギーギー いってるね。とまって 上げたら みるよ（ロータリーを上げ下げすると ギーギー鳴る。3 点リンクの 動く所の グリースが 切れているのかも。止まって 上げると 見ます）', 7); }
+    if (moves >= 3 && !m && !told && !startNoticeMuted()) { told = true; toast('ギーギー いってるね。とまって 上げたら みるよ（ロータリーを上げ下げすると ギーギー鳴る。3 点リンクの 動く所の グリースが 切れているのかも。止まって 上げると 見ます）', 7); }
     if (told && Math.abs(S.v) < 0.05 && !S.rotDown && S.rotPos > 0.9 && (S.rotorW || 0) < 1 && (!S.stalled || offFree()) && !(S.crank > 0)) {   // 爪が止まってから
       S.stalled = true; S.parked = true; S.v = 0; S.autoUp = false;
       for (const k of ['fwd', 'back', 'left', 'right']) key[k] = 0;
@@ -3322,7 +3322,7 @@ const RAMPDMG = (() => {
     if (!add) return;
     dmg = Math.min(1, dmg + add * dt);
     if (mat) mat.opacity = Math.min(0.85, 0.25 + dmg);
-    if (dmg > 0.25 && !told) { told = true; toast('出入口の坂を ' + (S.rotDown ? IMPL + 'で削っている' : 'タイヤで えぐっている') + '。坂の形が崩れると、出るときに タイヤがすべる（坂では ' + IMPL + 'を 地面に当たらない高さにして、まっすぐ）', 6); }
+    if (dmg > 0.25 && !told && !startNoticeMuted()) { told = true; toast('出入口の坂を ' + (S.rotDown ? IMPL + 'で削っている' : 'タイヤで えぐっている') + '。坂の形が崩れると、出るときに タイヤがすべる（坂では ' + IMPL + 'を 地面に当たらない高さにして、まっすぐ）', 6); }
   }
   function cap(dir) {                             // 崩れた坂を 上がるとき（前進でも バックでも）：タイヤがすべって ゆっくりしか上がれない
     if (dmg < 0.4 || !dir) return Infinity;

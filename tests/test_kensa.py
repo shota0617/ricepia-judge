@@ -252,6 +252,10 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertRegex(HTML, r"#plate \{[^}]*touch-action:none")
         self.assertIn('addEventListener("gesturestart"', HTML)
 
+    def test_grade_label_fits_small_phone(self):
+        # 320px幅で「規格外」が2行に折れない
+        self.assertIn("@media (max-width:340px) {\n    #rows, #gradeBtns { grid-template-columns:84px repeat(4,1fr); }\n    .gradeBtn.small { font-size:14px; }", HTML)
+
     def test_decide_hint_fits_small_phone(self):
         # 320px幅で1行に収まる長さ（「いちばん右の…」は「↑」だけが2行目に落ちていた）
         self.assertIn('"右の ● の下を 上へ ↑"', HTML)

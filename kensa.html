@@ -166,6 +166,11 @@
   #notes a { color:var(--green); }
   #notes p { margin:0 0 10px; }
 
+  /* 幅の狭いスマホ: きめるの「規格外」が2行に折れないよう、項目の列を少し狭め字を小さく */
+  @media (max-width:340px) {
+    #rows, #gradeBtns { grid-template-columns:84px repeat(4,1fr); }
+    .gradeBtn.small { font-size:14px; }
+  }
   /* 横向きの低い画面: 上段と皿を左右に並べ、きめるの表も詰める */
   @media (orientation:landscape) and (max-height:500px) {
     #app { max-width:760px; }

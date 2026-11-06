@@ -171,6 +171,11 @@ class FlowTests(unittest.TestCase):
         # iPhone は許可の画面が出るので、振るは使わない
         self.assertIn('typeof DeviceMotionEvent.requestPermission === "function"', HTML)
 
+    def test_poke_demo_moves_as_far_as_needed(self):
+        # 手本の指は、さすのに必要な押しの長さだけ動く（固定の46pxではない）
+        self.assertIn('poke.style.setProperty("--pokeDx", -(P.rest - P.inAt + 8) + "px");', HTML)
+        self.assertIn("translateX(var(--pokeDx, -46px))", HTML)
+
     def test_probe_inserts_with_a_short_push(self):
         # 先が袋に1/3入ったら「さした」（手本の指は46pxしか動かないのに、以前は124px押す必要があった）。引く長さは入れた深さから
         self.assertIn("P.inAt = bag.offsetLeft + bag.offsetWidth * 0.66;", HTML)

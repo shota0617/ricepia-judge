@@ -51,7 +51,7 @@
   #bagBtn canvas { width:100%; height:100%; display:block; transition:transform .1s ease; }
   #bagBtn.squash canvas { transform:scale(1.05,.94); }
   #poke { position:absolute; z-index:4; font-size:34px; animation:poke 1.3s ease-in-out infinite; pointer-events:none; }
-  @keyframes poke { 0%,100% { transform:translateX(0); } 55% { transform:translateX(-46px); } }
+  @keyframes poke { 0%,100% { transform:translateX(0); } 55% { transform:translateX(var(--pokeDx, -46px)); } } /* 動く長さは、さすのに必要な押しと同じ */
   #probe { position:absolute; left:0; top:0; z-index:1; pointer-events:none; } /* 袋の後ろを通るので、押すと袋に入って見える */
   #kokuPhoto { position:absolute; right:0; top:0; height:50%; aspect-ratio:3/4; object-fit:cover; border-radius:10px; box-shadow:0 2px 8px rgba(26,24,20,.25); pointer-events:none; }
 
@@ -583,6 +583,7 @@ function layoutProbe() {
   const poke = $("poke");
   poke.style.left = P.rest + P.L * 0.72 + "px";
   poke.style.top = P.y - 6 + "px";
+  poke.style.setProperty("--pokeDx", -(P.rest - P.inAt + 8) + "px"); /* 手本どおりに押せば、ちょうどさされる */
   if (!P.inserted) setProbe(P.rest);
 }
 function setProbe(x) {

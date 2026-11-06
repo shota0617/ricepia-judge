@@ -8615,7 +8615,7 @@ function step(dt) {
     }
     rutPull = Math.max(-0.22, Math.min(0.22, rutPull));   // バックでは 切る向きが逆
     S.rutT = Math.abs(rutPull) > 0.08 ? (S.rutT || 0) + dt : 0;
-    if (S.rutT > 0.5 && !S.rutTold && S.started) { S.rutTold = true; toast('わだち（稲刈りのみぞ）に前輪が落ちて、ハンドルを取られた。まっすぐ走れないときは、止まって 切り返す（みぞは 耕すと ならされる）', 6); setTimeout(() => voice('wadachi'), 6500); }
+    if (S.rutT > 0.5 && !S.rutTold && S.started && !startNoticeMuted()) { S.rutTold = true; toast('わだち（稲刈りのみぞ）に前輪が落ちて、ハンドルを取られた。まっすぐ走れないときは、止まって 切り返す（みぞは 耕すと ならされる）', 6); setTimeout(() => voice('wadachi'), 6500); }   // サイクル177・最初の1分: のんびりでは秋の開始直後（わだちに0.5秒入ると出る）にわだちの長文知らせと声で最初のなぞりを止めない。rutToldは立てないので1分を過ぎて再び（または続けて）わだちに入れば従来どおり出す。くわしい説明では従来どおり開始直後から出す
   }
   S.rutPull = rutPull;
   const yaw = S.yaw - S.v * Math.tan(S.steer + rutPull + PANKU.pull()) / WB * turnRate(Math.abs(S.v), S.x, S.z, onRoad) * dt;

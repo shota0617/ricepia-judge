@@ -9717,8 +9717,7 @@ function drawMzHint(ox, oy, T, now) {
   mzHelp.dots = 0;
   if (!mzRt.path) return;
   if (now >= mzRt.showUntil && mzHelpOn()) {   // おたすけ：ゴールへの 道すじを 水色の 流れる 線で いつも（16マス先まで。金の 米つぶと まちがえない 色と 形）
-    // 「🏁 つぎの ゴール」の 大きな 文字が 出ている 間も 待つ（小さい 画面で、はじめの ゴールの 名前が この 知らせの 下に かくれた。自分で 遊んで 分かった）
-    if (!mzHelp.told && mzRt.path.length > 2 && !mapCovered() && !sightBusy() && !mzNext.want && !mzNext.t0) { mzHelp.told = true; G.toast('🧭 水色の 線が ゴールへの 道。✕ は 行き止まり'); }   // あそびかた・窓・人の 話が 出ている 間は 待つ（読める ように なってから 知らせる）
+    // はじめの 案内は 水色の 道すじだけ。説明の 知らせを 重ねない
     const S = MZ_K * T, pts = mzRt.path.slice(0, 17).map(([cx, cy]) => [ox + cx * S + S / 2, oy + cy * S + S / 2]);
     if (pts.length < 2) return;
     ctx.save();

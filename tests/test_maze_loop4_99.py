@@ -29,12 +29,12 @@ class Blink99(unittest.TestCase):
     def test_face_set_blink(self):
         self.assertIn("blink: 'shut cheeks smile'", PIX)
 
-    def test_dot_path_draws_blink(self):
-        self.assertIn("const shutEyes = (mood === 'blink' || asleepShut()) && riceEyeAt && (fr === riceSprites.right[0] || fr === riceSprites.down[0]);", PIX)
-        self.assertIn("rgb(250,249,243)", PIX)
-        self.assertIn("rgb(14,14,14)", PIX)
-        self.assertIn("(riceEyeAt.y + 2 - rb0.gy) * u, 2 * u, u)", PIX)
-        self.assertIn("for (const dx of [0, 5])", PIX)
+    def test_blink_drawn_by_program_face(self):
+        # ユーザー指示 2026-11-06（米粒の姿と動きを元に戻す）に追随：ドット絵経路の目の上書き描画は廃止。
+        # まばたきはプログラム描画経路が rb.faces の blink（shut cheeks smile）を mood で選んで描く
+        self.assertNotIn("riceSprites.dot", PIX)
+        self.assertIn("blink: 'shut cheeks smile'", PIX)
+        self.assertIn("const fc = (rb.faces && rb.faces[mood]) || rb.face;", PIX)
 
     def test_eye_saved_and_public(self):
         self.assertIn("riceEyeAt = (ex < N && ey < N) ? { x: ex, y: ey } : null;", PIX)
@@ -57,7 +57,7 @@ class Blink99(unittest.TestCase):
 
     def test_scope(self):
         files = set(self._diff("--name-only").split())
-        self.assertLessEqual(files, {"nishio-go/pixel.js", "tests/test_maze_loop4_105.py", "tests/test_maze_loop4_106.py", "tests/test_maze_loop4_101.py", "tests/test_maze_loop4_102.py", "tests/test_maze_loop4_103.py", "tests/test_maze_loop4_104.py", "tests/test_maze_loop4_99.py", "tests/test_maze_loop4_100.py", "tests/test_maze_loop4_16.py", "tests/test_maze_loop4_95.py", "tests/test_maze_loop4_97.py", "tests/test_maze_loop4_98.py"})
+        self.assertLessEqual(files, {"nishio-go/pixel.js", "tests/test_maze_loop4_86.py", "tests/test_maze_loop4_105.py", "tests/test_maze_loop4_106.py", "tests/test_maze_loop4_101.py", "tests/test_maze_loop4_102.py", "tests/test_maze_loop4_103.py", "tests/test_maze_loop4_104.py", "tests/test_maze_loop4_99.py", "tests/test_maze_loop4_100.py", "tests/test_maze_loop4_16.py", "tests/test_maze_loop4_95.py", "tests/test_maze_loop4_97.py", "tests/test_maze_loop4_98.py"})
 
 
 if __name__ == "__main__":

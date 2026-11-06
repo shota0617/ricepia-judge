@@ -88,6 +88,11 @@ class FlowTests(unittest.TestCase):
         self.assertIn("height:100dvh", HTML)
         self.assertRegex(HTML, r"#app \{[^}]*overflow:hidden")
 
+    def test_swipe_in_game_does_not_scroll_page(self):
+        # ● を上へ引く・はんこを下ろす指で、ページが下の説明へ流れない。📖で下へ行ったあとは指で戻れる
+        self.assertIn("html:not(.scrolled) { touch-action:none; }", HTML)
+        self.assertIn('classList.toggle("scrolled", window.scrollY > 0)', HTML)
+
     def test_idle_card_keeps_measuring(self):
         self.assertIn('kind:"kensa"', HTML)
         self.assertIn('sendTap("like"', HTML)

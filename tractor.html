@@ -7928,6 +7928,7 @@ const T3 = {
       const qx = ax + dx * u, qz = az + dz * u, d = Math.hypot(x - qx, z - qz);
       if (d < bd) { bd = d; ct = ((x - qx) * dz - (z - qz) * dx) / L; }   // 符号つき横ずれ（符号は sim のずれ±0.5復帰テストで確認済み）
     }
+    ct *= Math.max(0, 1 - Math.max(0, bd - 0.3) / 0.7);   // サイクル117: 線から 0.3m を超えて離れるほど横ずれ補正を弱め、1.0m 以上（＝まだ線に乗っていない）では使わない。運転席視点では最初の点が 5m 先に置かれることが多く、遠い短い線分への垂線（1m 前後）を「横ずれ」として切り返し、ハンドルが左右に振れていた（段差が出ないよう重みはなだらかに）
     return { tgt, kappa, kMax, ct };
   },
   steer(pts, x, z, yaw, v, baseCap) {   // 切れ角目標と速度上限を返す
@@ -7948,6 +7949,7 @@ const T3 = {
 const TRACE = {
   pts: [], cps: [], ctx: 0, on: false, drive: false, line: null, fade: 0,
   fv: 0, fHist: [], fT: 0, fPos: null, scCd: 0, stopBoost: 0,   // サイクル116: 指の速さ（変位ベース）・近道の間隔・離した直後の強い減速
+  sPos: null, DZ: 5,   // サイクル116（なぞり）: 最後に受け付けた指の画面位置と、そこから何 px 動いたら新しい点として受け付けるか（指を置いたままの わずかなブレは無視する）
   sync() { this.cps = T3.smooth(this.pts).slice(this.ctx); },   // 制御用点列（平滑化済み）を作り直す（add のたび）。pts の先頭 ctx 個は通過済みで、平滑化の文脈用に2個だけ残す（平滑化は前後2点にしか依存しないため、残りの点の値は全体を平滑化した場合と一致する）
   ensure() {
     if (this.line) return;
@@ -7987,6 +7989,7 @@ const TRACE = {
     h.x = Math.max(-HX, Math.min(HX, h.x)); h.z = Math.max(-HZ, Math.min(HZ, h.z));   // サイクル101: 地面の上なら どこで始めても なぞり（田んぼの外は ふちへ寄せる）
     this.pts = [[h.x, h.z]]; this.ctx = 0; this.sync(); this.on = true; this.fade = 0;
     this.fv = 0; this.fHist = [[e.timeStamp || 0, h.x, h.z]]; this.fT = e.timeStamp || 0; this.fPos = [h.x, h.z]; this.scCd = 0;   // サイクル116
+    this.sPos = [e.clientX, e.clientY];
     if (camMode !== 0) { camMode = 0; look.yaw = look.pitch = 0; $('bCam').textContent = '👁 ' + CAMS[0]; this.rebase = true; }   // サイクル118: 運転席視点に戻す（ユーザー実機指示 2026-11-05）。なぞりは運転席から前方の田んぼをなぞる形にする。最初の点は旧視点の座標なので、次の add で引き直す（従来の rebase）
     if (!S.rotDown && !S.stalled) toggleRotary();       // 下りていなければ 自動で下ろす（降下止めの判定は toggleRotary 側）。エンスト中は下げない（なぞりでの再始動が できなくなるため。Codex指摘）
     this.draw();
@@ -7997,7 +8000,13 @@ const TRACE = {
     const h = this.ground(e);
     if (!h) return;
     h.x = Math.max(-HX, Math.min(HX, h.x)); h.z = Math.max(-HZ, Math.min(HZ, h.z));   // サイクル101: ふちの外へ出ても 線が途切れない
-    if (this.rebase) { this.rebase = false; this.pts = [[h.x, h.z]]; this.ctx = 0; this.sync(); this.fv = 0; this.fHist = [[e.timeStamp || 0, h.x, h.z]]; this.fT = e.timeStamp || 0; this.fPos = [h.x, h.z]; this.draw(); return; }   // 視点が切りかわった直後: 線をいまの指の位置から引き直す（指速の計測もここから）
+    if (this.rebase) { this.rebase = false; this.pts = [[h.x, h.z]]; this.ctx = 0; this.sync(); this.fv = 0; this.fHist = [[e.timeStamp || 0, h.x, h.z]]; this.fT = e.timeStamp || 0; this.fPos = [h.x, h.z]; this.sPos = [e.clientX, e.clientY]; this.draw(); return; }   // 視点が切りかわった直後: 線をいまの指の位置から引き直す（指速の計測もここから）
+    // サイクル116（なぞり）: 画面上で DZ px 動いていない pointermove は受け付けない（最後に受け付けた位置からの差で見る＝ゆっくりでも動かし続ければ通る）。
+    // なぞり中の視点（運転席。サイクル118）はトラクターといっしょに動く・回るので、指を置いたままでも地面のほうが指の下を流れる。置いた指のわずかなブレ（1〜2px）で pointermove が来ると、
+    // そのたびに流れた先の地面が新しい点になって線が勝手に伸び、トラクターが指に追いつけず走り続けた（U ターン中は視点が回って線が大きく掃かれた）。
+    // 物差し（スマホ 390×844・運転席視点・ブレ ±1.5px、ループ側 scratchpad/nazoru_cam.js）: 6m 先に置いたまま 11.73m 走って止まらず（線が 15.5m 先まで伸びた）→5.45m で停止（ブレなしと同じ）／U ターンを描いて置いたまま 線が 22m 伸びて走り続け→止まる
+    if (this.sPos && Math.hypot(e.clientX - this.sPos[0], e.clientY - this.sPos[1]) < this.DZ) return;
+    this.sPos = [e.clientX, e.clientY];
     // サイクル116: 指の速さを測る（直近0.45秒の変位÷時間。イベント間隔の生速度はブレが大きいため使わない。Codex指摘）
     const tms = e.timeStamp || 0;
     this.fHist.push([tms, h.x, h.z]);
@@ -8046,7 +8055,7 @@ const TRACE = {
     }
     this.draw();
     const r = T3.steer(this.cps, S.x, S.z, S.yaw, S.v, base);   // T3仕上げ: 弧長先読み＋曲率の先読み＋横ずれ補正（T3 の節）
-    S.steer += Math.max(-2.6 * dt, Math.min(2.6 * dt, r.steerT - S.steer));
+    S.steer += Math.max(-1.8 * dt, Math.min(1.8 * dt, (r.steerT - S.steer) * Math.min(1, dt * 7)));   // サイクル117: 目標へは一次遅れ（約0.14秒）で寄せ、1秒あたりの切れ角の変化も 2.6→1.8rad に（手動の 1.1 に近づける）。点が足されるたびの目標の小さな段差で ハンドルが こきざみに振れないように
     const kM = T3.info(this.cps, S.x, S.z).kMax;   // 指追従中は T3 のカーブ上限（0.45/0.60、耕し時代の物差し）を 0.75/0.95 へ緩める
     this.cap = Math.max(r.cap, Math.min(base, kM > 0.45 ? 0.75 : kM > 0.22 ? 0.95 : base));
     if (Math.abs(r.steerT) > 0.7) this.cap = Math.min(this.cap, 0.8);   // 切れ角が飽和しているときの T3 の減速は残す（Codex diffレビュー指摘）
@@ -10825,7 +10834,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { HERI, GASU, get ECO() { return ECO; }, set ECO(v) { ECO = v; }, get ECO_RPM() { return ECO_RPM; }, cycleEco, setRpm, WORK_RPM, DIFF, SAGE, WARAYAMA, FENCE, RENGE, SHIHATSU, DIP, YAMA, MARKS, CLAW, USHI, UZURA, soilY, soilCell, WAVD, CLOD, GREASE, squeak, SCRAPE, BELT, COVER, KATA, RAMPDMG, CORNER, TILTY, WAVY, STONES, HAMARU, WASH, squeeze, moistAt, clodH, ROUGHA: () => ROUGH, engineLoad, engineRpm, WALK, walkField, TILLN, T2, T3, T4, T5, T6, get overTilled() { return overTilled; }, AKIAKANE, BUTTERFLIES, LEAK, INAGO, ROADSIDE, TOBI, KABASHIRA, LEVEE_FLOWERS, KERI, SNAILS, WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, AMENBO, KERA, KAMO, ZARI, GENGO, KANA, KABU, DOJO, HACHI, MEDAKA, HOTARU, KAWASEMI, IMORI, KIJI, TONOSAMA, MOGURA, TSUBAME, KABUTO, HIGAN, HIBARI, PLAY, INTRO, MAEUKI, OSHI, MUKU, DRY, MAKURA, DEEP, softAt, OCHI, PANKU, AIRCL, OMO, KEIKAL, DANKI, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, TRACE, HINT, AUTO, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, BADGE, SAY, sim: sec => { for (let t = 0; t < sec; t += 0.05) { lastPct = step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); MUKU.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); USHI.update(0.05); UZURA.update(0.05); AMENBO.update(0.05); KERA.update(0.05); KAMO.update(0.05); ZARI.update(0.05); GENGO.update(0.05); KANA.update(0.05); KABU.update(0.05); DOJO.update(0.05); HACHI.update(0.05); MEDAKA.update(0.05); HOTARU.update(0.05); KAWASEMI.update(0.05); IMORI.update(0.05); KIJI.update(0.05); TONOSAMA.update(0.05); MOGURA.update(0.05); TSUBAME.update(0.05); KABUTO.update(0.05); HIGAN.update(0.05); HIBARI.update(0.05); INTRO.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); FARMER.update(0.05, S.started && !S.done); } buildHills(); } };
+window.game = { HERI, GASU, get ECO() { return ECO; }, set ECO(v) { ECO = v; }, get ECO_RPM() { return ECO_RPM; }, cycleEco, setRpm, WORK_RPM, DIFF, SAGE, WARAYAMA, FENCE, RENGE, SHIHATSU, DIP, YAMA, MARKS, CLAW, USHI, UZURA, soilY, soilCell, WAVD, CLOD, GREASE, squeak, SCRAPE, BELT, COVER, KATA, RAMPDMG, CORNER, TILTY, WAVY, STONES, HAMARU, WASH, squeeze, moistAt, clodH, ROUGHA: () => ROUGH, engineLoad, engineRpm, WALK, walkField, TILLN, T2, T3, T4, T5, T6, get overTilled() { return overTilled; }, AKIAKANE, BUTTERFLIES, LEAK, INAGO, ROADSIDE, TOBI, KABASHIRA, LEVEE_FLOWERS, KERI, SNAILS, WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, AMENBO, KERA, KAMO, ZARI, GENGO, KANA, KABU, DOJO, HACHI, MEDAKA, HOTARU, KAWASEMI, IMORI, KIJI, TONOSAMA, MOGURA, TSUBAME, KABUTO, HIGAN, HIBARI, PLAY, INTRO, MAEUKI, OSHI, MUKU, DRY, MAKURA, DEEP, softAt, OCHI, PANKU, AIRCL, OMO, KEIKAL, DANKI, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, TRACE, HINT, AUTO, updateCamera, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, BADGE, SAY, sim: sec => { for (let t = 0; t < sec; t += 0.05) { lastPct = step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); MUKU.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); USHI.update(0.05); UZURA.update(0.05); AMENBO.update(0.05); KERA.update(0.05); KAMO.update(0.05); ZARI.update(0.05); GENGO.update(0.05); KANA.update(0.05); KABU.update(0.05); DOJO.update(0.05); HACHI.update(0.05); MEDAKA.update(0.05); HOTARU.update(0.05); KAWASEMI.update(0.05); IMORI.update(0.05); KIJI.update(0.05); TONOSAMA.update(0.05); MOGURA.update(0.05); TSUBAME.update(0.05); KABUTO.update(0.05); HIGAN.update(0.05); HIBARI.update(0.05); INTRO.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); FARMER.update(0.05, S.started && !S.done); } buildHills(); } };
 </script>
 </body>
 </html>

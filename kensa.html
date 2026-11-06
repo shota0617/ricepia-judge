@@ -1346,7 +1346,8 @@ function leaveBag() {
   $("bagBig").animate([{ transform:$("bagBig").style.transform || "none" }, { transform:"translateX(130%) rotate(10deg)" }],
     { duration:240 * motion, easing:"ease-in", fill:"forwards" }).onfinish = function () { this.cancel(); goNext(); };
 }
-nextBtn.addEventListener("click", () => { if (!leaving) leaveBag(); });
+nextBtn.addEventListener("pointerup", leaveBag); /* 袋を速くなでた直後は click が来ないことがあるので、指を離した時に流す */
+nextBtn.addEventListener("click", (e) => { if (e.detail === 0) leaveBag(); }); /* キーボードの Enter */
 window.addEventListener("scroll", () => { document.documentElement.classList.toggle("scrolled", window.scrollY > 0); }, { passive:true });
 window.addEventListener("resize", () => {
   layoutProbe();

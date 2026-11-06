@@ -98,6 +98,8 @@ class FlowTests(unittest.TestCase):
         # 速くなでた直後のタップは click にならないことがある（Chrome のフリング抑止）。粒と同じく pointerup で効かせる
         self.assertIn('zoomBtn.addEventListener("pointerup", toggleZoom);', HTML)
         self.assertIn('zoomBtn.addEventListener("click", (e) => { if (e.detail === 0) toggleZoom(); });', HTML)
+        self.assertIn('nextBtn.addEventListener("pointerup", leaveBag);', HTML)
+        self.assertIn('nextBtn.addEventListener("click", (e) => { if (e.detail === 0) leaveBag(); });', HTML)
 
     def test_long_press_shows_no_ios_sheet(self):
         # 一等米の写真・🤲・はんこを長押ししても「画像を保存」などのシートが出ない（#app から継承）

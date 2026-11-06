@@ -37,6 +37,11 @@ def build(side):
         a = rnd.uniform(-0.6, 0.6) + (math.pi/2 if rnd.random() < 0.5 else 0)
         creases.append((u0 * W / 2, z0, math.cos(a), math.sin(a), rnd.uniform(0.06, 0.2), rnd.choice((-1, 1)) * rnd.uniform(0.0008, 0.0016)))
 
+    crinkles = []
+    for _ in range(90):
+        u0, z0 = rnd.uniform(-0.9, 0.9), rnd.uniform(-0.95, -0.08)
+        a = rnd.uniform(0, math.pi)
+        crinkles.append((u0 * W / 2, z0, math.cos(a), math.sin(a), rnd.uniform(0.015, 0.06), rnd.choice((-1, 1)) * rnd.uniform(0.0006, 0.0015)))
     me = bpy.data.meshes.new('Bag_' + side)
     bm = bmesh.new()
     verts = []
@@ -88,6 +93,12 @@ def build(side):
                 ue = u - 0.06
                 if ue < 0:
                     y += -0.0009 * smooth(-0.04, 0.0, ue)
+            # 小さな もみ じわ（写真：積んで 運ぶ うちに 紙 全体に つく 細かい しわ。胴だけ）
+            for (cx, cz, dx, dz, ln, a) in crinkles:
+                t = (px - cx) * dx + (z - cz) * dz
+                if -ln < t < ln:
+                    dist = abs((px - cx) * dz - (z - cz) * dx)
+                    if dist < 0.008: y += a * b * math.exp(-(dist / 0.0022) ** 2) * (1 - (t / ln) ** 2) ** 2
             row.append(bm.verts.new((x, y, z)))
         verts.append(row)
     for j in range(NZ):
@@ -130,8 +141,9 @@ def kraft():
     fib = N.new('ShaderNodeTexWave'); fib.wave_type = 'BANDS'; fib.inputs['Scale'].default_value = 140; fib.inputs['Distortion'].default_value = 18; fib.inputs['Detail'].default_value = 6
     for n in (big, fine, fib): Ln.new(tc.outputs['Object'], n.inputs['Vector'])
     ramp = N.new('ShaderNodeValToRGB')
-    ramp.color_ramp.elements[0].color = (0.36, 0.20, 0.08, 1)   # 濃い クラフト
-    ramp.color_ramp.elements[1].color = (0.58, 0.37, 0.17, 1)   # うすい クラフト
+    # 運営者の 写真（店の 玄米 30kg 袋）：茶色より うすい、灰色がかった ベージュの クラフト紙
+    ramp.color_ramp.elements[0].color = (0.42, 0.31, 0.17, 1)   # 濃い クラフト
+    ramp.color_ramp.elements[1].color = (0.64, 0.49, 0.30, 1)   # うすい クラフト
     Ln.new(big.outputs['Fac'], ramp.inputs['Fac'])
     mixf = N.new('ShaderNodeMix'); mixf.data_type = 'RGBA'; mixf.blend_type = 'MULTIPLY'; mixf.inputs['Factor'].default_value = 0.35
     Ln.new(ramp.outputs['Color'], mixf.inputs['A'])

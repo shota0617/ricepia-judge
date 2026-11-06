@@ -1744,7 +1744,7 @@ function syncUI(dt){
   const put = (el, k, v) => { if(el['_' + k] !== v){ el['_' + k] = v; if(k === 'text') el.textContent = v; else if(k === 'low') el.classList.toggle('low', v); else el.style[k] = v; } };
   put(ui.score, 'text', S.score.toLocaleString());
   put(ui.time, 'text', String(Math.ceil(S.time)));
-  put(ui.time, 'low', S.time<8);
+  put(ui.time, 'low', S.time<10); /* 点線の わくは カチカチ（のこり 10秒）と 同じ とき から（音を 切って いる 人にも 同じ 合図。301周目：8秒 だったので「10」「9」が 白い まま 鳴って いた） */
   put(ui.bags, 'text', String(S.bags));
   const mult = multOf();
   put(ui.combo, 'text', S.feverT>0 ? 'フィーバー '+Math.ceil(S.feverT)+'秒' : mult>1 ? (W < 260 ? '×'+mult : 'スルスル ×'+mult) : ''); /* とても せまい（字 200%）と まん中の「+3秒」に かさなる（145周目） */

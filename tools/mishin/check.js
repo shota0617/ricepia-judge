@@ -290,6 +290,10 @@ const CHECKS = {
     ok(!both.last && both.ending && !/ラスト/.test(sr2), 'はなして いる ときに 時間ぎれなら「ラスト1袋」と 言わずに おわる', { both, sr2 });
     const kn = await p.evaluate(() => { let mx = 0; for (let k=0;k<40;k++) for (let s=0;s<8;s++) mx = Math.max(mx, KB.makeBag(k).knots.size); return mx; });
     ok(kn===4, 'きつい目は さいだい 4つ', kn);
+    // 301周目：のこり わずかの 点線の わくは カチカチ（のこり 10秒）と 同じ ときから（8秒 だったので「10」「9」が 白い ままだった）
+    const lowAt = async (t) => { await p.evaluate((t) => { KB.start(); KB.S.touched = true; KB.S.time = t; }, t); await p.waitForTimeout(80); return p.evaluate(() => document.getElementById('time').classList.contains('low')); };
+    const low10 = await lowAt(10.6), low9 = await lowAt(9.6);
+    ok(!low10 && low9, 'のこり 10秒を 切ったら 時計に 点線の わく（カチカチと 同じ とき）', { low10, low9 });
   },
   // お客さん目線（31周目）：れんしゅうで 表の 端を さわると 裏返す・途中で やめると はんこを 出さない・つぎの 袋に 前の 声を もちこさない
   async coin(b){

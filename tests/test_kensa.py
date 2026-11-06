@@ -151,6 +151,7 @@ class FlowTests(unittest.TestCase):
 
     def test_double_tap_and_shake(self):
         self.assertIn("tapNow - lastGoodTap < 320", HTML)
+        self.assertIn("Math.hypot(e.clientX - lastGoodX, e.clientY - lastGoodY) < 40", HTML)  # 離れた粒を続けて突いても寄らない
         # iPhone は許可の画面が出るので、振るは使わない
         self.assertIn('typeof DeviceMotionEvent.requestPermission === "function"', HTML)
 

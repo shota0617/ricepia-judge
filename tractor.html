@@ -8020,9 +8020,11 @@ const TRACE = {
     // サイクル191（最初の1分）: 指を同じ道で戻すと、線は戻った所まで消える（戻りの道を線の続きにしない）。
     // それまでは戻りの道が「折り返し」として線に足され、トラクターがハンドルいっぱいで回れ右をしていた
     // （物差し ループ側 scratchpad/steer.js: 上へ滑らせて同じ道を戻すと 最大切れ角 0.85rad・向き 23° 回り、指から 1.45m 離れたまま）。
-    // 線の終わりから 2 つ以上前の点の 0.5m 以内に指が来たら、そこまで線を縮めて終点を指に置きかえる（通過済みの点より前へは縮めない）
-    { let bi = -1, bd = 0.5;
-      for (let i = this.pts.length - 3; i >= Math.max(this.ctx, this.pts.length - 60); i--) { const d = Math.hypot(h.x - this.pts[i][0], h.z - this.pts[i][1]); if (d < bd) { bd = d; bi = i; } }
+    // 線の終わりから 2 つ以上前の点の 0.5m 以内に指が来たら、そこまで線を縮めて終点を指に置きかえる（通過済みの点より前へは縮めない）。
+    // サイクル192: 見るのは終わりから道のり 2m 以内の点だけ。輪や 8 の字のように線が自分と交わる・輪を閉じてなぞり続けるときは、交わる相手が線のずっと前の点なので縮めない
+    // （物差し ループ側 scratchpad/steer.js: 8 の字で 59 点→44 点に縮んでいたのが 59 点のまま、輪を閉じて続けても 73 点のまま）
+    { let bi = -1, bd = 0.5, arc = 0;
+      for (let i = this.pts.length - 3; i >= Math.max(this.ctx, this.pts.length - 60); i--) { arc += Math.hypot(this.pts[i + 1][0] - this.pts[i][0], this.pts[i + 1][1] - this.pts[i][1]); if (arc > 2.0) break; const d = Math.hypot(h.x - this.pts[i][0], h.z - this.pts[i][1]); if (d < bd) { bd = d; bi = i; } }
       if (bi >= 0) { this.pts.length = bi + 1; this.pts[bi] = [h.x, h.z]; this.sync(); this.passMin = 1e9; this.draw(); return; } }
     if (this.pts.length < 512) { this.pts.push([h.x, h.z]); this.sync(); this.passMin = 1e9; this.draw(); }
   },

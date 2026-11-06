@@ -125,7 +125,7 @@ function loadTowns() {
   };
   if (worldLabels.some(x => x[4] === 'tw')) { use(worldLabels); return; }
   townsRetry = Date.now() + 60000;   // 取れなかったら1分おいて試し直す
-  townsLoad = fetch(WORLD_FILE).then(r => (r.ok ? r.json() : null)).then(j => use(j && j.l)).catch(() => {}).finally(() => { townsLoad = null; });
+  townsLoad = worldJson().then(j => use(j && j.l)).catch(() => {}).finally(() => { townsLoad = null; });   // せかいちずと 同じ 1回の 読みこみを 使う（にしおサイクル128）
 }
 // いまいる町（いちばん近い町名。約1.2km以内）と、町が変わったときの知らせ（RPG の地名の出しかた）
 const here = { town: '', city: '', banner: '', bannerAt: 0, at: 0 };   // at：町名を最後に確かめた時刻（歩く地図を描いている間だけ更新される）
@@ -833,6 +833,13 @@ function drawFoot(code, tx, ty, X, Y, T) {
 const wToLL = (x, y) => ({ lat: WB.n - y * WT / M_LAT, lng: WB.w + x * WT / M_LNG });
 // 名前の表の中身（川・町名）を変えたら番号を上げる。古い番号の保存分は消して、新しい地図を取り直してもらう
 const WORLD_KEY = 'nsg_world8', WORLD_FILE = 'nishio-go/world.json';
+// world.json は 1回だけ 読む（にしおサイクル128：町名の 表 loadTowns と せかいちず buildWorld が べつべつに fetch して、遅い 回線（1.5Mbps）で 417KB を 2回 読み、地図が 動きだすのが おくれていた）。
+//   読んでいる 間は 同じ 約束を 返す。終わったら 手ばなす（取れなかった ときの やりなおし・作り直しの 読みなおしは これまでどおり。ブラウザの HTTP キャッシュの 確かめだけで 軽い）
+let worldJsonP = null;
+function worldJson() {
+  if (!worldJsonP) worldJsonP = fetch(WORLD_FILE, { cache: 'no-cache' }).then(r => (r.ok ? r.json() : null)).catch(() => null).finally(() => { worldJsonP = null; });
+  return worldJsonP;
+}
 for (let i = 1; i <= 7; i++) store.del('nsg_world' + i);
 let world = null, worldPois = [], worldLabels = [], worldImg = null, worldState = 'none';   // none | building | ok | fail
 
@@ -1021,8 +1028,7 @@ async function buildWorld(force) {
   //    変わっていなければブラウザの HTTP キャッシュの確かめだけで軽い
   if (!BAKE) {
     try {
-      const r = await fetch(WORLD_FILE, { cache: 'no-cache' });
-      const b = r.ok ? await r.json() : null;
+      const b = await worldJson();   // 町名の 表と 同じ 1回の 読みこみ（にしおサイクル128）
       if (b && b.w === WW && b.h === WH && typeof b.d === 'string' && b.d.length === WW * WH) {
         world = dec(b.d); worldPois = b.p || []; worldLabels = b.l || []; makeWorldImg(); worldState = 'ok';
         // 名前の表が古い形（川・町名の種類がない）なら、作り直しが届くまでの仮として1日だけ保存する

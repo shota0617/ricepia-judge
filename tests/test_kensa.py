@@ -99,12 +99,31 @@ class FlowTests(unittest.TestCase):
         foot = HTML[HTML.index('<div id="foot">'):HTML.index("</main>")]
         self.assertIn('id="idleCard"', foot)
 
-    def test_first_bag_shows_bad_grains_at_once(self):
-        self.assertIn("armHint(lotIndex === 0 ? 350 : 6000);", HTML)
+    def test_first_bag_shows_bad_grains_soon(self):
+        self.assertIn("armHint(lotIndex === 0 ? 1200 : 6000);", HTML)
 
     def test_touching_good_grain_keeps_hint_timer(self):
         fn = HTML[HTML.index("function tapGrain(g) {"):HTML.index("g.gone = true; badLeft--;")]
         self.assertNotIn("armHint", fn)
+
+    def test_motions_are_not_only_taps(self):
+        # さす（押し込んで引き抜く）・おさえる（長押し）・なでる・ズーム・おす（はんこを下ろす）
+        for needle in ("function moveProbe(x)", "const HOLD_MS = 600;", "function brush(from, to)", "function startPinch()", "function stampNow()"):
+            self.assertIn(needle, HTML)
+
+    def test_crack_only_shows_when_zoomed(self):
+        self.assertIn('if (kind === "higai" && !far) px(', HTML)
+        self.assertIn('if (far) return spriteCache[key] = c.toDataURL();', HTML)
+
+    def test_motion_has_fallback(self):
+        # 動かし方が分からなくても止まらない。キーボードでも進める
+        self.assertIn("const NUDGE_LIMIT = 3;", HTML)
+        for needle in ('if (e.detail === 0) autoProbe();', 'e.detail === 0 && step === 1', 'e.detail === 0 && step === 4'):
+            self.assertIn(needle, HTML)
+
+    def test_page_zoom_does_not_fight_pinch(self):
+        self.assertRegex(HTML, r"#plate \{[^}]*touch-action:none")
+        self.assertIn('addEventListener("gesturestart"', HTML)
 
     def test_like_closes_card_and_can_retry(self):
         self.assertIn("setTimeout(hideIdleCard, 900);", HTML)

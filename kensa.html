@@ -17,6 +17,7 @@
   html,body { margin:0; background:var(--bg); color:var(--ink);
     font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif; }
   button { font:inherit; color:inherit; background:none; border:0; padding:0; cursor:pointer; touch-action:manipulation; }
+  [hidden] { display:none !important; }
   img,canvas { image-rendering:pixelated; -webkit-user-select:none; user-select:none; -webkit-user-drag:none; }
   .photo { image-rendering:auto; }
 
@@ -44,18 +45,22 @@
     opacity:0; transform:translateX(26px); pointer-events:none; transition:opacity .22s ease, transform .22s ease; }
   .topScene.on { opacity:1; transform:none; pointer-events:auto; }
 
-  #bagBtn { position:relative; height:100%; aspect-ratio:48/60; }
+  #sceneBag { justify-content:flex-start; touch-action:none; }
+  #bagBtn { position:relative; z-index:2; height:100%; aspect-ratio:48/60; margin-left:4%; pointer-events:none; }
   #bagBtn canvas { width:100%; height:100%; display:block; transition:transform .1s ease; }
   #bagBtn.squash canvas { transform:scale(1.05,.94); }
-  #poke { position:absolute; right:-6px; bottom:6%; font-size:38px; animation:poke 1s ease-in-out infinite; pointer-events:none; }
-  @keyframes poke { 0%,100% { transform:translate(0,0); } 50% { transform:translate(-10px,-10px); } }
-  #probe { position:absolute; left:0; top:0; width:132px; height:18px; transform-origin:0 50%; opacity:0; pointer-events:none; z-index:3; }
-  #kokuPhoto { width:78px; aspect-ratio:3/4; object-fit:cover; border-radius:10px; box-shadow:0 2px 8px rgba(26,24,20,.25); }
+  #poke { position:absolute; z-index:4; font-size:34px; animation:poke 1.3s ease-in-out infinite; pointer-events:none; }
+  @keyframes poke { 0%,100% { transform:translateX(0); } 55% { transform:translateX(-46px); } }
+  #probe { position:absolute; left:0; top:0; z-index:1; pointer-events:none; } /* 袋の後ろを通るので、押すと袋に入って見える */
+  #kokuPhoto { position:absolute; right:0; top:0; height:50%; aspect-ratio:3/4; object-fit:cover; border-radius:10px; box-shadow:0 2px 8px rgba(26,24,20,.25); pointer-events:none; }
 
   /* 水分計 */
   #meterBtn { position:relative; height:100%; max-height:190px; aspect-ratio:1.5/1; border-radius:18px; background:#2c63a8;
-    box-shadow:inset 0 -8px 0 #1d4a82, 0 3px 10px rgba(26,24,20,.3); padding:12px; display:flex; flex-direction:column; gap:8px; transition:transform .08s ease; }
-  #meterBtn:active { transform:scale(.97); }
+    box-shadow:inset 0 -8px 0 #1d4a82, 0 3px 10px rgba(26,24,20,.3); padding:12px; display:flex; flex-direction:column; gap:6px; transition:transform .08s ease;
+    touch-action:none; -webkit-touch-callout:none; }
+  #meterBtn.press { transform:scale(.95,.93); }
+  #holdTrack { flex:none; height:6px; border-radius:3px; background:#1d4a82; overflow:hidden; }
+  #holdBar { display:block; height:100%; width:0; background:#f4c27a; }
   #lcd { flex:1; min-height:0; border-radius:8px; background:#cfe0b4; color:#22301a; display:flex; align-items:center; justify-content:center;
     font:800 clamp(38px, 11vh, 62px)/1 ui-monospace,Menlo,monospace; box-shadow:inset 0 3px 0 rgba(0,0,0,.18); }
   #lcd small { font-size:.5em; margin-left:3px; }
@@ -70,15 +75,18 @@
   #dish img { width:36px; height:20px; }
 
   /* 鑑定皿: 白と黒の2つで同じ試料を見る */
-  #plate { flex:1; min-height:0; position:relative; border-radius:18px; border:4px solid #4a4136;
-    background:linear-gradient(90deg,#fbf8ef 0 50%,#1c1a16 50% 100%); transition:opacity .2s ease; }
-  .grain { position:absolute; display:block; transform:translate(-50%,-50%) rotate(var(--r)); }
-  .grain::before { content:""; position:absolute; inset:-9px; }
+  #plate { flex:1; min-height:0; position:relative; border-radius:18px; border:4px solid #4a4136; touch-action:none; background:#1c1a16; }
+  #plate.zoomed { overflow:hidden; }
+  #plateInner { position:absolute; inset:0; border-radius:14px; transform-origin:0 0;
+    background:linear-gradient(90deg,#fbf8ef 0 50%,#1c1a16 50% 100%); }
+  #zoomBtn { position:absolute; right:8px; bottom:8px; z-index:30; width:46px; height:46px; border-radius:50%; background:var(--paper); font-size:22px; box-shadow:0 2px 6px rgba(0,0,0,.4); }
+  .grain { position:absolute; left:0; top:0; display:block; pointer-events:none; }
   .grain img { display:block; width:100%; height:100%; }
-  .grain.wig { animation:wig .32s ease; }
-  @keyframes wig { 0%,100% { transform:translate(-50%,-50%) rotate(var(--r)); } 30% { transform:translate(-50%,-68%) rotate(calc(var(--r) - 12deg)); } 65% { transform:translate(-50%,-50%) rotate(calc(var(--r) + 8deg)); } }
-  .grain.hint { animation:hint 1s ease-in-out infinite; }
-  @keyframes hint { 0%,100% { transform:translate(-50%,-50%) rotate(var(--r)) scale(1); } 50% { transform:translate(-50%,-50%) rotate(var(--r)) scale(1.22); } }
+  .grain img.wig { animation:wig .32s ease; }
+  @keyframes wig { 0%,100% { transform:none; } 30% { transform:translateY(-22%) rotate(-12deg); } 65% { transform:rotate(8deg); } }
+  .grain img.hint { animation:hint 1s ease-in-out infinite; }
+  @keyframes hint { 0%,100% { transform:scale(1); } 50% { transform:scale(1.25); } }
+  .flyGrain { position:fixed; z-index:50; pointer-events:none; }
 
   /* きめる: 行ごとの ● が下のボタンと同じ列に落ちる。いちばん右の ● が等級 */
   #decide, #osu { position:absolute; inset:0; background:var(--bg); opacity:0; pointer-events:none; transition:opacity .2s ease; }
@@ -103,7 +111,7 @@
 
   /* おす */
   #osu { display:flex; align-items:center; justify-content:center; }
-  #bagBig { position:relative; height:min(100%, 440px); aspect-ratio:48/60; }
+  #bagBig { position:relative; height:min(100%, 440px); aspect-ratio:48/60; touch-action:none; }
   #bagBig canvas { width:100%; height:100%; display:block; }
   #bagBig.squash canvas { animation:squash .22s ease; }
   @keyframes squash { 30% { transform:scale(1.06,.92); } }
@@ -142,8 +150,8 @@
     #pips { margin-top:1px; }
     #stage { flex-direction:row; }
     #top { flex:0 0 34%; }
-    #bagBtn { height:auto; width:56%; }
-    #kokuPhoto { width:34%; }
+    #bagBtn { height:auto; width:50%; margin-left:0; }
+    #kokuPhoto { height:36%; }
     #meterBtn { height:auto; width:100%; }
     #sceneSort { flex-direction:column; gap:6px; }
     #ittoPhoto { height:45%; }
@@ -160,8 +168,8 @@
     #likeBtn,#returnLink { height:40px; }
   }
   @media (prefers-reduced-motion: reduce) {
-    #poke,.grain.hint,.grain.wig,.dot.ping { animation:none; }
-    .grain.hint { outline:3px solid var(--gold); }
+    #poke,.grain img.hint,.grain img.wig,.dot.ping { animation:none; }
+    .grain img.hint { outline:3px solid var(--gold); }
   }
 </style>
 </head>
@@ -179,19 +187,20 @@
   <div id="stage">
     <div id="top">
       <div class="topScene on" id="sceneBag">
-        <button id="bagBtn" aria-label="ふくろ"><canvas id="bagCanvas" width="48" height="60"></canvas><span id="poke" aria-hidden="true">👆</span></button>
+        <canvas id="probe" width="44" height="6" aria-hidden="true"></canvas>
+        <button id="bagBtn" aria-label="ふくろに 穀刺しを さす"><canvas id="bagCanvas" width="48" height="60"></canvas></button>
         <img id="kokuPhoto" class="photo" src="kensa/kokusashi.webp" alt="穀刺しの実物の写真"/>
+        <span id="poke" aria-hidden="true">👆</span>
       </div>
       <div class="topScene" id="sceneMeter">
-        <button id="meterBtn" aria-label="水分計"><div id="lcd">--.-</div><div id="slots"><span></span><span></span><span></span></div></button>
+        <button id="meterBtn" aria-label="水分計"><div id="lcd">--.-</div><div id="holdTrack"><i id="holdBar"></i></div><div id="slots"><span></span><span></span><span></span></div></button>
       </div>
       <div class="topScene" id="sceneSort">
         <img id="ittoPhoto" class="photo" src="kensa/ittomai.webp" alt="一等米の実物の写真"/>
         <div id="dish" aria-label="よけた粒"></div>
       </div>
-      <canvas id="probe" width="44" height="6" aria-hidden="true"></canvas>
     </div>
-    <div id="plate" aria-label="鑑定皿"></div>
+    <div id="plate" aria-label="鑑定皿"><div id="plateInner"></div><button id="zoomBtn" aria-label="ズーム" hidden>🔍</button></div>
     <div id="decide" inert>
       <div id="rows"></div>
       <div id="gradeBtns">
@@ -323,11 +332,13 @@ function grainSprite(kind, mood) {
   if (spriteCache[key]) return spriteCache[key];
   const c = document.createElement("canvas");
   c.width = 18; c.height = 10;
-  const x = c.getContext("2d"), pal = GRAIN_COLORS[kind];
+  const far = mood === "far"; /* 遠目では顔も割れ目も見えない。寄ると見える */
+  const x = c.getContext("2d"), pal = GRAIN_COLORS[far && kind === "higai" ? "seiryu" : kind];
   const px = (color, ...pts) => { x.fillStyle = color; pts.forEach(([a, b]) => x.fillRect(a, b, 1, 1)); };
   GRAIN_ROWS.forEach((row, y) => [...row].forEach((ch, i) => { if (ch !== ".") px(pal[ch], [i, y]); }));
-  if (kind === "higai") px("#5a3d18", [12, 1], [12, 2], [13, 3], [13, 4], [12, 5], [13, 6], [13, 7], [14, 8]); /* 割れ目 */
+  if (kind === "higai" && !far) px("#5a3d18", [12, 1], [12, 2], [13, 3], [13, 4], [12, 5], [13, 6], [13, 7], [14, 8]); /* 割れ目 */
   if (kind === "color") px("#2c1a0c", [3, 3], [4, 3], [3, 4], [4, 5], [13, 2], [14, 2], [14, 6], [13, 7]); /* 色のしみ */
+  if (far) return spriteCache[key] = c.toDataURL();
   const e = pal.eye;
   if (mood === "happy") { /* ^ ^ */
     px(e, [5, 4], [6, 3], [7, 4], [11, 4], [12, 3], [13, 4], [8, 6], [9, 7], [10, 6]);
@@ -405,7 +416,7 @@ faceImg.src = "kensa/face_dot.webp";
 
 /* 進行 */
 let lotIndex = 0, LOT = LOTS[0], step = 0, grains = [], badLeft = 0, measured = 0, hintTimer = null;
-const plate = $("plate"), hint = $("hint"), nextBtn = $("nextBtn");
+const plate = $("plate"), inner = $("plateInner"), hint = $("hint"), nextBtn = $("nextBtn"), zoomBtn = $("zoomBtn");
 function setStep(i, text) {
   step = i;
   $("stepName").textContent = STEPS[i];
@@ -424,113 +435,228 @@ function shuffle(a) {
   for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
   return a;
 }
+function capture(el, e) {
+  try { el.setPointerCapture(e.pointerId); } catch (_) {}
+}
+/* 指の動きはどれも止まらないように、3回タップされたら自動でやってみせる */
+const NUDGE_LIMIT = 3;
 function startLot() {
   LOT = LOTS[lotIndex % LOTS.length];
   layer($("decide"), false); layer($("osu"), false);
   nextBtn.classList.remove("on");
   hint.style.display = "";
   showTop("sceneBag");
-  plate.textContent = "";
   $("dish").textContent = "";
-  grains = []; measured = 0;
+  measured = 0; meterTaps = 0; bagTaps = 0; hankoTaps = 0; spread = false; stamped = false;
   $("lcd").textContent = "--.-";
   $("meterBtn").classList.remove("high");
   [...$("slots").children].forEach(s => { s.textContent = ""; });
   $("mark").className = ""; $("mark").textContent = "";
   $("hanko").style.opacity = "1";
-  $("bagBtn").disabled = false;
   $("poke").style.display = lotIndex === 0 ? "" : "none";
-  setStep(0, "ふくろを タップ");
+  zoomBtn.hidden = true;
+  resetZoom();
+  buildGrains();
+  P.inserted = false; P.done = false; P.released = 0; P.drag = null;
+  $("probe").style.opacity = "1";
+  layoutProbe();
+  setStep(0, "穀刺しを ふくろへ さす ←");
   setFace("normal");
   if (lotIndex > 0) $("bagBtn").animate([{ transform:"translateX(120%)" }, { transform:"none" }], { duration:260 * motion, easing:"ease-out" });
 }
 
-/* ぬく: さわった場所に穀刺しが入り、粒が皿へ降ってくる */
-$("bagBtn").addEventListener("click", (e) => {
-  if (step !== 0 || $("bagBtn").disabled) return;
-  $("bagBtn").disabled = true;
-  pop(); /* iPhoneはタップの中で最初の音を出さないと以後も鳴らない */
-  $("poke").style.display = "none";
-  hint.textContent = "ざらざら…";
-  const bag = $("bagBtn").getBoundingClientRect(), topBox = $("top").getBoundingClientRect();
-  const px = e.clientX > 0 ? Math.min(Math.max(e.clientX, bag.left + bag.width * .25), bag.right - bag.width * .2) : bag.left + bag.width / 2;
-  const py = e.clientY > 0 ? Math.min(Math.max(e.clientY, bag.top + bag.height * .3), bag.bottom - bag.height * .25) : bag.top + bag.height * .6;
-  const probe = $("probe");
-  const at = (dx, dy) => "translate(" + (px - topBox.left + dx) + "px," + (py - topBox.top + dy) + "px) rotate(-16deg)";
-  probe.style.opacity = "1";
-  probe.animate([{ transform:at(90, -26) }, { transform:at(0, 0) }], { duration:150 * motion, easing:"ease-in", fill:"forwards" });
-  setTimeout(() => {
-    $("bagBtn").classList.add("squash");
-    pourGrains(px, py);
-    setTimeout(() => $("bagBtn").classList.remove("squash"), 120);
-  }, 150 * motion);
-  setTimeout(() => {
-    probe.animate([{ transform:at(0, 0) }, { transform:at(110, -32) }], { duration:200 * motion, easing:"ease-out", fill:"forwards" })
-      .onfinish = () => { probe.style.opacity = "0"; };
-  }, 1050 * motion);
-  setTimeout(toHakaru, 1500 * motion);
-});
-function pourGrains(sx, sy) {
+/* 皿の粒: 位置は皿の中の px で持ち、指でなでると動く */
+let GW = 36, GH = 20, PW = 0, PH = 0;
+function renderGrain(g) {
+  g.el.style.transform = "translate(" + (g.x - GW / 2) + "px," + (g.y - GH / 2) + "px) rotate(" + g.r + "deg)";
+}
+function buildGrains() {
+  inner.textContent = "";
+  grains = [];
+  PW = inner.clientWidth; PH = inner.clientHeight;
+  const scale = Math.max(2, Math.round(PW / 180));
+  GW = 18 * scale; GH = 10 * scale;
   const kinds = [];
   ["higai", "shini", "mijuku", "color"].forEach(k => { for (let i = 0; i < LOT[k]; i++) kinds.push(k); });
   badLeft = kinds.length;
   while (kinds.length < PLATE_GRAINS) kinds.push("seiryu");
-  shuffle(kinds);
-  const box = plate.getBoundingClientRect();
-  const scale = Math.max(2, Math.min(Math.round(box.width / 117), Math.floor(box.height / 70)));
-  const w = 18 * scale, h = 10 * scale;
-  const order = shuffle(kinds.map((_, i) => i));
+  const reach = Math.min(PW, PH) * 0.2;
   kinds.forEach((kind, i) => {
-    const col = i % 5, row = Math.floor(i / 5);
-    const left = 10 + (col + 0.5) / 5 * 80 + (Math.random() * 4 - 2);
-    const top = 9 + (row + 0.5) / 4 * 82 + (Math.random() * 5 - 2.5);
+    /* 山の形に落ちる。わるい粒は山の真ん中の下に隠れる */
+    const bad = kind !== "seiryu";
+    const a = Math.random() * Math.PI * 2, d = Math.sqrt(Math.random()) * reach * (bad ? 0.5 : 1);
     const b = document.createElement("button");
     b.className = "grain";
-    b.style.cssText = "left:" + left + "%;top:" + top + "%;width:" + w + "px;height:" + h + "px;--r:" + Math.round(Math.random() * 60 - 30) + "deg;";
     b.setAttribute("aria-label", "粒");
     b.disabled = true;
+    b.hidden = true;
+    b.style.width = GW + "px"; b.style.height = GH + "px";
     const img = document.createElement("img");
-    img.src = grainSprite(kind, "normal"); img.alt = "";
+    img.src = grainSprite(kind, "far"); img.alt = "";
     b.appendChild(img);
-    plate.appendChild(b);
-    const g = { el:b, img, kind, gone:false };
+    const g = { el:b, img, kind, x:PW / 2 + Math.cos(a) * d, y:PH / 2 + Math.sin(a) * d * 0.8, r:Math.round(Math.random() * 120 - 60), z:bad ? 1 : 2 + i, gone:false, awake:0 };
+    b.style.zIndex = g.z;
+    b.addEventListener("click", () => { tapGrain(g); });
+    inner.appendChild(b);
+    renderGrain(g);
     grains.push(g);
-    b.addEventListener("click", () => tapGrain(g));
-    /* 穀刺しの場所から落ちてきて、皿で小さくはねる */
-    const tx = sx - (box.left + box.width * left / 100), ty = sy - (box.top + box.height * top / 100);
-    const r = b.style.getPropertyValue("--r");
-    const base = "translate(-50%,-50%) ";
-    const delay = order[i] * 42 * motion;
-    b.animate([
-      { transform:base + "translate(" + tx + "px," + ty + "px) rotate(" + (Math.random() * 360) + "deg)", offset:0, easing:"cubic-bezier(.35,0,.85,.55)" },
-      { transform:base + "rotate(" + r + ")", offset:.72, easing:"ease-out" },
-      { transform:base + "translateY(-13px) rotate(" + r + ")", offset:.86, easing:"ease-in" },
-      { transform:base + "rotate(" + r + ")", offset:1 }
-    ], { duration:520 * motion, delay, fill:"backwards" });
-    setTimeout(tick, delay + 375 * motion);
   });
+  shuffle(grains); /* 落ちる順はばらばらに */
+}
+function toLocal(cx, cy) {
+  const rect = plate.getBoundingClientRect();
+  return { x:(cx - rect.left - plate.clientLeft - Z.tx) / Z.s, y:(cy - rect.top - plate.clientTop - Z.ty) / Z.s };
 }
 
-/* はかる: 水分計をトントンと3回 */
+/* ぬく: 穀刺しを指で押し込み、引き抜くと、引いた分だけ粒が落ちる */
+const P = { x:0, rest:0, inX:0, y:0, L:0, inserted:false, done:false, released:0, drag:null };
+let bagTaps = 0;
+function layoutProbe() {
+  const scene = $("sceneBag"), bag = $("bagBtn"), probe = $("probe");
+  P.rest = bag.offsetLeft + bag.offsetWidth + 6;
+  P.inX = bag.offsetLeft + bag.offsetWidth * 0.32;
+  P.L = Math.min(scene.clientWidth - P.rest - 6, 190);
+  P.y = bag.offsetTop + bag.offsetHeight * 0.62;
+  probe.style.width = P.L + "px";
+  probe.style.height = P.L * 6 / 44 + "px";
+  const poke = $("poke");
+  poke.style.left = P.rest + P.L * 0.72 + "px";
+  poke.style.top = P.y - 6 + "px";
+  if (!P.inserted) setProbe(P.rest);
+}
+function setProbe(x) {
+  P.x = x;
+  $("probe").style.transform = "translate(" + x + "px," + P.y + "px)";
+}
+function moveProbe(x) {
+  if (P.done) return;
+  const span = P.rest - P.inX;
+  x = Math.min(Math.max(x, P.inX), P.rest + 12);
+  setProbe(x);
+  if (!P.inserted) {
+    if (x <= P.inX + span * 0.1) {
+      P.inserted = true;
+      tone(150, 0.1, 0.1, "sine");
+      $("bagBtn").classList.add("squash");
+      setTimeout(() => $("bagBtn").classList.remove("squash"), 120);
+      hint.textContent = "ひきぬく →";
+    }
+    return;
+  }
+  const want = Math.floor(Math.max(0, (x - P.inX) / span - 0.08) / 0.84 * PLATE_GRAINS);
+  while (P.released < Math.min(want, PLATE_GRAINS)) pourOne(grains[P.released++]);
+  if (P.released >= PLATE_GRAINS) finishProbe();
+}
+function pourOne(g) {
+  const scene = $("sceneBag").getBoundingClientRect();
+  const from = toLocal(scene.left + Math.max(P.rest - 4, P.x + P.L * 0.3), scene.top + P.y);
+  g.el.hidden = false;
+  const end = g.el.style.transform;
+  const sx = from.x - GW / 2, sy = from.y - GH / 2;
+  g.el.animate([
+    { transform:"translate(" + sx + "px," + sy + "px) rotate(" + Math.random() * 360 + "deg)", offset:0, easing:"cubic-bezier(.4,0,.9,.6)" },
+    { transform:end, offset:.76, easing:"ease-out" },
+    { transform:end + " translateY(-9px)", offset:.88, easing:"ease-in" },
+    { transform:end, offset:1 }
+  ], { duration:430 * motion });
+  setTimeout(tick, 320 * motion);
+}
+function finishProbe() {
+  P.done = true; P.drag = null;
+  hint.textContent = "ざらざら…";
+  $("probe").animate([{ opacity:1 }, { opacity:0 }], { duration:280 * motion, fill:"forwards" }).onfinish = function () { this.cancel(); $("probe").style.opacity = "0"; };
+  setTimeout(toHakaru, 560 * motion);
+}
+function autoProbe() {
+  if (P.done || step !== 0) return;
+  $("poke").style.display = "none";
+  const t0 = performance.now(), start = P.x;
+  const dIn = P.inserted ? 0 : 240 * motion, dOut = 620 * motion;
+  const run = () => {
+    if (step !== 0 || P.done) return;
+    const t = performance.now() - t0;
+    if (t < dIn) moveProbe(start + (P.inX - start) * (t / dIn));
+    else moveProbe(P.inX + (P.rest - P.inX) * Math.min(1, (t - dIn) / dOut));
+    requestAnimationFrame(run);
+  };
+  if (!P.inserted) moveProbe(P.inX);
+  run();
+}
+$("sceneBag").addEventListener("pointerdown", (e) => {
+  if (step !== 0 || P.done) return;
+  P.drag = { cx:e.clientX, x0:P.x, moved:false };
+  capture($("sceneBag"), e);
+});
+$("sceneBag").addEventListener("pointermove", (e) => {
+  if (!P.drag) return;
+  const dx = e.clientX - P.drag.cx;
+  if (Math.abs(dx) > 5) { P.drag.moved = true; $("poke").style.display = "none"; }
+  if (P.drag.moved) moveProbe(P.drag.x0 + dx);
+});
+function endBagDrag() {
+  if (!P.drag) return;
+  const tapped = !P.drag.moved;
+  P.drag = null;
+  if (!tapped || P.done) return;
+  if (++bagTaps >= NUDGE_LIMIT) { autoProbe(); return; }
+  /* タップだけだと、動かし方を穀刺しが見せる */
+  $("probe").animate([{ transform:"translate(" + P.x + "px," + P.y + "px)" }, { transform:"translate(" + (P.x - 18) + "px," + P.y + "px)" }, { transform:"translate(" + P.x + "px," + P.y + "px)" }], { duration:320 * motion, easing:"ease-in-out" });
+}
+$("sceneBag").addEventListener("pointerup", endBagDrag);
+$("sceneBag").addEventListener("pointercancel", () => { P.drag = null; });
+$("bagBtn").addEventListener("click", (e) => { if (e.detail === 0) autoProbe(); }); /* キーボードの Enter はそのまま進める */
+
+/* はかる: 水分計をぎゅっと長押し。おさえ終わると数字が出る */
+const HOLD_MS = 600;
+let meterTaps = 0, holding = null;
 function toHakaru() {
   showTop("sceneMeter");
-  setStep(1, "💧 3回 タップ");
+  setStep(1, "💧 ぎゅっと おさえる");
   $("meterBtn").disabled = false;
   $("meterBtn").focus({ preventScroll:true });
 }
-$("meterBtn").addEventListener("click", () => {
-  if (step !== 1 || measured >= LOT.moisture.length) return;
-  const i = measured++, value = LOT.moisture[i], lcd = $("lcd");
+function takeReading() {
+  const i = measured++, value = LOT.moisture[i];
   pop();
-  const t0 = performance.now();
-  const roll = () => {
-    if (performance.now() - t0 < 220 * motion) { lcd.textContent = (12 + Math.random() * 6).toFixed(1); requestAnimationFrame(roll); return; }
-    lcd.textContent = value.toFixed(1);
-    $("slots").children[i].textContent = value.toFixed(1);
-    if (i === LOT.moisture.length - 1) setTimeout(showAverage, 240 * motion);
-    else hint.textContent = "💧 あと " + (LOT.moisture.length - i - 1) + "回";
+  $("lcd").textContent = value.toFixed(1);
+  $("slots").children[i].textContent = value.toFixed(1);
+  if (measured === LOT.moisture.length) setTimeout(showAverage, 240 * motion);
+  else hint.textContent = "💧 あと " + (LOT.moisture.length - measured) + "回";
+}
+function stopHold() {
+  holding = null;
+  $("meterBtn").classList.remove("press");
+  $("holdBar").style.width = "0";
+}
+$("meterBtn").addEventListener("pointerdown", (e) => {
+  if (step !== 1 || measured >= LOT.moisture.length || holding) return;
+  capture($("meterBtn"), e);
+  $("meterBtn").classList.add("press");
+  const h = holding = { t0:performance.now(), done:false };
+  const run = () => {
+    if (holding !== h) return;
+    const p = (performance.now() - h.t0) / (HOLD_MS * motion);
+    if (p >= 1) { h.done = true; $("holdBar").style.width = "0"; takeReading(); return; }
+    $("holdBar").style.width = p * 100 + "%";
+    $("lcd").textContent = (12 + Math.random() * 6).toFixed(1);
+    requestAnimationFrame(run);
   };
-  roll();
+  run();
+});
+function releaseMeter() {
+  if (!holding) return;
+  const early = !holding.done;
+  stopHold();
+  if (!early || measured >= LOT.moisture.length) return;
+  $("lcd").textContent = measured ? LOT.moisture[measured - 1].toFixed(1) : "--.-";
+  if (++meterTaps >= NUDGE_LIMIT) { meterTaps = 0; takeReading(); return; }
+  hint.textContent = "💧 はなさず おさえる";
+}
+$("meterBtn").addEventListener("pointerup", releaseMeter);
+$("meterBtn").addEventListener("pointercancel", releaseMeter);
+$("meterBtn").addEventListener("contextmenu", (e) => e.preventDefault());
+$("meterBtn").addEventListener("click", (e) => {
+  if (e.detail === 0 && step === 1 && measured < LOT.moisture.length) takeReading();
 });
 function showAverage() {
   const avg = moistureAverage(LOT.moisture), high = itemGrades(lotPercents(LOT)).moisture === 3;
@@ -543,43 +669,227 @@ function showAverage() {
   setTimeout(toMiwakeru, (high ? 1700 : 950) * motion);
 }
 
-/* みわける: さわると粒が反応する。わるい粒はぴょんと小皿へ */
-function toMiwakeru() {
-  showTop("sceneSort");
-  setStep(2, "わるい粒を タップ");
-  grains.forEach(g => { g.el.disabled = false; });
-  armHint(lotIndex === 0 ? 350 : 6000); /* 最初の袋は探させず、わるい粒をすぐ揺らす */
+/* みわける: なでて広げる／ズームして見る／つまんで小皿へ */
+const Z = { s:1, tx:0, ty:0 };
+const ZOOM_MAX = 3.4, FACE_AT = 1.5;
+let isNear = false, everZoomed = false, spread = false;
+function applyZoom() {
+  const maxX = 0, minX = PW * (1 - Z.s), minY = PH * (1 - Z.s);
+  Z.tx = Math.min(maxX, Math.max(minX, Z.tx));
+  Z.ty = Math.min(0, Math.max(minY, Z.ty));
+  inner.style.transform = "translate(" + Z.tx + "px," + Z.ty + "px) scale(" + Z.s + ")";
+  plate.classList.toggle("zoomed", Z.s > 1.001);
+  zoomBtn.textContent = Z.s > 1.001 ? "➖" : "🔍";
+  const near = Z.s >= FACE_AT;
+  if (near !== isNear) {
+    isNear = near;
+    grains.forEach(g => { if (!g.gone) g.img.src = grainSprite(g.kind, near ? "normal" : "far"); });
+    if (near && step === 2) {
+      tick();
+      setFace("happy", 700);
+      if (!everZoomed) { everZoomed = true; updateSortHint(); }
+    }
+  }
+}
+function resetZoom() {
+  Z.s = 1; Z.tx = 0; Z.ty = 0;
+  applyZoom();
+}
+function zoomTo(s, px, py) {
+  /* px,py（皿の枠の中の場所）の下にある粒が動かないように寄る */
+  const lx = (px - Z.tx) / Z.s, ly = (py - Z.ty) / Z.s;
+  Z.s = s < 1.04 ? 1 : Math.min(ZOOM_MAX, s);
+  Z.tx = px - lx * Z.s; Z.ty = py - ly * Z.s;
+  applyZoom();
+}
+function updateSortHint() {
+  if (step !== 2) return;
+  if (!spread) hint.textContent = "👋 なでて ひろげる";
+  else if (!everZoomed) hint.textContent = "🔍 ふたゆびで ズーム";
+  else {
+    hint.textContent = "わるい粒を つまむ";
+    armHint(lotIndex === 0 ? 1200 : 6000);
+  }
 }
 function armHint(ms) {
   clearTimeout(hintTimer);
   hintTimer = setTimeout(() => {
-    const rest = grains.filter(g => !g.gone && g.kind !== "seiryu");
-    if (step === 2) rest.forEach(g => g.el.classList.add("hint"));
+    if (step === 2) grains.filter(g => !g.gone && g.kind !== "seiryu").forEach(g => g.img.classList.add("hint"));
   }, ms);
 }
+function toMiwakeru() {
+  showTop("sceneSort");
+  setStep(2, "");
+  grains.forEach(g => { g.el.disabled = false; });
+  zoomBtn.hidden = false;
+  checkSpread();
+  updateSortHint();
+}
+function checkSpread() {
+  const live = grains.filter(g => !g.gone), near = GW * 0.74;
+  let overlaps = 0;
+  for (let i = 0; i < live.length; i++) for (let j = i + 1; j < live.length; j++) {
+    if (Math.hypot(live[i].x - live[j].x, live[i].y - live[j].y) < near) overlaps++;
+  }
+  const now = overlaps <= 2;
+  if (now !== spread && now) { spread = true; updateSortHint(); }
+}
+/* なでる: 指先で粒を押し、押された粒がとなりの粒も押す */
+let simOn = false, lastBrushSound = 0;
+function brush(from, to) {
+  const R = GW * 0.8, dist = Math.hypot(to.x - from.x, to.y - from.y), steps = Math.max(1, Math.ceil(dist / 6));
+  let moved = false;
+  for (let k = 1; k <= steps; k++) {
+    const fx = from.x + (to.x - from.x) * k / steps, fy = from.y + (to.y - from.y) * k / steps;
+    grains.forEach(g => {
+      if (g.gone) return;
+      const dx = g.x - fx, dy = g.y - fy, d = Math.hypot(dx, dy) || 1;
+      if (d >= R) return;
+      g.x = fx + dx / d * R; g.y = fy + dy / d * R;
+      g.r += (R - d) * (dx > 0 ? 0.5 : -0.5);
+      g.awake = 16;
+      moved = true;
+    });
+  }
+  if (moved) {
+    const t = performance.now();
+    if (t - lastBrushSound > 70) { lastBrushSound = t; tick(); }
+    startSim();
+  }
+}
+function startSim() {
+  if (simOn) return;
+  simOn = true;
+  requestAnimationFrame(simFrame);
+}
+function simFrame() {
+  const live = grains.filter(g => !g.gone), minD = GW * 0.82;
+  let any = false;
+  for (let i = 0; i < live.length; i++) for (let j = i + 1; j < live.length; j++) {
+    const a = live[i], b = live[j];
+    if (!a.awake && !b.awake) continue;
+    const dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || 1;
+    if (d >= minD) continue;
+    const push = (minD - d) * 0.32, ux = dx / d, uy = dy / d;
+    a.x -= ux * push; a.y -= uy * push; b.x += ux * push; b.y += uy * push;
+    if (push > 0.6) { a.awake = Math.max(a.awake, 6); b.awake = Math.max(b.awake, 6); }
+  }
+  live.forEach(g => {
+    g.x = Math.min(PW - GW * 0.55, Math.max(GW * 0.55, g.x));
+    g.y = Math.min(PH - GW * 0.4, Math.max(GW * 0.4, g.y));
+    renderGrain(g);
+    if (g.awake > 0) { g.awake--; any = true; }
+  });
+  if (any) requestAnimationFrame(simFrame);
+  else simOn = false;
+  checkSpread();
+}
+function grainAt(p) {
+  const pad = 6 / Z.s;
+  let best = null;
+  grains.forEach(g => {
+    if (g.gone || g.el.hidden) return;
+    const a = g.r * Math.PI / 180, dx = p.x - g.x, dy = p.y - g.y;
+    const u = dx * Math.cos(a) + dy * Math.sin(a), v = -dx * Math.sin(a) + dy * Math.cos(a);
+    if (Math.abs(u) <= GW / 2 + pad && Math.abs(v) <= GH / 2 + pad && (!best || g.z > best.z)) best = g;
+  });
+  return best;
+}
+const pts = new Map();
+let sortDrag = null, pinch = null;
+function plateXY(cx, cy) {
+  const rect = plate.getBoundingClientRect();
+  return { x:cx - rect.left - plate.clientLeft, y:cy - rect.top - plate.clientTop };
+}
+function startPinch() {
+  const [a, b] = [...pts.values()];
+  const mid = plateXY((a.x + b.x) / 2, (a.y + b.y) / 2);
+  pinch = { d0:Math.hypot(a.x - b.x, a.y - b.y) || 1, s0:Z.s, lx:(mid.x - Z.tx) / Z.s, ly:(mid.y - Z.ty) / Z.s };
+  sortDrag = null;
+}
+plate.addEventListener("pointerdown", (e) => {
+  if (step !== 2 || e.target === zoomBtn) return;
+  capture(plate, e);
+  pts.set(e.pointerId, { x:e.clientX, y:e.clientY });
+  if (pts.size === 1) sortDrag = { x:e.clientX, y:e.clientY, lx:e.clientX, ly:e.clientY, moved:false };
+  else if (pts.size === 2) startPinch();
+});
+plate.addEventListener("pointermove", (e) => {
+  if (!pts.has(e.pointerId)) return;
+  pts.set(e.pointerId, { x:e.clientX, y:e.clientY });
+  if (pts.size >= 2 && pinch) {
+    const [a, b] = [...pts.values()];
+    const mid = plateXY((a.x + b.x) / 2, (a.y + b.y) / 2);
+    const s = Math.max(1, Math.min(ZOOM_MAX, pinch.s0 * Math.hypot(a.x - b.x, a.y - b.y) / pinch.d0));
+    Z.s = s < 1.04 ? 1 : s;
+    Z.tx = mid.x - pinch.lx * Z.s; Z.ty = mid.y - pinch.ly * Z.s;
+    applyZoom();
+    return;
+  }
+  if (!sortDrag) return;
+  if (Math.hypot(e.clientX - sortDrag.x, e.clientY - sortDrag.y) > 7) sortDrag.moved = true;
+  if (sortDrag.moved) {
+    if (Z.s > 1.001) { /* 寄っている間は、指で見る場所を動かす */
+      Z.tx += e.clientX - sortDrag.lx; Z.ty += e.clientY - sortDrag.ly;
+      applyZoom();
+    } else {
+      brush(toLocal(sortDrag.lx, sortDrag.ly), toLocal(e.clientX, e.clientY));
+    }
+  }
+  sortDrag.lx = e.clientX; sortDrag.ly = e.clientY;
+});
+function endPlatePointer(e, cancelled) {
+  if (!pts.has(e.pointerId)) return;
+  pts.delete(e.pointerId);
+  if (pts.size < 2) pinch = null;
+  if (pts.size === 0 && sortDrag) {
+    const d = sortDrag;
+    sortDrag = null;
+    if (!d.moved && !cancelled && step === 2) {
+      const g = grainAt(toLocal(e.clientX, e.clientY));
+      if (g) tapGrain(g);
+    }
+  }
+}
+plate.addEventListener("pointerup", (e) => endPlatePointer(e, false));
+plate.addEventListener("pointercancel", (e) => endPlatePointer(e, true));
+document.addEventListener("gesturestart", (e) => e.preventDefault()); /* iPhoneのページ拡大と取り合わない */
+zoomBtn.addEventListener("click", () => {
+  if (step !== 2) return;
+  if (Z.s > 1.001) resetZoom();
+  else zoomTo(2.4, PW / 2, PH / 2);
+});
 function tapGrain(g) {
   if (step !== 2 || g.gone) return;
   if (g.kind === "seiryu") {
     tick();
-    g.img.src = grainSprite("seiryu", "happy");
-    g.el.classList.remove("wig"); void g.el.offsetWidth; g.el.classList.add("wig");
-    setTimeout(() => { g.el.classList.remove("wig"); g.img.src = grainSprite("seiryu", "normal"); }, 520);
+    if (isNear) g.img.src = grainSprite("seiryu", "happy");
+    g.img.classList.remove("wig"); void g.img.offsetWidth; g.img.classList.add("wig");
+    setTimeout(() => { g.img.classList.remove("wig"); if (!g.gone) g.img.src = grainSprite("seiryu", isNear ? "normal" : "far"); }, 520);
     return;
   }
   g.gone = true; badLeft--;
-  g.el.classList.remove("hint");
-  if (lotIndex > 0) { grains.forEach(o => o.el.classList.remove("hint")); armHint(6000); }
   pop();
   setFace("happy", 500);
+  grains.forEach(o => o.img.classList.remove("hint"));
+  if (everZoomed) armHint(lotIndex === 0 ? 1200 : 6000);
+  /* つまんだ粒だけ皿の外へ飛ばせるよう、皿の上に写しを出して小皿まで運ぶ */
   const from = g.el.getBoundingClientRect(), to = $("dish").getBoundingClientRect();
+  const cw = GW * Z.s, ch = GH * Z.s;
+  const fly = document.createElement("img");
+  fly.className = "flyGrain";
+  fly.src = grainSprite(g.kind, "happy"); fly.alt = "";
+  fly.style.cssText = "left:" + (from.left + from.width / 2 - cw / 2) + "px;top:" + (from.top + from.height / 2 - ch / 2) + "px;width:" + cw + "px;height:" + ch + "px;";
+  document.body.appendChild(fly);
+  g.el.hidden = true;
   const dx = to.left + to.width / 2 - (from.left + from.width / 2), dy = to.top + to.height / 2 - (from.top + from.height / 2);
-  const base = "translate(-50%,-50%) ";
-  g.el.animate([
-    { transform:base + "rotate(" + g.el.style.getPropertyValue("--r") + ")", easing:"ease-out" },
-    { transform:base + "translate(" + dx * .5 + "px," + (dy * .5 - 34) + "px) rotate(170deg)", easing:"ease-in" },
-    { transform:base + "translate(" + dx + "px," + dy + "px) rotate(340deg) scale(.66)" }
+  const shrink = 36 / cw;
+  fly.animate([
+    { transform:"rotate(" + g.r + "deg)", easing:"ease-out" },
+    { transform:"translate(" + dx * .5 + "px," + (dy * .5 - 34) + "px) rotate(170deg)", easing:"ease-in" },
+    { transform:"translate(" + dx + "px," + dy + "px) rotate(340deg) scale(" + shrink + ")" }
   ], { duration:330 * motion, fill:"forwards" }).onfinish = () => {
-    g.el.style.visibility = "hidden";
+    fly.remove();
     const mini = document.createElement("img");
     mini.src = grainSprite(g.kind, "happy"); mini.alt = "";
     $("dish").appendChild(mini);
@@ -588,26 +898,32 @@ function tapGrain(g) {
     clearTimeout(hintTimer);
     grains.forEach(o => { o.el.disabled = true; });
     hint.textContent = "きれいに なった！";
+    pts.clear(); sortDrag = null; pinch = null;
+    zoomBtn.hidden = true;
     setTimeout(() => {
-      grains.filter(o => !o.gone).forEach((o, i) => setTimeout(() => {
-        o.img.src = grainSprite("seiryu", "happy");
-        o.el.classList.add("wig");
-      }, i * 22 * motion));
+      resetZoomForSmiles();
     }, 300 * motion);
     setTimeout(toKimeru, 1050 * motion);
   }
 }
+function resetZoomForSmiles() {
+  grains.filter(o => !o.gone).forEach((o, i) => setTimeout(() => {
+    o.img.src = grainSprite("seiryu", "happy");
+    o.img.classList.add("wig");
+  }, i * 22 * motion));
+}
 
 /* きめる: 項目ごとに ● が下の等級の列へ落ちる */
 function toKimeru() {
-  const pc = lotPercents(LOT), it = itemGrades(pc);
+  const pc = lotPercents(LOT), it = itemGrades(pc), worst = lotGrade(LOT);
+  resetZoom();
   const rows = [
     ["水分", pc.moisture.toFixed(1) + "%", it.moisture],
     ["整粒", pc.seiryu + "%", it.seiryu],
     ["死米", pc.shini + "%", it.shini],
     ["着色粒", pc.color + "%", it.color],
     ["計", pc.total + "%", it.total]
-  ].filter(([name, , g]) => name === "水分" || name === "整粒" || g === lotGrade(LOT) && g > 0); /* 水分と整粒のほかは、等級を下げた項目だけ出す */
+  ].filter(([name, , g]) => name === "水分" || name === "整粒" || (g === worst && g > 0)); /* 水分と整粒のほかは、等級を下げた項目だけ出す */
   $("rows").innerHTML = rows.map(([name, value, g]) =>
     '<div class="rowName">' + name + "<b>" + value + "</b></div>" +
     [0, 1, 2, 3].map(c => '<div class="cell' + (c === 3 ? " last" : "") + '">' + (c === g ? '<i class="dot" data-g="' + g + '"></i>' : "") + "</div>").join("")).join("");
@@ -630,46 +946,91 @@ document.querySelectorAll(".gradeBtn").forEach(btn => btn.addEventListener("clic
   toOsu();
 }));
 
-/* おす: ドン */
+/* おす: はんこを指で下ろして、ドン */
+let hankoTaps = 0, stamped = false, hankoDrag = null, hankoMax = 0, hankoBob = null;
+function setHanko(y) {
+  $("hanko").style.transform = "translateY(" + y + "px)";
+}
+function bobHanko() {
+  hankoBob = $("hanko").animate([{ transform:"translateY(0)" }, { transform:"translateY(-8px)" }, { transform:"translateY(0)" }], { duration:900, iterations:Infinity, easing:"ease-in-out" });
+}
+function stopBob() {
+  if (hankoBob) { hankoBob.cancel(); hankoBob = null; }
+}
 function toOsu() {
   const grade = GRADES[lotGrade(LOT)];
   const d = new Date();
   $("mark").innerHTML = grade + "<small>" + d.getFullYear() + "." + (d.getMonth() + 1) + "." + d.getDate() + "</small>";
   $("mark").className = grade === "規格外" ? "small" : "";
   $("hanko").style.opacity = "1";
-  $("hanko").style.transform = "";
-  $("bagBig").disabled = false;
+  setHanko(0);
   layer($("osu"), true);
-  setStep(4, "ふくろを タップ");
-  $("hanko").animate([
-    { transform:"translateY(0)" }, { transform:"translateY(-8px)" }, { transform:"translateY(0)" }
-  ], { duration:900, iterations:Infinity, easing:"ease-in-out" });
+  setStep(4, "はんこを おろす ⬇");
+  const mark = $("mark").getBoundingClientRect(), hk = $("hanko").getBoundingClientRect();
+  hankoMax = mark.top + mark.height / 2 - (hk.top + hk.height) + 10;
+  bobHanko();
   $("bagBig").focus({ preventScroll:true });
 }
-$("bagBig").addEventListener("click", () => {
-  if (step !== 4 || $("bagBig").disabled) return;
-  $("bagBig").disabled = true;
-  const hanko = $("hanko"), mark = $("mark").getBoundingClientRect(), hk = hanko.getBoundingClientRect();
-  hanko.getAnimations().forEach(a => a.cancel());
-  const dy = mark.top + mark.height / 2 - (hk.top + hk.height - 12);
-  hanko.animate([{ transform:"translateY(-14px)" }, { transform:"translateY(" + dy + "px)" }],
-    { duration:120 * motion, easing:"cubic-bezier(.6,0,1,.7)", fill:"forwards" }).onfinish = () => {
-    thump();
-    $("mark").classList.add("on");
-    $("bagBig").classList.add("squash");
-    setTimeout(() => $("bagBig").classList.remove("squash"), 240);
-    setFace("happy", 1800);
-    hanko.animate([{ transform:"translateY(" + dy + "px)" }, { transform:"translateY(-90px)", opacity:0 }],
-      { duration:320 * motion, delay:150 * motion, easing:"ease-out", fill:"forwards" });
-    hint.style.display = "none";
-    nextBtn.classList.add("on");
-    nextBtn.focus({ preventScroll:true });
-  };
+function stampNow() {
+  if (stamped || step !== 4) return;
+  stamped = true;
+  hankoDrag = null;
+  stopBob();
+  setHanko(hankoMax);
+  thump();
+  $("mark").classList.add("on");
+  $("bagBig").classList.add("squash");
+  setTimeout(() => $("bagBig").classList.remove("squash"), 240);
+  setFace("happy", 1800);
+  $("hanko").animate([{ transform:"translateY(" + hankoMax + "px)" }, { transform:"translateY(-90px)", opacity:0 }],
+    { duration:320 * motion, delay:150 * motion, easing:"ease-out", fill:"forwards" });
+  hint.style.display = "none";
+  nextBtn.classList.add("on");
+  nextBtn.focus({ preventScroll:true });
+}
+function dropHanko() {
+  stopBob();
+  $("hanko").animate([{ transform:"translateY(0)" }, { transform:"translateY(" + hankoMax + "px)" }],
+    { duration:130 * motion, easing:"cubic-bezier(.6,0,1,.7)" }).onfinish = stampNow;
+}
+$("bagBig").addEventListener("pointerdown", (e) => {
+  if (step !== 4 || stamped) return;
+  capture($("bagBig"), e);
+  stopBob();
+  hankoDrag = { cy:e.clientY, moved:false };
 });
+$("bagBig").addEventListener("pointermove", (e) => {
+  if (!hankoDrag) return;
+  const dy = e.clientY - hankoDrag.cy;
+  if (Math.abs(dy) > 5) hankoDrag.moved = true;
+  if (!hankoDrag.moved) return;
+  const y = Math.max(0, Math.min(hankoMax, dy));
+  setHanko(y);
+  if (y >= hankoMax - 1) stampNow();
+});
+function endHanko() {
+  if (!hankoDrag) return;
+  const tapped = !hankoDrag.moved;
+  hankoDrag = null;
+  if (stamped) return;
+  if (tapped && ++hankoTaps >= NUDGE_LIMIT) { dropHanko(); return; }
+  setHanko(0);
+  bobHanko();
+}
+$("bagBig").addEventListener("pointerup", endHanko);
+$("bagBig").addEventListener("pointercancel", endHanko);
+$("bagBig").addEventListener("click", (e) => { if (e.detail === 0 && step === 4 && !stamped) dropHanko(); });
 nextBtn.addEventListener("click", () => {
   $("hanko").getAnimations().forEach(a => a.cancel());
   lotIndex++;
   startLot();
+});
+window.addEventListener("resize", () => {
+  layoutProbe();
+  PW = inner.clientWidth; PH = inner.clientHeight;
+  grains.forEach(g => { g.awake = 1; });
+  startSim();
+  applyZoom();
 });
 
 /* 手が止まったらカード（入力はふさがない・舞台にもかぶせない）。タップ数は /api/feedback（kind:kensa）で数える */

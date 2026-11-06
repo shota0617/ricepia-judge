@@ -222,6 +222,10 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertRegex(HTML, r"#plate \{[^}]*touch-action:none")
         self.assertIn('addEventListener("gesturestart"', HTML)
 
+    def test_idle_card_buttons_do_not_wrap(self):
+        # 320px幅で「サイトへ もどる」が2行に折れてはみ出さない
+        self.assertRegex(HTML, r"#likeBtn,#returnLink \{[^}]*flex:1 1 auto; white-space:nowrap")
+
     def test_like_closes_card_and_can_retry(self):
         self.assertIn("setTimeout(hideIdleCard, 900);", HTML)
         self.assertIn('sessionStorage.removeItem("kensaLiked")', HTML)

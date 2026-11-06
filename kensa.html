@@ -776,7 +776,7 @@ function zoomTo(s, px, py) {
 function updateSortHint() {
   if (step !== 2) return;
   if (!spread) { hint.textContent = "👋 なでて ひろげる"; guideAt("sweep", plate); }
-  else if (!everZoomed) { hint.textContent = "🔍 ふたゆびで ズーム"; guideAt("pinch", plate); }
+  else if (!everZoomed) { hint.textContent = "🔍 ふたゆびで ズーム"; guideAt("pinch", plate); armHint(6000); } /* 寄らない人にも、しばらくしたらわるい粒がふくらんで知らせる */
   else {
     guideOff();
     hint.textContent = "わるい粒を つまむ";
@@ -1018,6 +1018,7 @@ function tapGrain(g) {
   setFace("happy", 500);
   grains.forEach(o => o.img.classList.remove("hint"));
   if (everZoomed) armHint(lotIndex === 0 ? 1200 : 6000);
+  else armHint(6000);
   /* つまんだ粒だけ皿の外へ飛ばせるよう、皿の上に写しを出して小皿まで運ぶ */
   const from = g.el.getBoundingClientRect(), to = $("dish").getBoundingClientRect();
   const cw = GW * Z.s, ch = GH * Z.s;

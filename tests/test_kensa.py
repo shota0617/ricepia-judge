@@ -131,6 +131,11 @@ class FlowTests(unittest.TestCase):
         # わるい粒のタップは、指が12pxまでずれても効く（7px では実機の指のぶれで空振りしやすい）
         self.assertIn("Math.hypot(e.clientX - sortDrag.x, e.clientY - sortDrag.y) > 12) sortDrag.moved = true;", HTML)
 
+    def test_non_zoomer_still_gets_a_cue(self):
+        # 寄らない人にも、ズーム待ちの間に6秒でわるい粒がふくらむ（遠目では割れ目の粒が良い粒と同じ絵）
+        self.assertIn('guideAt("pinch", plate); armHint(6000); }', HTML)
+        self.assertIn("  else armHint(6000);", HTML)
+
     def test_touching_good_grain_keeps_hint_timer(self):
         fn = HTML[HTML.index("function tapGrain(g) {"):HTML.index("g.gone = true; badLeft--;")]
         self.assertNotIn("armHint", fn)

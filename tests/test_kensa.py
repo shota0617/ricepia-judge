@@ -101,6 +101,13 @@ class FlowTests(unittest.TestCase):
         self.assertIn('nextBtn.addEventListener("pointerup", leaveBag);', HTML)
         self.assertIn('nextBtn.addEventListener("click", (e) => { if (e.detail === 0) leaveBag(); });', HTML)
 
+    def test_no_focus_ring_for_finger_play(self):
+        # 指で遊ぶ間は focus() を呼ばない（ブラウザが水分計や袋にフォーカスの枠を描く）。キーを使った人にだけ移す
+        self.assertNotIn(".focus({ preventScroll:true })", HTML.replace("if (keyUser) el.focus({ preventScroll:true });", ""))
+        self.assertIn("keyUser = true;", HTML)
+        for el in ('$("meterBtn")', "token", '$("bagBig")', "nextBtn"):
+            self.assertIn("focusIfKeys(" + el + ");", HTML)
+
     def test_long_press_shows_no_ios_sheet(self):
         # 一等米の写真・🤲・はんこを長押ししても「画像を保存」などのシートが出ない（#app から継承）
         self.assertRegex(HTML, r"#app \{[^}]*-webkit-touch-callout:none")

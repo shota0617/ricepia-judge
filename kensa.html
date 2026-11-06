@@ -472,6 +472,11 @@ function shuffle(a) {
   for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
   return a;
 }
+/* 進行に合わせたフォーカス移しは、キーで遊ぶ人にだけ。指で遊ぶ人にはブラウザのフォーカスの枠を描かせない */
+let keyUser = false;
+function focusIfKeys(el) {
+  if (keyUser) el.focus({ preventScroll:true });
+}
 function capture(el, e) {
   try { el.setPointerCapture(e.pointerId); } catch (_) {}
 }
@@ -671,7 +676,7 @@ function toHakaru() {
   setStep(1, "💧 ぐるぐる まわす");
   guideAt("circle", $("crank"));
   $("meterBtn").disabled = false;
-  $("meterBtn").focus({ preventScroll:true });
+  focusIfKeys($("meterBtn"));
 }
 function takeReading() {
   const i = measured++, value = LOT.moisture[i];
@@ -1082,7 +1087,7 @@ function toSense() {
     const tk = token.getBoundingClientRect(), fc = $("face").getBoundingClientRect();
     guideAt("move", token, fc.left + fc.width / 2 - (tk.left + tk.width / 2), fc.top + fc.height / 2 - (tk.top + tk.height / 2));
   }
-  token.focus({ preventScroll:true });
+  focusIfKeys(token);
 }
 function senseDone() {
   if (token.hidden) return;
@@ -1242,7 +1247,7 @@ function toOsu() {
   hankoMax = mark.top + mark.height / 2 - hk.bottom + 10;
   bobHanko();
   guideAt("press", $("pad"));
-  $("bagBig").focus({ preventScroll:true });
+  focusIfKeys($("bagBig"));
 }
 function inkDone() {
   inked = true;
@@ -1270,7 +1275,7 @@ function stampNow() {
     { duration:320 * motion, delay:150 * motion, easing:"ease-out", fill:"forwards" });
   hint.style.display = "none";
   nextBtn.classList.add("on");
-  nextBtn.focus({ preventScroll:true });
+  focusIfKeys(nextBtn);
   guideAt("move", $("bagBig"), 90, 0);
 }
 function dropHanko() {
@@ -1390,6 +1395,7 @@ document.addEventListener("pointerdown", (e) => {
   armIdle();
 }, { passive:true });
 document.addEventListener("keydown", (e) => {
+  keyUser = true;
   if (!e.target.closest || !e.target.closest("#idleCard")) hideIdleCard();
   armIdle();
 });

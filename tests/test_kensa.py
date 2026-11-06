@@ -94,6 +94,11 @@ class FlowTests(unittest.TestCase):
         self.assertIn('classList.toggle("scrolled", window.scrollY > 0)', HTML)
         self.assertIn("html.scrolled #guide { visibility:hidden; }", HTML)  # 説明を読む間は手本の指が浮かない
 
+    def test_zoom_button_works_right_after_a_swipe(self):
+        # 速くなでた直後のタップは click にならないことがある（Chrome のフリング抑止）。粒と同じく pointerup で効かせる
+        self.assertIn('zoomBtn.addEventListener("pointerup", toggleZoom);', HTML)
+        self.assertIn('zoomBtn.addEventListener("click", (e) => { if (e.detail === 0) toggleZoom(); });', HTML)
+
     def test_long_press_shows_no_ios_sheet(self):
         # 一等米の写真・🤲・はんこを長押ししても「画像を保存」などのシートが出ない（#app から継承）
         self.assertRegex(HTML, r"#app \{[^}]*-webkit-touch-callout:none")

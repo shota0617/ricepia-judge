@@ -993,11 +993,13 @@ function twistPlate(deg) {
 plate.addEventListener("pointerup", (e) => endPlatePointer(e, false));
 plate.addEventListener("pointercancel", (e) => endPlatePointer(e, true));
 document.addEventListener("gesturestart", (e) => e.preventDefault()); /* iPhoneのページ拡大と取り合わない */
-zoomBtn.addEventListener("click", () => {
+function toggleZoom() {
   if (step !== 2) return;
   if (Z.s > 1.001) resetZoom();
   else zoomTo(2.4, PW / 2, PH / 2);
-});
+}
+zoomBtn.addEventListener("pointerup", toggleZoom); /* 粒と同じく指を離した時に効く。速くなでた直後は click が来ないことがある */
+zoomBtn.addEventListener("click", (e) => { if (e.detail === 0) toggleZoom(); }); /* キーボードの Enter */
 function tapGrain(g) {
   if (step !== 2 || g.gone) return;
   if (g.kind === "seiryu") {

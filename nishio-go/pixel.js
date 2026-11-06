@@ -8858,6 +8858,46 @@ cv.addEventListener('pointermove', e => {
 });
 cv.addEventListener('pointerup', () => { drag = null; });
 
+// お米の そばを 2回 さわると、ちょこん。歩く 操作には 手を 加えない。
+const riceTouch = { down: null, tap: null, shakeAt: -Infinity };
+function ricePlayReady() {
+  return active && !document.hidden && !worldMode && !driving && !meiroPause
+    && howtoEl.hidden && !mapCovered() && !!roll.last && !!roll.box;
+}
+function ricePlayHop() {
+  roll.happyT = Math.max(roll.happyT, 1.2);
+  if (!calmMotion && roll.h <= 0) { roll.hv = 1.8; roll.h = 0.001; }
+  dirty = true;
+}
+function riceTouchNear(e) {
+  if (!ricePlayReady()) return false;
+  const r = cv.getBoundingClientRect(), b = roll.box;
+  if (!r.width || !r.height) return false;
+  const x = (e.clientX - r.left) * cv.width / r.width, y = (e.clientY - r.top) * cv.height / r.height;
+  const px = 12 * cv.width / r.width, py = 12 * cv.height / r.height;
+  return x >= b[0] - px && x <= b[2] + px && y >= b[1] - py && y <= b[3] + py;
+}
+function riceTouchReset() { riceTouch.down = riceTouch.tap = null; }
+document.addEventListener('pointerdown', e => {
+  if (e.target !== cv || !e.isPrimary || e.button !== 0 || !riceTouchNear(e)) { riceTouchReset(); return; }
+  riceTouch.down = { id: e.pointerId, x: e.clientX, y: e.clientY, at: performance.now() };
+}, { capture: true, passive: true });
+cv.addEventListener('pointermove', e => {
+  const d = riceTouch.down;
+  if (d && e.pointerId === d.id && Math.hypot(e.clientX - d.x, e.clientY - d.y) > 10) riceTouchReset();
+}, { passive: true });
+cv.addEventListener('pointerup', e => {
+  const d = riceTouch.down, prev = riceTouch.tap, now = performance.now();
+  riceTouch.down = null;
+  if (!d || e.pointerId !== d.id || now - d.at > 400 || Math.hypot(e.clientX - d.x, e.clientY - d.y) > 10 || !riceTouchNear(e)) { riceTouchReset(); return; }
+  if (prev && now - prev.at <= 360 && Math.hypot(e.clientX - prev.x, e.clientY - prev.y) <= 28) {
+    riceTouch.tap = null; ricePlayHop();
+  } else riceTouch.tap = { x: e.clientX, y: e.clientY, at: now };
+}, { passive: true });
+cv.addEventListener('pointercancel', riceTouchReset, { passive: true });
+window.addEventListener('blur', riceTouchReset);
+document.addEventListener('visibilitychange', riceTouchReset);
+
 /* ---------- 操作 ---------- */
 function setActive(on) {
   active = on;
@@ -9008,6 +9048,21 @@ window.addEventListener('deviceorientation', e => {
 });
 function tiltReset() { tiltG.base = null; tiltG.n = 0; tiltG.t = 0; tiltG.x = tiltG.y = 0; }
 function tiltNeedsPermission() { return !!(window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function'); }
+// 許可済みの 傾き、または 許可不要の 端末だけ。新しく 許可を 求めない。
+window.addEventListener('devicemotion', e => {
+  if (!ricePlayReady()) return;
+  const needs = tiltNeedsPermission() || (window.DeviceMotionEvent && typeof window.DeviceMotionEvent.requestPermission === 'function');
+  const { on: tiltIsOn } = tiltG;
+  if (needs && !tiltIsOn) return;
+  const now = performance.now();
+  if (now - riceTouch.shakeAt < 1500) return;
+  const valid = a => a && Number.isFinite(a.x) && Number.isFinite(a.y) && Number.isFinite(a.z);
+  const a = valid(e.acceleration) ? e.acceleration : e.accelerationIncludingGravity;
+  if (!valid(a)) return;
+  const strength = Math.abs(Math.hypot(a.x, a.y, a.z) - (a === e.acceleration ? 0 : 9.81));
+  if (strength < 12) return;
+  riceTouch.shakeAt = now; ricePlayHop();
+}, { passive: true });
 function tiltAsk(event) {   // 本当の タップで 1回だけ（はじめの画面の「あそぶ」・地図のタップ・めいろを開くボタンなど）。拒否・例外でも タップや 矢印キーで 遊べる。
   if (!event || !event.isTrusted || tiltG.asked || !tiltNeedsPermission()) return;   // userActivation が ない 端末でも、自動表示・合成クリックからは 求めない
   tiltG.asked = true; tiltG.retry = false;

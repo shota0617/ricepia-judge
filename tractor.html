@@ -1697,7 +1697,7 @@ const CLAW = (() => {
     }
     if (!gone) return;
     if (working && S.v > 0.05) run += S.v * dt;
-    if (run > 12 && !told && !chk && tries < 3 && toastT <= 0) { chk = true; toast(MSG, 7); }   // ほかの知らせが 消えてから
+    if (run > 12 && !told && !chk && tries < 3 && toastT <= 0 && !startNoticeMuted()) { chk = true; toast(MSG, 7); }   // ほかの知らせが 消えてから。サイクル179・最初の1分は のんびりでは 出さない
     if (chk) {                                      // 1.2 秒 見えていたら 気づいたことにする（上書きされたら 出しなおす）
       if ($('toast').dataset.raw !== MSG) { chk = false; tries++; }
       else if (toastT <= 7 - 1.2) { chk = false; told = true; }
@@ -2885,7 +2885,7 @@ function tillCell(i, j, lx = 0) {               // lx：作業機のまん中か
   eraseTracks(c);
   tillTexDirty = true;
   ROUGH[c] = 1.04 - 0.16 * Math.max(0, Math.min(1, ((S.pitch || 9) - 6) / 7)) - 0.14 * clod;   // 土塊がふえて 影が濃い
-  if (!SHIRO && mo > 0.5 && !S.moistTold && S.started) { S.moistTold = true; toast('水分の多い所を耕している：土塊がふえる（握ると だんご）。N で土を握って確かめられる', 5); }
+  if (!SHIRO && mo > 0.5 && !S.moistTold && S.started && !startNoticeMuted()) { S.moistTold = true; toast('水分の多い所を耕している：土塊がふえる（握ると だんご）。N で土を握って確かめられる', 5); }
   DRY.wet(c);
   OMO.till(c, x0 + CELL / 2, z0 + CELL / 2, mo);   // 秋：オモダカの 塊茎が 出る
   KEIKAL.till(x0 + CELL / 2, z0 + CELL / 2);      // 秋：まいた ケイカルが 土に まざる
@@ -3794,7 +3794,7 @@ const OMO = (() => {
   function till(c, x, z, mo) {                        // はじめて 耕した ます目（x, z は まん中）
     if (!patches.some(P => Math.hypot(x - P.x, z - P.z) < P.r)) return;
     if (mo >= 0.5) {                                // 練れて 泥の 塊に なる
-      if (!wetTold && S.started) { wetTold = true; setTimeout(() => { toast('水の 多い 所を 耕すと 土が 練れて 泥の 塊に なり、オモダカの 塊茎は 土の 中に 残る。秋起こしは 乾いてから', 6); }, 600); }
+      if (!wetTold && S.started && !startNoticeMuted()) { wetTold = true; setTimeout(() => { toast('水の 多い 所を 耕すと 土が 練れて 泥の 塊に なり、オモダカの 塊茎は 土の 中に 残る。秋起こしは 乾いてから', 6); }, 600); }
       return;
     }
     if (rnd() > 0.3 || n >= MAX) return;
@@ -3865,7 +3865,7 @@ const STONES = (() => {
       s.x -= sn * 0.5; s.z -= cs * 0.5; s.y = TILL_Y + s.r * 0.2; place(k); mesh.instanceMatrix.needsUpdate = true;
       S.v *= 0.82;                                  // がくっ
       if (audio && soundOn) { clank(audio.ac, audio.out, Math.min(1, s.r * 8)); thud(audio.ac, audio.out, 0.35); }
-      if (!told) { told = true; toast('カン！ 爪が石に当たった。土の中の石は 爪をいためる（田植えの苗の根張りも悪くする）。本物は 水を張る前に 石を拾っておく', 6); setTimeout(() => voice('oto'), 6500); }
+      if (!told && !startNoticeMuted()) { told = true; toast('カン！ 爪が石に当たった。土の中の石は 爪をいためる（田植えの苗の根張りも悪くする）。本物は 水を張る前に 石を拾っておく', 6); setTimeout(() => voice('oto'), 6500); }
     });
   }
   return { setup, start, step, list, get hits() { return hits; } };

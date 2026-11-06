@@ -93,6 +93,10 @@ class FlowTests(unittest.TestCase):
         self.assertIn("html:not(.scrolled) { touch-action:none; }", HTML)
         self.assertIn('classList.toggle("scrolled", window.scrollY > 0)', HTML)
 
+    def test_long_press_shows_no_ios_sheet(self):
+        # 一等米の写真・🤲・はんこを長押ししても「画像を保存」などのシートが出ない（#app から継承）
+        self.assertRegex(HTML, r"#app \{[^}]*-webkit-touch-callout:none")
+
     def test_idle_card_keeps_measuring(self):
         self.assertIn('kind:"kensa"', HTML)
         self.assertIn('sendTap("like"', HTML)

@@ -248,7 +248,7 @@ const CHECKS = {
   async whatif(b){
     const p = await page(b, 390, 844);
     const r = await p.evaluate(() => { K3.manual = true; K3.fixedSeed = 11; K3.jump('heading'); const S = K3.S, f = S.f; f.hoshiDays = 0; f.root = 40; f.flowDays = 0; f.heatHits = 6; for (let i=0;i<200 && f.gdd < 1000;i++){ f.water = Math.max(f.water, 2); K3.advanceDay(); } for (let i=0;i<8 && !S.hv.done;i++) K3.doLeft(); const w = K3.whatIf(); for (let i=0;i<10 && S.hv.moisture > 15.5;i++) K3.advanceDay(); K3.doLeft(); return { w: w.map(x => [x.name, x.dy, x.ds]), text: document.getElementById('rSay2').textContent }; });
-    ok(r.w.length >= 2 && (r.w[0][1] + r.w[0][2]*4) >= 8 && r.w.every((x, i) => i === 0 || x[1] + x[2]*4 <= r.w[i-1][1] + r.w[i-1][2]*4), '「〜して いれば」が 損失の 大きい 順', r.w);
+    ok(r.w.length >= 2 && (r.w[0][1] + r.w[0][2]*4) >= 12 && r.w.every((x, i) => i === 0 || x[1] + x[2]*4 <= r.w[i-1][1] + r.w[i-1][2]*4), '「〜して いれば」が 損失の 大きい 順', r.w);
     ok(/して いれば|入れかえて いれば/.test(r.text) && /\+\d+/.test(r.text), '結果の 2行目に 2つの「〜して いれば +X」', r.text);
     const g = await p.evaluate(() => { K3.jump('result'); return { w: K3.whatIf().map(x => x.name), text: document.getElementById('rSay2').textContent }; });
     ok(!/刈りどき|乾燥/.test(g.w.join()), 'ていねいな 年には 刈りどき・乾燥の「していれば」は 出ない', g);
@@ -257,7 +257,7 @@ const CHECKS = {
   async heading(b){
     const p = await page(b, 390, 844);
     const r = await p.evaluate(() => { K3.manual = true; K3.fixedSeed = 11; K3.jump('tiller'); const S = K3.S, f = S.f; let said = null; for (let i=0;i<120 && !said;i++){ f.water = Math.max(f.water, 2); K3.advanceDay(); if (/出穂！/.test(document.getElementById('say').textContent)) said = { day: S.day, heading: f.heading, hud: document.getElementById('stage').textContent }; }
-      for (let i=0;i<10;i++){ f.water = Math.max(f.water, 2); K3.advanceDay(); } f.lodge = 0.3; f.typhoonDay = S.day; f.water = 3; K3.advanceDay(); const ty = document.getElementById('say').textContent;
+      for (let i=0;i<10;i++){ f.water = Math.max(f.water, 2); K3.advanceDay(); } K3.advanceDay(); f.lodge = 0.3; f.tyAdd = 0.3; f.typhoonDay = S.day; f.water = 3; K3.advanceDay(); /* seed 11 は 132日目が 本物の 台風なので 1日 ずらす（33周目） */ const ty = document.getElementById('say').textContent;
       K3.say('ながい ことばを ためす ための 吹き出しです。これは 三行に なります。<span class="src">（出典）</span>'); const longSrc = !!document.getElementById('say').querySelector('.src'); K3.say('みじかい。<span class="src">（出典）</span>', 'wow'); const shortSrc = !!document.getElementById('say').querySelector('.src');
       return { said, ty, longSrc, shortSrc }; });
     ok(!r.longSrc && r.shortSrc, '34字を こえる 吹き出しは 注を 落とし、短ければ のこす', [r.longSrc, r.shortSrc]);

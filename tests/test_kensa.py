@@ -266,7 +266,7 @@ const LOT = LOTS[0], hint = {}, lcd = {textContent:'--.-'};
 const elements = {lcd, slots:{children:[{}, {}, {}]}, crankArm:{style:{}},
   sceneMeter:{addEventListener:(_, fn) => { onMove = fn; }}};
 const $ = id => elements[id];
-const pop = () => {}, tick = () => {};
+const pop = () => {}, tick = () => {}, meterBeep = () => {};
 const crankPointer = e => ({a:e.angle, far:true});
 let crankTurned = 0, crankDrag = {id:1, last:0, sum:0, x:0, y:0, moved:false};
 """ + reading + move + """
@@ -566,6 +566,19 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertIn('palLook = kind === "seiryu" || (far && kind === "higai")', HTML)  # わるい粒の色は変えない
         self.assertIn("drawBag($(\"bagCanvas\"), LOT_LOOKS[LOT.look].stripe)", HTML)
         self.assertIn("{ moisture:[14.1, 14.3, 14.2], higai:1, shini:1, mijuku:0, color:0, look:0 }", HTML)  # 最初の袋の固定内容は不変
+
+    def test_cycle89_each_action_has_its_own_small_sound(self):
+        # 類3の点検: 測定1回・わるい粒よけ・等級正解・朱肉の4所作が同じ pop を共有していた。
+        # 所作ごとに違う小さな音へ分け、押印 thump・刺す150Hz・平均880Hzは従来どおり固有のまま。
+        self.assertIn('const meterBeep = () => tone(1240, 0.09, 0.035, "sine");', HTML)
+        self.assertIn('const grainDrop = () => tone(340, 0.07, 0.05, "triangle");', HTML)
+        self.assertIn('const inkSound = () => tone(240, 0.1, 0.055, "triangle");', HTML)
+        self.assertIn("  meterBeep();", HTML)  # はかる: 測定のたび計器のピッ
+        self.assertIn("  grainDrop();", HTML)  # みわける: 粒が小皿へコト
+        self.assertIn("  inkSound();", HTML)  # おす: 朱肉にぎゅっと
+        self.assertEqual(HTML.count("pop();"), 1)  # pop は等級正解だけに残る
+        self.assertIn('tone(150, 0.1, 0.1, "sine")', HTML)  # 刺す音は不変
+        self.assertIn("tone(high ? 330 : 880, 0.14, 0.05,", HTML)  # 平均確定の音は不変
 
 if __name__ == "__main__":
     unittest.main()

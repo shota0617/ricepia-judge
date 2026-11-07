@@ -9375,7 +9375,7 @@ function mzRoute(now) {
     mzTiles.clear();   // はまった タイルも ゴールごとに はじめから
     const bc = npcBump.carry; if (bc) npcBump.carry = bc.from === mzRt.gkey ? { id: bc.id, to: gkey } : null;   // ゴールの 人に 着いて 話した：あいさつ ずみは その すぐ 次の ゴールへ だけ もちこす（動く 前に 行き先を また かえたら すてる）
     mzRt.gkey = gkey; mzRt.best = Infinity; mzRt.bestT = now; mzRt.showUntil = 0; mzRt.hints = 0; mzRt.t0 = now; mzRt.clockT = now; mzRt.len0 = 0; mzRt.touched = false;
-    mzNext.name = g.name || ''; mzNext.want = true;   // 「🏁 つぎの ゴール」を 出す（道のりが 分かってから）
+    mzNext.name = g.name || '';   // にしおサイクル146（F3）：つぎのゴールの札は出さない（want を 立てない）
   }
   mzRt.gid = g.id || g.name;
   if (key === mzRt.key && !(mzRt.retry && now > mzRt.retry)) return;
@@ -9462,10 +9462,7 @@ function mzHintTick(now) {   // 25秒 行き先に 近づけていない（め�
   if (!mzRt.touched) { mzRt.bestT = now; return; }   // にしおサイクル126：まだ 手で 動かして いない（開いて 眺めている だけ）なら 迷っていない。25秒は 手で 動かしはじめてから 数える
   if (now - mzRt.bestT > 25000) {
     mzRt.showUntil = now + 6000; mzRt.bestT = now; mzRt.hints = (mzRt.hints || 0) + 1;
-    // 知らせは ゴールごとに 1回目だけ（自分で 遊んで 分かった：迷って いる 間、25秒ごとに 同じ 知らせが 上を ふさいでいた。光る 点は 毎回 出す）。
-    // 同じ ゴールで 3回目には、おたすけを すすめる（1回の あそびで 1回）
-    if (mzRt.hints === 1) G.toast('💡 道しるべ：光る 点の ほうへ 進もう');
-    else if (mzRt.hints === 3 && !mzHelp.offered) { mzHelp.offered = true; G.toast('🧭 まよったら、せっていで 道しるべを 出せるよ'); }
+    // にしおサイクル146（F3）：知らせは 出さない。光る 点だけ（毎回 出す）
   }
 }
 // めいろの おたすけ（運営者の声「迷路初心者でもわかりやすく」）：ゴールへの 道しるべを いつも 出し、行き止まりの マスに ✕。
@@ -11929,34 +11926,9 @@ function drawMzFx(w, cy, T, now, S) {   // 画面の まん中（お米）から
   }
   ctx.globalAlpha = 1;
 }
-// 新しい ゴールが きまった：画面の 上に「🏁 つぎの ゴール」と 名所の 名前・めいろの 道のりを 3秒（運営者の声「ゴールのわかりやすさを磨く」）
-// 「🏁 ゴール！」の あと・窓が 開いている 間は 待つ。道のりが 分かってから（2秒 待っても 分からなければ 名前だけ）
+// にしおサイクル146（F3）：つぎのゴールの札は出さない。下の札と矢印で足りる（want・t0 が 立たないので 札・待ち・縁の 矢印の よけも 働かない）
 function drawMzNext(w, cy, U, now) {
-  if (mapCovered() || mzBanner.t0) { if (mzNext.t0) mzNext.t0 = now; return; }
-  if (mzNext.want) {
-    if (!mzRt.path && now - mzRt.t0 < 2000) return;
-    mzNext.want = false; mzNext.t0 = now;
-    mzNext.dist = mzRt.path ? (mzRt.path.length - 1) * MZ_K * TILE_M : 0;
-  }
-  const a = (now - mzNext.t0) / 1000;
-  if (a > 3) { mzNext.t0 = 0; return; }   // （ゴールまでの めいろ図は 運営者の声「ゴールまでの迷路は削除」2026-10-29 で なくした）
-  const S = Math.round(MZ_CLOCK_PX * U / 16), under = mzRt.t0 && mzRt.len0 ? Math.round(S * 1.5 + S * 0.85 + U * 0.3) : 0;   // 時間と ★の 札（drawMzClock）の 下から（横向きの 低い 画面では お米が 上の ほうに いて、札と 重なって 字が 読めなかった）
-  const big = Math.round(U * 1.05), y = Math.max(big, cy - U * 5.6, under + Math.round(big * 0.8) * 0.9), d = mzNext.dist, dist = !d ? '' : d < 1000 ? `めいろで ${Math.round(d / 10) * 10}m` : `めいろで ${(d / 1000).toFixed(1)}km`;   // y：画面の 上に はみ出さない
-  ctx.globalAlpha = Math.min(1, a / 0.25, (3 - a) / 0.4);
-  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
-  const lines = [['🏁 つぎの ゴール', Math.round(big * 0.8), '#ffe680'], [mzNext.name, big, '#ffffff'], [dist, Math.round(big * 0.7), '#bfefff']].filter(l => l[0]);
-  let yy = y;
-  ctx.fillStyle = 'rgba(10,20,30,.62)';
-  const bw = Math.min(w - U, Math.max(...lines.map(([t, sz]) => { ctx.font = `bold ${sz}px "DotGothic16", sans-serif`; return ctx.measureText(t).width; })) + U * 1.2);
-  const bh = lines.reduce((s, l) => s + l[1] * 1.35, 0) + U * 0.5;
-  ctx.fillRect(Math.round(w / 2 - bw / 2), Math.round(y - lines[0][1] * 0.9), Math.round(bw), Math.round(bh));
-  mzNext.box = [w / 2 - bw / 2, y - lines[0][1] * 0.9, w / 2 + bw / 2, y - lines[0][1] * 0.9 + bh]; mzNext.at = now;   // 縁の 矢印の 道のりの 札が これに 重なる ときは 描かない（drawMzGoal）
-  for (const [t, sz, col] of lines) {
-    ctx.font = `bold ${sz}px "DotGothic16", sans-serif`; ctx.lineWidth = Math.max(3, sz / 5); ctx.strokeStyle = '#1a1a1a'; ctx.fillStyle = col;
-    let tt = t; while (ctx.measureText(tt).width > w - U * 2 && tt.length > 2) tt = tt.slice(0, -2) + '…';   // 長い 名前は 「…」
-    ctx.strokeText(tt, w / 2, yy); ctx.fillText(tt, w / 2, yy); yy += sz * 1.35;
-  }
-  ctx.globalAlpha = 1;
+  mzNext.want = false; mzNext.t0 = 0; return;
 }
 const mzHud = { t: -1e9, r: [] };
 function mzHudRects(now) {   // 地図の 上に 重なる ボタン・札の 四角（キャンバスの 画素。0.5秒ごとに 測りなおす）

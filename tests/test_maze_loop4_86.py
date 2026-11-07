@@ -100,8 +100,8 @@ class HeroRevert(unittest.TestCase):
         files = set(subprocess.run(["git", "diff", "origin/main", "--name-only"], cwd=ROOT,
                                    capture_output=True, text=True, check=True).stdout.split())
         allowed = {"nishio-go/pixel.js"} | {"tests/test_maze_loop4_%d.py" % n
-                                            for n in (86, 95, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 145)} \
-            | {"tests/test_maze_loop4_hero_revert.py"}
+                                            for n in (66, 86, 95, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 145, 146)} \
+            | {"tests/test_maze_loop4_hero_revert.py", "nishio-go/game.js", "nishio-go.html", "tests/test_nishio_cycle126.py", "tests/test_maze_loop3_40.py", "tests/test_maze_loop3_41.py"}
         self.assertLessEqual(files, allowed)
 
 

@@ -32,8 +32,9 @@ class Hint(unittest.TestCase):
 
     def test_hint_after_touched(self):
         r = run(True, 30)
-        self.assertEqual(r['toasts'], ['💡 道しるべ：光る 点の ほうへ 進もう'])
+        self.assertEqual(r['toasts'], [])   # サイクル146（F3）：知らせの 文は 出さない。光る 点だけ
         self.assertEqual(r['hints'], 1)
+        self.assertGreater(r['show'], 0)
 
     def test_source(self):
         self.assertIn("if (typeof mzRt !== 'undefined') mzRt.touched = true;", grab_fn('idleTouch'))

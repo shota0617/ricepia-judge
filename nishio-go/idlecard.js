@@ -8,7 +8,7 @@
     if (!s || typeof s !== 'object') return false;
     var n = Number(s.idleSec);
     return isFinite(n) && n >= IDLE_CARD_SEC &&
-      s.started === true && s.visible === true && s.covered === false && s.shown === false;
+      s.moved === true && s.started === true && s.visible === true && s.covered === false && s.shown === false;
   }
 
   var shown = false, liked = false, lastAct = Date.now();
@@ -57,6 +57,7 @@
     if (open($('idleCard')) && (covered() || document.hidden)) { hide(); return; }
     if (shouldShow({
       idleSec: idleSec,
+      moved: window.nsgHandMoved === true,
       started: !!intro && intro.hidden,
       visible: !document.hidden,
       covered: covered(),
@@ -87,7 +88,7 @@
   window.NISHIO_IDLE_CARD = {
     IDLE_CARD_SEC: IDLE_CARD_SEC,
     shouldShow: shouldShow,
-    state: function () { return { shown: shown, liked: liked, idleSec: Math.floor((Date.now() - lastAct) / 1000) }; }
+    state: function () { return { moved: window.nsgHandMoved === true, shown: shown, liked: liked, idleSec: Math.floor((Date.now() - lastAct) / 1000) }; }
   };
 
   if (typeof document !== 'undefined') {

@@ -163,7 +163,7 @@ let S = loadState();
 let stepMove = false;   // いまの移動が、歩く地図の1歩か（pixel.js の moveTo(…, 'step')）
 // 開始の 位置合わせだけで ようこそ箱を 開かず、最初の 操作から 遊べるようにする。
 let playInteracted = false;
-const notePlayInput = () => { playInteracted = true; };
+const notePlayInput = () => { playInteracted = true; window.nsgHandMoved = true; };   // 手で 動かした 合図（無操作カードは 動かした 人にだけ 出す）
 const session = { start: Date.now(), on: false, gained: 0, rewards: 0 };   // 1回に遊んだ間のこと（離脱を減らす：session_end）
 const modeListeners = [];   // あるいて移動／操作して移動の切り替えを知らせる先（pixel.js）
 const save = () => { if (!store.set(stateKey(), S)) toast('このブラウザに きろくを 保存できませんでした。スマホの 空きや、ブラウザの 設定（プライベート モード など）を 見てみてね。'); };

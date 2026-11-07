@@ -12308,6 +12308,7 @@ function idleRollForce() {   // 眺めるコロコロ（M5）の 力。条件が
   if (!RS || !RS.idleDue || mazeOn() || worldMode || driving || tapS.path.length || mapCovered(false, true)) { idleRoll.on = false; return null; }
   const now = performance.now();
   if (!RS.idleDue((now - idleRoll.last) / 1000, false)) { idleRoll.on = false; return null; }
+  const fw = firstWalk();   // はじめてのさんぽの 間は 眺めても「いまの ゴール」だけへ（名所めぐりは 3ゴール以降）
   let tg = null, gobj = null;
   if (gd) {
     const p = toTile(gd.lat, gd.lng);
@@ -12318,6 +12319,11 @@ function idleRollForce() {   // 眺めるコロコロ（M5）の 力。条件が
   const gEff = (gobj && (idleRoll.guideKey === gobj.key || idleRoll.fails.indexOf(gobj.key) >= 0)) ? null : gobj;   // 済みの 目的地は その回の あいだ えらばない（手動入力で idleTouch が もどす）
   let restarted = false;
   for (let hop = 0; hop < 8; hop++) {   // 目的地や 近くの 名所に 着いていたら その場で つぎへ（着いた ものは skip に ためて まとめて外す。目的地の 次も 名所めぐりで 転がり続ける）
+    if (!tg && fw) {
+      const ex = failedAll();
+      tg = (gEff && ex.indexOf(gEff.key) < 0) ? Object.assign({ guide: true }, gEff) : null;
+      if (!tg) { idleRoll.on = false; return null; }
+    }
     if (!tg) {
       const list = (G['spots'] || []).map(s => { const p = toTile(s.lat, s.lng); return { x: p.x, y: p.y, key: 's:' + (s.id || s.name) }; });
       const ex = failedAll();
@@ -12326,7 +12332,7 @@ function idleRollForce() {   // 眺めるコロコロ（M5）の 力。条件が
       else tg = RS.idleTarget(rp.x, rp.y, list, ex);
     }
     if (!tg) {
-      if (!restarted && idleRoll.skip.length) { restarted = true; idleRoll.skip = []; continue; }   // 名所を 一巡したら 履歴を 解放して 巡回を 再開する（目的地の 済みは guideKey で保持。Codexレビュー）
+      if (!fw && !restarted && idleRoll.skip.length) { restarted = true; idleRoll.skip = []; continue; }   // 名所を 一巡したら 履歴を 解放して 巡回を 再開する（目的地の 済みは guideKey で保持。Codexレビュー）
       idleRoll.on = false; return null;
     }
     const guide = tg.guide === true;

@@ -49,18 +49,20 @@
 - 育苗日数：中苗で 30〜40日 とする資料がある（WebSearch の要約。どの県の資料かは 確定できず、ゲームでは「30日ほど」と ぼかした）。
 - 代かき：浅い 水（ヒタヒタ）で ていねいに（[埼玉県](https://www.pref.saitama.lg.jp/documents/280800/kassuigizyututaisakusiryou.pdf)）、浅水だと 田面が 見えて 均平を 取りやすい（[鳥取県](https://www.pref.tottori.lg.jp/secure/515264/asamizu.pdf)）、田植えの 3日 以上 前に 行い 作業の あと 落水しない（[愛知県](https://www.pref.aichi.jp/uploaded/attachment/369205.pdf)）。いずれも WebSearch の 要約で 確認。
 - 溝切り：長雨の 停滞水の 排水・緊急時の かん水・収穫時の 地耐力（[新潟県 稲作情報](https://www.pref.niigata.lg.jp/uploaded/attachment/497862.pdf)）。溝は 深さ 10cm 以上、末端を 水口・水尻に つなぐ（新潟県）。ゲームでは 中干しの 間の 雨が 溝が あれば 落ちる（雨の 25% だけ たまる。なければ 80%）だけに した。
+- 苗：中苗は 草丈 15〜20cm・3.0〜4.0葉（[長野県](https://www.pref.nagano.lg.jp/nagachi/nosei-aec/joho/documents/r5-5sakumotsu.pdf)）、育苗日数は 中苗で 30〜35日（[宮城県](https://www.pref.miyagi.jp/documents/6313/inasakunokiisho.pdf)）。ゲームでは「30日 ほどで 3〜4葉」。
+- 穂肥：1回目は 出穂 18〜15日 前・幼穂長 1cm・葉色（SPAD）32.5 以下を 目安に 窒素 1.0〜1.2kg/10a、合わせて 1.0〜3.0kg（[新潟県 岩船](https://www.pref.niigata.lg.jp/uploaded/attachment/502648.pdf)・[新潟県 巻](https://www.pref.niigata.lg.jp/uploaded/attachment/502337.pdf)）。ゲームでは 葉いろ 36 以上なら 1kg、それ以下なら 2kg（簡略）。
 - 活着期：田植え直後は 植えいたみで 吸水が落ちるので、葉先が出る程度の 深水で 苗を守る。[岩手県 稲作情報](https://www.pref.iwate.jp/agri/_res/projects/project_agri/_page_/002/000/188/gogai0518.pdf)
 - 分げつ期：浅水管理で 水温・地温を上げ 初期生育を 促す。[全農 高品質米づくり（初期の水管理）](https://www.zennoh.or.jp/ty/einou/high_quality_rice/pdf/production_001_05.pdf)
 - 中干し：目標茎数を 確保したら 直ちに始める。窒素吸収を 一時的に抑えて 過剰分げつを防ぎ、根を深く伸ばす。[岩手県 2023 水稲 第4号](https://www.pref.iwate.jp/agri/_res/projects/project_agri/_page_/002/007/047/2023suitou04.pdf)。期間は 7〜10日、田面に 1〜2cm の亀裂・足跡がつく程度。幼穂形成期の前に 終える。[秋田県 R8 稲作情報 第4号](https://www.pref.akita.lg.jp/uploads/public/archive_0000080784_00/R8稲作情報04-0626.pdf)。強い中干しは 根を切る おそれ。[福井県 2026 第8号](https://www.pref.fukui.lg.jp/doc/noushi/inasaku_2026_d/fil/20260612_No8.pdf)
 - 出穂：5月上旬植えの コシヒカリは 7月下旬に 出穂（茨城県の例。愛知の値ではない）。[茨城県 水稲生育情報](https://www.pref.ibaraki.jp/nourinsuisan/nishinourin/bannofu/keiei/documents/r8suitouseiikuno5.pdf)
 - 高温登熟：出穂後 20日間の 平均気温が 26℃を こえると 白未熟粒が ふえる。[千葉県 高温障害対策](https://www.pref.chiba.lg.jp/ninaite/system/documents/kouonsyougaitaisaku.pdf)。出穂後 20日間の 掛け流しで 地温が下がり 品質が上がる。[福島県](https://www.pref.fukushima.lg.jp/uploaded/attachment/448369.pdf)。間断かん水・かけ流しで 基部未熟粒を抑え、早期落水を 避ける。[栃木県 成果](https://www.agrinet.pref.tochigi.lg.jp/nousi/seikasyu/seika40/seika_ken1komemijyuku.pdf)
 - 刈取適期：出穂後の 積算気温 1000℃ 前後（一部 950℃）。[栃木県 2023 水稲](https://www.pref.tochigi.lg.jp/g59/documents/20230818suitou2.pdf)。1,200℃ を こえると 胴割粒が ふえる。[福島県 水稲の刈取り](https://www.pref.fukushima.lg.jp/sec/36210a/suitoukaritori.html)。積算 1,001℃ の時点で 籾水分 25% 前後（埼玉県の 2024年の例）。[埼玉県 籾水分情報](https://www.pref.saitama.lg.jp/documents/53276/momisuibunzyouhou4.pdf)
-- 愛知県：平坦地では 極早生の コシヒカリ・早生の あいちのこころ・中生の あいちのかおりSBL などを 組み合わせ、収穫は 8月中旬〜11月。[愛知県 愛知産の穀類](https://www.pref.aichi.jp/soshiki/engei/aichisan-kokurui-cha.html)。西尾市の 主力品種は この周では 確定できなかった（同ページで コシヒカリの 主な産地は 豊田・豊橋・安城）。ゲームの 品種は 参考にした アーティファクトと 同じ コシヒカリ。
+- 愛知県：平坦地では 極早生の コシヒカリ・早生の あいちのこころ・中生の あいちのかおりSBL などを 組み合わせ、収穫は 8月中旬〜11月。[愛知県 愛知産の穀類](https://www.pref.aichi.jp/soshiki/engei/aichisan-kokurui-cha.html)。同ページで 稲の 主な産地に 豊田・西尾・安城・豊橋・一宮が 挙がる。西尾市の 主力品種は 10周目でも 確定できなかった（あいちのかおりSBL の 主な産地は 安城・一宮・豊橋、コシヒカリは 豊田・豊橋・安城）。ゲームの 品種は 参考にした アーティファクトと 同じ コシヒカリ。
 
 ### 作らなかった・言いきらなかった もの
 
 - 西尾の 本物の 気象（ゲームの 天気は 山なりの 気温と 梅雨・台風を 乱数で 作った もの）。
-- 減水深（1日に 水が へる 量）、蒸発の 量：出典を 確かめていないので、ゲームでは「晴れで 1.2cm」のような ゲーム用の 値。
+- 減水深：土地改良事業計画設計基準の 目標値は 15〜25mm/日（[熊本県の 報告（農研機構の 機関リポジトリ）](https://repository.naro.go.jp/record/2390/files/Mem-KARC_no95_p10-17.pdf)。WebSearch の 要約で 確認）。ゲームは 晴れ 15mm・暑い 20mm・くもり 10mm で、この 範囲に 寄せた（10周目）。蒸発と 浸透は 分けていない。
 - 代かき・溝切り・除草・病害虫・乾燥機の 温度：1周目では 入れていない。
 - 西尾市の 主力品種。
 

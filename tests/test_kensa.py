@@ -755,6 +755,22 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         # 粒の tick 自体は従来どおり残る（粒同士の動きの音は変えない）
         self.assertIn("const tick = () => tone(1100 + Math.random() * 900, 0.03, 0.025);", HTML)
 
+    def test_cycle102_sort_completion_has_its_own_smile_sound(self):
+        # 差分テーマ差8（類3の残り）: みわける完了の合図だけが無音だったため、
+        # 残った粒が一斉に笑顔になる瞬間に固有のゆっくり上がる音を付ける。
+        # この音は粒同士の音ではなく、みわけが終わった合図（他の所作の完了音と同じ位置づけ）。
+        self.assertIn("function smileSound() {", HTML)
+        self.assertIn("o.frequency.setValueAtTime(500, t);", HTML)
+        self.assertIn("o.frequency.exponentialRampToValueAtTime(760, t + 0.22);", HTML)
+        # resetZoomForSmiles の冒頭で smileSound を使い、tick は使わない
+        smiles = HTML[HTML.index("function resetZoomForSmiles()"):HTML.index("/* におう・かむ・にぎる")]
+        self.assertIn("smileSound();", smiles)
+        self.assertNotIn("tick();", smiles)
+        # 音量は控えめ（0.018）に留める
+        self.assertIn("g.gain.setValueAtTime(0.018, t);", HTML)
+        # 粒の tick 自体は従来どおり残る（粒同士の動きの音は変えない）
+        self.assertIn("const tick = () => tone(1100 + Math.random() * 900, 0.03, 0.025);", HTML)
+
     def test_cycle93_picked_grains_stay_in_quiet_record(self):
         # 類7: 見分けた粒が静かに記録に残る。任意で開く資料（#notes）の中だけに出し、常時表示・競争・スコアにはしない。
         # 袋を越えて残るため startLot では消さない（サイクル91の seenChecks と同じ持ち方）。

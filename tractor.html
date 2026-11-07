@@ -1944,7 +1944,7 @@ const AIRCL = (() => {
     if (clog <= 0) return;
     if (working && Math.abs(S.v) > 0.05 && !full()) clog = Math.min(1, clog + dt / 200);   // 耕すと 土ぼこりを 吸う
     if (full() && working && Math.abs(S.v) > 0.1 && !told && toastT <= 0 && !startNoticeMuted()) { told = true; toast('エンジンの 回転が 上がりにくい。ぬかるみで すぐ 重くなる。エアクリーナーが 土ぼこりで 詰まっているのかも。止まって ' + IMPL + 'を上げると 見ます', 7); }
-    if (full() && Math.abs(S.v) < 0.05 && !S.rotDown && S.rotPos > 0.9 && (S.rotorW || 0) < 1 && (!S.stalled || offFree()) && !(S.crank > 0)) {   // 詰まっていれば（知らせを 読めなくても）爪が止まってから
+    if (full() && Math.abs(S.v) < 0.05 && !S.rotDown && S.rotPos > 0.9 && (S.rotorW || 0) < 1 && (!S.stalled || offFree()) && !(S.crank > 0) && !startNoticeMuted()) {   // 詰まっていれば（知らせを 読めなくても）爪が止まってから。サイクル226・最初の1分: のんびりでは最初の1分は入口知らせ（1946でガード済み）だけでなく清掃も始めない（止めて上げると知らせなしに駐車・清掃へ入ってしまう漏れ。HERI のサイクル212と同型）。満杯まで作業60.0秒に対し最初の1分で耕せるのは始動0.9秒と初回降下0.26秒を引いた最大58.84秒で clog 上限0.9942と現行でも届かないが、余裕は約1.16秒ぶんしかない。clog は満杯のまま保持されるので、1分を過ぎて止めて上げれば従来どおり清掃する（遅れて直す形）。くわしい説明では従来どおり最初の止めて上げるで清掃する
       S.stalled = true; S.parked = true; S.v = 0; S.autoUp = false;
       for (const k of ['fwd', 'back', 'left', 'right']) key[k] = 0;
       fixT = 5; S.elapsed += 300;

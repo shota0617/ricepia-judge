@@ -635,5 +635,22 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertIn("if (m.a > 0) { Z.s = m.a; Z.tx = m.e; Z.ty = m.f; }", HTML)
         self.assertIn("stopSmoothZoom(); /* 寄りの途中で触れたら、今見えている所から指の操作を始める */", HTML)
 
+    def test_cycle93_picked_grains_stay_in_quiet_record(self):
+        # 類7: 見分けた粒が静かに記録に残る。任意で開く資料（#notes）の中だけに出し、常時表示・競争・スコアにはしない。
+        # 袋を越えて残るため startLot では消さない（サイクル91の seenChecks と同じ持ち方）。
+        self.assertIn('<p id="grainRecord">まだ みわけた粒は ありません。</p>', HTML)
+        self.assertIn("const pickedKinds = { higai:0, shini:0, mijuku:0, color:0 };", HTML)
+        self.assertIn('const KIND_NAMES = { higai:"被害粒", shini:"死米", mijuku:"未熟粒", color:"着色粒" };', HTML)
+        self.assertIn("pickedKinds[g.kind]++; updateGrainRecord();", HTML)
+        self.assertIn("みわけた粒の種類は、ここに静かに残ります", HTML)
+        # きろくは #notes の中（＝📖で任意に開く場所）だけにあり、ゲーム画面側には出していない
+        notes = HTML[HTML.index('<section id="notes">'):HTML.index("</section>")]
+        self.assertIn('id="grainRecord"', notes)
+        self.assertEqual(HTML.count('id="grainRecord"'), 1)
+        # startLot（次の袋へのリセット）で pickedKinds を消していないこと
+        start_lot = HTML[HTML.index("function startLot()"):HTML.index("/* 皿の粒:")]
+        self.assertNotIn("pickedKinds", start_lot)
+
+
 if __name__ == "__main__":
     unittest.main()

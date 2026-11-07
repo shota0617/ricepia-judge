@@ -9515,6 +9515,7 @@ function mzCrowTick(now) {
   const gap = mzCrow.last ? now - mzCrow.last : 0, dt = Math.min(0.1, gap / 1000);
   mzCrow.last = now;
   if (!mzCrowOn() || rp.x === null) { mzCrow.list.length = 0; mzScare.on = false; mzScare.until = 0; return; }
+  if (cubeFirstGoal()) return;   // にしおサイクル134：めいろの はじめての ゴールに 着くまで（最初の 1分）は カラスを 湧かせない（かかしは カラスが いる ときだけ なので 連動して 出ない。2回目からは これまでどおり）
   if (gap > 1000 || mapCovered() || !howtoEl.hidden || sightBusy()) { if (mzScare.until > now - gap) mzScare.until += gap; return; }   // 窓・あそびかた・人の 話の 間は 止まる（かかしの 時間も 止める。画面が かくれて こまが とんだ ときも、前の こまで 効いていれば のばす）
   const rc = Math.floor(rp.x / MZ_K), rr = Math.floor(rp.y / MZ_K), help = mzHelpOn(), max = help ? 1 : 3, spd = help ? 0.9 : 1.5;
   mzCrow.list = mzCrow.list.filter(c => Math.abs(c.cx - rc) + Math.abs(c.cy - rr) < 34);   // 遠くへ はなれた カラスは いなくなる
@@ -9583,6 +9584,7 @@ function mzSpringTick(now) {   // ばね：お米から めいろの 6〜14マ�
     }
     return;
   }
+  if (cubeFirstGoal()) return;   // にしおサイクル134：めいろの はじめての ゴールに 着くまで（最初の 1分）は ばねを 湧かせない（とる 仕組みは そのまま。2回目からは これまでどおり）
   if (now < mzSpring.next || now < mzSpring.until) return;
   mzSpring.next = now + 3000;
   for (let t = 0; t < 30; t++) {

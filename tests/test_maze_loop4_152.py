@@ -28,8 +28,8 @@ class TestWiring(unittest.TestCase):
         i = PIX.index("for (const s of spots) {\n    const p = toTile(s.lat, s.lng);\n    const near")
         body = PIX[i:PIX.index("if (s.featured && !cool && f)", i)]
         self.assertIn("collectedOf(s, G.state && G.state.visits)", body)
-        self.assertIn("drawCollectedMark(sx, sy, size, dpr, !s.shop && !giant)", body)
-        self.assertGreater(body.index("drawCollectedMark"), body.index("depthArt.push"))
+        self.assertIn("if (giant) collectedMarks.push([sx, sy, size, dpr]); else drawCollectedMark(sx, sy, size, dpr, !s.shop);", body)  # サイクル159で遅延描画へ
+        self.assertGreater(body.index("collectedOf"), body.index("depthArt.push"))
 
     def test_mark_body(self):
         i = PIX.index("function drawCollectedMark(")

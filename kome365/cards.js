@@ -765,7 +765,20 @@
   function reflectLine(f) { return reflectLines(f).join(' '); }
 
   function cache(f, key, from, make) { var c = f[key]; if (!c || c.from !== from) c = f[key] = { from: from, sch: make() }; return c.sch; }
+  // 周回117(F1・お手本3枚): 最初の3枚は種(seedP)によらず固定し、全員が同じ順で「弾き方→×がありうる→○で取り戻せる」を通る。正解の側も固定(1日=左・2日=右・3日=左、1枚目と2枚目で必ず逆)
+  var FIRST3 = { 1: 'p_newyear', 2: 'p_frost', 3: 'pf_crack' };
+  var FIRST3_SIDE = { 1: 'left', 2: 'right', 3: 'left' };
+  var FIRST3_KEYS = { p_newyear: 1, p_frost: 1, pf_crack: 1 };
+  function first3Row(cal) {
+    var k = FIRST3[cal], i;
+    if (!k) return null;
+    for (i = 0; i < PREP_ONE.length; i++) if (PREP_ONE[i].k === k) return PREP_ONE[i];
+    for (i = 0; i < PREP_FILL.length; i++) if (PREP_FILL[i].k === k) return PREP_FILL[i];
+    return null;
+  }
   function prepCard(f) {
+    var cal = f._cal == null ? 1 : f._cal, fr = first3Row(cal);
+    if (fr) return dcard('準備', '_prep', fr, f);
     var sch = cache(f, '_prsch', 1, function () { return schedule(PREP_ONE, PREP_FILL, 1, 79, f.seedP & 255, f); }), r = sch[f._cal];
     return dcard('準備', '_prep', r, f);
   }
@@ -790,15 +803,26 @@
   // 正解がいつも同じ側にならないよう、判定つきのカードは左右を日ごとに入れかえる(f・日・カードだけで決まるので、つづきからでも同じになる)
   function shuffleSides(c, f) {
     if (!c.judged || c.left.label === c.right.label) return c;
+    function swap() {
+      var L = c.left, R = c.right, ap = c.apply;
+      c.left = R; c.right = L;
+      var vd = c.verdict;
+      c.apply = function (side, f) { return ap(side === 'left' ? 'right' : 'left', f); };
+      c.verdict = function (side, f) { return vd(side === 'left' ? 'right' : 'left', f); };
+    }
+    // 周回117(F1): 最初の3枚だけは正解の側を固定する(1日=左・2日=右・3日=左)。それ以外は従来のハッシュ方式
+    var cal117 = f._cal == null ? 1 : f._cal;
+    if (FIRST3_SIDE[cal117] && FIRST3_KEYS[c.key]) {
+      var okSide = null;
+      try { okSide = c.verdict('left', f) ? 'left' : c.verdict('right', f) ? 'right' : null; } catch (e) { okSide = null; }
+      if (okSide && okSide !== FIRST3_SIDE[cal117]) swap();
+      return c;
+    }
     var h = 0, s = c.key + ':' + (f._cal == null ? 1 : f._cal) + ':' + (f.seedP & 65535), i;
     for (i = 0; i < s.length; i++) h = (Math.imul(h, 31) + s.charCodeAt(i)) | 0;
     h = Math.imul(h ^ (h >>> 16), 0x85ebca6b); h = Math.imul(h ^ (h >>> 13), 0xc2b2ae35); h ^= h >>> 16;   // 下位の桁までよく混ぜる
     if (!(h & 1)) return c;
-    var L = c.left, R = c.right, ap = c.apply;
-    c.left = R; c.right = L;
-    var vd = c.verdict;
-    c.apply = function (side, f) { return ap(side === 'left' ? 'right' : 'left', f); };
-    c.verdict = function (side, f) { return vd(side === 'left' ? 'right' : 'left', f); };
+    swap();
     return c;
   }
   // 1日すすめる。本編(80日目〜稲刈り)だけエンジンを動かし、準備と収穫後は暦だけが進む

@@ -182,7 +182,7 @@
   body.calm .ico { font-size: 0 !important; }
   /* 操作を かんたんに：ふだんは よく使う ボタンだけ（くわしい説明を 入れると ぜんぶ 出る。キーボードの キーは いつでも 使える） */
   body.calm #bEco, body.calm #bAssist, body.calm #bFast, body.calm #bHelp, body.calm:not(.needDepth) #bShallow, body.calm:not(.needDepth) #bDeep { display: none !important; }   /* 深さは 案内が 浅くと 言ったら 出す（needDepth） */
-  body.calm.firstmin #bCam, body.calm.firstmin #bSnd, body.calm.firstmin #bGear, body.calm.firstmin #bArt, body.calm.firstmin #padB, body.calm.firstmin #padD { display: none !important; }   /* サイクル159 最初の1分：開始直後は 上のボタンと下のパッドを絞り、残すのは 🔰 🌙 ≡ の3つと padC だけ（キーは従来どおり効く。FIRSTMIN 終了で 静かに もどる） */
+  body.calm.firstmin #bCam, body.calm.firstmin #bSnd, body.calm.firstmin #bEasy, body.calm.firstmin #bGear, body.calm.firstmin #bArt, body.calm.firstmin #padB, body.calm.firstmin #padD { display: none !important; }   /* サイクル159 最初の1分：開始直後は 上のボタンと下のパッドを絞る（キーは従来どおり効く。FIRSTMIN 終了で 静かに もどる）／サイクル214・最初の1分（Fable5設計 項目1）: 🔰（かんたんアシスト入切）も最初の1分は隠し、上のアイコンは 🌙 と ≡ の2つだけにする。アシストは既定で入ったまま効き、入切は ≡ から開くはじめの画面のチェックと K キーで従来どおりできる。padC は上の body.firstmin 行（サイクル185）で別途隠している */
   body.calm .ico::before { content: attr(data-i); font-size: 18px; }
   body.calm .pad .ico::before { font-size: 26px; }
   body.calm #bStart.ico::before { font-size: 30px; }
@@ -8129,7 +8129,7 @@ const HINT = {
   }
 };
 // ---- 最初の1分（サイクル159、最初の1分改善 第2弾「開始直後の表示を軽くする」）----
-// のんびり（calm）だけ：開始直後は body に firstmin を付け、CSS で上のボタン・下のパッドを絞る（残るのは 🔰 🌙 ≡ と padC）。
+// のんびり（calm）だけ：開始直後は body に firstmin を付け、CSS で上のボタン・下のパッドを絞る（上に残るのは 🌙 と ≡ の2つ。padC も最初の1分は隠す。サイクル214で 🔰 も隠して2つにそろえた）。
 // なぞりや耕しが始まっても表示を増やさず、60秒経ってから 1 回だけ外し、
 // 後出しにしていた ミニ地図（artBox）があれば トーストなしで 静かに出す。以後は戻さない（R・リセットでも戻らない）。
 const FIRSTMIN = {

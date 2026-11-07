@@ -3346,9 +3346,9 @@ function renderVisitedGallery() {
   const box = $('visitedGallery');
   if (!box) return;
   const tiles = galleryTiles(S.visits, new Set(spots.map(x => x.id))).map(t => {
-    const art = spotThumb(spots.find(x => x.id === t.id)).replace('class="gthumb"', 'class="vg-art"').replace(/width="28" height="28"/, 'width="96" height="96"');
-    return art ? `<button type="button" class="vg-tile" data-spot="${esc(t.id)}">${art}<b>${esc(t.name)}</b></button>` : '';
-  }).filter(Boolean);
+    const art = spotThumb(spots.find(x => x.id === t.id)).replace('class="gthumb"', 'class="vg-art"').replace(/width="28" height="28"/, 'width="96" height="96"') || '<span class="vg-art vg-pin" aria-hidden="true">📍</span>';   // 絵が引けない名所も 落とさない
+    return `<button type="button" class="vg-tile" data-spot="${esc(t.id)}">${art}<b>${esc(t.name)}</b></button>`;
+  });
   box.innerHTML = tiles.join('');
   box.hidden = !tiles.length;
 }
@@ -3417,14 +3417,6 @@ function renderLog() {
   $('critterList').innerHTML = CRITTERS.map(c => book[c.id]
     ? `<li><span class="ico">${cimg(c.id) || '🐾'}</span><span class="main"><b>${esc(c.name)}</b>${simple() && !c.note ? '' : `<small>${esc(c.note || c.say)}${c.src ? ` <a href="${esc(c.src)}" target="_blank" rel="noopener">出典</a>` : ''}</small>`}</span><span class="num">×${book[c.id].n}</span></li>`
     : `<li><span class="ico heard">${cimg(c.id) || '❔'}</span><span class="main"><b>？？？</b><small>${WHERE_NAME[c.where]}${c.months ? `・${c.months[0]}〜${c.months[c.months.length - 1]}月` : ''}</small></span></li>`).join('');
-
-  const visits = Object.entries(S.visits).sort((a, b) => b[1].last - a[1].last);
-  $('visitedList').innerHTML = visits.length ? visits.map(([id, v]) =>
-    simple()   // 文字を少なく（ふだん）：名所のドット絵と、行った回数
-      ? `<li data-spot="${esc(id)}"><span class="ico">${spotThumb(spots.find(x => x.id === id)) || PIA('pin', '')}</span><span class="main"><b>${esc(v.name)}</b></span><span class="num">${v.featured ? PIA('star', '注目スポット') : ''}×${v.n}</span></li>`
-      : `<li data-spot="${esc(id)}"><span class="ico">${esc(v.icon || '📍')}</span><span class="main"><b>${esc(v.name)}</b>
-      <small>${v.n}回・最後 ${fmtTime(v.last)}</small></span>${v.featured ? '<span class="num">⭐</span>' : ''}</li>`).join('')
-    : '<li class="empty">まだありません。地図のスポットへ歩いてみよう！</li>';
 
   $('areaList').innerHTML = areas.length ? areas.map(a => {
     const art = simple() && areaArt(a.id);
@@ -3661,7 +3653,7 @@ function openTab(tab) {
 document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => openTab(b.dataset.tab)));
 $('lvBtn').addEventListener('click', () => { openTab('log'); $('badgeHead').scrollIntoView(); });
 
-['visitedList', 'heardList', 'visitedGallery'].forEach(id => $(id) && $(id).addEventListener('click', e => {
+['heardList', 'visitedGallery'].forEach(id => $(id) && $(id).addEventListener('click', e => {
   const li = e.target.closest('[data-spot]');
   const s = li && spots.find(x => x.id === li.dataset.spot);
   if (!s) return;

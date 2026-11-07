@@ -165,3 +165,21 @@ Mac の Claude Code に頼む文（そのまま貼る）：
 
 確かめ（クラウドで実施済み）：9画面で右へめくったときの表示の幅相当が画面の幅のまま（直す前は最大1135px）。9画面×365枚は kome365/README.md の周回101を見る。
 未確認：iPhone・Android の実機。
+
+## 周回102（止まったときの小さなカードを、選ぶ部分の上ではなくカードの上に出す）
+
+- 直したのは index.html の JS 1か所（`idleShow` の `idlePixApply();` のあとに、置き場所 `e.style.bottom` を決める1文を足す）。周回101のパッチの上に当たる。engine.js・field3d.js は触っていない
+- 公開後の本番 index.html の md5：`1e99cdc89b773c2f20776157de95ec3b`
+- 公開前の本番の md5（手順1で照合する。周回101の公開後）：`72556bb952c27386118856220f827f30`
+- 93〜101 がまだなら 93 から順に 102 まで当てる（クラウドで周回92の Mac 形に順に当て、md5 が上と一致することを確かめた）
+
+Mac の Claude Code に頼む文（そのまま貼る）：
+
+```
+米づくり365 の周回102を公開して。shota0617/ricepia-new-project のブランチ claude/kome365-loop の kome365/publish/kome365-102.patch を muse_zip/kome365_rebuild/work の game/index.html に git apply で当て（--check で先に確かめる。周回93〜101が未適用なら先に kome365-93.patch から順に）、game/index.html だけをコミット。引き継ぎ書（HANDOFF）の「米365」の公開手順 1〜5 のとおりに組み立てて FTP で上げ、本番の md5 が 1e99cdc89b773c2f20776157de95ec3b になることを確かめる。手順1の照合は 72556bb952c27386118856220f827f30。終わったら STATE に「周回102」を記録。
+```
+
+当たらないときは、パッチの `+` の行のとおりに `idleShow` の中を書きかえればよい（1か所）。
+
+確かめ（クラウドで実施済み）：9画面で、30秒止まったときの小さなカードと選ぶ部分の重なり 86〜138px→0px。9画面×365枚は kome365/README.md の周回102を見る。
+未確認：iPhone・Android の実機。

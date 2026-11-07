@@ -1,0 +1,13 @@
+diff --git a/game/index.html b/game/index.html
+index 6cb0646..069b9a4 100644
+--- a/game/index.html
++++ b/game/index.html
+@@ -3079,7 +3079,7 @@ renderTitle();
+   var idleT0 = Date.now();
+   function idleSend(tap){ try { var body = JSON.stringify({ kind: 'kome', tap: tap, t: Date.now() - idleT0 }), url = 'https://go.ricepia.jp/api/feedback'; if (navigator.sendBeacon && navigator.sendBeacon(url, new Blob([body], { type: 'text/plain' }))) return; fetch(url, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: body, keepalive: true }).catch(function(){}); } catch (x) {} }
+   function idlePixApply(){ try { var lk = $('swIdleLike').querySelector('.idlePix'), hm = $('swIdleHome').querySelector('.idlePix'); if (lk && !lk.style.backgroundImage) lk.style.backgroundImage = 'url("' + pixStatURL('heart') + '")'; if (hm && !hm.style.backgroundImage) hm.style.backgroundImage = 'url("' + pixEdgeURL('home') + '")'; } catch (x) {} }   /* 止まったときカードのアイコンをドット絵で付ける(サイクル79・いいね=PIXSTAT heart／家=PIXEDGE home) */
+-  function idleShow(){ var e = $('swIdle'); if (!e || idleInfo.shown) return; idleInfo.shown = true; idleInfo.liked = false; idleInfo.shows++; idleSave(); try { var b = $('swIdleLike'); b.classList.remove('liked'); var tx = b.querySelector('.idleTx'); if (tx) tx.textContent = 'いいね'; idlePixApply(); e.setAttribute('data-on', ''); e.setAttribute('aria-hidden', 'false'); } catch (x) {} }
++  function idleShow(){ var e = $('swIdle'); if (!e || idleInfo.shown) return; idleInfo.shown = true; idleInfo.liked = false; idleInfo.shows++; idleSave(); try { var b = $('swIdleLike'); b.classList.remove('liked'); var tx = b.querySelector('.idleTx'); if (tx) tx.textContent = 'いいね'; idlePixApply(); try { var swr = $('swipe').getBoundingClientRect(), cdr = $('swCard').getBoundingClientRect(), tpr = $('swTop').getBoundingClientRect(); e.style.bottom = Math.max(14, Math.round(Math.min(swr.bottom - cdr.top + 8, swr.bottom - tpr.bottom - 4 - e.offsetHeight))) + 'px'; } catch (y) {}   /* 周回102: カードの上に出す(下に出すと選ぶ部分を覆っていた)。低い画面では ⌂ ? の列より上には出さない */ e.setAttribute('data-on', ''); e.setAttribute('aria-hidden', 'false'); } catch (x) {} }
+   function idleHide(){ idleInfo.shown = false; try { var e = $('swIdle'); e.removeAttribute('data-on'); e.setAttribute('aria-hidden', 'true'); } catch (x) {} }
+   function idleTouch(){ idleInfo.last = Date.now(); if (idleInfo.shown) idleHide(); }
+   function idleTick(){ try { if (!idleInfo.last) return; if ($('sGame').classList.contains('hidden')) { if (idleInfo.shown) idleHide(); return; } if (document.hidden) return; if (!idleInfo.shown && Date.now() - idleInfo.last >= IDLE_MS) idleShow(); } catch (e) {} }

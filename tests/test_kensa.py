@@ -787,6 +787,28 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         # 粒の tick 自体は従来どおり残る（粒同士の動きの音は変えない）
         self.assertIn("const tick = () => tone(1100 + Math.random() * 900, 0.03, 0.025);", HTML)
 
+    def test_cycle104_next_bag_arrival_has_its_own_rising_sound(self):
+        # 差分テーマ差10（類3の残り）: 袋が流れる音（bagSound）がある一方、
+        # 次の袋が運ばれてくる到着の窓だけが無音だったため、流れる音の対になる
+        # ゆっくり上がる固有の音を付ける。最初の袋（開いた時）では鳴らさない。
+        self.assertIn("function arriveSound() {", HTML)
+        arrive = HTML[HTML.index("function arriveSound()"):HTML.index("function knockSound()")]
+        self.assertIn("o.frequency.setValueAtTime(180, t);", arrive)
+        self.assertIn("o.frequency.exponentialRampToValueAtTime(320, t + 0.16);", arrive)
+        self.assertIn('o.type = "triangle";', arrive)
+        self.assertIn("o.start(t); o.stop(t + 0.18);", arrive)
+        # startLot の次の袋アニメーションで arriveSound を使い、tick は使わない
+        start = HTML[HTML.index("function startLot()"):HTML.index("/* 皿の粒")]
+        self.assertIn("arriveSound();", start)
+        self.assertIn("if (lotIndex > 0) { arriveSound();", start)
+        self.assertNotIn("tick();", start)
+        # 音量は控えめ（0.03）に留める
+        self.assertIn("g.gain.setValueAtTime(0.03, t);", arrive)
+        # 流れる音 bagSound 自体は従来どおり残る
+        self.assertIn("function bagSound() {", HTML)
+        # 粒の tick 自体は従来どおり残る（粒同士の動きの音は変えない）
+        self.assertIn("const tick = () => tone(1100 + Math.random() * 900, 0.03, 0.025);", HTML)
+
     def test_cycle93_picked_grains_stay_in_quiet_record(self):
         # 類7: 見分けた粒が静かに記録に残る。任意で開く資料（#notes）の中だけに出し、常時表示・競争・スコアにはしない。
         # 袋を越えて残るため startLot では消さない（サイクル91の seenChecks と同じ持ち方）。

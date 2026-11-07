@@ -409,6 +409,20 @@ function bagSound() { /* おす: 袋が流れる紙の音。360→150Hzへゆっ
     o.start(t); o.stop(t + 0.24);
   } catch (_) {}
 }
+function arriveSound() { /* ぬく: 次の袋が運ばれてくる紙の音。180→320Hzへゆっくり上がる低い音で、流れる音（bagSound 360→150Hz）の対にする（サイクル104・差分テーマ差10）。流れる音がある一方、運ばれてくる窓だけが無音だった（390×844実測）。最初の袋（開いた時）では鳴らさない */
+  try {
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    if (ac.state === "suspended") ac.resume();
+    const o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime;
+    o.type = "triangle";
+    o.frequency.setValueAtTime(180, t);
+    o.frequency.exponentialRampToValueAtTime(320, t + 0.16);
+    g.gain.setValueAtTime(0.03, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+    o.connect(g).connect(ac.destination);
+    o.start(t); o.stop(t + 0.18);
+  } catch (_) {}
+}
 function knockSound() { /* みわける: 皿をトントンたたく音。720→290Hzへ短く下がる音で、粒の tick（高い短い音）とは分ける（サイクル99・差分テーマ差5）。この音は粒同士の音ではなく、手が皿をたたく返り */
   try {
     ac = ac || new (window.AudioContext || window.webkitAudioContext)();
@@ -695,7 +709,7 @@ function startLot() {
   setStep(0, "穀刺しを ふくろへ さす ←");
   setFace("normal");
   updateCooked(); /* 前の袋があれば、そのお米が小さく炊き上がって返ってくる（サイクル94・類8） */
-  if (lotIndex > 0) $("bagBtn").animate([{ transform:"translateX(120%)" }, { transform:"none" }], { duration:260 * motion, easing:"ease-out" });
+  if (lotIndex > 0) { arriveSound(); $("bagBtn").animate([{ transform:"translateX(120%)" }, { transform:"none" }], { duration:260 * motion, easing:"ease-out" }); } /* 次の袋が運ばれてくる合図も固有の音にする（サイクル104・差10）。流れる bagSound とは分ける */
 }
 
 /* 皿の粒: 位置は皿の中の px で持ち、指でなでると動く */

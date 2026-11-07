@@ -73,7 +73,9 @@ canvas#cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-a
 button.go{font-family:var(--display);font-size:22px;padding:14px 20px;border:0;border-radius:14px;background:var(--kraft);color:var(--ai-deep);cursor:pointer;box-shadow:0 4px 0 #8c6c3b;touch-action:manipulation}
 button.go:active{transform:translateY(3px);box-shadow:0 1px 0 #8c6c3b}
 button.go.sticky{position:sticky;bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:2;box-shadow:0 4px 0 #8c6c3b,0 -10px 18px rgba(19,26,46,.7)} /* 結果が 長くても「もう一回」は 見える（14周目） */
-@media (max-height:640px){ button.go.sticky{padding:8px 16px;font-size:18px} } /* 低い 画面では 小さく して 札を かくさない（20周目。貼りつきは 残す：字 200% で 見える ため）。題の「はじめる」は 行ごと 貼りつく（22周目：ボタンだけ だと 親の 行の 中で 動けない） */
+@media (max-height:640px){ button.go.sticky{padding:8px 16px;font-size:18px} }
+@media (max-height:400px){ button.go.sticky,.startRow .go{width:max-content;padding:6px 14px;font-size:16px;align-self:flex-end;margin-left:auto} button.go small{display:none} } /* 横向き：貼りつく ボタンは 右下に 小さく、はんこを かくさない（23周目） */
+@media (max-width:345px){.hval{font-size:17px}} /* 320px：HUD の 右が 切れない（23周目） */ /* 低い 画面では 小さく して 札を かくさない（20周目。貼りつきは 残す：字 200% で 見える ため）。題の「はじめる」は 行ごと 貼りつく（22周目：ボタンだけ だと 親の 行の 中で 動けない） */
 button.go:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
 button.go small{display:block;font:700 13px var(--body);margin-top:2px;opacity:.85}
 .swipes{display:grid;grid-template-columns:1fr 1fr 1fr;grid-template-areas:'. up .' 'left mid right' '. down .';gap:6px;margin:0;align-items:center} /* 十字（17周目：4つの 箱は UI の 表に 見えた） */
@@ -106,7 +108,7 @@ button.go small{display:block;font:700 13px var(--body);margin-top:2px;opacity:.
 .talk.cont>.who{visibility:hidden} .talk.cont>.say::before,.talk.cont>.say::after{display:none}
 @media (max-width:240px){.talk>.say .src,#hud .hlab{display:none}} /* 字 200%：田んぼを 見せる（14周目） */
 @media (max-width:300px){.talk>.who{display:none}.talk>.say::before,.talk>.say::after{display:none}.swipes{grid-template-columns:1fr}
-  #hud{flex-wrap:wrap;row-gap:0}.hcell.r{align-items:flex-start;text-align:left;flex-direction:row;gap:8px;align-items:baseline}.hval{font-size:19px}#hud .hcell{min-width:0;max-width:100%}.hval,#stage{white-space:normal}
+  #hud{flex-wrap:wrap;row-gap:0}.hcell.r{align-items:flex-start;text-align:left;flex-direction:column;gap:0}.hval{font-size:19px}#hud .hcell{min-width:0;max-width:100%}.hval{white-space:normal}#stage{white-space:nowrap}.res{grid-template-columns:1fr}
   } /* 字 200%（幅 195px）：HUD の 右の 数は 2行目へ、題は 音ボタンの 下から（7周目） */
 button.sound{position:absolute;right:max(12px,env(safe-area-inset-right,0px));top:calc(10px + env(safe-area-inset-top,0px));z-index:6;min-height:44px;padding:6px 12px;border-radius:22px;border:2px solid rgba(201,164,108,.7);background:rgba(19,26,46,.8);color:var(--ink);font:700 13px var(--body);display:none}
 button.sound.show{display:block} /* 題と 結果の 画面で（8周目） */
@@ -384,8 +386,8 @@ function resize(){ DPR = Math.min(2, window.devicePixelRatio||1); W = cv.clientW
 window.addEventListener('resize', resize);
 function layout(){ /* 田んぼの 場所（低い 画面でも 吹き出しと かさならない） */
   const top = Math.max(HUD_H + 4, H*0.12), talkH = TALK_H; /* 暦は HUD の 本当の 高さの 下（字 200% で 3行に なっても。7周目） */ /* HUD は 3行（日・日づけ・天気）。暦は その 下。吹き出しの 高さは 言った 時に はかる（4周目） */
-  const bottom = H - talkH - 24;
-  const fieldTop = top + (bottom-top)*0.36, fieldBot = top + (bottom-top)*0.86;
+  const low = H < 400; const bottom = H - talkH - (low ? 8 : 24);
+  const fieldTop = top + (bottom-top)*(low ? 0.22 : 0.36), fieldBot = top + (bottom-top)*0.86; /* 低い 画面（横向き・字 200%）は 田を 広く（23周目） */
   return { top, bottom, fieldTop, fieldBot, cx: W/2 };
 }
 
@@ -589,7 +591,7 @@ function drawCalendar(L){
     const prev = dateOf(Math.max(1, S.day-1)); page(-V.page*40, Math.max(.05, 1 - V.page*1.1), prev, 1 - V.page*0.6);
     page(0, 1, dt, V.page);
   } else page(0, 1, dt, 1);
-  if (S.phase==='field' || S.phase==='dry'){ /* スタンプカード：クラフト札に 3×2 の 空き枠、済は 少し 傾けて（21周目：横一列の 目盛りは 集計表に 見えた） */
+  if ((S.phase==='field' || S.phase==='dry') && y + h + 7 + 42 < L.bottom - 4){ /* スタンプカード（吹き出しに かかる 低い 画面では 出さない。23周目）：クラフト札に 3×2 の 空き枠、済は 少し 傾けて（21周目：横一列の 目盛りは 集計表に 見えた） */
     const cy = y + h + 7; ctx.save(); ctx.fillStyle = '#f1dfba'; ctx.strokeStyle = '#7a5a30'; ctx.lineWidth = 1.5; ctx.beginPath(); rrect(x, cy, w, 42, 4); ctx.fill(); ctx.stroke();
     for (let i=0;i<6;i++){ const sx = x + 5 + (i%3)*17, sy = cy + 4 + Math.floor(i/3)*18; if (i < S.done.length){ ctx.save(); ctx.translate(sx+8, sy+8); ctx.rotate((i%2 ? 1 : -1)*0.1); ctx.strokeStyle = '#c8352b'; ctx.fillStyle = '#c8352b'; ctx.lineWidth = 1.2; ctx.beginPath(); rrect(-7, -7, 14, 14, 2); ctx.stroke(); ctx.font = '700 10px ' + FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('済', 0, 0.5); ctx.restore(); } else { ctx.save(); ctx.strokeStyle = 'rgba(122,90,48,.5)'; ctx.lineWidth = 1; ctx.setLineDash([2, 2]); ctx.beginPath(); rrect(sx+1, sy+1, 14, 14, 2); ctx.stroke(); ctx.restore(); } }
     ctx.restore(); }
@@ -597,18 +599,19 @@ function drawCalendar(L){
 }
 /* スワイプの 案内（はじめの うち だけ うすく）。字は 1〜2字 */
 function drawHints(L, acts){
-  if (V.hint <= 0.02) return;
+  if (V.hint <= 0.02 || V.card) return; /* 札の 間は 出さない（23周目） */
   const cx = W/2, cy = L.bottom - 44, R = Math.min(70, W*0.17);
   ctx.save(); ctx.globalAlpha = V.hint*0.85; ctx.font = '700 13px ' + FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   const arrow = (dx, dy, label, on) => { const x = cx + dx*R, y = cy + dy*R*0.55; ctx.fillStyle = on ? 'rgba(251,243,224,.92)' : 'rgba(251,243,224,.35)'; ctx.strokeStyle = on ? '#7a5a30' : 'rgba(122,90,48,.3)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(x, y, 30, 15, 0, 0, Math.PI*2); ctx.fill(); ctx.stroke(); ctx.fillStyle = on ? '#3e2a1a' : 'rgba(62,42,26,.4)'; ctx.fillText(label, x, y+1); };
-  const sm = R < 50; /* 小さい 画面は できる 矢印だけ（22周目：4つが 重なって 桶を かくした） */
+  const sm = R < 50; /* 小さい 画面は 吹き出しの 矢印 1つだけ 田の まん中に（22・23周目：4つが 重なって 暦や 桶を かくした） */
+  if (sm){ const m = (V.lastSay||'').replace(/<[^>]+>/g, '').match(/[↑↓←→]/); if (m){ const ar = m[0], lab = ar==='↑' ? (acts.up||'みず') : ar==='↓' ? (acts.down||(S.phase==='seed' ? 'まく' : 'おとす')) : ar==='←' ? (acts.left||'みる') : 'あした'; const sx = cx, sy = (L.fieldTop+L.fieldBot)/2; ctx.fillStyle = 'rgba(251,243,224,.92)'; ctx.strokeStyle = '#7a5a30'; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(sx, sy, 30, 15, 0, 0, Math.PI*2); ctx.fill(); ctx.stroke(); ctx.fillStyle = '#5a3a20'; ctx.fillText(ar + ' ' + lab, sx, sy); } ctx.restore(); return; }
   if (!sm || acts.up) arrow(0, -1, '↑ ' + (acts.up || 'みず'), !!acts.up); if (!sm || acts.down) arrow(0, 1, '↓ ' + (acts.down || (S.phase==='seed' ? 'まく' : 'おとす')), !!acts.down); arrow(1, 0, '→ あした', !!acts.right); if (!sm || acts.left) arrow(-1, 0, '← ' + (acts.left || 'みる'), !!acts.left);
   ctx.restore();
 }
 /* 1株を 掘り出した 札（← 見る）。クラフト紙に 1株と ものさし。字は 草丈 だけ */
 function drawCard(L){
   const c = V.card; if (!c) return;
-  const a = clamp(Math.min(c.life*3, (2.4-c.life)*4), 0, 1), cw = Math.min(W*0.6, 240), ch = Math.min((L.fieldBot-L.top)*0.62, 280), x = W/2 - cw/2, y = L.top + 62 + (1-a)*12; /* 暦の 下 */
+  const a = clamp(Math.min(c.life*3, (2.4-c.life)*4), 0, 1), cw = Math.min(W*0.6, 240), y = L.top + (H < 400 ? 0 : 62) + (1-a)*12, ch = Math.min((L.fieldBot-L.top)*0.62, 280, L.bottom - y - 6), x = W/2 - cw/2; /* 暦の 下。低い 画面は 暦の 横（23周目） */
   ctx.save(); ctx.globalAlpha = a; ctx.translate(x, y); ctx.rotate(-0.02);
   ctx.fillStyle = '#f1dfba'; ctx.strokeStyle = '#7a5a30'; ctx.lineWidth = 2.5; ctx.setLineDash([7, 5]); ctx.beginPath(); rrect(0, 0, cw, ch, 14); ctx.fill(); ctx.stroke(); ctx.setLineDash([]);
   const yBase = ch - 36, ppc = (yBase - 24)/Math.max(100, c.H*1.05);
@@ -622,7 +625,7 @@ function drawCard(L){
 }
 function drawStamps(L, A){
   if (V.drag && V.drag.kind==='day' && V.drag.amt < 0 && A.left){ const k = Math.min(1, -V.drag.amt); ctx.save(); ctx.globalAlpha = k*0.7; ctx.translate(W/2, (L.fieldTop+L.fieldBot)/2); ctx.rotate(-0.2); const sc = 1.6 - k*0.6; ctx.scale(sc, sc); ctx.strokeStyle = '#c8352b'; ctx.lineWidth = 3; ctx.beginPath(); rrect(-22, -22, 44, 44, 8); ctx.stroke(); ctx.fillStyle = '#c8352b'; ctx.font = '700 22px ' + FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(A.left, 0, 1); ctx.restore(); } /* ←の 引いて いる 間（13周目） */ /* 「済」の はんこ と、まく 粒 */
-  for (const st of V.stamps){ ctx.save(); ctx.globalAlpha = clamp(st.life*3, 0, 1)*0.9; const sc = 1 + Math.max(0, st.life-0.8)*1.3; ctx.translate(st.x, st.y); ctx.rotate(-0.2); ctx.scale(sc, sc); ctx.strokeStyle = '#c8352b'; ctx.lineWidth = 3;
+  for (const st of V.stamps){ ctx.save(); ctx.globalAlpha = clamp(st.life*3, 0, 1)*0.9; const sc = (1 + Math.max(0, st.life-0.8)*1.3) * clamp((L.fieldBot-L.fieldTop)/110, .55, 1); /* 田が 低い 画面では 小さく（23周目） */ ctx.translate(st.x, st.y); ctx.rotate(-0.2); ctx.scale(sc, sc); ctx.strokeStyle = '#c8352b'; ctx.lineWidth = 3;
     if (st.text==='◎'){ ctx.beginPath(); ctx.arc(0, 0, 20, 0, Math.PI*2); ctx.stroke(); ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(0, 0, 13, 0, Math.PI*2); ctx.stroke(); } /* ◎は 丸い 二重の はんこ だけ（21周目） */
     else { ctx.beginPath(); rrect(-22, -22, 44, 44, 8); ctx.stroke(); ctx.lineWidth = 1; ctx.beginPath(); rrect(-18, -18, 36, 36, 6); ctx.stroke(); ctx.fillStyle = '#c8352b'; ctx.font = '700 26px ' + FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(st.text, 0, 1); } /* 済 だけ 大きく。しごとの 名は 吹き出しが 言う（21周目：9px は 読めない） */
     ctx.restore(); }

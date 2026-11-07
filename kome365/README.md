@@ -7,6 +7,7 @@ main に入れると Vercel で **https://go.ricepia.jp/kome365/** に自動で�
 - **正式なアドレスは https://go.ricepia.jp/kome365/**（2026-11-07 店主の判断）。canonical・og:url・シェアのリンク・シェア画像の文字を go.ricepia.jp にした
 - ricepia.jp/kome365/（さくら）は go.ricepia.jp/kome365/ へ 301 で転送する。転送は `ricepia-jp/kome365/.htaccess` を GitHub Actions「ricepia.jp kome365 redirect」（手で動かす）で上げる。元に戻すときはサーバーの `www/kome365/.htaccess` を消す
 - 記録（localStorage）はドメインごとに別なので、ricepia.jp で遊んでいた人の続きは go.ricepia.jp には引き継がれない
+- シェア画像 `shots/og.jpg`（1200×630）は 2026-11-07 に新しく作った（店主の判断）。ゲームの6月・7月・9月の画面（390×844）を3枚並べ、題「米づくり365」・説明・go.ricepia.jp/kome365 を入れたもの
 - これからは ricepia.jp 向けの FTP 公開はしない。`publish/` のパッチは周回101までの記録として残す
 - Mac の作業元 `muse_zip/kome365_rebuild/work/game/index.html` とのちがいは、engine.js の読みこみ先だけ（Mac は `../sim/engine.js`、ここと本番は `engine.js`）。Mac へ戻すときは `sed 's#src="engine\.js"#src="../sim/engine.js"#'`
 - 変えてよいのは index.html と cards.js だけ。`engine.js`・`field3d.js` は変更禁止（店主の決まり）

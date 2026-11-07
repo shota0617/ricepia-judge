@@ -2681,10 +2681,11 @@ const T2 = {
   }
 };
 // T4 列の目印（モーション磨き）: 次に耕す列が うっすら光る帯で見える。色だけ・文字なし。
+// サイクル215・最初の1分（Fable5設計 候補C「2本目のなぞりが自然に隣へ並ぶ」）: 最初の1分だけ帯の明るさを少し強くし、運転席からでも「次はここ」と読めるようにする。帯の幅は作業幅そのものなので変えない（広げると重なりの目安が狂う）。
 // 列は田んぼの長い向き（Z）で、間隔は PITCH（作業幅−0.1m＝10cm重ね。ASSIST のガイドと同じ考え方）。
 // 物差し＝目印どおり走ると重なりが減ること（ループ側 scripts/sim_t4_guide.js: 目印どおり 重なり6.9%・残し0%・14列 / 目分量（0.5m重ね） 重なり30.6%・17列）。
 const T4 = {
-  mesh: null, lane: null, t: 0, acc: 1,
+  mesh: null, lane: null, t: 0, acc: 1, fm: 0,
   lanes() {
     const a = [], x0 = -HX + 0.5 + TILL_W / 2, xe = HX - 0.5 - TILL_W / 2;
     for (let x = x0; x <= xe + 1e-6; x += PITCH) a.push(x);
@@ -2718,12 +2719,14 @@ const T4 = {
   },
   update(dt) {
     this.t += dt; this.acc += dt;
+    const fmTgt = (!DETAIL && FIRSTMIN.on) ? 1 : 0;   // サイクル215・最初の1分: 帯の強さの目標（最初の1分だけ1）
+    this.fm += Math.max(-dt / 2, Math.min(dt / 2, fmTgt - this.fm));   // 約2秒かけて滑らかに寄せる（60秒の切り替えで段差を出さない。Codex diffレビュー指摘への対応）
     if (this.acc >= 0.25) { this.acc = 0; this.lane = ART.on ? null : this.next(); }   // 列の判定は 0.25 秒ごと（毎コマ全ます目は数えない）。田んぼアートには白線の下絵があるので出さない
     this.ensure();
     if (this.lane === null || this.lane === undefined) { this.mesh.visible = false; return; }
     this.mesh.visible = true;
     this.mesh.position.x = this.lane;
-    this.mesh.material.opacity = 0.13 + 0.03 * Math.sin(this.t * 1.6);   // ゆっくり息づく光（速い点滅はしない）
+    this.mesh.material.opacity = 0.13 + 0.09 * this.fm + 0.03 * Math.sin(this.t * 1.6);   // ゆっくり息づく光（速い点滅はしない）。サイクル215・最初の1分: fm が上がっている間だけ基準が 0.22 へ少し強くなる
   }
 };
 // T5 耕し切り（モーション磨き）: 田んぼ全体を耕し終えると、全体の色が揃って ゆっくり光る。色だけ・文字なし。光は見た目だけで、流れは止めない。

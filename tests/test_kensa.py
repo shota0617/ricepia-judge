@@ -272,6 +272,11 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertRegex(HTML, r"#plate \{[^}]*touch-action:none")
         self.assertIn('addEventListener("gesturestart"', HTML)
 
+    def test_grade_buttons_grow_with_large_text(self):
+        # 文字150%以上でも等級の字がボタンの枠からはみ出さない（高さは最低値、字の分だけ伸びる）
+        self.assertRegex(HTML, r"\.gradeBtn \{[^}]*min-height:clamp\(58px, 11vh, 84px\)")
+        self.assertNotRegex(HTML, r"\.gradeBtn \{[^}]*[^-]height:clamp")
+
     def test_grade_label_fits_small_phone(self):
         # 320px幅で「規格外」が2行に折れない
         self.assertIn("@media (max-width:340px) {\n    #rows, #gradeBtns { grid-template-columns:84px repeat(4,1fr); }\n    .gradeBtn.small { font-size:14px; }", HTML)

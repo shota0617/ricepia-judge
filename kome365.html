@@ -85,7 +85,7 @@ button.go small{display:block;font:700 13px var(--body);margin-top:2px;opacity:.
   #hud{flex-wrap:wrap;row-gap:0}.hcell.r{align-items:flex-start;text-align:left;flex-direction:row;gap:8px;align-items:baseline}.hval{font-size:19px}#hud .hcell{min-width:0;max-width:100%}.hval,#stage{white-space:normal}
   .overlay{padding-top:calc(64px + env(safe-area-inset-top,0px))}} /* 字 200%（幅 195px）：HUD の 右の 数は 2行目へ、題は 音ボタンの 下から（7周目） */
 button.sound{position:absolute;right:max(12px,env(safe-area-inset-right,0px));top:calc(10px + env(safe-area-inset-top,0px));z-index:6;min-height:44px;padding:6px 12px;border-radius:22px;border:2px solid rgba(201,164,108,.7);background:rgba(19,26,46,.8);color:var(--ink);font:700 13px var(--body);display:none}
-.overlay button.sound{display:block}
+button.sound.show{display:block} /* 題と 結果の 画面で（8周目） */
 button.sound[aria-pressed="false"]{color:var(--ink-dim);border-color:rgba(169,176,199,.5)}
 </style>
 </head>
@@ -110,8 +110,8 @@ button.sound[aria-pressed="false"]{color:var(--ink-dim);border-color:rgba(169,17
       <button class="go" id="startBtn" type="button">はじめる<small>ボタンは これだけ</small></button>
       <p class="note">数の 目安は 農林水産省・愛知県・各県の 普及の 資料から（<a href="docs/kome365.md">出典</a>）。品種は コシヒカリ、田んぼは 10a。</p>
     </div>
-    <button class="sound" id="soundBtn" type="button" aria-pressed="true">♪ 音 オン</button>
   </div>
+  <button class="sound show" id="soundBtn" type="button" aria-pressed="true">♪ 音 オン</button>
 
   <div id="result" class="overlay" hidden>
     <div class="panel">
@@ -247,7 +247,7 @@ function growDay(S){
 }
 function lodgeRisk(S){
   const f = S.f, culm = f.H*0.8, ratioPeak = f.Tmax/TARGET;
-  let risk = (culm-80)*0.035 + ((f.Nhead==null?f.N:f.Nhead)-36)*0.045 + (10-f.W)*0.09 + (ratioPeak-1)*0.55 - (f.root-60)*0.006 + (f.A2 >= 3 ? 0.12 : 0);
+  let risk = (culm-80)*0.035 + ((f.Nhead==null?f.N:f.Nhead)-36)*0.045 + (10-f.W)*0.09 + (ratioPeak-1)*0.55 - (f.root-60)*0.006 + (f.A2 >= 2 ? 0.12 : 0); /* 穂肥を 入れると 少し たおれやすい */
   return clamp(risk, 0, 1);
 }
 function lodgeCheck(S){ const f = S.f; f.lodge = Math.max(f.lodge, clamp(lodgeRisk(S)*0.95, 0, 1)); }
@@ -292,16 +292,16 @@ let S = newState((Date.now() ^ Math.floor(Math.random()*1e9))>>>0);
 let soundOn = true; try{ soundOn = localStorage.getItem('k365_sound') !== 'off'; }catch(e){}
 const now = () => (K3.manual ? V.t*1000 : performance.now());
 const V = { /* 見た目の 動き（モデルとは 別）：水面の ばね・めくれ・ゆれ */
-  water: 0, waterV: 0, page: 0, pageV: 0, flipQueue: 0, flipTimer: 0, flipGap: 0.09, flipN: 0,
-  drag: null, card: null, shake: 0, hint: 1, stamps: [], particles: [], cutAnim: 0, t: 0, lastSay: '', toast: null, flash: 0,
+  water: 0, waterV: 0, page: 0, flipQueue: 0, flipTimer: 0, flipGap: 0.11, flipN: 0,
+  drag: null, card: null, shake: 0, hint: 1, stamps: [], particles: [], t: 0, lastSay: '', toast: null,
 };
 
 /* ========== 音と 振動（WebAudio で 作る 素朴な 音。外の 音は 使わない） ========== */
 const SND = {
   ac: null,
-  init(){ if (this.ac) return; try{ this.ac = new (window.AudioContext||window.webkitAudioContext)(); this.master = this.ac.createGain(); this.master.gain.value = soundOn ? 1 : 0; this.master.connect(this.ac.destination); }catch(e){} },
+  init(){ if (this.ac) return; try{ this.ac = new (window.AudioContext||window.webkitAudioContext)(); this.master = this.ac.createGain(); this.master.gain.value = soundOn ? 1 : 0; this.master.connect(this.ac.destination); const n = Math.floor(this.ac.sampleRate*0.35); this.noiseBuf = this.ac.createBuffer(1, n, this.ac.sampleRate); const ch = this.noiseBuf.getChannelData(0); for (let i=0;i<n;i++) ch[i] = Math.random()*2-1; }catch(e){} }, /* 雑音は 1つの バッファを 使いまわす（8周目） */
   tone(f, dur, type, vol, slide){ if (!this.ac) return; const t = this.ac.currentTime, o = this.ac.createOscillator(), g = this.ac.createGain(); o.type = type||'sine'; o.frequency.setValueAtTime(f, t); if (slide) o.frequency.exponentialRampToValueAtTime(slide, t+dur); g.gain.setValueAtTime(vol||.2, t); g.gain.exponentialRampToValueAtTime(.001, t+dur); o.connect(g); g.connect(this.master); o.start(t); o.stop(t+dur+.02); },
-  noise(dur, vol, hz){ if (!this.ac) return; const t = this.ac.currentTime, n = Math.floor(this.ac.sampleRate*dur), b = this.ac.createBuffer(1, n, this.ac.sampleRate), ch = b.getChannelData(0); for (let i=0;i<n;i++) ch[i] = (Math.random()*2-1) * (1 - i/n); const s = this.ac.createBufferSource(); s.buffer = b; const fl = this.ac.createBiquadFilter(); fl.type = 'bandpass'; fl.frequency.value = hz||1200; fl.Q.value = .7; const g = this.ac.createGain(); g.gain.value = vol||.25; s.connect(fl); fl.connect(g); g.connect(this.master); s.start(t); },
+  noise(dur, vol, hz){ if (!this.ac || !this.noiseBuf) return; const t = this.ac.currentTime, s = this.ac.createBufferSource(); s.buffer = this.noiseBuf; const fl = this.ac.createBiquadFilter(); fl.type = 'bandpass'; fl.frequency.value = hz||1200; fl.Q.value = .7; const g = this.ac.createGain(); g.gain.setValueAtTime(vol||.25, t); g.gain.exponentialRampToValueAtTime(.001, t+dur); s.connect(fl); fl.connect(g); g.connect(this.master); s.start(t, 0, dur+.02); },
   pera(i){ this.noise(.05, .18, 2200 + (i%3)*300); },                /* 暦を めくる */
   chapu(){ this.tone(520, .14, 'sine', .16, 260); this.noise(.08, .08, 900); },  /* 水が 入る */
   zaa(){ this.noise(.3, .16, 600); },                                  /* 水が 落ちる */
@@ -547,7 +547,6 @@ function draw(){
   drawSky(L);
   ctx.fillStyle = '#4a3a2c'; ctx.fillRect(0, L.fieldTop, W, H - L.fieldTop); /* 地面（7周目：黒すぎた） */
   if (S.phase==='seed') drawSeed(L); else if (S.phase==='nursery') drawNursery(L); else if (S.phase==='dry') drawDry(L); else drawField(L);
-  if (V.flash > 0){ ctx.save(); ctx.globalAlpha = V.flash*0.5; ctx.fillStyle = '#fff'; ctx.fillRect(0,0,W,H); ctx.restore(); }
   drawCard(L); drawCalendar(L); drawHints(L); drawStamps(L);
   ctx.restore();
 }
@@ -599,7 +598,7 @@ function advanceDay(){
   if (S.phase==='seed' && S.seed_.soaked && !S.seed_.sprouted){ S.seed_.heat += Math.max(8, wx.t) ; if (S.seed_.heat >= 120){ S.seed_.sprouted = true; SND.pin(); say('芽出しも すんで はと胸に。<b>↓で まきましょう</b>。', 'joy'); } }
   if ((S.phase==='nursery' || (S.phase==='field' && !S.f.planted)) && S.nur.sown){ S.nur.age++; S.nur.moist -= wx.w==='雨' ? 0.05 : wx.w==='高温' ? 0.4 : wx.w==='晴れ' ? 0.3 : 0.18; if (S.nur.moist <= 0){ S.nur.moist = 0; S.nur.stress++; } }
   if (S.phase==='field' && S.f.planted){ growDay(S); if (S.f.gdd >= 1400 && !S.hv.done){ S.f.agedPlant += 1; } }
-  if (S.phase==='dry'){ S.hv.dryDays++; S.hv.moisture = Math.max(10, S.hv.moisture - (S.hv.moisture <= 15.5 ? 0.8 : 3.4)); /* 仕上がりの あとは ゆっくり（3周目） */ if (S.hv.moisture <= 15.5 && V.flipQueue > 0){ V.flipQueue = 0; SND.pin(); toast('15%'); } } /* 仕上がりで めくりが 止まる（2周目）。もう一度 → すると 乾かしすぎ */
+  if (S.phase==='dry'){ S.hv.dryDays++; const was = S.hv.moisture; S.hv.moisture = Math.max(10, was - (was <= 15.5 ? 0.8 : 3.4)); /* 仕上がりの あとは ゆっくり（3周目） */ if (was > 15.5 && S.hv.moisture <= 15.5){ V.flipQueue = 0; SND.pin(); toast('15%'); } } /* こえた 時に かならず 合図（8周目） */ /* 仕上がりで めくりが 止まる（2周目）。もう一度 → すると 乾かしすぎ */
   S.day++;
   if (S.weather[S.day] && S.weather[S.day].w==='台風') { V.shake = 1; }
   V.page = 1; V.flipN++; SND.pera(V.flipN); if (V.flipN % 3 === 1) vib(6);
@@ -628,6 +627,7 @@ function narrate(){
     if (f.dat <= 8){ if (f.water <= 0) return say('うえたばかり。<b>↑で 水を</b>。', 'sad'); if (wx.w==='低温' && f.water < 4) return say('さむい日。水を ふかめに。<span class="src">（岩手県）</span>'); return say('ねづくまで 水で まもります。'); }
     if (a.left==='刈る' && f.gdd >= 980 && f.gdd < 1150) return say('<b>刈りどき</b>です。←で ざくざく。<span class="src">（出穂後 1000℃：栃木県）</span>', 'joy');
     if (a.left==='刈る' && f.gdd >= 1200) return say('刈りおくれ。胴割れが ふえます。<b>←で 刈る</b>！', 'sad');
+    if (a.left==='刈る' && f.gdd >= 1150) return say('黄色が こく なりました。<b>←で 刈る</b>。おくれると 胴割れ。<span class="src">（1,200℃ まで：福島県）</span>');
     if (a.left==='刈る') return say('もう少し 黄色く なってから。');
     if (f.heading && wx.w==='高温' && (S.day - f.heading) <= 20) return say('あつい。<b>↑で 水を 入れかえる</b>と 地温が 下がります。<span class="src">（福島県）</span>');
     if (f.heading && (S.day - f.heading) < 25 && f.water < 1) return say('まだ 水を 切らないで。<b>↑で 水を</b>。<span class="src">（栃木県）</span>', 'sad');
@@ -680,7 +680,7 @@ function doLeft(L){
   if (S.phase==='field' && a.left==='追肥'){ f.A1 = 3; f.N += 3*3.6; SND.sara(); vib(10); stamp('済', W/2, (L.fieldTop+L.fieldBot)/2, '追肥'); for (let i=0;i<16;i++) V.particles.push({ x: W/2, y: L.fieldTop+20, vx:(Math.random()-.5)*260, vy:-120 - Math.random()*80, r:2.5, c:'#f1dfba', a:0, life:.7 }); say('追肥しました。葉いろが こく なります。'); return true; }
   if (S.phase==='field' && a.left==='穂肥'){ f.A2 = 2; f.N += 2*3.2; SND.sara(); vib(10); stamp('済', W/2, (L.fieldTop+L.fieldBot)/2, '穂肥'); for (let i=0;i<16;i++) V.particles.push({ x: W/2, y: L.fieldTop+20, vx:(Math.random()-.5)*260, vy:-120 - Math.random()*80, r:2.5, c:'#f1dfba', a:0, life:.7 }); say('穂肥を 入れました。もみの 数が ふえます。'); return true; }
   if (S.phase==='field' && a.left==='刈る'){
-    S.hv.cut++; SND.shaku(); vib([12, 30, 12]); V.cutAnim = 1;
+    S.hv.cut++; SND.shaku(); vib([12, 30, 12]);
     for (let i=0;i<14;i++) V.particles.push({ x: W*0.2 + Math.random()*W*0.6, y: L.fieldTop + (L.fieldBot-L.fieldTop)*(1 - S.hv.cut/5) + Math.random()*20, vx:(Math.random()-.5)*120, vy:-80 - Math.random()*80, r:3, c:'#e2b84c', a:Math.random()*3, life:.7 });
     if (S.hv.cut >= 5){ S.hv.done = true; S.hv.gdd = f.gdd; S.hv.moisture = 25; stamp('済', W/2, (L.fieldTop+L.fieldBot)/2, '稲刈り'); S.phase = 'dry'; say('ぜんぶ 刈りました。もみは 水分 25%。→で かわかします。<span class="src">（埼玉県）</span>', 'joy'); }
     else say('ざくざく。あと ' + (5 - S.hv.cut) + '回。<b>←</b>。');
@@ -737,39 +737,42 @@ function pointerUpInner(e){
     return;
   }
   if (d.kind==='water'){
-    S.swipes++;
-    if (dy < -30 || vy < -0.5){ /* ↑ 水を 入れる */
-      if (!a.up) return;
-      if (S.phase==='seed'){ S.seed_.soaked = true; V.water = 10; V.waterV = 0.4; SND.chapu(); vib(8); say('つけました。→で 日を すすめて。<span class="src">（浸種は 120℃ が 目安：栃木県）</span>'); return; }
-      if (S.phase==='nursery'){ S.nur.moist = 1; SND.chapu(); vib(8); say('じょうろで たっぷり。'); return; }
-      const before = S.f.water; const amt = Math.max(1, d.target != null ? d.target - before : 3) ; S.f.water = clamp(before + amt, 0, 15); S.f.flowToday = true;
-      SND.chapu(); vib(8); V.waterV = 0.6 + Math.min(1, Math.abs(vy))*0.6;
-      if (S.f.heading && (S.day - S.f.heading) <= 20 && S.weather[S.day].w==='高温') toast('かけ流し');
-      if (!S.f.planted && S.f.water > 0) say(S.f.shiro < 2 ? '水が 入りました。<b>←で 代かき</b>。' : '水が 入りました。<b>←で うえます</b>。');
-      else say('みず ' + fmtCm(S.f.water) + 'cm。' + (S.f.dat <= 8 ? 'ねづくまで ふかめに。' : S.f.heading && (S.day - S.f.heading) <= 20 && S.weather[S.day].w==='高温' ? '入れかえで すずしく。' : '') + '<b>→で あした</b>。');
-      V.hint = Math.max(0, V.hint - 0.08);
-      return;
-    }
-    if (dy > 30 || vy > 0.5){ /* ↓ */
-      if (S.phase==='seed'){ if (doDown()) return; }
-      if (!a.down) return;
-      const before = S.f.water; const amt = Math.max(1, d.target != null ? before - d.target : 3); S.f.water = clamp(before - amt, 0, 15);
-      if (S.f.water < 1 && before > 1 && vy < 1.0) S.f.water = 1; /* ゆっくりの ↓ は 1cm のこす。空に するのは はじくか もう一度（5周目） */
-      SND.zaa(); vib([6, 20, 6]); V.waterV = -0.5;
-      if (S.f.water <= 0 && S.f.dat >= 30 && S.f.dat <= 54 && !S.f.heading){ toast('中干し'); say(S.f.mizo ? '中干しです。ひびが 入るまで <b>→で 日を</b>。<span class="src">（7〜10日：秋田県）</span>' : '中干しです。<b>←で 溝切り</b>を しておくと 雨が 落ちます。<span class="src">（新潟県）</span>'); }
-      else say(S.f.water <= 0 ? '水を 落としました。<b>→で あした</b>。' : 'みず ' + fmtCm(S.f.water) + 'cm。<b>→で あした</b>。');
-      V.hint = Math.max(0, V.hint - 0.08);
-    }
+    if (dy < -30 || vy < -0.5){ doUp(d.target != null ? d.target - S.f.water : 3, vy); return; } /* ↑ 水を 入れる */
+    if (dy > 30 || vy > 0.5) doDownWater(d.target != null ? S.f.water - d.target : 3, vy);        /* ↓ 水を 落とす（たねは まく） */
   }
 }
-cv.addEventListener('pointerdown', e => { if (e.button !== 0 && e.pointerType==='mouse') return; cv.setPointerCapture && cv.setPointerCapture(e.pointerId); pointerDown(e); });
+/* ↑：水を 入れる（たね＝つける、なえ＝じょうろ、たんぼ＝amt cm）。指も キーも ここを 通る（8周目） */
+function doUp(amt, vy){
+  const a = actions(); if (!a.up) return false; S.swipes++; V.hint = Math.max(0, V.hint - 0.08);
+  if (S.phase==='seed'){ S.seed_.soaked = true; V.water = 10; V.waterV = 0.4; SND.chapu(); vib(8); say('つけました。→で 日を すすめて。<span class="src">（浸種は 120℃ が 目安：栃木県）</span>'); return true; }
+  if (S.phase==='nursery'){ S.nur.moist = 1; SND.chapu(); vib(8); say('じょうろで たっぷり。'); return true; }
+  const before = S.f.water; S.f.water = clamp(before + Math.max(1, amt), 0, 15); S.f.flowToday = true;
+  SND.chapu(); vib(8); V.waterV = 0.6 + Math.min(1, Math.abs(vy||0))*0.6;
+  if (S.f.heading && (S.day - S.f.heading) <= 20 && S.weather[S.day].w==='高温') toast('かけ流し');
+  if (!S.f.planted && S.f.water > 0) say(S.f.shiro < 2 ? '水が 入りました。<b>←で 代かき</b>。' : '水が 入りました。<b>←で うえます</b>。');
+  else say('みず ' + fmtCm(S.f.water) + 'cm。' + (S.f.dat <= 8 ? 'ねづくまで ふかめに。' : S.f.heading && (S.day - S.f.heading) <= 20 && S.weather[S.day].w==='高温' ? '入れかえで すずしく。' : '') + '<b>→で あした</b>。');
+  return true;
+}
+/* ↓：水を 落とす（たねの 時は まく）。ゆっくり（vy < 1）は 1cm のこす */
+function doDownWater(amt, vy){
+  if (S.phase==='seed') return doDown();
+  const a = actions(); if (!a.down) return false; S.swipes++; V.hint = Math.max(0, V.hint - 0.08);
+  const before = S.f.water; S.f.water = clamp(before - Math.max(1, amt), 0, 15);
+  if (S.f.water < 1 && before > 1 && (vy||0) < 1.0) S.f.water = 1; /* ゆっくりの ↓ は 1cm のこす。空に するのは はじくか もう一度（5周目） */
+  SND.zaa(); vib([6, 20, 6]); V.waterV = -0.5;
+  if (S.f.water <= 0 && S.f.dat >= 30 && S.f.dat <= 54 && !S.f.heading){ toast('中干し'); say(S.f.mizo ? '中干しです。ひびが 入るまで <b>→で 日を</b>。<span class="src">（7〜10日：秋田県）</span>' : '中干しです。<b>←で 溝切り</b>を しておくと 雨が 落ちます。<span class="src">（新潟県）</span>'); }
+  else say(S.f.water <= 0 ? '水を 落としました。<b>→で あした</b>。' : 'みず ' + fmtCm(S.f.water) + 'cm。<b>→で あした</b>。');
+  return true;
+}
+cv.addEventListener('pointerdown', e => { if (e.button !== 0 && e.pointerType==='mouse') return; try{ cv.setPointerCapture(e.pointerId); }catch(_){} pointerDown(e); }); /* 指が もう はなれて いると 投げる（8周目） */
 cv.addEventListener('pointermove', pointerMove);
-cv.addEventListener('pointerup', pointerUp); cv.addEventListener('pointercancel', pointerUp);
+cv.addEventListener('pointerup', pointerUp);
+cv.addEventListener('pointercancel', e => { if (V.drag && e.pointerId === V.drag.id){ V.drag = null; V.waterTarget = undefined; } }); /* 途中で 切れた 指は なかった ことに（8周目） */
 window.addEventListener('keydown', e => { /* パソコンの 人の ため：矢印キーも スワイプと 同じ */
   if (S.over || !$('title').hidden) return; const L = layout(); const k = e.key;
-  if (k==='ArrowRight'){ V.flipQueue = e.shiftKey ? 6 : 0; advanceDay(); } else if (k==='ArrowLeft'){ V.flipQueue = 0; doLeft(L); }
-  else if (k==='ArrowUp'){ const a = actions(); if (S.phase==='seed' && a.up){ S.seed_.soaked = true; V.water = 10; say('つけました。→で 日を すすめて。'); } else if (S.phase==='nursery'){ S.nur.moist = 1; } else if (a.up){ S.f.water = clamp(S.f.water + 3, 0, 15); S.f.flowToday = true; V.waterV = .6; SND.chapu(); } }
-  else if (k==='ArrowDown'){ if (S.phase==='seed'){ doDown(); } else if (actions().down){ S.f.water = clamp(S.f.water - 3, 0, 15); V.waterV = -.5; SND.zaa(); } }
+  if (k==='ArrowRight'){ S.swipes++; V.flipQueue = e.shiftKey ? 6 : 0; V.flipGap = 0.11; advanceDay(); } else if (k==='ArrowLeft'){ S.swipes++; V.flipQueue = 0; doLeft(L); }
+  else if (k==='ArrowUp'){ doUp(3, 0); }
+  else if (k==='ArrowDown'){ doDownWater(3, 0); }
   else return; e.preventDefault(); syncUI();
 });
 
@@ -778,7 +781,7 @@ function endGame(why){
   if (S.over) return; S.over = true;
   if (why==='year' && !S.hv.done){ S.result = null; }
   else { S.result = finalize(S); }
-  const r = S.result; const R = $('result'); R.hidden = false;
+  const r = S.result; const R = $('result'); R.hidden = false; $('soundBtn').classList.add('show');
   $('whoR').innerHTML = DOODLE.kome(r && r.grade==='一等' ? 'joy' : r ? 'smile' : 'sad');
   if (!r){ $('resTitle').textContent = '一年 おわり'; $('rank').textContent = '—'; $('rYield').innerHTML = '0<small> kg/10a</small>'; $('rTawara').innerHTML = '0<small> 俵</small>'; $('rSeiryu').innerHTML = '—'; $('rTaste').innerHTML = '—'; $('rSay').textContent = '収穫まで いきませんでした。来年は 春に 種を つけましょう。'; $('rSay2').textContent = '4月に 種、5月に 田うえ、7月の おわりに 出穂、9月に 稲刈り。'; return; }
   $('resTitle').textContent = S.day + '日で 検査';
@@ -798,7 +801,7 @@ function endGame(why){
   else lines.push('茎 ' + Math.round(f.P||f.T) + '本・穂 ' + Math.round(r.P) + '本/㎡・一穂 ' + Math.round(r.G) + '粒。');
   $('rSay').innerHTML = lines[0]; $('rSay2').innerHTML = lines[1] || ('穂 ' + Math.round(r.P) + '本/㎡・一穂 ' + Math.round(r.G) + '粒・登熟 ' + Math.round(r.R*100) + '%。');
 }
-function start(){ S = newState(K3.fixedSeed != null ? K3.fixedSeed : (Date.now() ^ Math.floor(Math.random()*1e9))>>>0); Object.assign(V, { water:0, waterV:0, waterTarget:undefined, page:0, pageV:0, flipQueue:0, flipTimer:0, flipGap:0.11, flipN:0, drag:null, card:null, shake:0, cutAnim:0, flash:0, hint:1, stamps:[], particles:[], toast:null, lastSay:'' }); $('title').hidden = true; $('result').hidden = true; resize(); syncUI(); narrate(); SND.init(); }
+function start(){ S = newState(K3.fixedSeed != null ? K3.fixedSeed : (Date.now() ^ Math.floor(Math.random()*1e9))>>>0); Object.assign(V, { water:0, waterV:0, waterTarget:undefined, page:0, flipQueue:0, flipTimer:0, flipGap:0.11, flipN:0, drag:null, card:null, shake:0, hint:1, stamps:[], particles:[], toast:null, lastSay:'' }); $('title').hidden = true; $('result').hidden = true; $('soundBtn').classList.remove('show'); resize(); syncUI(); narrate(); SND.init(); }
 $('startBtn').addEventListener('click', start); $('againBtn').addEventListener('click', start);
 $('whoT').innerHTML = DOODLE.kome('smile');
 const sb = $('soundBtn'); sb.setAttribute('aria-pressed', soundOn ? 'true' : 'false'); sb.textContent = soundOn ? '♪ 音 オン' : '♪ 音 オフ';
@@ -814,7 +817,7 @@ function step(dt){
   /* 暦の めくり：とんで いく */
   if (V.page > 0) V.page = Math.max(0, V.page - dt*6);
   if (V.flipQueue > 0){ V.flipTimer += dt; if (V.flipTimer >= V.flipGap){ V.flipTimer = 0; V.flipQueue--; V.flipGap = Math.min(0.3, V.flipGap*1.18); if (!advanceDay()) V.flipQueue = 0; } } else V.flipTimer = 0;
-  V.shake = Math.max(0, V.shake - dt*1.5); V.cutAnim = Math.max(0, V.cutAnim - dt*2); V.flash = Math.max(0, V.flash - dt*3);
+  V.shake = Math.max(0, V.shake - dt*1.5);
   for (const st of V.stamps) st.life -= dt*0.9; V.stamps = V.stamps.filter(s => s.life > 0);
   for (const p of V.particles){ p.x += p.vx*dt; p.y += p.vy*dt; p.vy += 500*dt; p.life -= dt; } V.particles = V.particles.filter(p => p.life > 0);
   if (V.toast){ V.toast.life -= dt*0.8; if (V.toast.life <= 0) V.toast = null; }
@@ -830,7 +833,7 @@ if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { me
 const K3 = window.K3 = {
   get S(){ return S; }, V, manual: false, fixedSeed: null, step, start, layout, actions, advanceDay, doLeft: () => doLeft(layout()), finalize: () => finalize(S), newState, makeWeather, dateOf, growDay, TARGET, HILLS,
   /* スクショ用：ある 場面まで 一気に すすめる */
-  jump(to){ start(); const f = S.f; const L = layout();
+  jump(to){ if (!['seed','nursery','tiller','nakaboshi','heading','harvest','dry','result'].includes(to)) throw new Error('K3.jump: 知らない 場面 ' + to); start(); const f = S.f; const L = layout();
     const flipTo = (cond, max) => { for (let i=0;i<max && !cond();i++) advanceDay(); };
     S.seed_.soaked = true; V.water = 10; flipTo(() => S.seed_.sprouted, 30); if (to==='seed'){ return; }
     doDown(); if (to==='nursery'){ flipTo(() => S.nur.age >= 18, 40); return; }
@@ -841,8 +844,8 @@ const K3 = window.K3 = {
     if (to==='nakaboshi'){ run(() => f.dat >= 44, 80); f.water = 0; f.dryRun = 6; V.water = 0; return; }
     if (to==='heading'){ run(() => !!f.heading, 120); return; }
     run(() => f.gdd >= 980, 200); if (to==='harvest'){ doLeft(L); doLeft(L); return; }
-    while (!S.hv.done) doLeft(L); if (to==='dry'){ advanceDay(); advanceDay(); return; }
-    flipTo(() => S.hv.moisture <= 15.5, 10); doLeft(L); if (to !== 'result') throw new Error('K3.jump: 知らない 場面 ' + to); },
+    for (let i=0;i<8 && !S.hv.done;i++) doLeft(L); if (!S.hv.done) throw new Error('K3.jump: 刈れなかった（出穂 ' + f.heading + '・積算 ' + Math.round(f.gdd) + '）'); if (to==='dry'){ advanceDay(); advanceDay(); return; }
+    flipTo(() => S.hv.moisture <= 15.5, 10); doLeft(L); },
 };
 </script>
 </body>

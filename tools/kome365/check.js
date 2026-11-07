@@ -9,19 +9,7 @@ const OUT = process.env.KOME_OUT || path.join(os.tmpdir(), 'kome365-check');
 fs.mkdirSync(OUT, { recursive: true });
 const only = process.argv.slice(2);
 
-// ページの 中で 使う 道具：本物の タッチ（pointerType:'touch'）を #cv に 送る。swipe は 指を おろして 何点か 動かして はなす
-const HELPERS = () => {
-  window.ev = (t, id, x, y) => document.getElementById('cv').dispatchEvent(new PointerEvent(t, { pointerId:id, pointerType:'touch', clientX:x, clientY:y, bubbles:true, button:0, isPrimary:true }));
-  window.steps = n => { for (let i=0;i<n;i++) K3.step(1/60); };
-  // dir: 'up'|'down'|'left'|'right'。len は px、fast は はじく（点の 間を 大きく）
-  window.swipe = (dir, len, fast) => {
-    const W = innerWidth, H = innerHeight, cx = W/2, cy = H*0.5; const dx = dir==='right'?1:dir==='left'?-1:0, dy = dir==='down'?1:dir==='up'?-1:0;
-    const n = fast ? 3 : 24; ev('pointerdown', 1, cx - dx*len/2, cy - dy*len/2); /* ゆっくり＝24コマ（0.4秒）、はじく＝3コマ */
-    for (let i=1;i<=n;i++){ ev('pointermove', 1, cx - dx*len/2 + dx*len*i/n, cy - dy*len/2 + dy*len*i/n); K3.step(1/60); }
-    ev('pointerup', 1, cx + dx*len/2, cy + dy*len/2); K3.step(1/60);
-  };
-  window.flush = () => { for (let i=0;i<400 && K3.V.flipQueue > 0;i++) K3.step(1/30); };
-};
+const { HELPERS } = require('./helpers'); // ページの 中で 使う 道具（playtest.js と 共通。8周目）
 
 const CHECKS = {
   async syntax(){
@@ -45,12 +33,16 @@ const CHECKS = {
       // 速さごとの 日数（実機の はじき 1.5〜3px/ms が 4〜9日）
       const days = v => { const d0 = K3.S.day; const n = 4, len = v*n*16.7; ev('pointerdown', 1, cx-len/2, cy); K3.step(1/60); for (let i=1;i<=n;i++){ ev('pointermove', 1, cx-len/2+len*i/n, cy); K3.step(1/60); } ev('pointerup', 1, cx+len/2, cy); flush(); return K3.S.day - d0; };
       const dv = [1, 1.5, 3].map(days);
-      return { d0, d1, d1b, q, d2, d3, dq, q2, d4, qHold, dv, dayEnd: K3.S.day, date: document.getElementById('date').textContent, dayNo: document.getElementById('dayNo').textContent };
+      // 途中で 切れた 指（pointercancel）は なかった ことに。id 2 の 指でも 動く（8周目）
+      const dc = K3.S.day; ev('pointerdown', 3, cx-100, cy); for (let i=1;i<=6;i++){ ev('pointermove', 3, cx-100+i*30, cy); K3.step(1/60); } ev('pointercancel', 3, cx+80, cy); K3.step(1/60); const cancelDay = K3.S.day - dc;
+      const d2b = K3.S.day; swipe('right', 120, false, true, 2); const id2Day = K3.S.day - d2b;
+      return { d0, d1, d1b, q, d2, d3, dq, q2, d4, qHold, dv, cancelDay, id2Day, dayEnd: K3.S.day, date: document.getElementById('date').textContent, dayNo: document.getElementById('dayNo').textContent };
     });
     ok(r.d1 === r.d0 + 1 && r.d1b === r.d1, 'ゆっくり →：1日 だけ 進む', r);
     ok(r.q >= 3 && r.d3 - r.d2 === r.q, 'はじく →：つづけて 何日も めくれる（慣性）', r);
     ok(r.q2 === 0 && r.d4 <= r.dq + 1, 'めくれて いる とちゅうの ← で 止まる', r);
     ok(r.qHold === 0, '引いて 止めてから はなすと 1日 だけ', r.qHold);
+    ok(r.cancelDay === 0 && r.id2Day === 1, '途中で 切れた 指は 進めない。2本目の id の 指でも 進む（8周目）', [r.cancelDay, r.id2Day]);
     ok(r.dv[0] <= 3 && r.dv[1] >= 3 && r.dv[1] <= 5 && r.dv[2] >= 7 && r.dv[2] <= 10, 'はじきの 速さと 日数：1px/ms ≤3日・1.5 で 3〜5日・3 で 7〜10日', r.dv);
     ok(/日$/.test(r.date) && r.dayNo === r.dayEnd + '日目', 'HUD の 日づけが 進む', r);
     await p.screenshot({ path: path.join(OUT, 'swipe.png') });
@@ -126,7 +118,7 @@ const CHECKS = {
     const p = await page(b, 390, 844);
     const r = await p.evaluate(() => {
       K3.manual = true; K3.fixedSeed = 11; K3.jump('heading'); swipe('left', 120, false); const card = !!K3.V.card; steps(20); const cardOn = !!K3.V.card; steps(200); const cardOff = !K3.V.card;
-      K3.jump('harvest'); while (!K3.S.hv.done) K3.doLeft(); const m0 = K3.S.hv.moisture;
+      K3.jump('harvest'); for (let i=0;i<8 && !K3.S.hv.done;i++) K3.doLeft(); const m0 = K3.S.hv.moisture;
       swipe('right', 260, true); flush(); const m1 = K3.S.hv.moisture, q = K3.V.flipQueue; const stat = document.getElementById('stat').textContent;
       swipe('right', 100, false); flush(); const m2 = K3.S.hv.moisture;
       return { card, cardOn, cardOff, m0, m1, q, stat, m2, left: K3.actions().left, wx: document.getElementById('wx').textContent };
@@ -135,6 +127,10 @@ const CHECKS = {
     ok(r.m0 === 25 && r.m1 <= 15.5 && r.m1 >= 14 && r.q === 0, 'はじいても 15% で 止まる（乾燥機の 仕上がり）', r);
     ok(r.m2 < r.m1 && r.m2 >= 13 && r.left === 'けんさ', 'もう一度 → すると 少し 乾かしすぎ（1日 0.8%。それでも 検査へ 行ける）', r);
     ok(/あす/.test(r.wx), 'HUD に あすの 天気', r.wx);
+    const c = await p.evaluate(() => { K3.jump('harvest'); for (let i=0;i<8 && !K3.S.hv.done;i++) K3.doLeft(); K3.V.toast = null; for (let i=0;i<3;i++) K3.advanceDay(); return { m: K3.S.hv.moisture, toast: K3.V.toast && K3.V.toast.text }; });
+    ok(c.m <= 15.5 && c.toast === '15%', '1日ずつ 進めても 15% を こえた 時に 合図（8周目）', c);
+    const k = await p.evaluate(() => { K3.jump('tiller'); const f = K3.S.f; f.water = 2; const w0 = f.water; window.dispatchEvent(new KeyboardEvent('keydown', { key:'ArrowUp' })); const w1 = f.water, t1 = document.getElementById('say').textContent; window.dispatchEvent(new KeyboardEvent('keydown', { key:'ArrowDown' })); const w2 = f.water; return { w0, w1, w2, t1 }; });
+    ok(k.w1 === k.w0 + 3 && k.w2 === k.w1 - 3 && /→で あした/.test(k.t1), '矢印キーも 指と 同じ 道（水 ±3cm・こめつぶの 返事）', k);
     await p.screenshot({ path: path.join(OUT, 'dry.png') });
   },
   // 中干しの 合図が 出る。水が ない 間は 追肥できない（3周目）

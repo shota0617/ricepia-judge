@@ -17,11 +17,8 @@ const opt = (k, d) => { const i = args.indexOf(k); return i >= 0 ? args[i+1] : d
 const SEEDS = opt('--seeds', '3,5,11,42').split(',').map(Number);
 const BOTS = opt('--bots', 'careful,normal,idle,flood,hasty,late').split(',');
 
+const { HELPERS: BASE } = require('./helpers'); // ev・swipe は check.js と 共通（8周目）
 const HELPERS = () => {
-  window.ev = (t, id, x, y) => document.getElementById('cv').dispatchEvent(new PointerEvent(t, { pointerId:id, pointerType:'touch', clientX:x, clientY:y, bubbles:true, button:0, isPrimary:true }));
-  window.swipe = (dir, len, fast) => { const W = innerWidth, H = innerHeight, cx = W/2, cy = H*0.5, dx = dir==='right'?1:dir==='left'?-1:0, dy = dir==='down'?1:dir==='up'?-1:0, n = fast ? 3 : 24;
-    ev('pointerdown', 1, cx - dx*len/2, cy - dy*len/2); for (let i=1;i<=n;i++){ ev('pointermove', 1, cx - dx*len/2 + dx*len*i/n, cy - dy*len/2 + dy*len*i/n); K3.step(1/60); } ev('pointerup', 1, cx + dx*len/2, cy + dy*len/2); K3.step(1/60);
-    for (let i=0;i<400 && K3.V.flipQueue > 0;i++) K3.step(1/30); };
   window.playBot = (bot, seed) => {
     K3.manual = true; K3.fixedSeed = seed; K3.start(); const S = K3.S, f = S.f; let lateFrom = null;
     for (let i=0;i<900 && !S.over;i++){
@@ -40,7 +37,7 @@ const HELPERS = () => {
       if (bot==='flood' && S.phase==='field' && f.planted){ if (dir==='down') dir = 'right'; if (f.water < 14 && dir==='right' && !S.hv.done) { dir = 'up'; len = 400; } }
       if (bot==='hasty'){ if (S.phase==='field' && a.left==='刈る') dir = 'left'; if (S.phase==='dry'){ if (S.hv.moisture > 15.5){ dir = 'right'; len = 300; fast = true; } else dir = 'left'; } }
       if (bot==='late'){ if (S.phase==='field' && a.left==='刈る'){ if (lateFrom == null) lateFrom = S.day; dir = S.day - lateFrom >= 14 ? 'left' : 'right'; if (dir==='right' && /↑/.test(t)) dir = 'up'; } if (S.phase==='dry' && S.hv.moisture <= 15.5 && S.hv.dryDays < 6) dir = 'right'; }
-      swipe(dir, len, fast);
+      swipe(dir, len, fast, true);
     }
     const r = S.result;
     return { bot, seed, over: S.over, day: S.day, done: S.hv.done, swipes: S.swipes, grade: r ? r.grade : '—', yield: r ? Math.round(r.yieldKg) : 0, seiryu: r ? Math.round(r.seiryu) : 0, taste: r ? r.taste : 0,
@@ -52,7 +49,7 @@ const ORDER = { '一等':4, '二等':3, '三等':2, '規格外':1, '—':0 };
   const b = await chromium.launch(); const rows = [];
   for (const seed of SEEDS){
     const p = await b.newPage({ viewport:{ width:390, height:844 }, hasTouch:true }); p.on('pageerror', e => console.log('ERR', e.message));
-    await p.goto(FILE); await p.waitForFunction(() => window.K3); await p.evaluate(HELPERS);
+    await p.goto(FILE); await p.waitForFunction(() => window.K3); await p.evaluate(BASE); await p.evaluate(HELPERS);
     for (const bot of BOTS){ const r = await p.evaluate(([bot, seed]) => playBot(bot, seed), [bot, seed]); rows.push(r); }
     await p.close();
   }

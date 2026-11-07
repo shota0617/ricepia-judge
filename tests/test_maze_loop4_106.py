@@ -48,7 +48,7 @@ class TestMichikusaFirstRoll(unittest.TestCase):
 
     def test_scope(self):
         files = set(self._diff("--name-only").split())
-        allowed = {"nishio-go/pixel.js", "tests/test_maze_loop4_86.py", "tests/test_maze_loop4_106.py"} | {"tests/test_maze_loop4_%d.py" % n for n in (95, 97, 98, 99, 100, 101, 102, 103, 104, 105)}
+        allowed = {"nishio-go/pixel.js", "tests/test_maze_loop4_86.py", "tests/test_maze_loop4_106.py", "tests/test_maze_loop4_145.py"} | {"tests/test_maze_loop4_%d.py" % n for n in (95, 97, 98, 99, 100, 101, 102, 103, 104, 105, 107, 108)}
         self.assertLessEqual(files, allowed)
 
 

@@ -323,6 +323,17 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertIn('faceImg.addEventListener("load", loadPhotos);', HTML)
         self.assertIn("setTimeout(loadPhotos, 2500);", HTML)
 
+    def test_button_zoom_centers_on_remaining_bad_grains(self):
+        # 🔍で寄るときは皿の真ん中ではなく残っているわるい粒のまんなかへ。
+        # 皿の真ん中へ寄ると、端へ広がったわるい粒が拡大画面の外に出て見えなくなる（実測8回中2回）
+        body = HTML[HTML.index("function toggleZoom()"):]
+        body = body[:body.index("\n}\n")]
+        self.assertIn('grains.filter(g => !g.gone && g.kind !== "seiryu")', body)
+        self.assertIn("targets.reduce((a, g) => a + g.x, 0) / targets.length", body)
+        self.assertIn("targets.reduce((a, g) => a + g.y, 0) / targets.length", body)
+        # 離れた2粒は、両方収まる倍率まで引いて寄せる（顔が見える下限つき）
+        self.assertIn("Math.max(1.6, Math.min(2.4, fit))", body)
+
     def test_assets_exist(self):
         for name in set(re.findall(r'kensa/[a-z_]+\.webp', HTML)):
             self.assertTrue(os.path.exists(os.path.join(ROOT, name)), name)

@@ -1025,7 +1025,21 @@ document.addEventListener("gesturestart", (e) => e.preventDefault()); /* iPhone�
 function toggleZoom() {
   if (step !== 2) return;
   if (Z.s > 1.001) resetZoom();
-  else zoomTo(2.4, PW / 2, PH / 2);
+  else {
+    /* 皿の真ん中ではなく、残っているわるい粒のまんなかへ寄る。端へ広がった粒が拡大の外に出ない。
+       2粒が離れているときは、両方収まる倍率まで引く（顔が見える 1.6 倍よりは引かない） */
+    const bad = grains.filter(g => !g.gone && g.kind !== "seiryu");
+    const targets = bad.length ? bad : grains.filter(g => !g.gone);
+    if (!targets.length) zoomTo(2.4, PW / 2, PH / 2);
+    else {
+      const cx = targets.reduce((a, g) => a + g.x, 0) / targets.length;
+      const cy = targets.reduce((a, g) => a + g.y, 0) / targets.length;
+      const spanX = Math.max(...targets.map(g => g.x)) - Math.min(...targets.map(g => g.x)) + GW;
+      const spanY = Math.max(...targets.map(g => g.y)) - Math.min(...targets.map(g => g.y)) + GH;
+      const fit = Math.min(PW / spanX, PH / spanY);
+      zoomTo(Math.max(1.6, Math.min(2.4, fit)), cx, cy);
+    }
+  }
 }
 zoomBtn.addEventListener("pointerup", toggleZoom); /* 粒と同じく指を離した時に効く。速くなでた直後は click が来ないことがある */
 zoomBtn.addEventListener("click", (e) => { if (e.detail === 0) toggleZoom(); }); /* キーボードの Enter */

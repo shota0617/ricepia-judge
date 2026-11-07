@@ -411,6 +411,8 @@ a{color:var(--acc)}
 #swWrap.guideOn #swEdge .eR{animation:swEdgeGlowR 4.4s ease-in-out infinite}   /* 周回113: ゴーストが消えた2〜3枚目も、動かす方向とその側の札の同期を続ける */
 #swWrap.guideOn #swEdge .eL{animation:swEdgeGlowL 4.4s ease-in-out infinite}
 @media (prefers-reduced-motion: reduce){#swWrap:has(#swGhost.on) #swEdge .eL,#swWrap:has(#swGhost.on) #swEdge .eR,#swWrap.guideOn #swEdge .eL,#swWrap.guideOn #swEdge .eR{animation:none}}
+#swWrap.guideOn:has(#swCard.drag) #swEdge .eL,#swWrap.guideOn:has(#swCard.drag) #swEdge .eR,#swWrap:has(#swGhost.on):has(#swCard.drag) #swEdge .eL,#swWrap:has(#swGhost.on):has(#swCard.drag) #swEdge .eR{animation:none}   /* 周回114: ドラッグ中は案内の同期の光を止め、選んでいる側の札だけが手に連動して濃くなる(案内の周期で点いたり消えたりしない) */
+#sGame:has(#swCard.drag) #swGuide .gdL,#sGame:has(#swCard.drag) #swGuide .gdR{animation:none}   /* 周回114: ドラッグ中は案内の矢印も中立位置に戻して止める(寄ったまま凍ると手と無関係な方向を示すため。戻りは最大7px) */
 @media (prefers-reduced-motion: reduce){#swGhost,#swGhost.on{display:none;animation:none}}
 .swBack{position:absolute;inset:0;z-index:0;border-radius:20px;background:#efe6cf;box-shadow:0 4px 14px rgba(0,0,0,.22);pointer-events:none;transition:transform .32s cubic-bezier(.22,1.25,.36,1),opacity .22s ease}
 .swBack.b1{transform:translateY(calc(-9px + var(--p) * 5px)) scale(calc(.95 + var(--p) * .04));opacity:calc(.55 + var(--p) * .45)}
@@ -455,7 +457,7 @@ a{color:var(--acc)}
 #swEdge{display:flex;justify-content:space-between;gap:10px;margin-top:8px;font-size:22px;font-weight:800}
 #swEdge>span{flex:1;padding:9px;border-radius:14px;line-height:1.25}.eIc{display:block;font-size:32px;line-height:1.1;margin-bottom:2px}.eIc .ePix{display:inline-block;width:32px;height:32px;background-repeat:no-repeat;background-position:center;background-size:32px 32px;image-rendering:pixelated;vertical-align:top}.eIc i{font-style:normal;font-size:.55em;vertical-align:.35em;margin-left:1px}.eIc .eMod{display:inline-block;width:16px;height:16px;background-repeat:no-repeat;background-position:center;background-size:16px 16px;image-rendering:pixelated;vertical-align:.35em;margin-left:2px}   /* 修飾マークのドット絵(サイクル82・16x16を等倍表示しドットの粒度を主アイコンとそろえる) */#swEdge .eL,#swEdge .eR{color:#344957;background:#e7edf0}#swEdge .eL{text-align:left}#swEdge .eR{text-align:right}
 #swCard.tL .eL,#swCard.tR .eR{transform:scale(1.07);background:#cbdbe3}
-#swEdge>span{transition:scale 90ms ease-out}#swCard.lockL .eL,#swCard.lockR .eR{scale:1.065}   /* 独立scaleプロパティ: tL/tRのtransform:scale(1.07)と掛け合わさり合計約1.14 */
+#swEdge>span{transition:scale 90ms ease-out,background-color 120ms ease}#swCard.lockL .eL,#swCard.lockR .eR{scale:1.065;background:#9dbfd1;box-shadow:inset 0 0 0 3px #3b5263}   /* 独立scaleプロパティ: tL/tRのtransform:scale(1.07)と掛け合わさり合計約1.14。周回114: 決まる位置では札も一段濃く+輪で「離せば決まる」が札で読める */
 @media (prefers-reduced-motion: reduce){#swCard.lockL .eL,#swCard.lockR .eR{scale:1}#swCard.lockL .swSide.L,#swCard.lockR .swSide.R{scale:1}#swEdge>span{transition:none}}
 /* はじめの数枚だけ: カードが揺れて、左右へ動かすことを知らせる */
 #swHint{display:none;position:absolute;left:50%;bottom:-17px;transform:translateX(-50%);white-space:nowrap;background:#2b2a24;color:#fff;font-size:17px;font-weight:800;padding:7px 16px;border-radius:18px;box-shadow:0 3px 10px rgba(0,0,0,.35);pointer-events:none;z-index:3}

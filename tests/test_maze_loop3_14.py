@@ -56,6 +56,7 @@ const mzCritDrawn = [[8, 3, 'kaeru']];
 const mzGate = new Map([['3,3r', 1]]);
 const mzRt = { path: [[1, 1], [10, 10]] };
 const mzFx = [];
+const cubeFirstGoal = () => false;   // サイクル132：2つ目の 迷路から（はじめての ゴールの 後）の 動きを 確かめる
 const grainSound = () => { sounds++; };
 const floatText = s => said.push(s);
 const G = { mzFruit: () => { pts += 10; return { pts: 10 }; }, mzPiece: done => { const p = 5 + (done ? 15 : 0); pts += p; return { pts: p }; }, mzView: () => { pts += 15; return { pts: 15 }; }, mzCache: () => { pts += 20; return { pts: 20 }; } };

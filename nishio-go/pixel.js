@@ -10553,6 +10553,7 @@ function mzCacheTick(now) {
   if (mzCache.cx < 0) {   // まだ 出ていない：地図が 読めるまで 0.5秒ごとに さがす。1回 見つけたら もう 出ない
     if (mzCache.done || now < mzCache.next) return;
     mzCache.next = now + 500;
+    if (cubeFirstGoal()) return;   // にしおサイクル132：めいろの はじめての ゴールに 着くまで（最初の 1分）は かくし宝箱を 湧かせない（手がかり札・紫の 輪・波紋・足元の 光は 宝箱が 出てから なので 連動して 出ない）。2回目からは これまでどおり
     const c = mzCachePick();
     if (c) { mzCache.cx = c[0]; mzCache.cy = c[1]; mzCacheCell = ''; dirty = true; }
     else return;

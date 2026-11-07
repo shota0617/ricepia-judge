@@ -1153,7 +1153,8 @@ function senseDone() {
 }
 function tokenNearFace() {
   const t = token.getBoundingClientRect(), f = $("face").getBoundingClientRect();
-  return Math.hypot(t.left + t.width / 2 - (f.left + f.width / 2), t.top + t.height / 2 - (f.top + f.height / 2)) < f.width * 0.9;
+  /* トークンが顔に触れる（重なる）所まで運べば届いたことにする。中心同士が近い必要はない */
+  return Math.hypot(t.left + t.width / 2 - (f.left + f.width / 2), t.top + t.height / 2 - (f.top + f.height / 2)) < (t.width + f.width) / 2 + 8;
 }
 function autoSense() {
   if (senseKind === "nigiru") { senseDone(); return; }

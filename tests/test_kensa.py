@@ -334,6 +334,14 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         # 離れた2粒は、両方収まる倍率まで引いて寄せる（顔が見える下限つき）
         self.assertIn("Math.max(1.6, Math.min(2.4, fit))", body)
 
+    def test_sense_token_counts_touching_the_face(self):
+        # はこぶ: トークンが顔に触れる所まで運べば届く。中心同士54px以内（旧仕様）では、
+        # 顔のふちに触れる運び方（中心間78px）でも届かず戻ってしまった（390×844実測）
+        body = HTML[HTML.index("function tokenNearFace()"):]
+        body = body[:body.index("\n}\n")]
+        self.assertIn("(t.width + f.width) / 2 + 8", body)
+        self.assertNotIn("f.width * 0.9", body)
+
     def test_assets_exist(self):
         for name in set(re.findall(r'kensa/[a-z_]+\.webp', HTML)):
             self.assertTrue(os.path.exists(os.path.join(ROOT, name)), name)

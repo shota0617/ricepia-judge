@@ -202,8 +202,8 @@ class FlowTests(unittest.TestCase):
         self.assertIn("translateX(var(--pokeDx, -46px))", HTML)
 
     def test_probe_inserts_with_a_short_push(self):
-        # 先が袋に1/3入ったら「さした」（手本の指は46pxしか動かないのに、以前は124px押す必要があった）。引く長さは入れた深さから
-        self.assertIn("P.inAt = bag.offsetLeft + bag.offsetWidth * 0.66;", HTML)
+        # 先が袋に少し入ったら「さした」（サイクル74で0.66→0.82にゆるめた）。引く長さは入れた深さから
+        self.assertIn("P.inAt = bag.offsetLeft + bag.offsetWidth * 0.82;", HTML)
         self.assertIn("if (x <= P.inAt) {", HTML)
         self.assertIn("(x - P.deep) / (P.rest - P.deep) - 0.02", HTML)
 
@@ -401,6 +401,15 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertIn("const NIGIRU_MS = 350;", HTML)
         self.assertNotIn("const NIGIRU_MS = 600;", HTML)
         self.assertIn("NIGIRU_MS * motion", HTML)  # 動きを減らす設定では待ちも短くなる従来どおり
+
+    def test_probe_inserts_with_a_short_push_of_about_forty_px(self):
+        # ぬく・押し込み: 先が袋に少し入る約40pxの短い押しで「さした」になる。
+        # 0.66では約69px必要で、40〜60pxの自然な短い押しでは刺さらなかった（390×844実測・サイクル74）
+        # 押しの長さ = (1 - 0.82) * 袋幅184px + 6 ≒ 39px。30pxのわざとらしい短さでは届かない範囲に留める
+        self.assertIn("P.inAt = bag.offsetLeft + bag.offsetWidth * 0.82;", HTML)
+        self.assertNotIn("P.inAt = bag.offsetLeft + bag.offsetWidth * 0.66;", HTML)
+        # 手本の指は、さすのに必要な押しの長さだけ動く（rest - inAt + 8）
+        self.assertIn('poke.style.setProperty("--pokeDx", -(P.rest - P.inAt + 8) + "px");', HTML)
 
     def test_assets_exist(self):
         for name in set(re.findall(r'kensa/[a-z_]+\.webp', HTML)):

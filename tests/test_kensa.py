@@ -511,6 +511,15 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertIn('"translate(" + P.inAt + "px," + P.y + "px)", offset:.5', HTML)
         self.assertIn("stopProbeAttract(); /* 触れたら誘いは止まる（サイクル82） */", HTML)
 
+    def test_pinch_faces_show_with_a_small_pinch(self):
+        # みわける: 顔が出る倍率は1.2倍から受ける。
+        # 1.5倍では指を少し開く自然なピンチ（1.2倍・1.35倍）で寄っても顔が出ず、
+        # 寄れていないように見えた（390×844実測・サイクル85）。
+        # ごく小さなピンチ（1.1倍以下）では顔を出さない範囲に留める
+        self.assertIn("const ZOOM_MAX = 3.4, FACE_AT = 1.2;", HTML)
+        self.assertNotIn("FACE_AT = 1.5", HTML)
+        self.assertIn("const near = Z.s >= FACE_AT;", HTML)
+
     def test_assets_exist(self):
         for name in set(re.findall(r'kensa/[a-z_]+\.webp', HTML)):
             self.assertTrue(os.path.exists(os.path.join(ROOT, name)), name)

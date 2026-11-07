@@ -4504,7 +4504,9 @@ const BIRDS = (() => {
   // ドアを開けて降りると いっせいに飛んで逃げる（田んぼを耕す人のブログ（アメブロ）「田畑を耕すといろんな鳥がトラクターの後に集まります。」）
   const NROOK = season === 'aki' ? (MOBILE ? 8 : 14) : 0;
   for (let k = 0; k < NROOK; k++) { const b = makeCrow(k === 5 ? 'koku' : 'miyama'); b.userData.delay = 30 + k * 0.25; b.visible = false; scene.add(b); list.push(b); }
-  let workT = 0, flee = 0, toldRook = false, toldFlee = false;
+  let workT = 0, flee = 0, toldRook = false, toldFlee = false, pendRook = false;
+  const rookMsg = () => '冬鳥の ミヤマガラスの群れが 降りてきた。くちばしの根元が 白っぽい。' + (list.some(o => o.userData.kind === 'koku') ? '首と腹の白い 小さいのは コクマルガラス。' : '') + 'キャビンのガラスごしだと 鳥は用心しない';
+  function tellRook() { toldRook = true; toast(rookMsg(), 6); setTimeout(() => voice('miyama'), 6500); }
   function scare() {                               // ドアを開けて降りた：ミヤマガラスの群れが いっせいに飛び立ち、しばらく来ない
     const near = list.filter(b => b.userData.rook && b.visible && b.userData.state === 'walk' && Math.hypot(b.position.x - S.x, b.position.z - S.z) < 15);
     if (!near.length) return;
@@ -4521,6 +4523,7 @@ const BIRDS = (() => {
   function update(dt, working) {
     workT = working && Math.abs(S.v) > 0.2 ? workT + dt : Math.max(0, workT - dt * 0.2);
     if (flee > 0) flee -= dt;
+    if (pendRook && !toldRook && toastT <= 0 && !startNoticeMuted()) { pendRook = false; tellRook(); }   // サイクル209・最初の1分: のんびりでは開始直後（耕して約40秒で群れが着地）にミヤマガラスの長文知らせと声で最初のなぞりを止めない。pendは立てたままなので1分を過ぎて知らせが空いていれば従来どおり出す（遅れて出す形。再着地に依存しない）。くわしい説明では従来どおり着地時に出す
     const s = Math.sin(S.yaw), c = Math.cos(S.yaw);
     list.forEach((b, k) => {
       const u = b.userData;
@@ -4562,9 +4565,8 @@ const BIRDS = (() => {
         if (d < 0.3) {
           u.state = 'walk'; b.position.y = gy;
           if (u.rook && !toldRook) {
-            toldRook = true;
-            toast('冬鳥の ミヤマガラスの群れが 降りてきた。くちばしの根元が 白っぽい。' + (list.some(o => o.userData.kind === 'koku') ? '首と腹の白い 小さいのは コクマルガラス。' : '') + 'キャビンのガラスごしだと 鳥は用心しない', 6);
-            setTimeout(() => voice('miyama'), 6500);
+            if (startNoticeMuted()) pendRook = true;   // サイクル209・最初の1分: のんびりでは着地しても出さず pend に残す（上の消化で遅れて出す）
+            else tellRook();
           }
         }
         b.rotation.y = Math.atan2(dx, dz);

@@ -3485,7 +3485,7 @@ const SAGE = (() => {
       const a = Math.round(S.yaw / (Math.PI / 2)) * (Math.PI / 2), aligned = Math.abs(Math.atan2(Math.sin(S.yaw - a), Math.cos(S.yaw - a))) < 0.2;
       if (!turned) { dist = 0; return; }
       if (aligned && !toExit() && untilledBehind()) dist += S.v * dt; else dist = 0;
-      if (dist > 2.5) {
+      if (dist > 2.5 && !startNoticeMuted()) {   // サイクル211・最初の1分: のんびりでは最初の列の終わりの旋回で下げ忘れの長文知らせと声で最初の旋回を邪魔しない。toldは立てないので1分を過ぎたあとの下げ忘れで従来どおり出す（遅れて出す形）。くわしい説明では従来どおり最初の旋回から出す
         told = true;
         toast('旋回が終わったら すぐ下ろす（' + (MOBILE || params.has('pad') ? '「' + IMPL + 'を下げる」' : 'スペース') + '）。上げたまま進むと、そこが耕し残しになって あとで耕しなおす', 6);
         setTimeout(() => voice('udemi'), 6500);

@@ -2930,7 +2930,7 @@ const toastQ = [];
 // 同じ知らせが続けて来ても、重ねて出さない（農場のゲームで、同じ知らせが何枚も積み上がって畑が見えなくなったので）
 const toastShowing = msg => $('toast').classList.contains('show') && $('toast').textContent === msg;
 // にしおサイクル123：転がして 遊ぶ 人は、めいろの はじめての ゴールに 着くまで（最初の 1分）数の 知らせ（+5・+30pt・500m・1km・×3 など）を 出さない。ポイント・記録は そのまま 上がる。歩いて 遊ぶ 人・2回目からは これまでどおり
-const QUIET_NUM = /[+＋]\d|\d+\s?pt|\d+(\.\d+)?\s?km|\d+\s?m[！!]|×\d/;
+const QUIET_NUM = /[+＋]\d|\d+\s?pt|\d+(\.\d+)?\s?km|\d+\s?m[！!・。]|×\d|\d+\/\d+/;   // にしおサイクル136：「48m・」「25/100」の 形（日付を またいだ ときの きのうの さんぽ・100歩たんけん）も
 const quietNumMsg = msg => demo && !(store.get('nsg_mzgoals', 0) >= 1) && QUIET_NUM.test(String(msg));
 function toast(msg) {
   if (quietNumMsg(msg)) return;   // にしおサイクル123：最初の 1分の 数の 知らせは 出さない

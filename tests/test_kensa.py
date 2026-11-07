@@ -266,7 +266,7 @@ const LOT = LOTS[0], hint = {}, lcd = {textContent:'--.-'};
 const elements = {lcd, slots:{children:[{}, {}, {}]}, crankArm:{style:{}},
   sceneMeter:{addEventListener:(_, fn) => { onMove = fn; }}};
 const $ = id => elements[id];
-const pop = () => {}, tick = () => {}, meterBeep = () => {};
+const pop = () => {}, tick = () => {}, meterBeep = () => {}, crankSound = () => {};
 const crankPointer = e => ({a:e.angle, far:true});
 let crankTurned = 0, crankDrag = {id:1, last:0, sum:0, x:0, y:0, moved:false};
 """ + reading + move + """
@@ -669,6 +669,17 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertNotIn("tick();", leave)
         # 音量は控えめ（0.045 以下）に留める
         self.assertIn("g.gain.setValueAtTime(0.045, t);", HTML)
+
+    def test_cycle96_crank_has_its_own_mechanical_sound(self):
+        # 差分テーマ差2（類3の残り）: はかるのハンドルを回す音だけが粒の tick を共有していたため、
+        # 水分計の機械らしい低いカチッという固有の音に分ける。
+        self.assertIn('const crankSound = () => tone(185, 0.03, 0.03, "square");', HTML)
+        # ハンドルの45°ごとの音は crankSound を使い、tick は使わない
+        crank = HTML[HTML.index("crankDrag.sum += Math.abs(d);"):HTML.index("function endCrank(e)")]
+        self.assertIn("crankSound();", crank)
+        self.assertNotIn("tick();", crank)
+        # 粒の tick 自体は従来どおり残る（みわける等の粒の音は変えない）
+        self.assertIn("const tick = () => tone(1100 + Math.random() * 900, 0.03, 0.025);", HTML)
 
     def test_cycle93_picked_grains_stay_in_quiet_record(self):
         # 類7: 見分けた粒が静かに記録に残る。任意で開く資料（#notes）の中だけに出し、常時表示・競争・スコアにはしない。

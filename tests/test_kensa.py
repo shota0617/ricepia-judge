@@ -479,6 +479,18 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertIn('if (hankoTaps === 1) guideAt("press", $("pad"));', HTML)  # おす・朱肉
         self.assertIn('if (hankoTaps === 1) guideAt("move", $("hanko"), 0, hankoMax);', HTML)  # おす・おろし
 
+    def test_opening_attract_moves_probe_once_before_touch(self):
+        # 開いた瞬間の誘い（Fable設計の足すもの1・サイクル82）: 最初の袋だけ、
+        # 触れる前に穀刺しが一度だけ約2秒かけて袋の口（P.inAt）へ寄って戻る。
+        # 触れたら（pointerdown／自動代替）止まる。2袋目以降では出さない
+        self.assertIn("function startProbeAttract()", HTML)
+        self.assertIn("if (lotIndex !== 0 || P.done || P.inserted) return;", HTML)
+        self.assertIn("startProbeAttract();", HTML)  # startLot から呼ぶ
+        self.assertIn("duration:2000 * motion", HTML)
+        self.assertIn("iterations:1", HTML)
+        self.assertIn('"translate(" + P.inAt + "px," + P.y + "px)", offset:.5', HTML)
+        self.assertIn("stopProbeAttract(); /* 触れたら誘いは止まる（サイクル82） */", HTML)
+
     def test_assets_exist(self):
         for name in set(re.findall(r'kensa/[a-z_]+\.webp', HTML)):
             self.assertTrue(os.path.exists(os.path.join(ROOT, name)), name)

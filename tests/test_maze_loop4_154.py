@@ -22,8 +22,8 @@ class TestBloom(unittest.TestCase):
     def test_push(self):
         out = node("""let l=[];l=R.bloomPush(l,0,0,0);l=R.bloomPush(l,0.5,0,1);l=R.bloomPush(l,1.2,0,2);l=R.bloomPush(l,2.4,0,3);
 console.log(JSON.stringify(l.map(p=>p.n)));
-let m=[];for(let i=0;i<200;i++)m=R.bloomPush(m,i*2,0,i);console.log(m.length,m[0].n,m[119].n);""")
-        self.assertEqual(out.splitlines(), ["[0,1,2]", "120 80 199"])
+let m=[];for(let i=0;i<200;i++)m=R.bloomPush(m,i*2,0,i);console.log(m.filter(p=>p.fo==null).length,m.filter(p=>p.fo!=null).length,m[m.length-1].n);""")
+        self.assertEqual(out.splitlines(), ["[0,1,2]", "120 80 199"])   # 第4弾サイクル157：上限超えは即消さず fo を付けて退場（生きた点は120のまま）
 
     def test_push_invalid(self):
         out = node("""const l=[{x:0,y:0,t:0,n:0}];

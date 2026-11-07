@@ -451,6 +451,20 @@ function smileSound() { /* みわける: 完了の合図の音。500→760Hzへ�
     o.start(t); o.stop(t + 0.24);
   } catch (_) {}
 }
+function probeDoneSound() { /* ぬく: 完了の合図の音。300→480Hzへゆっくり上がる音で、粒の tick（高い短い音）や みわける完了の笑顔の音（smileSound 500→760Hz）とは分ける（サイクル103・差分テーマ差9）。最後の粒が落ちる tick のあと、穀刺しが消えて「はかる」へ移るまでの窓は無音だった（390×844実測）。他の所作の完了には固有の音がある（はかる=平均の音・みわける=smileSound・きめる=pop・おす=thump）一方、ぬく完了だけが無音だった */
+  try {
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    if (ac.state === "suspended") ac.resume();
+    const o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime;
+    o.type = "sine";
+    o.frequency.setValueAtTime(300, t);
+    o.frequency.exponentialRampToValueAtTime(480, t + 0.18);
+    g.gain.setValueAtTime(0.02, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.2);
+    o.connect(g).connect(ac.destination);
+    o.start(t); o.stop(t + 0.2);
+  } catch (_) {}
+}
 function thump() {
   tone(110, 0.16, 0.14, "sine");
   tone(70, 0.22, 0.1, "sine");
@@ -821,6 +835,7 @@ function pourOne(g) {
 }
 function finishProbe() {
   P.done = true; P.drag = null;
+  probeDoneSound(); /* ぬく完了の合図は固有の音にする（サイクル103・差9）。粒が落ちる tick とは分ける */
   hint.textContent = "ざらざら…";
   $("probe").animate([{ opacity:1 }, { opacity:0 }], { duration:280 * motion, fill:"forwards" }).onfinish = function () { this.cancel(); $("probe").style.opacity = "0"; };
   setTimeout(toHakaru, 560 * motion);

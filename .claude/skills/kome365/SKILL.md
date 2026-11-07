@@ -26,7 +26,7 @@ description: 米作り365（kome365.html・tools/kome365/）を 改善する ル
 |---|---|
 | `kome365.html` | ゲーム 1ファイル。`window.K3` が テスト用の 口（`K3.manual=true` で `K3.step(dt)` が 1コマ、`K3.fixedSeed` で 同じ 天気、`K3.jump('seed'|'nursery'|'tiller'|'nakaboshi'|'heading'|'harvest'|'dry'|'result')` で 場面へ、`K3.S` 状態、`K3.actions()` いま できる こと、`K3.doLeft()`・`K3.advanceDay()`・`K3.whatIf()`） |
 | `tools/kome365/helpers.js` | check.js・playtest.js で 共通の ページ内の 道具（本物の タッチ `ev`、`swipe(dir,len,fast,andFlush,id)`、`flush`、`steps`） |
-| `tools/kome365/check.js` | 通しの 確かめ（本物の PointerEvent）。`node tools/kome365/check.js [名前…]`。ぜんぶ ✔ で 0 |
+| `tools/kome365/check.js` | 通しの 確かめ（本物の PointerEvent）。`node tools/kome365/check.js [名前…]`。ぜんぶ ✔ で 0（19周目：100 こ） |
 | `tools/kome365/playtest.js` | 遊び方の ちがう ボット 6種（ていねい・ふつう・ほったらかし・みずびたし・せっかち・のんびり）× 天気 4つ。順位の 確かめ |
 | `tools/kome365/shots.js [幅 高さ]` | おもな 画面の スクショと `sheet.png` |
 | `docs/kome365.md` | 遊び方・スワイプの 割り当て・生育の しくみ・出典・周ごとの 記録・好みで かえられる 数 |
@@ -60,6 +60,8 @@ description: 米作り365（kome365.html・tools/kome365/）を 改善する ル
 - **引き算の かわいさ**：縁取りの 大きな 字・同じ 役目の 2つは けす（17周目）。字の 知らせは 暦の 横の 短冊。
 - **レビューは 役を かえて くり返す**：スワイプの 楽しさ・お客さん目線は 2回目でも 7つ 見つかった（13・14周目）。
 - **古い Safari で 止まる 書き方を 使わない**（正規表現の 後読み など。`check.js syntax`）。
+- **`rng` は LCG なので 近い seed の 1つ目は ほぼ 同じ 値**（seed 3・5・11・42 で 葉いろが ぜんぶ 39、台風が ぜんぶ あり に なった。19周目）。年ごとの 値は 別の `rng` を 2回 すててから。天気の 乱数の 回数は 変えない（固定 seed の 試しが 変わる）。
+- **等級は 品位だけ**なので 収量 143kg でも 一等に なる（19周目）。結果の 1行目は 等級＋原因。だれる 区間は 既定の 一言に 日ごとに 進む 数（茎・あと N日・積算℃）を 入れる。
 
 ## レビューの たのみ方（別の エージェント・general-purpose・バックグラウンド）
 

@@ -49,7 +49,7 @@ const CHECKS = {
     ok(r.qHold === 0, '引いて 止めてから はなすと 1日 だけ', r.qHold);
     ok(r.cancelDay === 0 && r.id2Day === 1, '途中で 切れた 指は 進めない。2本目の id の 指でも 進む（8周目）', [r.cancelDay, r.id2Day]);
     ok(r.back === 0 && r.arc.day === 0 && r.arc.water > 0 && r.shortFlick <= 1, '引いて 戻すと 何も しない。親指の 弧は ↑。短い はじきは 1日 まで（13周目）', [r.back, r.arc, r.shortFlick]);
-    ok(r.dv[0] <= 3 && r.dv[1] >= 3 && r.dv[1] <= 5 && r.dv[2] >= 7 && r.dv[2] <= 10, 'はじきの 速さと 日数：1px/ms ≤3日・1.5 で 3〜5日・3 で 7〜10日', r.dv);
+    ok(r.dv[0] <= 2 && r.dv[1] >= 2 && r.dv[1] <= 3 && r.dv[2] >= 7 && r.dv[2] <= 10, 'はじきの 速さと 日数：1px/ms ≤2日・1.5 で 2〜3日・3 で 7〜10日（21周目）', r.dv);
     ok(/日$/.test(r.date) && r.dayNo === r.dayEnd + '日目', 'HUD の 日づけが 進む', r);
     await p.screenshot({ path: path.join(OUT, 'swipe.png') });
   },
@@ -58,7 +58,7 @@ const CHECKS = {
     const p = await page(b, 390, 844);
     const r = await p.evaluate(() => {
       K3.manual = true; K3.fixedSeed = 11; K3.jump('tiller'); const f = K3.S.f; f.dat = 35; f.water = 2; K3.V.water = 2; K3.V.waterV = 0; steps(60); /* 分げつの ころ（10〜30日）は ゆっくりの ↑が 4cm までなので、その あとで */
-      const w0 = f.water; swipe('up', 80, false); const w1 = f.water; swipe('up', 240, false); const w2 = f.water;
+      const w0 = f.water; swipe('up', 80, true); const w1 = f.water; swipe('up', 240, true); const w2 = f.water; /* はじく（ゆっくりは 5cm まで。21周目） */
       const v0 = K3.V.water; steps(90); const v1 = K3.V.water;   // 見た目の 水面が 本当の 水に 追いつく
       swipe('down', 120, false); const w3 = f.water; swipe('down', 400, true); const w4 = f.water; steps(90); const v2 = K3.V.water;
       const stat = document.getElementById('stat').textContent;
@@ -135,7 +135,7 @@ const CHECKS = {
     ok(/あす/.test(r.wx), 'HUD に あすの 天気', r.wx);
     const c = await p.evaluate(() => { K3.jump('harvest'); for (let i=0;i<8 && !K3.S.hv.done;i++) K3.doLeft(); K3.V.toast = null; for (let i=0;i<3;i++) K3.advanceDay(); return { m: K3.S.hv.moisture, toast: K3.V.toast && K3.V.toast.text }; });
     ok(c.m <= 15.5 && c.toast === '15%', '1日ずつ 進めても 15% を こえた 時に 合図（8周目）', c);
-    const k = await p.evaluate(() => { K3.jump('tiller'); const f = K3.S.f; f.dat = 35; f.water = 2; const w0 = f.water; window.dispatchEvent(new KeyboardEvent('keydown', { key:'ArrowUp' })); const w1 = f.water, t1 = document.getElementById('say').textContent; window.dispatchEvent(new KeyboardEvent('keydown', { key:'ArrowDown' })); const w2 = f.water; return { w0, w1, w2, t1 }; });
+    const k = await p.evaluate(() => { K3.jump('tiller'); const f = K3.S.f; f.dat = 35; f.hoshiDays = 8; f.water = 2; const w0 = f.water; /* 中干しの あと（窓の 外。21周目：窓の 中は ↓が 0 まで） */ window.dispatchEvent(new KeyboardEvent('keydown', { key:'ArrowUp' })); const w1 = f.water, t1 = document.getElementById('say').textContent; window.dispatchEvent(new KeyboardEvent('keydown', { key:'ArrowDown' })); const w2 = f.water; return { w0, w1, w2, t1 }; });
     ok(k.w1 === k.w0 + 3 && k.w2 === Math.max(2.5, k.w1 - 3) && /→で あした/.test(k.t1), '矢印キーも 指と 同じ 道（水 +3cm・−3cm は 2.5cm のこす・こめつぶの 返事）', k);
     await p.screenshot({ path: path.join(OUT, 'dry.png') });
   },

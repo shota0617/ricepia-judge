@@ -9607,7 +9607,7 @@ function mzHelpGoal() {   // めいろの ゴールに 着いた：3回目で �
   const n = mzGoalsDone() + 1;
   lsSet('nsg_mzgoals', String(n));
   firstWalkBtns();
-  if (n === MZ_HELP_N && lsGet('nsg_mzhelp', 'auto') === 'auto') setTimeout(() => G.toast('🧭 道しるべと ✕ を けしたよ（せっていで また 出せる）'), 4500);
+  if (n === MZ_HELP_N && lsGet('nsg_mzhelp', 'auto') === 'auto') setTimeout(() => G.toast('🧭 道しるべと ✕ を けしたよ（せっていで また 出せる）'), MZ_GOAL_FX.bannerSec * 1000 + 200);
   mzHelpSync();
 }
 if ($('mzHelpToggle')) { mzHelpSync(); $('mzHelpToggle').addEventListener('change', e => { lsSet('nsg_mzhelp', e.target.checked ? 'on' : 'off'); mzHelp.told = true; dirty = true; }); }   // せっていの「🧭 めいろの おたすけ」
@@ -12009,6 +12009,8 @@ function mzSnap(now) {
 // ・画面の 外：縁に 大きな 矢印と、🏁 と めいろの 道のり（なければ まっすぐの きょり）の 札
 // ゴールに 着いた：お米の まわりに 紙ふぶき（ごはんつぶ・星・桜の 色。盤の めいろと 同じ）
 const mzFx = [], mzBanner = { t0: 0, text: '' };
+// ゴールの 区切りは 短く、絵と 動きだけ（サイクル156：紙ふぶき 60→24、バナー 4→1.6秒）
+const MZ_GOAL_FX = { n: 24, bannerSec: 1.6, fadeSec: 0.4, lifeMin: 0.7, lifeVar: 0.4, vMin: 1.2, vVar: 2.4, up: 2.2, happyMs: 1600 };
 const mzNext = { t0: 0, name: '', want: false };   // 新しい ゴールの 知らせ（3秒）
 // 「🏁 つぎの ゴール」の 札（と 道のりを 待つ 2秒まで）が 出て いる 間は、知らせ（game.js の toast）を 待たせ、札が 消えたら 出す。
 // ごほうびの 窓を とじると、待たせて いた 知らせと この 札が 同時に 出て、札の 見出し「🏁 つぎの ゴール」が 知らせに かくれて いた（自分で 遊んで 分かった。ゴールの たびに）
@@ -12026,22 +12028,22 @@ function mzGoalFx(text) {
   mzSpringShot();   // ばねで はね返って ゴールに 飛びこんだ
   // 紙ふぶきは 西尾らしく（運営者の声「西尾らしく」）：お米つぶ（白い たて長が くるくる）・抹茶の 葉（緑）・金の つぶ（お米屋さんの ゲーム、抹茶の まち）
   const now = performance.now(), kinds = ['rice', 'rice', 'leaf', 'rice', 'gold', 'leaf'], cols = { rice: '#fffdf3', leaf: ['#6f9f2c', '#9ccc4f'], gold: '#ffd84a' };
-  for (let i = 0; i < 60; i++) {
-    const a = Math.random() * Math.PI * 2, v = 2 + Math.random() * 6, k = kinds[i % kinds.length];
-    mzFx.push({ t0: now, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 4, k, c: k === 'leaf' ? cols.leaf[i % 2] : cols[k], spin: 4 + Math.random() * 8, ph: Math.random() * 6.3, life: 1 + Math.random() * 0.8 });
+  for (let i = 0; i < MZ_GOAL_FX.n; i++) {
+    const a = Math.random() * Math.PI * 2, v = MZ_GOAL_FX.vMin + Math.random() * MZ_GOAL_FX.vVar, k = kinds[i % kinds.length];
+    mzFx.push({ t0: now, vx: Math.cos(a) * v, vy: Math.sin(a) * v - MZ_GOAL_FX.up, k, c: k === 'leaf' ? cols.leaf[i % 2] : cols[k], spin: 4 + Math.random() * 8, ph: Math.random() * 6.3, life: MZ_GOAL_FX.lifeMin + Math.random() * MZ_GOAL_FX.lifeVar });
   }
   mzBanner.t0 = now; mzBanner.text = text || ''; mzBanner.said = false;
-  mzHelpGoal();   // 「🏁 ゴール！」の 大きな 文字（4秒。ごほうびの 窓を とじても 見える ように 長め）
+  mzHelpGoal();   // ゴールの 数え上げ（バナーの 文字は 出さない。サイクル146）
 }
 function drawMzFx(w, cy, T, now, S) {   // 画面の まん中（お米）から はじける。重さで 落ちて うすく なる。S：文字の 大きさの もと（画面の 点）
   if (mapCovered()) { if (mzBanner.t0) mzBanner.t0 = now; for (const p of mzFx) p.t0 = now; return; }   // ごほうびの 窓などが 開いている 間は 待って、とじたら はじめる
   const ba = (now - mzBanner.t0) / 1000;
-  if (mzBanner.t0 && ba < 4) {   // ゴールの ★と 時間（さいごの 0.5秒で うすく）。「ついた〜！」は お米の 吹き出し
-    ctx.globalAlpha = Math.min(1, (4 - ba) / 0.5);
+  if (mzBanner.t0 && ba < MZ_GOAL_FX.bannerSec) {   // ゴールの ★と 時間（さいごの fadeSec で うすく）。「ついた〜！」は お米の 吹き出し
+    ctx.globalAlpha = Math.min(1, (MZ_GOAL_FX.bannerSec - ba) / MZ_GOAL_FX.fadeSec);
     const big = Math.round(S * 1.6), y = Math.max(big, cy - S * 3.2) - Math.max(0, 0.3 - ba) * S * 6;   // 画面の 上に はみ出さない
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
     ctx.font = `bold ${big}px "DotGothic16", sans-serif`; ctx.lineWidth = Math.max(4, big / 5); ctx.strokeStyle = '#1a1a1a'; ctx.fillStyle = '#ffe680';
-    if (!mzBanner.said) { mzBanner.said = true; riceSay('ついた〜！', 3600, 'happy'); }   // 大きな「🏁 ゴール！」の 文字は やめて、お米が 吹き出しで 言う（10/29 店主「文字を 廃止して キャラクターとの 対話」）。窓を とじてから
+    if (!mzBanner.said) { mzBanner.said = true; riceSay('ついた〜！', MZ_GOAL_FX.happyMs, 'happy'); }   // 大きな「🏁 ゴール！」の 文字は やめて、お米が 吹き出しで 言う（10/29 店主「文字を 廃止して キャラクターとの 対話」）。窓を とじてから
     if (mzBanner.text) { const sm = Math.round(big * 0.5); ctx.font = `bold ${sm}px "DotGothic16", sans-serif`; ctx.lineWidth = Math.max(3, sm / 4); ctx.fillStyle = '#ffffff'; const ty = cy + T * 1.4; ctx.strokeText(mzBanner.text, w / 2, ty); ctx.fillText(mzBanner.text, w / 2, ty); }
     ctx.globalAlpha = 1;
   } else if (mzBanner.t0) mzBanner.t0 = 0;
@@ -13112,7 +13114,7 @@ const meiroApi = {
   tilt: () => tiltG, tiltAsk, tiltReset, tiltNeedsPermission, koto: (v, low) => kotoSound(v, low), splash: v => splashSound(v), boing: (v, hi) => boingSound(v, hi), rumble: v => rumbleTick(v, GROUND.road),   // rumble：転がる音（速さは 地図の マス/秒）
   pause(on) { meiroPause = !!on; dirty = true; if (on && mzNext.hold) { mzNext.hold = false; if (G.toastFlush) G.toastFlush(); } },   // 止める ときは「つぎの ゴール」で 待たせた 知らせを 出す
 };
-window.nishioPixel = { blinkOn, BLINK_MS, BLINK_SHUT_MS, get riceEye() { return riceEyeAt; }, grow: { stage: () => grow.stage, stageFor: growStageFor, TH: GROW_TH, popAt: () => grow.popT }, firstRoute: { shape: mzPathShape, simple: mzFirstSimple, LIM: MZ_FIRST_SIMPLE }, collected: { has: collectedOf }, roadShape: { of: roadShapeOf, corner: roadShapeCorner }, glanceShift, asleepShut, happyFace, meiroApi, heroGiant: () => heroGiantId, pickHeroGiant, HERO_GIANT_RANGE, maze: { wallTheme: () => mzWallTheme(), on: () => mazeOn(), playing: () => active && mazeOn(), next: () => ({ want: mzNext.want, t0: mzNext.t0, on: mzNextOn(), labHide: !!mzNext.labHide, arrowDim: !!mzNext.arrowDim, box: mzNext.box || null }), goal: id => {   // id の 名所が いまの ゴール（か 2分 以内の 前の ゴール）なら、かかった 時間と めいろの 道のり
+window.nishioPixel = { blinkOn, BLINK_MS, BLINK_SHUT_MS, get riceEye() { return riceEyeAt; }, grow: { stage: () => grow.stage, stageFor: growStageFor, TH: GROW_TH, popAt: () => grow.popT }, firstRoute: { shape: mzPathShape, simple: mzFirstSimple, LIM: MZ_FIRST_SIMPLE }, collected: { has: collectedOf }, roadShape: { of: roadShapeOf, corner: roadShapeCorner }, glanceShift, asleepShut, happyFace, meiroApi, heroGiant: () => heroGiantId, pickHeroGiant, HERO_GIANT_RANGE, maze: { goalFxSpec: () => ({ ...MZ_GOAL_FX }), wallTheme: () => mzWallTheme(), on: () => mazeOn(), playing: () => active && mazeOn(), next: () => ({ want: mzNext.want, t0: mzNext.t0, on: mzNextOn(), labHide: !!mzNext.labHide, arrowDim: !!mzNext.arrowDim, box: mzNext.box || null }), goal: id => {   // id の 名所が いまの ゴール（か 2分 以内の 前の ゴール）なら、かかった 時間と めいろの 道のり
     if (!mazeOn()) return null;
     const now = performance.now(), pv = mzRt.prev, g = mzRt.gid === id ? { t0: mzRt.t0, len0: mzRt.len0, warp: mzRt.warp, moves: mzMv.n, run: { ...mzRt.run } } : pv && pv.id === id && now - pv.at < 120000 ? pv : null;
     if (!g || !g.t0) return null;

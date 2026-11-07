@@ -366,6 +366,7 @@ const meterBeep = () => tone(1240, 0.09, 0.035, "sine"); /* はかる: 計器の
 const grainDrop = () => tone(340, 0.07, 0.05, "triangle"); /* みわける: 粒が小皿へコト（サイクル89・類3） */
 const inkSound = () => tone(240, 0.1, 0.055, "triangle"); /* おす: 朱肉にぎゅっと（サイクル89・類3） */
 const crankSound = () => tone(185, 0.03, 0.03, "square"); /* はかる: ハンドルが45°ごとにカチッ。粒の tick（高い短い音）とは分ける（サイクル96・差分テーマ差2）。実測では60°回すと粒と同じ約1998Hzの tick が鳴っていた */
+const checkSound = () => tone(760, 0.05, 0.022, "sine"); /* きめる: 照合の●が付く小さな音。粒の tick（高い短い音）とは分ける（サイクル97・差分テーマ差3） */
 function bagSound() { /* おす: 袋が流れる紙の音。360→150Hzへゆっくり下がる低い音で、粒の tick（高い短い音）とは分ける（サイクル95・差分テーマ「類3の残り」） */
   try {
     ac = ac || new (window.AudioContext || window.webkitAudioContext)();
@@ -1379,7 +1380,7 @@ function toKimeru() {
   layer($("decide"), true);
   showTop(null);
   setStep(3, new Set(rows.map(r => r[2])).size > 1 ? "右の ● の下を 上へ ↑" : "● の下を 上へ ↑");
-  $("rows").querySelectorAll(".dot").forEach((d, i) => setTimeout(() => { d.classList.add("on"); tick(); }, (120 + i * 110) * motion));
+  $("rows").querySelectorAll(".dot").forEach((d, i) => setTimeout(() => { d.classList.add("on"); checkSound(); }, (120 + i * 110) * motion));
   guideAt("move", document.querySelectorAll(".gradeBtn")[worst], 0, -48);
 }
 /* 等級の印を上へひきあげて選ぶ。2回タップでも選べる */

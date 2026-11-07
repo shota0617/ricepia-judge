@@ -958,7 +958,7 @@ function endPlatePointer(e, cancelled) {
       let g = grainAt(toLocal(e.clientX, e.clientY));
       if (!g && d.startG && !d.startG.gone) g = d.startG; /* ずれる途中のなでで粒が押し動かされ、離した場所では外れることがある。押した瞬間に触れていた粒をタップ先にする */
       const tapNow = performance.now();
-      if (g && g.kind === "seiryu" && tapNow - lastGoodTap < 320 && Math.hypot(e.clientX - lastGoodX, e.clientY - lastGoodY) < 40) { /* 同じ所を2回タップで寄る。もう一度で戻る。離れた粒を続けて突いても寄らない */
+      if (g && g.kind === "seiryu" && tapNow - lastGoodTap < 500 && Math.hypot(e.clientX - lastGoodX, e.clientY - lastGoodY) < 40) { /* 同じ所を2回タップで寄る。もう一度で戻る。離れた粒を続けて突いても寄らない。間隔は500msまで受ける: 320msでは約410ms間隔のゆっくりした2回タップが届かず、ただ揺れるだけだった（390×844実測・サイクル77）。距離40pxは、となりの別の粒を続けて突いた時に寄せと誤らないためそのまま */
         lastGoodTap = 0;
         if (Z.s > 1.001) resetZoom();
         else { const pz = plateXY(e.clientX, e.clientY); zoomTo(2.4, pz.x, pz.y); }

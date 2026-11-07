@@ -191,7 +191,7 @@ class FlowTests(unittest.TestCase):
         self.assertIn("twistDone = false;", HTML)
 
     def test_double_tap_and_shake(self):
-        self.assertIn("tapNow - lastGoodTap < 320", HTML)
+        self.assertIn("tapNow - lastGoodTap < 500", HTML)  # サイクル77で320→500msにゆるめた（ゆっくりした2回タップでも寄る）
         self.assertIn("Math.hypot(e.clientX - lastGoodX, e.clientY - lastGoodY) < 40", HTML)  # 離れた粒を続けて突いても寄らない
         # iPhone は許可の画面が出るので、振るは使わない
         self.assertIn('typeof DeviceMotionEvent.requestPermission === "function"', HTML)
@@ -433,6 +433,15 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertIn("!d.noTap", HTML)
         # はじくは従来どおり24pxを超えた速い払いだけ
         self.assertIn("performance.now() - d.t0 < 260 && Math.hypot(e.clientX - d.x, e.clientY - d.y) > 24", HTML)
+
+    def test_good_grain_double_tap_takes_a_slow_double_tap(self):
+        # みわける: よい粒の2回タップで寄る判定の間隔は500msまで受ける。
+        # 320msでは約410ms間隔のゆっくりした2回タップが届かず、ただ揺れるだけだった
+        # （390×844実測・サイクル77）。距離40pxは、となりの別の粒を続けて突いた時に
+        # 寄せと誤らないためそのまま
+        self.assertIn('tapNow - lastGoodTap < 500', HTML)
+        self.assertNotIn('tapNow - lastGoodTap < 320', HTML)
+        self.assertIn('Math.hypot(e.clientX - lastGoodX, e.clientY - lastGoodY) < 40', HTML)
 
     def test_assets_exist(self):
         for name in set(re.findall(r'kensa/[a-z_]+\.webp', HTML)):

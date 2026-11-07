@@ -30,7 +30,7 @@ const HELPERS = () => {
         else if (a.left==='刈る' && f.gdd >= 980) dir = 'left';
         else if (f.dat < 10){ dir = f.water < 4 ? 'up' : 'right'; len = 120; }
         else if (f.dat < 34){ dir = f.water < 1.5 ? 'up' : f.water > 4.5 ? 'down' : 'right'; len = 40; }
-        else if (f.dat <= 44 && !f.heading){ if (f.water >= 1){ dir = 'down'; len = 400; fast = true; } else dir = 'right'; }
+        else if (f.dat <= 44 && !f.heading && f.hoshiDays < 7){ if (f.water >= 1 && f.hoshiDays === 0){ dir = 'down'; len = 400; fast = true; } else if (f.water >= 1){ dir = 'down'; len = 400; fast = true; } else dir = 'right'; } /* 46周目：中干しは 7日で 切り上げる（9日目から 根が 切れる） */
         else { dir = f.water < 2 ? 'up' : f.water > 6 ? 'down' : (f.heading && S.weather[S.day].w==='高温' && !f.flowToday ? 'up' : 'right'); len = 120; } /* 雨で 深く なったら 落とす（23周目） */
       }
       if (bot==='careful' && S.phase==='dry'){ dir = S.hv.moisture <= 15.5 ? 'left' : 'right'; }

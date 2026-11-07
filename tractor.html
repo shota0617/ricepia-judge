@@ -8821,7 +8821,7 @@ function step(dt) {
   if (S.cool === undefined) S.cool = COOL0;
   if (S.started && !S.stalled) S.cool += (0.55 + (S.rotDown && S.rotPos < 0.1 ? 0.04 : 0) + (BELT.broken ? 0.65 : 0) - S.cool) * Math.min(1, dt / (BELT.broken ? 14 : S.cool < 0.5 ? 40 : 15));   // ファンベルトが切れると ファンが止まって どんどん上がる
   const pct = Math.min(100, Math.floor(tilledCount / workCount * 100));
-  if (!SHIRO) T2.u.value = pct / 100;             // T2：耕し進むほど 残りの土が目立つ（代かきは水の下なので上げない）
+  if (!SHIRO) { const p218 = pct / 100; T2.u.value = pct > 80 ? p218 + (pct - 80) / 20 * 0.35 : p218; }   // T2：耕し進むほど 残りの土が目立つ（代かきは水の下なので上げない）。サイクル218・類似ゲーム類2（PowerWash Simulator）: 仕上げ間際（80%超）は残りの未耕地への黄土色の寄せをなだらかに強め、最後の細い残りが自然と目に入るようにする。色は同じ黄土色のまま・時間では変化しない（点滅・煽りなし）
   T4.update(dt);                                  // T4：次に耕す列の目印の帯を出す・動かす
   T5.tick(dt);                                    // T5：カバー率100%の判定を 0.25 秒ごとに更新
   if (pct >= 50 && !SHIRO && S.started) voice('hajimete');   // 半分 耕せたころ

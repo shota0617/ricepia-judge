@@ -2821,6 +2821,63 @@ const BLOCKS = {
   },
   measure() { this.init(); let d = 0; for (const v of this.done) d += v; return { blocks: this.cols * this.rows, done: d, cells: this.cells }; }
 };
+
+// サイクル222・類似ゲーム類6（牧場物語「耕した面が育つ」）: 耕したます目ごとに初めて耕した時刻を持ち、
+// 40秒で小さな芽（段階1）、120秒で少し大きくなった芽（段階2）が出る。芽は小さな緑の円錐（高さ約6cm・半径約1.8cm）を
+// InstancedMesh で最大1500個まで出し、マス番号の決定的ハッシュで約37個に1個に間引く（全面耕しても上限内・ランダムに見える並び）。
+// 耕し直したます目は芽が土に戻り、時刻も数え直す（育ち直す）。芽の再構築は2秒に1回まで（DRY.updateと同じ周期感）。
+// 代かき（SHIRO・水の下）と田んぼアート（ART.on・絵の色の差が本体）では出さない（T5・BLOCKSと同じ扱い）。
+// 文字・音・ポップ・点滅・点数は一切なし。操作・速さ・流れは変えない。芽はゆっくり静かに出て大きくなるだけ（のんびり・平和）。
+const GROW = {
+  born: new Float32Array(NX * NZ).fill(-1), clock: 0, acc: 0, mesh: null, CAP: 1500, T1: 40, T2: 120,
+  till(c) { this.born[c] = this.clock; },   // 初耕・再耕の両方から呼ぶ（再耕では芽が土に戻り、時刻も数え直しになる）
+  stage(c) {                                // 0=まだ出ない／1=小さな芽（40秒〜）／2=少し大きくなった芽（120秒〜）
+    if (c < 0 || c >= this.born.length || this.born[c] < 0) return 0;
+    if (typeof SHIRO !== 'undefined' && SHIRO) return 0;   // 代かきでは出さない。SHIRO は同スクリプト内で GROW より前に定義される const のため、定義順でも参照できる（BLOCKS の ART 向け typeof ガードと同じ流儀で安全側に倒す）
+    const age = this.clock - this.born[c];
+    return age < this.T1 ? 0 : age < this.T2 ? 1 : 2;
+  },
+  pick(c) { return ((c * 1103515245 + 12345) >>> 0) % 37 === 0; },   // 決定的ハッシュで約37個に1個のます目だけ芽を出す
+  ensure() {
+    if (this.mesh) return;
+    const geo = new THREE.ConeGeometry(0.018, 0.06, 5);
+    geo.translate(0, 0.03, 0);              // 円錐の底が耕した面（y=TILL_Y）に付くよう持ち上げる
+    this.mesh = new THREE.InstancedMesh(geo, new THREE.MeshLambertMaterial({ color: 0x5a8f3e }), this.CAP);
+    this.mesh.count = 0; this.mesh.frustumCulled = false; this.mesh.castShadow = false;
+    scene.add(this.mesh);
+  },
+  update(dt) {
+    this.clock += dt; this.acc += dt;
+    if (this.acc < 2) return;               // 再構築は2秒に1回まで
+    this.acc = 0;
+    if ((typeof SHIRO !== 'undefined' && SHIRO) || (typeof ART !== 'undefined' && ART && ART.on)) { if (this.mesh) this.mesh.count = 0; return; }   // 代かき・田んぼアートでは出さない（ART は GROW より後で定義されるため typeof ガード。呼び出しはスクリプト全体の読み込み後だけ）
+    this.ensure();
+    const m = new THREE.Matrix4();
+    let n = 0;
+    for (let c = 0; c < this.born.length && n < this.CAP; c++) {
+      const st = this.stage(c);
+      if (st < 1 || !this.pick(c)) continue;
+      const i = (c / NZ) | 0, j = c % NZ, h = (c * 2654435761) >>> 0;
+      const x = -HX + (i + 0.5) * CELL + (((h & 255) / 255) - 0.5) * 0.12;   // マス中心＋ハッシュ由来の小さなずれ（±0.06m以内）
+      const z = -HZ + (j + 0.5) * CELL + ((((h >> 8) & 255) / 255) - 0.5) * 0.12;
+      const s = st === 1 ? 0.6 : 1.0;       // 段階1は小さく、段階2で少し大きく
+      m.makeScale(s, s, s); m.setPosition(x, TILL_Y, z);
+      this.mesh.setMatrixAt(n++, m);
+    }
+    this.mesh.count = n;
+    this.mesh.instanceMatrix.needsUpdate = true;
+  },
+  measure() {
+    let cells = 0, stage1 = 0, stage2 = 0;
+    for (let c = 0; c < this.born.length; c++) {
+      if (this.born[c] < 0) continue;
+      cells++;
+      const st = this.stage(c);
+      if (st === 1) stage1++; else if (st === 2) stage2++;
+    }
+    return { cells, stage1, stage2, sprouts: this.mesh ? this.mesh.count : 0 };
+  }
+};
 function overTill(c) {
   const x0 = -HX + ((c / NZ) | 0) * CELL, z0 = -HZ + (c % NZ) * CELL;
   WAVY[c] = 0; setCell(c, null, 0);              // 土くれがなくなって 平らに（波も土塊も消える。二山盛りの山は 残る）
@@ -2977,6 +3034,7 @@ function tillCell(i, j, lx = 0) {               // lx：作業機のまん中か
     }   // 作業機がその所をはなれて（1.5m 以上走って）から また来たら 1 回と数える。止まっているあいだは数えない
     TODO[c] = S.odo || 0;
     if (TILTY[c] !== _sm0[0] || DIP[c] !== _sm0[1] || WAVY[c] !== _sm0[2] || TILLN[c] !== _sm0[3] || CLOD[c] !== _sm0[4]) refreshNeighbors(i, j, c);   // サイクル220・類4
+    GROW.till(c);                                   // サイクル222・類6: 耕し直すと芽は土に戻り、時刻も数え直す（育ち直す）
     return 0;
   }
   tilledMask[c] = 1; TILLN[c] = 1; TODO[c] = S.odo || 0;
@@ -3006,6 +3064,7 @@ function tillCell(i, j, lx = 0) {               // lx：作業機のまん中か
   dirtyLo = Math.min(dirtyLo, c); dirtyHi = Math.max(dirtyHi, c);
   hillsDirty = true;
   BLOCKS.check(i, j);                             // サイクル221・類5: このます目で区画が閉じたら、その区画の色が一段落ち着く
+  GROW.till(c);                                   // サイクル222・類6: 初めて耕した時刻を持ち、40秒・120秒で小さな芽が育つ
   return 1;
 }
 // 耕うんピッチ（爪が 1 回土に入るあいだに進む長さ）＝ 走る速さ ÷（爪軸の回転数 × 1 回転で同じ所に入る爪の数 2）。
@@ -10967,6 +11026,7 @@ function frame(now) {
   FARMER.update(dt, running);
   FLOAT.update(dt * SPEEDUP);
   DRY.update(dt * SPEEDUP);
+  GROW.update(dt * SPEEDUP);                      // サイクル222・類6: 耕した面の芽をゆっくり育てる
   TR.flush();
   if (tillTexDirty) { TILL_TEX.needsUpdate = true; tillTexDirty = false; }
   STREAK.flush();
@@ -10975,7 +11035,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { HERI, GASU, get ECO() { return ECO; }, set ECO(v) { ECO = v; }, get ECO_RPM() { return ECO_RPM; }, cycleEco, setRpm, WORK_RPM, DIFF, SAGE, WARAYAMA, FENCE, RENGE, SHIHATSU, DIP, YAMA, MARKS, CLAW, USHI, UZURA, soilY, soilCell, WAVD, CLOD, GREASE, squeak, SCRAPE, BELT, COVER, KATA, RAMPDMG, CORNER, TILTY, WAVY, STONES, HAMARU, WASH, squeeze, moistAt, clodH, ROUGHA: () => ROUGH, engineLoad, engineRpm, WALK, walkField, TILLN, T2, T3, T4, T5, T6, BLOCKS, get overTilled() { return overTilled; }, AKIAKANE, BUTTERFLIES, LEAK, INAGO, ROADSIDE, TOBI, KABASHIRA, LEVEE_FLOWERS, KERI, SNAILS, WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, AMENBO, KERA, KAMO, ZARI, GENGO, KANA, KABU, DOJO, HACHI, MEDAKA, HOTARU, KAWASEMI, IMORI, KIJI, TONOSAMA, MOGURA, TSUBAME, KABUTO, HIGAN, HIBARI, PLAY, INTRO, MAEUKI, OSHI, MUKU, DRY, MAKURA, DEEP, softAt, OCHI, PANKU, AIRCL, OMO, KEIKAL, DANKI, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, TRACE, HINT, AUTO, SOILPOP, updateCamera, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, BADGE, SAY, sim: sec => { for (let t = 0; t < sec; t += 0.05) { lastPct = step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); MUKU.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); USHI.update(0.05); UZURA.update(0.05); AMENBO.update(0.05); KERA.update(0.05); KAMO.update(0.05); ZARI.update(0.05); GENGO.update(0.05); KANA.update(0.05); KABU.update(0.05); DOJO.update(0.05); HACHI.update(0.05); MEDAKA.update(0.05); HOTARU.update(0.05); KAWASEMI.update(0.05); IMORI.update(0.05); KIJI.update(0.05); TONOSAMA.update(0.05); MOGURA.update(0.05); TSUBAME.update(0.05); KABUTO.update(0.05); HIGAN.update(0.05); HIBARI.update(0.05); INTRO.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); FARMER.update(0.05, S.started && !S.done); } buildHills(); } };
+window.game = { HERI, GASU, get ECO() { return ECO; }, set ECO(v) { ECO = v; }, get ECO_RPM() { return ECO_RPM; }, cycleEco, setRpm, WORK_RPM, DIFF, SAGE, WARAYAMA, FENCE, RENGE, SHIHATSU, DIP, YAMA, MARKS, CLAW, USHI, UZURA, soilY, soilCell, WAVD, CLOD, GREASE, squeak, SCRAPE, BELT, COVER, KATA, RAMPDMG, CORNER, TILTY, WAVY, STONES, HAMARU, WASH, squeeze, moistAt, clodH, ROUGHA: () => ROUGH, engineLoad, engineRpm, WALK, walkField, TILLN, T2, T3, T4, T5, T6, BLOCKS, GROW, get overTilled() { return overTilled; }, AKIAKANE, BUTTERFLIES, LEAK, INAGO, ROADSIDE, TOBI, KABASHIRA, LEVEE_FLOWERS, KERI, SNAILS, WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, AMENBO, KERA, KAMO, ZARI, GENGO, KANA, KABU, DOJO, HACHI, MEDAKA, HOTARU, KAWASEMI, IMORI, KIJI, TONOSAMA, MOGURA, TSUBAME, KABUTO, HIGAN, HIBARI, PLAY, INTRO, MAEUKI, OSHI, MUKU, DRY, MAKURA, DEEP, softAt, OCHI, PANKU, AIRCL, OMO, KEIKAL, DANKI, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, TRACE, HINT, AUTO, SOILPOP, updateCamera, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, BADGE, SAY, sim: sec => { for (let t = 0; t < sec; t += 0.05) { lastPct = step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); MUKU.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); USHI.update(0.05); UZURA.update(0.05); AMENBO.update(0.05); KERA.update(0.05); KAMO.update(0.05); ZARI.update(0.05); GENGO.update(0.05); KANA.update(0.05); KABU.update(0.05); DOJO.update(0.05); HACHI.update(0.05); MEDAKA.update(0.05); HOTARU.update(0.05); KAWASEMI.update(0.05); IMORI.update(0.05); KIJI.update(0.05); TONOSAMA.update(0.05); MOGURA.update(0.05); TSUBAME.update(0.05); KABUTO.update(0.05); HIGAN.update(0.05); HIBARI.update(0.05); INTRO.update(0.05); DRY.update(0.05); GROW.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); FARMER.update(0.05, S.started && !S.done); } buildHills(); } };
 </script>
 </body>
 </html>

@@ -29,6 +29,9 @@
   /* 上の計器（速さ・前後・ロータリー・耕した割合） */
   #hud { position: fixed; top: max(8px, env(safe-area-inset-top)); left: 8px; right: 8px; display: flex; gap: 6px; flex-wrap: wrap; pointer-events: none; }
   .chip { padding: 5px 10px; border-radius: 999px; background: rgba(20, 18, 14, .62); color: #fff; font-size: 13px; font-weight: 700; white-space: nowrap; }
+  /* サイクル217・類似ゲーム類1（PowerWash Simulator）: のんびりでは進み具合（耕した割合）を大きな数字1つだけで静かに見せる。説明の文字は足さず、点滅・ポップ・音も付けない。くわしい説明（DETAIL）では従来の計器チップが正で、こちらは決して出さない */
+  #bigPct { position: fixed; left: 12px; top: calc(max(8px, env(safe-area-inset-top)) + 50px); font-size: 44px; font-weight: 800; line-height: 1; color: #fff; text-shadow: 0 2px 6px rgba(0,0,0,.45); opacity: .92; pointer-events: none; }
+  body:not(.calm) #bigPct { display: none !important; }
   .chip b { font-size: 16px; }
   .chip.on { background: rgba(195, 20, 27, .85); }
   .chip.score { background: rgba(31, 77, 43, .82); }
@@ -237,6 +240,7 @@
   <span class="chip score hidden" id="artChip">でき <b id="sim">0</b>%</span>
   <span id="scorePop"></span>
 </div>
+<div id="bigPct" class="hidden">0%</div> <!-- サイクル217・類1: のんびり専用の大きな進み具合の数字（％だけ） -->
 <div id="bar" class="hidden">
   <button id="bCam" class="ico" data-i="👁" title="視点を切りかえる（C）">👁 運転席</button>
   <button id="bSnd" title="音（M）">🔇</button>
@@ -10017,7 +10021,7 @@ $('bStart').onclick = () => {
   if (!S.started) startCrank(true);  // エンジンをかける：（冷えていれば予熱）→ セル（1.1 秒）→ かかる → 回転が上がって落ちつく。サイクル161: 初回だけ true（のんびりでは始動を短くする）
   if (camMode !== 0) { camMode = 0; look.yaw = look.pitch = 0; $('bCam').textContent = '👁 ' + CAMS[0]; }   // サイクル118: 始まりは運転席視点（洗車などで外から見た後でも）
   $('start').classList.add('hidden');
-  for (const id of MOBILE || params.has('pad') ? ['hud', 'bar', 'badge', 'padC', 'padB', 'padD'] : ['hud', 'bar', 'badge']) $(id).classList.remove('hidden');   // サイクル98: 運転パッドは全廃済み（DOMなし）。運転はなぞり操作のみ（キーボードは予備として残す）
+  for (const id of MOBILE || params.has('pad') ? ['hud', 'bar', 'badge', 'padC', 'padB', 'padD', 'bigPct'] : ['hud', 'bar', 'badge', 'bigPct']) $(id).classList.remove('hidden');   // サイクル217・類1: のんびりでは大きな％数字も出す（DETAILでは CSS で常時非表示）   // サイクル98: 運転パッドは全廃済み（DOMなし）。運転はなぞり操作のみ（キーボードは予備として残す）
   if (!MOBILE && !params.has('pad')) $('keyHint').classList.remove('hidden');   // パソコン：はじめのうちは 画面の左下に いちばん使うキー
   if (!S.started) {
     S.started = true;
@@ -10847,6 +10851,7 @@ function frame(now) {
     $('rot').textContent = S.rotDown ? IMPL + ' 下（' + (SHIRO ? 'かく' : '耕す') + '）' : IMPL + ' 上';
     $('rot').classList.toggle('on', S.rotDown);
     $('pct').textContent = pct;
+    $('bigPct').textContent = pct + '%';   // サイクル217・類1: のんびりの大きな数字も同じ pct で静かに差し替える
     COACH.update(running && !INTRO.on);
     if (pct >= 3 && !S.hintGone) { S.hintGone = true; $('keyHint').style.opacity = 0; }
     $('time').textContent = fmtTime(S.elapsed);

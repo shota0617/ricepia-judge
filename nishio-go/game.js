@@ -3333,9 +3333,29 @@ function renderDayStamps() {
   box.innerHTML = `<h3>📅 ${md(cells[0].date)}〜${md(cells[cells.length - 1].date)}</h3><div class="ds-grid">${cells.map(c => `<span class="ds-cell${c.on ? ' on' : ''}${c.today ? ' today' : ''}" aria-label="${esc(c.date)}${c.on ? ' さんぽした日' : ''}${c.today ? ' 今日' : ''}">${c.day}</span>`).join('')}</div>`;
   box.hidden = false;
 }
+// 類6（駅メモ！）：着いた名所の大きな絵が「集まった」と分かる記録。はじめて着いた順に並べるだけ（回数・順位・進み具合は出さない）
+function galleryTiles(visits, spotIds) {
+  if (!visits || typeof visits !== 'object') return [];
+  const ok = spotIds instanceof Set ? spotIds : new Set(Array.isArray(spotIds) ? spotIds : []);
+  const num = x => typeof x === 'number' && isFinite(x) ? x : null;
+  return Object.entries(visits).filter(([id, v]) => ok.has(id) && v && typeof v === 'object')
+    .map(([id, v], i) => ({ id, name: v.name || id, k: num(v.first) ?? num(v.last) ?? 0, i }))
+    .sort((a, b) => a.k - b.k || a.i - b.i).map(({ id, name }) => ({ id, name }));
+}
+function renderVisitedGallery() {
+  const box = $('visitedGallery');
+  if (!box) return;
+  const tiles = galleryTiles(S.visits, new Set(spots.map(x => x.id))).map(t => {
+    const art = spotThumb(spots.find(x => x.id === t.id)).replace('class="gthumb"', 'class="vg-art"').replace(/width="28" height="28"/, 'width="96" height="96"');
+    return art ? `<button type="button" class="vg-tile" data-spot="${esc(t.id)}">${art}<b>${esc(t.name)}</b></button>` : '';
+  }).filter(Boolean);
+  box.innerHTML = tiles.join('');
+  box.hidden = !tiles.length;
+}
 function renderLog() {
   renderCourse();
   renderPostcards();
+  renderVisitedGallery();
   renderPhotoQuiz();
   renderDayStamps();
   const jOk = featuredToday();   // ミニゲームは、きょう名所でチェックインしたら
@@ -3641,8 +3661,8 @@ function openTab(tab) {
 document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => openTab(b.dataset.tab)));
 $('lvBtn').addEventListener('click', () => { openTab('log'); $('badgeHead').scrollIntoView(); });
 
-['visitedList', 'heardList'].forEach(id => $(id).addEventListener('click', e => {
-  const li = e.target.closest('li[data-spot]');
+['visitedList', 'heardList', 'visitedGallery'].forEach(id => $(id) && $(id).addEventListener('click', e => {
+  const li = e.target.closest('[data-spot]');
   const s = li && spots.find(x => x.id === li.dataset.spot);
   if (!s) return;
   follow = false;
@@ -4642,6 +4662,7 @@ document.addEventListener('click', e => { const b = e.target.closest && e.target
 
 // ドット絵表示（pixel.js）とテストから使う窓口
 window.nishioGo = {
+  galleryTiles,
   notePlayInput, snapMaze, mzSpeed, playAsk, playShow, get playPending() { return playQ.pending; }, set mzNpcShareTest(v) { mzNpcShare = v; },   // テスト用：遊んでいる 画面を とる・人の ゴールの シェアを 置く
   sound,
   get nimotsu() { const NM = window.NISHIO_NIMOTSU; return NM ? NM.current(S.nimotsu, Date.now()) : ''; },   // いま あたまに のせて いる 持ち物の 絵の id（なければ ''）

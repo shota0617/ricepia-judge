@@ -4278,7 +4278,7 @@ const SHIHATSU = (() => {
     if (pend && (spin >= 2.5 || PTOREV)) pend = null;   // 3 秒ほど空回しすると 盛り上がらない
     if (working && pend && odo - odo0 > 0.8) {    // 走り出して 少し進んでから、はじめの所を盛り上げる
       const [x, z, yaw] = pend; pend = null;
-      if (Math.abs(x) < HX && Math.abs(z) < HZ && mark(x, z, yaw, 0.035) && !toldDown) {
+      if (Math.abs(x) < HX && Math.abs(z) < HZ && mark(x, z, yaw, 0.035) && !toldDown && !startNoticeMuted()) {   // サイクル207・最初の1分: のんびりでは開始直後（初めて下ろして0.8m進んだ時）に長文知らせと声で最初のなぞりを止めない。toldDownは立てないので1分を過ぎて次に下ろした時に従来どおり出す（遅れて出す形）。mark()は条件の手前で従来どおり実行され土の盛り上がりは変わらない。くわしい説明では従来どおり開始直後から出す
         toldDown = true;
         toast('おろした所が もりあがったね。止まって 3 秒 空回ししてから 走ると ならせるよ（爪が 土を うしろへ けちらすから・本物は フラップを 少し 押さえ気味に）', 7);
         setTimeout(() => voice('shihatsu'), 7500);
@@ -4286,7 +4286,7 @@ const SHIHATSU = (() => {
     }
     if (!working && was && odo - odo0 > 1 && !PTOREV) {   // 上げた（正転で耕していた）：止めた所が くぼむ
       const [x, z, yaw] = rotC();
-      if (Math.abs(x) < HX && Math.abs(z) < HZ && mark(x, z, yaw, -0.035) && !toldUp) {
+      if (Math.abs(x) < HX && Math.abs(z) < HZ && mark(x, z, yaw, -0.035) && !toldUp && !startNoticeMuted()) {   // サイクル207・最初の1分: のんびりでは開始直後（初めて上げた時）に長文知らせと声で最初のなぞりを止めない。toldUpは立てないので1分を過ぎて次に上げた時に従来どおり出す（遅れて出す形）。mark()は条件の手前で従来どおり実行され土のくぼみは変わらない。くわしい説明では従来どおり開始直後から出す
         toldUp = true;
         toast('あげた所が ちょっと くぼんだね。耕しなおすと ならせるよ（本物は 爪の回転を止め、PTO を中立にして ゆっくり前へ出ると、うしろにたまった土を フラップが押しこんで 穴がうまる）', 7);
         setTimeout(() => voice('shihatsu'), 7500);

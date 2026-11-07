@@ -624,7 +624,7 @@ function moveProbe(x) {
     return;
   }
   P.deep = Math.min(P.deep, x); /* さらに押し込んだ分だけ、引く長さも伸びる */
-  const want = Math.floor(Math.max(0, (x - P.deep) / (P.rest - P.deep) - 0.08) / 0.84 * PLATE_GRAINS); /* 入れた深さから引き抜いた分だけ粒が落ちる */
+  const want = Math.floor(Math.max(0, (x - P.deep) / (P.rest - P.deep) - 0.02) / 0.78 * PLATE_GRAINS); /* 引いたらすぐ粒が落ち始め、8割ほど引けば全部落ちる */
   while (P.released < Math.min(want, PLATE_GRAINS)) pourOne(grains[P.released++]);
   if (P.released >= PLATE_GRAINS) finishProbe();
 }

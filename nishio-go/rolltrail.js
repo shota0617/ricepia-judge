@@ -338,22 +338,28 @@
   }
   // 景色に残る花の点々（第4弾サイクル154・Pikmin Bloom）：転がった跡がリボンより長く、小さな花のような点として静かに残る。純関数だけ
   const BLOOM_GAP = 1.1, BLOOM_MAX = 120, BLOOM_LIFE_MS = 300000, BLOOM_ALPHA = 0.8;
+  const BLOOM_FADE_MS = 4000;   // 上限で退場する花が薄れきるまで（fo＝退場開始時刻。無い点は従来どおり）
   function bloomPush(list, x, y, t) {
     try {
-      const l = Array.isArray(list) ? list : [];
-      if (!num(x) || !num(y) || !num(t)) return l;
+      const l0 = Array.isArray(list) ? list : [];
+      if (!num(x) || !num(y) || !num(t)) return l0;
+      // 消え終わった花（寿命切れ・退場完了）だけ先に落とす。まだ見えている花は件数では落とさない
+      const l = l0.filter(p => p && num(p.t) && t - p.t <= BLOOM_LIFE_MS && (!num(p.fo) || t - p.fo <= BLOOM_FADE_MS));
+      for (const q of l) if (q && Math.hypot(x - q.x, y - q.y) < BLOOM_GAP) return l;   // 戻ってきた場所に重ねない（退場中でも見えている間は含む）
       const last = l[l.length - 1];
-      if (last && Math.hypot(x - last.x, y - last.y) < BLOOM_GAP) return l;
       const n = last && num(last.n) ? last.n + 1 : 0;
       const next = l.concat([{ x, y, t, n }]);
-      return next.length > BLOOM_MAX ? next.slice(next.length - BLOOM_MAX) : next;
+      let live = 0, oldest = -1;
+      for (let i = 0; i < next.length; i++) if (!num(next[i].fo)) { live++; if (oldest < 0) oldest = i; }
+      if (live > BLOOM_MAX && oldest >= 0) next[oldest] = Object.assign({}, next[oldest], { fo: t });   // 即消さず、静かに退場を始める
+      return next.length > BLOOM_MAX * 2 ? next.slice(next.length - BLOOM_MAX) : next;
     } catch (e) { return Array.isArray(list) ? list : []; }
   }
   function bloomAlive(list, now) {
     try {
       if (!Array.isArray(list)) return [];
       if (!num(now)) return list.slice();
-      return list.filter(p => p && num(p.t) && now - p.t <= BLOOM_LIFE_MS);
+      return list.filter(p => p && num(p.t) && now - p.t <= BLOOM_LIFE_MS && (!num(p.fo) || now - p.fo <= BLOOM_FADE_MS));
     } catch (e) { return []; }
   }
   // 寿命の60%まではそのまま、そこから寿命まで直線で 0 へ
@@ -367,10 +373,20 @@
       return Math.max(0, BLOOM_ALPHA * (1 - (ageMs - hold) / (BLOOM_LIFE_MS - hold)));
     } catch (e) { return 0; }
   }
+  // 点と今の時刻から濃さ：寿命側は bloomAlpha、退場中の点は退場の進み具合との小さい方
+  function bloomAlphaAt(p, now) {
+    try {
+      if (!p || !num(p.t) || !num(now)) return 0;
+      const a = bloomAlpha(now - p.t);
+      if (!num(p.fo)) return a;
+      const k = Math.min(1, Math.max(0, 1 - (now - p.fo) / BLOOM_FADE_MS));
+      return Math.min(a, BLOOM_ALPHA * k);
+    } catch (e) { return 0; }
+  }
   // n から決まる花の形（乱数なし）：花びら4または5枚、回転角
   function bloomPetal(n) {
     const k = num(n) ? Math.abs(Math.trunc(n)) : 0;
     return { petals: k % 2 === 0 ? 4 : 5, rot: (k * 0.61803398875 % 1) * Math.PI * 2 };
   }
-  root.nishioRollTrail = { BLOOM_GAP, BLOOM_MAX, BLOOM_LIFE_MS, BLOOM_ALPHA, bloomPush, bloomAlive, bloomAlpha, bloomPetal, MAX, GAP, LIFE_MS, STEP, push, alive, alphaFor, segments, colorFor, mixRgb, smoothColors, ribbon, dedupe, dedupeNear, dedupeSplit, AREA_COLORS };
+  root.nishioRollTrail = { BLOOM_GAP, BLOOM_MAX, BLOOM_LIFE_MS, BLOOM_ALPHA, BLOOM_FADE_MS, bloomAlphaAt, bloomPush, bloomAlive, bloomAlpha, bloomPetal, MAX, GAP, LIFE_MS, STEP, push, alive, alphaFor, segments, colorFor, mixRgb, smoothColors, ribbon, dedupe, dedupeNear, dedupeSplit, AREA_COLORS };
 })(typeof window !== 'undefined' ? window : globalThis);

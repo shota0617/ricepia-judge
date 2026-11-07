@@ -488,6 +488,17 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertIn('if (hankoTaps === 1) guideAt("press", $("pad"));', HTML)  # おす・朱肉
         self.assertIn('if (hankoTaps === 1) guideAt("move", $("hanko"), 0, hankoMax);', HTML)  # おす・おろし
 
+    def test_second_miss_tool_does_half(self):
+        # 空振りの受け止め統一（Fable設計・サイクル84）: 2回目では道具が半分やって見せる。
+        # 従来は2回目も1回目と同じ小さな揺れ（ぬく18px）か無反応（はこぶ・おろし）で、
+        # 3回目の自動代替まで「半分」の段階がなかった。状態は進めない（アニメーションのみ）
+        self.assertIn("if (bagTaps === 2)", HTML)  # ぬく: さす所までの半分
+        self.assertIn("const halfX = P.x - (P.x - P.inAt) / 2;", HTML)
+        self.assertIn("else if (senseTaps === 2)", HTML)  # はこぶ: 顔までの半分
+        self.assertIn("if (senseTaps === 2) { token.classList.add(\"squeeze\");", HTML)  # にぎる: にぎる形を短く見せる
+        self.assertIn("if (hankoTaps === 2)", HTML)  # おす・おろし: 押せる所までの半分
+        self.assertIn('"translateY(" + hankoLand / 2 + "px)"', HTML)
+
     def test_opening_attract_moves_probe_once_before_touch(self):
         # 開いた瞬間の誘い（Fable設計の足すもの1・サイクル82）: 最初の袋だけ、
         # 触れる前に穀刺しが一度だけ約2秒かけて袋の口（P.inAt）へ寄って戻る。

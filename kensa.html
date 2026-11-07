@@ -704,6 +704,8 @@ function endBagDrag(e) {
   if (P.done || P.inserted) return; /* さす前に指を離したら、タップでも違う向きの引きでも1回と数える */
   if (++bagTaps >= NUDGE_LIMIT) { autoProbe(); return; }
   if (bagTaps === 1 && lotIndex === 0) $("poke").style.display = ""; /* 空振り1回目: 手本の指👆をもう一度出す。触って消えた指は戻らず、動かし方が分からなくなっていた（390×844実測・サイクル81、Fable設計の空振り統一） */
+  /* 空振り2回目: 道具が半分やって見せる（Fable設計の空振り統一・サイクル84）。さす所までの半分まで穀刺しが進んで戻る。状態は進めない */
+  if (bagTaps === 2) { const halfX = P.x - (P.x - P.inAt) / 2; $("probe").animate([{ transform:"translate(" + P.x + "px," + P.y + "px)" }, { transform:"translate(" + halfX + "px," + P.y + "px)", offset:.55 }, { transform:"translate(" + P.x + "px," + P.y + "px)" }], { duration:640 * motion, easing:"ease-in-out" }); return; }
   /* 進まなかったときは、動かし方を穀刺しが見せる */
   $("probe").animate([{ transform:"translate(" + P.x + "px," + P.y + "px)" }, { transform:"translate(" + (P.x - 18) + "px," + P.y + "px)" }, { transform:"translate(" + P.x + "px," + P.y + "px)" }], { duration:320 * motion, easing:"ease-in-out" });
 }
@@ -1225,6 +1227,7 @@ function endToken() {
     token.classList.remove("squeeze");
     if (++senseTaps >= NUDGE_LIMIT) { senseDone(); return; }
     if (senseTaps === 1) guideSense(); /* 空振り1回目: 手本の指をもう一度出す（サイクル81） */
+    if (senseTaps === 2) { token.classList.add("squeeze"); setTimeout(() => token.classList.remove("squeeze"), 300 * motion); } /* 空振り2回目: 道具が半分やって見せる（サイクル84）。にぎる形を短く見せるだけ。状態は進めない */
     hint.textContent = "🤲 はなさず にぎる";
     return;
   }
@@ -1233,6 +1236,10 @@ function endToken() {
   placeToken(0, 0);
   if (++senseTaps >= NUDGE_LIMIT) autoSense(); /* 顔に届かなかった運びもタップも数える */
   else if (senseTaps === 1) guideSense(); /* 空振り1回目: 手本の指をもう一度出す（サイクル81） */
+  else if (senseTaps === 2) { /* 空振り2回目: 道具が半分やって見せる（サイクル84）。トークンが顔までの半分を運んで戻る。状態は進めない */
+    const t = token.getBoundingClientRect(), f = $("face").getBoundingClientRect();
+    token.animate([{ transform:"none" }, { transform:"translate(" + (f.left + f.width / 2 - (t.left + t.width / 2)) / 2 + "px," + (f.top + f.height / 2 - (t.top + t.height / 2)) / 2 + "px)", offset:.55 }, { transform:"none" }], { duration:560 * motion, easing:"ease-in-out" });
+  }
 }
 token.addEventListener("pointerup", endToken);
 token.addEventListener("pointercancel", endToken);
@@ -1419,6 +1426,11 @@ function endHanko() {
   if (stamped) return;
   if (++hankoTaps >= NUDGE_LIMIT) { dropHanko(); return; } /* 届かなかったおろしもタップも数える */
   if (hankoTaps === 1) guideAt("move", $("hanko"), 0, hankoMax); /* 空振り1回目: 手本の指をもう一度出す（サイクル81） */
+  if (hankoTaps === 2) { /* 空振り2回目: 道具が半分やって見せる（サイクル84）。はんこが押せる所までの半分をおろして戻る。状態は進めない。揺れ（bob）は半分デモが終わってから戻す */
+    setHanko(0);
+    $("hanko").animate([{ transform:"translateY(0)" }, { transform:"translateY(" + hankoLand / 2 + "px)", offset:.55 }, { transform:"translateY(0)" }], { duration:560 * motion, easing:"ease-in-out" }).onfinish = () => { if (!stamped) bobHanko(); };
+    return;
+  }
   setHanko(0);
   bobHanko();
 }

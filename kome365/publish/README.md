@@ -147,3 +147,21 @@ Mac の Claude Code に頼む文（そのまま貼る）：
 
 確かめ（クラウドで実施済み）：縦7画面でめくるたびに起きていた縮み（6/6）が0/6に。9画面×365枚は kome365/README.md の周回100を見る。
 未確認：iPhone・Android の実機。
+
+## 周回101（右へめくったときに、スマホで画面全体が一瞬縮むのをやめる）
+
+- 直したのは index.html の CSS 1行（`#swipe{overflow-y:clip}` の行の次に `html:has(#sGame.swipeMode:not(.hidden)),body:has(#sGame.swipeMode:not(.hidden)){overflow-x:clip}` を足す）。周回100のパッチの上に当たる。engine.js・field3d.js は触っていない
+- 公開後の本番 index.html の md5：`72556bb952c27386118856220f827f30`
+- 公開前の本番の md5（手順1で照合する。周回100の公開後）：`20b922ec9dc98de3b0632bc191a5b59a`
+- 93〜100 がまだなら 93 から順に 101 まで当てる（クラウドで周回92の Mac 形に順に当て、md5 が上と一致することを確かめた）
+
+Mac の Claude Code に頼む文（そのまま貼る）：
+
+```
+米づくり365 の周回101を公開して。shota0617/ricepia-new-project のブランチ claude/kome365-loop の kome365/publish/kome365-101.patch を muse_zip/kome365_rebuild/work の game/index.html に git apply で当て（--check で先に確かめる。周回93〜100が未適用なら先に kome365-93.patch から順に）、game/index.html だけをコミット。引き継ぎ書（HANDOFF）の「米365」の公開手順 1〜5 のとおりに組み立てて FTP で上げ、本番の md5 が 72556bb952c27386118856220f827f30 になることを確かめる。手順1の照合は 20b922ec9dc98de3b0632bc191a5b59a。終わったら STATE に「周回101」を記録。
+```
+
+当たらないときは、パッチの `+` の1行を、`game/index.html` の `#swipe{overflow-y:clip}` の行のすぐ下に足せばよい。
+
+確かめ（クラウドで実施済み）：9画面で右へめくったときの表示の幅相当が画面の幅のまま（直す前は最大1135px）。9画面×365枚は kome365/README.md の周回101を見る。
+未確認：iPhone・Android の実機。

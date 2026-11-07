@@ -277,6 +277,11 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertRegex(HTML, r"#plate \{[^}]*touch-action:none")
         self.assertIn('addEventListener("gesturestart"', HTML)
 
+    def test_next_button_grows_with_large_text(self):
+        # 文字150%以上で「つぎの ふくろ」が2行になっても、字がボタンの枠からはみ出さない
+        self.assertRegex(HTML, r"#nextBtn \{[^}]*min-height:56px")
+        self.assertNotRegex(HTML, r"#nextBtn \{[^}]*[^-]height:56px")
+
     def test_grade_buttons_grow_with_large_text(self):
         # 文字150%以上でも等級の字がボタンの枠からはみ出さない（高さは最低値、字の分だけ伸びる）
         self.assertRegex(HTML, r"\.gradeBtn \{[^}]*min-height:clamp\(58px, 11vh, 84px\)")

@@ -141,7 +141,8 @@
   /* 下: 案内。手が止まったカードも同じ場所に出し、皿や袋にはかぶせない */
   #foot { flex:none; min-height:calc(74px + env(safe-area-inset-bottom)); padding-bottom:env(safe-area-inset-bottom); /* 文字を大きくした端末では案内の分だけ伸び、皿に重ならない */ display:flex; align-items:center; justify-content:center; position:relative; }
   #hint { font-size:23px; font-weight:800; text-align:center; }
-  #nextBtn { display:none; height:56px; touch-action:manipulation; padding:0 30px; border-radius:30px; background:var(--green); color:#fff; font-size:21px; font-weight:800; }
+  /* つぎの袋のボタンの高さは最低値。文字を大きくした端末で2行になっても字がはみ出さない */
+  #nextBtn { display:none; min-height:56px; line-height:1.2; touch-action:manipulation; padding:8px 30px; border-radius:30px; background:var(--green); color:#fff; font-size:21px; font-weight:800; }
   #nextBtn.on { display:block; }
   #guide { position:fixed; left:0; top:0; z-index:60; font-size:40px; line-height:1; margin:-6px 0 0 -14px; pointer-events:none; opacity:0; transition:opacity .2s ease; filter:drop-shadow(0 2px 3px rgba(0,0,0,.35)); }
   #guide.on { opacity:1; }
@@ -196,7 +197,7 @@
     #dish { flex:0 0 40%; width:100%; margin:0; border-radius:24px; padding:4px 8px; }
     #foot { min-height:calc(46px + env(safe-area-inset-bottom)); }
     #hint { font-size:17px; }
-    #nextBtn { height:40px; font-size:17px; }
+    #nextBtn { min-height:40px; padding:4px 30px; font-size:17px; }
     #decide { gap:4px; }
     .rowName { min-height:26px; flex-direction:row; align-items:center; justify-content:flex-start; gap:6px; }
     .rowName b { font-size:15px; }

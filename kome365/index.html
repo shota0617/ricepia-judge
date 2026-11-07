@@ -2377,7 +2377,7 @@ renderTitle();
   var streak = 0, streakBest = parseInt(store.get('kome365_streak_best'), 10) || 0, recDone = false, lifeSeen = new Set(), lifeFor = null;
   var seenCards = {}, aheadInfo = { tomorrow: null, revisit: null };   /* 再訪表示(サイクル18): カードkeyの最初の出現日。メモリのみ・SAVE不変。再開/Rewindの再生で再構築する */
   var lifeDay = {};   /* 出会った日(周回125・類3): 名前→その年の何枚目で初めて出会ったか。メモリのみ・保存なし。再開/巻き戻しの再生でも lifeNew が1枚ごとに組み直すため、選択列と食い違わない */
-  function lifeSync(){ try { lifeSeen = zukanOf((f.patrolLog && f.patrolLog.life) || []); lifeFor = f; lifeDay = {}; } catch (e) { lifeSeen = new Set(); } }
+  function lifeSync(){ try { lifeSeen = zukanOf((f.patrolLog && f.patrolLog.life) || []); lifeFor = f; } catch (e) { lifeSeen = new Set(); } }   /* lifeDay はここでは消さない: resumeSwipe は再生で組み直した後に lifeSync を呼ぶため、消すと再開前の出会いの日が失われる(Codexレビュー対応・周回125)。新規開始の消去は bStart 側で行う */
   var lifeCnt = 0;
   function lifeNew(){ lifeCnt = 0; try { if (lifeFor !== f) { lifeSeen = new Set(); lifeFor = f; lifeDay = {}; } var cur = zukanOf((f.patrolLog && f.patrolLog.life) || []), nw = null; cur.forEach(function(n){ if (!lifeSeen.has(n)) { if (!nw) nw = n; lifeCnt++; if (lifeDay[n] == null) lifeDay[n] = choices.length; } lifeSeen = lifeSeen.add(n); }); return nw; } catch (e) { return null; } }
   /* 月末まとめ(表示だけ): 月ごとの⭕・❌・新発見をメモリで数える(SAVE不変。再開・1日もどるは再生しながら数え直す)。表示は廃止(集計のみ残す) */
@@ -3491,7 +3491,7 @@ renderTitle();
   $('swHelp').onclick = function(){ $('sheet').innerHTML = '<h3 id="sheetTitle">あそびかた</h3><p class="sub" style="font-size:14px">毎日1枚のカードが出ます。カードを<b>左か右にスワイプ</b>(←→キーでもOK)して、どうするかを選びます。選んだ結果で田んぼが変わり、次の日へ進みます。田んぼの状態(天気・季節・稲の様子)を読んで正しく選ぶと田んぼが良くなり、まちがえると悪くなります。左と右では、することと結果がちがいます。ドラッグすると変わるステータスの印が予告になります。結果は田んぼとステータスの変化で分かります。1月1日から12月31日までの365日、毎日1枚。冬は準備、春から稲刈りまでが本番、収穫のあとは出荷や冬じたくの日々です。お米の等級と収量は稲刈りで決まり、結果は365日目のあとに出ます。</p><button class="btn sec" data-cancel>とじる</button>'; openBg(); $('sheet').onclick = function(e){ if (e.target.closest('[data-cancel]')) closeSheet(); }; };
   // はじめる: 既存の bStart の処理(Farm生成・設定)のあと、カード生活に入る
   $('bStart').addEventListener('click', function(){
-    if (!f) return; careClear(); traceClear(); f._fert = fertMode; store.set(RW, ''); choices = ''; goldSeen = {}; bannerDone = false; tally = {}; seenCards = {}; streak = 0; recDone = false; store.set('kome365_streak', '0'); lifeSync(); busy = false; $('swLog').innerHTML = '';
+    if (!f) return; careClear(); traceClear(); f._fert = fertMode; store.set(RW, ''); choices = ''; goldSeen = {}; bannerDone = false; tally = {}; seenCards = {}; streak = 0; recDone = false; store.set('kome365_streak', '0'); lifeDay = {}; lifeSync(); busy = false; $('swLog').innerHTML = '';
     var intro = f.msgs.slice(-3).map(function(m){ return m.t; }); if (intro.length) $('swLog').innerHTML = intro.map(esc).join('<br>');
     save(); render(); try { drawField(); } catch (e) { console.error(e); } greetSet(); idleTouch();
   });

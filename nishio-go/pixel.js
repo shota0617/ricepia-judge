@@ -7321,6 +7321,20 @@ function giantPoiOf(p) {   // その目印の特大の絵の id（なければ '
   return p.g || '';
 }
 const spriteOf = s => (!LANDMARK_ART[s.id] && !s.featured && GEN[s.id] && genSprite(s.id)) || spotSprites[spotArt(s)];
+function collectedOf(s, visits) { return !!(s && s.id && visits && visits[s.id]); }   // めぐった名所か（見た目だけ。ゴールの条件には使わない）
+function drawCollectedMark(sx, sy, size, dpr, ring) {   // 迷路・歩く地図でも、めぐった名所に静かな金の印（点滅しない）
+  ctx.save();
+  if (ring) {
+    const rr = size * 0.58, rx = sx + size / 2, ry = sy + size / 2, lw = Math.max(2, Math.round(dpr * 2));
+    ctx.lineWidth = lw + Math.max(2, Math.round(dpr * 2)); ctx.strokeStyle = 'rgba(26,26,26,.75)'; ctx.beginPath(); ctx.arc(rx, ry, rr, 0, Math.PI * 2); ctx.stroke();
+    ctx.lineWidth = lw; ctx.strokeStyle = 'rgba(255,213,79,.9)'; ctx.beginPath(); ctx.arc(rx, ry, rr, 0, Math.PI * 2); ctx.stroke();
+  }
+  const r = Math.min(Math.max(3 * dpr, size * 0.18), 15 * dpr), cx = Math.round(sx + size - r * 0.6), cy = Math.round(sy + r * 0.6);   // 特大の絵でも印は静かな大きさまで（サイクル152 Codex注記）
+  ctx.fillStyle = '#000'; ctx.fillRect(cx - r - dpr, cy - r - dpr, r * 2 + 2 * dpr, r * 2 + 2 * dpr);
+  ctx.fillStyle = '#ffd54f'; ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
+  ctx.fillStyle = '#000'; ctx.font = `${Math.round(r * 1.8)}px "DotGothic16", monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('✓', cx, cy + dpr * 0.5);
+  ctx.restore();
+}
 
 function spotArt(s) {
   if (s.id === 'f-ricepia') return 'ricepia';
@@ -7986,6 +8000,7 @@ function frame(now) {
     ctx.drawImage(spr[0], Math.round(sx), Math.round(sy), size, size);   // 訪れたあとも、目印は元の色のまま
     if (s.shop) gbPause--;
     if (giant) { giantHits.push([sx, sy, size, s, giant[0]]); depthArt.push([spr[0], Math.round(sx), Math.round(sy), size, sy + size * 0.72, !!s.shop]); }   // タップは、描いた順の逆（手前の絵から）に調べる
+    if (collectedOf(s, G.state && G.state.visits)) drawCollectedMark(sx, sy, size, dpr, !s.shop && !giant);
     if (s.featured && !cool && f) {   // 注目スポットはきらきら
       ctx.fillStyle = '#fff59d';
       const u = Math.min(size, 3 * T) / 16, kx = sx + size * 13 / 16, ky = sy + size / 16;   // 大きさは いつもの絵（3マス）まで。特大の絵の大きさに合わせると 1マスより大きな 十字になっていた
@@ -13040,7 +13055,7 @@ const meiroApi = {
   tilt: () => tiltG, tiltAsk, tiltReset, tiltNeedsPermission, koto: (v, low) => kotoSound(v, low), splash: v => splashSound(v), boing: (v, hi) => boingSound(v, hi), rumble: v => rumbleTick(v, GROUND.road),   // rumble：転がる音（速さは 地図の マス/秒）
   pause(on) { meiroPause = !!on; dirty = true; if (on && mzNext.hold) { mzNext.hold = false; if (G.toastFlush) G.toastFlush(); } },   // 止める ときは「つぎの ゴール」で 待たせた 知らせを 出す
 };
-window.nishioPixel = { blinkOn, BLINK_MS, BLINK_SHUT_MS, get riceEye() { return riceEyeAt; }, grow: { stage: () => grow.stage, stageFor: growStageFor, TH: GROW_TH, popAt: () => grow.popT }, firstRoute: { shape: mzPathShape, simple: mzFirstSimple, LIM: MZ_FIRST_SIMPLE }, glanceShift, asleepShut, happyFace, meiroApi, heroGiant: () => heroGiantId, pickHeroGiant, HERO_GIANT_RANGE, maze: { wallTheme: () => mzWallTheme(), on: () => mazeOn(), playing: () => active && mazeOn(), next: () => ({ want: mzNext.want, t0: mzNext.t0, on: mzNextOn(), labHide: !!mzNext.labHide, arrowDim: !!mzNext.arrowDim, box: mzNext.box || null }), goal: id => {   // id の 名所が いまの ゴール（か 2分 以内の 前の ゴール）なら、かかった 時間と めいろの 道のり
+window.nishioPixel = { blinkOn, BLINK_MS, BLINK_SHUT_MS, get riceEye() { return riceEyeAt; }, grow: { stage: () => grow.stage, stageFor: growStageFor, TH: GROW_TH, popAt: () => grow.popT }, firstRoute: { shape: mzPathShape, simple: mzFirstSimple, LIM: MZ_FIRST_SIMPLE }, collected: { has: collectedOf }, glanceShift, asleepShut, happyFace, meiroApi, heroGiant: () => heroGiantId, pickHeroGiant, HERO_GIANT_RANGE, maze: { wallTheme: () => mzWallTheme(), on: () => mazeOn(), playing: () => active && mazeOn(), next: () => ({ want: mzNext.want, t0: mzNext.t0, on: mzNextOn(), labHide: !!mzNext.labHide, arrowDim: !!mzNext.arrowDim, box: mzNext.box || null }), goal: id => {   // id の 名所が いまの ゴール（か 2分 以内の 前の ゴール）なら、かかった 時間と めいろの 道のり
     if (!mazeOn()) return null;
     const now = performance.now(), pv = mzRt.prev, g = mzRt.gid === id ? { t0: mzRt.t0, len0: mzRt.len0, warp: mzRt.warp, moves: mzMv.n, run: { ...mzRt.run } } : pv && pv.id === id && now - pv.at < 120000 ? pv : null;
     if (!g || !g.t0) return null;

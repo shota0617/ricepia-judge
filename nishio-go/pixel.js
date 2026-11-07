@@ -7919,6 +7919,7 @@ function frame(now) {
   giantHits = [];
   poiHits = [];
   depthArt.length = 0;
+  collectedMarks.length = 0;
   refreshSeason(now);
   trailLoad();   // あしあとの記録（あるいて移動／操作して移動・版で別）
   if (rec) { rec.end(); rec = null; ctx = ctx0; }
@@ -8040,7 +8041,7 @@ function frame(now) {
     ctx.drawImage(spr[0], Math.round(sx), Math.round(sy), size, size);   // 訪れたあとも、目印は元の色のまま
     if (s.shop) gbPause--;
     if (giant) { giantHits.push([sx, sy, size, s, giant[0]]); depthArt.push([spr[0], Math.round(sx), Math.round(sy), size, sy + size * 0.72, !!s.shop]); }   // タップは、描いた順の逆（手前の絵から）に調べる
-    if (collectedOf(s, G.state && G.state.visits)) drawCollectedMark(sx, sy, size, dpr, !s.shop && !giant);
+    if (collectedOf(s, G.state && G.state.visits)) { if (giant) collectedMarks.push([sx, sy, size, dpr]); else drawCollectedMark(sx, sy, size, dpr, !s.shop); }
     if (s.featured && !cool && f) {   // 注目スポットはきらきら
       ctx.fillStyle = '#fff59d';
       const u = Math.min(size, 3 * T) / 16, kx = sx + size * 13 / 16, ky = sy + size / 16;   // 大きさは いつもの絵（3マス）まで。特大の絵の大きさに合わせると 1マスより大きな 十字になっていた
@@ -8237,6 +8238,7 @@ function frame(now) {
     }
     if (riceBall.cv && !rec) occludeRice(hx, by, hcy + T * 0.3, u, () => drawRiceBall(hx, by, u, th % (Math.PI * 2), sx, sy, roll.spin, ctx, gbOn && !worldMode, mood, roll.look, roll.dirt, roll.dirtCol, roll.pitch));
   } else if (me || G.demo) ctx.drawImage(heroSprites[facing][f], Math.round(w / 2 - T / 2), Math.round(cy - T * 0.75), T, T);
+  for (const [mx, my, msize, mdpr] of collectedMarks) drawCollectedMark(mx, my, msize, mdpr, false);   // 特大絵の印（輪なし）：奥行きの描きなおしで隠れない
 
   if (!rec) drawNight(w, h, ox, oy, T, cy, pois, now);   // 夜のさんぽ：明かりのまわりだけ見える
   if (!rec) drawMorning(w, h);   // 朝の ひかり
@@ -8731,6 +8733,7 @@ function drawWorld(now, w, h, dpr) {
 // (cx, bottom) は札の下のまん中。札の外わく [左, 上, 右, 下] を返す
 // 奥行き：描いた特大の絵 [絵, 左, 上, 大きさ, 地面の高さ（画面）, 当店か]。お米が その絵より奥（北）にいるときに、お米の上に描きなおす（occludeRice）
 const depthArt = [];
+const collectedMarks = [];   // 特大絵の「集まった」印は、奥行きの描きなおし（occludeRice）のあとにまとめて描く [sx, sy, size, dpr]
 let giantHits = [];   // 描いた特大の絵 [左, 上, 大きさ, スポット, 絵の canvas]（描くたびに作り直す）
 let poiHits = [];     // 描いた街の主な建物の特大の絵 [左, 上, 大きさ, 目印, 絵の canvas]
 let shopHits = [];   // 当店の札と絵のタップ範囲 [左, 上, 右, 下, スポット]（描くたびに作り直す）

@@ -425,6 +425,7 @@ a{color:var(--acc)}
 #swText{font-size:16px;line-height:1.55;margin:0}
 .swSide{position:absolute;top:12px;max-width:66%;font-size:28px;font-weight:900;line-height:1.2;padding:8px 14px;border-radius:14px;opacity:0;background:#526879;color:#fff;pointer-events:none;z-index:3;box-shadow:0 3px 12px rgba(0,0,0,.35);border:4px solid #fff}
 .swSide.L{left:10px;transform:rotate(-6deg)}.swSide.R{right:10px;text-align:right;transform:rotate(6deg)}
+.swSide{display:none}   /* 周回105: ドラッグ中の大きな札(選んだ答えの文字をもう一度)は出さない。日付に重なり、画面の端で切れていた。どちらを選んでいるかは下の答えの札が大きく濃くなって分かる */
 /* ドラッグ中: 行き先側の表示とカードのふちで選択を示す */
 #swCard.gold{border:3px solid #7cb342;padding:11px 11px 9px;box-shadow:0 8px 24px rgba(0,0,0,.28)}
 #swCard.ms-sp{background:#eaf5dc}#swCard.ms-su{background:#dcf1ee}#swCard.ms-au{background:#fbf1d3}

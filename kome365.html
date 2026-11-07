@@ -359,7 +359,8 @@ const SND = {
 function vib(p){ if (!soundOn) return; try{ navigator.vibrate && navigator.vibrate(p); }catch(e){} }
 
 /* ========== 画面 ========== */
-const cv = $('cv'), ctx = cv.getContext('2d');
+const cv = $('cv'); let ctx = cv.getContext('2d');
+const HL = { cv: null, key: '' }; /* 株の 絵の 層：日が かわった 時だけ かきなおす（14周目） */
 let W = 0, H = 0, DPR = 1, TALK_H = 80, HUD_H = 88, FONT = '';
 function measure(){ TALK_H = $('talk').offsetHeight || 80; HUD_H = $('hud').offsetHeight || 88; FONT = getComputedStyle(document.body).fontFamily; }
 function resize(){ DPR = Math.min(2, window.devicePixelRatio||1); W = cv.clientWidth; H = cv.clientHeight; cv.width = Math.round(W*DPR); cv.height = Math.round(H*DPR); ctx.setTransform(DPR,0,0,DPR,0,0); measure(); }
@@ -396,7 +397,7 @@ function drawHill(x, yBase, ppc, f, alpha, seed, ripen, cut, maxN){
   const baseW = Math.min(f.W*ppc*0.09*n, 14*ppc);
   for (let j=0;j<n;j++){
     const fr = n===1 ? 0 : (j/(n-1)-.5);
-    const a = fr*spread + (r()-.5)*0.12 + lodge*0.9*(fr>=0?1:-1) + Math.sin(V.t*1.3 + j + seed)*0.012;
+    const a = fr*spread + (r()-.5)*0.12 + lodge*0.9*(fr>=0?1:-1); /* ゆれは 層ごと（14周目） */
     const len = Lh*(0.82 + r()*0.18);
     const bx = x + fr*baseW;
     const sx = bx + Math.sin(a)*len*0.42, sy = yBase - Math.cos(a)*len*0.42;
@@ -482,15 +483,22 @@ function drawField(L){
     for (let i=0;i<4;i++){ const t = 0.2 + i*0.2, y = lerp(top, bot, t); ctx.beginPath(); for (let x = xl(t)+10; x < xr(t)-10; x += 8) ctx.lineTo(x, y + Math.sin(x*0.12 + V.t*2 + i)*1.2*(1+Math.abs(V.waterV)*0.3)); ctx.stroke(); }
     if (S.phase==='field' && V.drag && V.drag.kind==='water'){ /* 指が 入れている あいだは 水の 口から 流れこむ */ ctx.strokeStyle = 'rgba(200,230,250,.9)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(xr(0)+8, top-10); ctx.quadraticCurveTo(xr(0)-6, top+4, xr(0.1)-20, lerp(top,bot,0.1)); ctx.stroke(); }
   }
-  /* 株（奥から 手前へ） */
+  /* 株（奥から 手前へ）：日・刈った 列・大きさが かわった 時だけ 別の キャンバスに かき、毎コマは はる。ゆれは 層ごとに 少し ななめ（14周目） */
   if (f.planted){
-    const rows = 4, cols = 5, ripen = f.heading ? clamp(f.gdd/1000, 0, 1) : 0;
-    const ppcBase = (bot - top) / 130;
-    for (let r=0; r<rows; r++){
-      const t = (r + 0.5)/rows, y = lerp(top, bot, t), ppc = ppcBase*lerp(0.55, 1.15, t);
-      const cutRow = (rows - 1 - r) < Math.round(S.hv.cut*rows/5); /* 5回で 4列：1,2,2,3,4（4周目） */
-      for (let c=0; c<cols; c++){ const u = (c + 0.5)/cols, x = lerp(xl(t), xr(t), u) + (r%2 ? ppc*3 : 0); drawHill(x, y, ppc, f, r < 2 ? .6 : lerp(.8, 1, t), r*101 + c*7, ripen, S.hv.cut >= 5 || cutRow, r < 2 ? 10 : 16); } /* 奥の 2列は 10本・うすく */
+    const ripen = f.heading ? clamp(f.gdd/1000, 0, 1) : 0;
+    const key = [S.day, S.hv.cut, Math.round(f.T*10), Math.round(f.H), Math.round(f.N), Math.round(f.W*10), f.lodge.toFixed(2), ripen.toFixed(2), W, H, Math.round(top), Math.round(bot), DPR].join('|');
+    if (key !== HL.key){
+      HL.key = key; if (!HL.cv) HL.cv = document.createElement('canvas'); HL.cv.width = Math.round(W*DPR); HL.cv.height = Math.round(H*DPR);
+      const main = ctx; ctx = HL.cv.getContext('2d'); ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H);
+      const rows = 4, cols = 5, ppcBase = (bot - top) / 130;
+      for (let r=0; r<rows; r++){
+        const t = (r + 0.5)/rows, y = lerp(top, bot, t), ppc = ppcBase*lerp(0.55, 1.15, t);
+        const cutRow = (rows - 1 - r) < Math.round(S.hv.cut*rows/5); /* 5回で 4列：1,2,2,3,4（4周目） */
+        for (let c=0; c<cols; c++){ const u = (c + 0.5)/cols, x = lerp(xl(t), xr(t), u) + (r%2 ? ppc*3 : 0); drawHill(x, y, ppc, f, r < 2 ? .6 : lerp(.8, 1, t), r*101 + c*7, ripen, S.hv.cut >= 5 || cutRow, r < 2 ? 10 : 16); } /* 奥の 2列は 10本・うすく */
+      }
+      ctx = main;
     }
+    ctx.save(); ctx.translate(0, bot); ctx.transform(1, 0, Math.sin(V.t*1.3)*0.012 + (S.weather[S.day].w==='台風' ? Math.sin(V.t*9)*0.03 : 0), 1, 0, 0); ctx.translate(0, -bot); ctx.drawImage(HL.cv, 0, 0, W, H); ctx.restore();
   }
   /* 生きもの：水が ある 5〜6月は オタマジャクシ、7〜9月は トンボ（3周目） */
   const mo = dateOf(S.day).m;
@@ -858,7 +866,7 @@ function endGame(why){
 }
 function loadLog(){ try{ const j = JSON.parse(localStorage.getItem('k365_log')||'[]'); return Array.isArray(j) ? j : []; }catch(e){ return []; } }
 function showYears(){ const log = loadLog(); const y = $('years'); let years = 0; try{ years = +localStorage.getItem('k365_years')||log.length; }catch(e){} if (!years){ y.hidden = true; return; } const best = log.reduce((m, e) => Math.max(m, e.score||0), 0); y.hidden = false; y.textContent = years + '年 つくりました・じこベスト ' + best + '点'; }
-function start(){ S = newState(K3.fixedSeed != null ? K3.fixedSeed : (Date.now() ^ Math.floor(Math.random()*1e9))>>>0); Object.assign(V, { water:0, waterV:0, waterTarget:undefined, page:0, flipQueue:0, flipTimer:0, flipGap:0.11, flipN:0, drag:null, card:null, shake:0, hint:1, stamps:[], particles:[], toast:null, lastSay:'' }); $('title').hidden = true; $('result').hidden = true; $('soundBtn').classList.remove('show'); resize(); draw(); syncUI(); narrate(); SND.init(); }
+function start(){ S = newState(K3.fixedSeed != null ? K3.fixedSeed : (Date.now() ^ Math.floor(Math.random()*1e9))>>>0); HL.key = ''; Object.assign(V, { water:0, waterV:0, waterTarget:undefined, page:0, flipQueue:0, flipTimer:0, flipGap:0.11, flipN:0, drag:null, card:null, shake:0, hint:1, stamps:[], particles:[], toast:null, lastSay:'' }); $('title').hidden = true; $('result').hidden = true; $('soundBtn').classList.remove('show'); resize(); draw(); syncUI(); narrate(); SND.init(); }
 $('startBtn').addEventListener('click', start); $('againBtn').addEventListener('click', start);
 $('whoT').innerHTML = DOODLE.kome('smile'); $('suzume').innerHTML = DOODLE.suzume(false); showYears();
 const sb = $('soundBtn'); sb.setAttribute('aria-pressed', soundOn ? 'true' : 'false'); sb.textContent = soundOn ? '♪ 音 オン' : '♪ 音 オフ';

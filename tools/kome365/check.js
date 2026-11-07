@@ -57,7 +57,7 @@ const CHECKS = {
   async water(b){
     const p = await page(b, 390, 844);
     const r = await p.evaluate(() => {
-      K3.manual = true; K3.fixedSeed = 11; K3.jump('tiller'); const f = K3.S.f; f.water = 2; K3.V.water = 2; K3.V.waterV = 0; steps(60);
+      K3.manual = true; K3.fixedSeed = 11; K3.jump('tiller'); const f = K3.S.f; f.dat = 35; f.water = 2; K3.V.water = 2; K3.V.waterV = 0; steps(60); /* 分げつの ころ（10〜30日）は ゆっくりの ↑が 4cm までなので、その あとで */
       const w0 = f.water; swipe('up', 80, false); const w1 = f.water; swipe('up', 240, false); const w2 = f.water;
       const v0 = K3.V.water; steps(90); const v1 = K3.V.water;   // 見た目の 水面が 本当の 水に 追いつく
       swipe('down', 120, false); const w3 = f.water; swipe('down', 400, true); const w4 = f.water; steps(90); const v2 = K3.V.water;
@@ -135,7 +135,7 @@ const CHECKS = {
     ok(/あす/.test(r.wx), 'HUD に あすの 天気', r.wx);
     const c = await p.evaluate(() => { K3.jump('harvest'); for (let i=0;i<8 && !K3.S.hv.done;i++) K3.doLeft(); K3.V.toast = null; for (let i=0;i<3;i++) K3.advanceDay(); return { m: K3.S.hv.moisture, toast: K3.V.toast && K3.V.toast.text }; });
     ok(c.m <= 15.5 && c.toast === '15%', '1日ずつ 進めても 15% を こえた 時に 合図（8周目）', c);
-    const k = await p.evaluate(() => { K3.jump('tiller'); const f = K3.S.f; f.water = 2; const w0 = f.water; window.dispatchEvent(new KeyboardEvent('keydown', { key:'ArrowUp' })); const w1 = f.water, t1 = document.getElementById('say').textContent; window.dispatchEvent(new KeyboardEvent('keydown', { key:'ArrowDown' })); const w2 = f.water; return { w0, w1, w2, t1 }; });
+    const k = await p.evaluate(() => { K3.jump('tiller'); const f = K3.S.f; f.dat = 35; f.water = 2; const w0 = f.water; window.dispatchEvent(new KeyboardEvent('keydown', { key:'ArrowUp' })); const w1 = f.water, t1 = document.getElementById('say').textContent; window.dispatchEvent(new KeyboardEvent('keydown', { key:'ArrowDown' })); const w2 = f.water; return { w0, w1, w2, t1 }; });
     ok(k.w1 === k.w0 + 3 && k.w2 === Math.max(2.5, k.w1 - 3) && /→で あした/.test(k.t1), '矢印キーも 指と 同じ 道（水 +3cm・−3cm は 2.5cm のこす・こめつぶの 返事）', k);
     await p.screenshot({ path: path.join(OUT, 'dry.png') });
   },
@@ -185,7 +185,7 @@ const CHECKS = {
     });
     ok(r.stopped && r.okText, '水が 0 に なった 日に パラパラが 止まり、吹き出しは → か ↑ を 言う', r);
     ok(r.moved >= 3, 'その あとも 吹き出しの とおりで 日が すすむ（詰まない）', r);
-    ok(/茎\d+本/.test(r.hud) && /℃|茎/.test(r.hud2), 'HUD に 茎の 本数（出穂の あとは 積算℃）', [r.hud, r.hud2]);
+    ok(/茎\d+本/.test(r.hud) && /℃|茎|出穂/.test(r.hud2), 'HUD に 茎の 本数（出穂の あとは 積算℃）', [r.hud, r.hud2]);
     const wp = await p.evaluate(() => { K3.jump('tiller'); K3.V.particles = []; K3.advanceDay(); const n = K3.V.particles.length; const w = K3.S.weather[K3.S.day].w; K3.jump('nursery'); return { n, w, stat: document.getElementById('stat').textContent }; });
     ok(wp.n >= 4, 'めくった 日に 天気の 粒が 飛ぶ（13周目）', wp);
     ok(/葉/.test(wp.stat), 'なえの HUD に 葉齢', wp.stat);
@@ -202,6 +202,19 @@ const CHECKS = {
     ok(/して いれば|入れかえて いれば/.test(r.text) && /\+\d+/.test(r.text), '結果の 2行目に 2つの「〜して いれば +X」', r.text);
     const g = await p.evaluate(() => { K3.jump('result'); return { w: K3.whatIf().map(x => x.name), text: document.getElementById('rSay2').textContent }; });
     ok(!/刈りどき|乾燥/.test(g.w.join()), 'ていねいな 年には 刈りどき・乾燥の「していれば」は 出ない', g);
+  },
+  // 出穂の 翌日に「出穂！」、台風の 翌日に たおれたか、長い 吹き出しは 注を 落とす、音ボタンは 3段（14周目）
+  async heading(b){
+    const p = await page(b, 390, 844);
+    const r = await p.evaluate(() => { K3.manual = true; K3.fixedSeed = 11; K3.jump('tiller'); const S = K3.S, f = S.f; let said = null; for (let i=0;i<120 && !said;i++){ f.water = Math.max(f.water, 2); K3.advanceDay(); if (/出穂！/.test(document.getElementById('say').textContent)) said = { day: S.day, heading: f.heading, hud: document.getElementById('stage').textContent }; }
+      for (let i=0;i<10;i++){ f.water = Math.max(f.water, 2); K3.advanceDay(); } f.lodge = 0.3; f.typhoonDay = S.day; f.water = 3; K3.advanceDay(); const ty = document.getElementById('say').textContent;
+      K3.jump('tiller'); const long = 'ながい ことばを ためす ための 吹き出しです。これは 三行に なります。<span class="src">（出典）</span>'; document.getElementById('say').innerHTML = ''; K3.V.lastSay = ''; (function(){ const t = document.getElementById('say'); })(); 
+      return { said, ty }; });
+    ok(r.said && r.said.day === r.said.heading + 1 && r.said.hud === '出穂', '出穂の 翌日に「出穂！」、HUD も 出穂', r.said);
+    ok(/たおれました/.test(r.ty), '台風の 翌日に たおれたかを 言う', r.ty);
+    const t = await p.evaluate(() => { K3.jump('tiller'); const f = K3.S.f; f.A2 = 0; f.N = 30; f.dat = f.headDat - 20; f.water = 3; K3.advanceDay(); const s1 = document.getElementById('say'); const hasSrc = !!s1.querySelector('.src'), len = s1.textContent.length; const btn = document.getElementById('soundBtn'); const l0 = btn.textContent; btn.click(); const l1 = btn.textContent; btn.click(); const l2 = btn.textContent; btn.click(); const l3 = btn.textContent; return { hasSrc, len, text: s1.textContent, labels: [l0, l1, l2, l3] }; });
+    ok(t.len <= 40, '穂肥の 吹き出しは 短い（注つきでも 40字 まで）', t);
+    ok(/ふるえ/.test(t.labels[0]) && /音だけ/.test(t.labels[1]) && /なし/.test(t.labels[2]) && /ふるえ/.test(t.labels[3]), '音ボタンは 音＋ふるえ → 音だけ → なし → もどる', t.labels);
   },
   // なにも しないで 1年 すぎると「おわり」
   async idle(b){
@@ -225,12 +238,12 @@ const CHECKS = {
           const L = K3.layout(); const tr = talk.getBoundingClientRect();
           out.scenes[s] = { hud: hud.every(inside), hudBad: hud.filter(el => !inside(el)).map(el => el.id + ':' + el.textContent), say: inside(say) && vis(say), talkTop: Math.round(tr.top), fieldBot: Math.round(L.fieldBot), sayH: Math.round(say.getBoundingClientRect().height), text: say.textContent.slice(0, 20) }; }
         K3.jump('result'); out.result = ['rank', 'rYield', 'rTawara', 'rSeiryu', 'rTaste', 'rSay', 'rSay2'].every(id => { const el = document.getElementById(id); el.scrollIntoView({ block:'center' }); return inside(el); });
-        const again = document.getElementById('againBtn'); document.getElementById('result').scrollTop = 1e6; out.again = inside(again);
+        const again = document.getElementById('againBtn'); out.againTop = inside(again); document.getElementById('result').scrollTop = 1e6; out.again = inside(again); /* はりついて いるので 送る 前でも 見える（14周目） */
         return out;
       });
       ok(r.title && r.sound, `題の 画面の 字が 画面の 中、音ボタンが のれんと かさならない（${w}×${h}）`, { title: r.title, sound: r.sound });
       for (const [s, v] of Object.entries(r.scenes)) ok(v.hud && v.say && v.talkTop >= v.fieldBot - 2, `${s}：HUD・吹き出しが 画面の 中、田んぼと かさならない（${w}×${h}）`, v);
-      ok(r.result && r.again, `結果の 字と「もう一回」が 画面の 中（${w}×${h}）`, r);
+      ok(r.result && r.again && r.againTop, `結果の 字と「もう一回」が 画面の 中（送る 前から 見える）（${w}×${h}）`, { result: r.result, again: r.again, againTop: r.againTop });
       await p.screenshot({ path: path.join(OUT, `fit-${w}x${h}.png`) });
       await p.close(); pages.splice(pages.indexOf(p), 1);
     }

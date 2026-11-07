@@ -54,13 +54,13 @@
 - 代かき：浅い 水（ヒタヒタ）で ていねいに（[埼玉県](https://www.pref.saitama.lg.jp/documents/280800/kassuigizyututaisakusiryou.pdf)）、浅水だと 田面が 見えて 均平を 取りやすい（[鳥取県](https://www.pref.tottori.lg.jp/secure/515264/asamizu.pdf)）、田植えの 3日 以上 前に 行い 作業の あと 落水しない（[愛知県](https://www.pref.aichi.jp/uploaded/attachment/369205.pdf)）。いずれも WebSearch の 要約で 確認。
 - 溝切り：長雨の 停滞水の 排水・緊急時の かん水・収穫時の 地耐力（[新潟県 稲作情報](https://www.pref.niigata.lg.jp/uploaded/attachment/497862.pdf)）。溝は 深さ 10cm 以上、末端を 水口・水尻に つなぐ（新潟県）。ゲームでは 中干しの 間の 雨が 溝が あれば 落ちる（雨の 25% だけ たまる。なければ 80%）だけに した。
 - 苗：中苗は 草丈 15〜20cm・3.0〜4.0葉（[長野県](https://www.pref.nagano.lg.jp/nagachi/nosei-aec/joho/documents/r5-5sakumotsu.pdf)）、育苗日数は 中苗で 30〜35日（[宮城県](https://www.pref.miyagi.jp/documents/6313/inasakunokiisho.pdf)）。ゲームでは「30日 ほどで 3〜4葉」。
-- 穂肥：1回目は 出穂 18〜15日 前・幼穂長 1cm・葉色（SPAD）32.5 以下を 目安に 窒素 1.0〜1.2kg/10a、合わせて 1.0〜3.0kg（[新潟県 岩船](https://www.pref.niigata.lg.jp/uploaded/attachment/502648.pdf)・[新潟県 巻](https://www.pref.niigata.lg.jp/uploaded/attachment/502337.pdf)）。ゲームでは 葉いろ 36 以上なら 1kg、それ以下なら 2kg（簡略）。
+- 穂肥：1回目は 出穂 18〜15日 前・幼穂長 1cm・葉色（SPAD）32.5 以下を 目安に 窒素 1.0〜1.2kg/10a、合わせて 1.0〜3.0kg（[新潟県 岩船](https://www.pref.niigata.lg.jp/uploaded/attachment/502648.pdf)・[新潟県 巻](https://www.pref.niigata.lg.jp/uploaded/attachment/502337.pdf)）。ゲームでは 葉いろ 34 以下なら 2kg（基準量の つもり）、34 より こければ 1kg、38 以上は「こい」と 言って 見送りも できる（簡略。22周目に 36 → 34：新潟県の 普及資料は SPAD 34〜32 で 基準どおり、35 以上は こい）。
 - 活着期：田植え直後は 植えいたみで 吸水が落ちるので、葉先が出る程度の 深水で 苗を守る。[岩手県 稲作情報](https://www.pref.iwate.jp/agri/_res/projects/project_agri/_page_/002/000/188/gogai0518.pdf)
 - 分げつ期：浅水管理で 水温・地温を上げ 初期生育を 促す。[全農 高品質米づくり（初期の水管理）](https://www.zennoh.or.jp/ty/einou/high_quality_rice/pdf/production_001_05.pdf)
 - 中干し：目標茎数を 確保したら 直ちに始める。窒素吸収を 一時的に抑えて 過剰分げつを防ぎ、根を深く伸ばす。[岩手県 2023 水稲 第4号](https://www.pref.iwate.jp/agri/_res/projects/project_agri/_page_/002/007/047/2023suitou04.pdf)。期間は 7〜10日、田面に 1〜2cm の亀裂・足跡がつく程度。幼穂形成期の前に 終える。[秋田県 R8 稲作情報 第4号](https://www.pref.akita.lg.jp/uploads/public/archive_0000080784_00/R8稲作情報04-0626.pdf)。強い中干しは 根を切る おそれ。[福井県 2026 第8号](https://www.pref.fukui.lg.jp/doc/noushi/inasaku_2026_d/fil/20260612_No8.pdf)
 - 出穂：5月上旬植えの コシヒカリは 7月下旬に 出穂（茨城県の例。愛知の値ではない）。[茨城県 水稲生育情報](https://www.pref.ibaraki.jp/nourinsuisan/nishinourin/bannofu/keiei/documents/r8suitouseiikuno5.pdf)
 - 高温登熟：出穂後 20日間の 平均気温が 26℃を こえると 白未熟粒が ふえる。[千葉県 高温障害対策](https://www.pref.chiba.lg.jp/ninaite/system/documents/kouonsyougaitaisaku.pdf)。出穂後 20日間の 掛け流しで 地温が下がり 品質が上がる。[福島県](https://www.pref.fukushima.lg.jp/uploaded/attachment/448369.pdf)。間断かん水・かけ流しで 基部未熟粒を抑え、早期落水を 避ける。[栃木県 成果](https://www.agrinet.pref.tochigi.lg.jp/nousi/seikasyu/seika40/seika_ken1komemijyuku.pdf)
-- 乾燥：乾燥機の 乾減率は 毎時 0.8% 以下（[栃木県 かわら版](https://www.pref.tochigi.lg.jp/)。WebSearch の 要約で 確認。通風乾燥の 日数は 見つからず）。ゲームは 1日 5%。
+- 乾燥：乾燥機の 乾減率は 毎時 0.8% 以下（[宮崎県](https://www.pref.miyazaki.lg.jp/documents/100819/100819_20250718111513-1.pdf)。WebSearch の 要約で 確認。22周目に 栃木県（URL が トップページ だった）から 宮崎県に）。ゲームは 1日 5%（出典なし。簡略）。
 - 刈取適期：出穂後の 積算気温 1000℃ 前後（一部 950℃）。[栃木県 2023 水稲](https://www.pref.tochigi.lg.jp/g59/documents/20230818suitou2.pdf)。1,200℃ を こえると 胴割粒が ふえる。[福島県 水稲の刈取り](https://www.pref.fukushima.lg.jp/sec/36210a/suitoukaritori.html)。積算 1,001℃ の時点で 籾水分 25% 前後（埼玉県の 2024年の例）。[埼玉県 籾水分情報](https://www.pref.saitama.lg.jp/documents/53276/momisuibunzyouhou4.pdf)
 - 愛知県：平坦地では 極早生の コシヒカリ・早生の あいちのこころ・中生の あいちのかおりSBL などを 組み合わせ、収穫は 8月中旬〜11月。[愛知県 愛知産の穀類](https://www.pref.aichi.jp/soshiki/engei/aichisan-kokurui-cha.html)。同ページで 稲の 主な産地に 豊田・西尾・安城・豊橋・一宮が 挙がる。西尾市の 主力品種は 10周目でも 確定できなかった（あいちのかおりSBL の 主な産地は 安城・一宮・豊橋、コシヒカリは 豊田・豊橋・安城）。ゲームの 品種は 参考にした アーティファクトと 同じ コシヒカリ。
 
@@ -355,3 +355,28 @@
   - **作らなかった**：「← 刈る」を 980℃ から、「← たんぼへ」を 30日 からに する 案。早刈り（青米）・若い 苗は わざと 選べる 失敗の 道（せっかちの ボット）なので 残す。吹き出しは「あと N℃。もう少し 黄色く なってから」で 止めている。
   - 中干し あけ〜登熟に 雨で 12cm に なっても 吹き出しが 何も 言わず、根が やせていた（ふつうの ボット seed 11：根 50）→「水が 深め。↓で 浅く（3〜5cm）」（根 80・292kg）。
 - check.js 105 こ ✔（はじきの 期待値・矢印キー・水の 長さの 確かめを 21周目の 数に）、playtest 4つの 年 ✔。
+
+### 22周目（コードレビュー・リアルさ 2回目・はじめて 開く とき）
+
+- **コードレビュー（20〜21周目の 差分）10件**：水が 変わらなかった ↑↓（上限で 止まった まま）にも「いい 深さ」と ◎を 出していた → 変わった 時だけ。年が 終わった めくりの 列でも「とん」と はねていた → 進んだ 時だけ。低い 画面の 結果で 音ボタンを かくすと 音を 止められない → 小さく 上へ。山の 層の `getContext` が 取れない 時に 空の 絵を かぶせて 田んぼが 消えて いた → 画面に 直接 かく。届かない「はじくと 深く」の 枝を けした。`overRipe` を 状態に 持つ。「水が 深め」の 数は `goodDepth` と 同じに（出穂後は 2〜5cm）。結果の スタンプカードは `role="img"` と「しごとの はんこ N/6」の 読み上げ、済の 字は 読み上げない。記録が ない 年に「じこベスト 0点」と 出さない。`check.js feel` が 作りなおす 前の `S` を 見ていた。
+- **出典の 調べ**（WebSearch の 要約。県の PDF は この 環境から 開けない）：
+  - 穂肥の 葉色（新潟県の 普及資料）：幼穂形成期の 葉色 SPAD 34〜32 なら 基準どおり（出穂 18日 前に 窒素 1.0kg/10a）、SPAD 35 以上は「こい」と 見て 草丈で 減らすか 見送り。2回目は 出穂 14〜12日 前に 1.0〜1.5kg。[新潟県 454214](https://www.pref.niigata.lg.jp/uploaded/attachment/454214.pdf)・[500038](https://www.pref.niigata.lg.jp/uploaded/attachment/500038.pdf)・[全農 水稲生育速報](https://www.zennoh.or.jp/nt/farming/%E6%B0%B4%E7%A8%B2%E7%94%9F%E8%82%B2%E9%80%9F%E5%A0%B1%E7%AC%AC4%E5%8F%B7.pdf)。ゲームの「葉いろ 36 以上で 1kg・38 以上で こい」「35 以下で 2kg」は 簡略（本物は 1.0〜1.5kg）。
+  - 穂ばらみ期〜登熟期の 水：穂ばらみ〜出穂は 水を 切らさない（熊本県・大分県。深水は 5日 以内：大分県）、登熟期は 間断かんがい（福岡県。湛水 2〜3日 ずつ：茨城県）、落水は 出穂 25〜30日 後 まで しない（新潟県・福島県）。**水深 cm の 数は 県の 資料に 見つからず**、「3〜5cm」「2〜5cm」は ゲームの 目安（注なし）。[福岡県](https://www.pref.fukuoka.lg.jp/uploaded/attachment/291342.pdf)・[茨城県](https://www.pref.ibaraki.jp/nourinsuisan/sansin/nosan/deta/hukumaru/documents/r3fukumarutuushin2revise.pdf)・[大分県](https://www.pref.oita.jp/uploaded/life/2171365_3553227_misc.pdf)。
+- **はじめて 開く とき（別の エージェント）7件**：
+  - 「はじめる」が 360×560・740×360・195×280 で 画面の 外（巻く 合図も なし）→ `もう一回` と 同じ 貼りつき（`class="go sticky"`）。
+  - たねを つけずに →を はじくと 37 はじきで「一年 おわり」→ 4日目からは めくりが 止まり、5日目からは「日だけ すぎて います。たねを ↑で 水に」。なえの 土が かわいた 日も 止まる（ざーっ）。
+  - 案内の 輪が 195×280 で 4つ 重なって 桶を かくす・たねの 場面で「↓ おとす」→ 小さい 画面は できる 矢印だけ、たねは「↓ まく」。まいた あと・たんぼへ の あとも もう一度 出す。
+  - さわっても 返事が ない（タップ 5回）→ 向きの ない タップには「ゆびで なでて」の 短冊と 案内。題の 画面は 札の とおり なでても 始まる（ボタンは ふやさない）。
+  - →の 札「あしたへ（はじくと パラパラ）」が 3行に 割れる → 2行目を 小さい 字に。
+  - 注と「N年 つくりました」の 字 13px → 15px。出典の リンクは 別の タブ。記録が ない 時は「じこベスト 0点」と 言わない。
+  - `prefers-reduced-motion` でも パラパラ・粒・めくりが 動いていた → めくりの 間隔 0.2秒 固定、粒 なし、紙の めくれ なし。
+- **リアルさ（別の エージェント・2回目）7件**（県の PDF は 開けず、検索の 要約で 照合）：
+  - 穂肥の 量：葉いろ 36 → 34 を 境に（新潟県：SPAD 34〜32 で 基準どおり、濃ければ ひかえめか 見送り）。
+  - 高温の 入れかえ：福島県は かけ流し 20日で 地温 −2.7℃・未熟粒 減（品種 初星）。千葉県は 26℃ の 線だけ → 注は「（福島県）」だけ。[福島県](https://www.pref.fukushima.lg.jp/uploaded/attachment/448369.pdf)
+  - 「水が 深め。↓で 浅く（3〜5cm）」に 注「（3〜5cm：栃木県）」（穂づくりの 時だけ。出穂後の 2〜5cm は 注なし）。[栃木県 R8](https://www.pref.tochigi.lg.jp/g58/suitou/documents/20260907153401.pdf)（要約のみ）
+  - 追肥：コシヒカリは 中間追肥を 原則 しない（島根県）→ 吹き出しに「（ひかえめ：島根県）」、倒伏の 危なさに 追肥 +0.1。[島根県](https://www.pref.shimane.lg.jp/industry/norin/gijutsu/nougyo_tech/kenyui/sisin_manyuaru/ine-sisin/ine-sisin.data/P32-37sehi.pdf)
+  - 乾燥の 注を 栃木県（URL が トップページ）から 宮崎県に。1日 5% は 出典なし と 書いた。
+  - 熊本県の 中干し・深水の 報告に URL（[熊本県](https://www.pref.kumamoto.jp/uploaded/attachment/4829.pdf)。9葉期 10日の 深水で 中干し 並みの 倒伏軽減：要約のみ）。ゲームの「深水の 日数で 倒伏 +0.3」は 目安（みずびたし の ための 簡略）。
+  - 刈りどきの 一言を「1000℃から 刈りどき」に（栃木県 2023：1000℃ を こえる 日が 刈り始め。2022：1000〜1100℃）。
+- やらかし：`#startBtn` に `sticky` を つけても 親の 行の 中で 動けず 効かなかった → 行（`.startRow`）ごと 貼りつけた。
+- check.js 105 こ ✔（はじきの 確かめは まず たねを つける）、playtest 4つの 年 ✔（穂肥 34 でも 順位は 同じ）。

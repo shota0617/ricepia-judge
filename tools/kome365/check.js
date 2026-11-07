@@ -23,7 +23,7 @@ const CHECKS = {
   async swipe(b){
     const p = await page(b, 390, 844);
     const r = await p.evaluate(() => {
-      K3.manual = true; K3.fixedSeed = 11; K3.start(); steps(5);
+      K3.manual = true; K3.fixedSeed = 11; K3.start(); steps(5); swipe('up', 160, false, true); /* まず つける（22周目：つけずに はじくと 4日目で 止まる） */
       const d0 = K3.S.day; swipe('right', 120, false); const d1 = K3.S.day; flush(); const d1b = K3.S.day;
       swipe('right', 260, true); const q = K3.V.flipQueue; const d2 = K3.S.day; flush(); const d3 = K3.S.day;
       // はじいて パラパラの とちゅうで ← を 入れると 止まる
@@ -217,14 +217,14 @@ const CHECKS = {
       const d1 = S.day; const x = 150, y0 = 600; ev('pointerdown', 1, x, y0); for (let i=1;i<=6;i++){ ev('pointermove', 1, x + i*40, y0); steps(3); } ev('pointerup', 1, x + 240, y0); flush(); const midLong = S.day - d1; /* 0.8px/ms（40px/50ms）・240px → 1日 */
       f.dat = 20; f.water = 2; K3.V.water = 2; K3.V.waterV = 0; ev('pointerdown', 1, 190, 600); for (let i=1;i<=24;i++){ ev('pointermove', 1, 190, 600 - i*10); steps(1); } const dragWater = K3.V.water; ev('pointerup', 1, 190, 360); steps(3); const slowUp = f.water; /* 指の 水面は 4cm 強で 止まり、はなすと 4cm */
       f.dat = 20; let joy = 0, marks = 0; for (let i=0;i<6;i++){ f.water = 1; K3.V.water = 1; K3.V.waterV = 0; swipe('up', 60, false, true); if (/いい 深さ/.test(document.getElementById('say').textContent)) joy++; } marks = K3.V.stamps.filter(st => st.text==='◎').length; /* 6回 続けても ◎は 区間で 1回（21周目） */
-      K3.jump('heading'); for (let i=0;i<120;i++) K3.step(1/60); const done = (S.done||[]).slice(); K3.jump('result'); const score = document.getElementById('rCard').querySelectorAll('span').length + '/' + document.getElementById('rCard').querySelectorAll('span.on').length;
+      K3.jump('nakaboshi'); K3.S.f.water = 0; K3.doLeft(); for (let i=0;i<150;i++) K3.step(1/60); const done = K3.S.done.slice(); /* 溝切りの 済が 消えて カードへ（22周目。jump は S を 作りなおす） */ K3.jump('result'); const score = document.getElementById('rCard').querySelectorAll('span').length + '/' + document.getElementById('rCard').querySelectorAll('span.on').length;
       K3.start(); const S2 = K3.S; swipe('up', 160, false, true); for (let i=0;i<14 && !S2.seed_.sprouted;i++) swipe('right', 110, false, true); swipe('left', 120, false, true); const t1 = document.getElementById('say').textContent; swipe('right', 110, false, true); const t2 = document.getElementById('say').textContent;
       return { slowLong, midLong, dragWater, slowUp, joy, marks, done, score, t1, t2 };
     });
     ok(r.slowLong === 1 && r.midLong === 1, 'ふつうの 速さの 長い 引きは 1日', [r.slowLong, r.midLong]);
     ok(r.dragWater > 4 && r.dragWater < 6 && r.slowUp === 4, '分げつの ころの ゆっくりの ↑は 指でも 4cm で ゴム、はなすと 4cm', [r.dragWater, r.slowUp]);
     ok(r.joy === 6 && r.marks === 1, 'よい 深さ 3回で「いい 深さ」と ◎（6回でも 区間で 1つ）', [r.joy, r.marks]);
-    ok(r.done.length >= 2 && /^6\/\d$/.test(r.score), '消えた 済が スタンプカードに、結果にも 6つの 枠', [r.done, r.score]);
+    ok(r.done.length >= 1 && /^6\/\d$/.test(r.score), '消えた 済が スタンプカードに、結果にも 6つの 枠', [r.done, r.score]);
     ok(/↓で まきましょう/.test(r.t2) && r.t1 !== r.t2, 'たねの ←の あとも →で 吹き出しが 更新', [r.t1, r.t2]);
   },
   // 「〜して いれば +Xkg」：中干しも 掛け流しも しない 年の 結果に、損失の 大きい 順に 2つ（11周目）

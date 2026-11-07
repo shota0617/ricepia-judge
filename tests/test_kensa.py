@@ -580,5 +580,25 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertIn('tone(150, 0.1, 0.1, "sine")', HTML)  # 刺す音は不変
         self.assertIn("tone(high ? 330 : 880, 0.14, 0.05,", HTML)  # 平均確定の音は不変
 
+    def test_cycle90_wrong_grade_loses_nothing_and_does_not_scold(self):
+        # 類4の点検: 機能上は何も失わない（スコア・タイマー・進捗リセットなし）ことは全所作で確認できたが、
+        # 等級の間違いだけ横揺れshake＋驚き顔wow＋首傾げで「✕・叱責」の合図になっていた。
+        # 穏やかなsway＋平常の顔へ寄せ、音なし・状態不変・正解列の●の誘導だけを残す。
+        self.assertNotIn(".gradeBtn.shake", HTML)
+        self.assertNotIn("@keyframes shake", HTML)
+        self.assertNotIn('add("shake")', HTML)
+        self.assertIn(".gradeBtn.sway { animation:sway .6s ease-in-out; }", HTML)
+        self.assertIn('btn.classList.add("sway")', HTML)
+        self.assertNotIn('setFace("wow", 800)', HTML)  # 間違いで驚き顔にしない（水分高・やわらかいのwowは米の状態用に残る）
+        seg = HTML.split("if (pick !== right) {", 1)[1].split("pop();", 1)[0]
+        self.assertIn('setFace("normal")', seg)
+        self.assertIn("return;", seg)  # その場で止まり、段階も進み具合も変えない
+        self.assertNotIn("tone(", seg)  # 間違いに音は付けない
+        self.assertNotIn("toOsu", seg)
+        self.assertIn("d.classList.add(\"ping\")", seg)  # 正解の列の●を光らせる見直しの誘導は残す
+        self.assertIn("等級をまちがえても、はかった水分も、よけた粒も、そのままで何も失われません", HTML)
+        self.assertIn(".gradeBtn.sway { animation:none; }", HTML)  # reduced-motionでも揺らさない
+        self.assertIn(".dot.ping { outline:3px solid var(--gold); outline-offset:2px; }", HTML)  # reduced-motionでは光る代わりに静かな輪郭で正解列を示す
+
 if __name__ == "__main__":
     unittest.main()

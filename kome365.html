@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="ja" class="nofont">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
@@ -10,7 +10,8 @@
 <meta name="theme-color" content="#1d2742"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Maru+Gothic:wght@500;700&display=swap"/>
+<script>/* 字の 形（Google Fonts）は 画面を 止めずに あとから。とどく までは html.nofont で 見出しを 太く（9周目） */
+(function(){ var l = document.createElement("link"); l.rel = "stylesheet"; l.href = "https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Maru+Gothic:wght@500;700&display=swap"; l.onload = l.onerror = function(){ if (document.fonts && document.fonts.ready) document.fonts.ready.then(function(){ document.documentElement.classList.remove("nofont"); }); else document.documentElement.classList.remove("nofont"); }; document.head.appendChild(l); setTimeout(function(){ document.documentElement.classList.remove("nofont"); }, 6000); })();</script>
 <style>
 /* 米屋の前掛けの藍を地に、クラフト紙と稲の緑。画面いっぱいのキャンバス（田んぼ）に、上の HUD と 下の こめつぶの 吹き出し */
 :root{
@@ -22,6 +23,7 @@
   color-scheme:dark;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html.nofont :is(.panel h1, button.go, .hval, .res strong, #rank){font-weight:800;font-synthesis:none} /* 字の 形が とどく まで：かわりの 字を 太く（Dela を にせの 太字に しない） */
 [hidden]{display:none!important}
 html,body{height:100%;margin:0}
 body{background:var(--ai);color:var(--ink);font-family:var(--body);overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;overscroll-behavior:none}
@@ -51,11 +53,21 @@ canvas#cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-a
 @media (max-height:600px){#talk>.say{font-size:15px;padding:7px 11px}}
 /* 題と 結果：藍の のれんの 上に 米屋の POP */
 .overlay{position:absolute;inset:0;z-index:5;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;background:linear-gradient(180deg,#131a2e 45%,#2c2321);
-  padding-block:22px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));touch-action:pan-y}
+  padding-block:22px;padding-top:calc(64px + env(safe-area-inset-top,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));touch-action:pan-y} /* 音ボタンの 下から（のれんが 幅いっぱいに なった。9周目） */
 .panel{margin:auto;width:min(420px,100%);display:flex;flex-direction:column;gap:14px;text-align:center}
+#resH:focus-visible{outline:3px solid var(--kraft);outline-offset:6px;border-radius:6px}
 .panel h1{font-family:var(--display);font-weight:400;font-size:clamp(34px,10vw,52px);line-height:1.1;margin:0;color:var(--ink)}
 .panel h1 small{display:block;font-family:var(--body);font-weight:700;font-size:13px;letter-spacing:.2em;color:var(--kraft);margin-bottom:6px}
-.noren{display:inline-block;align-self:center;background:#1a2a55;color:var(--ink);border-bottom:3px dashed rgba(243,239,228,.4);padding:4px 18px 6px;font-weight:700;letter-spacing:.3em;font-size:14px;border-radius:2px 2px 8px 8px}
+.noren{display:block;width:100%;position:relative;background:#1a2a55;color:var(--ink);padding:8px 0 10px;font-weight:700;letter-spacing:.4em;font-size:15px;text-align:center;
+  background-image:linear-gradient(90deg,transparent calc(33.3% - 1px),rgba(243,239,228,.35) calc(33.3% - 1px),rgba(243,239,228,.35) calc(33.3% + 1px),transparent calc(33.3% + 1px)),linear-gradient(90deg,transparent calc(66.6% - 1px),rgba(243,239,228,.35) calc(66.6% - 1px),rgba(243,239,228,.35) calc(66.6% + 1px),transparent calc(66.6% + 1px));
+  -webkit-mask:linear-gradient(#000 0 0) top/100% calc(100% - 7px) no-repeat,radial-gradient(circle at 6px 0,transparent 5px,#000 5.5px) bottom/12px 7px repeat-x;mask:linear-gradient(#000 0 0) top/100% calc(100% - 7px) no-repeat,radial-gradient(circle at 6px 0,transparent 5px,#000 5.5px) bottom/12px 7px repeat-x} /* 幅いっぱいの 藍の のれん：3つ割り・下は ぎざぎざ（9周目） */
+.noren::before{content:'';position:absolute;left:0;right:0;top:0;height:3px;background:#8c6c3b} /* 竿 */
+.startRow{position:relative;display:flex;justify-content:center}
+.startRow .suzume{position:absolute;left:0;bottom:-6px;width:56px;line-height:0;pointer-events:none;transform:scaleX(-1)} /* 「はじめる」の 左で こっちを 見る スズメ */
+.startRow .suzume svg{width:100%;height:auto}
+@media (max-width:359px){.startRow .suzume{display:none}}
+.tag{position:absolute;right:-6px;top:-8px;background:var(--paper2);color:#b3261e;border:2px dashed rgba(122,90,48,.6);border-radius:12px 8px 12px 8px;padding:3px 9px;font-weight:700;font-size:13px;transform:rotate(8deg);letter-spacing:.1em} /* 米屋の「新米」POP（9周目） */
+.rankBox{position:relative}
 button.go{font-family:var(--display);font-size:22px;padding:14px 20px;border:0;border-radius:14px;background:var(--kraft);color:var(--ai-deep);cursor:pointer;box-shadow:0 4px 0 #8c6c3b;touch-action:manipulation}
 button.go:active{transform:translateY(3px);box-shadow:0 1px 0 #8c6c3b}
 button.go:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
@@ -83,7 +95,7 @@ button.go small{display:block;font:700 13px var(--body);margin-top:2px;opacity:.
 .talk.cont>.who{visibility:hidden} .talk.cont>.say::before,.talk.cont>.say::after{display:none}
 @media (max-width:300px){.talk>.who{display:none}.talk>.say::before,.talk>.say::after{display:none}.swipes{grid-template-columns:1fr}
   #hud{flex-wrap:wrap;row-gap:0}.hcell.r{align-items:flex-start;text-align:left;flex-direction:row;gap:8px;align-items:baseline}.hval{font-size:19px}#hud .hcell{min-width:0;max-width:100%}.hval,#stage{white-space:normal}
-  .overlay{padding-top:calc(64px + env(safe-area-inset-top,0px))}} /* 字 200%（幅 195px）：HUD の 右の 数は 2行目へ、題は 音ボタンの 下から（7周目） */
+  } /* 字 200%（幅 195px）：HUD の 右の 数は 2行目へ、題は 音ボタンの 下から（7周目） */
 button.sound{position:absolute;right:max(12px,env(safe-area-inset-right,0px));top:calc(10px + env(safe-area-inset-top,0px));z-index:6;min-height:44px;padding:6px 12px;border-radius:22px;border:2px solid rgba(201,164,108,.7);background:rgba(19,26,46,.8);color:var(--ink);font:700 13px var(--body);display:none}
 button.sound.show{display:block} /* 題と 結果の 画面で（8周目） */
 button.sound[aria-pressed="false"]{color:var(--ink-dim);border-color:rgba(169,176,199,.5)}
@@ -107,7 +119,7 @@ button.sound[aria-pressed="false"]{color:var(--ink-dim);border-color:rgba(169,17
         <div><b>↑</b>みずを 入れる</div><div><b>↓</b>みずを おとす</div>
         <div><b>→</b>あしたへ（はじくと パラパラ）</div><div><b>←</b>しごと・田んぼを 見る</div>
       </div>
-      <button class="go" id="startBtn" type="button">はじめる<small>ボタンは これだけ</small></button>
+      <div class="startRow"><span class="suzume" id="suzume" aria-hidden="true"></span><button class="go" id="startBtn" type="button">はじめる<small>ボタンは これだけ</small></button></div>
       <p class="note">数の 目安は 農林水産省・愛知県・各県の 普及の 資料から（<a href="docs/kome365.md">出典</a>）。品種は コシヒカリ、田んぼは 10a。</p>
     </div>
   </div>
@@ -116,8 +128,8 @@ button.sound[aria-pressed="false"]{color:var(--ink-dim);border-color:rgba(169,17
   <div id="result" class="overlay" hidden>
     <div class="panel">
       <span class="noren">らいすぴあ</span>
-      <h1><small>けんさ の けっか</small><span id="resTitle">一年 おつかれさま</span></h1>
-      <div class="rankBox"><span class="rankLbl">とうきゅう</span><div id="rank" class="stamp">一等<small>検査済</small></div></div>
+      <h1 id="resH" tabindex="-1"><small>けんさ の けっか</small><span id="resTitle">一年 おつかれさま</span></h1>
+      <div class="rankBox"><span class="rankLbl">とうきゅう</span><div id="rank" class="stamp">一等<small>検査済</small></div><span class="tag" id="shinmai" hidden>新米</span></div>
       <div class="res">
         <div><span>しゅうりょう</span><strong id="rYield">0<small> kg/10a</small></strong></div>
         <div><span>たわら</span><strong id="rTawara">0<small> 俵</small></strong></div>
@@ -150,6 +162,19 @@ const DOODLE = {
       + '<path d="M7.6 31.5q1.6 2.6 4.4 2.9" fill="none" stroke="#d9cdb2" stroke-width="1.6" stroke-linecap="round"/>'
       + '<ellipse cx="8.6" cy="23.6" rx="2.3" ry="1.3" fill="#f2a7a0" opacity=".75"/><ellipse cx="21.4" cy="23.6" rx="2.3" ry="1.3" fill="#f2a7a0" opacity=".75"/>'
       + '<g fill="#4a3a28">' + face + '</g></svg>';
+  },
+  suzume(peck){
+    const body = '<path d="M44 29l15-8-1 9z" fill="#6b4a2b" stroke="#3e2a1a" stroke-width="2.2" stroke-linejoin="round"/>'
+      + '<ellipse cx="31" cy="31" rx="17.5" ry="14" fill="#b07a45" stroke="#3e2a1a" stroke-width="2.6"/>'
+      + '<ellipse cx="27" cy="36" rx="11.5" ry="8" fill="#efe3cf"/>'
+      + '<path d="M31 24q13-3 17 8-8 4-16 0z" fill="#8a5a32" stroke="#3e2a1a" stroke-width="2.2" stroke-linejoin="round"/>'
+      + '<path d="M36 26.5l3 5M41 26.5l2.4 5" stroke="#3e2a1a" stroke-width="1.2" stroke-linecap="round"/>'
+      + '<path d="M26 44l-2 6m-2 0h5M33 44l1 6m-2 0h5" stroke="#6b4a2b" stroke-width="1.6" stroke-linecap="round"/>';
+    const head = '<circle cx="18" cy="20" r="11" fill="#efe3cf" stroke="#3e2a1a" stroke-width="2.6"/>'
+      + '<path d="M7.6 18.4Q9.6 8.6 19.4 9.2q8.6.8 9.6 8.4-9-3-21.4.8z" fill="#7a4a28" stroke="#3e2a1a" stroke-width="2" stroke-linejoin="round"/>'
+      + '<ellipse cx="20.5" cy="24.2" rx="3" ry="2.4" fill="#2b2018"/><circle cx="13" cy="18.6" r="1.9" fill="#2b2018"/><circle cx="12.4" cy="18" r=".6" fill="#fff"/>'
+      + '<path d="M7.4 20.6L2 22.8l5.6 1.4z" fill="#3a2a1c"/><ellipse cx="11.5" cy="27.4" rx="3.2" ry="2.4" fill="#2b2018"/>';
+    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 54" width="64" height="54">' + body + (peck ? '<g transform="rotate(-28 24 34)">' + head + '</g>' : head) + '</svg>';
   },
 };
 
@@ -781,10 +806,11 @@ function endGame(why){
   if (S.over) return; S.over = true;
   if (why==='year' && !S.hv.done){ S.result = null; }
   else { S.result = finalize(S); }
-  const r = S.result; const R = $('result'); R.hidden = false; $('soundBtn').classList.add('show');
+  const r = S.result; const R = $('result'); R.hidden = false; $('soundBtn').classList.add('show'); setTimeout(() => { try{ $('resH').focus({ preventScroll:true }); }catch(e){} }, 50); /* 読み上げの 人は 見出しから（9周目） */
   $('whoR').innerHTML = DOODLE.kome(r && r.grade==='一等' ? 'joy' : r ? 'smile' : 'sad');
+  $('shinmai').hidden = true;
   if (!r){ $('resTitle').textContent = '一年 おわり'; $('rank').textContent = '—'; $('rYield').innerHTML = '0<small> kg/10a</small>'; $('rTawara').innerHTML = '0<small> 俵</small>'; $('rSeiryu').innerHTML = '—'; $('rTaste').innerHTML = '—'; $('rSay').textContent = '収穫まで いきませんでした。来年は 春に 種を つけましょう。'; $('rSay2').textContent = '4月に 種、5月に 田うえ、7月の おわりに 出穂、9月に 稲刈り。'; return; }
-  $('resTitle').textContent = S.day + '日で 検査';
+  $('resTitle').textContent = S.day + '日で 検査'; $('shinmai').hidden = !(r && r.grade !== '規格外');
   $('rank').innerHTML = r.grade + '<small>検査済</small>'; $('rank').classList.remove('stamp'); void $('rank').offsetWidth; $('rank').classList.add('stamp'); SND.pon(); vib([20, 40, 20]);
   $('rYield').innerHTML = Math.round(r.yieldKg) + '<small> kg/10a</small>'; $('rTawara').innerHTML = (r.yieldKg/60).toFixed(1) + '<small> 俵</small>';
   $('rSeiryu').innerHTML = r.seiryu.toFixed(0) + '<small> %</small>'; $('rTaste').innerHTML = r.taste + '<small> 点</small>';
@@ -803,7 +829,7 @@ function endGame(why){
 }
 function start(){ S = newState(K3.fixedSeed != null ? K3.fixedSeed : (Date.now() ^ Math.floor(Math.random()*1e9))>>>0); Object.assign(V, { water:0, waterV:0, waterTarget:undefined, page:0, flipQueue:0, flipTimer:0, flipGap:0.11, flipN:0, drag:null, card:null, shake:0, hint:1, stamps:[], particles:[], toast:null, lastSay:'' }); $('title').hidden = true; $('result').hidden = true; $('soundBtn').classList.remove('show'); resize(); syncUI(); narrate(); SND.init(); }
 $('startBtn').addEventListener('click', start); $('againBtn').addEventListener('click', start);
-$('whoT').innerHTML = DOODLE.kome('smile');
+$('whoT').innerHTML = DOODLE.kome('smile'); $('suzume').innerHTML = DOODLE.suzume(false);
 const sb = $('soundBtn'); sb.setAttribute('aria-pressed', soundOn ? 'true' : 'false'); sb.textContent = soundOn ? '♪ 音 オン' : '♪ 音 オフ';
 sb.addEventListener('click', () => { SND.init(); SND.set(!soundOn); sb.setAttribute('aria-pressed', soundOn ? 'true' : 'false'); sb.textContent = soundOn ? '♪ 音 オン' : '♪ 音 オフ'; });
 

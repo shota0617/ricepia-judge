@@ -681,6 +681,17 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         # 粒の tick 自体は従来どおり残る（みわける等の粒の音は変えない）
         self.assertIn("const tick = () => tone(1100 + Math.random() * 900, 0.03, 0.025);", HTML)
 
+    def test_cycle97_kimeru_dots_have_their_own_check_sound(self):
+        # 差分テーマ差3（類3の残り）: きめるの照合の●が付く音だけが粒の tick を共有していたため、
+        # 照合の印らしい静かな固有の音に分ける。
+        self.assertIn('const checkSound = () => tone(760, 0.05, 0.022, "sine");', HTML)
+        # toKimeru の●の出現は checkSound を使い、tick は使わない
+        kimeru = HTML[HTML.index("function toKimeru()"):HTML.index("function pickGrade(btn)")]
+        self.assertIn("checkSound();", kimeru)
+        self.assertNotIn("tick();", kimeru)
+        # 粒の tick 自体は従来どおり残る（みわける等の粒の音は変えない）
+        self.assertIn("const tick = () => tone(1100 + Math.random() * 900, 0.03, 0.025);", HTML)
+
     def test_cycle93_picked_grains_stay_in_quiet_record(self):
         # 類7: 見分けた粒が静かに記録に残る。任意で開く資料（#notes）の中だけに出し、常時表示・競争・スコアにはしない。
         # 袋を越えて残るため startLot では消さない（サイクル91の seenChecks と同じ持ち方）。

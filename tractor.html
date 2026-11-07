@@ -2891,7 +2891,8 @@ function tillCell(i, j, lx = 0) {               // lx：作業機のまん中か
   TILTY[c] = KATA.y(lx);                          // ハローが傾いていると 片側が浅い
   if (YAMA.on && YAMA.till(i, j)) YAMA.refresh(i, j, c);
   if (T6.till(i, j)) T6.refresh(i, j, c);
-  if (YAMA.on && ++YAMA.n === 600) {              // 24m² ほど耕したら
+  if (YAMA.on && ++YAMA.n >= 600 && !YAMA.told && !startNoticeMuted()) {   // 24m² ほど耕したら。サイクル208・最初の1分: のんびりでは開始直後（24m²・約11m耕した所）に長文知らせと声2件で最初のなぞりを止めない。等号（===600）のままだとガード中に通過して二度と出なくなるため >= と told で受ける。toldは立てないので1分を過ぎて次に初めて耕したセルで従来どおり出す（遅れて出す形）。くわしい説明では従来どおり600セル目から出す
+    YAMA.told = true;
     toast('⛰️ 二山盛り：1 回通るごとに 土の山が 2 本できた。稲わらは よく埋まるが、平耕より 田面の高い低いが わかりにくい', 6);
     setTimeout(() => voice('futayama'), 6500); setTimeout(() => voice('hirakou'), 6500);
   }

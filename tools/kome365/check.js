@@ -1,6 +1,6 @@
 // 米作り365：通しの 確かめ（本物の PointerEvent で スワイプして、日が 進む・水位が かわる・収穫まで 通る・字が はみ出ない、を 見る）
 //   node tools/kome365/check.js            # ぜんぶ
-//   node tools/kome365/check.js swipe      # 名前で えらぶ（syntax swipe water brake year fit）
+//   node tools/kome365/check.js swipe      # 名前で えらぶ（syntax swipe water year … vary fit）
 // スクショは KOME_OUT（なければ OS の 一時フォルダの kome365-check）に 書く。リポジトリの 中には 書かない。
 const { chromium } = require('playwright');
 const path = require('path'), os = require('os'), fs = require('fs');
@@ -193,6 +193,20 @@ const CHECKS = {
     ok(/出来ばえ \d+点/.test(z.s1) && !/じこベスト/.test(z.s1) && /じこベスト/.test(z.s2) && z.n === 2 && z.score > 0, '結果に 出来ばえの 点。2年目から じこベスト', z);
     const y = await p.evaluate(() => { localStorage.setItem('k365_years', '60'); localStorage.setItem('k365_log', JSON.stringify(Array.from({ length: 50 }, () => ({ score: 1 })))); K3.jump('result'); return { t: document.getElementById('rScore').textContent, n: JSON.parse(localStorage.getItem('k365_log')).length }; });
     ok(/61年目/.test(y.t) && y.n === 50, '記録は 50年 まで でも 年目は すすむ（12周目）', y);
+  },
+  // 年で ちがう：台風の ない 年・葉いろ 37〜42、出穂後の 一言は 日ごとに かわる、出穂後の ゆっくりの ↑は 5cm まで（19周目）
+  async vary(b){
+    const p = await page(b, 390, 844);
+    const r = await p.evaluate(() => {
+      const ty = {}, n0 = new Set(); for (const sd of [1, 2, 3, 5, 7, 8, 11, 42]){ K3.manual = true; K3.fixedSeed = sd; K3.start(); ty[sd] = K3.S.weather.some(w => w && w.w==='台風'); n0.add(K3.S.N0); }
+      K3.fixedSeed = 11; K3.jump('heading'); const S = K3.S, f = S.f; const says = new Set(); for (let i=0;i<12;i++){ f.water = Math.max(f.water, 2); K3.advanceDay(); says.add(document.getElementById('say').textContent); }
+      f.water = 2; K3.V.water = 2; K3.V.waterV = 0; swipe('up', 160, false); const slow = f.water; f.water = 2; K3.V.water = 2; swipe('up', 400, true); const fast = f.water;
+      return { ty, n0: [...n0], says: says.size, slow, fast };
+    });
+    const tv = Object.values(r.ty); ok(tv.some(x => x) && tv.some(x => !x), '台風の 年と ない 年が ある', r.ty);
+    ok(r.n0.length >= 3 && r.n0.every(n => n >= 37 && n <= 42), '田うえ時の 葉いろは 年で 37〜42', r.n0);
+    ok(r.says >= 8, '出穂後の 一言は 日ごとに かわる（12日で 8通り 以上）', r.says);
+    ok(r.slow <= 5 && r.fast > 5, '出穂後の ゆっくりの ↑は 5cm まで。はじけば 深く', [r.slow, r.fast]);
   },
   // 「〜して いれば +Xkg」：中干しも 掛け流しも しない 年の 結果に、損失の 大きい 順に 2つ（11周目）
   async whatif(b){

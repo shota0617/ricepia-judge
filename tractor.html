@@ -1757,7 +1757,7 @@ const HERI = (() => {
       if ($('toast').dataset.raw !== MSG) { chk = false; tries++; }
       else if (toastT <= 7 - 1.2) { chk = false; told = true; }
     }
-    if (run > 12 && Math.abs(S.v) < 0.05 && !S.rotDown && S.rotPos > 0.9 && (S.rotorW || 0) < 1 && (!S.stalled || offFree()) && !(S.crank > 0)) {   // 爪が止まってから
+    if (run > 12 && Math.abs(S.v) < 0.05 && !S.rotDown && S.rotPos > 0.9 && (S.rotorW || 0) < 1 && (!S.stalled || offFree()) && !(S.crank > 0) && !startNoticeMuted()) {   // 爪が止まってから。サイクル212・最初の1分: のんびりでは最初の1分は入口知らせ（174でガード済み）だけでなく修理も始めない（止めて上げると知らせなしに駐車・修理へ入ってしまう漏れ）。runは数え続け worn もそのままなので、1分を過ぎて止めて上げれば従来どおり直す（遅れて直す形）。くわしい説明では従来どおり最初の止めて上げるで直す
       S.stalled = true; S.parked = true; S.v = 0; S.autoUp = false;
       for (const k of ['fwd', 'back', 'left', 'right']) key[k] = 0;
       fixT = 6; S.elapsed += 300;

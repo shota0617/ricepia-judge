@@ -616,13 +616,15 @@ function stopProbeAttract() {
 function startProbeAttract() {
   stopProbeAttract();
   if (lotIndex !== 0 || P.done || P.inserted) return;
-  probeAttract = $("probe").animate([
+  const anim = $("probe").animate([
     { transform:"translate(" + P.rest + "px," + P.y + "px)" },
     { transform:"translate(" + P.inAt + "px," + P.y + "px)", offset:.5 },
     { transform:"translate(" + P.rest + "px," + P.y + "px)" }
   ], { duration:2000 * motion, easing:"ease-in-out", iterations:1 });
-  probeAttract.onfinish = () => { probeAttract = null; };
-  probeAttract.oncancel = () => { probeAttract = null; };
+  probeAttract = anim;
+  /* 旧アニメーションの cancel が遅れて発火しても、新しい誘いを消さないよう対象が一致する時だけ null にする（Codexレビュー指摘・サイクル82） */
+  anim.onfinish = () => { if (probeAttract === anim) probeAttract = null; };
+  anim.oncancel = () => { if (probeAttract === anim) probeAttract = null; };
 }
 function moveProbe(x) {
   if (P.done) return;

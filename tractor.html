@@ -10035,8 +10035,8 @@ $('bStart').onclick = () => {
     else if (!SHIRO && RAIN) setTimeout(() => voice('numa'), 11000);   // 雨のあとに耕して はまった話
     if (FOG0) setTimeout(() => { if (!startNoticeMuted()) toast('窓の内側がくもっています。デフロスター（エアコンの除湿した風）で 前ガラスの下から だんだん晴れます', 5); }, 1500);
     if (TOD === 'yoru') setTimeout(() => { if (!startNoticeMuted()) toast('くらく なってきたね。L で ライトを つけて ゆっくり いこう。（本物は 暗くなってからの作業は なるべくしない。畦や足もとが見えにくく、事故が多い）', 6); }, 10000);
-    if (SHIRO && RAIN) setTimeout(() => { if (!startNoticeMuted()) toast('雨の あとで 土が やわらかいね。きょうは そっと かこう（本物は 雨のすぐあとの植え代かきは さける。土がやわらかくなりすぎる。風の強い日も 水面が見づらいので さける）', 6); voice('kaze'); }, 4000);
-    else if (SHIRO && TOD === 'asa' && WX === 'hare') setTimeout(() => { if (!startNoticeMuted()) toast('☀️ 風のない晴れた朝：代かきに向いている', 4); voice('kaze'); }, 4000);
+    if (SHIRO && RAIN) setTimeout(() => { if (!startNoticeMuted()) { toast('雨の あとで 土が やわらかいね。きょうは そっと かこう（本物は 雨のすぐあとの植え代かきは さける。土がやわらかくなりすぎる。風の強い日も 水面が見づらいので さける）', 6); voice('kaze'); } }, 4000); // サイクル198 最初の1分: のんびりでは開始直後にトーストだけでなく声も出さず heard を消費しない。くわしい説明では従来どおり両方出す
+    else if (SHIRO && TOD === 'asa' && WX === 'hare') setTimeout(() => { if (!startNoticeMuted()) { toast('☀️ 風のない晴れた朝：代かきに向いている', 4); voice('kaze'); } }, 4000); // サイクル198 最初の1分: のんびりでは開始直後にトーストだけでなく声も出さず heard を消費しない。くわしい説明では従来どおり両方出す
     if (RAIN && !SHIRO) setTimeout(() => { if (!startNoticeMuted()) toast('ぬれた 土は こねちゃうね。かわいたら また たがやそう（本物は 雨の日や雨のすぐあとには耕さない。ぬれた土を耕すと こねられて、かわくと固いかたまりになる）', 6); }, 4000);
   }
   if (!soundOn && !audio) toggleSound();

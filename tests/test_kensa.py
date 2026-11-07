@@ -657,6 +657,19 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertNotIn("cookedReturns = []", start_lot)
         self.assertNotIn("cookedReturns.length = 0", start_lot)
 
+    def test_cycle95_bag_leave_has_its_own_paper_sound(self):
+        # 差分テーマ（類3の残り）: 袋を流す所作だけが粒の tick を共有していたため、紙の袋らしい低い音に分ける。
+        self.assertIn("function bagSound() {", HTML)
+        self.assertIn("o.frequency.setValueAtTime(360, t);", HTML)
+        self.assertIn("o.frequency.exponentialRampToValueAtTime(150, t + 0.22);", HTML)
+        self.assertIn('o.type = "triangle";', HTML)
+        # leaveBag は bagSound を使い、tick は使わない
+        leave = HTML[HTML.index("function leaveBag()"):HTML.index("nextBtn.addEventListener")]
+        self.assertIn("bagSound();", leave)
+        self.assertNotIn("tick();", leave)
+        # 音量は控えめ（0.045 以下）に留める
+        self.assertIn("g.gain.setValueAtTime(0.045, t);", HTML)
+
     def test_cycle93_picked_grains_stay_in_quiet_record(self):
         # 類7: 見分けた粒が静かに記録に残る。任意で開く資料（#notes）の中だけに出し、常時表示・競争・スコアにはしない。
         # 袋を越えて残るため startLot では消さない（サイクル91の seenChecks と同じ持ち方）。

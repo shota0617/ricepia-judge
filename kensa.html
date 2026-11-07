@@ -276,6 +276,7 @@
   <p>鑑定は視覚・触覚・臭覚・聴覚を用いて行います（鑑定方法・平成13年農林水産省告示第333号）。におう・かむ・にぎるは、それをゲームの動きにしたものです。水分計のハンドルは、粒をつぶして測る水分計の形にならいました。</p>
   <p>袋ごとに、整粒の形と色つや、袋の帯の色が少しずつ違います。今日はどんな米かが、開いてすぐの楽しみです。わるい粒の見分けの印（色・割れ目）は袋によらず同じです。</p>
   <p>等級をまちがえても、はかった水分も、よけた粒も、そのままで何も失われません。光る●の列をもう一度見て、選び直せます。</p>
+  <p>きめるで見る項目は、袋を進めるごとに1つずつ増えていきます。一度見た項目は次の袋でも残るので、見比べながら少しずつ覚えられます。</p>
   <p>ゲームでは分かりやすくするため、皿は20粒で1粒＝5%と数えます（実際の検査の粒数や重量の割合とは違います）。形質（標準品との比較）、異種穀粒、異物は皿には出していません。ゲームの等級は遊びのためのもので、実際の格付けではありません。</p>
   <p>出典: <a href="https://www.maff.go.jp/j/seisan/syoryu/kensa/kome/k_kikaku/" target="_blank" rel="noopener">農林水産省「玄米の検査規格」</a>／<a href="https://www.maff.go.jp/j/seisan/syoryu/kensa/hourei.html" target="_blank" rel="noopener">農産物検査法及び関係通知等</a>／<a href="https://www.maff.go.jp/j/seisan/syoryu/kensa/attach/pdf/index-25.pdf" target="_blank" rel="noopener">農林水産省「コメの農産物検査」</a></p>
   <p><a href="https://ricepia.jp/">らいすぴあ（近藤米穀店）のサイトへ</a></p>
@@ -514,6 +515,7 @@ faceImg.src = "kensa/face_dot.webp";
 
 /* 進行 */
 let lotIndex = 0, LOT = LOTS[0], step = 0, grains = [], badLeft = 0, measured = 0, hintTimer = null;
+const seenChecks = new Set(["水分", "整粒"]); /* きめるで見た項目は次の袋でも残る。見るところは袋ごとに1つずつ増える（サイクル91・類5）。startLot では消さない */
 const plate = $("plate"), inner = $("plateInner"), hint = $("hint"), nextBtn = $("nextBtn"), zoomBtn = $("zoomBtn");
 function setStep(i, text) {
   step = i;
@@ -1301,13 +1303,17 @@ token.addEventListener("click", (e) => { if (e.detail === 0) autoSense(); });
 function toKimeru() {
   const pc = lotPercents(LOT), it = itemGrades(pc), worst = lotGrade(LOT);
   resetZoom();
-  const rows = [
+  const allRows = [
     ["水分", pc.moisture.toFixed(1) + "%", it.moisture],
     ["整粒", pc.seiryu + "%", it.seiryu],
     ["死米", pc.shini + "%", it.shini],
     ["着色粒", pc.color + "%", it.color],
     ["計", pc.total + "%", it.total]
-  ].filter(([name, , g]) => name === "水分" || name === "整粒" || (g === worst && g > 0)); /* 水分と整粒のほかは、等級を下げた項目だけ出す */
+  ];
+  /* 見るところを袋ごとに1つずつ増やす（サイクル91・類5）: 等級を下げた項目を「見た項目」に加え、一度見た項目は次の袋でも残す。
+     各袋で新しく増える項目は最大1つ（ロット順: 1袋目=なし／2袋目=なし・水分が決め手だが既出／3袋目=死米／4袋目=計／5袋目=着色粒／6袋目=なし）。等級を下げた項目は必ずその袋で見えるため、判定に必要な情報が隠れることはない。最初の袋は従来どおり水分・整粒の2行だけ */
+  allRows.forEach(([name, , g]) => { if (g === worst && g > 0) seenChecks.add(name); });
+  const rows = allRows.filter(([name]) => seenChecks.has(name));
   $("rows").innerHTML = rows.map(([name, value, g]) =>
     '<div class="rowName">' + name + "<b>" + value + "</b></div>" +
     [0, 1, 2, 3].map(c => '<div class="cell' + (c === 3 ? " last" : "") + '">' + (c === g ? '<i class="dot" data-g="' + g + '"></i>' : "") + "</div>").join("")).join("");

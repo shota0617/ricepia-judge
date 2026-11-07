@@ -2943,6 +2943,7 @@ const YAMA = { on: false, n: 0,
     }
   } };
 // T6 作業機ごとの跡（モーション磨き総仕上げ）: 作業機ごとに、耕した跡の断面（模様）と土の粗さが変わる。形と粗さだけ・文字なし。
+// サイクル224・類似ゲーム類8（Zen Koi／Lawn Mowing Simulator）: 続ける動機は性能の数値ではなく跡の模様の違いで。断面の形は9種から増やし、耕す系の作業機グループごとに固有の模様にした（振幅は従来のプラウ以内）。ならし・散布系はごく浅い波、運搬系は平らがその模様（粗さ roughK の違いと合わせる）。数値・文字・収集の仕組みは足さない。
 // 物差し＝断面の形が作業機で分かれること（ループ側 scripts/sim_t6_pattern.js）と、T6.measure() で幅とカバー率・重なり率・残し率がいつでも測れること（自動計測の固定）。
 const T6 = {
   roughK: { rotary: 1, harrow: 0.6, plow: 1.7, disc: 1.25, ditch: 1, aze: 0.3, ridge: 0.8, flail: 0.5, sub: 0.9, mulch: 0.15, caster: 0.1, drill: 0.4, manure: 0.6, baler: 0.3, sqbaler: 0.3, rake: 0.3, picker: 0.4, mower: 0.3, tedder: 0.3, wrapper: 0.3, mixer: 0.3, potato: 1.2, chipper: 0.4, cart: 0.3, trailer: 0.3, slurry: 0.3, backhoe: 1.0, loader: 1.0, leveler: 0.2, cult: 0.7, auger: 0.3, roller: 0.15, power: 0.45, planter: 0.3, chisel: 0.9, discp: 1.4, snowb: 0.5, revp: 1.7, rblade: 0.2, springh: 0.7, rhoe: 0.6, mspray: 0.1, dmower: 0.2, pharrow: 0.3, spikeh: 0.7, phdigger: 0.5, crumbler: 0.8, boxb: 0.3, mfert: 0.1, fblade: 0.25, broom: 0.1, bfork: 0.2, bedf: 0.3, chainh: 0.4, deepr: 0.8, lplane: 0.25, aerator: 0.35, trench: 1, groover: 1, swather: 0.3, forage_wagon: 0.3, compost_turner: 0.7, potato_planter: 0.7, carrot_harvester: 0.7, cabbage_harvester: 0.7, onion_harvester: 0.7, garlic_harvester: 0.7, tomato_harvester: 0.7, pumpkin_harvester: 0.7, sweet_potato_harvester: 0.7, daikon_harvester: 0.7, negi_harvester: 0.7, gobo_harvester: 0.7, broccoli_harvester: 0.7, lettuce_harvester: 0.7, spinach_harvester: 0.7, bok_choy_harvester: 0.7, komatsuna_harvester: 0.7, celery_harvester: 0.7 }[IMPL_ID],   // ブロードキャスターは粒をまくだけで土を乱さない（サイクル79）。シードドリルは浅い溝で軽く乱す（サイクル80）。マニュアスプレッダーは堆肥の小塊で軽く乱す（サイクル81）
@@ -2958,6 +2959,23 @@ const T6 = {
       case 'flail': return 0.008 * Math.cos(2 * Math.PI * lx / 0.5);
       case 'sub': return -0.05 * (Math.exp(-(((lx + 0.6) / 0.14) ** 2)) + Math.exp(-((lx / 0.14) ** 2)) + Math.exp(-(((lx - 0.6) / 0.14) ** 2)));
       case 'deepr': return -0.055 * (Math.exp(-(((lx + 1.0) / 0.13) ** 2)) + Math.exp(-(((lx + 0.5) / 0.13) ** 2)) + Math.exp(-((lx / 0.13) ** 2)) + Math.exp(-(((lx - 0.5) / 0.13) ** 2)) + Math.exp(-(((lx - 1.0) / 0.13) ** 2)));
+      case 'rotary': return 0.014 * Math.cos(2 * Math.PI * lx / 0.48);   // サイクル224・類8: 以下、作業機グループごとの跡の模様（振幅は従来のプラウ ±0.038 以内）
+      case 'power': return 0.017 * Math.cos(2 * Math.PI * lx / 0.36 + 0.6);
+      case 'harrow': case 'pharrow': return 0.010 * Math.cos(2 * Math.PI * lx / 0.85 + 0.4);
+      case 'springh': case 'spikeh': case 'chainh': return 0.012 * Math.cos(2 * Math.PI * lx / 0.55 + 1.2);
+      case 'discp': return 0.030 * Math.cos(2 * Math.PI * lx / 0.55 + 0.8);
+      case 'revp': return 0.038 * Math.cos(2 * Math.PI * lx / 0.5 + Math.PI);
+      case 'chisel': return -0.034 * (Math.exp(-(((lx + 0.75) / 0.15) ** 2)) + Math.exp(-((lx / 0.15) ** 2)) + Math.exp(-(((lx - 0.75) / 0.15) ** 2)));
+      case 'cult': return -0.026 * (Math.exp(-(((lx + 0.55) / 0.11) ** 2)) + Math.exp(-((lx / 0.11) ** 2)) + Math.exp(-(((lx - 0.55) / 0.11) ** 2)));
+      case 'drill': case 'planter': case 'potato_planter': return -0.013 - 0.013 * Math.cos(2 * Math.PI * lx / 0.45);
+      case 'bedf': return 0.042 * Math.exp(-((lx / 0.55) ** 2)) - 0.010;
+      case 'rhoe': case 'aerator': return 0.015 * Math.cos(2 * Math.PI * lx / 0.36 + 0.5);
+      case 'dmower': case 'mower': case 'swather': return 0.009 * Math.cos(2 * Math.PI * lx / 0.70 + 2.0);
+      case 'tedder': case 'rake': case 'wrapper': case 'baler': case 'sqbaler': case 'picker': return 0.007 * Math.cos(2 * Math.PI * lx / 0.90 + 1.0);
+      case 'potato': case 'carrot_harvester': case 'cabbage_harvester': case 'onion_harvester': case 'garlic_harvester': case 'tomato_harvester': case 'pumpkin_harvester': case 'sweet_potato_harvester': case 'daikon_harvester': case 'negi_harvester': case 'gobo_harvester': case 'broccoli_harvester': case 'lettuce_harvester': case 'spinach_harvester': case 'bok_choy_harvester': case 'komatsuna_harvester': case 'celery_harvester': return -0.020 * (Math.exp(-(((lx + 0.40) / 0.13) ** 2)) + Math.exp(-(((lx - 0.40) / 0.13) ** 2)));
+      case 'compost_turner': return 0.020 * Math.cos(2 * Math.PI * lx / 0.45 + 1.6);
+      case 'mulch': case 'roller': case 'crumbler': case 'lplane': case 'leveler': case 'rblade': case 'boxb': case 'fblade': return 0.005 * Math.cos(2 * Math.PI * lx / 1.10 + 0.3);
+      case 'caster': case 'mfert': case 'mspray': case 'manure': case 'slurry': return 0.004 * Math.cos(2 * Math.PI * lx / 0.75 + 1.9);
       default: return 0;
     }
   },

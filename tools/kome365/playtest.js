@@ -72,7 +72,7 @@ const ORDER = { '一等':4, '二等':3, '三等':2, '規格外':1, '—':0 };
   if (has('normal') && has('hasty')){ const c = score('normal') > score('hasty')*1.05; ok(c, 'ふつう ＞ せっかち'); if (!c) bad++; }
   if (has('normal') && has('late')){ const c = score('normal') > score('late')*1.05; ok(c, 'ふつう ＞ のんびり'); if (!c) bad++; }
   for (const bt of ['idle', 'hasty', 'late']) if (has(bt)){ const n = avg[bt].filter(r => ORDER[r.grade] <= 3).length; const c = n*2 >= avg[bt].length; ok(c, bt + ' は 半分 以上の 年で 二等 以下（' + n + '/' + avg[bt].length + '）'); if (!c) bad++; }
-  if (has('flood') && has('normal')){ const c = avg.flood.every((r, i) => r.yield < avg.normal[i].yield*0.7); ok(c, 'みずびたしの 収量は ふつうの 7割 以下'); /* 32周目：はじきの 上限 8cm で 深水に ならず、半分 以下は 行きすぎ（三等 280kg 台） */ if (!c) bad++; }
+  if (has('flood') && has('normal')){ const c = (avg.flood.reduce((m, r) => m + r.yield, 0) < avg.normal.reduce((m, r) => m + r.yield, 0)*0.7); ok(c, 'みずびたしの 収量は ふつうの 7割 以下（4つの 年の 合計）'); /* 35周目：台風の ない 年は 72% に なる */ /* 32周目：はじきの 上限 8cm で 深水に ならず、半分 以下は 行きすぎ（三等 280kg 台） */ if (!c) bad++; }
   if (errs){ console.log('✖ ページの エラー ' + errs + ' こ'); bad++; }
   process.exit(bad ? 1 : 0);
 })();

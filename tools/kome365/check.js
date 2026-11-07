@@ -36,13 +36,19 @@ const CHECKS = {
       // 途中で 切れた 指（pointercancel）は なかった ことに。id 2 の 指でも 動く（8周目）
       const dc = K3.S.day; ev('pointerdown', 3, cx-100, cy); for (let i=1;i<=6;i++){ ev('pointermove', 3, cx-100+i*30, cy); K3.step(1/60); } ev('pointercancel', 3, cx+80, cy); K3.step(1/60); const cancelDay = K3.S.day - dc;
       const d2b = K3.S.day; swipe('right', 120, false, true, 2); const id2Day = K3.S.day - d2b;
-      return { d0, d1, d1b, q, d2, d3, dq, q2, d4, qHold, dv, cancelDay, id2Day, dayEnd: K3.S.day, date: document.getElementById('date').textContent, dayNo: document.getElementById('dayNo').textContent };
+      // 引いて 戻す・親指の 弧・短い はじき（13周目）：たんぼの 場面で
+      const dayBefore = K3.S.day; K3.jump('tiller'); K3.S.f.water = 2;
+      const back = (() => { const d0 = K3.S.day; ev('pointerdown', 1, cx-60, cy); for (let i=1;i<=6;i++){ ev('pointermove', 1, cx-60+i*20, cy); K3.step(1/60); } for (let i=1;i<=4;i++){ ev('pointermove', 1, cx+60-i*28, cy); K3.step(1/60); } ev('pointerup', 1, cx-52, cy); flush(); return K3.S.day - d0; })();
+      const w0 = K3.S.f.water; const arc = (() => { const d0 = K3.S.day; ev('pointerdown', 1, cx, cy+70); for (let i=1;i<=12;i++){ ev('pointermove', 1, cx + Math.min(10, i*2), cy+70 - i*12); K3.step(1/60); } ev('pointerup', 1, cx+10, cy-74); flush(); return { day: K3.S.day - d0, water: K3.S.f.water - w0 }; })();
+      const shortFlick = (() => { const d0 = K3.S.day; ev('pointerdown', 1, cx-14, cy); K3.step(1/60); ev('pointermove', 1, cx, cy); K3.step(1/60); ev('pointermove', 1, cx+14, cy); ev('pointerup', 1, cx+14, cy); flush(); return K3.S.day - d0; })();
+      return { d0, d1, d1b, q, d2, d3, dq, q2, d4, qHold, dv, cancelDay, id2Day, back, arc, shortFlick, dayEnd: K3.S.day, date: document.getElementById('date').textContent, dayNo: document.getElementById('dayNo').textContent };
     });
     ok(r.d1 === r.d0 + 1 && r.d1b === r.d1, 'ゆっくり →：1日 だけ 進む', r);
     ok(r.q >= 3 && r.d3 - r.d2 === r.q, 'はじく →：つづけて 何日も めくれる（慣性）', r);
     ok(r.q2 === 0 && r.d4 <= r.dq + 1, 'めくれて いる とちゅうの ← で 止まる', r);
     ok(r.qHold === 0, '引いて 止めてから はなすと 1日 だけ', r.qHold);
     ok(r.cancelDay === 0 && r.id2Day === 1, '途中で 切れた 指は 進めない。2本目の id の 指でも 進む（8周目）', [r.cancelDay, r.id2Day]);
+    ok(r.back === 0 && r.arc.day === 0 && r.arc.water > 0 && r.shortFlick <= 1, '引いて 戻すと 何も しない。親指の 弧は ↑。短い はじきは 1日 まで（13周目）', [r.back, r.arc, r.shortFlick]);
     ok(r.dv[0] <= 3 && r.dv[1] >= 3 && r.dv[1] <= 5 && r.dv[2] >= 7 && r.dv[2] <= 10, 'はじきの 速さと 日数：1px/ms ≤3日・1.5 で 3〜5日・3 で 7〜10日', r.dv);
     ok(/日$/.test(r.date) && r.dayNo === r.dayEnd + '日目', 'HUD の 日づけが 進む', r);
     await p.screenshot({ path: path.join(OUT, 'swipe.png') });
@@ -60,7 +66,7 @@ const CHECKS = {
     });
     ok(r.w1 > r.w0 && r.w2 > r.w1, '↑ で 水が 入る。長い ほど 多い', r);
     ok(r.w2 - r.w1 > r.w1 - r.w0, 'スワイプの 長さで 量が かわる', r);
-    ok(Math.abs(r.v1 - r.w2) < 0.3 && r.v0 < r.w2, '水面は 少し おくれて 追いつく（ばね）', r);
+    ok(Math.abs(r.v1 - r.w2) < 0.3 && r.v0 <= r.w2 + 0.3, '水面は 指に ついてきて、はなしたら 本当の 水に 落ちつく（ばね）', r);
     ok(r.w3 < r.w2 && r.w4 === 0 && Math.abs(r.v2) < 0.3, '↓ で 落ちる。強く はじくと 空に', r);
     ok(/みず 0cm/.test(r.stat), 'HUD の 水が 0cm に なる', r.stat);
     await p.screenshot({ path: path.join(OUT, 'water.png') });

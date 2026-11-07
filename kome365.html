@@ -347,8 +347,8 @@ const SND = {
   tone(f, dur, type, vol, slide){ if (!this.ac) return; const t = this.ac.currentTime, o = this.ac.createOscillator(), g = this.ac.createGain(); o.type = type||'sine'; o.frequency.setValueAtTime(f, t); if (slide) o.frequency.exponentialRampToValueAtTime(slide, t+dur); g.gain.setValueAtTime(vol||.2, t); g.gain.exponentialRampToValueAtTime(.001, t+dur); o.connect(g); g.connect(this.master); o.start(t); o.stop(t+dur+.02); },
   noise(dur, vol, hz){ if (!this.ac || !this.noiseBuf) return; const t = this.ac.currentTime, s = this.ac.createBufferSource(); s.buffer = this.noiseBuf; const fl = this.ac.createBiquadFilter(); fl.type = 'bandpass'; fl.frequency.value = hz||1200; fl.Q.value = .7; const g = this.ac.createGain(); g.gain.setValueAtTime(vol||.25, t); g.gain.exponentialRampToValueAtTime(.001, t+dur); s.connect(fl); fl.connect(g); g.connect(this.master); s.start(t, 0, dur+.02); },
   pera(i){ this.noise(.05, .18, 1900 + Math.min(10, i)*140); }, /* 連続で 少しずつ 高く（10周目） */                /* 暦を めくる */
-  chapu(){ this.tone(520, .14, 'sine', .16, 260); this.noise(.08, .08, 900); },  /* 水が 入る */
-  zaa(){ this.noise(.3, .16, 600); },                                  /* 水が 落ちる */
+  chapu(amt){ const a = Math.min(15, amt||3); this.tone(560 - a*16, .12 + a*.01, 'sine', .16, 260); this.noise(.06 + a*.01, .08, 900); }, /* 多いほど 低く 長く（13周目） */  /* 水が 入る */
+  zaa(amt){ const a = Math.min(15, amt||3); this.noise(.15 + a*.04, .16, 600); },                                  /* 水が 落ちる */
   pon(){ this.tone(180, .12, 'triangle', .3, 90); this.noise(.04, .2, 500); }, /* はんこ */
   shaku(){ this.noise(.09, .2, 1600); this.tone(900, .06, 'square', .05); }, /* 刈る */
   chun(){ this.tone(2400, .05, 'sine', .08, 3200); },                   /* スズメ */
@@ -579,7 +579,8 @@ function drawCard(L){
   ctx.fillStyle = '#c8352b'; ctx.font = '700 13px ' + FONT; ctx.textAlign = 'right'; ctx.textBaseline = 'bottom'; ctx.fillText(Math.round(c.H) + 'cm', cw - 14, hy - 2);
   ctx.restore();
 }
-function drawStamps(L){ /* 「済」の はんこ と、まく 粒 */
+function drawStamps(L){
+  if (V.drag && V.drag.kind==='day' && V.drag.amt < 0 && actions().left){ const k = Math.min(1, -V.drag.amt); ctx.save(); ctx.globalAlpha = k*0.45; ctx.translate(W/2, (L.fieldTop+L.fieldBot)/2); ctx.rotate(-0.2); const sc = 1.6 - k*0.6; ctx.scale(sc, sc); ctx.strokeStyle = '#c8352b'; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(-22, -22, 44, 44, 8) : ctx.rect(-22, -22, 44, 44); ctx.stroke(); ctx.fillStyle = '#c8352b'; ctx.font = '700 22px ' + FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(actions().left, 0, 1); ctx.restore(); } /* ←の 引いて いる 間（13周目） */ /* 「済」の はんこ と、まく 粒 */
   for (const st of V.stamps){ ctx.save(); ctx.globalAlpha = clamp(st.life*2, 0, 1)*0.9; const sc = 1 + Math.max(0, st.life-0.6)*3; ctx.translate(st.x, st.y); ctx.rotate(-0.2); ctx.scale(sc, sc); ctx.strokeStyle = '#c8352b'; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(-22, -22, 44, 44, 8) : ctx.rect(-22, -22, 44, 44); ctx.stroke(); ctx.lineWidth = 1; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(-18, -18, 36, 36, 6) : ctx.rect(-18, -18, 36, 36); ctx.stroke(); ctx.fillStyle = '#c8352b'; ctx.font = '700 22px ' + FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(st.text, 0, 1); if (st.sub){ ctx.rotate(0.2); ctx.fillStyle = '#fbf3e0'; ctx.strokeStyle = '#3e2a1a'; ctx.lineWidth = 3; ctx.lineJoin = 'round'; ctx.font = '700 14px ' + FONT; ctx.strokeText(st.sub, 0, 36); ctx.fillText(st.sub, 0, 36); } ctx.restore(); } /* はんこは 朱の 2重の 角丸、しごとの 名は 下に 小さく（7周目） */
   for (const p of V.particles){ ctx.fillStyle = p.c; ctx.beginPath(); ctx.ellipse(p.x, p.y, p.r, p.r*0.6, p.a, 0, Math.PI*2); ctx.fill(); }
   if (V.toast){ const t = V.toast; ctx.save(); ctx.globalAlpha = clamp(t.life*1.5, 0, 1); ctx.font = '400 ' + Math.min(30, W*0.075) + 'px "Dela Gothic One", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#fbf3e0'; ctx.strokeStyle = '#3e2a1a'; ctx.lineWidth = 5; ctx.lineJoin = 'round'; const y = L.fieldTop - 36 - (1-t.life)*14; ctx.strokeText(t.text, W/2, y); ctx.fillText(t.text, W/2, y); ctx.restore(); }
@@ -753,8 +754,8 @@ function pointerMove(e){
   const d = V.drag; if (!d || e.pointerId !== d.id) return;
   d.x = e.clientX; d.y = e.clientY; d.hist.push([now(), d.x, d.y]); if (d.hist.length > 8) d.hist.shift();
   const dx = d.x - d.x0, dy = d.y - d.y0;
-  if (!d.kind && Math.hypot(dx, dy) > 10) d.kind = Math.abs(dx) > Math.abs(dy) ? 'day' : 'water';
-  if (d.kind==='day'){ d.amt = clamp(dx/90, -1, 1); }
+  if (!d.kind){ const h = Math.hypot(dx, dy); if (h >= 24 && Math.abs(dx) > 1.6*Math.abs(dy)) d.kind = 'day'; else if (h >= 24 && Math.abs(dy) > 1.6*Math.abs(dx)) d.kind = 'water'; else if (h >= 40) d.kind = Math.abs(dx) > Math.abs(dy) ? 'day' : 'water'; } /* 親指の 弧で ↑が →に ならない（13周目） */
+  if (d.kind==='day'){ d.amt = clamp(dx/90, -1, 1); if (dx < -30 && !d.ticked){ d.ticked = true; SND.tone(1200, .03, 'square', .05); vib(4); } } /* ←は 届いた 所で カチッ（13周目） */
   if (d.kind==='water'){ /* 指に ついて 水面が 上下する（みせかけ）。はなした ときに 本当の 水に なる */
     const a = actions(); const cmPerPx = 15/(H*0.38); let target = d.startWater - dy*cmPerPx;
     if (dy < 0 && !a.up) target = d.startWater; if (dy > 0 && !a.down) target = d.startWater;
@@ -773,18 +774,18 @@ function pointerUpInner(e){
   const L = layout(); const a = actions();
   V.waterTarget = undefined;
   if (d.kind==='day'){
-    if (dx > 30 || vx > 0.5){
+    if (dx >= 24 && (dx > 30 || vx > 0.5)){ /* 引いて 戻した（dx<24）は 何も しない（13周目） */
       if (!a.right) return;
-      const n = clamp(Math.round(1 + Math.max(0, vx - 0.6)*3.5 + Math.max(0, dx-140)/120), 1, 10); /* ふつうの 速さ（0.6px/ms まで）は 1日。はじく ほど ふえる：1.5px/ms で 4日、3px/ms で 9日、最大 10日（3周目） */
+      const n = dx < 80 ? 1 : clamp(Math.round(1 + Math.max(0, vx - 0.6)*3.5 + Math.max(0, dx-140)/120), 1, 10); /* 短い はじき（80px 未満）は 1日 */ /* ふつうの 速さ（0.6px/ms まで）は 1日。はじく ほど ふえる：1.5px/ms で 4日、3px/ms で 9日、最大 10日（3周目） */
       S.swipes++; V.flipQueue = n - 1; V.flipGap = 0.11; V.flipN = 0; advanceDay();
-    } else if (dx < -30 || vx < -0.5){
+    } else if (dx <= -24 && (dx < -30 || vx < -0.5)){
       S.swipes++; V.flipQueue = 0; doLeft(L); V.hint = Math.max(0, V.hint - 0.08);
     }
     return;
   }
   if (d.kind==='water'){
-    if (dy < -30 || vy < -0.5){ doUp(d.target != null ? d.target - S.f.water : 3, vy); return; } /* ↑ 水を 入れる */
-    if (dy > 30 || vy > 0.5) doDownWater(d.target != null ? S.f.water - d.target : 3, vy);        /* ↓ 水を 落とす（たねは まく） */
+    if (dy <= -24 && (dy < -30 || vy < -0.5)){ doUp(d.target != null ? d.target - S.f.water : 3, vy); return; } /* ↑ 水を 入れる（戻したら 何も しない） */
+    if (dy >= 24 && (dy > 30 || vy > 0.5)) doDownWater(d.target != null ? S.f.water - d.target : 3, vy);        /* ↓ 水を 落とす（たねは まく） */
   }
 }
 /* ↑：水を 入れる（たね＝つける、なえ＝じょうろ、たんぼ＝amt cm）。指も キーも ここを 通る（8周目） */
@@ -793,7 +794,7 @@ function doUp(amt, vy){
   if (S.phase==='seed'){ S.seed_.soaked = true; V.water = 10; V.waterV = 0.4; SND.chapu(); vib(8); say('つけました。→で 日を すすめて。<span class="src">（浸種は 120℃ が 目安：栃木県）</span>'); return true; }
   if (S.phase==='nursery'){ S.nur.moist = 1; SND.chapu(); vib(8); say('じょうろで たっぷり。'); return true; }
   const before = S.f.water; S.f.water = clamp(before + Math.max(1, amt), 0, 15); S.f.flowToday = true;
-  SND.chapu(); vib(8); V.waterV = 0.6 + Math.min(1, Math.abs(vy||0))*0.6;
+  const added = S.f.water - before; SND.chapu(added); vib(6 + Math.round(added*2)); V.waterV = 0.6 + Math.min(1, Math.abs(vy||0))*0.6;
   if (S.f.heading && (S.day - S.f.heading) <= 20 && S.weather[S.day].w==='高温') toast('かけ流し');
   if (!S.f.planted && S.f.water > 0) say(S.f.shiro < 2 ? '水が 入りました。<b>←で 代かき</b>。' : '水が 入りました。<b>←で うえます</b>。');
   else say('みず ' + fmtCm(S.f.water) + 'cm。' + (S.f.dat <= 8 ? 'ねづくまで ふかめに。' : S.f.heading && (S.day - S.f.heading) <= 20 && S.weather[S.day].w==='高温' ? '入れかえで すずしく。' : '') + '<b>→で あした</b>。');
@@ -805,7 +806,7 @@ function doDownWater(amt, vy){
   const a = actions(); if (!a.down) return false; S.swipes++; V.hint = Math.max(0, V.hint - 0.08);
   const before = S.f.water; S.f.water = clamp(before - Math.max(1, amt), 0, 15);
   if (S.f.water < 2.5 && before > 2.5 && (vy||0) < 1.0) S.f.water = 2.5; /* ゆっくりの ↓ は 2.5cm のこす（10周目：1cm だと 翌日 0 で ↑↓の ピンポン）。空に するのは はじくか もう一度 */
-  SND.zaa(); vib([6, 20, 6]); V.waterV = -0.5;
+  const dropped = before - S.f.water; SND.zaa(dropped); vib([6 + Math.round(dropped), 20, 6]); V.waterV = -0.5;
   if (S.f.water <= 0 && S.f.dat >= 30 && S.f.dat <= S.f.headDat - 26 && !S.f.heading){ toast('中干し'); say(S.f.mizo ? '中干しです。ひびが 入るまで <b>→で 日を</b>。<span class="src">（7〜10日：秋田県）</span>' : '中干しです。<b>←で 溝切り</b>を しておくと 雨が 落ちます。<span class="src">（新潟県）</span>'); }
   else say(S.f.water <= 0 ? '水を 落としました。<b>→で あした</b>。' : 'みず ' + fmtCm(S.f.water) + 'cm。<b>→で あした</b>。');
   return true;
@@ -868,11 +869,12 @@ function step(dt){
   V.t += dt;
   /* 水面：ばねで 本当の 水に 近づく（指で 引いている あいだは 指の 高さへ） */
   const target = V.waterTarget != null ? V.waterTarget : (S.phase==='field' ? S.f.water : S.phase==='nursery' ? S.nur.moist*15 : S.phase==='seed' ? (S.seed_.soaked ? 10 : 0) : 0);
-  const k = V.waterTarget != null ? 60 : 30, c = 7;
+  if (V.waterTarget != null){ V.water = V.waterTarget; V.waterV = 0; } /* 引いて いる 間は 指に ぴったり（13周目） */
+  const k = 30, c = 7;
   V.waterV += (target - V.water)*k*dt - V.waterV*c*dt; V.water += V.waterV*dt; if (Math.abs(V.water-target) < 0.01 && Math.abs(V.waterV) < 0.01){ V.water = target; V.waterV = 0; }
   /* 暦の めくり：とんで いく */
-  if (V.page > 0) V.page = Math.max(0, V.page - dt*6);
-  if (V.flipQueue > 0){ V.flipTimer += dt; if (V.flipTimer >= V.flipGap){ V.flipTimer = 0; V.flipQueue--; V.flipGap = Math.min(0.3, V.flipGap*1.18); if (!advanceDay()) V.flipQueue = 0; } } else V.flipTimer = 0;
+  if (V.page > 0) V.page = Math.max(0, V.page - dt/Math.max(0.1, Math.min(V.flipGap, 0.17))); /* 紙は 次の めくりまでに とび終わる（13周目） */
+  if (V.flipQueue > 0){ V.flipTimer += dt; if (V.flipTimer >= V.flipGap){ V.flipTimer = 0; V.flipQueue--; V.flipGap = Math.min(0.2, V.flipGap*1.12); if (!advanceDay()) V.flipQueue = 0; } } else V.flipTimer = 0;
   V.shake = Math.max(0, V.shake - dt*1.5);
   for (const st of V.stamps) st.life -= dt*0.9; V.stamps = V.stamps.filter(s => s.life > 0);
   for (const p of V.particles){ p.x += p.vx*dt; p.y += p.vy*dt; p.vy += 500*dt; p.life -= dt; } V.particles = V.particles.filter(p => p.life > 0);

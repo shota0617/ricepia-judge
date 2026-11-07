@@ -1244,7 +1244,7 @@ document.querySelectorAll(".gradeBtn").forEach(btn => {
     const dy = Math.min(0, e.clientY - drag.y);
     if (dy < -6) drag.moved = true;
     btn.style.transform = "translateY(" + dy + "px)";
-    if (dy <= -34) { drag = null; btn.style.transform = ""; pickGrade(btn); }
+    if (dy <= -24) { drag = null; btn.style.transform = ""; pickGrade(btn); } /* 上へ引く判定: -24px。-34pxでは-30pxの自然な短い引き上げが届かず戻ってしまった（390×844実測・サイクル70）。手本の-48pxはそのまま目安として残す */
   });
   btn.addEventListener("pointerup", () => {
     if (!drag) return;

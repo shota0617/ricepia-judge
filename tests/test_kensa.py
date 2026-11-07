@@ -362,6 +362,13 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertNotIn("const INK_MS = 450;", HTML)
         self.assertIn("INK_MS * motion", HTML)  # 動きを減らす設定では待ちも短くなる従来どおり
 
+    def test_grade_pull_takes_with_a_short_pull(self):
+        # きめる: 上へ引く判定は-24px。-34pxでは-30pxの自然な短い引き上げが
+        # 届かず戻ってしまった（390×844実測）。手本の-48pxは目安として残す
+        self.assertIn("if (dy <= -24)", HTML)
+        self.assertNotIn("if (dy <= -34)", HTML)
+        self.assertIn('guideAt("move", document.querySelectorAll(".gradeBtn")[worst], 0, -48);', HTML)
+
     def test_assets_exist(self):
         for name in set(re.findall(r'kensa/[a-z_]+\.webp', HTML)):
             self.assertTrue(os.path.exists(os.path.join(ROOT, name)), name)

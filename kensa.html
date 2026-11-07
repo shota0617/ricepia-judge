@@ -118,8 +118,8 @@
   .gradeBtn { touch-action:none; min-height:clamp(58px, 11vh, 84px); padding:4px 0; margin:0 2px; border-radius:12px; background:var(--paper); border:3px solid var(--green); font-size:24px; font-weight:800; color:var(--green); transition:transform .1s ease; }
   .gradeBtn:active { transform:scale(.95); }
   .gradeBtn.small { font-size:15px; }
-  .gradeBtn.shake { animation:shake .3s ease; }
-  @keyframes shake { 25% { transform:translateX(-5px); } 75% { transform:translateX(5px); } }
+  .gradeBtn.sway { animation:sway .6s ease-in-out; }
+  @keyframes sway { 30% { transform:rotate(-2deg) translateY(2px); } 65% { transform:rotate(2deg) translateY(2px); } }
 
   /* おす */
   #osu { display:flex; align-items:center; justify-content:center; }
@@ -208,8 +208,9 @@
     #likeBtn,#returnLink { height:40px; }
   }
   @media (prefers-reduced-motion: reduce) {
-    #poke,#guide,.grain img.hint,.grain img.wig,.dot.ping { animation:none; }
+    #poke,#guide,.grain img.hint,.grain img.wig,.dot.ping,.gradeBtn.sway { animation:none; }
     .grain img.hint { outline:3px solid var(--gold); }
+    .dot.ping { outline:3px solid var(--gold); outline-offset:2px; } /* 動きを減らす設定でも、正解の列は静かな輪郭で示す（サイクル90・類4、Codexレビュー反映） */
   }
 </style>
 </head>
@@ -274,6 +275,7 @@
   <p>等級は水稲うるち玄米の規格どおりに、整粒・水分・死米・着色粒・計（被害粒＋死米＋着色粒＋異種穀粒＋異物）のうち、いちばん悪い項目で決まります。未熟粒は整粒を減らしますが、計には入りません。水分は規格表の15.0%に、当分の間の1.0%加算を入れた16.0%までを適合としています。</p>
   <p>鑑定は視覚・触覚・臭覚・聴覚を用いて行います（鑑定方法・平成13年農林水産省告示第333号）。におう・かむ・にぎるは、それをゲームの動きにしたものです。水分計のハンドルは、粒をつぶして測る水分計の形にならいました。</p>
   <p>袋ごとに、整粒の形と色つや、袋の帯の色が少しずつ違います。今日はどんな米かが、開いてすぐの楽しみです。わるい粒の見分けの印（色・割れ目）は袋によらず同じです。</p>
+  <p>等級をまちがえても、はかった水分も、よけた粒も、そのままで何も失われません。光る●の列をもう一度見て、選び直せます。</p>
   <p>ゲームでは分かりやすくするため、皿は20粒で1粒＝5%と数えます（実際の検査の粒数や重量の割合とは違います）。形質（標準品との比較）、異種穀粒、異物は皿には出していません。ゲームの等級は遊びのためのもので、実際の格付けではありません。</p>
   <p>出典: <a href="https://www.maff.go.jp/j/seisan/syoryu/kensa/kome/k_kikaku/" target="_blank" rel="noopener">農林水産省「玄米の検査規格」</a>／<a href="https://www.maff.go.jp/j/seisan/syoryu/kensa/hourei.html" target="_blank" rel="noopener">農産物検査法及び関係通知等</a>／<a href="https://www.maff.go.jp/j/seisan/syoryu/kensa/attach/pdf/index-25.pdf" target="_blank" rel="noopener">農林水産省「コメの農産物検査」</a></p>
   <p><a href="https://ricepia.jp/">らいすぴあ（近藤米穀店）のサイトへ</a></p>
@@ -1320,8 +1322,9 @@ function pickGrade(btn) {
   if (step !== 3) return;
   const pick = Number(btn.dataset.i), right = lotGrade(LOT);
   if (pick !== right) {
-    btn.classList.remove("shake"); void btn.offsetWidth; btn.classList.add("shake");
-    setFace("wow", 800);
+    /* まちがえても何も失わない（サイクル90・類4）: 横揺れの「✕」と驚き顔は責める合図になるため、穏やかな揺れと平常の顔にし、音も出さない。状態・進み具合は一切変えず、正解の列の ● だけを光らせて見直しへ誘う */
+    btn.classList.remove("sway"); void btn.offsetWidth; btn.classList.add("sway");
+    setFace("normal");
     $("rows").querySelectorAll('.dot[data-g="' + right + '"]').forEach(d => { d.classList.remove("ping"); void d.offsetWidth; d.classList.add("ping"); });
     return;
   }

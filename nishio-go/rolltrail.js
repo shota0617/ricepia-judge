@@ -336,5 +336,41 @@
       return out;
     } catch (e) { return Array.isArray(segs) ? segs.slice() : []; }
   }
-  root.nishioRollTrail = { MAX, GAP, LIFE_MS, STEP, push, alive, alphaFor, segments, colorFor, mixRgb, smoothColors, ribbon, dedupe, dedupeNear, dedupeSplit, AREA_COLORS };
+  // 景色に残る花の点々（第4弾サイクル154・Pikmin Bloom）：転がった跡がリボンより長く、小さな花のような点として静かに残る。純関数だけ
+  const BLOOM_GAP = 1.1, BLOOM_MAX = 120, BLOOM_LIFE_MS = 300000, BLOOM_ALPHA = 0.8;
+  function bloomPush(list, x, y, t) {
+    try {
+      const l = Array.isArray(list) ? list : [];
+      if (!num(x) || !num(y) || !num(t)) return l;
+      const last = l[l.length - 1];
+      if (last && Math.hypot(x - last.x, y - last.y) < BLOOM_GAP) return l;
+      const n = last && num(last.n) ? last.n + 1 : 0;
+      const next = l.concat([{ x, y, t, n }]);
+      return next.length > BLOOM_MAX ? next.slice(next.length - BLOOM_MAX) : next;
+    } catch (e) { return Array.isArray(list) ? list : []; }
+  }
+  function bloomAlive(list, now) {
+    try {
+      if (!Array.isArray(list)) return [];
+      if (!num(now)) return list.slice();
+      return list.filter(p => p && num(p.t) && now - p.t <= BLOOM_LIFE_MS);
+    } catch (e) { return []; }
+  }
+  // 寿命の60%まではそのまま、そこから寿命まで直線で 0 へ
+  function bloomAlpha(ageMs) {
+    try {
+      if (!num(ageMs)) return 0;
+      if (ageMs <= 0) return BLOOM_ALPHA;
+      if (ageMs >= BLOOM_LIFE_MS) return 0;
+      const hold = BLOOM_LIFE_MS * 0.6;
+      if (ageMs <= hold) return BLOOM_ALPHA;
+      return Math.max(0, BLOOM_ALPHA * (1 - (ageMs - hold) / (BLOOM_LIFE_MS - hold)));
+    } catch (e) { return 0; }
+  }
+  // n から決まる花の形（乱数なし）：花びら4または5枚、回転角
+  function bloomPetal(n) {
+    const k = num(n) ? Math.abs(Math.trunc(n)) : 0;
+    return { petals: k % 2 === 0 ? 4 : 5, rot: (k * 0.61803398875 % 1) * Math.PI * 2 };
+  }
+  root.nishioRollTrail = { BLOOM_GAP, BLOOM_MAX, BLOOM_LIFE_MS, BLOOM_ALPHA, bloomPush, bloomAlive, bloomAlpha, bloomPetal, MAX, GAP, LIFE_MS, STEP, push, alive, alphaFor, segments, colorFor, mixRgb, smoothColors, ribbon, dedupe, dedupeNear, dedupeSplit, AREA_COLORS };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -592,7 +592,7 @@ function layoutProbe() {
   const scene = $("sceneBag"), bag = $("bagBtn"), probe = $("probe");
   P.rest = bag.offsetLeft + bag.offsetWidth + 6;
   P.inX = bag.offsetLeft + bag.offsetWidth * 0.32; /* いちばん深く入る所 */
-  P.inAt = bag.offsetLeft + bag.offsetWidth * 0.66; /* 先が袋に1/3入ったら「さした」。手本の指の動きと同じくらいの短い押しで足りる */
+  P.inAt = bag.offsetLeft + bag.offsetWidth * 0.82; /* 先が袋に少し入ったら「さした」（390×844実測で押し約40px）。0.66では約69px押さないと刺さらず、40〜60pxの自然な短い押しでは戻ってしまった（サイクル74）。手本の指もこの長さに合わせて短く動く */
   P.L = Math.min(scene.clientWidth - P.rest - 6, 190);
   P.y = bag.offsetTop + bag.offsetHeight * 0.62;
   probe.style.width = P.L + "px";

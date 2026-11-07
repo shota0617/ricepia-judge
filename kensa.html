@@ -522,7 +522,7 @@ faceImg.src = "kensa/face_dot.webp";
 /* 進行 */
 let lotIndex = 0, LOT = LOTS[0], step = 0, grains = [], badLeft = 0, measured = 0, hintTimer = null;
 const seenChecks = new Set(["水分", "整粒"]); /* きめるで見た項目は次の袋でも残る。見るところは袋ごとに1つずつ増える（サイクル91・類5）。startLot では消さない */
-const pickedKinds = { higai:0, shini:0, mijuku:0, color:0 }; /* みわけた粒の静かなきろく（サイクル93・類7）。startLot では消さず袋を越えて残す。競争・スコアにはせず、常時表示にも足さない（📖の資料の中だけに出す） */
+const pickedKinds = { higai:0, shini:0, mijuku:0, color:0 }; /* みわけた粒の静かなきろく（サイクル93・類7）。startLot では消さず袋を越えて残す。競うものにはせず、常時表示にも足さない（📖の資料の中だけに出す） */
 const KIND_NAMES = { higai:"被害粒", shini:"死米", mijuku:"未熟粒", color:"着色粒" };
 function updateGrainRecord() {
   const parts = Object.keys(pickedKinds).filter(k => pickedKinds[k] > 0).map(k => KIND_NAMES[k] + " " + pickedKinds[k]);

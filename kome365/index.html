@@ -3226,7 +3226,7 @@ renderTitle();
     busy = false;
   }
   /* 判定確定時の短い振動(Android等でnavigator.vibrateがあるときだけ。設定OFF・prefers-reduced-motionでは振動しない。別キーで保存) */
-  var vibOn = store.get('kome365_vib') !== '0';
+  var vibOn = store.get('kome365_vib') === '1';   /* 周回103: ふだんは震えない(切りかえボタンはサイクル19から出していないので、止める手段がなかった)。前に自分でオンにした人だけ今までどおり */
   function vibJudge(ok){ try { if (vibOn && navigator.vibrate && !calmOn()) navigator.vibrate(30); } catch (e) {} }   /* のんびり・平和監査(サイクル41): 良し悪しで震え方を変えず、単発の小さな合図だけにする。違いは音と田んぼの変化で伝える */
   function vibSet(){ var b = $('swVib'); b.setAttribute('aria-pressed', vibOn); b.textContent = '📳'; }
   vibSet(); if (!navigator.vibrate) $('swVib').style.display = 'none';

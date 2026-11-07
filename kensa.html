@@ -479,6 +479,20 @@ function probeDoneSound() { /* ぬく: 完了の合図の音。300→480Hzへゆ
     o.start(t); o.stop(t + 0.2);
   } catch (_) {}
 }
+function spreadSound() { /* みわける: なでて広げ終わった合図の音。400→620Hzへ穏やかに上がる音で、粒の tick（高い短い音）や ぬく完了の音（probeDoneSound 300→480Hz）・みわける完了の笑顔の音（smileSound 500→760Hz）とは分ける（サイクル105・差分テーマ差11）。広がる前も後もなでる tick が同じに続くため、広がった瞬間だけが合図なしだった（390×844実測で遷移の同期音は0件）。最初の袋ではわるい粒に顔が出る瞬間でもある */
+  try {
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    if (ac.state === "suspended") ac.resume();
+    const o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime;
+    o.type = "sine";
+    o.frequency.setValueAtTime(400, t);
+    o.frequency.exponentialRampToValueAtTime(620, t + 0.14);
+    g.gain.setValueAtTime(0.02, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+    o.connect(g).connect(ac.destination);
+    o.start(t); o.stop(t + 0.16);
+  } catch (_) {}
+}
 function thump() {
   tone(110, 0.16, 0.14, "sine");
   tone(70, 0.22, 0.1, "sine");
@@ -1072,7 +1086,7 @@ function checkSpread() {
     if (Math.hypot(live[i].x - live[j].x, live[i].y - live[j].y) < near) overlaps++;
   }
   const now = overlaps <= 4;
-  if (now !== spread && now) { spread = true; if (lotIndex === 0) refreshBadFaces(); updateSortHint(); }
+  if (now !== spread && now) { spread = true; spreadSound(); if (lotIndex === 0) refreshBadFaces(); updateSortHint(); } /* 広がった合図は固有の音にする（サイクル105・差11）。なでる tick とは分ける */
 }
 /* なでる: 指先で粒を押し、押された粒がとなりの粒も押す */
 let simOn = false, lastBrushSound = 0;

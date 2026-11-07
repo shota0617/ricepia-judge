@@ -1,6 +1,23 @@
 // 米作り365：通しの 確かめ（本物の PointerEvent で スワイプして、日が 進む・水位が かわる・収穫まで 通る・字が はみ出ない、を 見る）
 //   node tools/kome365/check.js            # ぜんぶ
-//   node tools/kome365/check.js swipe      # 名前で えらぶ（syntax swipe water year … vary fit）
+//   node tools/kome365/check.js swipe      # 名前で えらぶ（下の 一覧）
+// 一覧（27周目に 整理）：
+//   syntax    script の 構文・後読みなし・モデルの 名前なし
+//   swipe     → で 日が 進む。はじきの 日数・慣性・ブレーキ・引いて 戻す・親指の 弧・2本目の 指
+//   water     ↑↓ で 水が 入る／落ちる。長さで 量。水面の ばね。HUD の 0cm
+//   year      1年を 本物の スワイプ だけで 通す（追肥・穂肥・中干し・溝切り・刈る・乾燥・検査）
+//   dry       乾燥は 15% で 止まる。もう一度 → で 乾かしすぎ。← 見る で 1株の 札
+//   cue       中干しの 合図。水が ない 間は 追肥できない。矢印キーも 同じ 道
+//   customer  吹き出しの 矢印 だけで 検査まで 行ける
+//   mizo      溝切り：中干しの 間の 雨が 落ちる
+//   stuck     はじき続けて 水が 0 でも 詰まない。結果に 出来ばえ・じこベスト
+//   vary      台風の ない 年・葉いろ 37〜42・出穂後の 一言が 日ごとに・出穂後の ゆっくり ↑ 5cm
+//   feel      長い 引きは 1日・ゴム・◎・スタンプカード・たねの 一言
+//   whatif    「〜して いれば +Xkg」が 損失の 大きい 順
+//   heading   出穂の 翌日の「出穂！」・台風の 翌日・注を 落とす・音ボタン 3段
+//   idle      なにも しないで 1年 すぎると「おわり」
+//   fit       390×844・360×560・740×360・195×280 で 字が 画面の 中
+//   perf      1コマ 60ms 以内
 // スクショは KOME_OUT（なければ OS の 一時フォルダの kome365-check）に 書く。リポジトリの 中には 書かない。
 const { chromium } = require('playwright');
 const path = require('path'), os = require('os'), fs = require('fs');

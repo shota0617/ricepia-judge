@@ -9372,6 +9372,27 @@ function mzOn(x, y) {   // (x, y)（地図の マス）を いちばん近い �
 // 道しるべ：お米の マスから 行き先（G.guide）の そばの 通路まで、めいろの 道すじ（マスの 幅さがし）。お米の マスか 行き先が かわったときだけ さがす。
 // 案内の 札の 道のり（めいろで 何m）に 使い、25秒 近づけなければ 道すじの 先 8マスを 6秒 光る 点で 見せる（ふだんは 見せない：迷路を とく 楽しみを のこす）
 const mzRt = { key: '', path: null, best: Infinity, bestT: 0, showUntil: 0, gkey: '', retry: 0, t0: 0, len0: 0, run: { dots: 0, pads: 0, combo: 0 } };   // run：この ゴールまでの 道で ひろった ごはんつぶ・のった びゅんパネル・いちばん 長い コンボ（ゴールの ふり返りに）   // t0・len0：いまの ゴールに なった 時刻と、そのときの めいろの 道のり（ゴールの 知らせに）
+const MZ_FIRST_SIMPLE = { turns: 5, branches: 4, ratio: 1.9 };   // はじめてのゴールに ふさわしい 道すじ：曲がり・分かれ道が 少なく、直線の 1.9倍まで
+function mzPathShape(path, openAt) {   // 道すじ（[x,y] の 列）の 形：cells マス数・turns 向きが かわる 回数・branches 前後の ほかにも 開いている 向きが ある マスの 数（openAt(x,y,dx,dy)：開いていれば 真）
+  const open = openAt || ((x, y, dx, dy) => mzType(x + dx, y + dy) >= 0 && mzOpen(x, y, dx, dy));
+  let turns = 0, branches = 0, pdx = 0, pdy = 0;
+  for (let i = 0; i < path.length; i++) {
+    const [x, y] = path[i], nx = path[i + 1], pv = path[i - 1];
+    if (nx) { const dx = nx[0] - x, dy = nx[1] - y; if (i > 0 && (dx !== pdx || dy !== pdy)) turns++; pdx = dx; pdy = dy; }
+    let n = 0;
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      if (nx && nx[0] === x + dx && nx[1] === y + dy) continue;
+      if (pv && pv[0] === x + dx && pv[1] === y + dy) continue;
+      if (open(x, y, dx, dy)) n++;
+    }
+    if (n > 0) branches++;
+  }
+  return { cells: path.length, turns, branches };
+}
+function mzFirstSimple(shape, straightM) {   // はじめてのゴールとして 単純か（straightM が 0・不明なら 比は 1）
+  const L = MZ_FIRST_SIMPLE, ratio = straightM > 0 ? Math.max(0, shape.cells - 1) * MZ_K * TILE_M / straightM : 1;
+  return shape.turns <= L.turns && shape.branches <= L.branches && ratio <= L.ratio;
+}
 function mzRoute(now) {
   const g = G.guide;
   if (!g || rp.x === null) { mzRt.path = null; return; }
@@ -9447,6 +9468,13 @@ function mzRoute(now) {
   const path = [];
   for (let i = end; i >= 0; i = from[i]) path.push([i % W + x0, (i / W | 0) + y0]);
   mzRt.path = path.reverse();
+  if (mzRt.simpleKey !== gkey) {   // はじめてのゴールだけ：道すじが 曲がり・分かれ道だらけなら 1回だけ 選びなおす（できなければ そのまま）
+    mzRt.simpleKey = gkey;
+    if (mzGoalsDone() < 1 && G.guideNoPath) {
+      const sm = G.dist && G.me ? G.dist(G.me, g) : 0;
+      if (!mzFirstSimple(mzPathShape(mzRt.path), sm) && G.guideNoPath(g)) return;
+    }
+  }
   const L = mzRt.path.length;
   if (!mzRt.len0) mzRt.len0 = L;
   if (L !== mzRt.shownLen && G.renderGuide) { mzRt.shownLen = L; G.renderGuide(); }   // 案内の 札の 道のり（🌀）を すぐ かえる
@@ -13012,7 +13040,7 @@ const meiroApi = {
   tilt: () => tiltG, tiltAsk, tiltReset, tiltNeedsPermission, koto: (v, low) => kotoSound(v, low), splash: v => splashSound(v), boing: (v, hi) => boingSound(v, hi), rumble: v => rumbleTick(v, GROUND.road),   // rumble：転がる音（速さは 地図の マス/秒）
   pause(on) { meiroPause = !!on; dirty = true; if (on && mzNext.hold) { mzNext.hold = false; if (G.toastFlush) G.toastFlush(); } },   // 止める ときは「つぎの ゴール」で 待たせた 知らせを 出す
 };
-window.nishioPixel = { blinkOn, BLINK_MS, BLINK_SHUT_MS, get riceEye() { return riceEyeAt; }, grow: { stage: () => grow.stage, stageFor: growStageFor, TH: GROW_TH, popAt: () => grow.popT }, glanceShift, asleepShut, happyFace, meiroApi, heroGiant: () => heroGiantId, pickHeroGiant, HERO_GIANT_RANGE, maze: { wallTheme: () => mzWallTheme(), on: () => mazeOn(), playing: () => active && mazeOn(), next: () => ({ want: mzNext.want, t0: mzNext.t0, on: mzNextOn(), labHide: !!mzNext.labHide, arrowDim: !!mzNext.arrowDim, box: mzNext.box || null }), goal: id => {   // id の 名所が いまの ゴール（か 2分 以内の 前の ゴール）なら、かかった 時間と めいろの 道のり
+window.nishioPixel = { blinkOn, BLINK_MS, BLINK_SHUT_MS, get riceEye() { return riceEyeAt; }, grow: { stage: () => grow.stage, stageFor: growStageFor, TH: GROW_TH, popAt: () => grow.popT }, firstRoute: { shape: mzPathShape, simple: mzFirstSimple, LIM: MZ_FIRST_SIMPLE }, glanceShift, asleepShut, happyFace, meiroApi, heroGiant: () => heroGiantId, pickHeroGiant, HERO_GIANT_RANGE, maze: { wallTheme: () => mzWallTheme(), on: () => mazeOn(), playing: () => active && mazeOn(), next: () => ({ want: mzNext.want, t0: mzNext.t0, on: mzNextOn(), labHide: !!mzNext.labHide, arrowDim: !!mzNext.arrowDim, box: mzNext.box || null }), goal: id => {   // id の 名所が いまの ゴール（か 2分 以内の 前の ゴール）なら、かかった 時間と めいろの 道のり
     if (!mazeOn()) return null;
     const now = performance.now(), pv = mzRt.prev, g = mzRt.gid === id ? { t0: mzRt.t0, len0: mzRt.len0, warp: mzRt.warp, moves: mzMv.n, run: { ...mzRt.run } } : pv && pv.id === id && now - pv.at < 120000 ? pv : null;
     if (!g || !g.t0) return null;

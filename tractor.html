@@ -10024,9 +10024,9 @@ $('bStart').onclick = () => {
     };
     if (ART.on) INTRO.on ? INTRO.after(artGo) : artGo();
     // はじめの「下げて前へ」は、画面下の案内（COACH）が出す
-    setTimeout(() => voice('car'), ART.on ? 12000 : 9000);
-    if (ART.on) setTimeout(() => voice('art'), 30000);
-    if (season === 'aki') setTimeout(() => voice('dryWait'), 20000);
+    setTimeout(() => { if (!startNoticeMuted()) voice('car'); }, ART.on ? 12000 : 9000); // サイクル199 最初の1分: のんびりでは開始直後に声を出さず heard を消費しない。くわしい説明では従来どおり出す
+    if (ART.on) setTimeout(() => { if (!startNoticeMuted()) voice('art'); }, 30000); // サイクル199 最初の1分: のんびりでは開始直後に声を出さず heard を消費しない。くわしい説明では従来どおり出す
+    if (season === 'aki') setTimeout(() => { if (!startNoticeMuted()) voice('dryWait'); }, 20000); // サイクル199 最初の1分: のんびりでは開始直後に声を出さず heard を消費しない。くわしい説明では従来どおり出す
     BELT.start($('checkBox').checked); COVER.start($('checkBox').checked); GREASE.start($('checkBox').checked); CLAW.start($('checkBox').checked); HERI.start($('checkBox').checked); GASU.start($('checkBox').checked); KATA.start($('checkBox').checked); PANKU.start($('checkBox').checked); AIRCL.start($('checkBox').checked); STONES.start($('stoneBox').checked);
     YAMA.on = !SHIRO && $('yamaBox').checked;
     ECO = !SHIRO && $('ecoBox').checked; ECO_RPM = 2000;

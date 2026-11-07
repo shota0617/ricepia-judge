@@ -395,6 +395,20 @@ function bagSound() { /* おす: 袋が流れる紙の音。360→150Hzへゆっ
     o.start(t); o.stop(t + 0.24);
   } catch (_) {}
 }
+function knockSound() { /* みわける: 皿をトントンたたく音。720→290Hzへ短く下がる音で、粒の tick（高い短い音）とは分ける（サイクル99・差分テーマ差5）。この音は粒同士の音ではなく、手が皿をたたく返り */
+  try {
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    if (ac.state === "suspended") ac.resume();
+    const o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime;
+    o.type = "triangle";
+    o.frequency.setValueAtTime(720, t);
+    o.frequency.exponentialRampToValueAtTime(290, t + 0.06);
+    g.gain.setValueAtTime(0.04, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.07);
+    o.connect(g).connect(ac.destination);
+    o.start(t); o.stop(t + 0.07);
+  } catch (_) {}
+}
 function thump() {
   tone(110, 0.16, 0.14, "sine");
   tone(70, 0.22, 0.1, "sine");
@@ -1151,7 +1165,7 @@ function flickGrain(g, dx, dy) {
 }
 /* トントン: 粒のない所をたたくと、粒が小さくはねて少し広がる */
 function knockPlate() {
-  tick();
+  knockSound(); /* 皿をたたく音は粒の tick とは分ける（サイクル99・差5） */
   const live = grains.filter(g => !g.gone);
   const cx = live.reduce((a, g) => a + g.x, 0) / (live.length || 1), cy = live.reduce((a, g) => a + g.y, 0) / (live.length || 1);
   live.forEach(g => {

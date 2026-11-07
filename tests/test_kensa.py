@@ -708,6 +708,21 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         # 粒の tick 自体は従来どおり残る（粒同士の動きの音は変えない）
         self.assertIn("const tick = () => tone(1100 + Math.random() * 900, 0.03, 0.025);", HTML)
 
+    def test_cycle99_plate_knock_has_its_own_sound(self):
+        # 差分テーマ差5（類3の残り）: 皿をトントンたたく音だけが粒の tick を共有していたため、
+        # 皿らしい短く下がる固有の音に分ける。この音は粒同士の音ではなく手が皿をたたく返り。
+        self.assertIn("function knockSound() {", HTML)
+        self.assertIn("o.frequency.setValueAtTime(720, t);", HTML)
+        self.assertIn("o.frequency.exponentialRampToValueAtTime(290, t + 0.06);", HTML)
+        # knockPlate は knockSound を使い、tick は使わない
+        knock = HTML[HTML.index("function knockPlate()"):HTML.index("/* ひねる:")]
+        self.assertIn("knockSound();", knock)
+        self.assertNotIn("tick();", knock)
+        # 音量は控えめ（0.04）に留める
+        self.assertIn("g.gain.setValueAtTime(0.04, t);", HTML)
+        # 粒の tick 自体は従来どおり残る（粒同士の動きの音は変えない）
+        self.assertIn("const tick = () => tone(1100 + Math.random() * 900, 0.03, 0.025);", HTML)
+
     def test_cycle93_picked_grains_stay_in_quiet_record(self):
         # 類7: 見分けた粒が静かに記録に残る。任意で開く資料（#notes）の中だけに出し、常時表示・競争・スコアにはしない。
         # 袋を越えて残るため startLot では消さない（サイクル91の seenChecks と同じ持ち方）。

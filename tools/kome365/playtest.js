@@ -13,7 +13,7 @@ const { chromium } = require('playwright');
 const path = require('path');
 const FILE = 'file://' + (process.env.KOME_FILE || path.resolve(__dirname, '../../kome365.html'));
 const args = process.argv.slice(2);
-const opt = (k, d) => { const i = args.indexOf(k); return i >= 0 ? args[i+1] : d; };
+const opt = (k, d) => { const i = args.indexOf(k); return i >= 0 && args[i+1] != null ? args[i+1] : d; }; /* 値の ない 旗は 既定（20周目） */
 const SEEDS = opt('--seeds', '3,5,11,42').split(',').map(Number);
 const BOTS = opt('--bots', 'careful,normal,idle,flood,hasty,late').split(',');
 const KNOWN = ['careful', 'normal', 'idle', 'flood', 'hasty', 'late']; for (const b of BOTS) if (!KNOWN.includes(b)){ console.log('知らない ボット：' + b + '（' + KNOWN.join('・') + '）'); process.exit(2); }

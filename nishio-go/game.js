@@ -1344,15 +1344,9 @@ function mazeGoal(id, name, lines) {
   if (!gl || gl.sec <= 3) return 0;
   if (MZ.rescueGoal) MZ.rescueGoal(id);   // 迷子の お米と いっしょに 着いた：+30pt と 救助完了の 札（ポイントは mzRescue が 加える）
   let total = 0;
-  lines.unshift(`🏁 めいろ ゴール！${gl.m ? `（めいろの 道のり ${fmtM(gl.m)}）` : ''}`);
-  {   // この 道の ふり返り（ポイントは つけない）：ひろった ごはんつぶ・のった びゅんパネル・いちばん 長い コンボ
-    const r = gl.run || {}, parts = [r.dots ? `🍚 つぶ ${r.dots}` : '', r.pads ? `💨 びゅん ${r.pads}` : '', r.combo >= 3 ? `🎵 コンボ ×${r.combo}` : ''].filter(Boolean);
-    if (parts.length) lines.push(`この 道で がんばったじゃん：${parts.join('・')}`);
-  }
   total += glowArrive(id, lines);   // 光るゴール +20・近くの 寄り道を 光らせる
-  lines.push('🍵 お疲れ様です。ここで おわっても だいじょうぶ（つづけるなら つぎの ゴールへ）');   // 基本 5分で 1回 おわる
   mzShare = { name, sec: gl.sec, stars: 0, m: gl.m || 0, run: gl.run || null, img: snapMaze(), t: Date.now(), city: (me && (cityNear(me.lat, me.lng) || {}).name) || '' };   // ゴールの ごほうびに シェアの ボタン（画面を 投稿する）。city：シェアの 文で 西尾市の 外を「西尾の」と 言わない ため
-  MZ.goalFx(gl.m ? `めいろ ${fmtM(gl.m)}` : '🏁 めいろ ゴール！');
+  MZ.goalFx('');   // にしおサイクル146（F3）：バナーの 文字は 出さない（紙ふぶきだけ）
   track('maze_goal', { spot: name, sec: Math.round(gl.sec), m: Math.round(gl.m), stars: 0, way: 0 });
   return total;
 }
@@ -1448,7 +1442,8 @@ function checkin() {
   const btn = $('spinBtn');
   btn.classList.remove('go'); void btn.offsetWidth; btn.classList.add('go');
   // 運営者の声（2026-11-03）「到着カードは いらない」：大きなカード（showReward）は出さない。ポイント・記録・ドット絵・袋・ポストカード・コースは 上で そのまま。知らせは 数字だけ
-  toast(lvUp ? `+${total}pt　⭐ レベル${lvUp}！` : `+${total}pt`);
+  if (mz) toast(`⭐ +${total}`);   // めいろゴール（にしおサイクル146 F3）：⭐ +N の 1行だけ（レベル表記も 足さない）
+  else toast(lvUp ? `+${total}pt　⭐ レベル${lvUp}！` : `+${total}pt`);
   setTimeout(() => { if (react.pending) reactShow(); else if (playQ.pending) playShow(); }, 1500);   // 下の小さなひとこと欄だけ（カードが無いので ここから）
   reactAsk(s);
   if (courseDone) courseCelebrate();   // コースを まわりきった：ごほうびの 窓が とじたら 1枚絵
@@ -2579,7 +2574,7 @@ function refreshNearby() {
     showRing(null);
     showGuide(null);
     // 位置情報が使えないときは、その場で「操作して遊ぶ」に切り替えられるボタンを出す（ここで閉じられてしまわないように）
-    setStatus(gpsError ? esc(gpsError) + (demo ? '' : RESCUE_BTN('geo')) + waitLine() : (demo ? '地図をタップすると、その場所へ移動します。' : '🍚 いまの 場所を さがしているよ…' + waitLine()), true);
+    setStatus(gpsError ? esc(gpsError) + (demo ? '' : RESCUE_BTN('geo')) + waitLine() : (demo ? '地図をタップすると、その場所へ移動します。' : waitLine()), true);
     return;
   }
   if (bagDone()) openBagSoon();   // 歩き終えた袋が開いていない（モードを切り替えた・閉じた など）：ここで開く

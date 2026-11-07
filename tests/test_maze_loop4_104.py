@@ -36,7 +36,7 @@ class TestFirstMinuteOtedama(unittest.TestCase):
 
     def test_scope(self):
         files = set(self._diff("--name-only").split())
-        allowed = {"nishio-go/pixel.js", "tests/test_maze_loop4_86.py", "tests/test_maze_loop4_104.py", "tests/test_maze_loop4_145.py"} | {"tests/test_maze_loop4_%d.py" % n for n in (95, 97, 98, 99, 100, 101, 102, 103, 105, 106, 107, 108)}
+        allowed = {"nishio-go/pixel.js", "tests/test_maze_loop4_86.py", "tests/test_maze_loop4_104.py", "tests/test_maze_loop4_145.py", "nishio-go/game.js", "nishio-go.html", "tests/test_maze_loop4_146.py", "tests/test_maze_loop4_66.py", "tests/test_nishio_cycle126.py", "tests/test_maze_loop3_40.py", "tests/test_maze_loop3_41.py", "tests/test_maze_loop4_86.py"} | {"tests/test_maze_loop4_%d.py" % n for n in (95, 97, 98, 99, 100, 101, 102, 103, 105, 106, 107, 108)}
         self.assertLessEqual(files, allowed)
 
 

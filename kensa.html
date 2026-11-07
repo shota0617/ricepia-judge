@@ -1314,7 +1314,7 @@ document.querySelectorAll(".gradeBtn").forEach(btn => {
 
 /* おす: 朱肉にぎゅっと押してから、はんこを指で下ろして、ドン。押した袋は横へ流す */
 const INK_MS = 250; /* 朱肉: 短くぎゅっと（約0.25秒）でもインクがつく。450msでは380msの押しでも付かず戻ってしまった（390×844実測・サイクル69） */
-let hankoTaps = 0, stamped = false, inked = false, hankoDrag = null, hankoMax = 0, hankoLand = 0, hankoBob = null, inkHold = null, bagSwipe = null, leaving = false;
+let hankoTaps = 0, stamped = false, inked = false, hankoDrag = null, inkDrag = null, hankoMax = 0, hankoLand = 0, hankoBob = null, inkHold = null, bagSwipe = null, leaving = false;
 function setHanko(y) {
   $("hanko").style.transform = "translateY(" + y + "px)";
 }
@@ -1348,12 +1348,12 @@ function toOsu() {
   setStep(4, "朱肉に ぎゅっと");
   layoutStamp();
   bobHanko();
-  guideAt("press", $("pad"));
+  guideAt("move", $("pad"), 0, 24); /* 朱肉の手本は「押し下げる」動き。静止長押しの「にぎる」と手ざわりを分ける（サイクル87・類1） */
   focusIfKeys($("bagBig"));
 }
 function inkDone() {
   inked = true;
-  inkHold = null;
+  inkHold = null; inkDrag = null;
   pop();
   guideAt("move", $("hanko"), 0, hankoMax);
   $("hanko").classList.add("inked");
@@ -1394,7 +1394,9 @@ $("bagBig").addEventListener("pointerdown", (e) => {
   if (stamped) { bagSwipe = { x:e.clientX }; return; }
   stopBob();
   if (!inked) {
-    /* 朱肉: 離さず押さえるとインクがつく */
+    /* 朱肉: はんこを朱肉へ押し下げる（下向きの短いドラッグ）と付く。離さず押さえる（250ms）でも付くのは従来どおりの受け皿。
+       静止長押しだけだと「にぎる」と手ざわりが同じだったため、主の動きを押し下げに分けた（サイクル87・類1の点検） */
+    inkDrag = { y:e.clientY };
     setHanko(10);
     const h = inkHold = {};
     h.timer = setTimeout(() => { if (inkHold === h) inkDone(); }, INK_MS * motion);
@@ -1409,6 +1411,12 @@ $("bagBig").addEventListener("pointermove", (e) => {
     if (dx >= 40) { bagSwipe = null; leaveBag(); } /* 横なで: 40pxの短いなででも流れる。70pxでは30〜65pxの自然な短いなでが全て戻ってしまった（390×844実測・サイクル78）。タップのずれ（24px以下）と間違えないよう40pxに留める。手本の90pxはそのまま目安として残す */
     return;
   }
+  if (!inked && inkDrag) { /* 朱肉の押し下げ: 18px下へ押し下げたらその場で付く（待ち時間なし） */
+    const idy = e.clientY - inkDrag.y;
+    if (idy > 0) setHanko(Math.min(16, 10 + idy / 3));
+    if (idy >= 18) { inkDrag = null; inkDone(); }
+    return;
+  }
   if (!hankoDrag) return;
   const dy = e.clientY - hankoDrag.cy;
   if (Math.abs(dy) > 5) hankoDrag.moved = true;
@@ -1420,10 +1428,10 @@ $("bagBig").addEventListener("pointermove", (e) => {
 function endHanko() {
   if (bagSwipe) { bagSwipe = null; $("bagBig").style.transform = ""; return; }
   if (inkHold) {
-    inkHold = null;
+    inkHold = null; inkDrag = null;
     setHanko(0);
     if (++hankoTaps >= NUDGE_LIMIT) { hankoTaps = 0; inkDone(); return; }
-    if (hankoTaps === 1) guideAt("press", $("pad")); /* 空振り1回目: 手本の指をもう一度出す（サイクル81） */
+    if (hankoTaps === 1) guideAt("move", $("pad"), 0, 24); /* 空振り1回目: 手本の指をもう一度出す（サイクル81）。朱肉は押し下げの動きで出す（サイクル87） */
     hint.textContent = "はなさず ぎゅっと";
     bobHanko();
     return;

@@ -1258,7 +1258,7 @@ document.querySelectorAll(".gradeBtn").forEach(btn => {
 });
 
 /* おす: 朱肉にぎゅっと押してから、はんこを指で下ろして、ドン。押した袋は横へ流す */
-const INK_MS = 450;
+const INK_MS = 250; /* 朱肉: 短くぎゅっと（約0.25秒）でもインクがつく。450msでは380msの押しでも付かず戻ってしまった（390×844実測・サイクル69） */
 let hankoTaps = 0, stamped = false, inked = false, hankoDrag = null, hankoMax = 0, hankoLand = 0, hankoBob = null, inkHold = null, bagSwipe = null, leaving = false;
 function setHanko(y) {
   $("hanko").style.transform = "translateY(" + y + "px)";

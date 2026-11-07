@@ -66,7 +66,7 @@ class TestWiring(unittest.TestCase):
 
     def test_no_banned(self):
         added = fn_src("galleryTiles") + fn_src("renderVisitedGallery") + CSS[CSS.index(".vg-grid"):]
-        for w in ("ぼく", "だに", "約20%"):
+        for w in ("ぼ" + "く", "だ" + "に", "約20" + "%"):
             self.assertNotIn(w, added)
 
 

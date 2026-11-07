@@ -384,7 +384,7 @@ a{color:var(--acc)}
 #swRipple[data-k] .rpIcon{animation:swRpIcon 1.15s ease-out 1 both}
 #swRipple[data-dir="-1"] .rpIcon{animation-name:swRpIconDn}
 @keyframes swRpIconDn{0%{opacity:0;transform:translateY(-8px)}20%{opacity:1;transform:translateY(0)}65%{opacity:1}100%{opacity:0;transform:translateY(18px)}}
-@keyframes swRpRing{0%{opacity:0;transform:scale(.25)}15%{opacity:.9}100%{opacity:0;transform:scale(2.6)}}
+@keyframes swRpRing{0%{opacity:0;transform:scale(.25)}15%{opacity:.9}100%{opacity:0;transform:scale(1.7)}}   /* 周回100: 2.6→1.7。468pxの輪が画面の横にはみ出し、スマホでページが一瞬縮んで(ズームアウトして)いた。306pxなら幅320pxの画面にも収まる */
 @keyframes swRpIcon{0%{opacity:0;transform:translateY(8px)}20%{opacity:1;transform:translateY(0)}65%{opacity:1}100%{opacity:0;transform:translateY(-18px)}}
 @keyframes swRpIconCalm{0%{opacity:0}20%,65%{opacity:1}100%{opacity:0}}
 @media (prefers-reduced-motion:reduce){#swRipple .rpRing{display:none}#swRipple[data-k] .rpRing{animation:none}#swRipple[data-k] .rpIcon{animation:swRpIconCalm 1.15s linear 1 both}}
@@ -2992,7 +2992,7 @@ renderTitle();
     if (guideFresh) guideLeft = true;
     $('swGuide').style.display = (guideLeft && choices.length < 3) ? 'block' : 'none';   /* はじめての案内は新規開始の最初の3枚だけ(2枚目・3枚目も出す) */
     rwUpdate(true);
-    el.card.classList.remove('enter', 'wig', 'hinting'); void el.card.offsetWidth; el.card.classList.add('enter'); if (hintOn) el.card.classList.add('hinting', 'wig');
+    el.card.classList.remove('enter', 'wig', 'hinting'); void el.card.offsetWidth; el.card.classList.add('enter'); if (hintOn) el.card.classList.add('hinting');   /* 周回99: 最初の3枚の揺れ(wig)はやめる。◀ ▶ の案内だけで足りる */
     if (card.focus && window.Field3D && window.Field3D.canFocus && use3d) { try { if (window.Field3D.canFocus(card.focus)) window.Field3D.focus(card.focus); } catch (e) {} }
     $('swGhost').classList.toggle('on', !ghostDone && choices.length === 0 && !calmOn());
     var kk = $('swKakashi'); kk.classList.toggle('big', card.tag === '見回り');

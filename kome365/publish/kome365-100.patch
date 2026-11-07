@@ -1,0 +1,13 @@
+diff --git a/game/index.html b/game/index.html
+index 3675c20..704e497 100644
+--- a/game/index.html
++++ b/game/index.html
+@@ -384,7 +384,7 @@ a{color:var(--acc)}
+ #swRipple[data-k] .rpIcon{animation:swRpIcon 1.15s ease-out 1 both}
+ #swRipple[data-dir="-1"] .rpIcon{animation-name:swRpIconDn}
+ @keyframes swRpIconDn{0%{opacity:0;transform:translateY(-8px)}20%{opacity:1;transform:translateY(0)}65%{opacity:1}100%{opacity:0;transform:translateY(18px)}}
+-@keyframes swRpRing{0%{opacity:0;transform:scale(.25)}15%{opacity:.9}100%{opacity:0;transform:scale(2.6)}}
++@keyframes swRpRing{0%{opacity:0;transform:scale(.25)}15%{opacity:.9}100%{opacity:0;transform:scale(1.7)}}   /* 周回100: 2.6→1.7。468pxの輪が画面の横にはみ出し、スマホでページが一瞬縮んで(ズームアウトして)いた。306pxなら幅320pxの画面にも収まる */
+ @keyframes swRpIcon{0%{opacity:0;transform:translateY(8px)}20%{opacity:1;transform:translateY(0)}65%{opacity:1}100%{opacity:0;transform:translateY(-18px)}}
+ @keyframes swRpIconCalm{0%{opacity:0}20%,65%{opacity:1}100%{opacity:0}}
+ @media (prefers-reduced-motion:reduce){#swRipple .rpRing{display:none}#swRipple[data-k] .rpRing{animation:none}#swRipple[data-k] .rpIcon{animation:swRpIconCalm 1.15s linear 1 both}}

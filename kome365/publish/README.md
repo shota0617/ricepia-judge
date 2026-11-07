@@ -111,3 +111,39 @@ Mac の Claude Code に頼む文（そのまま貼る）：
 
 確かめ（クラウドで実施済み）：390×844 の1年分で、種まき前の催促の印 48→0枚。9画面×365枚は kome365/README.md の周回98を見る。
 未確認：iPhone・Android の実機。
+
+## 周回99（最初の3枚のカードの揺れをやめる。◀ ▶ の案内は残す）
+
+- 直したのは index.html の JS 1か所（`el.card.classList.add('hinting', 'wig')` を `el.card.classList.add('hinting')` に）。周回98のパッチの上に当たる。engine.js・field3d.js は触っていない
+- 公開後の本番 index.html の md5：`b13aa634093ae5985aa0fa4f4ae3d0af`
+- 公開前の本番の md5（手順1で照合する。周回98の公開後）：`2fc72c43a3957da0b0d81237d747ed36`
+- 93〜98 がまだなら 93 から順に 99 まで当てる（クラウドで周回92の Mac 形に順に当て、md5 が上と一致することを確かめた）
+
+Mac の Claude Code に頼む文（そのまま貼る）：
+
+```
+米づくり365 の周回99を公開して。shota0617/ricepia-new-project のブランチ claude/kome365-loop の kome365/publish/kome365-99.patch を muse_zip/kome365_rebuild/work の game/index.html に git apply で当て（--check で先に確かめる。周回93〜98が未適用なら先に kome365-93.patch から順に）、game/index.html だけをコミット。引き継ぎ書（HANDOFF）の「米365」の公開手順 1〜5 のとおりに組み立てて FTP で上げ、本番の md5 が b13aa634093ae5985aa0fa4f4ae3d0af になることを確かめる。手順1の照合は 2fc72c43a3957da0b0d81237d747ed36。終わったら STATE に「周回99」を記録。
+```
+
+当たらないときは、`game/index.html` の `el.card.classList.add('hinting', 'wig');` を `el.card.classList.add('hinting');` に書きかえればよい（1か所）。
+
+確かめ（クラウドで実施済み）：最初の3枚の揺れ 3→0枚、◀ ▶ の案内は3枚のまま。9画面×365枚は kome365/README.md の周回99を見る。
+未確認：iPhone・Android の実機。
+
+## 周回100（めくったあとの波紋を小さくし、スマホで画面が一瞬縮むのをやめる）
+
+- 直したのは index.html の CSS 1か所（`@keyframes swRpRing` の最後の `scale(2.6)` を `scale(1.7)` に）。周回99のパッチの上に当たる。engine.js・field3d.js は触っていない
+- 公開後の本番 index.html の md5：`20b922ec9dc98de3b0632bc191a5b59a`
+- 公開前の本番の md5（手順1で照合する。周回99の公開後）：`b13aa634093ae5985aa0fa4f4ae3d0af`
+- 93〜99 がまだなら 93 から順に 100 まで当てる（クラウドで周回92の Mac 形に順に当て、md5 が上と一致することを確かめた）
+
+Mac の Claude Code に頼む文（そのまま貼る）：
+
+```
+米づくり365 の周回100を公開して。shota0617/ricepia-new-project のブランチ claude/kome365-loop の kome365/publish/kome365-100.patch を muse_zip/kome365_rebuild/work の game/index.html に git apply で当て（--check で先に確かめる。周回93〜99が未適用なら先に kome365-93.patch から順に）、game/index.html だけをコミット。引き継ぎ書（HANDOFF）の「米365」の公開手順 1〜5 のとおりに組み立てて FTP で上げ、本番の md5 が 20b922ec9dc98de3b0632bc191a5b59a になることを確かめる。手順1の照合は b13aa634093ae5985aa0fa4f4ae3d0af。終わったら STATE に「周回100」を記録。
+```
+
+当たらないときは、`game/index.html` の `@keyframes swRpRing{...100%{opacity:0;transform:scale(2.6)}}` の `2.6` を `1.7` に書きかえればよい（1か所）。
+
+確かめ（クラウドで実施済み）：縦7画面でめくるたびに起きていた縮み（6/6）が0/6に。9画面×365枚は kome365/README.md の周回100を見る。
+未確認：iPhone・Android の実機。

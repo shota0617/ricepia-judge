@@ -4058,7 +4058,7 @@ function growStep(hx, by, u, now) {
   if (st >= 3) { ctx.fillRect(x0 + q, y0 - 2 * q, q, q); ctx.fillRect(x0 - q, y0 - 2 * q, q, q); }   // 下の 葉（根もとにも 緑が 増える）
   if (st === 3) { ctx.fillStyle = '#ffd84a'; ctx.fillRect(x0, y0 - (sh + 2) * q, q, 2 * q); }   // 金のつぼみ（たて長）
   if (st >= 4) { ctx.fillStyle = '#ffffff'; for (const [fx, fy] of [[0, -2], [-1, -1], [1, -1], [0, 0], [-1, -2], [1, -2]]) ctx.fillRect(x0 + fx * q, y0 - (sh + 1) * q + fy * q, q, q); ctx.fillStyle = '#ffd84a'; ctx.fillRect(x0, y0 - (sh + 1) * q - q, q, q); }   // 小さな白い花（6つぶ＋金の まん中）
-  if (st >= 5) { const sx0 = x0 + 4 * q; ctx.fillStyle = '#ffffff'; if (st === 5) { for (const [fx, fy] of [[0, -1], [-1, 0], [1, 0], [0, 1]]) ctx.fillRect(sx0 + fx * q, y0 - (sh + 1) * q + fy * q, q, q); ctx.fillStyle = '#ffd84a'; ctx.fillRect(sx0, y0 - (sh + 1) * q, q, q); } else { for (const [fx, fy] of [[0, -2], [-1, -1], [1, -1], [0, 0], [-1, -2], [1, -2]]) ctx.fillRect(sx0 + fx * q, y0 - (sh + 1) * q + fy * q, q, q); ctx.fillStyle = '#ffd84a'; ctx.fillRect(sx0, y0 - (sh + 1) * q - q, q, q); } }   // 横の花（メインと 1つぶ 間を 空けて。段階5は 小さく4つぶ、段階6からは メインと 同じ大きさ）
+  if (st >= 5) { const sx0 = x0 + 4 * q; ctx.fillStyle = '#4c9a3a'; ctx.fillRect(x0 + 2 * q, y0 - sh * q, 2 * q, q); if (st >= 6) ctx.fillRect(x0 + 4 * q, y0 - sh * q, q, q); ctx.fillStyle = '#ffffff'; if (st === 5) { for (const [fx, fy] of [[0, -1], [-1, 0], [1, 0], [0, 1]]) ctx.fillRect(sx0 + fx * q, y0 - (sh + 1) * q + fy * q, q, q); ctx.fillStyle = '#ffd84a'; ctx.fillRect(sx0, y0 - (sh + 1) * q, q, q); } else { for (const [fx, fy] of [[0, -2], [-1, -1], [1, -1], [0, 0], [-1, -2], [1, -2]]) ctx.fillRect(sx0 + fx * q, y0 - (sh + 1) * q + fy * q, q, q); ctx.fillStyle = '#ffd84a'; ctx.fillRect(sx0, y0 - (sh + 1) * q - q, q, q); } }   // 横の花（茎から 枝でつなぐ＝サイクル162。メインと 1つぶ 間を 空けて。段階5は 小さく4つぶ、段階6からは メインと 同じ大きさ）
   if (st >= 7) { ctx.fillStyle = '#ffd84a'; ctx.fillRect(x0 + q, y0 - (sh + 5) * q, 2 * q, 2 * q); }   // 金の実（2つの花の 上・間に 2×2つぶ。花びらとは 重ならない 高さ）
 }
 function riceFeel(dt, speed) {
@@ -7992,7 +7992,7 @@ function frame(now) {
   roll.lastK = { x: kp.x, y: kp.y };
   roll.last = hp;
   roll.trail.push({ x: hp.x, y: hp.y, th: roll.ang }); if (roll.trail.length > 8) roll.trail.shift();   // のこりかげ用
-  { const RT = window.nishioRollTrail; if (RT && rolling && !fpsMeter.slow) { rollPath.list = RT.push(rollPath.list, hp.x, hp.y, now); rollPath.list = RT.alive(rollPath.list, now); if (RT.bloomPush && RT.bloomAlive) { rollBloom.list = RT.bloomPush(rollBloom.list, hp.x, hp.y, now); rollBloom.list = RT.bloomAlive(rollBloom.list, now); } } }   // 転がった道に跡を残す
+  { const RT = window.nishioRollTrail; if (RT && rolling) { if (!fpsMeter.slow) { rollPath.list = RT.push(rollPath.list, hp.x, hp.y, now); rollPath.list = RT.alive(rollPath.list, now); } if (RT.bloomPush && RT.bloomAlive) { rollBloom.list = RT.bloomPush(rollBloom.list, hp.x, hp.y, now); rollBloom.list = RT.bloomAlive(rollBloom.list, now); } } }   // 転がった道に跡を残す
 
   if (now - lastEnsure > 500) { lastEnsure = now; ensureVisible(w, h, T); snapDemoStart(); updateChests(); checkCar(); sightCheck(); updateCover(); loadTowns(); updateHere(); updateHarvestBtn(); updateDankyuBtn(); updateHiryoBtn(); }
 
@@ -8582,18 +8582,18 @@ function drawRollPath(ox, oy, T, now) {
 // 景色に残る花の点々（Pikmin Bloom）：通った所に小さな花。点滅・脈打ちなし
 function drawRollBloom(ox, oy, T, now) {
   const RT = window.nishioRollTrail;
-  if (!RT || !RT.bloomAlpha || !RT.bloomPetal || fpsMeter.slow || !rollBloom.list.length) return;
+  if (!RT || !RT.bloomAlpha || !RT.bloomPetal || !rollBloom.list.length) return;
   ctx.save();
   for (const p of rollBloom.list) {
     const a = RT.bloomAlphaAt ? RT.bloomAlphaAt(p, now) : RT.bloomAlpha(now - p.t);
     if (a <= 0) continue;
-    const cx = ox + p.x * T, cy = oy + p.y * T, f = RT.bloomPetal(p.n);
+    const cx = ox + p.x * T, cy = oy + p.y * T;
     ctx.fillStyle = 'rgba(' + (p.n % 2 === 0 ? '255,170,190' : '255,250,240') + ',' + a.toFixed(3) + ')';
-    for (let i = 0; i < f.petals; i++) {
+    if (!fpsMeter.slow) { const f = RT.bloomPetal(p.n); for (let i = 0; i < f.petals; i++) {   // 重い端末では 花びらを 描かず、中心の点だけ（跡は 残す）
       const ang = f.rot + i * Math.PI * 2 / f.petals;
       ctx.beginPath(); ctx.arc(cx + Math.cos(ang) * T * 0.10, cy + Math.sin(ang) * T * 0.10, T * 0.08, 0, Math.PI * 2); ctx.fill();
-    }
-    ctx.fillStyle = 'rgba(240,200,80,' + a.toFixed(3) + ')';
+    } }
+    if (!fpsMeter.slow) ctx.fillStyle = 'rgba(240,200,80,' + a.toFixed(3) + ')';   // 重い端末では 花の色の まま
     ctx.beginPath(); ctx.arc(cx, cy, T * 0.06, 0, Math.PI * 2); ctx.fill();
   }
   ctx.restore();

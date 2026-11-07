@@ -10,3 +10,4 @@ __pycache__/
 *.fds
 nethack-play-out/
 .xcycle/
+.ads-review/

@@ -195,7 +195,7 @@ const CHECKS = {
     const p = await page(b, 390, 844);
     const r = await p.evaluate(() => {
       K3.manual = true; K3.fixedSeed = 11; K3.jump('tiller'); const S = K3.S, f = S.f; f.water = 2.2; let stopped = null; const hud0 = document.getElementById('stage').textContent;
-      for (let i=0;i<6 && stopped == null;i++){ swipe('right', 260, true); const d0 = S.day; flush(); if (f.water < 1) stopped = { day: S.day, dayGap: S.day - d0 }; }
+      for (let i=0;i<20 && stopped == null;i++){ swipe('right', 260, true); const d0 = S.day; flush(); if (f.water < 1) stopped = { day: S.day, dayGap: S.day - d0 }; } /* 止まる 場面が ふえたので 20回（28周目） */
       const t = document.getElementById('say').textContent; const okText = /→|↑/.test(t);
       let moved = 0; for (let i=0;i<5;i++){ const t2 = document.getElementById('say').textContent; const dir = /↑/.test(t2) ? 'up' : /↓/.test(t2) ? 'down' : /←/.test(t2) ? 'left' : 'right'; const d0 = S.day; swipe(dir, 120, false, true); if (S.day > d0) moved++; }
       return { water: f.water, stopped, text: t.slice(0, 30), okText, moved, hud: hud0, hud2: document.getElementById('stage').textContent };

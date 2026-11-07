@@ -830,6 +830,27 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         brush = HTML[HTML.index("function brush(from, to)"):HTML.index("function startSim()")]
         self.assertIn("tick();", brush)
 
+    def test_cycle106_hint_swelling_has_its_own_gentle_sound(self):
+        # 差分テーマ差12（類3の残り）: みわけるで しばらくすると わるい粒がふくらんで知らせる瞬間（armHint）だけが
+        # 無音だったため、ふくらむ合図に穏やかに上がる固有の音を付ける。目を離していると膨らみに気づけなかった。
+        self.assertIn("function hintSound() {", HTML)
+        hint_fn = HTML[HTML.index("function hintSound()"):HTML.index("function thump()")]
+        self.assertIn("o.frequency.setValueAtTime(440, t);", hint_fn)
+        self.assertIn("o.frequency.exponentialRampToValueAtTime(560, t + 0.12);", hint_fn)
+        self.assertIn('o.type = "triangle";', hint_fn)
+        self.assertIn("o.start(t); o.stop(t + 0.14);", hint_fn)
+        # 音量はこれまでの合図の音より控えめ（0.015）に留める
+        self.assertIn("g.gain.setValueAtTime(0.015, t);", hint_fn)
+        # 新しくふくらむ粒がある時だけ鳴らし、すでにふくらんでいる粒には鳴らさない
+        arm = HTML[HTML.index("function armHint(ms)"):HTML.index("function toMiwakeru()")]
+        self.assertIn('!g.img.classList.contains("hint")', arm)
+        self.assertIn("if (!fresh.length) return;", arm)
+        self.assertIn("hintSound();", arm)
+        self.assertEqual(HTML.count("hintSound();"), 1)
+        # ひねって印が出る経路（twistSound）と なでる tick は従来どおり残る
+        self.assertIn("twistSound();", HTML)
+        self.assertIn("const tick = () => tone(1100 + Math.random() * 900, 0.03, 0.025);", HTML)
+
     def test_cycle93_picked_grains_stay_in_quiet_record(self):
         # 類7: 見分けた粒が静かに記録に残る。任意で開く資料（#notes）の中だけに出し、常時表示・競争・スコアにはしない。
         # 袋を越えて残るため startLot では消さない（サイクル91の seenChecks と同じ持ち方）。

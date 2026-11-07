@@ -95,7 +95,7 @@ const CHECKS = {
       K3.manual = true; K3.fixedSeed = 3; K3.start(); steps(5); const S = K3.S, f = S.f, log = [];
       const tick = () => { swipe('right', 100, false); flush(); };
       swipe('up', 160, false); log.push(['soak', S.seed_.soaked]);
-      for (let i=0;i<40 && !S.seed_.sprouted;i++){ swipe('right', 300, true); flush(); } log.push(['sprout', S.seed_.sprouted && S.seed_.heat < 155 && K3.V.flipQueue === 0, S.day, S.seed_.heat]); /* 42〜43周目：はじいても 浸種 おわりで 止まる（120℃ を 大きく こえない） */
+      for (let i=0;i<40 && !S.seed_.sprouted;i++){ swipe('right', 300, true); flush(); } log.push(['sprout', S.seed_.sprouted && S.day <= 15, S.day, S.seed_.heat]); /* 44周目：はじきが 21日まで 飛ぶと 失敗 */ /* 42〜43周目：はじいても 浸種 おわりで 止まる（120℃ を 大きく こえない） */
       swipe('down', 160, false); log.push(['sown', S.phase, S.nur.sown]);
       for (let i=0;i<60 && S.nur.age < 30;i++){ if (S.nur.moist < 0.4) swipe('up', 160, false); tick(); } log.push(['nursery', S.nur.age, S.nur.stress]);
       for (let i=0;i<6 && S.phase!=='field';i++) swipe('left', 120, false); log.push(['tofield', S.phase]);
@@ -234,10 +234,10 @@ const CHECKS = {
       const d1 = S.day; const x = 150, y0 = 600; ev('pointerdown', 1, x, y0); for (let i=1;i<=6;i++){ ev('pointermove', 1, x + i*40, y0); steps(3); } ev('pointerup', 1, x + 240, y0); flush(); const midLong = S.day - d1; /* 0.8px/ms（40px/50ms）・240px → 1日 */
       f.dat = 20; f.water = 2; K3.V.water = 2; K3.V.waterV = 0; ev('pointerdown', 1, 190, 600); for (let i=1;i<=24;i++){ ev('pointermove', 1, 190, 600 - i*10); steps(1); } const dragWater = K3.V.water; ev('pointerup', 1, 190, 360); steps(3); const slowUp = f.water; /* 指の 水面は 4cm 強で 止まり、はなすと 4cm */
       f.dat = 20; let joy = 0, marks = 0; for (let i=0;i<6;i++){ f.water = 1; K3.V.water = 1; K3.V.waterV = 0; swipe('up', 60, false, true); if (/いい 深さ/.test(document.getElementById('say').textContent)) joy++; } marks = K3.V.stamps.filter(st => st.text==='◎').length; /* 6回 続けても ◎は 区間で 1回（21周目） */
-      K3.jump('nakaboshi'); K3.S.f.hoshiDays = 3; K3.S.f.water = 3; K3.V.water = 3; swipe('down', 60, false, true); const reDrain = K3.S.f.water; /* 42〜43周目：途中（5日 未満）の 雨の あとは ゆっくり ↓で 空まで */
+      K3.jump('nakaboshi'); K3.S.f.hoshiDays = 3; K3.S.f.water = 3; K3.V.water = 3; swipe('down', 60, false, true); const reDrain = K3.S.f.water; K3.jump('nakaboshi'); K3.S.f.hoshiDays = 5; K3.S.f.water = 6; K3.V.water = 6; swipe('down', 200, false, true); const reDrain2 = K3.S.f.water; /* 44周目：5日 すぎは 床（3.5）で 止まる */ /* 42〜43周目：途中（5日 未満）の 雨の あとは ゆっくり ↓で 空まで */
       K3.jump('nakaboshi'); K3.S.f.water = 0; K3.doLeft(); for (let i=0;i<150;i++) K3.step(1/60); const done = K3.S.done.slice(); /* 溝切りの 済が 消えて カードへ（22周目。jump は S を 作りなおす） */ K3.jump('result'); const score = document.getElementById('rCard').querySelectorAll('span').length + '/' + document.getElementById('rCard').querySelectorAll('span.on').length;
       K3.start(); const S2 = K3.S; swipe('up', 160, false, true); for (let i=0;i<14 && !S2.seed_.sprouted;i++) swipe('right', 110, false, true); swipe('left', 120, false, true); const t1 = document.getElementById('say').textContent; swipe('right', 110, false, true); const t2 = document.getElementById('say').textContent;
-      return { slowLong, midLong, dragWater, slowUp, joy, marks, done, score, t1, t2, reDrain };
+      return { slowLong, midLong, dragWater, slowUp, joy, marks, done, score, t1, t2, reDrain, reDrain2 };
     });
     ok(r.slowLong === 1 && r.midLong === 1, 'ふつうの 速さの 長い 引きは 1日', [r.slowLong, r.midLong]);
     ok(r.dragWater > 4 && r.dragWater < 6 && r.slowUp === 4, '分げつの ころの ゆっくりの ↑は 指でも 4cm で ゴム、はなすと 4cm', [r.dragWater, r.slowUp]);
@@ -245,6 +245,7 @@ const CHECKS = {
     ok(r.done.length >= 1 && /^6\/\d$/.test(r.score), '消えた 済が スタンプカードに、結果にも 6つの 枠', [r.done, r.score]);
     ok(/↓で まきましょう/.test(r.t2) && r.t1 !== r.t2, 'たねの ←の あとも →で 吹き出しが 更新', [r.t1, r.t2]);
     ok(r.reDrain === 0, '中干しの 途中の 雨の あとは ゆっくり ↓で 空まで（42〜43周目）', r.reDrain);
+    ok(r.reDrain2 === 3.5, '中干し 5日 すぎの ゆっくり ↓は 床 3.5 で 止まる（44周目）', r.reDrain2);
   },
   // 「〜して いれば +Xkg」：中干しも 掛け流しも しない 年の 結果に、損失の 大きい 順に 2つ（11周目）
   async whatif(b){

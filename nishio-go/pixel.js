@@ -4036,7 +4036,30 @@ function comboEnd() {
 }
 // 速さの演出は 穏やかに（Smushi Come Home の物差し：速く動いても スピード線は 出さず、景色と 転がりで 速さを 伝える）
 const speedFx = { k: 0, at: 0, vx: 1, vy: 0 };   // テスト用の 互換だけ（speedK は いつも 0。スピード線は 描かないので 更新する コードは ない）
+// 転がるほど 頭の上の 芽が 育つ（サイクル150・塊魂：転がすほど 見た目が 育つ）。段階は 転がった道のり roll.d（マス）で決まり、そのセッションでは 下がらない。上がる瞬間だけ ぴっ（同じ音・同じ高さ）と 金の輪。文字は 出さない
+const GROW_TH = [15, 40, 80, 140];
+const grow = { stage: 0, popT: 0 };
+function growStageFor(d) { let s = 0; for (let i = 0; i < GROW_TH.length; i++) if (d >= GROW_TH[i]) s = i + 1; return s; }
+function growStep(hx, by, u, now) {
+  const st = grow.stage, pt = grow.popT ? (now - grow.popT) / 800 : 1;
+  if (!st && pt >= 1) return;
+  const q = Math.max(1, Math.round(u)), sway = Math.round(Math.sin(now / 420) * Math.min(1, roll.v / 2) * q), lift = pt < 1 ? Math.round(Math.sin(pt * Math.PI) * 2 * q) : 0;
+  const x0 = Math.round(hx) + sway, y0 = Math.round(by - 15 * u) - lift, ga = ctx.globalAlpha;
+  if (pt < 1) {   // 金の 細い輪が そっと 広がって 消える
+    ctx.globalAlpha = ga * (1 - pt) * 0.7; ctx.strokeStyle = '#ffd84a'; ctx.lineWidth = q;
+    ctx.beginPath(); ctx.arc(hx, by, (13 + 11 * pt) * u, 0, Math.PI * 2); ctx.stroke(); ctx.globalAlpha = ga;
+  }
+  if (!st) return;
+  const sh = 2 + st;   // 茎の 高さ（段階ごとに 1段ずつ のびる。段階の ちがいが 形で 読めるように）
+  ctx.fillStyle = '#4c9a3a'; ctx.fillRect(x0, y0 - sh * q, q, sh * q);   // 茎
+  ctx.fillStyle = '#7fd05a'; ctx.fillRect(x0 + q, y0 - (sh + 1) * q, 2 * q, q); ctx.fillRect(x0 + q, y0 - sh * q, q, q);   // 葉1（右へ 2つぶ）
+  if (st >= 2) { ctx.fillRect(x0 - 2 * q, y0 - (sh + 1) * q, 2 * q, q); ctx.fillRect(x0 - q, y0 - sh * q, q, q); }   // 葉2（左へ 2つぶ）
+  if (st >= 3) { ctx.fillRect(x0 + q, y0 - 2 * q, q, q); ctx.fillRect(x0 - q, y0 - 2 * q, q, q); }   // 下の 葉（根もとにも 緑が 増える）
+  if (st === 3) { ctx.fillStyle = '#ffd84a'; ctx.fillRect(x0, y0 - (sh + 2) * q, q, 2 * q); }   // 金のつぼみ（たて長）
+  if (st >= 4) { ctx.fillStyle = '#ffffff'; for (const [fx, fy] of [[0, -2], [-1, -1], [1, -1], [0, 0], [-1, -2], [1, -2]]) ctx.fillRect(x0 + fx * q, y0 - (sh + 1) * q + fy * q, q, q); ctx.fillStyle = '#ffd84a'; ctx.fillRect(x0, y0 - (sh + 1) * q - q, q, q); }   // 小さな白い花（6つぶ＋金の まん中）
+}
 function riceFeel(dt, speed) {
+  { const gs = growStageFor(roll.d); if (gs > grow.stage) { grow.stage = gs; grow.popT = performance.now(); dotSound(0); } }   // 段階が 上がる瞬間だけ（下がらない）
   if (combo.n) { combo.quietT = speed < 0.6 ? combo.quietT + dt : 0; if (combo.quietT > 0.7) comboEnd(); }   // 止まったら おしまい
   const g = roll.gnd = roll.last ? groundAt(roll.last.x, roll.last.y) : GROUND.dirt, wx = WX_ROLL[wxKind()];
   {   // よごれ（速く転がるほど つく）
@@ -8118,6 +8141,7 @@ function frame(now) {
     if (riceBall.cv) {
       drawRiceBall(hx, by, u, th % (Math.PI * 2), sx, sy, roll.spin, ctx, gbOn && !worldMode, mood, roll.look, roll.dirt, roll.dirtCol, roll.pitch);   // 光を当てなおして 丸く。表情つき・きょろきょろ
       drawSendArrow(hx, by, T, u);   // お米の まん中から
+      growStep(hx, by, u, now);   // 転がるほど 頭の上の 芽が 育つ（サイクル150）
       if (roll.wetT > 0) {   // ぽちゃん のあと：頭の左上に 水の しずく
         const q = Math.max(1, Math.round(u)), dx0 = hx - 11 * u, dy0 = by - 12 * u + (1.4 - roll.wetT) * 3 * u, crisp = !!rec || (gbOn && !worldMode), sm = ctx.imageSmoothingEnabled;
         ctx.globalAlpha = Math.min(1, roll.wetT * 2); ctx.imageSmoothingEnabled = !crisp;   // しずくも 1枚の 絵に して 点より 細かい 位置で なめらかに すべらせる（ゲームボーイの4色・記録係は 整数の 位置）
@@ -12988,7 +13012,7 @@ const meiroApi = {
   tilt: () => tiltG, tiltAsk, tiltReset, tiltNeedsPermission, koto: (v, low) => kotoSound(v, low), splash: v => splashSound(v), boing: (v, hi) => boingSound(v, hi), rumble: v => rumbleTick(v, GROUND.road),   // rumble：転がる音（速さは 地図の マス/秒）
   pause(on) { meiroPause = !!on; dirty = true; if (on && mzNext.hold) { mzNext.hold = false; if (G.toastFlush) G.toastFlush(); } },   // 止める ときは「つぎの ゴール」で 待たせた 知らせを 出す
 };
-window.nishioPixel = { blinkOn, BLINK_MS, BLINK_SHUT_MS, get riceEye() { return riceEyeAt; }, glanceShift, asleepShut, happyFace, meiroApi, heroGiant: () => heroGiantId, pickHeroGiant, HERO_GIANT_RANGE, maze: { wallTheme: () => mzWallTheme(), on: () => mazeOn(), playing: () => active && mazeOn(), next: () => ({ want: mzNext.want, t0: mzNext.t0, on: mzNextOn(), labHide: !!mzNext.labHide, arrowDim: !!mzNext.arrowDim, box: mzNext.box || null }), goal: id => {   // id の 名所が いまの ゴール（か 2分 以内の 前の ゴール）なら、かかった 時間と めいろの 道のり
+window.nishioPixel = { blinkOn, BLINK_MS, BLINK_SHUT_MS, get riceEye() { return riceEyeAt; }, grow: { stage: () => grow.stage, stageFor: growStageFor, TH: GROW_TH, popAt: () => grow.popT }, glanceShift, asleepShut, happyFace, meiroApi, heroGiant: () => heroGiantId, pickHeroGiant, HERO_GIANT_RANGE, maze: { wallTheme: () => mzWallTheme(), on: () => mazeOn(), playing: () => active && mazeOn(), next: () => ({ want: mzNext.want, t0: mzNext.t0, on: mzNextOn(), labHide: !!mzNext.labHide, arrowDim: !!mzNext.arrowDim, box: mzNext.box || null }), goal: id => {   // id の 名所が いまの ゴール（か 2分 以内の 前の ゴール）なら、かかった 時間と めいろの 道のり
     if (!mazeOn()) return null;
     const now = performance.now(), pv = mzRt.prev, g = mzRt.gid === id ? { t0: mzRt.t0, len0: mzRt.len0, warp: mzRt.warp, moves: mzMv.n, run: { ...mzRt.run } } : pv && pv.id === id && now - pv.at < 120000 ? pv : null;
     if (!g || !g.t0) return null;

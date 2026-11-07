@@ -531,7 +531,7 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertIn("let s = Math.min(2.4, fit);", body)
         self.assertIn("if (s < 1.04) s = FACE_AT;", body)
         self.assertIn("Z.tx = PW / 2 - cx * s; Z.ty = PH / 2 - cy * s;", body)
-        self.assertIn("applyZoom();", body)
+        self.assertIn("applyZoom(true);", body)  # サイクル92で🔍の寄りは滑らかになった
         self.assertNotIn("Math.max(1.6, Math.min(2.4, fit))", body)
         self.assertNotIn("zoomTo(Math.max(FACE_AT", body)
 
@@ -611,6 +611,29 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         # ロット順に「見た項目」を積み上げた行数の見通し（規則は変えない）: 2→2→3→4→5→5
         grades = run_rules("LOTS.map(lotGrade)")
         self.assertEqual(grades, [0, 3, 1, 2, 3, 0])
+
+    def test_cycle92_zoom_glides_only_for_button_and_double_tap(self):
+        # 類6: 寄って見る確認操作の磨き。🔍と2回タップの寄り・戻りだけ滑らかにし、ピンチと寄った後の指の移動は指にそのまま追随させる。
+        # 従来は倍率が1msで切り替わり（transition 0s・390×844実測）、身を寄せてじっくり見る感覚がなかった。
+        self.assertIn("#plateInner.smooth { transition:transform .45s cubic-bezier(.25,.8,.3,1); }", HTML)
+        self.assertIn("#plateInner.smooth { transition:none; }", HTML)  # 動きを減らす設定では滑らかにしない
+        self.assertIn("function applyZoom(smooth) {", HTML)
+        self.assertIn('inner.classList.add("smooth")', HTML)
+        self.assertIn("zoomAnimTimer = setTimeout(() => inner.classList.remove(\"smooth\"), 480);", HTML)
+        self.assertIn("applyZoom(true); /* 2回タップの寄りは滑らかに（サイクル92・類6） */", HTML)
+        self.assertIn("applyZoom(true); /* 🔍の寄りは滑らかに（サイクル92・類6） */", HTML)
+        self.assertIn("if (Z.s > 1.001) resetZoom(true);", HTML)  # 🔍で戻る時も滑らかに
+        self.assertIn("resetZoom(true);\n        else { const pz = plateXY(e.clientX, e.clientY); zoomTo(2.4, pz.x, pz.y); }", HTML)  # 2回タップで戻る時も滑らかに
+        # 指の操作は smooth を付けない: ピンチ中の applyZoom() と、寄った後の移動の applyZoom() は引数なしのまま
+        self.assertIn("Z.tx = mid.x - pinch.lx * Z.s; Z.ty = mid.y - pinch.ly * Z.s;\n    applyZoom();", HTML)
+        self.assertIn("Z.tx += e.clientX - sortDrag.lx; Z.ty += e.clientY - sortDrag.ly;\n      applyZoom();", HTML)
+        self.assertIn("🔍や2回タップで寄るときは、身を寄せるようにゆっくり近づきます", HTML)
+        # 寄りの途中で指が触れたら、今見えている transform を Z に同期してから止める（Codexレビュー指摘）。
+        # 同期せず smooth を外すと、Z の最終値へ表示が跳んでしまう
+        self.assertIn("function stopSmoothZoom() {", HTML)
+        self.assertIn("const m = new DOMMatrixReadOnly(getComputedStyle(inner).transform);", HTML)
+        self.assertIn("if (m.a > 0) { Z.s = m.a; Z.tx = m.e; Z.ty = m.f; }", HTML)
+        self.assertIn("stopSmoothZoom(); /* 寄りの途中で触れたら、今見えている所から指の操作を始める */", HTML)
 
 if __name__ == "__main__":
     unittest.main()

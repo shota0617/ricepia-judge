@@ -90,6 +90,7 @@
   #plate.zoomed { overflow:hidden; }
   #plateInner { position:absolute; inset:0; border-radius:14px; transform-origin:0 0;
     background:linear-gradient(90deg,#fbf8ef 0 50%,#1c1a16 50% 100%); }
+  #plateInner.smooth { transition:transform .45s cubic-bezier(.25,.8,.3,1); } /* 🔍と2回タップの寄り・戻りだけ、身を寄せるように滑らかにする（サイクル92・類6）。ピンチと寄った後の指の移動には付けず、指にそのまま追随させる */
   #zoomBtn { position:absolute; right:8px; bottom:8px; z-index:30; width:46px; height:46px; border-radius:50%; background:var(--paper); font-size:22px; box-shadow:0 2px 6px rgba(0,0,0,.4); }
   .grain { position:absolute; left:0; top:0; display:block; pointer-events:none; }
   .grain img { display:block; width:100%; height:100%; }
@@ -209,6 +210,7 @@
   }
   @media (prefers-reduced-motion: reduce) {
     #poke,#guide,.grain img.hint,.grain img.wig,.dot.ping,.gradeBtn.sway { animation:none; }
+    #plateInner.smooth { transition:none; } /* 動きを減らす設定では、寄りも滑らかにせずその場で切り替える（サイクル92・類6） */
     .grain img.hint { outline:3px solid var(--gold); }
     .dot.ping { outline:3px solid var(--gold); outline-offset:2px; } /* 動きを減らす設定でも、正解の列は静かな輪郭で示す（サイクル90・類4、Codexレビュー反映） */
   }
@@ -277,6 +279,7 @@
   <p>袋ごとに、整粒の形と色つや、袋の帯の色が少しずつ違います。今日はどんな米かが、開いてすぐの楽しみです。わるい粒の見分けの印（色・割れ目）は袋によらず同じです。</p>
   <p>等級をまちがえても、はかった水分も、よけた粒も、そのままで何も失われません。光る●の列をもう一度見て、選び直せます。</p>
   <p>きめるで見る項目は、袋を進めるごとに1つずつ増えていきます。一度見た項目は次の袋でも残るので、見比べながら少しずつ覚えられます。</p>
+  <p>🔍や2回タップで寄るときは、身を寄せるようにゆっくり近づきます。寄った後は、指で見る場所をそのまま動かせます。</p>
   <p>ゲームでは分かりやすくするため、皿は20粒で1粒＝5%と数えます（実際の検査の粒数や重量の割合とは違います）。形質（標準品との比較）、異種穀粒、異物は皿には出していません。ゲームの等級は遊びのためのもので、実際の格付けではありません。</p>
   <p>出典: <a href="https://www.maff.go.jp/j/seisan/syoryu/kensa/kome/k_kikaku/" target="_blank" rel="noopener">農林水産省「玄米の検査規格」</a>／<a href="https://www.maff.go.jp/j/seisan/syoryu/kensa/hourei.html" target="_blank" rel="noopener">農産物検査法及び関係通知等</a>／<a href="https://www.maff.go.jp/j/seisan/syoryu/kensa/attach/pdf/index-25.pdf" target="_blank" rel="noopener">農林水産省「コメの農産物検査」</a></p>
   <p><a href="https://ricepia.jp/">らいすぴあ（近藤米穀店）のサイトへ</a></p>
@@ -846,10 +849,19 @@ function refreshBadFaces() {
     g.img.src = grainSprite(g.kind, grainMood(g));
     g.img.style.transform = firstBagFace(g) ? "scale(1.5)" : ""; /* 寄った後も維持し、倍率の境界で突然縮まないようにする（Codexレビュー指摘・サイクル83） */ });
 }
-function applyZoom() {
+let zoomAnimTimer = null;
+function applyZoom(smooth) {
   const maxX = 0, minX = PW * (1 - Z.s), minY = PH * (1 - Z.s);
   Z.tx = Math.min(maxX, Math.max(minX, Z.tx));
   Z.ty = Math.min(0, Math.max(minY, Z.ty));
+  if (smooth && !reduced) { /* 🔍・2回タップでの寄り・戻りだけ滑らかに（サイクル92・類6「寄って見る確認操作の磨き」）。従来は倍率が1msで切り替わり、身を寄せてじっくり見る感覚がなかった（390×844実測） */
+    inner.classList.add("smooth");
+    clearTimeout(zoomAnimTimer);
+    zoomAnimTimer = setTimeout(() => inner.classList.remove("smooth"), 480);
+  } else if (!smooth) { /* ピンチ・寄った後の指の移動・画面の切り替えは滑らかにせず、その場で打ち消して指にそのまま追随させる */
+    inner.classList.remove("smooth");
+    clearTimeout(zoomAnimTimer);
+  }
   inner.style.transform = "translate(" + Z.tx + "px," + Z.ty + "px) scale(" + Z.s + ")";
   plate.classList.toggle("zoomed", Z.s > 1.001);
   zoomBtn.textContent = Z.s > 1.001 ? "➖" : "🔍";
@@ -864,16 +876,24 @@ function applyZoom() {
     }
   }
 }
-function resetZoom() {
-  Z.s = 1; Z.tx = 0; Z.ty = 0;
+/* 滑らかな寄りの途中で指が触れたら、今見えている所で止めて Z に合わせる（Codexレビュー指摘・サイクル92）。
+   Z は最終値を持っているため、そのまま smooth を外すと表示が最終値へ跳んでしまう */
+function stopSmoothZoom() {
+  if (!inner.classList.contains("smooth")) return;
+  const m = new DOMMatrixReadOnly(getComputedStyle(inner).transform);
+  if (m.a > 0) { Z.s = m.a; Z.tx = m.e; Z.ty = m.f; }
   applyZoom();
+}
+function resetZoom(smooth) {
+  Z.s = 1; Z.tx = 0; Z.ty = 0;
+  applyZoom(smooth); /* smooth は🔍・2回タップで戻る時だけ。場面の切り替え（次の袋・きめる・感じる）では付けず、その場で戻す */
 }
 function zoomTo(s, px, py) {
   /* px,py（皿の枠の中の場所）の下にある粒が動かないように寄る */
   const lx = (px - Z.tx) / Z.s, ly = (py - Z.ty) / Z.s;
   Z.s = s < 1.04 ? 1 : Math.min(ZOOM_MAX, s);
   Z.tx = px - lx * Z.s; Z.ty = py - ly * Z.s;
-  applyZoom();
+  applyZoom(true); /* 2回タップの寄りは滑らかに（サイクル92・類6） */
 }
 function updateSortHint() {
   if (step !== 2) return;
@@ -990,6 +1010,7 @@ function startPinch() {
 }
 plate.addEventListener("pointerdown", (e) => {
   if (step !== 2 || e.target === zoomBtn) return;
+  stopSmoothZoom(); /* 寄りの途中で触れたら、今見えている所から指の操作を始める */
   capture(plate, e);
   if (spread === false) guideOff();
   pts.set(e.pointerId, { x:e.clientX, y:e.clientY });
@@ -1044,7 +1065,7 @@ function endPlatePointer(e, cancelled) {
       const tapNow = performance.now();
       if (g && g.kind === "seiryu" && tapNow - lastGoodTap < 500 && Math.hypot(e.clientX - lastGoodX, e.clientY - lastGoodY) < 40) { /* 同じ所を2回タップで寄る。もう一度で戻る。離れた粒を続けて突いても寄らない。間隔は500msまで受ける: 320msでは約410ms間隔のゆっくりした2回タップが届かず、ただ揺れるだけだった（390×844実測・サイクル77）。距離40pxは、となりの別の粒を続けて突いた時に寄せと誤らないためそのまま */
         lastGoodTap = 0;
-        if (Z.s > 1.001) resetZoom();
+        if (Z.s > 1.001) resetZoom(true);
         else { const pz = plateXY(e.clientX, e.clientY); zoomTo(2.4, pz.x, pz.y); }
       } else if (g) {
         if (g.kind === "seiryu") { lastGoodTap = tapNow; lastGoodX = e.clientX; lastGoodY = e.clientY; }
@@ -1109,7 +1130,7 @@ plate.addEventListener("pointercancel", (e) => endPlatePointer(e, true));
 document.addEventListener("gesturestart", (e) => e.preventDefault()); /* iPhoneのページ拡大と取り合わない */
 function toggleZoom() {
   if (step !== 2) return;
-  if (Z.s > 1.001) resetZoom();
+  if (Z.s > 1.001) resetZoom(true);
   else {
     /* 皿の真ん中ではなく、残っているわるい粒のまんなかを皿の真ん中へ寄せる。端へ広がった粒が拡大の外に出ない。
        2粒が離れているときは、両方収まる倍率まで引く（収まる倍率が顔の出る倍率より小さい帯でも収まる方を優先）。
@@ -1129,7 +1150,7 @@ function toggleZoom() {
       let s = Math.min(2.4, fit); /* 両粒が収まる倍率を優先する。fit が顔の出る倍率（FACE_AT）より小さい帯（1.04〜1.2）でも、収まる方を取る */
       if (s < 1.04) s = FACE_AT; /* ほぼ寄らない倍率になってしまう時だけ、顔の出る所まで寄せる（両端の境界では粒の一部が見える） */
       Z.s = s; Z.tx = PW / 2 - cx * s; Z.ty = PH / 2 - cy * s;
-      applyZoom();
+      applyZoom(true); /* 🔍の寄りは滑らかに（サイクル92・類6） */
     }
   }
 }

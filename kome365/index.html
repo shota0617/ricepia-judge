@@ -633,6 +633,7 @@ body:has(#sGame.swipeMode:not(.hidden)){padding-bottom:0}   /* ページ下の40
 html:has(#sGame.swipeMode:not(.hidden)),body:has(#sGame.swipeMode:not(.hidden)){overflow-x:clip}   /* 周回101: 右へ飛ぶカードがページの横幅を広げ、スマホで画面全体が一瞬6割ほどに縮んでいた。html と body の両方に要る */
 #sGame.fxGood #swFieldFx,#sGame.fxBad #swFieldFx{animation:none;opacity:0}#sGame.swipeMode.fxGood canvas#field,#sGame.swipeMode.fxBad canvas#field{animation:none}   /* 周回104: 田んぼ全体の金の光・灰色の影(上の幕と田んぼの明るさ)はやめる。良し悪しは大きな○×(店主指示 2026-11-06)で伝わるので、画面全体を暗くしない */
 #swSkyTint,#swStageTint,#swHealthTint{left:50%;right:auto;width:100vw;margin-left:-50vw}   /* 周回106: 空・育ち・元気の色を画面の幅いっぱいに。カードの列の幅だけにかかり、田んぼの左右の端との間に縦の境目が出ていた */
+#swLiveFx,#swCareGlow{left:50%;right:auto;width:100vw;margin-left:-50vw}   /* 周回107: 田んぼの息づかいの光(#swLiveFx)とめくったあとの世話の余韻(#swCareGlow)も画面の幅いっぱいに(周回106と同じ境目) */
 @media (max-height:660px){#swGuide{margin-top:44px}}
 @media (max-height:600px){#swNextMile.on{display:none}#swIc{min-height:60px;max-height:64px}#swIc .icPix{width:56px;height:56px}#swIc .icEmoji{font-size:48px}}
 @media (max-height:440px){#swGuide,#swSeasonStrip,#swIc{display:none!important}#swTop{margin-bottom:2px}#swCard{padding-top:6px;padding-bottom:6px}#swTitle{margin:0 0 2px}#swText{line-height:1.4}#swEdge{margin-top:4px}#swEdge>span{padding:6px 9px}}

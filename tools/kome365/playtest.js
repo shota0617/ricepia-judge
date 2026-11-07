@@ -16,6 +16,7 @@ const args = process.argv.slice(2);
 const opt = (k, d) => { const i = args.indexOf(k); return i >= 0 ? args[i+1] : d; };
 const SEEDS = opt('--seeds', '3,5,11,42').split(',').map(Number);
 const BOTS = opt('--bots', 'careful,normal,idle,flood,hasty,late').split(',');
+const KNOWN = ['careful', 'normal', 'idle', 'flood', 'hasty', 'late']; for (const b of BOTS) if (!KNOWN.includes(b)){ console.log('知らない ボット：' + b + '（' + KNOWN.join('・') + '）'); process.exit(2); }
 
 const { HELPERS: BASE } = require('./helpers'); // ev・swipe は check.js と 共通（8周目）
 const HELPERS = () => {

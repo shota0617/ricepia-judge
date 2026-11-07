@@ -180,14 +180,16 @@ const CHECKS = {
     ok(r.stopped && r.okText, '水が 0 に なった 日に パラパラが 止まり、吹き出しは → か ↑ を 言う', r);
     ok(r.moved >= 3, 'その あとも 吹き出しの とおりで 日が すすむ（詰まない）', r);
     ok(/茎\d+本/.test(r.hud) && /℃|茎/.test(r.hud2), 'HUD に 茎の 本数（出穂の あとは 積算℃）', [r.hud, r.hud2]);
-    const z = await p.evaluate(() => { localStorage.removeItem('k365_log'); K3.jump('result'); const s1 = document.getElementById('rScore').textContent; K3.jump('result'); const s2 = document.getElementById('rScore').textContent; const log = JSON.parse(localStorage.getItem('k365_log')); return { s1, s2, n: log.length, score: log[0].score }; });
+    const z = await p.evaluate(() => { localStorage.removeItem('k365_log'); localStorage.removeItem('k365_years'); K3.jump('result'); const s1 = document.getElementById('rScore').textContent; K3.jump('result'); const s2 = document.getElementById('rScore').textContent; const log = JSON.parse(localStorage.getItem('k365_log')); return { s1, s2, n: log.length, score: log[0].score }; });
     ok(/出来ばえ \d+点/.test(z.s1) && !/じこベスト/.test(z.s1) && /じこベスト/.test(z.s2) && z.n === 2 && z.score > 0, '結果に 出来ばえの 点。2年目から じこベスト', z);
+    const y = await p.evaluate(() => { localStorage.setItem('k365_years', '60'); localStorage.setItem('k365_log', JSON.stringify(Array.from({ length: 50 }, () => ({ score: 1 })))); K3.jump('result'); return { t: document.getElementById('rScore').textContent, n: JSON.parse(localStorage.getItem('k365_log')).length }; });
+    ok(/61年目/.test(y.t) && y.n === 50, '記録は 50年 まで でも 年目は すすむ（12周目）', y);
   },
   // 「〜して いれば +Xkg」：中干しも 掛け流しも しない 年の 結果に、損失の 大きい 順に 2つ（11周目）
   async whatif(b){
     const p = await page(b, 390, 844);
     const r = await p.evaluate(() => { K3.manual = true; K3.fixedSeed = 11; K3.jump('heading'); const S = K3.S, f = S.f; f.hoshiDays = 0; f.root = 40; f.flowDays = 0; f.heatHits = 6; for (let i=0;i<200 && f.gdd < 1000;i++){ f.water = Math.max(f.water, 2); K3.advanceDay(); } for (let i=0;i<8 && !S.hv.done;i++) K3.doLeft(); const w = K3.whatIf(); for (let i=0;i<10 && S.hv.moisture > 15.5;i++) K3.advanceDay(); K3.doLeft(); return { w: w.map(x => [x.name, x.dy, x.ds]), text: document.getElementById('rSay2').textContent }; });
-    ok(r.w.length >= 2 && r.w[0].gain !== 0 && r.w.every((x, i) => i === 0 || x[1] + x[2]*4 <= r.w[i-1][1] + r.w[i-1][2]*4), '「〜して いれば」が 損失の 大きい 順', r.w);
+    ok(r.w.length >= 2 && (r.w[0][1] + r.w[0][2]*4) >= 15 && r.w.every((x, i) => i === 0 || x[1] + x[2]*4 <= r.w[i-1][1] + r.w[i-1][2]*4), '「〜して いれば」が 損失の 大きい 順', r.w);
     ok(/して いれば|入れかえて いれば/.test(r.text) && /\+\d+/.test(r.text), '結果の 2行目に 2つの「〜して いれば +X」', r.text);
     const g = await p.evaluate(() => { K3.jump('result'); return { w: K3.whatIf().map(x => x.name), text: document.getElementById('rSay2').textContent }; });
     ok(!/刈りどき|乾燥/.test(g.w.join()), 'ていねいな 年には 刈りどき・乾燥の「していれば」は 出ない', g);

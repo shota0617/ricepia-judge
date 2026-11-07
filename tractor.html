@@ -7704,7 +7704,7 @@ const OSHI = (() => {
   function decel(dt) {                              // アクセルを はなしたときの 止まる速さ（押されないときは ふだんの 2.5）
     const on = !SHIRO && !PTOREV && S.rotDown && S.rotPos < 0.08 && (S.rotorW || 0) > 5 && S.v > 0.05 && !S.stalled && !S.stuck;
     if (!on) { t = 0; return 2.5; }
-    if ((t += dt) > 0.6 && !told) {
+    if ((t += dt) > 0.6 && !told && !startNoticeMuted()) {   // サイクル210・最初の1分: のんびりでは最初のなぞりを離した止まり際（押し出しが続く0.6秒）に長文知らせと声で最初の停止を邪魔しない。toldは立てないので1分を過ぎたあとの押し出し停止で従来どおり出す（遅れて出す形）。くわしい説明では従来どおり最初の停止から出す
       told = true;
       toast('ロータリーを下ろしたままだと、爪の回転に 押されて すぐには止まらない。畦の手前では 早めに止めるか、先に ロータリーを上げる', 6);
       setTimeout(() => voice('oshi'), 6500);

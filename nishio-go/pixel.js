@@ -7336,6 +7336,42 @@ function drawCollectedMark(sx, sy, size, dpr, ring) {   // 迷路・歩く地図
   ctx.restore();
 }
 
+function roadShapeOf(mask) {   // 道のつながり（1上・2右・4下・8左）から、その場所の形を分ける（見た目だけ）
+  const m = mask & 15, n = (m & 1) + ((m >> 1) & 1) + ((m >> 2) & 1) + ((m >> 3) & 1);
+  if (n >= 4) return 'cross';
+  if (n === 3) return 'tee';
+  if (n === 2) return (m === 5 || m === 10) ? 'straight' : 'curve';
+  return 'none';
+}
+
+function roadShapeCorner(mask) {   // 曲がり角の内がわの角の向き [dx, dy]。曲がり角でなければ null
+  const m = mask & 15;
+  return m === 3 ? [1, -1] : m === 6 ? [1, 1] : m === 12 ? [-1, 1] : m === 9 ? [-1, -1] : null;
+}
+
+function drawRoadShape(X, Y, T, mask) {   // 実在の道の曲がり・交わりを淡い形の印で（点滅しない）
+  const shape = roadShapeOf(mask);
+  if (shape === 'none' || shape === 'straight') return;
+  ctx.save();
+  ctx.fillStyle = 'rgba(255,244,200,.45)';
+  ctx.beginPath();
+  if (shape === 'curve') {
+    const [dx, dy] = roadShapeCorner(mask);
+    ctx.beginPath(); ctx.rect(X, Y, T, T); ctx.clip();   // 印は このマスの中だけ（となりへの はみ出しで 見え方が かわらないように）
+    ctx.beginPath();
+    ctx.arc(X + (dx > 0 ? T : 0), Y + (dy > 0 ? T : 0), T * 0.28, 0, Math.PI * 2);
+    ctx.fill();
+  } else {
+    ctx.arc(X + T / 2, Y + T / 2, T * 0.22, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(120,90,40,.35)';
+    ctx.beginPath();
+    ctx.arc(X + T / 2, Y + T / 2, Math.max(1, T * 0.05), 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
 function spotArt(s) {
   if (s.id === 'f-ricepia') return 'ricepia';
   if (s.id === 'f-kondo-beikoku') return 'kondo';
@@ -7801,6 +7837,7 @@ function drawTile(tx, ty, X, Y, T, f, now) {
   else if (MT.road && ROAD_ROW[code] !== undefined) {   // 道は つながる向きの絵（ふちに縁石・白線・草）。踏切ではレールを重ねる
     const [ri, kado, xr, rankan] = nbrLook(tx, ty, roadLookOf);
     ctx.drawImage(MT.road[ROAD_ROW[code]][ri], X, Y, T, T);
+    if (code !== C.D) drawRoadShape(X, Y, T, ri >> 1);
     if (MT.kado) for (const i of kado) ctx.drawImage(MT.kado[ROAD_ROW[code]][i], X, Y, T, T);   // 交差点・曲がり角の内がわの縁石
     if (MT.rail) for (const p of xr) ctx.drawImage(MT.rail[p], X, Y, T, T);
     if (MT.rankan) for (const i of rankan) ctx.drawImage(MT.rankan[i], X, Y, T, T);   // 水と接する辺に橋の欄干
@@ -13055,7 +13092,7 @@ const meiroApi = {
   tilt: () => tiltG, tiltAsk, tiltReset, tiltNeedsPermission, koto: (v, low) => kotoSound(v, low), splash: v => splashSound(v), boing: (v, hi) => boingSound(v, hi), rumble: v => rumbleTick(v, GROUND.road),   // rumble：転がる音（速さは 地図の マス/秒）
   pause(on) { meiroPause = !!on; dirty = true; if (on && mzNext.hold) { mzNext.hold = false; if (G.toastFlush) G.toastFlush(); } },   // 止める ときは「つぎの ゴール」で 待たせた 知らせを 出す
 };
-window.nishioPixel = { blinkOn, BLINK_MS, BLINK_SHUT_MS, get riceEye() { return riceEyeAt; }, grow: { stage: () => grow.stage, stageFor: growStageFor, TH: GROW_TH, popAt: () => grow.popT }, firstRoute: { shape: mzPathShape, simple: mzFirstSimple, LIM: MZ_FIRST_SIMPLE }, collected: { has: collectedOf }, glanceShift, asleepShut, happyFace, meiroApi, heroGiant: () => heroGiantId, pickHeroGiant, HERO_GIANT_RANGE, maze: { wallTheme: () => mzWallTheme(), on: () => mazeOn(), playing: () => active && mazeOn(), next: () => ({ want: mzNext.want, t0: mzNext.t0, on: mzNextOn(), labHide: !!mzNext.labHide, arrowDim: !!mzNext.arrowDim, box: mzNext.box || null }), goal: id => {   // id の 名所が いまの ゴール（か 2分 以内の 前の ゴール）なら、かかった 時間と めいろの 道のり
+window.nishioPixel = { blinkOn, BLINK_MS, BLINK_SHUT_MS, get riceEye() { return riceEyeAt; }, grow: { stage: () => grow.stage, stageFor: growStageFor, TH: GROW_TH, popAt: () => grow.popT }, firstRoute: { shape: mzPathShape, simple: mzFirstSimple, LIM: MZ_FIRST_SIMPLE }, collected: { has: collectedOf }, roadShape: { of: roadShapeOf, corner: roadShapeCorner }, glanceShift, asleepShut, happyFace, meiroApi, heroGiant: () => heroGiantId, pickHeroGiant, HERO_GIANT_RANGE, maze: { wallTheme: () => mzWallTheme(), on: () => mazeOn(), playing: () => active && mazeOn(), next: () => ({ want: mzNext.want, t0: mzNext.t0, on: mzNextOn(), labHide: !!mzNext.labHide, arrowDim: !!mzNext.arrowDim, box: mzNext.box || null }), goal: id => {   // id の 名所が いまの ゴール（か 2分 以内の 前の ゴール）なら、かかった 時間と めいろの 道のり
     if (!mazeOn()) return null;
     const now = performance.now(), pv = mzRt.prev, g = mzRt.gid === id ? { t0: mzRt.t0, len0: mzRt.len0, warp: mzRt.warp, moves: mzMv.n, run: { ...mzRt.run } } : pv && pv.id === id && now - pv.at < 120000 ? pv : null;
     if (!g || !g.t0) return null;

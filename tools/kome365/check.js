@@ -136,7 +136,7 @@ const CHECKS = {
     const c = await p.evaluate(() => { K3.jump('harvest'); for (let i=0;i<8 && !K3.S.hv.done;i++) K3.doLeft(); K3.V.toast = null; for (let i=0;i<3;i++) K3.advanceDay(); return { m: K3.S.hv.moisture, toast: K3.V.toast && K3.V.toast.text }; });
     ok(c.m <= 15.5 && c.toast === '15%', '1日ずつ 進めても 15% を こえた 時に 合図（8周目）', c);
     const k = await p.evaluate(() => { K3.jump('tiller'); const f = K3.S.f; f.dat = 35; f.hoshiDays = 8; f.water = 2; const w0 = f.water; /* 中干しの あと（窓の 外。21周目：窓の 中は ↓が 0 まで） */ window.dispatchEvent(new KeyboardEvent('keydown', { key:'ArrowUp' })); const w1 = f.water, t1 = document.getElementById('say').textContent; window.dispatchEvent(new KeyboardEvent('keydown', { key:'ArrowDown' })); const w2 = f.water; return { w0, w1, w2, t1 }; });
-    ok(k.w1 === k.w0 + 3 && k.w2 === Math.max(2.5, k.w1 - 3) && /→で あした/.test(k.t1), '矢印キーも 指と 同じ 道（水 +3cm・−3cm は 2.5cm のこす・こめつぶの 返事）', k);
+    ok(k.w1 === k.w0 + 3 && k.w2 === Math.max(3.5, k.w1 - 3) && /→で あした/.test(k.t1), '矢印キーも 指と 同じ 道（水 +3cm・−3cm は 穂づくりの よい 深さの 下 3.5cm のこす・こめつぶの 返事）', k);
     await p.screenshot({ path: path.join(OUT, 'dry.png') });
   },
   // 中干しの 合図が 出る。水が ない 間は 追肥できない（3周目）

@@ -550,5 +550,22 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertIn("const INK_MS = 250;", HTML)  # 長押しの受け皿は従来どおり残す
         self.assertIn("const NIGIRU_MS = 350;", HTML)  # にぎるは静止長押しのまま（手ざわりが分かれる）
 
+    def test_cycle88_each_lot_has_its_own_grain_and_bag_look(self):
+        # 類2: 袋ごとに整粒の形・色つやと袋の帯の色で個性を出す。最初の袋は従来どおり、固定内容は変えない。
+        self.assertIn("look:0", HTML)
+        for i in range(6):
+            self.assertIn("look:%d" % i, HTML)
+        self.assertIn("const LOT_LOOKS = [", HTML)
+        self.assertEqual(HTML.count("stripe:"), 6)  # 袋ごとに帯の色が1つずつ
+        for stripe in ["#2d7a4a", "#2c5f7c", "#a83c2a", "#7c3a5e", "#2a7a6e", "#7a4f28"]:
+            self.assertIn('stripe:"' + stripe + '"', HTML)
+        self.assertIn("const GRAIN_ROWS_SLIM = [", HTML)
+        self.assertIn("const GRAIN_ROWS_ROUND = [", HTML)
+        self.assertIn("rows:GRAIN_ROWS, pal:GRAIN_COLORS.seiryu", HTML)  # 最初の袋は従来の形と色
+        self.assertIn('shapeLook = kind === "seiryu" || kind === "higai"', HTML)  # 被害粒も形は袋にそろえ、区別は割れ目と色だけ
+        self.assertIn('palLook = kind === "seiryu" || (far && kind === "higai")', HTML)  # わるい粒の色は変えない
+        self.assertIn("drawBag($(\"bagCanvas\"), LOT_LOOKS[LOT.look].stripe)", HTML)
+        self.assertIn("{ moisture:[14.1, 14.3, 14.2], higai:1, shini:1, mijuku:0, color:0, look:0 }", HTML)  # 最初の袋の固定内容は不変
+
 if __name__ == "__main__":
     unittest.main()

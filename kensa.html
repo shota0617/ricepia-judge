@@ -273,6 +273,7 @@
   <p>農産物検査の仕事が題材です。手順は、穀刺しで袋から試料をぬき（1袋 約40g）、水分を3回はかって平均し、白い皿と黒い皿で粒を見て、等級をきめ、証印をおす流れです。写真の穀刺しと一等米は実物です。</p>
   <p>等級は水稲うるち玄米の規格どおりに、整粒・水分・死米・着色粒・計（被害粒＋死米＋着色粒＋異種穀粒＋異物）のうち、いちばん悪い項目で決まります。未熟粒は整粒を減らしますが、計には入りません。水分は規格表の15.0%に、当分の間の1.0%加算を入れた16.0%までを適合としています。</p>
   <p>鑑定は視覚・触覚・臭覚・聴覚を用いて行います（鑑定方法・平成13年農林水産省告示第333号）。におう・かむ・にぎるは、それをゲームの動きにしたものです。水分計のハンドルは、粒をつぶして測る水分計の形にならいました。</p>
+  <p>袋ごとに、整粒の形と色つや、袋の帯の色が少しずつ違います。今日はどんな米かが、開いてすぐの楽しみです。わるい粒の見分けの印（色・割れ目）は袋によらず同じです。</p>
   <p>ゲームでは分かりやすくするため、皿は20粒で1粒＝5%と数えます（実際の検査の粒数や重量の割合とは違います）。形質（標準品との比較）、異種穀粒、異物は皿には出していません。ゲームの等級は遊びのためのもので、実際の格付けではありません。</p>
   <p>出典: <a href="https://www.maff.go.jp/j/seisan/syoryu/kensa/kome/k_kikaku/" target="_blank" rel="noopener">農林水産省「玄米の検査規格」</a>／<a href="https://www.maff.go.jp/j/seisan/syoryu/kensa/hourei.html" target="_blank" rel="noopener">農産物検査法及び関係通知等</a>／<a href="https://www.maff.go.jp/j/seisan/syoryu/kensa/attach/pdf/index-25.pdf" target="_blank" rel="noopener">農林水産省「コメの農産物検査」</a></p>
   <p><a href="https://ricepia.jp/">らいすぴあ（近藤米穀店）のサイトへ</a></p>
@@ -292,12 +293,12 @@ const MOISTURE_ADD = 1.0;
 const PLATE_GRAINS = 20; /* 1粒 = 5% */
 /* わるい粒の数（のこりが整粒）。等級はこの粒数と水分だけで決まる */
 const LOTS = [
-  { moisture:[14.1, 14.3, 14.2], higai:1, shini:1, mijuku:0, color:0 }, /* 1等: まずは2粒だけ */
-  { moisture:[16.8, 17.0, 16.9], higai:0, shini:1, mijuku:1, color:0 }, /* 規格外: 粒はきれいでも水分が高い */
-  { moisture:[14.0, 13.8, 13.9], higai:0, shini:2, mijuku:5, color:0 }, /* 2等: 整粒65%・死米10% */
-  { moisture:[14.4, 14.2, 14.3], higai:2, shini:3, mijuku:5, color:0 }, /* 3等: 整粒50%・死米15%・計25% */
-  { moisture:[14.5, 14.6, 14.4], higai:0, shini:0, mijuku:1, color:1 }, /* 規格外: 着色粒1粒が5% */
-  { moisture:[14.0, 14.2, 14.1], higai:0, shini:1, mijuku:5, color:0 }  /* 1等: 整粒70%ちょうど。未熟粒は計に入らない */
+  { moisture:[14.1, 14.3, 14.2], higai:1, shini:1, mijuku:0, color:0, look:0 }, /* 1等: まずは2粒だけ。見た目は従来どおり */
+  { moisture:[16.8, 17.0, 16.9], higai:0, shini:1, mijuku:1, color:0, look:1 }, /* 規格外: 粒はきれいでも水分が高い */
+  { moisture:[14.0, 13.8, 13.9], higai:0, shini:2, mijuku:5, color:0, look:2 }, /* 2等: 整粒65%・死米10% */
+  { moisture:[14.4, 14.2, 14.3], higai:2, shini:3, mijuku:5, color:0, look:3 }, /* 3等: 整粒50%・死米15%・計25% */
+  { moisture:[14.5, 14.6, 14.4], higai:0, shini:0, mijuku:1, color:1, look:4 }, /* 規格外: 着色粒1粒が5% */
+  { moisture:[14.0, 14.2, 14.1], higai:0, shini:1, mijuku:5, color:0, look:5 }  /* 1等: 整粒70%ちょうど。未熟粒は計に入らない */
 ];
 function moistureAverage(values) {
   return Math.round(values.reduce((a, b) => a + b, 0) / values.length * 10) / 10;
@@ -373,16 +374,53 @@ const GRAIN_COLORS = {
   mijuku: { O:"#5f7a3a", B:"#c2d68c", H:"#e0ecb8", S:"#9fb66a", eye:"#33441c" },
   color:  { O:"#3d2614", B:"#7c5230", H:"#9a6e45", S:"#5c3a1e", eye:"#f3e4c8" }
 };
+/* 袋ごとの個性（類2）: 整粒の形と色つや、袋の帯の色だけが袋ごとに違う。わるい粒の色・形は見分けのため変えない */
+const GRAIN_ROWS_SLIM = [
+  ".....OOOOOOOO.....",
+  "...OOHHHHBBBBOO...",
+  "..OHHBBBBBBBBBO...",
+  "..OBBBBBBBBBBBSO..",
+  "..OBBBBBBBBBBBSO..",
+  "..OBBBBBBBBBBBSO..",
+  "..OBBBBBBBBBBSSO..",
+  "...OBBBBBBBBSSO...",
+  "....OOSSSSSSOO....",
+  ".....OOOOOOOO....."
+];
+const GRAIN_ROWS_ROUND = [
+  "...OOOOOOOOOOOO...",
+  ".OOHHHHHHBBBBBBOO.",
+  "OHHHBBBBBBBBBBBBSO",
+  "OBBBBBBBBBBBBBBSSO",
+  "OBBBBBBBBBBBBBBSSO",
+  "OBBBBBBBBBBBBBBSSO",
+  ".OBBBBBBBBBBBBSSO.",
+  ".OOBBBBBBBBBBSSOO.",
+  "..OOSSSSSSSSSSOO..",
+  "...OOOOOOOOOOOO..."
+];
+const LOT_LOOKS = [
+  { rows:GRAIN_ROWS, pal:GRAIN_COLORS.seiryu, stripe:"#2d7a4a" }, /* 最初の袋は従来どおり */
+  { rows:GRAIN_ROWS_SLIM, pal:{ O:"#8a6a38", B:"#ecd096", H:"#f9ecc4", S:"#d3af6e", eye:"#3a2a14" }, stripe:"#2c5f7c" },
+  { rows:GRAIN_ROWS_ROUND, pal:{ O:"#6e4a20", B:"#d9a856", H:"#f0cd8a", S:"#b57f36", eye:"#33200e" }, stripe:"#a83c2a" },
+  { rows:GRAIN_ROWS_SLIM, pal:{ O:"#7c5c2c", B:"#e8c98c", H:"#f7e7bc", S:"#cfa75e", eye:"#3a2a14" }, stripe:"#7c3a5e" },
+  { rows:GRAIN_ROWS_ROUND, pal:{ O:"#8a6a38", B:"#eed9a4", H:"#faf0cc", S:"#d8ba78", eye:"#3a2a14" }, stripe:"#2a7a6e" },
+  { rows:GRAIN_ROWS, pal:{ O:"#6e4a20", B:"#dbb264", H:"#f2d894", S:"#bb8f42", eye:"#33200e" }, stripe:"#7a4f28" }
+];
 const spriteCache = {};
 function grainSprite(kind, mood) {
-  const key = kind + "/" + mood;
+  const far = mood === "far"; /* 遠目では顔も割れ目も見えない。寄ると見える */
+  const shapeLook = kind === "seiryu" || kind === "higai"; /* 被害粒も形はその袋の米にそろえ、区別は割れ目と色だけにする */
+  const palLook = kind === "seiryu" || (far && kind === "higai"); /* 遠目の被害粒は整粒そっくりの色 */
+  const look = LOT_LOOKS[(typeof LOT !== "undefined" && LOT.look) || 0];
+  const key = kind + "/" + mood + (shapeLook ? "/L" + ((typeof LOT !== "undefined" && LOT.look) || 0) : "");
   if (spriteCache[key]) return spriteCache[key];
   const c = document.createElement("canvas");
   c.width = 18; c.height = 10;
-  const far = mood === "far"; /* 遠目では顔も割れ目も見えない。寄ると見える */
-  const x = c.getContext("2d"), pal = GRAIN_COLORS[far && kind === "higai" ? "seiryu" : kind];
+  const x = c.getContext("2d"), pal = palLook ? look.pal : GRAIN_COLORS[kind];
+  const rows = shapeLook ? look.rows : GRAIN_ROWS;
   const px = (color, ...pts) => { x.fillStyle = color; pts.forEach(([a, b]) => x.fillRect(a, b, 1, 1)); };
-  GRAIN_ROWS.forEach((row, y) => [...row].forEach((ch, i) => { if (ch !== ".") px(pal[ch], [i, y]); }));
+  rows.forEach((row, y) => [...row].forEach((ch, i) => { if (ch !== ".") px(pal[ch], [i, y]); }));
   if (kind === "higai" && !far) px("#5a3d18", [12, 1], [12, 2], [13, 3], [13, 4], [12, 5], [13, 6], [13, 7], [14, 8]); /* 割れ目 */
   if (kind === "color") px("#2c1a0c", [3, 3], [4, 3], [3, 4], [4, 5], [13, 2], [14, 2], [14, 6], [13, 7]); /* 色のしみ */
   if (far) return spriteCache[key] = c.toDataURL();
@@ -403,16 +441,17 @@ function grainSprite(kind, mood) {
   return spriteCache[key] = c.toDataURL();
 }
 
-/* 袋のドット絵 */
-function drawBag(canvas) {
+/* 袋のドット絵。帯の色は袋ごとの個性（類2） */
+function drawBag(canvas, stripe) {
+  const band = stripe || LOT_LOOKS[0].stripe;
   const x = canvas.getContext("2d");
   const r = (c, a, b, w, h) => { x.fillStyle = c; x.fillRect(a, b, w, h); };
   r("#6b4a24", 4, 3, 40, 55); r("#6b4a24", 2, 8, 44, 46); r("#6b4a24", 6, 1, 8, 3); r("#6b4a24", 34, 1, 8, 3);
   r("#dcb47f", 5, 4, 38, 53); r("#dcb47f", 3, 9, 42, 44); r("#dcb47f", 7, 2, 6, 3); r("#dcb47f", 35, 2, 6, 3);
   r("#c79c62", 39, 8, 6, 45); r("#c79c62", 5, 53, 38, 4); r("#ecd0a2", 5, 8, 5, 40);
   for (let i = 7; i < 41; i += 3) r("#8a6a3a", i, 6, 2, 1); /* 口のぬい目 */
-  r("#2d7a4a", 12, 12, 24, 3); r("#2d7a4a", 15, 17, 18, 2); r("#2d7a4a", 15, 21, 18, 2);
-  r("#f5ecd6", 10, 27, 28, 25); r("#2d7a4a", 10, 27, 28, 1); r("#2d7a4a", 10, 51, 28, 1); r("#2d7a4a", 10, 27, 1, 25); r("#2d7a4a", 37, 27, 1, 25);
+  r(band, 12, 12, 24, 3); r(band, 15, 17, 18, 2); r(band, 15, 21, 18, 2);
+  r("#f5ecd6", 10, 27, 28, 25); r(band, 10, 27, 28, 1); r(band, 10, 51, 28, 1); r(band, 10, 27, 1, 25); r(band, 37, 27, 1, 25);
 }
 /* 穀刺しのドット絵（動きに使う。写真の実物は袋の横に置く） */
 (function drawProbe() {
@@ -501,6 +540,7 @@ function capture(el, e) {
 const NUDGE_LIMIT = 3;
 function startLot() {
   LOT = LOTS[lotIndex % LOTS.length];
+  drawBag($("bagCanvas"), LOT_LOOKS[LOT.look].stripe); drawBag($("bagBigCanvas"), LOT_LOOKS[LOT.look].stripe); /* 袋の帯もその袋の色で */
   layer($("decide"), false); layer($("osu"), false);
   nextBtn.classList.remove("on");
   hint.style.display = "";

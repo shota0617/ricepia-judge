@@ -96,12 +96,12 @@ class Cycle13ViewTests(unittest.TestCase):
           const first = mzView.cx >= 0;
           rp.x = (mzView.cx + 0.5) * MZ_K; rp.y = (mzView.cy + 0.5) * MZ_K;
           mzViewTick(1010);
-          return { first, done: mzView.done, pts, said, pano: mzView.panoAt, clearUntil: mzView.clearUntil, clearNow: mzViewClear(1010), clearLate: mzViewClear(31010) };""")
+          return { first, done: mzView.done, pts, said, pano: mzView.panoAt, clearNow: mzViewClear(1010), clearLate: mzViewClear(9999999) };""")
         self.assertTrue(r['first'])
-        self.assertEqual((r['done'], r['pts'], r['pano'], r['clearUntil']), (True, 15, 1010, 31010))
-        self.assertEqual(r['said'], ['🔭 見晴らし台に ついた！ +15pt（30秒間 もやが 晴れるよ）'])
+        self.assertEqual((r['done'], r['pts'], r['pano']), (True, 15, 1010))
+        self.assertEqual(r['said'], ['🔭 見晴らし台に ついた！ +15pt（もやが 晴れるよ）'])
         self.assertTrue(r['clearNow'])
-        self.assertFalse(r['clearLate'])   # 30秒で霧晴れは終わる
+        self.assertTrue(r['clearLate'])   # 第4弾サイクル81：霧晴れは期限で終わらない（迷路の間ずっと）
 
     def test_no_respawn_after_done(self):
         r = self.run_js("""
@@ -124,16 +124,17 @@ class Cycle13ViewTests(unittest.TestCase):
 
     def test_constants(self):
         r = self.run_js("return { ...MZ_VIEW };")
-        self.assertEqual(r, {'min': 8, 'reach': 18, 'pts': 15, 'panoMs': 6000, 'clearMs': 30000})
+        self.assertEqual(r, {'min': 8, 'reach': 18, 'pts': 15, 'panoMs': 6000})
 
     def test_state_reset(self):
         r = self.run_js("""
-          mzViewReset(); mzViewTick(1000); mzView.done = true; mzView.panoAt = 5; mzView.clearUntil = 99999;
+          mzViewReset(); mzViewTick(1000); mzView.done = true; mzView.panoAt = 5;
           const had = mzView.cx >= 0; mzViewReset();
           return { had, state: { ...mzView } };""")
         self.assertTrue(r['had'])
         s = r['state']
-        self.assertEqual((s['done'], s['cx'], s['sx'], s['panoAt'], s['clearUntil']), (False, -1, -1, 0, 0))
+        self.assertEqual((s['done'], s['cx'], s['sx'], s['panoAt']), (False, -1, -1, 0))
+        self.assertNotIn('clearUntil', s)
         self.assertIn('if (!mazeOn() && mzView.sx >= 0) mzViewReset();', PIXEL)
         self.assertIn('mzViewReset();   // 見晴らし台も 迷路（ゴール）ごとに はじめから', PIXEL)
         a = GAME.index('function mzView(')
@@ -156,7 +157,7 @@ class Cycle13ViewTests(unittest.TestCase):
 
     def test_drawn_before_fog_and_panorama_below_shelf(self):
         self.assertIn('drawMzView(ox, oy, T, now);', PIXEL)
-        self.assertLess(PIXEL.index('drawMzView(ox, oy, T, now);'), PIXEL.index('drawMzFogVeil(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTorchLight(ox, oy, T, now); drawMzSightRing(ox, oy, T, now); drawMzPulse(ox, oy, T, now); drawMzCacheGlow(ox, oy, T, now); drawMzGlide(ox, oy, T, now); drawMzStormRing(ox, oy, T, now); drawMzChase(ox, oy, T, now); drawMzEnergyRing('))
+        self.assertLess(PIXEL.index('drawMzView(ox, oy, T, now);'), PIXEL.index('drawMzFogVeil(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTorchLight(ox, oy, T, now); drawMzSightRing(ox, oy, T, now); drawMzPulse(ox, oy, T, now); drawMzCacheGlow(ox, oy, T, now); drawMzGlide(ox, oy, T, now); drawMzChase(ox, oy, T, now); drawMzEnergyRing('))
         self.assertIn('drawMzShelf(w, dpr, now); drawMzViewPanorama(w, dpr, now); drawMzEnergyBar(', PIXEL)
         self.assertNotIn('drawMzViewClearTag(w, dpr, now);', PIXEL)   # 文章札は 常時描画しない（サイクル25）
         self.assertIn("if (!mzViewClear(now)) mzFogFill(mzFogCells(tx0, ty0, tx1, ty1, ox, oy, T, 'veil'), S);", PIXEL)
@@ -165,7 +166,7 @@ class Cycle13ViewTests(unittest.TestCase):
         self.assertIn('80,170,235', d)   # 水色の輪
         self.assertNotIn('#ff8c1a', d)   # みかんの色は使わない
         self.assertNotIn('255,224,102', d)   # ゴールの金の輪の色は使わない
-        pano = PIXEL[PIXEL.index('function drawMzViewPanorama('):PIXEL.index('function drawMzViewClearTag(')]
+        pano = PIXEL[PIXEL.index('function drawMzViewPanorama('):PIXEL.index('\n}\n', PIXEL.index('function drawMzViewPanorama('))]
         self.assertIn('drawMzPieceArt', pano)   # 海・田んぼ・町の3景色
         self.assertIn('MZ_VIEW.panoMs', pano)
 

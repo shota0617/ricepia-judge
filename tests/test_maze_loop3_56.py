@@ -19,10 +19,9 @@ def git(*a):
 
 
 TRAIL = func_body("function drawMzTrail(")
-MINI = func_body("function drawMzMini(")
 PULSE = func_body("function mzEntrancePulse(")
 ENT = TRAIL[TRAIL.index("const ea = "):]
-ADDED = [l[1:] for l in git("diff", "-U0", "origin/main", "--", "nishio-go/pixel.js").splitlines() if l.startswith("+") and not l.startswith("+++") and "//c17" not in l and "!G.demo" not in l]
+ADDED = [l[1:] for l in git("diff", "-U0", "origin/main", "--", "nishio-go/pixel.js").splitlines() if l.startswith("+") and not l.startswith("+++") and "//c17" not in l and "!G.demo" not in l and "//c82" not in l]
 
 
 class Pulse(unittest.TestCase):
@@ -78,16 +77,9 @@ class Draw(unittest.TestCase):
 
 
 class Mini(unittest.TestCase):
-    def test_mini_triangle(self):
-        self.assertIn("mzOpen(cx, cy, dx, dy) && !mzTrail.has((cx + dx) + ',' + (cy + dy))", MINI)
-        self.assertIn("px0 + (0.5 + dx * 0.5) * q - dx * q * 0.45, Y = py0 + (0.5 + dy * 0.5) * q - dy * q * 0.45", MINI)
-        self.assertIn("ctx.fillStyle = '#ffffff'", MINI)
-        self.assertIn("q * 0.45", MINI)
-        self.assertIn("q * 0.4", MINI)
-
-    def test_mini_order(self):
-        self.assertGreater(MINI.index("q * 0.45"), MINI.index("if (!mzOpen(cx, cy, 1, 0))"))
-        self.assertGreater(MINI.index("q * 0.45"), MINI.index("of mzMini.seen"))  # 入口は しるしの 上（Codex指摘対応）
+    def test_mini_abolished_cycle64(self):
+        self.assertNotIn("function drawMzMini(", PIXEL)   # ミニマップ廃止（本線の白い三角は残る）
+        self.assertIn("mzOpen(cx, cy, dx, dy) && !mzTrail.has((cx + dx) + ',' + (cy + dy))", TRAIL)
 
 
 class Safety(unittest.TestCase):
@@ -101,4 +93,4 @@ class Safety(unittest.TestCase):
 
     def test_files_allowed(self):
         files = set(git("diff", "--name-only", "origin/main").split())
-        self.assertTrue(all(f.startswith("tests/") or f in ("nishio-go/pixel.js", "nishio-go/game.js", "nishio-go/style.css", "nishio-go/postcard.js", "nishio-go/photoquiz.js", "nishio-go/daystamp.js", "nishio-go/picross.js", "nishio-go/shopmap.js", "nishio-go/bingo.js", "nishio-go/memory.js", "nishio-go/slidepuzzle.js", "nishio-go/janken.js", "nishio-go/rollsync.js", "nishio-go/landscape.js", "nishio-go/biglandmark.js", "nishio-go/rolltrail.js", "nishio-go/meiro.js", "nishio-go.html") for f in files), files)
+        self.assertTrue(all(f.startswith("tests/") or f in ("nishio-go/pixel.js", "nishio-go/game.js", "nishio-go/style.css", "nishio-go/postcard.js", "nishio-go/photoquiz.js", "nishio-go/daystamp.js", "nishio-go/picross.js", "nishio-go/shopmap.js", "nishio-go/bingo.js", "nishio-go/memory.js", "nishio-go/slidepuzzle.js", "nishio-go/janken.js", "nishio-go/rollsync.js", "nishio-go/landscape.js", "nishio-go/biglandmark.js", "nishio-go/rolltrail.js", "nishio-go/meiro.js", "nishio-go/share.js", "nishio-go/shomai.js", "nishio-go/art/shomai-cute.png", "nishio-go/art/rice-dot.png", "nishio-go/art/poi.png", "nishio-go/art/spots.png", "nishio-go/art/people.png", "nishio-go/art/cat-art.png", "nishio-go/art/cat-beach.png", "nishio-go/art/cat-castle.png", "nishio-go/art/cat-historic.png", "nishio-go/art/cat-library.png", "nishio-go/art/cat-museum.png", "nishio-go/art/cat-park.png", "nishio-go/art/cat-shrine.png", "nishio-go/art/cat-sight.png", "nishio-go/art/cat-station.png", "nishio-go/art/cat-temple.png", "nishio-go/art/cat-townhall.png", "nishio-go/art/cat-view.png", "nishio-go/art/cat-worship.png", "nishio-go/art/giant/nishio-castle.png", "nishio-go/art/giant/okazaki-castle.png", "nishio-go/art/giant/iwase-bunko.png", "nishio-go/art/giant/konrenji.png", "nishio-go/art/giant/nishio-station.png", "nishio-go/art/giant/daibutsu.png", "nishio-go/art/giant/ohirune.png", "nishio-go/art/giant/kurokabe.png", "nishio-go/art/giant/chaen.png", "nishio-go/art/giant/ricepia.png", "nishio-go/art/giant/kondo.png", "nishio-go/dankyu.js", "nishio-go/harvest.js", "nishio-go/hiryoyama.js", "nishio-go/idlecard.js", "nishio-go.html") for f in files), files)

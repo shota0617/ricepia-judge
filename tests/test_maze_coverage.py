@@ -87,7 +87,7 @@ class Cycle17CoverageTests(unittest.TestCase):
 
     def test_wiring_in_source(self):
         s = self.src
-        self.assertIn('mzPebPct(', s[s.index('function drawMzClock'):s.index('// 足あと：いまの ゴール')])   # 時計の札（めいろの中だけ）
+        self.assertNotIn('mzPebPct(', s[s.index('function drawMzClock'):s.index('// 足あと：いまの ゴール')])   # 時計の札はサイクル85で廃止（drawMzClock は即 return）
         tick = s[s.index('function mzPebTick'):s.index('function drawMzPebs')]
         self.assertNotIn('addPoint', tick); self.assertNotIn('G.add', tick)   # ポイントには関係しない
 

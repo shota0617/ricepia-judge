@@ -1,0 +1,22 @@
+diff --git a/game/index.html b/game/index.html
+index 0e102ca..55e322f 100644
+--- a/game/index.html
++++ b/game/index.html
+@@ -2814,7 +2814,7 @@ renderTitle();
+     try { var ht = $('swHealthTint'); if (ht) { var hc = healthCalc(st); healthInfo = hc; ht.setAttribute('data-health', hc.key); ht.style.backgroundColor = hc.bg; } } catch (e) {}   /* 田んぼの調子で移ろう色み(サイクル64): moodCalc読み取りのみ。弱い項目の色みを弱さに比例して敷く(色のみ) */
+     try { var pl = $('swStagePlants');   /* 稲の列で読む丈・密度・穂(サイクル52): growthCalc() の読み取りのみ。段階が変わったときだけ株を組み直し、丈・金色・刈り株はCSSの data-stage で穏やかに移る(絵文字のみ・文字なし) */
+       if (pl) { var gc4 = growthCalc(); if (stagePlantsInfo.idx !== gc4.idx) { var sp4 = STAGEPLANTS[gc4.idx]; stagePlantsInfo = { idx: gc4.idx, key: gc4.key }; pl.setAttribute('data-stage', String(gc4.idx)); if (!pl.children.length) pl.innerHTML = Array.from({ length: 9 }, function(){ return '<span class="pl off"></span>'; }).join(''); for (var pi4 = 0; pi4 < pl.children.length; pi4++) { var pc4 = pl.children[pi4], on4 = sp4.slots.indexOf(pi4) >= 0; pc4.classList.toggle('off', !on4); if (on4) pixPlantSet(pc4, sp4.pix); else pixPlantClear(pc4); } } } } catch (e) {}
+-    try { var md = moodCalc(st), me = $('swMood'), mf = $('swMoodFace'), mneed = $('swMoodNeed'); if (md) { md.need = md.min < 0.3 ? NEEDICON[md.worst] : ''; moodInfo = md; me.style.display = ''; pixFaceSet(mf, md.level); pixFaceInfo.level = md.level; me.className = md.level; if (md.need) pixStatSet(mneed, md.worst); else pixStatClear(mneed); mneed.style.display = md.need ? '' : 'none'; } else { moodInfo = { face: '', level: '', avg: 0, min: 0, worst: '', need: '' }; me.style.display = 'none'; pixFaceClear(mf); pixFaceInfo.level = ''; pixStatClear(mneed); mneed.style.display = 'none'; me.className = ''; } } catch (e) {}
++    try { var md = moodCalc(st), me = $('swMood'), mf = $('swMoodFace'), mneed = $('swMoodNeed'); if (md) { md.need = md.min < 0.3 && f.sowDoy ? NEEDICON[md.worst] : '';   /* 周回98: 種まき前(準備の冬)は世話の催促を出さない */ moodInfo = md; me.style.display = ''; pixFaceSet(mf, md.level); pixFaceInfo.level = md.level; me.className = md.level; if (md.need) pixStatSet(mneed, md.worst); else pixStatClear(mneed); mneed.style.display = md.need ? '' : 'none'; } else { moodInfo = { face: '', level: '', avg: 0, min: 0, worst: '', need: '' }; me.style.display = 'none'; pixFaceClear(mf); pixFaceInfo.level = ''; pixStatClear(mneed); mneed.style.display = 'none'; me.className = ''; } } catch (e) {}
+     $('swSt').innerHTML = st.error ? '' : bar('water', '💧水', st.water) + bar('weed', '🌿雑草', st.weed) + bar('bug', '🐛虫', st.bug) + bar('fert', '🧺肥料', st.fert) + bar('vigor', '🌾稲', st.vigor);
+   }
+   /* 特別な日(金枠＋★): 1年の節目の作業(種まき・田植え・穂肥・稲刈り・台風)の、その年の最初の1枚だけ。後でまた出る同じ作業カードは通常の見た目(出しすぎない・目安は年に4〜5日) */
+@@ -3275,7 +3275,7 @@ renderTitle();
+           if (c.key !== card.key || c.left.label !== card.left.label || c.right.label !== card.right.label) throw new Error('pv mismatch');
+           var a = KomeCards.status(g); c.apply(sd, g); var b = KomeCards.status(g);
+           if (a.error || b.error) throw new Error('pv status');
+-          var mdp = moodCalc(b); if (mdp) { mdp.need = mdp.min < 0.3 ? NEEDICON[mdp.worst] : ''; pvM[sd] = mdp; }
++          var mdp = moodCalc(b); if (mdp) { mdp.need = mdp.min < 0.3 && f.sowDoy ? NEEDICON[mdp.worst] : ''; pvM[sd] = mdp; }
+           PVK.forEach(function(k){ var d = b[k].v - a[k].v, m = Math.abs(d); if (m >= 0.05) { pv[sd][k] = m < 0.15 ? 1 : m < 0.35 ? 2 : 3; pvS[sd][k] = d > 0 ? 1 : -1; } });
+         });
+       }

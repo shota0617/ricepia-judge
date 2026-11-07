@@ -86,8 +86,11 @@ class Cycle18EnergyTests(unittest.TestCase):
 
     def test_bar_drawn_always_in_maze(self):
         h = PIXEL[PIXEL.index('function drawMzEnergyBar('):PIXEL.index('// びゅんパネル')]
-        for t in ('⚡ ${', 'MZ_ENERGY.need', 'mzViewShelfY'):
+        for t in ('MZ_ENERGY.need', 'mzViewShelfY'):
             self.assertIn(t, h)
+        bar = h[:h.index('\n}\n')]
+        self.assertNotIn('fillText', bar)   # サイクル97：数字は描かない（ゲージだけ）
+        self.assertNotIn('⚡ ${', bar)
         self.assertNotIn('createLinearGradient', h)   # サイクル9（第4弾）：脈打ち・グラデーションをやめ、静かな単色に
         self.assertIn('drawMzViewPanorama(w, dpr, now); drawMzEnergyBar(w, dpr, now);', PIXEL)
         self.assertNotIn('さんぽエネルギー ${', h)   # 文章ラベルは 描かない（サイクル25）
@@ -113,7 +116,7 @@ class Cycle18EnergyTests(unittest.TestCase):
         pi = GAME[GAME.index('const STAT_PI = ['):GAME.index('];', GAME.index('const STAT_PI = ['))]
         rows = GAME[GAME.index("$('stats').innerHTML = ["):GAME.index('].map(([k, v, u], i)')]
         self.assertEqual(pi.count(',') + 1, len(re.findall(r"\['[^']+', ", rows)))
-        self.assertEqual(pi.count(',') + 1, 21)
+        self.assertEqual(pi.count(',') + 1, 20)
 
     def test_no_forbidden_words_in_diff(self):
         words = ('ぼく', 'だに', '約20%')   # このリスト自身は検査から除く

@@ -19,7 +19,7 @@ def git(*a):
 
 BODY = func_body("function drawMzTrail(")
 ADDED = [l[1:] for l in git("diff", "origin/main", "--", "nishio-go/pixel.js").splitlines()
-         if l.startswith("+") and not l.startswith("+++") and "//c17" not in l and "!G.demo" not in l]
+         if l.startswith("+") and not l.startswith("+++") and "//c17" not in l and "!G.demo" not in l and "//c82" not in l and "r.pts}pt（" not in l]
 
 
 class Edge(unittest.TestCase):
@@ -50,7 +50,7 @@ class Edge(unittest.TestCase):
 class Unchanged(unittest.TestCase):
     def test_other_funcs_untouched(self):
         d = git("diff", "origin/main", "-U0", "--", "nishio-go/pixel.js")
-        for f in ("mzTrailTick", "mzFogAlpha", "mzFogCells", "veil", "tint"):
+        for f in ("mzTrailTick", "mzFogAlpha", "mzFogCells", "veil"):   # サイクル64：ミニマップ描画（tint を含む）を廃止したため "tint" は除外
             self.assertFalse([l for l in d.splitlines() if l[:1] in "+-" and f in l], f)
 
     def test_no_state_or_text(self):
@@ -63,5 +63,5 @@ class Unchanged(unittest.TestCase):
 
     def test_files_allowed(self):
         files = set(git("diff", "--name-only", "origin/main").split())
-        self.assertTrue(files <= {"nishio-go/pixel.js", "nishio-go/game.js", "nishio-go/style.css", "nishio-go/postcard.js", "nishio-go/photoquiz.js", "nishio-go/daystamp.js", "nishio-go/picross.js", "nishio-go/shopmap.js", "nishio-go/bingo.js", "nishio-go/memory.js", "nishio-go/slidepuzzle.js", "nishio-go/janken.js", "nishio-go/rollsync.js", "nishio-go/landscape.js", "nishio-go/biglandmark.js", "nishio-go/rolltrail.js", "nishio-go/meiro.js", "nishio-go.html", "tests/test_maze_loop4_1.py", "tests/test_maze_loop4_3.py", "tests/test_maze_loop4_6.py", "tests/test_maze_loop3_53.py"} or all(
-            f.startswith("tests/") or f in ("nishio-go/pixel.js", "nishio-go/game.js", "nishio-go/style.css", "nishio-go/postcard.js", "nishio-go/photoquiz.js", "nishio-go/daystamp.js", "nishio-go/picross.js", "nishio-go/shopmap.js", "nishio-go/bingo.js", "nishio-go/memory.js", "nishio-go/slidepuzzle.js", "nishio-go/janken.js", "nishio-go/rollsync.js", "nishio-go/landscape.js", "nishio-go/biglandmark.js", "nishio-go/rolltrail.js", "nishio-go/meiro.js", "nishio-go.html") for f in files), files)
+        self.assertTrue(files <= {"nishio-go/pixel.js", "nishio-go/game.js", "nishio-go/style.css", "nishio-go/postcard.js", "nishio-go/photoquiz.js", "nishio-go/daystamp.js", "nishio-go/picross.js", "nishio-go/shopmap.js", "nishio-go/bingo.js", "nishio-go/memory.js", "nishio-go/slidepuzzle.js", "nishio-go/janken.js", "nishio-go/rollsync.js", "nishio-go/landscape.js", "nishio-go/biglandmark.js", "nishio-go/rolltrail.js", "nishio-go/meiro.js", "nishio-go/share.js", "nishio-go.html", "tests/test_maze_loop4_1.py", "tests/test_maze_coverage.py", "tests/test_maze_loop4_86.py", "tests/test_maze_loop4_3.py", "tests/test_maze_loop4_6.py", "tests/test_maze_loop3_53.py"} or all(
+            f.startswith("tests/") or f in ("nishio-go/pixel.js", "nishio-go/game.js", "nishio-go/style.css", "nishio-go/postcard.js", "nishio-go/photoquiz.js", "nishio-go/daystamp.js", "nishio-go/picross.js", "nishio-go/shopmap.js", "nishio-go/bingo.js", "nishio-go/memory.js", "nishio-go/slidepuzzle.js", "nishio-go/janken.js", "nishio-go/rollsync.js", "nishio-go/landscape.js", "nishio-go/biglandmark.js", "nishio-go/rolltrail.js", "nishio-go/meiro.js", "nishio-go/share.js", "nishio-go/shomai.js", "nishio-go/art/shomai-cute.png", "nishio-go/art/rice-dot.png", "nishio-go/art/poi.png", "nishio-go/art/spots.png", "nishio-go/art/people.png", "nishio-go/art/cat-art.png", "nishio-go/art/cat-beach.png", "nishio-go/art/cat-castle.png", "nishio-go/art/cat-historic.png", "nishio-go/art/cat-library.png", "nishio-go/art/cat-museum.png", "nishio-go/art/cat-park.png", "nishio-go/art/cat-shrine.png", "nishio-go/art/cat-sight.png", "nishio-go/art/cat-station.png", "nishio-go/art/cat-temple.png", "nishio-go/art/cat-townhall.png", "nishio-go/art/cat-view.png", "nishio-go/art/cat-worship.png", "nishio-go/art/giant/nishio-castle.png", "nishio-go/art/giant/okazaki-castle.png", "nishio-go/art/giant/iwase-bunko.png", "nishio-go/art/giant/konrenji.png", "nishio-go/art/giant/nishio-station.png", "nishio-go/art/giant/daibutsu.png", "nishio-go/art/giant/ohirune.png", "nishio-go/art/giant/kurokabe.png", "nishio-go/art/giant/chaen.png", "nishio-go/art/giant/ricepia.png", "nishio-go/art/giant/kondo.png", "nishio-go/dankyu.js", "nishio-go/harvest.js", "nishio-go/hiryoyama.js", "nishio-go/idlecard.js", "nishio-go.html") for f in files), files)

@@ -73,7 +73,7 @@ class Brigade(unittest.TestCase):
         self.assertIn("🎉 おとも旅団 完成！ かおりちゃんと おとも米たち！", tag)
         self.assertIn("MZ_BRIGADE.tagMs", tag)
         self.assertIn("mzEnergy.lastCx >= 0) y0 +=", tag)
-        self.assertIn("mzTorch.until > now) y0 +=", tag)   # たいまつ札と重ならない
+        self.assertNotIn("mzTorch.", tag)   # 第4弾サイクル81：たいまつ札は無いので余白も取らない
         self.assertIn("tagMs: 6000", PIXEL)
 
     def test_state_hook(self):
@@ -90,7 +90,7 @@ class Brigade(unittest.TestCase):
         self.assertNotIn("drawMzBrigadeTag(w, dpr, now);", PIXEL)   # 文章札は 常時描画しない（サイクル25）
 
     def test_non_blocking(self):
-        seg = PIXEL[PIXEL.index("// おとも旅団（ルフラン"):PIXEL.index("// 手描き探索マップ")]
+        seg = PIXEL[PIXEL.index("// おとも旅団（ルフラン"):PIXEL.index("// 見えたしるしの記録（表示はサイクル64で廃止")]
         for w in ("addEventListener", "confirm(", "alert(", "modal"):
             self.assertNotIn(w, seg)
 

@@ -1,21 +1,21 @@
 // にしおさんぽGO：ミニゲーム「段丘をのぼる」（たての段丘崖を、岩のでっぱりをジャンプで上る）
 // ・ドット絵の地図で、急な坂（段丘のへりの崖。山や丘はのぞく）のそばにいるとき、地図の右上の列のボタンから遊べる（pixel.js の pxDankyu）
 // ・下の田んぼ（氾濫平野）から、少し高い自然堤防、碧海層の見える段丘崖をへて、上の碧海台地の旗をめざす
-// ・崖の途中の「露頭」（碧海層が見える所）にさわると、まめちしき。上から落ちてくる小石にあたると ♥ がへる（3つ）。時間切れか ♥ がなくなると不成功
+// ・崖の途中の「露頭」（碧海層が見える所）にさわると、まめちしき。上から落ちてくる小石にあたると ♥ がへる（3つ）。♥ がなくなると不成功。制限時間はなく、自分のペースでのぼれる
 // ・段丘は3つ（だんだん高くなる）：西尾の本で分けた a〜e 地区の名前（a・b 地区の碧海台地 → c・d 地区の碧海台地 → e 地区の段丘）。のぼりきると次の段丘へ
-// ・★：のぼりきった・露頭をぜんぶ見た・時間が3分の1以上のこった
+// ・★での優劣はつけない（Spiritfarer・Cozy Grove：頼みは自分のペースで叶え、できたこと自体が進み具合）。のぼりきれば一律のごほうびと「できた」印（✓）だけ。♥ は遊びの仕組みで、評価には使わない
 // ・ことばは shizen.js（西尾の海と大地。出典つき）の「碧海台地と碧海層」「西尾の低い土地」「自然堤防の上の集落」の話だけを使う
 // ・主人公と地面の絵は「にしおジャンプ」と同じ Blender の絵（nishio-go/art/runner.png）。ごほうびは game.js の dankyuReward（1日1回）
 // ・操作：◀ ▶ と「ジャンプ」、キーボードは ← → / A D と スペース・↑・Z
-// ・段丘ごとの自己ベスト（★、★が同じなら のこり時間）を残し、開くと まだのぼりきっていない段丘から。結果の画面で えらべる（game.js の miniBest）
+// ・段丘ごとの「できた」印（✓）を静かに残し（結果では比べない。Townscaper：作ること自体が体験）、開くと まだのぼりきっていない段丘から。結果の画面で えらべる（game.js の miniBest）
 (() => {
   'use strict';
   const W = 192, H = 144, T = 16, COLS = W / T;   // 画面（12×9マス）
   // 段丘の名前：西尾の本（shizen.js の出典）89ページで、市内の碧海面（碧海台地）を地形で分けた a〜e の地区。場所は図1-3-133 から
   //   a・b：八ツ面山の西〜矢作川ぞい（碧海層の露頭1〜4）。c：五砂山のあたり、d：矢作川の河口に近い南西。e：幡豆山地のふもと（碧海層相当層の露頭6〜9）
-  const LEVELS = [{ rows: 30, time: 45, rock: 150, name: 'a・b 地区の碧海台地', where: '八ツ面山の西〜矢作川ぞい', tip: '田んぼの低い土地と、段丘のへりの崖のようすが分かりやすい所' },
-    { rows: 42, time: 60, rock: 120, name: 'c・d 地区の碧海台地', where: '五砂山のあたりと、南西の矢作川の河口に近いあたり', tip: 'a〜d 地区は古くから人が住み、土地が大きく変えられた所' },
-    { rows: 56, time: 75, rock: 95, name: 'e 地区の段丘', where: '幡豆山地のふもと', tip: 'ここで見える地層は「碧海層相当層」' }];
+  const LEVELS = [{ rows: 30, rock: 150, name: 'a・b 地区の碧海台地', where: '八ツ面山の西〜矢作川ぞい', tip: '田んぼの低い土地と、段丘のへりの崖のようすが分かりやすい所' },
+    { rows: 42, rock: 120, name: 'c・d 地区の碧海台地', where: '五砂山のあたりと、南西の矢作川の河口に近いあたり', tip: 'a〜d 地区は古くから人が住み、土地が大きく変えられた所' },
+    { rows: 56, rock: 95, name: 'e 地区の段丘', where: '幡豆山地のふもと', tip: 'ここで見える地層は「碧海層相当層」' }];
   const GRAV = 0.28, JUMP = -5.8, RUN = 1.6, ACC = 0.3;   // 1回のジャンプで約57点（3.5マス）上がる。でっぱりの間は たて2〜3マス（48点まで）
   // 1回のジャンプで上がる高さ（step と同じ順：速さに重さを足してから動く）
   const maxRise = () => { let v = JUMP, y = 0, top = 0; for (let i = 0; i < 200; i++) { v = Math.min(6, v + GRAV); y += v; top = Math.min(top, y); if (v > 0) break; } return -top; };
@@ -107,7 +107,6 @@
     if (root) root.querySelector('.jump-result').hidden = true;
   }
   function say(t) { msg = t; msgT = performance.now(); }
-  const timeLeft = () => Math.max(0, L.time - frames / 60);
 
   function zoneOf(y) {   // いる所の名前と、そこで出す話
     const r = y / T;
@@ -165,46 +164,40 @@
     if (hurtT > 0) hurtT--;
     else for (const r of rocks) if (Math.abs(r.x + 3 - (pl.x + 5)) < 7 && Math.abs(r.y + 3 - (pl.y + 8)) < 9) {
       r.y = camY + H + 99; hearts--; hurtT = 60; sound('hit');
-      say(hearts > 0 ? `小石にあたった（♥ のこり ${hearts}）` : '小石にあたった');
+      say(hearts > 0 ? `小石にあたった（♥ ${hearts}）` : '小石にあたった');
       if (hearts <= 0) return fail('♥ がなくなりました');
       break;
     }
-    if (timeLeft() <= 0) return fail('時間切れ');
     // カメラは主人公の少し上をみる
     const want = Math.max(0, Math.min(worldH - H, pl.y - 84));
     camY += (want - camY) * 0.15;
   }
-  function stars() {
-    const all = outcrops.every(o => o.got), fast = timeLeft() >= L.time / 3;
-    return 1 + (all ? 1 : 0) + (fast ? 1 : 0);
-  }
   function later(fn) { const g = gen; setTimeout(() => { if (running && g === gen) fn(); }, 300); }   // 閉じた・やりなおしたあとに前のプレイの結果を出さない
   function clear() { done = true; sound('clear'); later(() => result(true)); }
   function fail(why) { done = true; sound('fail'); later(() => result(false, why)); }
-  // 段丘をえらぶボタン：のぼりきった段丘と、その次の段丘（★は自己ベスト）
+  // 段丘をえらぶボタン：のぼりきった段丘と、その次の段丘（✓はできた印）
   function levelBtns() {
     const G = window.nishioGo;
     if (!G || !G.miniRecords) return '';
     const rec = G.miniRecords('dankyu');
     let open = 0; while (open < LEVELS.length - 1 && rec[open]) open++;   // えらべるのは、まだのぼりきっていない いちばん前の段丘まで
-    return `<span class="mini-levels">${LEVELS.map((l, i) => i > open && !rec[i] ? '' : `<button type="button" class="btn mini${i === lv ? ' now' : ''}" data-dk="lv" data-lv="${i}" aria-label="${i + 1}つ目の段丘 ${l.name}">${i + 1} ${rec[i] ? '★'.repeat(rec[i].s) + '☆'.repeat(3 - rec[i].s) : '—'}</button>`).join('')}</span>`;
+    return `<span class="mini-levels">${LEVELS.map((l, i) => i > open && !rec[i] ? '' : `<button type="button" class="btn mini${i === lv ? ' now' : ''}" data-dk="lv" data-lv="${i}" aria-label="${i + 1}つ目の段丘 ${l.name}">${i + 1} ${rec[i] ? '✓' : '—'}</button>`).join('')}</span>`;
   }
   function result(ok, why) {
     if (shown) return;
     shown = true;
-    const G = window.nishioGo, st = ok ? stars() : 0;
-    const got = ok && G && G.dankyuReward ? G.dankyuReward(st, lv) : null;
-    const mb = ok && G && G.miniBest ? G.miniBest('dankyu', lv, st, Math.ceil(timeLeft()), false) : null;
+    const G = window.nishioGo;
+    const got = ok && G && G.dankyuReward ? G.dankyuReward(lv) : null;
+    if (ok && G && G.miniBest) G.miniBest('dankyu', lv, 1, 0, false);   // 記録は静かに残すだけ
     const n = outcrops.filter(o => o.got).length;
     const res = root.querySelector('.jump-result');
     res.innerHTML = `<b>${ok ? `${L.name}に のぼりきった！` : '不成功'}</b><span>${lv + 1}つ目の段丘：${L.name}（${L.where}）</span>`
-      + (ok ? `<span>${'★'.repeat(st)}${'☆'.repeat(3 - st)}　露頭 ${n}/${outcrops.length}・のこり ${Math.ceil(timeLeft())}秒</span>` : `<span>${why}</span>`)
-      + (mb && mb.best ? `<span>${mb.fresh ? '自己ベスト更新！ ' : '自己ベスト '}${'★'.repeat(mb.best.s)}${'☆'.repeat(3 - mb.best.s)}　のこり ${mb.best.v}秒</span>` : '')
+      + (ok ? `<span>露頭 ${n}/${outcrops.length}</span>` : `<span>${why}</span>`)
       + (got > 0 ? `<span>きょうのごほうび +${got}pt</span>` : ok && got === null && G && G.dankyuReward ? '<span>きょうのごほうびは、もうもらいました（あしたまた）</span>' : '')
       + levelBtns()
       + `<span class="jump-btns"><button type="button" class="btn" data-dk="again">もういちど</button>${ok && lv < LEVELS.length - 1 ? '<button type="button" class="btn" data-dk="next">つぎの段丘</button>' : ''}<button type="button" class="btn" data-dk="close">もどる</button></span>`;
     res.hidden = false;
-    if (G && G.track) G.track(ok ? 'dankyu_clear' : 'dankyu_fail', { level: lv + 1, stars: st, outcrops: n, left: Math.ceil(timeLeft()) });
+    if (G && G.track) G.track(ok ? 'dankyu_clear' : 'dankyu_fail', { level: lv + 1, outcrops: n });
   }
 
   /* ---------- 音（BGM の設定がオフなら鳴らさない） ---------- */
@@ -287,7 +280,6 @@
     c.fillStyle = 'rgba(0,0,0,0.35)'; c.fillRect(W - 5, 10, 3, H - 20);
     c.fillStyle = '#f2c230'; c.fillRect(W - 5, 10 + (H - 20) * (1 - Math.max(0, Math.min(1, prog))), 3, 3);
     hud('name', `${lv + 1}. ${L.name}`, false);
-    hud('time', `のこり ${Math.ceil(timeLeft())}秒`, timeLeft() < 10);
     hud('heart', '♥'.repeat(Math.max(0, hearts)) + '♡'.repeat(Math.max(0, 3 - hearts)), hearts <= 1);
     hud('find', `露頭 ${outcrops.filter(o => o.got).length}/${outcrops.length}`, false);
     hud('msg', msg && now - msgT < 5200 ? msg : '', false);
@@ -318,7 +310,7 @@
     root = document.createElement('div');
     root.className = 'jump harvest dankyu'; root.id = 'dankyu'; root.hidden = true;
     root.innerHTML = `<div class="jump-top"><b>段丘をのぼる <small data-h="name"></small></b><button type="button" class="btn mini" data-dk="close" aria-label="とじる">とじる</button></div>
-      <div class="harvest-hud"><span data-h="time"></span><span data-h="heart"></span><span data-h="find"></span></div>
+      <div class="harvest-hud"><span data-h="heart"></span><span data-h="find"></span></div>
       <div class="jump-stage"><canvas width="${W}" height="${H}" aria-label="ミニゲーム 段丘をのぼる"></canvas><div class="jump-result" hidden></div></div>
       <p class="harvest-msg" data-h="msg"></p>
       <p class="jump-help">◀ ▶ で歩いて「ジャンプ」。でっぱりを上って、台地の旗へ。白い地層の「露頭」にさわるとまめちしき。落ちてくる小石に気をつけて</p>
@@ -364,7 +356,7 @@
   window.NISHIO_DANKYU = {
     open, close, reset, press(k, on) { if (keys) keys[k] = on; },
     warp(px, py) { if (pl) { pl.x = px; pl.y = py; pl.vy = 0; } },
-    get info() { return pl ? { level: lv, rows: L.rows, x: pl.x, y: pl.y, ground: pl.ground, hearts, time: timeLeft(), outcrops: outcrops.map(o => ({ x: o.x, y: o.y, got: o.got })), plats: plats.map(p => ({ ...p })), done, zone } : null; },
+    get info() { return pl ? { level: lv, rows: L.rows, x: pl.x, y: pl.y, ground: pl.ground, hearts, outcrops: outcrops.map(o => ({ x: o.x, y: o.y, got: o.got })), plats: plats.map(p => ({ ...p })), done, zone } : null; },
     LEVELS, maxRise,
   };
 })();

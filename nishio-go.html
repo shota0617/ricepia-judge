@@ -74,11 +74,23 @@
 <link rel="stylesheet" href="nishio-go/style.css"/>
 </head>
 <body>
+<script>/* 読みこみ中は 画面を切り替えず、題字だけを見せる（サイクル116）。スクリプトが読めなくても DOMContentLoaded で開く */
+(function () {
+  var c = document.createElement('div');
+  c.id = 'bootCover';
+  c.setAttribute('aria-hidden', 'true');
+  c.innerHTML = '<img src="nishio-go/logo.svg" alt="" width="272" height="40"/>';
+  document.body.appendChild(c);
+  document.addEventListener('DOMContentLoaded', function () {
+    setTimeout(function () { c.classList.add('off'); setTimeout(function () { c.remove(); }, 350); }, 50);
+  });
+})();
+</script>
 <script>/* 文字を少なく（ふだん）。せってい の「文字を多めに出す」をオンにすると外す */try{if(localStorage.getItem('nsg_text_more')!=='1')document.body.classList.add('simple')}catch(e){document.body.classList.add('simple')}</script>
 
 <header class="bar">
   <div class="brand"><i data-pi="castle" data-art="bar-castle"></i><span class="tx">にしおさんぽGO</span></div>
-  <button class="lv" id="lvBtn" type="button" aria-label="レベルと称号">
+  <button class="lv" id="lvBtn" type="button" aria-label="レベルと称号" hidden>
     <span class="lv-num"><i data-pi="star" data-art="stat-star"></i><span class="tx">Lv</span><b id="lvNum">1</b></span>
     <span class="lv-bar"><i id="lvFill"></i></span>
   </button>
@@ -94,7 +106,7 @@
 <!-- ドット絵の地図 -->
 <section id="pxView" aria-label="ドット絵の地図">
   <canvas id="pxCanvas"></canvas>
-  <div class="px-zoom"><button type="button" id="pxWorld" aria-label="せかいちず（西尾市と となりの市町）" title="せかいちず（西尾市と となりの市町）"><i data-pi="globe" data-art="btn-globe"></i></button><button type="button" id="pxZoomIn" aria-label="拡大">＋</button><button type="button" id="pxZoomOut" aria-label="縮小">－</button><button type="button" id="pxZoom" class="zc" aria-label="大きさを変える" title="大きさを変える">🔍</button><button type="button" id="pxHarvest" class="h" hidden aria-label="コンバインで稲刈り（田んぼの上で）" title="コンバインで稲刈り（田んぼの上で）"><i data-pi="star" data-art="btn-combine"></i></button><button type="button" id="pxDankyu" class="h" hidden aria-label="段丘をのぼる（急な坂のそばで）" title="段丘をのぼる（急な坂のそばで）">⛰️</button><button type="button" id="pxHiryo" class="h" hidden aria-label="肥料山の草刈り（丘や山のそばで）" title="肥料山の草刈り（丘や山のそばで）">🌿</button></div>
+  <div class="px-zoom"><button type="button" id="pxWorld" aria-label="せかいちず（西尾市と となりの市町）" title="せかいちず（西尾市と となりの市町）"><i data-pi="globe" data-art="btn-globe"></i></button><button type="button" id="pxZoomIn" aria-label="拡大">＋</button><button type="button" id="pxZoomOut" aria-label="縮小">－</button><button type="button" id="pxHarvest" class="h" hidden aria-label="コンバインで稲刈り（田んぼの上で）" title="コンバインで稲刈り（田んぼの上で）"><i data-pi="star" data-art="btn-combine"></i></button><button type="button" id="pxDankyu" class="h" hidden aria-label="段丘をのぼる（急な坂のそばで）" title="段丘をのぼる（急な坂のそばで）">⛰️</button><button type="button" id="pxHiryo" class="h" hidden aria-label="肥料山の草刈り（丘や山のそばで）" title="肥料山の草刈り（丘や山のそばで）">🌿</button></div>
   <div class="dq px-msg" id="pxMsg" hidden></div>
   <div class="px-attr">© OpenStreetMap contributors／地理院タイル／国土数値情報を加工</div>
   <div class="px-pad" id="pxPad" hidden>
@@ -396,12 +408,20 @@
       <li><span class="hi" aria-hidden="true">🐦</span><span><b>カラスに 気をつけて</b><small>当たると 時計が 5秒 すすむ</small></span></li>
       <li><span class="hi" aria-hidden="true">⭐</span><span><b>着いたら ポイントと ドット絵</b><small>着くと ポイントと ドット絵</small></span></li>
     </ol>
-    <p class="howto-btns"><span>🌏 せかいちず</span><span>🔍 大きさ</span><span>🌀 めいろ</span></p>
+    <p class="howto-btns"><span>🌏 せかいちず</span><span>🌀 めいろ</span></p>
     <button type="button" class="btn big" id="howtoOk">とじる</button>
   </div>
 </div>
 
 <!-- ホーム画面に追加のおすすめ（ごほうびを2回もらったあとに、7日に1回まで） -->
+<div class="idle-card" id="idleCard" hidden role="dialog" aria-label="お疲れ様です">
+  <p>🍚 お疲れ様です</p>
+  <div class="idle-btns">
+    <button type="button" class="btn mini" id="idleLike">♥ いいね</button>
+    <a class="btn mini" id="idleSite" href="https://ricepia.jp/?utm_source=nishio-go&utm_medium=game&utm_campaign=idle_card">🏠 サイトへ もどる</a>
+    <button type="button" class="btn mini ghost" id="idleKeep">つづける</button>
+  </div>
+</div>
 <div class="a2hs" id="a2hs" hidden role="dialog" aria-label="ホーム画面に追加">
   <p id="a2hsText">📲 ホーム画面に追加すると、あしたもワンタップで遊べます</p>
   <div class="a2hs-btns"><button type="button" class="btn mini" id="a2hsAdd">追加する</button><button type="button" class="btn mini ghost" id="a2hsNo">あとで</button></div>
@@ -507,14 +527,10 @@
 <script src="nishio-go/rolltrail.js"></script>
 <script src="nishio-go/landscape.js"></script>
 <script src="nishio-go/biglandmark.js"></script>
+<script src="nishio-go/shomai.js"></script>
 <script src="nishio-go/postcard.js"></script>
 <script src="nishio-go/shogo.js"></script>
 <script src="nishio-go/game.js"></script>
-<script src="nishio-go/runner.js"></script>
-<script src="nishio-go/harvest.js"></script>
-<script src="nishio-go/movie.js"></script>
-<script src="nishio-go/dankyu.js"></script>
-<script src="nishio-go/hiryoyama.js"></script>
 <script src="nishio-go/oldmap.js"></script>
 <script src="nishio-go/kirara.js"></script>
 <script src="nishio-go/yatsumushi.js"></script>
@@ -522,8 +538,25 @@
 <script src="nishio-go/korostyle.js"></script>
 <script src="nishio-go/pixel.js"></script>
 <script src="nishio-go/meiro.js"></script>
-<script src="nishio-go/dots.js"></script>
-<script src="nishio-go/godot-field.js"></script>
 <script src="nishio-go/share.js"></script>
+<script src="nishio-go/idlecard.js"></script>
+<script>
+/* スタートの1分：転がるのに要らない任意機能（ミニゲーム・ムービー・ドット絵帳・Godot 描画）は、load のあとに 1本ずつ順に読む。
+   入口は game.js / pixel.js 側の window.X && ... で守られているので、読み込み前は何もしない。失敗しても console に残すだけ */
+(function () {
+  var files = ["runner", "harvest", "movie", "dankyu", "hiryoyama", "dots", "godot-field"];
+  var i = 0;
+  function next() {
+    if (i >= files.length) { window.__nsgLazyDone = true; return; }
+    var el = document.createElement('script');
+    el.src = 'nishio-go/' + files[i++] + '.js';
+    el.async = false;
+    el.onload = next;
+    el.onerror = function () { try { console.warn('lazy load failed: ' + el.src); } catch (e) { /* noop */ } next(); };
+    document.body.appendChild(el);
+  }
+  if (document.readyState === 'complete') next(); else window.addEventListener('load', next);
+})();
+</script>
 </body>
 </html>

@@ -1,0 +1,13 @@
+diff --git a/game/index.html b/game/index.html
+index 55e322f..3675c20 100644
+--- a/game/index.html
++++ b/game/index.html
+@@ -2992,7 +2992,7 @@ renderTitle();
+     if (guideFresh) guideLeft = true;
+     $('swGuide').style.display = (guideLeft && choices.length < 3) ? 'block' : 'none';   /* はじめての案内は新規開始の最初の3枚だけ(2枚目・3枚目も出す) */
+     rwUpdate(true);
+-    el.card.classList.remove('enter', 'wig', 'hinting'); void el.card.offsetWidth; el.card.classList.add('enter'); if (hintOn) el.card.classList.add('hinting', 'wig');
++    el.card.classList.remove('enter', 'wig', 'hinting'); void el.card.offsetWidth; el.card.classList.add('enter'); if (hintOn) el.card.classList.add('hinting');   /* 周回99: 最初の3枚の揺れ(wig)はやめる。◀ ▶ の案内だけで足りる */
+     if (card.focus && window.Field3D && window.Field3D.canFocus && use3d) { try { if (window.Field3D.canFocus(card.focus)) window.Field3D.focus(card.focus); } catch (e) {} }
+     $('swGhost').classList.toggle('on', !ghostDone && choices.length === 0 && !calmOn());
+     var kk = $('swKakashi'); kk.classList.toggle('big', card.tag === '見回り');

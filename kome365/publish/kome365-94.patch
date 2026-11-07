@@ -1,0 +1,12 @@
+diff --git a/game/index.html b/game/index.html
+index 958fc5d..223f1b9 100644
+--- a/game/index.html
++++ b/game/index.html
+@@ -632,6 +632,7 @@ body:has(#sGame.swipeMode:not(.hidden)){padding-bottom:0}   /* ページ下の40
+ @media (max-height:660px){#swGuide{margin-top:44px}}
+ @media (max-height:600px){#swNextMile.on{display:none}#swIc{min-height:60px;max-height:64px}#swIc .icPix{width:56px;height:56px}#swIc .icEmoji{font-size:48px}}
+ @media (max-height:440px){#swGuide,#swSeasonStrip,#swIc{display:none!important}#swTop{margin-bottom:2px}#swCard{padding-top:6px;padding-bottom:6px}#swTitle{margin:0 0 2px}#swText{line-height:1.4}#swEdge{margin-top:4px}#swEdge>span{padding:6px 9px}}
++@media (max-height:440px){#swCard.fest #swFest{display:none}}   /* 横向き(周回94): 田植え・稲刈りのちょうちん・花火の段を出さない(日付に重なり、選ぶ部分を画面の下へ押していた) */
+ @media (max-height:440px) and (min-width:660px){#swMood{left:calc(10px - (100vw - 480px) / 2)}#swGrow{left:calc(8px - (100vw - 480px) / 2)}#swKakashi{right:calc(10px - (100vw - 480px) / 2)}#swSkyWx{right:calc(8px - (100vw - 480px) / 2)}#swAheadWx{right:calc(14px - (100vw - 480px) / 2)}}   /* 横向き: 顔・かかし・天気は左右の空きへ(カードの字に重ねない) */
+ </style>
+ </head>

@@ -1,4 +1,4 @@
-"""第3弾サイクル21：迷路のたいまつ（Legend of Grimrock の明かりの輪。フォグの視界 +3マス・45秒）。"""
+"""第3弾サイクル21：迷路のたいまつ（Legend of Grimrock の明かりの輪。フォグの視界 +3マス・迷路の間ずっと。第4弾サイクル81で期限を廃止）。"""
 import re
 import subprocess
 import unittest
@@ -16,9 +16,9 @@ def func_body(head):
 
 class Torch(unittest.TestCase):
     def test_constants_and_functions(self):
-        self.assertIn("const MZ_TORCH = { sight: 3, ms: 45000, pts: 10, min: 6", PIXEL)
+        self.assertIn("const MZ_TORCH = { sight: 3, pts: 10, min: 6", PIXEL)
         for h in ("function mzTorchReset(", "function mzTorchPick(", "function mzTorchTick(", "function mzTorchBonus(",
-                  "function mzTorchState(", "function drawMzTorch(", "function drawMzTorchFlame(", "function drawMzTorchTag("):
+                  "function mzTorchState(", "function drawMzTorch(", "function drawMzTorchFlame("):
             self.assertIn(h, PIXEL)
         self.assertIn("mzMiniTick(); mzTorchTick(now); mzBrigadeTick(now);", PIXEL)
 
@@ -48,12 +48,12 @@ class Torch(unittest.TestCase):
     def test_pickup_and_public_api(self):
         tick = func_body("function mzTorchTick(")
         self.assertIn("const r = G.mzTorch && G.mzTorch();\n  if (!r) return;", tick)
-        self.assertIn("mzTorch.until = now + MZ_TORCH.ms", tick)   # 加算ではなく張り直し
-        self.assertNotIn("until +", tick)
-        self.assertIn("🔥 たいまつ ゲット！ +${r.pts}pt（${MZ_TORCH.ms / 1000}秒間 ひろく 見えるよ）", tick)
+        self.assertIn("mzTorch.held = true", tick)   # 第4弾サイクル81：期限なし（迷路が終わるまで）
+        self.assertNotIn("until", tick)
+        self.assertIn("🔥 たいまつ ゲット！ +${r.pts}pt（ひろく 見えるよ）", tick)
         self.assertIn("grainSound()", tick)
         self.assertIn("mzFx.push", tick)
-        self.assertIn("mzTorch.cx = mzTorch.cy = -1", tick)   # 取ったら湧き直す（所持中も次が出る）
+        self.assertIn("mzTorch.cx = mzTorch.cy = -1", tick)   # 取ったら湧き直す（ただし所持中は次を出さない：サイクル81）
         g = GAME[GAME.index("function mzTorch()"):]
         g = g[:g.index("\n}\n")]
         for k in ("gainPoints(MZ_TORCH_PTS)", "S.torchGot = (S.torchGot || 0) + 1", "save()", "track('maze_torch'", "return { pts: MZ_TORCH_PTS }"):
@@ -68,25 +68,22 @@ class Torch(unittest.TestCase):
         pi = GAME[GAME.index('const STAT_PI = ['):GAME.index('];', GAME.index('const STAT_PI = ['))]
         rows = GAME[GAME.index("$('stats').innerHTML = ["):GAME.index('].map(([k, v, u], i)')]
         self.assertEqual(pi.count(',') + 1, len(re.findall(r"\['[^']+', ", rows)))
-        self.assertEqual(pi.count(',') + 1, 21)
+        self.assertEqual(pi.count(',') + 1, 20)
 
     def test_reset_rules(self):
         self.assertRegex(PIXEL, r"mzTorchReset\(\);[^\n]*\n\s*mzMini\.seen\.clear\(\);")   # ゴール変更時
-        self.assertRegex(PIXEL, r"!mazeOn\(\) && \(mzTorch\.sx >= 0 \|\| mzTorch\.until\)\) mzTorchReset\(\)")   # 迷路退出時
-        self.assertIn("until: 0", func_body("function mzTorchReset("))
+        self.assertRegex(PIXEL, r"!mazeOn\(\) && \(mzTorch\.sx >= 0 \|\| mzTorch\.held\)\) mzTorchReset\(\)")   # 迷路退出時
+        self.assertIn("held: false", func_body("function mzTorchReset("))
 
-    def test_tag_and_flame(self):
-        tag = func_body("function drawMzTorchTag(")
-        self.assertIn("🔥 たいまつ あと${Math.ceil((mzTorch.until - now) / 1000)}秒　視界が ひろいよ", tag)
-        self.assertIn("mzEnergy.lastCx >= 0) y0 +=", tag)   # エネルギーゲージと重ならない
-        self.assertIn("mzTorch.until <= now", tag)           # 時間切れで消える
-        self.assertIn("mzTorch.until <= now", func_body("function drawMzTorchFlame("))
-        self.assertIn("mzTorchBonus() { return mzTorch.until > performance.now()", PIXEL)
+    def test_flame_and_bonus_hold_while_held(self):
+        self.assertNotIn("function drawMzTorchTag(", PIXEL)   # 第4弾サイクル81：残り秒の札は廃止
+        self.assertIn("if (!mzTorch.held || rp.x === null) return;", func_body("function drawMzTorchFlame("))
+        self.assertIn("function mzTorchBonus() { return mzTorch.held ? MZ_TORCH.sight : 0; }", PIXEL)
 
     def test_state_hook(self):
         self.assertIn("torch: () => mzTorchState()", PIXEL)
         st = func_body("function mzTorchState(")
-        for k in ("at:", "left:", "got:", "bonus:"):
+        for k in ("at:", "held:", "got:", "bonus:"):
             self.assertIn(k, st)
 
     def test_draw_order(self):
@@ -97,7 +94,7 @@ class Torch(unittest.TestCase):
         self.assertNotIn("drawMzTorchTag(w, dpr, now);", PIXEL)   # 文章札は 常時描画しない（サイクル25）
 
     def test_non_blocking(self):
-        seg = PIXEL[PIXEL.index("// たいまつ（Legend of Grimrock"):PIXEL.index("// 手描き探索マップ")]
+        seg = PIXEL[PIXEL.index("// たいまつ（Legend of Grimrock"):PIXEL.index("// 見えたしるしの記録（表示はサイクル64で廃止")]
         for w in ("addEventListener", "confirm(", "alert(", "modal"):
             self.assertNotIn(w, seg)
 

@@ -16,12 +16,12 @@ def read(p):
 
 class ShadowStretch(unittest.TestCase):
     def test_bounds(self):
-        r = node("[R.shadowStretch(0),R.shadowStretch(1.5),R.shadowStretch(7.5),R.shadowStretch(99),R.shadowStretch(3),R.shadowStretch(5)]")
+        r = node("[R.shadowStretch(0),R.shadowStretch(1.5),R.shadowStretch(7.5),R.shadowStretch(99),R.shadowStretch(3),R.shadowStretch(4)]")
         self.assertEqual(r[0], 1)
         self.assertEqual(r[1], 1)
-        self.assertAlmostEqual(r[2], 1.3)
-        self.assertAlmostEqual(r[3], 1.3)
-        self.assertTrue(1 < r[4] < r[5] < 1.3)
+        self.assertAlmostEqual(r[2], 1.15)
+        self.assertAlmostEqual(r[3], 1.15)
+        self.assertTrue(1 < r[4] < r[5] < 1.15)
 
     def test_invalid(self):
         self.assertEqual(node("[R.shadowStretch(NaN),R.shadowStretch(null),R.shadowStretch('a'),R.shadowStretch(Infinity),R.shadowStretch()]"), [1, 1, 1, 1, 1])
@@ -75,7 +75,7 @@ class PixelWiring(unittest.TestCase):
     def test_fps(self):
         self.assertIn("RSf.fpsStep(fpsMeter", self.src)
         self.assertIn("!fpsMeter.slow && riceBall.cv", self.src)
-        self.assertIn("!fpsMeter.slow && rollOn && rp.x !== null) drawSpeedLines", self.src)
+        self.assertNotIn("drawSpeedLines", self.src)   # c84：スピード線は なくした
 
     def test_getter(self):
         self.assertIn("fps: fpsMeter.fps", self.src)

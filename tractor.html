@@ -9608,10 +9608,10 @@ function traceMinRun() { return !DETAIL && !HINT.done && !FIRSTMIN.over ? 0.12 :
 function traceStep() { return !DETAIL && !HINT.done && !FIRSTMIN.over ? 0.10 : 0.25; }
 // サイクル168・最初の1分: のんびり（calm）では朝・雨・夜の開始の窓の曇りを早く晴らし（約23秒→約6秒）、最初のなぞりの前に田んぼがはっきり見えるようにする。くわしい説明（DETAIL）では実物らしい晴れ方（従来どおり約23秒）を残す。
 function fogDiv() { return DETAIL ? 14 : 3.5; }
-// サイクル169・最初の1分: のんびり（calm）では開始1分は暖機の知らせ（トースト・声・COACHの暖機行）を出さず、冷えた朝・夜でもまずなぞって耕す楽しさに集中させる。冷えたまま耕した時間（coldT）の計測と回転・負荷の効きは従来どおり残し、くわしい説明（DETAIL）では実物どおり知らせる。
-function dankiMuted() { return !DETAIL && S.elapsed < 60; }
-// サイクル170・最初の1分: のんびり（calm）では開始1分は開始直後の天気・窓の知らせトーストを出さず、まずなぞって耕す楽しさに集中させる。天気・曇り・ライトの状態そのものは従来どおり見た目で伝わり、くわしい説明（DETAIL）では従来どおり知らせる。
-function startNoticeMuted() { return !DETAIL && S.elapsed < 60; }
+// サイクル169・最初の1分: のんびり（calm）では開始1分は暖機の知らせ（トースト・声・COACHの暖機行）を出さず、冷えた朝・夜でもまずなぞって耕す楽しさに集中させる。冷えたまま耕した時間（coldT）の計測と回転・負荷の効きは従来どおり残し、くわしい説明（DETAIL）では実物どおり知らせる。サイクル201・最初の1分: 点検（+300/+120）・歩行（+120）で S.elapsed が先行するとガードが開始直後から外れたため、判定を FIRSTMIN の実時間へそろえた。S.elapsed の加算自体・作業時間の表示は不変更で、くわしい説明では従来どおり出す。
+function dankiMuted() { return !DETAIL && FIRSTMIN.on; }
+// サイクル170・最初の1分: のんびり（calm）では開始1分は開始直後の天気・窓の知らせトーストを出さず、まずなぞって耕す楽しさに集中させる。天気・曇り・ライトの状態そのものは従来どおり見た目で伝わり、くわしい説明（DETAIL）では従来どおり知らせる。サイクル201・最初の1分: 点検（+300/+120）・歩行（+120）で S.elapsed が先行するとガードが開始直後から外れたため、判定を FIRSTMIN の実時間へそろえた。S.elapsed の加算自体・作業時間の表示は不変更で、くわしい説明では従来どおり出す。
+function startNoticeMuted() { return !DETAIL && FIRSTMIN.on; }
 function toggleRotary() {
   if (INTRO.on) return;                           // 草刈りの あいだは 草刈機（ロータリーは まだ ついていない）
   if (S.scrape > 0 || BELT.fixing || COVER.fixing || GREASE.fixing || CLAW.fixing || HERI.fixing || GASU.fixing || KATA.fixing || PANKU.fixing || AIRCL.fixing) return;   // 泥落とし・直しているあいだは さわらない（降下止めをかけてある）

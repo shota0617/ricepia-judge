@@ -316,6 +316,21 @@ function finalize(S){
   return { P, G, R, yieldKg, seiryu, chalk, green, crack, damage, protein, taste, grade, lodge, limGood, pct, eff, ratioPeak, grains, gdd:g };
 }
 
+/* 「〜して いれば」：状態の 写しを 直して finalize を もう一度。損失の 大きい 順に ならべる（11周目） */
+function whatIf(S){
+  const f = S.f, hv = S.hv, base = finalize(S), out = [];
+  const tryIt = (name, fix, say) => { const C = JSON.parse(JSON.stringify(S)); fix(C.f, C.hv); const r = finalize(C); const dy = Math.round(r.yieldKg - base.yieldKg), ds = Math.round(r.seiryu - base.seiryu); const gain = dy + ds*4; if (gain >= 15) out.push({ name, dy, ds, gain, say }); };
+  if (f.hoshiDays < 5) tryIt('中干し', (cf) => { cf.root = Math.max(cf.root, 75); cf.hoshiDays = 8; }, '中干しを して いれば');
+  if (f.heatHits > 0 && f.flowDays < f.heatHits) tryIt('掛け流し', (cf) => { cf.flowDays = cf.heatHits; }, 'あつい日に 水を 入れかえて いれば');
+  if (hv.gdd < 950 || hv.gdd > 1150) tryIt('刈りどき', (cf, ch) => { ch.gdd = 1000; }, '1000℃ で 刈って いれば');
+  if (hv.moisture < 14) tryIt('乾燥', (cf, ch) => { ch.moisture = 15; }, '15% で 止めて いれば');
+  if (f.A1 === 0) tryIt('追肥', (cf) => { cf.A1 = 3; cf.Nfloral = (cf.Nfloral==null ? cf.N : cf.Nfloral) + 4; }, '追肥を して いれば');
+  if (f.A2 === 0) tryIt('穂肥', (cf) => { cf.A2 = 2; cf.Nfloral = (cf.Nfloral==null ? cf.N : cf.Nfloral) + 3; }, '穂肥を して いれば');
+  if (f.flowerStress > 0) tryIt('水切れ', (cf) => { cf.flowerStress = 0; }, '穂づくりで 水を 切らさなければ');
+  if (f.drainLate > 0) tryIt('早い落水', (cf) => { cf.drainLate = 0; }, '登熟の 水を 早く 落とさなければ');
+  return out.sort((a, b) => b.gain - a.gain);
+}
+
 /* ========== ゲームの 状態 ========== */
 let S = newState((Date.now() ^ Math.floor(Math.random()*1e9))>>>0);
 let soundOn = true; try{ soundOn = localStorage.getItem('k365_sound') !== 'off'; }catch(e){}
@@ -836,7 +851,8 @@ function endGame(why){
   else if (r.pct > 95) lines.push('茎が ふえすぎ。分げつの ころに 少し 深い 水で。');
   else if (r.pct < 45) lines.push('茎が 少なめ。分げつの ころは 浅い 水で。');
   else lines.push('茎 ' + Math.round(f.P||f.T) + '本・穂 ' + Math.round(r.P) + '本/㎡・一穂 ' + Math.round(r.G) + '粒。');
-  $('rSay').innerHTML = lines[0]; $('rSay2').innerHTML = lines[1] || ('穂 ' + Math.round(r.P) + '本/㎡・一穂 ' + Math.round(r.G) + '粒・登熟 ' + Math.round(r.R*100) + '%。');
+  const wi = whatIf(S).slice(0, 2).map(w => w.say + ' <b>' + (w.dy > 0 ? '+' + w.dy + 'kg' : '') + (w.dy > 0 && w.ds > 0 ? '・' : '') + (w.ds > 0 ? '整粒 +' + w.ds + '%' : '') + '</b>'); /* 損失の 大きい 順に 2つ（11周目） */
+  $('rSay').innerHTML = lines[0]; $('rSay2').innerHTML = wi.length ? wi.join('。') + '。' : lines[1] || ('穂 ' + Math.round(r.P) + '本/㎡・一穂 ' + Math.round(r.G) + '粒・登熟 ' + Math.round(r.R*100) + '%。');
 }
 function loadLog(){ try{ const j = JSON.parse(localStorage.getItem('k365_log')||'[]'); return Array.isArray(j) ? j : []; }catch(e){ return []; } }
 function showYears(){ const log = loadLog(); const y = $('years'); if (!log.length){ y.hidden = true; return; } const best = log.reduce((m, e) => Math.max(m, e.score||0), 0); y.hidden = false; y.textContent = log.length + '年 つくりました・じこベスト ' + best + '点'; }
@@ -870,7 +886,7 @@ if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { me
 
 /* ========== テスト用の 口 ========== */
 const K3 = window.K3 = {
-  get S(){ return S; }, V, manual: false, fixedSeed: null, step, start, layout, actions, advanceDay, doLeft: () => doLeft(layout()), finalize: () => finalize(S), newState, makeWeather, dateOf, growDay, TARGET, HILLS,
+  get S(){ return S; }, V, manual: false, fixedSeed: null, step, start, layout, actions, advanceDay, doLeft: () => doLeft(layout()), finalize: () => finalize(S), whatIf: () => whatIf(S), newState, makeWeather, dateOf, growDay, TARGET, HILLS,
   /* スクショ用：ある 場面まで 一気に すすめる */
   jump(to){ if (!['seed','nursery','tiller','nakaboshi','heading','harvest','dry','result'].includes(to)) throw new Error('K3.jump: 知らない 場面 ' + to); start(); const f = S.f; const L = layout();
     const flipTo = (cond, max) => { for (let i=0;i<max && !cond();i++) advanceDay(); };

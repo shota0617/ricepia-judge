@@ -36,7 +36,7 @@ class Unlock(unittest.TestCase):
         self.assertEqual(out['toasts'], [])
 
     def test_style_after_first_goal(self):
-        out = run("localStorage.setItem('nsg_mzgoals','1');for(let i=0;i<41;i++)K.addDist(1);console.log(JSON.stringify({u:K.state.u.length,toasts}))")
+        out = run("localStorage.setItem('nsg_mzgoals','3');for(let i=0;i<41;i++)K.addDist(1);console.log(JSON.stringify({u:K.state.u.length,toasts}))")
         self.assertEqual(out['u'], 1)
         self.assertEqual(len(out['toasts']), 1)
         self.assertIn('転がり方', out['toasts'][0])
@@ -49,7 +49,7 @@ class Unlock(unittest.TestCase):
 class Static(unittest.TestCase):
     def test_source(self):
         i = SRC.index('function addDist(')
-        self.assertIn('if (goalsDone() < 1) return;', SRC[i:i + 600])
+        self.assertIn('if (goalsDone() < 3) return;', SRC[i:i + 600])
         self.assertIn("localStorage.getItem('nsg_mzgoals')", SRC)
 
 

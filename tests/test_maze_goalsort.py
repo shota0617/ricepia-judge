@@ -47,7 +47,8 @@ class MazeGoalSortStaticTests(unittest.TestCase):
         self.assertIn("const vertFirst = x => mazeVert && dist(me, x) <= MAZE_NEAR && dNS(x) >= dEW(x);", self.src)
 
     def test_refer_respects_near_floor(self):
-        self.assertIn("lo = five || (mazeNow() && !tooNearOk) ? MAZE_NEAR_MIN : 0", self.src)
+        self.assertIn("lo = nearLo;", self.src)
+        self.assertIn("first1 ? (tooNearOk ? 0 : FIRST_MIN) : five || (mazeNow() && !tooNearOk) ? MAZE_NEAR_MIN : 0", self.src)
         self.assertIn("dist(me, x.n) > Math.max(guideRadius({ kind: 'npc' }) * 1.5, lo)", self.src)
 
     def test_goalsort_definition(self):
@@ -55,7 +56,7 @@ class MazeGoalSortStaticTests(unittest.TestCase):
         self.assertRegex(self.src, r"const goalSort = mazeVert\n\s+\? .*\n\s+: \(a, b\) => dist\(me, a\) - dist\(me, b\);")
 
     def test_alts_use_goalsort_in_maze(self):
-        self.assertIn("const alts = (mazeVert ? rest.sort(goalSort) : rest).slice(0, 2)", self.src)
+        self.assertIn("const alts = (mazeVert ? rest.sort(first1 ? (a, b) => dist(me, a) - dist(me, b) : goalSort) : rest).slice(0, 2)", self.src)
 
     def test_unreachable_goal_is_rerolled_not_persisted(self):
         # 道すじが出なかった行き先は、10分だけ候補から外して選びなおす（S には書かない）。自分で選んだ・人のすすめは対象外

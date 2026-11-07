@@ -30,7 +30,7 @@ class Cube(unittest.TestCase):
             self.assertEqual(run(g), {'cx': -1, 'sx': 1}, g)   # スタートは おぼえる・かけらは 出ない
 
     def test_cube_after_first_goal(self):
-        self.assertEqual(run('1'), {'cx': 7, 'sx': 1})
+        self.assertEqual(run('3'), {'cx': 7, 'sx': 1})
 
     def test_shelf_hidden_before_first_goal(self):
         shelf = grab_fn('drawMzCubeShelf')

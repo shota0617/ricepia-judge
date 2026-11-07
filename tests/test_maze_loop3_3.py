@@ -69,7 +69,7 @@ class MapLookTest(unittest.TestCase):
         self.assertIn('overflow-x:auto', CSS)
 
     def test_guide_logic_unchanged(self):
-        self.assertIn('const alts = (mazeVert ? rest.sort(goalSort) : rest).slice(0, 2)', GAME)
+        self.assertIn('const alts = (mazeVert ? rest.sort(first1 ? (a, b) => dist(me, a) - dist(me, b) : goalSort) : rest).slice(0, 2)', GAME)
 
     def test_shortcut_highlight_only_when_walked(self):
         self.assertIn('mzGateUsed.add(key)', PIXEL)

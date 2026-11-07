@@ -966,7 +966,7 @@ function gainPoints(n) {
   session.gained += n;   // 1回に遊んだ間にふえたポイント（session_end）
   S.log = S.log.slice(0, 200);
   renderHeader();
-  if (demo && !(store.get('nsg_mzgoals', 0) >= 1)) return 0;   // にしおサイクル122：転がして 遊ぶ 人は、めいろの はじめての ゴールに 着くまで（最初の 1分）レベルが 上がっても 知らせない（⭐ の 知らせ・音・🎉 Lv。レベル表示は サイクル113 で しまってあり、レベルの 記録は そのまま 上がる。2回目からは これまでどおり。歩いて 遊ぶ 人は かわらない）
+  if (demo && !(store.get('nsg_mzgoals', 0) >= 3)) return 0;   // にしおサイクル122：転がして 遊ぶ 人は、めいろの はじめてのさんぽ（3ゴールまで）レベルが 上がっても 知らせない（⭐ の 知らせ・音・🎉 Lv。レベル表示は サイクル113 で しまってあり、レベルの 記録は そのまま 上がる。4つめのゴールからは これまでどおり。歩いて 遊ぶ 人は かわらない）
   return levelOf(S.total) > before ? levelOf(S.total) : 0;
 }
 
@@ -1844,6 +1844,8 @@ const GUIDE_PTS = 5, GUIDE_DAILY = 5, GUIDE_RANGE = { walk: 2000, play: 3000 };
 // まっすぐ 350〜900m（めいろの 道のり 1〜2km ＝ ふつうに 転がして 5分 ほど）。のこり 時間は 見せない（あせらせない）。近くに なければ いつもの 広さで えらぶ。
 // ★の 時間（道のりで きまる）・ポイントは かえない
 const MAZE_NEAR_MIN = 350, MAZE_NEAR = 900;
+// サイクル144：はじめてのゴールだけ、まっすぐ 120〜200m の 近くの 名所（最初の 1分で「転がす→着く」が 一巡する。2つめ以降は 上の 近さのまま）
+const FIRST_MIN = 120, FIRST_MAX = 200;
 const WEEKDAY = d => '日月火水木金土'[d.getDay()];
 const firstClause = t => String(t || '').split(/[。、]/)[0];
 // 着いたとみなす距離（checkGuide と decideGuide で同じものを使う）：人は話しかけられる距離、名所はチェックインできる距離
@@ -1877,15 +1879,18 @@ const mazeNow = () => !!(demo && window.nishioPixel && nishioPixel.maze && nishi
 function decideGuide(from) {   // めいろは まず 近く（5分）、なければ いつもの 広さ
   const near = demo && mazeNow(), g = decideGuide0(from, false);
   if (g) return near ? { ...g, near: true } : g;   // near：5分の 近さで えらんだ しるし（遠く なったら えらびなおす）
+  if (near && store.get('nsg_mzgoals', 0) < 1) { const f = decideGuide0(from, false, true); if (f) return { ...f, near: true }; }   // はじめてのゴール：200m の 帯に 何も なければ、近すぎる 所を 60m まで 許して もう 1回（それも なければ 広い 範囲へ）
   return near ? decideGuide0(from, true) || decideGuide0(from, true, true) : null;   // 広い範囲でも まず 近すぎる 所は のぞき、なければ 近い所も 許す
 }
 function decideGuide0(from, wide, tooNearOk) {
   if (!me) return null;
-  const now = new Date(), range = !wide && demo && mazeNow() ? MAZE_NEAR : GUIDE_RANGE[demo ? 'play' : 'walk'];   // めいろは 5分で 着く 近さ
+  const mazeNear = !wide && demo && mazeNow(), first1 = mazeNear && store.get('nsg_mzgoals', 0) < 1;   // first1：めいろで はじめての ゴールを えらぶ（近さは 最初の 1回だけ）
+  const now = new Date(), range = first1 ? FIRST_MAX : mazeNear ? MAZE_NEAR : GUIDE_RANGE[demo ? 'play' : 'walk'];   // めいろは 5分で 着く 近さ
   const recent = new Set([...(S.guideDone || []), ...mzNoPathIds()]);
   // 着いたとみなす距離の外（1.5倍より遠く）で、遠すぎず、最近着いた所でもない
-  const five = range === MAZE_NEAR;
-  const okFor = (kind, id) => x => { const d = dist(me, x); return d > Math.max(60, guideRadius({ kind, id }) * 1.5, five || (mazeNow() && !tooNearOk) ? MAZE_NEAR_MIN : 0) && d <= range && !recent.has(id); };   // めいろは 近すぎる 所も のぞく（1分で 終わって しまう）
+  const five = mazeNear;   // めいろの 近距離 pass か（first1 でも 真。range では 決めない）
+  const nearLo = first1 ? (tooNearOk ? 0 : FIRST_MIN) : five || (mazeNow() && !tooNearOk) ? MAZE_NEAR_MIN : 0;
+  const okFor = (kind, id) => x => { const d = dist(me, x); return d > Math.max(60, guideRadius({ kind, id }) * 1.5, nearLo) && d <= range && !recent.has(id); };   // めいろは 近すぎる 所も のぞく（1分で 終わって しまう）
   // 地図の めいろは「縦移動」に（運営者の声 2026-10-31「横移動の迷路から縦移動の迷路へ」）：めいろで 遊んでいるときの 行き先は、
   // 近い順ではなく、まず 南北（縦）に ある所を 先に する（同じ 向きの 中では 近い順）。東西にしか 候補が なければ 今までどおり 近い順で 選ばれる。
   // めいろ以外（あるいて移動・ふつうの地図）では 今までどおり 近い順のまま。
@@ -1903,7 +1908,7 @@ function decideGuide0(from, wide, tooNearOk) {
   // ①' この人が知っている人（人から人へ）。まだ話していない人だけ。遠くても10kmまで（佐久島へは船で）
   // 地図の めいろでは、ほかの 行き先と 同じ すすめる範囲まで（めいろの 道のりは まっすぐの 3〜4倍。5km 先の 人や 船の 先の 島は、めいろでは 着けない）
   if (from && Array.isArray(from.refer)) {
-    const all = placeNpcs(), lim = mazeNow() ? range : 10000, lo = five || (mazeNow() && !tooNearOk) ? MAZE_NEAR_MIN : 0;   // めいろは 近すぎる 人も のぞく（81m 先の 人では 数秒で 終わる）
+    const all = placeNpcs(), lim = mazeNow() ? range : 10000, lo = nearLo;   // めいろは 近すぎる 人も のぞく（81m 先の 人では 数秒で 終わる）
     const ref = from.refer.map(([id, words]) => ({ n: all.find(x => x.id === id), words }))
       .find(x => x.n && !npcMet(x.n.id) && !recent.has(x.n.id) && dist(me, x.n) > Math.max(guideRadius({ kind: 'npc' }) * 1.5, lo) && dist(me, x.n) <= lim);
     if (ref) cands.push({ kind: 'npc', id: ref.n.id, name: `${ref.n.name}（${ref.n.spotName}）`, lat: ref.n.lat, lng: ref.n.lng, why: ref.words, refer: true });
@@ -1960,16 +1965,17 @@ function decideGuide0(from, wide, tooNearOk) {
   // 話した人が知っている人、雨なら屋根のある所を先に。それ以外は、話を聞くたびに「名所・人」を順に
   // めいろで 広い範囲から 選ぶとき（5分の 近さに 何も ないとき）は、遠い 屋根を 先にせず ほかの 候補と 同じに 近い順で 選ぶ（雨の日だけ 2〜3km 先へ とばないように）
   let c = cands.find(x => x.refer) || cands.find(x => x.weather && (!mazeVert || dist(me, x) <= MAZE_NEAR));
+  if (first1) c = null;   // はじめてのゴールは 人のすすめ・天気・種類の 順を 使わず、いちばん 近い 候補（下の pool）
   if (!c) {
     // めいろでは 縦（南北）の 候補が あれば、そちらの中から 選ぶ（注目スポットが 横で、ふつうの名所・人が 縦のとき、種類の順で 横が 勝たないように）
-    const vert = mazeVert ? cands.filter(vertFirst) : [], pool = vert.length ? vert : mazeVert && !five ? [cands.slice().sort(goalSort)[0]] : cands;   // 広い範囲では いちばん 近い 候補
+    const vert = mazeVert ? cands.filter(vertFirst) : [], pool = first1 ? [cands.slice().sort((a, b) => dist(me, a) - dist(me, b))[0]] : vert.length ? vert : mazeVert && !five ? [cands.slice().sort(goalSort)[0]] : cands;   // 広い範囲では いちばん 近い 候補
     const order = [['spot', 'npc'], ['npc', 'spot']][(S.guides || 0) % 2]; for (const k of order) if ((c = pool.find(x => x.kind === k))) break;
   }
   c = c || cands[0];
   // ほかの候補（行き先がちがうものを2つまで）。札をひらくと選べる
   // めいろでは ほかの候補も 縦（南北）が 先、同じ 向きの 中では 近い順（並びだけ。主行き先は 上で 決まっている）
   const rest = cands.filter(x => x.id !== c.id).filter((x, i, a) => a.findIndex(y => y.id === x.id) === i);
-  const alts = (mazeVert ? rest.sort(goalSort) : rest).slice(0, 2)
+  const alts = (mazeVert ? rest.sort(first1 ? (a, b) => dist(me, a) - dist(me, b) : goalSort) : rest).slice(0, 2)
     .map(x => ({ kind: x.kind, id: x.id, name: x.name, lat: x.lat, lng: x.lng, why: x.why, by: x.by || by, refer: x.refer, weather: x.weather }));
   return { ...c, by: c.by || by, alts };
 }
@@ -2929,9 +2935,9 @@ let toastTimer;
 const toastQ = [];
 // 同じ知らせが続けて来ても、重ねて出さない（農場のゲームで、同じ知らせが何枚も積み上がって畑が見えなくなったので）
 const toastShowing = msg => $('toast').classList.contains('show') && $('toast').textContent === msg;
-// にしおサイクル123：転がして 遊ぶ 人は、めいろの はじめての ゴールに 着くまで（最初の 1分）数の 知らせ（+5・+30pt・500m・1km・×3 など）を 出さない。ポイント・記録は そのまま 上がる。歩いて 遊ぶ 人・2回目からは これまでどおり
+// にしおサイクル123：転がして 遊ぶ 人は、めいろの はじめてのさんぽ（3ゴールまで）数の 知らせ（+5・+30pt・500m・1km・×3 など）を 出さない。ポイント・記録は そのまま 上がる。歩いて 遊ぶ 人・2回目からは これまでどおり
 const QUIET_NUM = /[+＋]\d|\d+\s?pt|\d+(\.\d+)?\s?km|\d+\s?m[！!・。]|×\d|\d+\/\d+/;   // にしおサイクル136：「48m・」「25/100」の 形（日付を またいだ ときの きのうの さんぽ・100歩たんけん）も
-const quietNumMsg = msg => demo && !(store.get('nsg_mzgoals', 0) >= 1) && QUIET_NUM.test(String(msg));
+const quietNumMsg = msg => demo && !(store.get('nsg_mzgoals', 0) >= 3) && QUIET_NUM.test(String(msg));
 function toast(msg) {
   if (quietNumMsg(msg)) return;   // にしおサイクル123：最初の 1分の 数の 知らせは 出さない
   const el = $('toast');
@@ -3058,7 +3064,7 @@ function showReward(total, name, lines, lvUp, fact, dot) {
   if (navigator.vibrate) navigator.vibrate([60, 40, 120]);
   if (P && P.floatText) {
     P.floatText(`+${total}`);
-    if (f && !(demo && !(store.get('nsg_mzgoals', 0) >= 1))) P.floatText(dot.kira ? '🖼 キラ' : dot.fresh ? '🖼 NEW' : '🖼 +1');
+    if (f && !(demo && !(store.get('nsg_mzgoals', 0) >= 3))) P.floatText(dot.kira ? '🖼 キラ' : dot.fresh ? '🖼 NEW' : '🖼 +1');
     if (lvUp) P.floatText(`⭐ Lv${lvUp}`);
   }
   const art = f ? `　🖼 ${dot.kira ? 'キラ ' : dot.fresh ? 'NEW ' : ''}${f.title}` : '';

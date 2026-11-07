@@ -7499,7 +7499,7 @@ function riceSay(t, ms = 1400, mood = '') {   // t は もう 使わない（呼
 }
 function drawRiceSay() { /* 吹き出しは 描かない */ }
 const QUIET_NUM = /[+＋]\d|\d+\s?pt|\d+(\.\d+)?\s?km|\d+\s?m[！!・。]|×\d|\d+\/\d+/;   // にしおサイクル136：「48m・」「25/100」の 形（日付を またいだ ときの きのうの さんぽ・100歩たんけん）も   // にしおサイクル123：数の 浮き文字（+5・+20pt・500m・1km・×3 など。game.js の toast と 同じ 形）
-function quietNumText(t) { return !!G.demo && !(Number(lsGet('nsg_mzgoals', '0')) >= 1) && QUIET_NUM.test(String(t)); }   // 転がして 遊ぶ 人は、めいろの はじめての ゴールに 着くまで（最初の 1分）数の 浮き文字を 出さない（記録は そのまま 上がる）
+function quietNumText(t) { return !!G.demo && !(Number(lsGet('nsg_mzgoals', '0')) >= 3) && QUIET_NUM.test(String(t)); }   // 転がして 遊ぶ 人は、めいろの はじめてのさんぽ（3ゴールまで）数の 浮き文字を 出さない（記録は そのまま 上がる）
 function floatText(t) {   // 「ゴール！」の あと 待っていた 文字を 順に 出している 間（floatQEnd まで）に 来た 文字は、列の 最後に（重ねない）
   if (quietNumText(t)) return;   // にしおサイクル123：最初の 1分の 数の 浮き文字は 出さない
   // つづけて 来た 文字は 前の 文字が 消えてから 出す（字を 大きく したら、同じ 所に 2つ 重なって 読めなかった 2026-10-27）
@@ -10835,7 +10835,7 @@ function mzChaseWay(sx, sy, tx, ty) {   // 雲から かおりちゃんまでの
   }
   return [];
 }
-const chaseFirstGoal = () => { try { return !(Number(lsGet('nsg_mzgoals', '0')) >= 1); } catch (e) { return false; } };   // はじめての ゴールの 前か（nsg_mzgoals は mzGoalsDone と 同じ 鍵。読めなければ これまでどおり 出す）
+const chaseFirstGoal = () => { try { return !(Number(lsGet('nsg_mzgoals', '0')) >= 3); } catch (e) { return false; } };   // はじめてのさんぽ（3ゴールまで）の 間か（nsg_mzgoals は mzGoalsDone と 同じ 鍵。読めなければ これまでどおり 出す）
 function mzChaseTick(now) {
   if (rp.x === null || chaseFirstGoal()) return;   // にしおサイクル121：はじめての ゴールに 着くまで（最初の 1分）は 夕立雲を 出さない（はじめての 人の 足もとに 灰色の 雨雲が 来ない。2回目からは これまでどおり）
   const a = Math.floor(rp.x / MZ_K), b = Math.floor(rp.y / MZ_K);
@@ -11422,7 +11422,7 @@ function mzRescueDist(a, b) {   // かおりちゃんの マスから 迷子の 
   }
   return -1;
 }
-const rescueFirstGoal = () => { try { return !(Number(lsGet('nsg_mzgoals', '0')) >= 1); } catch (e) { return false; } };   // はじめての ゴールの 前か（nsg_mzgoals は mzGoalsDone と 同じ 鍵。読めなければ これまでどおり 出す）
+const rescueFirstGoal = () => { try { return !(Number(lsGet('nsg_mzgoals', '0')) >= 3); } catch (e) { return false; } };   // はじめてのさんぽ（3ゴールまで）の 間か（nsg_mzgoals は mzGoalsDone と 同じ 鍵。読めなければ これまでどおり 出す）
 function mzRescueTick(now) {
   if (rp.x === null) return;
   const a = Math.floor(rp.x / MZ_K), b = Math.floor(rp.y / MZ_K);
@@ -11567,7 +11567,7 @@ function mzCubeReveal() {   // 視点が 回って 隠れていた 印が 見え
   for (const [cx, cy, col] of mzMiniMarks()) { mzMini.seen.set(cx + ',' + cy, col); n++; }
   return n;
 }
-const cubeFirstGoal = () => { try { return !(Number(lsGet('nsg_mzgoals', '0')) >= 1); } catch (e) { return false; } };   // はじめての ゴールの 前か（nsg_mzgoals は mzGoalsDone と 同じ 鍵。読めなければ これまでどおり 出す）
+const cubeFirstGoal = () => { try { return !(Number(lsGet('nsg_mzgoals', '0')) >= 3); } catch (e) { return false; } };   // はじめてのさんぽ（3ゴールまで）の 間か（nsg_mzgoals は mzGoalsDone と 同じ 鍵。読めなければ これまでどおり 出す）
 function mzCubeTick(now) {
   if (rp.x === null) return;
   const a = Math.floor(rp.x / MZ_K), b = Math.floor(rp.y / MZ_K);

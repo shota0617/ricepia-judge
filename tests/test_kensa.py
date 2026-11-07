@@ -205,7 +205,25 @@ class FlowTests(unittest.TestCase):
         # 先が袋に1/3入ったら「さした」（手本の指は46pxしか動かないのに、以前は124px押す必要があった）。引く長さは入れた深さから
         self.assertIn("P.inAt = bag.offsetLeft + bag.offsetWidth * 0.66;", HTML)
         self.assertIn("if (x <= P.inAt) {", HTML)
-        self.assertIn("(x - P.deep) / (P.rest - P.deep) - 0.08", HTML)
+        self.assertIn("(x - P.deep) / (P.rest - P.deep) - 0.02", HTML)
+
+    def test_probe_pull_releases_grains_early_and_finishes_at_eighty_percent(self):
+        # 引き抜き: 引いたらすぐ（7%ほどで）粒が落ち始め、8割引けば全部落ちて終わる。
+        # 以前は15%引いても0粒、最後まで引き切らないと終わらなかった
+        node = shutil.which("node")
+        if not node:
+            self.skipTest("node がないので実行の確認は飛ばす")
+        expr = HTML[HTML.index("const want = Math.floor"):HTML.index("/* 引いたらすぐ粒が落ち始め")]
+        expr = expr.replace("const want =", "").strip().rstrip(";")
+        script = (
+            "const PLATE_GRAINS = 20; const P = { deep:0, rest:100 };\n"
+            "const want = (frac) => { const x = frac * 100; return Math.min(" + expr + ", PLATE_GRAINS); };\n"
+            "console.log(JSON.stringify([0, 0.02, 0.07, 0.1, 0.5, 0.79, 0.8, 1].map(want)));"
+        )
+        out = subprocess.run([node, "-e", script], capture_output=True, text=True)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        got = json.loads(out.stdout.strip())
+        self.assertEqual(got, [0, 0, 1, 2, 12, 19, 20, 20])
 
     def test_failed_tries_also_count_toward_auto(self):
         # タップだけでなく「進まなかった試し」（違う向きの引き・届かない運び・短い引き上げ・短いおろし）も3回で自動

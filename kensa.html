@@ -280,6 +280,9 @@
   <p>等級をまちがえても、はかった水分も、よけた粒も、そのままで何も失われません。光る●の列をもう一度見て、選び直せます。</p>
   <p>きめるで見る項目は、袋を進めるごとに1つずつ増えていきます。一度見た項目は次の袋でも残るので、見比べながら少しずつ覚えられます。</p>
   <p>🔍や2回タップで寄るときは、身を寄せるようにゆっくり近づきます。寄った後は、指で見る場所をそのまま動かせます。</p>
+  <h2>みわけた粒のきろく</h2>
+  <p id="grainRecord">まだ みわけた粒は ありません。</p>
+  <p>みわけた粒の種類は、ここに静かに残ります。競うための数ではなく、見分けた粒をあとから見返すための記録です。</p>
   <p>ゲームでは分かりやすくするため、皿は20粒で1粒＝5%と数えます（実際の検査の粒数や重量の割合とは違います）。形質（標準品との比較）、異種穀粒、異物は皿には出していません。ゲームの等級は遊びのためのもので、実際の格付けではありません。</p>
   <p>出典: <a href="https://www.maff.go.jp/j/seisan/syoryu/kensa/kome/k_kikaku/" target="_blank" rel="noopener">農林水産省「玄米の検査規格」</a>／<a href="https://www.maff.go.jp/j/seisan/syoryu/kensa/hourei.html" target="_blank" rel="noopener">農産物検査法及び関係通知等</a>／<a href="https://www.maff.go.jp/j/seisan/syoryu/kensa/attach/pdf/index-25.pdf" target="_blank" rel="noopener">農林水産省「コメの農産物検査」</a></p>
   <p><a href="https://ricepia.jp/">らいすぴあ（近藤米穀店）のサイトへ</a></p>
@@ -519,6 +522,12 @@ faceImg.src = "kensa/face_dot.webp";
 /* 進行 */
 let lotIndex = 0, LOT = LOTS[0], step = 0, grains = [], badLeft = 0, measured = 0, hintTimer = null;
 const seenChecks = new Set(["水分", "整粒"]); /* きめるで見た項目は次の袋でも残る。見るところは袋ごとに1つずつ増える（サイクル91・類5）。startLot では消さない */
+const pickedKinds = { higai:0, shini:0, mijuku:0, color:0 }; /* みわけた粒の静かなきろく（サイクル93・類7）。startLot では消さず袋を越えて残す。競争・スコアにはせず、常時表示にも足さない（📖の資料の中だけに出す） */
+const KIND_NAMES = { higai:"被害粒", shini:"死米", mijuku:"未熟粒", color:"着色粒" };
+function updateGrainRecord() {
+  const parts = Object.keys(pickedKinds).filter(k => pickedKinds[k] > 0).map(k => KIND_NAMES[k] + " " + pickedKinds[k]);
+  $("grainRecord").textContent = parts.length ? parts.join(" ・ ") : "まだ みわけた粒は ありません。";
+}
 const plate = $("plate"), inner = $("plateInner"), hint = $("hint"), nextBtn = $("nextBtn"), zoomBtn = $("zoomBtn");
 function setStep(i, text) {
   step = i;
@@ -1166,6 +1175,7 @@ function tapGrain(g) {
     return;
   }
   g.gone = true; badLeft--;
+  pickedKinds[g.kind]++; updateGrainRecord(); /* みわけた粒の種類を静かなきろくへ残す（サイクル93・類7） */
   grainDrop();
   setFace("happy", 500);
   grains.forEach(o => o.img.classList.remove("hint"));

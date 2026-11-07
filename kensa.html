@@ -789,6 +789,14 @@ function showAverage() {
 const Z = { s:1, tx:0, ty:0 };
 const ZOOM_MAX = 3.4, FACE_AT = 1.5;
 let isNear = false, everZoomed = false, spread = false;
+/* 最初の袋だけ、広げた時点でわるい粒に顔が出る（サイクル83、Fable設計の候補2）: 寄らなくても見分けられる */
+function firstBagFace(g) { return lotIndex === 0 && spread && g.kind !== "seiryu"; }
+function grainMood(g) { return (isNear || firstBagFace(g)) ? "normal" : "far"; }
+function refreshBadFaces() {
+  grains.forEach(g => { if (g.gone || g.kind === "seiryu") return;
+    g.img.src = grainSprite(g.kind, grainMood(g));
+    g.img.style.transform = firstBagFace(g) ? "scale(1.5)" : ""; /* 寄った後も維持し、倍率の境界で突然縮まないようにする（Codexレビュー指摘・サイクル83） */ });
+}
 function applyZoom() {
   const maxX = 0, minX = PW * (1 - Z.s), minY = PH * (1 - Z.s);
   Z.tx = Math.min(maxX, Math.max(minX, Z.tx));
@@ -799,7 +807,8 @@ function applyZoom() {
   const near = Z.s >= FACE_AT;
   if (near !== isNear) {
     isNear = near;
-    grains.forEach(g => { if (!g.gone) g.img.src = grainSprite(g.kind, near ? "normal" : "far"); });
+    grains.forEach(g => { if (!g.gone) g.img.src = grainSprite(g.kind, grainMood(g)); });
+    refreshBadFaces();
     if (near && step === 2) {
       tick();
       if (!everZoomed) { everZoomed = true; updateSortHint(); }
@@ -821,9 +830,12 @@ function updateSortHint() {
   if (step !== 2) return;
   if (!spread) { hint.textContent = "👋 なでて ひろげる"; guideAt("sweep", plate); }
   else if (!everZoomed) { /* 指のない PC では、ふたゆびの代わりに 🔍 を押す */
-    if (finePointer) { hint.textContent = "🔍 で 寄る"; guideAt("press", zoomBtn); }
-    else { hint.textContent = "🔍 ふたゆびで ズーム"; guideAt("pinch", plate); }
-    armHint(6000); /* 寄らない人にも、しばらくしたらわるい粒がふくらんで知らせる */
+    if (lotIndex === 0) { guideOff(); hint.textContent = "わるい粒を つまむ"; armHint(1200); /* 最初の袋は顔が出ているので寄る案内はしない（サイクル83）。🔍とピンチは残すが案内しない */ }
+    else {
+      if (finePointer) { hint.textContent = "🔍 で 寄る"; guideAt("press", zoomBtn); }
+      else { hint.textContent = "🔍 ふたゆびで ズーム"; guideAt("pinch", plate); }
+      armHint(6000); /* 寄らない人にも、しばらくしたらわるい粒がふくらんで知らせる */
+    }
   }
   else {
     guideOff();
@@ -852,7 +864,7 @@ function checkSpread() {
     if (Math.hypot(live[i].x - live[j].x, live[i].y - live[j].y) < near) overlaps++;
   }
   const now = overlaps <= 4;
-  if (now !== spread && now) { spread = true; updateSortHint(); }
+  if (now !== spread && now) { spread = true; if (lotIndex === 0) refreshBadFaces(); updateSortHint(); }
 }
 /* なでる: 指先で粒を押し、押された粒がとなりの粒も押す */
 let simOn = false, lastBrushSound = 0;

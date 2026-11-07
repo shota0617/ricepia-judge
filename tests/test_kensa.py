@@ -142,6 +142,15 @@ class FlowTests(unittest.TestCase):
     def test_first_bag_shows_bad_grains_soon(self):
         self.assertIn("armHint(lotIndex === 0 ? 1200 : 6000);", HTML)
 
+    def test_first_bag_bad_grains_show_faces_after_spread(self):
+        # サイクル83: 最初の袋だけ、なでて広げた時点でわるい粒2粒に顔が出て見える大きさになり、
+        # 🔍やピンチで寄らなくてもつまめる（寄る操作は残すが案内しない）。2袋目以降は従来どおり寄ると顔が出る
+        self.assertIn('function firstBagFace(g) { return lotIndex === 0 && spread && g.kind !== "seiryu"; }', HTML)
+        self.assertIn('function grainMood(g) { return (isNear || firstBagFace(g)) ? "normal" : "far"; }', HTML)
+        self.assertIn('g.img.style.transform = firstBagFace(g) ? "scale(1.5)" : "";', HTML)
+        self.assertIn("if (now !== spread && now) { spread = true; if (lotIndex === 0) refreshBadFaces(); updateSortHint(); }", HTML)
+        self.assertIn('if (lotIndex === 0) { guideOff(); hint.textContent = "わるい粒を つまむ"; armHint(1200);', HTML)
+
     def test_tap_allows_a_little_finger_drift(self):
         # わるい粒のタップは、指が12pxまでずれても効く（7px では実機の指のぶれで空振りしやすい）
         self.assertIn("Math.hypot(e.clientX - sortDrag.x, e.clientY - sortDrag.y) > 12) sortDrag.moved = true;", HTML)

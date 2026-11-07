@@ -682,6 +682,7 @@ function endBagDrag(e) {
   P.drag = null;
   if (P.done || P.inserted) return; /* さす前に指を離したら、タップでも違う向きの引きでも1回と数える */
   if (++bagTaps >= NUDGE_LIMIT) { autoProbe(); return; }
+  if (bagTaps === 1 && lotIndex === 0) $("poke").style.display = ""; /* 空振り1回目: 手本の指👆をもう一度出す。触って消えた指は戻らず、動かし方が分からなくなっていた（390×844実測・サイクル81、Fable設計の空振り統一） */
   /* 進まなかったときは、動かし方を穀刺しが見せる */
   $("probe").animate([{ transform:"translate(" + P.x + "px," + P.y + "px)" }, { transform:"translate(" + (P.x - 18) + "px," + P.y + "px)" }, { transform:"translate(" + P.x + "px," + P.y + "px)" }], { duration:320 * motion, easing:"ease-in-out" });
 }
@@ -744,6 +745,7 @@ function endCrank(e) {
   $("lcd").textContent = measured ? LOT.moisture[measured - 1].toFixed(1) : "--.-";
   if (!tapped) return;
   if (++meterTaps >= NUDGE_LIMIT) { meterTaps = 0; takeReading(); return; }
+  if (meterTaps === 1) guideAt("circle", $("crank")); /* 空振り1回目: 手本の指をもう一度出す（サイクル81） */
   $("crankArm").animate([{ transform:"rotate(" + crankAngle + "deg)" }, { transform:"rotate(" + (crankAngle + 60) + "deg)" }, { transform:"rotate(" + crankAngle + "deg)" }], { duration:380 * motion, easing:"ease-in-out" });
 }
 $("sceneMeter").addEventListener("pointerup", endCrank);
@@ -1122,12 +1124,15 @@ function toSense() {
   placeToken(0, 0);
   hint.textContent = { niou:"🤲 はなへ はこぶ ↖", kamu:"粒を くちへ はこぶ ↖", nigiru:"🤲 ぎゅっと にぎる" }[senseKind];
   $("face").classList.toggle("call", senseKind !== "nigiru");
+  guideSense();
+  focusIfKeys(token);
+}
+function guideSense() { /* 感じる所作の手本の指。空振り1回目にもう一度出す時も同じ形で呼ぶ（サイクル81） */
   if (senseKind === "nigiru") guideAt("press", token);
   else {
     const tk = token.getBoundingClientRect(), fc = $("face").getBoundingClientRect();
     guideAt("move", token, fc.left + fc.width / 2 - (tk.left + tk.width / 2), fc.top + fc.height / 2 - (tk.top + tk.height / 2));
   }
-  focusIfKeys(token);
 }
 function senseDone() {
   if (token.hidden) return;
@@ -1186,6 +1191,7 @@ function endToken() {
     senseHold = null;
     token.classList.remove("squeeze");
     if (++senseTaps >= NUDGE_LIMIT) { senseDone(); return; }
+    if (senseTaps === 1) guideSense(); /* 空振り1回目: 手本の指をもう一度出す（サイクル81） */
     hint.textContent = "🤲 はなさず にぎる";
     return;
   }
@@ -1193,6 +1199,7 @@ function endToken() {
   senseDrag = null;
   placeToken(0, 0);
   if (++senseTaps >= NUDGE_LIMIT) autoSense(); /* 顔に届かなかった運びもタップも数える */
+  else if (senseTaps === 1) guideSense(); /* 空振り1回目: 手本の指をもう一度出す（サイクル81） */
 }
 token.addEventListener("pointerup", endToken);
 token.addEventListener("pointercancel", endToken);
@@ -1252,7 +1259,7 @@ document.querySelectorAll(".gradeBtn").forEach(btn => {
     drag = null;
     btn.style.transform = "";
     if (++taps >= 2) { taps = 0; pickGrade(btn); } /* 届かなかった引き上げもタップも数える */
-    else btn.animate([{ transform:"none" }, { transform:"translateY(-12px)" }, { transform:"none" }], { duration:260 * motion, easing:"ease-out" });
+    else { if (taps === 1) guideAt("move", document.querySelectorAll(".gradeBtn")[lotGrade(LOT)], 0, -48); /* 空振り1回目: 正解ボタンの手本の指をもう一度出す（サイクル81） */ btn.animate([{ transform:"none" }, { transform:"translateY(-12px)" }, { transform:"none" }], { duration:260 * motion, easing:"ease-out" }); }
   });
   btn.addEventListener("pointercancel", () => { drag = null; btn.style.transform = ""; });
   btn.addEventListener("click", (e) => { if (e.detail === 0) pickGrade(btn); });
@@ -1369,6 +1376,7 @@ function endHanko() {
     inkHold = null;
     setHanko(0);
     if (++hankoTaps >= NUDGE_LIMIT) { hankoTaps = 0; inkDone(); return; }
+    if (hankoTaps === 1) guideAt("press", $("pad")); /* 空振り1回目: 手本の指をもう一度出す（サイクル81） */
     hint.textContent = "はなさず ぎゅっと";
     bobHanko();
     return;
@@ -1377,6 +1385,7 @@ function endHanko() {
   hankoDrag = null;
   if (stamped) return;
   if (++hankoTaps >= NUDGE_LIMIT) { dropHanko(); return; } /* 届かなかったおろしもタップも数える */
+  if (hankoTaps === 1) guideAt("move", $("hanko"), 0, hankoMax); /* 空振り1回目: 手本の指をもう一度出す（サイクル81） */
   setHanko(0);
   bobHanko();
 }

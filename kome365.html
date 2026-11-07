@@ -579,6 +579,9 @@ function drawDry(L){
 /* 目もり：クラフトの 札に 墨の 線、朱の 目印は 1か所（7周目） */
 function gauge(x, y, w, k, mark){ ctx.fillStyle = '#f1dfba'; ctx.strokeStyle = '#7a5a30'; ctx.lineWidth = 1.5; ctx.beginPath(); rrect(x, y-6, w, 16, 5); ctx.fill(); ctx.stroke(); ctx.strokeStyle = '#3e2a1a'; ctx.lineWidth = 4; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(x+8, y+2); ctx.lineTo(x+8 + (w-16)*k, y+2); ctx.stroke(); if (mark != null){ const mx = x+8 + (w-16)*mark; ctx.strokeStyle = '#c8352b'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(mx, y-9); ctx.lineTo(mx, y+13); ctx.stroke(); } }
 /* 暦（左上の 日めくり）。めくる ときは 上の 紙が 持ちあがって とぶ */
+/* スタンプカードの 場所（暦の 下。低い 画面は 暦の 右）と i 番目の 枠の まん中 */
+function cardGeom(L){ const x = Math.max(12, W*0.04), y = L.top + 6, w = 58, h = 46; const low = !(y + h + 49 < L.bottom - 4); return { x, y, w, h, cx0: low ? x + w + 6 : x, cy: low ? y : y + h + 7 }; }
+function cardSlot(L, i){ const g = cardGeom(L); return { x: g.cx0 + 5 + (i%3)*17 + 8, y: g.cy + 4 + Math.floor(i/3)*18 + 8 }; }
 function drawCalendar(L){
   const x = Math.max(12, W*0.04), y = L.top + 6, w = 58, h = 46;
   const dt = dateOf(S.day);
@@ -592,7 +595,7 @@ function drawCalendar(L){
     page(0, 1, dt, V.page);
   } else page(0, 1, dt, 1);
   if (S.phase==='field' || S.phase==='dry'){ /* スタンプカード（吹き出しに かかる 低い 画面では 暦の 右。23・24周目）：クラフト札に 3×2 の 空き枠、済は 少し 傾けて（21周目：横一列の 目盛りは 集計表に 見えた） */
-    const low = !(y + h + 49 < L.bottom - 4), cx0 = low ? x + w + 6 : x, cy = low ? y : y + h + 7; ctx.save(); ctx.fillStyle = '#f1dfba'; ctx.strokeStyle = '#7a5a30'; ctx.lineWidth = 1.5; ctx.beginPath(); rrect(cx0, cy, w, 42, 4); ctx.fill(); ctx.stroke();
+    const g = cardGeom(L), cx0 = g.cx0, cy = g.cy; ctx.save(); ctx.fillStyle = '#f1dfba'; ctx.strokeStyle = '#7a5a30'; ctx.lineWidth = 1.5; ctx.beginPath(); rrect(cx0, cy, w, 42, 4); ctx.fill(); ctx.stroke();
     for (let i=0;i<6;i++){ const sx = cx0 + 5 + (i%3)*17, sy = cy + 4 + Math.floor(i/3)*18; if (i < S.done.length){ ctx.save(); ctx.translate(sx+8, sy+8); ctx.rotate((i%2 ? 1 : -1)*0.1); ctx.strokeStyle = '#c8352b'; ctx.fillStyle = '#c8352b'; ctx.lineWidth = 1.2; ctx.beginPath(); rrect(-7, -7, 14, 14, 2); ctx.stroke(); ctx.font = '700 10px ' + FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('済', 0, 0.5); ctx.restore(); } else { ctx.save(); ctx.strokeStyle = 'rgba(122,90,48,.5)'; ctx.lineWidth = 1; ctx.setLineDash([2, 2]); ctx.beginPath(); rrect(sx+1, sy+1, 14, 14, 2); ctx.stroke(); ctx.restore(); } }
     ctx.restore(); }
   if (V.drag && V.drag.kind==='day' && V.drag.amt > 0){ /* 指で 引いている あいだ：紙の はしが 持ちあがる */ ctx.save(); ctx.globalAlpha = .9; ctx.fillStyle = '#f1dfba'; ctx.beginPath(); ctx.moveTo(x+w, y+h); ctx.lineTo(x+w - 24*V.drag.amt, y+h); ctx.lineTo(x+w, y+h - 24*V.drag.amt); ctx.closePath(); ctx.fill(); ctx.restore(); }
@@ -625,7 +628,7 @@ function drawCard(L){
 }
 function drawStamps(L, A){
   if (V.drag && V.drag.kind==='day' && V.drag.amt < 0 && A.left){ const k = Math.min(1, -V.drag.amt); ctx.save(); ctx.globalAlpha = k*0.7; ctx.translate(W/2, (L.fieldTop+L.fieldBot)/2); ctx.rotate(-0.2); const sc = 1.6 - k*0.6; ctx.scale(sc, sc); ctx.strokeStyle = '#c8352b'; ctx.lineWidth = 3; ctx.beginPath(); rrect(-22, -22, 44, 44, 8); ctx.stroke(); ctx.fillStyle = '#c8352b'; ctx.font = '700 22px ' + FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(A.left, 0, 1); ctx.restore(); } /* ←の 引いて いる 間（13周目） */ /* 「済」の はんこ と、まく 粒 */
-  for (const st of V.stamps){ ctx.save(); ctx.globalAlpha = clamp(st.life*3, 0, 1)*0.9; const sc = (1 + Math.max(0, st.life-0.8)*1.3) * clamp((L.fieldBot-L.fieldTop)/110, .55, 1); /* 田が 低い 画面では 小さく（23周目） */ ctx.translate(st.x, st.y); ctx.rotate(-0.2); ctx.scale(sc, sc); ctx.strokeStyle = '#c8352b'; ctx.lineWidth = 3;
+  for (const st of V.stamps){ ctx.save(); ctx.globalAlpha = clamp(st.life*3, 0, 1)*0.9; const sc = (1 + Math.max(0, st.life-0.8)*1.3) * clamp((L.fieldBot-L.fieldTop)/110, .55, 1) * (1 - (st.shrink||0)*(1 - 14/44)); /* 田が 低い 画面では 小さく（23周目） */ ctx.translate(st.x, st.y); ctx.rotate(-0.2); ctx.scale(sc, sc); ctx.strokeStyle = '#c8352b'; ctx.lineWidth = 3;
     if (st.text==='◎'){ ctx.beginPath(); ctx.arc(0, 0, 20, 0, Math.PI*2); ctx.stroke(); ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(0, 0, 13, 0, Math.PI*2); ctx.stroke(); } /* ◎は 丸い 二重の はんこ だけ（21周目） */
     else { ctx.beginPath(); rrect(-22, -22, 44, 44, 8); ctx.stroke(); ctx.lineWidth = 1; ctx.beginPath(); rrect(-18, -18, 36, 36, 6); ctx.stroke(); ctx.fillStyle = '#c8352b'; ctx.font = '700 26px ' + FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(st.text, 0, 1); } /* 済 だけ 大きく。しごとの 名は 吹き出しが 言う（21周目：9px は 読めない） */
     ctx.restore(); }
@@ -691,7 +694,7 @@ function advanceDay(){
   const wx = S.weather[S.day];
   if (S.phase==='seed' && !S.seed_.soaked && S.day >= 4){ V.flipQueue = 0; V.hint = Math.max(V.hint, 0.8); } /* つけずに はじいても 止まる（22周目：37 はじきで 一年 おわり） */
   if (S.phase==='seed' && S.seed_.soaked && !S.seed_.sprouted){ S.seed_.heat += Math.max(8, wx.t) ; if (S.seed_.heat >= 120){ S.seed_.sprouted = true; SND.pin(); say('芽出しも すんで はと胸に。<b>↓で まきましょう</b>。', 'joy'); } }
-  if ((S.phase==='nursery' || (S.phase==='field' && !S.f.planted)) && S.nur.sown){ S.nur.age++; if (S.phase==='field') S.nur.moist = Math.max(S.nur.moist, 1); S.nur.moist -= wx.w==='雨' ? 0.05 : wx.w==='高温' ? 0.4 : wx.w==='晴れ' ? 0.3 : 0.18; if (S.nur.moist <= 0){ if (S.nur.moist < 0 && V.flipQueue > 0){ V.flipQueue = 0; SND.zaa(); } S.nur.moist = 0; S.nur.stress++; } if (S.phase==='nursery' && (S.nur.age === 20 || S.nur.age === 30)) V.flipQueue = 0; } /* たんぼへ 行ける 日も 止まる（23周目） */ /* 土が かわいた 日も 止まる（22周目） */
+  if ((S.phase==='nursery' || (S.phase==='field' && !S.f.planted)) && S.nur.sown){ S.nur.age++; if (S.phase==='field') S.nur.moist = Math.max(S.nur.moist, 1); const m0 = S.nur.moist; S.nur.moist -= wx.w==='雨' ? 0.05 : wx.w==='高温' ? 0.4 : wx.w==='晴れ' ? 0.3 : 0.18; if (S.nur.moist <= 0){ if (S.nur.moist < 0 && V.flipQueue > 0){ V.flipQueue = 0; SND.zaa(); } S.nur.moist = 0; S.nur.stress++; } if (S.phase==='nursery' && (S.nur.age === 20 || S.nur.age === 30 || (m0 >= 0.35 && S.nur.moist < 0.35))) V.flipQueue = 0; } /* かわく 前に 止まる（24周目） */ /* たんぼへ 行ける 日も 止まる（23周目） */ /* 土が かわいた 日も 止まる（22周目） */
   if (S.phase==='field' && S.f.planted){ const w0 = S.f.water; growDay(S); if (S.f.gdd >= 1400 && !S.hv.done){ S.f.overRipe++; } /* 苗の 老化（agedPlant）とは 別（20周目） */ if (w0 >= 1 && S.f.water < 1 && V.flipQueue > 0){ V.flipQueue = 0; SND.zaa(); vib(12); } else if (S.f.water <= 1.5 && S.f.dat > S.f.headDat - 26 && (!S.f.heading || S.day - S.f.heading < 30) && V.flipQueue > 0){ V.flipQueue = 0; } } /* 水が 切れた 日は パラパラが 止まる（10周目） */
   if (S.phase==='dry'){ S.hv.dryDays++; const was = S.hv.moisture; S.hv.moisture = Math.max(10, was - (was <= 15.5 ? 0.8 : 5)); /* 1日 5%（乾燥機は 毎時 0.8% 以下：栃木県。16周目） */ /* 仕上がりの あとは ゆっくり（3周目） */ if (was > 15.5 && S.hv.moisture <= 15.5){ V.flipQueue = 0; SND.pin(); toast('15%'); } } /* こえた 時に かならず 合図（8周目） */ /* 仕上がりで めくりが 止まる（2周目）。もう一度 → すると 乾かしすぎ */
   S.day++;
@@ -714,13 +717,14 @@ function narrate(){
     if (n.age >= 45) return say('なえが 大きく なりすぎ。<b>←で たんぼへ</b>。', 'sad');
     if (n.age >= 30) return say('なえが 3〜4葉。<b>←で たんぼへ</b>。<span class="src">（中苗 3〜4葉：長野県）</span>', 'joy'); /* ←は かわきより 先（23周目：はじく 人が ↑↓の 往復に 閉じこめられた） */
     if (n.moist < 0.35) return say('土が かわいて きました。<b>↑で 水を</b>。', n.moist <= 0 ? 'sad' : 'smile');
-    if (n.age >= 20) return say('あと 少し。30日 ほどで 田うえです。');
+    if (n.age >= 20) return say('あと 少し。30日 ほどで 田うえ。<b>←で 早めも</b>。');
     return say('なえを そだてます。<b>→で あした</b>。');
   }
   if (S.phase==='field'){
     const a = actions();
     if (!f.planted){ if (f.shiro < 2 && f.water < 1) return say('たんぼに <b>↑で 水を</b>。ヒタヒタで 代かき。<span class="src">（埼玉県）</span>'); if (f.shiro < 2) return say('<b>←で 代かき</b>。土を たいらに。<span class="src">（鳥取県）</span>'); if (S.day - f.shiroDay < 3) return say('土が 落ちつくまで <b>→で ' + (3 - (S.day - f.shiroDay)) + '日</b>。<span class="src">（愛知県）</span>'); return say('<b>←で 1列ずつ</b> うえます。'); }
     if (wx.w==='台風' && f.heading) return say('たいふう！ たおれないで…', 'wow');
+    if (wx.w==='台風') return say('たいふう。雨で 水が ふえます。', 'wow'); /* 出穂前も 言う（24周目：止まるのに 無言だった） */
     if (f.dat <= 8){ if (f.water <= 0) return say('うえたばかり。<b>↑で 水を</b>。', 'sad'); if (wx.w==='低温' && f.water < 4) return say('さむい日。水を ふかめに。<span class="src">（岩手県）</span>'); return say('ねづくまで 水で まもります。'); }
     if (f.typhoonDay === S.day - 1 && f.heading) return say(f.lodge > 0.05 ? '台風で 稲が ' + Math.round(f.lodge*100) + '% たおれました。黄色く なったら 早めに ←で 刈る。' : (f.tyStrength >= 0.6 ? '強い 台風、もちこたえました。根が しっかり して いました。' : '台風、もちこたえました。'), f.lodge > 0.05 ? 'sad' : 'joy'); /* 刈れる ころの 台風でも 言う（20周目） */
     if (a.left==='刈る' && f.gdd >= 980 && f.gdd < 1150) return say('<b>刈りどき</b>です。←で ざくざく。<span class="src">（出穂後 1000℃ 前後：栃木県）</span>', 'joy');
@@ -803,7 +807,7 @@ function doDown(){ V.hint = 1; /* まいた あとも 案内（22周目） */
 /* ========== スワイプ ========== */
 function pointerDown(e){
   if (S.over) return; SND.init(); SND.ensure();
-  V.drag = { id: e.pointerId, x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY, t0: now(), kind: null, amt: 0, startWater: S.phase==='field' ? S.f.water : (S.phase==='nursery' ? S.nur.moist*15 : V.water), hist: [[now(), e.clientX, e.clientY]] };
+  V.drag = { id: e.pointerId, x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY, t0: now(), kind: null, amt: 0, startWater: S.phase==='field' ? S.f.water : (S.phase==='nursery' ? S.nur.moist*15 : V.water), hist: [[now(), e.clientX, e.clientY]], braked: V.flipQueue > 0 };
   if (V.flipQueue > 0) SND.noise(.04, .1, 800); V.flipQueue = 0; /* 指を おくと めくりは 止まる（ブレーキ。20周目：音） */
 }
 function pointerMove(e){
@@ -813,11 +817,11 @@ function pointerMove(e){
   if (!d.kind){ const h = Math.hypot(dx, dy); if (h >= 24 && Math.abs(dx) > 1.6*Math.abs(dy)) d.kind = 'day'; else if (h >= 24 && Math.abs(dy) > 1.6*Math.abs(dx)) d.kind = 'water'; else if (h >= 40) d.kind = Math.abs(dx) > Math.abs(dy) ? 'day' : 'water'; } /* 親指の 弧で ↑が →に ならない（13周目） */
   if (d.kind==='day'){ d.amt = clamp(dx/90, -1, 1); if (dx < -30 && !d.ticked){ d.ticked = true; SND.tone(1200, .03, 'square', .05); vib(4); } if (dx > 30 && !d.tickedR){ d.tickedR = true; SND.tone(1200, .03, 'square', .05); vib(4); } } /* →も 届いた 所で カチッ（20周目） */ /* ←は 届いた 所で カチッ（13周目） */
   if (d.kind==='water'){ /* 指に ついて 水面が 上下する（みせかけ）。はなした ときに 本当の 水に なる */
-    const a = actions(); const cmPerPx = 15/(H*0.38); let target = d.startWater - dy*cmPerPx;
+    const a = actions(); const cmPerPx = 15/(H*0.38); let target = d.startWater - (dy - Math.sign(dy)*Math.min(24, Math.abs(dy)))*cmPerPx; /* 向きが 決まる 24px の ぶんは 引く（24周目：決まった 瞬間に とんだ） */
     if (dy < 0 && !a.up) target = d.startWater; if (dy > 0 && !a.down) target = d.startWater;
     if (S.phase==='nursery') target = Math.max(d.startWater, target);
     d.rawTarget = clamp(target, 0, 15);
-    if (S.phase==='field' && S.f.planted){ const hi = slowCap(), fl = drainFloor(), lo = d.startWater > fl ? fl : 0; if (target > hi && d.startWater <= hi) target = hi + (target - hi)*0.05; if (target < lo) target = lo + (target - lo)*0.05; } /* ゆっくりの 上限・下限の 先は ゴム（20周目：指と 本当の 水が ずれていた） */
+    if (S.phase==='field' && S.f.planted){ const hi = slowCap(), fl = drainFloor(), lo = d.startWater > fl ? fl : 0; const lim = Math.max(hi, d.startWater); if (target > lim) target = lim + (target - lim)*0.05; /* すでに 深ければ そこから ゴム（24周目） */ if (target < lo) target = lo + (target - lo)*0.05; } /* ゆっくりの 上限・下限の 先は ゴム（20周目：指と 本当の 水が ずれていた） */
     d.amt = clamp(target - d.startWater, -15, 15); d.target = clamp(target, 0, 15);
     if (S.phase==='field' || S.phase==='nursery' || S.phase==='seed'){ V.waterTarget = d.target; }
   }
@@ -826,8 +830,8 @@ function pointerUp(e){ pointerUpInner(e); syncUI(); }
 function pointerUpInner(e){
   const d = V.drag; if (!d || e.pointerId !== d.id) return; V.drag = null;
   const dx = d.x - d.x0, dy = d.y - d.y0;
-  if (!d.kind && Math.hypot(dx, dy) < 10){ V.hint = 1; toast('ゆびで なでて'); SND.tone(1200, .03, 'square', .05); return; } /* タップには 案内で 返事（22周目） */
-  const first = d.hist[0], last = d.hist[d.hist.length-1], vdt = Math.max(16, last[0]-first[0]);
+  if (!d.kind && Math.hypot(dx, dy) < 10 && !d.braked){ V.hint = 1; /* ブレーキの タップには 言わない（24周目） */ toast('ゆびで なでて'); SND.tone(1200, .03, 'square', .05); return; } /* タップには 案内で 返事（22周目） */
+  const first = d.hist[Math.max(0, d.hist.length-4)], last = d.hist[d.hist.length-1], vdt = Math.max(16, last[0]-first[0]); /* 直前 4点（約 50ms。24周目：ためてから はじいても 1日 だった） */
   const held = now() - last[0] > 80; /* 止めてから はなした：はじきでは ない（3周目） */
   const vx = held ? 0 : (last[1]-first[1])/vdt, vy = held ? 0 : (last[2]-first[2])/vdt; /* px/ms（指を はなす 直前の 速さ） */
   const L = layout(); const a = actions();
@@ -952,7 +956,7 @@ function step(dt){
   if (V.page > 0) V.page = Math.max(0, V.page - dt/Math.max(0.1, Math.min(V.flipGap, 0.17))); /* 紙は 次の めくりまでに とび終わる（13周目） */
   if (V.flipQueue > 0){ V.flipTimer += dt; if (V.flipTimer >= V.flipGap){ V.flipTimer = 0; V.flipQueue--; V.flipGap = Math.min(0.2, V.flipGap*1.12); if (!advanceDay()) V.flipQueue = 0; else if (V.flipQueue === 0 && V.flipN >= 3){ SND.tone(320, .08, 'triangle', .12); vib(10); V.page = Math.max(V.page, 0.35); } } } else V.flipTimer = 0; /* 列の 終わりに とん、と 小さく はねる（20周目） */
   V.shake = Math.max(0, V.shake - dt*1.5);
-  for (const st of V.stamps) st.life -= dt*0.5; V.stamps = V.stamps.filter(st => { if (st.life > 0) return true; if (st.text==='済' && st.sub && !S.done.includes(st.sub)) S.done.push(st.sub); return false; }); /* 落ちついて 見える 時間 ≈0.9秒。消えた 済は 暦の 下へ（20周目） */
+  for (const st of V.stamps){ st.life -= dt*0.5; if (st.text==='済' && st.sub && st.life < 0.3){ const q = cardSlot(layout(), Math.min(5, S.done.length)); const k = Math.min(1, dt*10); st.x += (q.x - st.x)*k; st.y += (q.y - st.y)*k; st.shrink = 1 - st.life/0.3; } } /* 消える 前に 札の 枠へ 飛ぶ（24周目） */ V.stamps = V.stamps.filter(st => { if (st.life > 0) return true; if (st.text==='済' && st.sub && !S.done.includes(st.sub)) S.done.push(st.sub); return false; }); /* 落ちついて 見える 時間 ≈0.9秒。消えた 済は 暦の 下へ（20周目） */
   for (const p of V.particles){ p.x += p.vx*dt; p.y += p.vy*dt; p.vy += 500*dt; p.life -= dt; } V.particles = V.particles.filter(p => p.life > 0);
   if (V.toast){ V.toast.life -= dt*0.8; if (V.toast.life <= 0) V.toast = null; }
   if (V.card){ V.card.life -= dt; if (V.card.life <= 0) V.card = null; }

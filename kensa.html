@@ -1100,7 +1100,7 @@ function resetZoomForSmiles() {
 
 /* におう・かむ・にぎる: 袋ごとに交代で、粒を顔まで運んだり手でにぎったりする */
 const SENSES = ["niou", "kamu", "nigiru"];
-const NIGIRU_MS = 600;
+const NIGIRU_MS = 350; /* にぎる: 短くぎゅっと（約0.35秒）でもにぎったことにする。600msでは500msの押しでも届かず戻ってしまった（390×844実測・サイクル71）。朱肉（INK_MS 250）と同じく、タップと間違えない範囲で短くした */
 let senseKind = "niou", senseDrag = null, senseHold = null, senseTaps = 0;
 const token = $("senseToken");
 function placeToken(x, y) {

@@ -369,6 +369,13 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertNotIn("if (dy <= -34)", HTML)
         self.assertIn('guideAt("move", document.querySelectorAll(".gradeBtn")[worst], 0, -48);', HTML)
 
+    def test_nigiru_takes_with_a_short_squeeze(self):
+        # 感覚・にぎる: 短くぎゅっと（約0.35秒）にぎれば届く。600msでは
+        # 500msの押しでも届かず「はなさず にぎる」で戻ってしまった（390×844実測）
+        self.assertIn("const NIGIRU_MS = 350;", HTML)
+        self.assertNotIn("const NIGIRU_MS = 600;", HTML)
+        self.assertIn("NIGIRU_MS * motion", HTML)  # 動きを減らす設定では待ちも短くなる従来どおり
+
     def test_assets_exist(self):
         for name in set(re.findall(r'kensa/[a-z_]+\.webp', HTML)):
             self.assertTrue(os.path.exists(os.path.join(ROOT, name)), name)

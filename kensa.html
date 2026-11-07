@@ -409,6 +409,20 @@ function knockSound() { /* みわける: 皿をトントンたたく音。720→
     o.start(t); o.stop(t + 0.07);
   } catch (_) {}
 }
+function twistSound() { /* みわける: ひねってわるい粒の印が出る合図の音。320→460Hzへ小さく転がるように上がる音で、粒の tick（高い短い音）とは分ける（サイクル100・差分テーマ差6）。この音は粒同士の音ではなく、2本指でひねる操作が届いて印が出た返り */
+  try {
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    if (ac.state === "suspended") ac.resume();
+    const o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime;
+    o.type = "triangle";
+    o.frequency.setValueAtTime(320, t);
+    o.frequency.exponentialRampToValueAtTime(460, t + 0.09);
+    g.gain.setValueAtTime(0.03, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.11);
+    o.connect(g).connect(ac.destination);
+    o.start(t); o.stop(t + 0.11);
+  } catch (_) {}
+}
 function thump() {
   tone(110, 0.16, 0.14, "sine");
   tone(70, 0.22, 0.1, "sine");
@@ -1186,7 +1200,7 @@ function twistPlate(deg) {
   const p = pinch;
   if (p && Math.abs(p.twist) >= 20) { /* ひねる判定: 20°から受ける。35°では22°・28°の自然な小さなひねりでもわるい粒の印が付かず無反応だった（390×844実測・サイクル80）。ピンチで偶然回る小さな角度（18°以下）は印を付けない範囲に留める */
     twistDone = true;
-    tick();
+    twistSound(); /* ひねる合図の音は粒の tick とは分ける（サイクル100・差6） */
     setFace("happy", 500);
     if (step === 2) grains.filter(g => !g.gone && g.kind !== "seiryu").forEach(g => g.img.classList.add("hint"));
   }

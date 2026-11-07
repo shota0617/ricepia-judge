@@ -222,7 +222,7 @@ class FlowTests(unittest.TestCase):
         self.assertNotIn("turned:0", HTML)
 
     def test_first_bag_crank_is_short(self):
-        self.assertIn("crankTurned >= (lotIndex === 0 ? 170 : 350)", HTML)
+        self.assertIn("crankTurned >= (lotIndex === 0 ? 80 : 160)", HTML)
         # タップだけで進めない: 代替は3回のまま
         self.assertIn("if (++bagTaps >= NUDGE_LIMIT) { autoProbe(); return; }", HTML)
 
@@ -243,16 +243,16 @@ const pop = () => {}, tick = () => {};
 const crankPointer = e => ({a:e.angle, far:true});
 let crankTurned = 0, crankDrag = {id:1, last:0, sum:0, x:0, y:0, moved:false};
 """ + reading + move + """
-onMove({pointerId:1, clientX:10, clientY:0, angle:90});
+onMove({pointerId:1, clientX:10, clientY:0, angle:45});
 assert.equal(measured, 0);
 assert.equal(lcd.textContent, '--.-');
-onMove({pointerId:1, clientX:20, clientY:0, angle:180});
+onMove({pointerId:1, clientX:20, clientY:0, angle:90});
 assert.equal(measured, 1);
 assert.equal(lcd.textContent, LOT.moisture[0].toFixed(1));
-onMove({pointerId:1, clientX:30, clientY:0, angle:-90});
+onMove({pointerId:1, clientX:30, clientY:0, angle:135});
 assert.equal(measured, 1);
 assert.equal(lcd.textContent, LOT.moisture[0].toFixed(1));
-onMove({pointerId:1, clientX:40, clientY:0, angle:0});
+onMove({pointerId:1, clientX:40, clientY:0, angle:180});
 assert.equal(measured, 2);
 assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
 """
@@ -368,6 +368,14 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertIn("if (dy <= -24)", HTML)
         self.assertNotIn("if (dy <= -34)", HTML)
         self.assertIn('guideAt("move", document.querySelectorAll(".gradeBtn")[worst], 0, -48);', HTML)
+
+    def test_crank_takes_with_a_quarter_turn(self):
+        # はかる: 最初の袋は1/4周ほどの短い回しで1回はかれる。170°では90°の
+        # 回しは届かず、170°ちょうどの回しもうつり変わりの刻みで実測169.97°に
+        # なって届かなかった。判定90°でも90°の回しは実測約86°までしか貯まら
+        # ないため80°で受ける（390×844実測・サイクル72）。後の袋も160°
+        self.assertIn("crankTurned >= (lotIndex === 0 ? 80 : 160)", HTML)
+        self.assertNotIn("crankTurned >= (lotIndex === 0 ? 170 : 350)", HTML)
 
     def test_nigiru_takes_with_a_short_squeeze(self):
         # 感覚・にぎる: 短くぎゅっと（約0.35秒）にぎれば届く。600msでは

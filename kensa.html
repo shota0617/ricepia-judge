@@ -734,7 +734,7 @@ $("sceneMeter").addEventListener("pointermove", (e) => {
   crankDrag.sum += Math.abs(d);
   $("crankArm").style.transform = "rotate(" + crankAngle + "deg)";
   if (crankDrag.sum >= 45) { crankDrag.sum = 0; tick(); }
-  if (crankTurned >= (lotIndex === 0 ? 170 : 350)) { crankTurned = 0; takeReading(); } /* 最初の袋は半周で1回はかれる */
+  if (crankTurned >= (lotIndex === 0 ? 80 : 160)) { crankTurned = 0; takeReading(); } /* 最初の袋は1/4周ほどで1回はかれる。170°では90°の短い回しは届かず、170°ちょうどの回しも実測169.97°で届かなかった。判定を90°にしても、うつり変わりの刻みで90°の回しが実測約86°までしか貯まらず届かなかったため、80°で受ける（390×844実測・サイクル72）。後の袋も半周ほど（160°）にそろえる */
 });
 function endCrank(e) {
   if (!crankDrag || e.pointerId !== crankDrag.id) return;

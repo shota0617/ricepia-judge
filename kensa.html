@@ -520,6 +520,7 @@ function startLot() {
   P.inserted = false; P.done = false; P.released = 0; P.drag = null; P.deep = 0;
   $("probe").style.opacity = "1";
   layoutProbe();
+  startProbeAttract(); /* 開いた瞬間の誘い: 最初の袋だけ、触れる前に穀刺しが一度だけゆっくり袋の口へ寄って戻る（サイクル82、Fable設計の足すもの1） */
   setStep(0, "穀刺しを ふくろへ さす ←");
   setFace("normal");
   if (lotIndex > 0) $("bagBtn").animate([{ transform:"translateX(120%)" }, { transform:"none" }], { duration:260 * motion, easing:"ease-out" });
@@ -607,6 +608,24 @@ function setProbe(x) {
   P.x = x;
   $("probe").style.transform = "translate(" + x + "px," + P.y + "px)";
 }
+/* 開いた瞬間の誘い（サイクル82）: 触れる前、穀刺しが一度だけ約2秒かけて袋の口（さした判定の所）へ寄って戻り、「さす」動きを文字なしで見せる。手本の指👆（#poke の動き）は従来どおり一緒に出ている。触れたら止まる */
+let probeAttract = null;
+function stopProbeAttract() {
+  if (probeAttract) { probeAttract.cancel(); probeAttract = null; }
+}
+function startProbeAttract() {
+  stopProbeAttract();
+  if (lotIndex !== 0 || P.done || P.inserted) return;
+  const anim = $("probe").animate([
+    { transform:"translate(" + P.rest + "px," + P.y + "px)" },
+    { transform:"translate(" + P.inAt + "px," + P.y + "px)", offset:.5 },
+    { transform:"translate(" + P.rest + "px," + P.y + "px)" }
+  ], { duration:2000 * motion, easing:"ease-in-out", iterations:1 });
+  probeAttract = anim;
+  /* 旧アニメーションの cancel が遅れて発火しても、新しい誘いを消さないよう対象が一致する時だけ null にする（Codexレビュー指摘・サイクル82） */
+  anim.onfinish = () => { if (probeAttract === anim) probeAttract = null; };
+  anim.oncancel = () => { if (probeAttract === anim) probeAttract = null; };
+}
 function moveProbe(x) {
   if (P.done) return;
   const span = P.rest - P.inX;
@@ -650,6 +669,7 @@ function finishProbe() {
 }
 function autoProbe() {
   if (P.done || step !== 0) return;
+  stopProbeAttract();
   $("poke").style.display = "none";
   const t0 = performance.now(), start = P.x;
   const dIn = P.inserted ? 0 : 240 * motion, dOut = 620 * motion;
@@ -665,6 +685,7 @@ function autoProbe() {
 }
 $("sceneBag").addEventListener("pointerdown", (e) => {
   if (step !== 0 || P.done) return;
+  stopProbeAttract(); /* 触れたら誘いは止まる（サイクル82） */
   if (P.drag) return; /* 2本目の指は混ぜない */
   P.drag = { id:e.pointerId, cx:e.clientX, x0:P.x, moved:false };
   capture($("sceneBag"), e);

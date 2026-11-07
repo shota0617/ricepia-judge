@@ -3827,7 +3827,7 @@ const OMO = (() => {
       m4.compose(p.set(at(0), at(1) + 0.006 * s, at(2)), q, one.set(s, s, s)); cellOf[n] = c; sprout.setMatrixAt(n, m4); mesh.setMatrixAt(n++, m4);
     }
     mesh.count = sprout.count = n; mesh.instanceMatrix.needsUpdate = sprout.instanceMatrix.needsUpdate = true;
-    if (n >= 6 && !told && S.started) {
+    if (n >= 6 && !told && S.started && !startNoticeMuted()) {   // サイクル202・最初の1分: のんびりでは秋の開始直後（オモダカの多い所を耕し始めると出る）に長文知らせと声で最初のなぞりを止めない。toldは立てないので1分を過ぎてパッチ内で新たに塊茎が出れば従来どおり出す（遅れて出す形）。くわしい説明では従来どおり開始直後から出す。水の多い所の知らせ（wetTold）とガードをそろえた
       told = true;
       setTimeout(() => { toast('🌱 耕した 土から オモダカの 小さな 塊茎（イモ）が 出てきた。地上の 葉が 枯れても、塊茎で 冬を こして 春に また 生える。秋に 起こして 乾かすと、地表に 出た 塊茎は 寒さで 朽ちる', 7); setTimeout(() => voice('omodaka'), 7500); }, 400);
     }

@@ -882,13 +882,13 @@ function simFrame() {
   checkSpread();
 }
 function grainAt(p) {
-  const pad = 6 / Z.s;
+  const padU = 6 / Z.s, padV = 12 / Z.s; /* 粒の短い向き（v）だけゆるさを12pxにし、タップの実効の高さを44pxにする。6pxでは中心から16pxずれたタップが外れ、20pxずらした実タップでもわるい粒が取れなかった（390×844実測・サイクル75）。長い向き（u）は、となりの粒（広げた時の中心間は最小約30px）と取り合わないよう6pxのまま */
   let best = null;
   grains.forEach(g => {
     if (g.gone || g.el.hidden) return;
     const a = g.r * Math.PI / 180, dx = p.x - g.x, dy = p.y - g.y;
     const u = dx * Math.cos(a) + dy * Math.sin(a), v = -dx * Math.sin(a) + dy * Math.cos(a);
-    if (Math.abs(u) <= GW / 2 + pad && Math.abs(v) <= GH / 2 + pad && (!best || g.z > best.z)) best = g;
+    if (Math.abs(u) <= GW / 2 + padU && Math.abs(v) <= GH / 2 + padV && (!best || g.z > best.z)) best = g;
   });
   return best;
 }

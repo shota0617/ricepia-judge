@@ -342,6 +342,19 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertIn("(t.width + f.width) / 2 + 8", body)
         self.assertNotIn("f.width * 0.9", body)
 
+    def test_stamp_lands_when_hanko_overlaps_mark(self):
+        # おす: はんこの下が証印の円に1/4入る所までおろせば押したことにする。
+        # 中心+10px（390×844で約96px）まで求めると、円に触れる所までおろした
+        # 自然なおろし方（約50px）では戻ってしまった（390×844実測）
+        layout = HTML[HTML.index("function layoutStamp()"):]
+        layout = layout[:layout.index("\n}\n")]
+        self.assertIn("hankoLand = Math.max(24, mark.offsetTop - hkBottom + mark.offsetHeight * 0.25);", layout)
+        # 着地の位置そのものは変えない（stampNow が hankoMax まで落として押す）
+        self.assertIn("hankoMax = mark.offsetTop + mark.offsetHeight / 2 - hkBottom + 10;", layout)
+        move = HTML[HTML.index('$("bagBig").addEventListener("pointermove"'):]
+        self.assertIn("if (y >= hankoLand) stampNow();", move)
+        self.assertNotIn("if (y >= hankoMax - 1) stampNow();", move)
+
     def test_assets_exist(self):
         for name in set(re.findall(r'kensa/[a-z_]+\.webp', HTML)):
             self.assertTrue(os.path.exists(os.path.join(ROOT, name)), name)

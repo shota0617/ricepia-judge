@@ -1259,7 +1259,7 @@ document.querySelectorAll(".gradeBtn").forEach(btn => {
 
 /* おす: 朱肉にぎゅっと押してから、はんこを指で下ろして、ドン。押した袋は横へ流す */
 const INK_MS = 450;
-let hankoTaps = 0, stamped = false, inked = false, hankoDrag = null, hankoMax = 0, hankoBob = null, inkHold = null, bagSwipe = null, leaving = false;
+let hankoTaps = 0, stamped = false, inked = false, hankoDrag = null, hankoMax = 0, hankoLand = 0, hankoBob = null, inkHold = null, bagSwipe = null, leaving = false;
 function setHanko(y) {
   $("hanko").style.transform = "translateY(" + y + "px)";
 }
@@ -1275,6 +1275,10 @@ function layoutStamp() {
   const hkBottom = hk.offsetTop + hk.offsetHeight;
   $("pad").style.top = hkBottom + 2 + "px";
   hankoMax = mark.offsetTop + mark.offsetHeight / 2 - hkBottom + 10;
+  /* 押したことにする距離: はんこの下が証印の円に1/4入る所。中心+10px（約96px）まで求めると、
+     円に触れる所までおろした自然なおろし方（約50px）では戻ってしまった（390×844実測）。
+     着地の位置（hankoMax）自体は変えず、stampNow がそこまで落として押す */
+  hankoLand = Math.max(24, mark.offsetTop - hkBottom + mark.offsetHeight * 0.25);
 }
 function toOsu() {
   const grade = GRADES[lotGrade(LOT)];
@@ -1356,7 +1360,7 @@ $("bagBig").addEventListener("pointermove", (e) => {
   if (!hankoDrag.moved) return;
   const y = Math.max(0, Math.min(hankoMax, dy));
   setHanko(y);
-  if (y >= hankoMax - 1) stampNow();
+  if (y >= hankoLand) stampNow();
 });
 function endHanko() {
   if (bagSwipe) { bagSwipe = null; $("bagBig").style.transform = ""; return; }

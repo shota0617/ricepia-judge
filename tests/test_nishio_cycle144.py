@@ -37,7 +37,7 @@ class Gate(unittest.TestCase):
                 self.assertNotRegex(m.group(0).split('//')[0], r">= 1\)|goalsDone\(\) < 1")
 
     def test_game_three_places_and_koro(self):
-        self.assertEqual(len(re.findall(r"nsg_mzgoals', 0\) >= 3", GAME)), 3)
+        self.assertEqual(len(re.findall(r"nsg_mzgoals', 0\) >= 3", GAME)), 4)   # サイクル147：こよみ札(renderKoyomi)の ゲートが 加わり 3→4
         self.assertIn('goalsDone() < 3', KORO)
 
 

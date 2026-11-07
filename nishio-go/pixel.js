@@ -8809,6 +8809,11 @@ function setWorld(on) {
   updateDankyuBtn();
 }
 $('pxWorld').addEventListener('click', () => setWorld(!worldMode));
+function firstWalkBtns() {   // はじめてのさんぽの間は 🌏せかいちず・🌀盤のめいろ の ボタンを 出さない（3つめの ゴールから 従来どおり）
+  const fw = firstWalk();
+  for (const id of ['pxWorld', 'pxMeiro']) { const b = $(id); if (b) b.hidden = fw; }
+}
+firstWalkBtns();
 // めいろの ゴールが あるときは、お米と ゴールが 両方 入る 大きさ・まん中で 開く（遠い ゴールが 地図の どこか 分かる ように）
 function worldCamFitGoal() {
   const me = G.me, g = mazeBack() && G.guide;
@@ -8888,6 +8893,7 @@ function setActive(on) {
   else { if (mzNext.hold) { mzNext.hold = false; if (G.toastFlush) G.toastFlush(); } G.invalidateMap(); if (window.NSG_GODOT) NSG_GODOT.idle(); }   // ふつうの地図のあいだは Godot を休ませる
 }
 function updatePad() {
+  firstWalkBtns();
   // 操作して移動なら、せかいちずでもスティックを出す（動かすと歩く地図にもどって歩く。はじめての人はせかいちずから始まるため）
   $('pxPad').hidden = !(active && G.demo);
   G.sound.scene(active && worldMode ? 'world' : 'field');   // せかいちずでは別の曲
@@ -9476,6 +9482,7 @@ function mzHelpSync() { const t = $('mzHelpToggle'); if (t) t.checked = mzHelpOn
 function mzHelpGoal() {   // めいろの ゴールに 着いた：3回目で 自動の おたすけは おしまい（知らせる）
   const n = mzGoalsDone() + 1;
   lsSet('nsg_mzgoals', String(n));
+  firstWalkBtns();
   if (n === MZ_HELP_N && lsGet('nsg_mzhelp', 'auto') === 'auto') setTimeout(() => G.toast('🧭 道しるべと ✕ を けしたよ（せっていで また 出せる）'), 4500);
   mzHelpSync();
 }

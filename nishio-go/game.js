@@ -2493,7 +2493,7 @@ function renderGuide() {
   // 2行に収める（1行目：行き先と方角・距離、2行目：だれの話か。長い話は「…」。タップで全文）
   const alts = (S.guide && S.guide.alts) || [];
   const mr = demo && window.nishioPixel && nishioPixel.maze && nishioPixel.maze.route ? nishioPixel.maze.route() : null;   // 地図の めいろ：まっすぐ ではなく めいろの 道のり
-  const far = mr ? `🌀${fmtM(mr.m)}` : fmtM(dist(me, g));   // 🌀：めいろの 道のり（名前が 長くても 入るように みじかく）
+  const far = fmtM(mr ? mr.m : dist(me, g));   // 道のりは 数字だけ（めいろの ときは めいろの 道のり。しるしは 名前の 🏁 に まかせる）
   const gname = `<em class="gn">${mr ? '🏁 ' : ''}${esc(g.name)}</em>`;   // めいろの ときは 行き先が ゴール（地図の 🏁 と おなじ しるし）。長い 名前は こちらを「…」に して 道のりは のこす
   const head = simple() && window.NSG_ICONS ? `${NSG_ICONS.arrow(bearing(me, g))}${guideThumb(g)}${g.byId ? PIA('scroll', 'イベント') : ''} ${gname}<span>　${far}</span>` : `${g.byId ? '📜' : '🧭'} ${gname}<span>　${far}</span>`;   // 1行だけ：目的地の名前と 距離（運営者の声 2026-11-03「文字が多すぎる」）
   el.innerHTML = `<b>${head}</b>`
@@ -2524,6 +2524,7 @@ function renderKoyomi() {
   if (!el || !KO) return;
   const now = new Date(), px = document.body.classList.contains('px');
   if (px) { el.hidden = true; renderKoyomi.key = ''; return; }   // ドット絵の 地図では こよみの 札を 出さない（運営者の声 2026-11-03「文字が多すぎる」）
+  if (demo && !(store.get('nsg_mzgoals', 0) >= 3)) { el.hidden = true; renderKoyomi.key = ''; return; }   // はじめてのさんぽ（3ゴールまで）の間も 出さない
   const pc = px ? place : { city: ((me && placeAt(me.lat, me.lng)) || {}).name || '', town: '' };
   const key = ymd() + ':' + now.getHours() + ':' + pc.city + ':' + pc.town;
   if (WX) {   // 天気は10分ごとに取り直す（weather.js）。予報の地域（東部・西部）をまたいだら、1分を待たずにすぐ
@@ -2922,6 +2923,7 @@ function renderHeader() {
   $('lvNum').textContent = lv;
   $('lvFill').style.width = Math.min(100, ((S.total - lo) / (hi - lo)) * 100) + '%';
   $('ptsNum').textContent = S.points.toLocaleString();
+  const ptsEl = $('ptsNum').closest('.pts'); if (ptsEl) ptsEl.hidden = !(S.points > 0);   // 0pt の間は 数字を 出さない
   document.querySelectorAll('.mode-sw [data-mode]').forEach(b => b.setAttribute('aria-pressed', String((b.dataset.mode === 'demo') === demo)));
 }
 

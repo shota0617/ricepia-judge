@@ -9998,7 +9998,7 @@ const SAY = (() => {
     if (t > 0 && (t -= dt) <= 0) { t = 0; kind = ''; render(); }
     if (!S.started) return;
     if (S.done && !doneSaid) { doneSaid = true; say('お疲れ様です！', 8); }
-    if (!S.done && pi < STEPS.length && lastPct >= STEPS[pi][0] && !busy() && !DETAIL) { show(STEPS[pi][1], 3, 'step'); pi++; }   // 知らせの あいだは 待つ
+    if (!S.done && pi < STEPS.length && lastPct >= STEPS[pi][0] && !busy() && !DETAIL && !startNoticeMuted()) { show(STEPS[pi][1], 3, 'step'); pi++; }   // 知らせの あいだは 待つ。サイクル225・最初の1分: のんびりでは最初の1分は進みぐあいの吹き出し・読み上げも出さない（幅広作業機＝テッダー4.3m／スプレイヤー4.6mでは既定3速でも10%＝約140㎡に約48〜51秒で届き、216のロータリー幅前提の「届かない」を覆す実測）。piは進めないので1分を過ぎれば従来どおりその段階から出る（遅れて出す形）。くわしい説明では従来どおり出さない（show自体がDETAILで止まる）
   }
   function tap() {                                 // さわると：知らせの とちゅうは そのまま。案内が あれば もう一度 話す。なければ 雑談
     if (DETAIL || busy()) return;

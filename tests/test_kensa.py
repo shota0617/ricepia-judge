@@ -326,6 +326,8 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertIn('grains.filter(g => !g.gone && g.kind !== "seiryu")', body)
         self.assertIn("targets.reduce((a, g) => a + g.x, 0) / targets.length", body)
         self.assertIn("targets.reduce((a, g) => a + g.y, 0) / targets.length", body)
+        # 離れた2粒は、両方収まる倍率まで引いて寄せる（顔が見える下限つき）
+        self.assertIn("Math.max(1.6, Math.min(2.4, fit))", body)
 
     def test_assets_exist(self):
         for name in set(re.findall(r'kensa/[a-z_]+\.webp', HTML)):

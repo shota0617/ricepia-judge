@@ -219,7 +219,7 @@ function newState(seed){
     seed_: { soaked:false, heat:0, sprouted:false },           /* 浸種：積算水温 120℃ が 目安（栃木県の 育苗の 資料） */
     nur: { sown:false, age:0, moist:0, stress:0, days:0 },      /* 苗づくり：中苗は 30日 ほど */
     f: { planted:false, dat:0, T:0, H:0, W:0, N:39, root:50, water:0, Tmax:0, dryDays:0, dryRun:0, hoshiDays:0, overDry:0,
-         heading:null, gdd:0, A1:0, A2:0, Nfloral:null, Nhead:null, limit:null, heatHits:0, flowDays:0, flowerStress:0, drainLate:0, lodge:0, typhoon:false, cold:0, flowToday:false, coldPlant:0, agedPlant:0, young:0, planting:0, shiro:0, shiroDay:null, mizo:false, headDat:80, P:0, typhoonDay:null },
+         heading:null, gdd:0, A1:0, A2:0, Nfloral:null, Nhead:null, limit:null, heatHits:0, flowDays:0, flowerStress:0, drainLate:0, lodge:0, typhoon:false, cold:0, flowToday:false, coldPlant:0, agedPlant:0, young:0, planting:0, shiro:0, shiroDay:null, mizo:false, headDat:80, P:0, typhoonDay:null, deepDays:0 },
     hv: { cut:0, done:false, gdd:0, moisture:25, dryDays:0 },
     result: null, swipes:0,
   };
@@ -260,7 +260,7 @@ function growDay(S){
     else if (f.dat > headDat - 26 && f.dat < headDat + 8){ f.flowerStress += 1; f.root -= 0.5; }               /* 穂が できる 時・開花の 水切れ */
     else if (f.heading && f.dat < headDat + 30){ f.drainLate++; }                                                 /* 早い 落水は 胴割れ・未熟の もと（栃木県） */
     else if (f.dat > 8) f.root += 0.3;
-  } else { f.dryRun = 0; f.root += d >= 10 ? -0.5 : d <= 3 ? 0.4 : 0.1; }
+  } else { f.dryRun = 0; f.root += d >= 10 ? -0.5 : d <= 3 ? 0.4 : 0.1; if (d >= 10 && f.dat > 10) f.deepDays++; } /* 深水の 日を 数える（18周目） */
   f.root = clamp(f.root, 20, 110);
   /* しるしを とる */
   if (f.dat === 45) f.limit = { T:f.T, H:f.H, W:f.W };
@@ -281,7 +281,7 @@ function growDay(S){
 }
 function lodgeRisk(S){
   const f = S.f, culm = f.H - 10, ratioPeak = f.Tmax/TARGET; /* 稈長 ≒ 草丈 −10cm（16周目：0.8倍では 台風でも たおれなかった） */
-  let risk = (culm-80)*0.035 + ((f.Nhead==null?f.N:f.Nhead)-36)*0.045 + (10-f.W)*0.09 + (ratioPeak-1)*0.55 - (f.root-60)*0.006 + (f.A2 >= 2 ? 0.12 : 0) + (f.hoshiDays < 5 ? 0.15 : 0); /* 穂肥を 入れると 少し たおれやすい。中干し なしも（熊本県：無効分げつ・倒伏を 抑える） */
+  let risk = (culm-80)*0.035 + ((f.Nhead==null?f.N:f.Nhead)-36)*0.045 + (10-Math.min(f.W, 12))*0.09 + (ratioPeak-1)*0.55 - (f.root-60)*0.006 + (f.A2 >= 2 ? 0.12 : 0) + (f.hoshiDays < 5 ? 0.15 : 0) + Math.min(0.3, (f.deepDays||0)*0.008); /* 茎幅の 効きは 12mm まで、深水の 日が 長いほど 危ない（18周目：みずびたしが たおれなかった） */ /* 穂肥を 入れると 少し たおれやすい。中干し なしも（熊本県：無効分げつ・倒伏を 抑える） */
   return risk; /* 0 で 切らない：元気な 稲は 負の 値（台風の +0.2 を 足しても たおれない。16周目） */
 }
 function lodgeCheck(S){ const f = S.f; f.lodge = Math.max(f.lodge, clamp((lodgeRisk(S) + 0.2)*0.95, 0, 1)); } /* 台風は +0.2（16周目） */
@@ -330,7 +330,8 @@ function whatIf(S, base){
   if (hv.gdd < 950 || hv.gdd > 1150) tryIt('刈りどき', (cf, ch) => { ch.gdd = 1000; }, '1000℃ で 刈って いれば');
   if (hv.moisture < 14) tryIt('乾燥', (cf, ch) => { ch.moisture = 15; }, '15% で 止めて いれば');
   if (f.A1 === 0 && (f.Nfloral==null ? f.N : f.Nfloral) < 34) tryIt('追肥', (cf) => { cf.A1 = 3; cf.Nfloral = (cf.Nfloral==null ? cf.N : cf.Nfloral) + 3; }, '追肥を して いれば'); /* 葉色が うすかった 年だけ（16周目） */
-  if (f.A2 === 0) tryIt('穂肥', (cf) => { cf.A2 = 2; }, '穂肥を して いれば'); /* 幼穂形成期の 葉色は 穂肥より 前に 決まる（16周目） */
+  const Nfl0 = f.Nfloral==null ? f.N : f.Nfloral;
+  if (f.A2 === 0 && Nfl0 < 38) tryIt('穂肥', (cf) => { cf.A2 = Nfl0 >= 36 ? 1 : 2; }, '穂肥を して いれば'); /* 葉色が こくて 穂肥が できなかった 年には 言わない（18周目） */ /* 幼穂形成期の 葉色は 穂肥より 前に 決まる（16周目） */
   if (f.flowerStress > 0) tryIt('水切れ', (cf) => { cf.flowerStress = 0; }, '穂づくりで 水を 切らさなければ');
   if (f.drainLate > 0) tryIt('早い落水', (cf) => { cf.drainLate = 0; }, '登熟の 水を 早く 落とさなければ');
   return out.sort((a, b) => b.gain - a.gain);
@@ -348,7 +349,7 @@ const V = { /* 見た目の 動き（モデルとは 別）：水面の ばね�
 /* ========== 音と 振動（WebAudio で 作る 素朴な 音。外の 音は 使わない） ========== */
 const SND = {
   ac: null,
-  init(){ if (this.ac) return; try{ this.ac = new (window.AudioContext||window.webkitAudioContext)(); this.master = this.ac.createGain(); this.master.gain.value = soundOn ? 1 : 0; this.master.connect(this.ac.destination); const n = Math.floor(this.ac.sampleRate*0.35); this.noiseBuf = this.ac.createBuffer(1, n, this.ac.sampleRate); const ch = this.noiseBuf.getChannelData(0); for (let i=0;i<n;i++) ch[i] = Math.random()*2-1; }catch(e){} }, /* 雑音は 1つの バッファを 使いまわす（8周目） */
+  init(){ if (this.ac) return; try{ this.ac = new (window.AudioContext||window.webkitAudioContext)(); this.master = this.ac.createGain(); this.master.gain.value = soundOn ? 1 : 0; this.master.connect(this.ac.destination); const n = Math.floor(this.ac.sampleRate*1.0); this.noiseBuf = this.ac.createBuffer(1, n, this.ac.sampleRate); const ch = this.noiseBuf.getChannelData(0); for (let i=0;i<n;i++) ch[i] = Math.random()*2-1; }catch(e){} }, /* 雑音は 1つの バッファを 使いまわす（8周目） */
   ensure(){ try{ if (this.ac && this.ac.state !== 'running') this.ac.resume(); }catch(e){} }, /* 止まった 音を 起こす（16周目） */
   tone(f, dur, type, vol, slide){ if (!this.ac) return; this.ensure(); const t = this.ac.currentTime, o = this.ac.createOscillator(), g = this.ac.createGain(); o.type = type||'sine'; o.frequency.setValueAtTime(f, t); if (slide) o.frequency.exponentialRampToValueAtTime(slide, t+dur); g.gain.setValueAtTime(vol||.2, t); g.gain.exponentialRampToValueAtTime(.001, t+dur); o.connect(g); g.connect(this.master); o.start(t); o.stop(t+dur+.02); },
   noise(dur, vol, hz){ if (!this.ac || !this.noiseBuf) return; this.ensure(); const t = this.ac.currentTime, s = this.ac.createBufferSource(); s.buffer = this.noiseBuf; const fl = this.ac.createBiquadFilter(); fl.type = 'bandpass'; fl.frequency.value = hz||1200; fl.Q.value = .7; const g = this.ac.createGain(); g.gain.setValueAtTime(vol||.25, t); g.gain.exponentialRampToValueAtTime(.001, t+dur); s.connect(fl); fl.connect(g); g.connect(this.master); s.start(t, 0, dur+.02); },
@@ -380,6 +381,7 @@ function layout(){ /* 田んぼの 場所（低い 画面でも 吹き出しと 
   return { top, bottom, fieldTop, fieldBot, cx: W/2 };
 }
 
+function rrect(x, y, w, h, r){ if (ctx.roundRect) ctx.roundRect(x, y, w, h, r); else ctx.rect(x, y, w, h); } /* 角丸の 四角（古い ブラウザは 四角。18周目） */
 /* 手がきの 線：少し ゆらす */
 function wobbly(pts, amp, seed){ const r = rng(seed||7); ctx.beginPath(); pts.forEach(([x,y],i) => { const dx = (r()-.5)*amp, dy = (r()-.5)*amp; i ? ctx.lineTo(x+dx, y+dy) : ctx.moveTo(x+dx, y+dy); }); }
 
@@ -550,7 +552,7 @@ function drawNursery(L){
     if (n.sown){ const r = rng(b*31+1); const h = (bot - top) * 0.6 * clamp(n.age/32, 0.03, 1) * (n.stress > 0 ? 0.92 : 1); /* 枠の 6割 まで（3周目） */ ctx.strokeStyle = leafColor(40 - n.stress*4, 0); ctx.lineWidth = 1.6; ctx.lineCap = 'round';
       for (let i=0;i<14;i++){ const sx = x + 6 + (bw-12)*(i/13), lean = (r()-.5)*0.25 + (n.moist < 0.2 ? 0.35 : 0) + Math.sin(V.t*1.5 + i)*0.03; ctx.beginPath(); ctx.moveTo(sx, y+4); ctx.quadraticCurveTo(sx + lean*h*0.5, y+4 - h*0.6, sx + lean*h, y+4 - h); ctx.stroke(); } }
   }
-  if (V.drag && V.drag.kind==='water' && V.drag.amt > 0.1){ /* ブリキの じょうろ（17周目） */ const jx = W/2 + 30, jy = top - 26; ctx.save(); ctx.translate(jx, jy); ctx.rotate(-0.5); ctx.fillStyle = '#9fb0bf'; ctx.strokeStyle = '#3e2a1a'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(-17, -10, 34, 22, 4) : ctx.rect(-17, -10, 34, 22); ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.moveTo(-17, -4); ctx.lineTo(-34, -14); ctx.lineTo(-33, -9); ctx.lineTo(-17, 2); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.arc(-35, -13, 5, 0, Math.PI*2); ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.arc(6, -10, 10, Math.PI, 0); ctx.stroke(); ctx.restore(); ctx.strokeStyle = 'rgba(200,230,250,.9)'; ctx.lineWidth = 2; for (let i=0;i<6;i++){ ctx.beginPath(); ctx.moveTo(W/2 - 30 + i*12, top - 10); ctx.lineTo(W/2 - 36 + i*12, top + 30 + (V.t*300 + i*20)%40); ctx.stroke(); } }
+  if (V.drag && V.drag.kind==='water' && V.drag.amt > 0.1){ /* ブリキの じょうろ（17周目） */ const jx = W/2 + 30, jy = top - 26; ctx.save(); ctx.translate(jx, jy); ctx.rotate(-0.5); ctx.fillStyle = '#9fb0bf'; ctx.strokeStyle = '#3e2a1a'; ctx.lineWidth = 1.5; ctx.beginPath(); rrect(-17, -10, 34, 22, 4); ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.moveTo(-17, -4); ctx.lineTo(-34, -14); ctx.lineTo(-33, -9); ctx.lineTo(-17, 2); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.arc(-35, -13, 5, 0, Math.PI*2); ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.arc(6, -10, 10, Math.PI, 0); ctx.stroke(); ctx.restore(); ctx.strokeStyle = 'rgba(200,230,250,.9)'; ctx.lineWidth = 2; for (let i=0;i<6;i++){ ctx.beginPath(); ctx.moveTo(W/2 - 30 + i*12, top - 10); ctx.lineTo(W/2 - 36 + i*12, top + 30 + (V.t*300 + i*20)%40); ctx.stroke(); } }
   /* 水分の 目もり */
   gauge(x0, top - 24, boxes*bw + (boxes-1)*gap, clamp(n.moist, 0, 1), 0.3);
 }
@@ -561,14 +563,15 @@ function drawDry(L){
   const r = rng(5); ctx.fillStyle = '#e8c86a'; for (let i=0;i<60;i++){ const u = r()*2-1, v = r(); const x = cx + u*rw*0.9*(1-v*0.5), y = by - v*rw*0.5; ctx.beginPath(); ctx.ellipse(x, y, 3.5, 2, u, 0, Math.PI*2); ctx.fill(); }
   ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineWidth = 2; for (let i=0;i<3;i++){ const x = cx - 30 + i*30, ph = V.t*1.5 + i; ctx.beginPath(); ctx.moveTo(x, by - rw*0.55); ctx.quadraticCurveTo(x + Math.sin(ph)*8, by - rw*0.75, x, by - rw*0.95 - (ph*10)%14); ctx.stroke(); }
   gauge(cx - rw, by + 22, rw*2, clamp((hv.moisture - 12) / 14, 0, 1), (15-12)/14);
+  if (hv.moisture <= 15.5){ /* 仕上がったら 横に 米袋（18周目） */ const bx = cx + rw + 14, bw = 40, bh = 52, byy = by - bh; ctx.fillStyle = '#f1dfba'; ctx.strokeStyle = '#7a5a30'; ctx.lineWidth = 1.5; ctx.beginPath(); rrect(bx, byy, bw, bh, 5); ctx.fill(); ctx.stroke(); ctx.strokeStyle = '#c8352b'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(bx + 4, byy + 7); ctx.lineTo(bx + bw - 4, byy + 7); ctx.stroke(); ctx.fillStyle = '#3e2a1a'; ctx.font = '700 9px ' + FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('コシヒカリ', bx + bw/2, byy + 24); ctx.fillText('30kg', bx + bw/2, byy + 38); }
 }
 /* 目もり：クラフトの 札に 墨の 線、朱の 目印は 1か所（7周目） */
-function gauge(x, y, w, k, mark){ ctx.fillStyle = '#f1dfba'; ctx.strokeStyle = '#7a5a30'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x, y-6, w, 16, 5) : ctx.rect(x, y-6, w, 16); ctx.fill(); ctx.stroke(); ctx.strokeStyle = '#3e2a1a'; ctx.lineWidth = 4; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(x+8, y+2); ctx.lineTo(x+8 + (w-16)*k, y+2); ctx.stroke(); if (mark != null){ const mx = x+8 + (w-16)*mark; ctx.strokeStyle = '#c8352b'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(mx, y-9); ctx.lineTo(mx, y+13); ctx.stroke(); } }
+function gauge(x, y, w, k, mark){ ctx.fillStyle = '#f1dfba'; ctx.strokeStyle = '#7a5a30'; ctx.lineWidth = 1.5; ctx.beginPath(); rrect(x, y-6, w, 16, 5); ctx.fill(); ctx.stroke(); ctx.strokeStyle = '#3e2a1a'; ctx.lineWidth = 4; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(x+8, y+2); ctx.lineTo(x+8 + (w-16)*k, y+2); ctx.stroke(); if (mark != null){ const mx = x+8 + (w-16)*mark; ctx.strokeStyle = '#c8352b'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(mx, y-9); ctx.lineTo(mx, y+13); ctx.stroke(); } }
 /* 暦（左上の 日めくり）。めくる ときは 上の 紙が 持ちあがって とぶ */
 function drawCalendar(L){
   const x = Math.max(12, W*0.04), y = L.top + 6, w = 58, h = 46;
   const dt = dateOf(S.day);
-  function page(dy, scaleY, d, alpha){ ctx.save(); ctx.globalAlpha = alpha; ctx.translate(x, y + dy); ctx.scale(1, scaleY); ctx.fillStyle = '#fbf3e0'; ctx.strokeStyle = '#7a5a30'; ctx.lineWidth = 2; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(0, 0, w, h, 5) : ctx.rect(0, 0, w, h); ctx.fill(); ctx.stroke(); ctx.fillStyle = '#c8352b'; ctx.fillRect(0, 0, w, 11); ctx.fillStyle = '#fbf3e0'; ctx.font = '700 9px ' + FONT; ctx.textAlign = 'center'; ctx.fillText(d.m + '月', w/2, 9); ctx.fillStyle = '#3e2a1a'; ctx.font = '400 24px "Dela Gothic One", sans-serif'; ctx.fillText(d.d, w/2, 37); ctx.restore(); }
+  function page(dy, scaleY, d, alpha){ ctx.save(); ctx.globalAlpha = alpha; ctx.translate(x, y + dy); ctx.scale(1, scaleY); ctx.fillStyle = '#fbf3e0'; ctx.strokeStyle = '#7a5a30'; ctx.lineWidth = 2; ctx.beginPath(); rrect(0, 0, w, h, 5); ctx.fill(); ctx.stroke(); ctx.fillStyle = '#c8352b'; ctx.fillRect(0, 0, w, 11); ctx.fillStyle = '#fbf3e0'; ctx.font = '700 9px ' + FONT; ctx.textAlign = 'center'; ctx.fillText(d.m + '月', w/2, 9); ctx.fillStyle = '#3e2a1a'; ctx.font = '400 24px "Dela Gothic One", sans-serif'; ctx.fillText(d.d, w/2, 37); ctx.restore(); }
   ctx.fillStyle = '#7a5a30'; ctx.fillRect(x+10, y-5, 4, 8); ctx.fillRect(x+w-14, y-5, 4, 8);
   page(2, 1, dt, .5);
   if (V.page > 0){ /* めくれて いる 紙（きのう）：持ちあがり、小さく なって 消える */
@@ -578,9 +581,9 @@ function drawCalendar(L){
   if (V.drag && V.drag.kind==='day' && V.drag.amt > 0){ /* 指で 引いている あいだ：紙の はしが 持ちあがる */ ctx.save(); ctx.globalAlpha = .9; ctx.fillStyle = '#f1dfba'; ctx.beginPath(); ctx.moveTo(x+w, y+h); ctx.lineTo(x+w - 14*V.drag.amt, y+h); ctx.lineTo(x+w, y+h - 14*V.drag.amt); ctx.closePath(); ctx.fill(); ctx.restore(); }
 }
 /* スワイプの 案内（はじめの うち だけ うすく）。字は 1〜2字 */
-function drawHints(L){
+function drawHints(L, acts){
   if (V.hint <= 0.02) return;
-  const acts = actions(); const cx = W/2, cy = L.bottom - 44, R = Math.min(70, W*0.17);
+  const cx = W/2, cy = L.bottom - 44, R = Math.min(70, W*0.17);
   ctx.save(); ctx.globalAlpha = V.hint*0.85; ctx.font = '700 13px ' + FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   const arrow = (dx, dy, label, on) => { const x = cx + dx*R, y = cy + dy*R*0.55; ctx.fillStyle = on ? 'rgba(251,243,224,.92)' : 'rgba(251,243,224,.35)'; ctx.strokeStyle = on ? '#7a5a30' : 'rgba(122,90,48,.3)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(x, y, 30, 15, 0, 0, Math.PI*2); ctx.fill(); ctx.stroke(); ctx.fillStyle = on ? '#3e2a1a' : 'rgba(62,42,26,.4)'; ctx.fillText(label, x, y+1); };
   arrow(0, -1, '↑ ' + (acts.up || 'みず'), !!acts.up); arrow(0, 1, '↓ ' + (acts.down || 'おとす'), !!acts.down); arrow(1, 0, '→ あした', !!acts.right); arrow(-1, 0, '← ' + (acts.left || 'みる'), !!acts.left);
@@ -591,7 +594,7 @@ function drawCard(L){
   const c = V.card; if (!c) return;
   const a = clamp(Math.min(c.life*3, (2.4-c.life)*4), 0, 1), cw = Math.min(W*0.6, 240), ch = Math.min((L.fieldBot-L.top)*0.62, 280), x = W/2 - cw/2, y = L.top + 62 + (1-a)*12; /* 暦の 下 */
   ctx.save(); ctx.globalAlpha = a; ctx.translate(x, y); ctx.rotate(-0.02);
-  ctx.fillStyle = '#f1dfba'; ctx.strokeStyle = '#7a5a30'; ctx.lineWidth = 2.5; ctx.setLineDash([7, 5]); ctx.beginPath(); ctx.roundRect ? ctx.roundRect(0, 0, cw, ch, 14) : ctx.rect(0, 0, cw, ch); ctx.fill(); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle = '#f1dfba'; ctx.strokeStyle = '#7a5a30'; ctx.lineWidth = 2.5; ctx.setLineDash([7, 5]); ctx.beginPath(); rrect(0, 0, cw, ch, 14); ctx.fill(); ctx.stroke(); ctx.setLineDash([]);
   const yBase = ch - 36, ppc = (yBase - 24)/Math.max(100, c.H*1.05);
   ctx.fillStyle = '#6e5238'; ctx.beginPath(); ctx.ellipse(cw/2, yBase, 40, 9, 0, 0, Math.PI*2); ctx.fill();
   const r = rng(77); ctx.strokeStyle = '#d8c39a'; ctx.lineWidth = 1.2; for (let i=0;i<Math.min(30, c.root*0.4);i++){ const ang = (r()-.5)*2.2, l = (6 + c.root*0.18)*ppc*(0.5+r()*0.5); ctx.beginPath(); ctx.moveTo(cw/2 + (r()-.5)*8, yBase); ctx.quadraticCurveTo(cw/2 + Math.sin(ang)*l*.4, yBase + l*.5, cw/2 + Math.sin(ang)*l*.8, yBase + Math.min(28, Math.cos(ang*0.6)*l)); ctx.stroke(); }
@@ -601,11 +604,11 @@ function drawCard(L){
   ctx.fillStyle = '#c8352b'; ctx.font = '700 13px ' + FONT; ctx.textAlign = 'right'; ctx.textBaseline = 'bottom'; ctx.fillText(Math.round(c.H) + 'cm', cw - 14, hy - 2);
   ctx.restore();
 }
-function drawStamps(L){
-  if (V.drag && V.drag.kind==='day' && V.drag.amt < 0 && actions().left){ const k = Math.min(1, -V.drag.amt); ctx.save(); ctx.globalAlpha = k*0.45; ctx.translate(W/2, (L.fieldTop+L.fieldBot)/2); ctx.rotate(-0.2); const sc = 1.6 - k*0.6; ctx.scale(sc, sc); ctx.strokeStyle = '#c8352b'; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(-22, -22, 44, 44, 8) : ctx.rect(-22, -22, 44, 44); ctx.stroke(); ctx.fillStyle = '#c8352b'; ctx.font = '700 22px ' + FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(actions().left, 0, 1); ctx.restore(); } /* ←の 引いて いる 間（13周目） */ /* 「済」の はんこ と、まく 粒 */
-  for (const st of V.stamps){ ctx.save(); ctx.globalAlpha = clamp(st.life*2, 0, 1)*0.9; const sc = 1 + Math.max(0, st.life-0.6)*1.3; ctx.translate(st.x, st.y); ctx.rotate(-0.2); ctx.scale(sc, sc); ctx.strokeStyle = '#c8352b'; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(-22, -22, 44, 44, 8) : ctx.rect(-22, -22, 44, 44); ctx.stroke(); ctx.lineWidth = 1; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(-18, -18, 36, 36, 6) : ctx.rect(-18, -18, 36, 36); ctx.stroke(); ctx.fillStyle = '#c8352b'; ctx.font = '700 22px ' + FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(st.text, 0, st.sub ? -4 : 1); if (st.sub){ ctx.font = '700 9px ' + FONT; ctx.fillText(st.sub, 0, 12); } ctx.restore(); } /* はんこは 朱の 2重の 角丸、しごとの 名は 印の 中に 朱の 小さい 字（17周目：縁取りの 字は 字幕に 見えた） */
+function drawStamps(L, A){
+  if (V.drag && V.drag.kind==='day' && V.drag.amt < 0 && A.left){ const k = Math.min(1, -V.drag.amt); ctx.save(); ctx.globalAlpha = k*0.45; ctx.translate(W/2, (L.fieldTop+L.fieldBot)/2); ctx.rotate(-0.2); const sc = 1.6 - k*0.6; ctx.scale(sc, sc); ctx.strokeStyle = '#c8352b'; ctx.lineWidth = 3; ctx.beginPath(); rrect(-22, -22, 44, 44, 8); ctx.stroke(); ctx.fillStyle = '#c8352b'; ctx.font = '700 22px ' + FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(A.left, 0, 1); ctx.restore(); } /* ←の 引いて いる 間（13周目） */ /* 「済」の はんこ と、まく 粒 */
+  for (const st of V.stamps){ ctx.save(); ctx.globalAlpha = clamp(st.life*2, 0, 1)*0.9; const sc = 1 + Math.max(0, st.life-0.6)*1.3; ctx.translate(st.x, st.y); ctx.rotate(-0.2); ctx.scale(sc, sc); ctx.strokeStyle = '#c8352b'; ctx.lineWidth = 3; ctx.beginPath(); rrect(-22, -22, 44, 44, 8); ctx.stroke(); ctx.lineWidth = 1; ctx.beginPath(); rrect(-18, -18, 36, 36, 6); ctx.stroke(); ctx.fillStyle = '#c8352b'; ctx.font = '700 22px ' + FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(st.text, 0, st.sub ? -4 : 1); if (st.sub){ ctx.font = '700 9px ' + FONT; ctx.fillText(st.sub, 0, 12); } ctx.restore(); } /* はんこは 朱の 2重の 角丸、しごとの 名は 印の 中に 朱の 小さい 字（17周目：縁取りの 字は 字幕に 見えた） */
   for (const p of V.particles){ ctx.fillStyle = p.c; ctx.beginPath(); ctx.ellipse(p.x, p.y, p.r, p.r*0.6, p.a, 0, Math.PI*2); ctx.fill(); }
-  if (V.toast){ const t = V.toast; ctx.save(); ctx.globalAlpha = clamp(t.life*1.5, 0, 1); const x = Math.max(12, W*0.04) + 58 + 12, y = L.top + 10 - (1-t.life)*6; ctx.translate(x, y); ctx.rotate(-0.05); ctx.font = '700 13px ' + FONT; const w = ctx.measureText(t.text).width + 16; ctx.fillStyle = '#f1dfba'; ctx.strokeStyle = '#7a5a30'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(0, 0, w, 22, 4) : ctx.rect(0, 0, w, 22); ctx.fill(); ctx.stroke(); ctx.fillStyle = '#3e2a1a'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(t.text, 8, 11); ctx.restore(); } /* 暦の 横の 短冊（17周目：縁取りの 大きな 字は ゲーム調だった） */
+  if (V.toast){ const t = V.toast; ctx.save(); ctx.globalAlpha = clamp(t.life*1.5, 0, 1); const x = Math.max(12, W*0.04) + 58 + 12, y = L.top + 10 - (1-t.life)*6; ctx.translate(x, y); ctx.rotate(-0.05); ctx.font = '700 13px ' + FONT; const w = ctx.measureText(t.text).width + 16; ctx.fillStyle = '#f1dfba'; ctx.strokeStyle = '#7a5a30'; ctx.lineWidth = 1.5; ctx.beginPath(); rrect(0, 0, w, 22, 4); ctx.fill(); ctx.stroke(); ctx.fillStyle = '#3e2a1a'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(t.text, 8, 11); ctx.restore(); } /* 暦の 横の 短冊（17周目：縁取りの 大きな 字は ゲーム調だった） */
 }
 function draw(){
   const L = layout();
@@ -614,7 +617,7 @@ function draw(){
   drawSky(L);
   ctx.fillStyle = '#4a3a2c'; ctx.fillRect(0, L.fieldTop, W, H - L.fieldTop); /* 地面（7周目：黒すぎた） */
   if (S.phase==='seed') drawSeed(L); else if (S.phase==='nursery') drawNursery(L); else if (S.phase==='dry') drawDry(L); else drawField(L);
-  drawCard(L); drawCalendar(L); drawHints(L); drawStamps(L);
+  const A = actions(); drawCard(L); drawCalendar(L); drawHints(L, A); drawStamps(L, A);
   ctx.restore();
 }
 
@@ -625,7 +628,7 @@ function stamp(text, x, y, sub){ V.stamps.push({ text, x, y, sub, life: 1 }); SN
 const fmtCm = v => (Math.round(v*10)/10).toFixed(1).replace(/\.0$/, '');
 const PHASE_NAME = { seed:'たねもみ', nursery:'なえ', field:'たんぼ', dry:'かんそう' };
 function fieldStageName(){ const f = S.f; if (!f.planted) return '代かき'; if (!f.heading) return (f.dat < 10 ? '活着' : f.dat < 55 ? '分げつ' : '穂づくり') + ' 茎' + Math.round(f.T) + '本'; if (S.day - f.heading <= 3) return '出穂'; return (S.hv.done ? '乾燥' : f.gdd < 980 ? '登熟' : '刈りどき') + ' ' + Math.round(f.gdd) + '℃'; } /* 茎数と 積算℃を いつも 見せる（10周目） */
-function syncUI(){ const h0 = HUD_H;
+function syncUI(){
   const dt = dateOf(S.day), wx = S.weather[S.day] || S.weather[365];
   $('date').textContent = dt.m + '月' + dt.d + '日'; $('dayNo').textContent = S.day + '日目';
   const nx = S.weather[S.day+1]; $('wx').textContent = WX_ICON[wx.w] + ' ' + Math.round(wx.t) + '℃' + (nx && !S.over ? '　あす ' + WX_ICON[nx.w].split(' ')[0] : ''); /* あすの 天気も 見せる（2周目：掛け流し・落水の 段取りの ため） */
@@ -635,7 +638,7 @@ function syncUI(){ const h0 = HUD_H;
   else if (S.phase==='field'){ lab = fieldStageName(); st = 'みず ' + fmtCm(S.f.water) + 'cm'; }
   else if (S.phase==='dry'){ st = 'すいぶん ' + S.hv.moisture.toFixed(1) + '%'; }
   $('stage').textContent = lab; $('stat').textContent = st;
-  HUD_H = $('hud').offsetHeight || HUD_H; if (HUD_H !== h0) draw();
+  HUD_H = $('hud').offsetHeight || HUD_H;
 }
 
 /* ========== できる こと（場面ごとの スワイプの 意味） ========== */
@@ -645,7 +648,7 @@ function actions(){
   else if (S.phase==='nursery'){ a.up = 'みず'; a.down = null; a.left = S.nur.age >= 20 ? 'たんぼへ' : 'みる'; }
   else if (S.phase==='field'){
     a.up = 'みず'; a.down = f.water > 0 ? 'おとす' : null;
-    if (!f.planted){ a.left = f.water < 1 ? 'みる' : f.shiro < 2 ? '代かき' : '田うえ'; return a; } /* 代かき → 田うえ（5周目） */
+    if (!f.planted){ a.left = f.shiro >= 2 ? '田うえ' : f.water < 1 ? 'みる' : '代かき'; return a; } /* 代かきの あとは 水が 引いても 田うえ（18周目） */ /* 代かき → 田うえ（5周目） */
     if (f.heading && f.gdd >= 850) a.left = '刈る';
     else if (!f.heading && f.dat >= 30 && f.dat <= f.headDat - 26 && f.water < 1 && !f.mizo) a.left = '溝切り'; /* 中干しの 間（5周目） */
     else if (!f.heading && f.dat >= 40 && f.dat <= 58 && f.A1 === 0 && f.water >= 1) a.left = '追肥'; /* 水が ある 時だけ（3周目） */
@@ -689,7 +692,7 @@ function narrate(){
   }
   if (S.phase==='field'){
     const a = actions();
-    if (!f.planted){ if (f.water < 1) return say('たんぼに <b>↑で 水を</b>。ヒタヒタで 代かき。<span class="src">（埼玉県）</span>'); if (f.shiro < 2) return say('<b>←で 代かき</b>。土を たいらに。<span class="src">（鳥取県）</span>'); if (S.day - f.shiroDay < 3) return say('土が 落ちつくまで <b>→で ' + (3 - (S.day - f.shiroDay)) + '日</b>。<span class="src">（愛知県）</span>'); return say('<b>←で 1列ずつ</b> うえます。'); }
+    if (!f.planted){ if (f.shiro < 2 && f.water < 1) return say('たんぼに <b>↑で 水を</b>。ヒタヒタで 代かき。<span class="src">（埼玉県）</span>'); if (f.shiro < 2) return say('<b>←で 代かき</b>。土を たいらに。<span class="src">（鳥取県）</span>'); if (S.day - f.shiroDay < 3) return say('土が 落ちつくまで <b>→で ' + (3 - (S.day - f.shiroDay)) + '日</b>。<span class="src">（愛知県）</span>'); return say('<b>←で 1列ずつ</b> うえます。'); }
     if (wx.w==='台風' && f.heading) return say('たいふう！ たおれないで…', 'wow');
     if (f.dat <= 8){ if (f.water <= 0) return say('うえたばかり。<b>↑で 水を</b>。', 'sad'); if (wx.w==='低温' && f.water < 4) return say('さむい日。水を ふかめに。<span class="src">（岩手県）</span>'); return say('ねづくまで 水で まもります。'); }
     if (a.left==='刈る' && f.gdd >= 980 && f.gdd < 1150) return say('<b>刈りどき</b>です。←で ざくざく。<span class="src">（出穂後 1000℃ 前後：栃木県）</span>', 'joy');
@@ -702,7 +705,7 @@ function narrate(){
     if (f.heading && (S.day - f.heading) < 30 && f.water < 1) return say('まだ 水を 切らないで。<b>↑で 水を</b>。<span class="src">（栃木県）</span>', 'sad');
     if (a.left==='追肥') return say('1株を 見て、茎 ' + Math.round(f.T) + '本。<b>←で 追肥</b>も できます。');
     if (a.left==='穂肥') return say('穂の もと。葉いろ ' + Math.round(f.N) + '。<b>←で 穂肥</b>。<span class="src">（出穂 18日 前：新潟県）</span>');
-    if (f.dat >= 30 && f.dat <= 50 && (f.T >= TARGET*0.7 || f.dat >= 38) && f.water >= 1 && f.hoshiDays < 5) return say('茎が そろいました。<b>↓で 水を 落として 中干し</b>。<span class="src">（岩手県）</span>');
+    if (f.dat >= 30 && f.dat <= f.headDat - 33 && (f.T >= TARGET*0.7 || f.dat >= 38) && f.water >= 1 && f.hoshiDays < 5) return say('茎が そろいました。<b>↓で 水を 落として 中干し</b>。<span class="src">（岩手県）</span>');
     if (f.hoshiDays >= 1 && f.water < 1 && f.dryRun >= 7 && f.dat <= f.headDat - 26) return say('ひびが 入りました。<b>↑で 水を もどします</b>。<span class="src">（7〜10日：秋田県）</span>');
     if (f.dat > f.headDat - 26 && !f.heading && f.water < 1) return say('穂づくりの 時。<b>↑で 水を</b>。切らさないで。', 'sad');
     if (f.dat >= 10 && f.dat < 30 && f.water > 5) return say('分げつの ころは <b>↓で 浅く</b>（2〜3cm）。<span class="src">（全農）</span>');
@@ -840,7 +843,7 @@ cv.addEventListener('pointerup', pointerUp);
 cv.addEventListener('pointercancel', e => { if (V.drag && e.pointerId === V.drag.id){ V.drag = null; V.waterTarget = undefined; } }); /* 途中で 切れた 指は なかった ことに（8周目） */
 document.addEventListener('visibilitychange', () => { if (!document.hidden) SND.ensure(); });
 window.addEventListener('keydown', e => { /* パソコンの 人の ため：矢印キーも スワイプと 同じ */
-  if (S.over || !$('title').hidden) return; const L = layout(); const k = e.key;
+  if (S.over || !$('title').hidden || e.repeat) return; const L = layout(); const k = e.key; /* 押しっぱなしで 止まらない のを ふせぐ（18周目） */
   if (k==='ArrowRight'){ S.swipes++; V.flipQueue = e.shiftKey ? 6 : 0; V.flipGap = 0.11; advanceDay(); } else if (k==='ArrowLeft'){ S.swipes++; V.flipQueue = 0; doLeft(L); }
   else if (k==='ArrowUp'){ doUp(3, 0); }
   else if (k==='ArrowDown'){ doDownWater(3, 0); }
@@ -880,7 +883,7 @@ function endGame(why){
   const wi = whatIf(S, r).slice(0, 2).map(w => w.say + ' <b>' + (w.dy > 0 ? '+' + w.dy + 'kg' : '') + (w.dy > 0 && w.ds > 0 ? '・' : '') + (w.ds > 0 ? '整粒 +' + w.ds + '%' : '') + '</b>'); /* 損失の 大きい 順に 2つ（11周目） */
   $('rSay').innerHTML = lines[0]; const second = wi.length ? wi.join('。') + '。' : (lines[1] && !/^茎 /.test(lines[1]) ? lines[1] : ''); $('rSay2').innerHTML = second; $('rSay2').parentElement.hidden = !second; /* 一等の 年の 数の 行は 出さない（14周目） */
 }
-function loadLog(){ try{ const j = JSON.parse(localStorage.getItem('k365_log')||'[]'); return Array.isArray(j) ? j : []; }catch(e){ return []; } }
+function loadLog(){ try{ const j = JSON.parse(localStorage.getItem('k365_log')||'[]'); return Array.isArray(j) ? j.filter(e => e && typeof e === 'object') : []; }catch(e){ return []; } }
 function showYears(){ const log = loadLog(); const y = $('years'); let years = 0; try{ years = +localStorage.getItem('k365_years')||log.length; }catch(e){} if (!years){ y.hidden = true; return; } const best = log.reduce((m, e) => Math.max(m, e.score||0), 0); y.hidden = false; y.textContent = years + '年 つくりました・じこベスト ' + best + '点'; }
 function start(){ S = newState(K3.fixedSeed != null ? K3.fixedSeed : (Date.now() ^ Math.floor(Math.random()*1e9))>>>0); HL.key = ''; Object.assign(V, { water:0, waterV:0, waterTarget:undefined, page:0, flipQueue:0, flipTimer:0, flipGap:0.11, flipN:0, drag:null, card:null, shake:0, hint:1, stamps:[], particles:[], toast:null, lastSay:'' }); $('title').hidden = true; $('result').hidden = true; $('soundBtn').classList.remove('show'); resize(); draw(); syncUI(); narrate(); SND.init(); }
 $('startBtn').addEventListener('click', start); $('againBtn').addEventListener('click', start);
@@ -920,8 +923,8 @@ const K3 = window.K3 = {
   jump(to){ if (!['seed','nursery','tiller','nakaboshi','heading','harvest','dry','result'].includes(to)) throw new Error('K3.jump: 知らない 場面 ' + to); start(); const f = S.f; const L = layout();
     const flipTo = (cond, max) => { for (let i=0;i<max && !cond();i++) advanceDay(); };
     S.seed_.soaked = true; V.water = 10; flipTo(() => S.seed_.sprouted, 30); if (to==='seed'){ return; }
-    doDown(); if (to==='nursery'){ flipTo(() => S.nur.age >= 18, 40); return; }
-    flipTo(() => S.nur.age >= 30, 60); doLeft(L); f.water = 3; V.water = 3; doLeft(L); doLeft(L); f.shiroDay = S.day - 3; for (let i=0;i<4;i++) doLeft(L); f.water = 5; V.water = 5;
+    doDown(); if (to==='nursery'){ for (let i=0;i<40 && S.nur.age < 18;i++){ if (S.nur.moist < 0.4) S.nur.moist = 1; advanceDay(); } return; }
+    for (let i=0;i<60 && S.nur.age < 30;i++){ if (S.nur.moist < 0.4) S.nur.moist = 1; advanceDay(); } doLeft(L); /* 苗に 水を（18周目：かれた 苗で 試して いた） */ f.water = 3; V.water = 3; doLeft(L); doLeft(L); f.shiroDay = S.day - 3; for (let i=0;i<4;i++) doLeft(L); f.water = 5; V.water = 5;
     const manage = () => { if (f.dat < 10) f.water = Math.max(f.water, 4); else if (f.dat < 34) f.water = clamp(f.water, 2, 3); else if (f.dat <= 44) f.water = 0; else if (!f.heading) f.water = Math.max(f.water, 3); else { f.water = Math.max(f.water, 2); if (S.weather[S.day].w==='高温') f.flowToday = true; } };
     const run = (cond, max) => { for (let i=0;i<max && !cond();i++){ manage(); if (actions().left==='溝切り') doLeft(L); if (actions().left==='追肥') doLeft(L); if (actions().left==='穂肥') doLeft(L); advanceDay(); } };
     if (to==='tiller'){ run(() => f.dat >= 28, 60); return; }

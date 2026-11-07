@@ -24,12 +24,12 @@ class TestIdleCard(unittest.TestCase):
         code = ("global.window={};global.document={readyState:'complete',addEventListener(){},getElementById(){return null},"
                 "querySelectorAll(){return []},hidden:false};global.setInterval=()=>0;"
                 "require(process.argv[1]);const f=window.NISHIO_IDLE_CARD.shouldShow;"
-                "const b={idleSec:45,started:true,visible:true,covered:false,shown:false};"
+                "const b={idleSec:45,moved:true,started:true,visible:true,covered:false,shown:false};"
                 "console.log(JSON.stringify([f(b),f({...b,idleSec:44.9}),f({...b,covered:true}),f({...b,started:false}),"
-                "f({...b,visible:false}),f({...b,shown:true}),f(null),f({}),f({...b,idleSec:'x'}),window.NISHIO_IDLE_CARD.IDLE_CARD_SEC]))")
+                "f({...b,visible:false}),f({...b,shown:true}),f({...b,moved:false}),f(null),f({}),f({...b,idleSec:'x'}),window.NISHIO_IDLE_CARD.IDLE_CARD_SEC]))")
         out = subprocess.run(["node", "-e", code, str(ROOT / "nishio-go" / "idlecard.js")],
                              capture_output=True, text=True, check=True).stdout
-        self.assertEqual(json.loads(out), [True, False, False, False, False, False, False, False, False, 45])
+        self.assertEqual(json.loads(out), [True, False, False, False, False, False, False, False, False, False, 45])
 
     def test_tracking_events(self):
         self.assertIn("window.nsgTrack", JS)

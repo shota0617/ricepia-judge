@@ -431,8 +431,8 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         # ズーム後に残った指（見る場所を動かす用）は、離した時にタップにしない
         self.assertIn("startG:null, noTap:true", HTML)
         self.assertIn("!d.noTap", HTML)
-        # はじくは従来どおり24pxを超えた速い払いだけ
-        self.assertIn("performance.now() - d.t0 < 260 && Math.hypot(e.clientX - d.x, e.clientY - d.y) > 24", HTML)
+        # はじくは24pxを超えた払いだけ（時間の境目はサイクル79で400msへ）
+        self.assertIn("performance.now() - d.t0 < 400 && Math.hypot(e.clientX - d.x, e.clientY - d.y) > 24", HTML)
 
     def test_good_grain_double_tap_takes_a_slow_double_tap(self):
         # みわける: よい粒の2回タップで寄る判定の間隔は500msまで受ける。
@@ -442,6 +442,14 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertIn('tapNow - lastGoodTap < 500', HTML)
         self.assertNotIn('tapNow - lastGoodTap < 320', HTML)
         self.assertIn('Math.hypot(e.clientX - lastGoodX, e.clientY - lastGoodY) < 40', HTML)
+
+    def test_flick_takes_with_a_slow_flick(self):
+        # みわける: はじく判定は400msまで受ける。
+        # 260msでは約300〜400msのゆっくりした払いが届かず無反応だった
+        # （390×844実測・サイクル79）。ゆっくりなでて広げる払い（550ms以上）は
+        # はじきとしないため、境目は400msに留める
+        self.assertIn("performance.now() - d.t0 < 400", HTML)
+        self.assertNotIn("performance.now() - d.t0 < 260", HTML)
 
     def test_bag_swipe_takes_with_a_short_swipe(self):
         # おす後: 押した袋を横へ流す判定は40pxから受ける。

@@ -966,7 +966,7 @@ function endPlatePointer(e, cancelled) {
         if (g.kind === "seiryu") { lastGoodTap = tapNow; lastGoodX = e.clientX; lastGoodY = e.clientY; }
         tapGrain(g);
       } else knockPlate();
-    } else if (d.moved && !cancelled && step === 2 && Z.s <= 1.001 && d.startG && performance.now() - d.t0 < 260 && Math.hypot(e.clientX - d.x, e.clientY - d.y) > 24) {
+    } else if (d.moved && !cancelled && step === 2 && Z.s <= 1.001 && d.startG && performance.now() - d.t0 < 400 && Math.hypot(e.clientX - d.x, e.clientY - d.y) > 24) { /* はじく判定: 400msまで受ける。260msでは約300〜400msのゆっくりした払いが届かず無反応だった（390×844実測・サイクル79）。ゆっくりなでて広げる払い（550ms以上）は従来どおりはじきとしない */
       flickGrain(d.startG, e.clientX - d.x, e.clientY - d.y);
     }
   }

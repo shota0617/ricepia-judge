@@ -462,14 +462,14 @@ a{color:var(--acc)}
 /* はじめの数枚だけ: カードが揺れて、左右へ動かすことを知らせる */
 #swHint{display:none;position:absolute;left:50%;bottom:-17px;transform:translateX(-50%);white-space:nowrap;background:#2b2a24;color:#fff;font-size:17px;font-weight:800;padding:7px 16px;border-radius:18px;box-shadow:0 3px 10px rgba(0,0,0,.35);pointer-events:none;z-index:3}
 #swCard.hinting #swHint{display:block}
-/* はじめての案内: 新規開始の最初の3枚だけ、カードの上に大きく出す(操作は妨げない) */
-#swGuide .gd{display:inline-block;font-size:40px;line-height:1;color:#fff;background:rgba(43,42,36,.42);padding:7px 15px;border-radius:999px;text-shadow:0 1px 4px rgba(0,0,0,.4)}   /* 周回113: 2〜3枚目の案内は、小さな三角ではなく大きな丸い札の矢印にする(景色の上でも読める濃さ) */
-#swGuide .gdL{margin-right:56px;animation:swGuideL 4.4s ease-in-out infinite}   /* 周回113: 左の矢印はゴーストの左寄せ帯(68〜82%)にだけ小さく左へ寄る */
-#swGuide .gdR{animation:swGuideR 4.4s ease-in-out infinite}   /* 周回113: 右の矢印は右寄せ帯(18〜32%)にだけ小さく右へ寄る */
+/* はじめての案内: 新規開始の2〜3枚目だけ、カードの左右の縁に大きく出す(操作は妨げない・周回115) */
+#swGuide .gd{position:absolute;top:158px;margin-top:-27px;font-size:40px;line-height:1;color:#fff;background:rgba(43,42,36,.42);padding:7px 15px;border-radius:999px;text-shadow:0 1px 4px rgba(0,0,0,.4)}   /* 周回113: 2〜3枚目の案内は、小さな三角ではなく大きな丸い札の矢印にする(景色の上でも読める濃さ)。周回115: 置き場所はカードの縁(下の .gdL/.gdR) */
+#swGuide .gdL{left:6px;animation:swGuideL 4.4s ease-in-out infinite}   /* 周回113: 左の矢印はゴーストの左寄せ帯(68〜82%)にだけ小さく左へ寄る。周回115: カードの左の縁に置き、顔とかかしに隠れないようにする */
+#swGuide .gdR{right:6px;animation:swGuideR 4.4s ease-in-out infinite}   /* 周回113: 右の矢印は右寄せ帯(18〜32%)にだけ小さく右へ寄る。周回115: カードの右の縁に置く */
 @keyframes swGuideR{0%,100%{transform:translateX(0)}18%,32%{transform:translateX(7px)}50%{transform:translateX(0)}}
 @keyframes swGuideL{0%,50%,100%{transform:translateX(0)}68%,82%{transform:translateX(-7px)}}
 @media (prefers-reduced-motion: reduce){#swGuide .gdL,#swGuide .gdR{animation:none}}
-#swGuide{display:none;text-align:center;font-size:20px;font-weight:800;line-height:1.6;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.55);padding:2px 12px 0;pointer-events:none;margin-top:78px}
+#swGuide{display:none;position:absolute;inset:0;z-index:6;pointer-events:none}   /* 周回115: 案内は田んぼに浮かせずカードの重なりに置く(顔・かかし・天気に隠れない。流れの外に出した分、田んぼが広く見える) */
 #swCard.hinting.wig{animation:swIn .22s cubic-bezier(.22,1.25,.36,1),swWig 2.4s ease-in-out .7s 1}
 @keyframes swWig{0%,100%{transform:none}30%{transform:translateX(-6px) rotate(-1deg)}65%{transform:translateX(6px) rotate(1deg)}}
 #swLog{width:min(92%,380px);margin:8px auto 0;font-size:14px;background:rgba(255,253,247,.88);color:#2b2a24;border-radius:10px;padding:6px 9px;min-height:18px}
@@ -653,13 +653,12 @@ html:has(#sGame.swipeMode:not(.hidden)),body:has(#sGame.swipeMode:not(.hidden)){
 #sGame.fxGood #swFieldFx,#sGame.fxBad #swFieldFx{animation:none;opacity:0}#sGame.swipeMode.fxGood canvas#field,#sGame.swipeMode.fxBad canvas#field{animation:none}   /* 周回104: 田んぼ全体の金の光・灰色の影(上の幕と田んぼの明るさ)はやめる。良し悪しは大きな○×(店主指示 2026-11-06)で伝わるので、画面全体を暗くしない */
 #swSkyTint,#swStageTint,#swHealthTint{left:50%;right:auto;width:100vw;margin-left:-50vw}   /* 周回106: 空・育ち・元気の色を画面の幅いっぱいに。カードの列の幅だけにかかり、田んぼの左右の端との間に縦の境目が出ていた */
 #swLiveFx,#swCareGlow{left:50%;right:auto;width:100vw;margin-left:-50vw}   /* 周回107: 田んぼの息づかいの光(#swLiveFx)とめくったあとの世話の余韻(#swCareGlow)も画面の幅いっぱいに(周回106と同じ境目) */
-@media (max-height:660px){#swGuide{margin-top:44px}}
-@media (max-height:600px){#swNextMile.on{display:none}#swIc{min-height:60px;max-height:64px}#swIc .icPix{width:56px;height:56px}#swIc .icEmoji{font-size:48px}}
+@media (max-height:600px){#swGuide .gd{top:140px}#swNextMile.on{display:none}#swIc{min-height:60px;max-height:64px}#swIc .icPix{width:56px;height:56px}#swIc .icEmoji{font-size:48px}}
 @media (max-height:440px){#swGuide,#swSeasonStrip,#swIc{display:none!important}#swTop{margin-bottom:2px}#swCard{padding-top:6px;padding-bottom:6px}#swTitle{margin:0 0 2px}#swText{line-height:1.4}#swEdge{margin-top:4px}#swEdge>span{padding:6px 9px}}
 @media (max-height:440px){#swCard.fest #swFest{display:none}}   /* 横向き(周回94): 田植え・稲刈りのちょうちん・花火の段を出さない(日付に重なり、選ぶ部分を画面の下へ押していた) */
 @media (max-width:300px){#swipe{overflow-x:clip}#swMood,#swGrow,#swKakashi,#swSkyWx,#swAheadWx{display:none!important}}   /* 文字200%(周回96・幅300px以下=拡大表示): 太陽の光の円盤で横にスクロールし、顔・育ち・かかし・天気がカードの字に重なっていた。飾りを控えてカードだけにする */
 @media (max-width:300px){body:has(#sGame.swipeMode:not(.hidden)){padding-left:6px;padding-right:6px}#swCard{padding-left:8px;padding-right:8px}#swBigDate{font-size:32px;white-space:nowrap}#swText{line-height:1.4}#swTop{margin-bottom:0}#swCard{padding-top:6px;padding-bottom:6px}#swTitle{margin:0 0 2px}#swEdge{flex-direction:column;gap:6px;margin-top:2px}#swEdge>span{padding:6px 8px}#swEdge .eIc{display:inline-block;margin-bottom:0;vertical-align:-8px;margin-right:6px}#swCard.fest #swFest{display:none}}   /* 文字200%(周回110・幅300px以下=拡大表示): 横に並んだ答えの札が58px幅で字が縦に積み上がり(332px)、日付も2行に折れて、選ぶ部分が画面の下に出ていた(周回96の残り)。カードを広げ、日付は1行に、答えの札は縦に並べる(◀▶の向きは札の字と矢印で残る)。祭りの段も低い画面と同じく出さない */
-@media (max-width:300px){#swGuide{margin-top:24px}#swIc{min-height:48px;max-height:52px}#swIc .icPix{width:44px;height:44px}#swIc .icEmoji{font-size:40px}#swBigDate{margin-bottom:0}#swTitle{font-size:20px;margin-bottom:0}#swText{line-height:1.32}#swEdge{font-size:20px;gap:5px}#swEdge>span{padding:5px 8px;line-height:1.15}#swEdge .eIc{font-size:26px;vertical-align:-6px}#swEdge .eIc .ePix{width:26px;height:26px;background-size:26px 26px}}   /* 文字200%(周回112・幅300px以下=拡大表示): 背の高いカード(長い本文+札の字が2行)では、短い画面で答えの札が下に出た(300x480で実測+21px)。狭い画面だけ、大きな絵・札・本文の縦を少しずつ詰めて両方の札が画面に収まるようにする。字は大きなまま(札20px・本文16px)、通常幅には影響しない */
+@media (max-width:300px){#swGuide .gd{top:112px}#swIc{min-height:48px;max-height:52px}#swIc .icPix{width:44px;height:44px}#swIc .icEmoji{font-size:40px}#swBigDate{margin-bottom:0}#swTitle{font-size:20px;margin-bottom:0}#swText{line-height:1.32}#swEdge{font-size:20px;gap:5px}#swEdge>span{padding:5px 8px;line-height:1.15}#swEdge .eIc{font-size:26px;vertical-align:-6px}#swEdge .eIc .ePix{width:26px;height:26px;background-size:26px 26px}}   /* 文字200%(周回112・幅300px以下=拡大表示): 背の高いカード(長い本文+札の字が2行)では、短い画面で答えの札が下に出た(300x480で実測+21px)。狭い画面だけ、大きな絵・札・本文の縦を少しずつ詰めて両方の札が画面に収まるようにする。字は大きなまま(札20px・本文16px)、通常幅には影響しない */
 @media (max-height:440px) and (min-width:660px){#swMood{left:calc(10px - (100vw - 480px) / 2)}#swGrow{left:calc(8px - (100vw - 480px) / 2)}#swKakashi{right:calc(10px - (100vw - 480px) / 2)}#swSkyWx{right:calc(8px - (100vw - 480px) / 2)}#swAheadWx{right:calc(14px - (100vw - 480px) / 2)}}   /* 横向き: 顔・かかし・天気は左右の空きへ(カードの字に重ねない) */
 </style>
 </head>
@@ -739,8 +738,7 @@ html:has(#sGame.swipeMode:not(.hidden)),body:has(#sGame.swipeMode:not(.hidden)){
     <div id="swSun" aria-hidden="true"><span class="sunPix"></span></div>
     <div id="swRipple" aria-hidden="true"><i class="rpRing r1"></i><i class="rpRing r2"></i><span class="rpIcon"></span></div>
     <div id="swCount" role="status" aria-label="収穫までの日数"><b></b></div>
-    <div id="swGuide"><span class="gd gdL">◀</span><span class="gd gdR">▶</span></div>
-    <div id="swStage"><div id="swWrap"><div id="swStagePlants" aria-hidden="true"></div><div id="swGhost" aria-hidden="true"></div><div id="swCard" tabindex="0" role="group" aria-live="polite"><div class="swSide L" id="swSL"></div><div class="swSide R" id="swSR"></div><span id="swTag"></span><div id="swBigDate" aria-hidden="true"></div><div id="swSeasonStrip" aria-hidden="true"></div><div id="swNextMile" aria-hidden="true"><span class="nmIc"></span><b class="nmNum"></b><span class="nmDay"></span></div><div id="swFest" aria-hidden="true">🏮🎆🏮🎆🏮</div><div id="swIc"><span class="icPix" aria-hidden="true"></span><span class="icEmoji"></span></div><h2 id="swTitle"></h2><p id="swText"></p><div id="swEdge"><span class="eL"><b class="eIc"></b><span class="eLb"></span></span><span class="eR"><b class="eIc"></b><span class="eLb"></span></span></div><div id="swHint">◀ 左へ／右へ ▶ カードを動かして選ぶ</div></div><i class="swBack b2"></i><i class="swBack b1"></i><div id="swGhostArrows" aria-hidden="true"><span class="ghA ghL">◀</span><span class="ghA ghR">▶</span></div></div></div>
+    <div id="swStage"><div id="swWrap"><div id="swStagePlants" aria-hidden="true"></div><div id="swGhost" aria-hidden="true"></div><div id="swCard" tabindex="0" role="group" aria-live="polite"><div class="swSide L" id="swSL"></div><div class="swSide R" id="swSR"></div><span id="swTag"></span><div id="swBigDate" aria-hidden="true"></div><div id="swSeasonStrip" aria-hidden="true"></div><div id="swNextMile" aria-hidden="true"><span class="nmIc"></span><b class="nmNum"></b><span class="nmDay"></span></div><div id="swFest" aria-hidden="true">🏮🎆🏮🎆🏮</div><div id="swIc"><span class="icPix" aria-hidden="true"></span><span class="icEmoji"></span></div><h2 id="swTitle"></h2><p id="swText"></p><div id="swEdge"><span class="eL"><b class="eIc"></b><span class="eLb"></span></span><span class="eR"><b class="eIc"></b><span class="eLb"></span></span></div><div id="swHint">◀ 左へ／右へ ▶ カードを動かして選ぶ</div></div><i class="swBack b2"></i><i class="swBack b1"></i><div id="swGhostArrows" aria-hidden="true"><span class="ghA ghL">◀</span><span class="ghA ghR">▶</span></div><div id="swGuide" aria-hidden="true"><span class="gd gdL">◀</span><span class="gd gdR">▶</span></div></div></div>
     <div id="swDetail"></div>
     <button type="button" id="swDetailBtn" style="display:none" aria-controls="swDetail" aria-expanded="false">🔍 くわしい話を見る</button>
     <div id="swMark" aria-hidden="true"></div>
@@ -3019,7 +3017,7 @@ renderTitle();
     el.card.classList.remove('fly', 'tL', 'tR'); $('swWrap').style.setProperty('--p', 0); el.L.style.transform = el.R.style.transform = ''; el.card.style.transform = ''; el.card.style.opacity = ''; el.card.style.boxShadow = ''; el.card.style.transitionDuration = ''; el.L.style.opacity = el.R.style.opacity = 0; tiltInfo.p = 0; tiltInfo.deg = 0; side(0); decide(0);
     var hintOn = choices.length < 3;   /* ヒントは最初の3枚だけ */
     if (guideFresh) guideLeft = true;
-    $('swGuide').style.display = (guideLeft && choices.length < 3) ? 'block' : 'none';   /* はじめての案内は新規開始の最初の3枚だけ(2枚目・3枚目も出す) */
+    $('swGuide').style.display = (guideLeft && choices.length < 3 && (choices.length >= 1 || calmOn())) ? 'block' : 'none';   /* はじめての案内は新規開始の2〜3枚目だけ(1枚目はゴースト矢印が担当し二重に出さない・周回115)。動きを減らす設定ではゴーストが出ないため、1枚目から案内を出す */
     $('swWrap').classList.toggle('guideOn', !!(guideLeft && choices.length >= 1 && choices.length < 3 && !calmOn()));   /* 周回113: ゴーストが消えた2〜3枚目だけ、札の同期の光を続ける */
     if (guideLeft && choices.length === 1 && !calmOn()) { try { var gds = $('swGuide').querySelectorAll('.gd'), gi; for (gi = 0; gi < gds.length; gi++) gds[gi].style.animation = 'none'; void $('swGuide').offsetWidth; for (gi = 0; gi < gds.length; gi++) gds[gi].style.animation = ''; } catch (e) {} }   /* 周回113: 2枚目の表示で矢印の周期を札の光と同時に出し直す(位相をそろえる) */
     rwUpdate(true);

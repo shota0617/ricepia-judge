@@ -1013,7 +1013,7 @@ function twistPlate(deg) {
   grains.forEach(g => { if (!g.gone) { g.r += deg; renderGrain(g); } });
   if (twistDone) return;
   const p = pinch;
-  if (p && Math.abs(p.twist) >= 35) {
+  if (p && Math.abs(p.twist) >= 20) { /* ひねる判定: 20°から受ける。35°では22°・28°の自然な小さなひねりでもわるい粒の印が付かず無反応だった（390×844実測・サイクル80）。ピンチで偶然回る小さな角度（18°以下）は印を付けない範囲に留める */
     twistDone = true;
     tick();
     setFace("happy", 500);

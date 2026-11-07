@@ -600,5 +600,17 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertIn(".gradeBtn.sway { animation:none; }", HTML)  # reduced-motionでも揺らさない
         self.assertIn(".dot.ping { outline:3px solid var(--gold); outline-offset:2px; }", HTML)  # reduced-motionでは光る代わりに静かな輪郭で正解列を示す
 
+    def test_cycle91_checks_grow_one_by_one_per_bag(self):
+        # 類5: 見るところを袋ごとに1つずつ増やす。等級を下げた項目を「見た項目」に加え、一度見た項目は次の袋でも残す。
+        # 最初の袋は従来どおり水分・整粒の2行だけ。各袋で新しく増える項目は最大1つで、判定に必要な項目が隠れることはない。
+        self.assertIn('const seenChecks = new Set(["水分", "整粒"]);', HTML)
+        self.assertIn("if (g === worst && g > 0) seenChecks.add(name);", HTML)
+        self.assertIn("const rows = allRows.filter(([name]) => seenChecks.has(name));", HTML)
+        self.assertNotIn('g === worst && g > 0)); /* 水分と整粒のほかは、等級を下げた項目だけ出す */', HTML)
+        self.assertIn("きめるで見る項目は、袋を進めるごとに1つずつ増えていきます", HTML)
+        # ロット順に「見た項目」を積み上げた行数の見通し（規則は変えない）: 2→2→3→4→5→5
+        grades = run_rules("LOTS.map(lotGrade)")
+        self.assertEqual(grades, [0, 3, 1, 2, 3, 0])
+
 if __name__ == "__main__":
     unittest.main()

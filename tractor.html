@@ -10262,7 +10262,7 @@ const TALK = (() => {
 })();
 const COACH = (() => {
   const el = $('coach'), PAD = MOBILE || params.has('pad');
-  let shown = '', prevDown = false, liftYaw = null, turns = 0, off = false, afterStall = false;
+  let shown = '', prevDown = false, liftYaw = null, turns = 0, off = false, afterStall = false, fmMuted = false;
   const K = (pc, sp) => PAD ? sp : pc;
   const dYaw = (a, b) => Math.atan2(Math.sin(a - b), Math.cos(a - b));
   function leveeAhead() {                         // 前 4.5〜6.5m の所が畦（田んぼのはし）か
@@ -10379,7 +10379,9 @@ const COACH = (() => {
   }
   function update(running) {                      // 表示は計器と同じ間隔で
     const m = running ? msg() : null, h = m ? '<b>' + m[0] + '</b>' + m[1] : '';
-    if (h !== shown) { el.innerHTML = h; el.classList.toggle('hidden', !h); shown = h; SAY.coach(m ? icoWords(m[1].replace(/<[^>]+>/g, '')) : ''); }   // ふだんは キャラクターが 話す
+    const muted = startNoticeMuted();   // サイクル216・最初の1分: のんびりでは最初の1分は COACH の案内文を吹き出し・読み上げに出さず、指アイコンのヒントに一本化する（案内文は消さず、1分後に従来どおり戻る。くわしい説明では従来どおり）
+    if (h !== shown || muted !== fmMuted) { el.innerHTML = h; el.classList.toggle('hidden', !h); shown = h; SAY.coach(muted ? '' : (m ? icoWords(m[1].replace(/<[^>]+>/g, '')) : '')); }   // ふだんは キャラクターが 話す。ガードが外れた回は、文が同じでも再送して吹き出しに戻す
+    fmMuted = muted;
     $('bDoro').classList.toggle('hidden', !(running && SCRAPE.can()));   // スマホ：泥がついて 田んぼの中で止まって上げているときだけ
   }
   return { step, update, msg, get turns() { return turns; }, get off() { return off; } };

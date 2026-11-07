@@ -26,7 +26,7 @@ const HELPERS = () => {
       const t = document.getElementById('say').textContent, a = K3.actions();
       let dir = /↑/.test(t) ? 'up' : /↓/.test(t) ? 'down' : /←/.test(t) ? 'left' : 'right', len = dir==='right' ? 110 : 160, fast = false;
       if (bot==='careful' && S.phase==='field' && f.planted){
-        if ((a.left==='追肥' && f.N < 40) || a.left==='穂肥' || a.left==='溝切り') dir = 'left'; /* 葉いろが こい（40 以上）年は 追肥を 見送る（23周目） */
+        if ((a.left==='追肥' && f.N < 34) || (a.left==='穂肥' && f.N < 36) || a.left==='溝切り') dir = 'left'; /* 葉いろが こい 年は 追肥（34 以上）・穂肥（36 以上）を 見送る（23・31周目） */
         else if (a.left==='刈る' && f.gdd >= 980) dir = 'left';
         else if (f.dat < 10){ dir = f.water < 4 ? 'up' : 'right'; len = 120; }
         else if (f.dat < 34){ dir = f.water < 1.5 ? 'up' : f.water > 4.5 ? 'down' : 'right'; len = 40; }
@@ -35,7 +35,7 @@ const HELPERS = () => {
       }
       if (bot==='careful' && S.phase==='dry'){ dir = S.hv.moisture <= 15.5 ? 'left' : 'right'; }
       if (bot==='idle' && S.phase==='field' && f.planted && (dir==='up' || dir==='down')) dir = 'right';
-      if (bot==='flood' && S.phase==='field' && f.planted){ if (dir==='down') dir = 'right'; if (f.water < 14 && dir==='right' && !S.hv.done) { dir = 'up'; len = 400; fast = true; } } /* はじいて いっぱいに（分げつの ころの ゆっくりの 4cm 止めに かからない） */
+      if (bot==='flood' && S.phase==='field' && f.planted){ if (dir==='down') dir = 'right'; if (f.water < 7.5 && dir==='right' && !S.hv.done) { dir = 'up'; len = 400; fast = true; } } /* はじいて 上限 +4 まで（31周目：はじきも 上限が ある。8cm で 深水） */
       if (bot==='hasty'){ if (S.phase==='field' && a.left==='刈る') dir = 'left'; if (S.phase==='dry'){ if (S.hv.moisture > 15.5){ dir = 'right'; len = 300; fast = true; } else dir = 'left'; } }
       if (bot==='late'){ if (S.phase==='field' && a.left==='刈る'){ if (lateFrom == null) lateFrom = S.day; dir = S.day - lateFrom >= 14 ? 'left' : 'right'; if (dir==='right' && /↑/.test(t)) dir = 'up'; } if (S.phase==='dry' && S.hv.moisture <= 15.5 && S.hv.dryDays < 6) dir = 'right'; }
       swipe(dir, len, fast, true);

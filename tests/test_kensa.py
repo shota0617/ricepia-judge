@@ -635,6 +635,28 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertIn("if (m.a > 0) { Z.s = m.a; Z.tx = m.e; Z.ty = m.f; }", HTML)
         self.assertIn("stopSmoothZoom(); /* 寄りの途中で触れたら、今見えている所から指の操作を始める */", HTML)
 
+    def test_cycle94_cooked_return_comes_back_small_on_next_bag(self):
+        # 類8: 判定の返し（平和版）。押した袋のお米が、次の袋の「ぬく」の場面で小さく炊き上がって返ってくる。罰ではない返し方に限る。
+        self.assertIn('<span id="cookedReturn" hidden>🍚</span>', HTML)
+        self.assertIn("#cookedReturn { position:absolute; left:8px; bottom:8px;", HTML)
+        self.assertIn("const cookedReturns = [];", HTML)
+        self.assertIn("cookedReturns.push(GRADES[lotGrade(LOT)]); updateCooked();", HTML)
+        self.assertIn('el.textContent = "🍚 " + cookedReturns[cookedReturns.length - 1] + " 炊けたよ";', HTML)
+        self.assertIn('<p id="cookedRecord">まだ 炊き上がった お米は ありません。</p>', HTML)
+        self.assertIn("押した袋のお米は、次の袋のときに小さく炊き上がって返ってきます", HTML)
+        # 返しは #sceneBag（ぬくの場面）の中だけに出し、流れを止めない。#notes にも静かに残る
+        scene_bag = HTML[HTML.index('id="sceneBag"'):HTML.index('id="sceneMeter"')]
+        self.assertIn('id="cookedReturn"', scene_bag)
+        notes = HTML[HTML.index('<section id="notes">'):HTML.index("</section>")]
+        self.assertIn('id="cookedRecord"', notes)
+        self.assertEqual(HTML.count('id="cookedReturn"'), 1)
+        self.assertEqual(HTML.count('id="cookedRecord"'), 1)
+        # startLot で cookedReturns を消していないこと（次の袋で見せるため）。updateCooked は呼ぶ
+        start_lot = HTML[HTML.index("function startLot()"):HTML.index("/* 皿の粒:")]
+        self.assertIn("updateCooked();", start_lot)
+        self.assertNotIn("cookedReturns = []", start_lot)
+        self.assertNotIn("cookedReturns.length = 0", start_lot)
+
     def test_cycle93_picked_grains_stay_in_quiet_record(self):
         # 類7: 見分けた粒が静かに記録に残る。任意で開く資料（#notes）の中だけに出し、常時表示・競争・スコアにはしない。
         # 袋を越えて残るため startLot では消さない（サイクル91の seenChecks と同じ持ち方）。

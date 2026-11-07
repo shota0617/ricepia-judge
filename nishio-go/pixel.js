@@ -1948,6 +1948,7 @@ function potyaSound() {   // ぽちゃ：カエルが 田んぼに とびこむ�
 // なす（西三河の ハウスの「とげなし美茄子」・10〜6月）、大豆（西尾が 県の 主な 産地・フクユタカを 12月に かりとる）。7〜9月は 出ない
 const NAKAMA_FOLLOW = 6000, NAKAMA_CD = 40000;
 const nakama = { n: null, next: 0 };
+const firstWalk = () => { try { return !(Number(lsGet('nsg_mzgoals', '0')) >= 3); } catch (e) { return false; } };   // はじめてのさんぽ（3ゴールまで）の 間か（nsg_mzgoals は mzGoalsDone と 同じ 鍵。読めなければ これまでどおり 出す）
 const otomo = { next: 0, last: '' };   // 町の おとも（otomo.js）：60〜100秒に 1回まで。同じ おともを つづけない
 const NAKAMA_MONTHS = { ichigo: [12, 1, 2, 3, 4, 5], nasu: [10, 11, 12, 1, 2, 3, 4, 5, 6], daizu: [12] };
 const nakamaKinds = () => { const mo = new Date().getMonth() + 1; return Object.keys(NAKAMA_MONTHS).filter(k => NAKAMA_MONTHS[k].includes(mo)); };
@@ -2662,6 +2663,7 @@ function otedamaStep(hx, by, u, now) {
   o.prevH = roll.h;
   if (worldMode || driving || rp.x === null) { o.cur = null; return; }
   if (!o.cur) {
+    if (firstWalk()) return;   // はじめてのさんぽの間は ほうらない（予約も 立てない）
     if (!up || mapCovered() || !howtoEl.hidden || sightBusy() || now < riceBub.until) return;
     if (!o.next) o.next = now;   // はじめの とびはねから（サイクル104：最初の1分で西尾の名物をほうる）
     if (now < o.next || !otedamaStart(now)) return;
@@ -3076,8 +3078,8 @@ function kageDraw(hx, sy, shw, u, now, still) {   // sy：影の 高さ。shw：
 function nakamaStep(now, ox, oy, T, w, h, dpr) {
   if (worldMode || driving || rp.x === null) { nakama.n = null; return; }
   const sp = Math.hypot(rp.vx || 0, rp.vy || 0);
-  if (!nakama.n && now > otomo.next && sp > 1.5 && !mapCovered() && window.NISHIO_OTOMO && LU && howtoEl.hidden && !sightBusy() && now > riceBub.until + 2000) {   // 町の おとも（otomo.js）
-    if (!otomo.next) otomo.next = now + 6000;   // はじめは 6秒 転がってから（サイクル102：最初の1分で町の仲間が来る）
+  if (!nakama.n && now > otomo.next && sp > 1.5 && !mapCovered() && window.NISHIO_OTOMO && !firstWalk() && LU && howtoEl.hidden && !sightBusy() && now > riceBub.until + 2000) {   // 町の おとも（otomo.js）
+    if (!otomo.next) otomo.next = now + 6000;   // はじめは 6秒 転がってから（サイクル102。サイクル145で はじめてのさんぽの後へずらした：ゲート解除後の初回待ち）
     else {
       const ll = toLatLng(rp.x, rp.y);
       let near = '';
@@ -3119,8 +3121,8 @@ const deai = { next: 0, last: '', d: null, drawn: 0 };   // drawn：描いた �
 function deaiStep(now, ox, oy, T) {
   if (worldMode || driving || rp.x === null) { deai.d = null; return; }
   const sp = Math.hypot(rp.vx || 0, rp.vy || 0);
-  if (!deai.d && now > deai.next && sp > 1.5 && !mapCovered() && window.NISHIO_DEAI && LU && howtoEl.hidden && !sightBusy() && !nakama.n && now > riceBub.until + 2500) {
-    if (!deai.next) deai.next = now + 10000;   // はじめは 10秒 転がってから（サイクル102：おともが去ったあと最初の1分の中で出会う）
+  if (!deai.d && now > deai.next && sp > 1.5 && !mapCovered() && window.NISHIO_DEAI && !firstWalk() && LU && howtoEl.hidden && !sightBusy() && !nakama.n && now > riceBub.until + 2500) {
+    if (!deai.next) deai.next = now + 10000;   // はじめは 10秒 転がってから（サイクル102。サイクル145で はじめてのさんぽの後へずらした：ゲート解除後の初回待ち）
     else {
       const ll = toLatLng(rp.x, rp.y);
       let near = '';
@@ -3468,7 +3470,9 @@ function critterStep(x, y) {
   // （1/40 の運だけだと、10人に1人は 115歩より長く待っていた）
   if (!where || critterS.steps < CRITTER_FIRST_STEPS) return;
   const sure = critterS.steps >= CRITTER_SURE || !!(G.critterFirst && G.critterFirst());
-  const soon = !critterS.metNow && critterS.steps >= CRITTER_SOON_STEPS && performance.now() < CRITTER_SOON_MS;   // ループ4サイクル108・また来た人も、開いて1分のあいだは 早く会える（その回の1度だけ）
+  const soon = !critterS.metNow && critterS.steps >= CRITTER_SOON_STEPS && performance.now() < CRITTER_SOON_MS;
+  const earlyOnly = critterS.steps < CRITTER_SURE && (soon || sure) && firstWalk();   // サイクル145：早出し分（107・108）だけが理由の出会いか（100歩の かならずは含まない）
+  if (earlyOnly && (critterS.steps < 25 || Math.random() >= 1 / 40)) return;   // はじめてのさんぽの間は早出しを止め、通常の抽選（25歩・1/40）だけ残す   // ループ4サイクル108・また来た人も、開いて1分のあいだは 早く会える（その回の1度だけ）
   if (!sure && !soon && (critterS.steps < 25 || Math.random() >= 1 / 40)) return;
   if ((sure || soon) && (mapCovered() || sightBusy())) return;   // かならずの出会いは、窓・パネルを閉じたあとの1歩へ持ちこす
   critterS.steps = 0;

@@ -420,6 +420,20 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertIn("Math.abs(u) <= GW / 2 + padU && Math.abs(v) <= GH / 2 + padV", HTML)
         self.assertNotIn("const pad = 6 / Z.s;", HTML)
 
+    def test_grain_tap_tolerates_slip_up_to_flick_boundary(self):
+        # みわける: 指がずれたタップは、はじくの境目（24px）まではタップとして受ける。
+        # 12pxを超えたずれはドラッグ扱いになり、13〜24pxずれたタップ（縦14・18px／横22px）が
+        # どれも無反応だった（390×844実測・サイクル76）
+        self.assertIn("Math.hypot(e.clientX - d.x, e.clientY - d.y) <= 24", HTML)
+        self.assertNotIn("if (!d.moved && !cancelled && step === 2) {", HTML)
+        # ずれる途中のなでで押し動かされた粒も、押した瞬間の粒（startG）で拾う
+        self.assertIn("if (!g && d.startG && !d.startG.gone) g = d.startG;", HTML)
+        # ズーム後に残った指（見る場所を動かす用）は、離した時にタップにしない
+        self.assertIn("startG:null, noTap:true", HTML)
+        self.assertIn("!d.noTap", HTML)
+        # はじくは従来どおり24pxを超えた速い払いだけ
+        self.assertIn("performance.now() - d.t0 < 260 && Math.hypot(e.clientX - d.x, e.clientY - d.y) > 24", HTML)
+
     def test_assets_exist(self):
         for name in set(re.findall(r'kensa/[a-z_]+\.webp', HTML)):
             self.assertTrue(os.path.exists(os.path.join(ROOT, name)), name)

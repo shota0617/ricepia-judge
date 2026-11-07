@@ -355,6 +355,13 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertIn("if (y >= hankoLand) stampNow();", move)
         self.assertNotIn("if (y >= hankoMax - 1) stampNow();", move)
 
+    def test_ink_takes_with_a_short_press(self):
+        # おす・朱肉: 短くぎゅっと（約0.25秒）押せばインクがつく。450msでは
+        # 380msの押しでも付かず「はなさず ぎゅっと」で戻ってしまった（390×844実測）
+        self.assertIn("const INK_MS = 250;", HTML)
+        self.assertNotIn("const INK_MS = 450;", HTML)
+        self.assertIn("INK_MS * motion", HTML)  # 動きを減らす設定では待ちも短くなる従来どおり
+
     def test_assets_exist(self):
         for name in set(re.findall(r'kensa/[a-z_]+\.webp', HTML)):
             self.assertTrue(os.path.exists(os.path.join(ROOT, name)), name)

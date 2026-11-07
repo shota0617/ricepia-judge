@@ -84,7 +84,8 @@ const CHECKS = {
       swipe('down', 160, false); log.push(['sown', S.phase, S.nur.sown]);
       for (let i=0;i<60 && S.nur.age < 30;i++){ if (S.nur.moist < 0.4) swipe('up', 160, false); tick(); } log.push(['nursery', S.nur.age, S.nur.stress]);
       for (let i=0;i<6 && S.phase!=='field';i++) swipe('left', 120, false); log.push(['tofield', S.phase]);
-      for (let i=0;i<8 && !f.planted;i++) swipe('left', 120, false); log.push(['planted', f.planted, S.day]);
+      swipe('up', 100, false); const shiroNeeded = K3.actions().left; for (let i=0;i<3 && f.shiro < 2;i++) swipe('left', 120, false); const shiro = f.shiro; const early = K3.actions().left; for (let i=0;i<3;i++) tick();
+      for (let i=0;i<8 && !f.planted;i++) swipe('left', 120, false); log.push(['planted', f.planted, S.day, shiroNeeded, shiro, early]);
       let fert = 0, hoFert = 0, cuts = 0;
       for (let i=0;i<260 && !S.hv.done;i++){
         const a = K3.actions();
@@ -94,11 +95,11 @@ const CHECKS = {
         // 水：はじめ 深め → 分げつ 浅く → 中干し（dat 34〜44）→ 水を もどす → 出穂の あとは 切らさない。暑い 日は 入れかえる
         if (f.dat < 10){ if (f.water < 4) swipe('up', 140, false); }
         else if (f.dat < 34){ if (f.water < 1.5) swipe('up', 60, false); else if (f.water > 4) swipe('down', 60, false); }
-        else if (f.dat <= 44){ if (f.water > 0) swipe('down', 400, true); }
+        else if (f.dat <= 44){ if (f.water > 0) swipe('down', 400, true); if (K3.actions().left==='溝切り') swipe('left', 120, false); }
         else { if (f.water < 2) swipe('up', 120, false); else if (f.heading && S.weather[S.day].w==='高温') swipe('up', 60, false); }
         tick();
       }
-      log.push(['harvest', S.hv.done, S.day, Math.round(f.gdd), cuts, fert, hoFert, f.hoshiDays]);
+      log.push(['harvest', S.hv.done, S.day, Math.round(f.gdd), cuts, fert, hoFert, f.hoshiDays, f.mizo]);
       for (let i=0;i<8 && S.hv.moisture > 15.5;i++) tick(); log.push(['dry', S.hv.moisture]);
       swipe('left', 120, false);
       const res = S.result;
@@ -108,9 +109,10 @@ const CHECKS = {
     ok(L.soak === true, '↑ で 種を 水に つける', L);
     ok(L.sprout === true, '→ を くり返すと 芽が 出る', L);
     ok(r.log[2][1] === 'nursery', '↓ で まく → 苗の 場面', r.log[2]);
-    ok(r.log[4][1] === 'field' && r.log[5][1] === true, '← 4回で 田うえ', r.log.slice(3,6));
+    ok(r.log[4][1] === 'field' && r.log[5][1] === true, '← で たんぼへ → ↑ 水 → ← 2回 代かき → 3日 → ← 4回で 田うえ', r.log.slice(3,6));
+    ok(r.log[5][3] === '代かき' && r.log[5][4] === 2 && r.log[5][5] === '田うえ', '代かきは 水が ある 時に 2回。その あと 田うえ（5周目）', r.log[5]);
     ok(r.log[6][1] === true && r.log[6][3] >= 950 && r.log[6][4] >= 5, '出穂後 1000℃ ちかくで ← 5回 刈る', r.log[6]);
-    ok(r.log[6][5] === 1 && r.log[6][6] === 1 && r.log[6][7] >= 5, '追肥・穂肥・中干しが できた', r.log[6]);
+    ok(r.log[6][5] === 1 && r.log[6][6] === 1 && r.log[6][7] >= 5 && r.log[6][8] === true, '追肥・穂肥・中干し・溝切りが できた', r.log[6]);
     ok(L.dry <= 15.5 && L.dry >= 14, '乾燥 15% で とまる', L.dry);
     ok(r.over && r.shown && r.result && ['一等','二等','三等','規格外'].includes(r.result.grade), '← で 検査 → 結果が 出る', r.result);
     ok(r.result && r.result.yield >= 300 && r.result.yield <= 700, '収量が それらしい（300〜700 kg/10a）', r.result);
@@ -140,7 +142,7 @@ const CHECKS = {
     const p = await page(b, 390, 844);
     const r = await p.evaluate(() => {
       K3.manual = true; K3.fixedSeed = 11; K3.jump('tiller'); const f = K3.S.f; let cue = null; for (let i=0;i<30 && !cue;i++){ f.water = Math.max(f.water, 2); K3.advanceDay(); if (/中干し/.test(document.getElementById('say').textContent)) cue = f.dat; }
-      f.water = 0; f.dat = 42; const dryLeft = K3.actions().left; f.water = 3; const wetLeft = K3.actions().left;
+      f.water = 0.5; f.dat = 42; f.mizo = true; const dryLeft = K3.actions().left; f.water = 3; const wetLeft = K3.actions().left;
       return { cue, T: Math.round(f.T), dryLeft, wetLeft };
     });
     ok(r.cue != null && r.cue <= 40, '中干しの 合図が 40日目 までに 出る', r);
@@ -158,6 +160,16 @@ const CHECKS = {
     ok(r.over && r.done && r.day <= 200, '吹き出しの 矢印 だけで 収穫・検査まで 行ける', r);
     ok(r.hoshi >= 5 && r.A1 > 0 && r.A2 > 0, 'その 途中で 中干し・追肥・穂肥も 言われて できる', r);
     ok(r.grade && r.grade !== '規格外' && r.swipes <= 400, '言われた とおりで 三等 以上・スワイプ 400回 いない', r);
+  },
+  // 溝切り：中干しの 間の 雨が 落ちる（5周目）
+  async mizo(b){
+    const p = await page(b, 390, 844);
+    const r = await p.evaluate(() => {
+      K3.manual = true; K3.fixedSeed = 11; const run = mizo => { K3.jump('tiller'); const S = K3.S, f = S.f; for (let i=0;i<40 && f.dat < 36;i++){ f.water = 2; K3.advanceDay(); } f.water = 0; if (mizo) K3.doLeft(); let rainDays = 0, wet = 0; for (let i=0;i<8;i++){ const wx = S.weather[S.day]; K3.advanceDay(); if (wx.w==='雨'||wx.w==='台風') rainDays++; if (f.water >= 1) wet++; } return { mizo: f.mizo, rainDays, wet, dryRun: f.dryRun }; };
+      return { a: run(false), b: run(true) };
+    });
+    ok(r.b.mizo && !r.a.mizo, '中干しの 間に ← で 溝切り', r);
+    ok(r.b.wet <= r.a.wet && r.b.dryRun >= r.a.dryRun, '溝が あると 雨の 日でも 乾いた まま（同じ 天気で くらべる）', r);
   },
   // なにも しないで 1年 すぎると「おわり」
   async idle(b){

@@ -5961,7 +5961,7 @@ const KAMO = (() => {
         b.g.position.x = b.x; b.g.position.z = b.z;
       }
     }
-    if (pend && toastT <= 0) { pend = false; chk = true; toast(MSG, 6); }   // ほかの知らせが 消えてから
+    if (pend && toastT <= 0 && !startNoticeMuted()) { pend = false; chk = true; toast(MSG, 6); }   // ほかの知らせが 消えてから。サイクル204・最初の1分: のんびりでは代かきの開始直後（耕し始めて25〜45秒＋飛行でカルガモが着地）にカルガモの長文知らせと声で最初のなぞりを止めない。pendは立てたままなので1分を過ぎて知らせが空いていれば従来どおり出す（遅れて出す形）。くわしい説明では従来どおり開始直後から出す
     if (chk) {
       if ($('toast').dataset.raw !== MSG) { chk = false; if (++tries < 3) pend = true; }
       else if (toastT <= 6 - 1.2) { chk = false; told = true; voice('karugamo'); }

@@ -486,7 +486,7 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertIn("if (senseTaps === 1) guideSense();", HTML)
         self.assertIn("else if (senseTaps === 1) guideSense();", HTML)
         self.assertIn('if (taps === 1) guideAt("move", document.querySelectorAll(".gradeBtn")[lotGrade(LOT)], 0, -48);', HTML)  # きめる
-        self.assertIn('if (hankoTaps === 1) guideAt("press", $("pad"));', HTML)  # おす・朱肉
+        self.assertIn('if (hankoTaps === 1) guideAt("move", $("pad"), 0, 24);', HTML)  # おす・朱肉（サイクル87で押し下げの手本に変更）
         self.assertIn('if (hankoTaps === 1) guideAt("move", $("hanko"), 0, hankoMax);', HTML)  # おす・おろし
 
     def test_second_miss_tool_does_half(self):
@@ -539,6 +539,16 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         for name in set(re.findall(r'kensa/[a-z_]+\.webp', HTML)):
             self.assertTrue(os.path.exists(os.path.join(ROOT, name)), name)
 
+
+    def test_cycle87_ink_press_down_drag_differs_from_nigiru_hold(self):
+        # 類1の点検: 朱肉とにぎるがどちらも静止長押しで手ざわりが同じだった。
+        # 朱肉の主の動きを「はんこを朱肉へ押し下げる短い下向きドラッグ」に分け、手本も押し下げで出す。
+        self.assertIn("inkDrag = { y:e.clientY }", HTML)
+        self.assertIn("if (idy >= 18) { inkDrag = null; inkDone(); }", HTML)  # 18px押し下げで待ち時間なく付く
+        self.assertIn('guideAt("move", $("pad"), 0, 24);', HTML)  # 手本は押し下げ（move）
+        self.assertNotIn('guideAt("press", $("pad"))', HTML)
+        self.assertIn("const INK_MS = 250;", HTML)  # 長押しの受け皿は従来どおり残す
+        self.assertIn("const NIGIRU_MS = 350;", HTML)  # にぎるは静止長押しのまま（手ざわりが分かれる）
 
 if __name__ == "__main__":
     unittest.main()

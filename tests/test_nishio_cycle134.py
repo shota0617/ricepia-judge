@@ -44,7 +44,7 @@ class FirstMinute(unittest.TestCase):
             self.assertEqual(run('Crow', g), {'n': 0, 'scare': 0}, g)
 
     def test_crow_scare_after_first_goal(self):
-        r = run('Crow', '1')
+        r = run('Crow', '3')
         self.assertGreater(r['n'], 0)
         self.assertEqual(r['scare'], 1)
 
@@ -53,7 +53,7 @@ class FirstMinute(unittest.TestCase):
             self.assertEqual(run('Spring', g)['n'], 0, g)
 
     def test_spring_after_first_goal(self):
-        self.assertEqual(run('Spring', '1')['n'], 1)
+        self.assertEqual(run('Spring', '3')['n'], 1)
 
     def test_marker_comment(self):
         for fn in ('mzCrowTick', 'mzSpringTick'):

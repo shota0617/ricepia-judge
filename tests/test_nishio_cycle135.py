@@ -38,7 +38,7 @@ class FirstMinute(unittest.TestCase):
                                       'pts': 20, 'calls': 1, 'bursts': 1, 'steps': 0}, g)
 
     def test_full_show_after_first_goal(self):
-        r = run('1')
+        r = run('3')
         self.assertEqual((r['said'], r['sounds'], r['fx'], r['happy'], r['pts'], r['bursts']), (1, 1, 24, 1.2, 20, 1))
         self.assertGreater(r['t0'], 0)
 

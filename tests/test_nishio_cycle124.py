@@ -31,7 +31,7 @@ class Rescue(unittest.TestCase):
             self.assertEqual((r['spawned'], r['cx'], r['sx']), (False, -1, 1), g)   # スタートは おぼえる・迷子は 出ない
 
     def test_rescue_after_first_goal(self):
-        r = run('1')
+        r = run('3')
         self.assertEqual((r['spawned'], r['cx']), (True, 7))
 
     def test_source(self):

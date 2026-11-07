@@ -50,7 +50,7 @@ class FirstMinute(unittest.TestCase):
 
     def test_spawn_after_first_goal(self):
         for kind in CASES:
-            r = run(kind, '1')
+            r = run(kind, '3')
             self.assertEqual(r['at'], 1 if kind == 'Purify' else 7, kind)
 
     def test_marker_comment_on_each_tick(self):

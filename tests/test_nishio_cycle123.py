@@ -41,7 +41,7 @@ class Quiet(unittest.TestCase):
 
     def test_after_first_goal_and_walking(self):
         for pred in (game_pred, pixel_pred):
-            self.assertEqual(pred(True, '1', NUMS), [False] * len(NUMS), pred.__name__)
+            self.assertEqual(pred(True, '3', NUMS), [False] * len(NUMS), pred.__name__)
             self.assertEqual(pred(False, None, NUMS), [False] * len(NUMS), pred.__name__)
 
     def test_wired(self):

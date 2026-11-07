@@ -32,14 +32,14 @@ class Cache(unittest.TestCase):
             self.assertEqual(run(g), {'cx': -1, 'sx': 1}, g)   # スタートは おぼえる・宝箱は 湧かない
 
     def test_cache_after_first_goal(self):
-        self.assertEqual(run('1'), {'cx': 7, 'sx': 1})
+        self.assertEqual(run('3'), {'cx': 7, 'sx': 1})
 
 
 class Reward(unittest.TestCase):
     def test_float_text_quiet_before_first_goal(self):
         i = GAME.index('function showReward(')
         body = GAME[i:GAME.index('\n}\n', i)]
-        self.assertIn("if (f && !(demo && !(store.get('nsg_mzgoals', 0) >= 1))) P.floatText(dot.kira ? '🖼 キラ'", body)
+        self.assertIn("if (f && !(demo && !(store.get('nsg_mzgoals', 0) >= 3))) P.floatText(dot.kira ? '🖼 キラ'", body)
         self.assertIn("P.floatText(`+${total}`);", body)
 
 

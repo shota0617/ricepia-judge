@@ -77,7 +77,7 @@ const need = () => STEP * Math.min(st.u.length + 1, STEP_MAX);   // 次の 転�
 const goalsDone = () => { try { return Number(localStorage.getItem('nsg_mzgoals') || 0) || 0; } catch (e) { return 0; } };   // めいろの ゴールに 着いた 回数（pixel.js の mzGoalsDone と 同じ 鍵）
 function addDist(d) {   // 転がった道のり（マス）。need() ごとに 新しい転がり方を もらう
   if (!(d > 0) || d > 3) return;
-  if (goalsDone() < 1) return;   // にしおサイクル120：はじめての ゴールに 着くまで（最初の 1分）は もらわない・道のりも 数えない（転がり方が 手の 中で かわる こと・「GET！」の 知らせを 最初の 1分から なくす。2回目からは これまでどおり）
+  if (goalsDone() < 3) return;   // にしおサイクル120：はじめてのさんぽ（3ゴールまで）は もらわない・道のりも 数えない（転がり方が 手の 中で かわる こと・「GET！」の 知らせを 最初の 1分から なくす。4つめのゴールからは これまでどおり）
   st.dist += d;
   if (st.dist < need()) { if (Math.random() < 0.02) save(); return; }
   st.dist -= need();

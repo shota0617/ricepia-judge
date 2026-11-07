@@ -31,15 +31,15 @@ class LevelToast(unittest.TestCase):
         self.assertEqual(run(True, 0, 95, 10)['r'], 0)
 
     def test_rolling_after_first_goal(self):
-        self.assertEqual(run(True, 1, 95, 10)['r'], 2)
+        self.assertEqual(run(True, 3, 95, 10)['r'], 2)
         self.assertEqual(run(True, 3, 195, 10)['r'], 3)
-        self.assertEqual(run(True, 1, 50, 10)['r'], 0)   # 上がらなければ 0
+        self.assertEqual(run(True, 3, 50, 10)['r'], 0)   # 上がらなければ 0
 
     def test_walking_unchanged(self):
         self.assertEqual(run(False, None, 95, 10)['r'], 2)
 
     def test_source(self):
-        self.assertIn("if (demo && !(store.get('nsg_mzgoals', 0) >= 1)) return 0;", gain_fn())
+        self.assertIn("if (demo && !(store.get('nsg_mzgoals', 0) >= 3)) return 0;", gain_fn())
 
 
 if __name__ == '__main__':

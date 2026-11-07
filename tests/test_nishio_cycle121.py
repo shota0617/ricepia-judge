@@ -30,7 +30,7 @@ class Cloud(unittest.TestCase):
         self.assertEqual((r['cx'], r['cy'], r['sx']), (-1, -1, -1))   # スタートも おぼえない
 
     def test_cloud_after_first_goal(self):
-        r = run(1, [1, 2])
+        r = run(3, [1, 2])
         self.assertEqual((r['cx'], r['cy'], r['sx']), (0, 0, 0))   # スタートの マスに 浮かぶ（これまでどおり）
 
     def test_source(self):

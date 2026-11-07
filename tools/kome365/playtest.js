@@ -35,7 +35,7 @@ const HELPERS = () => {
       }
       if (bot==='careful' && S.phase==='dry'){ dir = S.hv.moisture <= 15.5 ? 'left' : 'right'; }
       if (bot==='idle' && S.phase==='field' && f.planted && (dir==='up' || dir==='down')) dir = 'right';
-      if (bot==='flood' && S.phase==='field' && f.planted){ if (dir==='down') dir = 'right'; if (f.water < 5.5 && dir==='right' && !S.hv.done) { dir = 'up'; len = 400; fast = true; } } /* はじいて 上限 +2（分げつ 6・ほか 7.5cm）まで（32周目：7.5 を ねらうと 分げつで 届かず 回り つづけた） */
+      if (bot==='flood' && S.phase==='field' && f.planted){ if (dir==='down') dir = 'right'; if (f.water < 4 && dir==='right' && !S.hv.done) { dir = 'up'; len = 400; fast = true; } } /* はじきの 着地は よい 深さの 上 +1（分げつ 5）まで（43周目：5.5 を ねらうと 回り つづけた） */
       if (bot==='hasty'){ if (S.phase==='field' && a.left==='刈る') dir = 'left'; if (S.phase==='dry'){ if (S.hv.moisture > 15.5){ dir = 'right'; len = 300; fast = true; } else dir = 'left'; } }
       if (bot==='late'){ if (S.phase==='field' && a.left==='刈る'){ if (lateFrom == null) lateFrom = S.day; dir = S.day - lateFrom >= 14 ? 'left' : 'right'; if (dir==='right' && /↑/.test(t)) dir = 'up'; } if (S.phase==='dry' && S.hv.moisture <= 15.5 && S.hv.dryDays < 6) dir = 'right'; }
       swipe(dir, len, fast, true);

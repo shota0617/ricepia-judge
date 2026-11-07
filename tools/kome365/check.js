@@ -130,7 +130,7 @@ const CHECKS = {
     const c = await p.evaluate(() => { K3.jump('harvest'); for (let i=0;i<8 && !K3.S.hv.done;i++) K3.doLeft(); K3.V.toast = null; for (let i=0;i<3;i++) K3.advanceDay(); return { m: K3.S.hv.moisture, toast: K3.V.toast && K3.V.toast.text }; });
     ok(c.m <= 15.5 && c.toast === '15%', '1日ずつ 進めても 15% を こえた 時に 合図（8周目）', c);
     const k = await p.evaluate(() => { K3.jump('tiller'); const f = K3.S.f; f.water = 2; const w0 = f.water; window.dispatchEvent(new KeyboardEvent('keydown', { key:'ArrowUp' })); const w1 = f.water, t1 = document.getElementById('say').textContent; window.dispatchEvent(new KeyboardEvent('keydown', { key:'ArrowDown' })); const w2 = f.water; return { w0, w1, w2, t1 }; });
-    ok(k.w1 === k.w0 + 3 && k.w2 === k.w1 - 3 && /→で あした/.test(k.t1), '矢印キーも 指と 同じ 道（水 ±3cm・こめつぶの 返事）', k);
+    ok(k.w1 === k.w0 + 3 && k.w2 === Math.max(2.5, k.w1 - 3) && /→で あした/.test(k.t1), '矢印キーも 指と 同じ 道（水 +3cm・−3cm は 2.5cm のこす・こめつぶの 返事）', k);
     await p.screenshot({ path: path.join(OUT, 'dry.png') });
   },
   // 中干しの 合図が 出る。水が ない 間は 追肥できない（3周目）
@@ -166,6 +166,22 @@ const CHECKS = {
     });
     ok(r.b.mizo && !r.a.mizo, '中干しの 間に ← で 溝切り', r);
     ok(r.b.wet <= r.a.wet && r.b.dryRun >= r.a.dryRun, '溝が あると 雨の 日でも 乾いた まま（同じ 天気で くらべる）', r);
+  },
+  // はじき続けて 水が 0 に なっても 詰まない：めくりが 止まり、吹き出しは「→」か「↑」を 言う。結果には 出来ばえと じこベスト（10周目）
+  async stuck(b){
+    const p = await page(b, 390, 844);
+    const r = await p.evaluate(() => {
+      K3.manual = true; K3.fixedSeed = 11; K3.jump('tiller'); const S = K3.S, f = S.f; f.water = 2.2; let stopped = null; const hud0 = document.getElementById('stage').textContent;
+      for (let i=0;i<6 && stopped == null;i++){ swipe('right', 260, true); const d0 = S.day; flush(); if (f.water < 1) stopped = { day: S.day, dayGap: S.day - d0 }; }
+      const t = document.getElementById('say').textContent; const okText = /→|↑/.test(t);
+      let moved = 0; for (let i=0;i<5;i++){ const t2 = document.getElementById('say').textContent; const dir = /↑/.test(t2) ? 'up' : /↓/.test(t2) ? 'down' : /←/.test(t2) ? 'left' : 'right'; const d0 = S.day; swipe(dir, 120, false, true); if (S.day > d0) moved++; }
+      return { water: f.water, stopped, text: t.slice(0, 30), okText, moved, hud: hud0, hud2: document.getElementById('stage').textContent };
+    });
+    ok(r.stopped && r.okText, '水が 0 に なった 日に パラパラが 止まり、吹き出しは → か ↑ を 言う', r);
+    ok(r.moved >= 3, 'その あとも 吹き出しの とおりで 日が すすむ（詰まない）', r);
+    ok(/茎\d+本/.test(r.hud) && /℃|茎/.test(r.hud2), 'HUD に 茎の 本数（出穂の あとは 積算℃）', [r.hud, r.hud2]);
+    const z = await p.evaluate(() => { localStorage.removeItem('k365_log'); K3.jump('result'); const s1 = document.getElementById('rScore').textContent; K3.jump('result'); const s2 = document.getElementById('rScore').textContent; const log = JSON.parse(localStorage.getItem('k365_log')); return { s1, s2, n: log.length, score: log[0].score }; });
+    ok(/出来ばえ \d+点/.test(z.s1) && !/じこベスト/.test(z.s1) && /じこベスト/.test(z.s2) && z.n === 2 && z.score > 0, '結果に 出来ばえの 点。2年目から じこベスト', z);
   },
   // なにも しないで 1年 すぎると「おわり」
   async idle(b){

@@ -68,6 +68,8 @@ canvas#cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-a
 @media (max-width:359px){.startRow .suzume{display:none}}
 .tag{position:absolute;right:-6px;top:-8px;background:var(--paper2);color:#b3261e;border:2px dashed rgba(122,90,48,.6);border-radius:12px 8px 12px 8px;padding:3px 9px;font-weight:700;font-size:13px;transform:rotate(8deg);letter-spacing:.1em} /* 米屋の「新米」POP（9周目） */
 .rankBox{position:relative}
+.score{margin:0;background:var(--paper2);color:var(--sumi);border:2px dashed rgba(122,90,48,.6);border-radius:14px 10px 15px 11px;padding:8px 12px;font-size:15px;line-height:1.5;font-weight:700;transform:rotate(.4deg)} .score b{color:#b3261e} .score .src{font-size:12px;color:#7a5a30} /* 出来ばえの POP */
+#years{font-size:13px;color:var(--kraft);font-weight:700;letter-spacing:.1em}
 button.go{font-family:var(--display);font-size:22px;padding:14px 20px;border:0;border-radius:14px;background:var(--kraft);color:var(--ai-deep);cursor:pointer;box-shadow:0 4px 0 #8c6c3b;touch-action:manipulation}
 button.go:active{transform:translateY(3px);box-shadow:0 1px 0 #8c6c3b}
 button.go:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
@@ -114,6 +116,7 @@ button.sound[aria-pressed="false"]{color:var(--ink-dim);border-color:rgba(169,17
     <div class="panel">
       <span class="noren">らいすぴあ</span>
       <h1><small>にしおの たんぼ 一まい</small>米作り365</h1>
+      <p id="years" hidden></p>
       <div class="talk"><div class="who" id="whoT"></div><p class="say">ゆびで なでて、お米の 一年を すごしましょう。</p></div>
       <div class="swipes" aria-label="スワイプの 割り当て">
         <div><b>↑</b>みずを 入れる</div><div><b>↓</b>みずを おとす</div>
@@ -136,6 +139,7 @@ button.sound[aria-pressed="false"]{color:var(--ink-dim);border-color:rgba(169,17
         <div><span>せいりゅう歩合</span><strong id="rSeiryu">0<small> %</small></strong></div>
         <div><span>しょくみ</span><strong id="rTaste">0<small> 点</small></strong></div>
       </div>
+      <p class="score" id="rScore"></p>
       <div class="talk"><div class="who" id="whoR"></div><p class="say" id="rSay"></p></div>
       <div class="talk cont"><div class="who"></div><p class="say" id="rSay2"></p></div>
       <button class="go" id="againBtn" type="button">もう一回<small>つぎの 一年へ</small></button>
@@ -327,7 +331,7 @@ const SND = {
   init(){ if (this.ac) return; try{ this.ac = new (window.AudioContext||window.webkitAudioContext)(); this.master = this.ac.createGain(); this.master.gain.value = soundOn ? 1 : 0; this.master.connect(this.ac.destination); const n = Math.floor(this.ac.sampleRate*0.35); this.noiseBuf = this.ac.createBuffer(1, n, this.ac.sampleRate); const ch = this.noiseBuf.getChannelData(0); for (let i=0;i<n;i++) ch[i] = Math.random()*2-1; }catch(e){} }, /* 雑音は 1つの バッファを 使いまわす（8周目） */
   tone(f, dur, type, vol, slide){ if (!this.ac) return; const t = this.ac.currentTime, o = this.ac.createOscillator(), g = this.ac.createGain(); o.type = type||'sine'; o.frequency.setValueAtTime(f, t); if (slide) o.frequency.exponentialRampToValueAtTime(slide, t+dur); g.gain.setValueAtTime(vol||.2, t); g.gain.exponentialRampToValueAtTime(.001, t+dur); o.connect(g); g.connect(this.master); o.start(t); o.stop(t+dur+.02); },
   noise(dur, vol, hz){ if (!this.ac || !this.noiseBuf) return; const t = this.ac.currentTime, s = this.ac.createBufferSource(); s.buffer = this.noiseBuf; const fl = this.ac.createBiquadFilter(); fl.type = 'bandpass'; fl.frequency.value = hz||1200; fl.Q.value = .7; const g = this.ac.createGain(); g.gain.setValueAtTime(vol||.25, t); g.gain.exponentialRampToValueAtTime(.001, t+dur); s.connect(fl); fl.connect(g); g.connect(this.master); s.start(t, 0, dur+.02); },
-  pera(i){ this.noise(.05, .18, 2200 + (i%3)*300); },                /* 暦を めくる */
+  pera(i){ this.noise(.05, .18, 1900 + Math.min(10, i)*140); }, /* 連続で 少しずつ 高く（10周目） */                /* 暦を めくる */
   chapu(){ this.tone(520, .14, 'sine', .16, 260); this.noise(.08, .08, 900); },  /* 水が 入る */
   zaa(){ this.noise(.3, .16, 600); },                                  /* 水が 落ちる */
   pon(){ this.tone(180, .12, 'triangle', .3, 90); this.noise(.04, .2, 500); }, /* はんこ */
@@ -582,7 +586,7 @@ function toast(text){ V.toast = { text, life: 1 }; }
 function stamp(text, x, y, sub){ V.stamps.push({ text, x, y, sub, life: 1 }); SND.pon(); vib(18); }
 const fmtCm = v => (Math.round(v*10)/10).toFixed(1).replace(/\.0$/, '');
 const PHASE_NAME = { seed:'たねもみ', nursery:'なえ', field:'たんぼ', dry:'かんそう', done:'けんさ' };
-function fieldStageName(){ const f = S.f; if (!f.heading) return f.dat < 10 ? '活着' : f.dat < 45 ? '分げつ' : f.dat < 55 ? '茎数限定' : f.dat < 80 ? '穂づくり' : '出穂'; return S.hv.done ? '乾燥' : f.gdd < 950 ? '登熟' : '刈りどき'; }
+function fieldStageName(){ const f = S.f; if (!f.planted) return '代かき'; if (!f.heading) return (f.dat < 10 ? '活着' : f.dat < 45 ? '分げつ' : f.dat < 55 ? '茎数限定' : f.dat < 80 ? '穂づくり' : '出穂') + ' 茎' + Math.round(f.T) + '本'; return (S.hv.done ? '乾燥' : f.gdd < 980 ? '登熟' : '刈りどき') + ' ' + Math.round(f.gdd) + '℃'; } /* 茎数と 積算℃を いつも 見せる（10周目） */
 function syncUI(){ const h0 = HUD_H;
   const dt = dateOf(S.day), wx = S.weather[S.day] || S.weather[365];
   $('date').textContent = dt.m + '月' + dt.d + '日'; $('dayNo').textContent = S.day + '日目';
@@ -622,10 +626,10 @@ function advanceDay(){
   const wx = S.weather[S.day];
   if (S.phase==='seed' && S.seed_.soaked && !S.seed_.sprouted){ S.seed_.heat += Math.max(8, wx.t) ; if (S.seed_.heat >= 120){ S.seed_.sprouted = true; SND.pin(); say('芽出しも すんで はと胸に。<b>↓で まきましょう</b>。', 'joy'); } }
   if ((S.phase==='nursery' || (S.phase==='field' && !S.f.planted)) && S.nur.sown){ S.nur.age++; S.nur.moist -= wx.w==='雨' ? 0.05 : wx.w==='高温' ? 0.4 : wx.w==='晴れ' ? 0.3 : 0.18; if (S.nur.moist <= 0){ S.nur.moist = 0; S.nur.stress++; } }
-  if (S.phase==='field' && S.f.planted){ growDay(S); if (S.f.gdd >= 1400 && !S.hv.done){ S.f.agedPlant += 1; } }
+  if (S.phase==='field' && S.f.planted){ const w0 = S.f.water; growDay(S); if (S.f.gdd >= 1400 && !S.hv.done){ S.f.agedPlant += 1; } if (w0 >= 1 && S.f.water < 1 && V.flipQueue > 0){ V.flipQueue = 0; SND.zaa(); vib(12); } } /* 水が 切れた 日は パラパラが 止まる（10周目） */
   if (S.phase==='dry'){ S.hv.dryDays++; const was = S.hv.moisture; S.hv.moisture = Math.max(10, was - (was <= 15.5 ? 0.8 : 3.4)); /* 仕上がりの あとは ゆっくり（3周目） */ if (was > 15.5 && S.hv.moisture <= 15.5){ V.flipQueue = 0; SND.pin(); toast('15%'); } } /* こえた 時に かならず 合図（8周目） */ /* 仕上がりで めくりが 止まる（2周目）。もう一度 → すると 乾かしすぎ */
   S.day++;
-  if (S.weather[S.day] && S.weather[S.day].w==='台風') { V.shake = 1; }
+  if (S.weather[S.day] && S.weather[S.day].w==='台風') { V.shake = 1; V.flipQueue = 0; } /* 台風の 日も 止まる */
   V.page = 1; V.flipN++; SND.pera(V.flipN); if (V.flipN % 3 === 1) vib(6);
   V.hint = Math.max(0, V.hint - 0.05);
   narrate();
@@ -662,9 +666,10 @@ function narrate(){
     if (f.dat >= 30 && f.dat <= 50 && (f.T >= TARGET*0.7 || f.dat >= 38) && f.water >= 1 && f.hoshiDays < 5) return say('茎が そろいました。<b>↓で 水を 落として 中干し</b>。<span class="src">（岩手県）</span>');
     if (f.hoshiDays >= 1 && f.water < 1 && f.dryRun >= 7 && f.dat < 54) return say('ひびが 入りました。<b>↑で 水を もどします</b>。<span class="src">（7〜10日：秋田県）</span>');
     if (f.dat > 54 && f.dat < 80 && f.water < 1) return say('穂づくりの 時。<b>↑で 水を</b>。切らさないで。', 'sad');
-    if (f.dat >= 10 && f.dat < 30 && f.water > 4) return say('分げつの ころは <b>↓で 浅く</b>（2〜3cm）。<span class="src">（全農）</span>');
-    if (f.water <= 0 && f.dat < 30) return say('水が ありません。<b>↑で 水を</b>。', 'sad');
-    return;
+    if (f.dat >= 10 && f.dat < 30 && f.water > 5) return say('分げつの ころは <b>↓で 浅く</b>（2〜3cm）。<span class="src">（全農）</span>');
+    if (f.water < 1 && f.dat < 30) return say('水が ありません。<b>↑で 水を</b>。', 'sad');
+    if (f.water < 1 && f.hoshiDays >= 1 && f.dat < 54) return say('中干し中。ひびが 入るまで <b>→で 日を</b>。');
+    return say('みず ' + fmtCm(f.water) + 'cm。<b>→で あした</b>。'); /* 何も なければ 既定の 一言（10周目：古い 吹き出しが のこって 詰んでいた） */
   }
   if (S.phase==='dry'){
     if (S.hv.moisture <= 15.5 && S.hv.moisture >= 14) return say('<b>15%</b>。ちょうど よい。<b>←で 検査へ</b>。<span class="src">（玄米の 規格 15.0%：農林水産省）</span>', 'joy');
@@ -755,7 +760,7 @@ function pointerUpInner(e){
     if (dx > 30 || vx > 0.5){
       if (!a.right) return;
       const n = clamp(Math.round(1 + Math.max(0, vx - 0.6)*3.5 + Math.max(0, dx-140)/120), 1, 10); /* ふつうの 速さ（0.6px/ms まで）は 1日。はじく ほど ふえる：1.5px/ms で 4日、3px/ms で 9日、最大 10日（3周目） */
-      S.swipes++; V.flipQueue = n - 1; V.flipGap = 0.11; advanceDay();
+      S.swipes++; V.flipQueue = n - 1; V.flipGap = 0.11; V.flipN = 0; advanceDay();
     } else if (dx < -30 || vx < -0.5){
       S.swipes++; V.flipQueue = 0; doLeft(L); V.hint = Math.max(0, V.hint - 0.08);
     }
@@ -783,7 +788,7 @@ function doDownWater(amt, vy){
   if (S.phase==='seed') return doDown();
   const a = actions(); if (!a.down) return false; S.swipes++; V.hint = Math.max(0, V.hint - 0.08);
   const before = S.f.water; S.f.water = clamp(before - Math.max(1, amt), 0, 15);
-  if (S.f.water < 1 && before > 1 && (vy||0) < 1.0) S.f.water = 1; /* ゆっくりの ↓ は 1cm のこす。空に するのは はじくか もう一度（5周目） */
+  if (S.f.water < 2.5 && before > 2.5 && (vy||0) < 1.0) S.f.water = 2.5; /* ゆっくりの ↓ は 2.5cm のこす（10周目：1cm だと 翌日 0 で ↑↓の ピンポン）。空に するのは はじくか もう一度 */
   SND.zaa(); vib([6, 20, 6]); V.waterV = -0.5;
   if (S.f.water <= 0 && S.f.dat >= 30 && S.f.dat <= 54 && !S.f.heading){ toast('中干し'); say(S.f.mizo ? '中干しです。ひびが 入るまで <b>→で 日を</b>。<span class="src">（7〜10日：秋田県）</span>' : '中干しです。<b>←で 溝切り</b>を しておくと 雨が 落ちます。<span class="src">（新潟県）</span>'); }
   else say(S.f.water <= 0 ? '水を 落としました。<b>→で あした</b>。' : 'みず ' + fmtCm(S.f.water) + 'cm。<b>→で あした</b>。');
@@ -808,13 +813,19 @@ function endGame(why){
   else { S.result = finalize(S); }
   const r = S.result; const R = $('result'); R.hidden = false; $('soundBtn').classList.add('show'); setTimeout(() => { try{ $('resH').focus({ preventScroll:true }); }catch(e){} }, 50); /* 読み上げの 人は 見出しから（9周目） */
   $('whoR').innerHTML = DOODLE.kome(r && r.grade==='一等' ? 'joy' : r ? 'smile' : 'sad');
-  $('shinmai').hidden = true;
+  $('shinmai').hidden = true; $('rScore').innerHTML = '';
   if (!r){ $('resTitle').textContent = '一年 おわり'; $('rank').textContent = '—'; $('rYield').innerHTML = '0<small> kg/10a</small>'; $('rTawara').innerHTML = '0<small> 俵</small>'; $('rSeiryu').innerHTML = '—'; $('rTaste').innerHTML = '—'; $('rSay').textContent = '収穫まで いきませんでした。来年は 春に 種を つけましょう。'; $('rSay2').textContent = '4月に 種、5月に 田うえ、7月の おわりに 出穂、9月に 稲刈り。'; return; }
   $('resTitle').textContent = S.day + '日で 検査'; $('shinmai').hidden = !(r && r.grade !== '規格外');
   $('rank').innerHTML = r.grade + '<small>検査済</small>'; $('rank').classList.remove('stamp'); void $('rank').offsetWidth; $('rank').classList.add('stamp'); SND.pon(); vib([20, 40, 20]);
   $('rYield').innerHTML = Math.round(r.yieldKg) + '<small> kg/10a</small>'; $('rTawara').innerHTML = (r.yieldKg/60).toFixed(1) + '<small> 俵</small>';
   $('rSeiryu').innerHTML = r.seiryu.toFixed(0) + '<small> %</small>'; $('rTaste').innerHTML = r.taste + '<small> 点</small>';
   const f = S.f, lines = [];
+  /* 出来ばえ：収量 6割・等級 3割・食味 1割 → 名人・上手・ふつう・見習い。じこベストと 通算の 年を のこす（10周目） */
+  const score = Math.round(clamp(r.yieldKg/5.5, 0, 100)*0.6 + (r.grade==='一等' ? 30 : r.grade==='二等' ? 20 : r.grade==='三等' ? 10 : 0) + clamp((r.taste-60)/35, 0, 1)*10);
+  const rank = score >= 85 ? '名人' : score >= 70 ? '上手' : score >= 50 ? 'ふつう' : '見習い';
+  const log = loadLog(); const best = log.reduce((m, e) => Math.max(m, e.score||0), 0); const newBest = score > best;
+  log.push({ day:S.day, grade:r.grade, yield:Math.round(r.yieldKg), taste:r.taste, score, typhoon:!!f.typhoon, heat:f.heatHits }); try{ localStorage.setItem('k365_log', JSON.stringify(log.slice(-50))); }catch(e){}
+  $('rScore').innerHTML = '出来ばえ <b>' + score + '点</b> ' + rank + (log.length > 1 ? (newBest ? '　<b>じこベスト こうしん！</b>' : '　じこベスト ' + best + '点') : '') + '<br><span class="src">' + log.length + '年目・' + (f.typhoon ? '台風の 年' : '台風なし') + '・あつい日 ' + f.heatHits + '</span>';
   if (r.grade==='一等') lines.push('<b>一等</b>です。よく できました。'); else if (r.grade==='二等') lines.push('二等。あと 少し。'); else lines.push(r.grade + '。来年 がんばりましょう。');
   if (r.yieldKg < 300) lines.push('収量が 少なめ（茎 ' + Math.round(f.P||f.T) + '本・根 ' + (f.root >= 60 ? 'ふつう' : 'よわい') + '）。' + (f.hoshiDays < 5 ? '分げつは 浅い 水で、中干しも。' : '分げつの ころは 浅い 水で。'));
   else if (r.lodge > 0.1) lines.push('稲が ' + Math.round(r.lodge*100) + '% たおれました。中干しで 根を、肥料は ひかえめに。');
@@ -827,9 +838,11 @@ function endGame(why){
   else lines.push('茎 ' + Math.round(f.P||f.T) + '本・穂 ' + Math.round(r.P) + '本/㎡・一穂 ' + Math.round(r.G) + '粒。');
   $('rSay').innerHTML = lines[0]; $('rSay2').innerHTML = lines[1] || ('穂 ' + Math.round(r.P) + '本/㎡・一穂 ' + Math.round(r.G) + '粒・登熟 ' + Math.round(r.R*100) + '%。');
 }
+function loadLog(){ try{ const j = JSON.parse(localStorage.getItem('k365_log')||'[]'); return Array.isArray(j) ? j : []; }catch(e){ return []; } }
+function showYears(){ const log = loadLog(); const y = $('years'); if (!log.length){ y.hidden = true; return; } const best = log.reduce((m, e) => Math.max(m, e.score||0), 0); y.hidden = false; y.textContent = log.length + '年 つくりました・じこベスト ' + best + '点'; }
 function start(){ S = newState(K3.fixedSeed != null ? K3.fixedSeed : (Date.now() ^ Math.floor(Math.random()*1e9))>>>0); Object.assign(V, { water:0, waterV:0, waterTarget:undefined, page:0, flipQueue:0, flipTimer:0, flipGap:0.11, flipN:0, drag:null, card:null, shake:0, hint:1, stamps:[], particles:[], toast:null, lastSay:'' }); $('title').hidden = true; $('result').hidden = true; $('soundBtn').classList.remove('show'); resize(); syncUI(); narrate(); SND.init(); }
 $('startBtn').addEventListener('click', start); $('againBtn').addEventListener('click', start);
-$('whoT').innerHTML = DOODLE.kome('smile'); $('suzume').innerHTML = DOODLE.suzume(false);
+$('whoT').innerHTML = DOODLE.kome('smile'); $('suzume').innerHTML = DOODLE.suzume(false); showYears();
 const sb = $('soundBtn'); sb.setAttribute('aria-pressed', soundOn ? 'true' : 'false'); sb.textContent = soundOn ? '♪ 音 オン' : '♪ 音 オフ';
 sb.addEventListener('click', () => { SND.init(); SND.set(!soundOn); sb.setAttribute('aria-pressed', soundOn ? 'true' : 'false'); sb.textContent = soundOn ? '♪ 音 オン' : '♪ 音 オフ'; });
 

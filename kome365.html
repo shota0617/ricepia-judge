@@ -309,7 +309,7 @@ function finalize(S){
   const damage = lodge*32 + (g > 1200 ? 7 : 0) + 1.5 + Math.min(8, f.agedPlant) + Math.max(0, 0.78-R)*40 + Math.min(8, f.flowerStress*0.8); /* 刈りおくれの 茶米・登熟の 悪い 死米・不稔（6周目） */
   if (g < 1000) yieldKg *= 1 - (1000-g)/1000; if (g > 1200) yieldKg *= 0.93;
   yieldKg *= (1 - Math.min(0.25, f.young*0.03));
-  const seiryu = clamp(100 - chalk - green - crack - damage - 8, 30, 92);
+  const seiryu = clamp(100 - chalk - green - crack - damage - 8 + (Math.abs(g-1000) <= 50 ? 2 : 0), 30, 92); /* 1000±50℃ で 刈ると 整粒 +2（13周目：刈りどきの 山） */
   const protein = clamp(5.6 + (Nh-35)*0.09 + f.A2*0.18 + lodge*0.6, 5.2, 8.5);
   const taste = Math.round(clamp(100 - (protein-5.8)*14 - (80-seiryu)*0.6 - lodge*10, 40, 95));
   const grade = hv.moisture > 16 ? '規格外' : seiryu >= 70 ? '一等' : seiryu >= 60 ? '二等' : seiryu >= 45 ? '三等' : '規格外';
@@ -608,7 +608,7 @@ function syncUI(){ const h0 = HUD_H;
   const nx = S.weather[S.day+1]; $('wx').textContent = WX_ICON[wx.w] + ' ' + Math.round(wx.t) + '℃' + (nx && !S.over ? '　あす ' + WX_ICON[nx.w].split(' ')[0] : ''); /* あすの 天気も 見せる（2周目：掛け流し・落水の 段取りの ため） */
   let st = '', lab = PHASE_NAME[S.phase];
   if (S.phase==='seed') st = S.seed_.soaked ? ('つんで ' + Math.round(S.seed_.heat) + '℃') : 'まだ';
-  else if (S.phase==='nursery') st = S.nur.sown ? ('なえ ' + S.nur.age + '日') : 'まく まえ';
+  else if (S.phase==='nursery') st = S.nur.sown ? ('なえ ' + S.nur.age + '日・' + (Math.round(Math.min(4.5, 0.4 + S.nur.age/8.5)*10)/10).toFixed(1) + '葉') : 'まく まえ'; /* 葉齢の 目安（30日で 3.9葉。13周目） */
   else if (S.phase==='field'){ lab = fieldStageName(); st = 'みず ' + fmtCm(S.f.water) + 'cm'; }
   else if (S.phase==='dry'){ st = 'すいぶん ' + S.hv.moisture.toFixed(1) + '%'; }
   $('stage').textContent = lab; $('stat').textContent = st;
@@ -645,6 +645,7 @@ function advanceDay(){
   if (S.phase==='dry'){ S.hv.dryDays++; const was = S.hv.moisture; S.hv.moisture = Math.max(10, was - (was <= 15.5 ? 0.8 : 3.4)); /* 仕上がりの あとは ゆっくり（3周目） */ if (was > 15.5 && S.hv.moisture <= 15.5){ V.flipQueue = 0; SND.pin(); toast('15%'); } } /* こえた 時に かならず 合図（8周目） */ /* 仕上がりで めくりが 止まる（2周目）。もう一度 → すると 乾かしすぎ */
   S.day++;
   if (S.weather[S.day] && S.weather[S.day].w==='台風') { V.shake = 1; V.flipQueue = 0; } /* 台風の 日も 止まる */
+  { const w = S.weather[S.day]; if (w){ const L = layout(), col = w.w==='雨' ? '#7f9fae' : w.w==='台風' ? '#6f7f93' : w.w==='高温' ? '#ff8a5b' : w.w==='晴れ' ? '#ffd36b' : w.w==='低温' ? '#cfe3f3' : '#d9dde3'; const nP = w.w==='台風' ? 10 : 4; for (let i=0;i<nP;i++) V.particles.push({ x: Math.max(12, W*0.04) + 70, y: L.top + 28, vx: 40 + Math.random()*120, vy: -60 - Math.random()*90, r: 2.6, c: col, a: 0, life: .55 }); } } /* めくった 日の 天気の 粒（13周目） */
   V.page = 1; V.flipN++; SND.pera(V.flipN); if (V.flipN % 3 === 1) vib(6);
   V.hint = Math.max(0, V.hint - 0.05);
   narrate();

@@ -7352,6 +7352,13 @@ function roadShapeCorner(mask) {   // 曲がり角の内がわの角の向き [d
   return m === 3 ? [1, -1] : m === 6 ? [1, 1] : m === 12 ? [-1, 1] : m === 9 ? [-1, -1] : null;
 }
 
+function roadShapeMissing(mask) {   // T字路でつながっていない1方向 [dx, dy]。T字路でなければ null
+  if (typeof mask !== 'number' || !Number.isInteger(mask) || mask < 0 || mask > 15) return null;
+  if (roadShapeOf(mask) !== 'tee') return null;
+  const m = 15 & ~mask;
+  return m === 1 ? [0, -1] : m === 2 ? [1, 0] : m === 4 ? [0, 1] : m === 8 ? [-1, 0] : null;
+}
+
 function drawRoadShape(X, Y, T, mask) {   // 実在の道の曲がり・交わりを淡い形の印で（点滅しない）
   const shape = roadShapeOf(mask);
   if (shape === 'none' || shape === 'straight') return;
@@ -7371,6 +7378,14 @@ function drawRoadShape(X, Y, T, mask) {   // 実在の道の曲がり・交わ�
     ctx.beginPath();
     ctx.arc(X + T / 2, Y + T / 2, Math.max(1, T * 0.05), 0, Math.PI * 2);
     ctx.fill();
+    const miss = shape === 'tee' ? roadShapeMissing(mask) : null;
+    if (miss) {   // つながっていない向きの端に、短い淡い「閉じ」線（このマスの中だけ・動かない）
+      const [mx, my] = miss, th = Math.max(1, T * 0.07), len = T * 0.4;
+      ctx.beginPath(); ctx.rect(X, Y, T, T); ctx.clip();
+      ctx.fillStyle = 'rgba(255,244,200,.45)';
+      const cx = X + T / 2 + mx * (T / 2 - th * 1.5), cy = Y + T / 2 + my * (T / 2 - th * 1.5);
+      if (mx === 0) ctx.fillRect(cx - len / 2, cy - th / 2, len, th); else ctx.fillRect(cx - th / 2, cy - len / 2, th, len);
+    }
   }
   ctx.restore();
 }
@@ -13119,7 +13134,7 @@ const meiroApi = {
   tilt: () => tiltG, tiltAsk, tiltReset, tiltNeedsPermission, koto: (v, low) => kotoSound(v, low), splash: v => splashSound(v), boing: (v, hi) => boingSound(v, hi), rumble: v => rumbleTick(v, GROUND.road),   // rumble：転がる音（速さは 地図の マス/秒）
   pause(on) { meiroPause = !!on; dirty = true; if (on && mzNext.hold) { mzNext.hold = false; if (G.toastFlush) G.toastFlush(); } },   // 止める ときは「つぎの ゴール」で 待たせた 知らせを 出す
 };
-window.nishioPixel = { blinkOn, BLINK_MS, BLINK_SHUT_MS, get riceEye() { return riceEyeAt; }, grow: { stage: () => grow.stage, stageFor: growStageFor, TH: GROW_TH, popAt: () => grow.popT }, firstRoute: { shape: mzPathShape, simple: mzFirstSimple, LIM: MZ_FIRST_SIMPLE }, collected: { has: collectedOf }, roadShape: { of: roadShapeOf, corner: roadShapeCorner }, glanceShift, asleepShut, happyFace, meiroApi, heroGiant: () => heroGiantId, pickHeroGiant, HERO_GIANT_RANGE, maze: { goalFxSpec: () => ({ ...MZ_GOAL_FX }), wallTheme: () => mzWallTheme(), on: () => mazeOn(), playing: () => active && mazeOn(), next: () => ({ want: mzNext.want, t0: mzNext.t0, on: mzNextOn(), labHide: !!mzNext.labHide, arrowDim: !!mzNext.arrowDim, box: mzNext.box || null }), goal: id => {   // id の 名所が いまの ゴール（か 2分 以内の 前の ゴール）なら、かかった 時間と めいろの 道のり
+window.nishioPixel = { blinkOn, BLINK_MS, BLINK_SHUT_MS, get riceEye() { return riceEyeAt; }, grow: { stage: () => grow.stage, stageFor: growStageFor, TH: GROW_TH, popAt: () => grow.popT }, firstRoute: { shape: mzPathShape, simple: mzFirstSimple, LIM: MZ_FIRST_SIMPLE }, collected: { has: collectedOf }, roadShape: { of: roadShapeOf, corner: roadShapeCorner, missing: roadShapeMissing }, glanceShift, asleepShut, happyFace, meiroApi, heroGiant: () => heroGiantId, pickHeroGiant, HERO_GIANT_RANGE, maze: { goalFxSpec: () => ({ ...MZ_GOAL_FX }), wallTheme: () => mzWallTheme(), on: () => mazeOn(), playing: () => active && mazeOn(), next: () => ({ want: mzNext.want, t0: mzNext.t0, on: mzNextOn(), labHide: !!mzNext.labHide, arrowDim: !!mzNext.arrowDim, box: mzNext.box || null }), goal: id => {   // id の 名所が いまの ゴール（か 2分 以内の 前の ゴール）なら、かかった 時間と めいろの 道のり
     if (!mazeOn()) return null;
     const now = performance.now(), pv = mzRt.prev, g = mzRt.gid === id ? { t0: mzRt.t0, len0: mzRt.len0, warp: mzRt.warp, moves: mzMv.n, run: { ...mzRt.run } } : pv && pv.id === id && now - pv.at < 120000 ? pv : null;
     if (!g || !g.t0) return null;

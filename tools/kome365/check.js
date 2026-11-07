@@ -95,7 +95,7 @@ const CHECKS = {
       K3.manual = true; K3.fixedSeed = 3; K3.start(); steps(5); const S = K3.S, f = S.f, log = [];
       const tick = () => { swipe('right', 100, false); flush(); };
       swipe('up', 160, false); log.push(['soak', S.seed_.soaked]);
-      for (let i=0;i<40 && !S.seed_.sprouted;i++){ swipe('right', 300, true); flush(); } log.push(['sprout', S.seed_.sprouted && S.day <= 15, S.day, S.seed_.heat]); /* 44周目：はじきが 21日まで 飛ぶと 失敗 */ /* 42〜43周目：はじいても 浸種 おわりで 止まる（120℃ を 大きく こえない） */
+      for (let i=0;i<40 && !S.seed_.sprouted;i++){ swipe('right', 300, true); flush(); } log.push(['sprout', S.seed_.sprouted && S.day <= 15 && S.seed_.heat < 155, S.day, S.seed_.heat]); /* 44周目：はじきが 21日まで 飛ぶと 失敗 */ /* 42〜43周目：はじいても 浸種 おわりで 止まる（120℃ を 大きく こえない） */
       swipe('down', 160, false); log.push(['sown', S.phase, S.nur.sown]);
       for (let i=0;i<60 && S.nur.age < 30;i++){ if (S.nur.moist < 0.4) swipe('up', 160, false); tick(); } log.push(['nursery', S.nur.age, S.nur.stress]);
       for (let i=0;i<6 && S.phase!=='field';i++) swipe('left', 120, false); log.push(['tofield', S.phase]);

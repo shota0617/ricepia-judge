@@ -437,6 +437,20 @@ function twistSound() { /* みわける: ひねってわるい粒の印が出る
     o.start(t); o.stop(t + 0.11);
   } catch (_) {}
 }
+function smileSound() { /* みわける: 完了の合図の音。500→760Hzへゆっくり上がる音で、粒の tick（高い短い音）や寄る音（zoomSound 600→900Hz・0.09秒）とは分ける（サイクル102・差分テーマ差8）。最後のわるい粒が小皿へ飛ぶ grainDrop のあと、残った粒が一斉に笑顔になる瞬間だけが無音だった（390×844実測）。他の所作の完了には固有の音がある（はかる=平均の音・きめる=pop・おす=thump） */
+  try {
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    if (ac.state === "suspended") ac.resume();
+    const o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime;
+    o.type = "sine";
+    o.frequency.setValueAtTime(500, t);
+    o.frequency.exponentialRampToValueAtTime(760, t + 0.22);
+    g.gain.setValueAtTime(0.018, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.24);
+    o.connect(g).connect(ac.destination);
+    o.start(t); o.stop(t + 0.24);
+  } catch (_) {}
+}
 function thump() {
   tone(110, 0.16, 0.14, "sine");
   tone(70, 0.22, 0.1, "sine");
@@ -1302,6 +1316,7 @@ function tapGrain(g) {
   }
 }
 function resetZoomForSmiles() {
+  smileSound(); /* みわけ完了の合図は固有の音にする（サイクル102・差8）。笑顔が広がる瞬間は粒が動く音ではない */
   grains.filter(o => !o.gone).forEach((o, i) => setTimeout(() => {
     o.img.src = grainSprite("seiryu", "happy");
     o.img.classList.add("wig");

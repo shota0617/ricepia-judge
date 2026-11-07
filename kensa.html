@@ -381,6 +381,20 @@ function zoomSound() { /* みわける: 寄って顔が出る合図の音。600�
     o.start(t); o.stop(t + 0.1);
   } catch (_) {}
 }
+function zoomOutSound() { /* みわける: 寄りから戻る合図の音。900→600Hzへ小さく下がる音で、寄る音（zoomSound 600→900Hz）の対にする（サイクル101・差分テーマ差7）。戻る操作だけが無音だった（390×844実測）。場面の切り替えでの戻し（次の袋・きめる等）では鳴らさない */
+  try {
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    if (ac.state === "suspended") ac.resume();
+    const o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime;
+    o.type = "sine";
+    o.frequency.setValueAtTime(900, t);
+    o.frequency.exponentialRampToValueAtTime(600, t + 0.09);
+    g.gain.setValueAtTime(0.02, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.1);
+    o.connect(g).connect(ac.destination);
+    o.start(t); o.stop(t + 0.1);
+  } catch (_) {}
+}
 function bagSound() { /* おす: 袋が流れる紙の音。360→150Hzへゆっくり下がる低い音で、粒の tick（高い短い音）とは分ける（サイクル95・差分テーマ「類3の残り」） */
   try {
     ac = ac || new (window.AudioContext || window.webkitAudioContext)();
@@ -953,6 +967,8 @@ function applyZoom(smooth) {
     if (near && step === 2) {
       zoomSound();
       if (!everZoomed) { everZoomed = true; updateSortHint(); }
+    } else if (!near && step === 2 && (smooth || pinch)) { /* 戻る合図も固有の音にする（サイクル101・差7）。smooth は🔍・2回タップの戻り、pinch はピンチで戻る途中。場面の切り替え（smooth なし・pinch なし）では鳴らさない */
+      zoomOutSound();
     }
   }
 }

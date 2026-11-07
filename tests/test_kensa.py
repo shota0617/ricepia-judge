@@ -738,6 +738,23 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         # 粒の tick 自体は従来どおり残る（粒同士の動きの音は変えない）
         self.assertIn("const tick = () => tone(1100 + Math.random() * 900, 0.03, 0.025);", HTML)
 
+    def test_cycle101_zoom_out_cue_has_its_own_falling_sound(self):
+        # 差分テーマ差7（類3・類6の残り）: 寄る合図には固有の上がる音（差4）がある一方、
+        # 寄りから戻る合図だけが無音だったため、寄る音の対になる小さく下がる固有の音を付ける。
+        # この音は粒同士の音ではなく、🔍・2回タップ・ピンチで戻る操作が届いた返り。
+        self.assertIn("function zoomOutSound() {", HTML)
+        self.assertIn("o.frequency.setValueAtTime(900, t);", HTML)
+        self.assertIn("o.frequency.exponentialRampToValueAtTime(600, t + 0.09);", HTML)
+        # applyZoom の isNear が下りる合図は zoomOutSound を使い、tick は使わない。
+        # 場面の切り替えでの戻し（smooth なし・pinch なし）では鳴らさない条件も固定する
+        zoom = HTML[HTML.index("const near = Z.s >= FACE_AT;"):HTML.index("function stopSmoothZoom()")]
+        self.assertIn("zoomOutSound();", zoom)
+        self.assertIn("(smooth || pinch)", zoom)
+        self.assertNotIn("tick();", zoom)
+        # 音量は寄る音と同じく控えめ（0.02）に留める（zoomSound と共通の行で固定済み）
+        # 粒の tick 自体は従来どおり残る（粒同士の動きの音は変えない）
+        self.assertIn("const tick = () => tone(1100 + Math.random() * 900, 0.03, 0.025);", HTML)
+
     def test_cycle93_picked_grains_stay_in_quiet_record(self):
         # 類7: 見分けた粒が静かに記録に残る。任意で開く資料（#notes）の中だけに出し、常時表示・競争・スコアにはしない。
         # 袋を越えて残るため startLot では消さない（サイクル91の seenChecks と同じ持ち方）。

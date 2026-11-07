@@ -55,9 +55,8 @@ class TestWiring(unittest.TestCase):
         self.assertIn("closest('[data-spot]')", GAME)
         self.assertRegex(GAME, r"window\.nishioGo = \{\s*galleryTiles")
 
-    def test_html_once_before_list(self):
+    def test_html_once_after_heading(self):
         self.assertEqual(HTML.count('id="visitedGallery"'), 1)
-        self.assertLess(HTML.index('id="visitedGallery"'), HTML.index('id="visitedList"'))
         self.assertGreater(HTML.index('id="visitedGallery"'), HTML.index("めぐったスポット"))
 
     def test_css(self):

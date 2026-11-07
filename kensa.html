@@ -27,7 +27,7 @@
   html:not(.scrolled) { touch-action:none; } /* 遊んでいる間は指でページが下の説明へ流れない。📖で下へ行ったあとは指で戻れる */
 
   /* 上: 顔と今の段階 */
-  #head { flex:none; display:flex; align-items:center; gap:10px; height:66px; }
+  #head { flex:none; display:flex; align-items:center; gap:10px; min-height:66px; } /* 文字を大きくした端末では題字と段階の点の分だけ伸びる */
   #face { width:60px; height:60px; border-radius:50%; background:#fdf0d8; flex:none; transition:transform .18s ease; }
   #face.hop { transform:translateY(-5px) rotate(-4deg); }
   #face.tilt { transform:rotate(9deg); }
@@ -177,7 +177,7 @@
   /* 横向きの低い画面: 上段と皿を左右に並べ、きめるの表も詰める */
   @media (orientation:landscape) and (max-height:500px) {
     #app { max-width:760px; }
-    #head { height:42px; }
+    #head { min-height:42px; }
     #face { width:40px; height:40px; }
     h1 { display:none; }
     #stepName { font-size:20px; }

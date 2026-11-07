@@ -123,6 +123,11 @@ class FlowTests(unittest.TestCase):
         self.assertRegex(HTML, r"#idleCard \{[^}]*bottom:calc\(5px \+ env\(safe-area-inset-bottom\)\)")
         self.assertNotRegex(HTML, r"#idleCard \{[^}]*top:0")
 
+    def test_head_grows_with_large_text(self):
+        # 文字150%以上でも題字「農産物検査」と段階の点が頭の枠からはみ出さない（高さは最低値）
+        self.assertRegex(HTML, r"#head \{[^}]*min-height:66px")
+        self.assertNotRegex(HTML, r"#head \{[^}]*[^-]height:66px")
+
     def test_foot_grows_with_large_text(self):
         # 文字200%の端末では案内が2行になる。下の枠は最低74pxで、必要な分だけ伸びて皿に重ならない
         self.assertRegex(HTML, r"#foot \{[^}]*min-height:calc\(74px \+ env\(safe-area-inset-bottom\)\)")

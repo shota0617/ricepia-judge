@@ -35,7 +35,7 @@ const HELPERS = () => {
       }
       if (bot==='careful' && S.phase==='dry'){ dir = S.hv.moisture <= 15.5 ? 'left' : 'right'; }
       if (bot==='idle' && S.phase==='field' && f.planted && (dir==='up' || dir==='down')) dir = 'right';
-      if (bot==='flood' && S.phase==='field' && f.planted){ if (dir==='down') dir = 'right'; if (f.water < 14 && dir==='right' && !S.hv.done) { dir = 'up'; len = 400; } }
+      if (bot==='flood' && S.phase==='field' && f.planted){ if (dir==='down') dir = 'right'; if (f.water < 14 && dir==='right' && !S.hv.done) { dir = 'up'; len = 400; fast = true; } } /* はじいて いっぱいに（分げつの ころの ゆっくりの 4cm 止めに かからない） */
       if (bot==='hasty'){ if (S.phase==='field' && a.left==='刈る') dir = 'left'; if (S.phase==='dry'){ if (S.hv.moisture > 15.5){ dir = 'right'; len = 300; fast = true; } else dir = 'left'; } }
       if (bot==='late'){ if (S.phase==='field' && a.left==='刈る'){ if (lateFrom == null) lateFrom = S.day; dir = S.day - lateFrom >= 14 ? 'left' : 'right'; if (dir==='right' && /↑/.test(t)) dir = 'up'; } if (S.phase==='dry' && S.hv.moisture <= 15.5 && S.hv.dryDays < 6) dir = 'right'; }
       swipe(dir, len, fast, true);
@@ -47,9 +47,9 @@ const HELPERS = () => {
 };
 const ORDER = { '一等':4, '二等':3, '三等':2, '規格外':1, '—':0 };
 (async () => {
-  const b = await chromium.launch(); const rows = [];
+  const b = await chromium.launch(); const rows = []; let errs = 0;
   for (const seed of SEEDS){
-    const p = await b.newPage({ viewport:{ width:390, height:844 }, hasTouch:true }); p.on('pageerror', e => console.log('ERR', e.message));
+    const p = await b.newPage({ viewport:{ width:390, height:844 }, hasTouch:true }); p.on('pageerror', e => { errs++; console.log('ERR', e.message); });
     await p.goto(FILE); await p.waitForFunction(() => window.K3); await p.evaluate(BASE); await p.evaluate(HELPERS);
     for (const bot of BOTS){ const r = await p.evaluate(([bot, seed]) => playBot(bot, seed), [bot, seed]); rows.push(r); }
     await p.close();
@@ -73,5 +73,6 @@ const ORDER = { '一等':4, '二等':3, '三等':2, '規格外':1, '—':0 };
   if (has('normal') && has('late')){ const c = score('normal') > score('late')*1.05; ok(c, 'ふつう ＞ のんびり'); if (!c) bad++; }
   for (const bt of ['idle', 'hasty', 'late']) if (has(bt)){ const n = avg[bt].filter(r => ORDER[r.grade] <= 3).length; const c = n*2 >= avg[bt].length; ok(c, bt + ' は 半分 以上の 年で 二等 以下（' + n + '/' + avg[bt].length + '）'); if (!c) bad++; }
   if (has('flood') && has('normal')){ const c = avg.flood.every((r, i) => r.yield < avg.normal[i].yield*0.5); ok(c, 'みずびたしの 収量は ふつうの 半分 以下'); if (!c) bad++; }
+  if (errs){ console.log('✖ ページの エラー ' + errs + ' こ'); bad++; }
   process.exit(bad ? 1 : 0);
 })();

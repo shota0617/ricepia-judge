@@ -3,7 +3,7 @@
 // 書き出し先は KOME_OUT（なければ OS の 一時フォルダの kome365-shots）。リポジトリの 中には 書かない。
 const { chromium } = require('playwright');
 const path = require('path'), os = require('os'), fs = require('fs');
-const FILE = 'file://' + path.resolve(__dirname, '../../kome365.html');
+const FILE = 'file://' + (process.env.KOME_FILE || path.resolve(__dirname, '../../kome365.html')); // KOME_FILE で 前の 版も
 const OUT = process.env.KOME_OUT || path.join(os.tmpdir(), 'kome365-shots');
 const VW = +(process.argv[2]||390), VH = +(process.argv[3]||844);
 fs.mkdirSync(OUT, { recursive: true });

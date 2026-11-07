@@ -208,8 +208,9 @@ const CHECKS = {
     const p = await page(b, 390, 844);
     const r = await p.evaluate(() => { K3.manual = true; K3.fixedSeed = 11; K3.jump('tiller'); const S = K3.S, f = S.f; let said = null; for (let i=0;i<120 && !said;i++){ f.water = Math.max(f.water, 2); K3.advanceDay(); if (/出穂！/.test(document.getElementById('say').textContent)) said = { day: S.day, heading: f.heading, hud: document.getElementById('stage').textContent }; }
       for (let i=0;i<10;i++){ f.water = Math.max(f.water, 2); K3.advanceDay(); } f.lodge = 0.3; f.typhoonDay = S.day; f.water = 3; K3.advanceDay(); const ty = document.getElementById('say').textContent;
-      K3.jump('tiller'); const long = 'ながい ことばを ためす ための 吹き出しです。これは 三行に なります。<span class="src">（出典）</span>'; document.getElementById('say').innerHTML = ''; K3.V.lastSay = ''; (function(){ const t = document.getElementById('say'); })(); 
-      return { said, ty }; });
+      K3.say('ながい ことばを ためす ための 吹き出しです。これは 三行に なります。<span class="src">（出典）</span>'); const longSrc = !!document.getElementById('say').querySelector('.src'); K3.say('みじかい。<span class="src">（出典）</span>', 'wow'); const shortSrc = !!document.getElementById('say').querySelector('.src');
+      return { said, ty, longSrc, shortSrc }; });
+    ok(!r.longSrc && r.shortSrc, '34字を こえる 吹き出しは 注を 落とし、短ければ のこす', [r.longSrc, r.shortSrc]);
     ok(r.said && r.said.day === r.said.heading + 1 && r.said.hud === '出穂', '出穂の 翌日に「出穂！」、HUD も 出穂', r.said);
     ok(/たおれました/.test(r.ty), '台風の 翌日に たおれたかを 言う', r.ty);
     const t = await p.evaluate(() => { K3.jump('tiller'); const f = K3.S.f; f.A2 = 0; f.N = 30; f.dat = f.headDat - 20; f.water = 3; K3.advanceDay(); const s1 = document.getElementById('say'); const hasSrc = !!s1.querySelector('.src'), len = s1.textContent.length; const btn = document.getElementById('soundBtn'); const l0 = btn.textContent; btn.click(); const l1 = btn.textContent; btn.click(); const l2 = btn.textContent; btn.click(); const l3 = btn.textContent; return { hasSrc, len, text: s1.textContent, labels: [l0, l1, l2, l3] }; });

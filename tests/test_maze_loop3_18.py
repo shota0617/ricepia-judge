@@ -33,6 +33,7 @@ def block():
 
 PRE = r"""
 const MZ_K = 3;
+const cubeFirstGoal = () => false;
 let dirty = false, pts = 0, said = [], sounds = 0, calls = 0, ok = true;
 const rp = { x: 1.5 * MZ_K, y: 1.5 * MZ_K }, roll = { happyT: 0 };
 const mzFx = [];

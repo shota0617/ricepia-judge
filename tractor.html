@@ -8531,16 +8531,19 @@ function step(dt) {
       const dtPer = 1 / Math.max(0.3, Math.abs(S.v));          // 1m 進むのにかかる時間
       for (let n = Math.ceil(d / 0.05), i = 0; i < n; i++) {   // 5cm ずつ（大きく切ると鼻先が一瞬だけ畦にかかって もどることがある）
         const ds = d / n;
-        if (!sIn0) st -= Math.sign(st) * Math.min(Math.abs(st), 0.35 * ds * dtPer);
+        if (!sIn0 && !tracing) st -= Math.sign(st) * Math.min(Math.abs(st), 0.35 * ds * dtPer);   // サイクル197: なぞり中は TRACE が切れ角を保つので、戻るとは見なさない（戻ると見なすと 止まった所からの道が真っすぐ畦へ向かい、横へなぞっても「畦にかかる」で一歩も動けなかった）
         y -= sg * ds * Math.tan(st) / WB * turnRate(v, x, z, Math.abs(x) > HX || Math.abs(z) > HZ, st); x += Math.sin(y) * ds * sg; z += Math.cos(y) * ds * sg;
         if (!canBe(x, z, y)) return false;
       }
       return true;
     };
     const at = d => steers.every(st => path(d, Math.abs(S.v), st) && path(d, 0, st));
-    if (!at(0.45 + Math.abs(S.v) * 0.7)) {
-      if (Math.abs(S.v) > 0.2 || !at(0.06) || Math.sign(want) !== sg) { want = 0; S.v *= 0.6; }   // 速いとき・惰性のときは強くブレーキ。6cm 先も畦なら止まる
-      else want = sg * Math.min(Math.abs(want), 0.15);                                           // ゆっくりなら、少しずつ動ける
+    if (!at((tracing ? 1.0 : 0.45) + Math.abs(S.v) * 0.7)) {   // サイクル197: なぞり中は 鼻先が畦の 1m 手前で止まる（ハンドルいっぱいで向きを変えるとき 鼻先は 0.5m ほど前へ出るため、0.45m では抜けられない）
+      // サイクル197（最初の1分）: なぞり中は「少しずつ動ける」を使わず、そこで止まる。なぞりでは後ろへ下がれないので、鼻先が畦の 6cm 手前まで
+      // にじり寄ると、そのあと横や後ろへなぞっても鼻先が畦にかかって一歩も動けなくなっていた（ループ側 scratchpad/cond197b.js: 畦の 3.16m 手前で
+      // 止まったあと 左・真横・後ろへなぞっても 0m）。手前で止まれば、ハンドルを切って抜けられる
+      if (tracing || Math.abs(S.v) > 0.2 || !at(0.06) || Math.sign(want) !== sg) { want = 0; S.v *= 0.6; }   // 速いとき・惰性のときは強くブレーキ。6cm 先も畦なら止まる
+      else want = sg * Math.min(Math.abs(want), 0.15);                                           // ゆっくりなら、少しずつ動ける（キー操作のとき）
       EASY.used = true;
       EASY.tell('stop', '畦の手前で止めました。' + (S.rotDown && sg > 0 ? IMPL + 'を上げてから回ろう' : 'ハンドルを切るか、反対へ'));
     }

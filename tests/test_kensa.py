@@ -411,6 +411,15 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         # 手本の指は、さすのに必要な押しの長さだけ動く（rest - inAt + 8）
         self.assertIn('poke.style.setProperty("--pokeDx", -(P.rest - P.inAt + 8) + "px");', HTML)
 
+    def test_bad_grain_tap_tolerates_offset_across_short_axis(self):
+        # みわける: 粒の短い向き（v）のタップのゆるさは12px（実効の高さ44px）。
+        # 6pxでは中心から16pxずれたタップが外れ、20pxずらした実タップでも
+        # わるい粒が取れなかった（390×844実測・サイクル75）。
+        # 長い向き（u）はとなりの粒と取り合わないよう6pxのまま
+        self.assertIn("const padU = 6 / Z.s, padV = 12 / Z.s;", HTML)
+        self.assertIn("Math.abs(u) <= GW / 2 + padU && Math.abs(v) <= GH / 2 + padV", HTML)
+        self.assertNotIn("const pad = 6 / Z.s;", HTML)
+
     def test_assets_exist(self):
         for name in set(re.findall(r'kensa/[a-z_]+\.webp', HTML)):
             self.assertTrue(os.path.exists(os.path.join(ROOT, name)), name)

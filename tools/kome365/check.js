@@ -179,12 +179,13 @@ const CHECKS = {
   },
   // 字が はみ出ない：390×844 と 360×560（本物の Android の Chrome の 高さ）で、おもな 画面の 字が 画面の 中・吹き出しが 田んぼと かさならない
   async fit(b){
-    for (const [w, h] of [[390, 844], [360, 560]]){
-      const p = await page(b, w, h);
+    for (const [w, h, dsf] of [[390, 844], [360, 560], [740, 360], [195, 280, 4]]){ /* 低い 横向き・字 200%（幅 195px・倍率 4）も（7周目） */
+      const p = await page(b, w, h, dsf);
       const r = await p.evaluate(() => {
         const out = {}; const inside = el => { const r = el.getBoundingClientRect(); return r.left >= -1 && r.top >= -1 && r.right <= innerWidth + 1 && r.bottom <= innerHeight + 1 && el.scrollWidth <= el.clientWidth + 1; };
         const vis = el => el.getBoundingClientRect().width > 0;
-        out.title = ['startBtn', 'whoT'].every(id => inside(document.getElementById(id))) && [...document.querySelectorAll('#title .swipes div')].every(inside);
+        const sb = document.getElementById('soundBtn').getBoundingClientRect(), nr = document.querySelector('#title .noren').getBoundingClientRect(); out.sound = sb.bottom <= nr.top + 1 || sb.left >= nr.right - 1 || sb.right <= nr.left + 1;
+        out.title = ['whoT'].every(id => inside(document.getElementById(id))) && [...document.querySelectorAll('#title .swipes div')].every(el => el.scrollWidth <= el.clientWidth + 1 && el.getBoundingClientRect().right <= innerWidth + 1);
         K3.manual = true; K3.fixedSeed = 11;
         const scenes = ['seed', 'nursery', 'tiller', 'nakaboshi', 'heading', 'harvest', 'dry'];
         out.scenes = {};
@@ -195,7 +196,7 @@ const CHECKS = {
         const again = document.getElementById('againBtn'); document.getElementById('result').scrollTop = 1e6; out.again = inside(again);
         return out;
       });
-      ok(r.title, `題の 画面の 字が 画面の 中（${w}×${h}）`, r);
+      ok(r.title && r.sound, `題の 画面の 字が 画面の 中、音ボタンが のれんと かさならない（${w}×${h}）`, { title: r.title, sound: r.sound });
       for (const [s, v] of Object.entries(r.scenes)) ok(v.hud && v.say && v.talkTop >= v.fieldBot - 2, `${s}：HUD・吹き出しが 画面の 中、田んぼと かさならない（${w}×${h}）`, v);
       ok(r.result && r.again, `結果の 字と「もう一回」が 画面の 中（${w}×${h}）`, r);
       await p.screenshot({ path: path.join(OUT, `fit-${w}x${h}.png`) });
@@ -214,8 +215,8 @@ let fails = 0;
 function ok(cond, name, info){ console.log((cond ? '  ✔ ' : '  ✖ ') + name + (cond || info===undefined ? '' : '  ' + JSON.stringify(info))); if (!cond) fails++; }
 let errs = [];
 const pages = [];
-async function page(b, w, h){
-  const p = await b.newPage({ viewport:{ width:w, height:h }, deviceScaleFactor:2, hasTouch:true }); pages.push(p);
+async function page(b, w, h, dsf){
+  const p = await b.newPage({ viewport:{ width:w, height:h }, deviceScaleFactor:dsf||2, hasTouch:true }); pages.push(p);
   p.on('pageerror', e => errs.push(e.message));
   await p.goto(FILE); await p.waitForFunction(() => window.K3);
   await p.evaluate(HELPERS);

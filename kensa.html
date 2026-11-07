@@ -493,6 +493,20 @@ function spreadSound() { /* みわける: なでて広げ終わった合図の�
     o.start(t); o.stop(t + 0.16);
   } catch (_) {}
 }
+function hintSound() { /* みわける: わるい粒がふくらんで知らせる合図の音。440→560Hzへ小さくふくらむように上がる音で、粒の tick（高い短い音）や広がった音（spreadSound 400→620Hz）・笑顔の音（smileSound 500→760Hz）とは分ける（サイクル106・差分テーマ差12）。しばらくして わるい粒がふくらむ瞬間（armHint）だけが無音で、目を離していると気づけなかった。すでにふくらんでいる粒には鳴らさない */
+  try {
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    if (ac.state === "suspended") ac.resume();
+    const o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime;
+    o.type = "triangle";
+    o.frequency.setValueAtTime(440, t);
+    o.frequency.exponentialRampToValueAtTime(560, t + 0.12);
+    g.gain.setValueAtTime(0.015, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.14);
+    o.connect(g).connect(ac.destination);
+    o.start(t); o.stop(t + 0.14);
+  } catch (_) {}
+}
 function thump() {
   tone(110, 0.16, 0.14, "sine");
   tone(70, 0.22, 0.1, "sine");
@@ -1068,7 +1082,11 @@ function updateSortHint() {
 function armHint(ms) {
   clearTimeout(hintTimer);
   hintTimer = setTimeout(() => {
-    if (step === 2) grains.filter(g => !g.gone && g.kind !== "seiryu").forEach(g => g.img.classList.add("hint"));
+    if (step !== 2) return;
+    const fresh = grains.filter(g => !g.gone && g.kind !== "seiryu" && !g.img.classList.contains("hint"));
+    if (!fresh.length) return; /* すでにふくらんでいる粒には鳴らさない */
+    fresh.forEach(g => g.img.classList.add("hint"));
+    hintSound(); /* ふくらんで知らせる合図は固有の音にする（サイクル106・差12）。目を離していても気づける */
   }, ms);
 }
 function toMiwakeru() {

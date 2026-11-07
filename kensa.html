@@ -1352,7 +1352,7 @@ $("bagBig").addEventListener("pointermove", (e) => {
   if (bagSwipe) {
     const dx = e.clientX - bagSwipe.x;
     $("bagBig").style.transform = "translateX(" + Math.max(0, dx) + "px) rotate(" + Math.max(0, dx) / 30 + "deg)";
-    if (dx > 70) { bagSwipe = null; leaveBag(); }
+    if (dx >= 40) { bagSwipe = null; leaveBag(); } /* 横なで: 40pxの短いなででも流れる。70pxでは30〜65pxの自然な短いなでが全て戻ってしまった（390×844実測・サイクル78）。タップのずれ（24px以下）と間違えないよう40pxに留める。手本の90pxはそのまま目安として残す */
     return;
   }
   if (!hankoDrag) return;

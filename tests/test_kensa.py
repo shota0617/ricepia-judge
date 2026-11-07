@@ -443,6 +443,13 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertNotIn('tapNow - lastGoodTap < 320', HTML)
         self.assertIn('Math.hypot(e.clientX - lastGoodX, e.clientY - lastGoodY) < 40', HTML)
 
+    def test_bag_swipe_takes_with_a_short_swipe(self):
+        # おす後: 押した袋を横へ流す判定は40pxから受ける。
+        # 70pxでは30〜65pxの自然な短い横なでが全て戻ってしまった
+        # （390×844実測・サイクル78）。タップのずれの境目24pxよりは大きく留める
+        self.assertIn('if (dx >= 40) { bagSwipe = null; leaveBag(); }', HTML)
+        self.assertNotIn('if (dx > 70) { bagSwipe = null; leaveBag(); }', HTML)
+
     def test_assets_exist(self):
         for name in set(re.findall(r'kensa/[a-z_]+\.webp', HTML)):
             self.assertTrue(os.path.exists(os.path.join(ROOT, name)), name)

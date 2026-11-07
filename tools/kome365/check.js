@@ -223,7 +223,7 @@ const CHECKS = {
     const tv = Object.values(r.ty); ok(tv.some(x => x) && tv.some(x => !x), '台風の 年と ない 年が ある', r.ty);
     ok(r.n0.length >= 3 && r.n0.every(n => n >= 37 && n <= 42), '田うえ時の 葉いろは 年で 37〜42', r.n0);
     ok(r.says >= 8, '出穂後の 一言は 日ごとに かわる（12日で 8通り 以上）', r.says);
-    ok(r.slow <= 5 && r.fast > 5, '出穂後の ゆっくりの ↑は 5cm まで。はじけば 深く', [r.slow, r.fast]);
+    ok(r.slow <= 7 && r.fast > 7, '出穂後の ゆっくりの ↑は 7cm まで。はじけば 深く（30周目）', [r.slow, r.fast]);
   },
   // 手ごたえ（20周目）：ふつうの 速さの 長い 引きは 1日、ゆっくりの ↑は 上限で ゴム、よい 深さ 3回で ◎、済は 暦の 下に ならび 結果に 済 N/6、たねの ←の あとも 吹き出しが 更新
   async feel(b){

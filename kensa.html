@@ -949,13 +949,14 @@ function endPlatePointer(e, cancelled) {
   if (pts.size < 2) pinch = null;
   if (pts.size === 1 && !sortDrag) { /* ズームのあと片方を離しても、残った指で見る場所を動かせる */
     const [p] = pts.values();
-    sortDrag = { x:p.x, y:p.y, lx:p.x, ly:p.y, moved:true, t0:0, startG:null };
+    sortDrag = { x:p.x, y:p.y, lx:p.x, ly:p.y, moved:true, t0:0, startG:null, noTap:true }; /* 見る場所を動かすための残り指は、離した時にタップとしない */
   }
   if (pts.size === 0 && sortDrag) {
     const d = sortDrag;
     sortDrag = null;
-    if (!d.moved && !cancelled && step === 2) {
-      const g = grainAt(toLocal(e.clientX, e.clientY));
+    if (!cancelled && step === 2 && !d.noTap && Math.hypot(e.clientX - d.x, e.clientY - d.y) <= 24) { /* ずれ24pxまではタップとして受ける。12pxを超えたずれはドラッグ扱いになり、はじくの境目（24px）までの13〜24pxはずれたタップが何も起こさなかった（390×844実測・サイクル76） */
+      let g = grainAt(toLocal(e.clientX, e.clientY));
+      if (!g && d.startG && !d.startG.gone) g = d.startG; /* ずれる途中のなでで粒が押し動かされ、離した場所では外れることがある。押した瞬間に触れていた粒をタップ先にする */
       const tapNow = performance.now();
       if (g && g.kind === "seiryu" && tapNow - lastGoodTap < 320 && Math.hypot(e.clientX - lastGoodX, e.clientY - lastGoodY) < 40) { /* 同じ所を2回タップで寄る。もう一度で戻る。離れた粒を続けて突いても寄らない */
         lastGoodTap = 0;

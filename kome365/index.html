@@ -539,16 +539,16 @@ a{color:var(--acc)}
 #swBanner.find b{font-size:min(15vw,72px);line-height:1.3;text-align:center;-webkit-text-stroke:3px #2f7a37;text-shadow:0 4px 14px rgba(0,70,20,.55)}
 /* 収穫まであと◯日: 出穂後〜収穫前だけ。HUDの下に重ねる(レイアウトは押し下げない) */
 #swHud{position:relative;display:none!important}   /* 上のカード廃止(サイクル9): DOMと計算は残すが画面には出さない */
-#swMood{position:absolute;left:10px;top:64px;width:72px;height:72px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:52px;line-height:1;pointer-events:none;box-shadow:0 3px 10px rgba(0,0,0,.25);border:3px solid #fff;transition:transform .35s ease,filter .35s ease,background .35s ease;z-index:3}
+#swMood{position:absolute;left:10px;top:64px;width:92px;height:92px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:52px;line-height:1;pointer-events:none;box-shadow:0 3px 10px rgba(0,0,0,.25);border:3px solid #fff;transition:transform .35s ease,filter .35s ease,background .35s ease;z-index:3}
 #swMood.great{background:radial-gradient(circle at 50% 40%,#ffe98a,#9bdc6a)}
 #swMood.good{background:#b9e88f}
 #swMood.ok{background:#fbf0b0}
 #swMood.bad{background:#b9bcb5;filter:saturate(.45)}
 #sGame.fxGood #swMood{transform:scale(1.22)}
 #sGame.fxBad #swMood{transform:scale(.9);filter:grayscale(1)}
-#swMoodFace{display:block;line-height:1;pointer-events:none;width:64px;height:64px;background-repeat:no-repeat;background-position:center;background-size:contain;image-rendering:pixelated}   /* ドット絵の田んぼの顔(サイクル58): 絵文字でなく手描きドット絵(16x16)を背景で出す */
+#swMoodFace{display:block;line-height:1;pointer-events:none;width:84px;height:84px;background-repeat:no-repeat;background-position:center;background-size:contain;image-rendering:pixelated}   /* ドット絵の田んぼの顔(サイクル58): 絵文字でなく手描きドット絵(16x16)を背景で出す */
 #swMoodFace[data-stroking]{background-image:var(--stroke-face)!important} /* 一時的な笑顔。下の状態の顔は書き換えない */
-#swMoodNeed{position:absolute;right:-6px;top:-6px;width:36px;height:36px;box-sizing:border-box;border-radius:50%;background-color:#fff;border:2px solid #d9534f;display:flex;align-items:center;justify-content:center;font-size:24px;line-height:1;pointer-events:none;box-shadow:0 2px 5px rgba(0,0,0,.3);background-repeat:no-repeat;background-position:center;background-size:24px 24px;image-rendering:pixelated}   /* 足りないものバッジもドット絵(サイクル77・PIXSTAT) */
+#swMoodNeed{position:absolute;right:-6px;top:-6px;width:44px;height:44px;box-sizing:border-box;border-radius:50%;background-color:#fff;border:2px solid #d9534f;display:flex;align-items:center;justify-content:center;font-size:28px;line-height:1;pointer-events:none;box-shadow:0 2px 5px rgba(0,0,0,.3);background-repeat:no-repeat;background-position:center;background-size:32px 32px;image-rendering:pixelated}   /* 足りないものバッジもドット絵(サイクル77・PIXSTAT) */
 #swMoodCare{position:absolute;left:50%;top:-4px;margin-left:-14px;width:28px;height:28px;font-size:28px;line-height:28px;text-align:center;opacity:0;pointer-events:none;z-index:4;background-repeat:no-repeat;background-position:center;background-size:28px 28px;image-rendering:pixelated}   /* 世話の反応アイコン(サイクル25・絵文字1つ・文字なし) */
 #swMood[data-care=good]{transform:scale(1.15)}   /* 反応中は顔の丸ごと大きさでも読める(サイクル62・非判定カードでも) */
 #swMood[data-care=bad]{transform:scale(.93)}
@@ -2478,11 +2478,12 @@ renderTitle();
   /* 輪郭の描き直し(第4弾サイクル73・星のカービィ: 輪郭は細く柔らかく表情が主役): 輪郭色oを濃い茶#7c5a2eから柔らかい黄土#b78f56へ変え、頭頂のベタ(oowwoo)を owwwwo の1ドット線へ、あごのベタ(oooooo)は Codex生成評価の「締まりが弱くなる」懸念を受け oowwoo の中間の形へ描き替えた。芽・目・口・ほっぺ(サイクル70)は不変で、輪郭だけをやさしくする */
   /* 表情差の作り直し(第4弾サイクル70・Pikmin: 頭の芽の様子でも状態が読める): 調子の4表情は芽(great=花+大きな葉/good=立った芽/ok=小さい芽/bad=しおれた葉+細い茎)・目(great=^^/good=丸い目/ok=縦の小さい目/bad=重いまぶた+閉じた目。斜めの目は怒り顔に読めるため使わない=CodexレビューP2対応)・口(great=開いた笑口+舌/good=U字/ok=まっすぐ/bad=下向き)・ほっぺ(great=大/good=小/ok・bad=なし)で段階を作り分ける。隣接段階の差分セル数>=20(実測はfirstface_check)。badは怒り眉なしの「少し元気がない」顔のまま */
   var PIXPAL = { o: '#b78f56', w: '#fff6df', s: '#f0d9a0', g: '#8fd45a', G: '#4e9b3a', k: '#4a3520', p: '#ffb3a7', b: '#7ec8f2' };
+  /* 状態を顔で読ませる点検(第4弾サイクル129・類7・たまごっち): 常駐の顔を92px丸・顔84pxへ大きくし、badを作り直した。旧badは ok との差分19セルでサイクル70の基準(>=20)を割り、口も ok とほぼ同じ真一文字だった。新badは芽を垂れた傘状にしおれさせ(垂れ端は濃緑G)、まぶたを内側へ広げ、口は両端の下がる∩型にして ok との差分28セルへ広げた。怒り眉はなし(少し元気がないだけ)。moodCalcの判定は不変 */
   var PIXFACE = {
     great: ['..gg...pp...gg..', '...gg.pppp.gg...', '....gggppggg....', '.......GG.......', '.......oo.......', '.....owwwwo.....', '....owwwwwwo....', '...owwwwwwwwo...', '..owkwwwwwwkwo..', '..okwkwwwwkwko..', '..oppkwwwwkppo..', '..owwkkkkkksso..', '...owwkppkwso...', '....owwwwwwo....', '.....oowwoo.....', '................'],
     good: ['...g........g...', '...gg......gg...', '....ggg..ggg....', '.......GG.......', '.......oo.......', '.....owwwwo.....', '....owwwwwwo....', '...owwwwwwwwo...', '..owkkwwwwkkwo..', '..owkkwwwwkkwo..', '..opwwwwwwwwpo..', '..owwkwwwwksso..', '...owwkkkkwso...', '....owwwwwwo....', '.....oowwoo.....', '................'],
     ok: ['................', '.....g....g.....', '.....gg..gg.....', '.......GG.......', '.......oo.......', '.....owwwwo.....', '....owwwwwwo....', '...owwwwwwwwo...', '..owkwwwwwwkwo..', '..owkwwwwwwkwo..', '..owwwwwwwwwwo..', '..owwwkkkkwsso..', '...owwwwwwwso...', '....owwwwwwo....', '.....oowwoo.....', '................'],
-    bad: ['................', '................', '.....gg..gg.....', '.....ggGGgg.....', '.......oo.......', '.....owwwwo...b.', '....owwwwwwo.bb.', '...owwwwwwwwo.b.', '..owsswwwwsswo..', '..owkkwwwwkkwo..', '..owwwwwwwwwwo..', '..owwwkkkkksso..', '...owkwwwwkso...', '....owwwwwwo....', '.....oowwoo.....', '................'],
+    bad: ['................', '......gggg......', '.....g.GG.g.....', '....G..GG..G....', '.......oo.......', '.....owwwwo...b.', '....owwwwwwo.bb.', '...owwwwwwwwo.b.', '..owssswwssswo..', '..owkkwwwwkkwo..', '..owwwwwwwwwwo..', '..owwkkkkkksso..', '...owkwwwwkso...', '....owwwwwwo....', '.....oowwoo.....', '................'],
     joy: ['...g........g...', '...gg......gg...', '....ggg..ggg....', '.......GG.......', '.......oo.......', '.....owwwwo.....', '....owwwwwwo....', '...owwwwwwwwo...', '..owwkwwwwkwwo..', '..owkwkwwkwkwo..', '..owppwkkwppwo..', '..owwkkkkkkwso..', '...owwkppkwso...', '....owwwwwwo....', '.....oowwoo.....', '................'],
     down: ['...g........g...', '...gg......gg...', '....ggg..ggg....', '.......GG.......', '.......oo.......', '.....owwwwo...b.', '....owwwwwwo..bb', '...owwwwwwwwo.bb', '..owsswwwwsswo..', '..owkkwwwwkkwo..', '..owwwwwwwwwwo..', '..owwwwwwwwwwo..', '...owwwkkkwso...', '....owwwwwwo....', '.....oowwoo.....', '................']
   };

@@ -3058,7 +3058,7 @@ function showReward(total, name, lines, lvUp, fact, dot) {
   if (navigator.vibrate) navigator.vibrate([60, 40, 120]);
   if (P && P.floatText) {
     P.floatText(`+${total}`);
-    if (f) P.floatText(dot.kira ? '🖼 キラ' : dot.fresh ? '🖼 NEW' : '🖼 +1');
+    if (f && !(demo && !(store.get('nsg_mzgoals', 0) >= 1))) P.floatText(dot.kira ? '🖼 キラ' : dot.fresh ? '🖼 NEW' : '🖼 +1');
     if (lvUp) P.floatText(`⭐ Lv${lvUp}`);
   }
   const art = f ? `　🖼 ${dot.kira ? 'キラ ' : dot.fresh ? 'NEW ' : ''}${f.title}` : '';

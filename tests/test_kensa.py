@@ -356,10 +356,11 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         body = HTML[HTML.index("function toggleZoom()"):]
         body = body[:body.index("\n}\n")]
         self.assertIn('grains.filter(g => !g.gone && g.kind !== "seiryu")', body)
-        self.assertIn("targets.reduce((a, g) => a + g.x, 0) / targets.length", body)
-        self.assertIn("targets.reduce((a, g) => a + g.y, 0) / targets.length", body)
-        # 離れた2粒は、両方収まる倍率まで引いて寄せる（顔が見える下限つき）
-        self.assertIn("Math.max(1.6, Math.min(2.4, fit))", body)
+        # 中心は外接矩形のまんなか（サイクル86で平均の重心から更新: 3粒以上では片側にはみ出すため）
+        self.assertIn("const cx = (Math.min(...xs) + Math.max(...xs)) / 2;", body)
+        self.assertIn("const cy = (Math.min(...ys) + Math.max(...ys)) / 2;", body)
+        # 離れた2粒は、両方収まる倍率まで引いて寄せる（サイクル86で重心の皿中央寄せへ更新）
+        self.assertIn("let s = Math.min(2.4, fit);", body)
 
     def test_sense_token_counts_touching_the_face(self):
         # はこぶ: トークンが顔に触れる所まで運べば届く。中心同士54px以内（旧仕様）では、
@@ -519,6 +520,20 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertIn("const ZOOM_MAX = 3.4, FACE_AT = 1.2;", HTML)
         self.assertNotIn("FACE_AT = 1.5", HTML)
         self.assertIn("const near = Z.s >= FACE_AT;", HTML)
+
+    def test_button_zoom_centers_bad_grains_on_plate_center(self):
+        # 🔍で寄るときは、わるい粒の重心を皿の真ん中へ持ってくる。
+        # 重心の位置を固定したまま寄せると、重心が端寄りのとき反対側の粒が画面の外へ出た
+        # （390×844実測: 自然な広げ方6回中1回・fit 2.27でも画面外、両端の境界では2粒とも完全に外）。
+        # 下限も顔が出る倍率 FACE_AT（1.2・サイクル85）にそろえ、1.6のままでは離れた2粒が収まらなかった
+        body = HTML[HTML.index("function toggleZoom()"):]
+        body = body[:body.index("\n}\n")]
+        self.assertIn("let s = Math.min(2.4, fit);", body)
+        self.assertIn("if (s < 1.04) s = FACE_AT;", body)
+        self.assertIn("Z.tx = PW / 2 - cx * s; Z.ty = PH / 2 - cy * s;", body)
+        self.assertIn("applyZoom();", body)
+        self.assertNotIn("Math.max(1.6, Math.min(2.4, fit))", body)
+        self.assertNotIn("zoomTo(Math.max(FACE_AT", body)
 
     def test_assets_exist(self):
         for name in set(re.findall(r'kensa/[a-z_]+\.webp', HTML)):

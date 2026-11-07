@@ -1064,18 +1064,25 @@ function toggleZoom() {
   if (step !== 2) return;
   if (Z.s > 1.001) resetZoom();
   else {
-    /* 皿の真ん中ではなく、残っているわるい粒のまんなかへ寄る。端へ広がった粒が拡大の外に出ない。
-       2粒が離れているときは、両方収まる倍率まで引く（顔が見える 1.6 倍よりは引かない） */
+    /* 皿の真ん中ではなく、残っているわるい粒のまんなかを皿の真ん中へ寄せる。端へ広がった粒が拡大の外に出ない。
+       2粒が離れているときは、両方収まる倍率まで引く（収まる倍率が顔の出る倍率より小さい帯でも収まる方を優先）。
+       重心の位置をそのまま固定して寄ると、重心が皿の端寄りのときは反対側の粒が画面の外へ出た
+       （390×844実測・自然な広げ方6回中1回、両端に置いた境界では2粒とも完全に外）ため、
+       重心が皿の真ん中に来るよう寄せる（サイクル86） */
     const bad = grains.filter(g => !g.gone && g.kind !== "seiryu");
     const targets = bad.length ? bad : grains.filter(g => !g.gone);
     if (!targets.length) zoomTo(2.4, PW / 2, PH / 2);
     else {
-      const cx = targets.reduce((a, g) => a + g.x, 0) / targets.length;
-      const cy = targets.reduce((a, g) => a + g.y, 0) / targets.length;
-      const spanX = Math.max(...targets.map(g => g.x)) - Math.min(...targets.map(g => g.x)) + GW;
-      const spanY = Math.max(...targets.map(g => g.y)) - Math.min(...targets.map(g => g.y)) + GH;
+      const xs = targets.map(g => g.x), ys = targets.map(g => g.y);
+      const cx = (Math.min(...xs) + Math.max(...xs)) / 2; /* 外接矩形のまんなか。平均の重心だと3粒以上で片側にはみ出す（Codexレビュー指摘・サイクル86） */
+      const cy = (Math.min(...ys) + Math.max(...ys)) / 2;
+      const spanX = Math.max(...xs) - Math.min(...xs) + GW;
+      const spanY = Math.max(...ys) - Math.min(...ys) + GH;
       const fit = Math.min(PW / spanX, PH / spanY);
-      zoomTo(Math.max(1.6, Math.min(2.4, fit)), cx, cy);
+      let s = Math.min(2.4, fit); /* 両粒が収まる倍率を優先する。fit が顔の出る倍率（FACE_AT）より小さい帯（1.04〜1.2）でも、収まる方を取る */
+      if (s < 1.04) s = FACE_AT; /* ほぼ寄らない倍率になってしまう時だけ、顔の出る所まで寄せる（両端の境界では粒の一部が見える） */
+      Z.s = s; Z.tx = PW / 2 - cx * s; Z.ty = PH / 2 - cy * s;
+      applyZoom();
     }
   }
 }

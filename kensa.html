@@ -507,6 +507,20 @@ function hintSound() { /* みわける: わるい粒がふくらんで知らせ�
     o.start(t); o.stop(t + 0.14);
   } catch (_) {}
 }
+function likeSound() { /* 終わり: 「いいね」を押した合図の音。560→840Hzへ小さく上がる音で、粒の tick（高い短い音）や等級正解の pop（620Hz単音）・笑顔の音（smileSound 500→760Hz）とは分ける（サイクル107・差分テーマ差13）。遊びの締めの肯定だけが無音で、押せたことが耳では分からなかった（390×844実測）。押せた時だけ1回鳴らし、押し直しの時は鳴らさない */
+  try {
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    if (ac.state === "suspended") ac.resume();
+    const o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime;
+    o.type = "triangle";
+    o.frequency.setValueAtTime(560, t);
+    o.frequency.exponentialRampToValueAtTime(840, t + 0.14);
+    g.gain.setValueAtTime(0.02, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+    o.connect(g).connect(ac.destination);
+    o.start(t); o.stop(t + 0.16);
+  } catch (_) {}
+}
 function thump() {
   tone(110, 0.16, 0.14, "sine");
   tone(70, 0.22, 0.1, "sine");
@@ -1768,6 +1782,7 @@ likeBtn.addEventListener("click", () => {
   try { sessionStorage.setItem("kensaLiked", "1"); } catch (_) {}
   likeBtn.disabled = true;
   likeBtn.textContent = "ありがとう 🌾";
+  likeSound(); /* いいねの合図は固有の音にする（サイクル107・差13）。押せた時だけ1回鳴らす */
   setFace("happy", 900);
   setTimeout(hideIdleCard, 900); /* つぎの ふくろ へすぐ戻れるように閉じる */
   sendTap("like", () => { /* 届かなかったら押し直せるように戻す */

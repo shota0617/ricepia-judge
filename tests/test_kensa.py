@@ -851,6 +851,27 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertIn("twistSound();", HTML)
         self.assertIn("const tick = () => tone(1100 + Math.random() * 900, 0.03, 0.025);", HTML)
 
+    def test_cycle107_like_has_its_own_gentle_sound(self):
+        # 差分テーマ差13（類3の残り）: 終了カードの「いいね」を押した合図だけが無音だったため、
+        # 固有の穏やかに上がる音を付ける。他の肯定の合図（きめる=pop・おす=thump）には音があるのに、
+        # 遊びの締めの肯定だけ音がなく、押せたことが耳では分からなかった。
+        self.assertIn("function likeSound() {", HTML)
+        like_fn = HTML[HTML.index("function likeSound()"):HTML.index("function thump()")]
+        self.assertIn("o.frequency.setValueAtTime(560, t);", like_fn)
+        self.assertIn("o.frequency.exponentialRampToValueAtTime(840, t + 0.14);", like_fn)
+        self.assertIn('o.type = "triangle";', like_fn)
+        self.assertIn("o.start(t); o.stop(t + 0.16);", like_fn)
+        # 音量は控えめ（0.02）に留める
+        self.assertIn("g.gain.setValueAtTime(0.02, t);", like_fn)
+        # いいねが受け付けられた時だけ1回鳴らす（すでに押した後の早期リターンでは鳴らさない）
+        like = HTML[HTML.index('likeBtn.addEventListener("click"'):HTML.index('returnLink.addEventListener("click"')]
+        self.assertIn("if (liked()) return;", like)
+        self.assertIn("likeSound();", like)
+        self.assertEqual(HTML.count("likeSound();"), 1)
+        # 等級正解の pop と粒の tick は従来どおり残る
+        self.assertIn('const pop = () => tone(620, 0.08, 0.05, "sine");', HTML)
+        self.assertIn("const tick = () => tone(1100 + Math.random() * 900, 0.03, 0.025);", HTML)
+
     def test_cycle93_picked_grains_stay_in_quiet_record(self):
         # 類7: 見分けた粒が静かに記録に残る。任意で開く資料（#notes）の中だけに出し、常時表示・競争・スコアにはしない。
         # 袋を越えて残るため startLot では消さない（サイクル91の seenChecks と同じ持ち方）。

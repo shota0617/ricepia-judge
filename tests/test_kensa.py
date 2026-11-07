@@ -148,7 +148,7 @@ class FlowTests(unittest.TestCase):
         self.assertIn('function firstBagFace(g) { return lotIndex === 0 && spread && g.kind !== "seiryu"; }', HTML)
         self.assertIn('function grainMood(g) { return (isNear || firstBagFace(g)) ? "normal" : "far"; }', HTML)
         self.assertIn('g.img.style.transform = firstBagFace(g) ? "scale(1.5)" : "";', HTML)
-        self.assertIn("if (now !== spread && now) { spread = true; if (lotIndex === 0) refreshBadFaces(); updateSortHint(); }", HTML)
+        self.assertIn("if (now !== spread && now) { spread = true; spreadSound(); if (lotIndex === 0) refreshBadFaces(); updateSortHint(); }", HTML)
         self.assertIn('if (lotIndex === 0) { guideOff(); hint.textContent = "わるい粒を つまむ"; armHint(1200);', HTML)
 
     def test_tap_allows_a_little_finger_drift(self):
@@ -808,6 +808,27 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertIn("function bagSound() {", HTML)
         # 粒の tick 自体は従来どおり残る（粒同士の動きの音は変えない）
         self.assertIn("const tick = () => tone(1100 + Math.random() * 900, 0.03, 0.025);", HTML)
+
+    def test_cycle105_spread_completion_has_its_own_gentle_sound(self):
+        # 差分テーマ差11（類3の残り）: みわけるで「なでて広げる」が終わる瞬間（spread の成立）だけが
+        # 合図なしだったため、広がった合図に穏やかに上がる固有の音を付ける。
+        # 広がる前も後もなでる tick が同じに続くので、耳では完了が分からなかった（390×844実測で遷移の同期音は0件）。
+        self.assertIn("function spreadSound() {", HTML)
+        spread_fn = HTML[HTML.index("function spreadSound()"):HTML.index("function thump()")]
+        self.assertIn("o.frequency.setValueAtTime(400, t);", spread_fn)
+        self.assertIn("o.frequency.exponentialRampToValueAtTime(620, t + 0.14);", spread_fn)
+        self.assertIn('o.type = "sine";', spread_fn)
+        self.assertIn("o.start(t); o.stop(t + 0.16);", spread_fn)
+        # 音量は控えめ（0.02）に留める
+        self.assertIn("g.gain.setValueAtTime(0.02, t);", spread_fn)
+        # checkSpread の成立した瞬間だけ spreadSound を鳴らす（毎回の呼び出しでは鳴らさない）
+        check = HTML[HTML.index("function checkSpread()"):HTML.index("/* なでる:")]
+        self.assertIn("if (now !== spread && now) { spread = true; spreadSound();", check)
+        self.assertEqual(HTML.count("spreadSound();"), 1)
+        # 広げる所作そのものの音（なでる tick）は従来どおり残る
+        self.assertIn("const tick = () => tone(1100 + Math.random() * 900, 0.03, 0.025);", HTML)
+        brush = HTML[HTML.index("function brush(from, to)"):HTML.index("function startSim()")]
+        self.assertIn("tick();", brush)
 
     def test_cycle93_picked_grains_stay_in_quiet_record(self):
         # 類7: 見分けた粒が静かに記録に残る。任意で開く資料（#notes）の中だけに出し、常時表示・競争・スコアにはしない。

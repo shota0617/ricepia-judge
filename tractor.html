@@ -5792,7 +5792,7 @@ const KERA = (() => {
         if (n === 1) pend = true;
       }
     }
-    if (pend && toastT <= 0) { pend = false; chk = true; toast(MSG, 6); }   // ほかの知らせが 消えてから
+    if (pend && toastT <= 0 && !startNoticeMuted()) { pend = false; chk = true; toast(MSG, 6); }   // ほかの知らせが 消えてから。サイクル203・最初の1分: のんびりでは代かきの開始直後（8〜18mかくと最初のケラが浮く）にケラの長文知らせと声で最初のなぞりを止めない。pendは立てたままなので1分を過ぎて知らせが空いていれば従来どおり出す（遅れて出す形）。くわしい説明では従来どおり開始直後から出す
     if (chk) {                                      // 1.2 秒 見えていたら 出せたことにする（上書きされたら 3 回まで 出しなおす）
       if ($('toast').dataset.raw !== MSG) { chk = false; if (++tries < 3) pend = true; }
       else if (toastT <= 6 - 1.2) { chk = false; voice('kera'); }

@@ -10032,7 +10032,7 @@ $('bStart').onclick = () => {
     ECO = !SHIRO && $('ecoBox').checked; ECO_RPM = 2000;
     $('bEco').textContent = ECO ? '⛽2000' : '⛽2500'; $('bEco').classList.toggle('on', ECO);
     if (!SHIRO && $('walkBox').checked) { INTRO.end(true); walkField(); }
-    else if (!SHIRO && RAIN) setTimeout(() => voice('numa'), 11000);   // 雨のあとに耕して はまった話
+    else if (!SHIRO && RAIN) setTimeout(() => { if (!startNoticeMuted()) voice('numa'); }, 11000);   // 雨のあとに耕して はまった話。サイクル200 最初の1分: のんびりでは開始直後に声を出さず heard を消費しない（歩行後・エンスト時の numa は従来どおり。くわしい説明では従来どおり出す）
     if (FOG0) setTimeout(() => { if (!startNoticeMuted()) toast('窓の内側がくもっています。デフロスター（エアコンの除湿した風）で 前ガラスの下から だんだん晴れます', 5); }, 1500);
     if (TOD === 'yoru') setTimeout(() => { if (!startNoticeMuted()) toast('くらく なってきたね。L で ライトを つけて ゆっくり いこう。（本物は 暗くなってからの作業は なるべくしない。畦や足もとが見えにくく、事故が多い）', 6); }, 10000);
     if (SHIRO && RAIN) setTimeout(() => { if (!startNoticeMuted()) { toast('雨の あとで 土が やわらかいね。きょうは そっと かこう（本物は 雨のすぐあとの植え代かきは さける。土がやわらかくなりすぎる。風の強い日も 水面が見づらいので さける）', 6); voice('kaze'); } }, 4000); // サイクル198 最初の1分: のんびりでは開始直後にトーストだけでなく声も出さず heard を消費しない。くわしい説明では従来どおり両方出す

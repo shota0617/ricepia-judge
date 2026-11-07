@@ -5,12 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>米づくり365</title>
 <meta name="description" content="西尾の田んぼで、お米づくりの1年を体験するゲーム。">
-<link rel="canonical" href="https://ricepia.jp/kome365/">
+<link rel="canonical" href="https://go.ricepia.jp/kome365/">
 <meta property="og:title" content="米づくり365 | らいすぴあ(近藤米穀店)">
 <meta property="og:description" content="西尾の田んぼで、お米づくりの1年を体験するゲーム。">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://ricepia.jp/kome365/">
-<meta property="og:image" content="https://ricepia.jp/kome365/shots/og.jpg">
+<meta property="og:url" content="https://go.ricepia.jp/kome365/">
+<meta property="og:image" content="https://go.ricepia.jp/kome365/shots/og.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
@@ -1938,7 +1938,7 @@ function makeCard(r, score){
   g.fillStyle = '#d4a017'; g.font = '64px sans-serif'; g.fillText('★'.repeat(r.stars) + '☆'.repeat(5 - r.stars), W / 2, 880);
   g.fillStyle = '#3d3a2e'; g.font = 'bold 50px sans-serif'; g.fillText('総合 ' + score + '点', W / 2, 960);
   g.font = '32px sans-serif'; g.fillStyle = '#6b5a32'; g.fillText((f && f._badges && f._badges.length ? '🏅 ' + f._badges.join('・') + '  ' : '') + '同じ田んぼで勝負!どっちがたくさんとれる?', W / 2, 1020);
-  g.fillStyle = '#fffdf6'; g.font = 'bold 44px sans-serif'; g.fillText('ricepia.jp/kome365', W / 2, 1180); g.font = '30px sans-serif'; g.fillText('らいすぴあ(近藤米穀店・西尾市)のゲーム', W / 2, 1240);
+  g.fillStyle = '#fffdf6'; g.font = 'bold 44px sans-serif'; g.fillText('go.ricepia.jp/kome365', W / 2, 1180); g.font = '30px sans-serif'; g.fillText('らいすぴあ(近藤米穀店・西尾市)のゲーム', W / 2, 1240);
   return c;
 }
 function makeMomentCard(title, sub){
@@ -1948,7 +1948,7 @@ function makeMomentCard(title, sub){
   g.fillStyle = '#3d3a2e'; g.textAlign = 'center'; g.font = 'bold 60px sans-serif'; g.fillText(title, W / 2, 110);
   g.font = '38px sans-serif'; g.fillStyle = '#6b5a32'; g.fillText(sub, W / 2, 1000);
   g.font = 'bold 46px sans-serif'; g.fillStyle = '#3d3a2e'; g.fillText('米づくり365・西尾の田んぼで1年', W / 2, 1110);
-  g.font = 'bold 44px sans-serif'; g.fillStyle = '#3f7d3a'; g.fillText('ricepia.jp/kome365', W / 2, 1200); g.font = '30px sans-serif'; g.fillStyle = '#6b5a32'; g.fillText('らいすぴあ(近藤米穀店・西尾市)のゲーム', W / 2, 1260);
+  g.font = 'bold 44px sans-serif'; g.fillStyle = '#3f7d3a'; g.fillText('go.ricepia.jp/kome365', W / 2, 1200); g.font = '30px sans-serif'; g.fillStyle = '#6b5a32'; g.fillText('らいすぴあ(近藤米穀店・西尾市)のゲーム', W / 2, 1260);
   return c;
 }
 async function shareImage(c, text, url){
@@ -1958,9 +1958,9 @@ async function shareImage(c, text, url){
   openBg(); $('sheet').onclick = (e) => { if (e.target.closest('[data-cancel]')) closeSheet(); };
 }
 document.addEventListener('click', (e) => { if (!e.target.closest('#bMoment')) return; f._sharedHead = true;
-  shareImage(makeMomentCard('🌾 穂が出ました!', K.fmt(f.headDoy) + '・' + f.v.name + '・田植えから' + (f.headDoy - f.transDoy) + '日'), '米づくり365で育てている「' + f.v.name + '」の穂が出ました。西尾の田んぼの1年、あなたもやってみて!', 'https://ricepia.jp/kome365/?utm_source=share_moment'); });
+  shareImage(makeMomentCard('🌾 穂が出ました!', K.fmt(f.headDoy) + '・' + f.v.name + '・田植えから' + (f.headDoy - f.transDoy) + '日'), '米づくり365で育てている「' + f.v.name + '」の穂が出ました。西尾の田んぼの1年、あなたもやってみて!', 'https://go.ricepia.jp/kome365/?utm_source=share_moment'); });
 async function shareCard(r, score){
-  const c = makeCard(r, score), url = 'https://ricepia.jp/kome365/?utm_source=share_card&c=' + chEncode(), text = `米づくり365で「${r.variety}」を育てて、${r.yield}kg・${r.grade}でした(総合${score}点)。同じ年・同じ天気の田んぼで勝負しよう!どっちがたくさん・高い等級でとれるか、最後に作業のちがいも見られるよ。`;
+  const c = makeCard(r, score), url = 'https://go.ricepia.jp/kome365/?utm_source=share_card&c=' + chEncode(), text = `米づくり365で「${r.variety}」を育てて、${r.yield}kg・${r.grade}でした(総合${score}点)。同じ年・同じ天気の田んぼで勝負しよう!どっちがたくさん・高い等級でとれるか、最後に作業のちがいも見られるよ。`;
   const blob = await new Promise((res) => c.toBlob(res, 'image/png')); const file = blob && new File([blob], 'kome365.png', { type: 'image/png' });
   if (file && navigator.canShare && navigator.canShare({ files: [file] })) { try { await navigator.share({ files: [file], title: '米づくり365', text: text + ' ' + url }); return; } catch (e) { if (e && e.name === 'AbortError') return; } }
   // 画像つきで共有できない機種: カードを見せて、長押しで保存+文の共有
@@ -2144,7 +2144,7 @@ function showResult(){
   $('againNote').textContent = 'こんどの設定: ' + K.VARIETIES[pick.variety].name + '・' + (YEAR_OPTS.find((x) => x[0] === pick.year) || [, ''])[1] + '。' + (pick.year !== 'hot' ? '年を「暑い夏」にすると、白く濁った粒がふえやすい年に挑戦できます。' : '') + '品種を変えると、穂が出る日や暑さへの強さのちがいがわかります。';
   // 結果を送る: スマホは共有シート、だめならLINEの送る画面。リンクに utm_source=share(送られた人の来訪を数える)
   $('bShare').onclick = async () => {
-    const url = 'https://ricepia.jp/kome365/?utm_source=share&c=' + chEncode(), text = `米づくり365で「${r.variety}」を育てて、${r.yield}kg・${r.grade}でした(総合${score}点)。同じ年・同じ天気の田んぼで勝負しよう!どっちがたくさん・高い等級でとれるか、最後に作業のちがいも見られるよ。`;
+    const url = 'https://go.ricepia.jp/kome365/?utm_source=share&c=' + chEncode(), text = `米づくり365で「${r.variety}」を育てて、${r.yield}kg・${r.grade}でした(総合${score}点)。同じ年・同じ天気の田んぼで勝負しよう!どっちがたくさん・高い等級でとれるか、最後に作業のちがいも見られるよ。`;
     if (navigator.share){ try { await navigator.share({ title: '米づくり365', text, url }); return; } catch(e){ if (e && e.name === 'AbortError') return; } }
     window.open('https://social-plugins.line.me/lineit/share?url=' + encodeURIComponent(url) + '&text=' + encodeURIComponent(text), '_blank', 'noopener');
   };

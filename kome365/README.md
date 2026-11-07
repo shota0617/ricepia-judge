@@ -4,8 +4,10 @@
 main に入れると Vercel で **https://go.ricepia.jp/kome365/** に自動で公開される。
 
 - もとは ricepia-new-project のブランチ `claude/kome365-loop`（周回92〜98）。ここに置いたのは周回98の版（index.html の md5 `2fc72c43a3957da0b0d81237d747ed36`）。`engine.js`・`field3d.js`・`cards.js` は本番 ricepia.jp/kome365/ と同じ。`vendor/three.min.js` は本番から取った
-- 正規のアドレス（canonical・og:url・シェアのリンク）は **https://ricepia.jp/kome365/ のまま**。go.ricepia.jp を正式にするか、ricepia.jp から転送するかは店主の判断（記録＝localStorage はドメインごとに別なので、移ると今までの続きが引き継がれない）
-- ricepia.jp/kome365/（さくら）は、これまでどおり Mac の手順（HANDOFF の「米365」、FTP）で公開する。周回ごとのパッチは `publish/`
+- **正式なアドレスは https://go.ricepia.jp/kome365/**（2026-11-07 店主の判断）。canonical・og:url・シェアのリンク・シェア画像の文字を go.ricepia.jp にした
+- ricepia.jp/kome365/（さくら）は go.ricepia.jp/kome365/ へ 301 で転送する。転送は `ricepia-jp/kome365/.htaccess` を GitHub Actions「ricepia.jp kome365 redirect」（手で動かす）で上げる。元に戻すときはサーバーの `www/kome365/.htaccess` を消す
+- 記録（localStorage）はドメインごとに別なので、ricepia.jp で遊んでいた人の続きは go.ricepia.jp には引き継がれない
+- これからは ricepia.jp 向けの FTP 公開はしない。`publish/` のパッチは周回101までの記録として残す
 - Mac の作業元 `muse_zip/kome365_rebuild/work/game/index.html` とのちがいは、engine.js の読みこみ先だけ（Mac は `../sim/engine.js`、ここと本番は `engine.js`）。Mac へ戻すときは `sed 's#src="engine\.js"#src="../sim/engine.js"#'`
 - 変えてよいのは index.html と cards.js だけ。`engine.js`・`field3d.js` は変更禁止（店主の決まり）
 

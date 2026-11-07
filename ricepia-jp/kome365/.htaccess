@@ -1,0 +1,5 @@
+# 米づくり365 は go.ricepia.jp/kome365/ に移りました（2026-11-07 店主の判断）。
+# ricepia.jp/kome365/ 以下へのアクセスは、同じパスとクエリ（utm・c= など）のまま go.ricepia.jp/kome365/ へ転送する。
+# 元に戻すときは、このファイルを消す（サーバーの古いファイルはそのまま残してある）。
+RewriteEngine On
+RewriteRule ^(.*)$ https://go.ricepia.jp/kome365/$1 [R=301,L]

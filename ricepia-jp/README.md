@@ -18,6 +18,17 @@ ricepia.jp（さくらのレンタルサーバ）の `www/index.html` に、に�
 
 さくらの「国外IPアドレスフィルタ」が有効だと、GitHub（海外のサーバー）からの FTP は止められます（あいさつ「220」の直後に切られる）。そのときは、アップロードする間だけフィルタを「無効」にする（さくらのコントロールパネル →「セキュリティ」→「国外IPアドレスフィルタ」。終わったら「有効」に戻す）か、さくらのファイルマネージャーで `index.html` を手で置き換えます。
 
+## 米づくり365 の転送（ricepia.jp/kome365/ → go.ricepia.jp/kome365/）
+
+2026-11-07 店主の判断で、米づくり365 の正式なアドレスを go.ricepia.jp/kome365/ にした。ricepia.jp/kome365/ 以下は、パスとクエリをそのままに 301 で転送する。
+
+1. さくらの「国外IPアドレスフィルタ」を一時的に「無効」にする
+2. GitHub の Actions →「ricepia.jp kome365 redirect」→「Run workflow」（main）
+3. `www/kome365/.htaccess` が上がり、転送を確かめる（だめなら自動で元に戻す。元の .htaccess があれば `.htaccess.bak-日時` に残す）
+4. フィルタを「有効」に戻す
+
+元に戻すときは、サーバーの `www/kome365/.htaccess` を消す（古いゲームのファイルはサーバーに残してある）。
+
 ## 元に戻す
 
 サーバーの `www/index.html.bak-日時` を `www/index.html` に名前を戻します。お知らせ欄だけ消すときは、`<!-- nishio-go:start` から `<!-- nishio-go:end -->` まで（トラクターは `<!-- tractor:start` から `<!-- tractor:end -->` まで）を消します。

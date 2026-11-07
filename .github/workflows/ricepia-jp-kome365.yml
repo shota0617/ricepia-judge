@@ -1,0 +1,72 @@
+# ricepia.jp/kome365/（さくら）を go.ricepia.jp/kome365/ へ転送する（2026-11-07 店主の判断）
+# - 手で動かしたときだけ（workflow_dispatch）。push では動かさない
+# - www/kome365/ の中身をログに出し、今ある .htaccess は .htaccess.bak-日時 に残してから、
+#   ricepia-jp/kome365/.htaccess を www/kome365/.htaccess として上げる
+# - 上げたあと https://ricepia.jp/kome365/ が go.ricepia.jp/kome365/ へ 301 で転送されるかを確かめ、
+#   だめなら元に戻す
+# さくらの「国外IPアドレスフィルタ」が有効だと GitHub からつながらないので、動かす間だけ無効にする（ricepia-jp/README.md）
+# 必要なシークレット：SAKURA_FTP_SERVER / SAKURA_FTP_USER / SAKURA_FTP_PASSWORD
+name: ricepia.jp kome365 redirect
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ricepia-jp
+  cancel-in-progress: false
+jobs:
+  redirect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      FTP_SERVER: ${{ secrets.SAKURA_FTP_SERVER }}
+      FTP_USER: ${{ secrets.SAKURA_FTP_USER }}
+      FTP_PASS: ${{ secrets.SAKURA_FTP_PASSWORD }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Check secrets
+        run: |
+          for v in FTP_SERVER FTP_USER FTP_PASS; do
+            if [ -z "${!v}" ]; then echo "::error::シークレット $v が未設定です"; exit 1; fi
+          done
+      - name: Install lftp
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq lftp
+      - name: List www/kome365
+        run: |
+          . .github/ricepia-ftp.sh
+          if ! ftp "debug 1; set net:timeout 20; set net:max-retries 2; cls -la www/kome365/"; then
+            echo "::error::FTP でつながりませんでした。さくらの「国外IPアドレスフィルタ」を一時的に無効にしてから、もう一度動かしてください"
+            exit 1
+          fi
+      - name: Upload .htaccess
+        run: |
+          . .github/ricepia-ftp.sh
+          stamp=$(TZ=Asia/Tokyo date +%Y%m%d-%H%M%S)
+          echo "stamp=$stamp" >> "$GITHUB_ENV"
+          # 今ある .htaccess は残しておく（無ければ何もしない）
+          if ftp "cls www/kome365/.htaccess" >/dev/null 2>&1; then
+            ftp "mv www/kome365/.htaccess www/kome365/.htaccess.bak-$stamp"
+            echo "had_old=true" >> "$GITHUB_ENV"
+            echo "元の .htaccess は www/kome365/.htaccess.bak-$stamp に残しました"
+          fi
+          ftp "put ricepia-jp/kome365/.htaccess -o www/kome365/.htaccess"
+      - name: Verify redirect
+        run: |
+          ok=false
+          for i in 1 2 3 4 5 6; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' 'https://ricepia.jp/kome365/?from=check')
+            loc=$(curl -s -o /dev/null -w '%{redirect_url}' 'https://ricepia.jp/kome365/?from=check')
+            echo "try $i: $code $loc"
+            if [ "$code" = 301 ] && [ "$loc" = 'https://go.ricepia.jp/kome365/?from=check' ]; then ok=true; break; fi
+            sleep 10
+          done
+          final=$(curl -sL -o /dev/null -w '%{http_code} %{url_effective}' 'https://ricepia.jp/kome365/')
+          echo "after redirect: $final"
+          if [ "$ok" != true ] || [ "${final%% *}" != 200 ]; then
+            echo "::error::転送を確かめられなかったので元に戻します"
+            . .github/ricepia-ftp.sh
+            ftp "rm www/kome365/.htaccess" || true
+            if [ "$had_old" = true ]; then ftp "mv www/kome365/.htaccess.bak-$stamp www/kome365/.htaccess" || true; fi
+            exit 1
+          fi
+          echo "転送できました：https://ricepia.jp/kome365/ → https://go.ricepia.jp/kome365/（301）"

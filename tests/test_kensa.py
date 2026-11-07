@@ -458,6 +458,13 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertIn('if (dx >= 40) { bagSwipe = null; leaveBag(); }', HTML)
         self.assertNotIn('if (dx > 70) { bagSwipe = null; leaveBag(); }', HTML)
 
+    def test_twist_takes_with_a_small_twist(self):
+        # みわける: ひねる判定は20°から受ける。
+        # 35°では22°・28°の自然な小さなひねりでもわるい粒の印が付かず無反応だった
+        # （390×844実測・サイクル80）。ピンチで偶然回る18°以下は印を付けない
+        self.assertIn("Math.abs(p.twist) >= 20", HTML)
+        self.assertNotIn("Math.abs(p.twist) >= 35", HTML)
+
     def test_assets_exist(self):
         for name in set(re.findall(r'kensa/[a-z_]+\.webp', HTML)):
             self.assertTrue(os.path.exists(os.path.join(ROOT, name)), name)

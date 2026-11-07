@@ -10886,7 +10886,9 @@ function mzEnergyTick(now) {
   if (mzEnergy.steps < MZ_ENERGY.need) return;
   const r = G.mzEnergy && G.mzEnergy();
   if (!r) return;
-  mzEnergy.bursts++; mzEnergy.burstT0 = now; mzEnergy.steps = 0;
+  mzEnergy.bursts++; mzEnergy.steps = 0;
+  if (cubeFirstGoal()) return;   // にしおサイクル135：めいろの はじめての ゴールに 着くまで（最初の 1分）は 満タンの 浮き文字・音・喜び顔・粒子・金の わを 出さない（ポイントと 回数は 静かに 残す。2回目からは これまでどおり）
+  mzEnergy.burstT0 = now;
   floatText(`⚡ さんぽエネルギー 満タン！ +${r.pts}pt`);
   grainSound(); roll.happyT = 1.2;
   const cols = ['#ffe27a', '#9ccc4f', '#ffffff'];
@@ -11013,6 +11015,7 @@ function drawMzStormRing(ox, oy, T, now) {   // 夕立雲に 追われて いる
   ctx.restore();
 }
 function drawMzEnergyRing(ox, oy, T, now) {   // 満タン直後 約1.2秒、かおりちゃんの まわりに 大きな 金の わ
+  if (cubeFirstGoal()) return;   // にしおサイクル135：めいろの はじめての ゴールに 着くまで（最初の 1分）は 金の わを 描かない（貯まる 仕組みは そのまま。2回目からは これまでどおり）
   if (!mzEnergy.burstT0 || rp.x === null) return;
   const k = (now - mzEnergy.burstT0) / 1200;
   if (k < 0 || k >= 1) return;
@@ -11029,6 +11032,7 @@ function mzEnergyCharge() {   // さんぽエネルギーの 貯まり具合 0�
   return Math.max(0, Math.min(1, mzEnergy.steps / MZ_ENERGY.need)) || 0;
 }
 function drawMzEnergyAura(ox, oy, T, now) {   // 歩いて 貯まるほど、かおりちゃんの まわりの オーラが 大きく 濃く なり、光の つぶが 周る（文字なし）
+  if (cubeFirstGoal()) return;   // にしおサイクル135：めいろの はじめての ゴールに 着くまで（最初の 1分）は オーラを 描かない（貯まる 仕組みは そのまま。2回目からは これまでどおり）
   if (rec || rp.x === null || rp.x === undefined) return;
   const ratio = mzEnergyCharge();
   if (ratio <= 0) return;
@@ -11053,6 +11057,7 @@ function mzEnergyStars(ratio) {   // 足あとの 星屑（Walkr）：さんぽ�
   return { n: 12, a: 0.9 };
 }
 function drawMzEnergyStars(ox, oy, T, now) {   // エネルギーが 貯まるほど、最近 歩いた 足あと（新しい 順）に 金の 星屑が きらめく（文字なし）
+  if (cubeFirstGoal()) return;   // にしおサイクル135：めいろの はじめての ゴールに 着くまで（最初の 1分）は 星屑を 描かない（貯まる 仕組みは そのまま。2回目からは これまでどおり）
   if (rec) return;
   const w = mzEnergyStars(mzEnergyCharge());
   if (w.n === 0 || !mzTrail.size) return;
@@ -11072,6 +11077,7 @@ function drawMzEnergyStars(ox, oy, T, now) {   // エネルギーが 貯まる�
   ctx.restore();
 }
 function drawMzEnergyBar(w, dpr, now) {   // 迷路の 間 いつも 出す 大きな 横長ゲージ（追跡札の 下）。満タン直後 約1.2秒は 全体が 金色に 脈打つ
+  if (cubeFirstGoal()) return;   // にしおサイクル135：めいろの はじめての ゴールに 着くまで（最初の 1分）は ゲージを 描かない（貯まる 仕組みは そのまま。2回目からは これまでどおり）
   if (mzEnergy.lastCx < 0 || mapCovered(true) || mzBanner.t0) return;
   const S = Math.round(MZ_CLOCK_PX * dpr), gap = Math.round(S * 0.35);
   let y0 = mzViewShelfY(w, dpr, now);

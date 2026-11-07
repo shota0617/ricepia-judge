@@ -771,6 +771,22 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         # 粒の tick 自体は従来どおり残る（粒同士の動きの音は変えない）
         self.assertIn("const tick = () => tone(1100 + Math.random() * 900, 0.03, 0.025);", HTML)
 
+    def test_cycle103_probe_completion_has_its_own_sound(self):
+        # 差分テーマ差9（類3の残り）: ぬく完了の合図だけが無音だったため、
+        # 穀刺しを引き抜き終えた瞬間に固有のゆっくり上がる音を付ける。
+        # この音は粒が落ちる音ではなく、ぬくが終わった合図（他の所作の完了音と同じ位置づけ）。
+        self.assertIn("function probeDoneSound() {", HTML)
+        self.assertIn("o.frequency.setValueAtTime(300, t);", HTML)
+        self.assertIn("o.frequency.exponentialRampToValueAtTime(480, t + 0.18);", HTML)
+        # finishProbe の冒頭で probeDoneSound を使い、tick は使わない
+        fin = HTML[HTML.index("function finishProbe()"):HTML.index("function autoProbe()")]
+        self.assertIn("probeDoneSound();", fin)
+        self.assertNotIn("tick();", fin)
+        # 音量は控えめ（0.02）に留める
+        self.assertIn("g.gain.setValueAtTime(0.02, t);", HTML)
+        # 粒の tick 自体は従来どおり残る（粒同士の動きの音は変えない）
+        self.assertIn("const tick = () => tone(1100 + Math.random() * 900, 0.03, 0.025);", HTML)
+
     def test_cycle93_picked_grains_stay_in_quiet_record(self):
         # 類7: 見分けた粒が静かに記録に残る。任意で開く資料（#notes）の中だけに出し、常時表示・競争・スコアにはしない。
         # 袋を越えて残るため startLot では消さない（サイクル91の seenChecks と同じ持ち方）。

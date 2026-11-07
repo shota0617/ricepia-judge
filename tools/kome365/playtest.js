@@ -2,7 +2,7 @@
 //   node tools/kome365/playtest.js            # seed 3・5・11・42 で ぜんぶの ボット
 //   node tools/kome365/playtest.js --seeds 3,5 --bots careful,idle
 // ボット（吹き出しの 矢印を 見る「ふつう」を もとに、くせを つける）
-//   careful  ていねい：矢印の とおり。水は 浅く 保ち、中干し・溝切り・追肥・穂肥・暑い日の 入れかえ・刈りどき・15%
+//   careful  ていねい：矢印の とおり。水は 浅く 保ち、中干し・溝切り・追肥（葉いろ 40 未満 だけ）・穂肥・暑い日の 入れかえ・刈りどき・15%
 //   normal   ふつう：吹き出しの 矢印 だけ（矢印が なければ →）
 //   idle     ほったらかし：しごと（←・↓の まく）は するが、水（↑↓）は 田うえの あと さわらない。雨まかせ
 //   flood    みずびたし：毎日 ↑ で 水を いっぱいに。中干しを しない
@@ -26,12 +26,12 @@ const HELPERS = () => {
       const t = document.getElementById('say').textContent, a = K3.actions();
       let dir = /↑/.test(t) ? 'up' : /↓/.test(t) ? 'down' : /←/.test(t) ? 'left' : 'right', len = dir==='right' ? 110 : 160, fast = false;
       if (bot==='careful' && S.phase==='field' && f.planted){
-        if (a.left==='追肥' || a.left==='穂肥' || a.left==='溝切り') dir = 'left';
+        if ((a.left==='追肥' && f.N < 40) || a.left==='穂肥' || a.left==='溝切り') dir = 'left'; /* 葉いろが こい（40 以上）年は 追肥を 見送る（23周目） */
         else if (a.left==='刈る' && f.gdd >= 980) dir = 'left';
         else if (f.dat < 10){ dir = f.water < 4 ? 'up' : 'right'; len = 120; }
         else if (f.dat < 34){ dir = f.water < 1.5 ? 'up' : f.water > 4.5 ? 'down' : 'right'; len = 40; }
         else if (f.dat <= 44 && !f.heading){ if (f.water >= 1){ dir = 'down'; len = 400; fast = true; } else dir = 'right'; }
-        else { dir = f.water < 2 ? 'up' : (f.heading && S.weather[S.day].w==='高温' && !f.flowToday ? 'up' : 'right'); len = 120; }
+        else { dir = f.water < 2 ? 'up' : f.water > 6 ? 'down' : (f.heading && S.weather[S.day].w==='高温' && !f.flowToday ? 'up' : 'right'); len = 120; } /* 雨で 深く なったら 落とす（23周目） */
       }
       if (bot==='careful' && S.phase==='dry'){ dir = S.hv.moisture <= 15.5 ? 'left' : 'right'; }
       if (bot==='idle' && S.phase==='field' && f.planted && (dir==='up' || dir==='down')) dir = 'right';

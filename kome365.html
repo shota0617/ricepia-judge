@@ -224,7 +224,7 @@ const WX_ICON = { '晴れ':'☀ はれ', 'くもり':'☁ くもり', '雨':'☂
 const HILLS = 15.1, TARGET = 25;
 function newState(seed){
   const rN = rng((seed ^ 0x5bd1e995)>>>0); rN(); rN(); const N0 = 37 + Math.floor(rN()*6); /* 田うえ時の 葉いろ 37〜42（19周目：毎年 39 で 穂肥に 考えどころが なかった） */
-  return { N0,
+  return { N0, seed,
     seed, weather: makeWeather(seed), day: 1, phase: 'seed', over: false,
     seed_: { soaked:false, heat:0, sprouted:false },           /* 浸種：積算水温 120℃ が 目安（栃木県の 育苗の 資料） */
     nur: { sown:false, age:0, moist:0, stress:0, days:0 },      /* 苗づくり：中苗は 30日 ほど */
@@ -291,10 +291,10 @@ function growDay(S){
 }
 function lodgeRisk(S){
   const f = S.f, culm = f.H - 10, ratioPeak = f.Tmax/TARGET; /* 稈長 ≒ 草丈 −10cm（16周目：0.8倍では 台風でも たおれなかった） */
-  let risk = (culm-80)*0.035 + ((f.Nhead==null?f.N:f.Nhead)-36)*0.045 + (10-Math.min(f.W, 12))*0.09 + (ratioPeak-1)*0.55 - (f.root-60)*0.006 + (f.A2 >= 2 ? 0.12 : 0) + (f.A1 > 0 ? 0.1 : 0) + (f.hoshiDays < 5 ? 0.15 : 0) + Math.min(0.3, (f.deepDays||0)*0.008); /* 茎幅の 効きは 12mm まで、深水の 日が 長いほど 危ない（18周目：みずびたしが たおれなかった） */ /* 穂肥を 入れると 少し たおれやすい。中干し なしも（熊本県：無効分げつ・倒伏を 抑える） */
+  let risk = (culm-80)*0.035 + ((f.Nhead==null?f.N:f.Nhead)-36)*0.045 + (10-Math.min(f.W, 12))*0.09 + (ratioPeak-1)*0.55 - (f.root-60)*0.006 + (f.A2 >= 2 ? 0.12 : 0) + (f.A1 > 0 ? ((f.Ntop||0) >= 40 ? 0.25 : 0.1) : 0) + (f.hoshiDays < 5 ? 0.15 : 0) + Math.min(0.3, (f.deepDays||0)*0.008); /* 茎幅の 効きは 12mm まで、深水の 日が 長いほど 危ない（18周目：みずびたしが たおれなかった） */ /* 穂肥を 入れると 少し たおれやすい。中干し なしも（熊本県：無効分げつ・倒伏を 抑える） */
   return risk; /* 0 で 切らない：元気な 稲は 負の 値（台風の +0.2 を 足しても たおれない。16周目） */
 }
-function lodgeCheck(S){ const f = S.f; f.lodge = Math.max(f.lodge, clamp((lodgeRisk(S) + 0.2)*0.95, 0, 1)); } /* 台風は +0.2（16周目） */
+function lodgeCheck(S){ const f = S.f; const rr = rng(((S.seed||0) ^ (S.day*2654435761))>>>0); rr(); rr(); const strength = 0.35 + rr()*0.45; /* 台風の 強さは その 日ごと 0.35〜0.8 */ const deep = f.heading && (S.day - f.heading) <= 20 && f.water >= 10 ? 0.1 : 0; f.lodge = Math.max(f.lodge, clamp((lodgeRisk(S) + strength + deep)*0.95, 0, 1)); f.tyStrength = strength; } /* 台風は +0.35、出穂後 20日 以内の 深水 +0.1（16・23周目：14年 すべて 倒伏 0 だった） */
 function finalize(S){
   const f = S.f, hv = S.hv;
   const ratioPeak = f.Tmax/TARGET;
@@ -312,7 +312,7 @@ function finalize(S){
   if (grains > 33000) R -= (grains-33000)/33000*0.5;
   if (Nh < 31) R -= 0.05;
   R = clamp(R, .45, .95);
-  let yieldKg = P*G*R*0.0194;
+  let yieldKg = P*G*R*0.0194 * (1 - Math.min(0.1, Math.max(0, 14 - hv.moisture)/0.8*0.02)); /* かわかしすぎは 目方が へる（1日 −2%。23周目：乾燥が 点に 出なかった） */
   /* 玄米の 品位 */
   let chalk = 2 + f.heatHits*1.6 - f.flowDays*1.1 - (Nh >= 35 ? 2 : 0) + (grains > 32000 ? (grains-32000)/1000*0.6 : 0) + (Nh < 31 ? 3 : 0) + Math.min(6, f.drainLate*0.5) + Math.min(5, f.flowerStress*0.5);
   chalk = clamp(chalk, 1, 30);
@@ -325,7 +325,7 @@ function finalize(S){
   if (g < 1000) yieldKg *= 1 - (1000-g)/1000; if (g > 1200) yieldKg *= 0.93;
   yieldKg *= (1 - Math.min(0.25, f.young*0.03));
   const seiryu = clamp(100 - chalk - green - crack - damage - 8 + (Math.abs(g-1000) <= 50 ? 2 : 0), 30, 92); /* 1000±50℃ で 刈ると 整粒 +2（13周目：刈りどきの 山） */
-  const protein = clamp(5.8 + (Nh-35)*0.09 + f.A2*0.18 + lodge*0.6, 5.6, 8.5);
+  const protein = clamp(5.6 + Math.max(0, (S.N0||39)-38)*0.15 + Math.max(0, Nh-33)*0.12 + f.A2*0.25 + ((f.Ntop||0) >= 40 ? 0.3 : 0) + lodge*0.6, 5.6, 8.5); /* 葉いろの こい 年は タンパクが 高め（23周目：収量と 食味の 綱引き） */ /* 23周目：5.6 に 張りついて 食味が 全年 88 だった。穂肥 2kg・こい 葉への 追肥は タンパクを 上げる */
   const taste = Math.round(clamp(88 - Math.max(0, protein-6)*12 - Math.max(0, 70-seiryu)*0.8 - lodge*8, 40, 92)); /* 16周目：全員 95 に なっていた */
   const grade = seiryu >= 70 ? '一等' : seiryu >= 60 ? '二等' : seiryu >= 45 ? '三等' : '規格外';
   return { P, G, R, yieldKg, seiryu, chalk, green, crack, damage, protein, taste, grade, lodge, limGood, pct, eff, ratioPeak, grains, gdd:g };
@@ -334,7 +334,7 @@ function finalize(S){
 /* 「〜して いれば」：状態の 写しを 直して finalize を もう一度。損失の 大きい 順に ならべる（11周目） */
 function whatIf(S, base){
   const f = S.f, hv = S.hv, out = []; base = base || finalize(S);
-  const tryIt = (name, fix, say) => { const C = { f: Object.assign({}, S.f), hv: Object.assign({}, S.hv) }; fix(C.f, C.hv); /* finalize は f・hv しか 読まない（12周目） */ const r = finalize(C); const dy = Math.round(r.yieldKg - base.yieldKg), ds = Math.round(r.seiryu - base.seiryu); const gain = dy + ds*4; if (gain >= 15) out.push({ name, dy, ds, gain, say }); };
+  const tryIt = (name, fix, say) => { const C = { f: Object.assign({}, S.f), hv: Object.assign({}, S.hv), N0: S.N0 }; fix(C.f, C.hv); /* finalize は f・hv しか 読まない（12周目） */ const r = finalize(C); const dy = Math.round(r.yieldKg - base.yieldKg), ds = Math.round(r.seiryu - base.seiryu); const gain = dy + ds*4; if (gain >= 15) out.push({ name, dy, ds, gain, say }); };
   if (f.hoshiDays < 5) tryIt('中干し', (cf) => { cf.root = Math.max(cf.root, 75); cf.hoshiDays = 8; }, '中干しを して いれば');
   if (f.heatHits > 0 && f.flowDays < f.heatHits) tryIt('掛け流し', (cf) => { cf.flowDays = cf.heatHits; }, 'あつい日に 水を 入れかえて いれば');
   if (hv.gdd < 950 || hv.gdd > 1150) tryIt('刈りどき', (cf, ch) => { ch.gdd = 1000; }, hv.gdd < 950 ? '早すぎ。1000℃ まで 待って いれば' : '刈りおくれ。1000℃ で 刈って いれば');
@@ -691,8 +691,8 @@ function advanceDay(){
   const wx = S.weather[S.day];
   if (S.phase==='seed' && !S.seed_.soaked && S.day >= 4){ V.flipQueue = 0; V.hint = Math.max(V.hint, 0.8); } /* つけずに はじいても 止まる（22周目：37 はじきで 一年 おわり） */
   if (S.phase==='seed' && S.seed_.soaked && !S.seed_.sprouted){ S.seed_.heat += Math.max(8, wx.t) ; if (S.seed_.heat >= 120){ S.seed_.sprouted = true; SND.pin(); say('芽出しも すんで はと胸に。<b>↓で まきましょう</b>。', 'joy'); } }
-  if ((S.phase==='nursery' || (S.phase==='field' && !S.f.planted)) && S.nur.sown){ S.nur.age++; if (S.phase==='field') S.nur.moist = Math.max(S.nur.moist, 1); S.nur.moist -= wx.w==='雨' ? 0.05 : wx.w==='高温' ? 0.4 : wx.w==='晴れ' ? 0.3 : 0.18; if (S.nur.moist <= 0){ if (S.nur.moist < 0 && V.flipQueue > 0){ V.flipQueue = 0; SND.zaa(); } S.nur.moist = 0; S.nur.stress++; } } /* 土が かわいた 日も 止まる（22周目） */
-  if (S.phase==='field' && S.f.planted){ const w0 = S.f.water; growDay(S); if (S.f.gdd >= 1400 && !S.hv.done){ S.f.overRipe++; } /* 苗の 老化（agedPlant）とは 別（20周目） */ if (w0 >= 1 && S.f.water < 1 && V.flipQueue > 0){ V.flipQueue = 0; SND.zaa(); vib(12); } } /* 水が 切れた 日は パラパラが 止まる（10周目） */
+  if ((S.phase==='nursery' || (S.phase==='field' && !S.f.planted)) && S.nur.sown){ S.nur.age++; if (S.phase==='field') S.nur.moist = Math.max(S.nur.moist, 1); S.nur.moist -= wx.w==='雨' ? 0.05 : wx.w==='高温' ? 0.4 : wx.w==='晴れ' ? 0.3 : 0.18; if (S.nur.moist <= 0){ if (S.nur.moist < 0 && V.flipQueue > 0){ V.flipQueue = 0; SND.zaa(); } S.nur.moist = 0; S.nur.stress++; } if (S.phase==='nursery' && (S.nur.age === 20 || S.nur.age === 30)) V.flipQueue = 0; } /* たんぼへ 行ける 日も 止まる（23周目） */ /* 土が かわいた 日も 止まる（22周目） */
+  if (S.phase==='field' && S.f.planted){ const w0 = S.f.water; growDay(S); if (S.f.gdd >= 1400 && !S.hv.done){ S.f.overRipe++; } /* 苗の 老化（agedPlant）とは 別（20周目） */ if (w0 >= 1 && S.f.water < 1 && V.flipQueue > 0){ V.flipQueue = 0; SND.zaa(); vib(12); } else if (S.f.water <= 1.5 && S.f.dat > S.f.headDat - 26 && (!S.f.heading || S.day - S.f.heading < 30) && V.flipQueue > 0){ V.flipQueue = 0; } } /* 水が 切れた 日は パラパラが 止まる（10周目） */
   if (S.phase==='dry'){ S.hv.dryDays++; const was = S.hv.moisture; S.hv.moisture = Math.max(10, was - (was <= 15.5 ? 0.8 : 5)); /* 1日 5%（乾燥機は 毎時 0.8% 以下：栃木県。16周目） */ /* 仕上がりの あとは ゆっくり（3周目） */ if (was > 15.5 && S.hv.moisture <= 15.5){ V.flipQueue = 0; SND.pin(); toast('15%'); } } /* こえた 時に かならず 合図（8周目） */ /* 仕上がりで めくりが 止まる（2周目）。もう一度 → すると 乾かしすぎ */
   S.day++;
   if (S.weather[S.day] && S.weather[S.day].w==='台風') { V.shake = RM ? 0 : 1; V.flipQueue = 0; } /* 台風の 日も 止まる */
@@ -711,9 +711,9 @@ function narrate(){
   if (S.phase==='seed') return say('芽出しも すんで はと胸に。<b>↓で まきましょう</b>。'); /* ←の あとも 更新（20周目） */
   if (S.phase==='nursery'){
     if (!n.sown) return say('はこに <b>↓で まきます</b>。');
-    if (n.moist < 0.35) return say('土が かわいて きました。<b>↑で 水を</b>。', n.moist <= 0 ? 'sad' : 'smile');
     if (n.age >= 45) return say('なえが 大きく なりすぎ。<b>←で たんぼへ</b>。', 'sad');
-    if (n.age >= 30) return say('なえが 3〜4葉。<b>←で たんぼへ</b>。<span class="src">（中苗 3〜4葉：長野県）</span>', 'joy');
+    if (n.age >= 30) return say('なえが 3〜4葉。<b>←で たんぼへ</b>。<span class="src">（中苗 3〜4葉：長野県）</span>', 'joy'); /* ←は かわきより 先（23周目：はじく 人が ↑↓の 往復に 閉じこめられた） */
+    if (n.moist < 0.35) return say('土が かわいて きました。<b>↑で 水を</b>。', n.moist <= 0 ? 'sad' : 'smile');
     if (n.age >= 20) return say('あと 少し。30日 ほどで 田うえです。');
     return say('なえを そだてます。<b>→で あした</b>。');
   }
@@ -722,7 +722,7 @@ function narrate(){
     if (!f.planted){ if (f.shiro < 2 && f.water < 1) return say('たんぼに <b>↑で 水を</b>。ヒタヒタで 代かき。<span class="src">（埼玉県）</span>'); if (f.shiro < 2) return say('<b>←で 代かき</b>。土を たいらに。<span class="src">（鳥取県）</span>'); if (S.day - f.shiroDay < 3) return say('土が 落ちつくまで <b>→で ' + (3 - (S.day - f.shiroDay)) + '日</b>。<span class="src">（愛知県）</span>'); return say('<b>←で 1列ずつ</b> うえます。'); }
     if (wx.w==='台風' && f.heading) return say('たいふう！ たおれないで…', 'wow');
     if (f.dat <= 8){ if (f.water <= 0) return say('うえたばかり。<b>↑で 水を</b>。', 'sad'); if (wx.w==='低温' && f.water < 4) return say('さむい日。水を ふかめに。<span class="src">（岩手県）</span>'); return say('ねづくまで 水で まもります。'); }
-    if (f.typhoonDay === S.day - 1 && f.heading) return say(f.lodge > 0.05 ? '台風で 稲が ' + Math.round(f.lodge*100) + '% たおれました。黄色く なったら 早めに ←で 刈る。' : '台風、もちこたえました。', f.lodge > 0.05 ? 'sad' : 'joy'); /* 刈れる ころの 台風でも 言う（20周目） */
+    if (f.typhoonDay === S.day - 1 && f.heading) return say(f.lodge > 0.05 ? '台風で 稲が ' + Math.round(f.lodge*100) + '% たおれました。黄色く なったら 早めに ←で 刈る。' : (f.tyStrength >= 0.6 ? '強い 台風、もちこたえました。根が しっかり して いました。' : '台風、もちこたえました。'), f.lodge > 0.05 ? 'sad' : 'joy'); /* 刈れる ころの 台風でも 言う（20周目） */
     if (a.left==='刈る' && f.gdd >= 980 && f.gdd < 1150) return say('<b>刈りどき</b>です。←で ざくざく。<span class="src">（出穂後 1000℃ 前後：栃木県）</span>', 'joy');
     if (a.left==='刈る' && f.gdd >= 1200) return say('刈りおくれ。胴割れが ふえます。<b>←で 刈る</b>！', 'sad');
     if (a.left==='刈る' && f.gdd >= 1150) return say('<b>←で 刈る</b>。おくれると 胴割れ。<span class="src">（1,200℃ まで：福島県）</span>');
@@ -730,11 +730,12 @@ function narrate(){
     if (f.heading && S.day === f.heading + 1) return say('<b>出穂</b>！ 穂が 出ました。', 'joy'); /* 日は めくった あと（14周目：出なかった） */
     if (f.heading && wx.w==='高温' && (S.day - f.heading) <= 20) return say('あつい日 ' + (f.heatHits+1) + '日目。<b>↑で 入れかえ</b>ると 白い 粒が へる。<span class="src">（福島県）</span>');
     if (f.heading && (S.day - f.heading) < 30 && f.water < 1) return say('まだ 水を 切らないで。<b>↑で 水を</b>。<span class="src">（栃木県）</span>', 'sad');
-    if (a.left==='追肥') return say('茎 ' + Math.round(f.T) + '本。<b>←で 追肥</b>も できます。<span class="src">（ひかえめ：島根県）</span>');
-    if (a.left==='穂肥') return say(f.N >= 38 ? '葉いろ ' + Math.round(f.N) + 'で こい。<b>←で 穂肥 1kg</b>か、→で 見送り。<span class="src">（新潟県）</span>' : '穂の もと。葉いろ ' + Math.round(f.N) + '。<b>←で 穂肥</b>。<span class="src">（出穂 18日 前：新潟県）</span>');
+    if (a.left==='追肥') return say(f.N >= 40 ? '葉いろ ' + Math.round(f.N) + 'で こい。追肥は たおれやすい。→で 見送り。' : '茎 ' + Math.round(f.T) + '本・葉いろ ' + Math.round(f.N) + '。<b>←で 追肥</b>も。<span class="src">（島根県）</span>'); /* 葉いろで 判断（23周目：追肥に 考えどころが なかった） */
+    if (a.left==='穂肥') return say(f.N >= 36 ? '葉いろ ' + Math.round(f.N) + 'で こい。<b>←で 穂肥 1kg</b>か、→で 見送り。<span class="src">（新潟県）</span>' : '穂の もと。葉いろ ' + Math.round(f.N) + '。<b>←で 穂肥</b>。<span class="src">（出穂 18日 前：新潟県）</span>');
     if (f.dat >= 30 && f.dat <= f.headDat - 33 && (f.T >= TARGET*0.7 || f.dat >= 38) && f.water >= 1 && f.hoshiDays < 5) return say('茎が そろいました。<b>↓で 水を 落として 中干し</b>。<span class="src">（岩手県）</span>');
     if (f.hoshiDays >= 1 && f.water < 1 && f.dryRun >= 7 && f.dat <= f.headDat - 26) return say('ひびが 入りました。<b>↑で 水を もどします</b>。<span class="src">（7〜10日：秋田県）</span>');
     if (f.dat > f.headDat - 26 && !f.heading && f.water < 1) return say('穂づくりの 時。<b>↑で 水を</b>。切らさないで。', 'sad');
+    if (f.dat > f.headDat - 26 && (!f.heading || S.day - f.heading < 30) && f.water >= 1 && f.water <= 1.5) return say('あす 切れます。<b>↑で 水を</b>。'); /* 切れる 前に（23周目：矢印どおりでも「切らさなければ」と 叱られた） */
     if (f.dat >= 10 && f.dat < 30 && f.water > 5) return say('分げつの ころは <b>↓で 浅く</b>（2〜3cm）。<span class="src">（全農）</span>');
     { const g = goodDepth(); if (g && f.dat >= 30 && f.water > g[1] + 1) return say('水が 深め。<b>↓で 浅く</b>（' + g[0] + '〜' + g[1] + 'cm）。' + (g[0] === 3 ? '<span class="src">（3〜5cm：栃木県）</span>' : '')); } /* 数は goodDepth と 同じ（22周目） */ /* 中干し あけ〜登熟も 深いままに しない（21周目：雨で 12cm に なり 根が やせた） */
     if (f.water < 1 && f.dat < 30) return say('水が ありません。<b>↑で 少し</b>（2〜3cm）。', 'sad');
@@ -779,7 +780,7 @@ function doLeft(L){
     return true;
   }
   if (S.phase==='field' && a.left==='溝切り'){ f.mizo = true; SND.shaku(); vib([10, 20, 10]); stamp('済', W/2, (L.fieldTop+L.fieldBot)/2, '溝切り'); say('溝を 切りました。ひびが 入るまで <b>→で 日を</b>。<span class="src">（新潟県）</span>'); return true; }
-  if (S.phase==='field' && a.left==='追肥'){ f.A1 = 3; f.N += 4.5; /* 簡略（16周目：+10.8 は 効きすぎ） */ SND.sara(); vib(10); stamp('済', W/2, (L.fieldTop+L.fieldBot)/2, '追肥'); burst(16, FERT(L)); say('追肥しました。葉いろが こく なります。'); return true; }
+  if (S.phase==='field' && a.left==='追肥'){ f.A1 = 3; f.Ntop = f.N; f.N += 4.5; /* 簡略（16周目：+10.8 は 効きすぎ） */ SND.sara(); vib(10); stamp('済', W/2, (L.fieldTop+L.fieldBot)/2, '追肥'); burst(16, FERT(L)); say('追肥しました。葉いろが こく なります。'); return true; }
   if (S.phase==='field' && a.left==='穂肥'){ f.A2 = f.N > 34 ? 1 : 2; /* 葉色 34 以下で 基準量、こければ ひかえめ（新潟県。22周目：36 → 34） */ f.N += f.A2*1.2; SND.sara(); vib(10); stamp('済', W/2, (L.fieldTop+L.fieldBot)/2, '穂肥'); /* 葉いろが こければ ひかえめ（新潟県の 目安を 簡略） */ burst(16, FERT(L)); say(f.A2 === 1 ? '葉いろが こいので 穂肥は ひかえめ（1kg）。<span class="src">（葉色で 量を 決める：新潟県）</span>' : '穂肥を 入れました（2kg）。もみの 数が ふえます。'); return true; }
   if (S.phase==='field' && a.left==='刈る'){
     S.hv.cut++; SND.shaku(); vib([12, 30, 12]);
@@ -854,18 +855,18 @@ function drainFloor(){ const f = S.f; return f.planted && !f.heading && f.dat >=
 /* その ころの よい 深さ [下, 上]（活着 4〜6・分げつ 1.5〜4・穂づくり 3〜5・出穂後 2〜5）。中干しの ころは なし */
 function goodDepth(){ const f = S.f; if (!f.planted || S.phase!=='field') return null; if (f.dat < 10) return [4, 6]; if (f.dat < 30) return [1.5, 4]; if (f.dat <= f.headDat - 26 && f.hoshiDays < 5) return null; if (!f.heading) return [3, 5]; return [2, 5]; }
 /* ↑↓の あと：よい 深さなら よろこぶ。3回 続くと ◎の はんこ（20周目：正しい 深さの ごほうびが なかった） */
-function depthReward(){ const g = goodDepth(); if (!g) return 'smile'; const w = S.f.water, f = S.f; if (w >= g[0] && w <= g[1]){ V.streak = (V.streak||0) + 1; SND.tone(392, .07, 'triangle', .1); /* 木の 音（21周目：sine の 高い 音は キラキラ寄り） */ const zone = f.dat < 10 ? 0 : f.dat < 30 ? 1 : !f.heading ? 2 : 3; if (V.streak >= 3 && !S.maru.includes(zone)){ S.maru.push(zone); const L = layout(); stamp('◎', W/2, (L.fieldTop+L.fieldBot)/2); vib([8, 30, 8]); } return 'joy'; } V.streak = 0; return 'smile'; } /* ◎は 区間（活着・分げつ・穂づくり・出穂後）ごとに 1回（21周目：出すぎ） */
+function depthReward(){ const g = goodDepth(); if (!g) return 'smile'; const w = S.f.water, f = S.f; if (w >= g[0] && w <= g[1]){ V.streak = (V.streak||0) + 1; SND.tone(392, .07, 'triangle', .1); /* 木の 音（21周目：sine の 高い 音は キラキラ寄り） */ const zone = f.dat < 10 ? 0 : f.dat < 30 ? 1 : !f.heading ? 2 : 3; if (V.streak >= (zone === 0 ? 1 : 3) && !S.maru.includes(zone)){ /* 活着は 1回で（23周目：活着の ◎が 0/24） */ S.maru.push(zone); const L = layout(); stamp('◎', W/2, (L.fieldTop+L.fieldBot)/2); vib([8, 30, 8]); } return 'joy'; } V.streak = 0; return 'smile'; } /* ◎は 区間（活着・分げつ・穂づくり・出穂後）ごとに 1回（21周目：出すぎ） */
 /* ↑：水を 入れる（たね＝つける、なえ＝じょうろ、たんぼ＝amt cm）。指も キーも ここを 通る（8周目） */
 function doUp(amt, vy){
   const a = actions(); if (!a.up) return false; S.swipes++; V.hint = Math.max(0, V.hint - 0.08);
   if (S.phase==='seed'){ S.seed_.soaked = true; V.water = 10; V.waterV = 0.4; SND.chapu(); vib(8); say('つけました。→で 日を。<span class="src">（120℃ が 目安：栃木県）</span>'); return true; }
   if (S.phase==='nursery'){ S.nur.moist = 1; SND.chapu(); vib(8); say('じょうろで たっぷり。'); return true; }
   const before = S.f.water; S.f.water = clamp(before + Math.max(1, amt), 0, 15); S.f.flowToday = true;
-  let capped = false; if (S.f.planted && Math.abs(vy||0) < 1.0 && S.f.water > slowCap() && before <= slowCap()){ S.f.water = slowCap(); capped = true; } /* ゆっくりの ↑は 上限まで（14・19周目：分げつ 4cm・出穂後 5cm）。深く したい 時は はじく */
+  let capped = false; if (S.f.planted && Math.abs(vy||0) < 1.0 && S.f.water > slowCap()){ S.f.water = Math.max(before, slowCap()); capped = true; } /* ゆっくりの ↑は 上限まで。すでに 深ければ ふやさない（入れかえ）。23周目：雨の あと 入れかえの ↑で 12cm に なっていた */ /* ゆっくりの ↑は 上限まで（14・19周目：分げつ 4cm・出穂後 5cm）。深く したい 時は はじく */
   const added = S.f.water - before; SND.chapu(added); vib(6 + Math.round(added*2)); V.waterV = 0.6 + Math.min(1, Math.abs(vy||0))*0.6;
   if (S.f.heading && (S.day - S.f.heading) <= 20 && S.weather[S.day].w==='高温') toast('かけ流し');
   if (!S.f.planted && S.f.water > 0) say(S.f.shiro < 2 ? '水が 入りました。<b>←で 代かき</b>。' : '水が 入りました。<b>←で うえます</b>。');
-  else { const mood = added > 0 ? depthReward() : 'smile'; /* 変わらなかった 時は ごほうび なし（22周目） */ say('みず ' + fmtCm(S.f.water) + 'cm。' + (capped && mood !== 'joy' ? 'ゆっくりは ここまで。' : S.f.dat <= 8 && mood !== 'joy' ? 'ねづくまで ふかめに。' : S.f.heading && (S.day - S.f.heading) <= 20 && S.weather[S.day].w==='高温' ? '入れかえで すずしく。' : mood==='joy' ? 'いい 深さ。' : '') + '<b>→で あした</b>。', mood); }
+  else { const mood = added > 0 ? depthReward() : 'smile'; /* 変わらなかった 時は ごほうび なし（22周目） */ const hot = S.f.heading && (S.day - S.f.heading) <= 20 && S.weather[S.day].w==='高温'; say('みず ' + fmtCm(S.f.water) + 'cm。' + (hot ? '入れかえで すずしく。' : capped && mood !== 'joy' ? 'ゆっくりは ここまで。' : S.f.dat <= 8 && mood !== 'joy' ? 'ねづくまで ふかめに。' : mood==='joy' ? 'いい 深さ。' : '') + '<b>→で あした</b>。', hot ? 'joy' : mood); }
   return true;
 }
 /* ↓：水を 落とす（たねの 時は まく）。ゆっくり（vy < 1）は 1cm のこす */
@@ -907,10 +908,10 @@ function endGame(why){
   $('rSeiryu').innerHTML = r.seiryu.toFixed(0) + '<small> %</small>'; $('rTaste').innerHTML = r.taste + '<small> 点</small>';
   const f = S.f, lines = [];
   /* 出来ばえ：収量 6割・等級 3割・食味 1割 → 名人・上手・ふつう・見習い。じこベストと 通算の 年を のこす（10周目） */
-  const score = Math.round(clamp(r.yieldKg/5.5, 0, 100)*0.6 + (r.grade==='一等' ? 30 : r.grade==='二等' ? 20 : r.grade==='三等' ? 10 : 0) + clamp((r.taste-60)/35, 0, 1)*10);
+  const score = Math.round(clamp(r.yieldKg/5.5, 0, 100)*0.6 + (r.grade==='一等' ? 20 : r.grade==='二等' ? 13 : r.grade==='三等' ? 7 : 0) + clamp((r.seiryu-60)/30, 0, 1)*10 + clamp((r.taste-60)/35, 0, 1)*10); /* 23周目：収量 6・等級 2・整粒 1・食味 1（刈りどき・乾燥が 点に 出る） */
   const rank = score >= 90 ? '名人' : score >= 70 ? '上手' : score >= 50 ? 'ふつう' : '見習い';
   const log = loadLog(); const best = log.reduce((m, e) => Math.max(m, e.score||0), 0); const newBest = log.length > 0 && score > best; /* 記録が ない 年に「こうしん」と 言わない（20周目） */ const last = log.length ? log[log.length-1] : null; let years = 1; try{ years = (+localStorage.getItem('k365_years')||0) + 1; localStorage.setItem('k365_years', years); }catch(e){}
-  log.push({ day:S.day, grade:r.grade, yield:Math.round(r.yieldKg), taste:r.taste, score, typhoon:!!f.typhoon, heat:f.heatHits }); try{ localStorage.setItem('k365_log', JSON.stringify(log.slice(-50))); }catch(e){}
+  log.push({ day:S.day, grade:r.grade, yield:Math.round(r.yieldKg), taste:r.taste, score, typhoon:!!f.typhoon, heat:f.heatHits, maru:S.maru.length, done:Math.min(6, S.done.length) }); /* ◎と 済も 残す（23周目） */ try{ localStorage.setItem('k365_log', JSON.stringify(log.slice(-50))); }catch(e){}
   $('rScore').innerHTML = '出来ばえ <b>' + score + '点</b> ' + rank + (years > 1 && log.length ? (newBest ? '　<b>じこベスト こうしん！</b>' : '　じこベスト ' + best + '点') + (last && last.score != null ? '<br>去年 ' + last.score + '点 → ことし ' + score + '点' : '') : '') + '<br><span class="src">' + years + '年目・' + (f.typhoon ? '台風の 年' : '台風なし') + '・あつい日 ' + f.heatHits + '</span>';
   if (r.grade==='一等' && r.yieldKg < 300) lines.push('<b>一等</b>。でも 収量は 少なめ。'); /* 等級は 品位だけ（19周目：みずびたしで 一等 143kg） */
   else if (r.grade==='一等') lines.push('<b>一等</b>です。よく できました。'); else if (r.grade==='二等') lines.push('二等。あと 少し。'); else lines.push(r.grade + '。来年 がんばりましょう。');
@@ -921,14 +922,14 @@ function endGame(why){
   else if (r.green >= 4) lines.push('青い 粒が のこりました。刈るのが 早すぎ。');
   else if (r.crack >= 5) lines.push('胴割れが ' + r.crack.toFixed(0) + '%。' + (S.hv.moisture < 14 ? 'かわかしすぎです。' : '刈りおくれ か 早い 落水。'));
   else if (f.hoshiDays < 5) lines.push('中干しを すると 根が しっかりします。');
-  else if (r.pct > 95) lines.push('茎が ふえすぎ。分げつの ころに 少し 深い 水で。');
+  else if (r.pct > 95 && r.yieldKg < 450) lines.push('茎が ふえすぎ。分げつの ころに 少し 深い 水で。');
   else if (r.pct < 45) lines.push('茎が 少なめ。分げつの ころは 浅い 水で。');
   else lines.push('茎 ' + Math.round(f.P||f.T) + '本・穂 ' + Math.round(r.P) + '本/㎡・一穂 ' + Math.round(r.G) + '粒。');
   const wi = whatIf(S, r).slice(0, 2).map(w => w.say + ' <b>' + (w.dy > 0 ? '+' + w.dy + 'kg' : '') + (w.dy > 0 && w.ds > 0 ? '・' : '') + (w.ds > 0 ? '整粒 +' + w.ds + '%' : '') + '</b>'); /* 損失の 大きい 順に 2つ（11周目） */
   $('rSay').innerHTML = (r.grade==='一等' && r.yieldKg >= 300) || !lines[1] || /^茎 /.test(lines[1]) ? lines[0] : lines[0] + ' ' + lines[1]; /* 一等で なければ 原因を 1行目に（19周目） */ const second = wi.length ? wi.join('。') + '。' : (lines[1] && !/^茎 /.test(lines[1]) ? lines[1] : ''); $('rSay2').innerHTML = second; $('rSay2').parentElement.hidden = !second; /* 一等の 年の 数の 行は 出さない（14周目） */
 }
 function loadLog(){ try{ const j = JSON.parse(localStorage.getItem('k365_log')||'[]'); return Array.isArray(j) ? j.filter(e => e && typeof e === 'object') : []; }catch(e){ return []; } }
-function showYears(){ const log = loadLog(); const y = $('years'); let years = 0; try{ years = +localStorage.getItem('k365_years')||log.length; }catch(e){} if (!years){ y.hidden = true; return; } const best = log.reduce((m, e) => Math.max(m, e.score||0), 0); y.hidden = false; y.textContent = years + '年 つくりました' + (log.length ? '・じこベスト ' + best + '点' : ''); }
+function showYears(){ const log = loadLog(); const y = $('years'); let years = 0; try{ years = +localStorage.getItem('k365_years')||log.length; }catch(e){} if (!years){ y.hidden = true; return; } const best = log.reduce((m, e) => Math.max(m, e.score||0), 0); y.hidden = false; const maru = log.reduce((m, e) => m + (e.maru||0), 0), full = log.filter(e => e.done >= 6).length; y.textContent = years + '年 つくりました' + (log.length ? '・じこベスト ' + best + '点' : '') + (maru ? '・◎ ' + maru : '') + (full ? '・済 そろえた 年 ' + full : ''); }
 function start(){ S = newState(K3.fixedSeed != null ? K3.fixedSeed : (Date.now() ^ Math.floor(Math.random()*1e9))>>>0); HL.key = ''; Object.assign(V, { water:0, waterV:0, waterTarget:undefined, page:0, flipQueue:0, flipTimer:0, flipGap:0.11, flipN:0, drag:null, card:null, shake:0, hint:1, stamps:[], particles:[], toast:null, lastSay:'', streak:0 }); $('title').hidden = true; $('result').hidden = true; document.body.classList.remove('resOn'); $('soundBtn').classList.remove('show'); resize(); draw(); syncUI(); narrate(); SND.init(); }
 $('startBtn').addEventListener('click', start);
 { let tx = null; const T = $('title'); T.addEventListener('pointerdown', e => { tx = e.clientX; }); T.addEventListener('pointerup', e => { if (tx != null && Math.abs(e.clientX - tx) >= 60 && e.target.tagName !== 'BUTTON' && e.target.tagName !== 'A') start(); tx = null; }); } /* 札の とおり なでても 始まる（22周目） */ $('againBtn').addEventListener('click', start);

@@ -40,7 +40,7 @@ def block():
 
 
 def run(body):
-    js = "const f = () => {" + PRE + block() + body + "}; console.log(JSON.stringify(f()));"
+    js = "const f = () => {const cubeFirstGoal = () => false;" + PRE + block() + body + "}; console.log(JSON.stringify(f()));"
     return json.loads(subprocess.run(["node", "-e", js], capture_output=True, text=True, check=True).stdout)
 
 

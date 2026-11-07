@@ -10310,6 +10310,7 @@ function mzFruitTick(now) {
   if (mzFruit.cx < 0) {   // まだ 出ていない：地図が 読めるまで 0.5秒ごとに さがす。3回 取ったら もう 出ない
     if (mzFruit.left <= 0 || now < mzFruit.next) return;
     mzFruit.next = now + 500;
+    if (cubeFirstGoal()) return;   // にしおサイクル133：めいろの はじめての ゴールに 着くまで（最初の 1分）は くだものを 湧かせない（集める 仕組みは そのまま。2回目からは これまでどおり）
     const c = mzFruitPick();
     if (c) { Object.assign(mzFruit, { cx: c[0], cy: c[1], px: c[0], py: c[1], mt: 0, dx: 0, dy: 0, mv: now + MZ_FRUIT.moveMs }); dirty = true; }
     return;
@@ -10372,6 +10373,7 @@ function mzPieceTick(now) {
   if (mzPiece.cx < 0) {   // まだ 出ていない：地図が 読めるまで 0.5秒ごとに さがす。3枚 取ったら もう 出ない
     if (mzPiece.got >= MZ_PIECE.n || now < mzPiece.next) return;
     mzPiece.next = now + 500;
+    if (cubeFirstGoal()) return;   // にしおサイクル133：めいろの はじめての ゴールに 着くまで（最初の 1分）は 地図ピースを 湧かせない（集める 仕組みは そのまま。2回目からは これまでどおり）
     const c = mzPiecePick();
     if (c) { mzPiece.cx = c[0]; mzPiece.cy = c[1]; dirty = true; }
     return;
@@ -10469,6 +10471,7 @@ function mzViewTick(now) {
   if (mzView.cx < 0) {   // まだ 出ていない：地図が 読めるまで 0.5秒ごとに さがす。1回 着いたら もう 出ない
     if (mzView.done || now < mzView.next) return;
     mzView.next = now + 500;
+    if (cubeFirstGoal()) return;   // にしおサイクル133：めいろの はじめての ゴールに 着くまで（最初の 1分）は 見晴らし台を 湧かせない（集める 仕組みは そのまま。2回目からは これまでどおり）
     const c = mzViewPick();
     if (c) { mzView.cx = c[0]; mzView.cy = c[1]; dirty = true; }
     return;
@@ -10628,6 +10631,7 @@ function mzQuestTick(now) {
   if (mzQuest.cx < 0) {   // まだ 出ていない：地図が 読めるまで 0.5秒ごとに さがす。3つ そろったら もう 出ない
     if (mzQuest.got >= QUEST_TOOLS.length || now < mzQuest.next) return;
     mzQuest.next = now + 500;
+    if (cubeFirstGoal()) return;   // にしおサイクル133：めいろの はじめての ゴールに 着くまで（最初の 1分）は どうぐを 湧かせない（集める 仕組みは そのまま。2回目からは これまでどおり）
     const c = mzQuestPick();
     if (c) { mzQuest.cx = c[0]; mzQuest.cy = c[1]; dirty = true; }
     return;
@@ -10733,6 +10737,7 @@ function mzDinoTick(now) {
   if (mzDino.cx < 0) {   // まだ 出ていない：地図が 読めるまで 0.5秒ごとに さがす
     if (now < (mzDino.next || 0)) return;
     mzDino.next = now + 500;
+    if (cubeFirstGoal()) return;   // にしおサイクル133：めいろの はじめての ゴールに 着くまで（最初の 1分）は きょうりゅうの 足跡を 湧かせない（集める 仕組みは そのまま。2回目からは これまでどおり）
     const c = mzDinoPick();
     if (!c) return;
     const path = mzDinoPath(mzDino.sx, mzDino.sy, c[0], c[1]);
@@ -11110,6 +11115,7 @@ function mzTorchTick(now) {
   if (mzTorch.cx < 0) {   // まだ 立っていない：地図が 読めるまで 0.5秒ごとに さがす（持っている 間は 次の 1本は 出ない）
     if (mzTorch.held || now < mzTorch.next) return;
     mzTorch.next = now + 500;
+    if (cubeFirstGoal()) return;   // にしおサイクル133：めいろの はじめての ゴールに 着くまで（最初の 1分）は たいまつを 湧かせない（集める 仕組みは そのまま。2回目からは これまでどおり）
     const c = mzTorchPick();
     if (c) { mzTorch.cx = c[0]; mzTorch.cy = c[1]; dirty = true; }
     return;
@@ -11185,6 +11191,7 @@ function mzBrigadeTick(now) {
   if (mzBrigade.cx < 0) {   // まだ 立っていない：地図が 読めるまで 0.5秒ごとに さがす
     if (now < mzBrigade.next) return;
     mzBrigade.next = now + 500;
+    if (cubeFirstGoal()) return;   // にしおサイクル133：めいろの はじめての ゴールに 着くまで（最初の 1分）は おともを 湧かせない（集める 仕組みは そのまま。2回目からは これまでどおり）
     const c = mzBrigadePick();
     if (c) { mzBrigade.cx = c[0]; mzBrigade.cy = c[1]; dirty = true; }
     return;
@@ -11286,6 +11293,7 @@ function mzPurifyTick(now) {
   if (!mzPurify.cells.length) {   // まだ 出ていない：地図が 読めるまで 0.5秒ごとに さがす（小さい 迷路は 候補の 数まで。0 なら 出さない）
     if (now < mzPurify.next) return;
     mzPurify.next = now + 500;
+    if (cubeFirstGoal()) return;   // にしおサイクル133：めいろの はじめての ゴールに 着くまで（最初の 1分）は 浄化マスを 湧かせない（集める 仕組みは そのまま。2回目からは これまでどおり）
     const c = mzPurifyPick();
     if (c.length) { mzPurify.cells = c; mzPurify.done = c.map(() => false); dirty = true; }
     return;

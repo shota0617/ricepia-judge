@@ -365,6 +365,20 @@ const pop = () => tone(620, 0.08, 0.05, "sine");
 const meterBeep = () => tone(1240, 0.09, 0.035, "sine"); /* はかる: 計器のピッ（サイクル89・類3） */
 const grainDrop = () => tone(340, 0.07, 0.05, "triangle"); /* みわける: 粒が小皿へコト（サイクル89・類3） */
 const inkSound = () => tone(240, 0.1, 0.055, "triangle"); /* おす: 朱肉にぎゅっと（サイクル89・類3） */
+function bagSound() { /* おす: 袋が流れる紙の音。360→150Hzへゆっくり下がる低い音で、粒の tick（高い短い音）とは分ける（サイクル95・差分テーマ「類3の残り」） */
+  try {
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    if (ac.state === "suspended") ac.resume();
+    const o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime;
+    o.type = "triangle";
+    o.frequency.setValueAtTime(360, t);
+    o.frequency.exponentialRampToValueAtTime(150, t + 0.22);
+    g.gain.setValueAtTime(0.045, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.24);
+    o.connect(g).connect(ac.destination);
+    o.start(t); o.stop(t + 0.24);
+  } catch (_) {}
+}
 function thump() {
   tone(110, 0.16, 0.14, "sine");
   tone(70, 0.22, 0.1, "sine");
@@ -1560,7 +1574,7 @@ function goNext() {
 function leaveBag() {
   if (leaving) return;
   leaving = true;
-  tick();
+  bagSound(); /* 袋が流れる時は紙の音（サイクル95）。粒の tick とは分ける */
   $("bagBig").animate([{ transform:$("bagBig").style.transform || "none" }, { transform:"translateX(130%) rotate(10deg)" }],
     { duration:240 * motion, easing:"ease-in", fill:"forwards" }).onfinish = function () { this.cancel(); goNext(); };
 }

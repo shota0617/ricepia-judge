@@ -282,6 +282,10 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertRegex(HTML, r"\.gradeBtn \{[^}]*min-height:clamp\(58px, 11vh, 84px\)")
         self.assertNotRegex(HTML, r"\.gradeBtn \{[^}]*[^-]height:clamp")
 
+    def test_lcd_average_fits_small_phone(self):
+        # 320px幅で2袋目の平均「16.9%」が水分計の表示枠からはみ出さない（字の大きさに幅の上限も付ける）
+        self.assertIn("font:800 clamp(38px, min(11vh, 16vw), 62px)/1 ui-monospace", HTML)
+
     def test_grade_label_fits_small_phone(self):
         # 320px幅で「規格外」が2行に折れない
         self.assertIn("@media (max-width:340px) {\n    #rows, #gradeBtns { grid-template-columns:84px repeat(4,1fr); }\n    .gradeBtn.small { font-size:14px; }", HTML)

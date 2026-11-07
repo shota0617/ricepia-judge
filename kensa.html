@@ -73,7 +73,7 @@
   #face.call { animation:call 1s ease-in-out infinite; }
   @keyframes call { 50% { box-shadow:0 0 0 7px rgba(184,137,58,.45); } }
   #lcd { flex:1; min-height:0; border-radius:8px; background:#cfe0b4; color:#22301a; display:flex; align-items:center; justify-content:center;
-    font:800 clamp(38px, 11vh, 62px)/1 ui-monospace,Menlo,monospace; box-shadow:inset 0 3px 0 rgba(0,0,0,.18); }
+    font:800 clamp(38px, min(11vh, 16vw), 62px)/1 ui-monospace,Menlo,monospace; /* 320px幅でも「16.9%」が枠に収まる */ box-shadow:inset 0 3px 0 rgba(0,0,0,.18); }
   #lcd small { font-size:.5em; margin-left:3px; }
   #meterBtn.high #lcd { background:#f4c27a; color:#5a2c08; }
   #slots { flex:none; display:flex; gap:6px; }

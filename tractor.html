@@ -7593,7 +7593,7 @@ const USHI = (() => {
         if (n === 1) pend = true;
       }
     }
-    if (pend && toastT <= 0) { pend = false; chk = true; toast(MSG, 6); }   // ほかの知らせが 消えてから
+    if (pend && toastT <= 0 && !startNoticeMuted()) { pend = false; chk = true; toast(MSG, 6); }   // ほかの知らせが 消えてから。サイクル227・最初の1分: のんびりでは開始直後（need下限70mを耕して最初のカエルが起きると出る）に長文知らせと声で最初のなぞりを止めない。従来の「届かない」前提（耕し最高速1.0m/s×60秒＝60m）はキー運転だけの値で、のんびりの主入力のなぞり追従は変速の上限で頭打ちにならず TRACE.cap 上限1.6m/sで走るため、始動0.9秒と初回降下0.26秒を引いた最大58.84秒で上限約94m・need下限70mには約45秒で届く（サイクル225と同型の前提の取り違え）。pendは立てたままなので1分を過ぎて知らせが空いていれば従来どおり出す（遅れて出す形）。くわしい説明では従来どおり開始直後から出す
     if (chk) {                                      // 1.2 秒 見えていたら 出せたことにする（上書きされたら 3 回まで 出しなおす）
       if ($('toast').dataset.raw !== MSG) { chk = false; if (++tries < 3) pend = true; }
       else if (toastT <= 6 - 1.2) { chk = false; voice(AMA ? 'nemugaeru' : 'ushigaeru'); }

@@ -465,6 +465,20 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertIn("Math.abs(p.twist) >= 20", HTML)
         self.assertNotIn("Math.abs(p.twist) >= 35", HTML)
 
+    def test_first_miss_reshows_guide_finger(self):
+        # 空振りの受け止め統一（Fable設計・サイクル81）: どの所作も空振り1回目で
+        # 手本の指👆がもう一度同じ動きを見せる。従来は触った瞬間に消えた指が
+        # 戻らず、1回目では道具の小さな揺れしか返らなかった（390×844実測）。
+        # 2回目の道具の動き・3回目（等級は2回）の自動代替は従来どおり
+        self.assertIn('if (bagTaps === 1 && lotIndex === 0) $("poke").style.display = "";', HTML)  # ぬく
+        self.assertIn('if (meterTaps === 1) guideAt("circle", $("crank"));', HTML)  # はかる
+        self.assertIn("function guideSense()", HTML)  # 感じる: 開始時と空振り1回目で同じ手本
+        self.assertIn("if (senseTaps === 1) guideSense();", HTML)
+        self.assertIn("else if (senseTaps === 1) guideSense();", HTML)
+        self.assertIn('if (taps === 1) guideAt("move", document.querySelectorAll(".gradeBtn")[lotGrade(LOT)], 0, -48);', HTML)  # きめる
+        self.assertIn('if (hankoTaps === 1) guideAt("press", $("pad"));', HTML)  # おす・朱肉
+        self.assertIn('if (hankoTaps === 1) guideAt("move", $("hanko"), 0, hankoMax);', HTML)  # おす・おろし
+
     def test_assets_exist(self):
         for name in set(re.findall(r'kensa/[a-z_]+\.webp', HTML)):
             self.assertTrue(os.path.exists(os.path.join(ROOT, name)), name)

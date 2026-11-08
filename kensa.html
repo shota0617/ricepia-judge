@@ -521,6 +521,20 @@ function likeSound() { /* 終わり: 「いいね」を押した合図の音。5
     o.start(t); o.stop(t + 0.16);
   } catch (_) {}
 }
+function idleSound() { /* 終わり: 終了カードが現れる合図の音。360→500Hzへゆっくり上がる音で、粒の tick（高い短い音）や「いいね」の音（likeSound 560→840Hz）・笑顔の音（smileSound 500→760Hz）とは分ける（サイクル108・差分テーマ差14）。手が止まって45秒後に現れるカードだけが無音で、目を離していると現れたことに気づけなかった（390×844実測）。現れた時だけ1回鳴らし、すでに現れている時には鳴らさない */
+  try {
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    if (ac.state === "suspended") ac.resume();
+    const o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime;
+    o.type = "sine";
+    o.frequency.setValueAtTime(360, t);
+    o.frequency.exponentialRampToValueAtTime(500, t + 0.24);
+    g.gain.setValueAtTime(0.015, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.26);
+    o.connect(g).connect(ac.destination);
+    o.start(t); o.stop(t + 0.26);
+  } catch (_) {}
+}
 function thump() {
   tone(110, 0.16, 0.14, "sine");
   tone(70, 0.22, 0.1, "sine");
@@ -1757,8 +1771,10 @@ function liked() {
 }
 function showIdleCard() {
   if (liked()) { likeBtn.disabled = true; likeBtn.textContent = "ありがとう 🌾"; }
+  const wasOn = idleCard.classList.contains("on");
   idleCard.inert = false;
   idleCard.classList.add("on");
+  if (!wasOn) idleSound(); /* 終了カードが現れる合図は固有の音にする（サイクル108・差14）。すでに現れている時には鳴らさない */
 }
 function hideIdleCard() {
   idleCard.classList.remove("on");

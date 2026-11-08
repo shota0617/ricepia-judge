@@ -872,6 +872,28 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertIn('const pop = () => tone(620, 0.08, 0.05, "sine");', HTML)
         self.assertIn("const tick = () => tone(1100 + Math.random() * 900, 0.03, 0.025);", HTML)
 
+    def test_cycle108_idle_card_appearance_has_its_own_gentle_sound(self):
+        # 差分テーマ差14（類3の残り）: 終了カードが現れる合図だけが無音だったため、
+        # 固有のゆっくり上がる音を付ける。手が止まって45秒後に現れるカードは、
+        # 目を離していると現れたことに気づけなかった。他の時間で出る知らせ
+        # （わるい粒のふくらみ＝hintSound）には音があるのに、この締めの入口だけ音がなかった。
+        self.assertIn("function idleSound() {", HTML)
+        idle_fn = HTML[HTML.index("function idleSound()"):HTML.index("function thump()")]
+        self.assertIn("o.frequency.setValueAtTime(360, t);", idle_fn)
+        self.assertIn("o.frequency.exponentialRampToValueAtTime(500, t + 0.24);", idle_fn)
+        self.assertIn('o.type = "sine";', idle_fn)
+        self.assertIn("o.start(t); o.stop(t + 0.26);", idle_fn)
+        # 音量は最も控えめな部類（0.015）に留める
+        self.assertIn("g.gain.setValueAtTime(0.015, t);", idle_fn)
+        # カードが新しく現れる時だけ1回鳴らす（すでに現れている時には鳴らさない）
+        show = HTML[HTML.index("function showIdleCard()"):HTML.index("function hideIdleCard()")]
+        self.assertIn('const wasOn = idleCard.classList.contains("on");', show)
+        self.assertIn("if (!wasOn) idleSound();", show)
+        self.assertEqual(HTML.count("idleSound();"), 1)
+        # いいねの音と粒の tick は従来どおり残る
+        self.assertIn("likeSound();", HTML)
+        self.assertIn("const tick = () => tone(1100 + Math.random() * 900, 0.03, 0.025);", HTML)
+
     def test_cycle93_picked_grains_stay_in_quiet_record(self):
         # 類7: 見分けた粒が静かに記録に残る。任意で開く資料（#notes）の中だけに出し、常時表示・競争・スコアにはしない。
         # 袋を越えて残るため startLot では消さない（サイクル91の seenChecks と同じ持ち方）。

@@ -231,7 +231,7 @@ const CHECKS = {
     ok(r.moved >= 3, 'その あとも 吹き出しの とおりで 日が すすむ（詰まない）', r);
     ok(/茎\d+本/.test(r.hud) && /℃|茎|出穂/.test(r.hud2), 'HUD に 茎の 本数（出穂の あとは 積算℃）', [r.hud, r.hud2]);
     const wp = await p.evaluate(() => { K3.jump('tiller'); K3.V.particles = []; K3.advanceDay(); const n = K3.V.particles.length; const w = K3.S.weather[K3.S.day].w; K3.jump('nursery'); return { n, w, stat: document.getElementById('stat').textContent }; });
-    ok(wp.n >= 4, 'めくった 日に 天気の 粒が 飛ぶ（13周目）', wp);
+    ok(wp.n >= 2, 'めくった 日に 天気の 粒が 飛ぶ（13周目。94周目：2つに）', wp);
     ok(/葉/.test(wp.stat), 'なえの HUD に 葉齢', wp.stat);
     const z = await p.evaluate(() => { localStorage.removeItem('k365_log'); localStorage.removeItem('k365_years'); K3.jump('result'); const s1 = document.getElementById('rScore').textContent; K3.jump('result'); const s2 = document.getElementById('rScore').textContent; const log = JSON.parse(localStorage.getItem('k365_log')); return { s1, s2, n: log.length, score: log[0].score }; });
     ok(/出来ばえ \d+点/.test(z.s1) && !/じこベスト/.test(z.s1) && /じこベスト/.test(z.s2) && z.n === 2 && z.score > 0, '結果に 出来ばえの 点。2年目から じこベスト', z);

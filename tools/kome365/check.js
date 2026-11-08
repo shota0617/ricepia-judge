@@ -349,6 +349,17 @@ const CHECKS = {
     ok(/あすは 浅く/.test(r.keep) && !/あすは 浅く/.test(r.keep2) && !/↓/.test(r.keep) && /熊本県/.test(r.keep2), '台風の 翌日の「あすは 浅く」は あすも 6cm 超の 時だけ（矢印の 字は 使わない。短い 方は 注も 出る）', r);
   },
   // 83〜84周目：あす 線を 割る 深水は「あすには 下がります」（↓を 頼まない）、2朝 つづく 深水は 間を 待たない、出穂後の はじき↓は 2夜分を 残す（高温→雨 でも 4cm）
+  async rules86(b){
+    const p = await page(b, 390, 844);
+    const r = await p.evaluate(() => {
+      K3.manual = true; K3.fixedSeed = 7; K3.jump('tiller'); const S = K3.S, f = S.f; const out = {};
+      for (let i=0;i<40 && f.dat < 34;i++){ f.water = 3; K3.advanceDay(); } f.hoshiEnd = true; f.hoshiDays = 5; f.dat = 42; f.A1 = 0; f.N = 35; f.water = 8.5; f.deepRun = 0; f.typhoonDay = null; calmDays(S, 3, 'くもり'); K3.V.deepDay = S.day - 3; out.left = K3.actions().left; K3.doLeft(); out.fert = document.getElementById('say').textContent.slice(0, 60); /* 87周目：追肥の 日の 8cm 以上 */
+      K3.fixedSeed = 7; K3.jump('heading'); const S2 = K3.S, f2 = S2.f; S2.day = f2.heading + 1; f2.water = 4; calmDays(S2, 2, '高温'); f2.typhoonDay = null; K3.narrate(); out.hot = document.getElementById('say').textContent.slice(0, 40); f2.water = 0.5; K3.narrate(); out.dry = document.getElementById('say').textContent.slice(0, 40);
+      return out;
+    });
+    ok(r.left === '追肥' && /追肥しました/.test(r.fert) && /で 深め/.test(r.fert) && /↓で 浅く/.test(r.fert) && /あすには 少し 下がります/.test(r.fert), '追肥の 日の 8cm 以上は「みず Ncm で 深め。↓で 浅く。あすには 少し 下がります」', r);
+    ok(/出穂/.test(r.hot) && /↑で かけ流す/.test(r.hot) && /出穂/.test(r.dry) && /あつい日 1日目。↑で 水を/.test(r.dry), '出穂の 日：あつい日は「↑で かけ流す」、水が ないなら「あつい日 1日目。↑で 水を」', r);
+  },
   async rules83(b){
     const p = await page(b, 390, 844);
     const r = await p.evaluate(() => {

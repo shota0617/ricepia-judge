@@ -3822,7 +3822,7 @@ const WARAYAMA = (() => {
       w.flat = Math.min(1, w.flat + dt * 1.5);    // 爪で崩して 散らす
       w.mesh.scale.y = Math.max(0.05, 1 - w.flat); w.mesh.position.y = w.h * w.mesh.scale.y / 2;
       if (w.flat >= 1) w.mesh.visible = false;
-      if (!told) {
+      if (!told && !startNoticeMuted()) {   // サイクル235・最初の1分: のんびりでは四隅の藁の山の長文知らせで最初のなぞりを止めない。自動知らせで最後まで無ガードだった1件で、端の列（x=13.4）を北端で折り返して南向きに下ると作業機が北側の山に z=21.5〜23.5 の間 重なり続ける実測がある。toldは立てないので1分を過ぎてまだ触れていれば（または次の山で）従来どおり1回出す（遅れて出す形）。山が崩れる見た目は変えない。くわしい説明では従来どおり接触直後に出す
         told = true;
         toast('四隅の藁の山を そのまま すきこんだ。そこだけ藁が多くなり、分解しきれない。本物は 耕す前に 熊手で まんべんなく散らしておく', 6);
         setTimeout(() => voice('warayama'), 6500);

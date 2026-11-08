@@ -1119,6 +1119,23 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         # 資料に1文だけ足す（ゲーム内文言は増やさない）
         self.assertIn("「いいね」が届かなかったときは、対になる小さな音で知らせて、押し直せるように戻ります", HTML)
 
+    def test_cycle119_crank_demo_wiggle_uses_crank_sound(self):
+        # 差分テーマ差25（差2の再監査の残り・手本の無音）: 実際にハンドルを回すと45°ごとに
+        # crankSound が鳴る（差2）一方、はかるで空振りしたときの手本の揺れ（60°）だけが無音だった
+        # （390×844実測で同期音0件）ため、揺れにも同じ crankSound を1回鳴らす。新しい音色は作らない。
+        end = HTML[HTML.index("function endCrank(e) {"):HTML.index('$("sceneMeter").addEventListener("pointerup", endCrank);')]
+        self.assertIn("crankSound();", end)
+        # 鳴らすのは揺れのアニメーションの直前（揺れ1回につき1回）だけに固定する
+        self.assertEqual(end.count("crankSound();"), 1)
+        self.assertLess(end.index("crankSound();"), end.index('$("crankArm").animate('))
+        # 本物の回転の音（差2）と計器のピッは従来どおり
+        self.assertIn('const crankSound = () => tone(185, 0.03, 0.03, "square");', HTML)
+        move = HTML[HTML.index("crankDrag.sum += Math.abs(d);"):HTML.index("function endCrank(e)")]
+        self.assertIn("crankSound();", move)
+        self.assertIn("const meterBeep = () => tone(1240, 0.09, 0.035, \"sine\");", HTML)
+        # 資料に1文だけ足す（ゲーム内文言は増やさない）
+        self.assertIn("はかるで空振りしたときも、ハンドルが揺れるのに合わせて、回すときと同じ小さなカチッという音で知らせます", HTML)
+
     def test_cycle93_picked_grains_stay_in_quiet_record(self):
         # 類7: 見分けた粒が静かに記録に残る。任意で開く資料（#notes）の中だけに出し、常時表示・競争・スコアにはしない。
         # 袋を越えて残るため startLot では消さない（サイクル91の seenChecks と同じ持ち方）。

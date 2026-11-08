@@ -287,6 +287,7 @@
   <p>出典（農林水産省）のリンクを開くときも、資料を開くときと同じ小さな音で知らせます。</p>
   <p>資料の末尾の「ゲームへ もどる」を押すと、対になる小さな音で知らせて、ゲームの画面へ戻ります。</p>
   <p>「いいね」が届かなかったときは、対になる小さな音で知らせて、押し直せるように戻ります。</p>
+  <p>はかるで空振りしたときも、ハンドルが揺れるのに合わせて、回すときと同じ小さなカチッという音で知らせます。</p>
   <h2>みわけた粒のきろく</h2>
   <p id="grainRecord">まだ みわけた粒は ありません。</p>
   <p>みわけた粒の種類は、ここに静かに残ります。競うための数ではなく、見分けた粒をあとから見返すための記録です。</p>
@@ -1139,6 +1140,7 @@ function endCrank(e) {
   if (!tapped) return;
   if (++meterTaps >= NUDGE_LIMIT) { meterTaps = 0; takeReading(); return; }
   if (meterTaps === 1) guideAt("circle", $("crank")); /* 空振り1回目: 手本の指をもう一度出す（サイクル81） */
+  crankSound(); /* 空振りの手本の揺れ（60°）も、実際に回す時と同じカチッで知らせる（サイクル119・差分テーマ差25）。本物の回転は45°ごとに crankSound が鳴るのに、60°揺れる手本だけが無音だった（390×844実測で同期音0件）。揺れ1回につき1回だけ鳴らす */
   $("crankArm").animate([{ transform:"rotate(" + crankAngle + "deg)" }, { transform:"rotate(" + (crankAngle + 60) + "deg)" }, { transform:"rotate(" + crankAngle + "deg)" }], { duration:380 * motion, easing:"ease-in-out" });
 }
 $("sceneMeter").addEventListener("pointerup", endCrank);

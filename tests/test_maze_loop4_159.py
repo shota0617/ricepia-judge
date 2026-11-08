@@ -47,7 +47,7 @@ class TestUnchanged(unittest.TestCase):
         self.assertRegex(PIX, r"RICE_BIG = 1\.45\b")
         self.assertRegex(PIX, r"ROLL_ACC = 7\b")
         self.assertRegex(PIX, r"ROLL_MAX = 4\.2\b")
-        self.assertIn("const GROW_TH = [15, 40, 80, 140, 210, 300, 420, 570, 760, 1000, 1300, 1700, 2200, 2800, 3600, 4600, 5900, 7600, 9800, 12700, 16500, 21400, 27800, 36100, 46900, 60900, 79100, 102800, 133600, 173600, 225600];", PIX)
+        self.assertIn("const GROW_TH = [15, 40, 80, 140, 210, 300, 420, 570, 760, 1000, 1300, 1700, 2200, 2800, 3600, 4600, 5900, 7600, 9800, 12700, 16500, 21400, 27800, 36100, 46900, 60900, 79100, 102800, 133600, 173600, 225600, 293200, 381100];", PIX)
 
     def test_forbidden_words_not_added(self):
         d = subprocess.run(["git", "diff", "origin/main", "--", "nishio-go", "nishio-go.html", "tests"], cwd=ROOT,

@@ -68,7 +68,8 @@ class Lazy183(unittest.TestCase):
         return r.stdout if r.returncode == 0 else None
 
     def test_added_lines_have_no_banned_words(self):
-        d = self._git("diff", "origin/main", "--", "nishio-go.html")
+        base = (self._git("merge-base", "HEAD", "origin/main") or "").strip()
+        d = self._git("diff", base, "--", "nishio-go.html") if base else None
         if d is None:
             self.skipTest("origin/main なし")
         added = "\n".join(l for l in d.splitlines() if l.startswith("+") and not l.startswith("+++"))
@@ -76,7 +77,8 @@ class Lazy183(unittest.TestCase):
             self.assertNotIn(w, added)
 
     def test_changed_files_limited(self):
-        d = self._git("diff", "--name-only", "origin/main")
+        base = (self._git("merge-base", "HEAD", "origin/main") or "").strip()
+        d = self._git("diff", "--name-only", base) if base else None
         if d is None:
             self.skipTest("origin/main なし")
         for f in d.split():

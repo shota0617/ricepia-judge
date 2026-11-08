@@ -4037,8 +4037,8 @@ function comboEnd() {
 }
 // 速さの演出は 穏やかに（Smushi Come Home の物差し：速く動いても スピード線は 出さず、景色と 転がりで 速さを 伝える）
 const speedFx = { k: 0, at: 0, vx: 1, vy: 0 };   // テスト用の 互換だけ（speedK は いつも 0。スピード線は 描かないので 更新する コードは ない）
-// 転がるほど 頭の上の 芽が 育つ（サイクル150・塊魂：転がすほど 見た目が 育つ）。段階は 転がった道のり roll.d（マス）で決まり、そのセッションでは 下がらない。上がる瞬間だけ ぴっ（同じ音・同じ高さ）と 金の輪。文字は 出さない。サイクル158（差2）: 140マスで 止まらず、区間を だんだん 広げながら ゆっくり 育ち続ける（210・300・420。茎は 段階4で 伸び止まり、その先は 横の花と 金の実で 違いを 出す）。サイクル170（差14）: 420マスの 先も ゆっくり（570・760）。段階8で 左にも 横の花、段階9で 金の実が 2つ
-const GROW_TH = [15, 40, 80, 140, 210, 300, 420, 570, 760];
+// 転がるほど 頭の上の 芽が 育つ（サイクル150・塊魂：転がすほど 見た目が 育つ）。段階は 転がった道のり roll.d（マス）で決まり、そのセッションでは 下がらない。上がる瞬間だけ ぴっ（同じ音・同じ高さ）と 金の輪。文字は 出さない。サイクル158（差2）: 140マスで 止まらず、区間を だんだん 広げながら ゆっくり 育ち続ける（210・300・420。茎は 段階4で 伸び止まり、その先は 横の花と 金の実で 違いを 出す）。サイクル170（差14）: 420マスの 先も ゆっくり（570・760）。段階8で 左にも 横の花、段階9で 金の実が 2つ。サイクル171（差15）: 760マスの 先も ゆっくり（1000・1300）。段階10で 金の実が 3つ、段階11で その上に 小さな 白い花
+const GROW_TH = [15, 40, 80, 140, 210, 300, 420, 570, 760, 1000, 1300];
 const grow = { stage: 0, popT: 0 };
 function growStageFor(d) { let s = 0; for (let i = 0; i < GROW_TH.length; i++) if (d >= GROW_TH[i]) s = i + 1; return s; }
 function growStep(hx, by, u, now) {
@@ -4062,6 +4062,8 @@ function growStep(hx, by, u, now) {
   if (st >= 8) { const lx0 = x0 - 4 * q; ctx.fillStyle = '#4c9a3a'; ctx.fillRect(x0 - 3 * q, y0 - sh * q, 2 * q, q); ctx.fillRect(x0 - 4 * q, y0 - sh * q, q, q); ctx.fillStyle = '#ffffff'; for (const [fx, fy] of [[0, -2], [-1, -1], [1, -1], [0, 0], [-1, -2], [1, -2]]) ctx.fillRect(lx0 + fx * q, y0 - (sh + 1) * q + fy * q, q, q); ctx.fillStyle = '#ffd84a'; ctx.fillRect(lx0, y0 - (sh + 1) * q - q, q, q); }   // 左の 横の花（サイクル170：右の 段階6と 同じ 大きさ・枝つき。茎から 左へ つながる）
   if (st >= 7) { ctx.fillStyle = '#ffd84a'; ctx.fillRect(x0 + q, y0 - (sh + 5) * q, 2 * q, 2 * q); }   // 金の実（2つの花の 上・間に 2×2つぶ。花びらとは 重ならない 高さ）
   if (st >= 9) { ctx.fillStyle = '#ffd84a'; ctx.fillRect(x0 - 3 * q, y0 - (sh + 5) * q, 2 * q, 2 * q); }   // 2つめの 金の実（左の花と メインの花の 間・上。サイクル170）
+  if (st >= 10) { ctx.fillStyle = '#ffd84a'; ctx.fillRect(x0 - q, y0 - (sh + 7) * q, 2 * q, 2 * q); }   // 3つめの 金の実（2つの 実の 間・二段 高く。段差で 実が 3つに 見分けられる。サイクル171・Codex指摘で一段追加）
+  if (st >= 11) { const fx0 = x0, fy0 = y0 - (sh + 9) * q; ctx.fillStyle = '#ffffff'; for (const [fx, fy] of [[0, -1], [-1, 0], [1, 0], [0, 1]]) ctx.fillRect(fx0 + fx * q, fy0 + fy * q, q, q); ctx.fillStyle = '#ffd84a'; ctx.fillRect(fx0, fy0, q, q); }   // 中央の実の 上の 小さな 白い花（4つぶ＋金の まん中。サイクル171）
 }
 function riceFeel(dt, speed) {
   { const gs = growStageFor(roll.d); if (gs > grow.stage) { grow.stage = gs; grow.popT = performance.now(); dotSound(0); } }   // 段階が 上がる瞬間だけ（下がらない）

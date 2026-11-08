@@ -75,7 +75,7 @@ const CHECKS = {
   async water(b){
     const p = await page(b, 390, 844);
     const r = await p.evaluate(() => {
-      K3.manual = true; K3.fixedSeed = 11; K3.jump('tiller'); const f = K3.S.f; f.dat = 35; f.water = 1; K3.V.water = 1; K3.V.waterV = 0; steps(60); /* 55周目：合図の 前は はじきの 上限が 7cm（よい 深さ 3〜5 の 上 +2）なので 1cm から */ /* 分げつの ころ（10〜30日）は ゆっくりの ↑が 4cm までなので、その あとで */
+      K3.manual = true; K3.fixedSeed = 11; K3.jump('tiller'); const f = K3.S.f; f.dat = 35; f.water = 1; K3.V.water = 1; K3.V.waterV = 0; calmDays(K3.S, 2, 'くもり'); steps(60); /* 69周目：はじきの 上限は きょうの 天気で 決まる ので、きょう・あすを くもりに */ /* 55周目：合図の 前は はじきの 上限が 7cm（よい 深さ 3〜5 の 上 +2）なので 1cm から */ /* 分げつの ころ（10〜30日）は ゆっくりの ↑が 4cm までなので、その あとで */
       const w0 = f.water; swipe('up', 80, true); const w1 = f.water; swipe('up', 240, true); const w2 = f.water; /* はじく（ゆっくりは 5cm まで。21周目） */
       const v0 = K3.V.water; steps(90); const v1 = K3.V.water;   // 見た目の 水面が 本当の 水に 追いつく
       swipe('down', 120, false); const w3 = f.water; swipe('down', 400, true); const w4 = f.water; swipe('down', 400, true); const w5 = f.water; steps(90); const v2 = K3.V.water; /* 55周目：はじき↓は よい 深さの 下（3cm）に 着地、もう一度 はじくと 空 */
@@ -307,7 +307,7 @@ const CHECKS = {
   async fit(b){
     for (const [w, h, dsf] of [[390, 844], [360, 560], [740, 360], [195, 280, 4]]){ /* 低い 横向き・字 200%（幅 195px・倍率 4）も（7周目） */
       const p = await page(b, w, h, dsf);
-      const r = await p.evaluate(() => {
+      const r = await p.evaluate(async () => {
         const out = {}; const inside = el => { const r = el.getBoundingClientRect(); return r.left >= -1 && r.top >= -1 && r.right <= innerWidth + 1 && r.bottom <= innerHeight + 1 && el.scrollWidth <= el.clientWidth + 1; };
         const vis = el => el.getBoundingClientRect().width > 0;
         const sb = document.getElementById('soundBtn').getBoundingClientRect(), nr = document.querySelector('#title .noren').getBoundingClientRect(); out.sound = sb.bottom <= nr.top + 1 || sb.left >= nr.right - 1 || sb.right <= nr.left + 1;
@@ -319,12 +319,12 @@ const CHECKS = {
           const L = K3.layout(); const tr = talk.getBoundingClientRect();
           out.scenes[s] = { hud: hud.every(inside), hudBad: hud.filter(el => !inside(el)).map(el => el.id + ':' + el.textContent), say: inside(say) && vis(say), talkTop: Math.round(tr.top), fieldBot: Math.round(L.fieldBot), sayH: Math.round(say.getBoundingClientRect().height), text: say.textContent.slice(0, 20) }; }
         K3.jump('result'); out.result = ['rank', 'rYield', 'rTawara', 'rSeiryu', 'rTaste', 'rSay', 'rSay2'].every(id => { const el = document.getElementById(id); el.scrollIntoView({ block:'center' }); return inside(el); });
-        const again = document.getElementById('againBtn'); out.againTop = inside(again); document.getElementById('result').scrollTop = 1e6; out.again = inside(again); /* はりついて いるので 送る 前でも 見える（14周目） */
+        const again = document.getElementById('againBtn'), R = document.getElementById('result'); const frames = () => new Promise(res => requestAnimationFrame(() => requestAnimationFrame(res))); const shown = () => !again.classList.contains('far') && getComputedStyle(again).visibility !== 'hidden'; R.scrollTop = 0; await frames(); out.overflow = R.scrollHeight - R.clientHeight > 24; out.farTop = !shown(); R.scrollTop = 1e6; await frames(); out.again = inside(again) && shown(); /* 69周目：はみ出す 時は 下まで 送るまで 消え、送れば 見える（68周目で 変えた 動き） */
         return out;
       });
       ok(r.title && r.sound, `題の 画面の 字が 画面の 中、音ボタンが のれんと かさならない（${w}×${h}）`, { title: r.title, sound: r.sound });
       for (const [s, v] of Object.entries(r.scenes)) ok(v.hud && v.say && v.talkTop >= v.fieldBot - 2, `${s}：HUD・吹き出しが 画面の 中、田んぼと かさならない（${w}×${h}）`, v);
-      ok(r.result && r.again && r.againTop, `結果の 字と「もう一回」が 画面の 中（送る 前から 見える）（${w}×${h}）`, { result: r.result, again: r.again, againTop: r.againTop });
+      ok(r.result && r.again && r.farTop === r.overflow, `結果の 字が 画面の 中、「もう一回」は はみ出す 時だけ 消えて 下まで 送れば 見える（${w}×${h}）`, { result: r.result, again: r.again, overflow: r.overflow, farTop: r.farTop });
       await p.screenshot({ path: path.join(OUT, `fit-${w}x${h}.png`) });
       await p.close(); pages.splice(pages.indexOf(p), 1);
     }

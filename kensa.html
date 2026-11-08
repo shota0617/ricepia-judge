@@ -286,6 +286,7 @@
   <p>穀刺しが袋に刺さると、専用の小さな音で知らせます。</p>
   <p>出典（農林水産省）のリンクを開くときも、資料を開くときと同じ小さな音で知らせます。</p>
   <p>資料の末尾の「ゲームへ もどる」を押すと、対になる小さな音で知らせて、ゲームの画面へ戻ります。</p>
+  <p>「いいね」が届かなかったときは、対になる小さな音で知らせて、押し直せるように戻ります。</p>
   <h2>みわけた粒のきろく</h2>
   <p id="grainRecord">まだ みわけた粒は ありません。</p>
   <p>みわけた粒の種類は、ここに静かに残ります。競うための数ではなく、見分けた粒をあとから見返すための記録です。</p>
@@ -534,6 +535,20 @@ function likeSound() { /* 終わり: 「いいね」を押した合図の音。5
     o.type = "triangle";
     o.frequency.setValueAtTime(560, t);
     o.frequency.exponentialRampToValueAtTime(840, t + 0.14);
+    g.gain.setValueAtTime(0.02, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+    o.connect(g).connect(ac.destination);
+    o.start(t); o.stop(t + 0.16);
+  } catch (_) {}
+}
+function likeOutSound() { /* 終わり: 「いいね」が届かなかった合図の音。840→560Hzへ小さく下がる音で、いいねの音（560→840Hzへ上がる・triangle）の対にする（サイクル118・差分テーマ差24）。押せた合図には固有の音がある（差13）一方、届かずに押し直せるよう戻る時だけが無音で、目を離していると「ありがとう」が静かに取り消されたことに気づけなかった（390×844実測で巻き戻しの同期音0件）。戻る時だけ1回鳴らす */
+  try {
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    if (ac.state === "suspended") ac.resume();
+    const o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime;
+    o.type = "triangle";
+    o.frequency.setValueAtTime(840, t);
+    o.frequency.exponentialRampToValueAtTime(560, t + 0.14);
     g.gain.setValueAtTime(0.02, t);
     g.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
     o.connect(g).connect(ac.destination);
@@ -1919,6 +1934,7 @@ likeBtn.addEventListener("click", () => {
   setFace("happy", 900);
   setTimeout(hideIdleCard, 900); /* つぎの ふくろ へすぐ戻れるように閉じる */
   sendTap("like", () => { /* 届かなかったら押し直せるように戻す */
+    likeOutSound(); /* 届かなかった合図も固有の音にする（サイクル118・差24）。押せた合図（差13）の対にする */
     try { sessionStorage.removeItem("kensaLiked"); } catch (_) {}
     likeBtn.disabled = false;
     likeBtn.textContent = "👍 いいね";

@@ -349,7 +349,7 @@ const CHECKS = {
     ok(/あすは 浅く/.test(r.keep) && !/あすは 浅く/.test(r.keep2) && !/↓/.test(r.keep) && /熊本県/.test(r.keep2), '台風の 翌日の「あすは 浅く」は あすも 6cm 超の 時だけ（矢印の 字は 使わない。短い 方は 注も 出る）', r);
   },
   // 83〜84周目：あす 線を 割る 深水は「あすには 下がります」（↓を 頼まない）、2朝 つづく 深水は 間を 待たない、出穂後の はじき↓は 2夜分を 残す（高温→雨 でも 4cm）
-  async rules86(b){
+  async rules87(b){
     const p = await page(b, 390, 844);
     const r = await p.evaluate(() => {
       K3.manual = true; K3.fixedSeed = 7; K3.jump('tiller'); const S = K3.S, f = S.f; const out = {};

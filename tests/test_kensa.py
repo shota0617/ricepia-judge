@@ -1136,6 +1136,28 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         # 資料に1文だけ足す（ゲーム内文言は増やさない）
         self.assertIn("はかるで空振りしたときも、ハンドルが揺れるのに合わせて、回すときと同じ小さなカチッという音で知らせます", HTML)
 
+    def test_cycle120_probe_demo_uses_probe_demo_sound(self):
+        # 差分テーマ差26（差25の再監査の残り・手本の無音）: はかるの手本の揺れには
+        # crankSound が付いた（差25）一方、ぬくで空振りしたときの手本の動き
+        # （1回目の小さな揺れ・2回目の半分デモ）だけが無音だった（390×844実測で同期音0件）
+        # ため、手本の滑る動きに固有の probeDemoSound を1回ずつ鳴らす。
+        # 刺さってはいないので、刺さった音（pierceSound）は使わない。
+        end = HTML[HTML.index("function endBagDrag(e) {"):HTML.index('$("sceneBag").addEventListener("pointerup", endBagDrag);')]
+        self.assertEqual(end.count("probeDemoSound();"), 2)
+        self.assertNotIn("pierceSound();", end)
+        # 手本の音は専用の関数で、刺さった音・完了の音とは分ける
+        self.assertIn("function probeDemoSound()", HTML)
+        self.assertIn("o.frequency.setValueAtTime(380, t);", HTML)
+        self.assertIn("o.frequency.exponentialRampToValueAtTime(300, t + 0.13);", HTML)
+        # 本物の刺さる音（差21）と完了の音（差9）は従来どおり
+        self.assertIn("pierceSound();", HTML)
+        self.assertIn("probeDoneSound();", HTML)
+        # 3回目の空振りで自動で刺す経路（autoProbe）では手本の音は鳴らさない
+        auto = HTML[HTML.index("function autoProbe() {"):HTML.index("function endBagDrag(e) {")]
+        self.assertNotIn("probeDemoSound", auto)
+        # 資料に1文だけ足す（ゲーム内文言は増やさない）
+        self.assertIn("ぬくで空振りしたときも、穀刺しが手本の動きをするのに合わせて、専用の小さな音で知らせます", HTML)
+
     def test_cycle93_picked_grains_stay_in_quiet_record(self):
         # 類7: 見分けた粒が静かに記録に残る。任意で開く資料（#notes）の中だけに出し、常時表示・競争・スコアにはしない。
         # 袋を越えて残るため startLot では消さない（サイクル91の seenChecks と同じ持ち方）。

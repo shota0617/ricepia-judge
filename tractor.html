@@ -7350,7 +7350,7 @@ const HIGAN = (() => {
     for (const c of HIGAN_SPOTS) { const d = Math.hypot(c.x - S.x, c.z - S.z); if (d < nd) { nd = d; near = c; } }
     if (!q1 && nd < 4.5) { q1 = true; q.push(['ヒガンバナの はっぱが でてるね。9がつは まっかな 花の 列だったよ', 'joy', () => { told = true; voice('higan'); }]); }
     else if (q1 && !q2 && nd < 4.5 && MOGURA.told) { q2 = true; q.push(['モグラが あぜに あなを あけないように うえたんだって', 'wow', () => { told2 = true; }]); }
-    const top = q[0]; if (top && nd < 7 && (!INTRO.on || INTRO.talked) && (DETAIL || SAY.free && SAY.note(top[0]))) { BADGE.peek(near.x, near.z, 3, top[1]); top[2](); q.shift(); }   // まえの ひとことが 消えてから
+    const top = q[0]; if (top && nd < 7 && (!INTRO.on || INTRO.talked) && !startNoticeMuted() && (DETAIL || SAY.free && SAY.note(top[0]))) { BADGE.peek(near.x, near.z, 3, top[1]); top[2](); q.shift(); }   // まえの ひとことが 消えてから。サイクル250・最初の1分: のんびりでは最初の1分はキューの消費だけを止め、吹き出し・BADGE・声をまとめて遅らせる（ヒガンバナの葉の株そのものは従来どおり）。有効なのは秋だけで、株は build_field.py の種102で決まり生成順の再現では全328株・北畦は75株あり、北畦の株 (-1.63, 25.26) は開始点(0,0)から北への最初の直進で nd<4.5 に入るのが z=21.06（なぞり上限1.6m/s＋始動・降下の遅れで開始約14.3秒・キー運転でも約22.2秒）で、消費の nd<7 は積まれた時点で既に満たしていた。従来の「畦の株まで近づく必要がある」という留保は実測で置き換える。q は積まれたまま残り told も立たないので、1分を過ぎれば順番どおり（1件目→2件目）出す（遅れて出す形。消費に nd<7 が要るのは元々の待ち方と同型）。2件目はモグラの told が前提でモグラ側も最初の1分はガード済みのため連鎖しない。くわしい説明では従来どおり開始直後から出す
   }
   return { update, get told() { return told; }, get told2() { return told2; } };
 })();

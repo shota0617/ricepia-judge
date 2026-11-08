@@ -4496,7 +4496,7 @@ const SNAILS = (() => {
   const bits = new THREE.InstancedMesh(new THREE.BoxGeometry(0.018, 0.004, 0.012), new THREE.MeshLambertMaterial({ color: 0xd2c6a4 }), N * 3);   // つぶれたかけらは 内側が白っぽい
   for (const m of [shells, bits]) { m.count = 0; m.frustumCulled = false; m.receiveShadow = true; scene.add(m); }
   const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), p = new THREE.Vector3(), one = new THREE.Vector3(1, 1, 1);
-  let acc = 0, ks = 0, kb = 0;
+  let acc = 0, ks = 0, kb = 0, tanishiTold = false;
   const PX = Math.ceil(2 * HX), PZ = Math.ceil(2 * HZ), pop = Uint8Array.from({ length: PX * PZ }, () => Math.floor(Math.random() * 3));   // 1m ごとに 0〜2 匹（平均 1 匹/m²）。つぶした・掘り出した貝はへる（同じ所を耕しなおしても ふえない）
   const put = (mesh, k, x, z, y) => { mesh.setMatrixAt(k, m4.compose(p.set(x, y, z), q.setFromEuler(e.set(Math.random() * 0.6, Math.random() * 6.3, Math.random() * 0.6)), one)); };
   return {
@@ -4523,7 +4523,7 @@ const SNAILS = (() => {
           put(shells, ks, x, z, TILL_Y + 0.012); ks = (ks + 1) % N;
           shells.count = Math.min(N, shells.count + 1); shells.instanceMatrix.needsUpdate = true;
         }
-        if (cnt.up + cnt.crushed === 12) voice('tanishi');
+        if (!tanishiTold && cnt.up + cnt.crushed >= 12 && !startNoticeMuted()) { tanishiTold = true; voice('tanishi'); }   // サイクル254・最初の1分: のんびりでは最初の1分はジャンボタニシの声を消費しない。声だけの経路で、秋に耕し始めると12匹目は実測の再現（500試行）でなぞり上限では中央値5.46秒・最大9.16秒、のんびり自動0.85m/sでも最大17.21秒で、再現500試行では全て最初の1分以内に届き、聞いていない声が終わりの画面の数にだけ入っていた。等号のままでは最初の1分に通過すると二度と出なくなるため、フラグと以上で受ける遅延形にし、1分を過ぎて次に貝を掘った時点で従来どおり1回出す（耕すのをやめれば次の貝まで待つ）。貝の出現・つぶれ方・数え方は従来どおり。くわしい説明では従来どおり12匹目から出す
       }
     }
   };

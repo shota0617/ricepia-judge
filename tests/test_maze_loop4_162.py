@@ -105,7 +105,7 @@ class TestBloomSlow(unittest.TestCase):
 class TestUnchanged(unittest.TestCase):
     def test_constants(self):
         th = re.search(r"const GROW_TH = \[([\d, ]+)\];", PIX).group(1)
-        self.assertEqual([int(x) for x in th.split(",")], [15, 40, 80, 140, 210, 300, 420, 570, 760, 1000, 1300, 1700, 2200, 2800, 3600, 4600, 5900, 7600, 9800])
+        self.assertEqual([int(x) for x in th.split(",")], [15, 40, 80, 140, 210, 300, 420, 570, 760, 1000, 1300, 1700, 2200, 2800, 3600, 4600, 5900, 7600, 9800, 12700, 16500])
         self.assertRegex(PIX, r"RICE_BIG = 1\.45\b")
         self.assertRegex(PIX, r"ROLL_ACC = 7\b")
         self.assertRegex(PIX, r"ROLL_MAX = 4\.2\b")

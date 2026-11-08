@@ -21,16 +21,16 @@ def stage_for(d):
 
 class TestGrow(unittest.TestCase):
     def test_thresholds(self):
-        self.assertIn("const GROW_TH = [15, 40, 80, 140, 210, 300, 420, 570, 760, 1000, 1300, 1700, 2200, 2800, 3600, 4600, 5900, 7600, 9800];", PIX)  # サイクル158（差2）で拡張
+        self.assertIn("const GROW_TH = [15, 40, 80, 140, 210, 300, 420, 570, 760, 1000, 1300, 1700, 2200, 2800, 3600, 4600, 5900, 7600, 9800, 12700, 16500];", PIX)  # サイクル158（差2）で拡張
         self.assertIn("function growStageFor(d)", PIX)
-        for d, s in [(0, 0), (14, 0), (15, 1), (39, 1), (40, 2), (79, 2), (80, 3), (139, 3), (140, 4), (209, 4), (210, 5), (300, 6), (420, 7), (99999, 19)]:  # 210以降はサイクル158
+        for d, s in [(0, 0), (14, 0), (15, 1), (39, 1), (40, 2), (79, 2), (80, 3), (139, 3), (140, 4), (209, 4), (210, 5), (300, 6), (420, 7), (99999, 21)]:  # 210以降はサイクル158
             self.assertEqual(stage_for(d), s, d)
 
     def test_stage_for_logic_runs_in_node(self):
         code = (re.search(r"const GROW_TH = .*?;", PIX).group(0) + re.search(r"function growStageFor\(d\) \{.*?\n", PIX).group(0)
                 + "console.log([0,14,15,40,80,140,1e6].map(growStageFor).join());")
         out = subprocess.run(["node", "-e", code], capture_output=True, text=True, check=True).stdout.strip()
-        self.assertEqual(out, "0,0,1,2,3,4,19")  # 1e6 はサイクル174で段階17
+        self.assertEqual(out, "0,0,1,2,3,4,21")  # 1e6 はサイクル174で段階17
 
     def test_growstep_after_hero_draw(self):
         a = PIX.index("drawRiceBall(hx, by, u, th % (Math.PI * 2), sx, sy, roll.spin, ctx, gbOn && !worldMode, mood, roll.look")

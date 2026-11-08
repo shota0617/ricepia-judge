@@ -388,5 +388,13 @@
     const k = num(n) ? Math.abs(Math.trunc(n)) : 0;
     return { petals: k % 2 === 0 ? 4 : 5, rot: (k * 0.61803398875 % 1) * Math.PI * 2 };
   }
-  root.nishioRollTrail = { BLOOM_GAP, BLOOM_MAX, BLOOM_LIFE_MS, BLOOM_ALPHA, BLOOM_FADE_MS, bloomAlphaAt, bloomPush, bloomAlive, bloomAlpha, bloomPetal, MAX, GAP, LIFE_MS, STEP, push, alive, alphaFor, segments, colorFor, mixRgb, smoothColors, ribbon, dedupe, dedupeNear, dedupeSplit, AREA_COLORS };
+  // 年齢で3段階に育つ（段階0＝つぼみ／1＝開く／2＝ふわり）。濃さは変えない。不正値は段階1
+  const BLOOM_STAGE1_MS = 30000, BLOOM_STAGE2_MS = 120000;
+  function bloomStage(ageMs) {
+    if (!num(ageMs)) return { stage: 1, scale: 1 };
+    if (ageMs < BLOOM_STAGE1_MS) return { stage: 0, scale: 0.55 };
+    if (ageMs < BLOOM_STAGE2_MS) return { stage: 1, scale: 1 };
+    return { stage: 2, scale: 1.25 };
+  }
+  root.nishioRollTrail = { BLOOM_STAGE1_MS, BLOOM_STAGE2_MS, bloomStage, BLOOM_GAP, BLOOM_MAX, BLOOM_LIFE_MS, BLOOM_ALPHA, BLOOM_FADE_MS, bloomAlphaAt, bloomPush, bloomAlive, bloomAlpha, bloomPetal, MAX, GAP, LIFE_MS, STEP, push, alive, alphaFor, segments, colorFor, mixRgb, smoothColors, ribbon, dedupe, dedupeNear, dedupeSplit, AREA_COLORS };
 })(typeof window !== 'undefined' ? window : globalThis);

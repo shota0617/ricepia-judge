@@ -8590,12 +8590,13 @@ function drawRollBloom(ox, oy, T, now) {
     if (a <= 0) continue;
     const cx = ox + p.x * T, cy = oy + p.y * T;
     ctx.fillStyle = 'rgba(' + (p.n % 2 === 0 ? '255,170,190' : '255,250,240') + ',' + a.toFixed(3) + ')';
-    if (!fpsMeter.slow) { const f = RT.bloomPetal(p.n); for (let i = 0; i < f.petals; i++) {   // 重い端末では 花びらを 描かず、中心の点だけ（跡は 残す）
+    const st = RT.bloomStage ? RT.bloomStage(now - p.t) : { stage: 1, scale: 1 }, sc = st.scale;   // 年齢で育つ：つぼみ（点だけ）→開く→ふわり
+    if (!fpsMeter.slow) { const f = RT.bloomPetal(p.n); for (let i = 0; i < (st.stage > 0 ? f.petals : 0); i++) {   // 重い端末では 花びらを 描かず、中心の点だけ（跡は 残す）
       const ang = f.rot + i * Math.PI * 2 / f.petals;
-      ctx.beginPath(); ctx.arc(cx + Math.cos(ang) * T * 0.10, cy + Math.sin(ang) * T * 0.10, T * 0.08, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx + Math.cos(ang) * T * 0.10 * sc, cy + Math.sin(ang) * T * 0.10 * sc, T * 0.08 * sc, 0, Math.PI * 2); ctx.fill();
     } }
     if (!fpsMeter.slow) ctx.fillStyle = 'rgba(240,200,80,' + a.toFixed(3) + ')';   // 重い端末では 花の色の まま
-    ctx.beginPath(); ctx.arc(cx, cy, T * 0.06, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(cx, cy, T * 0.06 * sc, 0, Math.PI * 2); ctx.fill();
   }
   ctx.restore();
 }

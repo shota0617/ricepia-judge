@@ -13,9 +13,9 @@ def thresholds():
 class Cycle172(unittest.TestCase):
     def test_thresholds(self):
         th = thresholds()
-        self.assertEqual(th, [15, 40, 80, 140, 210, 300, 420, 570, 760, 1000, 1300, 1700, 2200])
+        self.assertEqual(th[:13], [15, 40, 80, 140, 210, 300, 420, 570, 760, 1000, 1300, 1700, 2200])  # 2800以降はサイクル173
         gaps = [th[0]] + [b - a for a, b in zip(th, th[1:])]
-        self.assertEqual(gaps, [15, 25, 40, 60, 70, 90, 120, 150, 190, 240, 300, 400, 500])
+        self.assertEqual(gaps[:13], [15, 25, 40, 60, 70, 90, 120, 150, 190, 240, 300, 400, 500])
         self.assertEqual(gaps, sorted(gaps))
 
     def test_stage_boundaries_in_node(self):
@@ -23,7 +23,7 @@ class Cycle172(unittest.TestCase):
                 + re.search(r"function growStageFor\(d\) \{.*?\n", PIX).group(0)
                 + "console.log([1299,1300,1699,1700,2199,2200,1000000].map(growStageFor).join());")
         out = subprocess.run(["node", "-e", code], capture_output=True, text=True, check=True).stdout.strip()
-        self.assertEqual(out, "10,11,11,12,12,13,13")
+        self.assertEqual(out, "10,11,11,12,12,13,15")
 
     def test_draw_code(self):
         self.assertIn("if (st >= 12) { const fx0 = x0, fy0 = y0 - (sh + 9) * q; ctx.fillStyle = '#ffffff'; for (const [fx, fy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) ctx.fillRect(fx0 + fx * q, fy0 + fy * q, q, q); }", PIX)

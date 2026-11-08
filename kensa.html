@@ -953,8 +953,8 @@ function startLot() {
   setStep(0, "穀刺しを ふくろへ さす ←");
   setFace("normal");
   updateCooked(); /* 前の袋があれば、そのお米が小さく炊き上がって返ってくる（サイクル94・類8） */
-  if (lotIndex > 0 && cookedReturns.length) { const chipLot = lotIndex, chip = $("cookedReturn"); chip.hidden = true; setTimeout(() => { if (lotIndex !== chipLot || !cookedReturns.length) return; chip.hidden = false; chip.animate([{ opacity:0, transform:"scale(.7)" }, { opacity:1, transform:"scale(1.05)", offset:.7 }, { opacity:1, transform:"scale(1)" }], { duration:260 * motion, easing:"ease-out" }); }, 320 * motion); } /* 炊き上がりチップの見た目も、音（差16）と同じく袋が着いて落ち着いた後（320ms）に、ふわりと現れる形にそろえる（サイクル124・差30）。旧版は場面の切り替わりと同時に完成形で現れ、動きがなく、音より約320ms先に出ていた（390×844実測） */
-  if (lotIndex > 0) { arriveSound(); $("bagBtn").animate([{ transform:"translateX(120%)" }, { transform:"none" }], { duration:260 * motion, easing:"ease-out" }); if (cookedReturns.length) setTimeout(cookedSound, 320 * motion); } /* 次の袋が運ばれてくる合図も固有の音にする（サイクル104・差10）。流れる bagSound とは分ける。炊き上がって返ってくる合図は、袋が着いて落ち着いた後に固有の音で知らせる（サイクル110・差16）。到着音とは分ける */
+  if (lotIndex > 0 && cookedReturns.length) { const chipLot = lotIndex, chip = $("cookedReturn"); chip.hidden = true; setTimeout(() => { if (lotIndex !== chipLot || !cookedReturns.length) return; chip.hidden = false; chip.animate([{ opacity:0, transform:"scale(.7)" }, { opacity:1, transform:"scale(1.05)", offset:.7 }, { opacity:1, transform:"scale(1)" }], { duration:260 * motion, easing:"ease-out" }); cookedSound(); }, 320 * motion); } /* 炊き上がりチップの見た目も、音（差16）と同じく袋が着いて落ち着いた後（320ms）に、ふわりと現れる形にそろえる（サイクル124・差30）。旧版は場面の切り替わりと同時に完成形で現れ、動きがなく、音より約320ms先に出ていた（390×844実測）。音と表示は同じコールバックにまとめ、別の袋へ移っていたらどちらも出さない（Codexレビュー反映） */
+  if (lotIndex > 0) { arriveSound(); $("bagBtn").animate([{ transform:"translateX(120%)" }, { transform:"none" }], { duration:260 * motion, easing:"ease-out" }); } /* 次の袋が運ばれてくる合図も固有の音にする（サイクル104・差10）。流れる bagSound とは分ける。炊き上がって返ってくる合図は、袋が着いて落ち着いた後に固有の音で知らせる（サイクル110・差16→サイクル124で表示と同じコールバックへ統合）。到着音とは分ける */
 }
 
 /* 皿の粒: 位置は皿の中の px で持ち、指でなでると動く */

@@ -935,9 +935,10 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertIn("g.gain.setValueAtTime(0.016, t);", cooked_fn)
         # 次の袋の開始（startLot）で、炊き上がりの返りがある時だけ、到着の後に遅れて1回鳴らす
         start_lot = HTML[HTML.index("function startLot()"):HTML.index("/* 皿の粒:")]
-        self.assertIn("if (cookedReturns.length) setTimeout(cookedSound, 320 * motion);", start_lot)
+        # サイクル124（差30）で表示と音を同じコールバックに統合: 320ms後に1回鳴る点は不変
+        self.assertIn("cookedSound(); }, 320 * motion)", start_lot)
         self.assertIn("arriveSound();", start_lot)
-        self.assertEqual(HTML.count("cookedSound"), 2)  # 定義1＋呼び出し1（setTimeout の参照）
+        self.assertEqual(HTML.count("cookedSound"), 2)  # 定義1＋呼び出し1（サイクル124の統合コールバック内）
         # 押印の瞬間（stampNow の updateCooked）では鳴らさない: 返りが見えるのは次の袋の開始時だけ
         stamp = HTML[HTML.index("function stampNow()"):HTML.index("function dropHanko()")]
         self.assertNotIn("cookedSound", stamp)
@@ -1269,9 +1270,10 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertIn("chip.hidden = true;", start_lot)
         self.assertIn("chip.hidden = false;", start_lot)
         self.assertIn("chip.animate(", start_lot)
-        # 音（cookedSound）と同じ 320ms のタイミングで現れる
+        # 音（cookedSound）と同じ 320ms のタイミングで、同じコールバックから現れる
         self.assertIn("}, 320 * motion); } /* 炊き上がりチップの見た目も", start_lot)
-        self.assertIn("setTimeout(cookedSound, 320 * motion)", start_lot)
+        self.assertIn("cookedSound(); }, 320 * motion)", start_lot)
+        self.assertNotIn("setTimeout(cookedSound", start_lot)
         # 別の袋へ移っていたら古いチップは出さない
         self.assertIn("if (lotIndex !== chipLot || !cookedReturns.length) return;", start_lot)
         # 最初の袋（返りがない時）は従来どおり出さない: ガードは lotIndex > 0 かつ返りあり

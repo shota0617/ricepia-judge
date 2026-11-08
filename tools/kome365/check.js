@@ -190,6 +190,19 @@ const CHECKS = {
     ok(r.b.mizo && !r.a.mizo, '中干しの 間に ← で 溝切り', r);
     ok(r.b.wet <= r.a.wet && r.b.dryRun >= r.a.dryRun, '溝が あると 雨の 日でも 乾いた まま（同じ 天気で くらべる）', r);
   },
+  // 雨で 中干しが おわった 日は 一言 言って 止まる。↑で おわると ひびの 数（hoshiRun）が 消える（50周目）
+  async rainEnd(b){
+    const p = await page(b, 390, 844);
+    const r = await p.evaluate(() => {
+      K3.manual = true; K3.fixedSeed = 14; K3.jump('tiller'); const S = K3.S, f = S.f; for (let i=0;i<40 && f.dat < 36;i++){ f.water = 2; K3.advanceDay(); } f.water = 0;
+      let stop = null; for (let i=0;i<14 && !f.hoshiEnd;i++){ K3.V.flipQueue = 3; K3.advanceDay(); if (f.hoshiEnd) stop = K3.V.flipQueue; }
+      const say = document.getElementById('say').textContent, endDay = f.hoshiEndDay === S.day, hoshi = f.hoshiDays, water = f.water;
+      K3.fixedSeed = 3; K3.jump('tiller'); const f2 = K3.S.f; for (let i=0;i<40 && f2.dat < 36;i++){ f2.water = 2; K3.advanceDay(); } for (let i=0;i<7;i++){ f2.water = 0; K3.advanceDay(); } const run0 = f2.hoshiRun; swipe('up', 60, false); const run1 = f2.hoshiRun, say2 = document.getElementById('say').textContent;
+      return { say, stop, endDay, hoshi, water, run0, run1, say2 };
+    });
+    ok(/雨で 中干し おわり/.test(r.say) && r.stop === 0 && r.hoshi >= 5, '雨で 中干しが おわった 日は「雨で 中干し おわり」と 言って 止まる', r);
+    ok(r.run0 >= 7 && r.run1 === 0 && /中干し おわり/.test(r.say2), '7日 乾いた あとの ↑で 中干し おわり、ひびの 数は 0 に', r);
+  },
   // はじき続けて 水が 0 に なっても 詰まない：めくりが 止まり、吹き出しは「→」か「↑」を 言う。結果には 出来ばえと じこベスト（10周目）
   async stuck(b){
     const p = await page(b, 390, 844);

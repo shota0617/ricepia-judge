@@ -346,7 +346,7 @@ const CHECKS = {
     ok(/きのうの 雨で/.test(r.rain) && !/きのうの 雨で/.test(r.up), '中干しの 途中の「きのうの 雨で」は 自分で ↑した 日は 言わない', r);
     ok(/あつい日 1日目/.test(r.hot) && !/あつい日/.test(r.afterTy), '出穂の 翌朝の「あつい日 1日目」は 台風の あと（2日後）は 言わない', r);
     ok(/たおれました/.test(r.lodge) && /↓で 浅く/.test(r.lodge) && /岡山県/.test(r.lodge), 'たおれた 翌日は「↓で 浅く（岡山県）」と 注まで 出る', r);
-    ok(/あす ↓/.test(r.keep) && !/あす ↓/.test(r.keep2) && /熊本県/.test(r.keep2), '台風の 翌日の「あす ↓」は あすも 6cm 超の 時だけ（短い 方は 注も 出る）', r);
+    ok(/あすは 浅く/.test(r.keep) && !/あすは 浅く/.test(r.keep2) && !/↓/.test(r.keep) && /熊本県/.test(r.keep2), '台風の 翌日の「あすは 浅く」は あすも 6cm 超の 時だけ（矢印の 字は 使わない。短い 方は 注も 出る）', r);
   },
   async perf(b){
     const p = await page(b, 390, 844);

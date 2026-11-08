@@ -213,7 +213,7 @@ const CHECKS = {
       let moved = 0; for (let i=0;i<5;i++){ const t2 = document.getElementById('say').textContent; const dir = /↑/.test(t2) ? 'up' : /↓/.test(t2) ? 'down' : /←/.test(t2) ? 'left' : 'right'; const d0 = S.day; swipe(dir, 120, false, true); if (S.day > d0) moved++; }
       return { water: f.water, stopped, text: t.slice(0, 30), okText, moved, hud: hud0, hud2: document.getElementById('stage').textContent };
     });
-    ok(r.stopped && r.okText, '水が 0 に なった 日に パラパラが 止まり、吹き出しは → か ↑ を 言う', r);
+    ok(r.stopped && r.stopped.dayGap <= 2 && r.okText, '水が 0 に なった 日に パラパラが 止まり（はじきの 列の 途中で）、吹き出しは → か ↑ を 言う', r);
     ok(r.moved >= 3, 'その あとも 吹き出しの とおりで 日が すすむ（詰まない）', r);
     ok(/茎\d+本/.test(r.hud) && /℃|茎|出穂/.test(r.hud2), 'HUD に 茎の 本数（出穂の あとは 積算℃）', [r.hud, r.hud2]);
     const wp = await p.evaluate(() => { K3.jump('tiller'); K3.V.particles = []; K3.advanceDay(); const n = K3.V.particles.length; const w = K3.S.weather[K3.S.day].w; K3.jump('nursery'); return { n, w, stat: document.getElementById('stat').textContent }; });

@@ -7229,7 +7229,7 @@ const TSUBAME = (() => {
     }
     if (!told && nHunt >= Math.min(3, N) && near && nd < 10 && workT > 2) { told = true; q.push(['ツバメが きたよ。むしを つかまえてるね', 'wow', () => { voice('tsubame'); BADGE.joy(3); }]); }
     else if (told && !told2 && workT > 45 && nHunt >= Math.min(5, N) && near) { told2 = true; q.push(['ヒナに はこぶのかな。いっぱい たべてね', 'joy', () => BADGE.joy(4)]); }
-    const top = q[0]; if (top && near && S.started && (!INTRO.on || INTRO.talked) && (DETAIL || SAY.free && SAY.note(top[0]))) { BADGE.peek(near.x, near.z, 3, top[1]); top[2](); q.shift(); }   // まえの ひとことが 消えてから
+    const top = q[0]; if (top && near && S.started && (!INTRO.on || INTRO.talked) && !startNoticeMuted() && (DETAIL || SAY.free && SAY.note(top[0]))) { BADGE.peek(near.x, near.z, 3, top[1]); top[2](); q.shift(); }   // まえの ひとことが 消えてから。サイクル239・最初の1分: のんびりでは最初の1分はキューの消費を止め、吹き出し・BADGE・声をまとめて遅らせる（ツバメが集まって飛ぶ様子自体は従来どおり）。作業中 act は 1−exp(−0.35t) で寄り workT>2 の時点で約0.503 となり、必要数 min(3,N)=3 羽の hunt はデスクトップ（N=10・k は0.25まで）でもモバイル（N=6・k は0.417まで）でも満たし、hunt 鳥は各鳥の hunt 開始から約2秒で軌道（中心は後ろ2.5m・半径最大8.2m）へ収束するため、耕し続ける最初の1分に知らせの通知機会がほぼ確実に生じていた。q は積まれたまま残るので1分を過ぎて near がいれば順番どおり出す（遅れて出す形。told2 が後ろに積まれていれば続けて出る）。作業をやめて near が無ければ次の hunt まで待つ（キューの元々の待ち方）。くわしい説明では従来どおり開始直後から出す
   }
   return { update, list, get act() { return act; }, get told() { return told; }, get told2() { return told2; } };
 })();

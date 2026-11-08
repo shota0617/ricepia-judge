@@ -1168,7 +1168,8 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         end = HTML[HTML.index("function endHanko() {"):HTML.index('$("bagBig").addEventListener("pointerup", endHanko);')]
         self.assertEqual(end.count("stampDemoSound();"), 1)
         # 鳴らすのは半分デモ（空振り2回目）のアニメーションの直前だけに固定する
-        self.assertLess(end.index("stampDemoSound();"), end.index('$("hanko").animate('))
+        # （サイクル123で朱肉側にも半分デモの animate が増えたため、はんこ側の animate を対象にする）
+        self.assertLess(end.index("stampDemoSound();"), end.index('$("hanko").animate(', end.index("stampDemoSound();")))
         self.assertIn("hankoTaps === 2", end[:end.index("stampDemoSound();")])
         # 手本の音は専用の関数で、実際に押したときの音・粒の tick とは分ける
         self.assertIn("function stampDemoSound()", HTML)
@@ -1219,6 +1220,45 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertNotIn("gradeDemoSound", move)
         # 資料に1文だけ足す（ゲーム内文言は増やさない）
         self.assertIn("きめるで空振りしたときも、等級のボタンが手本の動きをするのに合わせて、専用の小さな音で知らせます", HTML)
+
+    def test_cycle123_ink_demo_uses_ink_demo_sound(self):
+        # 差分テーマ差29（差28の再監査の残り・手本の欠け）: 他の所作の空振り2回目には
+        # 道具の半分デモがある（ぬく=穀刺しの半分・はかる=ハンドルの揺れ・
+        # おす はんこ側=半分おろす）一方、おす朱肉側の2回目だけ半分デモ自体がなく
+        # 無音だった（390×844実測で同期音0件）ため、手本の指の押し下げ（24px）の
+        # 半分（12px）だけ はんこが押し下がって戻る半分デモを足し、固有の inkDemoSound を鳴らす。
+        # 朱肉はまだ付いていないので、実際に付くときの音（inkSound）は使わない。
+        end = HTML[HTML.index("function endHanko() {"):HTML.index('$("bagBig").addEventListener("pointerup", endHanko);')]
+        ink_branch = end[:end.index("if (!hankoDrag) return;")]
+        self.assertEqual(ink_branch.count("inkDemoSound();"), 1)
+        # 鳴らすのは朱肉側の半分デモ（空振り2回目）のアニメーションの直前だけに固定する
+        self.assertIn("hankoTaps === 2", ink_branch[:ink_branch.index("inkDemoSound();")])
+        self.assertIn('transform:"translateY(12px)"', ink_branch)
+        self.assertLess(ink_branch.index("inkDemoSound();"), ink_branch.index('$("hanko").animate('))
+        # 半分デモでは状態を進めない（朱肉は付かない・inkDone は呼ばない）
+        demo = ink_branch[ink_branch.index("hankoTaps === 2"):]
+        self.assertNotIn("inkDone", demo)
+        # デモの間に押し直していたら、終了時に揺れ（bob）を戻さない（Codexレビュー指摘・サイクル123）
+        self.assertIn("if (!inked && !inkHold && !inkDrag) bobHanko();", demo)
+        # 手本の音は専用の関数で、実際に付く音・はんこ側の手本の音・粒の tick とは分ける
+        self.assertIn("function inkDemoSound()", HTML)
+        fn = HTML[HTML.index("function inkDemoSound()"):HTML.index("function spreadSound()")]
+        self.assertIn("o.frequency.setValueAtTime(290, t);", fn)
+        self.assertIn("o.frequency.exponentialRampToValueAtTime(200, t + 0.13);", fn)
+        self.assertIn('o.type = "sine";', fn)
+        self.assertIn("g.gain.setValueAtTime(0.018, t);", fn)
+        self.assertEqual(HTML.count("inkDemoSound"), 2)  # 定義1＋呼び出し1
+        # 実際に朱肉が付く経路（inkDone）では手本の音は鳴らさず、従来の inkSound のまま
+        done = HTML[HTML.index("function inkDone() {"):HTML.index("function stampNow() {")]
+        self.assertNotIn("inkDemoSound", done)
+        self.assertIn("inkSound();", done)
+        # はんこ側の半分デモ（差27）には朱肉側の手本の音は混ぜない
+        self.assertEqual(end.count("stampDemoSound();"), 1)
+        self.assertNotIn("inkDemoSound", end[end.index("if (!hankoDrag) return;"):])
+        # 空振り1回目（手本の指のみ）には鳴らさない（サイクル121の切り分けと同じ）
+        self.assertNotIn("inkDemoSound", ink_branch[:ink_branch.index("hankoTaps === 2")])
+        # 資料に1文だけ足す（ゲーム内文言は増やさない）
+        self.assertIn("おすの朱肉で空振りしたときも、2回目にはんこが半分だけ押し下がる手本の動きと、専用の小さな音で知らせます", HTML)
 
     def test_cycle93_picked_grains_stay_in_quiet_record(self):
         # 類7: 見分けた粒が静かに記録に残る。任意で開く資料（#notes）の中だけに出し、常時表示・競争・スコアにはしない。

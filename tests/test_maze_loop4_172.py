@@ -23,7 +23,7 @@ class Cycle172(unittest.TestCase):
                 + re.search(r"function growStageFor\(d\) \{.*?\n", PIX).group(0)
                 + "console.log([1299,1300,1699,1700,2199,2200,1000000].map(growStageFor).join());")
         out = subprocess.run(["node", "-e", code], capture_output=True, text=True, check=True).stdout.strip()
-        self.assertEqual(out, "10,11,11,12,12,13,23")
+        self.assertEqual(out, "10,11,11,12,12,13,25")
 
     def test_draw_code(self):
         self.assertIn("if (st >= 12) { const fx0 = x0, fy0 = y0 - (sh + 9) * q; ctx.fillStyle = '#ffffff'; for (const [fx, fy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) ctx.fillRect(fx0 + fx * q, fy0 + fy * q, q, q); }", PIX)

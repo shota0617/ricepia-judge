@@ -1323,6 +1323,21 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertIn('duration:260 * motion, easing:"ease-out"', tap)
         self.assertEqual(HTML.count("mini.animate("), 1)
 
+    def test_cycle128_stamp_mark_appears_gently(self):
+        # 差分テーマ差34: おすで押した証印（#mark）だけが、opacity の切り替え
+        # だけで完成形が即座に出ていた（390×844実測で出現時のアニメーション
+        # 0件・opacity即1）。他の現れるもの（チップ・差30／つぎの袋ボタン・
+        # 差31／🔍ボタン・差32／小皿の粒・差33）と同じく、押した勢いのまま
+        # 少し大きく出て落ち着く穏やかな出現にする。傾き（-8deg）は保ち、
+        # 押した時だけ1回、流れは止めない。
+        stamp = HTML[HTML.index("function stampNow()"):HTML.index("function dropHanko()")]
+        self.assertIn('$("mark").classList.add("on");', stamp)
+        self.assertIn('$("mark").animate(', stamp)
+        self.assertIn('transform:"rotate(-8deg) scale(1.22)"', stamp)
+        self.assertIn('transform:"rotate(-8deg) scale(1)"', stamp)
+        self.assertIn('duration:200 * motion, easing:"ease-out"', stamp)
+        self.assertEqual(HTML.count('$("mark").animate('), 1)
+
     def test_cycle93_picked_grains_stay_in_quiet_record(self):
         # 類7: 見分けた粒が静かに記録に残る。任意で開く資料（#notes）の中だけに出し、常時表示・競争・スコアにはしない。
         # 袋を越えて残るため startLot では消さない（サイクル91の seenChecks と同じ持ち方）。

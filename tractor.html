@@ -6986,7 +6986,7 @@ const KIJI = (() => {
       cock.wings.forEach((w, i) => { w.visible = drum; w.rotation.z = (i ? -1 : 1) * (1.0 + Math.sin(c * 95) * 0.45); });   // 体の よこで たてに 速く うつ
     }
     cock.g.position.set(cock.x, cock.y, cock.z); cock.g.rotation.y = cock.yaw;
-    const q = toldQ[0]; if (q && S.started && (DETAIL || SAY.free && SAY.note(q.txt))) { BADGE.peek(q.x, q.z, 3.5, q.feel); q.then(); toldQ.shift(); }   // まえの ひとことが 消えてから
+    const q = toldQ[0]; if (q && S.started && !startNoticeMuted() && (DETAIL || SAY.free && SAY.note(q.txt))) { BADGE.peek(q.x, q.z, 3.5, q.feel); q.then(); toldQ.shift(); }   // まえの ひとことが 消えてから。サイクル251・最初の1分: のんびりでは最初の1分はキューの消費だけを止め、吹き出し・BADGEをまとめて遅らせる（キジの姿・鳴き声そのものは従来どおり）。春のオスは畦 (25.2, 25.5) にいて、乱数は種227で決まり生成順の再現では初期の鳴きタイマーは6.278秒・再設定は10.86秒。タイマーは発火の条件（はじめて・d<22）を満たさない間は再設定されず、開始点(0,0)から北東の隅 (15, 25) へ直接なぞる再現では1回目が開始10.25秒（d=21.99で知らせは積まれない）、2回目が21.15秒で隅では d=10.21<18 のため知らせが積まれ、その場で出ていた。従来の「タイマーが先に消費されるため確実さが足りない」という留保は実測で置き換える。q は積まれたまま残り told も立たないので、1分を過ぎれば順番どおり出す（遅れて出す形）。くわしい説明では従来どおり開始直後から出す
   }
   return {
     setup, update, hen, cock, get nest() { return nest; }, get told() { return told; },

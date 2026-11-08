@@ -549,6 +549,20 @@ function idleOutSound() { /* 終わり: 終了カードを自分で閉じる合�
     o.start(t); o.stop(t + 0.26);
   } catch (_) {}
 }
+function cookedSound() { /* ぬく: 前の袋のお米が炊き上がって返ってくる合図の音。392→523Hzへゆっくり上がる温かい音で、粒の tick（高い短い音）や袋が運ばれてくる紙の音（arriveSound 180→320Hz・triangle）・笑顔の音（smileSound 500→760Hz）とは分ける（サイクル110・差分テーマ差16）。炊き上がりのチップが現れる窓にあるのは袋の到着音だけで、返ってきた合図そのものの音がなかった（390×844実測）。袋が着いて落ち着いた後に1回だけ鳴らし、最初の袋（返りがない時）には鳴らさない */
+  try {
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    if (ac.state === "suspended") ac.resume();
+    const o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime;
+    o.type = "sine";
+    o.frequency.setValueAtTime(392, t);
+    o.frequency.exponentialRampToValueAtTime(523, t + 0.28);
+    g.gain.setValueAtTime(0.016, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.3);
+    o.connect(g).connect(ac.destination);
+    o.start(t); o.stop(t + 0.3);
+  } catch (_) {}
+}
 function thump() {
   tone(110, 0.16, 0.14, "sine");
   tone(70, 0.22, 0.1, "sine");
@@ -779,7 +793,7 @@ function startLot() {
   setStep(0, "穀刺しを ふくろへ さす ←");
   setFace("normal");
   updateCooked(); /* 前の袋があれば、そのお米が小さく炊き上がって返ってくる（サイクル94・類8） */
-  if (lotIndex > 0) { arriveSound(); $("bagBtn").animate([{ transform:"translateX(120%)" }, { transform:"none" }], { duration:260 * motion, easing:"ease-out" }); } /* 次の袋が運ばれてくる合図も固有の音にする（サイクル104・差10）。流れる bagSound とは分ける */
+  if (lotIndex > 0) { arriveSound(); $("bagBtn").animate([{ transform:"translateX(120%)" }, { transform:"none" }], { duration:260 * motion, easing:"ease-out" }); if (cookedReturns.length) setTimeout(cookedSound, 320 * motion); } /* 次の袋が運ばれてくる合図も固有の音にする（サイクル104・差10）。流れる bagSound とは分ける。炊き上がって返ってくる合図は、袋が着いて落ち着いた後に固有の音で知らせる（サイクル110・差16）。到着音とは分ける */
 }
 
 /* 皿の粒: 位置は皿の中の px で持ち、指でなでると動く */

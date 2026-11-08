@@ -1159,7 +1159,9 @@ function takeReading() {
   const i = measured++, value = LOT.moisture[i];
   meterBeep();
   $("lcd").textContent = value.toFixed(1);
-  $("slots").children[i].textContent = value.toFixed(1);
+  const slot = $("slots").children[i];
+  slot.textContent = value.toFixed(1);
+  slot.animate([{ opacity:0, transform:"scale(.7)" }, { opacity:1, transform:"scale(1.05)", offset:.7 }, { opacity:1, transform:"scale(1)" }], { duration:260 * motion, easing:"ease-out" }); /* 測定値の枠（slots）も、他の現れるもの（チップ=ふわり260ms・差30／つぎの袋ボタン=差31／🔍ボタン=差32／小皿の粒=差33／証印=差34）と同じくふわりと現れる形にそろえる（サイクル129・差分テーマ差35）。旧版は数字が入るだけで完成形が即座に出ていた（390×844実測で出現時のアニメーション0件・opacity即1） */
   if (measured === LOT.moisture.length) setTimeout(showAverage, 240 * motion);
   else hint.textContent = "💧 あと " + (LOT.moisture.length - measured) + "回";
 }

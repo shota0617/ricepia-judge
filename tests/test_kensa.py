@@ -261,9 +261,9 @@ class FlowTests(unittest.TestCase):
         move = HTML[HTML.index('$("sceneMeter").addEventListener("pointermove",'):HTML.index("function endCrank(e) {")]
         script = RULES + """
 const assert = require('node:assert/strict');
-let onMove, measured = 0, lotIndex = 0, crankAngle = 0, step = 1;
+let onMove, measured = 0, lotIndex = 0, crankAngle = 0, step = 1; const motion = 1;
 const LOT = LOTS[0], hint = {}, lcd = {textContent:'--.-'};
-const elements = {lcd, slots:{children:[{}, {}, {}]}, crankArm:{style:{}},
+const elements = {lcd, slots:{children:[{animate:()=>{}}, {animate:()=>{}}, {animate:()=>{}}]}, crankArm:{style:{}},
   sceneMeter:{addEventListener:(_, fn) => { onMove = fn; }}};
 const $ = id => elements[id];
 const pop = () => {}, tick = () => {}, meterBeep = () => {}, crankSound = () => {};
@@ -1337,6 +1337,20 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertIn('transform:"rotate(-8deg) scale(1)"', stamp)
         self.assertIn('duration:200 * motion, easing:"ease-out"', stamp)
         self.assertEqual(HTML.count('$("mark").animate('), 1)
+
+    def test_cycle129_moisture_slot_appears_gently(self):
+        # 差分テーマ差35: はかるで測定値が入る枠（slots）だけが、数字が入る
+        # だけで完成形が即座に出ていた（390×844実測で出現時のアニメーション
+        # 0件）。他の現れるもの（チップ・差30／つぎの袋ボタン・差31／🔍ボタン・
+        # 差32／小皿の粒・差33／証印・差34）と同じくふわりと現れる形にそろえる。
+        # 測定した時だけ1回、流れは止めない。
+        reading = HTML[HTML.index("function takeReading()"):HTML.index("function crankPointer")]
+        self.assertIn("const slot = $(\"slots\").children[i];", reading)
+        self.assertIn("slot.animate(", reading)
+        self.assertIn('transform:"scale(.7)"', reading)
+        self.assertIn('transform:"scale(1)"', reading)
+        self.assertIn('duration:260 * motion, easing:"ease-out"', reading)
+        self.assertEqual(HTML.count("slot.animate("), 1)
 
     def test_cycle93_picked_grains_stay_in_quiet_record(self):
         # 類7: 見分けた粒が静かに記録に残る。任意で開く資料（#notes）の中だけに出し、常時表示・競争・スコアにはしない。

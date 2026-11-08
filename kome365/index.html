@@ -2816,15 +2816,16 @@ renderTitle();
   function cardIconSet(icon){
     var ic = $('swIc'); if (!ic) return;
     var px = ic.querySelector('.icPix'), em = ic.querySelector('.icEmoji');
-    var url = pixCardURL(icon);
+    var url = pixCardURL(icon), src = url ? 'card' : '';
+    if (!url) { var ek = EDGEPIX[pixCardKey(icon)] || ''; if (ek) { url = pixEdgeURL(ek); if (url) src = 'edge:' + ek; } }   /* 周回142(差11・Reigns/Lapse: 大きな絵が主役): PIXCARDに無い48種は札用ドット絵(EDGEPIX)を流用し、大きな絵も全てドット絵にする。表示のみ・アイコン論理は不変 */
     if (url && px && em) {
       px.style.backgroundImage = 'url("' + url + '")';
       em.textContent = '';
-      ic.classList.add('pix'); ic.setAttribute('data-pixcard', pixCardKey(icon));
+      ic.classList.add('pix'); ic.setAttribute('data-pixcard', pixCardKey(icon)); ic.setAttribute('data-pixcard-src', src);
     } else {
       if (px) px.style.backgroundImage = '';
       if (em) em.textContent = icon;
-      ic.classList.remove('pix'); ic.removeAttribute('data-pixcard');
+      ic.classList.remove('pix'); ic.removeAttribute('data-pixcard'); ic.removeAttribute('data-pixcard-src');
     }
   }
   /* 田んぼの絵の刻々の変化(サイクル14): 状態から連続値を作りCSS変数へ流すだけ。読み取りのみ・判定/保存/乱数に触れない */

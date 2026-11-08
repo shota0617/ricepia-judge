@@ -7410,7 +7410,7 @@ const HIBARI = (() => {
     for (const { w, sx } of wings) { w.rotation.z = sx * (fl * (1 - wk) - 0.1 * wk); w.rotation.y = sx * 1.35 * wk; }   // 羽は 横（±x）へ のびる：z で 羽ばたき、y で 先を 尾（−z）へ
     g.position.set(x, y, z);
     g.rotation.set(st === 'drop' ? (t < 1.2 ? -0.3 : 1.1) : -0.55, 1.0 + Math.sin(ph * 0.3) * 0.3, 0);   // 頭を 上に して 風に むかう／おりる ときは 頭から
-    if (!told && (st === 'rise' || st === 'hover') && d < 40 && gate && (DETAIL || SAY.free && SAY.note('ヒバリだ！ たかーく のぼって うたってるね'))) { told = true; BADGE.peek(x, z, 4, 'wow', 1); voice('hibari'); }
+    if (!told && (st === 'rise' || st === 'hover') && d < 40 && gate && !startNoticeMuted() && (DETAIL || SAY.free && SAY.note('ヒバリだ！ たかーく のぼって うたってるね'))) { told = true; BADGE.peek(x, z, 4, 'wow', 1); voice('hibari'); }   // サイクル238・最初の1分: のんびりでは開始直後にヒバリの吹き出しと声で最初のなぞりを止めない。wait 4秒＋ground は d<7 か8秒のタイムアウトで必ず rise へ移るため、進路にかかわらず開始後最大12秒で上昇が始まり、配置距離は最大14m・ground 最大8秒に上限1.6m/sで遠ざかっても d は最大26.8m<40 で、rise 16秒＋hover 20〜30秒の知らせの窓は開始後最大58秒で終わる＝最初の1分に必ず通知機会が生じる。toldは立てないので最初の上昇では出ず、drop 後の次の上昇（wait 25〜45秒を経て開始から概ね85秒以降）で従来どおり出す（遅れて出す形。BADGEと声も一緒に遅れる）。told2（drop の知らせ）は told が前提のため最初の drop では連鎖して出ない。ヒバリの姿・動き・タイミングは従来どおり。くわしい説明では従来どおり開始直後から出す
     else if (told && !told2 && st === 'drop' && t > 1 && d < 40 && gate && (DETAIL || SAY.free && SAY.note('すとんって おりてきたね'))) { told2 = true; BADGE.peek(x, z, 2.5, 'joy', 1); }
   }
   return { update, g, get st() { return st; }, get y() { return y; }, get told() { return told; }, get told2() { return told2; } };

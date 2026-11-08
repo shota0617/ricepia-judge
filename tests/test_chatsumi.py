@@ -45,7 +45,7 @@ class ChatsumiTests(unittest.TestCase):
         self.assertIn('|| jokamachi.cur || chatsumi.cur || mangekyo.cur || kawabe.cur) { c.cur = null', px)   # ちゃせきは 譲る
         for scene in IDS:
             self.assertIn("id === '%s'" % scene if scene != 'kiri' else '川霧と 土：', px)
-        self.assertIn('chatsumi.js', (ROOT / 'nishio-go.html').read_text())
+        self.assertIn('"chatsumi"', (ROOT / 'nishio-go.html').read_text())
 
     @unittest.skipUnless(shutil.which('node'), 'node がない')
     def test_pick_by_place_and_month(self):

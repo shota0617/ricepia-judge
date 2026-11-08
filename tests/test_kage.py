@@ -33,7 +33,7 @@ class KageTests(unittest.TestCase):
         px = (GO / 'pixel.js').read_text()
         self.assertIn('NISHIO_KAGE.next(', px)
         self.assertIn('kageDraw(hx, hcy', px)
-        self.assertIn('kage.js', (ROOT / 'nishio-go.html').read_text())
+        self.assertIn('"kage"', (ROOT / 'nishio-go.html').read_text())
 
     @unittest.skipUnless(shutil.which('node'), 'node がない')
     def test_next_cycles_by_town_sea_and_month(self):

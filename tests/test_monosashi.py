@@ -28,7 +28,7 @@ class MonosashiTests(unittest.TestCase):
         self.assertIn("monosashiStep(hx, by, u, now, asleep);", px)
         self.assertIn('dd * TILE_M', px)
         self.assertIn('西尾', px[px.index('function monosashiStep'):px.index('function monosashiStep') + 900])   # 西尾市の 中だけ
-        self.assertIn('monosashi.js', (ROOT / 'nishio-go.html').read_text())
+        self.assertIn('"monosashi"', (ROOT / 'nishio-go.html').read_text())
 
     @unittest.skipUnless(shutil.which('node'), 'node がない')
     def test_add_gauge_say_clean(self):

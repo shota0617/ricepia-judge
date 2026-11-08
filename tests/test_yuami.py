@@ -37,7 +37,7 @@ class YuamiTests(unittest.TestCase):
         px = (GO / 'pixel.js').read_text()
         self.assertIn('NISHIO_YUAMI.pick(', px)
         self.assertIn('yuamiStep(hx, by, u, now)', px)
-        self.assertIn('yuami.js', (ROOT / 'nishio-go.html').read_text())
+        self.assertIn('"yuami"', (ROOT / 'nishio-go.html').read_text())
 
     @unittest.skipUnless(shutil.which('node'), 'node がない')
     def test_pick_by_town_and_sea(self):

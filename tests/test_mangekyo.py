@@ -43,7 +43,7 @@ class MangekyoTests(unittest.TestCase):
         self.assertIn('roll.idle > 12 || jokamachi.cur || chatsumi.cur || mangekyo.cur || kawabe.cur) { c.cur = null', px)   # ちゃせきは 譲る
         for scene in IDS[:2]:
             self.assertIn("id === '%s'" % scene, px)
-        self.assertIn('mangekyo.js', (ROOT / 'nishio-go.html').read_text())
+        self.assertIn('"mangekyo"', (ROOT / 'nishio-go.html').read_text())
 
     @unittest.skipUnless(shutil.which('node'), 'node がない')
     def test_pick_by_place(self):

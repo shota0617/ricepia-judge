@@ -29,7 +29,7 @@ class KoboreTests(unittest.TestCase):
         self.assertIn('NISHIO_KOBORE.pick(', px)
         self.assertIn('koboreStep(now, ox, oy, T, dpr)', px)
         html = (ROOT / 'nishio-go.html').read_text()
-        self.assertIn('kobore.js', html)
+        self.assertIn('"kobore"', html)
 
     @unittest.skipUnless(shutil.which('node'), 'node がない')
     def test_pick_by_town_month_and_sea(self):

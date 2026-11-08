@@ -44,7 +44,7 @@ class KawabeTests(unittest.TestCase):
             self.assertIn("id === '%s'" % scene, px)
         for k in ('medaka', 'akaza', 'misago', 'ishigame', 'sakana'):
             self.assertRegex(px, r'\n  %s: \[' % k)   # 絵は 生きもの手帳の 16×16 を 共用
-        self.assertIn('kawabe.js', (ROOT / 'nishio-go.html').read_text())
+        self.assertIn('"kawabe"', (ROOT / 'nishio-go.html').read_text())
 
     @unittest.skipUnless(shutil.which('node'), 'node がない')
     def test_pick_by_water_and_sea(self):

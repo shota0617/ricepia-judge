@@ -39,7 +39,7 @@ class ChochinyoruTests(unittest.TestCase):
         self.assertIn('!n || chochinyoru.cur', px)               # めぐりの 輪も 休む
         for scene in ('tomoru', 'narabu'):
             self.assertIn("id === '%s'" % scene, px)
-        self.assertIn('chochinyoru.js', (ROOT / 'nishio-go.html').read_text())
+        self.assertIn('"chochinyoru"', (ROOT / 'nishio-go.html').read_text())
 
     @unittest.skipUnless(shutil.which('node'), 'node がない')
     def test_pick_by_town_night_and_sea(self):

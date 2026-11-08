@@ -69,8 +69,8 @@ class Wiring(unittest.TestCase):
         self.assertIn(": '';", GAME.split("const shopMascot", 1)[1].split("\n", 1)[0])
 
     def test_html_css(self):
-        self.assertIn('<script src="nishio-go/shomai.js"></script>', HTML)
-        self.assertLess(HTML.index("nishio-go/shomai.js"), HTML.index("nishio-go/pixel.js"))
+        self.assertIn('"shomai"', HTML)
+        self.assertGreater(HTML.index('"shomai"'), HTML.index("nishio-go/pixel.js"))   # サイクル183：後読みへ
         self.assertIn(".shomai-art{display:block;margin:8px auto;height:132px;width:auto;image-rendering:pixelated}", CSS)
 
 

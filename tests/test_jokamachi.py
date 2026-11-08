@@ -43,7 +43,7 @@ class JokamachiTests(unittest.TestCase):
         self.assertIn('|| jokamachi.cur || chatsumi.cur || mangekyo.cur || kawabe.cur) { c.cur = null', px)   # ちゃせきは 譲る
         for scene in IDS:
             self.assertIn("id === '%s'" % scene if scene != 'koto' else '三河の小京都：', px)
-        self.assertIn('jokamachi.js', (ROOT / 'nishio-go.html').read_text())
+        self.assertIn('"jokamachi"', (ROOT / 'nishio-go.html').read_text())
 
     @unittest.skipUnless(shutil.which('node'), 'node がない')
     def test_pick_by_place(self):

@@ -40,7 +40,7 @@ class TsutsumiTests(unittest.TestCase):
         self.assertIn('land: luAt(', px)
         self.assertIn('tsutsumi.cur || tsutsumi.done', px)   # ゆあみ・ほりだしは 譲る
         self.assertLess(px.index('tsutsumiStep(hx, by, u, now);'), px.index('yuamiStep(hx, by, u, now);'))
-        self.assertIn('tsutsumi.js', (ROOT / 'nishio-go.html').read_text())
+        self.assertIn('"tsutsumi"', (ROOT / 'nishio-go.html').read_text())
 
     @unittest.skipUnless(shutil.which('node'), 'node がない')
     def test_pick_only_on_kira_paddy(self):

@@ -36,7 +36,7 @@ class MeguriTests(unittest.TestCase):
         self.assertIn('NISHIO_MEGURI.ring(', px)
         self.assertIn('nightLevel() >= 1', px)
         self.assertIn('meguriStep(hx, by, u, now)', px)
-        self.assertIn('meguri.js', (ROOT / 'nishio-go.html').read_text())
+        self.assertIn('"meguri"', (ROOT / 'nishio-go.html').read_text())
 
     @unittest.skipUnless(shutil.which('node'), 'node がない')
     def test_ring_by_town_sea_and_month(self):

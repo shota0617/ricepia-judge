@@ -44,7 +44,7 @@ class NazonazoTests(unittest.TestCase):
         self.assertIn('nazoTap(x, y, performance.now())', px)
         self.assertIn('roll.idle > N.SHOW', px)
         self.assertIn('gbOn', px[px.index('function nazoStep'):px.index('function nazoTap')])
-        self.assertIn('nazonazo.js', (ROOT / 'nishio-go.html').read_text())
+        self.assertIn('"nazonazo"', (ROOT / 'nishio-go.html').read_text())
 
     @unittest.skipUnless(shutil.which('node'), 'node がない')
     def test_pick_by_town(self):

@@ -35,7 +35,7 @@ class KasaTests(unittest.TestCase):
         self.assertIn('NISHIO_KASA.pick(', px)
         self.assertIn("wxKind() === 'rain'", px)
         self.assertIn('kasaStep(hx, by, u, now)', px)
-        self.assertIn('kasa.js', (ROOT / 'nishio-go.html').read_text())
+        self.assertIn('"kasa"', (ROOT / 'nishio-go.html').read_text())
 
     @unittest.skipUnless(shutil.which('node'), 'node がない')
     def test_pick_by_town_and_sea(self):

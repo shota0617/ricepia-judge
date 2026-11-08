@@ -41,7 +41,7 @@ class ShimatabiTests(unittest.TestCase):
         self.assertIn('S.pick(c, m.last)', px)
         self.assertIn('shimatabiStep(hx, by, u, now)', px)
         self.assertIn('shimatabi.cur', px)   # 佐久島の 海べでは ほりだしより 先
-        self.assertIn('shimatabi.js', (ROOT / 'nishio-go.html').read_text())
+        self.assertIn('"shimatabi"', (ROOT / 'nishio-go.html').read_text())
 
     @unittest.skipUnless(shutil.which('node'), 'node がない')
     def test_pick_only_on_sakushima(self):

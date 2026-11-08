@@ -34,7 +34,7 @@ class KiriTests(unittest.TestCase):
         self.assertIn('NISHIO_KIRI', px)
         self.assertIn('K.pick(c)', px)
         self.assertIn('kiriStep(hx, by, u, now);', px)
-        self.assertIn('kiri.js', (ROOT / 'nishio-go.html').read_text())
+        self.assertIn('"kiri"', (ROOT / 'nishio-go.html').read_text())
 
     @unittest.skipUnless(shutil.which('node'), 'node がない')
     def test_pick_and_morning(self):

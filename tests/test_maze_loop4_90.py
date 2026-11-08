@@ -44,7 +44,7 @@ class TestIdleCard(unittest.TestCase):
         self.assertIn("https://ricepia.jp/", a)
         self.assertIn("campaign=idle_card", a)
         self.assertNotIn("target", a)
-        self.assertRegex(HTML, r'<script src="nishio-go/idlecard\.js"></script>')
+        self.assertIn('"idlecard"', HTML)   # サイクル183：後読みへ
 
     def test_visibility_resets_idle(self):
         self.assertIn("visibilitychange", JS)

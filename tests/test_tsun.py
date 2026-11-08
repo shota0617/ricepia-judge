@@ -34,7 +34,7 @@ class TsunTests(unittest.TestCase):
         self.assertIn('NISHIO_TSUN.next(', px)
         self.assertIn('tsunTap(performance.now())', px)
         self.assertIn('tsunStep(hx, by, u, now)', px)
-        self.assertIn('tsun.js', (ROOT / 'nishio-go.html').read_text())
+        self.assertIn('"tsun"', (ROOT / 'nishio-go.html').read_text())
 
     @unittest.skipUnless(shutil.which('node'), 'node がない')
     def test_next_cycles_by_town_sea_and_month(self):

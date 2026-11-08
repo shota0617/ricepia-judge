@@ -6,8 +6,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 HTML = (ROOT / "nishio-go.html").read_text(encoding="utf-8")
+# サイクル183：任意機能の後読みを先頭に足した（元の文書順）
+LAZY183 = ["komebanashi", "michikusa", "otomo", "nimotsu", "yume", "deai", "kobore", "otedama", "kasa", "meguri", "tsun", "kage", "nedoko", "yuami", "horidashi", "chasetsu", "shimatabi", "isshiki", "chochinyoru", "hazusanpo", "kawabe", "tombolo", "mangekyo", "nazonazo", "youkoso", "shirushi", "monosashi", "okaeri", "furusato", "jokamachi", "chatsumi", "tsutsumi", "kiri", "shopmap", "shomai", "oldmap", "kirara", "yatsumushi", "idlecard"]
 LAZY = ["runner", "harvest", "movie", "dankyu", "hiryoyama", "dots", "godot-field"]
-SYNC = ["icons", "analytics", "game", "pixel", "meiro", "share", "idlecard"]
+SYNC = ["icons", "analytics", "game", "pixel", "meiro", "share"]
 
 
 def sync_tags():
@@ -29,13 +31,12 @@ class Lazy93(unittest.TestCase):
     def test_loader(self):
         m = re.search(r"var files = \[([^\]]*)\];", HTML)
         self.assertTrue(m)
-        self.assertEqual(re.findall(r'"([\w-]+)"', m.group(1)), LAZY)
+        self.assertEqual(re.findall(r'"([\w-]+)"', m.group(1)), LAZY183 + LAZY)
         self.assertIn("el.async = false", HTML)
         self.assertIn("el.onload = next", HTML)
         self.assertIn("window.__nsgLazyDone = true", HTML)
         self.assertIn("addEventListener('load', next)", HTML)
         self.assertIn("document.readyState === 'complete'", HTML)
-        self.assertLess(HTML.index("idlecard.js"), HTML.index("var files"))
 
     def test_lazy_files_exist_and_parse(self):
         for n in LAZY:

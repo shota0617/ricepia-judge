@@ -57,15 +57,21 @@
   #kokuPhoto { position:absolute; right:0; top:0; height:50%; aspect-ratio:3/4; object-fit:cover; border-radius:10px; box-shadow:0 2px 8px rgba(26,24,20,.25); pointer-events:none; }
   #cookedReturn { position:absolute; left:8px; bottom:8px; z-index:3; background:var(--paper); border:2px solid var(--gold); border-radius:20px; padding:4px 10px; font-size:15px; font-weight:800; pointer-events:none; }
 
-  /* 水分計 */
+  /* 水分計: ケット科学の米麦水分計「ライスタf」の形（サイクル130・店主指示2026-11-08）。
+     クリーム色の横長本体、下部は濃い赤茶の台、右の大きなレバーハンドルも濃い赤茶。
+     中央に大きな液晶、ボタンは電源（黄）・選択・平均・測定（青）。操作は従来どおりレバーを回して粒をつぶして測る */
   #sceneMeter { touch-action:none; gap:10px; }
-  #crank { flex:none; position:relative; height:min(80%, 128px); aspect-ratio:1; border-radius:50%; background:#2c63a8; box-shadow:inset 0 -6px 0 #1d4a82, 0 3px 10px rgba(26,24,20,.3); }
+  #crank { flex:none; position:relative; height:min(80%, 128px); aspect-ratio:1; border-radius:50%; background:#f2e8cf; border:5px solid #6e3520; box-shadow:inset 0 -6px 0 #d8c9a3, 0 3px 10px rgba(26,24,20,.3); }
   #crankArm { position:absolute; inset:0; display:block; }
-  #crankArm::before { content:""; position:absolute; left:50%; top:50%; width:12%; height:30%; margin:-30% 0 0 -6%; background:#e8e2d2; }
-  #crankArm::after { content:""; position:absolute; left:50%; top:5%; width:32%; height:32%; margin:0 0 0 -16%; border-radius:50%; background:#d9a441; box-shadow:inset 0 -3px 0 #a87a22; }
-  #meterBtn { position:relative; flex:1; min-width:0; height:100%; max-height:190px; border-radius:18px; background:#2c63a8;
-    box-shadow:inset 0 -8px 0 #1d4a82, 0 3px 10px rgba(26,24,20,.3); padding:12px; display:flex; flex-direction:column; gap:6px; transition:transform .08s ease;
+  #crankArm::before { content:""; position:absolute; left:50%; top:50%; width:12%; height:30%; margin:-30% 0 0 -6%; background:#6e3520; }
+  #crankArm::after { content:""; position:absolute; left:50%; top:5%; width:34%; height:34%; margin:0 0 0 -17%; border-radius:50%; background:#4a2113; box-shadow:inset 0 -3px 0 #2c130a, 0 0 0 3px #f2e8cf; }
+  #meterBtn { position:relative; flex:1; min-width:0; height:100%; max-height:190px; border-radius:18px; background:#f2e8cf; border:2px solid #d8c9a3;
+    box-shadow:inset 0 -14px 0 #6e3520, inset 0 3px 0 #fffdf4, 0 3px 10px rgba(26,24,20,.3); padding:12px 12px 18px; display:flex; flex-direction:column; gap:6px; transition:transform .08s ease;
     touch-action:none; }
+  #mkeys { flex:none; display:flex; gap:6px; }
+  #mkeys span { flex:1; height:22px; border-radius:6px; background:#e3d9bd; color:#5a4a2a; font-size:11px; font-weight:800; line-height:22px; text-align:center; box-shadow:inset 0 -2px 0 rgba(90,74,42,.35); }
+  #mkeys span.pw { background:#f0bd2a; color:#4a3200; }
+  #mkeys span.ms { background:#2c63a8; color:#fff; }
   #senseToken { position:absolute; z-index:40; left:50%; top:62%; width:96px; height:96px; margin:-48px 0 0 -48px; border-radius:50%; background:var(--paper); box-shadow:0 3px 14px rgba(26,24,20,.4); font-size:52px; line-height:96px; text-align:center; touch-action:none; transition:scale .12s ease; }
   #senseToken img { display:block; width:72px; height:40px; margin:28px auto 0; }
   #senseToken.squeeze { scale:.78; }
@@ -78,7 +84,7 @@
   #lcd small { font-size:.5em; margin-left:3px; }
   #meterBtn.high #lcd { background:#f4c27a; color:#5a2c08; }
   #slots { flex:none; display:flex; gap:6px; }
-  #slots span { flex:1; height:24px; border-radius:6px; background:#1d4a82; color:#fff; font:700 14px/24px ui-monospace,Menlo,monospace; text-align:center; }
+  #slots span { flex:1; height:24px; border-radius:6px; background:#6e3520; color:#fff; font:700 14px/24px ui-monospace,Menlo,monospace; text-align:center; }
 
   /* みわける上段: 見本とよけた粒 */
   #ittoPhoto { height:100%; max-height:112px; aspect-ratio:1; object-fit:cover; border-radius:10px; box-shadow:0 2px 8px rgba(26,24,20,.25); }
@@ -190,7 +196,8 @@
     #bagBtn { height:auto; width:50%; margin-left:0; }
     #kokuPhoto { height:36%; }
     #sceneMeter { flex-direction:column; gap:4px; }
-    #meterBtn { flex:1 1 0; height:auto; width:100%; padding:6px; }
+    #meterBtn { flex:1 1 0; height:auto; width:100%; padding:6px 6px 12px; }
+    #mkeys span { height:16px; font-size:9px; line-height:16px; }
     #crank { height:38%; }
     #senseToken { width:72px; height:72px; margin:-36px 0 0 -36px; font-size:38px; line-height:72px; }
     #senseToken img { width:54px; height:30px; margin:21px auto 0; }
@@ -238,7 +245,7 @@
         <span id="cookedReturn" hidden>🍚</span>
       </div>
       <div class="topScene" id="sceneMeter">
-        <button id="meterBtn" aria-label="水分計"><div id="lcd">--.-</div><div id="slots"><span></span><span></span><span></span></div></button>
+        <button id="meterBtn" aria-label="水分計"><div id="lcd">--.-</div><div id="mkeys" aria-hidden="true"><span class="pw">電源</span><span>選択</span><span>平均</span><span class="ms">測定</span></div><div id="slots"><span></span><span></span><span></span></div></button>
         <div id="crank" aria-hidden="true"><i id="crankArm"></i></div>
       </div>
       <div class="topScene" id="sceneSort">
@@ -277,7 +284,7 @@
   <h2>🌾 農産物検査のしくみ</h2>
   <p>農産物検査の仕事が題材です。手順は、穀刺しで袋から試料をぬき（1袋 約40g）、水分を3回はかって平均し、白い皿と黒い皿で粒を見て、等級をきめ、証印をおす流れです。写真の穀刺しと一等米は実物です。</p>
   <p>等級は水稲うるち玄米の規格どおりに、整粒・水分・死米・着色粒・計（被害粒＋死米＋着色粒＋異種穀粒＋異物）のうち、いちばん悪い項目で決まります。未熟粒は整粒を減らしますが、計には入りません。水分は規格表の15.0%に、当分の間の1.0%加算を入れた16.0%までを適合としています。</p>
-  <p>鑑定は視覚・触覚・臭覚・聴覚を用いて行います（鑑定方法・平成13年農林水産省告示第333号）。におう・かむ・にぎるは、それをゲームの動きにしたものです。水分計のハンドルは、粒をつぶして測る水分計の形にならいました。</p>
+  <p>鑑定は視覚・触覚・臭覚・聴覚を用いて行います（鑑定方法・平成13年農林水産省告示第333号）。におう・かむ・にぎるは、それをゲームの動きにしたものです。水分計は、ケット科学の米麦水分計「ライスタf」の形にならいました（クリーム色の本体に濃い赤茶のハンドル、電源・選択・平均・測定のボタン）。ハンドルを回して粒をつぶして測る操作は実物どおりです。</p>
   <p>袋ごとに、整粒の形と色つや、袋の帯の色が少しずつ違います。今日はどんな米かが、開いてすぐの楽しみです。わるい粒の見分けの印（色・割れ目）は袋によらず同じです。</p>
   <p>等級をまちがえても、はかった水分も、よけた粒も、そのままで何も失われません。光る●の列をもう一度見て、選び直せます。</p>
   <p>きめるで見る項目は、袋を進めるごとに1つずつ増えていきます。一度見た項目は次の袋でも残るので、見比べながら少しずつ覚えられます。</p>

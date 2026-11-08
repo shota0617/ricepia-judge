@@ -1352,6 +1352,25 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertIn('duration:260 * motion, easing:"ease-out"', reading)
         self.assertEqual(HTML.count("slot.animate("), 1)
 
+    def test_cycle130_meter_is_riceta_f_shape(self):
+        # 店主指示（2026-11-08）: はかるの水分計をケット科学の米麦水分計
+        # 「ライスタf」の形にする。クリーム色の横長本体・下部と右のハンドルは
+        # 濃い赤茶・中央に大きな液晶・ボタンは電源（黄）・選択・平均・測定（青）。
+        # 操作（ハンドルを回して測る・3回の平均）は従来どおり変えない。
+        self.assertIn("background:#f2e8cf", HTML)  # クリーム色の本体
+        self.assertIn("border:5px solid #6e3520", HTML)  # レバーの土台の濃い赤茶
+        self.assertIn("inset 0 -14px 0 #6e3520", HTML)  # 本体下部の濃い赤茶
+        self.assertIn('<div id="mkeys" aria-hidden="true">', HTML)
+        self.assertIn('<span class="pw">電源</span><span>選択</span><span>平均</span><span class="ms">測定</span>', HTML)
+        self.assertIn("#mkeys span.pw { background:#f0bd2a;", HTML)  # 電源は黄
+        self.assertIn("#mkeys span.ms { background:#2c63a8;", HTML)  # 測定は青
+        self.assertIn("ライスタf", HTML)
+        # 青い旧本体には戻っていない
+        self.assertNotIn("background:#2c63a8;\n    box-shadow:inset 0 -8px 0 #1d4a82", HTML)
+        # 操作の核は不変: 回す判定と平均の流れ
+        self.assertIn("crankTurned >= (lotIndex === 0 ? 80 : 160)", HTML)
+        self.assertIn("function showAverage()", HTML)
+
     def test_cycle93_picked_grains_stay_in_quiet_record(self):
         # 類7: 見分けた粒が静かに記録に残る。任意で開く資料（#notes）の中だけに出し、常時表示・競争・スコアにはしない。
         # 袋を越えて残るため startLot では消さない（サイクル91の seenChecks と同じ持ち方）。

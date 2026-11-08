@@ -577,6 +577,20 @@ function returnSound() { /* 終わり: 終了カードの「サイトへ もど�
     o.start(t); o.stop(t + 0.22);
   } catch (_) {}
 }
+function notesSound() { /* 資料: 📖で資料（#notes）を開く合図の音。700→540Hzへ短く下がる紙をめくるような音で、粒の tick（高い短い音）や「いいね」の音（likeSound 560→840Hz・triangle・上がる）・サイトへ戻る音（440→330Hz・sine）とは波形と帯域・長さで分ける（サイクル112・差分テーマ差18）。開く／閉じる・現れるの合図には固有の音がある（差14・差15・差17）一方、静かなきろく（類7・類8）が置かれた資料を開く操作だけが無音だった（390×844実測で押下の同期音0件）。開く時だけ1回鳴らす */
+  try {
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    if (ac.state === "suspended") ac.resume();
+    const o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime;
+    o.type = "triangle";
+    o.frequency.setValueAtTime(700, t);
+    o.frequency.exponentialRampToValueAtTime(540, t + 0.12);
+    g.gain.setValueAtTime(0.016, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.14);
+    o.connect(g).connect(ac.destination);
+    o.start(t); o.stop(t + 0.14);
+  } catch (_) {}
+}
 function thump() {
   tone(110, 0.16, 0.14, "sine");
   tone(70, 0.22, 0.1, "sine");
@@ -1855,6 +1869,7 @@ likeBtn.addEventListener("click", () => {
   });
 });
 returnLink.addEventListener("click", () => { returnSound(); sendTap("return"); }); /* 戻る合図も固有の音にする（サイクル111・差17）。いいねの音（差13）とは分ける */
+$("notesLink").addEventListener("click", () => { notesSound(); }); /* 資料を開く合図も固有の音にする（サイクル112・差18）。戻る音（差17）とは分ける。アンカーのスクロールは従来どおり */
 armIdle();
 startLot();
 </script>

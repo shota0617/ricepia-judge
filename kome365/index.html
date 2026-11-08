@@ -351,7 +351,7 @@ a{color:var(--acc)}
 #swSun{position:absolute;left:6%;top:30%;width:84px;height:84px;margin:-42px 0 0 -42px;z-index:1;pointer-events:none;opacity:0;transform:scale(.88);transition:left 1.2s ease,top 1.2s ease,transform 1.2s ease,filter 1.2s ease,opacity .4s ease}   /* 太陽の通り道(サイクル39・表示のみ。#swipe直下の静的要素でrenderでは作り直さない。大きさ・色はサイクル43で連続補間。絵はサイクル74でドット絵化) */
 #swSun[data-on]{opacity:.95}
 #swSun .sunPix{display:block;width:84px;height:84px;background-repeat:no-repeat;background-position:center;background-size:76px 76px;image-rendering:pixelated}
-#swSeasonScene{position:absolute;left:8px;top:238px;width:104px;height:104px;z-index:2;pointer-events:none;opacity:0;transition:opacity 1.2s ease}   /* 季節の景色(周回128・類6 牧場物語: 季節の区切りを大きな絵で。季節で主役の木・花が入れ替わり、足元に生育段階の絵が段階で変わる。文字なし・表示のみ) */
+#swSeasonScene{position:absolute;left:8px;top:calc(31% + 48px);width:104px;height:104px;z-index:2;pointer-events:none;opacity:0;transition:opacity 1.2s ease}   /* 季節の景色(周回128・類6 牧場物語: 季節の区切りを大きな絵で。季節で主役の木・花が入れ替わり、足元に生育段階の絵が段階で変わる。文字なし・表示のみ) 。位置はサイクル146(差15): 固定238pxでは背の高い画面で太陽の通り道の低い部分(年始〜2月・top最大31%+下半分約37px)と重なり、1月1日に太陽の約56%が松に隠れた。太陽のいちばん低い下端(31%+37px)より下へ、割合+pxで置いて画面の高さによらず重ならないようにする */
 #swSeasonScene[data-on]{opacity:.97}
 #swSeasonScene .scPix{display:block;width:104px;height:104px;background-repeat:no-repeat;background-position:center bottom;background-size:104px 104px;image-rendering:pixelated;filter:drop-shadow(0 3px 3px rgba(60,40,20,.25))}
 #swSeasonScene .scStage{position:absolute;right:-2px;bottom:0;width:48px;height:48px;background-repeat:no-repeat;background-position:center bottom;background-size:48px 48px;image-rendering:pixelated}

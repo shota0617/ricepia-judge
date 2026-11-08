@@ -297,7 +297,7 @@
   <p>みわけた粒の種類は、ここに静かに残ります。競うための数ではなく、見分けた粒をあとから見返すための記録です。</p>
   <h2>炊き上がりのきろく</h2>
   <p id="cookedRecord">まだ 炊き上がった お米は ありません。</p>
-  <p>押した袋のお米は、次の袋のときに小さく炊き上がって返ってきます。届いた先で炊かれた様子で、罰ではありません。</p>
+  <p>押した袋のお米は、次の袋のときに小さく炊き上がって返ってきます。届いた先で炊かれた様子で、罰ではありません。チップは袋が着いて落ち着いてから、専用の音と一緒にふわりと現れます。</p>
   <p>ゲームでは分かりやすくするため、皿は20粒で1粒＝5%と数えます（実際の検査の粒数や重量の割合とは違います）。形質（標準品との比較）、異種穀粒、異物は皿には出していません。ゲームの等級は遊びのためのもので、実際の格付けではありません。</p>
   <p>出典: <a class="sourceLink" href="https://www.maff.go.jp/j/seisan/syoryu/kensa/kome/k_kikaku/" target="_blank" rel="noopener">農林水産省「玄米の検査規格」</a>／<a class="sourceLink" href="https://www.maff.go.jp/j/seisan/syoryu/kensa/hourei.html" target="_blank" rel="noopener">農産物検査法及び関係通知等</a>／<a class="sourceLink" href="https://www.maff.go.jp/j/seisan/syoryu/kensa/attach/pdf/index-25.pdf" target="_blank" rel="noopener">農林水産省「コメの農産物検査」</a></p>
   <p><a id="notesReturnLink" href="https://ricepia.jp/">らいすぴあ（近藤米穀店）のサイトへ</a></p>
@@ -953,6 +953,7 @@ function startLot() {
   setStep(0, "穀刺しを ふくろへ さす ←");
   setFace("normal");
   updateCooked(); /* 前の袋があれば、そのお米が小さく炊き上がって返ってくる（サイクル94・類8） */
+  if (lotIndex > 0 && cookedReturns.length) { const chipLot = lotIndex, chip = $("cookedReturn"); chip.hidden = true; setTimeout(() => { if (lotIndex !== chipLot || !cookedReturns.length) return; chip.hidden = false; chip.animate([{ opacity:0, transform:"scale(.7)" }, { opacity:1, transform:"scale(1.05)", offset:.7 }, { opacity:1, transform:"scale(1)" }], { duration:260 * motion, easing:"ease-out" }); }, 320 * motion); } /* 炊き上がりチップの見た目も、音（差16）と同じく袋が着いて落ち着いた後（320ms）に、ふわりと現れる形にそろえる（サイクル124・差30）。旧版は場面の切り替わりと同時に完成形で現れ、動きがなく、音より約320ms先に出ていた（390×844実測） */
   if (lotIndex > 0) { arriveSound(); $("bagBtn").animate([{ transform:"translateX(120%)" }, { transform:"none" }], { duration:260 * motion, easing:"ease-out" }); if (cookedReturns.length) setTimeout(cookedSound, 320 * motion); } /* 次の袋が運ばれてくる合図も固有の音にする（サイクル104・差10）。流れる bagSound とは分ける。炊き上がって返ってくる合図は、袋が着いて落ち着いた後に固有の音で知らせる（サイクル110・差16）。到着音とは分ける */
 }
 

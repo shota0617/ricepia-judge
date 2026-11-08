@@ -84,7 +84,7 @@ const CHECKS = {
     });
     ok(r.w1 > r.w0 && r.w2 > r.w1, '↑ で 水が 入る。長い ほど 多い', r);
     ok(r.w2 - r.w1 > r.w1 - r.w0, 'スワイプの 長さで 量が かわる', r);
-    ok(Math.abs(r.v1 - r.w2) < 0.3 && r.v0 >= r.w2 - 0.3, '水面は 指に ついてきて、はなしたら 本当の 水に 落ちつく（ばね）', r); /* 80周目：上限で 止まる 時は 指の 水面が 本当の 水より 上に 出て から 落ちつく */
+    ok(Math.abs(r.v1 - r.w2) < 0.3 && r.v0 >= r.w2 - 0.3 && r.v0 <= r.w2 + 2, '水面は 指に ついてきて、はなしたら 本当の 水に 落ちつく（ばね）', r); /* 80周目：上限で 止まる 時は 指の 水面が 本当の 水より 上に 出て から 落ちつく */
     ok(r.w3 < r.w2 && r.w4 <= 3 && r.w4 > 0 && r.w5 === 0 && Math.abs(r.v2) < 0.3, '↓ で 落ちる。はじくと 3cm に 着地、もう一度 はじくと 空に（合図の 前：seed 11 の 35日目は 茎が 目標の 7割 未満）', r);
     ok(/みず 0cm/.test(r.stat), 'HUD の 水が 0cm に なる', r.stat);
     await p.screenshot({ path: path.join(OUT, 'water.png') });
@@ -338,7 +338,7 @@ const CHECKS = {
       f.water = 9; f.deepRun = 3; calmDays(S, 6, 'くもり'); S.weather[S.day+1] = Object.assign({}, S.weather[S.day+1], { w: '台風' }); K3.growDay(S); out.dr1 = f.deepRun; /* 台風の 前日：数えない が 0 にも しない */
       f.water = 9; S.weather[S.day] = Object.assign({}, S.weather[S.day], { w: 'くもり' }); S.weather[S.day+1] = Object.assign({}, S.weather[S.day+1], { w: 'くもり' }); S.weather[S.day+2] = Object.assign({}, S.weather[S.day+2], { w: 'くもり' }); S.weather[S.day-1] = Object.assign({}, S.weather[S.day-1], { w: 'くもり' }); S.weather[S.day-2] = Object.assign({}, S.weather[S.day-2], { w: 'くもり' }); f.typhoonDay = null; K3.growDay(S); out.dr2 = f.deepRun;
       K3.fixedSeed = 7; K3.jump('nakaboshi'); const S2 = K3.S, f2 = S2.f; f2.hoshiDays = 2; f2.hoshiEnd = false; f2.hoshiRun = 2; f2.water = 1; calmDays(S2, 3, 'くもり'); S2.weather[S2.day-1] = Object.assign({}, S2.weather[S2.day-1], { w: '雨' }); f2.upDay = null; K3.narrate(); out.rain = document.getElementById('say').textContent.slice(0, 20); f2.upDay = S2.day - 1; K3.narrate(); out.up = document.getElementById('say').textContent.slice(0, 20);
-      K3.fixedSeed = 7; K3.jump('heading'); const S3 = K3.S, f3 = S3.f; S3.day = f3.heading + 1; f3.water = 3; calmDays(S3, 2, '高温'); f3.typhoonDay = null; K3.narrate(); out.hot = document.getElementById('say').textContent.slice(0, 30); f3.typhoonDay = S3.day - 1; K3.narrate(); out.afterTy = document.getElementById('say').textContent.slice(0, 30);
+      K3.fixedSeed = 7; K3.jump('heading'); const S3 = K3.S, f3 = S3.f; S3.day = f3.heading + 1; f3.water = 3; calmDays(S3, 2, '高温'); f3.typhoonDay = null; K3.narrate(); out.hot = document.getElementById('say').textContent.slice(0, 30); f3.typhoonDay = S3.day - 2; K3.narrate(); out.afterTy = document.getElementById('say').textContent.slice(0, 30);
       return out;
     });
     ok(r.dr1 === 3 && r.dr2 === 4, '深水の 日数は 台風の 前後で 止まる だけ（0 に もどさない）', r);

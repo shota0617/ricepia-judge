@@ -977,7 +977,7 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertIn("g.gain.setValueAtTime(0.016, t);", fn)
         # 資料リンクの click で1回だけ鳴らす
         self.assertIn('$("notesLink").addEventListener("click", () => { notesSound(); });', HTML)
-        self.assertEqual(HTML.count("notesSound"), 2)  # 定義1＋呼び出し1
+        self.assertEqual(HTML.count("notesSound"), 3)  # 定義1＋呼び出し2（資料リンク＋出典リンク・サイクル116で追加）
         # 既存の合図の音は従来どおり残る
         self.assertIn("function returnSound() {", HTML)
         self.assertIn("function likeSound() {", HTML)
@@ -1046,6 +1046,26 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertIn("const tick = () => tone(1100 + Math.random() * 900, 0.03, 0.025);", HTML)
         # 資料に1文だけ足す（ゲーム内文言は増やさない）
         self.assertIn("穀刺しが袋に刺さると、専用の小さな音で知らせます", HTML)
+
+    def test_cycle116_source_links_share_notes_sound(self):
+        # 差分テーマ差22（差19の再監査の残り）: 資料（#notes）内のリンクは、資料を開く（差18）・
+        # サイトへ戻る（差19）には固有の音がある一方、出典（農林水産省・3件）のリンクだけが無音だったため、
+        # 資料を開くときと同じ小さな音を1回付ける。新しい音色は作らず、参照を開く操作には同じ音で揃える。
+        # 差19では出典リンクを「ゲームの操作ではない」として対象外にしたが、資料を開く操作（差18）も
+        # 同じくゲームの操作ではなく音を付けた前例があり、対象外の判断を見直した（差4・差5と同じ形の見直し）。
+        self.assertEqual(HTML.count('class="sourceLink"'), 3)  # 出典リンクは3件とも対象にする
+        self.assertIn('<a class="sourceLink" href="https://www.maff.go.jp/j/seisan/syoryu/kensa/kome/k_kikaku/" target="_blank" rel="noopener">', HTML)
+        self.assertIn('<a class="sourceLink" href="https://www.maff.go.jp/j/seisan/syoryu/kensa/hourei.html" target="_blank" rel="noopener">', HTML)
+        self.assertIn('<a class="sourceLink" href="https://www.maff.go.jp/j/seisan/syoryu/kensa/attach/pdf/index-25.pdf" target="_blank" rel="noopener">', HTML)
+        # 出典リンクの click で資料の音を1回だけ鳴らす。新しいタブで開く動き（target=_blank）は妨げない
+        self.assertIn('document.querySelectorAll(".sourceLink").forEach(a => a.addEventListener("click", () => { notesSound(); }));', HTML)
+        self.assertEqual(HTML.count("notesSound"), 3)  # 定義1＋資料リンクの呼び出し1＋出典リンクの呼び出し1
+        # 既存の合図の音は従来どおり残る。間違いのときの無音（類4）も変えない
+        self.assertIn("function notesSound() {", HTML)
+        self.assertIn("function returnSound() {", HTML)
+        self.assertIn("const tick = () => tone(1100 + Math.random() * 900, 0.03, 0.025);", HTML)
+        # 資料に1文だけ足す（ゲーム内文言は増やさない）
+        self.assertIn("出典（農林水産省）のリンクを開くときも、資料を開くときと同じ小さな音で知らせます", HTML)
 
     def test_cycle93_picked_grains_stay_in_quiet_record(self):
         # 類7: 見分けた粒が静かに記録に残る。任意で開く資料（#notes）の中だけに出し、常時表示・競争・スコアにはしない。

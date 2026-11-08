@@ -1838,6 +1838,7 @@ function stampNow() {
   setHanko(hankoMax);
   thump();
   $("mark").classList.add("on");
+  $("mark").animate([{ opacity:0, transform:"rotate(-8deg) scale(1.22)" }, { opacity:1, transform:"rotate(-8deg) scale(1)" }], { duration:200 * motion, easing:"ease-out" }); /* 証印も、他の現れるもの（チップ=ふわり260ms・差30／つぎの袋ボタン=ふわり260ms・差31／🔍ボタン=差32／小皿の粒=差33）と同じく、押した勢いのまま少し大きく出て落ち着く穏やかな出現にそろえる（サイクル128・差分テーマ差34）。旧版は opacity の切り替えだけで完成形が即座に出ていた（390×844実測で出現時のアニメーション0件・opacity即1）。傾き（-8deg）は従来どおり保つ */
   $("bagBig").classList.add("squash");
   setTimeout(() => $("bagBig").classList.remove("squash"), 240);
   setFace("happy", 1800);

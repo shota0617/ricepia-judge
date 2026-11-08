@@ -7144,7 +7144,7 @@ const MOGURA = (() => {
       else if (st.s === 'down' && st.t > 0.4) { st.s = 'in'; mole.visible = false; }
     }
     const cov = INTRO.coat && INTRO.coat.m ? INTRO.coat.x0 + (INTRO.coat.done || 0) * INTRO.coat.w : -1e9;   // ぬった 畦の 東の はし（泥の 下に なった 穴は 見えない）。モグラが 顔を 出す ほうが さき
-    if (!toldHole && S.started && st.s === 'in' && holes.some(h => h.x < cov - 0.2) && (!INTRO.on || INTRO.talked) && (DETAIL || SAY.free && SAY.note('モグラの あなも ふさいだよ'))) { toldHole = true; BADGE.joy(3); }
+    if (!toldHole && S.started && st.s === 'in' && holes.some(h => h.x < cov - 0.2) && (!INTRO.on || INTRO.talked) && !startNoticeMuted() && (DETAIL || SAY.free && SAY.note('モグラの あなも ふさいだよ'))) { toldHole = true; BADGE.joy(3); }   // サイクル253・最初の1分: のんびりでは最初の1分はモグラの穴の知らせで導入の進行を止めない。有効なのは INTRO（?intro=1 の導入: 草刈り→畦塗り）のときだけで、サイクル240では「畦塗りの進行が前提で最初の直進では届かない」として対象外にしたが、実コードの定数で測ると草刈り20m（既定ギア3・vk1.6で16.07秒）＋付け替え0.7秒＋畦塗りで最初の穴 (-4.2) がふさがるまで5.20m（vk1.2で5.57秒）＋始動最大0.9秒で開始23.24秒（最も遅い1速でも39.47秒）に届く。その時点で塚 (-3.0, 25.55) までの距離は2.07mだが、顔出し側はサイクル240で止まっているため st は in のまま保たれる。cov は単調に増えて条件は消えないので知らせは消費されず、1分を過ぎて他の条件（st が in・吹き出しの空き）もそろった時点で従来どおり出る（遅れて出す形）。既定の開き方では coat がなく cov=-1e9 で元々出ない。くわしい説明では従来どおり開始直後から出す
   }
   return { update, mole, st, hills, holes, paws, get hill() { return mh; }, get told() { return told; }, get toldHole() { return toldHole; } };
 })();

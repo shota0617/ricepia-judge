@@ -7129,7 +7129,7 @@ const MOGURA = (() => {
     if (d > 12) st.armed = true;
     st.ph += dt;
     if (st.s === 'in') {
-      if (st.armed && TOD !== 'yoru' && S.started && d < 9 && (!INTRO.on || INTRO.talked) && (DETAIL || SAY.free && SAY.note(told ? 'また かおを だしたね' : 'モグラさんだ！ はなが ピンクだね'))) {   // ゆれに 気づいて 顔を 出す
+      if (st.armed && TOD !== 'yoru' && S.started && d < 9 && (!INTRO.on || INTRO.talked) && !startNoticeMuted() && (DETAIL || SAY.free && SAY.note(told ? 'また かおを だしたね' : 'モグラさんだ！ はなが ピンクだね'))) {   // ゆれに 気づいて 顔を 出す。サイクル240・最初の1分: のんびりでは最初の1分はモグラの吹き出しと声で最初のなぞりを止めない。塚は北畦の (-3.0, 25.55) で発火距離は d<9 と広く、開始点(0,0)から北への最初の直進では z>17.06 で届き、なぞり上限1.6m/sで開始約11.6秒（キー運転でも約18秒）。サイクル237のカナヘビ（北畦 (-3.26, 25.59)・dist<9）とほぼ同位置・同条件。顔出しは元々「知らせが言えるときだけ出る」連動なので、ガード中は顔出し・BADGE・声がまとめて止まる。armed は立ったまま・told は立てないので、1分を過ぎて d<9 なら初回の文面で従来どおり出す（遅れて出す形）。くわしい説明では従来どおり開始直後から出す
         st.s = 'up'; st.t = 0; st.armed = false; mole.visible = true; BADGE.peek(MX, MZ, 3, 'wow'); if (!told) voice('mogura'); told = true;
       }
     } else {

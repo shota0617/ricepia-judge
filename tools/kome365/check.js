@@ -207,13 +207,13 @@ const CHECKS = {
   async stuck(b){
     const p = await page(b, 390, 844);
     const r = await p.evaluate(() => {
-      K3.manual = true; K3.fixedSeed = 11; K3.jump('tiller'); const S = K3.S, f = S.f; f.water = 2.2; let stopped = null; const hud0 = document.getElementById('stage').textContent;
+      K3.manual = true; K3.fixedSeed = 11; K3.jump('tiller'); const S = K3.S, f = S.f; f.water = 2.2; for (let i=0;i<40;i++){ if (S.weather[S.day+i]) S.weather[S.day+i] = Object.assign({}, S.weather[S.day+i], { w:'晴れ' }); } /* 58周目：雨で 水が へらない 年が できたので 晴れ つづきに して 水切れを 作る */ let stopped = null; const hud0 = document.getElementById('stage').textContent;
       for (let i=0;i<20 && stopped == null;i++){ swipe('right', 260, true); const d0 = S.day; flush(); if (f.water < 1) stopped = { day: S.day, dayGap: S.day - d0 }; } /* 止まる 場面が ふえたので 20回（28周目） */
       const t = document.getElementById('say').textContent; const okText = /→|↑/.test(t);
       let moved = 0; for (let i=0;i<5;i++){ const t2 = document.getElementById('say').textContent; const dir = /↑/.test(t2) ? 'up' : /↓/.test(t2) ? 'down' : /←/.test(t2) ? 'left' : 'right'; const d0 = S.day; swipe(dir, 120, false, true); if (S.day > d0) moved++; }
       return { water: f.water, stopped, text: t.slice(0, 30), okText, moved, hud: hud0, hud2: document.getElementById('stage').textContent };
     });
-    ok((r.stopped || /↓|←/.test(r.text)) && /→|↑|↓|←/.test(r.text), '水が 0 に なった 日に パラパラが 止まる か、吹き出しが つぎの 手（矢印）を 言う（57周目：雨で 深い まま なら ↓）', r);
+    ok(r.stopped && r.okText, '水が 0 に なった 日に パラパラが 止まり、吹き出しは → か ↑ を 言う', r);
     ok(r.moved >= 3, 'その あとも 吹き出しの とおりで 日が すすむ（詰まない）', r);
     ok(/茎\d+本/.test(r.hud) && /℃|茎|出穂/.test(r.hud2), 'HUD に 茎の 本数（出穂の あとは 積算℃）', [r.hud, r.hud2]);
     const wp = await p.evaluate(() => { K3.jump('tiller'); K3.V.particles = []; K3.advanceDay(); const n = K3.V.particles.length; const w = K3.S.weather[K3.S.day].w; K3.jump('nursery'); return { n, w, stat: document.getElementById('stat').textContent }; });

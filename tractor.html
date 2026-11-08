@@ -6724,7 +6724,7 @@ const KAWASEMI = (() => {
     wings.forEach((w, i) => { w.rotation.z = (i ? -1 : 1) * (b.st === 'perch' || b.st === 'plunge' ? 1.45 : flap); });   // とまる・とびこむ ときは たたむ
     if (b.st === 'perch') g.rotation.x = Math.sin(b.ph * 1.7) * 0.05;   // しっぽを ふる ように ゆれる
     if (!S.started) return;
-    if (!told && d < 16 && b.st === 'perch') {
+    if (!told && d < 16 && b.st === 'perch' && !startNoticeMuted()) {   // サイクル243・最初の1分: のんびりでは最初の1分は知らせだけを遅らせ、杭にとまって魚をとる動きは従来どおり残す。杭は東畦の (15.72, 33) で固定され、最初の列の北端 (0, 24.5) では d=17.87 で届かないが、北東の隅へ直接なぞれば東の端の列の北端 (13.4, 24.5) で d=8.81 となり開始約18.4秒で届く。田んぼの中からの最小距離は角 (15, 25) でも 8.03 で逃げる条件 d<7 に届かないため鳥は同じ杭にとまり続け、perch のたびに確率なしで知らせが出るので、自動知らせの経路をそろえて止める。told は立てないので1分を過ぎて近くでとまっていれば従来どおり出て、2件目も told が前提のため最初の1分には続かない。くわしい説明では従来どおり開始直後から出す
       if (DETAIL || SAY.note('カワセミだ！ あおくて きれいだね')) { told = true; BADGE.peek(b.p.x, b.p.z, 3); voice('kawasemi'); }
     } else if (told && !toldFish && b.fishT > 5 && d < 20) {
       if (DETAIL || SAY.note('さかな とった！ じょうずだね')) { toldFish = true; BADGE.peek(b.p.x, b.p.z, 3, 'joy'); BADGE.joy(3); }

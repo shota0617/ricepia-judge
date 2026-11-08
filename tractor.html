@@ -1699,7 +1699,7 @@ const GREASE = (() => {
     if (!dry) return;
     if (!m && moving) moves++;                      // 上げ（下げ）おわった回数
     moving = m;
-    if (m && (t -= dt) <= 0) { t = 0.42; if (audio && soundOn) squeak(audio.ac, audio.out, 0.6 + 0.4 * Math.random()); }   // 動いているあいだ ギーッ、ギーッ
+    if (m && (t -= dt) <= 0) { t = 0.42; if (audio && soundOn) squeak(audio.ac, audio.out, (0.6 + 0.4 * Math.random()) * (startNoticeMuted() ? 0.5 : 1)); }   // 動いているあいだ ギーッ、ギーッ。サイクル234・最初の1分: 知らせ（moves>=3）はガード済みでも音は無ガードだった。dryは既定の春・未点検で成立し、最初の降下（約0.28秒）で1回・以後の上げ下げ（約0.83秒）で2回ずつ鳴り、通常の最初の列→上げ→隣で下げる流れでは最初の1分で少なくとも5回出る。squeakのゲインピークはのんびりでも0.09〜0.15で土の音（0.035）の約2.6〜4.3倍のため、最初の1分だけ音量を半分にして弱める（鳴る間隔・dry自体は不変更）
     if (!m) t = 0;
     if (moves >= 3 && !m && !told && !startNoticeMuted()) { told = true; toast('ギーギー いってるね。とまって 上げたら みるよ（ロータリーを上げ下げすると ギーギー鳴る。3 点リンクの 動く所の グリースが 切れているのかも。止まって 上げると 見ます）', 7); }
     if (told && Math.abs(S.v) < 0.05 && !S.rotDown && S.rotPos > 0.9 && (S.rotorW || 0) < 1 && (!S.stalled || offFree()) && !(S.crank > 0)) {   // 爪が止まってから

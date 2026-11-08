@@ -28,7 +28,7 @@ const HELPERS = () => {
       if (bot==='careful' && S.phase==='field' && f.planted){
         if ((a.left==='追肥' && f.N < 37) || (a.left==='穂肥' && f.N < 40) || a.left==='溝切り') dir = 'left'; /* 葉いろが こい 年は 追肥（37 以上）・穂肥（40 以上）を 見送る（23・31周目） */
         else if (a.left==='刈る' && f.gdd >= 980) dir = 'left';
-        else if (S.weather[S.day+1] && S.weather[S.day+1].w==='台風' && S.weather[S.day].w!=='台風' && (f.heading || f.dat >= f.headDat - 2) && f.water < 7.5 && floodMark !== S.day + ':' + f.water){ dir = 'up'; len = 400; fast = true; floodMark = S.day + ':' + f.water; } /* 73周目：あす 台風は はじいて 7.5cm（ふつうの ゆっくり↑も 7.5 に なった ので、ていねいが 6cm 超を 落として 41% たおれて いた） */
+        else if (S.weather[S.day+1] && S.weather[S.day+1].w==='台風' && S.weather[S.day].w!=='台風' && (f.heading || f.dat >= f.headDat - 2) && f.water < K3.TY_DEEP && floodMark !== S.day + ':' + f.water){ dir = 'up'; len = 400; fast = true; floodMark = S.day + ':' + f.water; } /* 73周目：あす 台風は はじいて 7.5cm（ふつうの ゆっくり↑も 7.5 に なった ので、ていねいが 6cm 超を 落として 41% たおれて いた） */
         else if (f.dat < 10){ dir = f.water < 4 ? 'up' : 'right'; len = 120; }
         else if (f.dat < 34){ dir = f.water < 1.5 ? 'up' : f.water > 4.5 ? 'down' : 'right'; len = 40; }
         else if (f.dat <= 44 && !f.heading && f.hoshiDays < 7){ if (f.water >= 1){ dir = 'down'; len = 400; fast = true; } else dir = 'right'; } /* 46周目：中干しは 7日で 切り上げる（9日目から 根が 切れる） */

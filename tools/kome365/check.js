@@ -75,7 +75,7 @@ const CHECKS = {
   async water(b){
     const p = await page(b, 390, 844);
     const r = await p.evaluate(() => {
-      K3.manual = true; K3.fixedSeed = 11; K3.jump('tiller'); const f = K3.S.f; f.dat = 35; f.water = 1; K3.V.water = 1; K3.V.waterV = 0; calmDays(K3.S, 2, 'くもり'); steps(60); /* 69周目：はじきの 上限は きょうの 天気で 決まる ので、きょう・あすを くもりに */ /* 55周目：合図の 前は はじきの 上限が 7cm（よい 深さ 3〜5 の 上 +2）なので 1cm から */ /* 分げつの ころ（10〜30日）は ゆっくりの ↑が 4cm までなので、その あとで */
+      K3.manual = true; K3.fixedSeed = 11; K3.jump('tiller'); const f = K3.S.f; f.dat = 35; f.water = 0; K3.V.water = 0; K3.V.waterV = 0; calmDays(K3.S, 2, 'くもり'); steps(60); /* 80周目：合図の 前の 窓の はじきは 6cm に 着地 する ので 0 から（長さの 差が 見える ように） */ /* 69周目：はじきの 上限は きょうの 天気で 決まる ので、きょう・あすを くもりに */ /* 55周目：合図の 前は はじきの 上限が 7cm（よい 深さ 3〜5 の 上 +2）なので 1cm から */ /* 分げつの ころ（10〜30日）は ゆっくりの ↑が 4cm までなので、その あとで */
       const w0 = f.water; swipe('up', 80, true); const w1 = f.water; swipe('up', 240, true); const w2 = f.water; /* はじく（ゆっくりは 5cm まで。21周目） */
       const v0 = K3.V.water; steps(90); const v1 = K3.V.water;   // 見た目の 水面が 本当の 水に 追いつく
       swipe('down', 120, false); const w3 = f.water; swipe('down', 400, true); const w4 = f.water; swipe('down', 400, true); const w5 = f.water; steps(90); const v2 = K3.V.water; /* 55周目：はじき↓は よい 深さの 下（3cm）に 着地、もう一度 はじくと 空 */
@@ -84,7 +84,7 @@ const CHECKS = {
     });
     ok(r.w1 > r.w0 && r.w2 > r.w1, '↑ で 水が 入る。長い ほど 多い', r);
     ok(r.w2 - r.w1 > r.w1 - r.w0, 'スワイプの 長さで 量が かわる', r);
-    ok(Math.abs(r.v1 - r.w2) < 0.3 && r.v0 <= r.w2 + 0.3, '水面は 指に ついてきて、はなしたら 本当の 水に 落ちつく（ばね）', r);
+    ok(Math.abs(r.v1 - r.w2) < 0.3 && r.v0 >= r.w2 - 0.3, '水面は 指に ついてきて、はなしたら 本当の 水に 落ちつく（ばね）', r); /* 80周目：上限で 止まる 時は 指の 水面が 本当の 水より 上に 出て から 落ちつく */
     ok(r.w3 < r.w2 && r.w4 <= 3 && r.w4 > 0 && r.w5 === 0 && Math.abs(r.v2) < 0.3, '↓ で 落ちる。はじくと 3cm に 着地、もう一度 はじくと 空に（合図の 前：seed 11 の 35日目は 茎が 目標の 7割 未満）', r);
     ok(/みず 0cm/.test(r.stat), 'HUD の 水が 0cm に なる', r.stat);
     await p.screenshot({ path: path.join(OUT, 'water.png') });
@@ -330,6 +330,21 @@ const CHECKS = {
     }
   },
   // 重さ：1コマ 60ms を こえない（出穂の あと、株が いちばん 多い とき）
+  // 79周目の 3つの 動き：深水の 日数は 台風の 前後で 消えない・中干しの「きのうの 雨で」は ↑した 日は 言わない・台風の 翌日の 出穂は「あつい日 1日目」と 言わない
+  async rules79(b){
+    const p = await page(b, 390, 844);
+    const r = await p.evaluate(() => {
+      K3.manual = true; K3.fixedSeed = 7; K3.jump('heading'); const S = K3.S, f = S.f; const out = {};
+      f.water = 9; f.deepRun = 3; calmDays(S, 6, 'くもり'); S.weather[S.day+1] = Object.assign({}, S.weather[S.day+1], { w: '台風' }); K3.growDay(S); out.dr1 = f.deepRun; /* 台風の 前日：数えない が 0 にも しない */
+      f.water = 9; S.weather[S.day] = Object.assign({}, S.weather[S.day], { w: 'くもり' }); S.weather[S.day+1] = Object.assign({}, S.weather[S.day+1], { w: 'くもり' }); S.weather[S.day+2] = Object.assign({}, S.weather[S.day+2], { w: 'くもり' }); S.weather[S.day-1] = Object.assign({}, S.weather[S.day-1], { w: 'くもり' }); S.weather[S.day-2] = Object.assign({}, S.weather[S.day-2], { w: 'くもり' }); f.typhoonDay = null; K3.growDay(S); out.dr2 = f.deepRun;
+      K3.fixedSeed = 7; K3.jump('nakaboshi'); const S2 = K3.S, f2 = S2.f; f2.hoshiDays = 2; f2.hoshiEnd = false; f2.hoshiRun = 2; f2.water = 1; calmDays(S2, 3, 'くもり'); S2.weather[S2.day-1] = Object.assign({}, S2.weather[S2.day-1], { w: '雨' }); f2.upDay = null; K3.narrate(); out.rain = document.getElementById('say').textContent.slice(0, 20); f2.upDay = S2.day - 1; K3.narrate(); out.up = document.getElementById('say').textContent.slice(0, 20);
+      K3.fixedSeed = 7; K3.jump('heading'); const S3 = K3.S, f3 = S3.f; S3.day = f3.heading + 1; f3.water = 3; calmDays(S3, 2, '高温'); f3.typhoonDay = null; K3.narrate(); out.hot = document.getElementById('say').textContent.slice(0, 30); f3.typhoonDay = S3.day - 1; K3.narrate(); out.afterTy = document.getElementById('say').textContent.slice(0, 30);
+      return out;
+    });
+    ok(r.dr1 === 3 && r.dr2 === 4, '深水の 日数は 台風の 前後で 止まる だけ（0 に もどさない）', r);
+    ok(/きのうの 雨で/.test(r.rain) && !/きのうの 雨で/.test(r.up), '中干しの 途中の「きのうの 雨で」は 自分で ↑した 日は 言わない', r);
+    ok(/あつい日 1日目/.test(r.hot) && !/あつい日/.test(r.afterTy), '出穂の 翌朝の「あつい日 1日目」は 台風の 翌日は 言わない', r);
+  },
   async perf(b){
     const p = await page(b, 390, 844);
     const r = await p.evaluate(() => { K3.manual = true; K3.fixedSeed = 11; K3.jump('heading'); const t0 = performance.now(); for (let i=0;i<30;i++) K3.step(1/60); return (performance.now()-t0)/30; });

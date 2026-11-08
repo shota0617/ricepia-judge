@@ -654,7 +654,7 @@ a{color:var(--acc)}
 #swFriends{position:absolute;left:50%;transform:translateX(-50%);top:10px;z-index:3;pointer-events:none;display:none;align-items:center;gap:2px;padding:5px 8px;border-radius:999px;background:rgba(255,253,247,.88);border:3px solid #fff;box-shadow:0 3px 10px rgba(0,0,0,.25);font-size:30px;line-height:1}   /* 田んぼの仲間たち(サイクル57・Smushi Come Home: 出会った生きものが仲間としてそばにいる。絵文字のみ・文字なし・表示のみ。跳ねるアニメーションは付けない) */
 #swFriends .frMember{display:inline-block;width:30px;height:30px;line-height:1}
 .lfPix{display:inline-block;background-repeat:no-repeat;background-position:center;background-size:contain;image-rendering:pixelated;vertical-align:middle}
-.zkGot{width:32px;height:32px}.zkSil{width:40px;height:40px}.zkNext{width:36px;height:36px}.zkVisit{width:22px;height:22px}.zkNewIn{width:26px;height:26px}.zkResult{width:22px;height:22px}
+.zkGot{width:32px;height:32px}.zkSil{width:40px;height:40px}.zkNext{width:36px;height:36px}.zkVisit{width:22px;height:22px}.zkNewIn{width:26px;height:26px}.zkResult{width:22px;height:22px}.patLife{width:40px;height:40px}
 #swStageTint{position:absolute;inset:0;z-index:0;pointer-events:none;background-color:rgba(176,132,82,0);transition:background-color 1.2s ease}   /* 生育段階で移ろう田んぼの色み(サイクル51・A Short Hike: 景色の色みで段階が読める。色のみ・文字なし・表示のみ) */
 #swStageTint[data-stage="0"]{background-color:rgba(176,132,82,.16)}
 #swStageTint[data-stage="1"]{background-color:rgba(150,210,110,.14)}
@@ -1548,6 +1548,9 @@ const PULLPIC = SVGW('<path d="M10 58 H54" stroke="#8a6a44" stroke-width="5" str
 const STOMPPIC = SVGW('<path d="M4 60 Q32 34 60 60 Z" fill="#9b7650" stroke="#6e5232" stroke-width="2"/><ellipse cx="40" cy="52" rx="5" ry="3.5" fill="#3a2a1a"/><path d="M44 54 Q52 58 58 60" stroke="#5fa8d8" stroke-width="3" fill="none" stroke-linecap="round"/><rect x="22" y="10" width="14" height="22" rx="3" fill="#3c7a3c"/><path d="M20 30 H42 Q46 30 46 36 V38 H20 Z" fill="#2e5e2e"/><g stroke="#d9822b" stroke-width="3" stroke-linecap="round"><path d="M14 42 L10 46"/><path d="M48 42 L52 46"/></g>', '2 6 60 58');
 const LEAKPIC = SVGW('<path d="M2 58 Q30 22 62 58 Z" fill="#9b7650" stroke="#6e5232" stroke-width="2"/><path d="M8 40 H2 V58" fill="#7fb3d3"/><ellipse cx="38" cy="47" rx="6" ry="4" fill="#2f2216"/><path d="M42 49 Q50 54 54 62" stroke="#4f9fd8" stroke-width="4" fill="none" stroke-linecap="round"/><circle cx="56" cy="50" r="2.4" fill="#4f9fd8"/><circle cx="50" cy="44" r="2" fill="#4f9fd8"/>', '0 22 64 42');
 const picOf = (e) => { if (e.kind === 'life') { const z = ZUKAN.find(([k]) => e.text.includes(k)); if (z && LIFEPIC[z[2]]) return LIFEPIC[z[2]]; if (z && (z[2] === 'ゲンゴロウ' || z[2] === 'タガメ')) return '🪲✨'; if (z && z[2] === 'クモの巣の朝露') return '🕸️💧'; if (z && z[2] === '稲の花') return '🌾🌼'; } if (e.kind === 'leak') return LEAKPIC; return icOf(e.text); };
+/* 見回りカードの生きものドット絵(サイクル145・差14・ねこあつめ: 覗くたびの小さな違いがどこでも同じ手描きドット絵で読める水準へ): picOfは文字列経路(Field3D・_say)用にそのまま残し、HTMLの見回りカードでのみ life を __lifePixSpan(サイクル144の橋渡し)のドット絵へ替える。引けないときは従来の picOf へ戻る。表示のみ・判定/保存は不変 */
+const patrolPicHtml = (e) => { if (e && e.kind === 'life') { const z = ZUKAN.find(([k]) => e.text.includes(k)); if (z) { try { if (window.__lifePixSpan) { const h = window.__lifePixSpan(z[2], 'patLife'); if (h) return h; } } catch (_) {} } } return picOf(e); };
+window.__patrolPicHtml = patrolPicHtml;
 let pwKey = '', lookFrom = -1;
 function openPatrol(){
   const ev = f.patrol();
@@ -1565,7 +1568,7 @@ function openPatrol(){
     if (e.care) b = e.fixed ? `<span class="pdone" aria-label="${e.how === 'pull' ? 'ちぎれた茎が広がりました' : '手を打ちました'}">${e.how === 'pull' ? '😣' : '✅'}</span>` : ib(`data-care="${e.id}"`, (typeof PICON[e.kind] === 'function' ? PICON[e.kind]() : PICON[e.kind]) || '🛠️', e.care, 'go') + (e.alt ? ib(`data-care="${e.id}" data-opt="${e.alt.key}"`, PULLPIC, e.alt.label) : '');
     else if (e.spray) b = `<span class="pmark" aria-label="${esc('いまの判断: ' + pestAdvice(e.spray))}">${pestAdvice(e.spray).startsWith('👉') ? '❗' : '⏳'}</span>` + (canSpray(e.spray) ? ib(`data-spray="${e.spray}"`, '🧪', '防除の画面へ') : '');
     if (!e.fixed && use3d && window.Field3D && window.Field3D.canFocus(e.kind)) b = ib(`data-look="${e.kind}"`, '🔍', '近くで見る' + (LOOK[e.kind] ? ': ' + LOOK[e.kind] : '')) + b;
-    return `<div class="pv pcard${e.kind === 'life' ? ' life' : bad(e) ? ' bad' : ''}" style="animation-delay:${dl(i).toFixed(2)}s" role="group" aria-label="${esc(e.text)}"><div class="pic" aria-hidden="true">${picOf(e)}</div>${b ? '<div class="pbtns">' + b + '</div>' : ''}</div>`;
+    return `<div class="pv pcard${e.kind === 'life' ? ' life' : bad(e) ? ' bad' : ''}" style="animation-delay:${dl(i).toFixed(2)}s" role="group" aria-label="${esc(e.text)}"><div class="pic" aria-hidden="true">${patrolPicHtml(e)}</div>${b ? '<div class="pbtns">' + b + '</div>' : ''}</div>`;
   };
   const tod = f.timeOfDay ? f.timeOfDay() : 1;
   $('sheet').innerHTML = `<h3 id="sheetTitle" class="sr">田んぼの見回り(${K.fmt(f.doy)})</h3><div class="phead" aria-hidden="true">${['🌅', '☀️', '🌇'][tod]} ${KAKASHI_SVG(72)}</div>`

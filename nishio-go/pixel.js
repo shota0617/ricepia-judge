@@ -8123,6 +8123,7 @@ function frame(now) {
         shopHits.push([q.x, q.y, q.x + q.w, q.y + q.h, s]);
       }
     }
+    if (s.shop && giant) drawShopSeimai(sx, sy, size);   // 自店の特大絵の足元に精米の小道具（絵だけ）
     if (s.shop) { const t = drawShopTag(sx + size / 2, sy, dpr, s); shopHits.push([Math.min(t[0], sx), t[1], Math.max(t[2], sx + size), sy + size, s]); }
   }
   // 西尾の人たち（まだ話していない人の上には吹き出し）。呼びとめた人は、歩いてくる途中の位置に（歩く間は足を速く動かす）
@@ -8806,6 +8807,42 @@ let giantHits = [];   // 描いた特大の絵 [左, 上, 大きさ, スポッ�
 let poiHits = [];     // 描いた街の主な建物の特大の絵 [左, 上, 大きさ, 目印, 絵の canvas]
 let shopHits = [];   // 当店の札と絵のタップ範囲 [左, 上, 右, 下, スポット]（描くたびに作り直す）
 const SHOP_SIGN = { 'f-ricepia': ['らいすぴあ・秀幸', '#ffffff', '#d7262e'], 'f-kondo-beikoku': ['近藤米穀店', '#f3ead0', '#111111'] };
+// 自店の特大絵の足元・左手前に置く「精米の所作」の小道具（銀の精米機・粒のざる・粒を見る虫眼鏡）の幾何（サイクル184）。描画とテストが同じ数字を使う。純関数
+function seimaiLayout(sx, sy, size) {
+  try {
+    if (![sx, sy, size].every(v => typeof v === 'number' && isFinite(v)) || size <= 0) return null;
+    const ground = sy + size * 0.72, w = size * 0.34, h = size * 0.30, x = sx + size * 0.03, y = ground - h;
+    const grains = [[-0.16, -0.01], [-0.08, 0.02], [0, -0.02], [0.08, 0.01], [0.15, -0.01], [-0.04, 0.035], [0.05, 0.04]].map(g => ({ x: x + w * (0.66 + g[0]), y: y + h * (0.84 + g[1]), r: Math.max(1, w * 0.028) }));
+    return {
+      x, y, w, h, ground,
+      machine: { x, y: y + h * 0.26, w: w * 0.36, h: h * 0.74, hopper: [[x + w * 0.02, y + h * 0.18, w * 0.32, h * 0.08], [x + w * 0.05, y + h * 0.1, w * 0.26, h * 0.08], [x + w * 0.08, y, w * 0.2, h * 0.1]], knob: { x: x + w * 0.27, y: y + h * 0.42, w: w * 0.05, h: h * 0.1 } },
+      tray: { cx: x + w * 0.66, cy: y + h * 0.88, rx: w * 0.3, ry: h * 0.1 },
+      grains,
+      lens: { cx: x + w * 0.7, cy: y + h * 0.66, r: w * 0.14, hx0: x + w * 0.7 + w * 0.1, hy0: y + h * 0.66 - w * 0.1, hx1: x + w * 0.94, hy1: y + h * 0.3 },
+    };
+  } catch (e) { return null; }
+}
+function drawShopSeimai(sx, sy, size) {   // 静止画：動きも文字もなし
+  const L = seimaiLayout(sx, sy, size);
+  if (!L) return;
+  const R = (x, y, w, h) => ctx.fillRect(Math.round(x), Math.round(y), Math.max(1, Math.round(w)), Math.max(1, Math.round(h)));
+  const m = L.machine;
+  ctx.fillStyle = '#d9dee3'; R(m.x, m.y, m.w, m.h);
+  ctx.fillStyle = '#f2f4f6'; R(m.x + m.w * 0.12, m.y, m.w * 0.3, m.h);
+  ctx.fillStyle = '#aeb6bd'; R(m.x + m.w * 0.72, m.y, m.w * 0.28, m.h);
+  m.hopper.forEach((r, i) => { ctx.fillStyle = i === 2 ? '#f2f4f6' : '#d9dee3'; R(r[0], r[1], r[2], r[3]); ctx.fillStyle = '#aeb6bd'; R(r[0] + r[2] * 0.82, r[1], r[2] * 0.18, r[3]); });
+  ctx.fillStyle = '#ffd54f'; R(m.knob.x, m.knob.y, m.knob.w, m.knob.h);
+  const t = L.tray;
+  ctx.fillStyle = '#8d6e4a'; ctx.beginPath(); ctx.ellipse(t.cx, t.cy, t.rx, t.ry, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#a98a62'; ctx.beginPath(); ctx.ellipse(t.cx, t.cy - t.ry * 0.15, t.rx * 0.88, t.ry * 0.78, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.lineWidth = 1; ctx.strokeStyle = '#e3e6e8';
+  for (const g of L.grains) { ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(g.x, g.y, g.r, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); }
+  const l = L.lens;
+  ctx.lineCap = 'round'; ctx.strokeStyle = '#4a3b2a'; ctx.lineWidth = Math.max(2, size * 0.012);
+  ctx.beginPath(); ctx.moveTo(l.hx0, l.hy0); ctx.lineTo(l.hx1, l.hy1); ctx.stroke();
+  ctx.fillStyle = 'rgba(180,220,255,.35)'; ctx.beginPath(); ctx.arc(l.cx, l.cy, l.r, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#2f2a26'; ctx.lineWidth = Math.max(2, size * 0.01); ctx.beginPath(); ctx.arc(l.cx, l.cy, l.r, 0, Math.PI * 2); ctx.stroke();
+}
 function drawShopTag(cx, bottom, dpr, s) {
   gbPause++;
   try { return shopTag(cx, bottom, dpr, s); } finally { gbPause--; }   // 看板も本物の色のまま
@@ -13246,7 +13283,7 @@ const meiroApi = {
   tilt: () => tiltG, tiltAsk, tiltReset, tiltNeedsPermission, koto: (v, low) => kotoSound(v, low), splash: v => splashSound(v), boing: (v, hi) => boingSound(v, hi), rumble: v => rumbleTick(v, GROUND.road),   // rumble：転がる音（速さは 地図の マス/秒）
   pause(on) { meiroPause = !!on; dirty = true; if (on && mzNext.hold) { mzNext.hold = false; if (G.toastFlush) G.toastFlush(); } },   // 止める ときは「つぎの ゴール」で 待たせた 知らせを 出す
 };
-window.nishioPixel = { blinkOn, BLINK_MS, BLINK_SHUT_MS, get riceEye() { return riceEyeAt; }, grow: { stage: () => grow.stage, stageFor: growStageFor, TH: GROW_TH, popAt: () => grow.popT }, firstRoute: { shape: mzPathShape, simple: mzFirstSimple, LIM: MZ_FIRST_SIMPLE }, collected: { has: collectedOf }, roadShape: { of: roadShapeOf, corner: roadShapeCorner, missing: roadShapeMissing, end: roadShapeEndDir, straight: roadShapeStraightDir }, glanceShift, asleepShut, happyFace, meiroApi, heroGiant: () => heroGiantId, pickHeroGiant, HERO_GIANT_RANGE, maze: { half: () => ({ cell: mzHalf.cell ? [...mzHalf.cell] : null, passed: !!mzHalf.passed }), halfCell: mzHalfCell, halfPassed: mzHalfPassed, HALF_MIN: MZ_HALF_MIN, goalFxSpec: () => ({ ...MZ_GOAL_FX }), wallTheme: () => mzWallTheme(), on: () => mazeOn(), playing: () => active && mazeOn(), next: () => ({ want: mzNext.want, t0: mzNext.t0, on: mzNextOn(), labHide: !!mzNext.labHide, arrowDim: !!mzNext.arrowDim, box: mzNext.box || null }), goal: id => {   // id の 名所が いまの ゴール（か 2分 以内の 前の ゴール）なら、かかった 時間と めいろの 道のり
+window.nishioPixel = { seimaiLayout, drawShopSeimai, blinkOn, BLINK_MS, BLINK_SHUT_MS, get riceEye() { return riceEyeAt; }, grow: { stage: () => grow.stage, stageFor: growStageFor, TH: GROW_TH, popAt: () => grow.popT }, firstRoute: { shape: mzPathShape, simple: mzFirstSimple, LIM: MZ_FIRST_SIMPLE }, collected: { has: collectedOf }, roadShape: { of: roadShapeOf, corner: roadShapeCorner, missing: roadShapeMissing, end: roadShapeEndDir, straight: roadShapeStraightDir }, glanceShift, asleepShut, happyFace, meiroApi, heroGiant: () => heroGiantId, pickHeroGiant, HERO_GIANT_RANGE, maze: { half: () => ({ cell: mzHalf.cell ? [...mzHalf.cell] : null, passed: !!mzHalf.passed }), halfCell: mzHalfCell, halfPassed: mzHalfPassed, HALF_MIN: MZ_HALF_MIN, goalFxSpec: () => ({ ...MZ_GOAL_FX }), wallTheme: () => mzWallTheme(), on: () => mazeOn(), playing: () => active && mazeOn(), next: () => ({ want: mzNext.want, t0: mzNext.t0, on: mzNextOn(), labHide: !!mzNext.labHide, arrowDim: !!mzNext.arrowDim, box: mzNext.box || null }), goal: id => {   // id の 名所が いまの ゴール（か 2分 以内の 前の ゴール）なら、かかった 時間と めいろの 道のり
     mzGoalAsk.id = '';   // 保留中の 着いた名所は 入口で 消す（失敗した goal で 前の id が 残らない。サイクル166 Codex指摘）
     if (!mazeOn()) return null;
     const now = performance.now(), pv = mzRt.prev, g = mzRt.gid === id ? { t0: mzRt.t0, len0: mzRt.len0, warp: mzRt.warp, moves: mzMv.n, run: { ...mzRt.run } } : pv && pv.id === id && now - pv.at < 120000 ? pv : null;

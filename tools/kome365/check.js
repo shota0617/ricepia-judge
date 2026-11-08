@@ -339,11 +339,14 @@ const CHECKS = {
       f.water = 9; S.weather[S.day] = Object.assign({}, S.weather[S.day], { w: 'くもり' }); S.weather[S.day+1] = Object.assign({}, S.weather[S.day+1], { w: 'くもり' }); S.weather[S.day+2] = Object.assign({}, S.weather[S.day+2], { w: 'くもり' }); S.weather[S.day-1] = Object.assign({}, S.weather[S.day-1], { w: 'くもり' }); S.weather[S.day-2] = Object.assign({}, S.weather[S.day-2], { w: 'くもり' }); f.typhoonDay = null; K3.growDay(S); out.dr2 = f.deepRun;
       K3.fixedSeed = 7; K3.jump('nakaboshi'); const S2 = K3.S, f2 = S2.f; f2.hoshiDays = 2; f2.hoshiEnd = false; f2.hoshiRun = 2; f2.water = 1; calmDays(S2, 3, 'くもり'); S2.weather[S2.day-1] = Object.assign({}, S2.weather[S2.day-1], { w: '雨' }); f2.upDay = null; K3.narrate(); out.rain = document.getElementById('say').textContent.slice(0, 20); f2.upDay = S2.day - 1; K3.narrate(); out.up = document.getElementById('say').textContent.slice(0, 20);
       K3.fixedSeed = 7; K3.jump('heading'); const S3 = K3.S, f3 = S3.f; S3.day = f3.heading + 1; f3.water = 3; calmDays(S3, 2, '高温'); f3.typhoonDay = null; K3.narrate(); out.hot = document.getElementById('say').textContent.slice(0, 30); f3.typhoonDay = S3.day - 2; K3.narrate(); out.afterTy = document.getElementById('say').textContent.slice(0, 30);
+      K3.fixedSeed = 7; K3.jump('heading'); const S4 = K3.S, f4 = S4.f; S4.day = f4.heading + 5; f4.water = 7; calmDays(S4, 3, 'くもり'); f4.typhoonDay = S4.day - 1; f4.typhoon = true; f4.tyAdd = 0.2; f4.tyWater = 7.5; K3.narrate(); out.lodge = document.getElementById('say').textContent.slice(0, 60); f4.tyAdd = 0; f4.water = 8; K3.narrate(); out.keep = document.getElementById('say').textContent.slice(0, 60); f4.water = 6.5; K3.narrate(); out.keep2 = document.getElementById('say').textContent.slice(0, 60); /* 82周目：たおれた 翌日の 文と 注、あす ↓の 予告は あすも 6cm 超の 時だけ */
       return out;
     });
     ok(r.dr1 === 3 && r.dr2 === 4, '深水の 日数は 台風の 前後で 止まる だけ（0 に もどさない）', r);
     ok(/きのうの 雨で/.test(r.rain) && !/きのうの 雨で/.test(r.up), '中干しの 途中の「きのうの 雨で」は 自分で ↑した 日は 言わない', r);
-    ok(/あつい日 1日目/.test(r.hot) && !/あつい日/.test(r.afterTy), '出穂の 翌朝の「あつい日 1日目」は 台風の 翌日は 言わない', r);
+    ok(/あつい日 1日目/.test(r.hot) && !/あつい日/.test(r.afterTy), '出穂の 翌朝の「あつい日 1日目」は 台風の あと（2日後）は 言わない', r);
+    ok(/たおれました/.test(r.lodge) && /↓で 浅く/.test(r.lodge) && /岡山県/.test(r.lodge), 'たおれた 翌日は「↓で 浅く（岡山県）」と 注まで 出る', r);
+    ok(/あす ↓/.test(r.keep) && !/あす ↓/.test(r.keep2) && /熊本県/.test(r.keep2), '台風の 翌日の「あす ↓」は あすも 6cm 超の 時だけ（短い 方は 注も 出る）', r);
   },
   async perf(b){
     const p = await page(b, 390, 844);

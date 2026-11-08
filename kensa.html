@@ -284,6 +284,7 @@
   <p>🔍や2回タップで寄るときは、身を寄せるようにゆっくり近づきます。寄った後は、指で見る場所をそのまま動かせます。</p>
   <p>水分を3回はかって平均が決まると、専用の小さな音で知らせます。水分が高いときは、低い音でゆっくり知らせます。</p>
   <p>穀刺しが袋に刺さると、専用の小さな音で知らせます。</p>
+  <p>出典（農林水産省）のリンクを開くときも、資料を開くときと同じ小さな音で知らせます。</p>
   <h2>みわけた粒のきろく</h2>
   <p id="grainRecord">まだ みわけた粒は ありません。</p>
   <p>みわけた粒の種類は、ここに静かに残ります。競うための数ではなく、見分けた粒をあとから見返すための記録です。</p>
@@ -291,7 +292,7 @@
   <p id="cookedRecord">まだ 炊き上がった お米は ありません。</p>
   <p>押した袋のお米は、次の袋のときに小さく炊き上がって返ってきます。届いた先で炊かれた様子で、罰ではありません。</p>
   <p>ゲームでは分かりやすくするため、皿は20粒で1粒＝5%と数えます（実際の検査の粒数や重量の割合とは違います）。形質（標準品との比較）、異種穀粒、異物は皿には出していません。ゲームの等級は遊びのためのもので、実際の格付けではありません。</p>
-  <p>出典: <a href="https://www.maff.go.jp/j/seisan/syoryu/kensa/kome/k_kikaku/" target="_blank" rel="noopener">農林水産省「玄米の検査規格」</a>／<a href="https://www.maff.go.jp/j/seisan/syoryu/kensa/hourei.html" target="_blank" rel="noopener">農産物検査法及び関係通知等</a>／<a href="https://www.maff.go.jp/j/seisan/syoryu/kensa/attach/pdf/index-25.pdf" target="_blank" rel="noopener">農林水産省「コメの農産物検査」</a></p>
+  <p>出典: <a class="sourceLink" href="https://www.maff.go.jp/j/seisan/syoryu/kensa/kome/k_kikaku/" target="_blank" rel="noopener">農林水産省「玄米の検査規格」</a>／<a class="sourceLink" href="https://www.maff.go.jp/j/seisan/syoryu/kensa/hourei.html" target="_blank" rel="noopener">農産物検査法及び関係通知等</a>／<a class="sourceLink" href="https://www.maff.go.jp/j/seisan/syoryu/kensa/attach/pdf/index-25.pdf" target="_blank" rel="noopener">農林水産省「コメの農産物検査」</a></p>
   <p><a id="notesReturnLink" href="https://ricepia.jp/">らいすぴあ（近藤米穀店）のサイトへ</a></p>
 </section>
 <script>
@@ -1910,6 +1911,7 @@ likeBtn.addEventListener("click", () => {
 returnLink.addEventListener("click", () => { returnSound(); sendTap("return"); }); /* 戻る合図も固有の音にする（サイクル111・差17）。いいねの音（差13）とは分ける */
 $("notesLink").addEventListener("click", () => { notesSound(); }); /* 資料を開く合図も固有の音にする（サイクル112・差18）。戻る音（差17）とは分ける。アンカーのスクロールは従来どおり */
 $("notesReturnLink").addEventListener("click", () => { returnSound(); }); /* 資料の末尾のサイトリンクも、同じ戻り先（ricepia.jp）なので戻る合図は同じ音にする（サイクル113・差19）。終了カードの戻る（差17）には音があるのに、このリンクだけが無音だった */
+document.querySelectorAll(".sourceLink").forEach(a => a.addEventListener("click", () => { notesSound(); })); /* 資料の出典リンク（農林水産省・3件）も、資料を開くときと同じ小さな音で知らせる（サイクル116・差22）。差19では「ゲームの操作ではない」として対象外にしたが、資料を開く操作（差18）も同じくゲームの操作ではなく音を付けた前例があり、資料内のリンク5件で出典3件だけが無音だった（390×844実測で押下の同期音0件）。新しいタブで開く動きは従来どおり妨げない */
 armIdle();
 startLot();
 </script>

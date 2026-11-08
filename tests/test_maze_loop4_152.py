@@ -54,7 +54,7 @@ class TestUnchanged(unittest.TestCase):
         self.assertRegex(PIX, r"RICE_BIG = 1\.45\b")
         self.assertRegex(PIX, r"ROLL_ACC = 7\b")
         self.assertRegex(PIX, r"ROLL_MAX = 4\.2\b")
-        self.assertIn("const GROW_TH = [15, 40, 80, 140, 210, 300, 420, 570, 760, 1000, 1300, 1700, 2200, 2800, 3600, 4600, 5900];", PIX)  # サイクル158（差2）で拡張
+        self.assertIn("const GROW_TH = [15, 40, 80, 140, 210, 300, 420, 570, 760, 1000, 1300, 1700, 2200, 2800, 3600, 4600, 5900, 7600, 9800];", PIX)  # サイクル158（差2）で拡張
         self.assertIn("const MZ_FIRST_SIMPLE = { turns: 5, branches: 4, ratio: 1.9 };", PIX)
         self.assertIn("const FIRST_MIN = 120, FIRST_MAX = 200;", GAME)
 

@@ -1843,6 +1843,7 @@ function stampNow() {
     { duration:320 * motion, delay:150 * motion, easing:"ease-out", fill:"forwards" });
   hint.style.display = "none";
   nextBtn.classList.add("on");
+  nextBtn.animate([{ opacity:0, transform:"scale(.92)" }, { opacity:1, transform:"scale(1.03)", offset:.7 }, { opacity:1, transform:"scale(1)" }], { duration:260 * motion, easing:"ease-out" }); /* つぎの袋ボタンも、他の現れるもの（終了カード・場面・チップ）と同じくふわりと現れる形にそろえる（サイクル125・差分テーマ差31）。旧版は display の切り替えだけで完成形が即座に出ていた（390×844実測で出現時のアニメーション0件） */
   focusIfKeys(nextBtn);
   guideAt("move", $("bagBig"), 90, 0);
 }

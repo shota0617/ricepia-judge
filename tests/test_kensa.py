@@ -1096,6 +1096,29 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         # 資料に1文だけ足す（ゲーム内文言は増やさない）
         self.assertIn("資料の末尾の「ゲームへ もどる」を押すと、対になる小さな音で知らせて、ゲームの画面へ戻ります", HTML)
 
+    def test_cycle118_like_rollback_has_its_own_paired_sound(self):
+        # 差分テーマ差24（差13の再監査の残り・対の音の欠け）: いいねを押した合図には固有の上がる音がある
+        # （差13）一方、送信が届かず押し直せるように戻る時だけが無音だった（390×844実測で巻き戻しの
+        # 同期音0件）ため、いいねの音と対になる固有の下がる音を付ける。届いた時は鳴らさない。
+        self.assertIn("function likeOutSound() {", HTML)
+        fn = HTML[HTML.index("function likeOutSound()"):HTML.index("function idleSound()")]
+        self.assertIn("o.frequency.setValueAtTime(840, t);", fn)
+        self.assertIn("o.frequency.exponentialRampToValueAtTime(560, t + 0.14);", fn)
+        self.assertIn('o.type = "triangle";', fn)
+        self.assertIn("o.start(t); o.stop(t + 0.16);", fn)
+        # 音量はいいねの音と同じ控えめさ（0.02）に留める
+        self.assertIn("g.gain.setValueAtTime(0.02, t);", fn)
+        # 届かなかった時の巻き戻しでだけ1回鳴らす（呼び出しは失敗コールバックの中だけにあることまで固定する）
+        fail = HTML[HTML.index('sendTap("like", () => {'):HTML.index('likeBtn.textContent = "👍 いいね";')]
+        self.assertIn("likeOutSound();", fail)
+        self.assertEqual(HTML.count("likeOutSound"), 2)  # 定義1＋呼び出し1
+        # いいねの音（差13）は従来どおり。間違いのときの無音（類4）も変えない
+        self.assertIn("function likeSound() {", HTML)
+        self.assertEqual(HTML.count("likeSound();"), 1)
+        self.assertIn("const tick = () => tone(1100 + Math.random() * 900, 0.03, 0.025);", HTML)
+        # 資料に1文だけ足す（ゲーム内文言は増やさない）
+        self.assertIn("「いいね」が届かなかったときは、対になる小さな音で知らせて、押し直せるように戻ります", HTML)
+
     def test_cycle93_picked_grains_stay_in_quiet_record(self):
         # 類7: 見分けた粒が静かに記録に残る。任意で開く資料（#notes）の中だけに出し、常時表示・競争・スコアにはしない。
         # 袋を越えて残るため startLot では消さない（サイクル91の seenChecks と同じ持ち方）。

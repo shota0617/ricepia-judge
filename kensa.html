@@ -290,6 +290,7 @@
   <p>はかるで空振りしたときも、ハンドルが揺れるのに合わせて、回すときと同じ小さなカチッという音で知らせます。</p>
   <p>ぬくで空振りしたときも、穀刺しが手本の動きをするのに合わせて、専用の小さな音で知らせます。</p>
   <p>おすで空振りしたときも、はんこが手本の動きをするのに合わせて、専用の小さな音で知らせます。</p>
+  <p>おすの朱肉で空振りしたときも、2回目にはんこが半分だけ押し下がる手本の動きと、専用の小さな音で知らせます。</p>
   <p>きめるで空振りしたときも、等級のボタンが手本の動きをするのに合わせて、専用の小さな音で知らせます。</p>
   <h2>みわけた粒のきろく</h2>
   <p id="grainRecord">まだ みわけた粒は ありません。</p>
@@ -539,6 +540,20 @@ function gradeDemoSound() { /* きめる: 空振り1回目の手本の動きの�
     o.type = "sine";
     o.frequency.setValueAtTime(420, t);
     o.frequency.exponentialRampToValueAtTime(560, t + 0.13);
+    g.gain.setValueAtTime(0.018, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.15);
+    o.connect(g).connect(ac.destination);
+    o.start(t); o.stop(t + 0.15);
+  } catch (_) {}
+}
+function inkDemoSound() { /* おす（朱肉側）: 空振り2回目の手本（半分デモ）の音。290→200Hzへ小さく下がる音で、粒の tick（高い短い音）や実際に朱肉が付くときの音（inkSound 240Hz・triangle）・はんこ側の手本の音（340→240Hz）とは分ける（サイクル123・差分テーマ差29）。他の所作の空振り2回目には道具の半分デモがある（ぬく=穀刺しの半分・はかる=ハンドルの揺れ・おす はんこ側=半分おろす）一方、朱肉側の2回目だけ半分デモ自体がなく無音だった（390×844実測で同期音0件）。朱肉はまだ付いていないので実際に付く音は使わず、手本の押し下げに固有の小さな音を付ける。手本1回につき1回だけ鳴らす */
+  try {
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    if (ac.state === "suspended") ac.resume();
+    const o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime;
+    o.type = "sine";
+    o.frequency.setValueAtTime(290, t);
+    o.frequency.exponentialRampToValueAtTime(200, t + 0.13);
     g.gain.setValueAtTime(0.018, t);
     g.gain.exponentialRampToValueAtTime(0.0001, t + 0.15);
     o.connect(g).connect(ac.destination);
@@ -1882,6 +1897,12 @@ function endHanko() {
     setHanko(0);
     if (++hankoTaps >= NUDGE_LIMIT) { hankoTaps = 0; inkDone(); return; }
     if (hankoTaps === 1) guideAt("move", $("pad"), 0, 24); /* 空振り1回目: 手本の指をもう一度出す（サイクル81）。朱肉は押し下げの動きで出す（サイクル87） */
+    if (hankoTaps === 2) { /* 空振り2回目: 道具が半分やって見せる（Fable設計の空振り統一・サイクル84）。朱肉側だけ半分デモがなかったため、手本の指の押し下げ（24px）の半分（12px）だけ はんこが朱肉へ押し下がって戻る形で足す（サイクル123・差29）。状態は進めない（朱肉は付かない）。揺れ（bob）は半分デモが終わってから戻す */
+      inkDemoSound(); /* 半分デモにも手本の音を付ける（サイクル123・差29） */
+      hint.textContent = "はなさず ぎゅっと";
+      $("hanko").animate([{ transform:"translateY(0)" }, { transform:"translateY(12px)", offset:.55 }, { transform:"translateY(0)" }], { duration:560 * motion, easing:"ease-in-out" }).onfinish = () => { if (!inked && !inkHold && !inkDrag) bobHanko(); }; /* デモの間に押し直していたら揺れは戻さない（Codexレビュー指摘・サイクル123） */
+      return;
+    }
     hint.textContent = "はなさず ぎゅっと";
     bobHanko();
     return;

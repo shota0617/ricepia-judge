@@ -6639,7 +6639,7 @@ const HOTARU = (() => {
       const d = Math.hypot(u.x - S.x, u.z - S.z); if (a > 0.3 && d < bd) { bd = d; best = u; }
     }
     g.attributes.position.needsUpdate = true; g.attributes.alpha.needsUpdate = true;
-    if (!told && S.started && best && bd < 14) {
+    if (!told && S.started && best && bd < 14 && !startNoticeMuted()) {   // サイクル249・最初の1分: のんびりでは最初の1分は知らせだけを遅らせ、ホタルの光・飛び方・増え方は従来どおり残す。有効なのは代かき＋夕方・夜だけで、配置は自前の種173で決まり、生成順を再現するとデスクトップの7番目は (15.62, 0.48)＝開始点のほぼ真東で最初から点く側（k=0.25<0.4）にいて、東へ上限1.6m/sで進む再現では夜・夕とも開始約1秒（始動の遅れを入れても数秒）で bd<14 に入る。モバイルでも1番目 (15.74, 8.16) で開始約3.3秒に届く。told は立てないので1分を過ぎて近くで光っていれば従来どおり出て、2件目も told が前提のため最初の1分には続かない。くわしい説明では従来どおり開始直後から出す
       if (DETAIL || SAY.note('ホタルだ… きらきら してるね')) { told = true; BADGE.peek(best.x, best.z, 3, 'joy'); BADGE.joy(4); voice('hotaru'); }
     } else if (told && !toldStill && act > 0.85 && best && bd < 18) {
       if (DETAIL || SAY.note('とまって 見ると いっぱい いるね')) { toldStill = true; BADGE.peek(best.x, best.z, 3, 'joy'); BADGE.joy(4); }

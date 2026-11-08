@@ -920,6 +920,30 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertIn("idleSound();", HTML)
         self.assertIn("const tick = () => tone(1100 + Math.random() * 900, 0.03, 0.025);", HTML)
 
+    def test_cycle110_cooked_return_has_its_own_gentle_sound(self):
+        # 差分テーマ差16（類3・類8の残り）: 前の袋のお米が炊き上がって返ってくる合図だけに
+        # 固有の音がなく、チップが現れる窓にあるのは次の袋の到着音（arriveSound）だけだったため、
+        # 袋が着いて落ち着いた後に固有の温かい音を1回付ける（差8・差9と同じ「窓にあるのは別の音だけ」の形）。
+        self.assertIn("function cookedSound() {", HTML)
+        cooked_fn = HTML[HTML.index("function cookedSound()"):HTML.index("function thump()")]
+        self.assertIn("o.frequency.setValueAtTime(392, t);", cooked_fn)
+        self.assertIn("o.frequency.exponentialRampToValueAtTime(523, t + 0.28);", cooked_fn)
+        self.assertIn('o.type = "sine";', cooked_fn)
+        self.assertIn("o.start(t); o.stop(t + 0.3);", cooked_fn)
+        # 音量は控えめ（0.016）に留める
+        self.assertIn("g.gain.setValueAtTime(0.016, t);", cooked_fn)
+        # 次の袋の開始（startLot）で、炊き上がりの返りがある時だけ、到着の後に遅れて1回鳴らす
+        start_lot = HTML[HTML.index("function startLot()"):HTML.index("/* 皿の粒:")]
+        self.assertIn("if (cookedReturns.length) setTimeout(cookedSound, 320 * motion);", start_lot)
+        self.assertIn("arriveSound();", start_lot)
+        self.assertEqual(HTML.count("cookedSound"), 2)  # 定義1＋呼び出し1（setTimeout の参照）
+        # 押印の瞬間（stampNow の updateCooked）では鳴らさない: 返りが見えるのは次の袋の開始時だけ
+        stamp = HTML[HTML.index("function stampNow()"):HTML.index("function dropHanko()")]
+        self.assertNotIn("cookedSound", stamp)
+        # 到着音と粒の tick は従来どおり残る
+        self.assertIn("function arriveSound() {", HTML)
+        self.assertIn("const tick = () => tone(1100 + Math.random() * 900, 0.03, 0.025);", HTML)
+
     def test_cycle93_picked_grains_stay_in_quiet_record(self):
         # 類7: 見分けた粒が静かに記録に残る。任意で開く資料（#notes）の中だけに出し、常時表示・競争・スコアにはしない。
         # 袋を越えて残るため startLot では消さない（サイクル91の seenChecks と同じ持ち方）。

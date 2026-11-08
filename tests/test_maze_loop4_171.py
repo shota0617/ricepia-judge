@@ -13,9 +13,9 @@ def thresholds():
 class Cycle171(unittest.TestCase):
     def test_thresholds(self):
         th = thresholds()
-        self.assertEqual(th, [15, 40, 80, 140, 210, 300, 420, 570, 760, 1000, 1300, 1700, 2200])
+        self.assertEqual(th[:13], [15, 40, 80, 140, 210, 300, 420, 570, 760, 1000, 1300, 1700, 2200])  # 2800以降はサイクル173
         gaps = [th[0]] + [b - a for a, b in zip(th, th[1:])]
-        self.assertEqual(gaps, [15, 25, 40, 60, 70, 90, 120, 150, 190, 240, 300, 400, 500])
+        self.assertEqual(gaps[:13], [15, 25, 40, 60, 70, 90, 120, 150, 190, 240, 300, 400, 500])
         self.assertEqual(gaps, sorted(gaps))
 
     def test_stage_boundaries_in_node(self):
@@ -23,7 +23,7 @@ class Cycle171(unittest.TestCase):
                 + re.search(r"function growStageFor\(d\) \{.*?\n", PIX).group(0)
                 + "console.log([759,760,999,1000,1299,1300,1000000].map(growStageFor).join());")
         out = subprocess.run(["node", "-e", code], capture_output=True, text=True, check=True).stdout.strip()
-        self.assertEqual(out, "8,9,9,10,10,11,13")
+        self.assertEqual(out, "8,9,9,10,10,11,15")
 
     def test_draw_code(self):
         self.assertIn("if (st >= 10) { ctx.fillStyle = '#ffd84a'; ctx.fillRect(x0 - q, y0 - (sh + 7) * q, 2 * q, 2 * q); }", PIX)

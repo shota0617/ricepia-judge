@@ -20,7 +20,7 @@ def thresholds():
 
 class TestGrowContinues(unittest.TestCase):
     def test_thresholds_extended(self):
-        self.assertEqual(thresholds(), [15, 40, 80, 140, 210, 300, 420, 570, 760, 1000, 1300, 1700, 2200])
+        self.assertEqual(thresholds(), [15, 40, 80, 140, 210, 300, 420, 570, 760, 1000, 1300, 1700, 2200, 2800, 3600])
         # 段階0〜4のしきい値はサイクル150のまま変えない
         self.assertEqual(thresholds()[:4], [15, 40, 80, 140])
 
@@ -35,7 +35,7 @@ class TestGrowContinues(unittest.TestCase):
                 + re.search(r"function growStageFor\(d\) \{.*?\n", PIX).group(0)
                 + "console.log([0,139,140,209,210,299,300,419,420,100000].map(growStageFor).join());")
         out = subprocess.run(["node", "-e", code], capture_output=True, text=True, check=True).stdout.strip()
-        self.assertEqual(out, "0,3,4,4,5,5,6,6,7,13")
+        self.assertEqual(out, "0,3,4,4,5,5,6,6,7,15")
 
     def test_stem_height_capped(self):
         body = fn(PIX, "growStep")

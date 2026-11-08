@@ -963,6 +963,27 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertIn("function idleSound() {", HTML)
         self.assertIn("const tick = () => tone(1100 + Math.random() * 900, 0.03, 0.025);", HTML)
 
+    def test_cycle112_notes_link_has_its_own_gentle_sound(self):
+        # 差分テーマ差18（類3の残り）: 開く／閉じる・現れる合図には固有の音がある（差14・差15・差17）一方、
+        # 静かなきろく（類7・類8）が置かれた資料（📖→#notes）を開く操作だけが無音だったため、
+        # 固有の短く下がる音を1回付ける。アンカーのスクロールは従来どおり。
+        self.assertIn("function notesSound() {", HTML)
+        fn = HTML[HTML.index("function notesSound()"):HTML.index("function thump()")]
+        self.assertIn("o.frequency.setValueAtTime(700, t);", fn)
+        self.assertIn("o.frequency.exponentialRampToValueAtTime(540, t + 0.12);", fn)
+        self.assertIn('o.type = "triangle";', fn)
+        self.assertIn("o.start(t); o.stop(t + 0.14);", fn)
+        # 音量は控えめ（0.016）に留める
+        self.assertIn("g.gain.setValueAtTime(0.016, t);", fn)
+        # 資料リンクの click で1回だけ鳴らす
+        self.assertIn('$("notesLink").addEventListener("click", () => { notesSound(); });', HTML)
+        self.assertEqual(HTML.count("notesSound"), 2)  # 定義1＋呼び出し1
+        # 既存の合図の音は従来どおり残る
+        self.assertIn("function returnSound() {", HTML)
+        self.assertIn("function likeSound() {", HTML)
+        self.assertIn("function idleSound() {", HTML)
+        self.assertIn("const tick = () => tone(1100 + Math.random() * 900, 0.03, 0.025);", HTML)
+
     def test_cycle93_picked_grains_stay_in_quiet_record(self):
         # 類7: 見分けた粒が静かに記録に残る。任意で開く資料（#notes）の中だけに出し、常時表示・競争・スコアにはしない。
         # 袋を越えて残るため startLot では消さない（サイクル91の seenChecks と同じ持ち方）。

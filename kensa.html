@@ -1586,8 +1586,8 @@ function tapGrain(g) {
   const flyAnim = lotIndex === 0 ? fly.animate([
     { transform:"rotate(" + g.r + "deg) scale(1)", easing:"ease-out" },
     { transform:"translate(0px,-18px) rotate(" + g.r + "deg) scale(1.45)", offset:.38, easing:"ease-out" },
-    { transform:"translate(0px,-18px) rotate(" + g.r + "deg) scale(1.45)", offset:.62 },
-    { transform:"translate(" + dx + "px," + dy + "px) rotate(" + g.r + "deg) scale(" + shrink + ")", easing:"ease-in-out" }
+    { transform:"translate(0px,-18px) rotate(" + g.r + "deg) scale(1.45)", offset:.62, easing:"ease-in-out" },
+    { transform:"translate(" + dx + "px," + dy + "px) rotate(" + g.r + "deg) scale(" + shrink + ")" }
   ], { duration:880 * motion, fill:"forwards" }) : fly.animate([
     { transform:"rotate(" + g.r + "deg)", easing:"ease-out" },
     { transform:"translate(" + dx * .5 + "px," + (dy * .5 - 34) + "px) rotate(170deg)", easing:"ease-in" },

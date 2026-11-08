@@ -203,6 +203,19 @@ const CHECKS = {
     ok(/雨で 中干し おわり/.test(r.say) && r.stop === 0 && r.hoshi >= 5 && r.endDay && r.water >= 1.5, '雨で 中干しが おわった 日は「雨で 中干し おわり」と 言って 止まる', r);
     ok(r.run0 >= 7 && r.run1 === 0 && /中干し おわり/.test(r.say2), '7日 乾いた あとの ↑で 中干し おわり、ひびの 数は 0 に', r);
   },
+  // 中干しの 期限（出穂 31日 前）：最後の 合図の 日に 落とせば 始まる、すぎたら 始まらず 根が へる（61〜62周目）
+  async deadline(b){
+    const p = await page(b, 390, 844);
+    const r = await p.evaluate(() => {
+      K3.manual = true; K3.fixedSeed = 3; K3.jump('tiller'); const S = K3.S, f = S.f; for (let i=0;i<40 && f.dat < 34;i++){ f.water = 2; K3.advanceDay(); }
+      f.dat = f.headDat - 26 - 5; f.hoshiDays = 0; f.hoshiRun = 0; f.water = 2; const cueLast = /中干し/.test(document.getElementById('say').textContent) || true; K3.V.flipQueue = 0; f.water = 0; K3.advanceDay(); const h1 = f.hoshiDays;
+      K3.fixedSeed = 3; K3.jump('tiller'); const f2 = K3.S.f; for (let i=0;i<40 && f2.dat < 34;i++){ f2.water = 2; K3.advanceDay(); }
+      f2.dat = f2.headDat - 26 - 3; f2.hoshiDays = 0; f2.hoshiRun = 0; f2.water = 0.5; const say0 = document.getElementById('say').textContent; const r0 = f2.root; K3.advanceDay(); K3.advanceDay(); const h2 = f2.hoshiDays, dr = f2.root - r0, say2 = document.getElementById('say').textContent;
+      return { h1, h2, dr, say0, say2: say2.slice(0, 40) };
+    });
+    ok(r.h1 === 1, '最後の 合図の 日に 落とした 中干しは 翌日 1日目に なる', r);
+    ok(r.h2 === 0 && r.dr < 0 && /間に合いません/.test(r.say2), '期限を すぎた 乾きは 中干しに ならず 根が へり、「間に合いません」と 言う', r);
+  },
   // はじき続けて 水が 0 に なっても 詰まない：めくりが 止まり、吹き出しは「→」か「↑」を 言う。結果には 出来ばえと じこベスト（10周目）
   async stuck(b){
     const p = await page(b, 390, 844);

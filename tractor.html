@@ -6437,7 +6437,7 @@ const DOJO = (() => {
         u.yaw += Math.atan2(Math.sin(want - u.yaw), Math.cos(want - u.yaw)) * Math.min(1, dt * 0.8) + Math.sin(u.ph * 2.3) * dt * 0.8;
         u.x += Math.sin(u.yaw) * 0.12 * dt; u.z += Math.cos(u.yaw) * 0.12 * dt;
         u.y += (groundY(u.x, u.z) - u.y) * Math.min(1, dt * 6);
-        if (!told && S.started && Math.hypot(u.x - S.x, u.z - S.z) < 9) {
+        if (!told && S.started && !startNoticeMuted() && Math.hypot(u.x - S.x, u.z - S.z) < 9) {   // サイクル242・最初の1分: のんびりでは最初の1分は知らせだけを見送り、出現・泳ぎ・もぐる動きは従来どおり残す。湿地は東南の (11.8, -18) の一角で通常の最初の列では入らないが、開始点から直接なぞれば最寄り約17.84mをなぞり上限で開始約12.1秒で届き、湿地内で耕し続けると出現は約5秒で約95%まで上がり、出現直後の距離は約2.0mで知らせがほぼ同時に出るため、自動知らせの経路をそろえて止める。ガード中に泳ぎ終えた個体の知らせは出ないが、1分終了時にまだ泳いでいる個体と以後の出現は従来どおり知らせる。くわしい説明では従来どおり開始直後から出す
           if (DETAIL || SAY.note('あ、ドジョウ！ ぬれた 土に もぐっていくね')) { told = true; BADGE.peek(u.x, u.z, 3); voice('dojo'); }
         }
         if ((u.t -= dt) <= 0) u.st = 'dig';

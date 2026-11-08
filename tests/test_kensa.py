@@ -957,7 +957,7 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertIn("g.gain.setValueAtTime(0.018, t);", ret_fn)
         # 戻るリンクの click で、タップ計測（sendTap）の前に1回だけ鳴らす
         self.assertIn('returnLink.addEventListener("click", () => { returnSound(); sendTap("return"); });', HTML)
-        self.assertEqual(HTML.count("returnSound"), 2)  # 定義1＋呼び出し1
+        self.assertEqual(HTML.count("returnSound"), 3)  # 定義1＋呼び出し2（サイクル113・差19で資料末尾のリンクにも同じ音を付けた）
         # いいねの音とカード出現の音は従来どおり残る
         self.assertIn("function likeSound() {", HTML)
         self.assertIn("function idleSound() {", HTML)
@@ -982,6 +982,18 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertIn("function returnSound() {", HTML)
         self.assertIn("function likeSound() {", HTML)
         self.assertIn("function idleSound() {", HTML)
+        self.assertIn("const tick = () => tone(1100 + Math.random() * 900, 0.03, 0.025);", HTML)
+
+    def test_cycle113_notes_return_link_shares_return_sound(self):
+        # 差分テーマ差19（差17の再監査の残り）: サイトへ戻る合図には固有の音がある（差17・returnSound）一方、
+        # 資料（#notes）の末尾にある同じ戻り先（ricepia.jp）へのリンクだけが無音だったため、
+        # 同じ戻る音を1回付ける。新しい音色は作らず、同じ行き先には同じ音で揃える。
+        self.assertIn('<a id="notesReturnLink" href="https://ricepia.jp/">らいすぴあ（近藤米穀店）のサイトへ</a>', HTML)
+        self.assertIn('$("notesReturnLink").addEventListener("click", () => { returnSound(); });', HTML)
+        self.assertEqual(HTML.count("returnSound"), 3)  # 定義1＋終了カードの呼び出し1＋資料末尾の呼び出し1
+        # 既存の合図の音は従来どおり残る
+        self.assertIn("function notesSound() {", HTML)
+        self.assertIn("function returnSound() {", HTML)
         self.assertIn("const tick = () => tone(1100 + Math.random() * 900, 0.03, 0.025);", HTML)
 
     def test_cycle93_picked_grains_stay_in_quiet_record(self):

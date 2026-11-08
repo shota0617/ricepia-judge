@@ -7904,7 +7904,7 @@ const OSHI = (() => {
 const MAKURA = (() => {
   let told = false;
   function step() {
-    if (told || SHIRO || Math.abs(S.v) < 0.2) return;
+    if (told || SHIRO || Math.abs(S.v) < 0.2 || startNoticeMuted()) return;   // サイクル231・最初の1分: のんびりでは開始直後に枕地の長文知らせと声、needDepth（深さボタン）で最初のなぞりを止めない。DEEP は数え直し（1.5m以上離れて戻る）3回で ≧4 に届き、往復の長さは問わないため、開始直後の短い往復の繰り返し（L=4m で odo 約13m・全セル6往復以内に到達をシミュレーションで確認。164〜166が想定する初見の短い試しなぞりそのもの）でも最初の1分に発火していた。told は立てないので1分を過ぎて後輪が深いセルに乗れば従来どおり出す（遅れて出す形）。くわしい説明では従来どおり開始直後から出す
     const p = wheelPoints(S.x, S.z, S.yaw);
     for (const k of ['rl', 'rr']) {
       const i = Math.floor((p[k][0] + HX) / CELL), j = Math.floor((p[k][1] + HZ) / CELL);

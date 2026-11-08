@@ -358,6 +358,8 @@ const CHECKS = {
       K3.fixedSeed = 7; K3.jump('tiller'); const S3 = K3.S, f3 = S3.f; for (let i=0;i<40 && f3.dat < 34;i++){ f3.water = 3; K3.advanceDay(); } f3.hoshiEnd = true; f3.hoshiDays = 5; f3.dat = 42; f3.A1 = 0; f3.water = 4; f3.typhoonDay = null; calmDays(S3, 3, 'くもり'); f3.N = 36.7; K3.narrate(); out.n36 = document.getElementById('say').textContent.slice(0, 40); f3.N = 37.2; K3.narrate(); out.n37 = document.getElementById('say').textContent.slice(0, 40); /* 89周目：表示は 切り捨て、判断は 37 */
       K3.fixedSeed = 3; K3.jump('nakaboshi'); const S4 = K3.S, f4 = S4.f; f4.hoshiDays = 5; f4.hoshiRun = 5; f4.hoshiEnd = false; f4.water = 0; K3.V.water = 0; f4.A1 = 0; f4.N = 35; calmDays(S4, 3, 'くもり'); swipe('up', 60, false); out.nkEnd = document.getElementById('say').textContent.slice(0, 50); out.nkWater = f4.water;
       K3.fixedSeed = 3; K3.jump('nakaboshi'); const S5 = K3.S, f5 = S5.f; f5.hoshiDays = 5; f5.hoshiRun = 5; f5.hoshiEnd = false; f5.water = 0; K3.V.water = 0; f5.A1 = 0; f5.N = 35; calmDays(S5, 3, 'くもり'); swipe('up', 400, true, true); out.nkTy = document.getElementById('say').textContent.slice(0, 50); out.nkW = f5.water; /* 90周目：よい 深さより 上（6cm）なら 水の 返事 */
+      K3.fixedSeed = 3; K3.jump('nakaboshi'); const S6 = K3.S, f6 = S6.f; f6.hoshiDays = 4; f6.hoshiRun = 0; f6.hoshiEnd = false; f6.water = 1.2; f6.mizo = true; calmDays(S6, 3, 'くもり'); K3.narrate(); out.d4 = document.getElementById('say').textContent.slice(0, 40); K3.V.flipQueue = 3; K3.V.deepStop = false; K3.advanceDay(); out.d4stop = K3.V.flipQueue; /* 91周目：4日目の 雨は「かわけば あと 1日」で 止めない */
+      K3.fixedSeed = 7; K3.jump('tiller'); const S7 = K3.S, f7 = S7.f; for (let i=0;i<60 && f7.dat < f7.headDat - K3.NK_END + 2;i++){ f7.water = 3; K3.advanceDay(); } f7.hoshiEnd = true; f7.hoshiDays = 5; f7.water = 9; f7.typhoonDay = null; calmDays(S7, 3, '低温'); K3.narrate(); out.cold = document.getElementById('say').textContent.slice(0, 40); const r0 = f7.root, dd0 = f7.deepDays; K3.advanceDay(); out.coldRoot = f7.root - r0; out.coldDeep = f7.deepDays - dd0; /* 91周目：穂づくりの さむい日の 深水は まもる 水 */
       return out;
     });
     ok(r.left === '追肥' && /追肥しました/.test(r.fert) && /で 深め/.test(r.fert) && /↓で 浅く/.test(r.fert) && /あすには 少し 下がります/.test(r.fert), '追肥の 日の 8cm 以上は「みず Ncm で 深め。↓で 浅く。あすには 少し 下がります」', r);
@@ -365,6 +367,8 @@ const CHECKS = {
     ok(/葉いろ 36/.test(r.n36) && /←で 追肥/.test(r.n36) && /葉いろ 37で こい/.test(r.n37), '追肥の 葉いろは 切り捨てで 表示（36.7 → 36 で ←、37.2 → 37 で こい）', r);
     ok(/中干し おわり。葉いろ 35で うすめ。←で 追肥も/.test(r.nkEnd) && r.nkWater <= 5.01, '中干し おわりの ↑は 追肥の 年なら「葉いろ Nで うすめ。←で 追肥も」の 1文', r);
     ok(/中干し おわり/.test(r.nkTy) && !/←で 追肥/.test(r.nkTy) && r.nkW > 5, 'よい 深さより 上に 入れた 時は 中干し おわりの 1文は 出さず 水の 返事', r);
+    ok(/かわけば あと 1日/.test(r.d4) && r.d4stop === 3, '中干し 4日目の 1〜1.5cm は「かわけば あと 1日」で 止めない', r);
+    ok(/さむい日。深めで 穂を まもります/.test(r.cold) && r.coldRoot > 0 && r.coldDeep === 0, '穂づくりの さむい日の 8cm 以上は 叱らず、根も 深水の 日も 減らさない', r);
   },
   async rules83(b){
     const p = await page(b, 390, 844);

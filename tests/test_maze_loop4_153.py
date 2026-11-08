@@ -22,7 +22,7 @@ def node(js):
 class TestRoadShape(unittest.TestCase):
     def test_of(self):
         out = node("console.log([0,1,5,10,3,6,12,9,7,11,13,14,15].map(roadShapeOf).join())")
-        self.assertEqual(out, "none,none,straight,straight,curve,curve,curve,curve,tee,tee,tee,tee,cross")
+        self.assertEqual(out, "none,end,straight,straight,curve,curve,curve,curve,tee,tee,tee,tee,cross")
 
     def test_corner(self):
         out = node("console.log(JSON.stringify([3,6,12,9,5,15].map(roadShapeCorner)))")
@@ -45,9 +45,9 @@ class TestWiring(unittest.TestCase):
 
     def test_only_three_uses(self):
         # サイクル160（差4）で roadShapeMissing が roadShapeOf を1回使うため 4 に更新（他の用途は不変）
-        self.assertEqual(len(re.findall(r"roadShapeOf\b", PIX)), 4)
+        self.assertEqual(len(re.findall(r"roadShapeOf\b", PIX)), 5)
         self.assertEqual(len(re.findall(r"roadShapeCorner\b", PIX)), 3)
-        self.assertIn("roadShape: { of: roadShapeOf, corner: roadShapeCorner, missing: roadShapeMissing },", PIX)
+        self.assertIn("roadShape: { of: roadShapeOf, corner: roadShapeCorner, missing: roadShapeMissing, end: roadShapeEndDir },", PIX)
 
 
 class TestUnchanged(unittest.TestCase):

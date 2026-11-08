@@ -84,7 +84,7 @@ const CHECKS = {
     ok(r.w1 > r.w0 && r.w2 > r.w1, '↑ で 水が 入る。長い ほど 多い', r);
     ok(r.w2 - r.w1 > r.w1 - r.w0, 'スワイプの 長さで 量が かわる', r);
     ok(Math.abs(r.v1 - r.w2) < 0.3 && r.v0 <= r.w2 + 0.3, '水面は 指に ついてきて、はなしたら 本当の 水に 落ちつく（ばね）', r);
-    ok(r.w3 < r.w2 && r.w4 <= 3 && r.w4 > 0 && r.w5 === 0 && Math.abs(r.v2) < 0.3, '↓ で 落ちる。強く はじくと 空に', r);
+    ok(r.w3 < r.w2 && r.w4 <= 3 && r.w4 > 0 && r.w5 === 0 && Math.abs(r.v2) < 0.3, '↓ で 落ちる。はじくと 3cm に 着地、もう一度 はじくと 空に（合図の 前：seed 11 の 35日目は 茎が 目標の 7割 未満）', r);
     ok(/みず 0cm/.test(r.stat), 'HUD の 水が 0cm に なる', r.stat);
     await p.screenshot({ path: path.join(OUT, 'water.png') });
   },

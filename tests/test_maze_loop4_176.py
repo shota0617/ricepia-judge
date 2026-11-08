@@ -13,9 +13,9 @@ def thresholds():
 class Cycle176(unittest.TestCase):
     def test_thresholds(self):
         th = thresholds()
-        self.assertEqual(th, [15, 40, 80, 140, 210, 300, 420, 570, 760, 1000, 1300, 1700, 2200, 2800, 3600, 4600, 5900, 7600, 9800, 12700, 16500])
+        self.assertEqual(th, [15, 40, 80, 140, 210, 300, 420, 570, 760, 1000, 1300, 1700, 2200, 2800, 3600, 4600, 5900, 7600, 9800, 12700, 16500, 21400, 27800])
         gaps = [th[0]] + [b - a for a, b in zip(th, th[1:])]
-        self.assertEqual(gaps, [15, 25, 40, 60, 70, 90, 120, 150, 190, 240, 300, 400, 500, 600, 800, 1000, 1300, 1700, 2200, 2900, 3800])
+        self.assertEqual(gaps, [15, 25, 40, 60, 70, 90, 120, 150, 190, 240, 300, 400, 500, 600, 800, 1000, 1300, 1700, 2200, 2900, 3800, 4900, 6400])
         self.assertEqual(gaps, sorted(gaps))
 
     def test_stage_boundaries_in_node(self):
@@ -23,7 +23,7 @@ class Cycle176(unittest.TestCase):
                 + re.search(r"function growStageFor\(d\) \{.*?\n", PIX).group(0)
                 + "console.log([9799,9800,12699,12700,16499,16500,1000000].map(growStageFor).join());")
         out = subprocess.run(["node", "-e", code], capture_output=True, text=True, check=True).stdout.strip()
-        self.assertEqual(out, "18,19,19,20,20,21,21")
+        self.assertEqual(out, "18,19,19,20,20,21,23")
 
     def test_draw_code(self):
         self.assertIn("if (st >= 19) { ctx.fillStyle = '#ffffff'; ctx.fillRect(x0 - q, y0 - (sh + 18) * q, q, q); ctx.fillRect(x0 + q, y0 - (sh + 18) * q, q, q); }", PIX)

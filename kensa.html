@@ -563,6 +563,20 @@ function cookedSound() { /* ぬく: 前の袋のお米が炊き上がって返�
     o.start(t); o.stop(t + 0.3);
   } catch (_) {}
 }
+function returnSound() { /* 終わり: 終了カードの「サイトへ もどる」を押した合図の音。440→330Hzへゆっくり下がる穏やかな音で、粒の tick（高い短い音）や「いいね」の音（likeSound 560→840Hz・triangle）・カードが現れる音（idleSound 360→500Hz）とは分ける（サイクル111・差分テーマ差17）。終了カードの2つのボタンのうち、いいねには固有の音がある（差13）のに、サイトへ戻る側だけが無音だった。押した時だけ1回鳴らす */
+  try {
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    if (ac.state === "suspended") ac.resume();
+    const o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime;
+    o.type = "sine";
+    o.frequency.setValueAtTime(440, t);
+    o.frequency.exponentialRampToValueAtTime(330, t + 0.2);
+    g.gain.setValueAtTime(0.018, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.22);
+    o.connect(g).connect(ac.destination);
+    o.start(t); o.stop(t + 0.22);
+  } catch (_) {}
+}
 function thump() {
   tone(110, 0.16, 0.14, "sine");
   tone(70, 0.22, 0.1, "sine");
@@ -1840,7 +1854,7 @@ likeBtn.addEventListener("click", () => {
     likeBtn.textContent = "👍 いいね";
   });
 });
-returnLink.addEventListener("click", () => sendTap("return"));
+returnLink.addEventListener("click", () => { returnSound(); sendTap("return"); }); /* 戻る合図も固有の音にする（サイクル111・差17）。いいねの音（差13）とは分ける */
 armIdle();
 startLot();
 </script>

@@ -57,7 +57,8 @@ class TestGoalFx(unittest.TestCase):
 
     def test_help_delay(self):
         m = re.search(r"if \(n === MZ_HELP_N .*", PIX)
-        self.assertIn("MZ_GOAL_FX.bannerSec * 1000 + 200", m.group(0))
+        self.assertIn("mzHelp.helpToast = true", m.group(0))
+        self.assertNotIn("setTimeout", m.group(0))
         self.assertNotIn("4500", m.group(0))
 
     def test_spec_exposed(self):

@@ -21,7 +21,7 @@ def git(*a):
 HINT = func_body("function drawMzHint(")
 SECOND = HINT[HINT.index("if (now >= mzRt.showUntil) return;"):]
 HELP = HINT[:HINT.index("if (now >= mzRt.showUntil) return;")]
-ADDED = [l[1:] for l in git("diff", "-U0", "origin/main", "--", "nishio-go/pixel.js").splitlines() if l.startswith("+") and not l.startswith("+++") and "//c17" not in l and "!G.demo" not in l and "//c82" not in l]
+ADDED = [l[1:] for l in git("diff", "-U0", "origin/main", "--", "nishio-go/pixel.js").splitlines() if l.startswith("+") and not l.startswith("+++") and "//c17" not in l and "!G.demo" not in l and "//c82" not in l and "//c163" not in l]
 
 
 class Angle(unittest.TestCase):

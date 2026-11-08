@@ -348,6 +348,22 @@ const CHECKS = {
     ok(/たおれました/.test(r.lodge) && /↓で 浅く/.test(r.lodge) && /岡山県/.test(r.lodge), 'たおれた 翌日は「↓で 浅く（岡山県）」と 注まで 出る', r);
     ok(/あすは 浅く/.test(r.keep) && !/あすは 浅く/.test(r.keep2) && !/↓/.test(r.keep) && /熊本県/.test(r.keep2), '台風の 翌日の「あすは 浅く」は あすも 6cm 超の 時だけ（矢印の 字は 使わない。短い 方は 注も 出る）', r);
   },
+  // 83〜84周目：あす 線を 割る 深水は「あすには 下がります」（↓を 頼まない）、2朝 つづく 深水は 間を 待たない、出穂後の はじき↓は 2夜分を 残す（高温→雨 でも 4cm）
+  async rules83(b){
+    const p = await page(b, 390, 844);
+    const r = await p.evaluate(() => {
+      K3.manual = true; K3.fixedSeed = 7; K3.jump('heading'); const S = K3.S, f = S.f; const out = {};
+      S.day = f.heading + 5; f.water = 8.5; f.typhoonDay = null; K3.V.deepDay = null; calmDays(S, 3, 'くもり'); K3.narrate(); out.drop = document.getElementById('say').textContent.slice(0, 40);
+      f.water = 9.5; K3.narrate(); out.deep = document.getElementById('say').textContent.slice(0, 40);
+      f.water = 7; K3.V.water = 7; S.weather[S.day] = Object.assign({}, S.weather[S.day], { w: '高温' }); S.weather[S.day+1] = Object.assign({}, S.weather[S.day+1], { w: '雨' }); swipe('down', 400, true, true); out.floor = f.water;
+      K3.fixedSeed = 7; K3.jump('tiller'); const S2 = K3.S, f2 = S2.f; for (let i=0;i<40 && f2.dat < 34;i++){ f2.water = 3; K3.advanceDay(); } f2.hoshiEnd = true; f2.hoshiDays = 5; f2.dat = 40; f2.water = 9; f2.deepRun = 1; f2.typhoonDay = null; K3.V.deepDay = S2.day - 2; K3.V.deepStop = false; calmDays(S2, 3, '雨'); K3.V.flipQueue = 3; K3.advanceDay(); out.stop2 = K3.V.flipQueue;
+      return out;
+    });
+    ok(/あすには 少し 下がります/.test(r.drop) && /↓で 浅く/.test(r.drop), 'あす 8cm を 割る 深水は「↓で 浅く。あすには 少し 下がります」（止まらない 日だと 分かる）', r);
+    ok(/↓で 浅く/.test(r.deep), 'あすも 8cm 以上なら「↓で 浅く」', r);
+    ok(Math.abs(r.floor - 4) < 0.01, '出穂後の はじき↓は 高温→雨 でも 4cm に 着地', r);
+    ok(r.stop2 === 0, '2朝 つづけて 深い 時は 5日の 間を 待たずに 止まる', r);
+  },
   async perf(b){
     const p = await page(b, 390, 844);
     const r = await p.evaluate(() => { K3.manual = true; K3.fixedSeed = 11; K3.jump('heading'); const t0 = performance.now(); for (let i=0;i<30;i++) K3.step(1/60); return (performance.now()-t0)/30; });

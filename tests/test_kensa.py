@@ -935,9 +935,10 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertIn("g.gain.setValueAtTime(0.016, t);", cooked_fn)
         # 次の袋の開始（startLot）で、炊き上がりの返りがある時だけ、到着の後に遅れて1回鳴らす
         start_lot = HTML[HTML.index("function startLot()"):HTML.index("/* 皿の粒:")]
-        self.assertIn("if (cookedReturns.length) setTimeout(cookedSound, 320 * motion);", start_lot)
+        # サイクル124（差30）で表示と音を同じコールバックに統合: 320ms後に1回鳴る点は不変
+        self.assertIn("cookedSound(); }, 320 * motion)", start_lot)
         self.assertIn("arriveSound();", start_lot)
-        self.assertEqual(HTML.count("cookedSound"), 2)  # 定義1＋呼び出し1（setTimeout の参照）
+        self.assertEqual(HTML.count("cookedSound"), 2)  # 定義1＋呼び出し1（サイクル124の統合コールバック内）
         # 押印の瞬間（stampNow の updateCooked）では鳴らさない: 返りが見えるのは次の袋の開始時だけ
         stamp = HTML[HTML.index("function stampNow()"):HTML.index("function dropHanko()")]
         self.assertNotIn("cookedSound", stamp)
@@ -1259,6 +1260,26 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertNotIn("inkDemoSound", ink_branch[:ink_branch.index("hankoTaps === 2")])
         # 資料に1文だけ足す（ゲーム内文言は増やさない）
         self.assertIn("おすの朱肉で空振りしたときも、2回目にはんこが半分だけ押し下がる手本の動きと、専用の小さな音で知らせます", HTML)
+
+    def test_cycle124_cooked_chip_appears_with_its_sound(self):
+        # 差分テーマ差30（差16の見た目側の残り）: 炊き上がりチップの音は袋が着いて
+        # 落ち着いた後（320ms）にある一方、チップの見た目は場面の切り替わりと同時に
+        # 完成形で現れ、出現の動きがなかった（390×844実測で出現時のアニメーション0件・
+        # 音より約320ms先行）。見た目も同じ320msにそろえ、ふわりと現れる動きを付ける。
+        start_lot = HTML[HTML.index("function startLot()"):HTML.index("/* 皿の粒:")]
+        self.assertIn("chip.hidden = true;", start_lot)
+        self.assertIn("chip.hidden = false;", start_lot)
+        self.assertIn("chip.animate(", start_lot)
+        # 音（cookedSound）と同じ 320ms のタイミングで、同じコールバックから現れる
+        self.assertIn("}, 320 * motion); } /* 炊き上がりチップの見た目も", start_lot)
+        self.assertIn("cookedSound(); }, 320 * motion)", start_lot)
+        self.assertNotIn("setTimeout(cookedSound", start_lot)
+        # 別の袋へ移っていたら古いチップは出さない
+        self.assertIn("if (lotIndex !== chipLot || !cookedReturns.length) return;", start_lot)
+        # 最初の袋（返りがない時）は従来どおり出さない: ガードは lotIndex > 0 かつ返りあり
+        self.assertIn("if (lotIndex > 0 && cookedReturns.length)", start_lot)
+        # 資料に1文だけ足す（ゲーム内文言は増やさない）
+        self.assertIn("チップは袋が着いて落ち着いてから、専用の音と一緒にふわりと現れます", HTML)
 
     def test_cycle93_picked_grains_stay_in_quiet_record(self):
         # 類7: 見分けた粒が静かに記録に残る。任意で開く資料（#notes）の中だけに出し、常時表示・競争・スコアにはしない。

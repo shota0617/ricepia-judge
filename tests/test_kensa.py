@@ -1309,6 +1309,20 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertIn('duration:260 * motion, easing:"ease-out"', sort_fn)
         self.assertEqual(HTML.count("zoomBtn.animate("), 1)
 
+    def test_cycle127_dish_grain_appears_gently(self):
+        # 差分テーマ差33: みわけるでよけた粒が小皿（#dish）に着く瞬間だけが、
+        # 飛んできた粒（fly）のアニメーションの後に完成形が即座に出ていた
+        # （390×844実測で出現時のアニメーション0件・opacity即1）。他の現れる
+        # もの（チップ=ふわり260ms・差30／つぎの袋ボタン=差31／🔍ボタン=差32）
+        # と同じく、ふわりと現れる動きを付ける。着いた時だけ1回、流れは止めない。
+        tap = HTML[HTML.index("function tapGrain(g)"):HTML.index("function resetZoomForSmiles()")]
+        self.assertIn('$("dish").appendChild(mini);', tap)
+        self.assertIn("mini.animate(", tap)
+        self.assertIn('transform:"scale(.7)"', tap)
+        self.assertIn('transform:"scale(1)"', tap)
+        self.assertIn('duration:260 * motion, easing:"ease-out"', tap)
+        self.assertEqual(HTML.count("mini.animate("), 1)
+
     def test_cycle93_picked_grains_stay_in_quiet_record(self):
         # 類7: 見分けた粒が静かに記録に残る。任意で開く資料（#notes）の中だけに出し、常時表示・競争・スコアにはしない。
         # 袋を越えて残るため startLot では消さない（サイクル91の seenChecks と同じ持ち方）。

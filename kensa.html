@@ -1583,6 +1583,7 @@ function tapGrain(g) {
     const mini = document.createElement("img");
     mini.src = grainSprite(g.kind, "happy"); mini.alt = "";
     $("dish").appendChild(mini);
+    mini.animate([{ opacity:0, transform:"scale(.7)" }, { opacity:1, transform:"scale(1.05)", offset:.7 }, { opacity:1, transform:"scale(1)" }], { duration:260 * motion, easing:"ease-out" }); /* 小皿に着いた粒も、他の現れるもの（チップ=ふわり260ms・差30／つぎの袋ボタン=ふわり260ms・差31／🔍ボタン=ふわり260ms・差32）と同じくふわりと現れる形にそろえる（サイクル127・差分テーマ差33）。旧版は飛んできた粒が消えた瞬間に完成形が即座に出ていた（390×844実測で出現時のアニメーション0件・opacity即1） */
   };
   if (badLeft === 0) {
     clearTimeout(hintTimer);

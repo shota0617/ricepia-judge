@@ -24,7 +24,7 @@ def render():
         "let grow={stage:0,popT:0}; const roll={v:0};"
         + body +
         "const out={};"
-        "for(let st=0; st<=7; st++){ calls.length=0; grow={stage:st,popT:0}; growStep(100,200,2,100000);"
+        "for(let st=0; st<=9; st++){ calls.length=0; grow={stage:st,popT:0}; growStep(100,200,2,100000);"
         " const cells={}; let bad=0;"
         " for(const [x,y,w,h,c] of calls){ for(let dx=0; dx<w; dx+=2) for(let dy=0; dy<h; dy+=2){"
         " const k=((x+dx-100)/2)+','+((y+dy-(200-30))/2); if(k in cells && cells[k]!==c) bad++; cells[k]=c; } }"
@@ -105,7 +105,7 @@ class TestBloomSlow(unittest.TestCase):
 class TestUnchanged(unittest.TestCase):
     def test_constants(self):
         th = re.search(r"const GROW_TH = \[([\d, ]+)\];", PIX).group(1)
-        self.assertEqual([int(x) for x in th.split(",")], [15, 40, 80, 140, 210, 300, 420])
+        self.assertEqual([int(x) for x in th.split(",")], [15, 40, 80, 140, 210, 300, 420, 570, 760])
         self.assertRegex(PIX, r"RICE_BIG = 1\.45\b")
         self.assertRegex(PIX, r"ROLL_ACC = 7\b")
         self.assertRegex(PIX, r"ROLL_MAX = 4\.2\b")

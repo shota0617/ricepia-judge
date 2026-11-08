@@ -578,7 +578,7 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertIn("  inkSound();", HTML)  # おす: 朱肉にぎゅっと
         self.assertEqual(HTML.count("pop();"), 1)  # pop は等級正解だけに残る
         self.assertIn('tone(150, 0.1, 0.1, "sine")', HTML)  # 刺す音は不変
-        self.assertIn("tone(high ? 330 : 880, 0.14, 0.05,", HTML)  # 平均確定の音は不変
+        self.assertIn("avgSound(high);", HTML)  # 平均確定の音はサイクル114（差20）で固有の avgSound へ分けた
 
     def test_cycle90_wrong_grade_loses_nothing_and_does_not_scold(self):
         # 類4の点検: 機能上は何も失わない（スコア・タイマー・進捗リセットなし）ことは全所作で確認できたが、
@@ -995,6 +995,34 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertIn("function notesSound() {", HTML)
         self.assertIn("function returnSound() {", HTML)
         self.assertIn("const tick = () => tone(1100 + Math.random() * 900, 0.03, 0.025);", HTML)
+
+    def test_cycle114_average_completion_has_its_own_sound(self):
+        # 差分テーマ差20（完了の合図の再監査）: 他の所作の完了には固有の名前の音がある
+        # （ぬく=probeDoneSound・みわける=smileSound・きめる=pop・おす=thump）一方、
+        # はかる完了（水分の平均確定）だけが名前のない tone(880／330Hz単音) のままだったため、
+        # 固有の avgSound に分ける。通常時は穏やかに上がり、水分が高い時は警告音にせず低くゆっくり下がる。
+        self.assertIn("function avgSound(high) {", HTML)
+        fn = HTML[HTML.index("function avgSound(high)"):HTML.index("function thump()")]
+        self.assertIn("o.frequency.setValueAtTime(784, t);", fn)
+        self.assertIn("o.frequency.exponentialRampToValueAtTime(1046, t + 0.18);", fn)
+        self.assertIn("o.frequency.setValueAtTime(349, t);", fn)
+        self.assertIn("o.frequency.exponentialRampToValueAtTime(262, t + 0.26);", fn)
+        self.assertIn('o.type = "sine";', fn)
+        # 音量は控えめ（通常0.018／高水分0.02）に留める
+        self.assertIn("g.gain.setValueAtTime(0.018, t);", fn)
+        self.assertIn("g.gain.setValueAtTime(0.02, t);", fn)
+        # 平均確定（showAverage）でだけ1回鳴らし、旧い匿名 tone は残さない
+        avg = HTML[HTML.index("function showAverage()"):HTML.index("const Z = {")]
+        self.assertIn("avgSound(high);", avg)
+        self.assertNotIn("tone(high", avg)
+        self.assertEqual(HTML.count("avgSound"), 2)  # 定義1＋呼び出し1
+        # 1回ごとの計器のピッと他の完了音は従来どおり残る。間違いのときの無音（類4）も変えない
+        self.assertIn("const meterBeep = () => tone(1240, 0.09, 0.035, \"sine\");", HTML)
+        self.assertIn("function probeDoneSound() {", HTML)
+        self.assertIn("function smileSound() {", HTML)
+        self.assertIn("const tick = () => tone(1100 + Math.random() * 900, 0.03, 0.025);", HTML)
+        # 資料に1文だけ足す（ゲーム内文言は増やさない）
+        self.assertIn("水分を3回はかって平均が決まると、専用の小さな音で知らせます", HTML)
 
     def test_cycle93_picked_grains_stay_in_quiet_record(self):
         # 類7: 見分けた粒が静かに記録に残る。任意で開く資料（#notes）の中だけに出し、常時表示・競争・スコアにはしない。

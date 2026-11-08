@@ -282,6 +282,7 @@
   <p>等級をまちがえても、はかった水分も、よけた粒も、そのままで何も失われません。光る●の列をもう一度見て、選び直せます。</p>
   <p>きめるで見る項目は、袋を進めるごとに1つずつ増えていきます。一度見た項目は次の袋でも残るので、見比べながら少しずつ覚えられます。</p>
   <p>🔍や2回タップで寄るときは、身を寄せるようにゆっくり近づきます。寄った後は、指で見る場所をそのまま動かせます。</p>
+  <p>水分を3回はかって平均が決まると、専用の小さな音で知らせます。水分が高いときは、低い音でゆっくり知らせます。</p>
   <h2>みわけた粒のきろく</h2>
   <p id="grainRecord">まだ みわけた粒は ありません。</p>
   <p>みわけた粒の種類は、ここに静かに残ります。競うための数ではなく、見分けた粒をあとから見返すための記録です。</p>
@@ -589,6 +590,29 @@ function notesSound() { /* 資料: 📖で資料（#notes）を開く合図の�
     g.gain.exponentialRampToValueAtTime(0.0001, t + 0.14);
     o.connect(g).connect(ac.destination);
     o.start(t); o.stop(t + 0.14);
+  } catch (_) {}
+}
+function avgSound(high) { /* はかる: 水分の平均が決まった合図の音。ちょうどいい時は784→1046Hzへ穏やかに上がり、水分が高い時は349→262Hzへゆっくり下がる音で、1回ごとの計器のピッ（meterBeep 1240Hz単音）や粒の tick（高い短い音）・みわける完了の笑顔の音（smileSound 500→760Hz）とは分ける（サイクル114・差分テーマ差20）。他の所作の完了には固有の名前の音がある（ぬく=probeDoneSound・みわける=smileSound・きめる=pop・おす=thump）一方、はかる完了だけが名前のない tone(880／330Hz単音) のままだった。高い時も警告音にはせず、低い穏やかな下がり方で知らせる。平均が決まった時だけ1回鳴らす */
+  try {
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    if (ac.state === "suspended") ac.resume();
+    const o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime;
+    o.type = "sine";
+    if (high) {
+      o.frequency.setValueAtTime(349, t);
+      o.frequency.exponentialRampToValueAtTime(262, t + 0.26);
+      g.gain.setValueAtTime(0.02, t);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.28);
+      o.connect(g).connect(ac.destination);
+      o.start(t); o.stop(t + 0.28);
+    } else {
+      o.frequency.setValueAtTime(784, t);
+      o.frequency.exponentialRampToValueAtTime(1046, t + 0.18);
+      g.gain.setValueAtTime(0.018, t);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.2);
+      o.connect(g).connect(ac.destination);
+      o.start(t); o.stop(t + 0.2);
+    }
   } catch (_) {}
 }
 function thump() {
@@ -1082,7 +1106,7 @@ function showAverage() {
   $("meterBtn").disabled = true;
   hint.textContent = high ? "水分が 高い！" : "ちょうどいい";
   setFace(high ? "wow" : "happy", high ? 1700 : 900);
-  tone(high ? 330 : 880, 0.14, 0.05, "sine");
+  avgSound(high); /* 平均が決まった合図は固有の音にする（サイクル114・差20）。1回ごとの meterBeep とは分ける */
   setTimeout(toMiwakeru, (high ? 1700 : 950) * motion);
 }
 

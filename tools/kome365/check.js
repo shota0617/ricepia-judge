@@ -201,7 +201,7 @@ const CHECKS = {
       K3.fixedSeed = 3; K3.jump('tiller'); const f2 = K3.S.f; for (let i=0;i<40 && f2.dat < 36;i++){ f2.water = 2; K3.advanceDay(); } for (let i=0;i<20 && (f2.hoshiRun||0) < 7;i++){ f2.water = 0; { const S2 = K3.S; if (S2.weather[S2.day].w !== 'くもり') calmDays(S2, 1); } /* 低温（出穂の 見込みが ずれる）も 固める（66周目） */ K3.advanceDay(); } /* 雨の 日は くもりに 書きかえて 7日 つづけて 乾かす（52周目：雨 1.6cm で 連続が 切れる ように なった） */ const run0 = f2.hoshiRun; swipe('up', 60, false); const run1 = f2.hoshiRun, say2 = document.getElementById('say').textContent;
       return { say, stop, endDay, hoshi, water, run0, run1, say2 };
     });
-    ok(/雨で 中干し おわり/.test(r.say) && r.stop === 0 && r.hoshi >= 5 && r.endDay && r.water >= 1.5, '雨で 中干しが おわった 日は「雨で 中干し おわり」と 言って 止まる', r);
+    ok(/雨で 中干し おわり/.test(r.say) && r.stop === 0 && r.hoshi >= 4 && r.endDay && r.water >= 1.5, '雨で 中干しが おわった 日は「雨で 中干し おわり」と 言って 止まる（90周目：4日目の 雨でも）', r);
     ok(r.run0 >= 7 && r.run1 === 0 && /中干し おわり/.test(r.say2), '7日 乾いた あとの ↑で 中干し おわり、ひびの 数は 0 に', r);
   },
   // 中干しの 期限（出穂 31日 前）：最後の 合図の 日に 落とせば 始まる、すぎたら 始まらず 根が へる（61〜62周目）
@@ -357,14 +357,14 @@ const CHECKS = {
       K3.fixedSeed = 7; K3.jump('heading'); const S2 = K3.S, f2 = S2.f; S2.day = f2.heading + 1; f2.water = 4; calmDays(S2, 2, '高温'); f2.typhoonDay = null; K3.narrate(); out.hot = document.getElementById('say').textContent.slice(0, 40); f2.water = 0.5; K3.narrate(); out.dry = document.getElementById('say').textContent.slice(0, 40);
       K3.fixedSeed = 7; K3.jump('tiller'); const S3 = K3.S, f3 = S3.f; for (let i=0;i<40 && f3.dat < 34;i++){ f3.water = 3; K3.advanceDay(); } f3.hoshiEnd = true; f3.hoshiDays = 5; f3.dat = 42; f3.A1 = 0; f3.water = 4; f3.typhoonDay = null; calmDays(S3, 3, 'くもり'); f3.N = 36.7; K3.narrate(); out.n36 = document.getElementById('say').textContent.slice(0, 40); f3.N = 37.2; K3.narrate(); out.n37 = document.getElementById('say').textContent.slice(0, 40); /* 89周目：表示は 切り捨て、判断は 37 */
       K3.fixedSeed = 3; K3.jump('nakaboshi'); const S4 = K3.S, f4 = S4.f; f4.hoshiDays = 5; f4.hoshiRun = 5; f4.hoshiEnd = false; f4.water = 0; K3.V.water = 0; f4.A1 = 0; f4.N = 35; calmDays(S4, 3, 'くもり'); swipe('up', 60, false); out.nkEnd = document.getElementById('say').textContent.slice(0, 50); out.nkWater = f4.water;
-      K3.fixedSeed = 3; K3.jump('nakaboshi'); const S5 = K3.S, f5 = S5.f; f5.hoshiDays = 5; f5.hoshiRun = 5; f5.hoshiEnd = false; f5.water = 0; K3.V.water = 0; f5.A1 = 0; f5.N = 35; calmDays(S5, 3, 'くもり'); S5.weather[S5.day+1] = Object.assign({}, S5.weather[S5.day+1], { w: '台風' }); swipe('up', 60, false); out.nkTy = document.getElementById('say').textContent.slice(0, 50);
+      K3.fixedSeed = 3; K3.jump('nakaboshi'); const S5 = K3.S, f5 = S5.f; f5.hoshiDays = 5; f5.hoshiRun = 5; f5.hoshiEnd = false; f5.water = 0; K3.V.water = 0; f5.A1 = 0; f5.N = 35; calmDays(S5, 3, 'くもり'); swipe('up', 400, true, true); out.nkTy = document.getElementById('say').textContent.slice(0, 50); out.nkW = f5.water; /* 90周目：よい 深さより 上（6cm）なら 水の 返事 */
       return out;
     });
     ok(r.left === '追肥' && /追肥しました/.test(r.fert) && /で 深め/.test(r.fert) && /↓で 浅く/.test(r.fert) && /あすには 少し 下がります/.test(r.fert), '追肥の 日の 8cm 以上は「みず Ncm で 深め。↓で 浅く。あすには 少し 下がります」', r);
     ok(/出穂/.test(r.hot) && /↑で かけ流す/.test(r.hot) && /出穂/.test(r.dry) && /あつい日 1日目。↑で 水を/.test(r.dry), '出穂の 日：あつい日は「↑で かけ流す」、水が ないなら「あつい日 1日目。↑で 水を」', r);
     ok(/葉いろ 36/.test(r.n36) && /←で 追肥/.test(r.n36) && /葉いろ 37で こい/.test(r.n37), '追肥の 葉いろは 切り捨てで 表示（36.7 → 36 で ←、37.2 → 37 で こい）', r);
     ok(/中干し おわり。葉いろ 35で うすめ。←で 追肥も/.test(r.nkEnd) && r.nkWater <= 5.01, '中干し おわりの ↑は 追肥の 年なら「葉いろ Nで うすめ。←で 追肥も」の 1文', r);
-    ok(/中干し おわり/.test(r.nkTy) && !/←で 追肥/.test(r.nkTy), 'あす 台風なら 中干し おわりの 1文は 出さず 水の 返事', r);
+    ok(/中干し おわり/.test(r.nkTy) && !/←で 追肥/.test(r.nkTy) && r.nkW > 5, 'よい 深さより 上に 入れた 時は 中干し おわりの 1文は 出さず 水の 返事', r);
   },
   async rules83(b){
     const p = await page(b, 390, 844);
@@ -374,13 +374,13 @@ const CHECKS = {
       f.water = 9.5; K3.narrate(); out.deep = document.getElementById('say').textContent.slice(0, 40);
       f.water = 7; K3.V.water = 7; S.weather[S.day] = Object.assign({}, S.weather[S.day], { w: '高温' }); S.weather[S.day+1] = Object.assign({}, S.weather[S.day+1], { w: '雨' }); swipe('down', 400, true, true); out.floor = f.water;
       K3.fixedSeed = 7; K3.jump('tiller'); const S2 = K3.S, f2 = S2.f; for (let i=0;i<40 && f2.dat < 34;i++){ f2.water = 3; K3.advanceDay(); } f2.hoshiEnd = true; f2.hoshiDays = 5; f2.dat = 40; f2.water = 9; f2.deepRun = 1; f2.typhoonDay = null; K3.V.deepDay = S2.day - 2; K3.V.deepStop = false; calmDays(S2, 3, '雨'); K3.V.flipQueue = 3; K3.advanceDay(); out.stop2 = K3.V.flipQueue;
-      K3.fixedSeed = 7; K3.jump('tiller'); const S3 = K3.S, f3 = S3.f; for (let i=0;i<40 && f3.dat < 34;i++){ f3.water = 3; K3.advanceDay(); } f3.hoshiEnd = true; f3.hoshiDays = 5; f3.dat = 40; f3.water = 8.5; f3.deepRun = 0; f3.typhoonDay = null; K3.V.deepDay = S3.day - 2; K3.V.deepStop = false; calmDays(S3, 3, 'くもり'); K3.V.flipQueue = 3; K3.advanceDay(); out.stop1 = K3.V.flipQueue; /* 89周目：あす 8cm を 割る 1日だけの 深水は 近道 なし */
+      K3.fixedSeed = 7; K3.jump('tiller'); const S3 = K3.S, f3 = S3.f; for (let i=0;i<40 && f3.dat < 34;i++){ f3.water = 3; K3.advanceDay(); } f3.hoshiEnd = true; f3.hoshiDays = 5; f3.dat = 40; f3.water = 7; f3.deepRun = 0; f3.typhoonDay = null; K3.V.deepDay = S3.day - 2; K3.V.deepStop = false; calmDays(S3, 3, '雨'); K3.V.flipQueue = 3; K3.advanceDay(); out.stop1 = K3.V.flipQueue; out.w1 = f3.water; /* 90周目：雨で 上がった 1朝目（7 → 9cm）は 前の 止まりから 5日 あける */
       return out;
     });
     ok(/あすには 少し 下がります/.test(r.drop) && /↓で 浅く/.test(r.drop), 'あす 8cm を 割る 深水は「↓で 浅く。あすには 少し 下がります」（止まらない 日だと 分かる）', r);
     ok(/↓で 浅く/.test(r.deep), 'あすも 8cm 以上なら「↓で 浅く」', r);
     ok(Math.abs(r.floor - 4) < 0.01, '出穂後の はじき↓は 高温→雨 でも 4cm に 着地', r);
-    ok(r.stop2 === 0 && r.stop1 === 3, 'きょうも あすも 深い 時は 5日の 間を 待たずに 止まる（1日だけの 深水は 待つ）', r);
+    ok(r.stop2 === 0 && r.stop1 === 3 && r.w1 >= 8, '2朝目の 深水は 5日の 間を 待たずに 止まる（雨で 上がった 1朝目は 待つ）', r);
   },
   async perf(b){
     const p = await page(b, 390, 844);

@@ -8881,7 +8881,8 @@ function step(dt) {
   if (working && !S.wasWorking) { S.ppv = (S.ppv || 0) - 0.05; S.bite = 1; if (audio && soundOn) thud(audio.ac, audio.out); }
   // 乾いた土の大きな土くれに爪が当たると、ごつっと がくっとくる（春の深い田起こしで多い。代かきの泥では無い）
   if (working && !SHIRO && Math.abs(S.v) > 0.3 && Math.random() < dt * (season === 'haru' ? 0.7 : 0.3) * (DEPTH / DEPTH0) * Math.min(1, Math.abs(S.v) / 0.8)) {
-    clodBump = 1; S.ppv = (S.ppv || 0) + 0.03 * (Math.random() < 0.5 ? 1 : -1); if (audio && soundOn) thud(audio.ac, audio.out);
+    const soft = startNoticeMuted();              // サイクル233・最初の1分: 土くれの音は thud の既定音量1（呼び出し中では最大級）で、春・既定の深さでは毎秒0.7回の確率＝耕している間は約1.4秒に1回・最初の1分（約50秒耕す想定）で約35回出る。サイクル232で「ランダム・小音量」として対象外にしたが実測が前提と違うため、最初の1分だけ音量・跳ね・揺れを半分にして弱める（出る回数と土くれ自体は不変更）
+    clodBump = soft ? 0.5 : 1; S.ppv = (S.ppv || 0) + 0.03 * (soft ? 0.5 : 1) * (Math.random() < 0.5 ? 1 : -1); if (audio && soundOn) thud(audio.ac, audio.out, soft ? 0.5 : 1);
   }   // 爪が土にかみこむ瞬間、ぐっと前へ引かれて がくっとくる
   S.wasWorking = working;
   // 軽油：エンジンが出している力（kW）× 燃料消費率 約 0.25kg/kWh ÷ 軽油の重さ 0.83kg/L。60 馬力＝44kW。

@@ -3198,7 +3198,7 @@ renderTitle();
     var g = new K.Farm({ variety: f.vKey, year: f.yearKey, soil: Object.keys(K.SOIL).find(function(k){ return K.SOIL[k] === f.soil; }) || 'mid', method: f.method, contract: !!f.contract, seed: f.seedP });
     g._challenge = null; g._daily = false; g._ch = null; g._hard = null; g._fert = fertMode;
     f = g; msgSeen = 0; lastTurnFrom = f.doy; choices = ''; tally = {}; seenCards = {}; lifeSeen = new Set(); lifeFor = f; lifeDay = {}; traceClear();
-    for (var i = 0; i < o.ch.length && !KomeCards.over(f); i++) { var c = KomeCards.cardFor(f), dd = KomeCards.day(f), fb2 = '', sa = null, sb = null; if (seenCards[c.key] == null) seenCards[c.key] = dd; try { sa = KomeCards.status(f); } catch (e) {} try { fb2 = c.apply(o.ch[i] === 'L' ? 'left' : 'right', f) || ''; } catch (e) {} try { sb = KomeCards.status(f); } catch (e) {} KomeCards.advance(f); var sc = null; try { sc = KomeCards.status(f); } catch (e) {} choices += o.ch[i]; lifeNew(); tallyAdd(dd, fb2, lifeCnt, { t: c.title, s: o.ch[i] === 'L' ? c.left.label : c.right.label, im: impactCalc(sa, sb) }); if (!KomeCards.over(f)) traceReplay(fb2, sa, sc); }   /* 周回118 Codex対応: 通常操作と追加条件をそろえる */
+    for (var i = 0; i < o.ch.length && !KomeCards.over(f); i++) { var c = KomeCards.cardFor(f), dd = KomeCards.day(f), fb2 = '', sa = null, sb = null; if (seenCards[c.key] == null) seenCards[c.key] = dd; try { sa = KomeCards.status(f); } catch (e) {} try { fb2 = c.apply(o.ch[i] === 'L' ? 'left' : 'right', f) || ''; } catch (e) {} try { sb = KomeCards.status(f); } catch (e) {} KomeCards.advance(f); var sc = null; try { sc = KomeCards.status(f); } catch (e) {} choices += o.ch[i]; lifeNew(); tallyAdd(dd, fb2, lifeCnt, { t: c.title, s: o.ch[i] === 'L' ? c.left.label : c.right.label, im: impactCalc(sa, sb) }); if (!KomeCards.over(f)) traceReplay(fb2, c.key); }   /* 周回118 Codex対応: 通常操作と追加条件をそろえる */
     streak = o.st; recDone = !!o.rd; goldSeen = o.gs || {}; lifeSeen = new Set(o.ls || []); lifeFor = f; bannerDone = !!o.bd;
     store.set('kome365_streak', String(streak)); store.set(RW, '');
     $('swLog').innerHTML = ''; { var sg = $('sGame'); sg.classList.remove('fxGood', 'fxBad', 'fieldTick'); }
@@ -3319,21 +3319,19 @@ renderTitle();
   function traceDraw(isNew){ try { var e = $('swTrace'); if (!e) return; e.innerHTML = ''; traceInfo.list.forEach(function(k, i){ var s = document.createElement('span'); s.className = 'tr' + (isNew && i === traceInfo.list.length - 1 ? ' new' : ''); pixTraceSet(s, k); e.appendChild(s); }); } catch (e) {} }
   function traceAdd(ok){ var key = ok ? TRACE_OK[traceInfo.okN % 2] : TRACE_NG[traceInfo.ngN % 2]; if (ok) { traceInfo.okN++; try { delayList.push(choices.length); } catch (e) {} } else traceInfo.ngN++; traceInfo.list.push(key); if (traceInfo.list.length > TRACE_MAX) traceInfo.list.shift(); traceInfo.count++; traceDraw(true); richDraw(true); }
   function traceClear(){ traceInfo.list = []; traceInfo.okN = 0; traceInfo.ngN = 0; traceInfo.count = 0; delayList = []; branchInfo = { counts: { water: 0, weed: 0, bug: 0, fert: 0, vigor: 0 }, total: 0, key: '', lockedAt: 0 }; traceDraw(false); richDraw(false); }
-  function traceReplay(fb, a, b){ if (!fb) return; if (fb.indexOf('⭕') === 0) { traceAdd(true); branchAdd(a, b); } else if (fb.indexOf('❌') === 0) traceAdd(false); }   /* 再開・巻き戻しの再生では、再生した選択の判定から跡を組み直す(表示が選択列と食い違わないため)。周回132: 世話の色の数えも同じ再生で組み直す */
+  function traceReplay(fb, ck){ if (!fb) return; if (fb.indexOf('⭕') === 0) { traceAdd(true); branchAdd(ck); } else if (fb.indexOf('❌') === 0) traceAdd(false); }   /* 再開・巻き戻しの再生では、再生した選択の判定から跡を組み直す(表示が選択列と食い違わないため)。周回132: 世話の色の数えも同じ再生で組み直す */
 
-  /* 世話の色(周回132・差1 たまごっち: 世話の方向で成長の姿が少しずつ分岐する): 判定○のたびに、その日一番良くなった面(選択前→日送り後のステータスの改善幅が最大の面。ゲーム自身の chg ▲▼表示と同じ土台・しきい値0.05)を1件数える。選択の効果は fn だけではステータスにほぼ出ず、日送り(advance)まで含めて初めて田んぼの変化として現れるため、この土台にする(検証: st0→stM では61件の○のうち2件しか数えられなかった)。数えた○が10件以上になり、1つの面が2位に2件以上の差を付けたら、その年の色として固定する(年内は変わらない)。×は数えない=罰しない。表示は蓄積の列の末尾の花1株だけ(richDraw)。導出のみ・新規保存なし(再開・巻き戻しは選択列の再生で組み直される) */
+  /* 世話の色(周回132・差1 たまごっち: 世話の方向で成長の姿が少しずつ分岐する): 判定○のたびに、その世話が属する面(水・草・虫・肥料・稲)を1件数える。数え方を「ステータス改善幅の最大の面」から「カードの世話の種類」へ替えた理由: ステータス(status())は良い世話ほど上限1.0に張り付いて改善幅が出ず、実測では交互プレイ200手で○47〜62件に対し改善幅0.05以上の手が2〜4件しかなく、色が決まらなかった(サイクル132検証 out3〜out5)。世話の種類なら、その年に繰り返し正しく世話した面がそのまま数になる。面の対応はカードキーの表 BRANCH_FACE で決める(必須作業・田んぼの様子・見回りの作業カードだけが対象。準備・七十二候・天気などの判定カードは面が定まらないため数えない)。数えた○の中で1つの面が10件以上になり、2位に2件以上の差を付けたら、その年の色として固定する(年内は変わらない)。×は数えない=罰しない。表示は蓄積の列の末尾の花1株だけ(richDraw)。導出のみ・新規保存なし(再開・巻き戻しは選択列の再生で組み直される) */
   var BRANCH_KEYS = ['water', 'weed', 'bug', 'fert', 'vigor'];
+  var BRANCH_FACE = { flood: 'water', drain: 'water', mid: 'water', mizo: 'water', c_water: 'water', ev_leak: 'water', herb: 'weed', c_mow: 'weed', mow: 'weed', ev_hie: 'weed', ev_konagi: 'weed', ev_nagae: 'weed', ev_omodaka: 'weed', kame: 'bug', ev_kame: 'bug', ev_bph: 'bug', ev_blast: 'bug', ev_sheath: 'bug', ev_snail: 'bug', ev_egg: 'bug', basal: 'fert', top: 'fert', leaf: 'fert', sow: 'vigor', dsow: 'vigor', till: 'vigor', puddle: 'vigor', plant: 'vigor', harvest: 'vigor' };
   var branchInfo = { counts: { water: 0, weed: 0, bug: 0, fert: 0, vigor: 0 }, total: 0, key: '', lockedAt: 0 };
-  function branchAdd(a, b){
-    if (!a || !b || a.error || b.error) return;
-    var bk = '', bd = 0;
-    for (var i = 0; i < BRANCH_KEYS.length; i++) { var k = BRANCH_KEYS[i], d = (b[k] ? b[k].v : 0) - (a[k] ? a[k].v : 0); if (d > bd) { bk = k; bd = d; } }   /* 同点は BRANCH_KEYS の順で先のもの(決定的)。impactCalc と同じ厳密な > で選ぶ */
-    if (!bk || bd < 0.05) return;
+  function branchAdd(ck){
+    var bk = BRANCH_FACE[ck]; if (!bk) return;
     branchInfo.counts[bk]++; branchInfo.total++;
-    if (!branchInfo.key && branchInfo.total >= 10) {
+    if (!branchInfo.key && branchInfo.counts[bk] >= 10) {
       var best = '', bv = -1, second = -1;
       for (var j = 0; j < BRANCH_KEYS.length; j++) { var v = branchInfo.counts[BRANCH_KEYS[j]]; if (v > bv) { second = bv; bv = v; best = BRANCH_KEYS[j]; } else if (v > second) second = v; }
-      if (best && bv - second >= 2) { branchInfo.key = best; branchInfo.lockedAt = branchInfo.total; }
+      if (best === bk && bv - second >= 2) { branchInfo.key = best; branchInfo.lockedAt = branchInfo.total; }
     }
     if (branchInfo.key && richInfo.branchShown !== branchInfo.key) richDraw(true);   /* 色が決まったその手で花を出す(traceAdd の richDraw は branchAdd より前に走るため、ここで追いつく) */
   }
@@ -3439,7 +3437,7 @@ renderTitle();
     try { var st1 = KomeCards.status(f), nm = { water: '💧水', weed: '🌿雑草', bug: '🐛虫', fert: '🧺肥料', vigor: '🌾稲' };
       if (st0 && !st0.error && !st1.error) for (var k in nm) { var dv = st1[k].v - st0[k].v; if (Math.abs(dv) >= 0.05) chg[k] = [st0[k].v, dv]; if (Math.abs(dv) >= 0.05) dl += '<span class="dl ' + (dv > 0 ? 'up' : 'dn') + '">' + nm[k] + (dv > 0 ? '▲' : '▼') + '</span>'; } } catch (e) {}
     var over = KomeCards.over(f), judged = !!cls && !over, newLife = over ? null : lifeNew(), rec = 0;
-    if (judged) { markShow(cls === 'vOK' ? 'ok' : 'ng'); traceAdd(cls === 'vOK'); if (cls === 'vOK') { var stb = null; try { stb = KomeCards.status(f); } catch (e) {} branchAdd(st0, stb); } }   /* 周回118(F2): 答えが田んぼに物として残る。周回132: ○のときだけ世話の色も数える(土台は chg の ▲▼ と同じ選択前→日送り後のステータス)。※この行のコメントは元々この行では閉じず数行先で閉じる形(本番現行どおり)。終端を足すとコメントアウトされている後続行(streak・tallyAdd・save等)が復活して挙動が変わるため、周回132では終端を足さない。詳細はサイクル132記録の発見事項を参照
+    if (judged) { markShow(cls === 'vOK' ? 'ok' : 'ng'); traceAdd(cls === 'vOK'); if (cls === 'vOK') { branchAdd(card.key); } }   /* 周回118(F2): 答えが田んぼに物として残る。周回132: ○のときだけ世話の色も数える(数えはカードの世話の種類で、branchAdd 参照)。※この行のコメントは元々この行では閉じず数行先で閉じる形(本番現行どおり)。終端を足すとコメントアウトされている後続行(streak・tallyAdd・save等)が復活して挙動が変わるため、周回132では終端を足さない。詳細はサイクル132記録の発見事項を参照
     if (cls === 'vOK') { streak++; if (streak > streakBest) { streakBest = streak; store.set('kome365_streak_best', String(streak)); if (streak >= 5 && !recDone) { rec = streak; recDone = true; } } store.set('kome365_streak', String(streak)); } else if (cls === 'vNG') { streak = 0; recDone = false; store.set('kome365_streak', '0'); }
     $('swLog').innerHTML = (fb && !judged ? '<b' + (cls ? ' class="' + cls + '"' : '') + '>' + esc(fb) + '</b>' : '') + (dl ? '<br>' + dl : '') + (news.length ? (fb || dl ? '<br>' : '') + news.map(esc).join('<br>') : '');
     tallyAdd(d0, fb, over ? 0 : lifeCnt, { t: card.title, s: side === 'left' ? card.left.label : card.right.label, im: impactCalc(st0, stM) });
@@ -3602,7 +3600,7 @@ renderTitle();
     challenge = null; fertMode = o.fm; yearHidden = !!o.yh;
     f = new K.Farm({ variety: o.v, year: o.y, soil: o.so, method: o.m, contract: !!o.c, seed: o.s }); f._challenge = null; f._daily = false; f._ch = null; f._hard = null; f._fert = fertMode;
     msgSeen = 0; lastTurnFrom = f.doy; choices = ''; goldSeen = {}; bannerDone = false; store.set(RW, ''); tally = {}; seenCards = {}; lifeSeen = new Set(); lifeFor = f; lifeDay = {};
-    for (var i = 0; i < o.ch.length && !KomeCards.over(f); i++) { var c = KomeCards.cardFor(f), side = o.ch[i] === 'L' ? 'left' : 'right', dd = KomeCards.day(f), fb2 = '', sa = null, sb = null; if (isGold(c)) goldSeen[goldKey(c)] = 1; if (seenCards[c.key] == null) seenCards[c.key] = dd; try { sa = KomeCards.status(f); } catch (e) {} try { fb2 = c.apply(side, f) || ''; } catch (e) {} try { sb = KomeCards.status(f); } catch (e) {} KomeCards.advance(f); var sc = null; try { sc = KomeCards.status(f); } catch (e) {} choices += o.ch[i]; lifeNew(); tallyAdd(dd, fb2, lifeCnt, { t: c.title, s: side === 'left' ? c.left.label : c.right.label, im: impactCalc(sa, sb) }); if (!KomeCards.over(f)) traceReplay(fb2, sa, sc); }   /* 周回118 Codex対応: 最終日の選択は通常操作(advance の judged が over を除く)と条件をそろえ、跡を足さない */
+    for (var i = 0; i < o.ch.length && !KomeCards.over(f); i++) { var c = KomeCards.cardFor(f), side = o.ch[i] === 'L' ? 'left' : 'right', dd = KomeCards.day(f), fb2 = '', sa = null, sb = null; if (isGold(c)) goldSeen[goldKey(c)] = 1; if (seenCards[c.key] == null) seenCards[c.key] = dd; try { sa = KomeCards.status(f); } catch (e) {} try { fb2 = c.apply(side, f) || ''; } catch (e) {} try { sb = KomeCards.status(f); } catch (e) {} KomeCards.advance(f); var sc = null; try { sc = KomeCards.status(f); } catch (e) {} choices += o.ch[i]; lifeNew(); tallyAdd(dd, fb2, lifeCnt, { t: c.title, s: side === 'left' ? c.left.label : c.right.label, im: impactCalc(sa, sb) }); if (!KomeCards.over(f)) traceReplay(fb2, c.key); }   /* 周回118 Codex対応: 最終日の選択は通常操作(advance の judged が over を除く)と条件をそろえ、跡を足さない */
     streak = parseInt(store.get('kome365_streak'), 10) || 0; recDone = false; lifeSync(); $('swLog').innerHTML = ''; show('sGame'); if (KomeCards.over(f)) return showResult(); render(); try { drawField(); } catch (e) { console.error(e); } greetSet(); idleTouch();
   }
   window.__zukanState = zukanProg;

@@ -13,7 +13,7 @@ def thresholds():
 class Cycle170(unittest.TestCase):
     def test_thresholds(self):
         th = thresholds()
-        self.assertEqual(th, [15, 40, 80, 140, 210, 300, 420, 570, 760])
+        self.assertEqual(th, [15, 40, 80, 140, 210, 300, 420, 570, 760, 1000, 1300])
         gaps = [th[0]] + [b - a for a, b in zip(th, th[1:])]
         self.assertEqual(gaps, sorted(gaps))
 
@@ -22,7 +22,7 @@ class Cycle170(unittest.TestCase):
                 + re.search(r"function growStageFor\(d\) \{.*?\n", PIX).group(0)
                 + "console.log([419,420,569,570,759,760,1000000].map(growStageFor).join());")
         out = subprocess.run(["node", "-e", code], capture_output=True, text=True, check=True).stdout.strip()
-        self.assertEqual(out, "6,7,7,8,8,9,9")
+        self.assertEqual(out, "6,7,7,8,8,9,11")
 
     def test_draw_code(self):
         self.assertIn("if (st >= 8) { const lx0 = x0 - 4 * q;", PIX)

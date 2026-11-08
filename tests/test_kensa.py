@@ -1281,6 +1281,20 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         # 資料に1文だけ足す（ゲーム内文言は増やさない）
         self.assertIn("チップは袋が着いて落ち着いてから、専用の音と一緒にふわりと現れます", HTML)
 
+    def test_cycle125_next_button_appears_gently(self):
+        # 差分テーマ差31: 押印後に現れる「つぎの ふくろ」ボタンだけが display の
+        # 切り替えで完成形が即座に出ていた（390×844実測で出現時のアニメーション0件）。
+        # 他の現れるもの（終了カード=opacity .4s・場面=.22s・チップ=ふわり260ms）と
+        # 同じく、ふわりと現れる動きを付ける。押印した時だけ1回、流れは止めない。
+        stamp = HTML[HTML.index("function stampNow()"):HTML.index("function dropHanko()")]
+        self.assertIn('nextBtn.classList.add("on");', stamp)
+        self.assertIn("nextBtn.animate(", stamp)
+        self.assertIn('transform:"scale(.92)"', stamp)
+        self.assertIn('transform:"scale(1)"', stamp)
+        self.assertIn('duration:260 * motion, easing:"ease-out"', stamp)
+        # 出現は stampNow（stamped ガードで1回だけ）の中だけ。隠す側は従来どおり即時
+        self.assertEqual(HTML.count("nextBtn.animate("), 1)
+
     def test_cycle93_picked_grains_stay_in_quiet_record(self):
         # 類7: 見分けた粒が静かに記録に残る。任意で開く資料（#notes）の中だけに出し、常時表示・競争・スコアにはしない。
         # 袋を越えて残るため startLot では消さない（サイクル91の seenChecks と同じ持ち方）。

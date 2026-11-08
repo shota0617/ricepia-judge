@@ -894,6 +894,32 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertIn("likeSound();", HTML)
         self.assertIn("const tick = () => tone(1100 + Math.random() * 900, 0.03, 0.025);", HTML)
 
+    def test_cycle109_idle_card_dismissal_has_its_own_gentle_sound(self):
+        # 差分テーマ差15（類3の残り）: 終了カードを自分で閉じる合図だけが無音だったため、
+        # 現れる音の対になる固有のゆっくり下がる音を付ける。現れる合図（差14・idleSound）には
+        # 音があるのに、カードの外を触って閉じる操作への返りだけ音がなかった（差7の寄る／戻ると同じ形）。
+        self.assertIn("function idleOutSound() {", HTML)
+        out_fn = HTML[HTML.index("function idleOutSound()"):HTML.index("function thump()")]
+        self.assertIn("o.frequency.setValueAtTime(500, t);", out_fn)
+        self.assertIn("o.frequency.exponentialRampToValueAtTime(360, t + 0.24);", out_fn)
+        self.assertIn('o.type = "sine";', out_fn)
+        self.assertIn("o.start(t); o.stop(t + 0.26);", out_fn)
+        # 音量は現れる音よりさらに控えめ（0.012）に留める
+        self.assertIn("g.gain.setValueAtTime(0.012, t);", out_fn)
+        # 自分で閉じる経路（dismissIdleCard）で、カードが出ている時だけ1回鳴らす
+        dismiss = HTML[HTML.index("function dismissIdleCard()"):HTML.index("function armIdle()")]
+        self.assertIn('if (!idleCard.classList.contains("on")) return;', dismiss)
+        self.assertIn("hideIdleCard();", dismiss)
+        self.assertIn("idleOutSound();", dismiss)
+        self.assertEqual(HTML.count("idleOutSound();"), 1)
+        # 画面の外側のタップとキー操作は dismiss 経路で閉じる（2か所とも）
+        self.assertEqual(HTML.count('dismissIdleCard();'), 2)
+        # いいねの後に自動で閉じる経路は従来どおり hideIdleCard のまま無音に留める
+        self.assertIn("setTimeout(hideIdleCard, 900);", HTML)
+        # 現れる音と粒の tick は従来どおり残る
+        self.assertIn("idleSound();", HTML)
+        self.assertIn("const tick = () => tone(1100 + Math.random() * 900, 0.03, 0.025);", HTML)
+
     def test_cycle93_picked_grains_stay_in_quiet_record(self):
         # 類7: 見分けた粒が静かに記録に残る。任意で開く資料（#notes）の中だけに出し、常時表示・競争・スコアにはしない。
         # 袋を越えて残るため startLot では消さない（サイクル91の seenChecks と同じ持ち方）。

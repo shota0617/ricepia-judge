@@ -535,6 +535,20 @@ function idleSound() { /* 終わり: 終了カードが現れる合図の音。3
     o.start(t); o.stop(t + 0.26);
   } catch (_) {}
 }
+function idleOutSound() { /* 終わり: 終了カードを自分で閉じる合図の音。500→360Hzへゆっくり下がる音で、現れる音（idleSound 360→500Hz）の対にする（サイクル109・差分テーマ差15）。現れる合図には音がある一方、閉じる操作だけが無音だった（390×844実測）。自分で閉じた時だけ1回鳴らし、いいねの後の自動で閉じる時（hideIdleCard のまま）には鳴らさない */
+  try {
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    if (ac.state === "suspended") ac.resume();
+    const o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime;
+    o.type = "sine";
+    o.frequency.setValueAtTime(500, t);
+    o.frequency.exponentialRampToValueAtTime(360, t + 0.24);
+    g.gain.setValueAtTime(0.012, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.26);
+    o.connect(g).connect(ac.destination);
+    o.start(t); o.stop(t + 0.26);
+  } catch (_) {}
+}
 function thump() {
   tone(110, 0.16, 0.14, "sine");
   tone(70, 0.22, 0.1, "sine");
@@ -1780,17 +1794,22 @@ function hideIdleCard() {
   idleCard.classList.remove("on");
   idleCard.inert = true;
 }
+function dismissIdleCard() { /* 自分で閉じる合図も固有の音にする（サイクル109・差15）。カードが出ている時だけ1回鳴らす。いいねの後に自動で閉じる経路は hideIdleCard のまま無音 */
+  if (!idleCard.classList.contains("on")) return;
+  hideIdleCard();
+  idleOutSound();
+}
 function armIdle() {
   clearTimeout(idleTimer);
   idleTimer = setTimeout(showIdleCard, IDLE_MS);
 }
 document.addEventListener("pointerdown", (e) => {
-  if (!e.target.closest || !e.target.closest("#idleCard")) hideIdleCard();
+  if (!e.target.closest || !e.target.closest("#idleCard")) dismissIdleCard();
   armIdle();
 }, { passive:true });
 document.addEventListener("keydown", (e) => {
   keyUser = true;
-  if (!e.target.closest || !e.target.closest("#idleCard")) hideIdleCard();
+  if (!e.target.closest || !e.target.closest("#idleCard")) dismissIdleCard();
   armIdle();
 });
 likeBtn.addEventListener("click", () => {

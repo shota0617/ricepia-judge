@@ -63,7 +63,7 @@ class TestDraw(unittest.TestCase):
 class TestScope(unittest.TestCase):
     def test_files(self):
         out = subprocess.run(["git", "diff", "--name-only", "origin/main"], cwd=ROOT, capture_output=True, text=True).stdout.split()
-        allowed = {"nishio-go/pixel.js", "tests/test_maze_loop4_168.py", "tests/test_maze_loop4_167.py", "tests/test_maze_loop4_153.py", "tests/test_maze_loop4_160.py"}
+        allowed = {"nishio-go/pixel.js", "tests/test_maze_loop4_168.py", "tests/test_maze_loop4_169.py", "tests/test_maze_loop4_167.py", "tests/test_maze_loop4_153.py", "tests/test_maze_loop4_160.py"}
         self.assertTrue(set(out) <= allowed, out)
 
 

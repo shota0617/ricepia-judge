@@ -8648,6 +8648,7 @@ function drawLinked(code, x, y, X, Y, T, f) {
   if (MT.road && ROAD_ROW[code] !== undefined) {
     const [ri, kado, xr, rankan] = nbrLook(x, y, roadLookOf);
     ctx.drawImage(MT.road[ROAD_ROW[code]][ri], X, Y, T, T);
+    if (code !== C.D) drawRoadShape(X, Y, T, ri >> 1);
     if (MT.kado) for (const i of kado) ctx.drawImage(MT.kado[ROAD_ROW[code]][i], X, Y, T, T);
     if (MT.rail) for (const p of xr) ctx.drawImage(MT.rail[p], X, Y, T, T);
     if (MT.rankan) for (const i of rankan) ctx.drawImage(MT.rankan[i], X, Y, T, T);

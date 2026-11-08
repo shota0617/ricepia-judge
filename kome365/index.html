@@ -431,7 +431,7 @@ a{color:var(--acc)}
 @keyframes kkSway{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg)}}
 @media (prefers-reduced-motion:reduce){#swKakashi .kkSvg{animation:none}#swKakashi .kkPix{animation:none}#swKakashi{transition:none}}
 #swStage{flex:1;display:flex;align-items:flex-end;justify-content:center;padding:2px 0 0;min-height:0;touch-action:pan-y}   /* 田んぼを広く見せる(サイクル65・BOTW: カードを低くし空いた分を田んぼの見える面積にする。表示のみ) */
-#swWrap{position:relative;isolation:isolate;width:min(92%,360px);--p:0}
+#swWrap{position:relative;isolation:isolate;width:min(98%,360px);--p:0}   /* サイクル139(差8): 札が1行に収まるようカードを少し広げる */
 #swCard{transform-origin:50% 92%;position:relative;z-index:1;width:100%;background:#fffdf7;color:#2b2a24;border-radius:20px;box-shadow:0 8px 24px rgba(0,0,0,.28);padding:10px 12px 10px;box-sizing:border-box;touch-action:pan-y;user-select:none;-webkit-user-select:none;cursor:grab;transition:transform .32s cubic-bezier(.22,1.25,.36,1),opacity .22s ease,box-shadow .26s ease;will-change:transform}
 #swCard.drag{transition:none;cursor:grabbing}
 /* Tinder風: 後ろのカードの気配(無地の2枚)。--p(0〜1)はドラッグ進捗で、進むほど大きくはっきり見える */
@@ -494,9 +494,10 @@ a{color:var(--acc)}
 /* 決まる瞬間(サイクル16): 確定しきい値(p=0.55)を越えている間だけ、ふちが太く濃く・チップとスタンプが一段大きくなる。戻れば一段戻る */
 #swCard.lockL,#swCard.lockR{outline:9px solid #3b5263;outline-offset:-2px}
 #swCard.lockL .swSide.L,#swCard.lockR .swSide.R{border-width:6px;scale:1.08}
-/* カードの下辺に、左右の選択肢を矢印つきでいつも薄く出す */
-#swEdge{display:flex;justify-content:space-between;gap:10px;margin-top:8px;font-size:22px;font-weight:800}
-#swEdge>span{flex:1;padding:9px;border-radius:14px;line-height:1.25}.eIc{display:block;font-size:40px;line-height:1.1;margin-bottom:2px}.eIc .ePix{display:inline-block;width:40px;height:40px;background-repeat:no-repeat;background-position:center;background-size:40px 40px;image-rendering:pixelated;vertical-align:top}.eIc i{font-style:normal;font-size:.55em;vertical-align:.35em;margin-left:1px}.eIc .eMod{display:inline-block;width:20px;height:20px;background-repeat:no-repeat;background-position:center;background-size:20px 20px;image-rendering:pixelated;vertical-align:.35em;margin-left:2px}   /* 周回119(F3): 札の絵を32px→40px級へ大きくし、本文なしでも絵の対比で判断できるようにする(修飾も16px→20px) */   /* 修飾マークのドット絵(サイクル82・16x16を等倍表示しドットの粒度を主アイコンとそろえる) */#swEdge .eL,#swEdge .eR{color:#344957;background:#e7edf0}#swEdge .eL{text-align:left}#swEdge .eR{text-align:right}
+/* カードの下辺に、左右の選択肢の札をいつも出す(サイクル139で札の文から矢印を外した) */
+#swEdge{display:flex;justify-content:space-between;gap:6px;margin-top:8px;font-size:22px;font-weight:800}   /* サイクル139(差8): 札同士の間を詰め、札の幅に回す */
+#swEdge>span{flex:1;padding:9px 6px;border-radius:14px;line-height:1.25}.eLb{display:block;font-size:19px;letter-spacing:-.5px;line-height:1.25;white-space:nowrap}   /* サイクル139(差8): 札の語(最大7字)を1行で読める幅と字にする。矢印は文から外した(向きは札の位置と案内の矢印が示す) */
+@media (max-width:359px){#swEdge .eLb{white-space:normal}}   /* サイクル139(差8): 狭い画面では溢れさせず従来どおり折り返す */.eIc{display:block;font-size:40px;line-height:1.1;margin-bottom:2px}.eIc .ePix{display:inline-block;width:40px;height:40px;background-repeat:no-repeat;background-position:center;background-size:40px 40px;image-rendering:pixelated;vertical-align:top}.eIc i{font-style:normal;font-size:.55em;vertical-align:.35em;margin-left:1px}.eIc .eMod{display:inline-block;width:20px;height:20px;background-repeat:no-repeat;background-position:center;background-size:20px 20px;image-rendering:pixelated;vertical-align:.35em;margin-left:2px}   /* 周回119(F3): 札の絵を32px→40px級へ大きくし、本文なしでも絵の対比で判断できるようにする(修飾も16px→20px) */   /* 修飾マークのドット絵(サイクル82・16x16を等倍表示しドットの粒度を主アイコンとそろえる) */#swEdge .eL,#swEdge .eR{color:#344957;background:#e7edf0}#swEdge .eL{text-align:left}#swEdge .eR{text-align:right}
 #swCard.tL .eL,#swCard.tR .eR{transform:scale(1.07);background:#cbdbe3}
 #swEdge>span{transition:scale 90ms ease-out,background-color 120ms ease}#swCard.lockL .eL,#swCard.lockR .eR{scale:1.065;background:#9dbfd1;box-shadow:inset 0 0 0 3px #3b5263}   /* 独立scaleプロパティ: tL/tRのtransform:scale(1.07)と掛け合わさり合計約1.14。周回114: 決まる位置では札も一段濃く+輪で「離せば決まる」が札で読める */
 @media (prefers-reduced-motion: reduce){#swCard.lockL .eL,#swCard.lockR .eR{scale:1}#swCard.lockL .swSide.L,#swCard.lockR .swSide.R{scale:1}#swEdge>span{transition:none}}
@@ -3145,7 +3146,7 @@ renderTitle();
     var tg = $('swTag'); tg.textContent = card.tag; tg.className = card.tag === '必須作業' ? 'must' : card.tag === '天気' ? 'wx' : card.tag === '見回り' ? 'ev' : card.tag === '田んぼの様子' ? 'chk' : card.tag === '準備' ? 'prep' : card.tag === '収穫後' ? 'post' : '';
     cardIconSet(card.icon); $('swTitle').textContent = shortTitle(card.title); $('swText').textContent = shortText(card.text, card.key);   /* 周回122(F6): 題の表示は6字以内(shortTitle・表示のみ) */
     el.L.textContent = '◀ ' + card.left.label; el.R.textContent = card.right.label + ' ▶';
-    edgeSet('.eL', '◀ ' + card.left.label); edgeSet('.eR', card.right.label + ' ▶');
+    edgeSet('.eL', card.left.label); edgeSet('.eR', card.right.label);   /* サイクル139(差8): 札の文から矢印を外し1行に収める(向きは札の左右の位置・ゴースト/案内の矢印・縁の印が示す) */
     (function(){ var ic = edgeIcons(card); setIcon('.eL', ic[0]); setIcon('.eR', ic[1]); })();
     el.card.classList.remove('fly', 'tL', 'tR'); $('swWrap').style.setProperty('--p', 0); el.L.style.transform = el.R.style.transform = ''; el.card.style.transform = ''; el.card.style.opacity = ''; el.card.style.boxShadow = ''; el.card.style.transitionDuration = ''; el.L.style.opacity = el.R.style.opacity = 0; tiltInfo.p = 0; tiltInfo.deg = 0; side(0); decide(0);
     var hintOn = choices.length < 3;   /* ヒントは最初の3枚だけ */

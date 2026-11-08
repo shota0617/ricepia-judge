@@ -84,7 +84,8 @@ class Wiring(unittest.TestCase):
         self.assertIn('if (!mazeOn()) drawRollPath(ox, oy, T, now);', PIXEL)
 
     def test_record_kept(self):
-        self.assertRegex(PIXEL, r'RT && rolling && !fpsMeter\.slow\) \{ rollPath\.list = RT\.push')
+                # サイクル162（差6）で記録の形が変わった: 全体のゲートは RT && rolling、rollPath だけが !fpsMeter.slow の内側（bloom は slow でも記録する）
+        self.assertRegex(PIXEL, r'RT && rolling\) \{ if \(!fpsMeter\.slow\) \{ rollPath\.list = RT\.push')
         self.assertIn('RT.alive(', PIXEL)
 
     def test_forbidden(self):

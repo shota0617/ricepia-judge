@@ -33,7 +33,7 @@ class ChasetsuTests(unittest.TestCase):
         self.assertIn('NISHIO_CHASETSU', px)
         self.assertIn('C.pick(f,', px)
         self.assertIn('chasetsuStep(hx, by, u, now)', px)
-        self.assertIn('chasetsu.js', (ROOT / 'nishio-go.html').read_text())
+        self.assertIn('"chasetsu"', (ROOT / 'nishio-go.html').read_text())
 
     @unittest.skipUnless(shutil.which('node'), 'node がない')
     def test_pick_by_town_and_month(self):

@@ -34,7 +34,7 @@ class ShirushiTests(unittest.TestCase):
         self.assertIn('NISHIO_SHIRUSHI', px)
         self.assertIn("shirushiStep(hx, by, u, now, asleep);", px)
         self.assertIn('S.add(s.list, a)', px)
-        self.assertIn('shirushi.js', (ROOT / 'nishio-go.html').read_text())
+        self.assertIn('"shirushi"', (ROOT / 'nishio-go.html').read_text())
 
     @unittest.skipUnless(shutil.which('node'), 'node がない')
     def test_add_say_clean(self):

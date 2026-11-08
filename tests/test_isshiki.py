@@ -35,7 +35,7 @@ class IsshikiTests(unittest.TestCase):
         self.assertIn('isshikiStep(hx, by, u, now);', px)
         for scene in ('ebisen', 'unagi2', 'yoman', 'sakana'):
             self.assertIn("m.cur.id === '%s'" % scene if scene != 'sakana' else 'さかな広場：', px)
-        self.assertIn('isshiki.js', (ROOT / 'nishio-go.html').read_text())
+        self.assertIn('"isshiki"', (ROOT / 'nishio-go.html').read_text())
 
     @unittest.skipUnless(shutil.which('node'), 'node がない')
     def test_pick_by_town_and_sea(self):

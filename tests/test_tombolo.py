@@ -46,7 +46,7 @@ class TomboloTests(unittest.TestCase):
         for scene in IDS[:3]:
             self.assertIn("id === '%s'" % scene, px)
         self.assertIn('干潟の 生きもの：', px)
-        self.assertIn('tombolo.js', (ROOT / 'nishio-go.html').read_text())
+        self.assertIn('"tombolo"', (ROOT / 'nishio-go.html').read_text())
 
     @unittest.skipUnless(shutil.which('node'), 'node がない')
     def test_pick_by_place(self):

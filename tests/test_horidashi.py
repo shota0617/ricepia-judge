@@ -43,7 +43,7 @@ class HoridashiTests(unittest.TestCase):
         px = (GO / 'pixel.js').read_text()
         self.assertIn('NISHIO_HORIDASHI', px)
         self.assertIn('horidashiStep(hx, by, u, now)', px)
-        self.assertIn('horidashi.js', (ROOT / 'nishio-go.html').read_text())
+        self.assertIn('"horidashi"', (ROOT / 'nishio-go.html').read_text())
 
     @unittest.skipUnless(shutil.which('node'), 'node がない')
     def test_pick_by_town_and_sea(self):

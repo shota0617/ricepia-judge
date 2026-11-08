@@ -68,7 +68,7 @@ class Wiring(unittest.TestCase):
         self.assertIn('Math.sin(now / 400)', PIXEL)
 
     def test_html_css(self):
-        self.assertIn('<script src="nishio-go/shopmap.js"></script>', HTML)
+        self.assertIn('"shopmap"', HTML)
         self.assertIn('class="shop-links"', HTML)
         self.assertIn('https://ricepia.jp/go/lin.ee/uPhkiiv?from=game-log', HTML)
         self.assertIn('https://ricepia.jp/kakaku.pdf', HTML)

@@ -45,7 +45,7 @@ class KomeBanashiTests(unittest.TestCase):
         game = (GO / 'game.js').read_text()
         self.assertIn('...komeBanashi(g)', game)
         self.assertIn('komeSeen', game)
-        self.assertIn('komebanashi.js', (ROOT / 'nishio-go.html').read_text())
+        self.assertIn('"komebanashi"', (ROOT / 'nishio-go.html').read_text())
 
     @unittest.skipUnless(shutil.which('node'), 'node がない')
     def test_pick_by_area_month_and_rotation(self):

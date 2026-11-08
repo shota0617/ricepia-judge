@@ -33,8 +33,8 @@ class DeaiTests(unittest.TestCase):
         self.assertIn('NISHIO_DEAI.pick(', px)
         self.assertIn('riceSay(e.say', px)
         self.assertIn('deaiStep(now, ox, oy, T)', px)
-        self.assertIn('deai.js', (ROOT / 'nishio-go.html').read_text())
-        self.assertLess((ROOT / 'nishio-go.html').read_text().index('michikusa.js'), (ROOT / 'nishio-go.html').read_text().index('deai.js'))
+        self.assertIn('"deai"', (ROOT / 'nishio-go.html').read_text())
+        self.assertLess((ROOT / 'nishio-go.html').read_text().index('"michikusa"'), (ROOT / 'nishio-go.html').read_text().index('"deai"'))
 
     @unittest.skipUnless(shutil.which('node'), 'node がない')
     def test_pick_by_place_month_and_town(self):

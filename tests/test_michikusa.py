@@ -36,7 +36,7 @@ class MichikusaTests(unittest.TestCase):
         px = (GO / 'pixel.js').read_text()
         self.assertIn('mzMichikusa(now)', px)
         self.assertIn('riceSay(r.item.say', px)
-        self.assertIn('michikusa.js', (ROOT / 'nishio-go.html').read_text())
+        self.assertIn('"michikusa"', (ROOT / 'nishio-go.html').read_text())
 
     @unittest.skipUnless(shutil.which('node'), 'node がない')
     def test_pick_by_place_month_and_rotation(self):

@@ -38,7 +38,7 @@ class YoukosoTests(unittest.TestCase):
         self.assertIn('NISHIO_YOUKOSO', px)
         self.assertIn('youkosoStep(hx, by, u, now);', px)
         self.assertIn('Y.entered(was, a)', px)
-        self.assertIn('youkoso.js', (ROOT / 'nishio-go.html').read_text())
+        self.assertIn('"youkoso"', (ROOT / 'nishio-go.html').read_text())
 
     @unittest.skipUnless(shutil.which('node'), 'node がない')
     def test_area_pick_entered(self):

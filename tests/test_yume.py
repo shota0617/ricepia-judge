@@ -33,7 +33,7 @@ class YumeTests(unittest.TestCase):
         self.assertIn('NISHIO_YUME.pick(', px)
         self.assertIn('riceSay(y.say', px)
         self.assertIn("yumeStep(hx, by, u, now, asleep)", px)
-        self.assertIn('yume.js', (ROOT / 'nishio-go.html').read_text())
+        self.assertIn('"yume"', (ROOT / 'nishio-go.html').read_text())
 
     @unittest.skipUnless(shutil.which('node'), 'node がない')
     def test_pick_by_town_month_and_sea(self):

@@ -34,7 +34,7 @@ class OtedamaTests(unittest.TestCase):
         self.assertIn('NISHIO_OTEDAMA.pick(', px)
         self.assertIn('otedamaStep(hx, by, u, now)', px)
         html = (ROOT / 'nishio-go.html').read_text()
-        self.assertIn('otedama.js', html)
+        self.assertIn('"otedama"', html)
 
     @unittest.skipUnless(shutil.which('node'), 'node がない')
     def test_pick_by_town_month_and_sea(self):

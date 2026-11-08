@@ -24,7 +24,7 @@ class FurusatoTests(unittest.TestCase):
         body = px[px.index('function furusatoStep'):px.index('function furusatoStep') + 2200]
         self.assertIn('K.outside(here.city)', body)   # 西尾市の 外だけ
         self.assertIn('G.areas', body)
-        self.assertIn('furusato.js', (ROOT / 'nishio-go.html').read_text())
+        self.assertIn('"furusato"', (ROOT / 'nishio-go.html').read_text())
 
     def test_items_match_areas(self):
         areas = {a['id'] for a in json.loads((GO / 'areas.json').read_text())['areas'] if not a.get('near')}

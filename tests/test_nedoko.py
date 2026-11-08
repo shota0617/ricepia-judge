@@ -32,7 +32,7 @@ class NedokoTests(unittest.TestCase):
         px = (GO / 'pixel.js').read_text()
         self.assertIn('NISHIO_NEDOKO.pick(', px)
         self.assertIn("nedokoStep(hx, by, u, now, asleep)", px)
-        self.assertIn('nedoko.js', (ROOT / 'nishio-go.html').read_text())
+        self.assertIn('"nedoko"', (ROOT / 'nishio-go.html').read_text())
 
     @unittest.skipUnless(shutil.which('node'), 'node がない')
     def test_pick_by_town_month_and_sea(self):

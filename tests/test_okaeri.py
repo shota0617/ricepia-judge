@@ -25,7 +25,7 @@ class OkaeriTests(unittest.TestCase):
         body = px[px.index('function okaeriStep'):px.index('function okaeriStep') + 1800]
         self.assertIn('西尾', body)   # 西尾市の 中だけ
         self.assertIn('NISHIO_YOUKOSO', body)   # 名物は ようこそと 共用
-        self.assertIn('okaeri.js', (ROOT / 'nishio-go.html').read_text())
+        self.assertIn('"okaeri"', (ROOT / 'nishio-go.html').read_text())
 
     @unittest.skipUnless(shutil.which('node'), 'node がない')
     def test_days_and_say(self):

@@ -484,67 +484,29 @@
 <script src="nishio-go/season.js"></script>
 <script src="nishio-go/weather.js"></script>
 <script src="nishio-go/osm-query.js"></script>
-<script src="nishio-go/komebanashi.js"></script>
-<script src="nishio-go/michikusa.js"></script>
-<script src="nishio-go/otomo.js"></script>
-<script src="nishio-go/nimotsu.js"></script>
-<script src="nishio-go/yume.js"></script>
-<script src="nishio-go/deai.js"></script>
-<script src="nishio-go/kobore.js"></script>
 <script src="nishio-go/gochiso.js"></script>
-<script src="nishio-go/otedama.js"></script>
-<script src="nishio-go/kasa.js"></script>
-<script src="nishio-go/meguri.js"></script>
-<script src="nishio-go/tsun.js"></script>
-<script src="nishio-go/kage.js"></script>
-<script src="nishio-go/nedoko.js"></script>
-<script src="nishio-go/yuami.js"></script>
-<script src="nishio-go/horidashi.js"></script>
-<script src="nishio-go/chasetsu.js"></script>
-<script src="nishio-go/shimatabi.js"></script>
-<script src="nishio-go/isshiki.js"></script>
-<script src="nishio-go/chochinyoru.js"></script>
-<script src="nishio-go/hazusanpo.js"></script>
-<script src="nishio-go/kawabe.js"></script>
-<script src="nishio-go/tombolo.js"></script>
-<script src="nishio-go/mangekyo.js"></script>
-<script src="nishio-go/nazonazo.js"></script>
-<script src="nishio-go/youkoso.js"></script>
-<script src="nishio-go/shirushi.js"></script>
-<script src="nishio-go/monosashi.js"></script>
-<script src="nishio-go/okaeri.js"></script>
-<script src="nishio-go/furusato.js"></script>
-<script src="nishio-go/jokamachi.js"></script>
-<script src="nishio-go/chatsumi.js"></script>
-<script src="nishio-go/tsutsumi.js"></script>
-<script src="nishio-go/kiri.js"></script>
 <script src="nishio-go/kometalk.js"></script>
 <script src="nishio-go/course.js"></script>
 <script src="nishio-go/photoquiz.js"></script>
 <script src="nishio-go/daystamp.js"></script>
-<script src="nishio-go/shopmap.js"></script>
 <script src="nishio-go/rollsync.js"></script>
 <script src="nishio-go/rolltrail.js"></script>
 <script src="nishio-go/landscape.js"></script>
 <script src="nishio-go/biglandmark.js"></script>
-<script src="nishio-go/shomai.js"></script>
 <script src="nishio-go/postcard.js"></script>
 <script src="nishio-go/shogo.js"></script>
 <script src="nishio-go/game.js"></script>
-<script src="nishio-go/oldmap.js"></script>
-<script src="nishio-go/kirara.js"></script>
-<script src="nishio-go/yatsumushi.js"></script>
 <script src="nishio-go/landmark-gen.js"></script>
 <script src="nishio-go/korostyle.js"></script>
 <script src="nishio-go/pixel.js"></script>
 <script src="nishio-go/meiro.js"></script>
 <script src="nishio-go/share.js"></script>
-<script src="nishio-go/idlecard.js"></script>
 <script>
-/* スタートの1分：転がるのに要らない任意機能（ミニゲーム・ムービー・ドット絵帳・Godot 描画）は、load のあとに 1本ずつ順に読む。
+/* スタートの1分：転がるのに要らない任意機能（お米つぶの ひとこと・出会い・イベント・ミニゲーム・ムービー・ドット絵帳・Godot 描画）は、load のあとに 1本ずつ順に読む。
    入口は game.js / pixel.js 側の window.X && ... で守られているので、読み込み前は何もしない。失敗しても console に残すだけ */
 (function () {
-  var files = ["runner", "harvest", "movie", "dankyu", "hiryoyama", "dots", "godot-field"];
+  var files = ["komebanashi", "michikusa", "otomo", "nimotsu", "yume", "deai", "kobore", "otedama", "kasa", "meguri", "tsun", "kage", "nedoko", "yuami", "horidashi", "chasetsu", "shimatabi", "isshiki", "chochinyoru", "hazusanpo", "kawabe", "tombolo", "mangekyo", "nazonazo", "youkoso", "shirushi", "monosashi", "okaeri", "furusato", "jokamachi", "chatsumi", "tsutsumi", "kiri", "shopmap", "shomai", "oldmap", "kirara", "yatsumushi", "idlecard",
+    "runner", "harvest", "movie", "dankyu", "hiryoyama", "dots", "godot-field"];
   var i = 0;
   function next() {
     if (i >= files.length) { window.__nsgLazyDone = true; return; }

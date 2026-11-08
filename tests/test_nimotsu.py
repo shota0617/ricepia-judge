@@ -41,7 +41,7 @@ class NimotsuTests(unittest.TestCase):
         self.assertIn('get nimotsu()', game)
         px = (GO / 'pixel.js').read_text()
         self.assertIn('drawNimotsu(hx, by, u, now', px)
-        self.assertIn('nimotsu.js', (ROOT / 'nishio-go.html').read_text())
+        self.assertIn('"nimotsu"', (ROOT / 'nishio-go.html').read_text())
 
     @unittest.skipUnless(shutil.which('node'), 'node がない')
     def test_pick_and_current(self):

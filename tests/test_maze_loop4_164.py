@@ -73,7 +73,7 @@ class TestDiff(unittest.TestCase):
         diff = subprocess.run(["git", "diff", "HEAD", "--", "nishio-go"], cwd=ROOT, capture_output=True, text=True).stdout
         for l in diff.splitlines():
             if l.startswith("+") and not l.startswith("+++"):
-                for w in ("ぼく", "だに", "約20%"):
+                for w in ("\u307c\u304f", "\u3060\u306b", "\u7d0420%"):
                     self.assertNotIn(w, l)
 
 

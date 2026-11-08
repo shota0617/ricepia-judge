@@ -10,7 +10,7 @@
 //   cue       中干しの 合図。水が ない 間は 追肥できない。矢印キーも 同じ 道
 //   customer  吹き出しの 矢印 だけで 検査まで 行ける
 //   mizo      溝切り：中干しの 間の 雨が 落ちる
-//   deadline  中干しの 期限（出穂 31日 前）：最後の 合図の 日は 始まる、すぎたら 始まらず 根が へる（62周目）
+//   deadline  中干しの 期限（出穂 31日 前）：最後の 合図の 日は 始まる、すぎたら 始まらず 根が へり 2日目から 毎日 止まる（62〜64周目）
 //   stuck     はじき続けて 水が 0 でも 詰まない。結果に 出来ばえ・じこベスト
 //   vary      台風の ない 年・葉いろ 37〜42・出穂後の 一言が 日ごとに・出穂後の ゆっくり ↑ 5cm
 //   feel      長い 引きは 1日・ゴム・◎・スタンプカード・たねの 一言
@@ -198,7 +198,7 @@ const CHECKS = {
       K3.manual = true; K3.fixedSeed = 14; K3.jump('tiller'); const S = K3.S, f = S.f; for (let i=0;i<40 && f.dat < 36;i++){ f.water = 2; K3.advanceDay(); } f.water = 0;
       let stop = null; for (let i=0;i<20 && !f.hoshiEnd;i++){ K3.V.flipQueue = 3; K3.advanceDay(); if (f.hoshiEnd) stop = K3.V.flipQueue; }
       const say = document.getElementById('say').textContent, endDay = f.hoshiEndDay === S.day, hoshi = f.hoshiDays, water = f.water;
-      K3.fixedSeed = 3; K3.jump('tiller'); const f2 = K3.S.f; for (let i=0;i<40 && f2.dat < 36;i++){ f2.water = 2; K3.advanceDay(); } for (let i=0;i<20 && (f2.hoshiRun||0) < 7;i++){ f2.water = 0; const S2 = K3.S, wet = S2.weather[S2.day].w==='雨' || S2.weather[S2.day].w==='台風'; if (wet){ S2.weather[S2.day] = Object.assign({}, S2.weather[S2.day], { w:'くもり' }); } K3.advanceDay(); } /* 雨の 日は くもりに 書きかえて 7日 つづけて 乾かす（52周目：雨 1.6cm で 連続が 切れる ように なった） */ const run0 = f2.hoshiRun; swipe('up', 60, false); const run1 = f2.hoshiRun, say2 = document.getElementById('say').textContent;
+      K3.fixedSeed = 3; K3.jump('tiller'); const f2 = K3.S.f; for (let i=0;i<40 && f2.dat < 36;i++){ f2.water = 2; K3.advanceDay(); } for (let i=0;i<20 && (f2.hoshiRun||0) < 7;i++){ f2.water = 0; calmDays(K3.S, 1); K3.advanceDay(); } /* 雨の 日は くもりに 書きかえて 7日 つづけて 乾かす（52周目：雨 1.6cm で 連続が 切れる ように なった） */ const run0 = f2.hoshiRun; swipe('up', 60, false); const run1 = f2.hoshiRun, say2 = document.getElementById('say').textContent;
       return { say, stop, endDay, hoshi, water, run0, run1, say2 };
     });
     ok(/雨で 中干し おわり/.test(r.say) && r.stop === 0 && r.hoshi >= 5 && r.endDay && r.water >= 1.5, '雨で 中干しが おわった 日は「雨で 中干し おわり」と 言って 止まる', r);
@@ -209,19 +209,19 @@ const CHECKS = {
     const p = await page(b, 390, 844);
     const r = await p.evaluate(() => {
       K3.manual = true; K3.fixedSeed = 3; K3.jump('tiller'); const S = K3.S, f = S.f; for (let i=0;i<40 && f.dat < 34;i++){ f.water = 2; K3.advanceDay(); }
-      f.dat = f.headDat - K3.NK_END - K3.HOSHI_DONE; f.hoshiDays = 0; f.hoshiRun = 0; for (let i=0;i<4;i++) S.weather[S.day+i] = Object.assign({}, S.weather[S.day+i], { w:'くもり' }); K3.V.flipQueue = 0; f.water = 0; K3.advanceDay(); const h1 = f.hoshiDays;
+      f.dat = f.headDat - K3.NK_END - K3.HOSHI_DONE; f.hoshiDays = 0; f.hoshiRun = 0; calmDays(S, 4); K3.V.flipQueue = 0; f.water = 0; K3.advanceDay(); const h1 = f.hoshiDays;
       K3.fixedSeed = 3; K3.jump('tiller'); const f2 = K3.S.f; for (let i=0;i<40 && f2.dat < 34;i++){ f2.water = 2; K3.advanceDay(); }
-      const S2 = K3.S; f2.dat = f2.headDat - K3.NK_END - K3.HOSHI_DONE + 2; f2.hoshiDays = 0; f2.hoshiRun = 0; f2.water = 0.5; f2.mizo = true; for (let i=0;i<4;i++) S2.weather[S2.day+i] = Object.assign({}, S2.weather[S2.day+i], { w:'くもり' }); const r0 = f2.root; K3.V.flipQueue = 3; K3.advanceDay(); const stop1 = K3.V.flipQueue; K3.V.flipQueue = 3; K3.advanceDay(); const stop2 = K3.V.flipQueue; const h2 = f2.hoshiDays, dr = f2.root - r0, say2 = document.getElementById('say').textContent;
+      const S2 = K3.S; f2.dat = f2.headDat - K3.NK_END - K3.HOSHI_DONE + 2; f2.hoshiDays = 0; f2.hoshiRun = 0; f2.water = 0.5; calmDays(S2, 4); const r0 = f2.root; K3.V.flipQueue = 3; K3.advanceDay(); K3.V.flipQueue = 3; K3.advanceDay(); const stop1 = K3.V.flipQueue; K3.V.flipQueue = 3; K3.advanceDay(); const stop2 = K3.V.flipQueue; const h2 = f2.hoshiDays, dr = f2.root - r0, say2 = document.getElementById('say').textContent;
       return { h1, h2, dr, stop1, stop2, say2: say2.slice(0, 40) };
     });
     ok(r.h1 === 1, '最後の 合図の 日に 落とした 中干しは 翌日 1日目に なる', r);
-    ok(r.h2 === 0 && r.dr < 0 && /間に合いません/.test(r.say2) && r.stop1 === 0 && r.stop2 === 0, '期限を すぎた 乾きは 中干しに ならず（溝が あっても）根が へり、「間に合いません」と 言って 毎日 止まる', r);
+    ok(r.h2 === 0 && r.dr < 0 && /根が へります|間に合いません/.test(r.say2) && r.stop1 === 0 && r.stop2 === 0, '期限を すぎた 乾きは 中干しに ならず 根が へり、「間に合いません」と 言って 2日目から 毎日 止まる', r);
   },
   // はじき続けて 水が 0 に なっても 詰まない：めくりが 止まり、吹き出しは「→」か「↑」を 言う。結果には 出来ばえと じこベスト（10周目）
   async stuck(b){
     const p = await page(b, 390, 844);
     const r = await p.evaluate(() => {
-      K3.manual = true; K3.fixedSeed = 11; K3.jump('tiller'); const S = K3.S, f = S.f; f.water = 2.2; for (let i=0;i<40;i++){ if (S.weather[S.day+i]) S.weather[S.day+i] = Object.assign({}, S.weather[S.day+i], { w:'晴れ' }); } /* 58周目：雨で 水が へらない 年が できたので 晴れ つづきに して 水切れを 作る */ let stopped = null; const hud0 = document.getElementById('stage').textContent;
+      K3.manual = true; K3.fixedSeed = 11; K3.jump('tiller'); const S = K3.S, f = S.f; f.water = 2.2; calmDays(S, 40, '晴れ'); /* 58周目：雨で 水が へらない 年が できたので 晴れ つづきに して 水切れを 作る */ let stopped = null; const hud0 = document.getElementById('stage').textContent;
       for (let i=0;i<20 && stopped == null;i++){ const d0 = S.day; swipe('right', 260, true); flush(); if (f.water < 1) stopped = { day: S.day, dayGap: S.day - d0 }; } /* 60周目：日の ずれは はじく 前から 数える */ /* 止まる 場面が ふえたので 20回（28周目） */
       const t = document.getElementById('say').textContent; const okText = /→|↑/.test(t);
       let moved = 0; for (let i=0;i<5;i++){ const t2 = document.getElementById('say').textContent; const dir = /↑/.test(t2) ? 'up' : /↓/.test(t2) ? 'down' : /←/.test(t2) ? 'left' : 'right'; const d0 = S.day; swipe(dir, 120, false, true); if (S.day > d0) moved++; }

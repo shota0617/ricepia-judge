@@ -5,6 +5,7 @@ const HELPERS = () => {
   window.ev = (t, id, x, y) => document.getElementById('cv').dispatchEvent(new PointerEvent(t, { pointerId:id, pointerType:'touch', clientX:x, clientY:y, bubbles:true, button:0, isPrimary:true }));
   window.steps = n => { for (let i=0;i<n;i++) K3.step(1/60); };
   window.flush = () => { for (let i=0;i<400 && K3.V.flipQueue > 0;i++) K3.step(1/30); };
+  window.calmDays = (S, n, w) => { for (let i=0;i<n;i++){ if (S.weather[S.day+i]) S.weather[S.day+i] = Object.assign({}, S.weather[S.day+i], { w: w || 'くもり' }); } }; /* n日 ぶんの 天気を 固める（64周目：check.js の 4か所で 共通） */
   window.swipe = (dir, len, fast, andFlush, id) => {
     const W = innerWidth, H = innerHeight, cx = W/2, cy = H*0.5; const dx = dir==='right'?1:dir==='left'?-1:0, dy = dir==='down'?1:dir==='up'?-1:0;
     const n = fast ? 3 : 24, pid = id || 1; ev('pointerdown', pid, cx - dx*len/2, cy - dy*len/2);

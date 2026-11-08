@@ -6284,7 +6284,7 @@ const KANA = (() => {
         if ((u.t2 -= dt) <= 0) { u.t2 = 2 + R() * 4; u.look = (R() - 0.5) * 0.9; if (R() < 0.3) u.walk = 0.6 + R() * 0.8; }
         if (u.walk > 0) { u.walk -= dt; u.t += u.dir * 0.035 * dt / L; }
         if (dist < 3.5) { u.st = 'run'; u.walk = 0.9 + R() * 0.5; const along = u.side < 2 ? x - S.x : z - S.z; u.dir = along >= 0 ? 1 : -1; }   // トラクターから 遠い ほうへ
-        if (!told && S.started && dist < 9) {
+        if (!told && S.started && dist < 9 && !startNoticeMuted()) {   // サイクル237・最初の1分: のんびりでは開始直後にカナヘビの吹き出しと声で最初のなぞりを止めない。配置は決定的（種83）で北畦の1匹は (-3.26, 25.59) にいて、開始点(0,0)から北への最初の直進では z>17.20 で dist<9 になり、なぞり上限1.6m/sで開始約12秒（キー運転でも約18〜19秒）に届く。toldは立てないので1分を過ぎて畦の近くにいれば従来どおり出す（遅れて出す形。BADGEと声も一緒に遅れる）。カナヘビの姿・逃げる動きは従来どおり。くわしい説明では従来どおり開始直後から出す
           if (DETAIL || SAY.note('カナヘビが ひなたぼっこ してるね')) { told = true; BADGE.peek(x, z, 3); voice('kanahebi'); }
         }
       } else if (u.st === 'run') {                // するっと 走って 畦の 草の 中へ

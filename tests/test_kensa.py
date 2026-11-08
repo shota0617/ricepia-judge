@@ -1295,6 +1295,20 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         # 出現は stampNow（stamped ガードで1回だけ）の中だけ。隠す側は従来どおり即時
         self.assertEqual(HTML.count("nextBtn.animate("), 1)
 
+    def test_cycle126_zoom_button_appears_gently(self):
+        # 差分テーマ差32: みわけるに入った時に現れる🔍ボタンだけが hidden の
+        # 切り替えで完成形が即座に出ていた（390×844実測で出現時のアニメーション
+        # 0件・opacity即1）。他の現れるもの（チップ=ふわり260ms・差30／つぎの
+        # 袋ボタン=ふわり260ms・差31）と同じく、ふわりと現れる動きを付ける。
+        # 隠す側（みわけ完了時）は従来どおり即時。感じる所作には触れない。
+        sort_fn = HTML[HTML.index("function toMiwakeru()"):HTML.index("function checkSpread()")]
+        self.assertIn("zoomBtn.hidden = false;", sort_fn)
+        self.assertIn("zoomBtn.animate(", sort_fn)
+        self.assertIn('transform:"scale(.7)"', sort_fn)
+        self.assertIn('transform:"scale(1)"', sort_fn)
+        self.assertIn('duration:260 * motion, easing:"ease-out"', sort_fn)
+        self.assertEqual(HTML.count("zoomBtn.animate("), 1)
+
     def test_cycle93_picked_grains_stay_in_quiet_record(self):
         # 類7: 見分けた粒が静かに記録に残る。任意で開く資料（#notes）の中だけに出し、常時表示・競争・スコアにはしない。
         # 袋を越えて残るため startLot では消さない（サイクル91の seenChecks と同じ持ち方）。

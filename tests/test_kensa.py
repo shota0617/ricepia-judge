@@ -485,7 +485,8 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertIn("function guideSense()", HTML)  # 感じる: 開始時と空振り1回目で同じ手本
         self.assertIn("if (senseTaps === 1) guideSense();", HTML)
         self.assertIn("else if (senseTaps === 1) guideSense();", HTML)
-        self.assertIn('if (taps === 1) guideAt("move", document.querySelectorAll(".gradeBtn")[lotGrade(LOT)], 0, -48);', HTML)  # きめる
+        self.assertIn('if (taps === 1) { gradeDemoSound();', HTML)  # きめる（サイクル122・差28で手本の音を追加し波括弧で囲った）
+        self.assertIn('guideAt("move", document.querySelectorAll(".gradeBtn")[lotGrade(LOT)], 0, -48); /* 空振り1回目: 正解ボタンの手本の指をもう一度出す（サイクル81） */', HTML)  # きめる
         self.assertIn('if (hankoTaps === 1) guideAt("move", $("pad"), 0, 24);', HTML)  # おす・朱肉（サイクル87で押し下げの手本に変更）
         self.assertIn('if (hankoTaps === 1) guideAt("move", $("hanko"), 0, hankoMax);', HTML)  # おす・おろし
 
@@ -1188,6 +1189,36 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertIn("const tick = () => tone(1100 + Math.random() * 900, 0.03, 0.025);", HTML)
         # 資料に1文だけ足す（ゲーム内文言は増やさない）
         self.assertIn("おすで空振りしたときも、はんこが手本の動きをするのに合わせて、専用の小さな音で知らせます", HTML)
+
+    def test_cycle122_grade_demo_uses_grade_demo_sound(self):
+        # 差分テーマ差28（差27の再監査の残り・手本の無音）: ぬく・はかる・おすの手本には
+        # 音が付いた一方、きめるで空振り（1回タップ）したときの手本の動き
+        # （手本の指がもう一度出て、ボタンが上へ12px小さく揺れる）だけが無音だった
+        # （390×844実測で同期音0件）ため、手本の上がる動きに固有の音を鳴らす。
+        # この1回目は等級を選んだわけではなく間違いの判定でもないため、
+        # 間違えたときの無音（類4）とは切り分ける。選んではいないので正解の音は使わない。
+        up = HTML[HTML.index('btn.addEventListener("pointerup"'):HTML.index('btn.addEventListener("pointercancel"')]
+        self.assertEqual(up.count("gradeDemoSound();"), 1)
+        # 鳴らすのは空振り1回目（taps === 1）の分岐の中だけに固定する
+        self.assertIn("taps === 1", up[:up.index("gradeDemoSound();")])
+        self.assertLess(up.index("gradeDemoSound();"), up.index("btn.animate("))
+        # 手本の音は専用の関数で、正解の音・粒の tick とは分ける
+        self.assertIn("function gradeDemoSound()", HTML)
+        fn = HTML[HTML.index("function gradeDemoSound()"):HTML.index("function spreadSound()")]
+        self.assertIn("o.frequency.setValueAtTime(420, t);", fn)
+        self.assertIn("o.frequency.exponentialRampToValueAtTime(560, t + 0.13);", fn)
+        self.assertIn('o.type = "sine";', fn)
+        self.assertIn("g.gain.setValueAtTime(0.018, t);", fn)
+        self.assertEqual(HTML.count("gradeDemoSound"), 2)  # 定義1＋呼び出し1
+        # 間違えたとき（等級を選び外れたとき）は従来どおり無音のまま（類4）
+        pick = HTML[HTML.index("function pickGrade(btn) {"):HTML.index('document.querySelectorAll(".gradeBtn")')]
+        self.assertNotIn("gradeDemoSound", pick)
+        self.assertNotIn("tone(", pick)
+        # 2回目のタップや上へ引いて選ぶ経路では手本の音は鳴らさない
+        move = HTML[HTML.index('btn.addEventListener("pointermove"'):HTML.index('btn.addEventListener("pointerup"')]
+        self.assertNotIn("gradeDemoSound", move)
+        # 資料に1文だけ足す（ゲーム内文言は増やさない）
+        self.assertIn("きめるで空振りしたときも、等級のボタンが手本の動きをするのに合わせて、専用の小さな音で知らせます", HTML)
 
     def test_cycle93_picked_grains_stay_in_quiet_record(self):
         # 類7: 見分けた粒が静かに記録に残る。任意で開く資料（#notes）の中だけに出し、常時表示・競争・スコアにはしない。

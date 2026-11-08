@@ -1158,6 +1158,37 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         # 資料に1文だけ足す（ゲーム内文言は増やさない）
         self.assertIn("ぬくで空振りしたときも、穀刺しが手本の動きをするのに合わせて、専用の小さな音で知らせます", HTML)
 
+    def test_cycle121_hanko_demo_uses_stamp_demo_sound(self):
+        # 差分テーマ差27（差26の再監査の残り・手本の無音）: ぬくと はかる の手本には
+        # 音が付いた（差25・差26）一方、おすで空振りしたときの手本の動き
+        # （はんこが押せる所までの半分をおろして戻る）だけが無音だった
+        # （390×844実測で同期音0件）ため、手本のおろす動きに固有の stampDemoSound を鳴らす。
+        # 押してはいないので、実際に押したときの音は使わない。
+        end = HTML[HTML.index("function endHanko() {"):HTML.index('$("bagBig").addEventListener("pointerup", endHanko);')]
+        self.assertEqual(end.count("stampDemoSound();"), 1)
+        # 鳴らすのは半分デモ（空振り2回目）のアニメーションの直前だけに固定する
+        self.assertLess(end.index("stampDemoSound();"), end.index('$("hanko").animate('))
+        self.assertIn("hankoTaps === 2", end[:end.index("stampDemoSound();")])
+        # 手本の音は専用の関数で、実際に押したときの音・粒の tick とは分ける
+        self.assertIn("function stampDemoSound()", HTML)
+        fn = HTML[HTML.index("function stampDemoSound()"):HTML.index("function spreadSound()")]
+        self.assertIn("o.frequency.setValueAtTime(340, t);", fn)
+        self.assertIn("o.frequency.exponentialRampToValueAtTime(240, t + 0.13);", fn)
+        self.assertIn('o.type = "sine";', fn)
+        self.assertIn("g.gain.setValueAtTime(0.018, t);", fn)
+        self.assertEqual(HTML.count("stampDemoSound"), 2)  # 定義1＋呼び出し1
+        # 実際に押す経路（dropHanko・stampNow）では手本の音は鳴らさない
+        drop = HTML[HTML.index("function dropHanko() {"):HTML.index('$("bagBig").addEventListener("pointerdown"')]
+        self.assertNotIn("stampDemoSound", drop)
+        # 朱肉側の空振り（1回目の手本の指）にも鳴らさない（判子は動いていない）
+        ink_branch = end[:end.index("if (!hankoDrag) return;")]
+        self.assertNotIn("stampDemoSound", ink_branch)
+        # 既存の手本の音と粒の tick は従来どおり
+        self.assertIn("function probeDemoSound()", HTML)
+        self.assertIn("const tick = () => tone(1100 + Math.random() * 900, 0.03, 0.025);", HTML)
+        # 資料に1文だけ足す（ゲーム内文言は増やさない）
+        self.assertIn("おすで空振りしたときも、はんこが手本の動きをするのに合わせて、専用の小さな音で知らせます", HTML)
+
     def test_cycle93_picked_grains_stay_in_quiet_record(self):
         # 類7: 見分けた粒が静かに記録に残る。任意で開く資料（#notes）の中だけに出し、常時表示・競争・スコアにはしない。
         # 袋を越えて残るため startLot では消さない（サイクル91の seenChecks と同じ持ち方）。

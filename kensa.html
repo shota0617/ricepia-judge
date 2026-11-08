@@ -289,6 +289,7 @@
   <p>「いいね」が届かなかったときは、対になる小さな音で知らせて、押し直せるように戻ります。</p>
   <p>はかるで空振りしたときも、ハンドルが揺れるのに合わせて、回すときと同じ小さなカチッという音で知らせます。</p>
   <p>ぬくで空振りしたときも、穀刺しが手本の動きをするのに合わせて、専用の小さな音で知らせます。</p>
+  <p>おすで空振りしたときも、はんこが手本の動きをするのに合わせて、専用の小さな音で知らせます。</p>
   <h2>みわけた粒のきろく</h2>
   <p id="grainRecord">まだ みわけた粒は ありません。</p>
   <p>みわけた粒の種類は、ここに静かに残ります。競うための数ではなく、見分けた粒をあとから見返すための記録です。</p>
@@ -509,6 +510,20 @@ function probeDemoSound() { /* ぬく: 空振りの手本の動きの音。380�
     o.type = "sine";
     o.frequency.setValueAtTime(380, t);
     o.frequency.exponentialRampToValueAtTime(300, t + 0.13);
+    g.gain.setValueAtTime(0.018, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.15);
+    o.connect(g).connect(ac.destination);
+    o.start(t); o.stop(t + 0.15);
+  } catch (_) {}
+}
+function stampDemoSound() { /* おす: 空振りの手本（半分デモ）の音。340→240Hzへ小さく下がる音で、粒の tick（高い短い音）や実際に押したときの低いドンという音とは分ける（サイクル121・差分テーマ差27）。ぬくと はかる の手本には音が付いた（差25・差26）一方、おすで空振りしたときの手本の動き（はんこが押せる所までの半分をおろして戻る）だけが無音だった（390×844実測で同期音0件）。押してはいないので実際に押した音は使わず、手本のおろす動きに固有の小さな音を付ける。手本1回につき1回だけ鳴らす */
+  try {
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    if (ac.state === "suspended") ac.resume();
+    const o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime;
+    o.type = "sine";
+    o.frequency.setValueAtTime(340, t);
+    o.frequency.exponentialRampToValueAtTime(240, t + 0.13);
     g.gain.setValueAtTime(0.018, t);
     g.gain.exponentialRampToValueAtTime(0.0001, t + 0.15);
     o.connect(g).connect(ac.destination);
@@ -1862,6 +1877,7 @@ function endHanko() {
   if (++hankoTaps >= NUDGE_LIMIT) { dropHanko(); return; } /* 届かなかったおろしもタップも数える */
   if (hankoTaps === 1) guideAt("move", $("hanko"), 0, hankoMax); /* 空振り1回目: 手本の指をもう一度出す（サイクル81） */
   if (hankoTaps === 2) { /* 空振り2回目: 道具が半分やって見せる（サイクル84）。はんこが押せる所までの半分をおろして戻る。状態は進めない。揺れ（bob）は半分デモが終わってから戻す */
+    stampDemoSound(); /* 半分デモにも手本の音を付ける（サイクル121・差27） */
     setHanko(0);
     $("hanko").animate([{ transform:"translateY(0)" }, { transform:"translateY(" + hankoLand / 2 + "px)", offset:.55 }, { transform:"translateY(0)" }], { duration:560 * motion, easing:"ease-in-out" }).onfinish = () => { if (!stamped) bobHanko(); };
     return;

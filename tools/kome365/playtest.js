@@ -21,21 +21,22 @@ const KNOWN = ['careful', 'normal', 'idle', 'flood', 'hasty', 'late']; for (cons
 const { HELPERS: BASE } = require('./helpers'); // ev・swipe は check.js と 共通（8周目）
 const HELPERS = () => {
   window.playBot = (bot, seed) => {
-    K3.manual = true; K3.fixedSeed = seed; K3.start(); const S = K3.S, f = S.f; let lateFrom = null;
+    K3.manual = true; K3.fixedSeed = seed; K3.start(); const S = K3.S, f = S.f; let lateFrom = null, floodMark = null;
     for (let i=0;i<900 && !S.over;i++){
       const t = document.getElementById('say').textContent, a = K3.actions();
       let dir = /↑/.test(t) ? 'up' : /↓/.test(t) ? 'down' : /←/.test(t) ? 'left' : 'right', len = dir==='right' ? 110 : 160, fast = false;
       if (bot==='careful' && S.phase==='field' && f.planted){
         if ((a.left==='追肥' && f.N < 37) || (a.left==='穂肥' && f.N < 40) || a.left==='溝切り') dir = 'left'; /* 葉いろが こい 年は 追肥（37 以上）・穂肥（40 以上）を 見送る（23・31周目） */
         else if (a.left==='刈る' && f.gdd >= 980) dir = 'left';
+        else if (S.weather[S.day+1] && S.weather[S.day+1].w==='台風' && S.weather[S.day].w!=='台風' && (f.heading || f.dat >= f.headDat - 2) && f.water < 7.5 && floodMark !== S.day + ':' + f.water){ dir = 'up'; len = 400; fast = true; floodMark = S.day + ':' + f.water; } /* 73周目：あす 台風は はじいて 7.5cm（ふつうの ゆっくり↑も 7.5 に なった ので、ていねいが 6cm 超を 落として 41% たおれて いた） */
         else if (f.dat < 10){ dir = f.water < 4 ? 'up' : 'right'; len = 120; }
         else if (f.dat < 34){ dir = f.water < 1.5 ? 'up' : f.water > 4.5 ? 'down' : 'right'; len = 40; }
         else if (f.dat <= 44 && !f.heading && f.hoshiDays < 7){ if (f.water >= 1){ dir = 'down'; len = 400; fast = true; } else dir = 'right'; } /* 46周目：中干しは 7日で 切り上げる（9日目から 根が 切れる） */
-        else { dir = f.water < 2 ? 'up' : f.water > 6 ? 'down' : (f.heading && S.weather[S.day].w==='高温' && !f.flowToday ? 'up' : 'right'); len = 120; } /* 雨で 深く なったら 落とす（23周目） */
+        else { const tyN = S.weather[S.day].w==='台風' || (S.weather[S.day+1] && S.weather[S.day+1].w==='台風'); dir = f.water < 2 ? 'up' : f.water > 6 && !tyN ? 'down' : (f.heading && S.weather[S.day].w==='高温' && !f.flowToday ? 'up' : 'right'); len = 120; } /* 73周目：台風の 当日・前日は 深い まま */ /* 雨で 深く なったら 落とす（23周目） */
       }
       if (bot==='careful' && S.phase==='dry'){ dir = S.hv.moisture <= 15.5 ? 'left' : 'right'; }
       if (bot==='idle' && S.phase==='field' && f.planted && (dir==='up' || dir==='down')) dir = 'right';
-      if (bot==='flood' && S.phase==='field' && f.planted){ if (dir==='down') dir = 'right'; if (f.water < 4 && dir==='right' && !S.hv.done) { dir = 'up'; len = 400; fast = true; } } /* はじきの 着地は よい 深さの 上 +1（分げつ 5）まで（43周目：5.5 を ねらうと 回り つづけた） */
+      if (bot==='flood' && S.phase==='field' && f.planted){ if (dir==='down') dir = 'right'; if (f.water < 4 && dir==='right' && !S.hv.done && floodMark !== S.day + ':' + f.water) { dir = 'up'; len = 400; fast = true; floodMark = S.day + ':' + f.water; } } /* 73周目：↑で 水が 変わらない 日（雨の 日の 着地は 2.5cm）は → へ（同じ 日に 回り つづけて いた） */ /* はじきの 着地は よい 深さの 上 +1（分げつ 5）まで（43周目：5.5 を ねらうと 回り つづけた） */
       if (bot==='hasty'){ if (S.phase==='field' && a.left==='刈る') dir = 'left'; if (S.phase==='dry'){ if (S.hv.moisture > 15.5){ dir = 'right'; len = 300; fast = true; } else dir = 'left'; } }
       if (bot==='late'){ if (S.phase==='field' && a.left==='刈る'){ if (lateFrom == null) lateFrom = S.day; dir = S.day - lateFrom >= 14 ? 'left' : 'right'; if (dir==='right' && /↑/.test(t)) dir = 'up'; } if (S.phase==='dry' && S.hv.moisture <= 15.5 && S.hv.dryDays < 6) dir = 'right'; }
       swipe(dir, len, fast, true);

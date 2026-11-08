@@ -45,9 +45,9 @@ class TestWiring(unittest.TestCase):
 
     def test_only_three_uses(self):
         # サイクル160（差4）で roadShapeMissing が roadShapeOf を1回使うため 4 に更新（他の用途は不変）
-        self.assertEqual(len(re.findall(r"roadShapeOf\b", PIX)), 5)
+        self.assertEqual(len(re.findall(r"roadShapeOf\b", PIX)), 6)
         self.assertEqual(len(re.findall(r"roadShapeCorner\b", PIX)), 3)
-        self.assertIn("roadShape: { of: roadShapeOf, corner: roadShapeCorner, missing: roadShapeMissing, end: roadShapeEndDir },", PIX)
+        self.assertIn("roadShape: { of: roadShapeOf, corner: roadShapeCorner, missing: roadShapeMissing, end: roadShapeEndDir, straight: roadShapeStraightDir },", PIX)
 
 
 class TestUnchanged(unittest.TestCase):

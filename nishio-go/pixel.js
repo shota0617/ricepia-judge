@@ -7366,13 +7366,23 @@ function roadShapeEndDir(mask) {   // 行き止まりでつながっている唯
   return mask === 1 ? [0, -1] : mask === 2 ? [1, 0] : mask === 4 ? [0, 1] : mask === 8 ? [-1, 0] : null;
 }
 
+function roadShapeStraightDir(mask) {   // 一本道の道の軸 [dx, dy]（横 [1,0]・縦 [0,1]）。一本道でなければ null
+  if (typeof mask !== 'number' || !Number.isInteger(mask) || mask < 0 || mask > 15) return null;
+  if (roadShapeOf(mask) !== 'straight') return null;
+  return mask === 10 ? [1, 0] : mask === 5 ? [0, 1] : null;
+}
+
 function drawRoadShape(X, Y, T, mask) {   // 実在の道の曲がり・交わりを淡い形の印で（点滅しない）
   const shape = roadShapeOf(mask);
-  if (shape === 'none' || shape === 'straight') return;
+  if (shape === 'none') return;
   ctx.save();
   ctx.fillStyle = 'rgba(255,244,200,.45)';
   ctx.beginPath();
-  if (shape === 'end') {   // 行き止まり：中が空いた淡い輪（塗らない・中心点なし・このマスの中だけ・動かない）
+  if (shape === 'straight') {   // 一本道：中心を通る、軸ぞいの短い淡い線（丸・中心点なし・このマスの中だけ・動かない）
+    const [dx, dy] = roadShapeStraightDir(mask) || [1, 0], len = T * 0.44, th = Math.max(1, T * 0.07);
+    ctx.beginPath(); ctx.rect(X, Y, T, T); ctx.clip();
+    if (dx) ctx.fillRect(X + T / 2 - len / 2, Y + T / 2 - th / 2, len, th); else ctx.fillRect(X + T / 2 - th / 2, Y + T / 2 - len / 2, th, len);
+  } else if (shape === 'end') {   // 行き止まり：中が空いた淡い輪（塗らない・中心点なし・このマスの中だけ・動かない）
     const [dx, dy] = roadShapeEndDir(mask) || [0, 0];
     ctx.beginPath(); ctx.rect(X, Y, T, T); ctx.clip();
     ctx.strokeStyle = 'rgba(255,244,200,.45)'; ctx.lineWidth = Math.max(1, T * 0.07);
@@ -13209,7 +13219,7 @@ const meiroApi = {
   tilt: () => tiltG, tiltAsk, tiltReset, tiltNeedsPermission, koto: (v, low) => kotoSound(v, low), splash: v => splashSound(v), boing: (v, hi) => boingSound(v, hi), rumble: v => rumbleTick(v, GROUND.road),   // rumble：転がる音（速さは 地図の マス/秒）
   pause(on) { meiroPause = !!on; dirty = true; if (on && mzNext.hold) { mzNext.hold = false; if (G.toastFlush) G.toastFlush(); } },   // 止める ときは「つぎの ゴール」で 待たせた 知らせを 出す
 };
-window.nishioPixel = { blinkOn, BLINK_MS, BLINK_SHUT_MS, get riceEye() { return riceEyeAt; }, grow: { stage: () => grow.stage, stageFor: growStageFor, TH: GROW_TH, popAt: () => grow.popT }, firstRoute: { shape: mzPathShape, simple: mzFirstSimple, LIM: MZ_FIRST_SIMPLE }, collected: { has: collectedOf }, roadShape: { of: roadShapeOf, corner: roadShapeCorner, missing: roadShapeMissing, end: roadShapeEndDir }, glanceShift, asleepShut, happyFace, meiroApi, heroGiant: () => heroGiantId, pickHeroGiant, HERO_GIANT_RANGE, maze: { half: () => ({ cell: mzHalf.cell ? [...mzHalf.cell] : null, passed: !!mzHalf.passed }), halfCell: mzHalfCell, halfPassed: mzHalfPassed, HALF_MIN: MZ_HALF_MIN, goalFxSpec: () => ({ ...MZ_GOAL_FX }), wallTheme: () => mzWallTheme(), on: () => mazeOn(), playing: () => active && mazeOn(), next: () => ({ want: mzNext.want, t0: mzNext.t0, on: mzNextOn(), labHide: !!mzNext.labHide, arrowDim: !!mzNext.arrowDim, box: mzNext.box || null }), goal: id => {   // id の 名所が いまの ゴール（か 2分 以内の 前の ゴール）なら、かかった 時間と めいろの 道のり
+window.nishioPixel = { blinkOn, BLINK_MS, BLINK_SHUT_MS, get riceEye() { return riceEyeAt; }, grow: { stage: () => grow.stage, stageFor: growStageFor, TH: GROW_TH, popAt: () => grow.popT }, firstRoute: { shape: mzPathShape, simple: mzFirstSimple, LIM: MZ_FIRST_SIMPLE }, collected: { has: collectedOf }, roadShape: { of: roadShapeOf, corner: roadShapeCorner, missing: roadShapeMissing, end: roadShapeEndDir, straight: roadShapeStraightDir }, glanceShift, asleepShut, happyFace, meiroApi, heroGiant: () => heroGiantId, pickHeroGiant, HERO_GIANT_RANGE, maze: { half: () => ({ cell: mzHalf.cell ? [...mzHalf.cell] : null, passed: !!mzHalf.passed }), halfCell: mzHalfCell, halfPassed: mzHalfPassed, HALF_MIN: MZ_HALF_MIN, goalFxSpec: () => ({ ...MZ_GOAL_FX }), wallTheme: () => mzWallTheme(), on: () => mazeOn(), playing: () => active && mazeOn(), next: () => ({ want: mzNext.want, t0: mzNext.t0, on: mzNextOn(), labHide: !!mzNext.labHide, arrowDim: !!mzNext.arrowDim, box: mzNext.box || null }), goal: id => {   // id の 名所が いまの ゴール（か 2分 以内の 前の ゴール）なら、かかった 時間と めいろの 道のり
     mzGoalAsk.id = '';   // 保留中の 着いた名所は 入口で 消す（失敗した goal で 前の id が 残らない。サイクル166 Codex指摘）
     if (!mazeOn()) return null;
     const now = performance.now(), pv = mzRt.prev, g = mzRt.gid === id ? { t0: mzRt.t0, len0: mzRt.len0, warp: mzRt.warp, moves: mzMv.n, run: { ...mzRt.run } } : pv && pv.id === id && now - pv.at < 120000 ? pv : null;

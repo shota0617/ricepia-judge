@@ -4038,7 +4038,7 @@ function comboEnd() {
 // 速さの演出は 穏やかに（Smushi Come Home の物差し：速く動いても スピード線は 出さず、景色と 転がりで 速さを 伝える）
 const speedFx = { k: 0, at: 0, vx: 1, vy: 0 };   // テスト用の 互換だけ（speedK は いつも 0。スピード線は 描かないので 更新する コードは ない）
 // 転がるほど 頭の上の 芽が 育つ（サイクル150・塊魂：転がすほど 見た目が 育つ）。段階は 転がった道のり roll.d（マス）で決まり、そのセッションでは 下がらない。上がる瞬間だけ ぴっ（同じ音・同じ高さ）と 金の輪。文字は 出さない。サイクル158（差2）: 140マスで 止まらず、区間を だんだん 広げながら ゆっくり 育ち続ける（210・300・420。茎は 段階4で 伸び止まり、その先は 横の花と 金の実で 違いを 出す）。サイクル170（差14）: 420マスの 先も ゆっくり（570・760）。段階8で 左にも 横の花、段階9で 金の実が 2つ。サイクル171（差15）: 760マスの 先も ゆっくり（1000・1300）。段階10で 金の実が 3つ、段階11で その上に 小さな 白い花
-const GROW_TH = [15, 40, 80, 140, 210, 300, 420, 570, 760, 1000, 1300, 1700, 2200, 2800, 3600];   // サイクル172（差16）: 1300マスの先も ゆっくり育つ（段階12=花が 8つぶの輪に、段階13=金の つぼみ）。サイクル173（差17）: 2200マスの先も（段階14=つぼみが開く、段階15=金の実）
+const GROW_TH = [15, 40, 80, 140, 210, 300, 420, 570, 760, 1000, 1300, 1700, 2200, 2800, 3600, 4600, 5900];   // サイクル172（差16）: 1300マスの先も ゆっくり育つ（段階12=花が 8つぶの輪に、段階13=金の つぼみ）。サイクル173（差17）: 2200マスの先も（段階14=つぼみが開く、段階15=金の実）。サイクル174（差18）: 3600マスの先も（段階16=一番上に白い花、段階17=花が満ちる）
 const grow = { stage: 0, popT: 0 };
 function growStageFor(d) { let s = 0; for (let i = 0; i < GROW_TH.length; i++) if (d >= GROW_TH[i]) s = i + 1; return s; }
 function growStep(hx, by, u, now) {
@@ -4068,6 +4068,8 @@ function growStep(hx, by, u, now) {
   if (st >= 13) { ctx.fillStyle = '#ffd84a'; ctx.fillRect(x0, y0 - (sh + 12) * q, q, 2 * q); }   // 一番上の 金の つぼみ（サイクル172）
   if (st >= 14) { ctx.fillStyle = '#ffffff'; ctx.fillRect(x0 - q, y0 - (sh + 11) * q, q, q); ctx.fillRect(x0 + q, y0 - (sh + 11) * q, q, q); }   // つぼみが 開く（サイクル173）
   if (st >= 15) { ctx.fillStyle = '#ffd84a'; ctx.fillRect(x0 - q, y0 - (sh + 14) * q, 2 * q, 2 * q); }   // 一番上に 金の 実（サイクル173）
+  if (st >= 16) { const fx0 = x0, fy0 = y0 - (sh + 16) * q; ctx.fillStyle = '#ffffff'; for (const [fx, fy] of [[0, -1], [-1, 0], [1, 0], [0, 1]]) ctx.fillRect(fx0 + fx * q, fy0 + fy * q, q, q); ctx.fillStyle = '#ffd84a'; ctx.fillRect(fx0, fy0, q, q); }   // 一番上の 実の 上に 小さな 白い花（サイクル174）
+  if (st >= 17) { const fx0 = x0, fy0 = y0 - (sh + 16) * q; ctx.fillStyle = '#ffffff'; for (const [fx, fy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) ctx.fillRect(fx0 + fx * q, fy0 + fy * q, q, q); }   // 花が 8つぶの 輪に 満ちる（サイクル174）
 }
 function riceFeel(dt, speed) {
   { const gs = growStageFor(roll.d); if (gs > grow.stage) { grow.stage = gs; grow.popT = performance.now(); dotSound(0); } }   // 段階が 上がる瞬間だけ（下がらない）

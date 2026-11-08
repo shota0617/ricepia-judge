@@ -1583,11 +1583,17 @@ function tapGrain(g) {
   g.el.hidden = true;
   const dx = to.left + to.width / 2 - (from.left + from.width / 2), dy = to.top + to.height / 2 - (from.top + from.height / 2);
   const shrink = 36 / cw;
-  fly.animate([
+  const flyAnim = lotIndex === 0 ? fly.animate([
+    { transform:"rotate(" + g.r + "deg) scale(1)", easing:"ease-out" },
+    { transform:"translate(0px,-18px) rotate(" + g.r + "deg) scale(1.45)", offset:.38, easing:"ease-out" },
+    { transform:"translate(0px,-18px) rotate(" + g.r + "deg) scale(1.45)", offset:.62, easing:"ease-in-out" },
+    { transform:"translate(" + dx + "px," + dy + "px) rotate(" + g.r + "deg) scale(" + shrink + ")" }
+  ], { duration:880 * motion, fill:"forwards" }) : fly.animate([
     { transform:"rotate(" + g.r + "deg)", easing:"ease-out" },
     { transform:"translate(" + dx * .5 + "px," + (dy * .5 - 34) + "px) rotate(170deg)", easing:"ease-in" },
     { transform:"translate(" + dx + "px," + dy + "px) rotate(340deg) scale(" + shrink + ")" }
-  ], { duration:330 * motion, fill:"forwards" }).onfinish = () => {
+  ], { duration:330 * motion, fill:"forwards" }); /* 最初の袋だけ、つまんだ粒を一拍持ち上げて大きく見て確かめてから、回さず静かに小皿へ運ぶ（サイクル131・差分テーマ差36／店主指示2026-11-08 21:55「粒を手に取って確かめる所作の丁寧さ」）。旧版は最初の袋でも330msで340度回転しながら飛び、投げるような速さだった。2袋目以降は従来どおり */
+  flyAnim.onfinish = () => {
     fly.remove();
     const mini = document.createElement("img");
     mini.src = grainSprite(g.kind, "happy"); mini.alt = "";

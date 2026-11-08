@@ -1371,6 +1371,19 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertIn("crankTurned >= (lotIndex === 0 ? 80 : 160)", HTML)
         self.assertIn("function showAverage()", HTML)
 
+    def test_cycle131_first_bag_grain_is_held_and_checked(self):
+        # 差分テーマ差36／店主指示「精米のこだわり」: 最初の袋では、つまんだ
+        # わるい粒が330msで回転しながら飛び（投げるような速さ）、
+        # 手に取って確かめる丁寧さになっていなかった。最初の袋だけ一拍
+        # 持ち上げて大きく見てから、回さず静かに小皿へ運ぶ。2袋目以降は不変。
+        tap = HTML[HTML.index("function tapGrain(g)"):HTML.index("function resetZoomForSmiles()")]
+        self.assertIn("const flyAnim = lotIndex === 0 ? fly.animate([", tap)
+        self.assertIn('scale(1.45)", offset:.38', tap)
+        self.assertIn('scale(1.45)", offset:.62', tap)
+        self.assertIn('duration:880 * motion', tap)
+        self.assertIn('duration:330 * motion', tap)  # 2袋目以降は従来どおり
+        self.assertIn("flyAnim.onfinish", tap)
+
     def test_cycle93_picked_grains_stay_in_quiet_record(self):
         # 類7: 見分けた粒が静かに記録に残る。任意で開く資料（#notes）の中だけに出し、常時表示・競争・スコアにはしない。
         # 袋を越えて残るため startLot では消さない（サイクル91の seenChecks と同じ持ち方）。

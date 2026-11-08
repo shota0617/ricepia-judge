@@ -944,6 +944,25 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertIn("function arriveSound() {", HTML)
         self.assertIn("const tick = () => tone(1100 + Math.random() * 900, 0.03, 0.025);", HTML)
 
+    def test_cycle111_return_link_has_its_own_gentle_sound(self):
+        # 差分テーマ差17（類3の残り）: 終了カードの2つのボタンのうち「いいね」には固有の音（差13）が
+        # あるのに、「サイトへ もどる」を押した合図だけが無音だったため、固有の穏やかな下がる音を1回付ける。
+        self.assertIn("function returnSound() {", HTML)
+        ret_fn = HTML[HTML.index("function returnSound()"):HTML.index("function thump()")]
+        self.assertIn("o.frequency.setValueAtTime(440, t);", ret_fn)
+        self.assertIn("o.frequency.exponentialRampToValueAtTime(330, t + 0.2);", ret_fn)
+        self.assertIn('o.type = "sine";', ret_fn)
+        self.assertIn("o.start(t); o.stop(t + 0.22);", ret_fn)
+        # 音量は控えめ（0.018）に留める
+        self.assertIn("g.gain.setValueAtTime(0.018, t);", ret_fn)
+        # 戻るリンクの click で、タップ計測（sendTap）の前に1回だけ鳴らす
+        self.assertIn('returnLink.addEventListener("click", () => { returnSound(); sendTap("return"); });', HTML)
+        self.assertEqual(HTML.count("returnSound"), 2)  # 定義1＋呼び出し1
+        # いいねの音とカード出現の音は従来どおり残る
+        self.assertIn("function likeSound() {", HTML)
+        self.assertIn("function idleSound() {", HTML)
+        self.assertIn("const tick = () => tone(1100 + Math.random() * 900, 0.03, 0.025);", HTML)
+
     def test_cycle93_picked_grains_stay_in_quiet_record(self):
         # 類7: 見分けた粒が静かに記録に残る。任意で開く資料（#notes）の中だけに出し、常時表示・競争・スコアにはしない。
         # 袋を越えて残るため startLot では消さない（サイクル91の seenChecks と同じ持ち方）。

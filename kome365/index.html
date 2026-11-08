@@ -539,6 +539,10 @@ a{color:var(--acc)}
 #swMark.on{animation:swMarkIn .75s ease-out both}
 @keyframes swMarkIn{0%{opacity:0;transform:scale(.55)}18%{opacity:1;transform:scale(1.08)}30%{transform:scale(1)}72%{opacity:1}100%{opacity:0;transform:scale(1)}}
 @media (prefers-reduced-motion:reduce){#swMark.on{animation:swMarkFade .75s linear both}@keyframes swMarkFade{0%,70%{opacity:1}100%{opacity:0}}}
+#swWhy{position:absolute;left:50%;top:calc(40% + min(29vw,120px) + 10px);transform:translateX(-50%);width:max-content;max-width:88%;z-index:41;pointer-events:none;opacity:0;background:rgba(255,253,247,.94);color:#b4472f;font-size:15px;font-weight:700;line-height:1.4;padding:5px 12px;border-radius:999px;text-align:center;box-shadow:0 2px 8px rgba(60,40,20,.20)}   /* 店主指示 2026-11-08: バツの一言理由。マークの下に浮かせて約2秒で消す。入力はふさがない */
+#swWhy.on{animation:swWhyIn 2s ease-out both}
+@keyframes swWhyIn{0%{opacity:0}10%{opacity:1}76%{opacity:1}100%{opacity:0}}
+@media (prefers-reduced-motion:reduce){#swWhy.on{animation:swWhyFade 2s linear both}@keyframes swWhyFade{0%,78%{opacity:1}100%{opacity:0}}}
 #swJudge{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%);z-index:5;width:min(84%,340px);text-align:center;border-radius:24px;padding:18px 16px;box-shadow:0 10px 30px rgba(0,0,0,.28);pointer-events:none;opacity:0;visibility:hidden}
 #swJudge.ok{background:rgba(224,243,213,.96);border:4px solid #3f9d3a;color:#2f7a37}
 #swJudge.ng{background:rgba(250,225,213,.96);border:4px solid #c84628;color:#b4472f}
@@ -799,6 +803,7 @@ html:has(#sGame.swipeMode:not(.hidden)),body:has(#sGame.swipeMode:not(.hidden)){
     <div id="swDetail"></div>
     <button type="button" id="swDetailBtn" style="display:none" aria-controls="swDetail" aria-expanded="false">🔍 くわしい話を見る</button>
     <div id="swMark" aria-hidden="true"></div>
+    <div id="swWhy" aria-hidden="true"></div>
     <div id="swJudge" aria-live="assertive"><div id="swJudgeMark"></div><div id="swJudgeHead"></div><div id="swJudgeWhy"></div></div>
     <div id="swLog" aria-live="polite"></div>
     <button type="button" id="swRewind" disabled>↩ 1日もどる</button>
@@ -3430,8 +3435,11 @@ renderTitle();
     return markURLs[k] = c.toDataURL();
   }
   function markShow(k){ var e = $('swMark'); if (!e) return; e.classList.remove('on'); e.style.backgroundImage = 'url("' + markURL(k) + '")'; void e.offsetWidth; e.classList.add('on'); }
+  /* 店主指示 2026-11-08: バツ(✗)のときだけ、判定文 why の最初の一文をマークの下に小さく浮かせて約2秒出す。○側は出さない */
+  function whyShow(fb){ var e = $('swWhy'); if (!e) return; var t = String(fb || '').replace(/^\S+\s+/, ''); var i = t.indexOf('。'); if (i >= 0) t = t.slice(0, i + 1); if (!t) return; e.textContent = t; e.classList.remove('on'); void e.offsetWidth; e.classList.add('on'); }
+  function whyHide(){ var e = $('swWhy'); if (e) e.classList.remove('on'); }
   function advance(side){
-    pvClear(); finishFx();   /* 前の判定の光/影が残っていたら消す(素早く次のカードを選んだときの誤認防止。Codex軽微指摘) */
+    pvClear(); finishFx(); whyHide();   /* 前の判定の光/影が残っていたら消す(素早く次のカードを選んだときの誤認防止。Codex軽微指摘)。バツの理由も前のカードの分はここで片づける */
     var fb = '', n0 = f.msgs.length, st0 = null;
     rwTake(); var d0 = KomeCards.day(f);
     try { st0 = KomeCards.status(f); } catch (e) {}
@@ -3445,7 +3453,7 @@ renderTitle();
     try { var st1 = KomeCards.status(f), nm = { water: '💧水', weed: '🌿雑草', bug: '🐛虫', fert: '🧺肥料', vigor: '🌾稲' };
       if (st0 && !st0.error && !st1.error) for (var k in nm) { var dv = st1[k].v - st0[k].v; if (Math.abs(dv) >= 0.05) chg[k] = [st0[k].v, dv]; if (Math.abs(dv) >= 0.05) dl += '<span class="dl ' + (dv > 0 ? 'up' : 'dn') + '">' + nm[k] + (dv > 0 ? '▲' : '▼') + '</span>'; } } catch (e) {}
     var over = KomeCards.over(f), judged = !!cls && !over, newLife = over ? null : lifeNew(), rec = 0;
-    if (judged) { markShow(cls === 'vOK' ? 'ok' : 'ng'); traceAdd(cls === 'vOK'); if (cls === 'vOK') { branchAdd(card.key); } }   /* 周回118(F2): 答えが田んぼに物として残る。周回132: ○のときだけ世話の色も数える(branchAdd 参照)。周回133(差2): この行のコメントは元々行内で閉じておらず、後続の streak・tallyAdd・save 等がコメントアウトされていた(サイクル132で特定)。終端を足して復旧済み */
+    if (judged) { markShow(cls === 'vOK' ? 'ok' : 'ng'); if (cls === 'vNG') whyShow(fb); traceAdd(cls === 'vOK'); if (cls === 'vOK') { branchAdd(card.key); } }   /* 周回118(F2): 答えが田んぼに物として残る。周回132: ○のときだけ世話の色も数える(branchAdd 参照)。周回133(差2): この行のコメントは元々行内で閉じておらず、後続の streak・tallyAdd・save 等がコメントアウトされていた(サイクル132で特定)。終端を足して復旧済み */
     if (cls === 'vOK') { streak++; if (streak > streakBest) { streakBest = streak; store.set('kome365_streak_best', String(streak)); if (streak >= 5 && !recDone) { rec = streak; recDone = true; } } store.set('kome365_streak', String(streak)); } else if (cls === 'vNG') { streak = 0; recDone = false; store.set('kome365_streak', '0'); }
     $('swLog').innerHTML = (fb && !judged ? '<b' + (cls ? ' class="' + cls + '"' : '') + '>' + esc(fb) + '</b>' : '') + (dl ? '<br>' + dl : '') + (news.length ? (fb || dl ? '<br>' : '') + news.map(esc).join('<br>') : '');
     tallyAdd(d0, fb, over ? 0 : lifeCnt, { t: card.title, s: side === 'left' ? card.left.label : card.right.label, im: impactCalc(st0, stM) });
@@ -3569,7 +3577,7 @@ renderTitle();
   function evT(e){ return (e && typeof e.timeStamp === 'number' && e.timeStamp > 0) ? e.timeStamp : performance.now(); }   /* 時刻はイベント発生時刻(e.timeStamp)で統一する。ハンドラ実行時刻(performance.now)はメインスレッド混雑で伸縮し、速いフリックの速度が潰れて実機で効かなくなる(サイクル15で同一ジェスチャでもvが0〜1.75にばらつく不安定さを観測、サイクル16で修正) */
   $('swipe').addEventListener('pointerdown', function(e){ if (e.target.closest && (e.target.closest('#swIdleLike') || e.target.closest('#swIdleHome'))) return; idleTouch(); }, true);   /* 操作があれば止まったカードを消して数え直す(サイクル63)。カードのボタン自体は除外 */
   $('swipe').addEventListener('pointermove', function(e){ if (e.target.closest && (e.target.closest('#swIdleLike') || e.target.closest('#swIdleHome'))) return; idleTouch(); }, true);   /* ドラッグし続けている間も「操作中」として数え直す(Codex P2対応) */
-  el.card.addEventListener('pointerdown', function(e){ if (busy || e.button > 0 || (startX != null && !e.isPrimary)) return; /* 動かしている最中の2本目の指は混ぜない */ var mk0 = $('swMark'); if (mk0) mk0.classList.remove('on'); /* 次のカードに触ったら、前の○×は片づける */ greetClear(); ghostOff(); cancelDragFrame(); dragMoves = 0; dragApplied = 0; startX = e.clientX; startY = e.clientY; lastY = e.clientY; maxDy = 0; samples = [[evT(e), e.clientX]]; pid = e.pointerId; tapT0 = evT(e); tapMax = 0; dx = 0; dy = 0; dragW = el.card.offsetWidth || 0; el.card.style.transitionDuration = ''; lastP = null; lastShadowKey = ''; try { pvCompute(); } catch (x) {} el.card.classList.add('drag'); el.card.classList.remove('enter', 'wig'); try { el.card.setPointerCapture(pid); } catch (x) {} });   /* つかんだら出現演出も解除し、指のtransformと競合させない。影響プレビューはつかんだ時点で先に計算する */
+  el.card.addEventListener('pointerdown', function(e){ if (busy || e.button > 0 || (startX != null && !e.isPrimary)) return; /* 動かしている最中の2本目の指は混ぜない */ var mk0 = $('swMark'); if (mk0) mk0.classList.remove('on'); var wy0 = $('swWhy'); if (wy0) wy0.classList.remove('on'); /* 次のカードに触ったら、前の○×とバツの理由は片づける */ greetClear(); ghostOff(); cancelDragFrame(); dragMoves = 0; dragApplied = 0; startX = e.clientX; startY = e.clientY; lastY = e.clientY; maxDy = 0; samples = [[evT(e), e.clientX]]; pid = e.pointerId; tapT0 = evT(e); tapMax = 0; dx = 0; dy = 0; dragW = el.card.offsetWidth || 0; el.card.style.transitionDuration = ''; lastP = null; lastShadowKey = ''; try { pvCompute(); } catch (x) {} el.card.classList.add('drag'); el.card.classList.remove('enter', 'wig'); try { el.card.setPointerCapture(pid); } catch (x) {} });   /* つかんだら出現演出も解除し、指のtransformと競合させない。影響プレビューはつかんだ時点で先に計算する */
   el.card.addEventListener('pointermove', function(e){ if (startX == null || e.pointerId !== pid) return; var n = evT(e), list = null; lastY = e.clientY; tapMax = Math.max(tapMax, Math.hypot(e.clientX - startX, e.clientY - startY)); if (Math.abs(e.clientY - startY) > maxDy) maxDy = Math.abs(e.clientY - startY); try { list = e.getCoalescedEvents ? e.getCoalescedEvents() : null; } catch (x) {} if (list && list.length) { for (var ci = 0; ci < list.length; ci++) { var ct = evT(list[ci]); if (samples.length && ct < samples[samples.length - 1][0]) ct = samples[samples.length - 1][0]; samples.push([ct, list[ci].clientX]); tapMax = Math.max(tapMax, Math.hypot(list[ci].clientX - startX, list[ci].clientY - startY)); if (Math.abs(list[ci].clientY - startY) > maxDy) maxDy = Math.abs(list[ci].clientY - startY); } } else { if (samples.length && n < samples[samples.length - 1][0]) n = samples[samples.length - 1][0]; samples.push([n, e.clientX]); } var nT = samples.length ? Math.max(n, samples[samples.length - 1][0]) : n; while (samples.length > 2 && nT - samples[0][0] > 150) samples.shift(); queueDrag(e.clientX - startX, e.clientY - startY); });   /* getCoalescedEventsで間引かれた中間点も取り込む(速いフリックほどmoveが合体されて落ちるため)。時刻は単調になるようクランプし、時刻源の混在で順序が崩れても速度計算が壊れないようにする */
   var lastFlick = null, lastY = null, maxDy = 0, tapT0 = 0, tapMax = 0;   /* カードのタップ判定(くわしい話の開閉): 開始時刻と最大移動量。新しいpointerリスナーは足さず既存ハンドラで追う */
   var dragW = 0, lastP = null, lastShadowKey = '';   /* スワイプの滑らかさ用: カード幅はつかんだ時点で固定し(毎moveのレイアウト読みをなくす)、影と--pは値が変わったときだけ書き直す(毎moveの再描画・スタイル再計算が引っかかりの主因) */

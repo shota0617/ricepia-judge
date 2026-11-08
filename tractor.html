@@ -4066,8 +4066,9 @@ const STONES = (() => {
       if (s.inZone) return;                         // 同じ当たりで 何度も鳴らさない（爪がはなれたら また当たる）
       s.inZone = true; hits++;                      // 爪が石に当たった：はじかれて 耕した土の上に出る（拾わないかぎり 田んぼに残る）
       s.x -= sn * 0.5; s.z -= cs * 0.5; s.y = TILL_Y + s.r * 0.2; place(k); mesh.instanceMatrix.needsUpdate = true;
-      S.v *= 0.82;                                  // がくっ
-      if (audio && soundOn) { clank(audio.ac, audio.out, Math.min(1, s.r * 8)); thud(audio.ac, audio.out, 0.35); }
+      const soft = startNoticeMuted();              // サイクル232・最初の1分: 知らせは既にガード済みでも、がくっとした減速と金属音は無ガードだった。石は種23で決定的に置かれ、最初の列（北・|x|≦1.1）だけでも5個あり、最初は走行約1.1mで当たり音量は上限1.0。最初の1分だけ減速の幅と音を半分にして、石に当たる手応えと石が出る見た目は残す
+      S.v *= soft ? 0.91 : 0.82;                    // がくっ（最初の1分は幅を半分に）
+      if (audio && soundOn) { clank(audio.ac, audio.out, Math.min(1, s.r * 8) * (soft ? 0.5 : 1)); thud(audio.ac, audio.out, 0.35 * (soft ? 0.5 : 1)); }
       if (!told && !startNoticeMuted()) { told = true; toast('カン！ 爪が石に当たった。土の中の石は 爪をいためる（田植えの苗の根張りも悪くする）。本物は 水を張る前に 石を拾っておく', 6); setTimeout(() => voice('oto'), 6500); }
     });
   }

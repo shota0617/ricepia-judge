@@ -36,7 +36,7 @@ class TestRoadShapeMissing(unittest.TestCase):
         print("\n".join(map(str, out)))
 
     def test_of_corner_unchanged(self):
-        self.assertIn("roadShape: { of: roadShapeOf, corner: roadShapeCorner, missing: roadShapeMissing, end: roadShapeEndDir }", PIX)
+        self.assertIn("roadShape: { of: roadShapeOf, corner: roadShapeCorner, missing: roadShapeMissing, end: roadShapeEndDir, straight: roadShapeStraightDir }", PIX)
         out = json.loads(node("console.log(JSON.stringify([15,7,5,3,0].map(roadShapeOf)))"))
         self.assertEqual(out, ["cross", "tee", "straight", "curve", "none"])
 

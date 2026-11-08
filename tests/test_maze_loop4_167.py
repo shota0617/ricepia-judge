@@ -60,7 +60,7 @@ class TestDraw(unittest.TestCase):
         self.assertIn("shape === 'tee' ? roadShapeMissing(mask)", b)
 
     def test_api_and_call(self):
-        self.assertIn("roadShape: { of: roadShapeOf, corner: roadShapeCorner, missing: roadShapeMissing, end: roadShapeEndDir }", PIX)
+        self.assertIn("roadShape: { of: roadShapeOf, corner: roadShapeCorner, missing: roadShapeMissing, end: roadShapeEndDir, straight: roadShapeStraightDir }", PIX)
         self.assertIn("if (code !== C.D) drawRoadShape(X, Y, T, ri >> 1);", PIX)
 
     def test_no_forbidden_words(self):
@@ -71,7 +71,7 @@ class TestDraw(unittest.TestCase):
 class TestScope(unittest.TestCase):
     def test_files(self):
         out = subprocess.run(["git", "diff", "--name-only", "origin/main"], cwd=ROOT, capture_output=True, text=True).stdout.split()
-        allowed = {"nishio-go/pixel.js", "tests/test_maze_loop4_167.py", "tests/test_maze_loop4_153.py", "tests/test_maze_loop4_160.py"}
+        allowed = {"nishio-go/pixel.js", "tests/test_maze_loop4_167.py", "tests/test_maze_loop4_168.py", "tests/test_maze_loop4_153.py", "tests/test_maze_loop4_160.py"}
         self.assertTrue(set(out) <= allowed, out)
 
 

@@ -1067,6 +1067,35 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         # 資料に1文だけ足す（ゲーム内文言は増やさない）
         self.assertIn("出典（農林水産省）のリンクを開くときも、資料を開くときと同じ小さな音で知らせます", HTML)
 
+    def test_cycle117_game_return_link_has_its_own_sound(self):
+        # 差分テーマ差23（差18の再監査の残り・戻る道そのものの欠け）: 資料を開く合図には固有の音がある
+        # （差18）一方、資料（#notes）の末尾にはサイトへのリンクしかなく、ゲームへ戻る道そのものが
+        # なかった（390×844実測で資料は1,340px、ページ内の戻りアンカーは #notes への1件だけ）ため、
+        # 末尾に「ゲームへ もどる」（#app へのアンカー）を足し、資料を開く音と対になる固有の上がる音を付ける。
+        self.assertIn('<a id="gameReturnLink" href="#app">🎮 ゲームへ もどる</a>', HTML)
+        # リンクは資料（#notes）の中だけにあり、ゲーム画面側には足していない
+        notes = HTML[HTML.index('<section id="notes">'):HTML.index("</section>")]
+        self.assertIn('id="gameReturnLink"', notes)
+        self.assertEqual(HTML.count('id="gameReturnLink"'), 1)
+        self.assertIn("function gameReturnSound() {", HTML)
+        fn = HTML[HTML.index("function gameReturnSound()"):HTML.index("function thump()")]
+        self.assertIn("o.frequency.setValueAtTime(540, t);", fn)
+        self.assertIn("o.frequency.exponentialRampToValueAtTime(700, t + 0.12);", fn)
+        self.assertIn('o.type = "sine";', fn)
+        self.assertIn("o.start(t); o.stop(t + 0.14);", fn)
+        # 音量は控えめ（0.016）に留める
+        self.assertIn("g.gain.setValueAtTime(0.016, t);", fn)
+        # 戻るリンクの click で1回だけ鳴らす。アンカーのスクロールは従来どおり
+        self.assertIn('$("gameReturnLink").addEventListener("click", () => { gameReturnSound(); });', HTML)
+        self.assertEqual(HTML.count("gameReturnSound"), 2)  # 定義1＋呼び出し1
+        # 既存の合図の音と件数は従来どおり残る。間違いのときの無音（類4）も変えない
+        self.assertIn("function notesSound() {", HTML)
+        self.assertEqual(HTML.count("notesSound"), 3)
+        self.assertEqual(HTML.count("returnSound"), 3)
+        self.assertIn("const tick = () => tone(1100 + Math.random() * 900, 0.03, 0.025);", HTML)
+        # 資料に1文だけ足す（ゲーム内文言は増やさない）
+        self.assertIn("資料の末尾の「ゲームへ もどる」を押すと、対になる小さな音で知らせて、ゲームの画面へ戻ります", HTML)
+
     def test_cycle93_picked_grains_stay_in_quiet_record(self):
         # 類7: 見分けた粒が静かに記録に残る。任意で開く資料（#notes）の中だけに出し、常時表示・競争・スコアにはしない。
         # 袋を越えて残るため startLot では消さない（サイクル91の seenChecks と同じ持ち方）。

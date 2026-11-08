@@ -283,6 +283,7 @@
   <p>きめるで見る項目は、袋を進めるごとに1つずつ増えていきます。一度見た項目は次の袋でも残るので、見比べながら少しずつ覚えられます。</p>
   <p>🔍や2回タップで寄るときは、身を寄せるようにゆっくり近づきます。寄った後は、指で見る場所をそのまま動かせます。</p>
   <p>水分を3回はかって平均が決まると、専用の小さな音で知らせます。水分が高いときは、低い音でゆっくり知らせます。</p>
+  <p>穀刺しが袋に刺さると、専用の小さな音で知らせます。</p>
   <h2>みわけた粒のきろく</h2>
   <p id="grainRecord">まだ みわけた粒は ありません。</p>
   <p>みわけた粒の種類は、ここに静かに残ります。競うための数ではなく、見分けた粒をあとから見返すための記録です。</p>
@@ -478,6 +479,20 @@ function probeDoneSound() { /* ぬく: 完了の合図の音。300→480Hzへゆ
     g.gain.exponentialRampToValueAtTime(0.0001, t + 0.2);
     o.connect(g).connect(ac.destination);
     o.start(t); o.stop(t + 0.2);
+  } catch (_) {}
+}
+function pierceSound() { /* ぬく: 穀刺しが袋に刺さった合図の音。260→170Hzへ短く下がる低い音で、粒の tick（高い短い音）や袋が流れる紙の音（bagSound 360→150Hz・0.22秒）・ぬく完了の音（probeDoneSound 300→480Hzへ上がる）とは分ける（サイクル115・差分テーマ差21）。刺さる瞬間だけが名前のない tone(150Hz単音・音量0.1) のままだった（390×844実測）。刺さった時だけ1回鳴らす */
+  try {
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    if (ac.state === "suspended") ac.resume();
+    const o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime;
+    o.type = "triangle";
+    o.frequency.setValueAtTime(260, t);
+    o.frequency.exponentialRampToValueAtTime(170, t + 0.11);
+    g.gain.setValueAtTime(0.032, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.13);
+    o.connect(g).connect(ac.destination);
+    o.start(t); o.stop(t + 0.13);
   } catch (_) {}
 }
 function spreadSound() { /* みわける: なでて広げ終わった合図の音。400→620Hzへ穏やかに上がる音で、粒の tick（高い短い音）や ぬく完了の音（probeDoneSound 300→480Hz）・みわける完了の笑顔の音（smileSound 500→760Hz）とは分ける（サイクル105・差分テーマ差11）。広がる前も後もなでる tick が同じに続くため、広がった瞬間だけが合図なしだった（390×844実測で遷移の同期音は0件）。最初の袋ではわるい粒に顔が出る瞬間でもある */
@@ -957,7 +972,7 @@ function moveProbe(x) {
     if (x <= P.inAt) {
       P.inserted = true;
       P.deep = x;
-      tone(150, 0.1, 0.1, "sine");
+      pierceSound(); /* 刺さった合図は固有の音にする（サイクル115・差21）。匿名の単音とは分ける */
       $("bagBtn").classList.add("squash");
       setTimeout(() => $("bagBtn").classList.remove("squash"), 120);
       hint.textContent = "ひきぬく →";

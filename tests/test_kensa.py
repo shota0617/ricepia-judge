@@ -577,7 +577,7 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertIn("  grainDrop();", HTML)  # みわける: 粒が小皿へコト
         self.assertIn("  inkSound();", HTML)  # おす: 朱肉にぎゅっと
         self.assertEqual(HTML.count("pop();"), 1)  # pop は等級正解だけに残る
-        self.assertIn('tone(150, 0.1, 0.1, "sine")', HTML)  # 刺す音は不変
+        self.assertIn("pierceSound();", HTML)  # 刺す音はサイクル115（差21）で固有の pierceSound へ分けた
         self.assertIn("avgSound(high);", HTML)  # 平均確定の音はサイクル114（差20）で固有の avgSound へ分けた
 
     def test_cycle90_wrong_grade_loses_nothing_and_does_not_scold(self):
@@ -1023,6 +1023,29 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertIn("const tick = () => tone(1100 + Math.random() * 900, 0.03, 0.025);", HTML)
         # 資料に1文だけ足す（ゲーム内文言は増やさない）
         self.assertIn("水分を3回はかって平均が決まると、専用の小さな音で知らせます", HTML)
+
+    def test_cycle115_probe_pierce_has_its_own_sound(self):
+        # 差分テーマ差21（刺さる合図の再監査）: 他の節目には固有の名前の音がある
+        # （ぬく完了=probeDoneSound・袋が流れる=bagSound）一方、穀刺しが袋に刺さる瞬間だけが
+        # 名前のない tone(150Hz単音・音量0.1) のままだったため、固有の pierceSound に分ける。
+        self.assertIn("function pierceSound() {", HTML)
+        fn = HTML[HTML.index("function pierceSound()"):HTML.index("function spreadSound()")]
+        self.assertIn("o.frequency.setValueAtTime(260, t);", fn)
+        self.assertIn("o.frequency.exponentialRampToValueAtTime(170, t + 0.11);", fn)
+        self.assertIn('o.type = "triangle";', fn)
+        # 音量は控えめ（0.032）に留める。旧い匿名 tone の音量0.1より小さくする
+        self.assertIn("g.gain.setValueAtTime(0.032, t);", fn)
+        # 刺さった瞬間（moveProbe の inserted）でだけ1回鳴らし、旧い匿名 tone は残さない
+        probe = HTML[HTML.index("function moveProbe(x)"):HTML.index("function pourOne(g)")]
+        self.assertIn("pierceSound();", probe)
+        self.assertNotIn("tone(150", probe)
+        self.assertEqual(HTML.count("pierceSound"), 2)  # 定義1＋呼び出し1
+        # 他の固有音と粒の tick は従来どおり残る。間違いのときの無音（類4）も変えない
+        self.assertIn("function probeDoneSound() {", HTML)
+        self.assertIn("function bagSound() {", HTML)
+        self.assertIn("const tick = () => tone(1100 + Math.random() * 900, 0.03, 0.025);", HTML)
+        # 資料に1文だけ足す（ゲーム内文言は増やさない）
+        self.assertIn("穀刺しが袋に刺さると、専用の小さな音で知らせます", HTML)
 
     def test_cycle93_picked_grains_stay_in_quiet_record(self):
         # 類7: 見分けた粒が静かに記録に残る。任意で開く資料（#notes）の中だけに出し、常時表示・競争・スコアにはしない。

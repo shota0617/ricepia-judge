@@ -7331,7 +7331,7 @@ const KABUTO = (() => {
     }
     if (!q1 && near && nd < 7) { q1 = true; q.push(['カブトエビだ！ くさを たべて くれるんだって', 'wow', () => { told = true; voice('kabuto'); }]); }
     else if (q1 && !q2 && near && nd < 9 && near.st === 'dig') { q2 = true; q.push(['どろを まきあげてるね', 'joy', () => { told2 = true; BADGE.joy(3); }]); }
-    const top = q[0]; if (top && near && S.started && (!INTRO.on || INTRO.talked) && (DETAIL || SAY.free && SAY.note(top[0]))) { BADGE.peek(near.x, near.z, 3, top[1]); top[2](); q.shift(); }   // まえの ひとことが 消えてから
+    const top = q[0]; if (top && near && S.started && (!INTRO.on || INTRO.talked) && !startNoticeMuted() && (DETAIL || SAY.free && SAY.note(top[0]))) { BADGE.peek(near.x, near.z, 3, top[1]); top[2](); q.shift(); }   // まえの ひとことが 消えてから。サイクル247・最初の1分: のんびりでは最初の1分はキューの消費だけを止め、吹き出し・BADGE・声をまとめて遅らせる（カブトエビが泳いで泥をまきあげる様子自体は従来どおり）。カブトエビは代かきのみ・夜以外で有効で、配置は種271と土の高さの再現で北畦の3個体（(-2.54, 24.64) 深さ0.0154／(0.67, 23.83) 深さ0.0076／(3.55, 23.46) 深さ0.0057）が全て置かれ、(0.67, 23.83) は北への最初の直進で nd<7 に入るのが z>16.86（なぞり上限1.6m/sで開始約10.5秒・キー運転でも約16.9秒）。q は積まれたまま残り told も立たないので、1分を過ぎれば順番どおり（1件目→2件目）出す（遅れて出す形。消費に near が要るのは元々の待ち方と同型）。くわしい説明では従来どおり開始直後から出す
   }
   return { update, list, puffs, get told() { return told; }, get told2() { return told2; } };
 })();

@@ -74,17 +74,17 @@ const CHECKS = {
   async water(b){
     const p = await page(b, 390, 844);
     const r = await p.evaluate(() => {
-      K3.manual = true; K3.fixedSeed = 11; K3.jump('tiller'); const f = K3.S.f; f.dat = 35; f.water = 2; K3.V.water = 2; K3.V.waterV = 0; steps(60); /* 分げつの ころ（10〜30日）は ゆっくりの ↑が 4cm までなので、その あとで */
+      K3.manual = true; K3.fixedSeed = 11; K3.jump('tiller'); const f = K3.S.f; f.dat = 35; f.water = 1; K3.V.water = 1; K3.V.waterV = 0; steps(60); /* 55周目：合図の 前は はじきの 上限が 7cm（よい 深さ 3〜5 の 上 +2）なので 1cm から */ /* 分げつの ころ（10〜30日）は ゆっくりの ↑が 4cm までなので、その あとで */
       const w0 = f.water; swipe('up', 80, true); const w1 = f.water; swipe('up', 240, true); const w2 = f.water; /* はじく（ゆっくりは 5cm まで。21周目） */
       const v0 = K3.V.water; steps(90); const v1 = K3.V.water;   // 見た目の 水面が 本当の 水に 追いつく
-      swipe('down', 120, false); const w3 = f.water; swipe('down', 400, true); const w4 = f.water; steps(90); const v2 = K3.V.water;
+      swipe('down', 120, false); const w3 = f.water; swipe('down', 400, true); const w4 = f.water; swipe('down', 400, true); const w5 = f.water; steps(90); const v2 = K3.V.water; /* 55周目：はじき↓は よい 深さの 下（3cm）に 着地、もう一度 はじくと 空 */
       const stat = document.getElementById('stat').textContent;
-      return { w0, w1, w2, v0, v1, w3, w4, v2, stat };
+      return { w0, w1, w2, v0, v1, w3, w4, w5, v2, stat };
     });
     ok(r.w1 > r.w0 && r.w2 > r.w1, '↑ で 水が 入る。長い ほど 多い', r);
     ok(r.w2 - r.w1 > r.w1 - r.w0, 'スワイプの 長さで 量が かわる', r);
     ok(Math.abs(r.v1 - r.w2) < 0.3 && r.v0 <= r.w2 + 0.3, '水面は 指に ついてきて、はなしたら 本当の 水に 落ちつく（ばね）', r);
-    ok(r.w3 < r.w2 && r.w4 === 0 && Math.abs(r.v2) < 0.3, '↓ で 落ちる。強く はじくと 空に', r);
+    ok(r.w3 < r.w2 && r.w4 <= 3 && r.w4 > 0 && r.w5 === 0 && Math.abs(r.v2) < 0.3, '↓ で 落ちる。強く はじくと 空に', r);
     ok(/みず 0cm/.test(r.stat), 'HUD の 水が 0cm に なる', r.stat);
     await p.screenshot({ path: path.join(OUT, 'water.png') });
   },

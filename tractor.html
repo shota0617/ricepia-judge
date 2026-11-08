@@ -7070,7 +7070,7 @@ const TONOSAMA = (() => {
     hinds.forEach(({ hip, knee, sx }) => { hip.rotation.x = 0.32 + air * 2.52; knee.rotation.x = -0.35 + air * 3.35; hip.rotation.y = sx * (0.55 - air * 0.3); });   // すわる ときは ももを 少し 下げて 足先を 地面に。とぶ ときは もも（ふだん 前向き）を うしろ やや 下へ まわし、すね（ふだん たたんで うしろ向き）を のばして 足先を うしろ（−z）へ。左右の ひらきは 作った ときと 同じ 向き
     fronts.forEach(l => { l.rotation.x = air * -0.9; });
     body.position.y = f.st === 'sit' ? Math.max(0, Math.sin(f.ph * 2.2)) * 0.0008 : 0;   // のどを ふくらませて 息
-    const top = q[0]; if (top && (DETAIL || SAY.free && SAY.note(top[0]))) { BADGE.peek(f.x, f.z, 3, top[1]); top[2](); q.shift(); }   // まえの ひとことが 消えてから
+    const top = q[0]; if (top && !startNoticeMuted() && (DETAIL || SAY.free && SAY.note(top[0]))) { BADGE.peek(f.x, f.z, 3, top[1]); top[2](); q.shift(); }   // まえの ひとことが 消えてから。サイクル241・最初の1分: のんびりでは最初の1分はキューの消費だけを止め、吹き出し・BADGE・声をまとめて遅らせる（カエルが跳んで逃げる様子自体は従来どおり）。カエルは北畦の (2.0, 24.9) に決定的に座り発火は d<3.2 で、最初の直進 x=0 では z>22.40（なぞり上限1.6m/sで開始約14.9秒）、既定ロータリーの最初の列 x=−0.8 でも z>23.35 で届き、列の終わり z=24.5 では d=2.83。q は積まれたまま残り told も立たないので、1分を過ぎれば順番どおり（1件目→2件目）出す（遅れて出す形。消費に距離条件は元々なく、SAY混雑時の従来の待ち方と同型）。くわしい説明では従来どおり開始直後から出す
   }
   return { update, f, g, hinds, fronts, get told() { return told; }, get told2() { return told2; } };
 })();

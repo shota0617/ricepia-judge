@@ -290,7 +290,7 @@
   <p>押した袋のお米は、次の袋のときに小さく炊き上がって返ってきます。届いた先で炊かれた様子で、罰ではありません。</p>
   <p>ゲームでは分かりやすくするため、皿は20粒で1粒＝5%と数えます（実際の検査の粒数や重量の割合とは違います）。形質（標準品との比較）、異種穀粒、異物は皿には出していません。ゲームの等級は遊びのためのもので、実際の格付けではありません。</p>
   <p>出典: <a href="https://www.maff.go.jp/j/seisan/syoryu/kensa/kome/k_kikaku/" target="_blank" rel="noopener">農林水産省「玄米の検査規格」</a>／<a href="https://www.maff.go.jp/j/seisan/syoryu/kensa/hourei.html" target="_blank" rel="noopener">農産物検査法及び関係通知等</a>／<a href="https://www.maff.go.jp/j/seisan/syoryu/kensa/attach/pdf/index-25.pdf" target="_blank" rel="noopener">農林水産省「コメの農産物検査」</a></p>
-  <p><a href="https://ricepia.jp/">らいすぴあ（近藤米穀店）のサイトへ</a></p>
+  <p><a id="notesReturnLink" href="https://ricepia.jp/">らいすぴあ（近藤米穀店）のサイトへ</a></p>
 </section>
 <script>
 "use strict";
@@ -1870,6 +1870,7 @@ likeBtn.addEventListener("click", () => {
 });
 returnLink.addEventListener("click", () => { returnSound(); sendTap("return"); }); /* 戻る合図も固有の音にする（サイクル111・差17）。いいねの音（差13）とは分ける */
 $("notesLink").addEventListener("click", () => { notesSound(); }); /* 資料を開く合図も固有の音にする（サイクル112・差18）。戻る音（差17）とは分ける。アンカーのスクロールは従来どおり */
+$("notesReturnLink").addEventListener("click", () => { returnSound(); }); /* 資料の末尾のサイトリンクも、同じ戻り先（ricepia.jp）なので戻る合図は同じ音にする（サイクル113・差19）。終了カードの戻る（差17）には音があるのに、このリンクだけが無音だった */
 armIdle();
 startLot();
 </script>

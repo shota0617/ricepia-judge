@@ -338,7 +338,7 @@ const CHECKS = {
       f.water = 9; f.deepRun = 3; calmDays(S, 6, 'くもり'); S.weather[S.day+1] = Object.assign({}, S.weather[S.day+1], { w: '台風' }); K3.growDay(S); out.dr1 = f.deepRun; /* 台風の 前日：数えない が 0 にも しない */
       f.water = 9; S.weather[S.day] = Object.assign({}, S.weather[S.day], { w: 'くもり' }); S.weather[S.day+1] = Object.assign({}, S.weather[S.day+1], { w: 'くもり' }); S.weather[S.day+2] = Object.assign({}, S.weather[S.day+2], { w: 'くもり' }); S.weather[S.day-1] = Object.assign({}, S.weather[S.day-1], { w: 'くもり' }); S.weather[S.day-2] = Object.assign({}, S.weather[S.day-2], { w: 'くもり' }); f.typhoonDay = null; K3.growDay(S); out.dr2 = f.deepRun;
       K3.fixedSeed = 7; K3.jump('nakaboshi'); const S2 = K3.S, f2 = S2.f; f2.hoshiDays = 2; f2.hoshiEnd = false; f2.hoshiRun = 2; f2.water = 1; calmDays(S2, 3, 'くもり'); S2.weather[S2.day-1] = Object.assign({}, S2.weather[S2.day-1], { w: '雨' }); f2.upDay = null; K3.narrate(); out.rain = document.getElementById('say').textContent.slice(0, 20); f2.upDay = S2.day - 1; K3.narrate(); out.up = document.getElementById('say').textContent.slice(0, 20);
-      K3.fixedSeed = 7; K3.jump('heading'); const S3 = K3.S, f3 = S3.f; S3.day = f3.heading + 1; f3.water = 3; calmDays(S3, 2, '高温'); f3.typhoonDay = null; K3.narrate(); out.hot = document.getElementById('say').textContent.slice(0, 30); f3.typhoonDay = S3.day - 2; K3.narrate(); out.afterTy = document.getElementById('say').textContent.slice(0, 30);
+      K3.fixedSeed = 7; K3.jump('heading'); const S3 = K3.S, f3 = S3.f; S3.day = f3.heading + 1; f3.water = 3; calmDays(S3, 2, '高温'); f3.typhoonDay = null; K3.narrate(); out.hot = document.getElementById('say').textContent.slice(0, 30); S3.weather[S3.day-2] = Object.assign({}, S3.weather[S3.day-2], { w: '台風' }); K3.narrate(); out.afterTy = document.getElementById('say').textContent.slice(0, 30);
       K3.fixedSeed = 7; K3.jump('heading'); const S4 = K3.S, f4 = S4.f; S4.day = f4.heading + 5; f4.water = 7; calmDays(S4, 3, 'くもり'); f4.typhoonDay = S4.day - 1; f4.typhoon = true; f4.tyAdd = 0.2; f4.tyWater = 7.5; K3.narrate(); out.lodge = document.getElementById('say').textContent.slice(0, 60); f4.tyAdd = 0; f4.water = 8; K3.narrate(); out.keep = document.getElementById('say').textContent.slice(0, 60); f4.water = 6.5; K3.narrate(); out.keep2 = document.getElementById('say').textContent.slice(0, 60); /* 82周目：たおれた 翌日の 文と 注、あす ↓の 予告は あすも 6cm 超の 時だけ */
       return out;
     });
@@ -357,12 +357,13 @@ const CHECKS = {
       f.water = 9.5; K3.narrate(); out.deep = document.getElementById('say').textContent.slice(0, 40);
       f.water = 7; K3.V.water = 7; S.weather[S.day] = Object.assign({}, S.weather[S.day], { w: '高温' }); S.weather[S.day+1] = Object.assign({}, S.weather[S.day+1], { w: '雨' }); swipe('down', 400, true, true); out.floor = f.water;
       K3.fixedSeed = 7; K3.jump('tiller'); const S2 = K3.S, f2 = S2.f; for (let i=0;i<40 && f2.dat < 34;i++){ f2.water = 3; K3.advanceDay(); } f2.hoshiEnd = true; f2.hoshiDays = 5; f2.dat = 40; f2.water = 9; f2.deepRun = 1; f2.typhoonDay = null; K3.V.deepDay = S2.day - 2; K3.V.deepStop = false; calmDays(S2, 3, '雨'); K3.V.flipQueue = 3; K3.advanceDay(); out.stop2 = K3.V.flipQueue;
+      K3.fixedSeed = 7; K3.jump('tiller'); const S3 = K3.S, f3 = S3.f; for (let i=0;i<40 && f3.dat < 34;i++){ f3.water = 3; K3.advanceDay(); } f3.hoshiEnd = true; f3.hoshiDays = 5; f3.dat = 40; f3.water = 9; f3.deepRun = 0; f3.typhoonDay = null; K3.V.deepDay = S3.day - 2; K3.V.deepStop = false; calmDays(S3, 3, '雨'); K3.V.flipQueue = 3; K3.advanceDay(); out.stop1 = K3.V.flipQueue; /* 85周目：1朝目は 近道 なし（5日の 間を 待つ） */
       return out;
     });
     ok(/あすには 少し 下がります/.test(r.drop) && /↓で 浅く/.test(r.drop), 'あす 8cm を 割る 深水は「↓で 浅く。あすには 少し 下がります」（止まらない 日だと 分かる）', r);
     ok(/↓で 浅く/.test(r.deep), 'あすも 8cm 以上なら「↓で 浅く」', r);
     ok(Math.abs(r.floor - 4) < 0.01, '出穂後の はじき↓は 高温→雨 でも 4cm に 着地', r);
-    ok(r.stop2 === 0, '2朝 つづけて 深い 時は 5日の 間を 待たずに 止まる', r);
+    ok(r.stop2 === 0 && r.stop1 === 3, '2朝 つづけて 深い 時は 5日の 間を 待たずに 止まる（1朝目は 待つ）', r);
   },
   async perf(b){
     const p = await page(b, 390, 844);

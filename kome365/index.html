@@ -3015,6 +3015,7 @@ renderTitle();
   var PIXEDGE = {
     footprints: ['................', '...tt.tt........', '..tt.tt.tt......', '...oooo.........', '..ottooo........', '..ottooo........', '...oooo.........', '................', '......tt.tt.....', '.....tt.tt.tt...', '......oooo......', '.....ottooo.....', '.....ottooo.....', '......oooo......', '................', '................'],
     telescope: ['................', '...........kk...', '..........kyYk..', '.........kbBYk..', '........kbBBk...', '.......kbBBk....', '......kbBBk.....', '.....kyYBk......', '....kyYkk.......', '.....kkTk.......', '.......Tk.......', '......kTk.......', '.....kT.Tk......', '....kT...Tk.....', '...kT.....Tk....', '................'],
+    skip: ['................', '................', 'n.....n.......nn', 'nn....nn......nn', 'nnn...nnn.....nn', 'nnnn..nnnn....nn', 'nnnnn.nnnnn...nn', 'nnnnnnnnnnnn..nn', 'nnnnnnnnnnnn..nn', 'nnnnn.nnnnn...nn', 'nnnn..nnnn....nn', 'nnn...nnn.....nn', 'nn....nn......nn', 'n.....n.......nn', '................', '................'],
     home: ['................', '.......kk.......', '......krrk......', '.....krrrrk.....', '....krrRRrrk....', '...krrRRRRrrk...', '..krrRRRRRRrrk..', '.krrrrrrrrrrrrk.', '..kssssssssssk..', '..kskksssskksk..', '..ksbBssssBbsk..', '..kskksssskksk..', '..kssskkkssssk..', '..kssskToksssk..', '..kssskTTksssk..', '..kkkkkkkkkkkk..'],
     bird: ['................', '................', '........kkkk....', '.......kbbbbk...', '......kbbbWkbk..', '......kbbbbbkYY.', '..kk..kbbbbbkY..', '..kbkkbbbbbbk...', '...kbbbbBBBBbk..', '...kbbbBBBBbbk..', '....kbbbBBbbk...', '.....kkkkkkk....', '.......TT.TT....', '......TT..TT....', '................', '................'],
     bow: ['................', '................', '................', '.....kkkk.......', '....koook.......', '...koppppk......', '...kpppppk......', '....kpppknnn....', '.....kkknBBBn...', '......nBBBBBBn..', '.....ppnBBBBBn..', '....pp..nnnnn...', '........n..n....', '.......nn..nn...', '................', '................'],
@@ -3045,7 +3046,7 @@ renderTitle();
     wind: ['................', '................', '.........bbb....', '........b...b...', '...bbbbbb...b...', '..b........b....', '...bbbbbbbb.....', '................', '.WWWWWWWWWWW....', '............W...', '.....bbbb...W...', '....b....WWW....', '.....b..........', '......bbbbbb....', '................', '................'],
     wrench: ['................', '..........EE....', '.........Eee....', '........Eee.....', '........Eee..EE.', '........EeeEEeE.', '.........EeeeE..', '........EeeeE...', '.......EeeEE....', '......EeeE......', '.....EeeE.......', '....EeeE........', '...EeeE.........', '..EeEE..........', '..EEE...........', '................']
   };
-  var EDGEPIX = { '🌬': 'wind', '🧂': 'salt', '🛡': 'shield', '🐛': 'bug', '🚿': 'spray', '✋': 'hand', '⛏': 'pick', '💧': 'water', '🧺': 'fert', '☀': 'sun', '🚜': 'tractor', '🌾': 'vigor', '🌱': 'sprout', '🌡': 'thermo', '💊': 'pill', '📷': 'camera', '🔍': 'search', '🚶': 'walk', '👃': 'nose', '☂': 'umbrella', '🚪': 'door', '💭': 'thought', '👂': 'ear', '🌿': 'weed', '💤': 'sleep', '🎁': 'gift', '🙇': 'bow', '👀': 'eyes', '📅': 'calendar', '⏳': 'wait', '😊': 'smile', '🐦': 'bird', '🔧': 'wrench', '🙋': 'raise', '🧘': 'stretch', '🌅': 'sunrise', '👣': 'footprints', '🔭': 'telescope' };
+  var EDGEPIX = { '🌬': 'wind', '🧂': 'salt', '🛡': 'shield', '🐛': 'bug', '🚿': 'spray', '✋': 'hand', '⛏': 'pick', '💧': 'water', '🧺': 'fert', '☀': 'sun', '🚜': 'tractor', '🌾': 'vigor', '🌱': 'sprout', '🌡': 'thermo', '💊': 'pill', '📷': 'camera', '🔍': 'search', '🚶': 'walk', '👃': 'nose', '☂': 'umbrella', '🚪': 'door', '💭': 'thought', '👂': 'ear', '🌿': 'weed', '💤': 'sleep', '🎁': 'gift', '🙇': 'bow', '👀': 'eyes', '📅': 'calendar', '⏳': 'wait', '😊': 'smile', '🐦': 'bird', '🔧': 'wrench', '🙋': 'raise', '🧘': 'stretch', '🌅': 'sunrise', '👣': 'footprints', '🔭': 'telescope', '⏭': 'skip' };
   var pixEdgeCache = {};
   function pixEdgeURL(key){
     if (pixEdgeCache[key]) return pixEdgeCache[key];
@@ -3127,7 +3128,7 @@ renderTitle();
     else if (/始める|続ける/.test(t)) return ['🌅', ''];
     else if (/様子を見る|^見る|観察|のぞく|見回|見る/.test(t)) return ['👀', ''];
     else if (/待つ/.test(t)) return ['⏳', ''];
-    if (/ない$|やめ|見送|省く|のまま/.test(t) && !/^そのまま/.test(t)) { mod = '⏭️'; if (m == null) m = ''; }
+    if (/ない$|やめ|見送|省く|のまま/.test(t) && !/^そのまま/.test(t)) { if (m == null) m = '⏭️'; else mod = '⏭️'; }   /* サイクル140(差9): 行動の絵がない否定の札は、見送り記号を修飾でなく主アイコン(40pxドット絵)として出す。論理文字列 data-edgeicon は従来どおり '⏭️' で不変 */
     if (m == null) m = fb || '🌾';
     return [m, mod];
   }

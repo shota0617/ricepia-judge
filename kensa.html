@@ -131,6 +131,14 @@
 
   /* おす */
   #osu { display:flex; align-items:center; justify-content:center; }
+  /* 米の流れの絵（サイクル132・店主指示2026-11-09「この感じでゲーム修正」）: 押印した玄米が
+     精米されて白米になり、ごはんになるまでを、水彩の手描き風の大きな絵で下にそっと見せる。
+     副産物のもみがら・ぬかも添える。操作は妨げない（pointer-events:none） */
+  #journey { position:absolute; left:8px; right:8px; bottom:6px; z-index:2; pointer-events:none;
+    background:rgba(251,248,240,.94); border:2px solid #d8c9a3; border-radius:14px; padding:5px 10px 3px;
+    box-shadow:0 2px 8px rgba(26,24,20,.18); }
+  #journey svg { display:block; width:100%; height:64px; }
+  #journey text { font-family:"Hiragino Maru Gothic ProN","Hiragino Sans",sans-serif; font-weight:700; fill:#5a4a2a; }
   #bagBig { position:relative; height:min(100%, 440px); aspect-ratio:48/60; touch-action:none; }
   #bagBig canvas { width:100%; height:100%; display:block; }
   #bagBig.squash canvas { animation:squash .22s ease; }
@@ -267,6 +275,23 @@
         <div id="pad" aria-hidden="true"></div>
         <div id="hanko" aria-hidden="true"><i></i><b></b></div>
       </button>
+      <div id="journey" hidden aria-hidden="true"><svg viewBox="0 0 360 64" role="img" aria-label="玄米が精米されて白米になり、ごはんになる流れ">
+        <g transform="translate(38,25)"><ellipse rx="19" ry="13" fill="#c69a52" opacity=".92"/><ellipse cx="-4" cy="-4" rx="12" ry="7" fill="#dcbc7d" opacity=".85"/><path d="M-15,-6 Q0,0 15,7" stroke="#97702e" stroke-width="1.6" fill="none" stroke-linecap="round"/></g>
+        <text x="38" y="57" text-anchor="middle" font-size="13">玄米</text>
+        <path d="M64,25 H90" stroke="#8a7a5a" stroke-width="2" stroke-linecap="round"/><path d="M86,20 L93,25 L86,30" stroke="#8a7a5a" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <text x="77" y="13" text-anchor="middle" font-size="11">精米</text>
+        <g transform="translate(120,25)"><ellipse rx="19" ry="13" fill="#fdfcf7" stroke="#c9c2b2" stroke-width="1.4"/><ellipse cx="-4" cy="-4" rx="12" ry="7" fill="#efe9d8" opacity=".8"/></g>
+        <text x="120" y="57" text-anchor="middle" font-size="13">白米</text>
+        <path d="M146,25 H172" stroke="#8a7a5a" stroke-width="2" stroke-linecap="round"/><path d="M168,20 L175,25 L168,30" stroke="#8a7a5a" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <g transform="translate(200,27)"><path d="M-6,-16 q3,4 0,8 M5,-16 q3,4 0,8" stroke="#b9c4a8" stroke-width="1.8" fill="none" stroke-linecap="round"/><ellipse cx="0" cy="-5" rx="15" ry="8" fill="#fffdf6" stroke="#d8d2c2" stroke-width="1.2"/><path d="M-20,0 A20,13 0 0 0 20,0 Z" fill="#5b7ea6" opacity=".92"/></g>
+        <text x="200" y="57" text-anchor="middle" font-size="13">ごはん</text>
+        <line x1="232" y1="8" x2="232" y2="58" stroke="#d8c9a3" stroke-width="1.6" stroke-dasharray="3 4"/>
+        <text x="296" y="13" text-anchor="middle" font-size="10.5">ぜんぶ つかう</text>
+        <g transform="translate(258,30)"><path d="M0,-13 C7,-4 7,6 0,13 C-7,6 -7,-4 0,-13 Z" fill="#dcbc7d" stroke="#a8843c" stroke-width="1.3"/><path d="M10,-10 C15,-2 15,6 10,12 C5,6 5,-2 10,-10 Z" fill="#c69a52" opacity=".8"/></g>
+        <text x="262" y="57" text-anchor="middle" font-size="10.5">もみがら</text>
+        <g transform="translate(322,32)"><path d="M-15,9 Q0,-11 15,9 Z" fill="#e9ddc0" stroke="#c9b489" stroke-width="1.3"/><circle cx="-5" cy="3" r="1.4" fill="#b39b5e"/><circle cx="4" cy="0" r="1.4" fill="#b39b5e"/><circle cx="8" cy="5" r="1.4" fill="#b39b5e"/></g>
+        <text x="322" y="57" text-anchor="middle" font-size="10.5">ぬか</text>
+      </svg></div>
     </div>
   </div>
   <div id="foot">
@@ -305,6 +330,7 @@
   <h2>炊き上がりのきろく</h2>
   <p id="cookedRecord">まだ 炊き上がった お米は ありません。</p>
   <p>押した袋のお米は、次の袋のときに小さく炊き上がって返ってきます。届いた先で炊かれた様子で、罰ではありません。チップは袋が着いて落ち着いてから、専用の音と一緒にふわりと現れます。</p>
+  <p>押印すると、おすの場面の下に、検査した玄米が精米されて白米になり、ごはんになるまでの流れを、水彩風の絵で見せます。精米で出るぬかや、もみすりで出るもみがらも、捨てずに活用できるものとして一緒に描いています。</p>
   <p>ゲームでは分かりやすくするため、皿は20粒で1粒＝5%と数えます（実際の検査の粒数や重量の割合とは違います）。形質（標準品との比較）、異種穀粒、異物は皿には出していません。ゲームの等級は遊びのためのもので、実際の格付けではありません。</p>
   <p>出典: <a class="sourceLink" href="https://www.maff.go.jp/j/seisan/syoryu/kensa/kome/k_kikaku/" target="_blank" rel="noopener">農林水産省「玄米の検査規格」</a>／<a class="sourceLink" href="https://www.maff.go.jp/j/seisan/syoryu/kensa/hourei.html" target="_blank" rel="noopener">農産物検査法及び関係通知等</a>／<a class="sourceLink" href="https://www.maff.go.jp/j/seisan/syoryu/kensa/attach/pdf/index-25.pdf" target="_blank" rel="noopener">農林水産省「コメの農産物検査」</a></p>
   <p><a id="notesReturnLink" href="https://ricepia.jp/">らいすぴあ（近藤米穀店）のサイトへ</a></p>
@@ -948,6 +974,7 @@ function startLot() {
   $("meterBtn").classList.remove("high");
   [...$("slots").children].forEach(s => { s.textContent = ""; });
   $("mark").className = ""; $("mark").textContent = "";
+  $("journey").hidden = true; /* 米の流れの絵も袋ごとに仕切り直す（サイクル132） */
   $("hanko").style.opacity = "1";
   $("poke").style.display = lotIndex === 0 ? "" : "none";
   zoomBtn.hidden = true;
@@ -1854,6 +1881,7 @@ function stampNow() {
   thump();
   $("mark").classList.add("on");
   $("mark").animate([{ opacity:0, transform:"rotate(-8deg) scale(1.22)" }, { opacity:1, transform:"rotate(-8deg) scale(1)" }], { duration:200 * motion, easing:"ease-out" }); /* 証印も、他の現れるもの（チップ=ふわり260ms・差30／つぎの袋ボタン=ふわり260ms・差31／🔍ボタン=差32／小皿の粒=差33）と同じく、押した勢いのまま少し大きく出て落ち着く穏やかな出現にそろえる（サイクル128・差分テーマ差34）。旧版は opacity の切り替えだけで完成形が即座に出ていた（390×844実測で出現時のアニメーション0件・opacity即1）。傾き（-8deg）は従来どおり保つ */
+  const jr = $("journey"); jr.hidden = false; jr.animate([{ opacity:0, transform:"scale(.94)" }, { opacity:1, transform:"scale(1.02)", offset:.7 }, { opacity:1, transform:"scale(1)" }], { duration:260 * motion, easing:"ease-out" }); /* 押印した玄米の行き先（精米→白米→ごはん、もみがら・ぬかも活用）を、水彩風の流れの絵でふわりと見せる（サイクル132・店主指示2026-11-09）。stamped ガードで1回だけ。流れは止めず、絵は操作を妨げない */
   $("bagBig").classList.add("squash");
   setTimeout(() => $("bagBig").classList.remove("squash"), 240);
   setFace("happy", 1800);

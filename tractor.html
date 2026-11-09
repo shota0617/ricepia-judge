@@ -8787,7 +8787,7 @@ function step(dt) {
     const s = Math.sin(S.yaw), c = Math.cos(S.yaw);
     if ([-0.9, 0.9].some(lx => RUTS.at(S.x + lx * c + (ROTARY_Z + 0.3) * s, S.z - lx * s + (ROTARY_Z + 0.3) * c) > 0.04)) voice('tsume');
   }   // 秋起こしを 2 分ほど続けたら（秋に早く起こすわけ）
-  if (SHIRO && (S.workT || 0) > 45) voice('asamizu');   // 代かきを 45 秒ほど続けたら（水の深さの目安）
+  if (SHIRO && (S.workT || 0) > 45 && !startNoticeMuted()) voice('asamizu');   // 代かきを 45 秒ほど続けたら（水の深さの目安）。サイクル255・最初の1分: のんびりでは最初の1分は浅水代かきの声を消費しない。声だけの経路で、代かきを続けると作業時間45秒は実測の再現で開始約46.21秒に届き（止まる・上げる時間が合計13.75秒未満でも60秒以内）、聞いていない声が終わりの画面の数だけに入っていた。条件は > のため、ガード中は呼ばずに過ぎ、1分を過ぎた最初のフレームで従来どおり1回出る遅延形（耕し続けていない場合は次の作業で出る）。作業時間の数え方と代かきの深さの平均は不変更
   if (SHIRO && S.started && Math.abs(S.x) > HX - 2.5 && Math.abs(S.x) < HX && Math.abs(S.z) > HZ - 2.5 && Math.abs(S.z) < HZ) voice('azenuri');   // 代かき：田んぼの中で 塗った畦の 角に来たら（農道では出さない）   // 重ねがそろわず 耕し残しや重なりが多い
   if (ASSIST.on && S.started && Math.abs(S.x) > HX - 4 && Math.abs(S.z) > HZ - 4) voice('corner');   // 直進アシストのまま四隅に来た
   if (SHIRO && !S.rotDown && softAt(S.x, S.z) && Math.abs(S.v) > 0.3 && (S.trackM = (S.trackM || 0) + Math.abs(S.v) * dt) > 12) voice('track');

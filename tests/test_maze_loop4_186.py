@@ -51,9 +51,9 @@ console.log(JSON.stringify({ n1, n: calls.length, cols: calls.filter(c => c[0] =
 """)
         self.assertEqual(out["n"], out["n1"])
         self.assertEqual(out["ell"], 0)
-        self.assertEqual(out["quad"], 36)
+        self.assertEqual(out["quad"], 108)   # 188で色むらの斑が加わった（12×9）
         self.assertEqual(out["text"], 0)
-        self.assertEqual(out["cols"], ["rgba(255,240,190,.22)", "rgba(170,210,140,.18)", "rgba(170,210,240,.16)"])
+        self.assertEqual(out["cols"][::3], ["rgba(255,240,190,.22)", "rgba(170,210,140,.18)", "rgba(170,210,240,.16)"])
 
     def test_call_site(self):
         self.assertEqual(len(re.findall(r"if \(giant\) drawGiantWash\(sx, sy, size\);", SRC)), 1)
@@ -70,7 +70,7 @@ console.log(JSON.stringify({ n1, n: calls.length, cols: calls.filter(c => c[0] =
     def test_only_expected_files_changed(self):
         out = subprocess.run(["git", "status", "--porcelain"], cwd=ROOT, capture_output=True, text=True).stdout
         files = {l[3:] for l in out.splitlines()}
-        self.assertLessEqual(files, {"nishio-go/pixel.js", "tests/test_maze_loop4_186.py"})
+        self.assertLessEqual(files, {"nishio-go/pixel.js", "tests/test_maze_loop4_186.py", "tests/test_maze_loop4_187.py", "tests/test_maze_loop4_188.py"})
 
 
 if __name__ == "__main__":

@@ -67,19 +67,19 @@ class GiantWash187(unittest.TestCase):
     def test_stub_draw(self):
         calls = self.draw_calls()
         names = [c[0] for c in calls]
-        self.assertEqual([c[1] for c in calls if c[0] == "fill="], ["rgba(255,240,190,.22)", "rgba(170,210,140,.18)", "rgba(170,210,240,.16)"])
+        self.assertEqual([c[1] for c in calls if c[0] == "fill="][::3], ["rgba(255,240,190,.22)", "rgba(170,210,140,.18)", "rgba(170,210,240,.16)"])
         self.assertEqual(names.count("ellipse"), 0)
-        self.assertEqual(names.count("quadraticCurveTo"), 36)
+        self.assertEqual(names.count("quadraticCurveTo"), 108)
         self.assertEqual(names.count("fillText") + names.count("stroke"), 0)
-        self.assertEqual(names.count("fill"), 3)
-        self.assertEqual(names.count("closePath"), 3)
+        self.assertEqual(names.count("fill"), 9)
+        self.assertEqual(names.count("closePath"), 9)
         L = run_node("console.log(JSON.stringify(giantWashLayout(100,200,400)))")
         layer = -1
         for c in calls:
             if c[0] == "fill=":
                 layer += 1
             if c[0] in ("moveTo", "quadraticCurveTo"):
-                l = L["layers"][layer]
+                l = L["layers"][layer // 3]
                 pts = [(c[1], c[2])] + ([(c[3], c[4])] if c[0] == "quadraticCurveTo" else [])
                 for x, y in pts:
                     self.assertLessEqual(abs(x - l["cx"]), l["rx"] + 1e-9)
@@ -103,7 +103,7 @@ class GiantWash187(unittest.TestCase):
     def test_only_expected_files_changed(self):
         out = subprocess.run(["git", "status", "--porcelain"], cwd=ROOT, capture_output=True, text=True).stdout
         files = {l[3:] for l in out.splitlines()}
-        self.assertLessEqual(files, {"nishio-go/pixel.js", "tests/test_maze_loop4_186.py", "tests/test_maze_loop4_187.py"})
+        self.assertLessEqual(files, {"nishio-go/pixel.js", "tests/test_maze_loop4_186.py", "tests/test_maze_loop4_187.py", "tests/test_maze_loop4_188.py"})
 
 
 if __name__ == "__main__":

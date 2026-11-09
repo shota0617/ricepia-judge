@@ -47,10 +47,11 @@ class GiantWash186(unittest.TestCase):
 const calls = [];
 const ctx = new Proxy({}, { get: (t, k) => (k in t ? t[k] : (...a) => calls.push([k, ...a])), set: (t, k, v) => { if (k === 'fillStyle') calls.push(['fill=', v]); t[k] = v; return true; } });
 drawGiantWash(0, 0, 400); const n1 = calls.length; drawGiantWash(0, 0, 0);
-console.log(JSON.stringify({ n1, n: calls.length, cols: calls.filter(c => c[0] === 'fill=').map(c => c[1]), ell: calls.filter(c => c[0] === 'ellipse').length, text: calls.filter(c => c[0] === 'fillText' || c[0] === 'stroke').length }));
+console.log(JSON.stringify({ n1, n: calls.length, cols: calls.filter(c => c[0] === 'fill=').map(c => c[1]), ell: calls.filter(c => c[0] === 'ellipse').length, quad: calls.filter(c => c[0] === 'quadraticCurveTo').length, text: calls.filter(c => c[0] === 'fillText' || c[0] === 'stroke').length }));
 """)
         self.assertEqual(out["n"], out["n1"])
-        self.assertEqual(out["ell"], 3)
+        self.assertEqual(out["ell"], 0)
+        self.assertEqual(out["quad"], 36)
         self.assertEqual(out["text"], 0)
         self.assertEqual(out["cols"], ["rgba(255,240,190,.22)", "rgba(170,210,140,.18)", "rgba(170,210,240,.16)"])
 

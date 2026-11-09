@@ -8921,9 +8921,9 @@ function giantWashLayout(sx, sy, size) {
     if (![sx, sy, size].every(v => typeof v === 'number' && isFinite(v)) || size <= 0) return null;
     const ground = sy + size * 0.72, cx = sx + size / 2, cy = ground - size * 0.01;
     const layers = [
-      { cx, cy, rx: size * 0.46, ry: size * 0.13, fill: 'rgba(255,240,190,.22)' },
-      { cx: cx - size * 0.06, cy: cy + size * 0.015, rx: size * 0.38, ry: size * 0.105, fill: 'rgba(170,210,140,.18)' },
-      { cx: cx + size * 0.07, cy: cy - size * 0.01, rx: size * 0.30, ry: size * 0.085, fill: 'rgba(170,210,240,.16)' },
+      { cx, cy, rx: size * 0.46, ry: size * 0.13, fill: 'rgba(255,240,190,.22)', wob: [1, .96, .93, .97, .91, .95, .98, .92, .96, .94, .99, .95] },
+      { cx: cx - size * 0.06, cy: cy + size * 0.015, rx: size * 0.38, ry: size * 0.105, fill: 'rgba(170,210,140,.18)', wob: [.95, .99, .92, .96, .94, .90, .97, .93, 1, .95, .91, .96] },
+      { cx: cx + size * 0.07, cy: cy - size * 0.01, rx: size * 0.30, ry: size * 0.085, fill: 'rgba(170,210,240,.16)', wob: [.93, .97, 1, .94, .98, .92, .95, .99, .90, .96, .94, .97] },
     ];
     return { x: cx - size * 0.46, y: cy - size * 0.13, w: size * 0.92, h: size * 0.26, ground, cx, cy, layers };
   } catch (e) { return null; }
@@ -8931,7 +8931,14 @@ function giantWashLayout(sx, sy, size) {
 function drawGiantWash(sx, sy, size) {   // 静止画：絵の下地だけ（輪郭線も文字も動きもなし）
   const L = giantWashLayout(sx, sy, size);
   if (!L) return;
-  for (const l of L.layers) { ctx.fillStyle = l.fill; ctx.beginPath(); ctx.ellipse(l.cx, l.cy, l.rx, l.ry, 0, 0, Math.PI * 2); ctx.fill(); }
+  const U = [[1, 0], [.866, .5], [.5, .866], [0, 1], [-.5, .866], [-.866, .5], [-1, 0], [-.866, -.5], [-.5, -.866], [0, -1], [.5, -.866], [.866, -.5]];   // 単位円の12点（30度刻み）
+  for (const l of L.layers) {
+    const P = U.map((u, i) => [l.cx + u[0] * l.rx * l.wob[i], l.cy + u[1] * l.ry * l.wob[i]]);   // 半径を層ごとの固定値で揺らす（乱数・時刻なし）
+    ctx.fillStyle = l.fill; ctx.beginPath();
+    ctx.moveTo((P[11][0] + P[0][0]) / 2, (P[11][1] + P[0][1]) / 2);
+    for (let i = 0; i < 12; i++) { const a = P[i], b = P[(i + 1) % 12]; ctx.quadraticCurveTo(a[0], a[1], (a[0] + b[0]) / 2, (a[1] + b[1]) / 2); }
+    ctx.closePath(); ctx.fill();
+  }
 }
 function drawShopTag(cx, bottom, dpr, s) {
   gbPause++;

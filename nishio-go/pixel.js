@@ -8925,6 +8925,13 @@ function giantWashLayout(sx, sy, size) {
       { cx: cx - size * 0.06, cy: cy + size * 0.015, rx: size * 0.38, ry: size * 0.105, fill: 'rgba(170,210,140,.18)', wob: [.95, .99, .92, .96, .94, .90, .97, .93, 1, .95, .91, .96] },
       { cx: cx + size * 0.07, cy: cy - size * 0.01, rx: size * 0.30, ry: size * 0.085, fill: 'rgba(170,210,240,.16)', wob: [.93, .97, 1, .94, .98, .92, .95, .99, .90, .96, .94, .97] },
     ];
+    // 色むら：各層の中に、白っぽい「抜け」と少し濃い「溜まり」の小さい斑を2つずつ（絶対座標・固定値）
+    const SPOTS = [
+      [[.13, -.012, .11, .032, 'rgba(255,255,255,.12)', [.96, 1, .92, .97, .94, .99, .91, .95, .98, .93, .96, .90]], [-.15, .014, .13, .036, 'rgba(215,175,80,.10)', [.94, .98, .95, 1, .91, .96, .93, .99, .92, .97, .90, .95]]],
+      [[.10, .010, .10, .030, 'rgba(105,165,80,.10)', [.92, .96, 1, .94, .98, .91, .95, .97, .93, .99, .90, .96]], [-.11, -.010, .09, .026, 'rgba(255,255,255,.11)', [.98, .93, .96, .91, 1, .95, .92, .97, .94, .90, .99, .96]]],
+      [[.07, -.008, .08, .024, 'rgba(255,255,255,.13)', [.95, .91, .99, .96, .93, 1, .94, .90, .97, .98, .92, .96]], [-.09, .009, .085, .025, 'rgba(90,150,200,.10)', [.97, .94, .90, .98, .95, .92, 1, .96, .91, .99, .93, .95]]],
+    ];
+    layers.forEach((l, i) => { l.spots = SPOTS[i].map(([dx, dy, rx, ry, fill, wob]) => ({ cx: l.cx + size * dx, cy: l.cy + size * dy, rx: size * rx, ry: size * ry, fill, wob })); });
     return { x: cx - size * 0.46, y: cy - size * 0.13, w: size * 0.92, h: size * 0.26, ground, cx, cy, layers };
   } catch (e) { return null; }
 }
@@ -8932,13 +8939,14 @@ function drawGiantWash(sx, sy, size) {   // 静止画：絵の下地だけ（輪
   const L = giantWashLayout(sx, sy, size);
   if (!L) return;
   const U = [[1, 0], [.866, .5], [.5, .866], [0, 1], [-.5, .866], [-.866, .5], [-1, 0], [-.866, -.5], [-.5, -.866], [0, -1], [.5, -.866], [.866, -.5]];   // 単位円の12点（30度刻み）
-  for (const l of L.layers) {
-    const P = U.map((u, i) => [l.cx + u[0] * l.rx * l.wob[i], l.cy + u[1] * l.ry * l.wob[i]]);   // 半径を層ごとの固定値で揺らす（乱数・時刻なし）
-    ctx.fillStyle = l.fill; ctx.beginPath();
+  const blob = o => {
+    const P = U.map((u, i) => [o.cx + u[0] * o.rx * o.wob[i], o.cy + u[1] * o.ry * o.wob[i]]);   // 半径を固定値で揺らす（乱数・時刻なし）
+    ctx.fillStyle = o.fill; ctx.beginPath();
     ctx.moveTo((P[11][0] + P[0][0]) / 2, (P[11][1] + P[0][1]) / 2);
     for (let i = 0; i < 12; i++) { const a = P[i], b = P[(i + 1) % 12]; ctx.quadraticCurveTo(a[0], a[1], (a[0] + b[0]) / 2, (a[1] + b[1]) / 2); }
     ctx.closePath(); ctx.fill();
-  }
+  };
+  for (const l of L.layers) { blob(l); for (const sp of l.spots) blob(sp); }   // 層の本体→その層の色むら（抜け・溜まり）
 }
 function drawShopTag(cx, bottom, dpr, s) {
   gbPause++;

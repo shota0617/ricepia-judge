@@ -1384,6 +1384,24 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertIn('duration:330 * motion', tap)  # 2袋目以降は従来どおり
         self.assertIn("flyAnim.onfinish", tap)
 
+    def test_cycle132_rice_journey_appears_after_stamp(self):
+        # 店主指示（2026-11-09「この感じでゲーム修正」・米の流れの絵）:
+        # 押印した玄米が精米されて白米になり、ごはんになる流れを、水彩風の
+        # 大きな絵でおすの場面にふわりと見せる。もみがら・ぬかも添える。
+        # 流れは止めず、絵は操作を妨げない（pointer-events:none）。
+        self.assertIn('<div id="journey" hidden aria-hidden="true">', HTML)
+        journey = HTML[HTML.index('id="journey"'):HTML.index('</svg>')]
+        for word in ("玄米", "精米", "白米", "ごはん", "もみがら", "ぬか", "ぜんぶ つかう"):
+            self.assertIn(word, journey)
+        self.assertIn("#journey { position:absolute;", HTML)
+        self.assertIn("pointer-events:none;", HTML[HTML.index("#journey {"):HTML.index("#journey svg")])
+        stamp = HTML[HTML.index("function stampNow()"):HTML.index("function dropHanko()")]
+        self.assertIn('const jr = $("journey"); jr.hidden = false;', stamp)
+        self.assertIn("jr.animate(", stamp)
+        start_lot = HTML[HTML.index("function startLot()"):HTML.index("/* 皿の粒:")]
+        self.assertIn('$("journey").hidden = true;', start_lot)
+        self.assertIn("精米されて白米になり、ごはんになるまでの流れを、水彩風の絵で見せます", HTML)
+
     def test_cycle93_picked_grains_stay_in_quiet_record(self):
         # 類7: 見分けた粒が静かに記録に残る。任意で開く資料（#notes）の中だけに出し、常時表示・競争・スコアにはしない。
         # 袋を越えて残るため startLot では消さない（サイクル91の seenChecks と同じ持ち方）。

@@ -1426,6 +1426,17 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         reading = HTML[HTML.index("function takeReading()"):HTML.index("function crankPointer")]
         self.assertNotIn('$("lcd").animate', reading)
 
+    def test_cycle135_step_name_gently_appears(self):
+        # 差40: 段階が変わる瞬間、頭の段階名（#stepName）だけが textContent の
+        # 差し替えで即座に出ていた（出現アニメーション0件）。
+        # 他の現れるものと同じ260msのふわりとした出現を、setStep の時だけ付ける。
+        start = HTML.index("function setStep(i, text)")
+        body = HTML[start:HTML.index("function showTop", start)]
+        self.assertIn('$("stepName").animate([{ opacity:0, transform:"scale(.7)" }', body)
+        self.assertIn('duration:260 * motion', body)
+        # setStep 以外の場所では段階名にアニメーションを付けない（出現は段階の切り替え時だけ）
+        self.assertEqual(HTML.count('$("stepName").animate'), 1)
+
     def test_cycle93_picked_grains_stay_in_quiet_record(self):
         # 類7: 見分けた粒が静かに記録に残る。任意で開く資料（#notes）の中だけに出し、常時表示・競争・スコアにはしない。
         # 袋を越えて残るため startLot では消さない（サイクル91の seenChecks と同じ持ち方）。

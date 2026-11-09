@@ -945,6 +945,7 @@ const plate = $("plate"), inner = $("plateInner"), hint = $("hint"), nextBtn = $
 function setStep(i, text) {
   step = i;
   $("stepName").textContent = STEPS[i];
+  $("stepName").animate([{ opacity:0, transform:"scale(.7)" }, { opacity:1, transform:"scale(1.05)", offset:.7 }, { opacity:1, transform:"scale(1)" }], { duration:260 * motion, easing:"ease-out" }); /* 段階の名前（#stepName）も、他の現れるもの（チップ=ふわり260ms・差30／つぎの袋ボタン=差31／🔍ボタン=差32／小皿の粒=差33／証印=差34／測定値の枠=差35／平均の数字=差39）と同じくふわりと現れる形にそろえる（サイクル135・差分テーマ差40）。旧版は textContent の差し替えだけで完成形が即座に出ていた（390×844実測で出現時のアニメーション0件）。段階が変わる時（setStep）だけ1回付ける */
   [...$("pips").children].forEach((p, k) => { p.className = k < i ? "done" : k === i ? "now" : ""; });
   hint.textContent = text;
   document.documentElement.dataset.step = STEPS[i];

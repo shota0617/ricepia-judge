@@ -1390,7 +1390,7 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         # 大きな絵でおすの場面にふわりと見せる。もみがら・ぬかも添える。
         # 流れは止めず、絵は操作を妨げない（pointer-events:none）。
         self.assertIn('<div id="journey" hidden aria-hidden="true">', HTML)
-        journey = HTML[HTML.index('id="journey"'):HTML.index('</svg>')]
+        journey = HTML[HTML.index('id="journey"'):HTML.index('</svg>', HTML.index('id="journey"'))]
         for word in ("玄米", "精米", "白米", "ごはん", "もみがら", "ぬか", "ぜんぶ つかう"):
             self.assertIn(word, journey)
         self.assertIn("#journey { position:absolute;", HTML)
@@ -1401,6 +1401,18 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         start_lot = HTML[HTML.index("function startLot()"):HTML.index("/* 皿の粒:")]
         self.assertIn('$("journey").hidden = true;', start_lot)
         self.assertIn("精米されて白米になり、ごはんになるまでの流れを、水彩風の絵で見せます", HTML)
+
+    def test_cycle133_rice_journey_starts_from_paddy(self):
+        # 差38（店主指示2026-11-09・米の流れの絵の続き）: 押印後の流れの帯を
+        # 稲からの全行程に伸ばす（稲→脱穀→もみ→もみすり→玄米→精米→白米→ごはん、
+        # 副産物は稲わら・もみがら・ぬか）。開いた直後の右下に置く案は、案内の手と
+        # 穀刺しに重なり窮屈だったため、締めの帯を完全版にする形に寄せた。
+        journey = HTML[HTML.index('id="journey"'):HTML.index('</svg>', HTML.index('id="journey"'))]
+        for word in ("稲", "脱穀", "もみ", "もみすり", "玄米", "精米", "白米", "ごはん", "稲わら", "もみがら", "ぬか", "ぜんぶ つかう"):
+            self.assertIn(word, journey)
+        self.assertIn('viewBox="0 0 360 92"', journey)
+        self.assertIn("height:92px;", HTML[HTML.index("#journey svg"):HTML.index("#journey text")])
+        self.assertIn("稲が脱穀されて もみになり、もみすりで玄米になり、精米されて白米になり、ごはんになるまでの流れを、水彩風の絵で見せます", HTML)
 
     def test_cycle93_picked_grains_stay_in_quiet_record(self):
         # 類7: 見分けた粒が静かに記録に残る。任意で開く資料（#notes）の中だけに出し、常時表示・競争・スコアにはしない。

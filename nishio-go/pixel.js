@@ -8124,6 +8124,7 @@ function frame(now) {
       }
     }
     if (s.shop && giant) drawShopSeimai(sx, sy, size);   // 自店の特大絵の足元に精米の小道具（絵だけ）
+    if (s.shop && giant) drawRiceJourney(sx, sy, size);   // 米の流れ（稲→もみ→玄米→白米・副産物）の水彩風の絵（絵だけ）
     if (s.shop) { const t = drawShopTag(sx + size / 2, sy, dpr, s); shopHits.push([Math.min(t[0], sx), t[1], Math.max(t[2], sx + size), sy + size, s]); }
   }
   // 西尾の人たち（まだ話していない人の上には吹き出し）。呼びとめた人は、歩いてくる途中の位置に（歩く間は足を速く動かす）
@@ -8842,6 +8843,76 @@ function drawShopSeimai(sx, sy, size) {   // 静止画：動きも文字もな�
   ctx.beginPath(); ctx.moveTo(l.hx0, l.hy0); ctx.lineTo(l.hx1, l.hy1); ctx.stroke();
   ctx.fillStyle = 'rgba(180,220,255,.35)'; ctx.beginPath(); ctx.arc(l.cx, l.cy, l.r, 0, Math.PI * 2); ctx.fill();
   ctx.strokeStyle = '#2f2a26'; ctx.lineWidth = Math.max(2, size * 0.01); ctx.beginPath(); ctx.arc(l.cx, l.cy, l.r, 0, Math.PI * 2); ctx.stroke();
+}
+// 自店の特大絵の足元・右寄りに置く「米の流れ」（稲→もみ→玄米→白米と、副産物の小さな山）の水彩風の絵の幾何（サイクル185）。描画とテストが同じ数字を使う。純関数
+function riceJourneyLayout(sx, sy, size) {
+  try {
+    if (![sx, sy, size].every(v => typeof v === 'number' && isFinite(v)) || size <= 0) return null;
+    const ground = sy + size * 0.72, x = sx + size * 0.38, w = size * 0.44, r = size * 0.034, cy = ground - size * 0.07;
+    const stages = ['ine', 'momi', 'genmai', 'hakumai'].map((kind, i) => ({ kind, cx: x + w * (0.125 + 0.25 * i), cy, r }));
+    const arrows = [0, 1, 2].map(i => ({ x0: stages[i].cx + r * 1.2, x1: stages[i + 1].cx - r * 1.2, y: cy }));
+    const pyY = ground + size * 0.065;
+    const piles = [{ kind: 'wara', cx: x + w * 0.2, cy: pyY, w: size * 0.07, h: size * 0.035 }, { kind: 'momigara', cx: x + w * 0.5, cy: pyY, w: size * 0.07, h: size * 0.035 }, { kind: 'nuka', cx: x + w * 0.8, cy: pyY, w: size * 0.07, h: size * 0.035 }];
+    const links = piles.map((pl, i) => ({ x: (stages[i].cx + stages[i + 1].cx) / 2, y0: cy + r * 0.4, x1: pl.cx, y1: pl.cy - pl.h * 0.6 }));   // 工程の途中から副産物へ降りる点線（参照絵と同じ）
+    return { x, y: cy - r * 1.6, w, h: pyY + size * 0.035 - (cy - r * 1.6), ground, stages, arrows, piles, links };
+  } catch (e) { return null; }
+}
+function drawRiceJourney(sx, sy, size) {   // 静止画：動きも文字もなし
+  const L = riceJourneyLayout(sx, sy, size);
+  if (!L) return;
+  const oval = (cx, cy, rx, ry, fill, line, rot = 0) => {
+    ctx.fillStyle = fill; ctx.beginPath(); ctx.ellipse(cx, cy, rx, ry, rot, 0, Math.PI * 2); ctx.fill();
+    if (line) { ctx.strokeStyle = line; ctx.lineWidth = Math.max(1, size * 0.004); ctx.stroke(); }
+  };
+  const wash = { ine: ['rgba(255,224,130,.28)', 'rgba(200,225,120,.22)'], momi: ['rgba(255,236,170,.3)', 'rgba(255,214,120,.2)'], genmai: ['rgba(238,210,160,.3)', 'rgba(226,190,140,.2)'], hakumai: ['rgba(255,255,255,.4)', 'rgba(220,235,250,.25)'] };
+  for (const s of L.stages) {
+    const c = wash[s.kind];
+    oval(s.cx, s.cy, s.r * 1.55, s.r * 1.2, c[0]);
+    oval(s.cx + s.r * 0.3, s.cy + s.r * 0.15, s.r * 1.2, s.r * 1.05, c[1]);
+    oval(s.cx - s.r * 0.25, s.cy - s.r * 0.2, s.r * 1.0, s.r * 0.85, c[0]);
+    const u = s.r;
+    if (s.kind === 'ine') {
+      ctx.lineCap = 'round';
+      for (let k = -1; k <= 1; k++) {
+        ctx.strokeStyle = '#8aa83c'; ctx.lineWidth = Math.max(1, size * 0.005);
+        ctx.beginPath(); ctx.moveTo(s.cx + k * u * 0.25, s.cy + u * 0.9); ctx.quadraticCurveTo(s.cx + k * u * 0.4, s.cy - u * 0.2, s.cx + k * u * 0.8, s.cy - u * 0.5); ctx.stroke();
+        for (let j = 0; j < 3; j++) oval(s.cx + k * u * (0.5 + 0.1 * j) + u * 0.05, s.cy - u * (0.5 - 0.3 * j) + u * 0.2, u * 0.13, u * 0.2, j % 2 ? '#e8c14a' : '#f2d56b', '#b8942c', 0.4 * k);
+      }
+    } else if (s.kind === 'momi') {
+      ctx.fillStyle = '#e8c96a'; ctx.beginPath(); ctx.moveTo(s.cx - u * 0.16, s.cy - u * 0.72); ctx.lineTo(s.cx, s.cy - u * 1.1); ctx.lineTo(s.cx + u * 0.16, s.cy - u * 0.72); ctx.closePath(); ctx.fill();
+      oval(s.cx, s.cy, u * 0.5, u * 0.85, '#f0d68a', '#b8942c');
+      ctx.strokeStyle = '#c9a54a'; ctx.lineWidth = Math.max(1, size * 0.003);
+      for (const d of [-0.2, 0, 0.2]) { ctx.beginPath(); ctx.moveTo(s.cx + u * d, s.cy - u * 0.65); ctx.lineTo(s.cx + u * d, s.cy + u * 0.65); ctx.stroke(); }
+    } else if (s.kind === 'genmai') {
+      oval(s.cx, s.cy, u * 0.58, u * 0.78, '#e6c79a', '#a07c4a', 0.3);
+      oval(s.cx - u * 0.12, s.cy - u * 0.2, u * 0.12, u * 0.25, '#f3dfbd', null, 0.3);
+    } else {
+      oval(s.cx + u * 0.12, s.cy + u * 0.78, u * 0.55, u * 0.14, 'rgba(120,140,160,.28)');
+      oval(s.cx, s.cy, u * 0.5, u * 0.8, '#ffffff', '#c9d2d9', 0.3);
+    }
+  }
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#a89a78'; ctx.lineWidth = Math.max(1, size * 0.004);
+  for (const a of L.arrows) {
+    const h = size * 0.012;
+    ctx.beginPath(); ctx.moveTo(a.x0, a.y); ctx.lineTo(a.x1, a.y); ctx.moveTo(a.x1 - h, a.y - h); ctx.lineTo(a.x1, a.y); ctx.lineTo(a.x1 - h, a.y + h); ctx.stroke();
+  }
+  if (ctx.setLineDash) ctx.setLineDash([2, 3]);
+  ctx.strokeStyle = '#b8ab8c';
+  for (const lk of L.links) { ctx.beginPath(); ctx.moveTo(lk.x, lk.y0); ctx.lineTo(lk.x, lk.y1 - size * 0.012); ctx.lineTo(lk.x1, lk.y1 - size * 0.012); ctx.lineTo(lk.x1, lk.y1); ctx.stroke(); }
+  if (ctx.setLineDash) ctx.setLineDash([]);
+  for (const p of L.piles) {
+    oval(p.cx, p.cy + p.h * 0.1, p.w * 0.75, p.h * 0.9, p.kind === 'nuka' ? 'rgba(226,200,150,.3)' : 'rgba(255,230,160,.3)');
+    if (p.kind === 'wara') {
+      ctx.fillStyle = '#e2c25a'; ctx.fillRect(Math.round(p.cx - p.w / 2), Math.round(p.cy - p.h * 0.3), Math.max(1, Math.round(p.w)), Math.max(1, Math.round(p.h * 0.7)));
+      ctx.strokeStyle = '#a88a2c'; ctx.beginPath(); ctx.moveTo(p.cx - p.w * 0.1, p.cy - p.h * 0.3); ctx.lineTo(p.cx - p.w * 0.1, p.cy + p.h * 0.4); ctx.stroke();
+    } else if (p.kind === 'momigara') {
+      oval(p.cx - p.w * 0.2, p.cy, p.w * 0.22, p.h * 0.45, '#ecd27c', '#b8942c', -0.4);
+      oval(p.cx + p.w * 0.2, p.cy + p.h * 0.1, p.w * 0.22, p.h * 0.45, '#f4e29c', '#b8942c', 0.4);
+    } else {
+      ctx.fillStyle = '#d8b98a'; ctx.beginPath(); ctx.moveTo(p.cx - p.w * 0.5, p.cy + p.h * 0.5); ctx.quadraticCurveTo(p.cx, p.cy - p.h * 1.1, p.cx + p.w * 0.5, p.cy + p.h * 0.5); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = '#a98a5c'; ctx.stroke();
+    }
+  }
 }
 function drawShopTag(cx, bottom, dpr, s) {
   gbPause++;
@@ -13283,7 +13354,7 @@ const meiroApi = {
   tilt: () => tiltG, tiltAsk, tiltReset, tiltNeedsPermission, koto: (v, low) => kotoSound(v, low), splash: v => splashSound(v), boing: (v, hi) => boingSound(v, hi), rumble: v => rumbleTick(v, GROUND.road),   // rumble：転がる音（速さは 地図の マス/秒）
   pause(on) { meiroPause = !!on; dirty = true; if (on && mzNext.hold) { mzNext.hold = false; if (G.toastFlush) G.toastFlush(); } },   // 止める ときは「つぎの ゴール」で 待たせた 知らせを 出す
 };
-window.nishioPixel = { seimaiLayout, drawShopSeimai, blinkOn, BLINK_MS, BLINK_SHUT_MS, get riceEye() { return riceEyeAt; }, grow: { stage: () => grow.stage, stageFor: growStageFor, TH: GROW_TH, popAt: () => grow.popT }, firstRoute: { shape: mzPathShape, simple: mzFirstSimple, LIM: MZ_FIRST_SIMPLE }, collected: { has: collectedOf }, roadShape: { of: roadShapeOf, corner: roadShapeCorner, missing: roadShapeMissing, end: roadShapeEndDir, straight: roadShapeStraightDir }, glanceShift, asleepShut, happyFace, meiroApi, heroGiant: () => heroGiantId, pickHeroGiant, HERO_GIANT_RANGE, maze: { half: () => ({ cell: mzHalf.cell ? [...mzHalf.cell] : null, passed: !!mzHalf.passed }), halfCell: mzHalfCell, halfPassed: mzHalfPassed, HALF_MIN: MZ_HALF_MIN, goalFxSpec: () => ({ ...MZ_GOAL_FX }), wallTheme: () => mzWallTheme(), on: () => mazeOn(), playing: () => active && mazeOn(), next: () => ({ want: mzNext.want, t0: mzNext.t0, on: mzNextOn(), labHide: !!mzNext.labHide, arrowDim: !!mzNext.arrowDim, box: mzNext.box || null }), goal: id => {   // id の 名所が いまの ゴール（か 2分 以内の 前の ゴール）なら、かかった 時間と めいろの 道のり
+window.nishioPixel = { seimaiLayout, drawShopSeimai, riceJourneyLayout, drawRiceJourney, blinkOn, BLINK_MS, BLINK_SHUT_MS, get riceEye() { return riceEyeAt; }, grow: { stage: () => grow.stage, stageFor: growStageFor, TH: GROW_TH, popAt: () => grow.popT }, firstRoute: { shape: mzPathShape, simple: mzFirstSimple, LIM: MZ_FIRST_SIMPLE }, collected: { has: collectedOf }, roadShape: { of: roadShapeOf, corner: roadShapeCorner, missing: roadShapeMissing, end: roadShapeEndDir, straight: roadShapeStraightDir }, glanceShift, asleepShut, happyFace, meiroApi, heroGiant: () => heroGiantId, pickHeroGiant, HERO_GIANT_RANGE, maze: { half: () => ({ cell: mzHalf.cell ? [...mzHalf.cell] : null, passed: !!mzHalf.passed }), halfCell: mzHalfCell, halfPassed: mzHalfPassed, HALF_MIN: MZ_HALF_MIN, goalFxSpec: () => ({ ...MZ_GOAL_FX }), wallTheme: () => mzWallTheme(), on: () => mazeOn(), playing: () => active && mazeOn(), next: () => ({ want: mzNext.want, t0: mzNext.t0, on: mzNextOn(), labHide: !!mzNext.labHide, arrowDim: !!mzNext.arrowDim, box: mzNext.box || null }), goal: id => {   // id の 名所が いまの ゴール（か 2分 以内の 前の ゴール）なら、かかった 時間と めいろの 道のり
     mzGoalAsk.id = '';   // 保留中の 着いた名所は 入口で 消す（失敗した goal で 前の id が 残らない。サイクル166 Codex指摘）
     if (!mazeOn()) return null;
     const now = performance.now(), pv = mzRt.prev, g = mzRt.gid === id ? { t0: mzRt.t0, len0: mzRt.len0, warp: mzRt.warp, moves: mzMv.n, run: { ...mzRt.run } } : pv && pv.id === id && now - pv.at < 120000 ? pv : null;

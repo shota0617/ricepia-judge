@@ -8104,6 +8104,7 @@ function frame(now) {
       ctx.lineWidth = lw; ctx.strokeStyle = 'rgba(255,213,79,.9)'; ctx.beginPath(); ctx.arc(rx, ry, rr, 0, Math.PI * 2); ctx.stroke(); //c17
     } //c17
     if (s.shop) gbPause++;
+    if (giant) drawGiantWash(sx, sy, size);   // 特大絵の足元に水彩のにじみ（絵の下地）
     ctx.drawImage(spr[0], Math.round(sx), Math.round(sy), size, size);   // 訪れたあとも、目印は元の色のまま
     if (s.shop) gbPause--;
     if (giant) { giantHits.push([sx, sy, size, s, giant[0]]); depthArt.push([spr[0], Math.round(sx), Math.round(sy), size, sy + size * 0.72, !!s.shop]); }   // タップは、描いた順の逆（手前の絵から）に調べる
@@ -8913,6 +8914,24 @@ function drawRiceJourney(sx, sy, size) {   // 静止画：動きも文字もな�
       ctx.strokeStyle = '#a98a5c'; ctx.stroke();
     }
   }
+}
+// 特大の名所絵すべての足元に敷く、水彩の手描き風の淡い「地面のにじみ」（サイクル186）。描画とテストが同じ数字を使う。純関数
+function giantWashLayout(sx, sy, size) {
+  try {
+    if (![sx, sy, size].every(v => typeof v === 'number' && isFinite(v)) || size <= 0) return null;
+    const ground = sy + size * 0.72, cx = sx + size / 2, cy = ground - size * 0.01;
+    const layers = [
+      { cx, cy, rx: size * 0.46, ry: size * 0.13, fill: 'rgba(255,240,190,.22)' },
+      { cx: cx - size * 0.06, cy: cy + size * 0.015, rx: size * 0.38, ry: size * 0.105, fill: 'rgba(170,210,140,.18)' },
+      { cx: cx + size * 0.07, cy: cy - size * 0.01, rx: size * 0.30, ry: size * 0.085, fill: 'rgba(170,210,240,.16)' },
+    ];
+    return { x: cx - size * 0.46, y: cy - size * 0.13, w: size * 0.92, h: size * 0.26, ground, cx, cy, layers };
+  } catch (e) { return null; }
+}
+function drawGiantWash(sx, sy, size) {   // 静止画：絵の下地だけ（輪郭線も文字も動きもなし）
+  const L = giantWashLayout(sx, sy, size);
+  if (!L) return;
+  for (const l of L.layers) { ctx.fillStyle = l.fill; ctx.beginPath(); ctx.ellipse(l.cx, l.cy, l.rx, l.ry, 0, 0, Math.PI * 2); ctx.fill(); }
 }
 function drawShopTag(cx, bottom, dpr, s) {
   gbPause++;
@@ -13354,7 +13373,7 @@ const meiroApi = {
   tilt: () => tiltG, tiltAsk, tiltReset, tiltNeedsPermission, koto: (v, low) => kotoSound(v, low), splash: v => splashSound(v), boing: (v, hi) => boingSound(v, hi), rumble: v => rumbleTick(v, GROUND.road),   // rumble：転がる音（速さは 地図の マス/秒）
   pause(on) { meiroPause = !!on; dirty = true; if (on && mzNext.hold) { mzNext.hold = false; if (G.toastFlush) G.toastFlush(); } },   // 止める ときは「つぎの ゴール」で 待たせた 知らせを 出す
 };
-window.nishioPixel = { seimaiLayout, drawShopSeimai, riceJourneyLayout, drawRiceJourney, blinkOn, BLINK_MS, BLINK_SHUT_MS, get riceEye() { return riceEyeAt; }, grow: { stage: () => grow.stage, stageFor: growStageFor, TH: GROW_TH, popAt: () => grow.popT }, firstRoute: { shape: mzPathShape, simple: mzFirstSimple, LIM: MZ_FIRST_SIMPLE }, collected: { has: collectedOf }, roadShape: { of: roadShapeOf, corner: roadShapeCorner, missing: roadShapeMissing, end: roadShapeEndDir, straight: roadShapeStraightDir }, glanceShift, asleepShut, happyFace, meiroApi, heroGiant: () => heroGiantId, pickHeroGiant, HERO_GIANT_RANGE, maze: { half: () => ({ cell: mzHalf.cell ? [...mzHalf.cell] : null, passed: !!mzHalf.passed }), halfCell: mzHalfCell, halfPassed: mzHalfPassed, HALF_MIN: MZ_HALF_MIN, goalFxSpec: () => ({ ...MZ_GOAL_FX }), wallTheme: () => mzWallTheme(), on: () => mazeOn(), playing: () => active && mazeOn(), next: () => ({ want: mzNext.want, t0: mzNext.t0, on: mzNextOn(), labHide: !!mzNext.labHide, arrowDim: !!mzNext.arrowDim, box: mzNext.box || null }), goal: id => {   // id の 名所が いまの ゴール（か 2分 以内の 前の ゴール）なら、かかった 時間と めいろの 道のり
+window.nishioPixel = { giantWashLayout, drawGiantWash, seimaiLayout, drawShopSeimai, riceJourneyLayout, drawRiceJourney, blinkOn, BLINK_MS, BLINK_SHUT_MS, get riceEye() { return riceEyeAt; }, grow: { stage: () => grow.stage, stageFor: growStageFor, TH: GROW_TH, popAt: () => grow.popT }, firstRoute: { shape: mzPathShape, simple: mzFirstSimple, LIM: MZ_FIRST_SIMPLE }, collected: { has: collectedOf }, roadShape: { of: roadShapeOf, corner: roadShapeCorner, missing: roadShapeMissing, end: roadShapeEndDir, straight: roadShapeStraightDir }, glanceShift, asleepShut, happyFace, meiroApi, heroGiant: () => heroGiantId, pickHeroGiant, HERO_GIANT_RANGE, maze: { half: () => ({ cell: mzHalf.cell ? [...mzHalf.cell] : null, passed: !!mzHalf.passed }), halfCell: mzHalfCell, halfPassed: mzHalfPassed, HALF_MIN: MZ_HALF_MIN, goalFxSpec: () => ({ ...MZ_GOAL_FX }), wallTheme: () => mzWallTheme(), on: () => mazeOn(), playing: () => active && mazeOn(), next: () => ({ want: mzNext.want, t0: mzNext.t0, on: mzNextOn(), labHide: !!mzNext.labHide, arrowDim: !!mzNext.arrowDim, box: mzNext.box || null }), goal: id => {   // id の 名所が いまの ゴール（か 2分 以内の 前の ゴール）なら、かかった 時間と めいろの 道のり
     mzGoalAsk.id = '';   // 保留中の 着いた名所は 入口で 消す（失敗した goal で 前の id が 残らない。サイクル166 Codex指摘）
     if (!mazeOn()) return null;
     const now = performance.now(), pv = mzRt.prev, g = mzRt.gid === id ? { t0: mzRt.t0, len0: mzRt.len0, warp: mzRt.warp, moves: mzMv.n, run: { ...mzRt.run } } : pv && pv.id === id && now - pv.at < 120000 ? pv : null;

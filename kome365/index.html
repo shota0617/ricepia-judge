@@ -464,6 +464,15 @@ a{color:var(--acc)}
 #swCard.tL::after,#swCard.tR::after{background:#526879}
 #swCard.fly{transition:transform .18s cubic-bezier(.3,.7,.4,1),opacity .18s ease-out}
 #swCard.enter{animation:swIn .22s cubic-bezier(.22,1.25,.36,1)}
+/* 店主指示 2026-11-09: 最初の1枚だけ、カードの左右の内側に柔らかい影がゆっくり交互に現れ、左右へ動かせることを影でそっと知らせる(文字・アイコンなし、操作は妨げない) */
+.swHintSh{position:absolute;top:0;bottom:0;width:52px;pointer-events:none;opacity:0;z-index:3}
+.swHintSh.L{left:0;border-radius:20px 0 0 20px;background:linear-gradient(to right,rgba(59,82,99,.30),rgba(59,82,99,0))}
+.swHintSh.R{right:0;border-radius:0 20px 20px 0;background:linear-gradient(to left,rgba(59,82,99,.30),rgba(59,82,99,0))}
+#swCard.hintSh .swHintSh{animation:swHintShPulse 4.8s ease-in-out infinite}
+#swCard.hintSh .swHintSh.R{animation-delay:2.4s}
+#swCard.drag .swHintSh{animation:none;opacity:0}   /* つかんでいる間は促しを止める(決めずに離せば、まだ最初の1枚の間はまた出る) */
+@keyframes swHintShPulse{0%,100%{opacity:0}22%{opacity:1}46%{opacity:0}}
+@media (prefers-reduced-motion: reduce){#swCard.hintSh .swHintSh{animation:none;opacity:0}}
 @keyframes swIn{from{transform:translateY(24px) scale(.96);opacity:0}60%{opacity:1}80%{transform:translateY(-1px) scale(1.004)}to{transform:none;opacity:1}}
 #swTag{display:none;font-size:11px;font-weight:700;background:#efe7d2;color:#6b5a32;border-radius:10px;padding:2px 8px}
 #swTag.must{background:#f3dfb4}#swTag.wx{background:#cfe3ef}#swTag.ev{background:#f2d3c8}#swTag.prep{background:#dfe8cf}#swTag.post{background:#e6dcef}
@@ -804,7 +813,7 @@ html:has(#sGame.swipeMode:not(.hidden)),body:has(#sGame.swipeMode:not(.hidden)){
     <div id="swSeasonScene" aria-hidden="true"><span class="scPix"></span><span class="scStage"></span></div>
     <div id="swRipple" aria-hidden="true"><i class="rpRing r1"></i><i class="rpRing r2"></i><span class="rpIcon"></span></div>
     <div id="swCount" role="status" aria-label="収穫までの日数"><b></b></div>
-    <div id="swStage"><div id="swWrap"><div id="swStagePlants" aria-hidden="true"></div><div id="swTrace" aria-hidden="true"></div><div id="swGhost" aria-hidden="true"></div><div id="swCard" tabindex="0" role="group" aria-live="polite"><div class="swSide L" id="swSL"></div><div class="swSide R" id="swSR"></div><span id="swTag"></span><div id="swBigDate" aria-hidden="true"></div><div id="swSeasonStrip" aria-hidden="true"></div><div id="swNextMile" aria-hidden="true"><span class="nmIc"></span><b class="nmNum"></b><span class="nmDay"></span></div><div id="swFest" aria-hidden="true">🏮🎆🏮🎆🏮</div><div id="swIc"><span class="icPix" aria-hidden="true"></span><span class="icEmoji"></span></div><h2 id="swTitle"></h2><p id="swText"></p><div id="swEdge"><span class="eL"><b class="eIc"></b><span class="eLb"></span></span><span class="eR"><b class="eIc"></b><span class="eLb"></span></span></div><div id="swHint">◀ 左へ／右へ ▶ カードを動かして選ぶ</div></div><i class="swBack b2"></i><i class="swBack b1"></i><div id="swGhostArrows" aria-hidden="true"><span class="ghA ghL">◀</span><span class="ghA ghR">▶</span></div><div id="swGuide" aria-hidden="true"><span class="gd gdL">◀</span><span class="gd gdR">▶</span></div></div></div>
+    <div id="swStage"><div id="swWrap"><div id="swStagePlants" aria-hidden="true"></div><div id="swTrace" aria-hidden="true"></div><div id="swGhost" aria-hidden="true"></div><div id="swCard" tabindex="0" role="group" aria-live="polite"><i class="swHintSh L" aria-hidden="true"></i><i class="swHintSh R" aria-hidden="true"></i><div class="swSide L" id="swSL"></div><div class="swSide R" id="swSR"></div><span id="swTag"></span><div id="swBigDate" aria-hidden="true"></div><div id="swSeasonStrip" aria-hidden="true"></div><div id="swNextMile" aria-hidden="true"><span class="nmIc"></span><b class="nmNum"></b><span class="nmDay"></span></div><div id="swFest" aria-hidden="true">🏮🎆🏮🎆🏮</div><div id="swIc"><span class="icPix" aria-hidden="true"></span><span class="icEmoji"></span></div><h2 id="swTitle"></h2><p id="swText"></p><div id="swEdge"><span class="eL"><b class="eIc"></b><span class="eLb"></span></span><span class="eR"><b class="eIc"></b><span class="eLb"></span></span></div><div id="swHint">◀ 左へ／右へ ▶ カードを動かして選ぶ</div></div><i class="swBack b2"></i><i class="swBack b1"></i><div id="swGhostArrows" aria-hidden="true"><span class="ghA ghL">◀</span><span class="ghA ghR">▶</span></div><div id="swGuide" aria-hidden="true"><span class="gd gdL">◀</span><span class="gd gdR">▶</span></div></div></div>
     <div id="swDetail"></div>
     <button type="button" id="swDetailBtn" style="display:none" aria-controls="swDetail" aria-expanded="false">🔍 くわしい話を見る</button>
     <div id="swMark" aria-hidden="true"></div>
@@ -3254,6 +3263,7 @@ renderTitle();
     el.card.classList.remove('enter', 'wig', 'hinting'); void el.card.offsetWidth; el.card.classList.add('enter'); if (hintOn) el.card.classList.add('hinting');   /* 周回99: 最初の3枚の揺れ(wig)はやめる。◀ ▶ の案内だけで足りる */
     if (card.focus && window.Field3D && window.Field3D.canFocus && use3d) { try { if (window.Field3D.canFocus(card.focus)) window.Field3D.focus(card.focus); } catch (e) {} }
     $('swGhost').classList.toggle('on', !ghostDone && choices.length === 0 && !calmOn()); $('swGhostArrows').classList.toggle('on', !ghostDone && choices.length === 0 && !calmOn());
+    el.card.classList.toggle('hintSh', choices.length === 0 && !calmOn());   /* 店主指示 2026-11-09: 最初の1枚だけカード両端の影で左右へ動かせることを促す。最初のスワイプ以降(choices>=1)は render のたび外れるので二度と出ない */
     var kk = $('swKakashi'); kk.classList.toggle('big', card.tag === '見回り');
     festReset();
     detailBuild();

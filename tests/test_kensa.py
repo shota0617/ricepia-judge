@@ -1414,6 +1414,18 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertIn("height:92px;", HTML[HTML.index("#journey svg"):HTML.index("#journey text")])
         self.assertIn("稲が脱穀されて もみになり、もみすりで玄米になり、精米されて白米になり、ごはんになるまでの流れを、水彩風の絵で見せます", HTML)
 
+    def test_cycle134_average_number_on_lcd_gently_appears(self):
+        # 差39: はかるで平均が決まる瞬間、液晶（#lcd）の平均数字だけが
+        # innerHTML の差し替えで即座に出ていた（出現アニメーション0件）。
+        # 他の現れるものと同じ260msのふわりとした出現を、平均確定時だけ付ける。
+        start = HTML.index("function showAverage()")
+        avg = HTML[start:HTML.index("setTimeout(toMiwakeru", start)]
+        self.assertIn('$("lcd").animate([{ opacity:0, transform:"scale(.7)" }', avg)
+        self.assertIn('duration:260 * motion', avg)
+        # 1回ごとの測定値の表示（takeReading）は従来どおり即時で、アニメーションは付けない
+        reading = HTML[HTML.index("function takeReading()"):HTML.index("function crankPointer")]
+        self.assertNotIn('$("lcd").animate', reading)
+
     def test_cycle93_picked_grains_stay_in_quiet_record(self):
         # 類7: 見分けた粒が静かに記録に残る。任意で開く資料（#notes）の中だけに出し、常時表示・競争・スコアにはしない。
         # 袋を越えて残るため startLot では消さない（サイクル91の seenChecks と同じ持ち方）。

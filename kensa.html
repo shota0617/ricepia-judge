@@ -1259,6 +1259,7 @@ $("meterBtn").addEventListener("click", (e) => {
 function showAverage() {
   const avg = moistureAverage(LOT.moisture), high = itemGrades(lotPercents(LOT)).moisture === 3;
   $("lcd").innerHTML = avg.toFixed(1) + "<small>%</small>";
+  $("lcd").animate([{ opacity:0, transform:"scale(.7)" }, { opacity:1, transform:"scale(1.05)", offset:.7 }, { opacity:1, transform:"scale(1)" }], { duration:260 * motion, easing:"ease-out" }); /* 平均の数字（液晶）も、他の現れるもの（チップ=ふわり260ms・差30／つぎの袋ボタン=差31／🔍ボタン=差32／小皿の粒=差33／証印=差34／測定値の枠=差35）と同じくふわりと現れる形にそろえる（サイクル134・差分テーマ差39）。旧版は innerHTML の差し替えだけで完成形が即座に出ていた（390×844実測で出現時のアニメーション0件）。平均が決まった時だけ1回付ける。1回ごとの測定値の表示は従来どおり即時 */
   $("meterBtn").classList.toggle("high", high);
   $("meterBtn").disabled = true;
   hint.textContent = high ? "水分が 高い！" : "ちょうどいい";

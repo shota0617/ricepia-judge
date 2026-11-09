@@ -3285,7 +3285,7 @@ renderTitle();
     p.innerHTML = '<div class="dS"><b>📖 全文</b><p>' + esc(card.text) + '</p></div>' + nowHtml + '<div class="dS L"><b>◀ ' + esc(card.left.label) + '</b>' + (lh ? '<p>' + esc(lh) + '</p>' : '') + fxLine(fx.left, fx.leftDir, detailInfo.leftFxState) + '</div><div class="dS R"><b>' + esc(card.right.label) + ' ▶</b>' + (rh ? '<p>' + esc(rh) + '</p>' : '') + fxLine(fx.right, fx.rightDir, detailInfo.rightFxState) + '</div>';
   }
   function toggleDetail(){ var b = $('swDetailBtn'), p = $('swDetail'), o = !p.classList.contains('open'); if (o && choices.length < 3) return;   /* 周回122(F6): 最初の3枚ではカードのタップでくわしい話を開かない(誤タップで文章が出て流れが止まるのを防ぐ。閉じる操作と4枚目以降は従来どおり) */
-    if (o) { if (card && card.pv === undefined) { try { pvCompute(); } catch (e) {} } detailBuild(); p = $('swDetail'); } p.classList.toggle('open', o); b.textContent = o ? '🔍 くわしい話をとじる' : '🔍 くわしい話を見る'; b.setAttribute('aria-expanded', o ? 'true' : 'false'); }   /* ボタンは画面から廃止(サイクル11)。カードのタップと検証互換のボタンclickが共用する */
+    if (o) { if (card && card.pv === undefined) { try { pvCompute(); } catch (e) {} } detailBuild(); p = $('swDetail'); } p.classList.toggle('open', o); b.textContent = o ? '🔍 くわしい話をとじる' : '🔍 くわしい話を見る'; b.setAttribute('aria-expanded', o ? 'true' : 'false'); }   /* ボタンは画面から廃止(サイクル11)。店主指示(2026-11-09「スワイプのみ」)でカードのタップからは呼ばない。検証互換のボタンclick専用 */
   $('swDetailBtn').onclick = toggleDetail;
   /* 1日もどる(直前の1枚だけ): 判断を適用する直前の状態を別キー kome365_rewind に保存し、choices を1文字短くして再生し直す。SAVE の形式は変えない */
   var RW = 'kome365_rewind';
@@ -3696,7 +3696,7 @@ renderTitle();
     lastFlick = { dx: dx, v: Math.round(v * 1000) / 1000, flick: flick, cancelled: !!cancel, viaCancel: false };
     var okL = dx <= -th || (flick && dx < 0), okR = dx >= th || (flick && dx > 0);
     if ((isUp || cancel) && (dyEnd == null || Math.abs(dx) < dyGuard * (cancel ? 1.5 : 1))) { okL = false; okR = false; }   /* cancelは横優勢(縦の1.5倍以上)のときだけ確定。指離しは横が縦以上なら確定し、自然な弧は通す。はっきり縦へ動かしただけでは選ばない */
-    if (okL) { lastFlick.viaCancel = !!cancel; choose('left', v); } else if (okR) { lastFlick.viaCancel = !!cancel; choose('right', v); } else { reset(); if (isUp && !busy && tapMax < 12 && n - tapT0 < 500) toggleDetail(); }   /* スワイプ確定(choose)ではここに来ないので詳細は開かない。pointerupで12px未満・500ms未満のタップだけ詳細を開閉する(選択には使わない)。pointercancelでも横変位と速度が条件を満たし横優勢なら選択として確定する。実機の速いフリックはブラウザ側のジェスチャ競合でpointerupでなくpointercancelで終わることがあり、無条件に捨てると「早いスワイプができない」になる(サイクル16)。変位の小さいcancel・縦優勢のcancelは従来どおり戻る */
+    if (okL) { lastFlick.viaCancel = !!cancel; choose('left', v); } else if (okR) { lastFlick.viaCancel = !!cancel; choose('right', v); } else { reset(); }   /* 店主指示(2026-11-09)「タップするとカードが上に移動する。スワイプのみ」: タップでは詳細を開かず選択もしない。従来は12px未満・500ms未満のタップで toggleDetail() を呼び、#swDetail が縦を占めて #swStage が縮み、カードが上へ跳ねていた(実機報告・実測476px)。選択は左右スワイプだけ。toggleDetail は検証互換の隠しボタン専用に残す。pointercancelでも横変位と速度が条件を満たし横優勢なら選択として確定する。実機の速いフリックはブラウザ側のジェスチャ競合でpointerupでなくpointercancelで終わることがあり、無条件に捨てると「早いスワイプができない」になる(サイクル16)。変位の小さいcancel・縦優勢のcancelは従来どおり戻る */
     dx = 0; samples = [];
   }
   el.card.addEventListener('pointerup', up); el.card.addEventListener('pointercancel', up);

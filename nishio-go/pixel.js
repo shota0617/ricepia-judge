@@ -9414,7 +9414,10 @@ function tapDemoTick() {
   const now = performance.now();
   if (rp.x !== tapDemo.x || rp.y !== tapDemo.y) { tapDemo.x = rp.x; tapDemo.y = rp.y; tapDemo.at = now; }   // 転がって いる・歩いて いる
   const path = mzRt.path;
-  const ok = active && !meiroPause && !document.hidden && rp.x !== null && mazeOn() && howtoEl.hidden && !mapCovered() && !tapS.goal && !!path && path.length > 1 && now - tapDemo.at >= DEMO_IDLE_MS;
+  // サイクル197（運営者の声 2026-11-10「最初の 1 タップを促す表示」「１タップを促すお手本」）：iPhone は 1回 タップしないと 傾きの 許可を 聞けない。
+  // まだ 聞いて いない 間は、2秒 待たずに はじめから タップの 手本（指＋「タップ！」の 札）を 出す。タップすると 許可の 窓が 出て、手本は ふだんの 出かた（止まって 2秒）に もどる
+  const first = tiltBtnWanted() && !tiltG.asked;
+  const ok = active && !meiroPause && !document.hidden && rp.x !== null && mazeOn() && howtoEl.hidden && !mapCovered() && !tapS.goal && !!path && path.length > 1 && now - tapDemo.at >= (first ? 0 : DEMO_IDLE_MS);
   if (!ok) { tapDemoHide(); return; }
   if (!tapDemo.el) {
     const mk = (id, t) => { const e = document.createElement('div'); e.id = id; e.setAttribute('aria-hidden', 'true'); e.textContent = t; e.hidden = true; document.body.appendChild(e); return e; };
@@ -9423,6 +9426,7 @@ function tapDemoTick() {
   const c = path[Math.min(2, path.length - 1)], q = tileClient(c[0] * MZ_K + 1, c[1] * MZ_K + 1);   // 道しるべの 2マス先（ゴールが 近ければ ゴールの マス）
   tapDemo.el.style.left = Math.round(q.x) + 'px'; tapDemo.el.style.top = Math.round(q.y) + 'px';
   if (tapDemo.el.hidden) { tapDemo.el.hidden = false; tapDemo.n++; }
+  if (tapDemo.el.classList.contains('first') !== first) tapDemo.el.classList.toggle('first', first);
   const ph = tiltG.on && Math.hypot(tiltG.x, tiltG.y) <= 0.2;   // 傾きが 使えて いる 端末：傾ける 手本も
   if (tapDemo.ph.hidden === ph) tapDemo.ph.hidden = !ph;
 }
@@ -9436,6 +9440,9 @@ function tileClient(tx, ty) {   // 歩く地図のマスのまん中が、画面
 }
 function tiltAsk(event) {   // 本当の タップで 1回だけ（画面を 最初に さわった とき・傾きの ボタン・はじめの画面の「あそぶ」・盤の めいろを 開く ボタン）。前に ことわった 人には 地図の タップでは 聞かない。拒否・例外でも タップで 遊べる。
   if (!event || !event.isTrusted || tiltG.asked || !tiltNeedsPermission()) return;   // userActivation が ない 端末でも、自動表示・合成クリックからは 求めない
+  if (event.type === 'touchend') return;   // Codex 指摘（PR #1085）：聞くのは click で だけ。盤の めいろ（meiro.js）は touchend と click の 両方から 呼ぶ。touchend で 失敗すると、すぐ あとの click が 下の 間あけで 捨てられ、何回 タップしても 聞けなく なる
+  if (tiltAsk.ev === event || performance.now() - (tiltAsk.at || -1e9) < 250) return;   // 同じ タップで 2回 聞かない（画面の 最初の タップと、あそぶ・盤の めいろの ボタンが 同じ click で 重なる。一時的な 失敗の やりなおしは 次の タップで）
+  tiltAsk.ev = event; tiltAsk.at = performance.now();
   tiltG.asked = true; tiltG.retry = false;
   const fallback = () => G.toast('地図を タップして 遊べるよ');   // サイクル191：傾きの 許可を 聞くのは スマホ・タブレットだけ（矢印キーの 話は しない）
   const denied = () => { lsSet('nsg_tilt_ok', '0'); tiltBtnSync(); fallback(); };   // ことわった・聞けない：おぼえて、ボタンは 小さく
@@ -9450,14 +9457,16 @@ function tiltAsk(event) {   // 本当の タップで 1回だけ（画面を 最
 // Codex 指摘（PR #1083）：傾きの ボタンを 押した ときは ボタンに まかせる（ここで 先に 聞くと、ボタンが「もう 聞いた」と 見て 案内を 出して しまう）。
 // 一時的な 失敗の やりなおしは、同じ 指の 動き（touchend の すぐ あとの click）では なく、次の タップで（0.7秒 あける）
 function tiltFirstTouch(e) {
-  if ((tiltG.asked && !tiltG.retry) || !tiltBtnWanted() || lsGet('nsg_tilt_ok', '') === '0') return;
+  // サイクル196（運営者の声 2026-11-10「にしおさんぽの動作許可をすぐ出して」「すぐ出るように修正」）：
+  // ・前に ことわった 人にも、開く たびに 最初の タップで 1回 聞く（前は 聞かなかったので、いちど「許可しない」を 押すと 窓が もう 出なかった）
+  // ・聞くのは click だけ（touchend では 聞かない）。iPhone が touchend を「さわった 操作」と 認めないと 失敗に なり、すぐ あとの click も 0.7秒の 間あけで 捨てて、いつまでも 窓が 出ない おそれが あった
+  if ((tiltG.asked && !tiltG.retry) || !tiltBtnWanted()) return;
   if (e && e.target && e.target.closest && e.target.closest('#pxTilt')) return;
   const now = performance.now();
   if (now - (tiltFirstTouch.at || -1e9) < 700) return;
   tiltFirstTouch.at = now;
   tiltAsk(e);
 }
-document.addEventListener('touchend', tiltFirstTouch, { capture: true, passive: true });
 document.addEventListener('click', tiltFirstTouch, { capture: true, passive: true });
 // 「あそぶ」ボタン（playReady）は廃止（運営者の声 2026-10-31）。傾きの許可は、傾きの ボタン（#pxTilt）を 押した ときに 聞く（サイクル194。最初の 地図タップでは 聞かない）
 document.addEventListener('visibilitychange', () => { tiltReset(); rp.vx = rp.vy = 0; });

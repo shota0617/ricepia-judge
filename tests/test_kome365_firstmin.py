@@ -120,6 +120,11 @@ class TestKome365FirstMinute(unittest.TestCase):
         # 速い フリックは ななめ(横が 縦の 0.7倍 以上)でも 決める
         self.assertIn("Math.abs(dx) < dyGuard * (cancel ? 1.5 : flick ? 0.7 : 1)", HTML)
 
+    def test_demo_waits_for_judge_mark(self):
+        # Codex 指摘(PR #1085): ○✗ の しるしが 出て いる 間は 手本を 待つ
+        self.assertIn("if (performance.now() - markAt < 750) { demoArm(); return; }", HTML)
+        self.assertIn("markAt = performance.now();", HTML)
+
     def test_demo_timer_does_not_count_hidden_tab(self):
         # Codex指摘(PR #1082): 別のタブに いる間は 手本の 待ちを 数えない。戻ったら 数え直す
         self.assertIn("if (document.hidden) { demoHeld = !!demoT; demoDisarm(); } else if (demoHeld) { demoHeld = false; demoArm(); }", HTML)
@@ -127,7 +132,7 @@ class TestKome365FirstMinute(unittest.TestCase):
     def test_demo_shows_whenever_player_stops(self):
         # 周回158(運営者の声 2026-11-10「手本は、止まって見ているときにかならず出ていること」):
         # 何枚目でも・前に決めた人でも、決めずに止まっていたら約2秒で手本を出す(うまくできている人は6秒に延ばすだけ)
-        self.assertIn("var DEMO_STOP_MS = 2000, DEMO_STOP_OK_MS = 6000, demoT = null, demoMiss = 0, demoOk = 0;", HTML)
+        self.assertIn("var DEMO_STOP_MS = 300, DEMO_STOP_OK_MS = 300, demoT = null, demoMiss = 0, demoOk = 0;", HTML)   # 周回160(運営者の声 2026-11-10「スワイプのお手本をすぐにだす」): 2秒・6秒 → 0.3秒
         arm = HTML[HTML.index("function demoArm(){"):HTML.index("window.addEventListener('resize', function(){ if ($('swWrap')")]
         self.assertIn("demoSet(true)", arm)
         self.assertIn("(demoMiss > 0 || demoOk < 3) ? DEMO_STOP_MS : DEMO_STOP_OK_MS", arm)

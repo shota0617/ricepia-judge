@@ -25,14 +25,27 @@ class Tilt194(unittest.TestCase):
         """サイクル195（運営者の声 2026-11-10「傾けた時に反応しなくなった。最優先で直して」「プレイスタート時にすぐ許可が出るように」）：
         画面の どこでも 最初に さわった ときに 1回 聞く。前に ことわった 人には 聞かない"""
         f = fn_src("tiltFirstTouch")
-        self.assertIn("if ((tiltG.asked && !tiltG.retry) || !tiltBtnWanted() || lsGet('nsg_tilt_ok', '') === '0') return;", f)
+        # サイクル196（運営者の声「すぐ出るように修正」）：前に ことわった 人にも 開く たびに 1回 聞く。聞くのは click だけ
+        self.assertIn("if ((tiltG.asked && !tiltG.retry) || !tiltBtnWanted()) return;", f)
+        self.assertNotIn("=== '0') return;", f)
+        self.assertNotIn("document.addEventListener('touchend', tiltFirstTouch", PIX)
         self.assertIn("tiltAsk(e);", f)
+        self.assertIn("if (tiltAsk.ev === event || performance.now() - (tiltAsk.at || -1e9) < 250) return;", fn_src("tiltAsk"))
+        self.assertIn("if (event.type === 'touchend') return;", fn_src("tiltAsk"))   # 聞くのは click で だけ（盤の めいろの touchend で 失敗して click が 捨てられない ように）   # 同じ タップで 2回 聞かない
         # Codex 指摘（PR #1083）：傾きの ボタンの タップは ボタンに まかせる。やりなおしは 同じ 指の 動きの 中では しない
         self.assertIn("if (e && e.target && e.target.closest && e.target.closest('#pxTilt')) return;", f)
         self.assertIn("if (now - (tiltFirstTouch.at || -1e9) < 700) return;", f)
-        self.assertIn("document.addEventListener('touchend', tiltFirstTouch, { capture: true, passive: true });", PIX)
         self.assertIn("document.addEventListener('click', tiltFirstTouch, { capture: true, passive: true });", PIX)
         self.assertIn("if (!event || !event.isTrusted || tiltG.asked || !tiltNeedsPermission()) return;", fn_src("tiltAsk"))
+
+    def test_first_tap_demo_shows_at_once(self):
+        """サイクル197（運営者の声 2026-11-10「１タップを促すお手本」）：まだ 許可を 聞いて いない 間は、待たずに タップの 手本と「タップ！」の 札を 出す"""
+        t = fn_src("tapDemoTick")
+        self.assertIn("const first = tiltBtnWanted() && !tiltG.asked;", t)
+        self.assertIn("now - tapDemo.at >= (first ? 0 : DEMO_IDLE_MS)", t)
+        self.assertIn("tapDemo.el.classList.toggle('first', first);", t)
+        css = (ROOT / "nishio-go" / "style.css").read_text(encoding="utf-8")
+        self.assertIn('#tapDemo.first::after{content:"タップ！"', css)
 
     def test_tilt_button_asks_once_per_real_tap(self):
         self.assertIn("if (!event || !event.isTrusted || tiltG.asked || !tiltNeedsPermission()) return;", fn_src("tiltAsk"))
@@ -59,7 +72,7 @@ class Tilt194(unittest.TestCase):
     def test_idle_demo_repeats_and_does_not_block(self):
         self.assertIn("const DEMO_IDLE_MS = 2000;", PIX)
         t = fn_src("tapDemoTick")
-        self.assertIn("now - tapDemo.at >= DEMO_IDLE_MS", t)
+        self.assertIn("now - tapDemo.at >= (first ? 0 : DEMO_IDLE_MS)", t)
         self.assertIn("if (rp.x !== tapDemo.x || rp.y !== tapDemo.y) { tapDemo.x = rp.x; tapDemo.y = rp.y; tapDemo.at = now; }", t)
         self.assertIn("const c = path[Math.min(2, path.length - 1)]", t)
         self.assertNotIn("localStorage", t)   # はじめての 人 だけ・1回だけ の 条件を もたない

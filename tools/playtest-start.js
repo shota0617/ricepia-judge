@@ -161,7 +161,7 @@ async function runStartChecks(browser, url, out, { shareOnly = false } = {}) {
       await page.waitForTimeout(300);
       const reask = await page.evaluate(() => window.__asks) - reask0, reaskWant = !permission ? 0 : kind.startsWith('notallowed') ? 2 : 1;
       const wantAsks = !permission ? 0 : kind.startsWith('notallowed') ? 2 : 1;
-      checks[kind] = { before, after, revisit, kept, back, persistence, reask0, reaskMap, again, remembered, reask, ok: !before.intro && !before.help && !before.talk && !before.panel && before.playing && before.asks === 0 && !after.panel && after.asks === wantAsks && !revisit.help && !revisit.intro && !revisit.panel && revisit.asks === 0 && reask0 === 0 && reaskMap === reaskMapWant && (permission && !['denied', 'throws', 'rejected'].includes(kind) ? reaskMap > 0 : reaskMap === 0) && remembered && reask === reaskWant && kept && back };
+      checks[kind] = { before, after, revisit, kept, back, persistence, reask0, reaskMap, again, remembered, reask, ok: !before.intro && !before.help && !before.talk && !before.panel && before.playing && before.asks === 0 && !after.panel && after.asks === wantAsks && !revisit.help && !revisit.intro && !revisit.panel && revisit.asks === 0 && reask0 === 0 && reaskMap === reaskMapWant && (permission ? reaskMap > 0 : reaskMap === 0) && remembered && reask === reaskWant && kept && back };
     } finally { await ctx.close(); }
   }
   // UserActivation API が ない 端末でも、共有リンクの 自動openから 許可を 求めない。

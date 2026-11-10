@@ -3046,9 +3046,10 @@ renderTitle();
   /* 周回158(最初の1分・運営者の声 2026-11-10「手本は、止まって見ているときにかならず出ていること」): 1回スワイプで決めたあとは、2枚目で10秒・5枚目で12秒止まっても、ためらって短く引いて離しても、縦になぞっても、手本の指は出なかった(出るのは「押しただけ2回」のときだけ)。
      どのカードでも、決めずに止まっていたら手本を出す: カードが出てから・決めずに離してから 2秒。この読みこみで3回スワイプで決めた人(うまくできている人)は、決めずに離すまでは 6秒に延ばすだけで、出なくなることはない。
      触れたら消える(ghostPause)・スワイプで決めたら消える(ghostOff)。カードは動かさない・タップでは選ばない(2026-11-09)はそのまま */
-  var DEMO_STOP_MS = 2000, DEMO_STOP_OK_MS = 6000, demoT = null, demoMiss = 0, demoOk = 0;
+  /* 周回160(運営者の声 2026-11-10「スワイプのお手本をすぐにだす」): 待ちを 2秒・6秒 から 0.3秒 に。カードが 出たら・決めずに 離したら すぐ 手本を 出す(何回 決めた 人でも 同じ)。触れて いる 間は 消える */
+  var DEMO_STOP_MS = 300, DEMO_STOP_OK_MS = 300, demoT = null, demoMiss = 0, demoOk = 0;
   function demoDisarm(){ if (demoT) { clearTimeout(demoT); demoT = null; } }
-  function demoArm(){ demoDisarm(); demoT = setTimeout(function(){ demoT = null; if (startX == null && !busy && !$('sGame').classList.contains('hidden')) demoSet(true); }, (demoMiss > 0 || demoOk < 3) ? DEMO_STOP_MS : DEMO_STOP_OK_MS); }
+  function demoArm(){ demoDisarm(); demoT = setTimeout(function(){ demoT = null; if (performance.now() - markAt < 750) { demoArm(); return; }   /* Codex 指摘(PR #1085): ○✗ の しるし(0.75秒)が 出て いる 間は 待つ。消えたら すぐ 出す */ if (startX == null && !busy && !$('sGame').classList.contains('hidden')) demoSet(true); }, (demoMiss > 0 || demoOk < 3) ? DEMO_STOP_MS : DEMO_STOP_OK_MS); }
   var demoHeld = false;   /* Codex指摘(PR #1082): 別のタブに いる間は 数えない。待ちの とちゅうで 隠れたら 止めて、戻ったら はじめから 数え直す */
   document.addEventListener('visibilitychange', function(){ if (document.hidden) { demoHeld = !!demoT; demoDisarm(); } else if (demoHeld) { demoHeld = false; demoArm(); } });
   window.addEventListener('resize', function(){ if ($('swWrap').classList.contains('demoOn')) demoSet(true); });   /* Codex指摘(PR #1071): 手本が出ている間に画面を回す・大きさが変わると、指の高さ(--hy)が前の画面のままだった。出ている間は測り直す(絵が無い横向きではカードの46%へ戻る) */
@@ -3588,7 +3589,8 @@ renderTitle();
     MARK_ROWS[k].forEach(function(r, y){ for (var i = 0; i < r.length; i++) { var col = pal[r.charAt(i)]; if (col) { x.fillStyle = col; x.fillRect(i, y, 1, 1); } } });
     return markURLs[k] = c.toDataURL();
   }
-  function markShow(k){ var e = $('swMark'); if (!e) return; e.classList.remove('on'); e.style.backgroundImage = 'url("' + markURL(k) + '")'; void e.offsetWidth; e.classList.add('on'); }
+  var markAt = -1e9;   /* ○✗ の しるしを 出した 時刻(手本は しるしが 消えてから) */
+  function markShow(k){ var e = $('swMark'); if (!e) return; markAt = performance.now(); e.classList.remove('on'); e.style.backgroundImage = 'url("' + markURL(k) + '")'; void e.offsetWidth; e.classList.add('on'); }
   /* 店主指示 2026-11-08: バツ(✗)のときだけ、判定文 why の最初の一文をマークの下に小さく浮かせて約2秒出す。○側は出さない */
   function whyShow(fb){ var e = $('swWhy'); if (!e) return; var t = String(fb || '').replace(/^\S+\s+/, ''); var i = t.indexOf('。'); if (i >= 0) t = t.slice(0, i + 1); if (!t) return; e.textContent = t; e.classList.remove('on'); void e.offsetWidth; e.classList.add('on'); }
   function whyHide(){ var e = $('swWhy'); if (e) e.classList.remove('on'); }

@@ -8066,7 +8066,7 @@ const HINT = {
       if (k !== this.demoK) {
         this.demoK = k;
         const sd = this.workSide(this.turn ? this.turn.side : 0, true), any = this.workAhead(1);
-        let fwd = (this.bent || this.sideOK >= 3) && this.workAhead(this.sideOK >= 3 ? 1 : 6);   // Codex 指摘（PR #1090）：曲がり方を 覚えた 人（sideOK >= 3）は、はじめの 向きの 近くで 切り返して いて bent が 立って いなくても、これまで どおり（前に 耕す 所が あれば「前へ」から） if (k % 2) fwd = !fwd; if (!any) fwd = false;   // サイクル267: まだ曲がったことのない人（this.bent が false）には「横へ」を先に
+        let fwd = (this.bent || this.sideOK >= 3) && this.workAhead(this.sideOK >= 3 ? 1 : 6); if (k % 2) fwd = !fwd; if (!any) fwd = false;   // Codex 指摘（PR #1090）：曲がり方を 覚えた 人（sideOK >= 3）は、はじめの 向きの 近くで 切り返して いて bent が 立って いなくても、これまで どおり（前に 耕す 所が あれば「前へ」から）。   // サイクル267: まだ曲がったことのない人（this.bent が false）には「横へ」を先に
         this.t = 0; this.demoF = !!sd && fwd; this.turn = sd && !fwd ? { idle: true, side: sd } : null; if (this.demoF) this.pts = this.build();
       }
     } else if (this.sideOK >= 3 && FIRSTMIN.over) { this.demoF = false; if (this.turn && this.turn.idle) this.turn = null; }   // 覚えた人が 1 分をまたいだら、出ていた見本を消す

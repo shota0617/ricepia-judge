@@ -3570,7 +3570,7 @@ let nightK = null;   // 直近の drawNight の 係数（テスト用）
 let nightBase = null;   // 夜を はじめて 描いた 時刻（サイクル95 Codex指摘：読みこみの 待ちで 薄い 時間が 消えないよう、起点は ここ）
 function drawNight(w, h, ox, oy, T, cy, pois, now) {
   const lv = nightOn && !worldMode ? nightLevel() : 0;
-  if (!lv) { nightLamps.n = nightLamps.warm = 0; return; }
+  if (!lv) { nightLamps.n = nightLamps.warm = nightLamps.lit = nightLamps.vis = 0; return; }
   if (nightBase === null) nightBase = now;
   const sk = nightStartK(now - nightBase), lve = lv * sk;
   nightK = sk;
@@ -3613,8 +3613,9 @@ function drawNight(w, h, ox, oy, T, cy, pois, now) {
     let n = 0;
     for (const p of pois) n += warm(ox + p[0] * T, oy + p[1] * T - T * 0.5, T * 1.1, 0.3);
     const u = Math.max(1, Math.round(T / 16));
-    for (const [lx, ly] of lamps) { n += warm(lx, ly, T * 1.1, 0.34); ctx.fillStyle = '#ffe7a8'; ctx.fillRect(Math.round(lx - u), Math.round(ly - u), u * 2, u * 2); }   // 街灯の あかりの 粒
-    nightLamps.warm = n;
+    let lit = 0, vis = 0;   // テスト用：あかりの 輪が とどく 所（画面から 輪の 半径 まで）に ある 街灯の 数と、その うち あたたかい 輪を 描いた 数。n は 画面の すぐ 外の マスの 街灯も 数えるので、warm >= n では 立つ 場所で 落ちた
+    for (const [lx, ly] of lamps) { const r = T * 1.1, k = warm(lx, ly, r, 0.34); n += k; lit += k; if (!(lx < -r || ly < -r || lx > w + r || ly > h + r)) vis++; ctx.fillStyle = '#ffe7a8'; ctx.fillRect(Math.round(lx - u), Math.round(ly - u), u * 2, u * 2); }   // 街灯の あかりの 粒
+    nightLamps.warm = n; nightLamps.lit = lit; nightLamps.vis = vis;
   }
   nightLamps.n = lamps.length;
   gbPause--;
@@ -9126,6 +9127,7 @@ function setWorld(on) {
   $('pxInfo').hidden = true;
   if (on) { wcam = worldCamStart(); worldCamFitGoal(); buildWorld(); }
   try { localStorage.setItem('nsg_world_on', on ? '1' : '0'); } catch (e) { /* noop */ }
+  firstWalkBtns();
   updatePad();
   updateHarvestBtn();   // せかいちずでは frame が早く戻るので、稲刈りのボタンをここで消す
   updateDankyuBtn();
@@ -9133,7 +9135,9 @@ function setWorld(on) {
 $('pxWorld').addEventListener('click', () => setWorld(!worldMode));
 function firstWalkBtns() {   // はじめてのさんぽの間は 🌏せかいちず・🌀盤のめいろ の ボタンを 出さない（3つめの ゴールから 従来どおり）
   const fw = firstWalk();
-  for (const id of ['pxWorld', 'pxMeiro']) { const b = $(id); if (b) b.hidden = fw; }
+  // サイクル191（はじめの 1分）：せかいちずを 開いて いる 間は 👣（もどる）を 出す。自分で 遊んで 分かった：はじめてのさんぽでも 縁の 矢印を タップすると せかいちずが 開くのに、
+  // もどる ボタンが かくれた ままで、知らせの「👣 で めいろに もどる」が 押せず、めいろに もどれなかった
+  for (const id of ['pxWorld', 'pxMeiro']) { const b = $(id); if (b) b.hidden = fw && !(id === 'pxWorld' && worldMode); }
 }
 firstWalkBtns();
 // めいろの ゴールが あるときは、お米と ゴールが 両方 入る 大きさ・まん中で 開く（遠い ゴールが 地図の どこか 分かる ように）
@@ -9393,7 +9397,7 @@ setTimeout(tiltHintShow, 1200);
 function tiltAsk(event) {   // 本当の タップで 1回だけ（はじめの画面の「あそぶ」・地図のタップ・めいろを開くボタンなど）。拒否・例外でも タップや 矢印キーで 遊べる。
   if (!event || !event.isTrusted || tiltG.asked || !tiltNeedsPermission()) return;   // userActivation が ない 端末でも、自動表示・合成クリックからは 求めない
   tiltG.asked = true; tiltG.retry = false;
-  const fallback = () => G.toast('地図を タップして 遊べるよ（矢印キーでも）');
+  const fallback = () => G.toast('地図を タップして 遊べるよ');   // サイクル191：傾きの 許可を 聞くのは スマホ・タブレットだけ（矢印キーの 話は しない）
   const failed = e => { if (e && e.name === 'NotAllowedError') { tiltG.asked = false; tiltG.retry = true; } fallback(); };   // 一時的に 操作と 認められなかったときは、次の 本当の タップで 再試行。denied では 繰り返さない
   try { Promise.resolve(DeviceOrientationEvent.requestPermission()).then(r => { if (r === 'granted') tiltReset(); else fallback(); }, failed); }
   catch (e) { failed(e); }
@@ -9802,10 +9806,10 @@ function mzRoute(now) {
         // 選びなおしは 近く（はじめての ゴールの 帯）の 中だけ。ためした 中に 単純な 道が なければ、道のりが いちばん 短い ものに もどす
         const tried = mzRt.firstTried || (mzRt.firstTried = []);
         tried.push({ g, gkey, cells: mzRt.path.length });
-        if (G.guideNoPath(g, true)) return;
+        if (G.guideNoPath(g, true)) return mzRoute(now);   // サイクル191：つぎの 候補も 同じ こまの 中で ためす（旗・矢印・道しるべが 0.3秒の 間に 3か所へ とばない。地図が まだ 読めて いない 候補は 次の こまで）
         const best = mzFirstBest(tried);
         mzRt.firstTried = null;
-        if (best.gkey !== gkey && G.setGuide) { const { t, ...bg } = best.g; mzRt.simpleKey = best.gkey; mzRt.key = ''; G.setGuide(bg); return; }
+        if (best.gkey !== gkey && G.setGuide) { const { t, ...bg } = best.g; mzRt.simpleKey = best.gkey; mzRt.key = ''; G.setGuide(bg); return mzRoute(now); }
       }
     }
   }
@@ -13412,7 +13416,7 @@ const meiroApi = {
   tilt: () => tiltG, tiltAsk, tiltReset, tiltNeedsPermission, koto: (v, low) => kotoSound(v, low), splash: v => splashSound(v), boing: (v, hi) => boingSound(v, hi), rumble: v => rumbleTick(v, GROUND.road),   // rumble：転がる音（速さは 地図の マス/秒）
   pause(on) { meiroPause = !!on; dirty = true; if (on && mzNext.hold) { mzNext.hold = false; if (G.toastFlush) G.toastFlush(); } },   // 止める ときは「つぎの ゴール」で 待たせた 知らせを 出す
 };
-window.nishioPixel = { giantWashLayout, drawGiantWash, seimaiLayout, drawShopSeimai, riceJourneyLayout, drawRiceJourney, blinkOn, BLINK_MS, BLINK_SHUT_MS, get riceEye() { return riceEyeAt; }, grow: { stage: () => grow.stage, stageFor: growStageFor, TH: GROW_TH, popAt: () => grow.popT }, firstRoute: { shape: mzPathShape, simple: mzFirstSimple, LIM: MZ_FIRST_SIMPLE }, firstBest: mzFirstBest, collected: { has: collectedOf }, roadShape: { of: roadShapeOf, corner: roadShapeCorner, missing: roadShapeMissing, end: roadShapeEndDir, straight: roadShapeStraightDir }, glanceShift, asleepShut, happyFace, meiroApi, heroGiant: () => heroGiantId, pickHeroGiant, HERO_GIANT_RANGE, maze: { half: () => ({ cell: mzHalf.cell ? [...mzHalf.cell] : null, passed: !!mzHalf.passed }), halfCell: mzHalfCell, halfPassed: mzHalfPassed, HALF_MIN: MZ_HALF_MIN, goalFxSpec: () => ({ ...MZ_GOAL_FX }), wallTheme: () => mzWallTheme(), on: () => mazeOn(), playing: () => active && mazeOn(), next: () => ({ want: mzNext.want, t0: mzNext.t0, on: mzNextOn(), labHide: !!mzNext.labHide, arrowDim: !!mzNext.arrowDim, box: mzNext.box || null }), goal: id => {   // id の 名所が いまの ゴール（か 2分 以内の 前の ゴール）なら、かかった 時間と めいろの 道のり
+window.nishioPixel = { giantWashLayout, drawGiantWash, seimaiLayout, drawShopSeimai, riceJourneyLayout, drawRiceJourney, blinkOn, BLINK_MS, BLINK_SHUT_MS, get riceEye() { return riceEyeAt; }, grow: { stage: () => grow.stage, stageFor: growStageFor, TH: GROW_TH, popAt: () => grow.popT }, firstRoute: { shape: mzPathShape, simple: mzFirstSimple, LIM: MZ_FIRST_SIMPLE }, firstBest: mzFirstBest, get goalArrowRect() { return mzMap.arrow ? mzMap.arrow.slice(0, 4) : null; }, collected: { has: collectedOf }, roadShape: { of: roadShapeOf, corner: roadShapeCorner, missing: roadShapeMissing, end: roadShapeEndDir, straight: roadShapeStraightDir }, glanceShift, asleepShut, happyFace, meiroApi, heroGiant: () => heroGiantId, pickHeroGiant, HERO_GIANT_RANGE, maze: { half: () => ({ cell: mzHalf.cell ? [...mzHalf.cell] : null, passed: !!mzHalf.passed }), halfCell: mzHalfCell, halfPassed: mzHalfPassed, HALF_MIN: MZ_HALF_MIN, goalFxSpec: () => ({ ...MZ_GOAL_FX }), wallTheme: () => mzWallTheme(), on: () => mazeOn(), playing: () => active && mazeOn(), next: () => ({ want: mzNext.want, t0: mzNext.t0, on: mzNextOn(), labHide: !!mzNext.labHide, arrowDim: !!mzNext.arrowDim, box: mzNext.box || null }), goal: id => {   // id の 名所が いまの ゴール（か 2分 以内の 前の ゴール）なら、かかった 時間と めいろの 道のり
     mzGoalAsk.id = '';   // 保留中の 着いた名所は 入口で 消す（失敗した goal で 前の id が 残らない。サイクル166 Codex指摘）
     if (!mazeOn()) return null;
     const now = performance.now(), pv = mzRt.prev, g = mzRt.gid === id ? { t0: mzRt.t0, len0: mzRt.len0, warp: mzRt.warp, moves: mzMv.n, run: { ...mzRt.run } } : pv && pv.id === id && now - pv.at < 120000 ? pv : null;

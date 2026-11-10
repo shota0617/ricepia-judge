@@ -64,6 +64,18 @@ async function runStartChecks(browser, url, out, { shareOnly = false } = {}) {
       });
       await tapMap(page);
       const first = await page.evaluate(() => ({ asks: window.__asks, asked: !!nishioPixel.meiroApi.tilt().asked, retry: !!nishioPixel.meiroApi.tilt().retry }));
+      // Codex 指摘（PR #1072）：ことわられた・例外の ときは、本当の タップの あとに 出る 知らせを 画面で 読む（文字列を ソースから 読む だけでは、呼ばれなく なっても 分からない）
+      let deniedMsg = null;
+      if (['denied', 'throws', 'rejected'].includes(kind)) {
+        await page.waitForFunction(() => /タップ/.test(document.getElementById('toast').textContent), null, { timeout: 3000 }).catch(() => {});
+        const text = await page.evaluate(() => document.getElementById('toast').textContent);
+        deniedMsg = { text, ok: /地図を タップして 遊べるよ/.test(text) && !/矢印キー|キーボード/.test(text) };
+        checks[kind + 'Msg'] = deniedMsg;
+      } else if (kind === 'granted') {
+        await page.waitForTimeout(500);
+        const text = await page.evaluate(() => document.getElementById('toast').textContent);
+        checks[kind + 'Msg'] = { text, ok: !/地図を タップして 遊べるよ/.test(text) };   // 許可された ときは 出さない
+      }
       await tapMap(page, 170, 170);
       const second = await page.evaluate(() => ({ asks: window.__asks, asked: !!nishioPixel.meiroApi.tilt().asked, retry: !!nishioPixel.meiroApi.tilt().retry }));
       for (let i = 0; i < 6; i++) await tapMap(page, 150 + (i % 2) * 20, 150 + (i % 2) * 20);

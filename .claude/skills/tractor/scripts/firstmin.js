@@ -8,6 +8,12 @@ const fs = require('fs'), http = require('http'), path = require('path');
 const ROOT = path.resolve(__dirname, '../../../..'), HTML = path.resolve(process.argv[2] || path.join(ROOT, 'tractor.html')), TN = process.env.THREE_NM || path.join(__dirname, 'node_modules/three'), PORT = +(process.env.PORT || 8891);
 const src = fs.readFileSync(HTML, 'utf8'); let ng = 0;
 const ok = (name, cond, info) => { console.log((cond ? 'ok   ' : 'NG   ') + name + (info !== undefined ? '  ' + JSON.stringify(info) : '')); if (!cond) ng++; };
+// ---- 0) なぞりを畦から寄せる幅（Codex 指摘 PR #1070）：幅のせまい作業機でも いちばん外の列（畦から 0.5m + 幅の半分）を なぞれる ----
+{
+  const m = src.match(/clampM\(\) \{ return ([^;]+); \}/), f = m && new Function('TILL_W', 'return ' + m[1]);
+  const got = f ? [2.2, 1.35, 0.9, 3.4].map(w => +f(w).toFixed(3)) : null;
+  ok('畦から寄せる幅：ロータリー 1.5m・プラウは外の列（1.175m）まで', !!got && got[0] === 1.5 && got[1] === 1.175 && got[2] === 0.95 && got[3] === 1.5 && /clampIn\(h\) \{ const m = this\.clampM\(\);/.test(src), got);
+}
 // ---- 1) 知らせの文 ----
 {
   const fn = new Function('DETAIL', src.slice(src.indexOf('const KEYH ='), src.indexOf('function showToast')) + '; return { speakText, shortText };')(false);

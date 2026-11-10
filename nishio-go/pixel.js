@@ -9374,36 +9374,76 @@ window.addEventListener('devicemotion', e => {
   if (strength < 12) return;
   riceTouch.shakeAt = now; ricePlayHop();
 }, { passive: true });
-// 開いた直後の 手本（ループ4サイクル115）：文字は出さず アイコンだけ。許可が要る端末は まず 👆、ほかは 📱 が ゆれる。転がすか 手を動かすと 消える
-const tiltHint = { el: null, timer: null };
-function tiltHintOff() {
-  clearTimeout(tiltHint.timer);
-  if (tiltHint.el) { tiltHint.el.remove(); tiltHint.el = null; }
+// サイクル194（運営者の声 2026-11-10「スタート時に反応せず、タップすると動作許可が出る挙動を改善」。ホーム画面から 開いた iPhone）：
+// これまで：iPhone は 傾きの 許可を 最初の 地図タップで 聞いて いた（2026-10-31 の 決まり）。傾けても 何も 起きず、遊ぶ つもりの 最初の タップで いきなり システムの 窓が 出た。
+// ・地図の タップ・なぞりは 歩く だけ（許可は 聞かない）。はじめの 1秒から 遊べる
+// ・傾きは 見える ボタンで えらぶ（右上の「📱 かたむけて ころがす」）。押した ときだけ 許可を 聞く（1回の タップに 1回。自動・合成の クリックでは 聞かない）
+//   許可：ボタンは「📱 OK」と 出て 消える。ことわった・聞けない：タップで 遊べる 知らせ。ボタンは 小さく のこる（もう 窓は 出さない）
+//   前に 許可した 人（nsg_tilt_ok=1）には はじめから 目立たせる。ことわった 人（0）には 小さく。許可の いらない 端末（Android など）・タッチの ない 端末には 出さない
+// ・止まって 2秒 たったら いつでも 手本：道しるべの 2マス先を 指（👆）が トンと タップする 動き。傾きが 使える 間は 下に ゆれる 📱 も。さわる・転がると 消え、また 止まると 出る
+const TILT_BTN = { labelMs: 20000, okMs: 1500 };
+const tiltBtn = $('pxTilt');
+function tiltBtnWanted() {   // 許可を 聞かないと 傾きが 使えない スマホ・タブレットで、めいろを 遊んで いる
+  return !!tiltBtn && tiltNeedsPermission() && !tiltG.on && !tiltG.granted && navigator.maxTouchPoints > 0 && !!G.demo && rollOn;
 }
-function tiltHintShow() {
-  if (!rollOn || worldMode || !howtoEl.hidden || mapCovered()) return;
-  const el = tiltHint.el = document.createElement('div');
-  el.id = 'tiltHint'; el.setAttribute('aria-hidden', 'true');
-  const { on: tiltIsOn } = tiltG;
-  el.textContent = tiltNeedsPermission() && !tiltIsOn ? '👆' : '📱';
-  document.body.appendChild(el);
-  document.addEventListener('pointerdown', () => {   // 👆 のあとは 傾きへ。📱 なら もう 手が 動いたので 消す
-    if (!tiltHint.el) return;
-    if (tiltHint.el.textContent === '👆') { tiltHint.el.textContent = '📱'; tiltHint.timer = setTimeout(tiltHintOff, 5000); } else tiltHintOff();
-  }, { capture: true, passive: true });
-  window.addEventListener('deviceorientation', () => { const { x, y } = tiltG; if (Math.hypot(x, y) > 0.2) tiltHintOff(); }, { passive: true });
-  window.addEventListener('keydown', tiltHintOff, { once: true });
+function tiltBtnSync() {
+  if (!tiltBtn || tiltBtn.classList.contains('ok')) return;
+  const want = tiltBtnWanted();
+  if (tiltBtn.hidden !== !want) tiltBtn.hidden = !want;
+  if (!want) return;
+  const prev = lsGet('nsg_tilt_ok', ''), quiet = (tiltG.asked && !tiltG.retry) || prev === '0', pro = !quiet && prev === '1';
+  const lab = !quiet && (pro || performance.now() < TILT_BTN.labelMs);   // 名前つきは はじめの 20秒（前に 許可した 人には ずっと）。その あとは 📱 だけ
+  tiltBtn.classList.toggle('lab', lab); tiltBtn.classList.toggle('pro', pro); tiltBtn.classList.toggle('quiet', quiet);
 }
-setTimeout(tiltHintShow, 1200);
-function tiltAsk(event) {   // 本当の タップで 1回だけ（はじめの画面の「あそぶ」・地図のタップ・めいろを開くボタンなど）。拒否・例外でも タップや 矢印キーで 遊べる。
+function tiltBtnOk() {   // 許可された：「📱 OK」と 出して 消す
+  if (!tiltBtn) return;
+  tiltBtn.hidden = false; tiltBtn.className = 'lab ok'; tiltBtn.querySelector('.tx').textContent = 'OK';
+  setTimeout(() => { tiltBtn.classList.remove('ok'); tiltBtn.hidden = true; tiltBtn.querySelector('.tx').textContent = 'かたむけて ころがす'; tiltBtnSync(); }, TILT_BTN.okMs);
+}
+if (tiltBtn) tiltBtn.addEventListener('click', e => {
+  if (tiltG.asked && !tiltG.retry) { G.toast('地図を タップして 遊べるよ'); return; }   // もう 聞いた（ことわった）：窓は 出さない
+  tiltAsk(e);
+});
+// 止まって いる ときの 手本
+const DEMO_IDLE_MS = 2000;
+const tapDemo = { el: null, ph: null, at: performance.now(), x: null, y: null, n: 0 };
+function tapDemoTouch() { tapDemo.at = performance.now(); tapDemoHide(); }
+function tapDemoHide() { if (tapDemo.el && !tapDemo.el.hidden) tapDemo.el.hidden = true; if (tapDemo.ph && !tapDemo.ph.hidden) tapDemo.ph.hidden = true; }
+function tapDemoTick() {
+  tiltBtnSync();
+  const now = performance.now();
+  if (rp.x !== tapDemo.x || rp.y !== tapDemo.y) { tapDemo.x = rp.x; tapDemo.y = rp.y; tapDemo.at = now; }   // 転がって いる・歩いて いる
+  const path = mzRt.path;
+  const ok = active && !meiroPause && !document.hidden && rp.x !== null && mazeOn() && howtoEl.hidden && !mapCovered() && !tapS.goal && !!path && path.length > 1 && now - tapDemo.at >= DEMO_IDLE_MS;
+  if (!ok) { tapDemoHide(); return; }
+  if (!tapDemo.el) {
+    const mk = (id, t) => { const e = document.createElement('div'); e.id = id; e.setAttribute('aria-hidden', 'true'); e.textContent = t; e.hidden = true; document.body.appendChild(e); return e; };
+    tapDemo.el = mk('tapDemo', '👆'); tapDemo.ph = mk('tiltHint', '📱');
+  }
+  const c = path[Math.min(2, path.length - 1)], q = tileClient(c[0] * MZ_K + 1, c[1] * MZ_K + 1);   // 道しるべの 2マス先（ゴールが 近ければ ゴールの マス）
+  tapDemo.el.style.left = Math.round(q.x) + 'px'; tapDemo.el.style.top = Math.round(q.y) + 'px';
+  if (tapDemo.el.hidden) { tapDemo.el.hidden = false; tapDemo.n++; }
+  const ph = tiltG.on && Math.hypot(tiltG.x, tiltG.y) <= 0.2;   // 傾きが 使えて いる 端末：傾ける 手本も
+  if (tapDemo.ph.hidden === ph) tapDemo.ph.hidden = !ph;
+}
+document.addEventListener('pointerdown', tapDemoTouch, { capture: true, passive: true });
+window.addEventListener('keydown', tapDemoTouch, { passive: true });
+window.addEventListener('deviceorientation', () => { if (Math.hypot(tiltG.x, tiltG.y) > 0.2) tapDemoTouch(); }, { passive: true });
+setInterval(tapDemoTick, 250);
+function tileClient(tx, ty) {   // 歩く地図のマスのまん中が、画面のどこか（手本の 指・台本の タップ）
+  const r = cv.getBoundingClientRect(), dpr = cv.width / r.width, T = fieldT(Math.min(window.devicePixelRatio || 1, 3)), c = camTile();
+  return { x: r.left + (cv.width / 2 + (tx + 0.5 - c.x) * T) / dpr, y: r.top + (fieldCy + (ty + 0.5 - c.y) * T) / dpr };
+}
+function tiltAsk(event) {   // 本当の タップで 1回だけ（傾きの ボタン・はじめの画面の「あそぶ」・盤の めいろを 開く ボタン）。地図の タップでは 聞かない。拒否・例外でも タップで 遊べる。
   if (!event || !event.isTrusted || tiltG.asked || !tiltNeedsPermission()) return;   // userActivation が ない 端末でも、自動表示・合成クリックからは 求めない
   tiltG.asked = true; tiltG.retry = false;
   const fallback = () => G.toast('地図を タップして 遊べるよ');   // サイクル191：傾きの 許可を 聞くのは スマホ・タブレットだけ（矢印キーの 話は しない）
-  const failed = e => { if (e && e.name === 'NotAllowedError') { tiltG.asked = false; tiltG.retry = true; } fallback(); };   // 一時的に 操作と 認められなかったときは、次の 本当の タップで 再試行。denied では 繰り返さない
-  try { Promise.resolve(DeviceOrientationEvent.requestPermission()).then(r => { if (r === 'granted') tiltReset(); else fallback(); }, failed); }
+  const denied = () => { lsSet('nsg_tilt_ok', '0'); tiltBtnSync(); fallback(); };   // ことわった・聞けない：おぼえて、ボタンは 小さく
+  const failed = e => { if (e && e.name === 'NotAllowedError') { tiltG.asked = false; tiltG.retry = true; tiltBtnSync(); fallback(); } else denied(); };   // 一時的に 操作と 認められなかったときは、次の 本当の タップで 再試行（ことわった とは おぼえない）。denied では 繰り返さない
+  try { Promise.resolve(DeviceOrientationEvent.requestPermission()).then(r => { if (r === 'granted') { tiltG.granted = true; lsSet('nsg_tilt_ok', '1'); tiltReset(); tiltBtnOk(); } else denied(); }, failed); }
   catch (e) { failed(e); }
 }
-// 「あそぶ」ボタン（playReady）は廃止（運営者の声 2026-10-31）。傾きの許可は、最初に地図をタップしたときに聞く（下の 地図タップの処理）
+// 「あそぶ」ボタン（playReady）は廃止（運営者の声 2026-10-31）。傾きの許可は、傾きの ボタン（#pxTilt）を 押した ときに 聞く（サイクル194。最初の 地図タップでは 聞かない）
 document.addEventListener('visibilitychange', () => { tiltReset(); rp.vx = rp.vy = 0; });
 window.addEventListener('pageshow', () => { tiltReset(); rp.vx = rp.vy = 0; });
 window.addEventListener('orientationchange', () => { tiltReset(); rp.vx = rp.vy = 0; });
@@ -13287,9 +13327,27 @@ function planPath(sx, sy, gx, gy, goalR, avoid) {
   for (let i = found >= 0 ? found : best; i !== start && i >= 0; i = from[i]) out.push([i % W + x0, (i / W | 0) + y0]);
   return out.reverse();
 }
+// サイクル192（はじめの 1分）：なぞっても 進む。自分で 遊んで 分かった：タップの つもりで 指が 30px ずれる・お米から 行きたい 方へ なぞる と、ブラウザは タップ（click）に せず、
+// 地図は 何も 起こさなかった（15とおりの 指で ためした うち、何も 起きない 2つ）。指を はなした 所まで 歩く（タップと 同じ tapWalk。窓は 開かない）。
+// 2本指（ピンチ）・せかいちず（ドラッグで 地図を 動かす）・あるいて移動は これまでどおり。CSS の touch-action は pinch-zoom（1本指の なぞりを ブラウザに とられない）
+const swipeS = { down: null, at: -Infinity };
+const SWIPE_MIN = 12;   // これより 短い ずれは ふつうの タップ（click）に まかせる（px）
+cv.addEventListener('pointerdown', e => { swipeS.down = !worldMode && e.isPrimary && e.button === 0 ? { id: e.pointerId, x: e.clientX, y: e.clientY } : null; }, { passive: true });
+cv.addEventListener('pointercancel', () => { swipeS.down = null; }, { passive: true });
+cv.addEventListener('pointerup', e => {
+  const d = swipeS.down;
+  swipeS.down = null;
+  if (!d || e.pointerId !== d.id || worldMode || !G.demo || !howtoEl.hidden || mapCovered(false, true)) return;
+  if (Math.hypot(e.clientX - d.x, e.clientY - d.y) < SWIPE_MIN) return;
+  swipeS.at = performance.now();   // この あとに 来る click（マウスの ドラッグ）は 使わない
+  const r = cv.getBoundingClientRect(), dpr = cv.width / r.width, T = fieldT(Math.min(window.devicePixelRatio || 1, 3)), c = camTile();
+  const x = (e.clientX - r.left) * dpr, y = (e.clientY - r.top) * dpr;
+  tapWalk(Math.floor(c.x + (x - cv.width / 2) / T), Math.floor(c.y + (y - fieldCy) / T));
+}, { passive: true });
 // スポットをタップすると、ドラクエ風のウィンドウで説明
 cv.addEventListener('click', e => {
-  if (!tiltG.asked || tiltG.retry) tiltAsk(e);   // 「あそぶ」ボタン廃止のため、傾きの許可は 最初の 地図タップで 1回だけ聞く。一時的な 許可失敗の あとは 次の タップで 再試行（denied では 繰り返さない）
+  if (performance.now() - swipeS.at < 400) return;   // なぞって 歩きだした すぐ あとの click
+  // サイクル194：地図の タップでは 傾きの 許可を 聞かない（歩く だけ。許可は 右上の 傾きの ボタンで）。もとの 説明：「あそぶ」ボタン廃止のため、傾きの許可は 最初の 地図タップで 1回だけ聞く。一時的な 許可失敗の あとは 次の タップで 再試行（denied では 繰り返さない）
   const r = cv.getBoundingClientRect(), dpr = cv.width / r.width;
   if (mazeOn() && !worldMode) {   // 縁の 矢印を タップで せかいちず
     const px = (e.clientX - r.left) * dpr, py = (e.clientY - r.top) * dpr, now = performance.now(), inR = q => q && px >= q[0] && px <= q[2] && py >= q[1] && py <= q[3];
@@ -13433,9 +13491,6 @@ window.nishioPixel = { giantWashLayout, drawGiantWash, seimaiLayout, drawShopSei
   nightStartK, get nightK() { return nightK !== null ? nightK : nightStartK(performance.now()); },   // サイクル95：夜の 幕の 立ち上がり（テスト用）
   // いまの町名が新しいか（歩く地図を描いていて、いまの位置で2秒以内に確かめた。せかいちず・ふつうの地図に切り替えたあとの古い町名は使わない）
   get hereFresh() { return active && !worldMode && !!G.me && performance.now() - here.at < 2000; }, spotSprites, spriteOf: sp => spriteOf(sp)[0], npcSprite: look => (npcSprites[look] || npcSprites.man)[0], art: { hiCanvas, shopCanvas, tileRoof, spanRows, pix, genSprite, GEN_DRAW }, get towns() { return towns; }, get here() { return here; }, npcTile, rasterize, chunkQuery, chunkBox, chunkInPlay, luReady, luAt, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, centerOnMe, demFor, get worldMode() { return worldMode; }, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; }, get traffic() { return traffic; }, get driving() { return driving; }, toggleCar, floatText, onPaddy, get tapGoal() { return tapS.goal; }, trailWalk, trailHas, trailClear, get trailCells() { return TRAIL.world.size; }, get trailWorld() { return [...TRAIL.world]; },
-  tileToClient(tx, ty) {   // 歩く地図のマスのまん中が、画面のどこか（台本でタップするため）
-    const r = cv.getBoundingClientRect(), dpr = cv.width / r.width, T = fieldT(Math.min(window.devicePixelRatio || 1, 3)), c = camTile();
-    return { x: r.left + (cv.width / 2 + (tx + 0.5 - c.x) * T) / dpr, y: r.top + (fieldCy + (ty + 0.5 - c.y) * T) / dpr };
-  }, ensureAround(lat, lng) { const q = toTile(lat, lng); ensureChunk(Math.floor(q.x / CHUNK), Math.floor(q.y / CHUNK)); } };
+  tileToClient: tileClient, get tapDemo() { return { on: !!tapDemo.el && !tapDemo.el.hidden, n: tapDemo.n, phone: !!tapDemo.ph && !tapDemo.ph.hidden, idleMs: DEMO_IDLE_MS, wait: [!active && 'active', rp.x === null && 'rice', !mazeOn() && 'maze', !howtoEl.hidden && 'howto', mapCovered() && 'covered', !!tapS.goal && 'walking', !(mzRt.path && mzRt.path.length > 1) && 'route'].filter(Boolean) }; }, tiltBtnCfg: TILT_BTN, ensureAround(lat, lng) { const q = toTile(lat, lng); ensureChunk(Math.floor(q.x / CHUNK), Math.floor(q.y / CHUNK)); } };
 { const rollGet = Object.getOwnPropertyDescriptor(window.nishioPixel, 'roll').get; Object.defineProperty(window.nishioPixel, 'roll', { configurable: true, enumerable: true, get() { const r = rollGet(), ra = rp.x === null ? '' : rollAreaAt(rp.x, rp.y), RSg = window.nishioRollSync; return { ...r, area: ra, feel: RSg && RSg.groundFeel ? RSg.groundFeel(ra) : { crr: 1, lin: 1 }, fps: fpsMeter.fps, shadow: RSg && RSg.shadowStretch ? RSg.shadowStretch(r.v) : 1 }; } }); }   // テスト用：いまの 地区と 地面の感じ（係数）を roll に足す
 })();

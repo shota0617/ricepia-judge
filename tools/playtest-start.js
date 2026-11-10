@@ -39,7 +39,7 @@ async function runStartChecks(browser, url, out, { shareOnly = false } = {}) {
     return { ctx, page };
   }
   // 「あそぶ」の 窓（playReady）は なくなった（運営者の声 2026-10-31。nishio-go/meiro.js・pixel.js の「あそぶ ボタン廃止」）。
-  // いまの きまり：開始を 止める 窓は ない／自動で 始まる ときは 傾きの 許可を 求めない／最初の 本当の 地図タップで 1回だけ 求める（NotAllowedError の ときだけ 次の タップで もう1回）
+  // いまの きまり（サイクル194 から）：開始を 止める 窓は ない／自動で 始まる ときは 傾きの 許可を 求めない／地図の タップでも 求めない／傾きの ボタン（#pxTilt）の 本当の タップで 1回だけ 求める（NotAllowedError の ときだけ 次の タップで もう1回）
   const visible = page => page.evaluate(() => ({ intro: !document.getElementById('intro').hidden, help: !document.getElementById('howto').hidden, panel: !!document.querySelector('#playReady, #playReadyOk'), playing: !!(nishioGo.started && nishioGo.demo && nishioPixel.roll.ready && !nishioPixel.mapCovered(true)), talk: !!document.querySelector('#komeTalk:not([hidden])'), asks: window.__asks }));
   const shot = (page, name) => page.screenshot({ path: path.join(out, `start-${name}.png`) });
   // 本当の タップ（isTrusted）を 地図に 送る。ほかの 窓が かぶって いたら 先に 閉じる（かぶった ままだと 地図に とどかない）
@@ -54,16 +54,39 @@ async function runStartChecks(browser, url, out, { shareOnly = false } = {}) {
     const { ctx, page } = await fresh(kind);
     try {
       await page.waitForTimeout(400);
-      const before = await visible(page), permission = !['normal', 'unsupported'].includes(kind);   // desktop：タッチの ない 端末でも、ブラウザが 許可を 求める 作り（requestPermission が ある）なら 最初の 地図クリックで 1回だけ 聞く（窓が なくなり、タッチの 有無では 分けなく なった）
+      const before = await visible(page);
       await shot(page, kind);
+      // サイクル194（運営者の声 2026-11-10「スタート時に反応せず、タップすると動作許可が出る挙動を改善」）：
+      // 地図の タップでは 求めない（歩く だけ）。許可の いる スマホには 傾きの ボタン（#pxTilt）が 出て、それを 押した ときだけ 1回 求める。許可の いらない 端末・タッチの ない 端末には ボタンを 出さない
+      const tiltSt = () => page.evaluate(() => { const b = document.getElementById('pxTilt'), t = nishioPixel.meiroApi.tilt(), r = b.getBoundingClientRect(); return { asks: window.__asks, asked: !!t.asked, retry: !!t.retry, btn: !b.hidden && r.width > 0, cls: b.className, text: b.textContent.trim(), saved: localStorage.getItem('nsg_tilt_ok') }; });
+      const tapTilt = async () => { await clearOverlays(page); if (!(await tiltSt()).btn) return false; await page.click('#pxTilt'); await page.waitForTimeout(300); return true; };
+      // 止まって いる ときの 手本：何も さわらずに 2秒ほどで 指の 手本が 出る。地図を タップすると 消え、また 止まると 出る（はじめての 人 だけで なく、何回でも）
+      // （地図の タップで 歩いて いる 間は 手本は 出ない。歩きおわるのを 待ってから、止まって 何秒で 出るかを はかる。下の 合成クリックは 遠くへ 歩きだすので、その 前に）
+      const demoOn = async t => { await page.waitForFunction(() => !nishioPixel.tapGoal, null, { timeout: 20000 }).catch(() => {}); await clearOverlays(page).catch(() => {}); const t0 = Date.now(); const on = await page.waitForFunction(() => nishioPixel.tapDemo.on, null, { timeout: t }).then(() => true, () => false); return on ? Date.now() - t0 : -1; };
+      const early = await tiltSt();   // 開いて すぐ：名前つきの ボタン（20秒 たつと 📱 だけに なる）
+      if (['normal', 'granted', 'denied'].includes(kind)) {   // 手本は 3とおりで 見る（許可の いらない 端末・許可する 人・ことわる 人）
+      const d1 = await demoOn(4000), n1 = await page.evaluate(() => nishioPixel.tapDemo.n), w1 = await page.evaluate(() => ({ wait: nishioPixel.tapDemo.wait, sight: nishioPixel.sightBusy(), cover: [...document.querySelectorAll('#pxInfo:not([hidden]), .panel:not([hidden]), #intro:not([hidden]), [role="dialog"]:not([hidden]), .medashi:not([hidden])')].map(e => e.id || e.className) }));
+      for (let i = 0; i < 6; i++) { try { await tapMap(page); break; } catch (e) { if (i === 5) throw e; await page.waitForTimeout(1500); } }   // 呼びとめ などの 窓が 出て いたら とじるまで 待つ
+      const dOff = await page.evaluate(() => !nishioPixel.tapDemo.on);
+      // タップした 所は めいろの 道のりで 遠い ことが ある（歩きおわるまで 20秒 より 長い）。地図の 外（上の バー）を さわって 歩くのを 止めてから はかる
+      await page.click('header.bar .brand'); await page.waitForTimeout(100);
+      const d2 = await demoOn(4000), n2 = await page.evaluate(() => nishioPixel.tapDemo.n);
+      const dBox = await page.evaluate(() => { const e = document.getElementById('tapDemo'); if (!e) return { pe: '', hit: false, wait: nishioPixel.tapDemo.wait }; return { pe: getComputedStyle(e).pointerEvents, hit: (() => { const r = e.getBoundingClientRect(); return document.elementFromPoint(r.left + r.width / 2, r.top + 4) === document.getElementById('pxCanvas'); })() }; });
+      checks[kind + 'IdleDemo'] = { d1, dOff, d2, n1, n2, w1, ...dBox, ok: d1 >= 0 && d1 <= 3500 && dOff && d2 >= 0 && d2 <= 3500 && n2 > n1 && dBox.pe === 'none' && dBox.hit };   // d1・d2：止まってから 手本が 出るまでの ミリ秒（2秒＋こまの 遅れ）
+      }
       // 合成の クリック・引数なし（タイマーや 自動openと 同じ）では 求めない
       const synthetic = await page.evaluate(() => {
         nishioPixel.meiroApi.tiltAsk(); nishioPixel.meiroApi.tiltAsk(new Event('click'));
         document.getElementById('pxCanvas').dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: 5, clientY: 5 }));
         return { asks: window.__asks, asked: !!nishioPixel.meiroApi.tilt().asked };
       });
-      await tapMap(page);
-      const first = await page.evaluate(() => ({ asks: window.__asks, asked: !!nishioPixel.meiroApi.tilt().asked, retry: !!nishioPixel.meiroApi.tilt().retry }));
+      await clearOverlays(page).catch(() => {}); await page.click('header.bar .brand'); await page.waitForTimeout(100);   // 合成クリックで 遠くへ 歩きだした ぶんを 止める（歩きおわるのを 待つと 1とおりに 25秒 かかる）
+      await tapMap(page); await tapMap(page, 170, 170);
+      const mapOnly = await tiltSt();   // 地図を 2回 タップした あと：まだ 1回も 求めて いない
+      const touchPerm = !['normal', 'unsupported', 'desktop'].includes(kind);
+      const btn0 = early.btn && mapOnly.btn, lab0 = /\blab\b/.test(early.cls);
+      await tapTilt();
+      const first = await tiltSt();
       // Codex 指摘（PR #1072）：ことわられた・例外の ときは、本当の タップの あとに 出る 知らせを 画面で 読む（文字列を ソースから 読む だけでは、呼ばれなく なっても 分からない）
       let deniedMsg = null;
       if (['denied', 'throws', 'rejected'].includes(kind)) {
@@ -74,23 +97,30 @@ async function runStartChecks(browser, url, out, { shareOnly = false } = {}) {
       } else if (kind === 'granted') {
         await page.waitForTimeout(500);
         const text = await page.evaluate(() => document.getElementById('toast').textContent);
-        checks[kind + 'Msg'] = { text, ok: !/地図を タップして 遊べるよ/.test(text) };   // 許可された ときは 出さない
+        const okShown = await tiltSt();   // 「📱 OK」と 出て いる
+        checks[kind + 'Msg'] = { text, okText: okShown.text, ok: !/地図を タップして 遊べるよ/.test(text) && /OK/.test(okShown.text) };   // 許可された ときは 出さない
       }
-      await tapMap(page, 170, 170);
-      const second = await page.evaluate(() => ({ asks: window.__asks, asked: !!nishioPixel.meiroApi.tilt().asked, retry: !!nishioPixel.meiroApi.tilt().retry }));
+      await tapTilt();
+      const second = await tiltSt();
+      await page.waitForTimeout(kind === 'granted' || kind.startsWith('notallowed') ? 2200 : 300);   // 許可：「OK」の あと ボタンが 消えるまで
       for (let i = 0; i < 6; i++) await tapMap(page, 150 + (i % 2) * 20, 150 + (i % 2) * 20);
-      const after = await visible(page), last = await page.evaluate(() => ({ asks: window.__asks, asked: !!nishioPixel.meiroApi.tilt().asked, retry: !!nishioPixel.meiroApi.tilt().retry }));
-      const syntheticOk = synthetic.asks === 0 && !synthetic.asked;
+      await tapTilt(); await tapTilt();
+      const after = await visible(page), last = await tiltSt();
+      const syntheticOk = synthetic.asks === 0 && !synthetic.asked, mapOk = mapOnly.asks === 0 && !mapOnly.asked;
       if (kind.startsWith('notallowed')) {
-        // 一時的に 操作と 認められなかった（NotAllowedError）：次の 本当の タップで 1回だけ やりなおす。その あとは 求めない
-        checks[kind + 'Retry'] = { synthetic, first, second, last, ok: syntheticOk && first.asks === 1 && !first.asked && first.retry && second.asks === 2 && second.asked && !second.retry && last.asks === 2 && last.asked };
-      } else if (permission) {
-        // 許可・拒否・例外：最初の 地図タップで 1回だけ。何回 タップしても 2回目は ない
-        checks[kind + 'NoRetry'] = { synthetic, first, second, last, ok: syntheticOk && first.asks === 1 && first.asked && !first.retry && second.asks === 1 && last.asks === 1 && !last.retry };
+        // 一時的に 操作と 認められなかった（NotAllowedError）：ボタンの 次の 本当の タップで 1回だけ やりなおす（ことわった とは おぼえない）。許可の あとは ボタンが 消え、もう 求めない
+        checks[kind + 'Retry'] = { synthetic, mapOnly, first, second, last, ok: syntheticOk && mapOk && btn0 && lab0 && first.asks === 1 && !first.asked && first.retry && first.btn && first.saved === null && second.asks === 2 && second.asked && !second.retry && last.asks === 2 && last.asked && !last.btn && last.saved === '1' };
+      } else if (kind === 'granted') {
+        // 許可：ボタンを 押した ときに 1回だけ。ボタンは 消え、何回 タップしても 2回目は ない。つぎの ために おぼえる
+        checks[kind + 'NoRetry'] = { synthetic, mapOnly, first, second, last, ok: syntheticOk && mapOk && btn0 && lab0 && first.asks === 1 && first.asked && !first.retry && second.asks === 1 && last.asks === 1 && !last.retry && !last.btn && last.saved === '1' };
+      } else if (touchPerm) {
+        // 拒否・例外：ボタンを 押した ときに 1回だけ。ボタンは 小さく のこるが、何回 押しても 2回目は 求めない
+        checks[kind + 'NoRetry'] = { synthetic, mapOnly, first, second, last, ok: syntheticOk && mapOk && btn0 && lab0 && first.asks === 1 && first.asked && !first.retry && second.asks === 1 && last.asks === 1 && !last.retry && last.btn && /\bquiet\b/.test(last.cls) && !/\blab\b/.test(last.cls) && last.saved === '0' };
       } else {
-        // 許可の いらない 端末・センサーの ない 端末：どの タップでも 求めない
-        checks[kind + 'NoAsk'] = { synthetic, first, last, ok: syntheticOk && first.asks === 0 && last.asks === 0 && !last.asked };
+        // 許可の いらない 端末・センサーの ない 端末・タッチの ない 端末：ボタンを 出さない。どの タップでも 求めない
+        checks[kind + 'NoAsk'] = { synthetic, mapOnly, first, last, ok: syntheticOk && mapOk && !btn0 && !first.btn && !last.btn && first.asks === 0 && last.asks === 0 && !last.asked };
       }
+      const permission = touchPerm;
       const fallback = ['denied', 'throws', 'rejected', 'unsupported', 'desktop'].includes(kind) ? await movementWithClear(page, false) : { ok: true };
       checks[kind + 'Controls'] = fallback;
       fs.writeFileSync(path.join(out, 'start-progress.json'), JSON.stringify(checks, null, 2));
@@ -120,9 +150,14 @@ async function runStartChecks(browser, url, out, { shareOnly = false } = {}) {
       await page.waitForTimeout(400);
       const reask0 = await page.evaluate(() => window.__asks);
       await tapMap(page); await tapMap(page, 170, 170);
+      const reaskMap = await page.evaluate(() => window.__asks) - reask0;   // 読みなおした あとも 地図の タップでは 求めない
+      const again = await tiltSt();   // 前の 答えを おぼえて いる：許可した 人には 目立たせる（pro）、ことわった 人には 小さく（quiet）
+      const remembered = !permission ? !again.btn : again.saved === '1' ? /\bpro\b/.test(again.cls) && /\blab\b/.test(again.cls) : /\bquiet\b/.test(again.cls) && !/\blab\b/.test(again.cls);
+      await tapTilt(); await tapTilt();
+      await page.waitForTimeout(300);
       const reask = await page.evaluate(() => window.__asks) - reask0, reaskWant = !permission ? 0 : kind.startsWith('notallowed') ? 2 : 1;
       const wantAsks = !permission ? 0 : kind.startsWith('notallowed') ? 2 : 1;
-      checks[kind] = { before, after, revisit, kept, back, persistence, reask0, reask, ok: !before.intro && !before.help && !before.talk && !before.panel && before.playing && before.asks === 0 && !after.panel && after.asks === wantAsks && !revisit.help && !revisit.intro && !revisit.panel && revisit.asks === 0 && reask0 === 0 && reask === reaskWant && kept && back };
+      checks[kind] = { before, after, revisit, kept, back, persistence, reask0, reaskMap, again, remembered, reask, ok: !before.intro && !before.help && !before.talk && !before.panel && before.playing && before.asks === 0 && !after.panel && after.asks === wantAsks && !revisit.help && !revisit.intro && !revisit.panel && revisit.asks === 0 && reask0 === 0 && reaskMap === 0 && remembered && reask === reaskWant && kept && back };
     } finally { await ctx.close(); }
   }
   // UserActivation API が ない 端末でも、共有リンクの 自動openから 許可を 求めない。

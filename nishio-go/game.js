@@ -663,7 +663,8 @@ function talkNpc(id, page = 0) {
       brief.icons += '🎉';
       say.push(`🎉 ${S.guide.byId ? 'イベント達成：' : ''}${n.name}に会えた${pts ? ` +${pts}pt` : ''}`);
       const ml = [], mb = mazeGoal(n.id, n.name, ml), mz = takeMzShare();   // 地図の めいろの ゴールが この人だった：名所と 同じ ように 時間・★と 紙ふぶき
-      if (mz) { mzNpcShare = { ...mz, id: n.id }; if (playAskOk(mz)) playAsk(mz); }   // 話の 窓に「📣 シェア」（人の ゴールにも ごほうびの 窓は 出ないので）。「めいろ、どうだった？」は 話の 窓を とじた あと
+      if (mz) { mzNpcShare = { ...mz, id: n.id }; if (playAskOk(mz)) playAsk(mz); }
+      if (mz) a2hsLater('goal');   // ホーム画面に追加の おすすめ（サイクル193）   // 話の 窓に「📣 シェア」（人の ゴールにも ごほうびの 窓は 出ないので）。「めいろ、どうだった？」は 話の 窓を とじた あと
       const spl = ml.find(l => l.startsWith('🏃'));
       if (spl && simple()) toastAfter(spl);   // はやさ：文字を少なく では 下の 知らせが 絵だけに なるので、あとに 文で 出す
       if (ml.length) { if (mb) gainPoints(mb); brief.icons += '🏁'; say.unshift(...ml); }
@@ -1098,6 +1099,7 @@ const miniRecords = game => ((S.mini || {})[game] || []).map(r => r || null);
 const miniStart = (game, n) => { const r = miniRecords(game); for (let i = 0; i < n; i++) if (!r[i]) return i; return 0; };
 
 let selected = null;   // シートに表示中のチェックイン候補
+const guideArrived = { id: '', at: -Infinity }, GUIDE_AUTO_MS = 3000;   // いちばん 新しく 着いた 行き先の 名所と その 時刻（performance.now()）。めいろの ひとりでに チェックインを 待つ 間（3秒まで）ボタンを 出さない
 
 // 当店にチェックインしたときの一言（ricepia.jp の内容から）
 /* ---------- キャンペーン（nishio-go/campaigns.json：お店の企画や広告と連動） ----------
@@ -1447,6 +1449,7 @@ function checkin() {
   setTimeout(() => { if (react.pending) reactShow(); else if (playQ.pending) playShow(); }, 1500);   // 下の小さなひとこと欄だけ（カードが無いので ここから）
   reactAsk(s);
   if (courseDone) courseCelebrate();   // コースを まわりきった：ごほうびの 窓が とじたら 1枚絵
+  a2hsLater('goal');   // ホーム画面に追加の おすすめ（はじめてのさんぽの あと・落ちついたら。サイクル193）
   if (mz && !playAskOk(mz)) react.pending = null;   // はじめてのさんぽで すぐ 着いた ゴール：名所の ひとことも たずねない（行き先の 札を かくさない）
   else if (mz) playAsk(mz);   // めいろの ゴール：「めいろ、どうだった？」（1日1回。名所の ひとこと より 先に）
   // 当店の窓（shopAfter）は 自動では 開かない：カードが無いので、窓が いきなり 開いて 歩きを 止めない（お店の窓は 自分で タップして 開く）
@@ -2399,6 +2402,7 @@ function checkGuide() {
   if (dist(me, g) > farLimit && fixOk()) { setGuide(decideGuide(null)); return; }
   if (g.kind === 'npc') return;
   if (dist(me, g) > guideRadius(g) || !fixOk()) return;
+  guideArrived.id = g.id; guideArrived.at = performance.now();
   const pts = guideReward(g);
   const next = decideGuide(null);
   setGuide(next);
@@ -2598,7 +2602,10 @@ function refreshNearby() {
   selected = best ? best.s : null;
   showRing(selected || nearest);
   showGuide(guideTarget() || (selected ? null : nearest));   // 行き先（みちしるべ）はいつも指す。ほかのスポットの範囲にいるときに消すのは「いちばん近いスポット」だけ
-  if (selected) {
+  // サイクル192（はじめの 1分）：めいろで いま 着いた ゴールの 名所は ひとりでに チェックインする（pixel.js の mzArriveTick。0.3秒 以内）ので、その 間 ボタンを 出さない。
+  // 自分で 遊んで 分かった：着いた しゅんかんに「▸ 名鉄 西尾駅 +20」が 2こま（0.08秒）だけ 出て、下の 欄が 74px→117px→65px と とんだ。そばを 通る ほかの 名所の ボタンは これまでどおり
+  const autoSoon = !!selected && mazeNow() && guideArrived.id === selected.id && performance.now() - guideArrived.at < GUIDE_AUTO_MS;
+  if (selected && !autoSoon) {
     btn.hidden = false;
     btn.classList.toggle('feat', !!selected.featured);
     const th = simple() ? spotThumb(selected) : '';
@@ -4359,9 +4366,7 @@ function afterReward() {
   const rd = store.get('nsg_rw_day', null), today = ymd(), n = (rd && rd.date === today ? rd.n : 0) + 1;
   store.set('nsg_rw_day', { date: today, n });
   if (n < 2) return;
-  afterRewardClosed(() => {
-    setTimeout(a2hsOffer, 4200);
-  });
+  afterRewardClosed(() => a2hsLater('goal'));   // サイクル193：ごほうびの 窓の あとも、決まりは ゴール・チェックインの あとと 同じ（a2hsLater）
 }
 // ごほうびの画面が消えてから（重ならないように）。続けてごほうびが出たら、そのぶん待つ
 function afterRewardClosed(fn) {
@@ -4444,35 +4449,89 @@ function renderTomorrow() {
     ? `<b>${ART32('calendar', '')} あした</b><div class="chips">${[['stat-fire', `+${tomorrowBonus()}`, items[0]], ['quest', '×3', items[1]], ['stat-chest', '', items[2]], ...(demo ? [['home', '', items[3]]] : []), ['stat-feet', '', items[items.length - 1]]].map(([ic, v, t]) => `<span title="${esc(t)}">${ART32(ic, t)}${v}</span>`).join('')}</div>`
     : `<b>📅 あしたのおたのしみ</b><ul>${items.map(t => `<li>${esc(t)}</li>`).join('')}</ul>`;
 }
-// ホーム画面に追加（Android の Chrome などは追加の画面を出せる。iPhone の Safari は手順を出す）
-let a2hsEvt = null, a2hsPending = false;
+// ホーム画面に追加の おすすめ（運営者の声 2026-11-10「さんぽGOホーム画面に追加を控えめに促す」・サイクル193）。
+// これまでは その日 2回めの ごほうびの 窓（showReward）の あとに 黄色い 窓（role="dialog"・「追加する」「あとで」）を 出して いたが、到着カードを なくした（2026-11-03・11-06）あとは
+// めいろの ゴール・チェックインでは 窓が 出ないので、ほとんど 出なかった（新しい 遊び手が ゴール 5つ：1回も 出ない）。出ると 地図を ふさいで タップ歩きも 止めた。
+// ・出すのは 小さな 1行の 札（role="status"。地図・時計・タップ歩きを 止めない）。ふわっと 出て 11秒で ひとりでに 消える。小さな ✕
+// ・いつ：はじめてのさんぽ（めいろの ゴール 3つ まで。あるいて移動は チェックイン 3回まで）の 間と 開いて 1分の 間は 出さない。その あとの ゴール・チェックインで、落ちついたら（知らせ・窓・せかいちず で ない）。
+//   べつの 日に また 来た 人には 開いて 20秒 あと。出すのは 7日に 1回まで、✕ で 閉じたら 30日 あける。ホーム画面から 開いた・追加ずみ の 人には 出さない
+// ・Android の Chrome など（beforeinstallprompt）：札が そのまま ボタン。iPhone の Safari：手順を 1行で（ボタンには できない）。
+//   LINE・Instagram・Facebook の 中の ブラウザ（iPhone）は ホーム画面に 追加できないので 何も 出さない
+const A2HS = { everyMs: 7 * 86400000, closedMs: 30 * 86400000, showMs: 11000, minPlayMs: 60000, returnMs: 20000, goals: 3, tryMs: 2000, tries: 20 };
+let a2hsEvt = null, a2hsPending = '', a2hsTimer = 0, a2hsTry = 0;
 window.addEventListener('beforeinstallprompt', e => {
   e.preventDefault(); a2hsEvt = e;
-  // Chrome は、しばらく見てからでないとこの合図を出さない。おすすめを出すはずだった人には、合図が来たところで出す（ごほうびの画面が消えてから）
-  if (a2hsPending) { a2hsPending = false; const go = () => ($('reward').classList.contains('show') ? setTimeout(go, 1000) : a2hsOffer()); go(); }
+  // Chrome は、しばらく見てからでないとこの合図を出さない。おすすめを出すはずだった人には、合図が来たところで（落ちついたら）出す
+  if (a2hsPending) { const w = a2hsPending; a2hsPending = ''; a2hsLater(w); }
 });
-window.addEventListener('appinstalled', () => { track('a2hs_installed', {}); store.set('nsg_a2hs_done', true); $('a2hs').hidden = true; });
+window.addEventListener('appinstalled', () => { track('a2hs_installed', {}); store.set('nsg_a2hs_done', true); a2hsHide(); });
 function standalone() { return (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true; }
 function isIOS() { return /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); }
-function a2hsOffer() {
-  if (standalone() || store.get('nsg_a2hs_done', false) || Date.now() - store.get('nsg_a2hs_t', 0) < 7 * 86400000) return;
-  if (!a2hsEvt && !isIOS()) { a2hsPending = true; return; }   // 追加の画面をまだ出せない（Chrome の合図待ち）。手順も案内できない端末では、合図が来なければ出さない
+const inAppBrowser = ua => /\bLine\/|Instagram|FBAN|FBAV|FB_IAB/.test(String(ua));   // アプリの 中の ブラウザ（共有ボタンに「ホーム画面に追加」が ない）
+// どの 形で 出せるか：'prompt'（追加の 画面を 出せる）・'ios'（Safari などの 手順）・''（出せない：アプリの 中の ブラウザ・合図の ない 端末）
+function a2hsHow() { return a2hsEvt ? 'prompt' : isIOS() && !inAppBrowser(navigator.userAgent) ? 'ios' : ''; }
+// 出して よい 人か（はじめてのさんぽが すんだ・追加して いない・前に 出してから 日が あいた）
+function a2hsEligible() {
+  if (standalone() || store.get('nsg_a2hs_done', false)) return false;
+  const now = Date.now();
+  if (now - store.get('nsg_a2hs_t', 0) < A2HS.everyMs || now - store.get('nsg_a2hs_x', 0) < A2HS.closedMs) return false;
+  return demo ? store.get('nsg_mzgoals', 0) >= A2HS.goals : (S.checkins || 0) >= A2HS.goals;
+}
+// 落ちついて いるか：地図を 見て いて、知らせ・窓・下の ひとこと欄・せかいちず で ない
+function a2hsCalm() {
+  const P = window.nishioPixel;
+  return !document.hidden && !ktBusy() && !rewardBusy() && !$('toast').classList.contains('show') && $('reactBar').hidden && !$('intro').offsetParent
+    && !document.querySelector('[role="dialog"]:not([hidden])') && !(P && P.worldMode) && !(P && P.floats && P.floats().length);
+}
+// when：'goal'（ゴール・チェックインの あと）・'return'（べつの 日に また 来た）。落ちつくまで 2秒おきに 40秒まで 待つ
+function a2hsLater(when) {
+  clearTimeout(a2hsTry);
+  let n = 0;
+  const go = () => {
+    if (!a2hsEligible() || !$('a2hs').hidden) return;
+    if (performance.now() < A2HS.minPlayMs || !a2hsCalm()) { if (++n <= A2HS.tries || performance.now() < A2HS.minPlayMs) a2hsTry = setTimeout(go, A2HS.tryMs); return; }
+    a2hsOffer(when);
+  };
+  a2hsTry = setTimeout(go, A2HS.tryMs);
+}
+function a2hsOffer(when) {
+  if (!a2hsEligible()) return false;
+  const how = a2hsHow();
+  if (!how) {   // いまは 出せない：Chrome の 合図を 待つ。アプリの 中の ブラウザは 1回だけ 数える
+    a2hsPending = when || 'goal';
+    if (isIOS() && !a2hsOffer.skipped) { a2hsOffer.skipped = true; track('a2hs_skip', { how: 'inapp' }); }
+    return false;
+  }
   store.set('nsg_a2hs_t', Date.now());
-  $('a2hsText').textContent = a2hsEvt ? '📲 ホーム画面に追加すると、あしたもワンタップで遊べます'
-    : '📲 ホーム画面に追加すると、あしたもワンタップで遊べます。Safari の下の 共有ボタン（□↑）→「ホーム画面に追加」';
-  $('a2hsAdd').hidden = !a2hsEvt;
-  $('a2hs').hidden = false;
-  track('a2hs_shown', { how: a2hsEvt ? 'prompt' : 'ios' });
+  const el = $('a2hs');
+  $('a2hsAdd').hidden = how !== 'prompt';
+  $('a2hsText').hidden = how === 'prompt';
+  $('a2hsText').textContent = '📲 □↑ →「ホーム画面に追加」で すぐ 開けるよ';   // Safari の 共有ボタン（□↑）
+  el.dataset.how = how;
+  el.hidden = false;
+  void el.offsetWidth; el.classList.add('show');
+  clearTimeout(a2hsTimer);
+  a2hsTimer = setTimeout(() => { if (!el.hidden) { track('a2hs_later', { how: 'timeout' }); a2hsHide(); } }, A2HS.showMs);
+  track('a2hs_shown', { how, when: when || 'goal' });
+  return true;
+}
+function a2hsHide() {
+  const el = $('a2hs');
+  clearTimeout(a2hsTimer);
+  el.classList.remove('show');
+  a2hsTimer = setTimeout(() => { el.hidden = true; }, 350);   // うすく なってから 消す
 }
 $('a2hsAdd').addEventListener('click', async () => {
-  $('a2hs').hidden = true;
+  a2hsHide();
   if (!a2hsEvt) return;
-  a2hsEvt.prompt();
-  const r = await a2hsEvt.userChoice.catch(() => null);
-  track('a2hs_click', { outcome: (r && r.outcome) || 'unknown' });
+  const ev = a2hsEvt;
   a2hsEvt = null;
+  ev.prompt();
+  const r = await Promise.resolve(ev.userChoice).catch(() => null);
+  track('a2hs_click', { outcome: (r && r.outcome) || 'unknown' });
 });
-$('a2hsNo').addEventListener('click', () => { $('a2hs').hidden = true; track('a2hs_later', {}); });
+$('a2hsNo').addEventListener('click', () => { store.set('nsg_a2hs_x', Date.now()); track('a2hs_later', { how: 'close' }); a2hsHide(); });
+setTimeout(() => { if (store.get('nsg_started', false) && dayN() >= 1) a2hsLater('return'); }, A2HS.returnMs);   // べつの 日に また 来た 人
 if (/[?&]src=a2hs\b/.test(location.search)) track('a2hs_open', {});
 // 1回に遊んだ時間と、その間にふえたポイント（画面を離れたときに送る）
 function sessionEnd() {
@@ -4661,6 +4720,7 @@ document.addEventListener('click', e => { const b = e.target.closest && e.target
 // ドット絵表示（pixel.js）とテストから使う窓口
 window.nishioGo = {
   galleryTiles,
+  a2hs: { cfg: A2HS, offer: a2hsOffer, later: a2hsLater, hide: a2hsHide, eligible: a2hsEligible, calm: a2hsCalm, how: a2hsHow, inApp: inAppBrowser, setEvt(e) { a2hsEvt = e; } },   // テスト用
   notePlayInput, snapMaze, mzSpeed, playAsk, playAskOk, PLAY_ASK_MIN_S, playShow, get playPending() { return playQ.pending; }, set mzNpcShareTest(v) { mzNpcShare = v; },   // テスト用：遊んでいる 画面を とる・人の ゴールの シェアを 置く
   sound,
   get nimotsu() { const NM = window.NISHIO_NIMOTSU; return NM ? NM.current(S.nimotsu, Date.now()) : ''; },   // いま あたまに のせて いる 持ち物の 絵の id（なければ ''）

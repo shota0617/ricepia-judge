@@ -86,11 +86,14 @@ class TestKome365FirstMinute(unittest.TestCase):
 
     def test_swipe_demo_lifecycle(self):
         # 出す: まだ決めていない最初の1枚、または最初の3枚で2回つづけて押しただけの人
-        self.assertIn("function demoWant(){ return choices.length < 3 && ((!ghostDone && choices.length === 0) || tapOnly >= 2); }", HTML)
+        # 周回157(店主の声 2026-11-10「スワイプお手本が出ない」): 進んだ端末でも 更新のあと 最初の1回は出す・何枚目でも 押しただけ2回で出す
+        self.assertIn("var DEMO = 'kome365_demo_seen', demoDone = store.get(DEMO) === '1';", HTML)
+        self.assertIn("function demoWant(){ return !demoDone || tapOnly >= 2; }", HTML)
+        self.assertIn("function ghostOff(){ tapOnly = 0; if (!demoDone) { demoDone = true; store.set(DEMO, '1'); } demoSet(false);", HTML)
         # 触れている間は止め、決めずに離したら出し直し、スワイプで決めたら片づける
         self.assertIn("function ghostPause(){ demoSet(false);", HTML)
         self.assertIn("$('swGhostArrows').classList.toggle('on', on); demoSet(demoWant()); }", HTML)
-        self.assertIn("function ghostOff(){ tapOnly = 0; demoSet(false);", HTML)
+        self.assertIn("function ghostOff(){ tapOnly = 0; if (!demoDone) { demoDone = true; store.set(DEMO, '1'); } demoSet(false);", HTML)
         self.assertIn("} else { if (tapMax < 12) tapOnly++; else tapOnly = 0; reset(); ghostBack(); }", HTML)
         # 指を置く高さは大きな絵の段(日付・題・札にかけない)
         self.assertIn("hd.style.setProperty('--hy', (ic.offsetTop + 4) + 'px')", HTML)

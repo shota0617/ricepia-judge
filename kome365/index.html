@@ -3035,10 +3035,14 @@ renderTitle();
   function isGold(c){ return !!GOLD[c.key] && !goldSeen[goldKey(c)]; }
   var GHOST = 'kome365_ghost_seen', ghostDone = store.get(GHOST) === '1';
   var tapOnly = 0;   /* 周回155: 決めずに押しただけの回数(スワイプで決めたら0に戻す) */
-  function demoWant(){ return choices.length < 3 && ((!ghostDone && choices.length === 0) || tapOnly >= 2); }   /* 周回155: 手本を出すのは、まだ一度もスワイプで決めていない最初の1枚と、最初の3枚で2回つづけて押しただけの人 */
+  /* 周回157(店主の声 2026-11-10「スワイプお手本が出ない」): 手本は はじめて遊ぶ人の1枚目にしか出ず、進んだ端末(店主の画面は2月2日)では 見ることも できなかった。
+     この更新のあと、どの端末でも 最初の1回は 手本を出す(いま開いているカードで。スワイプで1回決めたら消える。DEMO に覚える)。
+     また 何枚目でも、スワイプせずに 押しただけが 2回つづいたら 出す(前は最初の3枚だけ) */
+  var DEMO = 'kome365_demo_seen', demoDone = store.get(DEMO) === '1';
+  function demoWant(){ return !demoDone || tapOnly >= 2; }   /* 周回155: 手本を出すのは、まだ一度もスワイプで決めていない最初の1枚と、最初の3枚で2回つづけて押しただけの人 */
   function demoSet(on){ if (on) { try { var ic = $('swIc'), hd = $('swHand'); if (ic && ic.offsetParent) hd.style.setProperty('--hy', (ic.offsetTop + 4) + 'px'); else hd.style.removeProperty('--hy'); } catch (e) {} } $('swWrap').classList.toggle('demoOn', !!on); }   /* 指を置く高さはカードの大きな絵の段(日付・題・札の字にかけない)。絵が無い画面(横向き)ではカードの46% */
   window.addEventListener('resize', function(){ if ($('swWrap').classList.contains('demoOn')) demoSet(true); });   /* Codex指摘(PR #1071): 手本が出ている間に画面を回す・大きさが変わると、指の高さ(--hy)が前の画面のままだった。出ている間は測り直す(絵が無い横向きではカードの46%へ戻る) */
-  function ghostOff(){ tapOnly = 0; demoSet(false); $('swGhost').classList.remove('on'); $('swGhostArrows').classList.remove('on'); if (!ghostDone) { ghostDone = true; store.set(GHOST, '1'); } }
+  function ghostOff(){ tapOnly = 0; if (!demoDone) { demoDone = true; store.set(DEMO, '1'); } demoSet(false); $('swGhost').classList.remove('on'); $('swGhostArrows').classList.remove('on'); if (!ghostDone) { ghostDone = true; store.set(GHOST, '1'); } }
   function ghostPause(){ demoSet(false); $('swGhost').classList.remove('on'); $('swGhostArrows').classList.remove('on'); }   /* 周回153(最初の1分): つかんでいる間だけ案内を止める(覚えこまない) */
   function ghostBack(){ var on = !ghostDone && choices.length === 0 && !calmOn(); $('swGhost').classList.toggle('on', on); $('swGhostArrows').classList.toggle('on', on); demoSet(demoWant()); }   /* 周回153(最初の1分): 決めずに離したら、まだ最初の1枚の間は ◀ ▶ の案内をはじめから出し直す。もとは触れた瞬間に ghostOff で二度と出なくなり、札を押して選ぼうとした人は、押しても何も起きず、矢印も消えたまま止まっていた(両端の影だけが残る)。カードは動かさない(店主指示 2026-11-09 のまま) */   /* スワイプ開始/確定で即消え、以降は二度と出さない */
   function festKind(c){ return c && ({ plant: 'plant', harvest: 'harvest', qf_festival: 'aki', q_niiname: 'niiname' })[c.key] || null; }

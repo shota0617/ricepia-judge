@@ -1,4 +1,4 @@
-"""米づくり365: 最初の1分に出る飾りが、カードの日付や天気の丸に重ならない置き方になっているか(周回152)、押しただけでは案内が消えないか(周回153)、出だしのちらつきと2Dの天気(周回154)。"""
+"""米づくり365: 最初の1分に出る飾りが、カードの日付や天気の丸に重ならない置き方になっているか(周回152)、押しただけでは案内が消えないか(周回153)、出だしのちらつきと2Dの天気(周回154)、スワイプの手本(周回155)。"""
 import os
 import re
 import unittest
@@ -41,10 +41,10 @@ class TestKome365FirstMinute(unittest.TestCase):
         down = HTML[HTML.index("el.card.addEventListener('pointerdown'"):HTML.index("el.card.addEventListener('pointermove'")]
         self.assertIn("ghostPause();", down)
         self.assertNotIn("ghostOff()", down)
-        self.assertIn("choose('right', v); } else { reset(); ghostBack(); }", HTML)
         pause = HTML[HTML.index("function ghostPause(){"):HTML.index("function ghostBack(){")]
         self.assertNotIn("store.set", pause)
         self.assertIn("function ghostBack(){ var on = !ghostDone && choices.length === 0 && !calmOn();", HTML)
+        self.assertRegex(HTML, r"choose\('right', v\); \} else \{ (if \(tapMax < 12\) tapOnly\+\+; )?reset\(\); ghostBack\(\); \}")
         # 決めたとき(choose)は これまでどおり二度と出さない
         choose = HTML[HTML.index("function choose(side, vel){"):HTML.index("function choose(side, vel){") + 200]
         self.assertIn("ghostOff();", choose)
@@ -56,7 +56,7 @@ class TestKome365FirstMinute(unittest.TestCase):
 
     def test_guide_waits_for_entering_card(self):
         # 周回154: カードが入ってくる間は、後ろの案内の影と矢印を先に見せない(暗い箱のちらつき)
-        self.assertIn("#swWrap:has(#swCard.enter) #swGhost.on{animation:swGhostSlide 4.4s ease-in-out infinite,swGhostIn .24s linear both}", HTML)
+        self.assertRegex(HTML, r"#swWrap:has\(#swCard\.enter\) #swGhost\.on\{animation:sw(GhostSlide 4\.4s|DemoGhost 5s) ease-in-out infinite,swGhostIn \.24s linear both\}")
         self.assertIn("#swWrap:has(#swCard.enter) #swGhostArrows.on{animation:swGhostArrowsSlide 4.4s ease-in-out infinite,swGhostIn .24s linear both}", HTML)
         self.assertIn("@keyframes swGhostIn{0%,60%{opacity:0}100%{opacity:1}}", HTML)
         # 押して離したあとの出し直しでは消さない: つかんだ時点で enter を外している
@@ -69,6 +69,33 @@ class TestKome365FirstMinute(unittest.TestCase):
         self.assertIn("const fv = fview(f), lastRain = fv.daily.length && fv.daily[fv.daily.length - 1].rain;", draw)
         self.assertNotIn("lastRain = f.daily.length && f.daily[f.daily.length - 1].rain", draw)
         self.assertIn("window.Field3D.update(fview(f))", draw)
+
+    def test_swipe_demo_finger(self):
+        # 周回155(店主指示 2026-11-10「スワイプの仕方の手本を出す」): 指が押さえて横へ引く手本
+        self.assertIn('<div id="swHand" aria-hidden="true"><i class="hdTrail hdTrailR"></i><i class="hdTrail hdTrailL"></i><i class="hdRing"></i><div class="hdMove"><i class="hdFinger"></i></div></div><div id="swGuide"', HTML)
+        self.assertIn("#swHand{position:absolute;inset:0;z-index:6;display:none;pointer-events:none}", HTML)
+        self.assertIn("#swWrap.demoOn #swHand{display:block}", HTML)
+        # 指・うしろの影・札の光は同じ5秒の拍子。引く幅は確定距離以上(±23%)
+        self.assertIn("@keyframes swDemoMove{0%,10%{transform:translateX(0)}26%,42%{transform:translateX(23%)}42.01%,60%{transform:translateX(0)}76%,92%{transform:translateX(-23%)}92.01%,100%{transform:translateX(0)}}", HTML)
+        self.assertIn("@keyframes swDemoGhost{0%,10%{transform:translateX(0) rotate(0)}26%,36%{transform:translateX(23%) rotate(1.5deg)}", HTML)
+        self.assertIn("#swWrap.demoOn #swEdge .eR{animation:swDemoGlowR 5s ease-in-out infinite}", HTML)
+        # 手本が出ている間は ◀ ▶ を重ねない。動きを減らす設定では止まった指 + 丸い ◀ ▶
+        self.assertIn("#swWrap.demoOn #swGhostArrows,#swWrap.demoOn #swGhostArrows.on{display:none}", HTML)
+        self.assertIn("@media (prefers-reduced-motion: no-preference){#swWrap.demoOn #swGuide{display:none!important}}", HTML)
+        self.assertIn("#swHand .hdMove,#swHand .hdFinger{animation:none}#swHand .hdFinger{opacity:1}#swHand .hdRing,#swHand .hdTrail{display:none}", HTML)
+
+    def test_swipe_demo_lifecycle(self):
+        # 出す: まだ決めていない最初の1枚、または最初の3枚で2回つづけて押しただけの人
+        self.assertIn("function demoWant(){ return choices.length < 3 && ((!ghostDone && choices.length === 0) || tapOnly >= 2); }", HTML)
+        # 触れている間は止め、決めずに離したら出し直し、スワイプで決めたら片づける
+        self.assertIn("function ghostPause(){ demoSet(false);", HTML)
+        self.assertIn("$('swGhostArrows').classList.toggle('on', on); demoSet(demoWant()); }", HTML)
+        self.assertIn("function ghostOff(){ tapOnly = 0; demoSet(false);", HTML)
+        self.assertIn("} else { if (tapMax < 12) tapOnly++; reset(); ghostBack(); }", HTML)
+        # 指を置く高さは大きな絵の段(日付・題・札にかけない)
+        self.assertIn("hd.style.setProperty('--hy', (ic.offsetTop + 4) + 'px')", HTML)
+        # カードそのものは手本では動かさない: 手本の動きは #swHand・#swGhost・札の光だけ
+        self.assertNotRegex(HTML, r"#swWrap\.demoOn #swCard[^{]*\{[^}]*(transform|animation)")
 
     def test_owner_rules_kept(self):
         # 店主の指示(2026-11-08・11-09)で入れたものは そのまま

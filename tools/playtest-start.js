@@ -82,9 +82,9 @@ async function runStartChecks(browser, url, out, { shareOnly = false } = {}) {
       });
       await clearOverlays(page).catch(() => {}); await page.click('header.bar .brand'); await page.waitForTimeout(100);   // 合成クリックで 遠くへ 歩きだした ぶんを 止める（歩きおわるのを 待つと 1とおりに 25秒 かかる）
       await tapMap(page); await tapMap(page, 170, 170);
-      const mapOnly = await tiltSt();   // 地図を 2回 タップした あと：まだ 1回も 求めて いない
+      const mapOnly = await tiltSt();   // 地図を 2回 タップした あと（サイクル195）：許可の いる スマホでは 最初の タップで 1回 求めて いる（一時的な 失敗の あとは 次の タップで もう 1回）
       const touchPerm = !['normal', 'unsupported', 'desktop'].includes(kind);
-      const btn0 = early.btn && mapOnly.btn, lab0 = /\blab\b/.test(early.cls);
+      const btn0 = early.btn, lab0 = /\blab\b/.test(early.cls);
       await tapTilt();
       const first = await tiltSt();
       // Codex 指摘（PR #1072）：ことわられた・例外の ときは、本当の タップの あとに 出る 知らせを 画面で 読む（文字列を ソースから 読む だけでは、呼ばれなく なっても 分からない）
@@ -98,7 +98,7 @@ async function runStartChecks(browser, url, out, { shareOnly = false } = {}) {
         await page.waitForTimeout(500);
         const text = await page.evaluate(() => document.getElementById('toast').textContent);
         const okShown = await tiltSt();   // 「📱 OK」と 出て いる
-        checks[kind + 'Msg'] = { text, okText: okShown.text, ok: !/地図を タップして 遊べるよ/.test(text) && /OK/.test(okShown.text) };   // 許可された ときは 出さない
+        checks[kind + 'Msg'] = { text, okText: okShown.text, ok: !/地図を タップして 遊べるよ/.test(text) && (/OK/.test(okShown.text) || !okShown.btn) };   // 許可は 地図の タップで すんで いる：「OK」か、もう 消えて いる   // 許可された ときは 出さない
       }
       await tapTilt();
       const second = await tiltSt();
@@ -106,15 +106,15 @@ async function runStartChecks(browser, url, out, { shareOnly = false } = {}) {
       for (let i = 0; i < 6; i++) await tapMap(page, 150 + (i % 2) * 20, 150 + (i % 2) * 20);
       await tapTilt(); await tapTilt();
       const after = await visible(page), last = await tiltSt();
-      const syntheticOk = synthetic.asks === 0 && !synthetic.asked, mapOk = mapOnly.asks === 0 && !mapOnly.asked;
+      const syntheticOk = synthetic.asks === 0 && !synthetic.asked, mapWant = !touchPerm ? 0 : kind.startsWith('notallowed') ? 2 : 1, mapOk = mapOnly.asks === mapWant && mapOnly.asked === (mapWant > 0);
       if (kind.startsWith('notallowed')) {
-        // 一時的に 操作と 認められなかった（NotAllowedError）：ボタンの 次の 本当の タップで 1回だけ やりなおす（ことわった とは おぼえない）。許可の あとは ボタンが 消え、もう 求めない
-        checks[kind + 'Retry'] = { synthetic, mapOnly, first, second, last, ok: syntheticOk && mapOk && btn0 && lab0 && first.asks === 1 && !first.asked && first.retry && first.btn && first.saved === null && second.asks === 2 && second.asked && !second.retry && last.asks === 2 && last.asked && !last.btn && last.saved === '1' };
+        // 一時的に 操作と 認められなかった（NotAllowedError）：次の 本当の タップ（地図）で 1回だけ やりなおす（ことわった とは おぼえない）。許可の あとは ボタンが 消え、もう 求めない
+        checks[kind + 'Retry'] = { synthetic, mapOnly, first, second, last, ok: syntheticOk && mapOk && btn0 && lab0 && first.asks === 2 && first.asked && !first.retry && first.saved === '1' && second.asks === 2 && last.asks === 2 && last.asked && !last.btn && last.saved === '1' };
       } else if (kind === 'granted') {
-        // 許可：ボタンを 押した ときに 1回だけ。ボタンは 消え、何回 タップしても 2回目は ない。つぎの ために おぼえる
+        // 許可：最初の 地図タップで 1回だけ。ボタンは 消え、何回 タップしても 2回目は ない。つぎの ために おぼえる
         checks[kind + 'NoRetry'] = { synthetic, mapOnly, first, second, last, ok: syntheticOk && mapOk && btn0 && lab0 && first.asks === 1 && first.asked && !first.retry && second.asks === 1 && last.asks === 1 && !last.retry && !last.btn && last.saved === '1' };
       } else if (touchPerm) {
-        // 拒否・例外：ボタンを 押した ときに 1回だけ。ボタンは 小さく のこるが、何回 押しても 2回目は 求めない
+        // 拒否・例外：最初の 地図タップで 1回だけ。ボタンは 小さく のこるが、何回 押しても 2回目は 求めない
         checks[kind + 'NoRetry'] = { synthetic, mapOnly, first, second, last, ok: syntheticOk && mapOk && btn0 && lab0 && first.asks === 1 && first.asked && !first.retry && second.asks === 1 && last.asks === 1 && !last.retry && last.btn && /\bquiet\b/.test(last.cls) && !/\blab\b/.test(last.cls) && last.saved === '0' };
       } else {
         // 許可の いらない 端末・センサーの ない 端末・タッチの ない 端末：ボタンを 出さない。どの タップでも 求めない
@@ -150,14 +150,15 @@ async function runStartChecks(browser, url, out, { shareOnly = false } = {}) {
       await page.waitForTimeout(400);
       const reask0 = await page.evaluate(() => window.__asks);
       await tapMap(page); await tapMap(page, 170, 170);
-      const reaskMap = await page.evaluate(() => window.__asks) - reask0;   // 読みなおした あとも 地図の タップでは 求めない
+      const reaskMap = await page.evaluate(() => window.__asks) - reask0;   // 読みなおした あと：前に 許可した 人には 最初の 地図タップで 聞く。前に ことわった 人には 地図の タップでは 聞かない（サイクル195）
+      const savedNow = await page.evaluate(() => localStorage.getItem('nsg_tilt_ok')), reaskMapWant = !permission || (reask0 === 0 && reaskMap === 0 && savedNow === '0') ? 0 : kind.startsWith('notallowed') ? 2 : 1;
       const again = await tiltSt();   // 前の 答えを おぼえて いる：許可した 人には 目立たせる（pro）、ことわった 人には 小さく（quiet）
-      const remembered = !permission ? !again.btn : again.saved === '1' ? /\bpro\b/.test(again.cls) && /\blab\b/.test(again.cls) : /\bquiet\b/.test(again.cls) && !/\blab\b/.test(again.cls);
+      const remembered = !permission ? !again.btn : again.saved === '1' ? (!again.btn || /\bok\b/.test(again.cls)) : /\bquiet\b/.test(again.cls) && !/\blab\b/.test(again.cls);   // 許可した 人：地図の タップで もう 許可ずみ（ボタンは「OK」か 消えて いる）
       await tapTilt(); await tapTilt();
       await page.waitForTimeout(300);
       const reask = await page.evaluate(() => window.__asks) - reask0, reaskWant = !permission ? 0 : kind.startsWith('notallowed') ? 2 : 1;
       const wantAsks = !permission ? 0 : kind.startsWith('notallowed') ? 2 : 1;
-      checks[kind] = { before, after, revisit, kept, back, persistence, reask0, reaskMap, again, remembered, reask, ok: !before.intro && !before.help && !before.talk && !before.panel && before.playing && before.asks === 0 && !after.panel && after.asks === wantAsks && !revisit.help && !revisit.intro && !revisit.panel && revisit.asks === 0 && reask0 === 0 && reaskMap === 0 && remembered && reask === reaskWant && kept && back };
+      checks[kind] = { before, after, revisit, kept, back, persistence, reask0, reaskMap, again, remembered, reask, ok: !before.intro && !before.help && !before.talk && !before.panel && before.playing && before.asks === 0 && !after.panel && after.asks === wantAsks && !revisit.help && !revisit.intro && !revisit.panel && revisit.asks === 0 && reask0 === 0 && reaskMap === reaskMapWant && (permission && !['denied', 'throws', 'rejected'].includes(kind) ? reaskMap > 0 : reaskMap === 0) && remembered && reask === reaskWant && kept && back };
     } finally { await ctx.close(); }
   }
   // UserActivation API が ない 端末でも、共有リンクの 自動openから 許可を 求めない。

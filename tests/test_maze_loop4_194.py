@@ -21,10 +21,12 @@ class Tilt194(unittest.TestCase):
         for f in ["nishio-go/pixel.js", "tools/playtest-start.js", "tools/playtest.js"]:
             self.assertEqual(subprocess.run(["node", "--check", str(ROOT / f)]).returncode, 0, f)
 
-    def test_map_tap_never_asks(self):
+    def test_map_tap_asks_once_unless_refused_before(self):
+        """サイクル195（運営者の声 2026-11-10「傾けた時に反応しなくなった。最優先で直して」）：最初の 地図タップで 1回 聞く。前に ことわった 人には 聞かない。なぞりでは 聞かない"""
         i = PIX.index("cv.addEventListener('click', e => {\n")
         body = PIX[i:PIX.index("\n});\n", i)]
-        self.assertNotIn("tiltAsk(", body)
+        self.assertIn("if ((!tiltG.asked || tiltG.retry) && lsGet('nsg_tilt_ok', '') !== '0') tiltAsk(e);", body)
+        self.assertEqual(body.count("tiltAsk("), 1)
         swipe = PIX[PIX.index("const swipeS = "):i]
         self.assertNotIn("tiltAsk(", swipe)
 
@@ -66,7 +68,7 @@ class Tilt194(unittest.TestCase):
         self.assertNotIn("function tiltHintShow", PIX)
 
     def test_start_checks_cover_new_rules(self):
-        for s in ["checks[kind + 'IdleDemo']", "mapOk = mapOnly.asks === 0 && !mapOnly.asked", "await page.click('#pxTilt')", "reaskMap === 0 && remembered",
+        for s in ["checks[kind + 'IdleDemo']", "mapOk = mapOnly.asks === mapWant && mapOnly.asked === (mapWant > 0)", "await page.click('#pxTilt')", "reaskMap === reaskMapWant",
                   "!btn0 && !first.btn && !last.btn && first.asks === 0", "last.saved === '0'", "last.saved === '1'"]:
             self.assertIn(s, START)
 

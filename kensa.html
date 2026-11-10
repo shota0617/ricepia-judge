@@ -165,7 +165,18 @@
   #guide.on { opacity:1; }
   html.scrolled #guide { visibility:hidden; } /* 📖で下の説明を読んでいる間は、手本の指を浮かせない */
   #guide.circle { animation:gCircle 1.5s linear infinite; }
-  @keyframes gCircle { 0% { translate:34px 0; } 25% { translate:0 34px; } 50% { translate:-34px 0; } 75% { translate:0 -34px; } 100% { translate:34px 0; } }
+  @keyframes gCircle { 0% { translate:34px 0; } 12.5% { translate:24px 24px; } 25% { translate:0 34px; } 37.5% { translate:-24px 24px; } 50% { translate:-34px 0; } 62.5% { translate:-24px -24px; } 75% { translate:0 -34px; } 87.5% { translate:24px -24px; } 100% { translate:34px 0; } } /* 4点だと ひし形に動いて「回す」に見えにくいので、8点で円に近づける（サイクル140） */
+  /* 回す手本の軌跡（サイクル140）: 指の後ろに、同じ速さで回る尾を引く。指（#guide）のすぐ後ろの要素で、指が circle の時だけ出る */
+  #guideTrail { position:fixed; left:0; top:0; z-index:59; width:84px; height:84px; margin:-42px 0 0 -42px; border-radius:50%; pointer-events:none; display:none;
+    background:conic-gradient(from 0deg, rgba(150,95,30,0) 0 30%, rgba(150,95,30,.95) 100%);
+    -webkit-mask:radial-gradient(circle, transparent 29px, #000 30px, #000 38px, transparent 39px); mask:radial-gradient(circle, transparent 29px, #000 30px, #000 38px, transparent 39px);
+    animation:gSpin 1.5s linear infinite; }
+  #guide.on.circle + #guideTrail { display:block; }
+  html.scrolled #guideTrail { visibility:hidden; }
+  @keyframes gSpin { from { rotate:90deg; } to { rotate:450deg; } }
+  #guide::after, #poke::after { display:none; position:absolute; left:92%; top:2px; font-size:24px; font-weight:900; color:var(--ink); text-shadow:0 0 3px #fff, 0 0 3px #fff; }
+  #guide::after { content:attr(data-arrow); }
+  #poke::after { content:attr(data-arrow); }
   #guide.sweep { animation:gSweep 1.4s ease-in-out infinite; }
   @keyframes gSweep { 0%,100% { translate:-70px 10px; } 50% { translate:70px -10px; } }
   #guide.pinch { animation:gPinch 1.3s ease-in-out infinite; }
@@ -229,6 +240,8 @@
   }
   @media (prefers-reduced-motion: reduce) {
     #poke,#guide,.grain img.hint,.grain img.wig,.dot.ping,.gradeBtn.sway { animation:none; }
+    #guide::after, #poke::after { display:block; } /* 動きを減らす設定では、止まった指の横に向きの矢印を添える（サイクル140） */
+    #guideTrail { animation:none; rotate:90deg; }
     #plateInner.smooth { transition:none; } /* 動きを減らす設定では、寄りも滑らかにせずその場で切り替える（サイクル92・類6） */
     .grain img.hint { outline:3px solid var(--gold); }
     .dot.ping { outline:3px solid var(--gold); outline-offset:2px; } /* 動きを減らす設定でも、正解の列は静かな輪郭で示す（サイクル90・類4、Codexレビュー反映） */
@@ -252,7 +265,7 @@
         <canvas id="probe" width="44" height="6" aria-hidden="true"></canvas>
         <button id="bagBtn" aria-label="ふくろに 穀刺しを さす"><canvas id="bagCanvas" width="48" height="60"></canvas></button>
         <img id="kokuPhoto" class="photo" data-src="kensa/kokusashi.webp" alt="穀刺しの実物の写真"/>
-        <span id="poke" aria-hidden="true">👆</span>
+        <span id="poke" aria-hidden="true" data-arrow="←">👆</span>
         <span id="cookedReturn" hidden>🍚</span>
       </div>
       <div class="topScene" id="sceneMeter">
@@ -310,7 +323,7 @@
   <div id="foot">
     <div id="hint" aria-live="polite">ふくろを タップ</div>
     <button id="nextBtn">つぎの ふくろ 🌾 →</button>
-    <div id="guide" aria-hidden="true">👆</div>
+    <div id="guide" aria-hidden="true">👆</div><div id="guideTrail" aria-hidden="true"></div>
     <div id="idleCard" aria-live="polite" inert>
       <p id="idleSay">お疲れ様です 🌾</p>
       <button id="likeBtn">👍 いいね</button>
@@ -1005,7 +1018,7 @@ function startLot() {
   $("mark").className = ""; $("mark").textContent = "";
   $("journey").hidden = true; /* 米の流れの絵も袋ごとに仕切り直す（サイクル132） */
   $("hanko").style.opacity = "1";
-  $("poke").style.display = lotIndex === 0 ? "" : "none";
+  $("poke").style.display = ""; /* どの袋でも出す（サイクル140） */
   zoomBtn.hidden = true;
   resetZoom();
   buildGrains();
@@ -1063,15 +1076,28 @@ function toLocal(cx, cy) {
   return { x:(cx - rect.left - plate.clientLeft - Z.tx) / Z.s, y:(cy - rect.top - plate.clientTop - Z.ty) / Z.s };
 }
 
-/* 指の手本: 最初の袋だけ、それぞれの動かし方を指で見せる。動かすと消える */
+/* 指の手本: どの袋でも・どの所作でも、動かし方を指で見せる。触れると消え、手が止まるとまた出る（サイクル140・店主指示2026-11-10「お手本モーションを出す」）。
+   旧版は最初の袋だけ（lotIndex !== 0 なら出さない）だったため、2袋目からは はかる の「💧 ぐるぐる まわす」などに手本が1つも出なかった
+   （390×664実測: 3袋・30所作のうち21所作で手本なし。店主の画面は2袋目＝緑と白の粒がある袋の はかる）。出し直しの決まりは下の demoTick */
 const guideEl = $("guide");
 function guideOff() {
   guideEl.className = "";
+  guideAnchor = null; /* 手本を消したら、覚えていた相手も捨てる（Codex指摘 PR #1076: 消えた朱肉を相手に覚えたまま、次の袋の穀刺しの手本を消し続けた） */
 }
+var demoDown = new Set(); /* 画面に触れている指（サイクル140）。guideAt より前に置く（var: 読み込みの途中で guideAt が呼ばれても落ちない） */
+var guideAnchor = null; /* 手本の指が指している相手（要素）と、置いた時の場所。相手が動いた・消えたら、見回り（demoTick）が手本を消して出し直す */
 function guideAt(kind, el, gx, gy, at) { /* at: 手本の指を置く高さ（el の高さに対する割合）。省けば従来どおり */
   guideOff();
-  if (lotIndex !== 0) return;
-  const r = el.getBoundingClientRect();
+  /* 指が触れている間は、どの道から呼ばれても手本を出さない（Codex指摘 PR #1076: 2袋目以降、指を離さずになでて広げ切ると
+     checkSpread → updateSortHint → guideAt("pinch") で、触れたままの指の下に手本が出て、その後も消えなかった）。
+     離して手が止まれば、出し直しの見回り（demoTick）が出す */
+  if (demoDown && demoDown.size) return;
+  let r = el.getBoundingClientRect ? el.getBoundingClientRect() : { left:el.x, top:el.y, width:0, height:0 }; /* el は要素か、画面上の点 {x, y} */
+  guideAnchor = el.getBoundingClientRect ? { el, x:r.left, y:r.top, w:r.width } : null;
+  if (kind === "pinch" && el === plate) r = { left:r.left + r.width * 0.26, top:r.top + r.height * 0.8, width:0, height:0 }; /* ふたゆびの手本は皿の左下に出し、見ている粒を指で隠さない（サイクル140） */
+  if (kind === "circle") r = { left:Math.min(r.left + r.width / 2, window.innerWidth - 70), top:r.top + r.height / 2, width:0, height:0 }; /* 回る指が画面の右へはみ出さない所まで寄せる（375×548実測で3pxはみ出し） */
+  guideEl.dataset.arrow = kind === "circle" ? "↻" : kind === "sweep" ? "↔" : kind === "pinch" ? "⤢" : kind === "press" ? "↓" : Math.abs(gx || 0) > Math.abs(gy || 0) ? (gx > 0 ? "→" : "←") : (gy > 0 ? "↓" : "↑"); /* 動きを減らす設定の時だけ見える向きの矢印 */
+  $("guideTrail").style.left = r.left + r.width / 2 + "px"; $("guideTrail").style.top = r.top + r.height / 2 + "px";
   guideEl.style.left = r.left + r.width / 2 + "px";
   guideEl.style.top = r.top + r.height * (at !== undefined ? at : (kind === "move" && gy < 0 ? 0.82 : 0.5)) + "px"; /* 上へ引く手本は下のふちから。ボタンの字を指で隠さない */
   guideEl.style.setProperty("--gx", (gx || 0) + "px");
@@ -1096,6 +1122,7 @@ function layoutProbe() {
   poke.style.left = P.rest + P.L * 0.72 + "px";
   poke.style.top = P.y - 6 + "px";
   poke.style.setProperty("--pokeDx", -(P.rest - P.inAt + 8) + "px"); /* 手本どおりに押せば、ちょうどさされる */
+  poke.dataset.arrow = "←";
   if (!P.inserted) setProbe(P.rest);
   else if (!P.done) pullPoke(); /* さした後に画面の大きさが変わっても、手本の指は ひきぬく向きのまま（サイクル139） */
 }
@@ -1206,7 +1233,7 @@ function endBagDrag(e) {
   if (P.inserted && !P.done && still) { pullNudge(); return; }
   if (P.done || P.inserted) return; /* さす前に指を離したら、タップでも違う向きの引きでも1回と数える */
   if (++bagTaps >= NUDGE_LIMIT) { autoProbe(); return; }
-  if (bagTaps === 1 && lotIndex === 0) $("poke").style.display = ""; /* 空振り1回目: 手本の指👆をもう一度出す。触って消えた指は戻らず、動かし方が分からなくなっていた（390×844実測・サイクル81、Fable設計の空振り統一） */
+  if (bagTaps === 1) $("poke").style.display = ""; /* 空振り1回目: 手本の指👆をもう一度出す。触って消えた指は戻らず、動かし方が分からなくなっていた（390×844実測・サイクル81、Fable設計の空振り統一） */
   /* 空振り2回目: 道具が半分やって見せる（Fable設計の空振り統一・サイクル84）。さす所までの半分まで穀刺しが進んで戻る。状態は進めない */
   if (bagTaps === 2) { probeDemoSound(); /* 半分デモにも手本の音を付ける（サイクル120・差26） */ const halfX = P.x - (P.x - P.inAt) / 2; $("probe").animate([{ transform:"translate(" + P.x + "px," + P.y + "px)" }, { transform:"translate(" + halfX + "px," + P.y + "px)", offset:.55 }, { transform:"translate(" + P.x + "px," + P.y + "px)" }], { duration:640 * motion, easing:"ease-in-out" }); return; }
   /* 進まなかったときは、動かし方を穀刺しが見せる。手本の動きにも固有の小さな音を付ける（サイクル120・差26）。はかるの手本の揺れ（差25）と同じく、手本だけが無音だった */
@@ -1224,6 +1251,13 @@ function pullPoke() {
   const poke = $("poke");
   poke.style.left = P.x + P.L * 0.72 + "px";
   poke.style.setProperty("--pokeDx", "46px");
+  poke.dataset.arrow = "→";
+}
+function stabPoke() { /* さす手本の指を、いまの穀刺しの握りに合わせて置く（途中まで押してあれば、その場所から） */
+  const poke = $("poke");
+  poke.style.left = P.x + P.L * 0.72 + "px";
+  poke.style.setProperty("--pokeDx", -(Math.max(P.x - P.inAt, 12) + 8) + "px");
+  poke.dataset.arrow = "←";
 }
 let pullDemo = null; /* ひきぬく手本の動き。指が触れたら・次の空振りが来たら止める（手本の動きが残って、指やひとりでにぬける動きを隠さないように） */
 function stopPullDemo() {
@@ -1233,7 +1267,7 @@ function pullNudge() {
   if (step !== 0 || P.done || !P.inserted) return;
   stopPullDemo();
   if (++bagTaps >= NUDGE_LIMIT) { autoProbe(); return; }
-  if (lotIndex === 0) { pullPoke(); $("poke").style.display = ""; }
+  pullPoke(); $("poke").style.display = "";
   probeDemoSound();
   const to = bagTaps === 2 ? P.x + (P.rest - P.x) / 2 : P.x + 18;
   pullDemo = $("probe").animate([{ transform:"translate(" + P.x + "px," + P.y + "px)" }, { transform:"translate(" + to + "px," + P.y + "px)", offset:.55 }, { transform:"translate(" + P.x + "px," + P.y + "px)" }], { duration:(bagTaps === 2 ? 640 : 320) * motion, easing:"ease-in-out" });
@@ -1667,6 +1701,8 @@ function tapGrain(g) {
     return;
   }
   g.gone = true; badLeft--;
+  /* 取った粒を指していた手本は消し、手が止まれば 残りの粒を選び直して出す（Codex指摘 PR #1076: キーボードで取ると pointerdown を通らず、手本が消えた粒の場所を指し続けた） */
+  demoHide(); demoAt = performance.now() + DEMO_BACK;
   pickedKinds[g.kind]++; updateGrainRecord(); /* みわけた粒の種類を静かなきろくへ残す（サイクル93・類7） */
   grainDrop();
   setFace("happy", 500);
@@ -2090,6 +2126,96 @@ function leaveBag() {
 }
 nextBtn.addEventListener("pointerup", leaveBag); /* 袋を速くなでた直後は click が来ないことがあるので、指を離した時に流す */
 nextBtn.addEventListener("click", (e) => { if (e.detail === 0) leaveBag(); }); /* キーボードの Enter */
+/* お手本モーションの出し直し（サイクル140・店主指示2026-11-10「お手本モーションを出す」）。
+   決まりは1つ: いまの所作の手本が出ていなくて、指が画面に触れていなければ、出す。
+   ・所作が変わった時は DEMO_FIRST（0.8秒）後までに出る（所作の始まりで出す従来の手本はそのまま先に出る）
+   ・触れたら消える（document の pointerdown）。離して DEMO_BACK（2秒）進まなければ、また出る
+   ・その所作を手本の出し直しなしで2回やりとげた人には、DEMO_BACK_SLOW（4秒）待ってから出す。出なくなることはない
+   空振りの数え方（1回目=手本／2回目=半分やって見せる／3回目=ひとりでに進む）は従来どおりで、これは手が止まった時の道。
+   所作ごとのタイマーは持たず、0.2秒ごとに「いまの所作」を見て決めるので、所作や袋が変わった後に古い手本が出ることはない */
+const DEMO_FIRST = 800, DEMO_BACK = 2000, DEMO_BACK_SLOW = 4000;
+let demoKey = "", demoAt = 0, demoTouched = false, demoHelped = false, demoSeen = false;
+const demoDone = {};
+function demoPhase() { /* いま手本を出す所作。待ちの間（粒が落ちている・平均を出している・袋が流れている）は "" */
+  if (step === 0) return P.done || P.auto ? "" : P.inserted ? "pull" : "stab";
+  if (step === 1) return measured < LOT.moisture.length ? "crank" : "";
+  if (step === 2) return !token.hidden ? "sense" : badLeft === 0 ? "" : !spread ? "sweep" : "pick";
+  if (step === 3) return "grade";
+  if (step === 4) return leaving ? "" : stamped ? "slide" : inked ? "stamp" : "ink";
+  return "";
+}
+function demoVisible(k) {
+  return k === "stab" || k === "pull" ? $("poke").style.display !== "none" : guideEl.classList.contains("on");
+}
+function demoHide() {
+  guideOff();
+  $("poke").style.display = "none";
+}
+function pilePoint() { /* 皿の上の粒のまんなか（画面上の点） */
+  const live = grains.filter(g => !g.gone), rect = plate.getBoundingClientRect();
+  const cx = live.reduce((a, g) => a + g.x, 0) / (live.length || 1), cy = live.reduce((a, g) => a + g.y, 0) / (live.length || 1);
+  return { x:rect.left + plate.clientLeft + Z.tx + cx * Z.s, y:rect.top + plate.clientTop + Z.ty + cy * Z.s };
+}
+function demoShow(k) {
+  if (k === "stab") { stabPoke(); $("poke").style.display = ""; }
+  else if (k === "pull") { pullPoke(); $("poke").style.display = ""; }
+  else if (k === "crank") guideAt("circle", $("crank"));
+  else if (k === "sweep") guideAt("sweep", pilePoint());
+  else if (k === "pick") {
+    /* つまむ手本は、もう見分けがついている わるい粒（最初の袋の顔・寄って見えた顔・ふくらんで知らせた粒）の上でだけ見せる。
+       まだ見分けがついていない間は、答えを指ささず、寄り方（🔍・ふたゆび）を見せる */
+    const rect = plate.getBoundingClientRect();
+    const shown = grains.filter(g => !g.gone && g.kind !== "seiryu" && (firstBagFace(g) || isNear || g.img.classList.contains("hint")))
+      .find(g => { const b = g.el.getBoundingClientRect(); return b.left > rect.left && b.right < rect.right && b.top > rect.top && b.bottom < rect.bottom; });
+    if (shown) guideAt("press", shown.el); /* 粒そのものを相手にする（点ではなく）。粒が動いた・消えたら見回りが気づける */
+    else if (finePointer || everZoomed) guideAt("press", zoomBtn);
+    else guideAt("pinch", plate);
+  }
+  else if (k === "sense") guideSense();
+  else if (k === "grade") guideAt("move", document.querySelectorAll(".gradeBtn")[lotGrade(LOT)], 0, -48);
+  else if (k === "ink") guideAt("move", $("pad"), 0, 24);
+  else if (k === "stamp") guideAt("move", $("hanko"), 0, hankoMax);
+  else if (k === "slide") guideAt("move", $("bagBig"), 90, 0, 0.24);
+}
+function demoTick(syncOnly) { /* syncOnly: 所作の切り替わりだけ合わせ、手本は出さない */
+  const k = demoPhase(), now = performance.now();
+  if (k !== demoKey) {
+    if (demoKey && !demoHelped) demoDone[demoKey] = (demoDone[demoKey] || 0) + 1; /* 出し直しなしでやりとげた回数 */
+    demoKey = k; demoTouched = false; demoHelped = false; demoSeen = false; demoAt = now + DEMO_FIRST;
+    if (!k) demoHide(); /* 待ちの間は、前の所作の手本を残さない */
+  }
+  if (!k || syncOnly === true) return;
+  const vis = demoVisible(k);
+  if (vis && demoDown.size) { demoHide(); return; } /* 触れている間に ほかの道から出た手本（穀刺しの指など）も、見回りで消す */
+  /* 手本が指している相手が動いた・消えた（Codex指摘 PR #1076: キーボードで拡大を切りかえる・粒を取る など、指が触れない道で相手だけ動くと、手本が元の場所に残った）。
+     場合ごとに足すのをやめ、相手の場所を見回りで確かめる。ずれていたら消して、すぐ（0.4秒）選び直して出す */
+  if (vis && guideAnchor && guideEl.classList.contains("on")) { /* 相手を覚えているのは #guide の手本だけ。穀刺しの指（#poke）が出ている時には見ない */
+    const q = guideAnchor.el.getBoundingClientRect();
+    if (Math.hypot(q.left - guideAnchor.x, q.top - guideAnchor.y) > 12 || (guideAnchor.w && !q.width)) { demoHide(); demoAt = now + 400; return; }
+  }
+  if (vis) demoSeen = true;
+  if (vis && demoTouched) demoHelped = true; /* 触れた後にもう一度手本が出た（空振りの手本も含む） */
+  if (vis || demoDown.size || now < demoAt || document.documentElement.classList.contains("scrolled")) return;
+  if (demoTouched) demoHelped = true;
+  demoSeen = true;
+  demoShow(k);
+}
+document.addEventListener("pointerdown", (e) => {
+  demoTick(true); /* 所作が変わった直後の指でも、先に「いまの所作」へ合わせてから数える */
+  demoDown.add(e.pointerId); demoTouched = true; demoHide();
+}, { capture:true, passive:true });
+function demoUp(e) {
+  demoDown.delete(e.pointerId);
+  /* この所作の手本をまだ一度も見せていない（前の所作の指がのったまま始まった: さした指を離した直後の ひきぬく など）なら、はじめと同じ早さで出す */
+  demoAt = performance.now() + (!demoSeen ? DEMO_FIRST : demoDone[demoKey] >= 2 ? DEMO_BACK_SLOW : DEMO_BACK);
+}
+document.addEventListener("pointerup", demoUp, { capture:true, passive:true });
+document.addEventListener("pointercancel", demoUp, { capture:true, passive:true });
+window.addEventListener("blur", () => { if (demoDown.size) { demoDown.clear(); demoUp({ pointerId:-1 }); } }); /* 指をのせたまま画面を離れても、「触れている」のままにしない */
+/* 押したまま窓の外でマウスを離すと pointerup が届かない（Codex指摘 PR #1076）。ボタンを押していないマウスが動いたら、離したものとして扱う */
+document.addEventListener("pointermove", (e) => { if (e.pointerType === "mouse" && !e.buttons && demoDown.has(e.pointerId)) demoUp(e); }, { capture:true, passive:true });
+document.addEventListener("visibilitychange", () => { if (demoDown.size) { demoDown.clear(); demoUp({ pointerId:-1 }); } });
+(function demoLoop() { demoTick(); setTimeout(demoLoop, 200); })(); /* 0.2秒ごとに見直す。遊びを止めたり急がせたりする時計ではない */
 window.addEventListener("scroll", () => { document.documentElement.classList.toggle("scrolled", window.scrollY > 0); }, { passive:true });
 window.addEventListener("resize", () => {
   layoutProbe();

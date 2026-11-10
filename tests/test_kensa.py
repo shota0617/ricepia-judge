@@ -187,8 +187,8 @@ class FlowTests(unittest.TestCase):
         self.assertIn('(kind === "move" && gy < 0 ? 0.82 : 0.5)', HTML)
 
     def test_first_bag_guide(self):
-        # 最初の袋だけ、動かし方を指で見せる
-        self.assertIn("if (lotIndex !== 0) return;", HTML)
+        # 動かし方を指で見せる。サイクル140（店主指示2026-11-10「お手本モーションを出す」）で、最初の袋だけの決まりは外した
+        self.assertNotIn("if (lotIndex !== 0) return;", HTML)
         for kind in ('"circle"', '"sweep"', '"pinch"', '"move"', '"press"'):
             self.assertIn("guideAt(" + kind, HTML)
         self.assertIn('pointer-events:none; opacity:0; transition:opacity', HTML)
@@ -480,7 +480,7 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         # 手本の指👆がもう一度同じ動きを見せる。従来は触った瞬間に消えた指が
         # 戻らず、1回目では道具の小さな揺れしか返らなかった（390×844実測）。
         # 2回目の道具の動き・3回目（等級は2回）の自動代替は従来どおり
-        self.assertIn('if (bagTaps === 1 && lotIndex === 0) $("poke").style.display = "";', HTML)  # ぬく
+        self.assertIn('if (bagTaps === 1) $("poke").style.display = "";', HTML)  # ぬく（サイクル140でどの袋でも）
         self.assertIn('if (meterTaps === 1) guideAt("circle", $("crank"));', HTML)  # はかる
         self.assertIn("function guideSense()", HTML)  # 感じる: 開始時と空振り1回目で同じ手本
         self.assertIn("if (senseTaps === 1) guideSense();", HTML)
@@ -1553,7 +1553,10 @@ assert.equal(sims, 1);
         fn = HTML[start:HTML.index("/* ぬく:", start)]
         script = """
 const assert = require('node:assert/strict');
-const lotIndex = 0, guideEl = {style:{setProperty(){}}, className:'', offsetWidth:0}, guideOff = () => {};
+const lotIndex = 0, guideEl = {style:{setProperty(){}}, dataset:{}, className:'', offsetWidth:0}, guideOff = () => {};
+var demoDown = new Set();
+var guideAnchor = null;
+const plate = {}, $ = () => ({style:{}}), window = {innerWidth:390};
 const el = {getBoundingClientRect: () => ({left:0, top:100, width:200, height:400})};
 """ + fn + """
 guideAt('move', el, 90, 0, 0.24); assert.equal(guideEl.style.top, '196px');   // 指定した高さ
@@ -1588,7 +1591,7 @@ const assert = require('node:assert/strict');
 const NUDGE_LIMIT = 3, motion = 1;
 let step = 0, lotIndex = 0, bagTaps = 0, autos = 0, sounds = 0, cancels = 0; const anims = [];
 const P = {x:100, y:50, rest:200, L:100, inserted:true, done:false};
-const poke = {style:{display:'none', left:'', setProperty(k, v) { this[k] = v; }}};
+const poke = {style:{display:'none', left:'', setProperty(k, v) { this[k] = v; }}, dataset:{}};
 const probe = {animate(frames, opt) { anims.push([frames[1].transform, opt.duration]); return {cancel() { cancels++; }}; }};
 const $ = id => ({poke, probe})[id];
 const autoProbe = () => { autos++; }, probeDemoSound = () => { sounds++; };
@@ -1666,6 +1669,121 @@ P.drag = {id:1, cx:50, cy:50, far:3, x0:100, moved:false};   endBagDrag({pointer
         self.assertIn("endToken();", outside)
         down = HTML[HTML.index('plate.addEventListener("pointerdown",'):HTML.index('plate.addEventListener("pointermove",')]
         self.assertIn("if (step !== 2 || e.target === zoomBtn || !token.hidden) return;", down)
+
+    def test_cycle140_demonstration_on_every_bag_and_comes_back(self):
+        # 店主指示2026-11-10「お手本モーションを出す」: 手本は最初の袋だけ（lotIndex !== 0 なら出さない）だったため、
+        # 2袋目からは はかる の「ぐるぐる まわす」などに手本が1つも出なかった（390×664実測: 3袋30所作のうち21所作）。
+        # 最初の袋でも、短く回して離すと手本は二度と出なかった。
+        # どの袋・どの所作でも出し、触れたら消し、離して2秒進まなければまた出す。慣れた人には4秒。出なくなることはない。
+        self.assertNotIn("if (lotIndex !== 0) return;", HTML)
+        self.assertIn("店主指示2026-11-10「お手本モーションを出す」", HTML)
+        self.assertIn('$("poke").style.display = ""; /* どの袋でも出す（サイクル140） */', HTML)
+        node = shutil.which("node")
+        if not node:
+            self.skipTest("node がないので実行の確認は飛ばす")
+        start = HTML.index("const DEMO_FIRST = 800, DEMO_BACK = 2000, DEMO_BACK_SLOW = 4000;")
+        fn = HTML[start:HTML.index("(function demoLoop()", start)]
+        script = """
+const assert = require('node:assert/strict');
+let T = 0; const performance = {now: () => T};
+let step = 1, measured = 0, badLeft = 2, spread = false, leaving = false, stamped = false, inked = false, lotIndex = 4, everZoomed = false, isNear = false, hankoMax = 80;
+const finePointer = false, LOT = {moisture:[1, 2, 3]}, P = {done:false, auto:false, inserted:false}, token = {hidden:true}, grains = [], zoomBtn = {}, Z = {s:1, tx:0, ty:0};
+const plate = {getBoundingClientRect: () => ({left:0, top:0, right:300, bottom:300}), clientLeft:0, clientTop:0};
+const shown = []; let on = false, scrolled = false;
+const guideEl = {classList:{contains: () => on}};
+const poke = {style:{display:'none'}};
+const $ = id => id === 'poke' ? poke : {id};
+const guideOff = () => { on = false; }, guideAt = (kind, el) => { on = true; shown.push(kind + ':' + (el.id || 'point')); };
+const guideSense = () => { on = true; shown.push('sense'); }, pullPoke = () => {}, stabPoke = () => {}, firstBagFace = () => false, lotGrade = () => 0;
+const handlers = {};
+const document = {documentElement:{classList:{contains: () => scrolled}}, addEventListener: (n, f) => { handlers[n] = f; }, querySelectorAll: () => [{id:'grade0'}]};
+const window = {addEventListener: () => {}};
+var demoDown = new Set();
+var guideAnchor = null;
+""" + fn + """
+const at = (t) => { T = t; demoTick(); };
+// 5袋目の はかる（従来は手本なし）: 所作が始まって0.8秒までに出る
+at(0); assert.deepEqual(shown, []);
+at(600); assert.deepEqual(shown, []);
+at(900); assert.deepEqual(shown, ['circle:crank']);
+at(1100); assert.equal(shown.length, 1);                       // 出ている間は出し直さない
+// 触れたら消える。指がのっている間は出ない
+T = 1200; handlers.pointerdown({pointerId:1}); assert.equal(on, false); assert.equal(poke.style.display, 'none');
+at(5000); assert.equal(shown.length, 1);
+// 離して2秒進まなければ、また出る
+T = 5100; handlers.pointerup({pointerId:1});
+at(7000); assert.equal(shown.length, 1);
+at(7200); assert.deepEqual(shown, ['circle:crank', 'circle:crank']);
+// 説明を読んでいる間（scrolled）は出さない
+T = 7300; handlers.pointerdown({pointerId:1}); T = 7400; handlers.pointercancel({pointerId:1});
+scrolled = true; at(9600); assert.equal(shown.length, 2);
+scrolled = false; at(9800); assert.equal(shown.length, 3);
+// 待ちの間（平均を出している）は "" で、前の手本を消す
+measured = 3; at(10000); assert.equal(demoPhase(), ''); assert.equal(on, false);
+// 所作ごとの手本
+step = 2; at(10200); at(11100); assert.equal(shown[3], 'sweep:point');
+spread = true; on = false; at(11300); at(12200); assert.equal(shown[4], 'pinch:point');   // 見分けがつく前は答えを指ささず、寄り方を見せる
+token.hidden = false; on = false; at(12400); at(13300); assert.equal(shown[5], 'sense');
+token.hidden = true; step = 3; on = false; at(13500); at(14400); assert.equal(shown[6], 'move:grade0');
+step = 4; on = false; at(14600); at(15500); assert.equal(shown[7], 'move:pad');
+inked = true; on = false; at(15700); at(16600); assert.equal(shown[8], 'move:hanko');
+stamped = true; on = false; at(16800); at(17700); assert.equal(shown[9], 'move:bagBig');
+leaving = true; at(17900); assert.equal(demoPhase(), '');
+// さす・ひきぬく は穀刺しの指（#poke）
+leaving = false; stamped = false; inked = false; step = 0; at(18100); at(19000); assert.equal(poke.style.display, '');
+T = 19100; handlers.pointerdown({pointerId:2}); P.inserted = true; T = 19500; handlers.pointerup({pointerId:2});
+at(19600); assert.equal(demoPhase(), 'pull'); assert.equal(poke.style.display, 'none');
+at(20500); assert.equal(poke.style.display, '');             // 指をのせたまま始まった所作は、離して0.8秒で出る（2秒待たせない）
+// 手本の出し直しなしで2回やりとげた所作は、4秒待ってから出す。出なくなることはない
+P.inserted = false; P.done = true; step = 1; measured = 0; demoDone.crank = 2; on = false;
+at(30000); at(30900); const n = shown.length; assert.equal(shown[n - 1], 'circle:crank');
+T = 31000; handlers.pointerdown({pointerId:3}); T = 31100; handlers.pointerup({pointerId:3});
+at(33200); assert.equal(shown.length, n);
+at(35200); assert.equal(shown.length, n + 1);
+"""
+        out = subprocess.run([node, "-e", script], capture_output=True, text=True)
+        self.assertEqual(out.returncode, 0, out.stderr[-600:])
+
+    def test_cycle140_no_demonstration_while_a_finger_is_down(self):
+        # Codex指摘（PR #1076）: 指が触れている間は、どの道から呼ばれても手本を出さない。出ていたら見回りで消す
+        self.assertIn("var demoDown = new Set();", HTML)
+        self.assertLess(HTML.index("var demoDown = new Set();"), HTML.index("function guideAt(kind, el, gx, gy, at) {"))
+        g = HTML[HTML.index("function guideAt(kind, el, gx, gy, at) {"):]
+        self.assertLess(g.index("if (demoDown && demoDown.size) return;"), g.index("guideEl.dataset.arrow"))  # 何かを置く前に戻る
+        self.assertIn("if (vis && demoDown.size) { demoHide(); return; }", HTML)
+        self.assertNotIn("const demoDown = new Set()", HTML)
+        # 手本が指している相手が動いた・消えたら、見回りが消して出し直す（Codex指摘 PR #1076・5回目。場合ごとではなく相手の場所で見る）
+        self.assertIn("guideAnchor = el.getBoundingClientRect ? { el, x:r.left, y:r.top, w:r.width } : null;", HTML)
+        self.assertIn("if (Math.hypot(q.left - guideAnchor.x, q.top - guideAnchor.y) > 12 || (guideAnchor.w && !q.width)) { demoHide(); demoAt = now + 400; return; }", HTML)
+        self.assertIn('if (shown) guideAt("press", shown.el);', HTML)
+        # 手本を消したら相手も捨てる・相手を見るのは #guide が出ている時だけ（Codex指摘 PR #1076・6回目: 古い相手で穀刺しの手本がちらついた）
+        off = HTML[HTML.index("function guideOff() {"):HTML.index("var demoDown = new Set();")]
+        self.assertIn("guideAnchor = null;", off)
+        self.assertIn('if (vis && guideAnchor && guideEl.classList.contains("on")) {', HTML)
+        # 粒を取ったら（キーボードでも）手本を消して、残りの粒を選び直す（Codex指摘 PR #1076・4回目）
+        tg = HTML[HTML.index("function tapGrain(g) {"):]
+        self.assertLess(tg.index("g.gone = true; badLeft--;"), tg.index("demoHide(); demoAt = performance.now() + DEMO_BACK;"))
+        self.assertLess(tg.index("demoHide(); demoAt = performance.now() + DEMO_BACK;"), tg.index("\n}\n"))
+        # 押したまま窓の外で離したマウスを「触れている」に残さない（Codex指摘 PR #1076・3回目）
+        self.assertIn('document.addEventListener("pointermove", (e) => { if (e.pointerType === "mouse" && !e.buttons && demoDown.has(e.pointerId)) demoUp(e); }, { capture:true, passive:true });', HTML)
+        self.assertIn('window.addEventListener("blur", () => { if (demoDown.size) { demoDown.clear(); demoUp({ pointerId:-1 }); } });', HTML)
+
+    def test_cycle140_crank_demo_reads_as_turning(self):
+        # はかるの手本は、円に沿って回る指と、その後ろを同じ速さで回る尾。動きを減らす設定では止まった指と向きの矢印。
+        self.assertIn('<div id="guide" aria-hidden="true">👆</div><div id="guideTrail" aria-hidden="true"></div>', HTML)
+        self.assertIn("#guide.on.circle + #guideTrail { display:block; }", HTML)
+        self.assertIn("@keyframes gSpin { from { rotate:90deg; } to { rotate:450deg; } }", HTML)
+        self.assertIn("12.5% { translate:24px 24px; }", HTML)  # 8点で円に近づける
+        self.assertIn("html.scrolled #guideTrail { visibility:hidden; }", HTML)
+        reduce = HTML[HTML.index("@media (prefers-reduced-motion: reduce)"):HTML.index("</style>")]
+        self.assertIn("#guide::after, #poke::after { display:block; }", reduce)
+        self.assertIn("#guideTrail { animation:none; rotate:90deg; }", reduce)
+        self.assertIn('<span id="poke" aria-hidden="true" data-arrow="←">👆</span>', HTML)
+        # ふたゆびの手本は皿の左下。見ている粒を指で隠さない
+        self.assertIn('if (kind === "pinch" && el === plate) r = { left:r.left + r.width * 0.26, top:r.top + r.height * 0.8, width:0, height:0 };', HTML)
+        # 遊びを止める時計は置かない（setInterval は使わず、0.2秒ごとの見直しだけ）
+        self.assertNotIn("setInterval", HTML)
+        self.assertIn("(function demoLoop() { demoTick(); setTimeout(demoLoop, 200); })();", HTML)
 
     def test_cycle140_taps_on_the_stamped_bag_are_caught(self):
         # 最初の1分（差42）: 押印後の「流す」だけ空振りの受け皿がなく、目の前の大きな袋への

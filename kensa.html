@@ -1080,11 +1080,43 @@ function toLocal(cx, cy) {
    旧版は最初の袋だけ（lotIndex !== 0 なら出さない）だったため、2袋目からは はかる の「💧 ぐるぐる まわす」などに手本が1つも出なかった
    （390×664実測: 3袋・30所作のうち21所作で手本なし。店主の画面は2袋目＝緑と白の粒がある袋の はかる）。出し直しの決まりは下の demoTick */
 const guideEl = $("guide");
+/* はかるの手本は、指だけでなくハンドルも一緒に回して見せる（サイクル141・最初の1分・店主指示2026-11-10「お手本モーションを出す」）。
+   旧版は指👆がハンドルの握りの通り道（半径33px）を回るのに、握りは上で止まったままだった
+   （390×844実測: 手本が出ている1.3秒・12枚の連続写真で握りの向きは0°のまま、#crankArm の動き0件）。指が握りを素通りして見え、「この握りを持って回す」が伝わりにくかった。
+   指は握りの今の場所から回り始め、握りは指の下について回る。触れたら、その向きのまま止まる（とばない）。
+   はかった数（crankTurned）には足さない。動きを減らす設定では回さない（指も止まっている） */
+var crankDemo = null; /* var: 読み込みの途中で guideOff が呼ばれても落ちない */
+function crankDemoOff() {
+  if (!crankDemo) return;
+  const t = crankDemo.currentTime;
+  crankDemo.cancel(); crankDemo = null;
+  crankAngle = (crankAngle + 360 * ((Number(t) || 0) % 1500) / 1500) % 360; /* 手本で回った所を、握りの今の向きにする */
+  $("crankArm").style.transform = "rotate(" + crankAngle + "deg)";
+  guideEl.style.animationDelay = ""; $("guideTrail").style.animationDelay = "";
+}
+function crankDemoOn() {
+  if (reduced || crankDrag) return;
+  /* 指の回り始め（gCircle の 0% は右＝握りの向き90°）を、握りの今の向きに合わせる */
+  const delay = -((((crankAngle - 90) % 360) + 360) % 360) / 360 * 1500 + "ms";
+  guideEl.style.animationDelay = delay; $("guideTrail").style.animationDelay = delay;
+  crankDemo = $("crankArm").animate([{ transform:"rotate(" + crankAngle + "deg)" }, { transform:"rotate(" + (crankAngle + 360) + "deg)" }], { duration:1500, iterations:Infinity });
+}
 function guideOff() {
+  crankDemoOff();
   guideEl.className = "";
   guideAnchor = null; /* 手本を消したら、覚えていた相手も捨てる（Codex指摘 PR #1076: 消えた朱肉を相手に覚えたまま、次の袋の穀刺しの手本を消し続けた） */
 }
 var demoDown = new Set(); /* 画面に触れている指（サイクル140）。guideAt より前に置く（var: 読み込みの途中で guideAt が呼ばれても落ちない） */
+/* 手本の相手の「落ち着く場所」（サイクル141・最初の1分）。上の場面（.topScene）は右26pxから0.22秒かけて すべり込むので、
+   その途中で場所を はかると 26px 右にずれる。旧版は はかる に着いた時、すべり込む途中のハンドルに手本を置き、
+   見回りが「相手が動いた」と見て手本を消し、0.4秒後に出し直していた（390×844実測: 着いて約0.1秒で消え、413ms 手本なし。360×640: 400ms。
+   消える前の指は握りから最大26px右）。店主指示2026-11-10「お手本モーションを出す」の画面で、手本が 出て・消えて・また出る になっていた。
+   すべり込みの分を引いて、はじめから落ち着く場所に置く。見回りも同じ場所で比べる */
+function restRect(el) {
+  const r = el.getBoundingClientRect(), scene = el.closest ? el.closest(".topScene") : null;
+  const dx = scene ? new DOMMatrixReadOnly(getComputedStyle(scene).transform).m41 : 0;
+  return { left:r.left - dx, top:r.top, width:r.width, height:r.height };
+}
 var guideAnchor = null; /* 手本の指が指している相手（要素）と、置いた時の場所。相手が動いた・消えたら、見回り（demoTick）が手本を消して出し直す */
 function guideAt(kind, el, gx, gy, at) { /* at: 手本の指を置く高さ（el の高さに対する割合）。省けば従来どおり */
   guideOff();
@@ -1092,7 +1124,7 @@ function guideAt(kind, el, gx, gy, at) { /* at: 手本の指を置く高さ（el
      checkSpread → updateSortHint → guideAt("pinch") で、触れたままの指の下に手本が出て、その後も消えなかった）。
      離して手が止まれば、出し直しの見回り（demoTick）が出す */
   if (demoDown && demoDown.size) return;
-  let r = el.getBoundingClientRect ? el.getBoundingClientRect() : { left:el.x, top:el.y, width:0, height:0 }; /* el は要素か、画面上の点 {x, y} */
+  let r = el.getBoundingClientRect ? restRect(el) : { left:el.x, top:el.y, width:0, height:0 }; /* el は要素か、画面上の点 {x, y} */
   guideAnchor = el.getBoundingClientRect ? { el, x:r.left, y:r.top, w:r.width } : null;
   if (kind === "pinch" && el === plate) r = { left:r.left + r.width * 0.26, top:r.top + r.height * 0.8, width:0, height:0 }; /* ふたゆびの手本は皿の左下に出し、見ている粒を指で隠さない（サイクル140） */
   if (kind === "circle") r = { left:Math.min(r.left + r.width / 2, window.innerWidth - 70), top:r.top + r.height / 2, width:0, height:0 }; /* 回る指が画面の右へはみ出さない所まで寄せる（375×548実測で3pxはみ出し） */
@@ -1102,6 +1134,7 @@ function guideAt(kind, el, gx, gy, at) { /* at: 手本の指を置く高さ（el
   guideEl.style.top = r.top + r.height * (at !== undefined ? at : (kind === "move" && gy < 0 ? 0.82 : 0.5)) + "px"; /* 上へ引く手本は下のふちから。ボタンの字を指で隠さない */
   guideEl.style.setProperty("--gx", (gx || 0) + "px");
   guideEl.style.setProperty("--gy", (gy || 0) + "px");
+  if (kind === "circle" && el === $("crank")) crankDemoOn(); /* 指の回り始めをずらすので、動きを付ける前に決める */
   void guideEl.offsetWidth;
   guideEl.className = "on " + kind;
 }
@@ -1332,6 +1365,7 @@ function endCrank(e) {
   if (++meterTaps >= NUDGE_LIMIT) { meterTaps = NUDGE_LIMIT - 1; takeReading(); return; } /* タップ3回で1回はかれた後は、同じ袋の残りはタップ1回ごとにはかれる（サイクル137・最初の1分）。旧版は1回はかるたびに数え直していたため、タップだけの人は3回×3＝9〜10回のタップ・約12秒かかり、他の所作（3回・約4秒）の3倍だった（390×844実測）。回す動きは手本で3回見せ終えている */
   if (meterTaps === 1) guideAt("circle", $("crank")); /* 空振り1回目: 手本の指をもう一度出す（サイクル81） */
   crankSound(); /* 空振りの手本の揺れ（60°）も、実際に回す時と同じカチッで知らせる（サイクル119・差分テーマ差25）。本物の回転は45°ごとに crankSound が鳴るのに、60°揺れる手本だけが無音だった（390×844実測で同期音0件）。揺れ1回につき1回だけ鳴らす */
+  if (crankDemo) return; /* 手本の指と一緒に握りが回っている間は、揺れを重ねない（サイクル141。重ねると握りが指から離れて、とんで戻る） */
   $("crankArm").animate([{ transform:"rotate(" + crankAngle + "deg)" }, { transform:"rotate(" + (crankAngle + 60) + "deg)" }, { transform:"rotate(" + crankAngle + "deg)" }], { duration:380 * motion, easing:"ease-in-out" });
 }
 $("sceneMeter").addEventListener("pointerup", endCrank);
@@ -2190,7 +2224,7 @@ function demoTick(syncOnly) { /* syncOnly: 所作の切り替わりだけ合わ�
   /* 手本が指している相手が動いた・消えた（Codex指摘 PR #1076: キーボードで拡大を切りかえる・粒を取る など、指が触れない道で相手だけ動くと、手本が元の場所に残った）。
      場合ごとに足すのをやめ、相手の場所を見回りで確かめる。ずれていたら消して、すぐ（0.4秒）選び直して出す */
   if (vis && guideAnchor && guideEl.classList.contains("on")) { /* 相手を覚えているのは #guide の手本だけ。穀刺しの指（#poke）が出ている時には見ない */
-    const q = guideAnchor.el.getBoundingClientRect();
+    const q = restRect(guideAnchor.el); /* すべり込みの途中は、落ち着く場所で比べる（サイクル141） */
     if (Math.hypot(q.left - guideAnchor.x, q.top - guideAnchor.y) > 12 || (guideAnchor.w && !q.width)) { demoHide(); demoAt = now + 400; return; }
   }
   if (vis) demoSeen = true;

@@ -1558,6 +1558,7 @@ var demoDown = new Set();
 var guideAnchor = null;
 const plate = {}, $ = () => ({style:{}}), window = {innerWidth:390};
 const el = {getBoundingClientRect: () => ({left:0, top:100, width:200, height:400})};
+const restRect = el => el.getBoundingClientRect(); // 上の場面の外の相手（サイクル141）
 """ + fn + """
 guideAt('move', el, 90, 0, 0.24); assert.equal(guideEl.style.top, '196px');   // 指定した高さ
 guideAt('move', el, 90, 0);       assert.equal(guideEl.style.top, '300px');   // 省けば真ん中
@@ -1828,6 +1829,91 @@ stamped = true; step = 0; swipeNudge(); assert.equal(leaves, 1);   // 別の段�
         self.assertIn("function swipeDemoSound()", HTML)  # 手本には固有の小さな音。実際に流れる bagSound は使わない
         nudge = HTML[HTML.index("function swipeNudge()"):HTML.index("function leaveBag()")]
         self.assertNotIn("bagSound", nudge)
+
+    def test_cycle141_crank_demo_turns_the_handle_with_the_finger(self):
+        # サイクル141（最初の1分・店主指示2026-11-10「お手本モーションを出す」）: はかるの手本は、指だけでなくハンドルも一緒に回す。
+        # 旧版は指👆が握りの通り道を回るのに握りは止まったままで（390×844実測: 連続写真12枚で握りの向き0°のまま・#crankArm の動き0件）、
+        # 指が握りを素通りして見えた。直した後は、握りが指の下について回る（実測: 指と握りの離れ 最大1.7px）
+        node = shutil.which("node")
+        if not node:
+            self.skipTest("node がないので実行の確認は飛ばす")
+        demo = HTML[HTML.index("var crankDemo = null;"):HTML.index("function guideOff() {")]
+        script = """
+const assert = require('node:assert/strict');
+let reduced = false, crankDrag = null, crankAngle = 30, crankTurned = 0, made = [];
+const style = () => ({ animationDelay:'' });
+const arm = { style:{}, animate(frames, opt) { const a = { frames, opt, currentTime:0, cancelled:false, cancel() { this.cancelled = true; } }; made.push(a); return a; } };
+const guideEl = { style:style() }, trail = { style:style() };
+const $ = id => id === 'crankArm' ? arm : trail;
+""" + demo + """
+crankDemoOff(); // 出ていない時に消しても何も起きない
+assert.equal(made.length, 0);
+crankDemoOn();
+assert.equal(made.length, 1);
+assert.equal(made[0].frames[0].transform, 'rotate(30deg)'); // 握りは今の向きから回り始める（とばない）
+assert.equal(made[0].frames[1].transform, 'rotate(390deg)'); // 右回りに1周
+assert.equal(made[0].opt.duration, 1500); assert.equal(made[0].opt.iterations, Infinity); // 指の1周（gCircle 1.5秒）と同じ速さ
+assert.equal(guideEl.style.animationDelay, '-1250ms'); // 指は握りの今の場所（向き30°＝右から300°先）から回り始める
+assert.equal(trail.style.animationDelay, '-1250ms'); // 軌跡の尾も同じだけずらす
+made[0].currentTime = 1500 + 375; // 1周と1/4 回った所で指が触れた
+crankDemoOff();
+assert.equal(made[0].cancelled, true);
+assert.equal(crankAngle, 120); // 手本で回った向きのまま止まる（元の向きへ とんで戻らない）
+assert.equal(arm.style.transform, 'rotate(120deg)');
+assert.equal(guideEl.style.animationDelay, ''); assert.equal(trail.style.animationDelay, ''); // ほかの所作の手本には ずらしを残さない
+assert.equal(crankTurned, 0); // 手本で回った分は、はかった数に足さない
+crankAngle = 90; crankDemoOn(); assert.equal(guideEl.style.animationDelay, '0ms'); crankDemoOff();
+crankAngle = -99; crankDemoOn(); assert.equal(guideEl.style.animationDelay, '-712.5ms'); crankDemoOff(); // 逆回しの後の負の向きでも合う
+const n = made.length;
+reduced = true; crankDemoOn(); assert.equal(made.length, n); // 動きを減らす設定では回さない
+reduced = false; crankDrag = { id:1 }; crankDemoOn(); assert.equal(made.length, n); // 指で回している間は回さない
+"""
+        subprocess.run([node, "-e", script], capture_output=True, text=True, check=True)
+        # 指の動き（gCircle）は 0% が右・1.5秒で右回り、という前提を固定する
+        self.assertIn("#guide.circle { animation:gCircle 1.5s linear infinite; }", HTML)
+        self.assertIn("@keyframes gCircle { 0% { translate:34px 0; } 12.5% { translate:24px 24px; }", HTML)
+        # 手本を消す道は guideOff の1つだけ。そこで握りも止める
+        off = HTML[HTML.index("function guideOff() {"):HTML.index("var demoDown = new Set();")]
+        self.assertIn("crankDemoOff();", off)
+        at = HTML[HTML.index("function guideAt(kind, el, gx, gy, at) {"):HTML.index("/* ぬく: 穀刺しを指で押し込み")]
+        self.assertIn('if (kind === "circle" && el === $("crank")) crankDemoOn();', at)
+        self.assertLess(at.index("crankDemoOn();"), at.index('guideEl.className = "on " + kind;'))  # ずらしを決めてから動きを付ける
+        # 空振り1回目は手本の指と握りが一緒に回るので、60°の揺れは重ねない（音は従来どおり1回）
+        end = HTML[HTML.index("function endCrank(e) {"):HTML.index('$("sceneMeter").addEventListener("pointerup", endCrank);')]
+        self.assertLess(end.index("crankSound();"), end.index("if (crankDemo) return;"))
+        self.assertLess(end.index("if (crankDemo) return;"), end.index('$("crankArm").animate('))
+
+    def test_cycle141_demo_is_placed_where_the_sliding_scene_comes_to_rest(self):
+        # サイクル141（最初の1分）: 上の場面は右26pxから0.22秒かけてすべり込む。旧版は はかる に着いた時、すべり込む途中のハンドルに
+        # 手本を置き、見回りが「相手が動いた」と見て消し、0.4秒後に出し直していた（390×844実測: 413ms 手本なし・360×640: 400ms）。
+        # すべり込みの分を引いた「落ち着く場所」に置き、見回りも同じ場所で比べる（直した後の実測: 着いてから手本が消える回数0）
+        node = shutil.which("node")
+        if not node:
+            self.skipTest("node がないので実行の確認は飛ばす")
+        self.assertIn("transform:translateX(26px); pointer-events:none; transition:opacity .22s ease, transform .22s ease;", HTML)  # 前提: 場面のすべり込み
+        rest = HTML[HTML.index("function restRect(el) {"):HTML.index("var guideAnchor = null;")]
+        script = """
+const assert = require('node:assert/strict');
+class DOMMatrixReadOnly { constructor(t) { const m = /matrix\\(([^)]+)\\)/.exec(t); this.m41 = m ? +m[1].split(',')[4] : 0; } }
+let sceneTransform = 'matrix(1, 0, 0, 1, 26, 0)';
+const getComputedStyle = () => ({ transform:sceneTransform });
+const scene = {};
+const crank = { getBoundingClientRect:() => ({ left:250 + new DOMMatrixReadOnly(sceneTransform).m41, top:123, width:128, height:128 }), closest:sel => sel === '.topScene' ? scene : null };
+""" + rest + """
+assert.deepEqual(restRect(crank), { left:250, top:123, width:128, height:128 }); // すべり込みの始め（26px 右）でも、落ち着く場所
+sceneTransform = 'matrix(1, 0, 0, 1, 11.5, 0)';
+assert.equal(restRect(crank).left, 250); // 途中でも同じ場所（見回りが「動いた」と見ない）
+sceneTransform = 'none';
+assert.equal(restRect(crank).left, 250); // 落ち着いた後
+const hanko = { getBoundingClientRect:() => ({ left:40, top:300, width:60, height:80 }), closest:() => null };
+assert.deepEqual(restRect(hanko), { left:40, top:300, width:60, height:80 }); // 上の場面の外の相手は、そのまま
+"""
+        subprocess.run([node, "-e", script], capture_output=True, text=True, check=True)
+        at = HTML[HTML.index("function guideAt(kind, el, gx, gy, at) {"):HTML.index("/* ぬく: 穀刺しを指で押し込み")]
+        self.assertIn("let r = el.getBoundingClientRect ? restRect(el) :", at)  # 置く時
+        tick = HTML[HTML.index("function demoTick(syncOnly) {"):HTML.index('document.addEventListener("pointerdown", (e) => {\n  demoTick(true);')]
+        self.assertIn("const q = restRect(guideAnchor.el);", tick)  # 見回りで比べる時
+        self.assertNotIn("guideAnchor.el.getBoundingClientRect()", tick)
 
     def test_cycle93_picked_grains_stay_in_quiet_record(self):
         # 類7: 見分けた粒が静かに記録に残る。任意で開く資料（#notes）の中だけに出し、常時表示・競争・スコアにはしない。

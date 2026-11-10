@@ -1498,6 +1498,70 @@ bad.gone = true; assert.equal(grainAt({x:100, y:100}), null);
         self.assertIn("#osu { padding-bottom:0; padding-right:54%; }", land)
         self.assertIn("#journey { left:46%; top:calc(50% - 52px); bottom:auto; }", land)
 
+    def test_cycle137_taps_before_spreading_are_caught(self):
+        # 最初の1分: 「なでて ひろげる」だけ空振りの受け皿がなく、タップだけの人は
+        # 山の粒が揺れるだけで先へ進めなかった（390×844実測: 51回タップ・57秒でも広がらず）。
+        # 1回目=手本の指をもう一度／2回目=山がほどけて広がる。
+        node = shutil.which("node")
+        if not node:
+            self.skipTest("node がないので実行の確認は飛ばす")
+        fn = HTML[HTML.index("let spreadTaps = 0;"):HTML.index("/* トントン:")]
+        script = """
+const assert = require('node:assert/strict');
+let step = 2, spread = false, sims = 0; const guides = [], plate = {};
+const grains = [{gone:false, awake:0}, {gone:true, awake:0}, {gone:false, awake:0}];
+const guideAt = (kind, el) => guides.push([kind, el]), startSim = () => { sims++; };
+""" + fn + """
+nudgeSpread();
+assert.deepEqual(guides, [['sweep', plate]]);   // 1回目: 手本の指をもう一度
+assert.equal(sims, 0);
+nudgeSpread();
+assert.equal(sims, 1);                           // 2回目: 山がほどける
+assert.deepEqual(grains.map(g => g.awake > 0), [true, false, true]);
+assert.equal(spreadTaps, 0);
+spread = true; nudgeSpread(); nudgeSpread();     // 広げた後は数えない
+assert.equal(sims, 1);
+spread = false; step = 3; nudgeSpread(); nudgeSpread();
+assert.equal(sims, 1);
+"""
+        subprocess.run([node, "-e", script], capture_output=True, text=True, check=True)
+        end = HTML[HTML.index("function endPlatePointer(e, cancelled)"):HTML.index("/* 振る:")]
+        self.assertIn('if (!spread && (!g || g.kind === "seiryu")) nudgeSpread();', end)  # わるい粒を取ったタップは数えない
+        start_lot = HTML[HTML.index("function startLot()"):HTML.index("/* 皿の粒:")]
+        self.assertIn("spreadTaps = 0;", start_lot)
+
+    def test_cycle137_tap_only_measuring_does_not_start_over(self):
+        # はかる: タップ3回で1回はかれた後も数え直していたため、タップだけの人は
+        # 3回×3＝9〜10回・約12秒かかった（390×844実測。ほかの所作は3回・約4秒）。
+        # 同じ袋の残りはタップ1回ごとにはかれる。袋が替われば数え直す。
+        crank = HTML[HTML.index("function endCrank(e)"):HTML.index('$("sceneMeter").addEventListener("pointerup", endCrank);')]
+        self.assertIn("if (++meterTaps >= NUDGE_LIMIT) { meterTaps = NUDGE_LIMIT - 1; takeReading(); return; }", crank)
+        self.assertNotIn("{ meterTaps = 0; takeReading(); return; }", HTML)
+        self.assertIn("meterTaps = 0; crankTurned = 0;", HTML[HTML.index("function startLot()"):HTML.index("/* 皿の粒:")])
+
+    def test_cycle138_swipe_guide_stays_off_the_fresh_stamp(self):
+        # 最初の1分（アニメーションの重なり）: 押した直後、袋を横へ流す手本の指が袋の真ん中（高さ50%）に出て、
+        # 押したばかりの証印の輪の上を行き来していた（390×844・360×640実測: 約半分の間、最大30pxかぶる）。
+        # 証印は袋の高さ53〜85%にあるので、指は上のほう（24%）に出す。
+        stamp = HTML[HTML.index("function stampNow()"):HTML.index("function dropHanko()")]
+        self.assertIn('guideAt("move", $("bagBig"), 90, 0, 0.24);', stamp)
+        self.assertNotIn('guideAt("move", $("bagBig"), 90, 0);', HTML)
+        node = shutil.which("node")
+        if not node:
+            self.skipTest("node がないので実行の確認は飛ばす")
+        start = HTML.index("function guideAt(kind, el, gx, gy, at) {")
+        fn = HTML[start:HTML.index("/* ぬく:", start)]
+        script = """
+const assert = require('node:assert/strict');
+const lotIndex = 0, guideEl = {style:{setProperty(){}}, className:'', offsetWidth:0}, guideOff = () => {};
+const el = {getBoundingClientRect: () => ({left:0, top:100, width:200, height:400})};
+""" + fn + """
+guideAt('move', el, 90, 0, 0.24); assert.equal(guideEl.style.top, '196px');   // 指定した高さ
+guideAt('move', el, 90, 0);       assert.equal(guideEl.style.top, '300px');   // 省けば真ん中
+guideAt('move', el, 0, -48);      assert.equal(guideEl.style.top, '428px');   // 上へ引く手本は下のふちから（従来どおり）
+"""
+        subprocess.run([node, "-e", script], capture_output=True, text=True, check=True)
+
     def test_cycle137_current_pip_gently_appears(self):
         # 差41: 段階が変わる瞬間、進み具合（#pips）の今のバーだけが className の
         # 差し替えで即座に色が切り替わっていた（出現アニメーション0件）。

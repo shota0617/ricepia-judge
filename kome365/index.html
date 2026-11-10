@@ -430,6 +430,8 @@ a{color:var(--acc)}
 @media (prefers-reduced-motion: reduce){#swReunion.new .ruIc{animation:none}}
 @keyframes swTraceIn{0%{opacity:0;transform:translateY(6px) scale(.7)}100%{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){#swTrace .tr.new{animation:none}}
+@media (max-height:790px){#swTrace .tr{width:30px;height:30px;background-size:30px 30px}#swRich{bottom:calc(100% + 38px)}#swDelay{bottom:calc(100% + 72px)}#swRich:not(.on) + #swDelay{bottom:calc(100% + 38px)}}   /* 周回153(最初の1分): 背の低い画面では、世話のあと5つ(40px×5=220px)の両端が、左の季節の景色と右のあしたの空の丸にかかった(6枚目から。360×640 で 26×32px・16×40px)。790px以下では植物と同じ30pxにして列を170pxにし、上の2段も10pxずつ下げる */
+@media (min-height:701px) and (max-height:790px) and (min-width:301px) and (max-width:410px){#swSeasonScene{width:72px;height:72px}#swSeasonScene .scPix{width:72px;height:72px;background-size:72px 72px}#swSeasonScene .scStage{width:34px;height:34px;background-size:34px 34px}}   /* 周回153: 幅の狭い 701〜790px の画面でも、景色(104px)が世話のあとの左端にかかるので、700px以下と同じ72pxにする(サイクル147の作法を広げる) */
 @keyframes kkSway{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg)}}
 @media (prefers-reduced-motion:reduce){#swKakashi .kkSvg{animation:none}#swKakashi .kkPix{animation:none}#swKakashi{transition:none}}
 #swStage{flex:1;display:flex;align-items:flex-end;justify-content:center;padding:2px 0 0;min-height:0;touch-action:pan-y}   /* 田んぼを広く見せる(サイクル65・BOTW: カードを低くし空いた分を田んぼの見える面積にする。表示のみ) */
@@ -440,6 +442,9 @@ a{color:var(--acc)}
 /* シャドウモーション: 最初の1枚の間だけ、カードの真後ろで半透明の影が左右へ滑って「左右に動かして選ぶ」ことを見せる(文字なし・入力は妨げない) */
 #swGhost{position:absolute;inset:0;z-index:1;display:none;border-radius:20px;background:linear-gradient(135deg,rgba(43,42,36,.42),rgba(43,42,36,.20));box-shadow:0 6px 18px rgba(0,0,0,.18);pointer-events:none}
 #swGhost.on{display:block;animation:swGhostSlide 4.4s ease-in-out infinite}   /* サイクル68・最初の1分: ゆっくり大きく、端で少し止まって向きが読めるように。周回116: 幅は±22px→±23%(確定距離以上) */
+#swWrap:has(#swCard.enter) #swGhost.on{animation:swGhostSlide 4.4s ease-in-out infinite,swGhostIn .24s linear both}
+#swWrap:has(#swCard.enter) #swGhostArrows.on{animation:swGhostArrowsSlide 4.4s ease-in-out infinite,swGhostIn .24s linear both}   /* 周回154(最初の1分・アニメーション): カードが入ってくる0.22秒の間(はじめは透明)、後ろの案内の影(濃い箱)と ◀ ▶ だけが先に見え、開いた瞬間に「空の暗い箱→白いカード」とちらついた。カードが入ってくるときだけ、案内はカードが見えてから出す。押して離したあとの出し直し(周回153)は enter が外れているので、消えずにそのまま動く */
+@keyframes swGhostIn{0%,60%{opacity:0}100%{opacity:1}}
 @keyframes swGhostSlide{0%,100%{transform:translateX(0) rotate(0)}18%,32%{transform:translateX(23%) rotate(1.5deg)}50%{transform:translateX(0) rotate(0)}68%,82%{transform:translateX(-23%) rotate(-1.5deg)}}   /* 周回116: お手本の幅を確定距離(カード幅×0.22)以上にし、お手本どおり動かせば決まるようにする(従来の±22pxは確定距離の約3割しか届かなかった) */
 #swGhostArrows{position:absolute;inset:0;z-index:5;display:none;pointer-events:none}   /* サイクル111: 矢印はカードの下に隠れるゴーストの上ではなく、カードの両端に重ねて出す(実画面で隠れることを確認して分離) */
 #swGhostArrows.on{display:block;animation:swGhostArrowsSlide 4.4s ease-in-out infinite}   /* 周回116: 矢印はゴースト本体(±23%)に付けると端の矢印がカードの外へ出るため、同じタイミングで±22pxだけ動く別キーフレームにする */
@@ -1972,7 +1977,7 @@ function drawField(){
   else $('fieldTip').classList.add('hidden');
   const c = $('field'), g = c.getContext('2d'), W = c.width, H = c.height;
   const css = getComputedStyle(document.documentElement);
-  const lastRain = f.daily.length && f.daily[f.daily.length - 1].rain;
+  const fv = fview(f), lastRain = fv.daily.length && fv.daily[fv.daily.length - 1].rain;   /* 周回154(最初の1分・シミュレーション): 2Dの絵も3Dと同じ「今日の天気」で描く(fview)。もとは「きのうの記録」を見ていて、雨の1月1日でも three.js が届くまで(3Dが使えない端末ではずっと)晴れた空の絵で、右の今日の空の丸(雨)と食いちがい、3Dに切りかわると急に雨になった */
   // 空
   const sky = g.createLinearGradient(0, 0, 0, H * 0.45);
   sky.addColorStop(0, lastRain ? '#9aa7b0' : css.getPropertyValue('--sky1')); sky.addColorStop(1, css.getPropertyValue('--sky2'));
@@ -3004,7 +3009,9 @@ renderTitle();
   var seasonInfo = null;
   function isGold(c){ return !!GOLD[c.key] && !goldSeen[goldKey(c)]; }
   var GHOST = 'kome365_ghost_seen', ghostDone = store.get(GHOST) === '1';
-  function ghostOff(){ $('swGhost').classList.remove('on'); $('swGhostArrows').classList.remove('on'); if (!ghostDone) { ghostDone = true; store.set(GHOST, '1'); } }   /* スワイプ開始/確定で即消え、以降は二度と出さない */
+  function ghostOff(){ $('swGhost').classList.remove('on'); $('swGhostArrows').classList.remove('on'); if (!ghostDone) { ghostDone = true; store.set(GHOST, '1'); } }
+  function ghostPause(){ $('swGhost').classList.remove('on'); $('swGhostArrows').classList.remove('on'); }   /* 周回153(最初の1分): つかんでいる間だけ案内を止める(覚えこまない) */
+  function ghostBack(){ var on = !ghostDone && choices.length === 0 && !calmOn(); $('swGhost').classList.toggle('on', on); $('swGhostArrows').classList.toggle('on', on); }   /* 周回153(最初の1分): 決めずに離したら、まだ最初の1枚の間は ◀ ▶ の案内をはじめから出し直す。もとは触れた瞬間に ghostOff で二度と出なくなり、札を押して選ぼうとした人は、押しても何も起きず、矢印も消えたまま止まっていた(両端の影だけが残る)。カードは動かさない(店主指示 2026-11-09 のまま) */   /* スワイプ開始/確定で即消え、以降は二度と出さない */
   function festKind(c){ return c && ({ plant: 'plant', harvest: 'harvest', qf_festival: 'aki', q_niiname: 'niiname' })[c.key] || null; }
   /* 表示専用の短縮(第4弾サイクル4→サイクル71・INSIDE: 読まなくても絵と題で判断が始まる): 日付の前置きはHUDと重複なので外し、七十二候の定型の定義文も毎回同じなので外す。表面は「場面が分かる文」だけ(通常は18字以上になるまでの文・最大46字。数字や適期が2〜3文目にある必須作業 mid/drain/plant/harvest は最大3文・最大72字)。上限は必ず守り空にはしない。全文と左右のhintはくわしい話の「📖 全文」で読める。card.text 自体は不変 */
   function shortText(t, key){
@@ -3681,7 +3688,7 @@ renderTitle();
   function evT(e){ return (e && typeof e.timeStamp === 'number' && e.timeStamp > 0) ? e.timeStamp : performance.now(); }   /* 時刻はイベント発生時刻(e.timeStamp)で統一する。ハンドラ実行時刻(performance.now)はメインスレッド混雑で伸縮し、速いフリックの速度が潰れて実機で効かなくなる(サイクル15で同一ジェスチャでもvが0〜1.75にばらつく不安定さを観測、サイクル16で修正) */
   $('swipe').addEventListener('pointerdown', function(e){ if (e.target.closest && (e.target.closest('#swIdleLike') || e.target.closest('#swIdleHome'))) return; idleTouch(); }, true);   /* 操作があれば止まったカードを消して数え直す(サイクル63)。カードのボタン自体は除外 */
   $('swipe').addEventListener('pointermove', function(e){ if (e.target.closest && (e.target.closest('#swIdleLike') || e.target.closest('#swIdleHome'))) return; idleTouch(); }, true);   /* ドラッグし続けている間も「操作中」として数え直す(Codex P2対応) */
-  el.card.addEventListener('pointerdown', function(e){ if (busy || e.button > 0 || (startX != null && !e.isPrimary)) return; /* 動かしている最中の2本目の指は混ぜない */ var mk0 = $('swMark'); if (mk0) mk0.classList.remove('on'); var wy0 = $('swWhy'); if (wy0) wy0.classList.remove('on'); /* 次のカードに触ったら、前の○×とバツの理由は片づける */ greetClear(); ghostOff(); cancelDragFrame(); dragMoves = 0; dragApplied = 0; startX = e.clientX; startY = e.clientY; lastY = e.clientY; maxDy = 0; samples = [[evT(e), e.clientX]]; pid = e.pointerId; tapT0 = evT(e); tapMax = 0; dx = 0; dy = 0; dragW = el.card.offsetWidth || 0; el.card.style.transitionDuration = ''; lastP = null; lastShadowKey = ''; try { pvCompute(); } catch (x) {} el.card.classList.add('drag'); el.card.classList.remove('enter', 'wig'); try { el.card.setPointerCapture(pid); } catch (x) {} });   /* つかんだら出現演出も解除し、指のtransformと競合させない。影響プレビューはつかんだ時点で先に計算する */
+  el.card.addEventListener('pointerdown', function(e){ if (busy || e.button > 0 || (startX != null && !e.isPrimary)) return; /* 動かしている最中の2本目の指は混ぜない */ var mk0 = $('swMark'); if (mk0) mk0.classList.remove('on'); var wy0 = $('swWhy'); if (wy0) wy0.classList.remove('on'); /* 次のカードに触ったら、前の○×とバツの理由は片づける */ greetClear(); ghostPause(); cancelDragFrame(); dragMoves = 0; dragApplied = 0; startX = e.clientX; startY = e.clientY; lastY = e.clientY; maxDy = 0; samples = [[evT(e), e.clientX]]; pid = e.pointerId; tapT0 = evT(e); tapMax = 0; dx = 0; dy = 0; dragW = el.card.offsetWidth || 0; el.card.style.transitionDuration = ''; lastP = null; lastShadowKey = ''; try { pvCompute(); } catch (x) {} el.card.classList.add('drag'); el.card.classList.remove('enter', 'wig'); try { el.card.setPointerCapture(pid); } catch (x) {} });   /* つかんだら出現演出も解除し、指のtransformと競合させない。影響プレビューはつかんだ時点で先に計算する */
   el.card.addEventListener('pointermove', function(e){ if (startX == null || e.pointerId !== pid) return; var n = evT(e), list = null; lastY = e.clientY; tapMax = Math.max(tapMax, Math.hypot(e.clientX - startX, e.clientY - startY)); if (Math.abs(e.clientY - startY) > maxDy) maxDy = Math.abs(e.clientY - startY); try { list = e.getCoalescedEvents ? e.getCoalescedEvents() : null; } catch (x) {} if (list && list.length) { for (var ci = 0; ci < list.length; ci++) { var ct = evT(list[ci]); if (samples.length && ct < samples[samples.length - 1][0]) ct = samples[samples.length - 1][0]; samples.push([ct, list[ci].clientX]); tapMax = Math.max(tapMax, Math.hypot(list[ci].clientX - startX, list[ci].clientY - startY)); if (Math.abs(list[ci].clientY - startY) > maxDy) maxDy = Math.abs(list[ci].clientY - startY); } } else { if (samples.length && n < samples[samples.length - 1][0]) n = samples[samples.length - 1][0]; samples.push([n, e.clientX]); } var nT = samples.length ? Math.max(n, samples[samples.length - 1][0]) : n; while (samples.length > 2 && nT - samples[0][0] > 150) samples.shift(); queueDrag(e.clientX - startX, e.clientY - startY); });   /* getCoalescedEventsで間引かれた中間点も取り込む(速いフリックほどmoveが合体されて落ちるため)。時刻は単調になるようクランプし、時刻源の混在で順序が崩れても速度計算が壊れないようにする */
   var lastFlick = null, lastY = null, maxDy = 0, tapT0 = 0, tapMax = 0;   /* カードのタップ判定(くわしい話の開閉): 開始時刻と最大移動量。新しいpointerリスナーは足さず既存ハンドラで追う */
   var dragW = 0, lastP = null, lastShadowKey = '';   /* スワイプの滑らかさ用: カード幅はつかんだ時点で固定し(毎moveのレイアウト読みをなくす)、影と--pは値が変わったときだけ書き直す(毎moveの再描画・スタイル再計算が引っかかりの主因) */
@@ -3699,7 +3706,7 @@ renderTitle();
     lastFlick = { dx: dx, v: Math.round(v * 1000) / 1000, flick: flick, cancelled: !!cancel, viaCancel: false };
     var okL = dx <= -th || (flick && dx < 0), okR = dx >= th || (flick && dx > 0);
     if ((isUp || cancel) && (dyEnd == null || Math.abs(dx) < dyGuard * (cancel ? 1.5 : 1))) { okL = false; okR = false; }   /* cancelは横優勢(縦の1.5倍以上)のときだけ確定。指離しは横が縦以上なら確定し、自然な弧は通す。はっきり縦へ動かしただけでは選ばない */
-    if (okL) { lastFlick.viaCancel = !!cancel; choose('left', v); } else if (okR) { lastFlick.viaCancel = !!cancel; choose('right', v); } else { reset(); }   /* 店主指示(2026-11-09)「タップするとカードが上に移動する。スワイプのみ」: タップでは詳細を開かず選択もしない。従来は12px未満・500ms未満のタップで toggleDetail() を呼び、#swDetail が縦を占めて #swStage が縮み、カードが上へ跳ねていた(実機報告・実測476px)。選択は左右スワイプだけ。toggleDetail は検証互換の隠しボタン専用に残す。pointercancelでも横変位と速度が条件を満たし横優勢なら選択として確定する。実機の速いフリックはブラウザ側のジェスチャ競合でpointerupでなくpointercancelで終わることがあり、無条件に捨てると「早いスワイプができない」になる(サイクル16)。変位の小さいcancel・縦優勢のcancelは従来どおり戻る */
+    if (okL) { lastFlick.viaCancel = !!cancel; choose('left', v); } else if (okR) { lastFlick.viaCancel = !!cancel; choose('right', v); } else { reset(); ghostBack(); }   /* 店主指示(2026-11-09)「タップするとカードが上に移動する。スワイプのみ」: タップでは詳細を開かず選択もしない。従来は12px未満・500ms未満のタップで toggleDetail() を呼び、#swDetail が縦を占めて #swStage が縮み、カードが上へ跳ねていた(実機報告・実測476px)。選択は左右スワイプだけ。toggleDetail は検証互換の隠しボタン専用に残す。pointercancelでも横変位と速度が条件を満たし横優勢なら選択として確定する。実機の速いフリックはブラウザ側のジェスチャ競合でpointerupでなくpointercancelで終わることがあり、無条件に捨てると「早いスワイプができない」になる(サイクル16)。変位の小さいcancel・縦優勢のcancelは従来どおり戻る */
     dx = 0; samples = [];
   }
   el.card.addEventListener('pointerup', up); el.card.addEventListener('pointercancel', up);

@@ -1,4 +1,4 @@
-"""米づくり365: 最初の1分に出る飾りが、カードの日付や天気の丸に重ならない置き方になっているか(周回152)。"""
+"""米づくり365: 最初の1分に出る飾りが、カードの日付や天気の丸に重ならない置き方になっているか(周回152)、押しただけでは案内が消えないか(周回153)、出だしのちらつきと2Dの天気(周回154)。"""
 import os
 import re
 import unittest
@@ -36,10 +36,47 @@ class TestKome365FirstMinute(unittest.TestCase):
         self.assertNotIn("e.style.right = (16 + v.slot * 44) + 'px';", HTML)
         self.assertIn("@media (max-height:740px){#swDayGuest{top:calc(36% - 26px)}}", HTML)
 
+    def test_tap_does_not_kill_first_card_guide(self):
+        # 周回153: 触れただけでは ◀ ▶ の案内を「見た」ことにしない。決めずに離したら出し直す
+        down = HTML[HTML.index("el.card.addEventListener('pointerdown'"):HTML.index("el.card.addEventListener('pointermove'")]
+        self.assertIn("ghostPause();", down)
+        self.assertNotIn("ghostOff()", down)
+        self.assertIn("choose('right', v); } else { reset(); ghostBack(); }", HTML)
+        pause = HTML[HTML.index("function ghostPause(){"):HTML.index("function ghostBack(){")]
+        self.assertNotIn("store.set", pause)
+        self.assertIn("function ghostBack(){ var on = !ghostDone && choices.length === 0 && !calmOn();", HTML)
+        # 決めたとき(choose)は これまでどおり二度と出さない
+        choose = HTML[HTML.index("function choose(side, vel){"):HTML.index("function choose(side, vel){") + 200]
+        self.assertIn("ghostOff();", choose)
+
+    def test_trace_row_fits_between_side_columns_on_low_screens(self):
+        # 周回153: 790px以下では世話のあとを30pxにし、季節の景色・あしたの空の丸にかからない幅にする
+        self.assertIn("@media (max-height:790px){#swTrace .tr{width:30px;height:30px;background-size:30px 30px}#swRich{bottom:calc(100% + 38px)}#swDelay{bottom:calc(100% + 72px)}#swRich:not(.on) + #swDelay{bottom:calc(100% + 38px)}}", HTML)
+        self.assertIn("@media (min-height:701px) and (max-height:790px) and (min-width:301px) and (max-width:410px){#swSeasonScene{width:72px;height:72px}", HTML)
+
+    def test_guide_waits_for_entering_card(self):
+        # 周回154: カードが入ってくる間は、後ろの案内の影と矢印を先に見せない(暗い箱のちらつき)
+        self.assertIn("#swWrap:has(#swCard.enter) #swGhost.on{animation:swGhostSlide 4.4s ease-in-out infinite,swGhostIn .24s linear both}", HTML)
+        self.assertIn("#swWrap:has(#swCard.enter) #swGhostArrows.on{animation:swGhostArrowsSlide 4.4s ease-in-out infinite,swGhostIn .24s linear both}", HTML)
+        self.assertIn("@keyframes swGhostIn{0%,60%{opacity:0}100%{opacity:1}}", HTML)
+        # 押して離したあとの出し直しでは消さない: つかんだ時点で enter を外している
+        down = HTML[HTML.index("el.card.addEventListener('pointerdown'"):HTML.index("el.card.addEventListener('pointermove'")]
+        self.assertIn("el.card.classList.remove('enter', 'wig')", down)
+
+    def test_2d_field_uses_todays_weather(self):
+        # 周回154: 2Dの絵も3Dと同じ fview(今日の天気)で空と雨を描く
+        draw = HTML[HTML.index("function drawField(){"):HTML.index("// 遠くの山と家")]
+        self.assertIn("const fv = fview(f), lastRain = fv.daily.length && fv.daily[fv.daily.length - 1].rain;", draw)
+        self.assertNotIn("lastRain = f.daily.length && f.daily[f.daily.length - 1].rain", draw)
+        self.assertIn("window.Field3D.update(fview(f))", draw)
+
     def test_owner_rules_kept(self):
         # 店主の指示(2026-11-08・11-09)で入れたものは そのまま
         self.assertIn("#swWhy.on{animation:swWhyIn 2s ease-out both}", HTML)
         self.assertIn('<i class="swHintSh L" aria-hidden="true"></i><i class="swHintSh R" aria-hidden="true"></i>', HTML)
+        # タップでは選ばない・カードを動かさない(2026-11-09): 指を離したときの分かれ道は choose か reset だけ
+        self.assertNotIn("toggleDetail(); } else { reset()", HTML)
+        self.assertIn("#swVib,#swHelp,#swJudge,#swBanner,#swMonth,#swHint,#swLog,#swRewind,#swDetailBtn,#swCard.hinting #swHint{display:none!important}", HTML)
 
 
 if __name__ == "__main__":

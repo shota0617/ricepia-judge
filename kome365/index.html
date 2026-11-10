@@ -3046,7 +3046,8 @@ renderTitle();
   /* 周回158(最初の1分・運営者の声 2026-11-10「手本は、止まって見ているときにかならず出ていること」): 1回スワイプで決めたあとは、2枚目で10秒・5枚目で12秒止まっても、ためらって短く引いて離しても、縦になぞっても、手本の指は出なかった(出るのは「押しただけ2回」のときだけ)。
      どのカードでも、決めずに止まっていたら手本を出す: カードが出てから・決めずに離してから 2秒。この読みこみで3回スワイプで決めた人(うまくできている人)は、決めずに離すまでは 6秒に延ばすだけで、出なくなることはない。
      触れたら消える(ghostPause)・スワイプで決めたら消える(ghostOff)。カードは動かさない・タップでは選ばない(2026-11-09)はそのまま */
-  var DEMO_STOP_MS = 2000, DEMO_STOP_OK_MS = 6000, demoT = null, demoMiss = 0, demoOk = 0;
+  /* 周回160(運営者の声 2026-11-10「スワイプのお手本をすぐにだす」): 待ちを 2秒・6秒 から 0.3秒 に。カードが 出たら・決めずに 離したら すぐ 手本を 出す(何回 決めた 人でも 同じ)。触れて いる 間は 消える */
+  var DEMO_STOP_MS = 300, DEMO_STOP_OK_MS = 300, demoT = null, demoMiss = 0, demoOk = 0;
   function demoDisarm(){ if (demoT) { clearTimeout(demoT); demoT = null; } }
   function demoArm(){ demoDisarm(); demoT = setTimeout(function(){ demoT = null; if (startX == null && !busy && !$('sGame').classList.contains('hidden')) demoSet(true); }, (demoMiss > 0 || demoOk < 3) ? DEMO_STOP_MS : DEMO_STOP_OK_MS); }
   var demoHeld = false;   /* Codex指摘(PR #1082): 別のタブに いる間は 数えない。待ちの とちゅうで 隠れたら 止めて、戻ったら はじめから 数え直す */

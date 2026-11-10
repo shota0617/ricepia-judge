@@ -170,7 +170,7 @@ const srv = http.createServer((r, s) => { const u = decodeURIComponent(r.url.spl
     ok('曲がり方を覚えた人には、最初の1分のあとは 見本を出さない', !cu.vis, cu);
     // Codex 指摘（PR #1076・2 回目）：最初の1分のあと、下のボタン（canvas の外）を押している指の間も 見本は出ない
     await p.evaluate(() => { HINT.sideOK = 0; Object.assign(game.S, { x: -1.9, z: 8, yaw: -0.78, v: 0, steer: 0 }); }); await adv(3.5); const cuP = await cueSt();
-    const padBtn = await p.evaluate(() => { const b = document.querySelector('.pad button[data-k="left"]') || document.querySelector('.pad button[data-k]'); if (!b) return null; const r = b.getBoundingClientRect(); return r.width > 0 ? { x: r.left + r.width / 2, y: r.top + r.height / 2 } : null; });
+    const padBtn = await p.evaluate(() => { const vis = [...document.querySelectorAll('.pad button')].filter(e => e.getBoundingClientRect().width > 0), b = vis.find(e => e.dataset.k) || vis[0]; if (!b) return null; const r = b.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, k: b.dataset.k || b.id }; });
     if (padBtn) {
       await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: padBtn.x, y: padBtn.y, id: 1 }] }); await adv(0.3);
       const pad1 = await cueSt(); await adv(4); const pad2 = await cueSt(), ids = await p.evaluate(() => touchIds.size);

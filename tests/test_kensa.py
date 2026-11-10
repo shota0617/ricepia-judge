@@ -1539,6 +1539,29 @@ assert.equal(sims, 1);
         self.assertNotIn("{ meterTaps = 0; takeReading(); return; }", HTML)
         self.assertIn("meterTaps = 0; crankTurned = 0;", HTML[HTML.index("function startLot()"):HTML.index("/* 皿の粒:")])
 
+    def test_cycle138_swipe_guide_stays_off_the_fresh_stamp(self):
+        # 最初の1分（アニメーションの重なり）: 押した直後、袋を横へ流す手本の指が袋の真ん中（高さ50%）に出て、
+        # 押したばかりの証印の輪の上を行き来していた（390×844・360×640実測: 約半分の間、最大30pxかぶる）。
+        # 証印は袋の高さ53〜85%にあるので、指は上のほう（24%）に出す。
+        stamp = HTML[HTML.index("function stampNow()"):HTML.index("function dropHanko()")]
+        self.assertIn('guideAt("move", $("bagBig"), 90, 0, 0.24);', stamp)
+        self.assertNotIn('guideAt("move", $("bagBig"), 90, 0);', HTML)
+        node = shutil.which("node")
+        if not node:
+            self.skipTest("node がないので実行の確認は飛ばす")
+        start = HTML.index("function guideAt(kind, el, gx, gy, at) {")
+        fn = HTML[start:HTML.index("/* ぬく:", start)]
+        script = """
+const assert = require('node:assert/strict');
+const lotIndex = 0, guideEl = {style:{setProperty(){}}, className:'', offsetWidth:0}, guideOff = () => {};
+const el = {getBoundingClientRect: () => ({left:0, top:100, width:200, height:400})};
+""" + fn + """
+guideAt('move', el, 90, 0, 0.24); assert.equal(guideEl.style.top, '196px');   // 指定した高さ
+guideAt('move', el, 90, 0);       assert.equal(guideEl.style.top, '300px');   // 省けば真ん中
+guideAt('move', el, 0, -48);      assert.equal(guideEl.style.top, '428px');   // 上へ引く手本は下のふちから（従来どおり）
+"""
+        subprocess.run([node, "-e", script], capture_output=True, text=True, check=True)
+
     def test_cycle93_picked_grains_stay_in_quiet_record(self):
         # 類7: 見分けた粒が静かに記録に残る。任意で開く資料（#notes）の中だけに出し、常時表示・競争・スコアにはしない。
         # 袋を越えて残るため startLot では消さない（サイクル91の seenChecks と同じ持ち方）。

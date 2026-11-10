@@ -1052,12 +1052,12 @@ const guideEl = $("guide");
 function guideOff() {
   guideEl.className = "";
 }
-function guideAt(kind, el, gx, gy) {
+function guideAt(kind, el, gx, gy, at) { /* at: 手本の指を置く高さ（el の高さに対する割合）。省けば従来どおり */
   guideOff();
   if (lotIndex !== 0) return;
   const r = el.getBoundingClientRect();
   guideEl.style.left = r.left + r.width / 2 + "px";
-  guideEl.style.top = r.top + r.height * (kind === "move" && gy < 0 ? 0.82 : 0.5) + "px"; /* 上へ引く手本は下のふちから。ボタンの字を指で隠さない */
+  guideEl.style.top = r.top + r.height * (at !== undefined ? at : (kind === "move" && gy < 0 ? 0.82 : 0.5)) + "px"; /* 上へ引く手本は下のふちから。ボタンの字を指で隠さない */
   guideEl.style.setProperty("--gx", (gx || 0) + "px");
   guideEl.style.setProperty("--gy", (gy || 0) + "px");
   void guideEl.offsetWidth;
@@ -1919,7 +1919,7 @@ function stampNow() {
   nextBtn.classList.add("on");
   nextBtn.animate([{ opacity:0, transform:"scale(.92)" }, { opacity:1, transform:"scale(1.03)", offset:.7 }, { opacity:1, transform:"scale(1)" }], { duration:260 * motion, easing:"ease-out" }); /* つぎの袋ボタンも、他の現れるもの（終了カード・場面・チップ）と同じくふわりと現れる形にそろえる（サイクル125・差分テーマ差31）。旧版は display の切り替えだけで完成形が即座に出ていた（390×844実測で出現時のアニメーション0件） */
   focusIfKeys(nextBtn);
-  guideAt("move", $("bagBig"), 90, 0);
+  guideAt("move", $("bagBig"), 90, 0, 0.24); /* 袋を横へ流す手本の指は、袋の上のほう（帯のあたり）に出す（サイクル138・最初の1分／アニメーションの重なり）。袋の真ん中（高さ50%）に出していた旧版は、押したばかりの証印の輪の上を指が行き来していた（390×844・360×640の実測: 2.8秒のうち約半分の間、証印に最大30pxかぶる） */
 }
 function dropHanko() {
   stopBob();

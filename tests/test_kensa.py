@@ -1612,7 +1612,36 @@ P.done = false; P.inserted = false; pullNudge(); assert.equal(autos, 1);   // �
 """
         subprocess.run([node, "-e", script], capture_output=True, text=True, check=True)
         end = HTML[HTML.index("function endBagDrag(e) {"):HTML.index('$("sceneBag").addEventListener("pointerup", endBagDrag);')]
-        self.assertIn("const still = !P.drag.moved;", end)
+        self.assertIn("const still = !P.drag.moved && Math.max(P.drag.far || 0, Math.hypot(e.clientX - P.drag.cx, e.clientY - P.drag.cy)) <= 8;", end)
+        # Codex指摘（PR #1074）を実際の関数で確かめる
+        auto = HTML[HTML.index("function autoProbe() {"):HTML.index('$("sceneBag").addEventListener("pointerdown"')]
+        script2 = """
+const assert = require('node:assert/strict');
+const motion = 1; let step = 0, now = 0; const q = []; const moves = [];
+globalThis.performance = { now: () => now };
+globalThis.requestAnimationFrame = f => { q.push(f); };
+const P = {x:100, inX:100, rest:200, inserted:true, done:false, auto:false, drag:null};
+const poke = {style:{display:''}};
+const $ = id => ({poke})[id];
+const stopProbeAttract = () => {}, moveProbe = x => { moves.push(x); P.x = x; };
+""" + auto + """
+autoProbe();                       // 3回目のタップ: 自分でぬける動きが始まる
+now = 100; q.shift()();            // 100ms 進む
+const mid = P.x;
+autoProbe();                       // その間にもう一度タップ: 始めなおさない
+assert.equal(q.length, 1);         // 動きは1本のまま（旧版は2本になった）
+assert.equal(P.x, mid);            // さした所へ押し戻さない
+P.done = true; q.shift()(); assert.equal(P.auto, false);   // 終わったら印を下ろす
+// たてへ引いて離した指は、さした後の空振りに数えない
+let nudges = 0; const pullNudge = () => { nudges++; }; let bagTaps = 0, lotIndex = 0; const NUDGE_LIMIT = 3;
+const probeDemoSound = () => {};
+""" + end + """
+P.done = false; P.inserted = true;
+P.drag = {id:1, cx:50, cy:50, far:100, x0:100, moved:false}; endBagDrag({pointerId:1, clientX:50, clientY:150}); assert.equal(nudges, 0);
+P.drag = {id:1, cx:50, cy:50, far:0, x0:100, moved:false};   endBagDrag({pointerId:1, clientX:50, clientY:150}); assert.equal(nudges, 0);   // 離した位置だけが遠くても数えない
+P.drag = {id:1, cx:50, cy:50, far:3, x0:100, moved:false};   endBagDrag({pointerId:1, clientX:52, clientY:51});  assert.equal(nudges, 1);   // 置いただけ・タップは数える
+"""
+        subprocess.run([node, "-e", script2], capture_output=True, text=True, check=True)
         self.assertIn("if (P.inserted && !P.done && still) { pullNudge(); return; }", end)  # ひきぬく途中で離した指は数えない
         move = HTML[HTML.index("function moveProbe(x) {"):HTML.index("function pourOne(g) {")]
         self.assertIn("bagTaps = 0;", move)  # さした時に数え直す

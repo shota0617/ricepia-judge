@@ -995,7 +995,7 @@ function startLot() {
   zoomBtn.hidden = true;
   resetZoom();
   buildGrains();
-  P.inserted = false; P.done = false; P.released = 0; P.drag = null; P.deep = 0;
+  P.inserted = false; P.done = false; P.released = 0; P.drag = null; P.deep = 0; P.auto = false;
   $("probe").style.opacity = "1";
   layoutProbe();
   startProbeAttract(); /* 開いた瞬間の誘い: 最初の袋だけ、触れる前に穀刺しが一度だけゆっくり袋の口へ寄って戻る（サイクル82、Fable設計の足すもの1） */
@@ -1067,7 +1067,7 @@ function guideAt(kind, el, gx, gy, at) { /* at: 手本の指を置く高さ（el
 }
 
 /* ぬく: 穀刺しを指で押し込み、引き抜くと、引いた分だけ粒が落ちる */
-const P = { x:0, rest:0, inX:0, inAt:0, deep:0, y:0, L:0, inserted:false, done:false, released:0, drag:null };
+const P = { x:0, rest:0, inX:0, inAt:0, deep:0, y:0, L:0, inserted:false, done:false, released:0, drag:null, auto:false };
 let bagTaps = 0;
 function layoutProbe() {
   const scene = $("sceneBag"), bag = $("bagBtn"), probe = $("probe");
@@ -1151,13 +1151,14 @@ function finishProbe() {
   setTimeout(toHakaru, 560 * motion);
 }
 function autoProbe() {
-  if (P.done || step !== 0) return;
+  if (P.done || step !== 0 || P.auto) return; /* 自分でぬける動きの間は、もう一度始めない（Codex指摘 PR #1074: 3回目のタップの後にまたタップすると動きが2本になり、穀刺しが さした所へ押し戻されていた） */
+  P.auto = true;
   stopProbeAttract();
   $("poke").style.display = "none";
   const t0 = performance.now(), start = P.x;
   const dIn = P.inserted ? 0 : 240 * motion, dOut = 620 * motion;
   const run = () => {
-    if (step !== 0 || P.done) return;
+    if (step !== 0 || P.done) { P.auto = false; return; }
     const t = performance.now() - t0;
     if (t < dIn) moveProbe(start + (P.inX - start) * (t / dIn));
     else moveProbe(P.inX + (P.rest - P.inX) * Math.min(1, (t - dIn) / dOut));
@@ -1171,20 +1172,22 @@ $("sceneBag").addEventListener("pointerdown", (e) => {
   stopProbeAttract(); /* 触れたら誘いは止まる（サイクル82） */
   stopPullDemo();
   if (P.drag) return; /* 2本目の指は混ぜない */
-  P.drag = { id:e.pointerId, cx:e.clientX, x0:P.x, moved:false };
+  P.drag = { id:e.pointerId, cx:e.clientX, cy:e.clientY, far:0, x0:P.x, moved:false };
   capture($("sceneBag"), e);
 });
 $("sceneBag").addEventListener("pointermove", (e) => {
   if (step !== 0 || P.done || !e.buttons && e.pointerType === "mouse") return;
-  if (!P.drag) P.drag = { id:e.pointerId, cx:e.clientX, x0:P.x, moved:true }; /* 先の指を離しても、残った指で続ける */
+  if (!P.drag) P.drag = { id:e.pointerId, cx:e.clientX, cy:e.clientY, far:0, x0:P.x, moved:true }; /* 先の指を離しても、残った指で続ける */
   if (e.pointerId !== P.drag.id) return;
   const dx = e.clientX - P.drag.cx;
+  P.drag.far = Math.max(P.drag.far || 0, Math.hypot(dx, e.clientY - P.drag.cy)); /* たて・ななめも含めて指がどれだけ動いたか（さした後の空振りの見きわめ用） */
   if (Math.abs(dx) > 5) { P.drag.moved = true; $("poke").style.display = "none"; }
   if (P.drag.moved) moveProbe(P.drag.x0 + dx);
 });
 function endBagDrag(e) {
   if (!P.drag || e.pointerId !== P.drag.id) return;
-  const still = !P.drag.moved;
+  /* 動かさずに離した指だけを さした後の空振りに数える。横の動き（moved）だけで見ると、たてへ 100px 引いて離した指まで空振りになり、3回で自分でぬけていた（Codex指摘 PR #1074） */
+  const still = !P.drag.moved && Math.max(P.drag.far || 0, Math.hypot(e.clientX - P.drag.cx, e.clientY - P.drag.cy)) <= 8;
   P.drag = null;
   if (P.inserted && !P.done && still) { pullNudge(); return; }
   if (P.done || P.inserted) return; /* さす前に指を離したら、タップでも違う向きの引きでも1回と数える */

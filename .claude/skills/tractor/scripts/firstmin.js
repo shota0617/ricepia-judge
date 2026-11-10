@@ -67,8 +67,8 @@ const srv = http.createServer((r, s) => { const u = decodeURIComponent(r.url.spl
     const stroke = async (pts, hold) => { await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: pts[0][0], y: pts[0][1], id: 1 }] });
       for (let i = 1; i <= 20; i++) { const f = i / 20 * (pts.length - 1), k = Math.min(pts.length - 2, Math.floor(f)), u = f - k; await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: pts[k][0] + (pts[k + 1][0] - pts[k][0]) * u, y: pts[k][1] + (pts[k + 1][1] - pts[k][1]) * u, id: 1 }] }); await adv(0.05); }
       await adv(hold); await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); await adv(1.2); };
-    const st = () => p.evaluate(() => { const box = document.getElementById('hintSwipe'), d = [...box.querySelectorAll('.hDot')].filter(e => e.style.display !== 'none').map(e => parseFloat(e.style.left));
-      return { z: game.S.z, x: game.S.x, yaw: game.S.yaw, el: game.S.elapsed, hint: !box.classList.contains('hidden'), dx: d.length ? d[d.length - 1] - 195 : 0, low: window.__low }; });
+    const st = () => p.evaluate(() => { const box = document.getElementById('hintSwipe'), vis = [...box.querySelectorAll('.hDot')].filter(e => e.style.display !== 'none'), d = vis.map(e => parseFloat(e.style.left)), dy = vis.length ? parseFloat(vis[0].style.top) : 0;
+      return { z: game.S.z, x: game.S.x, yaw: game.S.yaw, el: game.S.elapsed, hint: !box.classList.contains('hidden'), dx: d.length ? d[d.length - 1] - 195 : 0, dy, low: window.__low }; });
     await adv(2);
     let s, z0 = -99, n = 0;
     for (; n < 8; n++) { await stroke([[195, 481], [195, 397]], 4.5); s = await st(); if (Math.abs(s.z - z0) < 0.05) break; z0 = s.z; }   // 前へ なぞるだけ。進まなくなるまで
@@ -76,7 +76,12 @@ const srv = http.createServer((r, s) => { const u = decodeURIComponent(r.url.spl
     await stroke([[195, 481], [195, 397]], 4.5); await adv(1.5); s = await st();
     for (let i = 0; i < 12 && !(s.hint && Math.abs(s.dx) > 40); i++) { await adv(0.2); s = await st(); }   // 見本は 2.6 秒で 1 まわり。指が横へ出ている所をつかまえる
     ok('止まったままなら「横へ なぞる」見本が出る', s.hint && Math.abs(s.dx) > 40, [s.hint, Math.round(s.dx)]);
+    ok('見本は ボンネットより上（画面の上半分）から始まる（サイクル261）', s.dy > 0 && s.dy < 422, Math.round(s.dy));
     const side = s.dx < 0 ? -1 : 1, yaw0 = s.yaw, x0 = s.x;
+    // サイクル261: 前へ なぞった指が 少し横へずれているだけ（40px）では、畦の手前で勝手に曲がらない
+    for (let i = 0; i < 2; i++) await stroke([[195, 481], [195 - side * 40, 397]], 4.5);
+    s = await st();
+    ok('少しずれた「前へ」の なぞりでは 曲がらない（サイクル261）', Math.abs(Math.atan2(Math.sin(s.yaw - yaw0), Math.cos(s.yaw - yaw0))) < 0.3 && Math.abs(s.x - x0) < 1, [+(s.yaw - yaw0).toFixed(2), +(s.x - x0).toFixed(1)]);
     for (let i = 0; i < 3; i++) await stroke([[195, 506], [195 + side * 58, 473], [195 + side * 156, 447]], 4.0);
     s = await st(); const dyaw = Math.abs(Math.atan2(Math.sin(s.yaw - yaw0), Math.cos(s.yaw - yaw0)));
     ok('見本どおり横へ 3 回なぞると 向きが変わる（45° 以上）', dyaw > 0.8, [+dyaw.toFixed(2), +(s.x - x0).toFixed(1)]);

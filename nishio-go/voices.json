@@ -3,7 +3,7 @@
  "replies": {},
  "log": [],
  "counts": {},
- "updated": "2026-11-03",
+ "updated": "2026-11-11",
  "reactions": {
   "n4581974121": {
    "love": 1
@@ -30,6 +30,9 @@
   },
   "f-jissoji": {
    "love": 1
+  },
+  "f-shozanji": {
+   "calm": 1
   }
  },
  "reactedIssues": [
@@ -37,6 +40,7 @@
   3,
   5,
   6,
-  8
+  8,
+  12
  ]
 }

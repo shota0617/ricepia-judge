@@ -1,4 +1,4 @@
-// 最初の1分の確かめ（サイクル259〜264）：node firstmin.js [tractor.html のパス]
+// 最初の1分の確かめ（サイクル259〜266）：node firstmin.js [tractor.html のパス]
 //  1) 知らせの文：吹き出し（speakText）・短い文（shortText）で かっこが合わなくならない（「…見ます）」のような切れ方をしない）
 //  3) 畦の手前で止まった人：「横へ なぞる」見本が出て、見本どおりで向きが変わる。自動で下ろす知らせは 1 回だけ（サイクル260）
 //  2) のんびりの大きな数字：スマホ縦で 1 回なぞって耕したら 0% のままにならない。田んぼアートでは地図の「でき」と同じ数、お題なしでは小数 1 けた
@@ -276,6 +276,37 @@ const srv = http.createServer((r, s) => { const u = decodeURIComponent(r.url.spl
       await T('touchEnd'); await adv(1);
       ok('横へ ' + w + 'px の小さな なぞりを 7 秒 置いた間も、向きは もどらない（15° 以上 曲がり、もどりは 6° 未満）', back < 0.1 && peak > 0.26, [+peak.toFixed(2), +back.toFixed(2)]);
     }
+    await ctx.close();
+  }
+  // ---- 7) サイクル266：右へ曲がって止まった あと（ハンドルは右に切れたまま・目も右へ いっている）、左へ なぞると 左へ曲がる（スマホ縦・横） ----
+  // 直す前：スマホ横は 左へ なぞったのに 右へ 54°、スマホ縦は 0〜11° で まっすぐ 2.6m。寄せた横なぞりの「指の横の位置」を、目がいった ぶん（glance）ずれた地面の上で見ていた
+  for (const [label, vw, vh, hy] of [['スマホ縦', 390, 844, 321], ['スマホ横', 844, 390, 164]]) {
+    const ctx = await b.newContext({ viewport: { width: vw, height: vh }, deviceScaleFactor: 2, hasTouch: true, isMobile: true });
+    const p = await ctx.newPage(); p.setDefaultTimeout(180000);
+    p.on('pageerror', e => errs.push('pageerror ' + e.message)); p.on('console', m => { if (m.type() === 'error') errs.push('console ' + m.text()); });
+    await p.route('https://cdn.jsdelivr.net/**', r => r.fulfill({ path: TN + r.request().url().split('/three@0.128.0')[1], contentType: 'text/javascript' }));
+    await p.goto(`http://localhost:${PORT}/tractor.html`);
+    await p.waitForFunction(() => window.game && game.S && game.S.started && typeof P !== 'undefined' && P.Rotary);
+    await p.evaluate(() => { const real = performance.now.bind(performance); let now = real(); performance.now = () => now; window.__sync = () => { now = real(); }; window.requestAnimationFrame = () => 0; game.renderer.render = () => {};
+      window.__adv = sec => { for (let i = 0, n = Math.round(sec / 0.05); i < n; i++) { now += 50; frame(now); } }; });
+    await p.waitForTimeout(2500); await p.evaluate(() => window.__sync());
+    const cdp = await ctx.newCDPSession(p), adv = s => p.evaluate(x => window.__adv(x), s);
+    const T = (type, x, y) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: type === 'touchEnd' ? [] : [{ x, y, id: 1 }] });
+    const st = () => p.evaluate(() => ({ yaw: game.S.yaw, steer: game.S.steer, el: game.S.elapsed }));
+    const sg = (a, b) => Math.atan2(Math.sin(a - b), Math.cos(a - b)), cx = vw / 2;
+    // 人の指に近い 横なぞり：0.4 秒で 150px なぞって 1.5 秒 置いて離す
+    const side = async dir => { await T('touchStart', cx - dir * 40, hy); for (let i = 1; i <= 8; i++) { await T('touchMove', cx - dir * 40 + dir * 150 * i / 8, hy); await adv(0.05); } await adv(1.5); await T('touchEnd'); await adv(1); };
+    await adv(2); await T('touchStart', cx, hy + 60); for (let i = 1; i <= 10; i++) { await T('touchMove', cx, hy + 60 - 6 * i); await adv(0.05); } await adv(1.5); await T('touchEnd'); await adv(1);   // はじめの「前へ」
+    const s0 = await st(); await side(1); const s1 = await st(); await side(-1); const s2 = await st();
+    const r = +(sg(s1.yaw, s0.yaw) * 57.3).toFixed(0), l = +(sg(s2.yaw, s1.yaw) * 57.3).toFixed(0);
+    ok(label + '：右へ なぞって 右へ曲がり（25° 以上）、ハンドルは右に切れたまま止まる', r < -25 && s1.steer > 0.4, [r, +s1.steer.toFixed(2)]);
+    ok(label + '：そのあと 左へ なぞると 左へ曲がる（25° 以上・はじめの 1 分のうち・サイクル266）', l > 25 && s2.el < 60, [l, +s2.el.toFixed(0)]);
+    // 2 本指で広げて拡大した あと（画角が せまい）でも、同じ横なぞりで 同じように曲がる（直す前：スマホ縦 2.2 倍で 13〜15°）
+    const T2 = (type, d) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: type === 'touchEnd' ? [] : [{ x: cx - d, y: hy + 40, id: 1 }, { x: cx + d, y: hy + 40, id: 2 }] });
+    await T2('touchStart', 30); for (let i = 1; i <= 8; i++) { await T2('touchMove', 30 + i * 8); await adv(0.05); } await T2('touchEnd'); await adv(0.5);
+    const zm = await p.evaluate(() => { Object.assign(game.S, { x: 0, z: 0, yaw: 0, v: 0, steer: 0 }); return fovZoom; }); await adv(0.6);
+    const s3 = await st(); await side(1); const s4 = await st(), z = +(sg(s4.yaw, s3.yaw) * 57.3).toFixed(0);
+    ok(label + '：2 本指で拡大した あと（' + zm.toFixed(1) + ' 倍）の横なぞりでも 右へ曲がる（35° 以上・サイクル266）', zm > 1.5 && z < -35 && s4.el < 60, [z, +s4.el.toFixed(0)]);
     await ctx.close();
   }
   ok('エラーなし', errs.length === 0, errs.slice(0, 3));

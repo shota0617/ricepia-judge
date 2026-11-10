@@ -113,7 +113,9 @@ class TestKome365FirstMinute(unittest.TestCase):
         self.assertIn("touch-action:none", m.group(0))
         self.assertNotIn("touch-action:pan-y", m.group(0))
         # 0.3秒 以内の 一筆(36px 以上)は 決める。押しただけ では 決めない(36px 以上が 要る)
-        self.assertIn("quick = !cancel && durAll >= 0 && durAll <= 300 && Math.abs(dx) >= Math.max(36, (dragW || 320) * 0.1);", HTML)
+        # のぞいて 引き戻した 動き(いちばん 遠い 所から 8px より 多く 戻った)は 決めない(Codex 指摘 PR #1084)
+        self.assertIn("quick = !cancel && durAll >= 0 && durAll <= 300 && Math.abs(dx) >= Math.max(36, (dragW || 320) * 0.1) && Math.abs(dx) >= maxAx - 8;", HTML)
+        self.assertIn("maxAx = Math.max(maxAx, Math.abs(e.clientX - startX));", HTML)
         self.assertIn("if (quick) flick = true;", HTML)
         # 速い フリックは ななめ(横が 縦の 0.7倍 以上)でも 決める
         self.assertIn("Math.abs(dx) < dyGuard * (cancel ? 1.5 : flick ? 0.7 : 1)", HTML)

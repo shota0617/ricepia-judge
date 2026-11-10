@@ -1,4 +1,4 @@
-// 最初の1分の確かめ（サイクル259〜267）：node firstmin.js [tractor.html のパス]
+// 最初の1分の確かめ（サイクル259〜269）：node firstmin.js [tractor.html のパス]
 //  1) 知らせの文：吹き出し（speakText）・短い文（shortText）で かっこが合わなくならない（「…見ます）」のような切れ方をしない）
 //  3) 畦の手前で止まった人：「横へ なぞる」見本が出て、見本どおりで向きが変わる。自動で下ろす知らせは 1 回だけ（サイクル260）
 //  2) のんびりの大きな数字：スマホ縦で 1 回なぞって耕したら 0% のままにならない。田んぼアートでは地図の「でき」と同じ数、お題なしでは小数 1 けた
@@ -346,12 +346,63 @@ const srv = http.createServer((r, s) => { const u = decodeURIComponent(r.url.spl
     ok(label + '：なぞって 5 秒 置いた指の間（サイクル116）は 見本を出さない・離すと 止まって 0.6 秒以内に出る', r.bad === 0 && r.w !== null && r.w <= 0.6, r);
     r = await play(cx - 40, yS, cx + 110, yS, 1.0);   // 横へ
     ok(label + '：横へ なぞって離したあとも 止まって 0.6 秒以内に出る・指のある間と動いている間は出ない', r.bad === 0 && r.w !== null && r.w <= 0.6, r);
-    await p.evaluate(() => { HINT.sideOK = 3; HINT.bent = false; HINT.yaw0 = null; }); r = await play(cx, yF0, cx, yF1, 0.6);   // 曲がり方を覚えた人：今までどおり 2 秒 待つ（なぞりの合間に出さない）。はじめの向きの近くで切り返していて bent が立っていない人として（Codex 指摘 PR #1090）
-    ok(label + '：曲がり方を覚えた人には 今までどおり 止まって 2 秒で出す（1.9〜2.3 秒）・はじめの 1 分のうち', r.bad === 0 && r.w !== null && r.w >= 1.9 && r.w <= 2.3 && r.el < 60, r);
+    await p.evaluate(() => { HINT.sideOK = 3; HINT.bent = false; HINT.yaw0 = null; Object.assign(game.S, { x: -3, z: -10, yaw: 0, v: 0, steer: 0 }); __adv(0.3); }); r = await play(cx, yF0, cx, yF1, 0.6);   // サイクル269: 前に耕す所がある場所に置く（前に耕す所がないときは 覚えた人でも 0.4 秒＝下の 9）   // 曲がり方を覚えた人：今までどおり 2 秒 待つ（なぞりの合間に出さない）。はじめの向きの近くで切り返していて bent が立っていない人として（Codex 指摘 PR #1090）
+    ok(label + '：曲がり方を覚えた人には、前に耕す所があれば 今までどおり 止まって 2 秒で出す（1.9〜2.3 秒）・はじめの 1 分のうち', r.bad === 0 && r.w !== null && r.w >= 1.9 && r.w <= 2.3 && r.el < 60 && r.fwd, r);
     const learnt = await p.evaluate(() => ({ bent: HINT.bent, fwd: !!HINT.demoF, ahead: HINT.workAhead(1) }));
     ok(label + '：曲がり方を覚えた人は、まだ 30° 向きが変わっていなくても、前に耕す所があれば「前へ」の見本から（Codex 指摘 PR #1090）', !learnt.ahead || learnt.fwd, learnt);
     const an = await p.evaluate(() => getComputedStyle(document.getElementById('hintSwipe')).animationName);
     ok(label + '：見本は ふわっと出る（0.1 秒で消えるときに光らない）', an === 'hintIn', an);
+    await ctx.close();
+  }
+  // ---- 9) サイクル269（はじめの 1 分で やめる人を へらす）：読みこみを待つ間の おおい・指を離したときの旋回アップ・絵の外へ出た知らせ・覚えた人が絵の外で止まったときの見本 ----
+  {
+    const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true, isMobile: true });
+    const p = await ctx.newPage(); p.setDefaultTimeout(180000);
+    p.on('pageerror', e => errs.push('pageerror ' + e.message)); p.on('console', m => { if (m.type() === 'error') errs.push('console ' + m.text()); });
+    await p.route('https://cdn.jsdelivr.net/**', r => r.fulfill({ path: TN + r.request().url().split('/three@0.128.0')[1], contentType: 'text/javascript' }));
+    let hold = true; const gate = []; await p.route('**/*.glb', r => { if (hold) gate.push(r); else r.continue(); });   // 車体と田んぼを 止めておく（おそい回線の 待ち）
+    await p.goto(`http://localhost:${PORT}/tractor.html`); await p.waitForFunction(() => typeof LOAD_ST !== 'undefined'); await p.waitForTimeout(1500);
+    const lw = () => p.evaluate(() => { const e = document.getElementById('loadWait'); if (!e) return null; const cs = getComputedStyle(e), f = e.querySelector('.lwF'), r = e.getBoundingClientRect(); return { started: !!(window.game && game.S && game.S.started), load: LOAD_ST, vis: cs.display !== 'none' && cs.visibility !== 'hidden' && +cs.opacity > 0.9, full: r.width >= innerWidth && r.height >= innerHeight, pe: cs.pointerEvents, anim: f ? getComputedStyle(f).animationName : '', text: e.innerText.replace(/\s+/g, ' ').trim(), btn: e.querySelectorAll('button, a, input').length }; });
+    const w0 = await lw();
+    ok('読みこみを待つ間：画面いっぱいの おおい（なぞり方の指と 1 行）が見えている・入力は ふさがない・押す物は ない（直す前は 何も置いていない景色の 大きな三角）', !!w0 && !w0.started && w0.load === 'wait' && w0.vis && w0.full && w0.pe === 'none' && w0.anim === 'lwUp' && /なぞ/.test(w0.text) && w0.text.length <= 16 && w0.btn === 0, w0);
+    hold = false; for (const r of gate) await r.continue();
+    await p.waitForFunction(() => window.game && game.S && game.S.started && typeof P !== 'undefined' && P.Rotary); await p.waitForTimeout(800);
+    const w1 = await lw();
+    ok('読みこみが終わったら おおいは消えて、そのまま始まる（はじめの画面は ない）', !!w1 && w1.started && !w1.vis, w1);
+    await p.evaluate(() => { const real = performance.now.bind(performance); let now = real(); performance.now = () => now; window.__sync = () => { now = real(); }; window.requestAnimationFrame = () => 0; game.renderer.render = () => {};
+      window.__adv = sec => { for (let i = 0, n = Math.round(sec / 0.05); i < n; i++) { now += 50; frame(now); } };
+      window.__c = () => { const b = document.getElementById('hintSwipe'), vis = HINT.done && !b.classList.contains('hidden') && [...b.querySelectorAll('.hDot'), document.getElementById('hintFinger')].some(e => e.style.display !== 'none'); const e = document.getElementById('say'); return { vis, side: !!(HINT.turn && HINT.turn.idle), fwd: !!HINT.demoF, ids: touchIds.size, v: Math.abs(game.S.v), down: game.S.rotDown, steer: Math.abs(game.S.steer), raw: document.getElementById('toast').dataset.raw || '', say: e.classList.contains('off') ? '' : e.innerText.replace(/\s+/g, ' ').trim() }; }; });
+    await p.waitForTimeout(2500); await p.evaluate(() => window.__sync());
+    const cdp = await ctx.newCDPSession(p), adv = s => p.evaluate(x => window.__adv(x), s), cx = 195, C = () => p.evaluate(() => window.__c());
+    const T = (type, x, y) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: type === 'touchEnd' ? [] : [{ x, y, id: 1 }] });
+    const stroke = async (x0, y0, x1, y1, hold) => { await T('touchStart', x0, y0); for (let i = 1; i <= 8; i++) { await T('touchMove', x0 + (x1 - x0) * i / 8, y0 + (y1 - y0) * i / 8); await adv(0.05); } await adv(hold); const at = await C(); await T('touchEnd'); return at; };
+    // 9-1) 横へ なぞって（0.4 秒＋1 秒 置く）離す：止まるまでの間に 旋回アップで作業機が上がらない・その知らせが出ない
+    await adv(2); await stroke(cx, 481, cx, 397, 0.6); await adv(1);
+    const held = await stroke(cx + 20, 321, cx - 140, 315, 1.0); let upN = 0, told = false;
+    for (let i = 0; i < 24; i++) { await adv(0.05); const c = await C(); if (!c.down) upN++; if (/旋回アップ/.test(c.raw + c.say)) told = true; }
+    ok('横へ なぞった指を離して止まる間：作業機は下りたまま・「旋回アップ…」の知らせは出ない（直す前は 上がって 33 字の吹き出し）', held.down && held.steer > 0.45 && upN === 0 && !told, { heldDown: held.down, steer: +held.steer.toFixed(2), upN, told });
+    // 9-2) 前進キーで耕しながら大きく切ったときの旋回アップは 今までどおり
+    const kb = await p.evaluate(() => { const g = game; Object.assign(g.S, { x: 0, z: -8, yaw: 0, v: 0, steer: 0 }); if (!g.S.rotDown) g.toggleRotary(); __adv(1.5); g.key.fwd = 1; __adv(1); g.key.left = 1; __adv(2); const r = { down: g.S.rotDown, raw: document.getElementById('toast').dataset.raw || '', turnUp: g.S.turnUp }; g.key.left = 0; g.key.fwd = 0; __adv(1.5); return r; });
+    ok('前進キーで耕しながら大きく切ると、旋回アップは 今までどおり働く', !kb.down && /旋回アップ/.test(kb.raw), kb);
+    // 9-3) 絵の外へ出るときの吹き出し：どうすればよいか（曲がって もどる）が はじめの 1 文に入っている
+    await p.evaluate(() => { Object.assign(game.S, { x: 0, z: 11, yaw: 0, v: 0, steer: 0 }); __adv(0.5); });
+    let art = ''; await T('touchStart', cx, 481); for (let i = 1; i <= 8; i++) { await T('touchMove', cx, 481 - 84 * i / 8); await adv(0.05); }
+    for (let i = 0; i < 120 && !art; i++) { await adv(0.05); const c = await C(); if (/白線/.test(c.say)) art = c.say; } await T('touchEnd');
+    ok('絵の外へ出るときの吹き出しに「曲がって 絵の中へ」が入っている・24 字まで（直す前は「白線をこえるので ロータリーを上げました」だけ）', /曲がって/.test(art) && /絵の中/.test(art) && art.length <= 24, art);
+    // 9-4) 曲がり方を覚えた人（sideOK 3）が 絵の外で 前へ なぞって止まった：止まって 0.6 秒以内に「横へ」の見本（直す前は 2 秒＝1 秒おきの なぞりの合間には出ない）
+    const pre = await p.evaluate(() => { Object.assign(game.S, { x: 7.7, z: 1.9, yaw: 153 / 57.3, v: 0, steer: 0 }); HINT.sideOK = 3; HINT.bent = true; __adv(0.3); return { sd: +ART.sdAt(game.S.x, game.S.z).toFixed(1), ahead: HINT.workAhead(1), art: ART.on }; });
+    await T('touchStart', cx, 481); for (let i = 1; i <= 8; i++) { await T('touchMove', cx, 481 - 84 * i / 8); await adv(0.05); } await adv(0.6); await T('touchEnd');
+    let stop = null, t = null, side = false, bad = 0; for (let i = 1; i <= 60 && t === null; i++) { await adv(0.05); const c = await C(); if (c.vis && c.v >= 0.05) bad++; if (stop === null && c.v < 0.05) stop = (i - 1) / 20; if (c.vis) { t = i / 20; side = c.side; } }
+    const ahead2 = await p.evaluate(() => HINT.workAhead(1));
+    ok('曲がり方を覚えた人が 絵の外で止まった：止まって 0.6 秒以内に「横へ」の見本が出る・動いている間は出ない（直す前 2.0 秒）', pre.art && pre.sd > 0.4 && !ahead2 && t !== null && stop !== null && t - stop <= 0.6 && side && bad === 0, { pre, ahead2, stop, t, side, bad });
+    await ctx.close();
+  }
+  {   // Codex 指摘（PR #1095）：three が 読みこめない とき、読みこみの おおいが 消えて 知らせが 出る
+    const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true }), p = await ctx.newPage();
+    await p.route('https://cdn.jsdelivr.net/**', r => /three\.min\.js/.test(r.request().url()) ? r.abort() : r.fulfill({ path: TN + r.request().url().split('/three@0.128.0')[1], contentType: 'text/javascript' }));
+    await p.goto(`http://localhost:${PORT}/tractor.html`).catch(() => {}); await p.waitForTimeout(1500);
+    const lw = await p.evaluate(() => { const w = document.getElementById('loadWait'), t = document.getElementById('toast'); return { off: w.classList.contains('off'), toast: t ? t.textContent : '' }; });
+    ok('three が 読みこめない とき、読みこみの おおいは 消えて「うまく 読みこめませんでした」と 出る', lw.off && /読みこめませんでした/.test(lw.toast), lw);
     await ctx.close();
   }
   ok('エラーなし', errs.length === 0, errs.slice(0, 3));

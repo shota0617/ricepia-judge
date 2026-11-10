@@ -663,7 +663,7 @@ function talkNpc(id, page = 0) {
       brief.icons += '🎉';
       say.push(`🎉 ${S.guide.byId ? 'イベント達成：' : ''}${n.name}に会えた${pts ? ` +${pts}pt` : ''}`);
       const ml = [], mb = mazeGoal(n.id, n.name, ml), mz = takeMzShare();   // 地図の めいろの ゴールが この人だった：名所と 同じ ように 時間・★と 紙ふぶき
-      if (mz) { mzNpcShare = { ...mz, id: n.id }; playAsk(mz); }   // 話の 窓に「📣 シェア」（人の ゴールにも ごほうびの 窓は 出ないので）。「めいろ、どうだった？」は 話の 窓を とじた あと
+      if (mz) { mzNpcShare = { ...mz, id: n.id }; if (playAskOk(mz)) playAsk(mz); }   // 話の 窓に「📣 シェア」（人の ゴールにも ごほうびの 窓は 出ないので）。「めいろ、どうだった？」は 話の 窓を とじた あと
       const spl = ml.find(l => l.startsWith('🏃'));
       if (spl && simple()) toastAfter(spl);   // はやさ：文字を少なく では 下の 知らせが 絵だけに なるので、あとに 文で 出す
       if (ml.length) { if (mb) gainPoints(mb); brief.icons += '🏁'; say.unshift(...ml); }
@@ -1447,7 +1447,8 @@ function checkin() {
   setTimeout(() => { if (react.pending) reactShow(); else if (playQ.pending) playShow(); }, 1500);   // 下の小さなひとこと欄だけ（カードが無いので ここから）
   reactAsk(s);
   if (courseDone) courseCelebrate();   // コースを まわりきった：ごほうびの 窓が とじたら 1枚絵
-  if (mz) playAsk(mz);   // めいろの ゴール：「めいろ、どうだった？」（1日1回。名所の ひとこと より 先に）
+  if (mz && !playAskOk(mz)) react.pending = null;   // はじめてのさんぽで すぐ 着いた ゴール：名所の ひとことも たずねない（行き先の 札を かくさない）
+  else if (mz) playAsk(mz);   // めいろの ゴール：「めいろ、どうだった？」（1日1回。名所の ひとこと より 先に）
   // 当店の窓（shopAfter）は 自動では 開かない：カードが無いので、窓が いきなり 開いて 歩きを 止めない（お店の窓は 自分で タップして 開く）
   map.closePopup();
   renderMarkers();
@@ -1853,7 +1854,7 @@ const GUIDE_RECENT = 8;
 // めいろで 道すじが 出なかった 行き先（はなれ島・行き止まり。pixel.js の mzRoute が 知らせる）：10分 だけ 候補から 外す（S には 書かない。島の中で 遊ぶ人には ひびかない）
 const mzNoPath = new Map();
 const mzNoPathIds = () => { const t = Date.now(); return [...mzNoPath].filter(([, u]) => u > t).map(([id]) => id); };
-function guideNoPath(g) {   // 外して 選びなおす。自分で 選んだ・人の すすめの 行き先は そのまま。続けて 3回（30秒）まで
+function guideNoPath(g, firstBand) {   // 外して 選びなおす。自分で 選んだ・人の すすめの 行き先は そのまま。続けて 3回（30秒）まで。firstBand：はじめての ゴールの 道すじが 単純で ない とき（pixel.js）。近くの 帯（FIRST_MAX）の 外へは かえない
   const cur = S.guide;
   if (!g || !cur || cur.id !== g.id || cur.mine || cur.refer || cur.byId || !mazeNow() || !fixOk()) return false;
   const now = Date.now(), ts = (guideNoPath.ts || []).filter(t => now - t < 30000);
@@ -1861,7 +1862,7 @@ function guideNoPath(g) {   // 外して 選びなおす。自分で 選んだ�
   if (ts.length >= 3) return false;
   ts.push(now); mzNoPath.set(g.id, now + 600000);
   const next = decideGuide(null);
-  if (!next) { mzNoPath.delete(g.id); return false; }
+  if (!next || (firstBand && dist(me, next) > FIRST_MAX)) { mzNoPath.delete(g.id); return false; }
   setGuide(next);
   return true;
 }
@@ -3904,6 +3905,11 @@ function reactAsk(s) {
 // 1日1回、名所の ひとこと（reactBar）と 同じ 場所に 出す。運営者の声「どのようにレビューを受けるのか。ゲーム改善につながるか」2026-10-27
 const playQ = { pending: null, r: 0, shown: 0, sent: false, t: 0 };
 const PLAY_MIN_MS = 900;   // api/feedback.js の PLAY_MIN_MS（800）より すこし 長く
+// サイクル189（はじめの 1分）：はじめてのさんぽ（3ゴールまで）の 間は、1分 より 短く 着いた ゴールでは たずねない（自分で 遊んで 分かった：はじめての ゴールに 15秒で 着くと、
+// まだ 遊んで いないのに ★の 札が 行き先の 札に かぶって 出た）。たずねるのは その日の 次の ゴールに とっておく
+const PLAY_ASK_MIN_S = 60;
+// ここへ 来る ときには 着いた ゴールは もう 数えて ある（mazeGoal → goalFx → mzHelpGoal）。だから 数は「いまのが 何こめか」：3こめ までは たずねない、4こめ からは これまでどおり
+const playAskOk = mz => !(demo && !(store.get('nsg_mzgoals', 0) > 3) && mz && mz.sec < PLAY_ASK_MIN_S);
 function playAsk(mz) {
   if (store.get('nsg_play_ask', '') === ymd()) return;
   playQ.pending = { sec: Math.round(mz.sec), st: 0, mz };   // mz：★4〜5 の ときの「友だちに」で シェアする ゴール（takeMzShare）
@@ -4655,7 +4661,7 @@ document.addEventListener('click', e => { const b = e.target.closest && e.target
 // ドット絵表示（pixel.js）とテストから使う窓口
 window.nishioGo = {
   galleryTiles,
-  notePlayInput, snapMaze, mzSpeed, playAsk, playShow, get playPending() { return playQ.pending; }, set mzNpcShareTest(v) { mzNpcShare = v; },   // テスト用：遊んでいる 画面を とる・人の ゴールの シェアを 置く
+  notePlayInput, snapMaze, mzSpeed, playAsk, playAskOk, PLAY_ASK_MIN_S, playShow, get playPending() { return playQ.pending; }, set mzNpcShareTest(v) { mzNpcShare = v; },   // テスト用：遊んでいる 画面を とる・人の ゴールの シェアを 置く
   sound,
   get nimotsu() { const NM = window.NISHIO_NIMOTSU; return NM ? NM.current(S.nimotsu, Date.now()) : ''; },   // いま あたまに のせて いる 持ち物の 絵の id（なければ ''）
   get state() { return S; }, get stateKey() { return stateKey(); }, get spotsVersion() { return spotsVersion; }, get spots() { return spots; }, get me() { return me; }, get demo() { return demo; },
@@ -4684,7 +4690,7 @@ window.nishioGo = {
   spotTip, dist, cooldownLeft, inReach, reachOf, guideRadius, renderGuide, checkin, checkinSpot, popupHtml, toast, toastAfter, renderLog, ymd, refreshNearby, reactLine, get npcs() { return placeNpcs(); }, weekTheme, giveBag, talkNpc, callNpc(id) { calledBy = id || null; }, meetCritter, critterLeft, critterFirst: () => !Object.keys(S.critters || {}).length, watchOpen, watchWater, alleyFind, mzGrain, mzFruit, mzPiece, mzView, mzCache, mzQuest, mzDino, mzChase, mzEnergy, mzShoo, mzTorch, mzBrigade, mzPurify, mzRescueJoin, mzRescue, mzCube, mzGrainHas: key => mzGrainGot().includes(key), get mzGrains() { return mzGrainGot().length; }, alleyOpen: (x, y) => (dayState().alleys || 0) < ALLEY.daily && !(S.alleys || []).includes(`${x},${y}`), sealCands, sealPickCheck, clearInfo: () => ({ cleared: !!S.cleared, got: SEAL_MAIN.filter(id => (S.seals || []).includes(id)).length, need: SEAL_MAIN.length }), get rival() { return rivalWhere(); }, rivalSay, RIVAL, areaArt, npcMet, chestOpened: id => dayState().chests.includes(id), liveChests, get welcomeChest() { return welcomeDue(); },
   moveTo(lat, lng, kind) { if (!demo) return; follow = false; stepMove = kind === 'step'; try { onFix(lat, lng, 5, Date.now()); } finally { stepMove = false; } },
   get driving() { return driving; },
-  get guide() { return guideTarget(); }, decideGuide, setGuide, guideNoPath,
+  get guide() { return guideTarget(); }, decideGuide, setGuide, guideNoPath, guideKept: () => !!(S.guide && (S.guide.mine || S.guide.refer || S.guide.byId)),   // guideKept：自分で 選んだ・人の すすめの 行き先か（かってに かえない）
   autoInterval, autoLearn, idleCheck, buyUp, IDLE,
   setDriving(on) { driving = !!on && demo; if (!driving) tryChest(); refreshNearby(); },
   invalidateMap() { setTimeout(() => { map.invalidateSize(); if (me) map.setView([me.lat, me.lng]); }, 0); },

@@ -397,7 +397,7 @@ a{color:var(--acc)}
 #swTrace{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(100% + 4px);z-index:2;display:flex;gap:5px;pointer-events:none}   /* 世話のあと(周回118・F2「答えが田んぼに残る」): 判定のたびに畦の上にドット絵の物が1つ残り、次のカードでも消えない。#swWrap直下の静的要素でrenderでは作り直さない。文字なし・表示のみ */
 #swTrace .tr{display:block;width:40px;height:40px;background-repeat:no-repeat;background-position:center bottom;background-size:40px 40px;image-rendering:pixelated;filter:drop-shadow(0 2px 2px rgba(60,40,20,.35))}
 #swTrace .tr.new{animation:swTraceIn 1.2s ease-out 1 both}   /* 新しい跡だけが静かに置かれる。残りは動かない */
-#swRich{position:absolute;left:50%;transform:translateX(-50%);top:47%;z-index:2;display:none;gap:4px;pointer-events:none}   /* 良い世話の蓄積(周回124・類2 Sort the Court!: 判断の積み重ねが景色の成長で返る): 判定○の累計が増えるたびに田んぼ側に手描きドット絵の植物が1つずつ増え、その年はずっと残る。直近だけの跡(#swTrace)とも、その瞬間の色みとも別の「総量」の層。文字なし・表示のみ */
+#swRich{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(100% + 48px);z-index:2;display:none;gap:4px;pointer-events:none}   /* 置き場所は周回152(最初の1分): もとは画面の高さの47%で、カードの上端と無関係だった。低い画面(390×664・360×640)では世話のあと(#swTrace)の真上に重なった。#swWrap の中へ移し、カードの上端から数えて「世話のあと」のすぐ上の段に置く(画面の高さによらず重ならない) */   /* 良い世話の蓄積(周回124・類2 Sort the Court!: 判断の積み重ねが景色の成長で返る): 判定○の累計が増えるたびに田んぼ側に手描きドット絵の植物が1つずつ増え、その年はずっと残る。直近だけの跡(#swTrace)とも、その瞬間の色みとも別の「総量」の層。文字なし・表示のみ */
 #swRich.on{display:flex}
 #swRich .rc{display:block;position:relative;width:30px;height:30px;background-repeat:no-repeat;background-position:center bottom;background-size:30px 30px;image-rendering:pixelated;filter:drop-shadow(0 2px 2px rgba(60,40,20,.30))}
 #swRich .rc.new{animation:swRichIn 1.2s ease-out 1 both}   /* 新しい植物だけが静かに置かれる。残りは動かない(跡と同じ作法) */
@@ -408,7 +408,8 @@ a{color:var(--acc)}
 #swRich .rc.hint .rcBadge{width:20px;height:20px;background-size:15px 15px}   /* 周回136・差5: 気配の印だけ少し大きくし、実寸でも面が判別できるようにする。確定の印は従来どおり16px */   /* 世話の色(周回132・差1 たまごっち: 世話の方向で姿が分岐する): その年に一番大事にした面の花が、蓄積の列の末尾に金の光で1株だけ残る。色による優劣は付けない(どの色も対等) */
 @keyframes swRichIn{0%{opacity:0;transform:translateY(5px) scale(.7)}100%{opacity:1;transform:none}}
 @media (prefers-reduced-motion: reduce){#swRich .rc.new{animation:none}}
-#swDelay{position:absolute;left:50%;transform:translateX(-50%);top:54%;z-index:2;display:none;pointer-events:none}   /* 時間差の実り(周回131・類9 旅かえる: 世話の結果が数日後に遅れて戻ってくる): 判定○の日から3〜5日後だけ金の花が1つ静かに出る。その場では増えない=待つ楽しみ。文字なし・表示のみ */
+#swDelay{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(100% + 82px);z-index:2;display:none;pointer-events:none}   /* 置き場所は周回152(最初の1分): もとは画面の高さの54%で、390×664・360×640 では金の花がカードの日付(48px)の真上に乗り、390×844 でもカードの上端と世話のあとにかかった(○のあと3〜5日=はじめて4〜5枚目から)。#swWrap の中へ移し、蓄積の植物(#swRich)の上の段に置く。蓄積がまだ無いときは1段下(世話のあとのすぐ上) */
+#swRich:not(.on) + #swDelay{bottom:calc(100% + 48px)}   /* 時間差の実り(周回131・類9 旅かえる: 世話の結果が数日後に遅れて戻ってくる): 判定○の日から3〜5日後だけ金の花が1つ静かに出る。その場では増えない=待つ楽しみ。文字なし・表示のみ */
 #swDelay.on{display:block}
 #swDelay .dlIc{display:block;width:34px;height:34px;background-repeat:no-repeat;background-position:center bottom;background-size:34px 34px;image-rendering:pixelated;filter:drop-shadow(0 2px 2px rgba(60,40,20,.30))}
 #swDelay.new .dlIc{animation:swRichIn 1.2s ease-out 1 both}   /* 現れた日だけ静かに置かれる(蓄積の植物と同じ作法) */
@@ -421,6 +422,7 @@ a{color:var(--acc)}
 @keyframes swReunionIn{0%{opacity:0;transform:translateY(6px) scale(.7)}100%{opacity:1;transform:none}}
 #swDayGuest{position:absolute;right:16px;top:36%;z-index:2;display:none;pointer-events:none}   /* その日の訪問者(周回130・類8 ねこあつめ: 覗くたびの小さな違い): 暦日で決まる生き物が1匹だけ田んぼの右手に静かにいる。日が替われば顔ぶれと居場所が少し替わる。文字なし・表示のみ */
 #swDayGuest.on{display:block}
+@media (max-height:740px){#swDayGuest{top:calc(36% - 26px)}}   /* 周回152(最初の1分): 低い画面では、カードの上の植物の段(#swRich)と訪問者の足もとが重なるので、訪問者を少しだけ上へ */
 #swDayGuest .dgIc{width:40px;height:40px;font-size:40px;line-height:1;filter:drop-shadow(0 2px 2px rgba(60,40,20,.30))}
 #swDayGuest.new .dgIc{animation:swGuestIn 1.2s ease-out 1 both}   /* 替わった日だけ静かに現れる。同じ日の間は動かない(再会・跡と同じ作法) */
 @keyframes swGuestIn{0%{opacity:0;transform:translateY(6px) scale(.7)}100%{opacity:1;transform:none}}
@@ -804,8 +806,6 @@ html:has(#sGame.swipeMode:not(.hidden)),body:has(#sGame.swipeMode:not(.hidden)){
     <div id="swCareGlow" aria-hidden="true"></div>
     <div id="swPvScene" aria-hidden="true"><i data-k="water"></i><i data-k="weed"></i><i data-k="bug"></i><i data-k="fert"></i><i data-k="vigor"></i></div>
     <div id="swPvAura" aria-hidden="true"><span class="pvAuraIc"></span><span class="pvAuraMod"></span></div>
-    <div id="swRich" aria-hidden="true"></div>
-    <div id="swDelay" aria-hidden="true"></div>
     <div id="swReunion" aria-hidden="true"></div>
     <div id="swDayGuest" aria-hidden="true"></div>
     <div id="swPvField" aria-hidden="true"></div>
@@ -816,7 +816,7 @@ html:has(#sGame.swipeMode:not(.hidden)),body:has(#sGame.swipeMode:not(.hidden)){
     <div id="swSeasonScene" aria-hidden="true"><span class="scPix"></span><span class="scStage"></span></div>
     <div id="swRipple" aria-hidden="true"><i class="rpRing r1"></i><i class="rpRing r2"></i><span class="rpIcon"></span></div>
     <div id="swCount" role="status" aria-label="収穫までの日数"><b></b></div>
-    <div id="swStage"><div id="swWrap"><div id="swStagePlants" aria-hidden="true"></div><div id="swTrace" aria-hidden="true"></div><div id="swGhost" aria-hidden="true"></div><div id="swCard" tabindex="0" role="group" aria-live="polite"><i class="swHintSh L" aria-hidden="true"></i><i class="swHintSh R" aria-hidden="true"></i><div class="swSide L" id="swSL"></div><div class="swSide R" id="swSR"></div><span id="swTag"></span><div id="swBigDate" aria-hidden="true"></div><div id="swSeasonStrip" aria-hidden="true"></div><div id="swNextMile" aria-hidden="true"><span class="nmIc"></span><b class="nmNum"></b><span class="nmDay"></span></div><div id="swFest" aria-hidden="true">🏮🎆🏮🎆🏮</div><div id="swIc"><span class="icPix" aria-hidden="true"></span><span class="icEmoji"></span></div><h2 id="swTitle"></h2><p id="swText"></p><div id="swEdge"><span class="eL"><b class="eIc"></b><span class="eLb"></span></span><span class="eR"><b class="eIc"></b><span class="eLb"></span></span></div><div id="swHint">◀ 左へ／右へ ▶ カードを動かして選ぶ</div></div><i class="swBack b2"></i><i class="swBack b1"></i><div id="swGhostArrows" aria-hidden="true"><span class="ghA ghL">◀</span><span class="ghA ghR">▶</span></div><div id="swGuide" aria-hidden="true"><span class="gd gdL">◀</span><span class="gd gdR">▶</span></div></div></div>
+    <div id="swStage"><div id="swWrap"><div id="swStagePlants" aria-hidden="true"></div><div id="swTrace" aria-hidden="true"></div><div id="swRich" aria-hidden="true"></div><div id="swDelay" aria-hidden="true"></div><div id="swGhost" aria-hidden="true"></div><div id="swCard" tabindex="0" role="group" aria-live="polite"><i class="swHintSh L" aria-hidden="true"></i><i class="swHintSh R" aria-hidden="true"></i><div class="swSide L" id="swSL"></div><div class="swSide R" id="swSR"></div><span id="swTag"></span><div id="swBigDate" aria-hidden="true"></div><div id="swSeasonStrip" aria-hidden="true"></div><div id="swNextMile" aria-hidden="true"><span class="nmIc"></span><b class="nmNum"></b><span class="nmDay"></span></div><div id="swFest" aria-hidden="true">🏮🎆🏮🎆🏮</div><div id="swIc"><span class="icPix" aria-hidden="true"></span><span class="icEmoji"></span></div><h2 id="swTitle"></h2><p id="swText"></p><div id="swEdge"><span class="eL"><b class="eIc"></b><span class="eLb"></span></span><span class="eR"><b class="eIc"></b><span class="eLb"></span></span></div><div id="swHint">◀ 左へ／右へ ▶ カードを動かして選ぶ</div></div><i class="swBack b2"></i><i class="swBack b1"></i><div id="swGhostArrows" aria-hidden="true"><span class="ghA ghL">◀</span><span class="ghA ghR">▶</span></div><div id="swGuide" aria-hidden="true"><span class="gd gdL">◀</span><span class="gd gdR">▶</span></div></div></div>
     <div id="swDetail"></div>
     <button type="button" id="swDetailBtn" style="display:none" aria-controls="swDetail" aria-expanded="false">🔍 くわしい話を見る</button>
     <div id="swMark" aria-hidden="true"></div>
@@ -3503,7 +3503,7 @@ renderTitle();
   var GUEST_POOLS = { wi: [['サギ', '🐦'], ['カルガモ', '🦆'], ['クモの巣の朝露', '💧']], sp: [['モンシロチョウ', '🦋'], ['タンポポ', '🌼'], ['ツバメ', '🐦'], ['アマガエル', '🐸']], su: [['アメンボ', '💧'], ['ホウネンエビ', '🦐'], ['シオカラトンボ', '🔵'], ['トノサマガエル', '🐸'], ['バッタ', '🦗'], ['メダカ', '🐟']], au: [['赤とんぼ', '🔴'], ['イナゴ', '🦗'], ['彼岸花', '🌺'], ['ドジョウ', '🐟']] };
   var guestInfo = { name: '', icon: '', doy: 0, season: '', slot: -1, seen: [] };
   function guestCalc(){ if (choices.length < 3) return null; var sk = seasonCalc().key, pool = GUEST_POOLS[sk]; if (!pool || !pool.length) return null; var cal = KomeCards.day(f); var idx = ((cal * 7) % pool.length + pool.length) % pool.length; return { name: pool[idx][0], icon: pool[idx][1], season: sk, slot: cal % 3, doy: cal }; }
-  function guestDraw(){ try { var e = $('swDayGuest'); if (!e) return; var v = guestCalc(); if (!v) { guestInfo = { name: '', icon: '', doy: 0, season: '', slot: -1, seen: visitLoad() }; e.innerHTML = ''; e.classList.remove('on', 'new'); return; } var isNew = guestInfo.doy !== v.doy || guestInfo.name !== v.name; visitAdd(v.name); guestInfo = { name: v.name, icon: v.icon, doy: v.doy, season: v.season, slot: v.slot, seen: visitLoad() }; e.innerHTML = lifePixSpan(v.name, 'dgIc') || ('<span class="dgIc">' + v.icon + '</span>'); e.style.right = (16 + v.slot * 44) + 'px'; e.classList.add('on'); e.classList.toggle('new', isNew); } catch (e) {} }
+  function guestDraw(){ try { var e = $('swDayGuest'); if (!e) return; var v = guestCalc(); if (!v) { guestInfo = { name: '', icon: '', doy: 0, season: '', slot: -1, seen: visitLoad() }; e.innerHTML = ''; e.classList.remove('on', 'new'); return; } var isNew = guestInfo.doy !== v.doy || guestInfo.name !== v.name; visitAdd(v.name); guestInfo = { name: v.name, icon: v.icon, doy: v.doy, season: v.season, slot: v.slot, seen: visitLoad() }; e.innerHTML = lifePixSpan(v.name, 'dgIc') || ('<span class="dgIc">' + v.icon + '</span>'); e.style.right = 'calc(84px + ' + v.slot + ' * max(0px, 50% - 144px) / 2)';   /* 周回152(最初の1分): もとは右端から 16・60・104px。16px は今日の空・あしたの空の丸(z3)の真後ろで、3日に1日は訪問者がほとんど見えなかった(60px も16pxぶん隠れる)。丸の列(右84px)より左、まん中の植物の段より右の空きに3か所を取る */ e.classList.add('on'); e.classList.toggle('new', isNew); } catch (e) {} }
   function rippleClear(){ clearTimeout(rippleTimer); rippleTimer = null; rippleInfo.kind = ''; rippleInfo.key = ''; rippleInfo.dir = 0; rippleInfo.icon = ''; try { var r = $('swRipple'); r.removeAttribute('data-k'); r.removeAttribute('data-dir'); pixStatClear(r.querySelector('.rpIcon')); } catch (e) {} }
   function rippleSet(kind, chg){
     if (choices.length <= 3) { rippleClear(); return; }   /* 周回120(F4): 最初の3枚の判定では波紋＋変わった項目のアイコンを出さない(advance は choices を足してから呼ぶため、確定した選択が1〜3枚目なら長さは1〜3)。4枚目以降は従来どおり */

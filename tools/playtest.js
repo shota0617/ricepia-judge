@@ -119,13 +119,69 @@ async function walkTo(page, id) {
   return { id, name: plan.name, straightM: plan.straight, steps: plan.keys.length, reached: spin === plan.name };
 }
 
+// サイクル189（はじめの 1分）：はじめて 開いた 人の はじめての ゴールは 近く（まっすぐ 200m ほど・道のり 700m まで）。選びなおしで 2km 先に ならない。
+// 手描きの 名所の 絵は 使う ときまで 作らない。はじめてのさんぽで すぐ 着いた ゴールでは「どうだった？」を たずねない
+// PLAYTEST_ONLY=firstMinute で この 3つだけを 動かせる（30秒 ほど。通しが 最後まで 動かない ときにも、直す 前の コードで 落ちる ことを 確かめられる）
+async function firstMinuteChecks(browser, R) {
+    const v = await newPage(browser, { howto: true, auto: true }), p2 = v.page;
+    try {
+      await p2.goto(URL);
+      const fg = await p2.evaluate(async () => {
+        const wait = ms => new Promise(r => setTimeout(r, ms)), seen = [];
+        let last = '', same = 0, g = null, rt = null;
+        for (let i = 0; i < 100 && same < 8; i++) {   // 行き先と 道すじが 2秒 かわらなく なるまで（20秒まで）
+          await wait(200);
+          const P = window.nishioPixel, G = window.nishioGo; if (!P || !G || !G.me) continue;
+          g = G.guide; rt = P.maze.route();
+          const k = g && rt ? g.id + ':' + rt.cells : '';
+          if (g && seen[seen.length - 1] !== g.name) seen.push(g.name);
+          if (k && k === last) same++; else { same = 0; last = k; }
+        }
+        const P = nishioPixel, G = nishioGo, straight = g ? Math.round(G.dist(G.me, g)) : -1, fb = P.firstBest;
+        const best = fb ? fb([{ gkey: 'a', cells: 21 }, { gkey: 'b', cells: 17 }, { gkey: 'c', cells: 18 }, { gkey: 'd', cells: 17 }]).gkey : '';
+        return { goal: g && g.name, straight, route: rt && Math.round(rt.m), seen, best, goals: localStorage.getItem('nsg_mzgoals'), ok: !!g && !!rt && straight <= 220 && rt.m <= 700 && best === 'b' };
+      });
+      const lz = await p2.evaluate(() => {
+        const P = nishioPixel, all = Object.values(P.spotSprites).filter(x => x && 'made' in x), made = all.filter(x => x.made).length;
+        const c = P.spotSprites.nishioCastle, size = c.size, madeBefore = c.made, a = c[0], b = c[1];
+        return { lazy: all.length, made, size, madeBefore, w: a && a.width, gray: b && b.width, same: c[0] === a, madeAfter: c.made, ok: all.length >= 200 && made <= 30 && size === 48 && a.width === 48 && b.width === 48 && c[0] === a && c.made };
+      });
+      const pa = await p2.evaluate(() => {
+        const G = nishioGo, g0 = localStorage.getItem('nsg_mzgoals');
+        if (!G.playAskOk) return { ok: false, why: 'no-api' };
+        localStorage.setItem('nsg_mzgoals', '1'); const quick = G.playAskOk({ sec: 15 }), slow = G.playAskOk({ sec: 90 });   // 数は 着いた あとの もの（いまのが 何こめか）
+        localStorage.setItem('nsg_mzgoals', '3'); const third = G.playAskOk({ sec: 15 });
+        localStorage.setItem('nsg_mzgoals', '4'); const later = G.playAskOk({ sec: 15 });
+        if (g0 === null) localStorage.removeItem('nsg_mzgoals'); else localStorage.setItem('nsg_mzgoals', g0);
+        return { quick, slow, third, later, kept: typeof G.guideKept === 'function' && G.guideKept() === false, min: G.PLAY_ASK_MIN_S, ok: quick === false && slow === true && third === false && later === true && typeof G.guideKept === 'function' && G.guideKept() === false && G.PLAY_ASK_MIN_S === 60 };
+      });
+      return { firstGoalNear: fg, lazySprites: lz, playAskQuick: pa };
+    } finally { R.errors.push(...v.errors); await v.ctx.close(); }
+}
+const FIRST_MINUTE_NEED = {
+  firstGoalNear: 'はじめての ゴールが 遠い（選びなおしで 近くの 帯の 外へ 出た・道のりが 長い）',
+  lazySprites: '手描きの 名所の 絵を 読みこみの ときに ぜんぶ 作って いる／使う ときに 作れない',
+  playAskQuick: 'はじめてのさんぽで すぐ 着いた ゴールでも「どうだった？」を たずねる',
+};
+
 (async () => {
   fs.mkdirSync(OUT, { recursive: true });
   const server = startServer(PORT);
   const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
   const R = { shots: [], checks: {}, walk: [], errors: [] };
+  if (process.env.PLAYTEST_ONLY === 'firstMinute') {
+    Object.assign(R.checks, await firstMinuteChecks(browser, R));
+    await browser.close(); server.close();
+    R.failures = Object.keys(FIRST_MINUTE_NEED).filter(k => !(R.checks[k] && R.checks[k].ok)).map(k => `${FIRST_MINUTE_NEED[k]}（${JSON.stringify(R.checks[k])}）`);
+    if (R.errors.length) R.failures.push(`ページの エラー：${R.errors.slice(0, 3).join(' / ')}`);
+    R.ok = R.failures.length === 0;
+    fs.writeFileSync(path.join(OUT, 'playtest.json'), JSON.stringify(R, null, 2));
+    console.log(JSON.stringify(R, null, 2));
+    process.exit(R.ok ? 0 : 1);
+  }
   R.checks.riceBubbleTime = await require('./playtest-bubble').runBubbleChecks(browser);
-  R.checks.startTilt = await require('./playtest-start').runStartChecks(browser, URL, OUT);
+  // サイクル189：はじめの 確かめ（playtest-start.js）が とちゅうで 止まっても、のこりの 確かめは 動かす（「あそぶ」の 窓 playReady を なくした あと、ここで 止まって 通しが 最後まで 動かなかった）。止まった ことは 落ちた 項目に のこす
+  R.checks.startTilt = await require('./playtest-start').runStartChecks(browser, URL, OUT).catch(e => ({ ok: false, crashed: String(e && e.message || e).split('\n')[0].slice(0, 200) }));
   const shot = async (page, name) => { await page.screenshot({ path: path.join(OUT, name + '.png') }); R.shots.push(name + '.png'); };
   const state = page => page.evaluate(() => ({ pts: nishioGo.state.points, demo: nishioGo.demo, status: document.getElementById('status').textContent }));
 
@@ -689,6 +745,7 @@ async function walkTo(page, id) {
       return { ...a, walker, ok: !a.intro && a.demo && a.roll && !a.howto && !a.walkBtn && !a.modeSw && walker.demo && walker.mode === '"demo"' };
     } finally { R.errors.push(...v.errors); await v.ctx.close(); }
   })();
+  Object.assign(R.checks, await firstMinuteChecks(browser, R));   // サイクル189（はじめの 1分）
   // 主人公の 名前は「あいちのかおりちゃん」（運営者の声 2026-10-29）：おはなしの 名前の 札・はじめの あいさつ
   R.checks.kaoriName = (() => {
     const kt = fs.readFileSync(path.join(__dirname, '..', 'nishio-go', 'kometalk.js'), 'utf8'), gm = fs.readFileSync(path.join(__dirname, '..', 'nishio-go', 'game.js'), 'utf8');
@@ -3693,6 +3750,7 @@ async function walkTo(page, id) {
   need(c.kaoriName && c.kaoriName.ok, `主人公の 名前が「あいちのかおりちゃん」に なって いない（${JSON.stringify(c.kaoriName)}）`);
   need(c.riceBubbleTime && c.riceBubbleTime.ok, `吹き出し：古い フレーム時刻で 描画が 止まる（${JSON.stringify(c.riceBubbleTime)}）`);
   need(c.startTilt && c.startTilt.ok, `開始・傾きの 回帰（${JSON.stringify(c.startTilt)}）`);
+  for (const k of Object.keys(FIRST_MINUTE_NEED)) need(c[k] && c[k].ok, `${FIRST_MINUTE_NEED[k]}（${JSON.stringify(c[k])}）`);
   need(c.autoStart && c.autoStart.ok, `開いても いきなり ころころ はじまらない／「あるいて遊ぶ」が のこって いる（${JSON.stringify(c.autoStart)}）`);
   need(c.introScenes && c.introScenes.ok, `西尾の 景色の ドット絵が はじめの 画面・あそびかた・おはなしに 出ない、または おはなしの 上に 知らせが かぶる（${JSON.stringify(c.introScenes)}）`);
   need(c.babyRice && c.babyRice.ok, `お米の 赤ちゃんの かわいさ：目の きらっ・あくびが ない（${JSON.stringify(c.babyRice)}）`);

@@ -130,7 +130,7 @@
   @keyframes sway { 30% { transform:rotate(-2deg) translateY(2px); } 65% { transform:rotate(2deg) translateY(2px); } }
 
   /* おす */
-  #osu { display:flex; align-items:center; justify-content:center; }
+  #osu { display:flex; align-items:center; justify-content:center; box-sizing:border-box; padding-bottom:112px; } /* 下の112pxは米の流れの絵の場所として空けておく（サイクル136・最初の1分）。空けていなかった旧版は、背の低い画面（360×640実測）で絵が袋の下と証印の下の端にかぶさり、押したばかりの証印が欠けて見えた */
   /* 米の流れの絵（サイクル132・店主指示2026-11-09「この感じでゲーム修正」）: 押印した玄米が
      精米されて白米になり、ごはんになるまでを、水彩の手描き風の大きな絵で下にそっと見せる。
      副産物のもみがら・ぬかも添える。操作は妨げない（pointer-events:none） */
@@ -212,6 +212,8 @@
     #sceneSort { flex-direction:column; gap:6px; }
     #ittoPhoto { height:45%; }
     #dish { flex:0 0 40%; width:100%; margin:0; border-radius:24px; padding:4px 8px; }
+    #osu { padding-bottom:0; padding-right:54%; } /* 横向きは下に空きがないので、袋を左へ寄せ、米の流れの絵は右に置く（サイクル136）。下に置いたままだと絵が証印にかぶさる（740×360実測） */
+    #journey { left:46%; top:calc(50% - 52px); bottom:auto; }
     #foot { min-height:calc(46px + env(safe-area-inset-bottom)); }
     #hint { font-size:17px; }
     #nextBtn { min-height:40px; padding:4px 30px; font-size:17px; }
@@ -1274,12 +1276,14 @@ const Z = { s:1, tx:0, ty:0 };
 const ZOOM_MAX = 3.4, FACE_AT = 1.2; /* 顔が出る倍率: 1.2倍から。1.5倍では指を少し開く自然なピンチ（1.2〜1.35倍）で寄っても顔が出ず、寄れていないように見えた（390×844実測・サイクル85）。ごく小さなピンチ（1.1倍以下）では顔を出さない範囲に留める */
 let isNear = false, everZoomed = false, spread = false;
 /* 最初の袋だけ、広げた時点でわるい粒に顔が出る（サイクル83、Fable設計の候補2）: 寄らなくても見分けられる */
+const FACE_Z = 100; /* 良い粒の重なり順（2〜21）より上 */
 function firstBagFace(g) { return lotIndex === 0 && spread && g.kind !== "seiryu"; }
 function grainMood(g) { return (isNear || firstBagFace(g)) ? "normal" : "far"; }
 function refreshBadFaces() {
   grains.forEach(g => { if (g.gone || g.kind === "seiryu") return;
     g.img.src = grainSprite(g.kind, grainMood(g));
-    g.img.style.transform = firstBagFace(g) ? "scale(1.5)" : ""; /* 寄った後も維持し、倍率の境界で突然縮まないようにする（Codexレビュー指摘・サイクル83） */ });
+    g.img.style.transform = firstBagFace(g) ? "scale(1.5)" : ""; /* 寄った後も維持し、倍率の境界で突然縮まないようにする（Codexレビュー指摘・サイクル83） */
+    if (firstBagFace(g)) { g.z = FACE_Z; g.el.style.zIndex = FACE_Z; } /* 最初の袋で顔が出たわるい粒は、良い粒の上に出す（サイクル136・最初の1分）。山の下に隠すための重なり順（1）のままだったため、広げた後も大きくなった顔が良い粒の下に半分隠れていた（390×844実測） */ });
 }
 let zoomAnimTimer = null;
 function applyZoom(smooth) {
@@ -1426,12 +1430,14 @@ function simFrame() {
 }
 function grainAt(p) {
   const padU = 6 / Z.s, padV = 12 / Z.s; /* 粒の短い向き（v）だけゆるさを12pxにし、タップの実効の高さを44pxにする。6pxでは中心から16pxずれたタップが外れ、20pxずらした実タップでもわるい粒が取れなかった（390×844実測・サイクル75）。長い向き（u）は、となりの粒（広げた時の中心間は最小約30px）と取り合わないよう6pxのまま */
-  let best = null;
+  let best = null, bestOn = false; /* 指の真下に粒そのものがあれば、その粒を先に取る（サイクル136・最初の1分）。旧版はゆるさの枠（上下12px）に入った粒のうち重なり順が上の粒を選んでいたため、見えているわるい粒の真ん中を押しても、となりの良い粒のゆるさの枠が先に当たり、良い粒が揺れるだけで取れなかった（390×844実測・最初の袋: 真ん中タップ24回中10回が取れず、同じ所を40回押しても取れない袋があった）。ゆるさの枠は、どの粒にも直接当たらなかった時だけ使う */
   grains.forEach(g => {
     if (g.gone || g.el.hidden) return;
     const a = g.r * Math.PI / 180, dx = p.x - g.x, dy = p.y - g.y;
     const u = dx * Math.cos(a) + dy * Math.sin(a), v = -dx * Math.sin(a) + dy * Math.cos(a);
-    if (Math.abs(u) <= GW / 2 + padU && Math.abs(v) <= GH / 2 + padV && (!best || g.z > best.z)) best = g;
+    if (!(Math.abs(u) <= GW / 2 + padU && Math.abs(v) <= GH / 2 + padV)) return;
+    const on = Math.abs(u) <= GW / 2 && Math.abs(v) <= GH / 2;
+    if (!best || (on && !bestOn) || (on === bestOn && g.z > best.z)) { best = g; bestOn = on; }
   });
   return best;
 }
@@ -2006,8 +2012,11 @@ window.addEventListener("resize", () => {
   layoutProbe();
   if (step === 4 && !stamped) layoutStamp();
   PW = inner.clientWidth; PH = inner.clientHeight;
-  grains.forEach(g => { g.awake = 1; });
-  startSim();
+  /* 画面の大きさが変わっただけでは、山を広げない（サイクル136・最初の1分）。旧版はここで全部の粒を起こして押し合わせていたため、
+     開いた直後や説明を読んで戻った時の resize だけで山がほどけ、「なでて ひろげる」の手本が出ないまま、広がった合図の音が ぬく の途中で鳴っていた
+     （390×844・スマホ表示の実測15回中14回）。なでて広げた後だけ押し合わせ、それまでは皿の中に収め直すだけにする */
+  if (spread) { grains.forEach(g => { g.awake = 1; }); startSim(); }
+  else grains.forEach(g => { g.x = Math.min(PW - GW * 0.55, Math.max(GW * 0.55, g.x)); g.y = Math.min(PH - GW * 0.4, Math.max(GW * 0.4, g.y)); renderGrain(g); });
   applyZoom();
 });
 

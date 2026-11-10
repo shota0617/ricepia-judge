@@ -1437,6 +1437,67 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         # setStep 以外の場所では段階名にアニメーションを付けない（出現は段階の切り替え時だけ）
         self.assertEqual(HTML.count('$("stepName").animate'), 1)
 
+    def test_cycle136_tap_takes_the_grain_under_the_finger(self):
+        # 最初の1分: 見えているわるい粒の真ん中を押しても、となりの良い粒の「ゆるさの枠」
+        # （上下12px）が重なり順で勝ち、良い粒が揺れるだけで取れなかった
+        # （390×844実測・最初の袋の真ん中タップ24回中10回）。
+        # 指の真下に粒そのものがあればその粒を取り、ゆるさの枠は直接当たらない時だけ使う。
+        node = shutil.which("node")
+        if not node:
+            self.skipTest("node がないので実行の確認は飛ばす")
+        fn = HTML[HTML.index("function grainAt(p) {"):HTML.index("const pts = new Map();")]
+        script = """
+const assert = require('node:assert/strict');
+const GW = 36, GH = 20, Z = {s:1};
+const mk = (kind, x, y, r, z) => ({kind, x, y, r, z, gone:false, el:{hidden:false}});
+const bad = mk('higai', 100, 100, 0, 1), good = mk('seiryu', 100, 130, 0, 5);
+let grains = [bad, good];
+""" + fn + """
+// わるい粒の真ん中: 良い粒（重なり順が上）のゆるさの枠にも入るが、真下にあるわるい粒を取る
+assert.equal(grainAt({x:100, y:100}), bad);
+assert.equal(grainAt({x:100, y:109}), bad);
+// 良い粒そのものの上は良い粒
+assert.equal(grainAt({x:100, y:125}), good);
+// 粒そのものが重なる所は、上に見えている粒（重なり順が上）
+const over = mk('seiryu', 110, 104, 0, 7); grains = [bad, over];
+assert.equal(grainAt({x:104, y:102}), over);
+// どの粒にも直接当たらない時は、従来どおりゆるさの枠で受ける（短い向き12px）
+grains = [bad];
+assert.equal(grainAt({x:100, y:121}), bad);
+assert.equal(grainAt({x:100, y:123}), null);
+// 取った粒・まだ落ちていない粒は当てない
+bad.gone = true; assert.equal(grainAt({x:100, y:100}), null);
+"""
+        subprocess.run([node, "-e", script], capture_output=True, text=True, check=True)
+
+    def test_cycle136_first_bag_faces_come_above_good_grains(self):
+        # 最初の袋で顔が出たわるい粒は、良い粒（重なり順2〜21）の上に出す。
+        # 山の下に隠すための重なり順（1）のままで、広げた後も顔が半分隠れていた（390×844実測）。
+        self.assertIn("const FACE_Z = 100;", HTML)
+        faces = HTML[HTML.index("function refreshBadFaces()"):HTML.index("let zoomAnimTimer")]
+        self.assertIn("if (firstBagFace(g)) { g.z = FACE_Z; g.el.style.zIndex = FACE_Z; }", faces)
+        self.assertIn("z:bad ? 1 : 2 + i", HTML)  # 山の間は従来どおり下に隠れる
+
+    def test_cycle136_resize_alone_does_not_spread_the_pile(self):
+        # resize のたびに全部の粒を起こして押し合わせていたため、開いた直後の resize だけで
+        # 山がほどけ、「なでて ひろげる」の手本が出ず、広がった合図の音が ぬく の途中で鳴っていた
+        # （390×844・スマホ表示の実測15回中14回）。広げる前は皿の中へ収め直すだけにする。
+        start = HTML.index('window.addEventListener("resize", () => {')
+        body = HTML[start:HTML.index("applyZoom();", start)]
+        self.assertIn("if (spread) { grains.forEach(g => { g.awake = 1; }); startSim(); }", body)
+        self.assertIn("else grains.forEach(g => {", body)
+        self.assertIn("renderGrain(g);", body)
+        self.assertEqual(body.count("startSim()"), 1)
+
+    def test_cycle136_rice_journey_does_not_cover_the_stamp(self):
+        # 背の低い画面（360×640実測）で、米の流れの絵（高さ104px＋下6px）が袋の下83pxと
+        # 証印の下26pxにかぶさり、押したばかりの証印が欠けていた。絵の場所を先に空けておく。
+        self.assertIn("#osu { display:flex; align-items:center; justify-content:center; box-sizing:border-box; padding-bottom:112px; }", HTML)
+        # 横向きの低い画面は下に空きがないので、絵を袋の右へ置く
+        land = HTML[HTML.index("@media (orientation:landscape) and (max-height:500px)"):HTML.index("@media (prefers-reduced-motion: reduce)")]
+        self.assertIn("#osu { padding-bottom:0; padding-right:54%; }", land)
+        self.assertIn("#journey { left:46%; top:calc(50% - 52px); bottom:auto; }", land)
+
     def test_cycle93_picked_grains_stay_in_quiet_record(self):
         # 類7: 見分けた粒が静かに記録に残る。任意で開く資料（#notes）の中だけに出し、常時表示・競争・スコアにはしない。
         # 袋を越えて残るため startLot では消さない（サイクル91の seenChecks と同じ持ち方）。

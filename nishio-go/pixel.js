@@ -9406,27 +9406,72 @@ if (tiltBtn) tiltBtn.addEventListener('click', e => {
 });
 // 止まって いる ときの 手本
 const DEMO_IDLE_MS = 2000;
-const tapDemo = { el: null, ph: null, at: performance.now(), x: null, y: null, n: 0 };
+// サイクル198（運営者の声 2026-11-10「最初の1分のプレイ離脱をいかに減らすか」）：手本の 指を タップして 進む 人を はかった（iPhone・空の 記録・390×780）。
+// ・1タップで 2マス 歩いた あと、次の 手本まで 2.0〜2.5秒 待つ。はじめての ゴール（17マス）まで 9タップ・35秒（傾けて 転がすと 17秒）。60秒の うち 動いて いたのは 3わり
+// ・2つめの ゴールの 手前（42秒）で、手本の 指が 着いた ばかりの 駅の 特大の 絵の 上を 指した。そこを タップすると 説明の 窓（ボタン 7つ）が 開いて、手本は 消えた
+// 直し：手本は 道しるべの 3マス先を 指す（DEMO_AHEAD）。タップで 歩いて 着いた あとは 0.9秒で 次の 手本（DEMO_TAP_MS。転がした あと・何も して いない ときは これまでどおり 2秒）。
+//       タップすると 窓が 開く 所（人・名所の 絵・建物・当店の 札・縁の 矢印）や 地図の 外は 指さない（tapDemoSpot：近い マス・マスの 中の ほかの 点を さがす）
+const DEMO_TAP_MS = 900, DEMO_AHEAD = 3;
+const DEMO_SLOP = [[0, 0], [0, 1], [1, 0], [-1, 0], [0, -1]], DEMO_SLOP_PX = 18, DEMO_NEAR_PX = 40, DEMO_CELLS = [0, -1, 1, -2, 2], DEMO_TILES = [[1, 1], [1, 0], [0, 1], [2, 1], [1, 2], [0, 0], [2, 0], [0, 2], [2, 2]];   // ためす 順：3マス先 → 2 → 4 → 1 → 5、マスの まん中 → まわり
+function tapDemoWalks(q, slop, spots) {   // 画面の この 点を タップすると 歩きだすか（窓が 開かない・地図に とどく）。人の 指は ずれるので、まわり slop px の 4点も 同じ こと
+  if (q.x < 24 || q.x > window.innerWidth - 24) return false;
+  const r = cv.getBoundingClientRect(), dpr = cv.width / r.width, a = mzMap.arrow;
+  for (const [ox, oy] of DEMO_SLOP) {
+    if (!slop && (ox || oy)) break;
+    const px = q.x + ox * slop, py = q.y + oy * slop;
+    if (document.elementFromPoint(px, py) !== cv) return false;
+    const x = (px - r.left) * dpr, y = (py - r.top) * dpr;
+    if (a && x >= a[0] && x <= a[2] && y >= a[1] && y <= a[3]) return false;
+    if (shopHits.some(([x0, y0, x1, y1]) => x >= x0 && x <= x1 && y >= y0 && y <= y1)) return false;
+    if (fieldHit(x, y, spots)) return false;
+  }
+  return true;
+}
+function tapDemoSpot(path) {
+  const last = path.length - 1, base = Math.min(DEMO_AHEAD, last), rc = tileClient(rp.x - 0.5, rp.y - 0.5);
+  const c = camTile(), near = G.spots.filter(s => { const p = toTile(s.lat, s.lng); return Math.abs(p.x - c.x) < 30 && Math.abs(p.y - c.y) < 40; });   // 画面の 近くの 名所だけ（名所は 2千こ ある。点ごとに ぜんぶ 調べると 重い）
+  for (const slop of [DEMO_SLOP_PX, 0]) for (const d of DEMO_CELLS) {   // まず 指が 18px ずれても 歩ける 所。なければ ぴったり 押せば 歩ける 所
+    const i = base + d;
+    if (i < 1 || i > last) continue;
+    for (const [dx, dy] of DEMO_TILES) {
+      const q = tileClient(path[i][0] * MZ_K + dx, path[i][1] * MZ_K + dy);
+      if (Math.hypot(q.x - rc.x, q.y - rc.y) >= DEMO_NEAR_PX && tapDemoWalks(q, slop, near)) return q;   // お米の すぐ そばは 指さない（指の 絵が お米に のる・お米を つつく）
+    }
+  }
+  return tileClient(path[base][0] * MZ_K + 1, path[base][1] * MZ_K + 1);   // どこも だめ（ゴールの 人が 目の前 など）：これまでどおり
+}
+const tapDemo = { el: null, ph: null, at: performance.now(), x: null, y: null, n: 0, side: '', up: false, walked: false, walkT: -1e9 };
 function tapDemoTouch() { tapDemo.at = performance.now(); tapDemoHide(); }
 function tapDemoHide() { if (tapDemo.el && !tapDemo.el.hidden) tapDemo.el.hidden = true; if (tapDemo.ph && !tapDemo.ph.hidden) tapDemo.ph.hidden = true; }
 function tapDemoTick() {
   tiltBtnSync();
   const now = performance.now();
-  if (rp.x !== tapDemo.x || rp.y !== tapDemo.y) { tapDemo.x = rp.x; tapDemo.y = rp.y; tapDemo.at = now; }   // 転がって いる・歩いて いる
+  if (rp.x !== tapDemo.x || rp.y !== tapDemo.y) { tapDemo.x = rp.x; tapDemo.y = rp.y; tapDemo.at = now; tapDemo.walked = now - tapDemo.walkT < 700; }   // 転がって いる・歩いて いる（walked：さいごに 動いたのは タップ・なぞりの 歩き。歩きの 1歩は 0.18秒おき）
   const path = mzRt.path;
   // サイクル197（運営者の声 2026-11-10「最初の 1 タップを促す表示」「１タップを促すお手本」）：iPhone は 1回 タップしないと 傾きの 許可を 聞けない。
   // まだ 聞いて いない 間は、2秒 待たずに はじめから タップの 手本（指＋「タップ！」の 札）を 出す。タップすると 許可の 窓が 出て、手本は ふだんの 出かた（止まって 2秒）に もどる
   const first = tiltBtnWanted() && !tiltG.asked;
-  const ok = active && !meiroPause && !document.hidden && rp.x !== null && mazeOn() && howtoEl.hidden && !mapCovered() && !tapS.goal && !!path && path.length > 1 && now - tapDemo.at >= (first ? 0 : DEMO_IDLE_MS);
+  const ok = active && !meiroPause && !document.hidden && rp.x !== null && mazeOn() && howtoEl.hidden && !mapCovered() && !tapS.goal && !!path && path.length > 1 && now - tapDemo.at >= (first ? 0 : tapDemo.walked ? DEMO_TAP_MS : DEMO_IDLE_MS);
   if (!ok) { tapDemoHide(); return; }
   if (!tapDemo.el) {
     const mk = (id, t) => { const e = document.createElement('div'); e.id = id; e.setAttribute('aria-hidden', 'true'); e.textContent = t; e.hidden = true; document.body.appendChild(e); return e; };
     tapDemo.el = mk('tapDemo', '👆'); tapDemo.ph = mk('tiltHint', '📱');
   }
-  const c = path[Math.min(2, path.length - 1)], q = tileClient(c[0] * MZ_K + 1, c[1] * MZ_K + 1);   // 道しるべの 2マス先（ゴールが 近ければ ゴールの マス）
+  const q = tapDemoSpot(path);   // 道しるべの 3マス先（ゴールが 近ければ ゴールの マス。窓が 開く 所は よける）
   tapDemo.el.style.left = Math.round(q.x) + 'px'; tapDemo.el.style.top = Math.round(q.y) + 'px';
   if (tapDemo.el.hidden) { tapDemo.el.hidden = false; tapDemo.n++; }
   if (tapDemo.el.classList.contains('first') !== first) tapDemo.el.classList.toggle('first', first);
+  // サイクル198（はじめの 1分）：「タップ！」の 札は 指の 下に 出るので、行き先が お米の 上（上・ななめ上）だと 札が お米に かぶった
+  // （なぞって 歩く 人＝click に ならず まだ 許可を 聞けて いない 人で はかった：止まった 14回の うち 10回。まっすぐ 上は お米の 半分が かくれた）。
+  // 行き先が お米より 上の ときは、札を 指の よこ（お米から 遠い がわ。画面から 出る ときは 逆）に 出す。下・よこの ときは これまでどおり 指の 下
+  // 指の 絵は 先（上の はし）で 行き先を 指し、手は その 下に のびる。行き先が お米の 上だと 手が お米に のった（1マス 上：お米の 3わり。手を タップすると お米を つつく だけで 進まない）。
+  // 行き先が お米より 上の ときは 指を さかさに（手は 行き先の 上・指先は 下向き。クラス dn）
+  const rc = tileClient(rp.x - 0.5, rp.y - 0.5), LAB_W = 124, up = q.y <= rc.y - 20;
+  if (tapDemo.up !== up) { tapDemo.up = up; tapDemo.el.classList.toggle('dn', up); }
+  // LAB_W：札が 指の まん中から よこへ のびる 長さ（指の 半分 22＋すきま 4＋札 約90＋ゆとり）
+  const shTop = $('sheet') ? $('sheet').getBoundingClientRect().top : window.innerHeight;   // 下の 札に 入る ときも よこへ（3マス 下を 指すと、背の 低い 画面で 札が 下の 欄に とどく）
+  const side = !first || (!up && q.y + 96 <= shTop) ? '' : q.x >= rc.x ? (q.x + LAB_W > window.innerWidth ? 'll' : 'lr') : (q.x - LAB_W < 0 ? 'lr' : 'll');
+  if (tapDemo.side !== side) { tapDemo.side = side; tapDemo.el.classList.toggle('lr', side === 'lr'); tapDemo.el.classList.toggle('ll', side === 'll'); }
   const ph = tiltG.on && Math.hypot(tiltG.x, tiltG.y) <= 0.2;   // 傾きが 使えて いる 端末：傾ける 手本も
   if (tapDemo.ph.hidden === ph) tapDemo.ph.hidden = !ph;
 }
@@ -13352,6 +13397,41 @@ function planPath(sx, sy, gx, gy, goalR, avoid) {
   for (let i = found >= 0 ? found : best; i !== start && i >= 0; i = from[i]) out.push([i % W + x0, (i / W | 0) + y0]);
   return out.reverse();
 }
+// サイクル198：歩く地図の タップが 何に 当たるか（人・さんぽ仲間・名所の 絵・街の 建物）。当たらなければ null（そこまで 歩く）。
+// 下の click と、止まって いる ときの 手本（tapDemoSpot：窓が 開く 所を 指さない）が 同じ 調べ方を 使う。x・y は キャンバスの 点
+function fieldHit(x, y, spots = G.spots) {   // spots：調べる 名所（手本は 画面の 近くの ものだけ 先に えらんで わたす）
+  const r = cv.getBoundingClientRect(), dpr = cv.width / r.width, T = fieldT(Math.min(window.devicePixelRatio || 1, 3)), c = camTile();
+  const ttx = Math.floor(c.x + (x - cv.width / 2) / T), tty = Math.floor(c.y + (y - fieldCy) / T + 0.25);   // 西尾の人（絵は半マス上に描いているので、その分を足して調べる）
+  const who = npcAt(ttx, tty) || npcAt(ttx, tty - 1);
+  if (who) return { npc: who };
+  const rt = rivalTile();
+  if (rt && rt.x === ttx && (rt.y === tty || rt.y === tty - 1)) return { rival: true };
+  let hit = null, best = Infinity;
+  // 特大の絵は、手前に描いた絵から順に、絵のある所（透明でない点）をタップしたかで決める
+  for (let i = giantHits.length - 1; i >= 0 && !hit; i--) {
+    const [gx, gy, gs, s, img] = giantHits[i];
+    if (x < gx || y < gy || x >= gx + gs || y >= gy + gs) continue;
+    const ix = Math.floor((x - gx) / gs * img.width), iy = Math.floor((y - gy) / gs * img.height);
+    if (img.getContext('2d').getImageData(ix, iy, 1, 1).data[3] > 0) hit = s;
+  }
+  if (!hit) for (const s of spots) {
+    if (bigOf(s, false)) continue;   // 特大の絵は上で調べた
+    const p = toTile(s.lat, s.lng);
+    const sx = cv.width / 2 + (p.x - c.x) * T, sy = fieldCy + (p.y - c.y) * T;
+    const half = bigSpotSize(s, spriteOf(s), T, null) / 2 + 4 * dpr, d = Math.hypot(x - sx, y - sy);   // 描いた大きさの半分
+    if (Math.abs(x - sx) <= half && Math.abs(y - sy) <= half && d < best) { hit = s; best = d; }
+  }
+  if (hit) return { spot: hit };
+  let bp = null;
+  for (let i = poiHits.length - 1; i >= 0 && !bp; i--) {   // 街の主な建物の特大の絵（6マス）は、絵のある所をタップしたかで
+    const [gx, gy, gs, p, img] = poiHits[i];
+    if (x < gx || y < gy || x >= gx + gs || y >= gy + gs) continue;
+    if (img.getContext('2d').getImageData(Math.floor((x - gx) / gs * img.width), Math.floor((y - gy) / gs * img.height), 1, 1).data[3] > 0) bp = p;
+  }
+  best = T * 1.2;
+  if (!bp) for (const p of poiCache.list) { const d = Math.hypot(x - (cv.width / 2 + (p[0] - c.x) * T), y - (fieldCy + (p[1] - c.y) * T - T * 0.2)); if (d < best) { bp = p; best = d; } }
+  return bp ? { poi: bp } : null;
+}
 // サイクル192（はじめの 1分）：なぞっても 進む。自分で 遊んで 分かった：タップの つもりで 指が 30px ずれる・お米から 行きたい 方へ なぞる と、ブラウザは タップ（click）に せず、
 // 地図は 何も 起こさなかった（15とおりの 指で ためした うち、何も 起きない 2つ）。指を はなした 所まで 歩く（タップと 同じ tapWalk。窓は 開かない）。
 // 2本指（ピンチ）・せかいちず（ドラッグで 地図を 動かす）・あるいて移動は これまでどおり。CSS の touch-action は pinch-zoom（1本指の なぞりを ブラウザに とられない）
@@ -13405,39 +13485,15 @@ cv.addEventListener('click', e => {
   const T = fieldT(Math.min(window.devicePixelRatio || 1, 3));
   const c = camTile();
   const x = (e.clientX - r.left) * dpr, y = (e.clientY - r.top) * dpr;
-  // 西尾の人（絵は半マス上に描いているので、その分を足して調べる）
-  const ttx = Math.floor(c.x + (x - cv.width / 2) / T), tty = Math.floor(c.y + (y - fieldCy) / T + 0.25);
   if (G.demo && rp.x !== null && !driving && howtoEl.hidden && nazoTap(x, y, performance.now())) return;   // なぞなぞの 札を タップ（nazonazo.js）
   if (G.demo && rp.x !== null && !driving && howtoEl.hidden && Math.hypot(x - (cv.width / 2 + heroScr.x), y - (fieldCy + heroScr.y)) < T * 0.8 && tsunTap(performance.now())) return;   // お米を つんつん（tsun.js）
-  const who = npcAt(ttx, tty) || npcAt(ttx, tty - 1);
-  if (who) { openNpc(who, true); return; }
-  const rt = rivalTile();
-  if (rt && rt.x === ttx && (rt.y === tty || rt.y === tty - 1)) { rivalTalk(); return; }
-  let hit = null, best = Infinity;
-  // 特大の絵は、手前に描いた絵から順に、絵のある所（透明でない点）をタップしたかで決める
-  for (let i = giantHits.length - 1; i >= 0 && !hit; i--) {
-    const [gx, gy, gs, s, img] = giantHits[i];
-    if (x < gx || y < gy || x >= gx + gs || y >= gy + gs) continue;
-    const ix = Math.floor((x - gx) / gs * img.width), iy = Math.floor((y - gy) / gs * img.height);
-    if (img.getContext('2d').getImageData(ix, iy, 1, 1).data[3] > 0) hit = s;
+  const h = fieldHit(x, y);
+  if (h) {
+    if (h.npc) openNpc(h.npc, true);
+    else if (h.rival) rivalTalk();
+    else { $('pxInfoBody').innerHTML = h.spot ? G.popupHtml(h.spot) : poiHtml(h.poi); $('pxInfo').hidden = false; }
+    return;
   }
-  if (!hit) for (const s of G.spots) {
-    if (bigOf(s, false)) continue;   // 特大の絵は上で調べた
-    const p = toTile(s.lat, s.lng);
-    const sx = cv.width / 2 + (p.x - c.x) * T, sy = fieldCy + (p.y - c.y) * T;
-    const half = bigSpotSize(s, spriteOf(s), T, null) / 2 + 4 * dpr, d = Math.hypot(x - sx, y - sy);   // 描いた大きさの半分
-    if (Math.abs(x - sx) <= half && Math.abs(y - sy) <= half && d < best) { hit = s; best = d; }
-  }
-  if (hit) { $('pxInfoBody').innerHTML = G.popupHtml(hit); $('pxInfo').hidden = false; return; }
-  let bp = null;
-  for (let i = poiHits.length - 1; i >= 0 && !bp; i--) {   // 街の主な建物の特大の絵（6マス）は、絵のある所をタップしたかで
-    const [gx, gy, gs, p, img] = poiHits[i];
-    if (x < gx || y < gy || x >= gx + gs || y >= gy + gs) continue;
-    if (img.getContext('2d').getImageData(Math.floor((x - gx) / gs * img.width), Math.floor((y - gy) / gs * img.height), 1, 1).data[3] > 0) bp = p;
-  }
-  best = T * 1.2;
-  if (!bp) for (const p of poiCache.list) { const d = Math.hypot(x - (cv.width / 2 + (p[0] - c.x) * T), y - (fieldCy + (p[1] - c.y) * T - T * 0.2)); if (d < best) { bp = p; best = d; } }
-  if (bp) { $('pxInfoBody').innerHTML = poiHtml(bp); $('pxInfo').hidden = false; return; }
   if (G.demo) tapWalk(Math.floor(c.x + (x - cv.width / 2) / T), Math.floor(c.y + (y - fieldCy) / T));   // 何もない所：そこまで歩く
 });
 // 操作して移動：地面をタップすると、そこまで道を探して1マスずつ歩く（車のときは道だけなので、スティックで）
@@ -13455,6 +13511,7 @@ function tapWalkStop() { clearTimeout(tapS.timer); tapS.timer = null; tapS.path 
 document.addEventListener('pointerdown', e => { if (tapS.goal && e.target !== cv) tapWalkStop(); }, true);
 function tapWalkTick() {
   tapS.timer = null;
+  tapDemo.walkT = performance.now();   // サイクル198：タップ・なぞりで 歩いて いる（着いた あとの 手本を 早く 出す）
   const nx = tapS.path.shift(), t = targetTile(), sx = Math.floor(t.x), sy = Math.floor(t.y);
   if (!nx || !G.demo || !active || worldMode || driving || mapCovered(false, true) || Math.abs(nx[0] - sx) + Math.abs(nx[1] - sy) !== 1) return tapWalkStop();
   if (!step(nx[0] > sx ? 'right' : nx[0] < sx ? 'left' : nx[1] > sy ? 'down' : 'up') || !tapS.path.length) return tapWalkStop();
@@ -13517,6 +13574,6 @@ window.nishioPixel = { giantWashLayout, drawGiantWash, seimaiLayout, drawShopSei
   nightStartK, get nightK() { return nightK !== null ? nightK : nightStartK(performance.now()); },   // サイクル95：夜の 幕の 立ち上がり（テスト用）
   // いまの町名が新しいか（歩く地図を描いていて、いまの位置で2秒以内に確かめた。せかいちず・ふつうの地図に切り替えたあとの古い町名は使わない）
   get hereFresh() { return active && !worldMode && !!G.me && performance.now() - here.at < 2000; }, spotSprites, spriteOf: sp => spriteOf(sp)[0], npcSprite: look => (npcSprites[look] || npcSprites.man)[0], art: { hiCanvas, shopCanvas, tileRoof, spanRows, pix, genSprite, GEN_DRAW }, get towns() { return towns; }, get here() { return here; }, npcTile, rasterize, chunkQuery, chunkBox, chunkInPlay, luReady, luAt, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, centerOnMe, demFor, get worldMode() { return worldMode; }, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; }, get traffic() { return traffic; }, get driving() { return driving; }, toggleCar, floatText, onPaddy, get tapGoal() { return tapS.goal; }, trailWalk, trailHas, trailClear, get trailCells() { return TRAIL.world.size; }, get trailWorld() { return [...TRAIL.world]; },
-  tileToClient: tileClient, get tapDemo() { return { on: !!tapDemo.el && !tapDemo.el.hidden, n: tapDemo.n, phone: !!tapDemo.ph && !tapDemo.ph.hidden, idleMs: DEMO_IDLE_MS, wait: [!active && 'active', rp.x === null && 'rice', !mazeOn() && 'maze', !howtoEl.hidden && 'howto', mapCovered() && 'covered', !!tapS.goal && 'walking', !(mzRt.path && mzRt.path.length > 1) && 'route'].filter(Boolean) }; }, tiltBtnCfg: TILT_BTN, ensureAround(lat, lng) { const q = toTile(lat, lng); ensureChunk(Math.floor(q.x / CHUNK), Math.floor(q.y / CHUNK)); } };
+  tileToClient: tileClient, get tapDemo() { return { on: !!tapDemo.el && !tapDemo.el.hidden, n: tapDemo.n, first: !!tapDemo.el && tapDemo.el.classList.contains('first'), side: tapDemo.side, up: tapDemo.up, walked: tapDemo.walked, tapMs: DEMO_TAP_MS, ahead: DEMO_AHEAD, walks: (q, slop = 0) => tapDemoWalks(q, slop), spot: () => (mzRt.path && mzRt.path.length > 1 ? tapDemoSpot(mzRt.path) : null), phone: !!tapDemo.ph && !tapDemo.ph.hidden, idleMs: DEMO_IDLE_MS, wait: [!active && 'active', rp.x === null && 'rice', !mazeOn() && 'maze', !howtoEl.hidden && 'howto', mapCovered() && 'covered', !!tapS.goal && 'walking', !(mzRt.path && mzRt.path.length > 1) && 'route'].filter(Boolean) }; }, tiltBtnCfg: TILT_BTN, ensureAround(lat, lng) { const q = toTile(lat, lng); ensureChunk(Math.floor(q.x / CHUNK), Math.floor(q.y / CHUNK)); } };
 { const rollGet = Object.getOwnPropertyDescriptor(window.nishioPixel, 'roll').get; Object.defineProperty(window.nishioPixel, 'roll', { configurable: true, enumerable: true, get() { const r = rollGet(), ra = rp.x === null ? '' : rollAreaAt(rp.x, rp.y), RSg = window.nishioRollSync; return { ...r, area: ra, feel: RSg && RSg.groundFeel ? RSg.groundFeel(ra) : { crr: 1, lin: 1 }, fps: fpsMeter.fps, shadow: RSg && RSg.shadowStretch ? RSg.shadowStretch(r.v) : 1 }; } }); }   // テスト用：いまの 地区と 地面の感じ（係数）を roll に足す
 })();

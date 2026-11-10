@@ -1853,7 +1853,7 @@ const GUIDE_RECENT = 8;
 // めいろで 道すじが 出なかった 行き先（はなれ島・行き止まり。pixel.js の mzRoute が 知らせる）：10分 だけ 候補から 外す（S には 書かない。島の中で 遊ぶ人には ひびかない）
 const mzNoPath = new Map();
 const mzNoPathIds = () => { const t = Date.now(); return [...mzNoPath].filter(([, u]) => u > t).map(([id]) => id); };
-function guideNoPath(g) {   // 外して 選びなおす。自分で 選んだ・人の すすめの 行き先は そのまま。続けて 3回（30秒）まで
+function guideNoPath(g, firstBand) {   // 外して 選びなおす。自分で 選んだ・人の すすめの 行き先は そのまま。続けて 3回（30秒）まで。firstBand：はじめての ゴールの 道すじが 単純で ない とき（pixel.js）。近くの 帯（FIRST_MAX）の 外へは かえない
   const cur = S.guide;
   if (!g || !cur || cur.id !== g.id || cur.mine || cur.refer || cur.byId || !mazeNow() || !fixOk()) return false;
   const now = Date.now(), ts = (guideNoPath.ts || []).filter(t => now - t < 30000);
@@ -1861,7 +1861,7 @@ function guideNoPath(g) {   // 外して 選びなおす。自分で 選んだ�
   if (ts.length >= 3) return false;
   ts.push(now); mzNoPath.set(g.id, now + 600000);
   const next = decideGuide(null);
-  if (!next) { mzNoPath.delete(g.id); return false; }
+  if (!next || (firstBand && dist(me, next) > FIRST_MAX)) { mzNoPath.delete(g.id); return false; }
   setGuide(next);
   return true;
 }

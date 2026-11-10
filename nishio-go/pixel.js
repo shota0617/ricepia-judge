@@ -9701,6 +9701,7 @@ function mzFirstSimple(shape, straightM) {   // はじめてのゴールとし�
   const L = MZ_FIRST_SIMPLE, ratio = straightM > 0 ? Math.max(0, shape.cells - 1) * MZ_K * TILE_M / straightM : 1;
   return shape.turns <= L.turns && shape.branches <= L.branches && ratio <= L.ratio;
 }
+const mzFirstBest = tried => tried.reduce((a, b) => (b.cells < a.cells ? b : a));   // ためした 行き先（{ g, gkey, cells }）の うち 道のりが いちばん 短い もの（同じなら 先に 出た もの）
 function mzRoute(now) {
   const g = G.guide;
   if (!g || rp.x === null) { mzRt.path = null; return; }
@@ -9782,7 +9783,17 @@ function mzRoute(now) {
     mzRt.simpleKey = gkey;
     if (mzGoalsDone() < 1 && G.guideNoPath) {
       const sm = G.dist && G.me ? G.dist(G.me, g) : 0;
-      if (!mzFirstSimple(mzPathShape(mzRt.path), sm) && G.guideNoPath(g)) return;
+      if (!mzFirstSimple(mzPathShape(mzRt.path), sm)) {
+        // サイクル189（はじめの 1分）：選びなおしで 遠く しない。自分で 遊んで 分かった：はじめの 場所（西尾駅の 南）では 近くの 候補が どれも「単純」で なく、
+        // 西尾駅（道のり 408m）→ 公園 → 学生 → 伊文神社の 人（まっすぐ 834m・道のり 2.3km）と 1秒で 4回 かわり、はじめての ゴールまで 道すじどおりに 転がしても 2分 より 長く かかった。
+        // 選びなおしは 近く（はじめての ゴールの 帯）の 中だけ。ためした 中に 単純な 道が なければ、道のりが いちばん 短い ものに もどす
+        const tried = mzRt.firstTried || (mzRt.firstTried = []);
+        tried.push({ g, gkey, cells: mzRt.path.length });
+        if (G.guideNoPath(g, true)) return;
+        const best = mzFirstBest(tried);
+        mzRt.firstTried = null;
+        if (best.gkey !== gkey && G.setGuide) { const { t, ...bg } = best.g; mzRt.simpleKey = best.gkey; mzRt.key = ''; G.setGuide(bg); return; }
+      }
     }
   }
   const L = mzRt.path.length;

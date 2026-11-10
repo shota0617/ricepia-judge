@@ -1158,7 +1158,12 @@ function layoutProbe() {
   poke.dataset.arrow = "←";
   if (!P.inserted) setProbe(P.rest);
   else if (!P.done) pullPoke(); /* さした後に画面の大きさが変わっても、手本の指は ひきぬく向きのまま（サイクル139） */
-  if (probeAttract) startProbeAttract(); /* 画面の大きさが変わったら、誘いの動きも新しい場所で やり直す（サイクル143） */
+  if (probeAttract) { /* 画面の大きさが変わったら、誘いの動きも新しい場所で やり直す（サイクル143） */
+    /* 指を置いている間（pointerdown で止めてある）は、止まったまま・同じ進み具合で置き直す（Codex指摘 PR #1089: 置いたまま画面を回すと、誘いが また動き出していた） */
+    const held = probeAttract.playState === "paused", at = probeAttract.currentTime;
+    startProbeAttract();
+    if (held && probeAttract) { probeAttract.pause(); probeAttract.currentTime = at; }
+  }
 }
 function setProbe(x) {
   P.x = x;
@@ -1180,6 +1185,15 @@ function stabDx(from) {
   return -Math.max(Math.round((from - P.inAt) * 1.8), 20);
 }
 let probeAttract = null;
+/* 指👆を出し直した時は、指の時計を 誘いの時計に合わせる（Codex指摘 PR #1089: 誘いの途中に場面の外をタップすると 指だけが隠れ、
+   出し直した指は頭から・穀刺しは前の時計のまま動いて、ずれたまま往復していた）。穀刺しは とばさず、出てくる指のほうを合わせる */
+function syncPokeToAttract() {
+  if (!probeAttract || !$("poke").getAnimations) return;
+  const finger = $("poke").getAnimations()[0];
+  if (!finger) return;
+  if (probeAttract.startTime !== null && probeAttract.playState === "running") finger.startTime = probeAttract.startTime;
+  else finger.currentTime = probeAttract.currentTime || 0;
+}
 function stopProbeAttract(keep) { /* keep: 指が穀刺しを動かし始めた時は、穀刺しを いま見えている所に残す（握りが指の下から とばない。はかるの握りと同じ・サイクル143）。ささる手前（P.inAt の1px手前）までで、さしたことにはしない。
    触れた時は その場で止めるだけ（pause）にして、動かさずに離した指（タップ）では 元の場所へ戻す。タップの数え方・3回目に ひとりでに ぬける動きは 旧版のまま */
   if (!probeAttract) return;
@@ -1307,8 +1321,13 @@ $("bagBtn").addEventListener("click", (e) => { if (e.detail === 0) autoProbe(); 
    1回目=手本の指を ひきぬく向きに出す／2回目=穀刺しが半分ぬけて戻る／3回目=自分でぬける。数はさした時に0へ戻す */
 function pullPoke() {
   const poke = $("poke");
-  poke.style.left = P.x + P.L * 0.72 + "px";
-  poke.style.setProperty("--pokeDx", Math.max(46, Math.round((P.rest - P.x) * 1.4)) + "px"); /* 入っている長さの1.4倍（サイクル143）。旧版は46px固定で、深くさした後は手本どおりでも ぬけきらなかった */
+  /* 入っている長さの1.4倍（サイクル143）。旧版は46px固定で、深くさした後は手本どおりでも ぬけきらなかった。
+     指は場面（#sceneBag）の中に収める（Codex指摘 PR #1089: いちばん深くさすと、指が往復の先で場面の右へ出て #app に切られ、横向きでは隣の皿へ はみ出した）。
+     足りない分は、指の出だしを握りから軸のほう（穀刺しの長さの3割の所まで）へ寄せ、それでも足りなければ場面の中に入る長さまでにする */
+  const want = Math.max(46, Math.round((P.rest - P.x) * 1.4)), right = $("sceneBag").clientWidth - (poke.offsetWidth || 44) - 2; /* 隠れている間は幅が0なので、👆の幅（実測42px）より少し広く見ておく */
+  const left = Math.max(P.x + P.L * 0.3, Math.min(P.x + P.L * 0.72, right - want));
+  poke.style.left = left + "px";
+  poke.style.setProperty("--pokeDx", Math.max(0, Math.min(want, Math.floor(right - left))) + "px");
   poke.dataset.arrow = "→";
 }
 function stabPoke() { /* さす手本の指を、いまの穀刺しの握りに合わせて置く（途中まで押してあれば、その場所から） */
@@ -2236,7 +2255,7 @@ function pilePoint() { /* 皿の上の粒のまんなか（画面上の点） */
   return { x:rect.left + plate.clientLeft + Z.tx + cx * Z.s, y:rect.top + plate.clientTop + Z.ty + cy * Z.s };
 }
 function demoShow(k) {
-  if (k === "stab") { stabPoke(); $("poke").style.display = ""; }
+  if (k === "stab") { stabPoke(); $("poke").style.display = ""; syncPokeToAttract(); }
   else if (k === "pull") { pullPoke(); $("poke").style.display = ""; }
   else if (k === "crank") guideAt("circle", $("crank"));
   else if (k === "sweep") guideAt("sweep", pilePoint());

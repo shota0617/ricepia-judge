@@ -593,6 +593,89 @@ P.done = true; layoutProbe(); assert.equal(pulls, 1);
         # 終わりのない動きは、手本の出し直しを待たせない
         self.assertIn("isFinite(a.effect.getComputedTiming().endTime)", HTML)
 
+    def test_cycle143_codex_pull_demo_finger_stays_inside_the_scene(self):
+        # Codex指摘（PR #1089）: 390×844 相当（場面の幅366・袋の左15・幅184・P.L=155）で いちばん深く（P.inX=73.88）さすと、
+        # ひきぬく手本の指の左端が 往復の先で 場面内369.48px になり、34pxの指の大部分が #app に切られた。
+        # 指は場面の中に収め、足りない分は出だしを軸のほうへ寄せる。
+        node = shutil.which("node")
+        if not node:
+            self.skipTest("node がないので実行の確認は飛ばす")
+        ps = HTML.index("function pullPoke() {")
+        fn = HTML[ps:HTML.index("function stabPoke() {", ps)]
+        script = """
+const assert = require('node:assert/strict');
+const poke = {offsetWidth:34, style:{left:'', setProperty(k, v) { this[k] = v; }}, dataset:{}};
+const scene = {clientWidth:366};
+const $ = id => id === 'sceneBag' ? scene : poke;
+const P = {x:73.88, rest:205, L:155};
+""" + fn + """
+const end = () => parseFloat(poke.style.left) + parseFloat(poke.style['--pokeDx']) + 34;
+pullPoke();
+assert.ok(end() <= 366, '指の右はしが場面の中 ' + end());                    // 旧版: 369.48 + 34 = 403.48
+const dx = parseFloat(poke.style['--pokeDx']);
+assert.ok(dx * 0.6 >= (205 - 73.88) * 0.8, '0.6倍でまねても全部ぬける長さは残す ' + dx);
+assert.ok(parseFloat(poke.style.left) >= 73.88 + 155 * 0.3);                 // 指の出だしは穀刺しの上
+// 指が隠れている間（幅0）に呼ばれても、👆の幅（実測42px）の分を空ける
+poke.offsetWidth = 0; pullPoke(); assert.ok(parseFloat(poke.style.left) + parseFloat(poke.style['--pokeDx']) + 42 <= 366);
+assert.ok(parseFloat(poke.style['--pokeDx']) * 0.6 >= (205 - 73.88) * 0.8); poke.offsetWidth = 34;
+// 場面に ゆとりがあれば、従来どおり握りの所から
+scene.clientWidth = 420; P.x = 166; pullPoke(); assert.equal(poke.style.left, 166 + 155 * 0.72 + 'px'); assert.equal(poke.style['--pokeDx'], '55px');
+// せまい場面（横向きなど）でも、場面の外へ出ない。長さは0より小さくならない
+for (const w of [300, 260, 200, 120]) for (const x of [40, 73.88, 120, 166, 200]) { scene.clientWidth = w; P.x = x; pullPoke();
+  assert.ok(end() <= Math.max(w, parseFloat(poke.style.left) + 34), w + ' ' + x); assert.ok(parseFloat(poke.style['--pokeDx']) >= 0); }
+"""
+        subprocess.run([node, "-e", script], capture_output=True, text=True, check=True)
+
+    def test_cycle143_codex_reshown_finger_joins_the_attract_clock(self):
+        # Codex指摘（PR #1089）: 誘いの途中に場面の外（見出しなど）をタップすると 指だけが隠れ、出し直した指は頭から・
+        # 穀刺しは前の時計のまま動いて、ずれたまま往復した。出し直した指の時計を 誘いに合わせる。
+        node = shutil.which("node")
+        if not node:
+            self.skipTest("node がないので実行の確認は飛ばす")
+        start = HTML.index("function syncPokeToAttract() {")
+        fn = HTML[start:HTML.index("function stopProbeAttract(keep)", start)]
+        script = """
+const assert = require('node:assert/strict');
+const finger = {startTime:null, currentTime:0};
+const poke = {getAnimations: () => [finger]};
+const $ = () => poke;
+let probeAttract = {startTime:120, currentTime:777, playState:'running'};
+""" + fn + """
+syncPokeToAttract(); assert.equal(finger.startTime, 120);                    // 動いている誘いと同じ始まり
+probeAttract = {startTime:null, currentTime:300, playState:'paused'}; finger.startTime = null;
+syncPokeToAttract(); assert.equal(finger.currentTime, 300); assert.equal(finger.startTime, null);
+probeAttract = null; finger.currentTime = 5; syncPokeToAttract(); assert.equal(finger.currentTime, 5);   // 誘いが無ければ何もしない
+"""
+        subprocess.run([node, "-e", script], capture_output=True, text=True, check=True)
+        self.assertIn('if (k === "stab") { stabPoke(); $("poke").style.display = ""; syncPokeToAttract(); }', HTML)
+
+    def test_cycle143_codex_resize_while_holding_keeps_the_attract_paused(self):
+        # Codex指摘（PR #1089）: 誘いの途中で指を置いたまま resize が起きると、pointerdown で止めた誘いが
+        # 動いている新しい誘いに置きかわり、指を動かしていないのに穀刺しが また往復した。
+        node = shutil.which("node")
+        if not node:
+            self.skipTest("node がないので実行の確認は飛ばす")
+        lp = HTML.index("function layoutProbe() {")
+        layout = HTML[lp:HTML.index("function setProbe(x)", lp)]
+        script = """
+const assert = require('node:assert/strict');
+const P = {x:0, rest:0, inX:0, inAt:0, y:0, L:0, inserted:false, done:false};
+const poke = {style:{setProperty() {}}, dataset:{}};
+const els = {sceneBag:{clientWidth:390}, bagBtn:{offsetLeft:15, offsetWidth:137, offsetTop:10, offsetHeight:160}, probe:{style:{}}, poke};
+const $ = id => els[id];
+const mk = () => ({playState:'running', currentTime:0, pause() { this.playState = 'paused'; }});
+let probeAttract = mk();
+const stabDx = () => -55, setProbe = () => {}, pullPoke = () => {}, startProbeAttract = () => { probeAttract = mk(); };
+""" + layout + """
+probeAttract.pause(); probeAttract.currentTime = 640; const old = probeAttract;   // 指を置いて止めてある
+layoutProbe();
+assert.notEqual(probeAttract, old);                      // 新しい場所で置き直す
+assert.equal(probeAttract.playState, 'paused');          // 止まったまま（旧版は running）
+assert.equal(probeAttract.currentTime, 640);             // 同じ進み具合
+probeAttract = mk(); probeAttract.currentTime = 300; layoutProbe(); assert.equal(probeAttract.playState, 'running');   // 指を置いていなければ、従来どおり動く
+"""
+        subprocess.run([node, "-e", script], capture_output=True, text=True, check=True)
+
     def test_cycle143_demo_finger_copied_at_60_percent_still_works(self):
         # 最初の1分（はじめの手ごたえ）: 手本の指は さすのに必要な押し＋8px ちょうどで、
         # 手本の0.5〜0.7倍（390×844 は0.8倍まで）の長さでまねる指は 1本目が ささらなかった
@@ -608,7 +691,8 @@ P.done = true; layoutProbe(); assert.equal(pulls, 1);
         script = """
 const assert = require('node:assert/strict');
 const poke = {style:{left:'', setProperty(k, v) { this[k] = v; }}, dataset:{}};
-const $ = () => poke;
+const scene = {clientWidth:366};
+const $ = id => id === 'sceneBag' ? scene : poke;
 const P = {x:0, rest:0, inAt:0, L:190};
 """ + fn + """
 // [袋の右はし+6, さした判定の所]: 390×664・390×844・360×640・375×548 の実測
@@ -1716,7 +1800,8 @@ let step = 0, lotIndex = 0, bagTaps = 0, autos = 0, sounds = 0, cancels = 0; con
 const P = {x:100, y:50, rest:200, L:100, inserted:true, done:false};
 const poke = {style:{display:'none', left:'', setProperty(k, v) { this[k] = v; }}, dataset:{}};
 const probe = {animate(frames, opt) { anims.push([frames[1].transform, opt.duration]); return {cancel() { cancels++; }}; }};
-const $ = id => ({poke, probe})[id];
+const sceneBag = {clientWidth:400};
+const $ = id => ({poke, probe, sceneBag})[id];
 const autoProbe = () => { autos++; }, probeDemoSound = () => { sounds++; };
 """ + fn + """
 pullNudge();                                    // 1回目: 手本の指をひきぬく向きに出し、小さく動く
@@ -1818,7 +1903,7 @@ const guideEl = {classList:{contains: () => on}};
 const poke = {style:{display:'none'}};
 const $ = id => id === 'poke' ? poke : {id};
 const guideOff = () => { on = false; }, guideAt = (kind, el) => { on = true; shown.push(kind + ':' + (el.id || 'point')); };
-const guideSense = () => { on = true; shown.push('sense'); }, pullPoke = () => {}, stabPoke = () => {}, firstBagFace = () => false, lotGrade = () => 0;
+const guideSense = () => { on = true; shown.push('sense'); }, pullPoke = () => {}, stabPoke = () => {}, syncPokeToAttract = () => {}, firstBagFace = () => false, lotGrade = () => 0;
 const handlers = {};
 const document = {documentElement:{classList:{contains: () => scrolled}}, addEventListener: (n, f) => { handlers[n] = f; }, querySelectorAll: () => [{id:'grade0'}], getAnimations: () => []};
 const window = {addEventListener: () => {}};
@@ -2060,7 +2145,7 @@ const guideEl = {classList:{contains: () => on}};
 const poke = {style:{display:'none'}};
 const $ = id => id === 'poke' ? poke : {id};
 const guideOff = () => { on = false; }, guideAt = (kind, el) => { on = true; shown.push(kind + ':' + (el.id || 'point')); };
-const guideSense = () => { on = true; shown.push('sense'); }, pullPoke = () => {}, stabPoke = () => {}, firstBagFace = () => false, lotGrade = () => 0;
+const guideSense = () => { on = true; shown.push('sense'); }, pullPoke = () => {}, stabPoke = () => {}, syncPokeToAttract = () => {}, firstBagFace = () => false, lotGrade = () => 0;
 const handlers = {};
 const document = {documentElement:{classList:{contains: () => false}}, addEventListener: (n, f) => { handlers[n] = f; }, querySelectorAll: () => [{id:'grade0'}], getAnimations: () => anims};
 const window = {addEventListener: () => {}};

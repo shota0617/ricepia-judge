@@ -8267,6 +8267,7 @@ const TRACE = {
   rlen() { let r = Math.hypot(this.cps[0][0] - S.x, this.cps[0][1] - S.z); for (let i = 0; i < this.cps.length - 1; i++) r += Math.hypot(this.cps[i + 1][0] - this.cps[i][0], this.cps[i + 1][1] - this.cps[i][1]); return r; },   // サイクル116: 残りの軌跡の長さ（＝指への遅れ）
   follow(dt) {                                          // step から毎フレーム: 追従するなら true。切れ角を目標へなめらかに寄せる
     if (!this.on || !this.cps.length) { this.drive = false; return false; }
+    if (this.pull && this.pull.done) { this.drive = false; return false; }   // 横なぞりで 70° 曲がり終えた：その なぞりは ここまで（下の「横なぞりは すぐ切る」の節）。指を離して 次の なぞりを待つ
     let bi = 0, bd = 1e9;                               // 進捗: いちばん近い点までを捨てる（通り過ぎた古い点を追い直して回りつづけるのを防ぐ。sim で発見・修正）。対象は制御用点列（cps）
     for (let i = 0, n = Math.min(this.cps.length, 60); i < n; i++) { const d = Math.hypot(this.cps[i][0] - S.x, this.cps[i][1] - S.z); if (d < bd) { bd = d; bi = i; } }
     if (bi) { this.cps.splice(0, bi); this.ctx += bi; } else if (this.cps.length > 1 && bd < 0.5) { this.cps.shift(); this.ctx++; }
@@ -8316,8 +8317,11 @@ const TRACE = {
       // Codex 指摘（PR #1075）: 線を追う切れ角（r.steerT）が 逆向きのとき、大きさだけ くらべて えらぶと、指は右に置いたままなのに 目標が 右いっぱい→左いっぱい と入れかわり、
       // いちど左へ もどってから また右へ曲がった。指の側へ切っている間は 逆向きの切れ角を 使わない（同じ向きで より大きいときだけ 線を追う切れ角を使う）。
       // 線の近く（0.8m）に着いた・70° 曲がった あとは、その なぞりの間 もう指の側へは切らない（q.off。境目で 行ったり来たり しない）
+      // 70° 曲がったら その なぞりは おしまい（止まって待つ）。ここで「線を追う」に もどすと、もう通りすぎた 3.5m 先の横の線へ もどろうとして 逆へ切り、
+      // 指は置いたままなのに 向きが 46° も もどった（実測 スマホ縦・横へ なぞって 7 秒置く: 75° 曲がってから 29° まで もどる）。横なぞり＝「その向きへ 70° まで曲がって止まる」に そろえる
       if (!q.off) {
-        if (ahead <= 0.8 || Math.sin(S.yaw) * q.fx + Math.cos(S.yaw) * q.fz <= 0.35) q.off = true;
+        if (Math.sin(S.yaw) * q.fx + Math.cos(S.yaw) * q.fz <= 0.35) { q.off = q.done = true; this.drive = false; return false; }
+        if (ahead <= 0.8) q.off = true;
         else if (Math.abs(lat) > 0.4) { const b = -Math.sign(lat) * MAX_STEER * Math.min(1, Math.abs(lat) / 1.5); if (!(r.steerT * b > 0 && Math.abs(r.steerT) > Math.abs(b))) r.steerT = b; }
       }   // なぞりはじめの向きから 70° より回ったら やめる（線に着かないまま 置いた指のまわりを回りつづけないように）
     }

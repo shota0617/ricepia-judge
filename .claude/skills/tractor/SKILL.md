@@ -149,7 +149,7 @@ description: トラクターのゲーム（tractor.html・tools/tractor/）を�
 Chromium と Playwright は入っている（`require('playwright')`）。three r128 は `scripts/` に入れる：
 
 ```sh
-cd .claude/skills/tractor/scripts && npm i --no-save three@0.128.0   # node_modules は git に入れない
+cd .claude/skills/tractor/scripts && npm i --no-save --ignore-scripts three@0.128.0   # node_modules は git に入れない。入れられないときは npm pack three@0.128.0 --ignore-scripts で取りだして node_modules/three に置く
 node tooshi.js haru t pc "&easy=0"            # 春・PC の通し
 node tooshi.js aki t pc "&easy=0&time=yu"     # 秋の夕方
 node tooshi.js shirokaki t mobile ""          # 代かき・スマホ（かんたんアシストあり）

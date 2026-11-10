@@ -397,6 +397,14 @@ const srv = http.createServer((r, s) => { const u = decodeURIComponent(r.url.spl
     ok('曲がり方を覚えた人が 絵の外で止まった：止まって 0.6 秒以内に「横へ」の見本が出る・動いている間は出ない（直す前 2.0 秒）', pre.art && pre.sd > 0.4 && !ahead2 && t !== null && stop !== null && t - stop <= 0.6 && side && bad === 0, { pre, ahead2, stop, t, side, bad });
     await ctx.close();
   }
+  {   // Codex 指摘（PR #1095）：three が 読みこめない とき、読みこみの おおいが 消えて 知らせが 出る
+    const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true }), p = await ctx.newPage();
+    await p.route('https://cdn.jsdelivr.net/**', r => /three\.min\.js/.test(r.request().url()) ? r.abort() : r.fulfill({ path: TN + r.request().url().split('/three@0.128.0')[1], contentType: 'text/javascript' }));
+    await p.goto(`http://localhost:${PORT}/tractor.html`).catch(() => {}); await p.waitForTimeout(1500);
+    const lw = await p.evaluate(() => { const w = document.getElementById('loadWait'), t = document.getElementById('toast'); return { off: w.classList.contains('off'), toast: t ? t.textContent : '' }; });
+    ok('three が 読みこめない とき、読みこみの おおいは 消えて「うまく 読みこめませんでした」と 出る', lw.off && /読みこめませんでした/.test(lw.toast), lw);
+    await ctx.close();
+  }
   ok('エラーなし', errs.length === 0, errs.slice(0, 3));
   console.log(ng ? `NG ${ng} 件` : 'ぜんぶ ok'); await b.close(); srv.close(); process.exit(ng ? 1 : 0);
 });

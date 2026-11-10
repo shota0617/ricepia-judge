@@ -191,6 +191,20 @@
 <canvas id="view"></canvas>
 <div id="vignette"></div>
 <div id="loadWait"><div class="lwF">👆</div><div class="lwT">指で なぞると 進みます</div></div>
+<script>
+// Codex 指摘（PR #1095）：CDN の three・ローダーが 読みこめない ときや、始まる 前に スクリプトが エラーで 止まった ときも、おおいを 消して 知らせる（始まらないのに「なぞると 進みます」が 出つづけない ように）
+(function () {
+  var w = document.getElementById('loadWait');
+  function fail() {
+    w.classList.add('off');
+    var say = function () { var t = document.getElementById('toast'); if (t && !t.textContent) { t.textContent = '🚜 うまく 読みこめませんでした。通信のよい所で、もう一度 ひらいてみてね。'; t.style.opacity = 1; } };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', say); else say();
+  }
+  function started() { try { return !!game.S.started; } catch (e) { return false; } }
+  if (!window.THREE || !THREE.GLTFLoader || !THREE.DRACOLoader) fail();
+  window.addEventListener('error', function () { if (!started()) fail(); });
+})();
+</script>
 <div id="hintSwipe" class="hidden"><div id="hintFinger">👆</div></div>
 
 <div id="hud" class="hidden">

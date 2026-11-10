@@ -9507,8 +9507,8 @@ function tapDemoTick() {
     if (!top || !wb.contains(top)) { tapDemoHide(); return; }   // ボタンが 何かの 下に かくれて いる ときは 指さない
     mkEls();
     const el = tapDemo.el;
-    el.style.left = Math.round(r.left + r.width / 2) + 'px'; el.style.top = Math.round(r.top + r.height / 2 - 6) + 'px';   // 指先は ボタンの まん中の 少し 上（手の 絵の まん中を 押しても ボタンの 中）
-    el.classList.remove('first', 'dn', 'lr', 'll'); tapDemo.up = false; tapDemo.side = '';
+    el.style.left = Math.round(r.left + r.width / 2) + 'px'; el.style.top = Math.round(r.top + 2) + 'px';   // 指先は ボタンの 上の はしの すぐ 下。手の 絵の まん中（指先から 20px）は、押す 動き（下へ 6px・CSS の .wb）の 間も ボタン（高さ 40px）の 中（Codex 指摘 PR #1096：前は 動きで 14px 下がり、下の「＋」に かかった）
+    el.classList.remove('first', 'dn', 'lr', 'll'); el.classList.add('wb'); tapDemo.up = false; tapDemo.side = '';
     if (el.hidden) { el.hidden = false; tapDemo.n++; }
     if (!tapDemo.ph.hidden) tapDemo.ph.hidden = true;
     tapDemo.world = true;
@@ -9522,7 +9522,8 @@ function tapDemoTick() {
   else {
     const q = sp.q;
     tapDemo.el.style.left = Math.round(q.x) + 'px'; tapDemo.el.style.top = Math.round(q.y) + 'px';
-    if (tapDemo.el.classList.contains('first') !== first) tapDemo.el.classList.toggle('first', first);
+    if (tapDemo.el.classList.contains('wb')) tapDemo.el.classList.remove('wb');
+  if (tapDemo.el.classList.contains('first') !== first) tapDemo.el.classList.toggle('first', first);
     // サイクル198（はじめの 1分）：「タップ！」の 札は 指の 下に 出るので、行き先が お米の 上（上・ななめ上）だと 札が お米に かぶった
     // （なぞって 歩く 人＝click に ならず まだ 許可を 聞けて いない 人で はかった：止まった 14回の うち 10回。まっすぐ 上は お米の 半分が かくれた）。
     // 行き先が お米より 上の ときは、札を 指の よこ（お米から 遠い がわ。地図から 出る ときは 逆）に 出す。下・よこの ときは これまでどおり 指の 下（下の 欄に とどく ときは よこ）

@@ -1057,6 +1057,9 @@ img.pq-art{display:block;width:144px;height:144px;margin:6px auto 10px;image-ren
 #tapDemo.dn{margin-top:-38px;transform:scaleY(-1);transform-origin:50% 50%;animation-name:tapDemoPressDn}
 #tapDemo.dn.first.lr::after,#tapDemo.dn.first.ll::after{transform:scaleY(-1)}
 @keyframes tapDemoPressDn{0%,55%,100%{transform:translateY(-14px) scaleY(-1)}22%,34%{transform:translateY(0) scaleY(-.92) scaleX(.92)}}
+/* サイクル200：せかいちずの 👣 を 押す 手本は 小さく 動く（下へ 6px）。手の まん中が ボタンの 外（下の「＋」）へ 出ない ように */
+#tapDemo.wb{animation-name:tapDemoPressS}
+@keyframes tapDemoPressS{0%,55%,100%{transform:translateY(6px)}22%,34%{transform:translateY(0) scale(.92)}}
 @keyframes tapDemoPress{0%,55%,100%{transform:translateY(14px)}22%,34%{transform:translateY(0) scale(.92)}}
 @keyframes tapDemoRing{0%,22%{opacity:0;transform:scale(.4)}30%{opacity:.95;transform:scale(.6)}70%,100%{opacity:0;transform:scale(1.5)}}
 /* サイクル194：傾きの ボタン（許可の いる スマホだけ）。地図の 左上（右上の 丸い ボタンの 列と 同じ 見た目。はじめの ゴールの 旗が 出やすい 右上・知らせの 出る まん中を さける）。名前つき（.lab）は 右へ のびる */

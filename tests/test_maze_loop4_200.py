@@ -45,7 +45,10 @@ class FirstMinute200(unittest.TestCase):
         self.assertIn("now - tapDemo.at >= (firstWalk() ? DEMO_IDLE_MS : DEMO_WORLD_MS)", t)
         self.assertIn("if (!top || !wb.contains(top)) { tapDemoHide(); return; }", t)   # ボタンが かくれて いる ときは 指さない
         self.assertIn("el.classList.remove('first', 'dn', 'lr', 'll');", t)   # 「タップ！」の 札・さかさは めいろの 手本だけ
-        self.assertIn("el.style.top = Math.round(r.top + r.height / 2 - 6) + 'px';", t)
+        self.assertIn("el.style.top = Math.round(r.top + 2) + 'px';", t)
+        # Codex 指摘（PR #1096）：押す 動きで 下がっても 手の まん中が ボタンの 中（小さな 動き .wb）
+        self.assertIn("el.classList.add('wb');", PIX)
+        self.assertIn('#tapDemo.wb{animation-name:tapDemoPressS}', (ROOT / 'nishio-go' / 'style.css').read_text(encoding='utf-8'))
         self.assertLess(t.index("if (wb) {"), t.index("if (!ok) { tapDemoHide(); return; }"))
         self.assertIn("mapCovered()", t[t.index("if (wb) {"):t.index("tapDemo.world = false;")])   # 窓が 開いて いる 間は 出さない
         g = fn_src("mzGoalWorld")

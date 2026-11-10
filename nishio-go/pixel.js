@@ -8941,7 +8941,7 @@ function giantWashLayout(sx, sy, size) {
       [[.07, -.008, .08, .024, 'rgba(255,255,255,.13)', [.95, .91, .99, .96, .93, 1, .94, .90, .97, .98, .92, .96]], [-.09, .009, .085, .025, 'rgba(90,150,200,.10)', [.97, .94, .90, .98, .95, .92, 1, .96, .91, .99, .93, .95]]],
     ];
     // 斑の境界をぼかす外側の淡い縁（サイクル190）：同じ色で alpha を薄くして、半径を 1.30・1.15 倍にして先に重ねる
-    const haloFill = (fill, k) => fill.replace(/,\s*(\.\d+)\)$/, (m, a) => ',' + (Math.round(parseFloat(a) * k * 100) / 100).toFixed(2).replace(/^0/, '') + ')');
+    const haloFill = (fill, k) => fill.replace(/,\s*(\.\d+)\)$/, (m, a) => ',' + String(Math.round(parseFloat(a) * k * 1000) / 1000).replace(/^0(?=\.)/, '') + ')');
     // 重ねても中心が濃くならないよう（サイクル192）、元の濃さ A を 本体 A/2・縁(1.15倍) A/3・縁(1.30倍) A/6 に分けて重ねる（中心の実効はほぼ A）
     const halo = (sp, A) => [[1.30, 1 / 6], [1.15, 1 / 3]].map(([m, k]) => ({ rx: sp.rx * m, ry: sp.ry * m, fill: haloFill(A, k) }));
     layers.forEach((l, i) => { l.spots = SPOTS[i].map(([dx, dy, rx, ry, fill, wob]) => ({ cx: l.cx + size * dx, cy: l.cy + size * dy, rx: size * rx, ry: size * ry, fill: haloFill(fill, 1 / 2), wob, A: fill })); l.spots.forEach(sp => { sp.halo = halo(sp, sp.A); delete sp.A; }); });

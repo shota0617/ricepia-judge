@@ -7896,7 +7896,15 @@ const TRACE = {
         if (Math.abs(dx) > 1.5 * Math.abs(dy) && gap > 4.5) { this.pull = { x: S.x + fx * 3.5, z: S.z + fz * 3.5, fx, fz }; this.pts = []; this.ctx = 0; this.sync(); this.fHist = []; this.passMin = 1e9; this.sPos = null; }   // sPos を消す（Codex 指摘 PR #1073）: 点を消した この回の指の位置は かならず新しい点にする。消さないと、直前に受け付けた位置から 5px 未満のとき 点が 1 つも無いまま返り、そこで指を止めると 曲がらずに止まっていた
       }
     }
-    if (this.pull) { const q = this.pull, lat = (h.x - q.x) * q.fz - (h.z - q.z) * q.fx; h.x = q.x + q.fz * lat; h.z = q.z - q.fx * lat; }
+    // サイクル266・最初の1分（運営者の実機の声 2026-11-10「曲がり方がわからない」のつづき）: 寄せた横なぞりの「指の横の位置」は、地面の上ではなく 画面の上で見る
+    // （画面の まん中から 指まで の横の角度を、11m 先の地面での 横の長さに直す。まっすぐ止まった所では 今までと同じ：スマホ縦で 指が まん中から 64px・1.5m ぶん横で ハンドルいっぱい。
+    //   2 本指で拡大していても 同じ指の動きで 同じだけ切る＝拡大前の画角 baseFov で見る）。
+    // それまでは 指の下の地面の点で見ていたので、目の向きや車体のかたむきで 同じ なぞりの きき方が大きく変わった：
+    // ・運転席の視点は ハンドルを切った側へ目がいく（glance。止まっていて 5°・走ると 17°）。ハンドルは止まっても切れたままなので、右へ曲がった あと 左へ なぞると、
+    //   画面では まん中より左に置いた指が、地面の上では まだトラクターの右側にあり、右へ切りつづけた
+    //   （実測 スマホ横・右へ 39° 曲がって止まった所から 左へ 0.4 秒なぞって 1.5 秒 置く: 右へ 54°。スマホ縦: 左へは 0〜11° で 2.6m まっすぐ進む。まっすぐの ハンドルからなら 左へ 50°）。
+    // ・2 本指で拡大した あと（画角が せまい）は、150px なぞっても 地面の上では 0.9m しか横へ動かず、ハンドルは 3 分の 1 しか切れなかった（実測 スマホ縦・2.2 倍: 同じ なぞりで 13〜15°）
+    if (this.pull) { const q = this.pull, lat = -((e.clientX / innerWidth) * 2 - 1) * Math.tan(baseFov * Math.PI / 360) * camera.aspect * 11; h.x = q.x + q.fz * lat; h.z = q.z - q.fx * lat; }
     this.clampIn(h);   // サイクル101: ふちの外へ出ても 線が途切れない
     if (this.rebase) { this.rebase = false; this.g0 = [h.x, h.z, e.clientX, e.clientY]; this.pull = null; this.pullDone = false; this.pts = [[h.x, h.z]];   // サイクル263（Codex 指摘）: 横なぞりの見きわめの始点（g0）も 引き直した点に そろえる。前の視点の交点・画面の位置のままだと、手前から なぞり直した線まで 3.5m 先へ寄せていた
     this.ctx = 0; this.sync(); this.fv = 0; this.fHist = [[e.timeStamp || 0, h.x, h.z]]; this.fT = e.timeStamp || 0; this.fPos = [h.x, h.z]; this.sPos = [e.clientX, e.clientY]; this.passMin = 1e9; this.draw(); return; }   // 視点が切りかわった直後: 線をいまの指の位置から引き直す（指速の計測もここから）。引き直しの点は begin と同じ始点として寄せない（Codex設計確認の指摘）

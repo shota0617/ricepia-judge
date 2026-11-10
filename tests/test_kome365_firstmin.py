@@ -1,4 +1,4 @@
-"""米づくり365: 最初の1分に出る飾りが、カードの日付や天気の丸に重ならない置き方になっているか(周回152)、押しただけでは案内が消えないか(周回153)、出だしのちらつきと2Dの天気(周回154)、スワイプの手本(周回155)。"""
+"""米づくり365: 最初の1分に出る飾りが、カードの日付や天気の丸に重ならない置き方になっているか(周回152)、押しただけでは案内が消えないか(周回153)、出だしのちらつきと2Dの天気(周回154)、スワイプの手本(周回155)、止まったら手本(周回158)。"""
 import os
 import re
 import unittest
@@ -43,7 +43,7 @@ class TestKome365FirstMinute(unittest.TestCase):
         self.assertNotIn("ghostOff()", down)
         pause = HTML[HTML.index("function ghostPause(){"):HTML.index("function ghostBack(){")]
         self.assertNotIn("store.set", pause)
-        self.assertIn("function ghostBack(){ var on = !ghostDone && choices.length === 0 && !calmOn();", HTML)
+        self.assertRegex(HTML, r"function ghostBack\(\)\{ (demoMiss\+\+; demoArm\(\); )?var on = !ghostDone && choices\.length === 0 && !calmOn\(\);")
         self.assertRegex(HTML, r"choose\('right', v\); \} else \{ (if \(tapMax < 12\) tapOnly\+\+; (else tapOnly = 0; )?)?reset\(\); ghostBack\(\); \}")
         # 決めたとき(choose)は これまでどおり二度と出さない
         choose = HTML[HTML.index("function choose(side, vel){"):HTML.index("function choose(side, vel){") + 200]
@@ -105,6 +105,27 @@ class TestKome365FirstMinute(unittest.TestCase):
         self.assertIn("if (tapMax < 12) tapOnly++; else tapOnly = 0; reset(); ghostBack();", HTML)
         # 手本が出ている間に画面の大きさが変わったら、指の高さを測り直す
         self.assertIn("window.addEventListener('resize', function(){ if ($('swWrap').classList.contains('demoOn')) demoSet(true); });", HTML)
+
+    def test_demo_shows_whenever_player_stops(self):
+        # 周回158(運営者の声 2026-11-10「手本は、止まって見ているときにかならず出ていること」):
+        # 何枚目でも・前に決めた人でも、決めずに止まっていたら約2秒で手本を出す(うまくできている人は6秒に延ばすだけ)
+        self.assertIn("var DEMO_STOP_MS = 2000, DEMO_STOP_OK_MS = 6000, demoT = null, demoMiss = 0, demoOk = 0;", HTML)
+        arm = HTML[HTML.index("function demoArm(){"):HTML.index("window.addEventListener('resize', function(){ if ($('swWrap')")]
+        self.assertIn("demoSet(true)", arm)
+        self.assertIn("(demoMiss > 0 || demoOk < 3) ? DEMO_STOP_MS : DEMO_STOP_OK_MS", arm)
+        # 出す条件に「何枚目まで」「まだ決めていない人だけ」を入れない
+        self.assertNotIn("choices.length", arm)
+        self.assertNotIn("demoDone", arm)
+        # カードが出たとき(render)と、決めずに離したとき(ghostBack)に数えはじめる
+        self.assertIn("demoSet(demoWant()); demoArm();   /* 周回155", HTML)
+        self.assertIn("function ghostBack(){ demoMiss++; demoArm();", HTML)
+        # 触れている間・スワイプで決めたときは止める
+        self.assertIn("function ghostPause(){ demoSet(false); demoDisarm();", HTML)
+        self.assertIn("demoSet(false); demoDisarm(); demoMiss = 0; demoOk++;", HTML)
+
+    def test_reduced_motion_demo_shows_direction(self):
+        # 周回158: 動きを減らす設定では、手本(止まった指)が出ている間 何枚目でも 丸い ◀ ▶ を一緒に出す
+        self.assertIn("@media (prefers-reduced-motion: reduce){#swWrap.demoOn #swGuide{display:block!important}}", HTML)
 
     def test_owner_rules_kept(self):
         # 店主の指示(2026-11-08・11-09)で入れたものは そのまま

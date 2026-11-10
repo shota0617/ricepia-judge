@@ -75,10 +75,12 @@ async function runStartChecks(browser, url, out, { shareOnly = false } = {}) {
       checks[kind + 'IdleDemo'] = { d1, dOff, d2, n1, n2, w1, ...dBox, ok: d1 >= 0 && d1 <= 3500 && dOff && d2 >= 0 && d2 <= 3500 && n2 > n1 && dBox.pe === 'none' && dBox.hit };   // d1・d2：止まってから 手本が 出るまでの ミリ秒（2秒＋こまの 遅れ）
       }
       // 合成の クリック・引数なし（タイマーや 自動openと 同じ）では 求めない
-      const synthetic = await page.evaluate(() => {
+      const synthetic = await page.evaluate(() => {   // この 前に 本当の タップで もう 聞いて いる ことが ある（サイクル195）ので、ここでの 増えた ぶんで 見る
+        const a0 = window.__asks, k0 = !!nishioPixel.meiroApi.tilt().asked;
         nishioPixel.meiroApi.tiltAsk(); nishioPixel.meiroApi.tiltAsk(new Event('click'));
         document.getElementById('pxCanvas').dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: 5, clientY: 5 }));
-        return { asks: window.__asks, asked: !!nishioPixel.meiroApi.tilt().asked };
+        document.dispatchEvent(new Event('touchend', { bubbles: true }));
+        return { asks: window.__asks - a0, asked: !!nishioPixel.meiroApi.tilt().asked !== k0 };
       });
       await clearOverlays(page).catch(() => {}); await page.click('header.bar .brand'); await page.waitForTimeout(100);   // 合成クリックで 遠くへ 歩きだした ぶんを 止める（歩きおわるのを 待つと 1とおりに 25秒 かかる）
       await tapMap(page); await tapMap(page, 170, 170);

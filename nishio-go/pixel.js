@@ -9434,7 +9434,7 @@ function tileClient(tx, ty) {   // 歩く地図のマスのまん中が、画面
   const r = cv.getBoundingClientRect(), dpr = cv.width / r.width, T = fieldT(Math.min(window.devicePixelRatio || 1, 3)), c = camTile();
   return { x: r.left + (cv.width / 2 + (tx + 0.5 - c.x) * T) / dpr, y: r.top + (fieldCy + (ty + 0.5 - c.y) * T) / dpr };
 }
-function tiltAsk(event) {   // 本当の タップで 1回だけ（最初の 地図タップ・傾きの ボタン・はじめの画面の「あそぶ」・盤の めいろを 開く ボタン）。前に ことわった 人には 地図の タップでは 聞かない。拒否・例外でも タップで 遊べる。
+function tiltAsk(event) {   // 本当の タップで 1回だけ（画面を 最初に さわった とき・傾きの ボタン・はじめの画面の「あそぶ」・盤の めいろを 開く ボタン）。前に ことわった 人には 地図の タップでは 聞かない。拒否・例外でも タップで 遊べる。
   if (!event || !event.isTrusted || tiltG.asked || !tiltNeedsPermission()) return;   // userActivation が ない 端末でも、自動表示・合成クリックからは 求めない
   tiltG.asked = true; tiltG.retry = false;
   const fallback = () => G.toast('地図を タップして 遊べるよ');   // サイクル191：傾きの 許可を 聞くのは スマホ・タブレットだけ（矢印キーの 話は しない）
@@ -9443,6 +9443,16 @@ function tiltAsk(event) {   // 本当の タップで 1回だけ（最初の 地
   try { Promise.resolve(DeviceOrientationEvent.requestPermission()).then(r => { if (r === 'granted') { tiltG.granted = true; lsSet('nsg_tilt_ok', '1'); tiltReset(); tiltBtnOk(); } else denied(); }, failed); }
   catch (e) { failed(e); }
 }
+// サイクル195（運営者の声 2026-11-10「傾けた時に反応しなくなった。最優先で直して」「プレイスタート時にすぐ許可が出るように」）：
+// サイクル194 で 地図の タップでは 許可を 聞かなく したら、iPhone では 傾きの ボタンを 押さない かぎり 傾きが ずっと 使えなく なった。
+// iPhone は 本当に さわった 中で しか 許可を 聞けない（開いた だけでは 窓を 出せない）。そこで、画面の どこでも 最初に さわって 指を はなした ところで すぐ 聞く（地図で なくても よい）。
+// 前に ことわった 人（nsg_tilt_ok=0）には 聞かない（傾きの ボタンで だけ）。一時的な 失敗の あとは 次に さわった ときに やりなおす。合成の イベントでは 聞かない（tiltAsk が isTrusted を 見る）
+function tiltFirstTouch(e) {
+  if ((tiltG.asked && !tiltG.retry) || !tiltBtnWanted() || lsGet('nsg_tilt_ok', '') === '0') return;
+  tiltAsk(e);
+}
+document.addEventListener('touchend', tiltFirstTouch, { capture: true, passive: true });
+document.addEventListener('click', tiltFirstTouch, { capture: true, passive: true });
 // 「あそぶ」ボタン（playReady）は廃止（運営者の声 2026-10-31）。傾きの許可は、傾きの ボタン（#pxTilt）を 押した ときに 聞く（サイクル194。最初の 地図タップでは 聞かない）
 document.addEventListener('visibilitychange', () => { tiltReset(); rp.vx = rp.vy = 0; });
 window.addEventListener('pageshow', () => { tiltReset(); rp.vx = rp.vy = 0; });
@@ -13348,9 +13358,7 @@ cv.addEventListener('pointerup', e => {
 // スポットをタップすると、ドラクエ風のウィンドウで説明
 cv.addEventListener('click', e => {
   if (performance.now() - swipeS.at < 400) return;   // なぞって 歩きだした すぐ あとの click
-  // サイクル195（運営者の声 2026-11-10「傾けた時に反応しなくなった。最優先で直して」）：サイクル194 で 地図の タップでは 許可を 聞かなく したら、iPhone では ボタンを 押さない かぎり 傾きが ずっと 使えなく なった。
-  // 最初の 地図タップで 1回だけ 聞く きまりに もどす（iPhone は 本当の タップの 中で しか 聞けない）。前に ことわった 人（nsg_tilt_ok=0）には 聞かない（傾きの ボタンで だけ）。一時的な 失敗の あとは 次の タップで やりなおす
-  if ((!tiltG.asked || tiltG.retry) && lsGet('nsg_tilt_ok', '') !== '0') tiltAsk(e);
+  // 傾きの 許可は、画面の どこでも 最初に さわった ときに 聞く（下の tiltFirstTouch。サイクル195）
   const r = cv.getBoundingClientRect(), dpr = cv.width / r.width;
   if (mazeOn() && !worldMode) {   // 縁の 矢印を タップで せかいちず
     const px = (e.clientX - r.left) * dpr, py = (e.clientY - r.top) * dpr, now = performance.now(), inR = q => q && px >= q[0] && px <= q[2] && py >= q[1] && py <= q[3];

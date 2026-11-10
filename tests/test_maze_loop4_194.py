@@ -21,14 +21,15 @@ class Tilt194(unittest.TestCase):
         for f in ["nishio-go/pixel.js", "tools/playtest-start.js", "tools/playtest.js"]:
             self.assertEqual(subprocess.run(["node", "--check", str(ROOT / f)]).returncode, 0, f)
 
-    def test_map_tap_asks_once_unless_refused_before(self):
-        """サイクル195（運営者の声 2026-11-10「傾けた時に反応しなくなった。最優先で直して」）：最初の 地図タップで 1回 聞く。前に ことわった 人には 聞かない。なぞりでは 聞かない"""
-        i = PIX.index("cv.addEventListener('click', e => {\n")
-        body = PIX[i:PIX.index("\n});\n", i)]
-        self.assertIn("if ((!tiltG.asked || tiltG.retry) && lsGet('nsg_tilt_ok', '') !== '0') tiltAsk(e);", body)
-        self.assertEqual(body.count("tiltAsk("), 1)
-        swipe = PIX[PIX.index("const swipeS = "):i]
-        self.assertNotIn("tiltAsk(", swipe)
+    def test_first_touch_asks_once_unless_refused_before(self):
+        """サイクル195（運営者の声 2026-11-10「傾けた時に反応しなくなった。最優先で直して」「プレイスタート時にすぐ許可が出るように」）：
+        画面の どこでも 最初に さわった ときに 1回 聞く。前に ことわった 人には 聞かない"""
+        f = fn_src("tiltFirstTouch")
+        self.assertIn("if ((tiltG.asked && !tiltG.retry) || !tiltBtnWanted() || lsGet('nsg_tilt_ok', '') === '0') return;", f)
+        self.assertIn("tiltAsk(e);", f)
+        self.assertIn("document.addEventListener('touchend', tiltFirstTouch, { capture: true, passive: true });", PIX)
+        self.assertIn("document.addEventListener('click', tiltFirstTouch, { capture: true, passive: true });", PIX)
+        self.assertIn("if (!event || !event.isTrusted || tiltG.asked || !tiltNeedsPermission()) return;", fn_src("tiltAsk"))
 
     def test_tilt_button_asks_once_per_real_tap(self):
         self.assertIn("if (!event || !event.isTrusted || tiltG.asked || !tiltNeedsPermission()) return;", fn_src("tiltAsk"))

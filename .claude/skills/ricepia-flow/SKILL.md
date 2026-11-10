@@ -56,7 +56,7 @@ description: にしおさんぽGO（ricepia-judge）で 作業する ときの �
      `node $F/playtest.js --old HEAD --files nishio-go/pixel.js --show 項目名`（別の 作業場所で 動かすので、いまの ファイルは さわらない）
    - 落ちた 項目が この 変更の せいか 分からない ときは、`--rerun`（もう1回）と `--main`（main だけで 動かす）で 見分ける
      - main でも 落ちる、または 2回 とも 落ちた 項目が ない なら、もとから ときどき 落ちる 確認
-     - いま 知っている ものは `waterWatch`・`critterSure`・`cornerAssist`・`nightLamps`（画面の すぐ 外の 灯りも 数える ため、立つ 場所で 落ちる）・`npcBump`（相手に「本好きの高校生」が 選ばれると 落ちる）
+     - いま 知っている ものは `waterWatch`・`critterSure`・`cornerAssist`・`npcBump`（相手に「本好きの高校生」が 選ばれると 落ちる）
      - PR が ゲームの コード（`nishio-go/`・`nishio-go.html`・`tools/playtest.js`）に ふれない ときは、その ことと main での 結果を 運営者に 伝えて マージして よい
 3. **コミット**：`git add …` → `$F/commit.sh "題" "本文"`（決まりの 2行 Co-Authored-By・Claude-Session を つける）
 4. **push**：`$F/push.sh`（見張りを 通してから push。ネットの つまずきは 2・4・8・16秒で やりなおす）

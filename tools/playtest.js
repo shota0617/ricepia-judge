@@ -145,7 +145,7 @@ async function walkTo(page, id) {
 
 // サイクル189（はじめの 1分）：はじめて 開いた 人の はじめての ゴールは 近く（まっすぐ 200m ほど・道のり 700m まで）。選びなおしで 2km 先に ならない。
 // 手描きの 名所の 絵は 使う ときまで 作らない。はじめてのさんぽで すぐ 着いた ゴールでは「どうだった？」を たずねない
-// PLAYTEST_ONLY=firstMinute で この 3つだけを 動かせる（30秒 ほど。通しが 最後まで 動かない ときにも、直す 前の コードで 落ちる ことを 確かめられる）
+// PLAYTEST_ONLY=firstMinute で はじめの 1分の 確かめ（FIRST_MINUTE_NEED）だけを 動かせる（30秒 ほど。通しが 最後まで 動かない ときにも、直す 前の コードで 落ちる ことを 確かめられる）
 async function firstMinuteChecks(browser, R) {
     const v = await newPage(browser, { howto: true, auto: true }), p2 = v.page;
     try {
@@ -179,13 +179,63 @@ async function firstMinuteChecks(browser, R) {
         if (g0 === null) localStorage.removeItem('nsg_mzgoals'); else localStorage.setItem('nsg_mzgoals', g0);
         return { quick, slow, third, later, kept: typeof G.guideKept === 'function' && G.guideKept() === false, min: G.PLAY_ASK_MIN_S, ok: quick === false && slow === true && third === false && later === true && typeof G.guideKept === 'function' && G.guideKept() === false && G.PLAY_ASK_MIN_S === 60 };
       });
-      return { firstGoalNear: fg, lazySprites: lz, playAskQuick: pa };
+      // サイクル191：はじめてのさんぽでも せかいちずから 👣 で もどれる（縁の 矢印の タップで 開く。もどったら ボタンは また かくれる）
+      const wb = await p2.evaluate(async () => {
+        const P = nishioPixel, b = document.getElementById('pxWorld'), wait = ms => new Promise(r => setTimeout(r, ms)), g0 = localStorage.getItem('nsg_mzgoals');
+        localStorage.setItem('nsg_mzgoals', '0');
+        const before = b.hidden; P.setWorld(true); await wait(100);
+        const r = b.getBoundingClientRect(), open = { world: P.worldMode, hidden: b.hidden, w: Math.round(r.width), inView: r.right <= innerWidth && r.top >= 0 };
+        b.click(); await wait(100);
+        const back = { world: P.worldMode, hidden: b.hidden };
+        if (P.worldMode) P.setWorld(false);
+        if (g0 === null) localStorage.removeItem('nsg_mzgoals'); else localStorage.setItem('nsg_mzgoals', g0);
+        return { before, open, back, ok: before === true && open.world && !open.hidden && open.w >= 36 && open.inView && !back.world && back.hidden === true };
+      });
+      // サイクル191：傾きの 許可を ことわった スマホの 知らせに 矢印キーの 話を 入れない
+      const px = fs.readFileSync(path.join(__dirname, '..', 'nishio-go', 'pixel.js'), 'utf8'), fbm = (px.match(/const fallback = \(\) => G\.toast\('([^']*)'\)/) || [])[1] || '';
+      const tm = { text: fbm, ok: /タップ/.test(fbm) && !/矢印キー|キーボード/.test(fbm) };
+      return { firstGoalNear: fg, lazySprites: lz, playAskQuick: pa, worldBack: wb, tiltDeniedMsg: tm, ...(await startSteadyChecks(browser, R)) };
     } finally { R.errors.push(...v.errors); await v.ctx.close(); }
+}
+// サイクル191（はじめの 1分・動き）：何も さわらない はじめの 数秒、お米が とばない（始まりの 場所が めいろの 通路の 上）・ゴールの 旗が あちこちへ かわらない（選びなおしは 1こまの 中で）。
+// こまごとに お米の 場所と 行き先を 記録して 見る（知らせや 札の 文字では なく、描く こまで）
+async function startSteadyChecks(browser, R) {
+  const v = await newPage(browser, { howto: true, auto: true }), p = v.page;
+  try {
+    await v.ctx.addInitScript(() => {
+      window.__st = { fr: [], ids: [] };
+      const tick = () => { try { const P = window.nishioPixel, G = window.nishioGo;
+        if (P && G && P.roll && P.roll.x != null) { const g = G.guide, id = g ? g.id : ''; window.__st.fr.push([P.roll.x, P.roll.y]); if (id && window.__st.ids[window.__st.ids.length - 1] !== id) window.__st.ids.push(id); } } catch (e) { /* 読みこみの とちゅう */ }
+        requestAnimationFrame(tick); };
+      requestAnimationFrame(tick);
+    });
+    await p.goto(URL);
+    const r = await p.evaluate(async () => {
+      const wait = ms => new Promise(r => setTimeout(r, ms));
+      let last = '', same = 0;
+      for (let i = 0; i < 100 && same < 8; i++) {   // 行き先と 道すじが 2秒 かわらなく なるまで（20秒まで）
+        await wait(200);
+        const P = window.nishioPixel, G = window.nishioGo; if (!P || !G || !G.me) continue;
+        const g = G.guide, rt = P.maze.route(), k = g && rt ? g.id + ':' + rt.cells : '';
+        if (k && k === last) same++; else { same = 0; last = k; }
+      }
+      const S = window.__st, fr = S.fr, M = nishioPixel.maze, K = M.K;
+      let jump = 0; for (let i = 1; i < fr.length; i++) jump = Math.max(jump, Math.hypot(fr[i][0] - fr[i - 1][0], fr[i][1] - fr[i - 1][1]));
+      const f0 = fr[0] || [0, 0], cell = M.type(Math.floor(f0[0] / K), Math.floor(f0[1] / K));
+      return { frames: fr.length, jump: +jump.toFixed(2), startCell: cell, ids: S.ids, settled: same >= 8 };
+    });
+    return { startNoJump: { frames: r.frames, jump: r.jump, startCell: r.startCell, ok: r.settled && r.frames > 20 && r.jump <= 0.5 },
+      firstGoalNoFlip: { ids: r.ids, ok: r.settled && r.ids.length === 1 } };
+  } finally { R.errors.push(...v.errors); await v.ctx.close(); }
 }
 const FIRST_MINUTE_NEED = {
   firstGoalNear: 'はじめての ゴールが 遠い（選びなおしで 近くの 帯の 外へ 出た・道のりが 長い）',
   lazySprites: '手描きの 名所の 絵を 読みこみの ときに ぜんぶ 作って いる／使う ときに 作れない',
   playAskQuick: 'はじめてのさんぽで すぐ 着いた ゴールでも「どうだった？」を たずねる',
+  worldBack: 'はじめてのさんぽで せかいちずを 開くと 👣（もどる）の ボタンが 出ない／もどれない',
+  tiltDeniedMsg: '傾きの 許可を ことわった スマホの 知らせに 矢印キーの 話が ある',
+  startNoJump: '何も さわらない うちに お米が とぶ（始まりの 場所が めいろの 通路の 上に ない）',
+  firstGoalNoFlip: 'はじめの 数秒で ゴールの 旗が あちこちへ かわる（選びなおしが こまを またいで 見える）',
 };
 
 const RUN = { R: null };
@@ -1060,7 +1110,7 @@ function crashFailures(R, fail) {   // 安全網（guardEvaluate）に かかっ
     P.nightForce(0); await wait(400);
     const day = P.nightLamps;
     P.nightForce(null);
-    return { night, day, toast, ok: night.n > 0 && night.warm >= night.n && day.n === 0 && !toast };
+    return { night, day, toast, ok: night.n > 0 && night.warm > 0 && night.lit === night.vis && night.warm >= night.lit && day.n === 0 && !toast };   // 輪が とどく 所の 街灯は ぜんぶ あたたかい 輪つき（lit === vis）。画面の すぐ 外の マスの 街灯（n には 入る）は 数えない
   });
   // てん茶の 覆い（朝の 改善 10）：4月15日〜5月20日ごろ だけ、茶畑に 覆いの 棚（10月は かけない）。絵が 描ける
   R.checks.kabuse = await page.evaluate(() => {

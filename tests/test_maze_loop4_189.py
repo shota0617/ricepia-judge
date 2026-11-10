@@ -41,9 +41,9 @@ console.log(JSON.stringify([k([['a', 21], ['b', 17], ['c', 18]]), k([['a', 17], 
     def test_repick_stays_in_first_band_and_restores(self):
         self.assertIn("function guideNoPath(g, firstBand) {", GAME)
         self.assertIn("if (!next || (firstBand && dist(me, next) > FIRST_MAX)) { mzNoPath.delete(g.id); return false; }", GAME)
-        self.assertIn("if (G.guideNoPath(g, true)) return;", PIX)
+        self.assertIn("if (G.guideNoPath(g, true)) return mzRoute(now);", PIX)   # サイクル191：つぎの 候補も 同じ こまで ためす
         self.assertIn("const best = mzFirstBest(tried);", PIX)
-        self.assertIn("mzRt.simpleKey = best.gkey; mzRt.key = ''; G.setGuide(bg); return;", PIX)
+        self.assertIn("mzRt.simpleKey = best.gkey; mzRt.key = ''; G.setGuide(bg); return mzRoute(now);", PIX)
         self.assertEqual(len(re.findall(r"G\.guideNoPath\(g\);", PIX)), 1)   # 道すじが 出ない とき（はなれ島）は これまでどおり 広い 範囲へ
         self.assertIn("const FIRST_MIN = 120, FIRST_MAX = 200;", GAME)
 

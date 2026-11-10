@@ -68,10 +68,16 @@
 <meta property="og:image:alt" content="にしおさんぽGO：スマホを傾けるとお米がころころ進む、西尾の地図の迷路ゲーム"/>
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://go.ricepia.jp/nishio-go/ogp.png"/>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap"/>
-<link rel="stylesheet" href="nishio-go/style.css"/>
+<style>/* 読みこみ中の 題字（サイクル116）と、その下で 転がる 米つぶ（サイクル202：止まった 絵に 見えない ように。押す 物では ない）。
+   スタイルシート（下の 3つ）が 届く 前から 出せる よう、ここに 書く。動きは transform だけ（読みこみで 手いっぱいの 間も 動く） */
+#bootCover{position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#f6f4ec;transition:opacity .3s}
+#bootCover.off{opacity:0;pointer-events:none}
+#bootCover img{max-width:70%;height:auto}
+#bootCover i{display:block;width:11px;height:14px;margin-top:18px;border-radius:50%;background:#fffdf5;border:2px solid #6b5a3a;animation:bootRoll .9s ease-in-out infinite alternate}
+@keyframes bootRoll{from{transform:translateX(-24px) rotate(-200deg)}to{transform:translateX(24px) rotate(200deg)}}
+@media (prefers-reduced-motion:reduce){#bootCover i{animation:none}}
+</style>
 </head>
 <body>
 <script>/* 読みこみ中は 画面を切り替えず、題字だけを見せる（サイクル116）。スクリプトが読めなくても DOMContentLoaded で開く */
@@ -79,13 +85,18 @@
   var c = document.createElement('div');
   c.id = 'bootCover';
   c.setAttribute('aria-hidden', 'true');
-  c.innerHTML = '<img src="nishio-go/logo.svg" alt="" width="272" height="40"/>';
+  c.innerHTML = '<img src="nishio-go/logo.svg" alt="" width="272" height="40"/><i></i>';
   document.body.appendChild(c);
   document.addEventListener('DOMContentLoaded', function () {
     setTimeout(function () { c.classList.add('off'); setTimeout(function () { c.remove(); }, 350); }, 50);
   });
 })();
 </script>
+<!-- サイクル202（おそい 回線）：スタイルシートは 題字の あとに 置く（head に 置くと、3つとも 届くまで 画面が まっ白の まま。ここなら 題字と 米つぶが 先に 出る）。
+     下の スクリプトは スタイルシートを 待って から 動くので、題字が 消える（DOMContentLoaded）ときには そろって いる -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap"/>
+<link rel="stylesheet" href="nishio-go/style.css"/>
 <script>/* 文字を少なく（ふだん）。せってい の「文字を多めに出す」をオンにすると外す */try{if(localStorage.getItem('nsg_text_more')!=='1')document.body.classList.add('simple')}catch(e){document.body.classList.add('simple')}</script>
 
 <header class="bar">

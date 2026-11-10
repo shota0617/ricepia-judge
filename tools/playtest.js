@@ -229,7 +229,7 @@ async function firstMinuteChecks(browser, R) {
         const otherBtn = !b.hidden && document.getElementById('spinName').textContent === other.name && !G.state.visits[other.id];
         return { goal: g.name, shown, h0, hMax, checked, other: other.name, otherBtn, ok: shown === 0 && checked && otherBtn };
       });
-      return { firstGoalNear: fg, lazySprites: lz, playAskQuick: pa, worldBack: wb, tiltDeniedMsg: tm, swipeWalk: sw, arriveNoSpin: an, ...(await startSteadyChecks(browser, R)), ...(await a2hsChecks(browser, R)), ...(await tapDemoChecks(browser, R)) };
+      return { firstGoalNear: fg, lazySprites: lz, playAskQuick: pa, worldBack: wb, tiltDeniedMsg: tm, swipeWalk: sw, arriveNoSpin: an, ...(await startSteadyChecks(browser, R)), ...(await a2hsChecks(browser, R)), ...(await tapDemoChecks(browser, R)), ...(await slowStartChecks(browser, R)) };
     } finally { R.errors.push(...v.errors); await v.ctx.close(); }
 }
 // サイクル193（運営者の声 2026-11-10「さんぽGOホーム画面に追加を控えめに促す」）：ホーム画面に追加の おすすめは 小さな 1行の 札。
@@ -536,7 +536,41 @@ async function startSteadyChecks(browser, R) {
       firstGoalNoFlip: { ids: r.ids, ok: r.settled && r.ids.length === 1 } };
   } finally { R.errors.push(...v.errors); await v.ctx.close(); }
 }
+// サイクル202（おそい 回線・おそい スマホ）：pixel.js を 1.5秒 おくらせて「読みこみ中」を 作り、その 間に 画面を タップする。
+// ①題字は スタイルシートより 前に 出て、下で 米つぶが 動く ②地図が 動きだす 前の タップでは 曲を 読みはじめない（動きだした あとの タップで 鳴る） ③家の 絵は 使う マスだけ 切りだす
+async function slowStartChecks(browser, R) {
+  const v = await newPage(browser, { howto: true, auto: true, hasTouch: true }), p = v.page, out = {};
+  try {
+    const mp3 = [];
+    p.on('request', r => { if (/\/bgm\/.*\.mp3/.test(r.url())) mp3.push(r.url().split('/').pop()); });
+    await p.route('**/nishio-go/pixel.js', async r => { await new Promise(res => setTimeout(res, 1500)); await r.continue(); });
+    await p.goto(URL, { waitUntil: 'commit' });
+    await p.waitForSelector('link[href$="nishio-go/style.css"]', { state: 'attached', timeout: 10000 }).catch(() => {});
+    const cv = await p.evaluate(() => {
+      const c = document.getElementById('bootCover'), i = c && c.querySelector('i'), cs = i && getComputedStyle(i), sheets = [...document.querySelectorAll('link[rel="stylesheet"]')];
+      return { cover: !!c, dot: !!i, anim: cs ? cs.animationName : '', pos: c ? getComputedStyle(c).position : '', sheets: sheets.length, inHead: sheets.filter(l => l.parentNode === document.head).length, after: !!c && sheets.every(l => !!(c.compareDocumentPosition(l) & Node.DOCUMENT_POSITION_FOLLOWING)) };
+    });
+    out.slowCover = { ...cv, ok: cv.cover && cv.dot && cv.anim === 'bootRoll' && cv.pos === 'fixed' && cv.sheets === 3 && cv.inHead === 0 && cv.after };
+    await p.waitForFunction(() => !!window.nishioGo, null, { timeout: 15000 }).catch(() => {});
+    const early = await p.evaluate(() => ({ go: !!window.nishioGo, up: !!(window.nishioPixel && nishioPixel.roll.ready) }));
+    await p.touchscreen.tap(195, 400);
+    await p.waitForTimeout(700);
+    const earlyMp3 = mp3.length, earlyPlayed = await p.evaluate(() => window.__played.length);
+    await p.waitForFunction(() => window.nishioPixel && window.nishioGo && nishioGo.started && nishioPixel.roll.ready && !document.getElementById('bootCover'), null, { timeout: 20000 }).catch(() => {});
+    await p.waitForTimeout(400);
+    const r = await p.evaluate(() => { const c = document.getElementById('pxCanvas').getBoundingClientRect(); return { x: c.left + c.width / 2 + 40, y: c.top + c.height / 2 + 40 }; });
+    await p.touchscreen.tap(r.x, r.y);
+    const late = await p.waitForFunction(() => window.__played.some(f => /\.mp3$/.test(f)), null, { timeout: 4000 }).then(() => true, () => false);
+    out.bgmAfterMap = { early, earlyMp3, earlyPlayed, late, ok: early.go && !early.up && earlyMp3 === 0 && earlyPlayed === 0 && late };
+    const hc = await p.evaluate(() => ({ cut: nishioPixel.houseCut, type: typeof nishioPixel.houseCut }));
+    out.houseLazy = { ...hc, ok: hc.type === 'number' && hc.cut < 1000 };
+  } finally { R.errors.push(...v.errors); await v.ctx.close(); }
+  return out;
+}
 const FIRST_MINUTE_NEED = {
+  slowCover: '読みこみ中の 題字が スタイルシートを 待つ（head に ある）／題字の 下に 動く しるし（米つぶ）が ない',
+  bgmAfterMap: '地図が 動きだす 前の タップで 曲（mp3）を 読みはじめる／動きだした あとの タップで 曲が 鳴らない',
+  houseLazy: '家の 絵（2500マス）を 読みこみの ときに ぜんぶ 切りだして いる',
   firstGoalNear: 'はじめての ゴールが 遠い（選びなおしで 近くの 帯の 外へ 出た・道のりが 長い）',
   lazySprites: '手描きの 名所の 絵を 読みこみの ときに ぜんぶ 作って いる／使う ときに 作れない',
   playAskQuick: 'はじめてのさんぽで すぐ 着いた ゴールでも「どうだった？」を たずねる',

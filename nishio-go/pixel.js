@@ -1281,6 +1281,29 @@ function sliceSheet(img, cols, rows) {   // 16×16 の canvas に切り分ける
   }
   return out;
 }
+// サイクル202（おそい スマホ）：家の シート（50×50＝2500マス）は、使う マスだけを 使う ときに 切りだす。
+//   ぜんぶを 先に 切ると、地図が 出る 前に canvas を 2500枚 作って いた（開いてから 地図が 出るまでの 仕事の 1割ほど。はじめの 画面で 使うのは 数十マス）。
+//   返す ものは これまでと 同じ形（長さ cols×rows・中身は [canvas, canvas]）。切った マスは おぼえて おく
+//   houseCut：切りだした マスの 数（確かめ用）
+let houseCut = 0;
+function sliceSheetLazy(img, cols, rows) {
+  const out = new Array(cols * rows);
+  for (let i = 0; i < out.length; i++) {
+    Object.defineProperty(out, i, {
+      configurable: true, enumerable: true,
+      get() {
+        const c = document.createElement('canvas');
+        c.width = c.height = 16;
+        c.getContext('2d').drawImage(img, (i % cols) * 16, Math.floor(i / cols) * 16, 16, 16, 0, 0, 16, 16);
+        const pair = [c, c];
+        Object.defineProperty(out, i, { value: pair, writable: true, configurable: true, enumerable: true });
+        houseCut++;
+        return pair;
+      },
+    });
+  }
+  return out;
+}
 function applyMapTiles() {
   if (MT.house) tiles[C.Q] = MT.house;
   if (MT.tree) tiles[C.W] = MT.tree;
@@ -1307,7 +1330,7 @@ function loadMapTiles() {
   if (s !== MT.s) {
     MT.s = s;
     const ok = () => MT.s === s;
-    get(`house-${s}`, ok, img => { MT.house = sliceSheet(img, 50, 50).map(c => [c, c]); });
+    get(`house-${s}`, ok, img => { MT.house = sliceSheetLazy(img, 50, 50); });
     get(`tree-${s}`, ok, img => { const a = sliceSheet(img, 30, 2); MT.tree = a.slice(0, 30).map((c, i) => [c, a[30 + i]]); });
     get(`misc-${s}`, ok, img => { const a = sliceSheet(img, 30, MISC_ROWS.length); MT.misc = MISC_ROWS.map((_, r) => a.slice(r * 30, r * 30 + 30).map(c => [c, c])); });
     get(`town-${s}`, ok, img => {   // 町なかの地面：小物（マンホール・植木鉢・自販機・電柱・自転車）は8マスに1つくらい
@@ -13630,7 +13653,7 @@ const meiroApi = {
   tilt: () => tiltG, tiltAsk, tiltReset, tiltNeedsPermission, koto: (v, low) => kotoSound(v, low), splash: v => splashSound(v), boing: (v, hi) => boingSound(v, hi), rumble: v => rumbleTick(v, GROUND.road),   // rumble：転がる音（速さは 地図の マス/秒）
   pause(on) { meiroPause = !!on; dirty = true; if (on && mzNext.hold) { mzNext.hold = false; if (G.toastFlush) G.toastFlush(); } },   // 止める ときは「つぎの ゴール」で 待たせた 知らせを 出す
 };
-window.nishioPixel = { giantWashLayout, drawGiantWash, seimaiLayout, drawShopSeimai, riceJourneyLayout, drawRiceJourney, blinkOn, BLINK_MS, BLINK_SHUT_MS, get riceEye() { return riceEyeAt; }, grow: { stage: () => grow.stage, stageFor: growStageFor, TH: GROW_TH, popAt: () => grow.popT }, firstRoute: { shape: mzPathShape, simple: mzFirstSimple, LIM: MZ_FIRST_SIMPLE }, firstBest: mzFirstBest, get goalArrowRect() { return mzMap.arrow ? mzMap.arrow.slice(0, 4) : null; }, collected: { has: collectedOf }, roadShape: { of: roadShapeOf, corner: roadShapeCorner, missing: roadShapeMissing, end: roadShapeEndDir, straight: roadShapeStraightDir }, glanceShift, asleepShut, happyFace, meiroApi, heroGiant: () => heroGiantId, pickHeroGiant, HERO_GIANT_RANGE, maze: { half: () => ({ cell: mzHalf.cell ? [...mzHalf.cell] : null, passed: !!mzHalf.passed }), halfCell: mzHalfCell, halfPassed: mzHalfPassed, HALF_MIN: MZ_HALF_MIN, goalFxSpec: () => ({ ...MZ_GOAL_FX }), wallTheme: () => mzWallTheme(), on: () => mazeOn(), playing: () => active && mazeOn(), next: () => ({ want: mzNext.want, t0: mzNext.t0, on: mzNextOn(), labHide: !!mzNext.labHide, arrowDim: !!mzNext.arrowDim, box: mzNext.box || null }), goal: id => {   // id の 名所が いまの ゴール（か 2分 以内の 前の ゴール）なら、かかった 時間と めいろの 道のり
+window.nishioPixel = { get houseCut() { return houseCut; }, giantWashLayout, drawGiantWash, seimaiLayout, drawShopSeimai, riceJourneyLayout, drawRiceJourney, blinkOn, BLINK_MS, BLINK_SHUT_MS, get riceEye() { return riceEyeAt; }, grow: { stage: () => grow.stage, stageFor: growStageFor, TH: GROW_TH, popAt: () => grow.popT }, firstRoute: { shape: mzPathShape, simple: mzFirstSimple, LIM: MZ_FIRST_SIMPLE }, firstBest: mzFirstBest, get goalArrowRect() { return mzMap.arrow ? mzMap.arrow.slice(0, 4) : null; }, collected: { has: collectedOf }, roadShape: { of: roadShapeOf, corner: roadShapeCorner, missing: roadShapeMissing, end: roadShapeEndDir, straight: roadShapeStraightDir }, glanceShift, asleepShut, happyFace, meiroApi, heroGiant: () => heroGiantId, pickHeroGiant, HERO_GIANT_RANGE, maze: { half: () => ({ cell: mzHalf.cell ? [...mzHalf.cell] : null, passed: !!mzHalf.passed }), halfCell: mzHalfCell, halfPassed: mzHalfPassed, HALF_MIN: MZ_HALF_MIN, goalFxSpec: () => ({ ...MZ_GOAL_FX }), wallTheme: () => mzWallTheme(), on: () => mazeOn(), playing: () => active && mazeOn(), next: () => ({ want: mzNext.want, t0: mzNext.t0, on: mzNextOn(), labHide: !!mzNext.labHide, arrowDim: !!mzNext.arrowDim, box: mzNext.box || null }), goal: id => {   // id の 名所が いまの ゴール（か 2分 以内の 前の ゴール）なら、かかった 時間と めいろの 道のり
     mzGoalAsk.id = '';   // 保留中の 着いた名所は 入口で 消す（失敗した goal で 前の id が 残らない。サイクル166 Codex指摘）
     if (!mazeOn()) return null;
     const now = performance.now(), pv = mzRt.prev, g = mzRt.gid === id ? { t0: mzRt.t0, len0: mzRt.len0, warp: mzRt.warp, moves: mzMv.n, run: { ...mzRt.run } } : pv && pv.id === id && now - pv.at < 120000 ? pv : null;

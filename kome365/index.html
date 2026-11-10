@@ -3048,6 +3048,8 @@ renderTitle();
   var DEMO_STOP_MS = 2000, DEMO_STOP_OK_MS = 6000, demoT = null, demoMiss = 0, demoOk = 0;
   function demoDisarm(){ if (demoT) { clearTimeout(demoT); demoT = null; } }
   function demoArm(){ demoDisarm(); demoT = setTimeout(function(){ demoT = null; if (startX == null && !busy && !$('sGame').classList.contains('hidden')) demoSet(true); }, (demoMiss > 0 || demoOk < 3) ? DEMO_STOP_MS : DEMO_STOP_OK_MS); }
+  var demoHeld = false;   /* Codex指摘(PR #1082): 別のタブに いる間は 数えない。待ちの とちゅうで 隠れたら 止めて、戻ったら はじめから 数え直す */
+  document.addEventListener('visibilitychange', function(){ if (document.hidden) { demoHeld = !!demoT; demoDisarm(); } else if (demoHeld) { demoHeld = false; demoArm(); } });
   window.addEventListener('resize', function(){ if ($('swWrap').classList.contains('demoOn')) demoSet(true); });   /* Codex指摘(PR #1071): 手本が出ている間に画面を回す・大きさが変わると、指の高さ(--hy)が前の画面のままだった。出ている間は測り直す(絵が無い横向きではカードの46%へ戻る) */
   function ghostOff(){ tapOnly = 0; if (!demoDone) { demoDone = true; store.set(DEMO, '1'); } demoSet(false); demoDisarm(); demoMiss = 0; demoOk++; $('swGhost').classList.remove('on'); $('swGhostArrows').classList.remove('on'); if (!ghostDone) { ghostDone = true; store.set(GHOST, '1'); } }
   function ghostPause(){ demoSet(false); demoDisarm(); $('swGhost').classList.remove('on'); $('swGhostArrows').classList.remove('on'); }   /* 周回153(最初の1分): つかんでいる間だけ案内を止める(覚えこまない) */

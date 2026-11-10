@@ -106,6 +106,10 @@ class TestKome365FirstMinute(unittest.TestCase):
         # 手本が出ている間に画面の大きさが変わったら、指の高さを測り直す
         self.assertIn("window.addEventListener('resize', function(){ if ($('swWrap').classList.contains('demoOn')) demoSet(true); });", HTML)
 
+    def test_demo_timer_does_not_count_hidden_tab(self):
+        # Codex指摘(PR #1082): 別のタブに いる間は 手本の 待ちを 数えない。戻ったら 数え直す
+        self.assertIn("if (document.hidden) { demoHeld = !!demoT; demoDisarm(); } else if (demoHeld) { demoHeld = false; demoArm(); }", HTML)
+
     def test_demo_shows_whenever_player_stops(self):
         # 周回158(運営者の声 2026-11-10「手本は、止まって見ているときにかならず出ていること」):
         # 何枚目でも・前に決めた人でも、決めずに止まっていたら約2秒で手本を出す(うまくできている人は6秒に延ばすだけ)

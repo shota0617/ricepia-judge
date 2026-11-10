@@ -8375,7 +8375,8 @@ const HINT = {
     // 曲がり方を まだ覚えていない人（横なぞりで 30° 以上 曲がれたのが 3 回未満）は、前に 6m ぶん続いていなければ「横へ」を先に出す。
     // 止まったまま 6 秒たつごとに「前へ」と「横へ」を入れかえる（両方の なぞり方が見える）。指がふれた・動きだした しゅんかんに消す（入力は ふさがない・文字なし）。
     // 最初の1分のあと（下のボタンが出ている間）は、曲がり方を覚えるまでだけ出す。畦で止められたときの見本（上）は今までどおりで、出ている間は こちらは出さない
-    const idle = live && this.done && !TRACE.on && !AUTO.on && !S.stalled && !(S.crank > 0) && Math.abs(S.v) < 0.05 && !(this.turn && !this.turn.idle);
+    // Codex 指摘（PR #1076）: 空を押して見回している指・2 本指の拡大も「指がふれている」。なぞり（TRACE.on）だけ見ていたので、その間も見本が消えず、置いたままの指の下に 2 秒で出ていた
+    const idle = live && this.done && !TRACE.on && !drag && viewPts.size === 0 && !AUTO.on && !S.stalled && !(S.crank > 0) && Math.abs(S.v) < 0.05 && !(this.turn && !this.turn.idle);
     if (!idle) { this.idleT = 0; this.demoK = -1; this.demoF = false; if (this.turn && this.turn.idle) this.turn = null; }
     else if ((this.idleT += dt) > 2 && !(this.sideOK >= 3 && FIRSTMIN.over)) {
       const k = Math.floor((this.idleT - 2) / 6);

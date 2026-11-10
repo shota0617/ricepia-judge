@@ -159,6 +159,12 @@ const srv = http.createServer((r, s) => { const u = decodeURIComponent(r.url.spl
     await p.evaluate(() => document.getElementById('help').classList.add('hidden')); await adv(3); cu = await cueSt();
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: 195, y: 380, id: 1 }] }); await adv(0.1); const touched = await cueSt(); await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); await adv(0.5);
     ok('指がふれた しゅんかんに 見本は消える', cu.vis && !touched.vis, [cu.vis, touched.vis]);
+    // Codex 指摘（PR #1076）：空を押して見回している指の間も 見本は消える・置いたままでも出ない
+    await adv(3); const cuB = await cueSt();
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: 40, y: 175, id: 1 }] }); await adv(0.2);
+    const look1 = await cueSt(), lookTr = await p.evaluate(() => TRACE.on); await adv(4); const look2 = await cueSt();
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); await adv(0.5);
+    ok('空を押して見回している間（なぞりではない指）も 見本は消えて、置いたまま 4 秒でも出ない', cuB.vis && lookTr === false && !look1.vis && !look2.vis, [cuB.vis, lookTr, look1.vis, look2.vis]);
     // 曲がり方を覚えた人（横なぞりで 30° 以上を 3 回）には、最初の1分のあとは出さない
     await p.evaluate(() => { HINT.sideOK = 3; FIRSTMIN.finish(); Object.assign(game.S, { x: -1.9, z: 8, yaw: -0.78, v: 0, steer: 0 }); }); await adv(4); cu = await cueSt();
     ok('曲がり方を覚えた人には、最初の1分のあとは 見本を出さない', !cu.vis, cu);

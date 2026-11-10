@@ -132,7 +132,7 @@ class TestKome365FirstMinute(unittest.TestCase):
     def test_swipe_during_fly_is_kept(self):
         # 周回161: 前の カードが 飛んで いる 間(busy・約0.2秒)に 置いた 指を 捨てない。おぼえて おき、次の カードで 同じ 順に 流しなおす
         down = HTML[HTML.index("el.card.addEventListener('pointerdown'"):HTML.index("el.card.addEventListener('pointermove'")]
-        self.assertIn("pend = e.button > 0 ? null : [pendCopy(e)]; return; }", down)
+        self.assertIn("pend = e.button > 0 ? null : [pendCopy(e)];", down)
         self.assertNotIn("if (busy || e.button > 0", down)
         move = HTML[HTML.index("el.card.addEventListener('pointermove'"):HTML.index("function up(e){")]
         self.assertIn("if (pend && e.pointerId === pend[0].pointerId) { var pl = null;", move)
@@ -155,6 +155,8 @@ class TestKome365FirstMinute(unittest.TestCase):
         self.assertIn("if (!q || document.hidden || busy ||", HTML)
         self.assertIn("pl = e.getCoalescedEvents ? e.getCoalescedEvents() : null;", HTML)
         self.assertIn("if (busy) { if (e.isPrimary === false) return;", HTML)
+        self.assertIn("(v > 0) === (dx > 0) && Math.abs(dx) >= maxAx - 12;", HTML)   # 速く のぞいて 引き戻した 動きは フリックと しない
+        self.assertIn("if (pend) { try { el.card.setPointerCapture(e.pointerId); } catch (x) {} }", HTML)   # おぼえはじめた ときも つかまえる
 
     def test_demo_timer_does_not_count_hidden_tab(self):
         # Codex指摘(PR #1082): 別のタブに いる間は 手本の 待ちを 数えない。戻ったら 数え直す

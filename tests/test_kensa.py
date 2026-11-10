@@ -1796,6 +1796,22 @@ guideAt('move', el, 0, -48);      assert.equal(guideEl.style.top, '428px');   //
         # 案内文へのアニメーションは setStep の中だけ（途中の案内の差し替えは従来どおり即時）
         self.assertEqual(HTML.count("hint.animate("), 1)
 
+    def test_cycle145_photos_gently_appear(self):
+        # 差44: 実物の写真（穀刺し・一等米）は顔が出た後に読み込まれるため、場面の
+        # すべり込み（.22s）が終わった後に完成形で即座に現れていた（出現アニメーション0件）。
+        # 他の現れるものと同じ260msのふわりとした出現を、読み込めた時だけ1回付ける。
+        start = HTML.index("function photoAppear(im)")
+        body = HTML[start:HTML.index("faceImg.addEventListener", start)]
+        self.assertIn('im.animate([{ opacity:0, transform:"scale(.7)" }', body)
+        self.assertIn('duration:260 * motion', body)
+        # 読み込み順と写真そのものは従来どおり（load で1回だけ・src を入れる前に付ける）
+        self.assertIn('addEventListener("load", () => photoAppear(im), { once:true })', body)
+        self.assertLess(body.index('addEventListener("load"'), body.index("im.src = im.dataset.src"))
+        self.assertEqual(HTML.count("() => photoAppear(im)"), 1)
+        # 写真は写真のまま（差し替え・イラスト化はしない）
+        self.assertIn('data-src="kensa/kokusashi.webp"', HTML)
+        self.assertIn('data-src="kensa/ittomai.webp"', HTML)
+
     def test_cycle139_taps_after_inserting_are_caught(self):
         # 最初の1分（本物の指）: さした後の空振りは数えず手本も出なかったため、押し込んで指を離し
         # 「ひきぬく →」を見て穀刺しをタップする人・指を置くだけの人は、4回やっても何も起きなかった

@@ -1447,7 +1447,8 @@ function checkin() {
   setTimeout(() => { if (react.pending) reactShow(); else if (playQ.pending) playShow(); }, 1500);   // 下の小さなひとこと欄だけ（カードが無いので ここから）
   reactAsk(s);
   if (courseDone) courseCelebrate();   // コースを まわりきった：ごほうびの 窓が とじたら 1枚絵
-  if (mz && playAskOk(mz)) playAsk(mz);   // めいろの ゴール：「めいろ、どうだった？」（1日1回。名所の ひとこと より 先に）
+  if (mz && !playAskOk(mz)) react.pending = null;   // はじめてのさんぽで すぐ 着いた ゴール：名所の ひとことも たずねない（行き先の 札を かくさない）
+  else if (mz) playAsk(mz);   // めいろの ゴール：「めいろ、どうだった？」（1日1回。名所の ひとこと より 先に）
   // 当店の窓（shopAfter）は 自動では 開かない：カードが無いので、窓が いきなり 開いて 歩きを 止めない（お店の窓は 自分で タップして 開く）
   map.closePopup();
   renderMarkers();
@@ -4659,7 +4660,7 @@ document.addEventListener('click', e => { const b = e.target.closest && e.target
 // ドット絵表示（pixel.js）とテストから使う窓口
 window.nishioGo = {
   galleryTiles,
-  notePlayInput, snapMaze, mzSpeed, playAsk, playShow, get playPending() { return playQ.pending; }, set mzNpcShareTest(v) { mzNpcShare = v; },   // テスト用：遊んでいる 画面を とる・人の ゴールの シェアを 置く
+  notePlayInput, snapMaze, mzSpeed, playAsk, playAskOk, PLAY_ASK_MIN_S, playShow, get playPending() { return playQ.pending; }, set mzNpcShareTest(v) { mzNpcShare = v; },   // テスト用：遊んでいる 画面を とる・人の ゴールの シェアを 置く
   sound,
   get nimotsu() { const NM = window.NISHIO_NIMOTSU; return NM ? NM.current(S.nimotsu, Date.now()) : ''; },   // いま あたまに のせて いる 持ち物の 絵の id（なければ ''）
   get state() { return S; }, get stateKey() { return stateKey(); }, get spotsVersion() { return spotsVersion; }, get spots() { return spots; }, get me() { return me; }, get demo() { return demo; },

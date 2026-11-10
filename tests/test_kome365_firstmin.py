@@ -132,10 +132,10 @@ class TestKome365FirstMinute(unittest.TestCase):
     def test_swipe_during_fly_is_kept(self):
         # 周回161: 前の カードが 飛んで いる 間(busy・約0.2秒)に 置いた 指を 捨てない。おぼえて おき、次の カードで 同じ 順に 流しなおす
         down = HTML[HTML.index("el.card.addEventListener('pointerdown'"):HTML.index("el.card.addEventListener('pointermove'")]
-        self.assertIn("if (busy) { pend = (e.button > 0 || e.isPrimary === false) ? null : [pendCopy(e)]; return; }", down)
+        self.assertIn("pend = e.button > 0 ? null : [pendCopy(e)]; return; }", down)
         self.assertNotIn("if (busy || e.button > 0", down)
         move = HTML[HTML.index("el.card.addEventListener('pointermove'"):HTML.index("function up(e){")]
-        self.assertIn("if (pend && e.pointerId === pend[0].pointerId) { if (pend.length < 240) pend.push(pendCopy(e)); return; }", move)
+        self.assertIn("if (pend && e.pointerId === pend[0].pointerId) { var pl = null;", move)
         up = HTML[HTML.index("function up(e){"):HTML.index("el.card.addEventListener('pointerup', up)")]
         self.assertIn("if (pend && e && e.pointerId === pend[0].pointerId) { pend.push(pendCopy(e)); return; }", up)
         # 流しなおすのは 次の カードが 出た あと。決める きまりは up の まま(押しただけ では 決まらない)
@@ -148,6 +148,13 @@ class TestKome365FirstMinute(unittest.TestCase):
         self.assertNotIn("choose(", flush)
         # 時刻は もとの 指の 時刻を 使う(速さ・0.3秒の 一筆の 見分けが くるわない)
         self.assertIn("timeStamp: evT(e)", HTML)
+
+    def test_pending_swipe_review_fixes(self):
+        # Codex 指摘(PR #1087): 隠れたら 捨てる・まとめられた 点も おぼえる・2本目の 指で 消さない
+        self.assertIn("document.addEventListener('visibilitychange', function(){ if (document.hidden) pend = null; });", HTML)
+        self.assertIn("if (!q || document.hidden || busy ||", HTML)
+        self.assertIn("pl = e.getCoalescedEvents ? e.getCoalescedEvents() : null;", HTML)
+        self.assertIn("if (busy) { if (e.isPrimary === false) return;", HTML)
 
     def test_demo_timer_does_not_count_hidden_tab(self):
         # Codex指摘(PR #1082): 別のタブに いる間は 手本の 待ちを 数えない。戻ったら 数え直す

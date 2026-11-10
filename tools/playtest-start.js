@@ -102,13 +102,15 @@ async function runStartChecks(browser, url, out, { shareOnly = false } = {}) {
         return { points, total, tilt, marker, legacyPoints, kept: points === 123 && total === 456 && tilt === '16' && localStorage.getItem('nsg_tilt_v') === '2' && marker === 'keep' && legacyPoints === 789 };
       });
       const kept = persistence.kept;
-      // 読みなおした あとも、最初の 地図タップで 1回だけ（ページを 開く たびに 1回）
-      await tapMap(page); await tapMap(page, 170, 170);
-      const reask = await page.evaluate(() => window.__asks), reaskWant = !permission ? 0 : kind.startsWith('notallowed') ? 2 : 1;
       await page.goto('about:blank'); await page.goBack(); await page.waitForFunction(() => window.nishioPixel && nishioGo.started);
       const back = await page.evaluate(key => !!localStorage.getItem(key) && nishioGo.state.points === 123 && document.getElementById('howto').hidden, saved);
+      // 読みなおした あとも、最初の 地図タップで 1回だけ（ページを 開く たびに 1回）。タップで 歩くと たからばこ などで ポイントが かわるので、上の 保存の 確かめの あとで
+      await page.waitForTimeout(400);
+      const reask0 = await page.evaluate(() => window.__asks);
+      await tapMap(page); await tapMap(page, 170, 170);
+      const reask = await page.evaluate(() => window.__asks) - reask0, reaskWant = !permission ? 0 : kind.startsWith('notallowed') ? 2 : 1;
       const wantAsks = !permission ? 0 : kind.startsWith('notallowed') ? 2 : 1;
-      checks[kind] = { before, after, revisit, kept, back, persistence, reask, ok: !before.intro && !before.help && !before.talk && !before.panel && before.playing && before.asks === 0 && !after.panel && after.asks === wantAsks && !revisit.help && !revisit.intro && !revisit.panel && revisit.asks === 0 && reask === reaskWant && kept && back };
+      checks[kind] = { before, after, revisit, kept, back, persistence, reask0, reask, ok: !before.intro && !before.help && !before.talk && !before.panel && before.playing && before.asks === 0 && !after.panel && after.asks === wantAsks && !revisit.help && !revisit.intro && !revisit.panel && revisit.asks === 0 && reask0 === 0 && reask === reaskWant && kept && back };
     } finally { await ctx.close(); }
   }
   // UserActivation API が ない 端末でも、共有リンクの 自動openから 許可を 求めない。
@@ -149,12 +151,18 @@ async function runStartChecks(browser, url, out, { shareOnly = false } = {}) {
         const e = new DeviceOrientationEvent('deviceorientation', { gamma, beta });
         Object.defineProperty(e, 'timeStamp', { value: time += ms }); window.dispatchEvent(e);
       };
+      // 傾きの 感度は 上がった（pixel.js の tiltCurve。運営者の声 2026-10-31「転がりの感度を上げる」「傾き感度上げる」）：いちばん 強く なる 角度は 12度（ふつう）、
+      // 中心の 無力は 角度の 3%（12度なら 0.36度）まで、小さい 傾き（25% まで）で 力 0.65、そこから 1 まで まっすぐ。5度の 力は 下の 式（0.728）。
+      // 前は 5度で 0.44〜0.45、0.7度の 手ぶれは 力 0 だった
+      const deg = tg.deg, v5 = Math.min(1, 5 / deg), want = v5 < 0.25 ? (v5 - 0.03) / 0.22 * 0.65 : 0.65 + (v5 - 0.25) / 0.75 * 0.35, dead = deg * 0.03;
       for (const hz of [30, 60, 100]) {
         api.tiltReset(); send(0); send(0);
         let first = null;
         for (let i = 1; i <= Math.ceil(hz * 0.2); i++) { send(5, 40, 1000 / hz); if (first === null && tg.x > 0.4) first = i * 1000 / hz; }
-        samples.push({ hz, first, force: tg.x });
-        send(0.7); if (tg.x !== 0) return { ok: false, why: 'center drift', samples };
+        samples.push({ hz, first, force: tg.x, want });
+        send(dead * 0.8); if (tg.x !== 0) return { ok: false, why: 'center drift', samples };   // 無力の 中（中心の 手ぶれ）：力は 0 に もどる
+        send(dead * 2); const out = tg.x; send(0);   // 無力の すぐ 外：小さな 力が 出る（びんかん）
+        if (!(out > 0 && out < 0.15) || tg.x !== 0) return { ok: false, why: 'dead zone edge', out, samples };
       }
       const rotations = [];
       for (const angle of [90, 180, 270, 0, -90]) {
@@ -174,7 +182,7 @@ async function runStartChecks(browser, url, out, { shareOnly = false } = {}) {
       const seam = tg.x === 0 && tg.y === 0;
       window.dispatchEvent(new Event('blur'));
       const blur = !tg.base && tg.x === 0 && tg.y === 0;
-      return { seam, blur, samples, rotations, reset, invalid, ok: samples.every(s => s.first !== null && s.first <= 67 && s.force > 0.44 && s.force <= 0.45) && rotations.every(r => r.neutral && r.right && r.y === 0) && reset && invalid && seam && blur };
+      return { seam, blur, samples, rotations, reset, invalid, deg, ok: deg === 12 && samples.every(s => s.first !== null && s.first <= 67 && Math.abs(s.force - s.want) < 0.01 && s.force <= s.want + 1e-9) && rotations.every(r => r.neutral && r.right && r.y === 0) && reset && invalid && seam && blur };
     });
     checks.motion = await movementWithClear(page, true);
     const { ctx: helpCtx, page: hp } = await fresh();

@@ -1,4 +1,4 @@
-// 最初の1分の確かめ（サイクル259〜269）：node firstmin.js [tractor.html のパス]
+// 最初の1分の確かめ（サイクル259〜270）：node firstmin.js [tractor.html のパス]
 //  1) 知らせの文：吹き出し（speakText）・短い文（shortText）で かっこが合わなくならない（「…見ます）」のような切れ方をしない）
 //  3) 畦の手前で止まった人：「横へ なぞる」見本が出て、見本どおりで向きが変わる。自動で下ろす知らせは 1 回だけ（サイクル260）
 //  2) のんびりの大きな数字：スマホ縦で 1 回なぞって耕したら 0% のままにならない。田んぼアートでは地図の「でき」と同じ数、お題なしでは小数 1 けた
@@ -404,6 +404,68 @@ const srv = http.createServer((r, s) => { const u = decodeURIComponent(r.url.spl
     const lw = await p.evaluate(() => { const w = document.getElementById('loadWait'), t = document.getElementById('toast'); return { off: w.classList.contains('off'), toast: t ? t.textContent : '' }; });
     ok('three が 読みこめない とき、読みこみの おおいは 消えて「うまく 読みこめませんでした」と 出る', lw.off && /読みこめませんでした/.test(lw.toast), lw);
     await ctx.close();
+  }
+  // ---- 10) サイクル271（おそい回線・おそい スマホ）：three を待つ間も おおいが見える・読みこみの 進みぐあいの 線・読みこみ中に置いた指の なぞりを 捨てない ----
+  {
+    const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true, isMobile: true });
+    const p = await ctx.newPage(); p.setDefaultTimeout(180000);
+    p.on('pageerror', e => errs.push('pageerror ' + e.message)); p.on('console', m => { if (m.type() === 'error') errs.push('console ' + m.text()); });
+    const full = r => r.fulfill({ path: TN + r.request().url().split('/three@0.128.0')[1], contentType: 'text/javascript' });
+    let holdJs = true, holdF = true; const gateJs = [], gateF = [];
+    await p.route('https://cdn.jsdelivr.net/**', r => { if (holdJs && /three\.min\.js/.test(r.request().url())) gateJs.push(r); else full(r); });   // three.min.js を 止めておく（おそい回線）
+    await p.route('**/field_tanbo*.glb', r => { if (holdF) gateF.push(r); else r.continue(); });                                                    // 田んぼ（いちばん大きい）を 止めておく
+    await p.goto(`http://localhost:${PORT}/tractor.html`, { waitUntil: 'commit' }); await p.waitForTimeout(1500);
+    // 10-1) three.min.js が まだ届かない間：おおいは もう見えている（直す前は body が始まらず まっ白）
+    const a0 = await p.evaluate(() => { const e = document.getElementById('loadWait'); if (!e) return { el: false, three: !!window.THREE }; const cs = getComputedStyle(e), r = e.getBoundingClientRect(); return { el: true, three: !!window.THREE, vis: cs.visibility !== 'hidden' && +cs.opacity > 0.9, full: r.width >= innerWidth && r.height >= innerHeight, text: e.innerText.replace(/\s+/g, ' ').trim() }; });
+    ok('three.min.js を待つ間も 読みこみの おおいが見えている（直す前は まっ白）', a0.el && !a0.three && a0.vis && a0.full && /なぞ/.test(a0.text), a0);
+    holdJs = false; for (const r of gateJs) await full(r);
+    await p.waitForFunction(() => typeof TRACE !== 'undefined' && typeof LOAD_ST !== 'undefined'); await p.waitForTimeout(2500);
+    // 10-2) 車体と作業機は届いた・田んぼは まだ：進みぐあいの 線が 途中まで のびている。押す物は ない
+    const bar = () => p.evaluate(() => { const e = document.getElementById('lwBar'); if (!e) return null; const w = document.getElementById('loadWait'); return { pct: parseFloat(e.style.width) || 0, px: e.getBoundingClientRect().width, track: e.parentElement.getBoundingClientRect().width, started: !!game.S.started, btn: w.querySelectorAll('button, a, input').length, pe: getComputedStyle(w).pointerEvents, text: w.innerText.replace(/\s+/g, ' ').trim() }; });
+    const b0 = await bar();
+    ok('田んぼを待つ間：進みぐあいの 線が 途中まで（15〜70%）のびている・押す物も 文字の追加も ない（直す前は 線が ない）', !!b0 && !b0.started && b0.pct > 15 && b0.pct < 70 && b0.px > 10 && b0.px < b0.track && b0.btn === 0 && b0.pe === 'none' && b0.text.length <= 16, b0);
+    // 10-3) 読みこみ中に 前へ なぞって 指を置いたまま待つ：目の向きは変わらない → 始まったら その なぞりで 動きだす（直す前は 目が上を向き、なぞり直すまで 動かない）
+    const cdp = await ctx.newCDPSession(p), T = (type, x, y) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: type === 'touchEnd' ? [] : [{ x, y, id: 1 }] });
+    await T('touchStart', 195, 481); for (let i = 1; i <= 8; i++) { await T('touchMove', 195, 481 - 84 * i / 8); await p.waitForTimeout(40); }
+    const l0 = await p.evaluate(() => ({ yaw: look.yaw, pitch: look.pitch, on: TRACE.on, started: !!game.S.started }));
+    ok('読みこみ中の なぞりで 目の向きは変わらない（直す前は 上へ 0.3rad）', !l0.started && l0.yaw === 0 && l0.pitch === 0 && !l0.on, l0);
+    holdF = false; for (const r of gateF) await r.continue();
+    await p.waitForFunction(() => window.game && game.S && game.S.started && typeof P !== 'undefined' && P.Rotary); await p.waitForTimeout(1500);
+    await p.evaluate(() => { const real = performance.now.bind(performance); let now = real(); performance.now = () => now; window.__sync = () => { now = real(); }; window.requestAnimationFrame = () => 0; game.renderer.render = () => {};
+      window.__adv = sec => { for (let i = 0, n = Math.round(sec / 0.05); i < n; i++) { now += 50; frame(now); } }; });
+    await p.waitForTimeout(2500); await p.evaluate(() => window.__sync());
+    const adv = sec => p.evaluate(x => window.__adv(x), sec), st = () => p.evaluate(() => ({ on: TRACE.on, v: +game.S.v.toFixed(2), z: +game.S.z.toFixed(2), tilled: tilledCount, yaw: look.yaw, pitch: look.pitch, bar: document.getElementById('loadWait').classList.contains('off') }));
+    const z0 = (await st()).z; await adv(4); const h1 = await st();
+    ok('指を置いたまま 始まったら、読みこみ中の なぞりで 動きだして 耕す（直す前は 動かない）', h1.on && h1.z - z0 > 1 && h1.tilled > 50 && h1.pitch === 0 && h1.bar, { z0, ...h1 });
+    await T('touchEnd'); await adv(1.5); const h2 = await st();
+    ok('指を離すと 止まる（サイクル116 のまま）', !h2.on && Math.abs(h2.v) < 0.05, h2);
+    await ctx.close();
+  }
+  {   // 10-4) 読みこみ中に なぞって 離した指は、始まっても 何もしない（離すと止まる＝サイクル116 のまま）。そのあとの ふつうの なぞりは 今までどおり効く
+    const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true, isMobile: true });
+    const p = await ctx.newPage(); p.setDefaultTimeout(180000);
+    p.on('pageerror', e => errs.push('pageerror ' + e.message)); p.on('console', m => { if (m.type() === 'error') errs.push('console ' + m.text()); });
+    await p.route('https://cdn.jsdelivr.net/**', r => r.fulfill({ path: TN + r.request().url().split('/three@0.128.0')[1], contentType: 'text/javascript' }));
+    let hold = true; const gate = []; await p.route('**/field_tanbo*.glb', r => { if (hold) gate.push(r); else r.continue(); });
+    await p.goto(`http://localhost:${PORT}/tractor.html`); await p.waitForFunction(() => typeof TRACE !== 'undefined' && typeof LOAD_ST !== 'undefined'); await p.waitForTimeout(800);
+    const cdp = await ctx.newCDPSession(p), T = (type, x, y) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: type === 'touchEnd' ? [] : [{ x, y, id: 1 }] });
+    await T('touchStart', 195, 481); for (let i = 1; i <= 8; i++) { await T('touchMove', 195, 481 - 84 * i / 8); await p.waitForTimeout(40); } await T('touchEnd');
+    hold = false; for (const r of gate) await r.continue();
+    await p.waitForFunction(() => window.game && game.S && game.S.started && typeof P !== 'undefined' && P.Rotary); await p.waitForTimeout(1500);
+    await p.evaluate(() => { const real = performance.now.bind(performance); let now = real(); performance.now = () => now; window.__sync = () => { now = real(); }; window.requestAnimationFrame = () => 0; game.renderer.render = () => {};
+      window.__adv = sec => { for (let i = 0, n = Math.round(sec / 0.05); i < n; i++) { now += 50; frame(now); } }; });
+    await p.waitForTimeout(2500); await p.evaluate(() => window.__sync());
+    const adv = sec => p.evaluate(x => window.__adv(x), sec), st = () => p.evaluate(() => ({ on: TRACE.on, v: +game.S.v.toFixed(2), z: +game.S.z.toFixed(2), tilled: tilledCount, yaw: look.yaw, pitch: look.pitch }));
+    const z0 = (await st()).z; await adv(3); const r1 = await st();
+    ok('読みこみ中に 離した指は、始まっても 何もしない・目の向きも そのまま', !r1.on && Math.abs(r1.v) < 0.05 && Math.abs(r1.z - z0) < 0.05 && r1.yaw === 0 && r1.pitch === 0, { z0, ...r1 });
+    await T('touchStart', 195, 481); for (let i = 1; i <= 8; i++) { await T('touchMove', 195, 481 - 84 * i / 8); await adv(0.05); } await adv(3); const r2 = await st(); await T('touchEnd');
+    ok('そのあとの ふつうの なぞりは 今までどおり効く', r2.on && r2.z - z0 > 1 && r2.tilled > 50, r2);
+    await ctx.close();
+  }
+  {   // Codex 指摘（PR #1100）：読みこみ中の なぞりは、タブを はなれたら 捨てる・おぼえた 指と 同じ 指の ときだけ 使う
+    const src = require('fs').readFileSync(require('path').join(__dirname, '../../../../tractor.html'), 'utf8');
+    ok('読みこみ中に おぼえた なぞりは、タブを はなれたら 捨て、同じ 指が 置かれた まま の ときだけ 使う（コードの 形）',
+      src.includes("addEventListener('blur', () => PRE.clear());") && src.includes("document.addEventListener('visibilitychange', () => { if (document.hidden) PRE.clear(); });") && src.includes('!viewPts.has(id)'), null);
   }
   ok('エラーなし', errs.length === 0, errs.slice(0, 3));
   console.log(ng ? `NG ${ng} 件` : 'ぜんぶ ok'); await b.close(); srv.close(); process.exit(ng ? 1 : 0);

@@ -1822,7 +1822,9 @@ guideAt('move', el, 0, -48);      assert.equal(guideEl.style.top, '428px');   //
         # boot を外すのは startLot（指の置き場所・案内文が決まる）の後・スクリプトの最後で1回だけ
         tail = HTML[HTML.rindex("armIdle();\nstartLot();"):]
         self.assertIn('startLot();\n$("app").classList.remove("boot");', tail)
-        self.assertEqual(HTML.count('classList.remove("boot")'), 1)
+        # 外すのは 2 か所だけ: 始まった時（上）と、始まるとちゅうで エラーで止まった時（Codex 指摘 PR #1100）
+        self.assertEqual(HTML.count('classList.remove("boot")'), 2)
+        self.assertIn('window.addEventListener("error", function(){ var a = document.getElementById("app"); if (a) a.classList.remove("boot"); });', HTML)
         self.assertNotIn('classList.add("boot")', HTML)
         # 隠すだけで、場所は取ったまま（始まった時に舞台の高さが動かない）
         css = HTML[HTML.index(".boot #poke"):HTML.index("\n", HTML.index(".boot #poke"))]

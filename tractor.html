@@ -9805,10 +9805,13 @@ const PRE = { id: null, pts: [], go: false,
   clear() { this.id = null; this.pts = []; this.go = false; },
   flush() {   // 始まって はじめの 1 こまを描いた あと（運転席の視点が決まってから）に 1 回だけ
     this.go = false; if (this.id === null) return;
-    const pts = this.pts; this.id = null; this.pts = [];
-    if (viewPts.size !== 1 || !TRACE.begin(pts[0])) return;
+    const pts = this.pts, id = this.id; this.id = null; this.pts = [];
+    if (viewPts.size !== 1 || !viewPts.has(id) || !TRACE.begin(pts[0])) return;   // Codex 指摘（PR #1100）：おぼえた 指と 同じ 指が 置かれた まま の ときだけ 使う
     AUTO.off(); drag = null; for (let i = 1; i < pts.length; i++) TRACE.add(pts[i]);
   } };
+// Codex 指摘（PR #1100）：読みこみ中に なぞってから タブを はなれたら、おぼえた 道すじは 捨てる（戻った あとの 別の 指に 古い なぞりを かぶせない）
+addEventListener('blur', () => PRE.clear());
+document.addEventListener('visibilitychange', () => { if (document.hidden) PRE.clear(); });
 canvas.addEventListener('pointerdown', e => { if (viewPts.size >= 2) { PRE.clear(); return; } if (!S.started) { if (e.isPrimary) PRE.down(e); canvas.setPointerCapture(e.pointerId); return; } if (TRACE.begin(e)) { AUTO.off(); drag = null; canvas.setPointerCapture(e.pointerId); return; } drag = { x: e.clientX, y: e.clientY, yaw: look.yaw, pitch: look.pitch }; canvas.setPointerCapture(e.pointerId); });
 canvas.addEventListener('pointermove', e => {
   if (viewPts.has(e.pointerId)) viewPts.set(e.pointerId, { x: e.clientX, y: e.clientY });

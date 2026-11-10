@@ -462,6 +462,11 @@ const srv = http.createServer((r, s) => { const u = decodeURIComponent(r.url.spl
     ok('そのあとの ふつうの なぞりは 今までどおり効く', r2.on && r2.z - z0 > 1 && r2.tilled > 50, r2);
     await ctx.close();
   }
+  {   // Codex 指摘（PR #1100）：読みこみ中の なぞりは、タブを はなれたら 捨てる・おぼえた 指と 同じ 指の ときだけ 使う
+    const src = require('fs').readFileSync(require('path').join(__dirname, '../../../../tractor.html'), 'utf8');
+    ok('読みこみ中に おぼえた なぞりは、タブを はなれたら 捨て、同じ 指が 置かれた まま の ときだけ 使う（コードの 形）',
+      src.includes("addEventListener('blur', () => PRE.clear());") && src.includes("document.addEventListener('visibilitychange', () => { if (document.hidden) PRE.clear(); });") && src.includes('!viewPts.has(id)'), null);
+  }
   ok('エラーなし', errs.length === 0, errs.slice(0, 3));
   console.log(ng ? `NG ${ng} 件` : 'ぜんぶ ok'); await b.close(); srv.close(); process.exit(ng ? 1 : 0);
 });

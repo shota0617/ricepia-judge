@@ -368,6 +368,8 @@
 </section>
 <script>
 "use strict";
+/* Codex 指摘（PR #1100）: 始まる とちゅうで エラーで 止まっても（古い ブラウザなど）、隠して いた 手本の指・案内文は 出す */
+window.addEventListener("error", function(){ var a = document.getElementById("app"); if (a) a.classList.remove("boot"); });
 /* KENSA-RULES-START */
 /* 水稲うるち玄米の品位（農産物規格規程。農林水産省「玄米の検査規格」2026-11-06確認）。
    水分は表の15.0%に附の「当分の間 1.0%加算」を入れて16.0%まで。ロットは15.0〜16.0%の帯を使わない */

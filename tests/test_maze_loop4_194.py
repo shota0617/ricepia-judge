@@ -74,7 +74,7 @@ class Tilt194(unittest.TestCase):
         t = fn_src("tapDemoTick")
         self.assertIn("now - tapDemo.at >= (first ? 0 : tapDemo.walked ? DEMO_TAP_MS : DEMO_IDLE_MS)", t)   # サイクル198：タップで 歩いた あとは 0.9秒（その ほかは 2秒）
         self.assertIn("if (rp.x !== tapDemo.x || rp.y !== tapDemo.y) { tapDemo.x = rp.x; tapDemo.y = rp.y; tapDemo.at = now; tapDemo.walked = now - tapDemo.walkT < 700; }", t)
-        self.assertIn("const q = tapDemoSpot(path);", t)   # サイクル198：道しるべの 3マス先。窓が 開く 所は よける
+        self.assertIn("const sp = tapDemoSpot(path, first);", t)   # サイクル198：道しるべの 3マス先。窓が 開く 所は よける
         self.assertNotIn("localStorage", t)   # はじめての 人 だけ・1回だけ の 条件を もたない
         self.assertNotIn("lsGet", t)
         self.assertIn("document.addEventListener('pointerdown', tapDemoTouch, { capture: true, passive: true });", PIX)

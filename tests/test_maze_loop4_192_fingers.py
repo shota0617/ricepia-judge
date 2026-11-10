@@ -88,3 +88,10 @@ console.log(JSON.stringify(out));
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class SwipeClick192(unittest.TestCase):
+    def test_new_touch_clears_click_guard(self):
+        """なぞった あと 新しく 指を 置いたら、その click は 捨てない（レビューの 指摘）"""
+        src = (Path(__file__).resolve().parent.parent / "nishio-go" / "pixel.js").read_text(encoding="utf-8")
+        self.assertIn("cv.addEventListener('pointerdown', e => { swipeS.at = -Infinity;", src)

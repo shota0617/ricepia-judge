@@ -72,7 +72,9 @@ console.log(JSON.stringify(['Mozilla/5.0 (iPhone) Mobile/15E148 Safari Line/14.9
         for s in ["!ktBusy()", "!rewardBusy()", "$('toast').classList.contains('show')", "$('reactBar').hidden", "P.worldMode", '[role="dialog"]:not([hidden])']:
             self.assertIn(s, calm)
         later = fn_src("a2hsLater")
-        self.assertIn("performance.now() < A2HS.minPlayMs || !a2hsCalm()", later)
+        # 開いて 1分の 待ちは 回数に 数えない（レビューの 指摘）。落ちつくのを 待つ 回数だけ 数える
+        self.assertIn("if (performance.now() < A2HS.minPlayMs) { a2hsTry = setTimeout(go, A2HS.tryMs); return; }", later)
+        self.assertIn("if (!a2hsCalm()) { if (++n <= A2HS.tries) a2hsTry = setTimeout(go, A2HS.tryMs); return; }", later)
         self.assertIn("if (!a2hsEligible() || !$('a2hs').hidden) return;", later)
         offer = fn_src("a2hsOffer")
         self.assertIn("a2hsTimer = setTimeout(() => { if (!el.hidden) { track('a2hs_later', { how: 'timeout' }); a2hsHide(); } }, A2HS.showMs);", offer)

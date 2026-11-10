@@ -422,6 +422,7 @@ a{color:var(--acc)}
 @keyframes swReunionIn{0%{opacity:0;transform:translateY(6px) scale(.7)}100%{opacity:1;transform:none}}
 #swDayGuest{position:absolute;right:16px;top:36%;z-index:2;display:none;pointer-events:none}   /* その日の訪問者(周回130・類8 ねこあつめ: 覗くたびの小さな違い): 暦日で決まる生き物が1匹だけ田んぼの右手に静かにいる。日が替われば顔ぶれと居場所が少し替わる。文字なし・表示のみ */
 #swDayGuest.on{display:block}
+@media (max-height:740px){#swDayGuest{top:calc(36% - 26px)}}   /* 周回152(最初の1分): 低い画面では、カードの上の植物の段(#swRich)と訪問者の足もとが重なるので、訪問者を少しだけ上へ */
 #swDayGuest .dgIc{width:40px;height:40px;font-size:40px;line-height:1;filter:drop-shadow(0 2px 2px rgba(60,40,20,.30))}
 #swDayGuest.new .dgIc{animation:swGuestIn 1.2s ease-out 1 both}   /* 替わった日だけ静かに現れる。同じ日の間は動かない(再会・跡と同じ作法) */
 @keyframes swGuestIn{0%{opacity:0;transform:translateY(6px) scale(.7)}100%{opacity:1;transform:none}}

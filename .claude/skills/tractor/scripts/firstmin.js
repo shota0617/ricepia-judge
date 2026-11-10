@@ -36,6 +36,7 @@ const srv = http.createServer((r, s) => { const u = decodeURIComponent(r.url.spl
     // swiftshader は遅いので、時計をにせものにして ページの frame() を 0.05 秒ずつ手で回す（絵は描かない）
     await p.evaluate(() => { let now = performance.now(); performance.now = () => now; window.requestAnimationFrame = () => 0; game.renderer.render = () => {};
       window.__adv = sec => { for (let i = 0, n = Math.round(sec / 0.05); i < n; i++) { now += 50; frame(now); } }; });
+    await p.waitForTimeout(2500);   // エンジンの始動（セル）は本物の時計（setTimeout）で進むので、かかるまで待つ
     const cdp = await ctx.newCDPSession(p), adv = s => p.evaluate(x => window.__adv(x), s), big = () => p.evaluate(() => document.getElementById('bigPct').textContent);
     await adv(2); ok(label + '：はじめは 0', /^0(\.0)?%$/.test(await big()), await big());
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: 195, y: 481, id: 1 }] });   // ヒントの指と同じ：前へ 1 回なぞる

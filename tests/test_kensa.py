@@ -1785,6 +1785,50 @@ at(35200); assert.equal(shown.length, n + 1);
         self.assertNotIn("setInterval", HTML)
         self.assertIn("(function demoLoop() { demoTick(); setTimeout(demoLoop, 200); })();", HTML)
 
+    def test_cycle140_taps_on_the_stamped_bag_are_caught(self):
+        # 最初の1分（差42）: 押印後の「流す」だけ空振りの受け皿がなく、目の前の大きな袋への
+        # タップ・40pxに届かない短いなでは何回やっても無反応だった（他の所作は全て数える）。
+        # 1回目=手本の指（証印に重ねない上24%・サイクル138）＋小さく滑る／2回目=半分流れて戻る／3回目=自分で流れる。
+        node = shutil.which("node")
+        if not node:
+            self.skipTest("node がないので実行の確認は飛ばす")
+        start = HTML.index("let swipeDemo = null;")
+        fn = HTML[start:HTML.index("function leaveBag()", start)]
+        script = """
+const assert = require('node:assert/strict');
+const NUDGE_LIMIT = 3, motion = 1;
+let step = 4, stamped = true, leaving = false, swipeTaps = 0, leaves = 0, sounds = 0, cancels = 0; const anims = [], guides = [];
+const bag = {animate(frames, opt) { anims.push([frames[1].transform, opt.duration]); return {cancel() { cancels++; }}; }};
+const $ = id => ({bagBig: bag})[id];
+const guideAt = (...a) => { guides.push(a); }, swipeDemoSound = () => { sounds++; }, leaveBag = () => { leaves++; };
+""" + fn + """
+swipeNudge();                                    // 1回目: 手本の指＋小さく滑る
+assert.equal(guides.length, 1);
+assert.equal(guides[0][0], 'move'); assert.equal(guides[0][2], 90); assert.equal(guides[0][4], 0.24);
+assert.deepEqual(anims[0], ['translateX(18px) rotate(.6deg)', 320]);
+swipeNudge();                                    // 2回目: 半分流れて戻る。前の手本は止める
+assert.deepEqual(anims[1], ['translateX(45px) rotate(1.5deg)', 560]);
+assert.equal(cancels, 1);
+assert.equal(sounds, 2);
+assert.equal(leaves, 0);
+swipeNudge();                                    // 3回目: 自分で流れる。手本は残さない
+assert.equal(leaves, 1);
+assert.equal(cancels, 2);
+assert.equal(anims.length, 2);
+stamped = false; swipeNudge(); assert.equal(leaves, 1);   // 押す前は数えない
+stamped = true; step = 0; swipeNudge(); assert.equal(leaves, 1);   // 別の段階では数えない
+"""
+        subprocess.run([node, "-e", script], capture_output=True, text=True, check=True)
+        end = HTML[HTML.index("function endHanko() {"):HTML.index('$("bagBig").addEventListener("pointerup", endHanko);')]
+        self.assertIn("swipeNudge();", end)  # 流れなかった指は空振りとして数える（朱肉・はんこと同じ共有ハンドラ）
+        self.assertIn("swipeTaps = 0;", HTML[HTML.index("function stampNow()"):HTML.index("function dropHanko()")])  # 押した時から数え直す
+        self.assertIn("swipeTaps = 0;", HTML[HTML.index("function startLot()"):HTML.index("/* 皿の粒:")])  # 袋ごとに仕切り直す
+        down = HTML[HTML.index('$("bagBig").addEventListener("pointerdown",'):HTML.index('$("bagBig").addEventListener("pointermove",')]
+        self.assertIn("stopSwipeDemo();", down)  # 指が触れたら手本の動きは止める
+        self.assertIn("function swipeDemoSound()", HTML)  # 手本には固有の小さな音。実際に流れる bagSound は使わない
+        nudge = HTML[HTML.index("function swipeNudge()"):HTML.index("function leaveBag()")]
+        self.assertNotIn("bagSound", nudge)
+
     def test_cycle93_picked_grains_stay_in_quiet_record(self):
         # 類7: 見分けた粒が静かに記録に残る。任意で開く資料（#notes）の中だけに出し、常時表示・競争・スコアにはしない。
         # 袋を越えて残るため startLot では消さない（サイクル91の seenChecks と同じ持ち方）。

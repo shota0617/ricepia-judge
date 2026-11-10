@@ -479,6 +479,20 @@ function bagSound() { /* おす: 袋が流れる紙の音。360→150Hzへゆっ
     o.start(t); o.stop(t + 0.24);
   } catch (_) {}
 }
+function swipeDemoSound() { /* おす: 押した後の袋を流す手本の動きの音。320→230Hzへ小さく下がる音で、粒の tick（高い短い音）や実際に流れる紙の音（bagSound 360→150Hz・triangle・0.22秒）とは分ける（サイクル140・差分テーマ差42）。ぬく・はかる・きめる・おす（はんこ側）の手本には音が付いた（差25〜28）一方、流す手本だけが無音だった。流れてはいないので実際に流れる音は使わず、手本の滑る動きに固有の小さな音を付ける。手本1回につき1回だけ鳴らす */
+  try {
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    if (ac.state === "suspended") ac.resume();
+    const o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime;
+    o.type = "sine";
+    o.frequency.setValueAtTime(320, t);
+    o.frequency.exponentialRampToValueAtTime(230, t + 0.13);
+    g.gain.setValueAtTime(0.018, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.15);
+    o.connect(g).connect(ac.destination);
+    o.start(t); o.stop(t + 0.15);
+  } catch (_) {}
+}
 function arriveSound() { /* ぬく: 次の袋が運ばれてくる紙の音。180→320Hzへゆっくり上がる低い音で、流れる音（bagSound 360→150Hz）の対にする（サイクル104・差分テーマ差10）。流れる音がある一方、運ばれてくる窓だけが無音だった（390×844実測）。最初の袋（開いた時）では鳴らさない */
   try {
     ac = ac || new (window.AudioContext || window.webkitAudioContext)();
@@ -996,7 +1010,7 @@ function startLot() {
   hint.style.display = "";
   showTop("sceneBag");
   $("dish").textContent = "";
-  measured = 0; meterTaps = 0; crankTurned = 0; bagTaps = 0; spreadTaps = 0; hankoTaps = 0; spread = false; stamped = false; inked = false; twistDone = false;
+  measured = 0; meterTaps = 0; crankTurned = 0; bagTaps = 0; spreadTaps = 0; hankoTaps = 0; swipeTaps = 0; spread = false; stamped = false; inked = false; twistDone = false;
   token.hidden = true;
   $("lcd").textContent = "--.-";
   $("meterBtn").classList.remove("high");
@@ -1928,7 +1942,7 @@ document.querySelectorAll(".gradeBtn").forEach(btn => {
 
 /* おす: 朱肉にぎゅっと押してから、はんこを指で下ろして、ドン。押した袋は横へ流す */
 const INK_MS = 250; /* 朱肉: 短くぎゅっと（約0.25秒）でもインクがつく。450msでは380msの押しでも付かず戻ってしまった（390×844実測・サイクル69） */
-let hankoTaps = 0, stamped = false, inked = false, hankoDrag = null, inkDrag = null, hankoMax = 0, hankoLand = 0, hankoBob = null, inkHold = null, bagSwipe = null, leaving = false;
+let hankoTaps = 0, stamped = false, inked = false, hankoDrag = null, inkDrag = null, hankoMax = 0, hankoLand = 0, hankoBob = null, inkHold = null, bagSwipe = null, swipeTaps = 0, leaving = false;
 function setHanko(y) {
   $("hanko").style.transform = "translateY(" + y + "px)";
 }
@@ -1979,6 +1993,7 @@ function inkDone() {
 function stampNow() {
   if (stamped || step !== 4) return;
   stamped = true;
+  swipeTaps = 0; /* 流す所作の空振りは、押した時から数え直す（サイクル140・差42） */
   cookedReturns.push(GRADES[lotGrade(LOT)]); updateCooked(); /* 押した袋を覚える。次の袋で炊き上がって返ってくる（サイクル94・類8） */
   hankoDrag = null;
   stopBob();
@@ -2009,7 +2024,7 @@ $("bagBig").addEventListener("pointerdown", (e) => {
   if (step !== 4 || leaving) return;
   capture($("bagBig"), e);
   guideOff();
-  if (stamped) { bagSwipe = { x:e.clientX }; return; }
+  if (stamped) { stopSwipeDemo(); bagSwipe = { x:e.clientX }; return; } /* 指が触れたら流す手本の動きは止める（サイクル140・差42。ひきぬく手本と同じ） */
   stopBob();
   if (!inked) {
     /* 朱肉: はんこを朱肉へ押し下げる（下向きの短いドラッグ）と付く。離さず押さえる（250ms）でも付くのは従来どおりの受け皿。
@@ -2044,7 +2059,7 @@ $("bagBig").addEventListener("pointermove", (e) => {
   if (y >= hankoLand) stampNow();
 });
 function endHanko() {
-  if (bagSwipe) { bagSwipe = null; $("bagBig").style.transform = ""; return; }
+  if (bagSwipe) { bagSwipe = null; $("bagBig").style.transform = ""; swipeNudge(); return; } /* 流れなかったタップ・短いなでは、流す所作の空振りとして数える（サイクル140・差42）。朱肉・はんこの空振りと同じ共有の数え方 */
   if (inkHold) {
     inkHold = null; inkDrag = null;
     setHanko(0);
@@ -2085,9 +2100,26 @@ function goNext() {
   lotIndex++;
   startLot();
 }
+/* 押した後の袋へのタップ・届かなかった短いなでも、ほかの所作と同じ空振りの数え方で受ける（サイクル140・差分テーマ差42）。
+   旧版は流す所作だけ受け皿がなく、押印後に目の前の大きな袋をタップする人・40pxに届かない短いなでをした人は、
+   何回やっても何も起きず、音も動きもなかった（「つぎの ふくろ」ボタンだけが別の出口だった）。
+   1回目=手本の指をもう一度＋袋が小さく滑る／2回目=半分流れて戻る／3回目=自分で流れる。数は押した時に0へ戻す */
+let swipeDemo = null; /* 流す手本の動き。指が触れたら・実際に流れ始めたら止める（手本の動きが残って、指や流れる動きを隠さないように） */
+function stopSwipeDemo() {
+  if (swipeDemo) { swipeDemo.cancel(); swipeDemo = null; }
+}
+function swipeNudge() {
+  if (step !== 4 || !stamped || leaving) return;
+  stopSwipeDemo();
+  if (++swipeTaps >= NUDGE_LIMIT) { swipeTaps = 0; leaveBag(); return; }
+  swipeDemoSound(); /* 手本の動きにも固有の小さな音を付ける（差42）。流れてはいないので実際に流れる紙の音は使わない */
+  if (swipeTaps === 1) { guideAt("move", $("bagBig"), 90, 0, 0.24); swipeDemo = $("bagBig").animate([{ transform:"none" }, { transform:"translateX(18px) rotate(.6deg)", offset:.55 }, { transform:"none" }], { duration:320 * motion, easing:"ease-in-out" }); return; } /* 手本の指は証印に重ねない上のほう（サイクル138） */
+  swipeDemo = $("bagBig").animate([{ transform:"none" }, { transform:"translateX(45px) rotate(1.5deg)", offset:.55 }, { transform:"none" }], { duration:560 * motion, easing:"ease-in-out" });
+}
 function leaveBag() {
   if (leaving) return;
   leaving = true;
+  stopSwipeDemo();
   bagSound(); /* 袋が流れる時は紙の音（サイクル95）。粒の tick とは分ける */
   $("bagBig").animate([{ transform:$("bagBig").style.transform || "none" }, { transform:"translateX(130%) rotate(10deg)" }],
     { duration:240 * motion, easing:"ease-in", fill:"forwards" }).onfinish = function () { this.cancel(); goNext(); };

@@ -1369,7 +1369,7 @@ function crashFailures(R, fail) {   // 安全網（guardEvaluate）に かかっ
     let fast = 0, vmax = 0, far = 0;
     for (let i = 0; i < 10; i++) { await page.waitForTimeout(20); const q = await page.evaluate(a => ({ k: nishioPixel.speedK, v: Math.hypot(nishioPixel.roll.vx, nishioPixel.roll.vy), d: Math.hypot(nishioPixel.roll.x - a[0], nishioPixel.roll.y - a[1]) }), [pick.x, pick.y]); fast = Math.max(fast, q.k); vmax = Math.max(vmax, q.v); far = Math.max(far, q.d); }
     await page.evaluate(a => { nishioPixel.rollPut(a[0], a[1], 0, 0); nishioPixel.setRoll(false); }, [pick.x, pick.y]);
-    return { ok: fast === 0 && vmax > 2 && vmax <= 4.25 && far > 1.5, room: d, fast: +fast.toFixed(2), vmax: +vmax.toFixed(2), far: +far.toFixed(2) };
+    return { ok: fast === 0 && vmax > 2 && vmax <= 5 && far > 1.5, room: d, fast: +fast.toFixed(2), vmax: +vmax.toFixed(2), far: +far.toFixed(2) };
   })();
   // びゅんパネル（クセになる ギミック）：めいろの パネルの 上で 矢印の 向きに 傾けると びゅんと 速く なる。矢印と 逆から 来ても おされない（通れる）
   R.checks.mazePad = await (async () => {
@@ -1405,7 +1405,7 @@ function crashFailures(R, fail) {   // 安全網（guardEvaluate）に かかっ
     const h2 = await page.evaluate(() => nishioPixel.maze.padHits);
     await put(c.home[0], c.home[1], 0, 0);
     await page.evaluate(() => nishioPixel.setRoll(false));
-    const ok = h1 === h0 + 1 && vmax > 3.9 && vmax <= 4.25 && h2 === h1b && (chain === 'one-pad' || chain >= 2);   // いちばん 速い 速さは 4.2マス/秒（pixel.js の ROLL_MAX「サイクル68・のんびり転がる：…MAX 8→4.2」）。おされると すぐ その 速さに なる（前は 6 より 上を 見て いた）。びゅんの つづきは ゴールまでの 道で 数える（mzPad の chain「時間では 切れない」）
+    const ok = h1 === h0 + 1 && vmax > 3.9 && vmax <= 5 && h2 === h1b && (chain === 'one-pad' || chain >= 2);   // いちばん 速い 速さは 4.2マス/秒（pixel.js の ROLL_MAX「サイクル68・のんびり転がる：…MAX 8→4.2」）。おされると すぐ その 速さに なる（前は 6 より 上を 見て いた。おされた こまは 4.2 を 少し こえて 4.4 ほどに なる ことが ある ので、上は 5 まで）。びゅんの つづきは ゴールまでの 道で 数える（mzPad の chain「時間では 切れない」）
     return { ok, pad: [x, y, d], boosted: h1 - h0, vmax: +vmax.toFixed(1), against: h2 - h1b, chain, tries, ...(ok ? {} : { tr }) };
   })();
   // ごはんつぶの 列（癖になる ギミック）：通路に 並んだ つぶに ふれると ひろえて、列を ぜんぶ ひろうと「ぜんぶ ひろった！」

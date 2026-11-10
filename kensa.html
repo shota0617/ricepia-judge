@@ -981,7 +981,7 @@ function startLot() {
   hint.style.display = "";
   showTop("sceneBag");
   $("dish").textContent = "";
-  measured = 0; meterTaps = 0; crankTurned = 0; bagTaps = 0; hankoTaps = 0; spread = false; stamped = false; inked = false; twistDone = false;
+  measured = 0; meterTaps = 0; crankTurned = 0; bagTaps = 0; spreadTaps = 0; hankoTaps = 0; spread = false; stamped = false; inked = false; twistDone = false;
   token.hidden = true;
   $("lcd").textContent = "--.-";
   $("meterBtn").classList.remove("high");
@@ -1249,7 +1249,7 @@ function endCrank(e) {
   if (measured >= LOT.moisture.length) return;
   $("lcd").textContent = measured ? LOT.moisture[measured - 1].toFixed(1) : "--.-";
   if (!tapped) return;
-  if (++meterTaps >= NUDGE_LIMIT) { meterTaps = 0; takeReading(); return; }
+  if (++meterTaps >= NUDGE_LIMIT) { meterTaps = NUDGE_LIMIT - 1; takeReading(); return; } /* タップ3回で1回はかれた後は、同じ袋の残りはタップ1回ごとにはかれる（サイクル137・最初の1分）。旧版は1回はかるたびに数え直していたため、タップだけの人は3回×3＝9〜10回のタップ・約12秒かかり、他の所作（3回・約4秒）の3倍だった（390×844実測）。回す動きは手本で3回見せ終えている */
   if (meterTaps === 1) guideAt("circle", $("crank")); /* 空振り1回目: 手本の指をもう一度出す（サイクル81） */
   crankSound(); /* 空振りの手本の揺れ（60°）も、実際に回す時と同じカチッで知らせる（サイクル119・差分テーマ差25）。本物の回転は45°ごとに crankSound が鳴るのに、60°揺れる手本だけが無音だった（390×844実測で同期音0件）。揺れ1回につき1回だけ鳴らす */
   $("crankArm").animate([{ transform:"rotate(" + crankAngle + "deg)" }, { transform:"rotate(" + (crankAngle + 60) + "deg)" }, { transform:"rotate(" + crankAngle + "deg)" }], { duration:380 * motion, easing:"ease-in-out" });
@@ -1516,6 +1516,7 @@ function endPlatePointer(e, cancelled) {
         if (g.kind === "seiryu") { lastGoodTap = tapNow; lastGoodX = e.clientX; lastGoodY = e.clientY; }
         tapGrain(g);
       } else knockPlate();
+      if (!spread && (!g || g.kind === "seiryu")) nudgeSpread();
     } else if (d.moved && !cancelled && step === 2 && Z.s <= 1.001 && d.startG && performance.now() - d.t0 < 400 && Math.hypot(e.clientX - d.x, e.clientY - d.y) > 24) { /* はじく判定: 400msまで受ける。260msでは約300〜400msのゆっくりした払いが届かず無反応だった（390×844実測・サイクル79）。ゆっくりなでて広げる払い（550ms以上）は従来どおりはじきとしない */
       flickGrain(d.startG, e.clientX - d.x, e.clientY - d.y);
     }
@@ -1541,6 +1542,15 @@ function flickGrain(g, dx, dy) {
   g.awake = 16;
   tick();
   startSim();
+}
+/* 広げる前のタップ（山の良い粒・皿）も、ほかの所作と同じ空振りの数え方で受ける（サイクル137・最初の1分）。
+   旧版は「なでて ひろげる」だけ受け皿がなく、タップだけの人は山の粒が揺れるだけで先へ進めなかった（390×844実測: 51回タップ・57秒たっても広がらず）。
+   手本の指も最初に触れた時に消えたまま戻らなかった。1回目=手本の指をもう一度／2回目=山がほどけて広がる。粒は少しでも押されると押し合って広がり切るため、半分だけ見せる段は置かない（短いなでの手本を試すと8回中6回がそれだけで広がった） */
+let spreadTaps = 0;
+function nudgeSpread() {
+  if (step !== 2 || spread) return;
+  if (++spreadTaps >= 2) { spreadTaps = 0; grains.forEach(g => { if (!g.gone) g.awake = 30; }); startSim(); return; } /* 粒どうしが押し合って山がほどける。checkSpread が広がった合図を出す */
+  guideAt("sweep", plate);
 }
 /* トントン: 粒のない所をたたくと、粒が小さくはねて少し広がる */
 function knockPlate() {

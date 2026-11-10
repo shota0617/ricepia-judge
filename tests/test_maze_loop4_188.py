@@ -89,19 +89,21 @@ class GiantWash188(unittest.TestCase):
         L = run_node(LAYOUT)
         exp = []
         for l in L["layers"]:
-            exp += [l["fill"]] + [s["fill"] for s in l["spots"]]
+            exp += [l["fill"]]
+            for s in l["spots"]:
+                exp += [h["fill"] for h in s["halo"]] + [s["fill"]]   # 190：斑の前に外側の淡い縁2つ
         self.assertEqual([c[1] for c in calls if c[0] == "fill="], exp)
-        self.assertEqual(len(exp), 9)
-        self.assertEqual(names.count("fill"), 9)
-        self.assertEqual(names.count("closePath"), 9)
+        self.assertEqual(len(exp), 21)
+        self.assertEqual(names.count("fill"), 21)
+        self.assertEqual(names.count("closePath"), 21)
         self.assertEqual(names.count("ellipse"), 0)
-        self.assertEqual(names.count("quadraticCurveTo"), 108)
+        self.assertEqual(names.count("quadraticCurveTo"), 252)
         self.assertEqual(names.count("fillText") + names.count("stroke"), 0)
         layer = -1
         for c in calls:
             if c[0] == "fill=":
                 layer += 1
-                l = L["layers"][layer // 3]
+                l = L["layers"][layer // 7]
             if c[0] in ("moveTo", "quadraticCurveTo"):
                 pts = [(c[1], c[2])] + ([(c[3], c[4])] if c[0] == "quadraticCurveTo" else [])
                 for x, y in pts:
@@ -126,7 +128,7 @@ class GiantWash188(unittest.TestCase):
     def test_only_expected_files_changed(self):
         out = subprocess.run(["git", "status", "--porcelain"], cwd=ROOT, capture_output=True, text=True).stdout
         files = {l[3:] for l in out.splitlines()}
-        self.assertLessEqual(files, {"nishio-go/pixel.js", "tests/test_maze_loop4_188.py", "tests/test_maze_loop4_187.py", "tests/test_maze_loop4_186.py"})
+        self.assertLessEqual(files, {"nishio-go/pixel.js", "tests/test_maze_loop4_188.py", "tests/test_maze_loop4_187.py", "tests/test_maze_loop4_186.py", "tests/test_maze_loop4_190.py"})
 
 
 if __name__ == "__main__":

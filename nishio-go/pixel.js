@@ -8939,7 +8939,10 @@ function giantWashLayout(sx, sy, size) {
       [[.10, .010, .10, .030, 'rgba(105,165,80,.10)', [.92, .96, 1, .94, .98, .91, .95, .97, .93, .99, .90, .96]], [-.11, -.010, .09, .026, 'rgba(255,255,255,.11)', [.98, .93, .96, .91, 1, .95, .92, .97, .94, .90, .99, .96]]],
       [[.07, -.008, .08, .024, 'rgba(255,255,255,.13)', [.95, .91, .99, .96, .93, 1, .94, .90, .97, .98, .92, .96]], [-.09, .009, .085, .025, 'rgba(90,150,200,.10)', [.97, .94, .90, .98, .95, .92, 1, .96, .91, .99, .93, .95]]],
     ];
-    layers.forEach((l, i) => { l.spots = SPOTS[i].map(([dx, dy, rx, ry, fill, wob]) => ({ cx: l.cx + size * dx, cy: l.cy + size * dy, rx: size * rx, ry: size * ry, fill, wob })); });
+    // 斑の境界をぼかす外側の淡い縁（サイクル190）：同じ色で alpha だけ 1/3・2/3 に、半径を 1.30・1.15 倍にして先に重ねる
+    const haloFill = (fill, k) => fill.replace(/,\s*(\.\d+)\)$/, (m, a) => ',' + (Math.round(parseFloat(a) * k * 100) / 100).toFixed(2).replace(/^0/, '') + ')');
+    const halo = sp => [[1.30, 1 / 3], [1.15, 2 / 3]].map(([m, k]) => ({ rx: sp.rx * m, ry: sp.ry * m, fill: haloFill(sp.fill, k) }));
+    layers.forEach((l, i) => { l.spots = SPOTS[i].map(([dx, dy, rx, ry, fill, wob]) => ({ cx: l.cx + size * dx, cy: l.cy + size * dy, rx: size * rx, ry: size * ry, fill, wob })); l.spots.forEach(sp => { sp.halo = halo(sp); }); });
     return { x: cx - size * 0.46, y: cy - size * 0.13, w: size * 0.92, h: size * 0.26, ground, cx, cy, layers };
   } catch (e) { return null; }
 }
@@ -8954,7 +8957,7 @@ function drawGiantWash(sx, sy, size) {   // 静止画：絵の下地だけ（輪
     for (let i = 0; i < 12; i++) { const a = P[i], b = P[(i + 1) % 12]; ctx.quadraticCurveTo(a[0], a[1], (a[0] + b[0]) / 2, (a[1] + b[1]) / 2); }
     ctx.closePath(); ctx.fill();
   };
-  for (const l of L.layers) { blob(l); for (const sp of l.spots) blob(sp); }   // 層の本体→その層の色むら（抜け・溜まり）
+  for (const l of L.layers) { blob(l); for (const sp of l.spots) { for (const h of sp.halo) blob({ cx: sp.cx, cy: sp.cy, rx: h.rx, ry: h.ry, fill: h.fill, wob: sp.wob }); blob(sp); } }   // 層の本体→その層の色むら（外側の淡い縁2つ→抜け・溜まり）
 }
 function drawShopTag(cx, bottom, dpr, s) {
   gbPause++;

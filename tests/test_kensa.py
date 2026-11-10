@@ -1562,6 +1562,17 @@ guideAt('move', el, 0, -48);      assert.equal(guideEl.style.top, '428px');   //
 """
         subprocess.run([node, "-e", script], capture_output=True, text=True, check=True)
 
+    def test_cycle137_current_pip_gently_appears(self):
+        # 差41: 段階が変わる瞬間、進み具合（#pips）の今のバーだけが className の
+        # 差し替えで即座に色が切り替わっていた（出現アニメーション0件）。
+        # 段階の名前（差40）と同じ260msのふわりとした出現を、今のバーにだけ付ける。
+        start = HTML.index("function setStep(i, text)")
+        body = HTML[start:HTML.index("function showTop", start)]
+        self.assertIn('$("pips").children[i].animate([{ opacity:0, transform:"scale(.7)" }', body)
+        self.assertIn('duration:260 * motion', body)
+        # pips へのアニメーションは setStep の中だけ（出現は段階の切り替え時だけ・今のバーだけ）
+        self.assertEqual(HTML.count('$("pips").children[i].animate'), 1)
+
     def test_cycle93_picked_grains_stay_in_quiet_record(self):
         # 類7: 見分けた粒が静かに記録に残る。任意で開く資料（#notes）の中だけに出し、常時表示・競争・スコアにはしない。
         # 袋を越えて残るため startLot では消さない（サイクル91の seenChecks と同じ持ち方）。

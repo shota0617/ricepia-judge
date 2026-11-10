@@ -1554,6 +1554,7 @@ assert.equal(sims, 1);
         script = """
 const assert = require('node:assert/strict');
 const lotIndex = 0, guideEl = {style:{setProperty(){}}, dataset:{}, className:'', offsetWidth:0}, guideOff = () => {};
+var demoDown = new Set();
 const plate = {}, $ = () => ({style:{}}), window = {innerWidth:390};
 const el = {getBoundingClientRect: () => ({left:0, top:100, width:200, height:400})};
 """ + fn + """
@@ -1696,6 +1697,7 @@ const guideSense = () => { on = true; shown.push('sense'); }, pullPoke = () => {
 const handlers = {};
 const document = {documentElement:{classList:{contains: () => scrolled}}, addEventListener: (n, f) => { handlers[n] = f; }, querySelectorAll: () => [{id:'grade0'}]};
 const window = {addEventListener: () => {}};
+var demoDown = new Set();
 """ + fn + """
 const at = (t) => { T = t; demoTick(); };
 // 5袋目の はかる（従来は手本なし）: 所作が始まって0.8秒までに出る
@@ -1739,6 +1741,15 @@ at(35200); assert.equal(shown.length, n + 1);
 """
         out = subprocess.run([node, "-e", script], capture_output=True, text=True)
         self.assertEqual(out.returncode, 0, out.stderr[-600:])
+
+    def test_cycle140_no_demonstration_while_a_finger_is_down(self):
+        # Codex指摘（PR #1076）: 指が触れている間は、どの道から呼ばれても手本を出さない。出ていたら見回りで消す
+        self.assertIn("var demoDown = new Set();", HTML)
+        self.assertLess(HTML.index("var demoDown = new Set();"), HTML.index("function guideAt(kind, el, gx, gy, at) {"))
+        g = HTML[HTML.index("function guideAt(kind, el, gx, gy, at) {"):]
+        self.assertLess(g.index("if (demoDown && demoDown.size) return;"), g.index("guideEl.dataset.arrow"))  # 何かを置く前に戻る
+        self.assertIn("if (vis && demoDown.size) { demoHide(); return; }", HTML)
+        self.assertNotIn("const demoDown = new Set()", HTML)
 
     def test_cycle140_crank_demo_reads_as_turning(self):
         # はかるの手本は、円に沿って回る指と、その後ろを同じ速さで回る尾。動きを減らす設定では止まった指と向きの矢印。

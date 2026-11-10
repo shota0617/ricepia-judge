@@ -168,6 +168,15 @@ const srv = http.createServer((r, s) => { const u = decodeURIComponent(r.url.spl
     // 曲がり方を覚えた人（横なぞりで 30° 以上を 3 回）には、最初の1分のあとは出さない
     await p.evaluate(() => { HINT.sideOK = 3; FIRSTMIN.finish(); Object.assign(game.S, { x: -1.9, z: 8, yaw: -0.78, v: 0, steer: 0 }); }); await adv(4); cu = await cueSt();
     ok('曲がり方を覚えた人には、最初の1分のあとは 見本を出さない', !cu.vis, cu);
+    // Codex 指摘（PR #1076・2 回目）：最初の1分のあと、下のボタン（canvas の外）を押している指の間も 見本は出ない
+    await p.evaluate(() => { HINT.sideOK = 0; Object.assign(game.S, { x: -1.9, z: 8, yaw: -0.78, v: 0, steer: 0 }); }); await adv(3.5); const cuP = await cueSt();
+    const padBtn = await p.evaluate(() => { const b = document.querySelector('.pad button[data-k="left"]') || document.querySelector('.pad button[data-k]'); if (!b) return null; const r = b.getBoundingClientRect(); return r.width > 0 ? { x: r.left + r.width / 2, y: r.top + r.height / 2 } : null; });
+    if (padBtn) {
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: padBtn.x, y: padBtn.y, id: 1 }] }); await adv(0.3);
+      const pad1 = await cueSt(); await adv(4); const pad2 = await cueSt(), ids = await p.evaluate(() => touchIds.size);
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); await adv(0.3); const ids2 = await p.evaluate(() => touchIds.size); await adv(3); const pad3 = await cueSt();
+      ok('下のボタンを押している間も 見本は消えて、押したまま 4 秒でも出ない・離すと また出る', cuP.vis && !pad1.vis && !pad2.vis && ids === 1 && ids2 === 0 && pad3.vis, [cuP.vis, pad1.vis, pad2.vis, ids, ids2, pad3.vis]);
+    } else ok('下のボタンが見える（最初の1分のあと）', false, padBtn);
     await ctx.close();
   }
   // ---- 5) お題なしで 畦のかどから切り返したあと（サイクル263・Codex 指摘 2）：同じ なぞりの中で 作業機が また下りる ----

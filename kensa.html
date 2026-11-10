@@ -1069,8 +1069,13 @@ const guideEl = $("guide");
 function guideOff() {
   guideEl.className = "";
 }
+var demoDown = new Set(); /* 画面に触れている指（サイクル140）。guideAt より前に置く（var: 読み込みの途中で guideAt が呼ばれても落ちない） */
 function guideAt(kind, el, gx, gy, at) { /* at: 手本の指を置く高さ（el の高さに対する割合）。省けば従来どおり */
   guideOff();
+  /* 指が触れている間は、どの道から呼ばれても手本を出さない（Codex指摘 PR #1076: 2袋目以降、指を離さずになでて広げ切ると
+     checkSpread → updateSortHint → guideAt("pinch") で、触れたままの指の下に手本が出て、その後も消えなかった）。
+     離して手が止まれば、出し直しの見回り（demoTick）が出す */
+  if (demoDown && demoDown.size) return;
   let r = el.getBoundingClientRect ? el.getBoundingClientRect() : { left:el.x, top:el.y, width:0, height:0 }; /* el は要素か、画面上の点 {x, y} */
   if (kind === "pinch" && el === plate) r = { left:r.left + r.width * 0.26, top:r.top + r.height * 0.8, width:0, height:0 }; /* ふたゆびの手本は皿の左下に出し、見ている粒を指で隠さない（サイクル140） */
   if (kind === "circle") r = { left:Math.min(r.left + r.width / 2, window.innerWidth - 70), top:r.top + r.height / 2, width:0, height:0 }; /* 回る指が画面の右へはみ出さない所まで寄せる（375×548実測で3pxはみ出し） */
@@ -2093,7 +2098,7 @@ nextBtn.addEventListener("click", (e) => { if (e.detail === 0) leaveBag(); }); /
    所作ごとのタイマーは持たず、0.2秒ごとに「いまの所作」を見て決めるので、所作や袋が変わった後に古い手本が出ることはない */
 const DEMO_FIRST = 800, DEMO_BACK = 2000, DEMO_BACK_SLOW = 4000;
 let demoKey = "", demoAt = 0, demoTouched = false, demoHelped = false, demoSeen = false;
-const demoDown = new Set(), demoDone = {};
+const demoDone = {};
 function demoPhase() { /* いま手本を出す所作。待ちの間（粒が落ちている・平均を出している・袋が流れている）は "" */
   if (step === 0) return P.done || P.auto ? "" : P.inserted ? "pull" : "stab";
   if (step === 1) return measured < LOT.moisture.length ? "crank" : "";
@@ -2144,6 +2149,7 @@ function demoTick(syncOnly) { /* syncOnly: 所作の切り替わりだけ合わ�
   }
   if (!k || syncOnly === true) return;
   const vis = demoVisible(k);
+  if (vis && demoDown.size) { demoHide(); return; } /* 触れている間に ほかの道から出た手本（穀刺しの指など）も、見回りで消す */
   if (vis) demoSeen = true;
   if (vis && demoTouched) demoHelped = true; /* 触れた後にもう一度手本が出た（空振りの手本も含む） */
   if (vis || demoDown.size || now < demoAt || document.documentElement.classList.contains("scrolled")) return;

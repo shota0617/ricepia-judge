@@ -45,8 +45,8 @@ class GiantWash190(unittest.TestCase):
         exp = [(cx, cy, 184, 52, "rgba(255,240,190,.22)"), (cx - 24, cy + 6, 152, 42, "rgba(170,210,140,.18)"), (cx + 28, cy - 4, 120, 34, "rgba(170,210,240,.16)")]
         spots = [
             [(52, -4.8, 44, 12.8, "rgba(255,255,255,.06)"), (-60, 5.6, 52, 14.4, "rgba(215,175,80,.05)")],
-            [(40, 4, 40, 12, "rgba(105,165,80,.05)"), (-44, -4, 36, 10.4, "rgba(255,255,255,.06)")],
-            [(28, -3.2, 32, 9.6, "rgba(255,255,255,.07)"), (-36, 3.6, 34, 10, "rgba(90,150,200,.05)")],
+            [(40, 4, 40, 12, "rgba(105,165,80,.05)"), (-44, -4, 36, 10.4, "rgba(255,255,255,.055)")],
+            [(28, -3.2, 32, 9.6, "rgba(255,255,255,.065)"), (-36, 3.6, 34, 10, "rgba(90,150,200,.05)")],
         ]
         for l, (ex, ey, rx, ry, f), sps in zip(L["layers"], exp, spots):
             self.assertAlmostEqual(l["cx"], ex)
@@ -93,13 +93,13 @@ class GiantWash190(unittest.TestCase):
                     self.assertLessEqual(s["cy"] + h["ry"], l["cy"] + l["ry"])
 
     def test_halo_fill_examples(self):
-        # 192で濃さを半分にした値（元 .12→本体.06・縁[.02,.04]、元 .10→.05・[.02,.03]、元 .11→.06・[.02,.04]、元 .13→.07・[.02,.04]）
+        # 199で小数第3位まで残した値（元 .12→本体.06・縁[.02,.04]、元 .10→.05・[.017,.033]、元 .11→.055・[.018,.037]、元 .13→.065・[.022,.043]）
         L = run_node(LAYOUT)
         got = [(s["fill"], [h["fill"] for h in s["halo"]]) for l in L["layers"] for s in l["spots"]]
         self.assertEqual(got[0], ("rgba(255,255,255,.06)", ["rgba(255,255,255,.02)", "rgba(255,255,255,.04)"]))
-        self.assertEqual(got[1], ("rgba(215,175,80,.05)", ["rgba(215,175,80,.02)", "rgba(215,175,80,.03)"]))
-        self.assertEqual(got[3], ("rgba(255,255,255,.06)", ["rgba(255,255,255,.02)", "rgba(255,255,255,.04)"]))
-        self.assertEqual(got[4], ("rgba(255,255,255,.07)", ["rgba(255,255,255,.02)", "rgba(255,255,255,.04)"]))
+        self.assertEqual(got[1], ("rgba(215,175,80,.05)", ["rgba(215,175,80,.017)", "rgba(215,175,80,.033)"]))
+        self.assertEqual(got[3], ("rgba(255,255,255,.055)", ["rgba(255,255,255,.018)", "rgba(255,255,255,.037)"]))
+        self.assertEqual(got[4], ("rgba(255,255,255,.065)", ["rgba(255,255,255,.022)", "rgba(255,255,255,.043)"]))
 
     def draw_calls(self):
         return run_node(STUB + "drawGiantWash(100, 200, 400); drawGiantWash(0, 0, 0); console.log(JSON.stringify(calls));")

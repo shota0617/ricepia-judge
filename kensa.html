@@ -52,7 +52,7 @@
   #bagBtn canvas { width:100%; height:100%; display:block; transition:transform .1s ease; }
   #bagBtn.squash canvas { transform:scale(1.05,.94); }
   #poke { position:absolute; z-index:4; font-size:34px; animation:poke 1.3s ease-in-out infinite; pointer-events:none; }
-  @keyframes poke { 0%,100% { transform:translateX(0); } 55% { transform:translateX(var(--pokeDx, -46px)); } } /* 動く長さは、さすのに必要な押しと同じ */
+  @keyframes poke { 0%,100% { transform:translateX(0); } 55% { transform:translateX(var(--pokeDx, -46px)); } } /* 動く長さは、さすのに必要な押しの1.8倍（サイクル143。6割の長さでまねても ささる） */
   #probe { position:absolute; left:0; top:0; z-index:1; pointer-events:none; } /* 袋の後ろを通るので、押すと袋に入って見える */
   #kokuPhoto { position:absolute; right:0; top:0; height:50%; aspect-ratio:3/4; object-fit:cover; border-radius:10px; box-shadow:0 2px 8px rgba(26,24,20,.25); pointer-events:none; }
   #cookedReturn { position:absolute; left:8px; bottom:8px; z-index:3; background:var(--paper); border:2px solid var(--gold); border-radius:20px; padding:4px 10px; font-size:15px; font-weight:800; pointer-events:none; }
@@ -1025,7 +1025,7 @@ function startLot() {
   P.inserted = false; P.done = false; P.released = 0; P.drag = null; P.deep = 0; P.auto = false;
   $("probe").style.opacity = "1";
   layoutProbe();
-  startProbeAttract(); /* 開いた瞬間の誘い: 最初の袋だけ、触れる前に穀刺しが一度だけゆっくり袋の口へ寄って戻る（サイクル82、Fable設計の足すもの1） */
+  startProbeAttract(); /* 開いた瞬間の誘い: 最初の袋だけ、触れる前に穀刺しが袋の口へ寄って戻る（サイクル82、Fable設計の足すもの1）。触れるまで指と一緒にくり返す（サイクル143） */
   setStep(0, "穀刺しを ふくろへ さす ←");
   setFace("normal");
   updateCooked(); /* 前の袋があれば、そのお米が小さく炊き上がって返ってくる（サイクル94・類8） */
@@ -1154,28 +1154,49 @@ function layoutProbe() {
   const poke = $("poke");
   poke.style.left = P.rest + P.L * 0.72 + "px";
   poke.style.top = P.y - 6 + "px";
-  poke.style.setProperty("--pokeDx", -(P.rest - P.inAt + 8) + "px"); /* 手本どおりに押せば、ちょうどさされる */
+  poke.style.setProperty("--pokeDx", stabDx(P.rest) + "px"); /* 手本の6割の長さでまねても ささる（サイクル143） */
   poke.dataset.arrow = "←";
   if (!P.inserted) setProbe(P.rest);
   else if (!P.done) pullPoke(); /* さした後に画面の大きさが変わっても、手本の指は ひきぬく向きのまま（サイクル139） */
+  if (probeAttract) startProbeAttract(); /* 画面の大きさが変わったら、誘いの動きも新しい場所で やり直す（サイクル143） */
 }
 function setProbe(x) {
   P.x = x;
   $("probe").style.transform = "translate(" + x + "px," + P.y + "px)";
 }
-/* 開いた瞬間の誘い（サイクル82）: 触れる前、穀刺しが一度だけ約2秒かけて袋の口（さした判定の所）へ寄って戻り、「さす」動きを文字なしで見せる。手本の指👆（#poke の動き）は従来どおり一緒に出ている。触れたら止まる */
+/* 開いた瞬間の誘い（サイクル82）: 触れる前、穀刺しが袋の口へ寄って戻り、「さす」動きを文字なしで見せる。手本の指👆（#poke の動き）は従来どおり一緒に出ている。触れたら止まる */
+/* 誘いは、触れるまで 手本の指と一緒に くり返す（サイクル143・最初の1分・見ているだけの人）。
+   旧版は はじめの2秒に1回 寄って戻るだけで、あとは指👆だけが 止まった穀刺しの握りの上を 行き来していた
+   （390×664・390×844実測: 何もせず60秒 見ている間、穀刺しが動くのは 0〜2秒の1回だけ。2秒〜60秒は 指が46回 往復し、穀刺しは0回）。
+   指の動き（1.3秒・2秒）も そろっておらず、指が握りを素通りして見えた（はかるの握りは サイクル141で 指と一緒に回るようにした）。
+   穀刺しは 指と同じ長さ・同じ間合い（1.3秒）で、指に押されて袋へ入り、戻る。触れたら止まる・最初の袋だけ は変えない。
+   終わりのない動きなので、手本の出し直し（demoBusy）は待たせない。動きを減らす設定では、従来どおり1回だけ短く見せる */
+/* 手本の指が押す長さ（サイクル143・最初の1分）。旧版は さすのに必要な押し＋8px ちょうどで、手本より少し短い指は ささらなかった
+   （実測: 手本の0.5〜0.7倍の長さでまねる指は 390×664・390×844・360×640・375×548 のどれでも1本目が ささらない。390×664 では 0.77倍の指が 1px 足りず、
+   2本目で深くささって ひきぬく手本（46px固定）では ぬけきらず、粒が落ちるまで5.5〜6.1秒・ぬけるまで8.9〜11.0秒かかっていた）。
+   さす手本は 必要な押しの1.8倍、ひきぬく手本は 穀刺しが入っている長さの1.4倍にして、手本の6割の長さでまねても 1本で ささり・ぬける。
+   さした・ぬけた の決まり（P.inAt・8割ひけば全部）は変えない */
+function stabDx(from) {
+  return -Math.max(Math.round((from - P.inAt) * 1.8), 20);
+}
 let probeAttract = null;
-function stopProbeAttract() {
-  if (probeAttract) { probeAttract.cancel(); probeAttract = null; }
+function stopProbeAttract(keep) { /* keep: 指が穀刺しを動かし始めた時は、穀刺しを いま見えている所に残す（握りが指の下から とばない。はかるの握りと同じ・サイクル143）。ささる手前（P.inAt の1px手前）までで、さしたことにはしない。
+   触れた時は その場で止めるだけ（pause）にして、動かさずに離した指（タップ）では 元の場所へ戻す。タップの数え方・3回目に ひとりでに ぬける動きは 旧版のまま */
+  if (!probeAttract) return;
+  const x = keep && !P.inserted && !P.done ? new DOMMatrixReadOnly(getComputedStyle($("probe")).transform).m41 : null;
+  probeAttract.cancel(); probeAttract = null;
+  if (x !== null && isFinite(x)) setProbe(Math.min(P.rest, Math.max(x, P.inAt + 1)));
 }
 function startProbeAttract() {
   stopProbeAttract();
   if (lotIndex !== 0 || P.done || P.inserted) return;
   const anim = $("probe").animate([
-    { transform:"translate(" + P.rest + "px," + P.y + "px)" },
-    { transform:"translate(" + P.inAt + "px," + P.y + "px)", offset:.5 },
+    { transform:"translate(" + P.rest + "px," + P.y + "px)", easing:"ease-in-out" },
+    { transform:"translate(" + (P.rest + stabDx(P.rest)) + "px," + P.y + "px)", offset:.55, easing:"ease-in-out" },
     { transform:"translate(" + P.rest + "px," + P.y + "px)" }
-  ], { duration:2000 * motion, easing:"ease-in-out", iterations:1 });
+  ], reduced ? { duration:2000 * motion, iterations:1 } : { duration:1300, iterations:Infinity }); /* 指（@keyframes poke: 1.3秒・55%で いちばん奥）と同じ形 */
+  const finger = !reduced && $("poke").getAnimations ? $("poke").getAnimations()[0] : null;
+  if (finger) { if (finger.startTime !== null) anim.startTime = finger.startTime; else anim.currentTime = finger.currentTime || 0; } /* 指と同じ時計で動かす（指が握りを素通りしない） */
   probeAttract = anim;
   /* 旧アニメーションの cancel が遅れて発火しても、新しい誘いを消さないよう対象が一致する時だけ null にする（Codexレビュー指摘・サイクル82） */
   anim.onfinish = () => { if (probeAttract === anim) probeAttract = null; };
@@ -1243,7 +1264,7 @@ function autoProbe() {
 }
 $("sceneBag").addEventListener("pointerdown", (e) => {
   if (step !== 0 || P.done) return;
-  stopProbeAttract(); /* 触れたら誘いは止まる（サイクル82） */
+  if (probeAttract) probeAttract.pause(); /* 触れたら誘いは止まる（サイクル82）。その場で止め、動かし始めたら そこから・離したら元へ（サイクル143） */
   stopPullDemo();
   if (P.drag) return; /* 2本目の指は混ぜない */
   P.drag = { id:e.pointerId, cx:e.clientX, cy:e.clientY, far:0, x0:P.x, moved:false };
@@ -1255,18 +1276,22 @@ $("sceneBag").addEventListener("pointermove", (e) => {
   if (e.pointerId !== P.drag.id) return;
   const dx = e.clientX - P.drag.cx;
   P.drag.far = Math.max(P.drag.far || 0, Math.hypot(dx, e.clientY - P.drag.cy)); /* たて・ななめも含めて指がどれだけ動いたか（さした後の空振りの見きわめ用） */
-  if (Math.abs(dx) > 5) { P.drag.moved = true; $("poke").style.display = "none"; }
+  if (Math.abs(dx) > 5) {
+    if (probeAttract) { stopProbeAttract(true); P.drag.x0 = P.x; } /* 誘いで寄っていた所から、指で続きを押す（サイクル143） */
+    P.drag.moved = true; $("poke").style.display = "none";
+  }
   if (P.drag.moved) moveProbe(P.drag.x0 + dx);
 });
 function endBagDrag(e) {
   if (!P.drag || e.pointerId !== P.drag.id) return;
+  stopProbeAttract(); /* 動かさずに離した指では、誘いで寄っていた穀刺しは元の場所へ（サイクル143） */
   /* 動かさずに離した指だけを さした後の空振りに数える。横の動き（moved）だけで見ると、たてへ 100px 引いて離した指まで空振りになり、3回で自分でぬけていた（Codex指摘 PR #1074） */
   const still = !P.drag.moved && Math.max(P.drag.far || 0, Math.hypot(e.clientX - P.drag.cx, e.clientY - P.drag.cy)) <= 8;
   P.drag = null;
   if (P.inserted && !P.done && still) { pullNudge(); return; }
   if (P.done || P.inserted) return; /* さす前に指を離したら、タップでも違う向きの引きでも1回と数える */
   if (++bagTaps >= NUDGE_LIMIT) { autoProbe(); return; }
-  if (bagTaps === 1) $("poke").style.display = ""; /* 空振り1回目: 手本の指👆をもう一度出す。触って消えた指は戻らず、動かし方が分からなくなっていた（390×844実測・サイクル81、Fable設計の空振り統一） */
+  if (bagTaps === 1) { stabPoke(); $("poke").style.display = ""; } /* 手本の指は、穀刺しの いまの握りの所から（サイクル143） */ /* 空振り1回目: 手本の指👆をもう一度出す。触って消えた指は戻らず、動かし方が分からなくなっていた（390×844実測・サイクル81、Fable設計の空振り統一） */
   /* 空振り2回目: 道具が半分やって見せる（Fable設計の空振り統一・サイクル84）。さす所までの半分まで穀刺しが進んで戻る。状態は進めない */
   if (bagTaps === 2) { probeDemoSound(); /* 半分デモにも手本の音を付ける（サイクル120・差26） */ const halfX = P.x - (P.x - P.inAt) / 2; $("probe").animate([{ transform:"translate(" + P.x + "px," + P.y + "px)" }, { transform:"translate(" + halfX + "px," + P.y + "px)", offset:.55 }, { transform:"translate(" + P.x + "px," + P.y + "px)" }], { duration:640 * motion, easing:"ease-in-out" }); return; }
   /* 進まなかったときは、動かし方を穀刺しが見せる。手本の動きにも固有の小さな音を付ける（サイクル120・差26）。はかるの手本の揺れ（差25）と同じく、手本だけが無音だった */
@@ -1274,7 +1299,7 @@ function endBagDrag(e) {
   $("probe").animate([{ transform:"translate(" + P.x + "px," + P.y + "px)" }, { transform:"translate(" + (P.x - 18) + "px," + P.y + "px)" }, { transform:"translate(" + P.x + "px," + P.y + "px)" }], { duration:320 * motion, easing:"ease-in-out" });
 }
 $("sceneBag").addEventListener("pointerup", endBagDrag);
-$("sceneBag").addEventListener("pointercancel", (e) => { if (P.drag && e.pointerId === P.drag.id) P.drag = null; });
+$("sceneBag").addEventListener("pointercancel", (e) => { if (P.drag && e.pointerId === P.drag.id) { P.drag = null; stopProbeAttract(); } });
 $("bagBtn").addEventListener("click", (e) => { if (e.detail === 0) autoProbe(); }); /* キーボードの Enter はそのまま進める */
 /* さした後のタップ・置いただけの指も、ほかの所作と同じ空振りの数え方で受ける（サイクル139・最初の1分）。
    旧版はさした後の空振りを数えず、手本の指も出なかったため、押し込んで指を離し「ひきぬく →」を見て穀刺しをタップする人・指を置くだけの人は
@@ -1283,13 +1308,13 @@ $("bagBtn").addEventListener("click", (e) => { if (e.detail === 0) autoProbe(); 
 function pullPoke() {
   const poke = $("poke");
   poke.style.left = P.x + P.L * 0.72 + "px";
-  poke.style.setProperty("--pokeDx", "46px");
+  poke.style.setProperty("--pokeDx", Math.max(46, Math.round((P.rest - P.x) * 1.4)) + "px"); /* 入っている長さの1.4倍（サイクル143）。旧版は46px固定で、深くさした後は手本どおりでも ぬけきらなかった */
   poke.dataset.arrow = "→";
 }
 function stabPoke() { /* さす手本の指を、いまの穀刺しの握りに合わせて置く（途中まで押してあれば、その場所から） */
   const poke = $("poke");
   poke.style.left = P.x + P.L * 0.72 + "px";
-  poke.style.setProperty("--pokeDx", -(Math.max(P.x - P.inAt, 12) + 8) + "px");
+  poke.style.setProperty("--pokeDx", stabDx(P.x) + "px");
   poke.dataset.arrow = "←";
 }
 let pullDemo = null; /* ひきぬく手本の動き。指が触れたら・次の空振りが来たら止める（手本の動きが残って、指やひとりでにぬける動きを隠さないように） */

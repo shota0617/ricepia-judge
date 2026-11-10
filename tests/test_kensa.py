@@ -1750,6 +1750,9 @@ at(35200); assert.equal(shown.length, n + 1);
         self.assertLess(g.index("if (demoDown && demoDown.size) return;"), g.index("guideEl.dataset.arrow"))  # 何かを置く前に戻る
         self.assertIn("if (vis && demoDown.size) { demoHide(); return; }", HTML)
         self.assertNotIn("const demoDown = new Set()", HTML)
+        # 押したまま窓の外で離したマウスを「触れている」に残さない（Codex指摘 PR #1076・3回目）
+        self.assertIn('document.addEventListener("pointermove", (e) => { if (e.pointerType === "mouse" && !e.buttons && demoDown.has(e.pointerId)) demoUp(e); }, { capture:true, passive:true });', HTML)
+        self.assertIn('window.addEventListener("blur", () => { if (demoDown.size) { demoDown.clear(); demoUp({ pointerId:-1 }); } });', HTML)
 
     def test_cycle140_crank_demo_reads_as_turning(self):
         # はかるの手本は、円に沿って回る指と、その後ろを同じ速さで回る尾。動きを減らす設定では止まった指と向きの矢印。

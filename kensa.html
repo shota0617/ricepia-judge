@@ -2168,7 +2168,10 @@ function demoUp(e) {
 }
 document.addEventListener("pointerup", demoUp, { capture:true, passive:true });
 document.addEventListener("pointercancel", demoUp, { capture:true, passive:true });
-window.addEventListener("blur", () => { demoDown.clear(); }); /* 指をのせたまま画面を離れても、「触れている」のままにしない */
+window.addEventListener("blur", () => { if (demoDown.size) { demoDown.clear(); demoUp({ pointerId:-1 }); } }); /* 指をのせたまま画面を離れても、「触れている」のままにしない */
+/* 押したまま窓の外でマウスを離すと pointerup が届かない（Codex指摘 PR #1076）。ボタンを押していないマウスが動いたら、離したものとして扱う */
+document.addEventListener("pointermove", (e) => { if (e.pointerType === "mouse" && !e.buttons && demoDown.has(e.pointerId)) demoUp(e); }, { capture:true, passive:true });
+document.addEventListener("visibilitychange", () => { if (demoDown.size) { demoDown.clear(); demoUp({ pointerId:-1 }); } });
 (function demoLoop() { demoTick(); setTimeout(demoLoop, 200); })(); /* 0.2秒ごとに見直す。遊びを止めたり急がせたりする時計ではない */
 window.addEventListener("scroll", () => { document.documentElement.classList.toggle("scrolled", window.scrollY > 0); }, { passive:true });
 window.addEventListener("resize", () => {

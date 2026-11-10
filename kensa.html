@@ -1684,6 +1684,8 @@ function tapGrain(g) {
     return;
   }
   g.gone = true; badLeft--;
+  /* 取った粒を指していた手本は消し、手が止まれば 残りの粒を選び直して出す（Codex指摘 PR #1076: キーボードで取ると pointerdown を通らず、手本が消えた粒の場所を指し続けた） */
+  demoHide(); demoAt = performance.now() + DEMO_BACK;
   pickedKinds[g.kind]++; updateGrainRecord(); /* みわけた粒の種類を静かなきろくへ残す（サイクル93・類7） */
   grainDrop();
   setFace("happy", 500);

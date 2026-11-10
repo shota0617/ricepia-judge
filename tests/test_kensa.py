@@ -1750,6 +1750,10 @@ at(35200); assert.equal(shown.length, n + 1);
         self.assertLess(g.index("if (demoDown && demoDown.size) return;"), g.index("guideEl.dataset.arrow"))  # 何かを置く前に戻る
         self.assertIn("if (vis && demoDown.size) { demoHide(); return; }", HTML)
         self.assertNotIn("const demoDown = new Set()", HTML)
+        # 粒を取ったら（キーボードでも）手本を消して、残りの粒を選び直す（Codex指摘 PR #1076・4回目）
+        tg = HTML[HTML.index("function tapGrain(g) {"):]
+        self.assertLess(tg.index("g.gone = true; badLeft--;"), tg.index("demoHide(); demoAt = performance.now() + DEMO_BACK;"))
+        self.assertLess(tg.index("demoHide(); demoAt = performance.now() + DEMO_BACK;"), tg.index("\n}\n"))
         # 押したまま窓の外で離したマウスを「触れている」に残さない（Codex指摘 PR #1076・3回目）
         self.assertIn('document.addEventListener("pointermove", (e) => { if (e.pointerType === "mouse" && !e.buttons && demoDown.has(e.pointerId)) demoUp(e); }, { capture:true, passive:true });', HTML)
         self.assertIn('window.addEventListener("blur", () => { if (demoDown.size) { demoDown.clear(); demoUp({ pointerId:-1 }); } });', HTML)

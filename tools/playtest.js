@@ -149,10 +149,11 @@ async function firstMinuteChecks(browser, R) {
       const pa = await p2.evaluate(() => {
         const G = nishioGo, g0 = localStorage.getItem('nsg_mzgoals');
         if (!G.playAskOk) return { ok: false, why: 'no-api' };
-        localStorage.setItem('nsg_mzgoals', '0'); const quick = G.playAskOk({ sec: 15 }), slow = G.playAskOk({ sec: 90 });
-        localStorage.setItem('nsg_mzgoals', '3'); const later = G.playAskOk({ sec: 15 });
+        localStorage.setItem('nsg_mzgoals', '1'); const quick = G.playAskOk({ sec: 15 }), slow = G.playAskOk({ sec: 90 });   // 数は 着いた あとの もの（いまのが 何こめか）
+        localStorage.setItem('nsg_mzgoals', '3'); const third = G.playAskOk({ sec: 15 });
+        localStorage.setItem('nsg_mzgoals', '4'); const later = G.playAskOk({ sec: 15 });
         if (g0 === null) localStorage.removeItem('nsg_mzgoals'); else localStorage.setItem('nsg_mzgoals', g0);
-        return { quick, slow, later, min: G.PLAY_ASK_MIN_S, ok: quick === false && slow === true && later === true && G.PLAY_ASK_MIN_S === 60 };
+        return { quick, slow, third, later, kept: typeof G.guideKept === 'function' && G.guideKept() === false, min: G.PLAY_ASK_MIN_S, ok: quick === false && slow === true && third === false && later === true && typeof G.guideKept === 'function' && G.guideKept() === false && G.PLAY_ASK_MIN_S === 60 };
       });
       return { firstGoalNear: fg, lazySprites: lz, playAskQuick: pa };
     } finally { R.errors.push(...v.errors); await v.ctx.close(); }

@@ -69,11 +69,20 @@ console.log(JSON.stringify({ before, again, after, set: a[0], b: [b.size, b.made
     def test_play_ask_waits_in_first_walk(self):
         code = "const store = { get: (k, d) => (k in LS ? LS[k] : d) }; let LS = {}, demo = true;\n" + line_of(GAME, "const PLAY_ASK_MIN_S = ") + "\n" + line_of(GAME, "const playAskOk = ") + """
 const out = [playAskOk({ sec: 15 }), playAskOk({ sec: 59.9 }), playAskOk({ sec: 60 })];
-LS = { nsg_mzgoals: 2 }; out.push(playAskOk({ sec: 15 }));
-LS = { nsg_mzgoals: 3 }; out.push(playAskOk({ sec: 15 }));
+LS = { nsg_mzgoals: 3 }; out.push(playAskOk({ sec: 15 }));   // 3こめ（数は 着いた あとの もの）：たずねない
+LS = { nsg_mzgoals: 4 }; out.push(playAskOk({ sec: 15 }));   // 4こめ：これまでどおり
 LS = {}; demo = false; out.push(playAskOk({ sec: 15 }));
 console.log(JSON.stringify(out))"""
         self.assertEqual(node(code), [False, False, True, False, True, True])
+        # 数えるのが 先（mazeGoal の 中の goalFx → mzHelpGoal）、たずねるか 決めるのは その あと
+        mg = fn_src(GAME, "mazeGoal")
+        self.assertIn("MZ.goalFx('');", mg)
+        self.assertLess(GAME.index("mb = mazeGoal(n.id, n.name, ml)"), GAME.index("if (playAskOk(mz)) playAsk(mz); }"))
+
+    def test_manual_goal_is_not_replaced_by_tried(self):
+        self.assertIn("guideKept: () => !!(S.guide && (S.guide.mine || S.guide.refer || S.guide.byId))", GAME)
+        self.assertIn("const kept = !!(G.guideKept && G.guideKept());", PIX)
+        self.assertIn("if (kept || mzFirstSimple(mzPathShape(mzRt.path), sm)) mzRt.firstTried = null;", PIX)
         self.assertIn("if (mz && !playAskOk(mz)) react.pending = null;", GAME)
         self.assertIn("if (playAskOk(mz)) playAsk(mz); }", GAME)
 

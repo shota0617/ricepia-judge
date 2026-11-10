@@ -9791,7 +9791,9 @@ function mzRoute(now) {
     mzRt.simpleKey = gkey;
     if (mzGoalsDone() < 1 && G.guideNoPath) {
       const sm = G.dist && G.me ? G.dist(G.me, g) : 0;
-      if (!mzFirstSimple(mzPathShape(mzRt.path), sm)) {
+      const kept = !!(G.guideKept && G.guideKept());   // 自分で 選んだ・人の すすめの 行き先：前に ためした 候補へ もどさない（ためした 記録も すてる）
+      if (kept || mzFirstSimple(mzPathShape(mzRt.path), sm)) mzRt.firstTried = null;   // 単純な 道に 決まった：ためした 記録は もう 使わない
+      else {
         // サイクル189（はじめの 1分）：選びなおしで 遠く しない。自分で 遊んで 分かった：はじめの 場所（西尾駅の 南）では 近くの 候補が どれも「単純」で なく、
         // 西尾駅（道のり 408m）→ 公園 → 学生 → 伊文神社の 人（まっすぐ 834m・道のり 2.3km）と 1秒で 4回 かわり、はじめての ゴールまで 道すじどおりに 転がしても 2分 より 長く かかった。
         // 選びなおしは 近く（はじめての ゴールの 帯）の 中だけ。ためした 中に 単純な 道が なければ、道のりが いちばん 短い ものに もどす

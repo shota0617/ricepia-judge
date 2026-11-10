@@ -3908,7 +3908,8 @@ const PLAY_MIN_MS = 900;   // api/feedback.js の PLAY_MIN_MS（800）より す
 // サイクル189（はじめの 1分）：はじめてのさんぽ（3ゴールまで）の 間は、1分 より 短く 着いた ゴールでは たずねない（自分で 遊んで 分かった：はじめての ゴールに 15秒で 着くと、
 // まだ 遊んで いないのに ★の 札が 行き先の 札に かぶって 出た）。たずねるのは その日の 次の ゴールに とっておく
 const PLAY_ASK_MIN_S = 60;
-const playAskOk = mz => !(demo && !(store.get('nsg_mzgoals', 0) >= 3) && mz && mz.sec < PLAY_ASK_MIN_S);
+// ここへ 来る ときには 着いた ゴールは もう 数えて ある（mazeGoal → goalFx → mzHelpGoal）。だから 数は「いまのが 何こめか」：3こめ までは たずねない、4こめ からは これまでどおり
+const playAskOk = mz => !(demo && !(store.get('nsg_mzgoals', 0) > 3) && mz && mz.sec < PLAY_ASK_MIN_S);
 function playAsk(mz) {
   if (store.get('nsg_play_ask', '') === ymd()) return;
   playQ.pending = { sec: Math.round(mz.sec), st: 0, mz };   // mz：★4〜5 の ときの「友だちに」で シェアする ゴール（takeMzShare）
@@ -4689,7 +4690,7 @@ window.nishioGo = {
   spotTip, dist, cooldownLeft, inReach, reachOf, guideRadius, renderGuide, checkin, checkinSpot, popupHtml, toast, toastAfter, renderLog, ymd, refreshNearby, reactLine, get npcs() { return placeNpcs(); }, weekTheme, giveBag, talkNpc, callNpc(id) { calledBy = id || null; }, meetCritter, critterLeft, critterFirst: () => !Object.keys(S.critters || {}).length, watchOpen, watchWater, alleyFind, mzGrain, mzFruit, mzPiece, mzView, mzCache, mzQuest, mzDino, mzChase, mzEnergy, mzShoo, mzTorch, mzBrigade, mzPurify, mzRescueJoin, mzRescue, mzCube, mzGrainHas: key => mzGrainGot().includes(key), get mzGrains() { return mzGrainGot().length; }, alleyOpen: (x, y) => (dayState().alleys || 0) < ALLEY.daily && !(S.alleys || []).includes(`${x},${y}`), sealCands, sealPickCheck, clearInfo: () => ({ cleared: !!S.cleared, got: SEAL_MAIN.filter(id => (S.seals || []).includes(id)).length, need: SEAL_MAIN.length }), get rival() { return rivalWhere(); }, rivalSay, RIVAL, areaArt, npcMet, chestOpened: id => dayState().chests.includes(id), liveChests, get welcomeChest() { return welcomeDue(); },
   moveTo(lat, lng, kind) { if (!demo) return; follow = false; stepMove = kind === 'step'; try { onFix(lat, lng, 5, Date.now()); } finally { stepMove = false; } },
   get driving() { return driving; },
-  get guide() { return guideTarget(); }, decideGuide, setGuide, guideNoPath,
+  get guide() { return guideTarget(); }, decideGuide, setGuide, guideNoPath, guideKept: () => !!(S.guide && (S.guide.mine || S.guide.refer || S.guide.byId)),   // guideKept：自分で 選んだ・人の すすめの 行き先か（かってに かえない）
   autoInterval, autoLearn, idleCheck, buyUp, IDLE,
   setDriving(on) { driving = !!on && demo; if (!driving) tryChest(); refreshNearby(); },
   invalidateMap() { setTimeout(() => { map.invalidateSize(); if (me) map.setView([me.lat, me.lng]); }, 0); },

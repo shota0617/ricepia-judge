@@ -8157,7 +8157,7 @@ const TRACE = {
   // 畦まで 4cm の所まで寄って平行になり、そこからは切ると作業機のおしりが畦にかかって どちらへも動けなかった（実測 スマホ横: 見本どおり横へなぞって 3 回目から 0m）。
   // 1.5m なら 作業機のはし（1.16m）は畦から 34cm。畦ぎわ 50cm は耕した割合に数えないので、耕し残しには ならない
   clampIn(h) { h.x = Math.max(-HX + 1.5, Math.min(HX - 1.5, h.x)); h.z = Math.max(-HZ + 1.5, Math.min(HZ - 1.5, h.z)); },
-  escSide() { const e = this.fPos || this.cps[this.cps.length - 1]; if (!e) return 0; const b = Math.atan2(e[0] - S.x, e[1] - S.z) - S.yaw, bb = Math.atan2(Math.sin(b), Math.cos(b)); return Math.abs(bb) > 0.1 ? Math.sign(bb) : 0; },   // 指（なければ線の終わり）が 向きに対して どちら側か（＋＝yaw が増える側。正面 ±6° は 0）
+  escSide() { const e = this.fPos || this.cps[this.cps.length - 1]; if (!e) return 0; const b = Math.atan2(e[0] - S.x, e[1] - S.z) - S.yaw, bb = Math.atan2(Math.sin(b), Math.cos(b)); return Math.abs(bb) > 0.1 && Math.abs(Math.hypot(e[0] - S.x, e[1] - S.z) * Math.sin(bb)) > 0.8 ? Math.sign(bb) : 0; },   // 指（なければ線の終わり）が 向きに対して どちら側か（＋＝yaw が増える側）。正面 ±6° と、横へ 0.8m 未満は 0（サイクル261: 本物の画面で確かめたら、前へ なぞっただけでも 指が 30cm ほど横へずれていると 畦の手前で勝手に曲がっていた。点を畦の 1.5m 内側へ寄せたので 指が近く、角度だけでは小さなずれを拾う）
   passMin: 1e9,   // サイクル190: 線の終点へ最も近づいた距離（行き過ぎたら止まるための記録。点が足されると戻す）
   sPos: null, DZ: 5,   // サイクル116（なぞり）: 最後に受け付けた指の画面位置と、そこから何 px 動いたら新しい点として受け付けるか（指を置いたままの わずかなブレは無視する）
   sync() { this.cps = T3.smooth(this.pts).slice(this.ctx); },   // 制御用点列（平滑化済み）を作り直す（add のたび）。pts の先頭 ctx 個は通過済みで、平滑化の文脈用に2個だけ残す（平滑化は前後2点にしか依存しないため、残りの点の値は全体を平滑化した場合と一致する）
@@ -8341,9 +8341,9 @@ const HINT = {
     });
   }
 };
-// サイクル260: 「横へ なぞる」見本。画面の上で、鼻先のすぐ先（3m 先の地面）から 少し上（7m 先の高さ）へ上がりながら 画面のはしへ。地面の見える高さだけを通る
+// サイクル260: 「横へ なぞる」見本。画面の上で、ボンネットのすぐ上（8m 先の地面の高さ）から 少し上（13m 先の高さ）へ上がりながら 画面のはしへ。地面の見える高さだけを通る
 HINT.sweep = function (dt, box) {
-  const fx = Math.sin(S.yaw), fz = Math.cos(S.yaw), a = this.proj([S.x + fx * 3.3, S.z + fz * 3.3]), b = this.proj([S.x + fx * 7, S.z + fz * 7]), fel = $('hintFinger');
+  const fx = Math.sin(S.yaw), fz = Math.cos(S.yaw), a = this.proj([S.x + fx * 8, S.z + fz * 8]), b = this.proj([S.x + fx * 13, S.z + fz * 13]), fel = $('hintFinger');   // サイクル261: 本物の運転席で見ると 3.3m 先・7m 先はボンネットとハンドルの上だった（まん中は 9m ほど先まで ボンネットに かくれる）。8m 先・13m 先の高さへ上げ、指が外の地面の上を横へ動くようにする
   if (!a || !b) { box.classList.add('hidden'); return; }
   box.classList.remove('hidden');
   this.t = (this.t + dt) % 2.6;   // 前へのヒントと同じ速さ：2.2 秒かけてなぞり、0.4 秒休む

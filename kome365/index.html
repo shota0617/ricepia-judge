@@ -442,6 +442,9 @@ a{color:var(--acc)}
 /* シャドウモーション: 最初の1枚の間だけ、カードの真後ろで半透明の影が左右へ滑って「左右に動かして選ぶ」ことを見せる(文字なし・入力は妨げない) */
 #swGhost{position:absolute;inset:0;z-index:1;display:none;border-radius:20px;background:linear-gradient(135deg,rgba(43,42,36,.42),rgba(43,42,36,.20));box-shadow:0 6px 18px rgba(0,0,0,.18);pointer-events:none}
 #swGhost.on{display:block;animation:swGhostSlide 4.4s ease-in-out infinite}   /* サイクル68・最初の1分: ゆっくり大きく、端で少し止まって向きが読めるように。周回116: 幅は±22px→±23%(確定距離以上) */
+#swWrap:has(#swCard.enter) #swGhost.on{animation:swGhostSlide 4.4s ease-in-out infinite,swGhostIn .24s linear both}
+#swWrap:has(#swCard.enter) #swGhostArrows.on{animation:swGhostArrowsSlide 4.4s ease-in-out infinite,swGhostIn .24s linear both}   /* 周回154(最初の1分・アニメーション): カードが入ってくる0.22秒の間(はじめは透明)、後ろの案内の影(濃い箱)と ◀ ▶ だけが先に見え、開いた瞬間に「空の暗い箱→白いカード」とちらついた。カードが入ってくるときだけ、案内はカードが見えてから出す。押して離したあとの出し直し(周回153)は enter が外れているので、消えずにそのまま動く */
+@keyframes swGhostIn{0%,60%{opacity:0}100%{opacity:1}}
 @keyframes swGhostSlide{0%,100%{transform:translateX(0) rotate(0)}18%,32%{transform:translateX(23%) rotate(1.5deg)}50%{transform:translateX(0) rotate(0)}68%,82%{transform:translateX(-23%) rotate(-1.5deg)}}   /* 周回116: お手本の幅を確定距離(カード幅×0.22)以上にし、お手本どおり動かせば決まるようにする(従来の±22pxは確定距離の約3割しか届かなかった) */
 #swGhostArrows{position:absolute;inset:0;z-index:5;display:none;pointer-events:none}   /* サイクル111: 矢印はカードの下に隠れるゴーストの上ではなく、カードの両端に重ねて出す(実画面で隠れることを確認して分離) */
 #swGhostArrows.on{display:block;animation:swGhostArrowsSlide 4.4s ease-in-out infinite}   /* 周回116: 矢印はゴースト本体(±23%)に付けると端の矢印がカードの外へ出るため、同じタイミングで±22pxだけ動く別キーフレームにする */
@@ -1974,7 +1977,7 @@ function drawField(){
   else $('fieldTip').classList.add('hidden');
   const c = $('field'), g = c.getContext('2d'), W = c.width, H = c.height;
   const css = getComputedStyle(document.documentElement);
-  const lastRain = f.daily.length && f.daily[f.daily.length - 1].rain;
+  const fv = fview(f), lastRain = fv.daily.length && fv.daily[fv.daily.length - 1].rain;   /* 周回154(最初の1分・シミュレーション): 2Dの絵も3Dと同じ「今日の天気」で描く(fview)。もとは「きのうの記録」を見ていて、雨の1月1日でも three.js が届くまで(3Dが使えない端末ではずっと)晴れた空の絵で、右の今日の空の丸(雨)と食いちがい、3Dに切りかわると急に雨になった */
   // 空
   const sky = g.createLinearGradient(0, 0, 0, H * 0.45);
   sky.addColorStop(0, lastRain ? '#9aa7b0' : css.getPropertyValue('--sky1')); sky.addColorStop(1, css.getPropertyValue('--sky2'));

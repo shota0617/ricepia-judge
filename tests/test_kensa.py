@@ -1573,6 +1573,100 @@ guideAt('move', el, 0, -48);      assert.equal(guideEl.style.top, '428px');   //
         # pips へのアニメーションは setStep の中だけ（出現は段階の切り替え時だけ・今のバーだけ）
         self.assertEqual(HTML.count('$("pips").children[i].animate'), 1)
 
+    def test_cycle139_taps_after_inserting_are_caught(self):
+        # 最初の1分（本物の指）: さした後の空振りは数えず手本も出なかったため、押し込んで指を離し
+        # 「ひきぬく →」を見て穀刺しをタップする人・指を置くだけの人は、4回やっても何も起きなかった
+        # （390×664・390×844・360×640実測: 各8/20が進まず）。
+        # 1回目=手本の指をひきぬく向きに／2回目=半分ぬけて戻る／3回目=自分でぬける。
+        node = shutil.which("node")
+        if not node:
+            self.skipTest("node がないので実行の確認は飛ばす")
+        start = HTML.index("function pullPoke() {")
+        fn = HTML[start:HTML.index("/* はかる:", start)]
+        script = """
+const assert = require('node:assert/strict');
+const NUDGE_LIMIT = 3, motion = 1;
+let step = 0, lotIndex = 0, bagTaps = 0, autos = 0, sounds = 0, cancels = 0; const anims = [];
+const P = {x:100, y:50, rest:200, L:100, inserted:true, done:false};
+const poke = {style:{display:'none', left:'', setProperty(k, v) { this[k] = v; }}};
+const probe = {animate(frames, opt) { anims.push([frames[1].transform, opt.duration]); return {cancel() { cancels++; }}; }};
+const $ = id => ({poke, probe})[id];
+const autoProbe = () => { autos++; }, probeDemoSound = () => { sounds++; };
+""" + fn + """
+pullNudge();                                    // 1回目: 手本の指をひきぬく向きに出し、小さく動く
+assert.equal(poke.style.display, '');
+assert.equal(poke.style.left, '172px');
+assert.equal(poke.style['--pokeDx'], '46px');
+assert.deepEqual(anims[0], ['translate(118px,50px)', 320]);
+pullNudge();                                    // 2回目: 半分ぬけて戻る。前の手本の動きは止める
+assert.deepEqual(anims[1], ['translate(150px,50px)', 640]);
+assert.equal(cancels, 1);
+assert.equal(sounds, 2);
+assert.equal(autos, 0);
+pullNudge();                                    // 3回目: 自分でぬける。手本の動きは残さない
+assert.equal(autos, 1);
+assert.equal(cancels, 2);
+assert.equal(anims.length, 2);
+P.done = true; pullNudge(); assert.equal(autos, 1);   // ぬけた後は数えない
+P.done = false; P.inserted = false; pullNudge(); assert.equal(autos, 1);   // さす前は従来の数え方（endBagDrag）
+"""
+        subprocess.run([node, "-e", script], capture_output=True, text=True, check=True)
+        end = HTML[HTML.index("function endBagDrag(e) {"):HTML.index('$("sceneBag").addEventListener("pointerup", endBagDrag);')]
+        self.assertIn("const still = !P.drag.moved && Math.max(P.drag.far || 0, Math.hypot(e.clientX - P.drag.cx, e.clientY - P.drag.cy)) <= 8;", end)
+        # Codex指摘（PR #1074）を実際の関数で確かめる
+        auto = HTML[HTML.index("function autoProbe() {"):HTML.index('$("sceneBag").addEventListener("pointerdown"')]
+        script2 = """
+const assert = require('node:assert/strict');
+const motion = 1; let step = 0, now = 0; const q = []; const moves = [];
+globalThis.performance = { now: () => now };
+globalThis.requestAnimationFrame = f => { q.push(f); };
+const P = {x:100, inX:100, rest:200, inserted:true, done:false, auto:false, drag:null};
+const poke = {style:{display:''}};
+const $ = id => ({poke})[id];
+const stopProbeAttract = () => {}, moveProbe = x => { moves.push(x); P.x = x; };
+""" + auto + """
+autoProbe();                       // 3回目のタップ: 自分でぬける動きが始まる
+now = 100; q.shift()();            // 100ms 進む
+const mid = P.x;
+autoProbe();                       // その間にもう一度タップ: 始めなおさない
+assert.equal(q.length, 1);         // 動きは1本のまま（旧版は2本になった）
+assert.equal(P.x, mid);            // さした所へ押し戻さない
+P.done = true; q.shift()(); assert.equal(P.auto, false);   // 終わったら印を下ろす
+// たてへ引いて離した指は、さした後の空振りに数えない
+let nudges = 0; const pullNudge = () => { nudges++; }; let bagTaps = 0, lotIndex = 0; const NUDGE_LIMIT = 3;
+const probeDemoSound = () => {};
+""" + end + """
+P.done = false; P.inserted = true;
+P.drag = {id:1, cx:50, cy:50, far:100, x0:100, moved:false}; endBagDrag({pointerId:1, clientX:50, clientY:150}); assert.equal(nudges, 0);
+P.drag = {id:1, cx:50, cy:50, far:0, x0:100, moved:false};   endBagDrag({pointerId:1, clientX:50, clientY:150}); assert.equal(nudges, 0);   // 離した位置だけが遠くても数えない
+P.drag = {id:1, cx:50, cy:50, far:3, x0:100, moved:false};   endBagDrag({pointerId:1, clientX:52, clientY:51});  assert.equal(nudges, 1);   // 置いただけ・タップは数える
+"""
+        subprocess.run([node, "-e", script2], capture_output=True, text=True, check=True)
+        self.assertIn("if (P.inserted && !P.done && still) { pullNudge(); return; }", end)  # ひきぬく途中で離した指は数えない
+        move = HTML[HTML.index("function moveProbe(x) {"):HTML.index("function pourOne(g) {")]
+        self.assertIn("bagTaps = 0;", move)  # さした時に数え直す
+        down = HTML[HTML.index('$("sceneBag").addEventListener("pointerdown",'):HTML.index('$("sceneBag").addEventListener("pointermove",')]
+        self.assertIn("stopPullDemo();", down)  # 指が触れたら手本の動きは止める
+        lp = HTML.index("function layoutProbe() {")
+        layout = HTML[lp:HTML.index("function setProbe(x)", lp)]
+        self.assertIn("else if (!P.done) pullPoke();", layout)
+
+    def test_cycle139_touches_beside_the_sense_token_are_caught(self):
+        # 最初の1分（本物の指）: 🤲のふちから10〜25px外で始めた運びは、4回やっても何も起きず、
+        # 代わりに下の皿が反応して粒がなでられ、案内が「わるい粒を つまむ」に戻ることがあった
+        # （390×664・390×844・360×640実測: 各4回とも進まず）。
+        # 🤲の当たりを24px広げ、その外の指は🤲の空振りと同じに数え、皿は🤲が出ている間は指を受けない。
+        self.assertIn('#senseToken::before { content:""; position:absolute; inset:-24px; border-radius:50%; }', HTML)
+        start = HTML.index('token.addEventListener("pointerup", endToken);')
+        outside = HTML[start:HTML.index('token.addEventListener("pointercancel", endToken);')]
+        self.assertIn('document.addEventListener("pointerup", (e) => {', outside)
+        self.assertIn("if (token.hidden || senseDrag || senseHold || e.target === token || token.contains(e.target)) return;", outside)
+        self.assertIn('if (!e.target.closest || !e.target.closest("#stage, #head") || e.target.closest("#notesLink")) return;', outside)  # 📖・下の説明・手が止まったカードは数えない
+        self.assertIn('if (senseKind === "nigiru") senseHold = {}; else senseDrag = { x:e.clientX, y:e.clientY, moved:false };', outside)
+        self.assertIn("endToken();", outside)
+        down = HTML[HTML.index('plate.addEventListener("pointerdown",'):HTML.index('plate.addEventListener("pointermove",')]
+        self.assertIn("if (step !== 2 || e.target === zoomBtn || !token.hidden) return;", down)
+
     def test_cycle93_picked_grains_stay_in_quiet_record(self):
         # 類7: 見分けた粒が静かに記録に残る。任意で開く資料（#notes）の中だけに出し、常時表示・競争・スコアにはしない。
         # 袋を越えて残るため startLot では消さない（サイクル91の seenChecks と同じ持ち方）。

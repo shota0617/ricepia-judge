@@ -8321,8 +8321,10 @@ const TRACE = {
       // 指は置いたままなのに 向きが 46° も もどった（実測 スマホ縦・横へ なぞって 7 秒置く: 75° 曲がってから 29° まで もどる）。横なぞり＝「その向きへ 70° まで曲がって止まる」に そろえる
       if (!q.off) {
         if (Math.sin(S.yaw) * q.fx + Math.cos(S.yaw) * q.fz <= 0.35) { q.off = q.done = true; this.drive = false; return false; }
-        if (ahead <= 0.8) q.off = true;
-        else if (Math.abs(lat) > 0.4) { const b = -Math.sign(lat) * MAX_STEER * Math.min(1, Math.abs(lat) / 1.5); if (!(r.steerT * b > 0 && Math.abs(r.steerT) > Math.abs(b))) r.steerT = b; }
+        // 線の近く（0.8m）に着いた: 指の側へ切ってきた なぞり（q.bias）は ここで おしまい（Codex 指摘 PR #1075: 横への動きが小さい なぞりは 70° の前に ここへ着き、
+        // 線を追う動きに もどすと 54° 曲がったあと 13° まで もどった）。指の側へ 一度も切っていない なぞり（横へ 0.4m 未満）は 今までどおり線を追う
+        if (ahead <= 0.8) { q.off = true; if (q.bias) { q.done = true; this.drive = false; return false; } }
+        else if (Math.abs(lat) > 0.4) { q.bias = true; const b = -Math.sign(lat) * MAX_STEER * Math.min(1, Math.abs(lat) / 1.5); if (!(r.steerT * b > 0 && Math.abs(r.steerT) > Math.abs(b))) r.steerT = b; }
       }   // なぞりはじめの向きから 70° より回ったら やめる（線に着かないまま 置いた指のまわりを回りつづけないように）
     }
     if (this.blockT > 0 && this.escSide()) r.steerT = -this.escSide() * MAX_STEER * this.escK;

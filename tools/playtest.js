@@ -14,6 +14,23 @@ const STATION = [34.8640, 137.0560];   // あるいて移動で使う位置（�
 // 今日のクエストとたからばこは日付で決まるので、台本の中の日付を固定する（この日は「西尾の注目スポット」と「たからばこ2つ」が出て、この道順で達成できる）
 const PLAY_DATE = process.env.PLAYTEST_DATE || '2026-10-16T10:00:00+09:00';
 
+// 安全網：ページの 中で 動かす 確かめ（page.evaluate）が エラーで 止まっても、通しは つづける。止まった ことは CRASHES に のこし、最後に 落ちた 項目として 出す
+// （ゲームが かわって 古く なった 確かめ 1つの せいで、のこり ぜんぶが 動かなく なって いた）。その 確かめの 値は false に なるので、ok には ならない。直すのは 確かめの ほう
+const CRASHES = [];
+const SRC_LINES = fs.readFileSync(__filename, 'utf8').split('\n');
+function crashNote(line, e) {
+  let name = '';
+  for (let i = line - 1; i >= 0 && i > line - 80 && !name; i--) { const m = /(?:R\.)?checks\.(\w+)\s*=[^=]/.exec(SRC_LINES[i] || ''); if (m) name = m[1]; }
+  CRASHES.push({ name: name || 'L' + line, line, msg: String(e && e.message || e).split('\n')[0].slice(0, 240) });
+}
+function guardEvaluate(page) {
+  const ev = page.evaluate.bind(page);
+  page.evaluate = (...a) => {
+    const fr = (new Error().stack || '').split('\n').slice(2).find(l => l.includes(__filename)), line = fr ? Number((/:(\d+):\d+\)?$/.exec(fr) || [])[1]) || 0 : 0;
+    return ev(...a).catch(e => { crashNote(line, e); return false; });
+  };
+}
+
 async function newPage(browser, opts = {}) {
   const { howto, kome, auto, ...ctxOpts } = opts;
   const ctx = await browser.newContext({ viewport: VIEW, deviceScaleFactor: 2, ...ctxOpts });
@@ -35,6 +52,7 @@ async function newPage(browser, opts = {}) {
     HTMLMediaElement.prototype.play = function () { window.__played.push(this.src.split('/').pop()); return play.call(this); };
   }, [!!howto, !!kome, !!auto]);
   const page = await ctx.newPage();
+  guardEvaluate(page);
   await page.clock.setFixedTime(new Date(PLAY_DATE));   // Date だけ固定（タイマーやアニメーションはふつうに動く）
   const errors = [];
   page.on('pageerror', e => errors.push(e.message));
@@ -164,16 +182,25 @@ const FIRST_MINUTE_NEED = {
   playAskQuick: 'はじめてのさんぽで すぐ 着いた ゴールでも「どうだった？」を たずねる',
 };
 
+const RUN = { R: null };
+function crashFailures(R, fail) {   // 安全網（guardEvaluate）に かかった 確かめを 落ちた 項目に する
+  for (const c of CRASHES) {
+    const k = 'crash_' + c.name;
+    if (!R.checks[k]) R.checks[k] = { ok: false, line: c.line, crashed: c.msg };
+    fail.push(`確かめの 中で エラー（${c.name}・${c.line}行め）：${c.msg}`);
+  }
+}
 (async () => {
   fs.mkdirSync(OUT, { recursive: true });
   const server = startServer(PORT);
   const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
-  const R = { shots: [], checks: {}, walk: [], errors: [] };
+  const R = RUN.R = { shots: [], checks: {}, walk: [], errors: [] };
   if (process.env.PLAYTEST_ONLY === 'firstMinute') {
     Object.assign(R.checks, await firstMinuteChecks(browser, R));
     await browser.close(); server.close();
     R.failures = Object.keys(FIRST_MINUTE_NEED).filter(k => !(R.checks[k] && R.checks[k].ok)).map(k => `${FIRST_MINUTE_NEED[k]}（${JSON.stringify(R.checks[k])}）`);
     if (R.errors.length) R.failures.push(`ページの エラー：${R.errors.slice(0, 3).join(' / ')}`);
+    crashFailures(R, R.failures);
     R.ok = R.failures.length === 0;
     fs.writeFileSync(path.join(OUT, 'playtest.json'), JSON.stringify(R, null, 2));
     console.log(JSON.stringify(R, null, 2));
@@ -308,9 +335,10 @@ const FIRST_MINUTE_NEED = {
     for (const p of path) { H.move(p[0] > at[0] ? 'right' : p[0] < at[0] ? 'left' : p[1] > at[1] ? 'down' : 'up'); at = p; }
     await new Promise(r => setTimeout(r, 500));
     const rec = G.miniRecords('harvest')[0], res = document.querySelector('#harvest .jump-result');
-    if (!(rec && rec.s === 3 && /自己ベスト/.test(res.textContent) && res.querySelector('[data-lv="1"]') && !res.querySelector('[data-lv="2"]'))) bad.push('自己ベスト');
-    const worse = G.miniBest('harvest', 0, 2, 99, true);
-    if (worse.fresh || G.miniRecords('harvest')[0].s !== 3) bad.push('悪い記録で上書き');
+    // ★での 優劣は つけなく なった（harvest.js の はじめの 説明・game.js の miniBest「星・効率では更新を競わない」）：成功は「できた」印（✓）だけを 静かに のこし、結果では くらべない
+    if (!(rec && rec.s === 1 && /刈り取り成功/.test(res.textContent) && !/自己ベスト|★|☆/.test(res.textContent) && /✓/.test((res.querySelector('[data-lv="0"]') || {}).textContent || '') && res.querySelector('[data-lv="1"]') && !res.querySelector('[data-lv="2"]'))) bad.push('できた印');
+    const again = G.miniBest('harvest', 0, 3, 99, true);   // もう ある 記録は、よい 数でも 悪い 数でも 上書きしない
+    if (again.fresh || G.miniRecords('harvest')[0].s !== 1 || G.miniBest('harvest', 0, 0, 1, true).fresh || G.miniRecords('harvest')[0].s !== 1) bad.push('ある記録を上書き');
     H.close(); H.open();
     if (H.info.level !== 1) bad.push('つづき');
     H.close();
@@ -456,10 +484,12 @@ const FIRST_MINUTE_NEED = {
     if (O.villageOf('中根町', '西尾市').id !== 'terazu' || O.villageOf('南中根町', '西尾市').id !== 'meiji') bad.push('中根と南中根');
     return bad.length ? bad.join(',') : true;
   });
-  // ミニゲーム「肥料山の草刈り」：草を刈って5束で かごがいっぱい、田んぼでおろす。持ち主に「知事の許可」と答えると +10秒
+  // ミニゲーム「肥料山の草刈り」：草を刈って5束で かごがいっぱい、田んぼでおろす。制限時間は なくなった（hiryoyama.js の はじめの 説明「制限時間はなく…時間は画面に出さない」）。
+  // 30秒ほどで 持ち主が 来る。「知事の許可」と 答えると 帰って 草刈りは つづく。「返す」と 答えると そこで おしまい
   R.checks.hiryo = await page.evaluate(async () => {
     const Y = window.NISHIO_HIRYO, G = nishioGo, bad = [];
     if (!Y) return 'none';
+    const wait = ms => new Promise(r => setTimeout(r, ms));
     const rw = document.getElementById('reward'); if (rw.classList.contains('show')) rw.click();
     Y.open(true);
     let i = Y.info;
@@ -470,14 +500,28 @@ const FIRST_MINUTE_NEED = {
     if (Y.info.carry !== 5) bad.push(`かご ${Y.info.carry}`);
     for (let k = 0; k < 7; k++) Y.move('down');
     if (Y.info.total !== 5 || Y.info.carry !== 0) bad.push(`おろす ${Y.info.total}`);
-    Y.setLeft(30.2);
-    await new Promise(r => setTimeout(r, 600));
+    if ('left' in Y.info || /秒|\d:\d/.test(document.querySelector('#hiryo .harvest-hud').textContent)) bad.push('のこり時間が 出ている');
+    if (Y.info.owner || Y.info.ownerAsked) bad.push('持ち主が 早く 来た');
+    Y.setElapsed(30.2);
+    await wait(600);
     if (!Y.info.owner) bad.push('持ち主が来ない');
-    const l0 = Y.info.left;
+    const res = document.querySelector('#hiryo .jump-result');
+    if (res.hidden || res.querySelectorAll('[data-hy]').length !== 3 || !res.querySelector('[data-hy="ok"]')) bad.push('こたえの ボタン');
+    const e0 = Y.info.elapsed; await wait(300);
+    if (Y.info.elapsed !== e0) bad.push('聞かれて いる 間も 時間が すすむ');
     Y.answer('ok');
-    if (Y.info.left < l0 + 9) bad.push('+10秒');
-    Y.finish('time');
-    if (!/草刈り|時間切れ/.test(document.querySelector('#hiryo .jump-result').textContent)) bad.push('結果');
+    if (Y.info.owner || Y.info.done || !res.hidden) bad.push('知事の許可：帰らない');
+    await wait(300);
+    if (!(Y.info.elapsed > e0)) bad.push('知事の許可：草刈りが つづかない');
+    Y.setElapsed(99); await wait(300);
+    if (Y.info.owner) bad.push('持ち主が 2回 来た');
+    // 「返す」と 答えると、そこで おしまい（ごほうびは 出ない）
+    const p0 = G.state.points;
+    Y.reset(); Y.setElapsed(30.2); await wait(600);
+    if (!Y.info.owner) bad.push('やりなおし：持ち主が来ない');
+    Y.answer('give');
+    if (!Y.info.done || !/肥料山を返した/.test(res.textContent) || !/運んだ束 0/.test(res.textContent) || res.hidden) bad.push('結果');
+    if (G.state.points !== p0) bad.push('返したのに ごほうび');
     Y.close();
     if (document.body.classList.contains('jump-open')) bad.push('閉じない');
     return bad.length ? bad.join(',') : true;
@@ -552,6 +596,13 @@ const FIRST_MINUTE_NEED = {
   } else R.checks.shopCard = false;
   // せかいちず：川の名前・町名・駅名（チェックインのほうびの知らせは7秒出ているので、写す前に消す）
   await page.evaluate(() => { const r = document.getElementById('reward'); if (r.classList.contains('show')) r.click(); });
+  // 🌏 せかいちず・🌀 盤のめいろ の ボタンは、はじめてのさんぽ（3ゴールまで）の 間は 出さない（pixel.js の firstWalkBtns）。3つめの ゴールから 出る。
+  // ここから 先は 3ゴール すんだ 人として 遊ぶ（ゴールの 数 nsg_mzgoals を 3 に。下の めいろの おたすけの 確かめと 同じ やり方）
+  R.checks.worldBtnFirstWalk = await page.evaluate(() => {
+    const w = document.getElementById('pxWorld'), m = document.getElementById('pxMeiro'), before = w.hidden && m.hidden;
+    localStorage.setItem('nsg_mzgoals', '3'); nishioPixel.setWorld(false);   // setWorld → updatePad → firstWalkBtns
+    return { before, after: !w.hidden && w.offsetParent !== null, ok: before && !w.hidden && w.offsetParent !== null };
+  });
   await page.click('#pxWorld');
   await page.waitForFunction(() => nishioPixel.worldState === 'ok', null, { timeout: 30000 });
   for (let i = 0; i < 3; i++) await page.$eval('#pxZoomIn', b => b.click());   // 文字を少なく（ふだん）では ＋ は隠れて 🔍 になる
@@ -3848,9 +3899,24 @@ const FIRST_MINUTE_NEED = {
   need(c.walkModePoints === 30 && c.walkWelcome && c.operatePointsKept === c.operateFinal.pts && c.operateFinal.pts > 0, '記録がモードごとに分かれていない（あるいて移動は ようこそ の +30 だけのはず）');
   need(Array.isArray(c.walkChests) && c.walkChests.length > 0, 'あるいて移動でたからばこが置かれていない');
   need(Array.isArray(c.walkChests) && c.walkChests.every(at => at), 'あるいて移動のたからばこがスポット以外に置かれた');
+  need(c.worldBtnFirstWalk && c.worldBtnFirstWalk.ok, `はじめてのさんぽの 間に 🌏・🌀 の ボタンが 出ている／3ゴールの あと 🌏 が 出ない（${JSON.stringify(c.worldBtnFirstWalk)}）`);
+  crashFailures(R, fail);
   R.failures = fail;
   R.ok = fail.length === 0;
   fs.writeFileSync(path.join(OUT, 'playtest.json'), JSON.stringify(R, null, 2));
   console.log(JSON.stringify(R, null, 2));
   process.exit(R.ok ? 0 : 1);
-})().catch(e => { console.error(e); process.exit(1); });
+})().catch(e => {
+  // 台本 そのものが とちゅうで 止まった：そこまでの 結果を 落ちた 項目つきで のこす（どこで 止まったかが 結果の ファイルで 分かる）。ok には ならない
+  console.error(e);
+  try {
+    const R = RUN.R || { checks: {}, errors: [] }, fail = [];
+    const fr = String(e && e.stack || '').split('\n').find(l => l.includes(__filename)), line = fr ? Number((/:(\d+):\d+\)?$/.exec(fr) || [])[1]) || 0 : 0;
+    R.checks.scriptStopped = { ok: false, line, crashed: String(e && e.message || e).split('\n')[0].slice(0, 240) };
+    fail.push(`台本が とちゅうで 止まった（${line}行め：${R.checks.scriptStopped.crashed}）。その 先の 確かめは 動いて いない`);
+    crashFailures(R, fail);
+    R.failures = fail; R.ok = false;
+    fs.writeFileSync(path.join(OUT, 'playtest.json'), JSON.stringify(R, null, 2));
+  } catch (e2) { console.error(e2); }
+  process.exit(1);
+});

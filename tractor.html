@@ -8153,6 +8153,10 @@ const TRACE = {
   pts: [], cps: [], ctx: 0, on: false, drive: false, line: null, fade: 0,
   fv: 0, fHist: [], fT: 0, fPos: null, scCd: 0, stopBoost: 0,   // サイクル116: 指の速さ（変位ベース）・近道の間隔・離した直後の強い減速
   blockT: 0, escK: 1,   // サイクル260: 畦の手前で止められてからの残り時間（秒）と、その間の切れ角（いっぱい＝1）。この間は 指のある側へ切る
+  // サイクル260: なぞりの点は 畦から 1.5m 内側までに寄せる（それまでは畦の線の上まで）。畦ぞいに なぞると 線が畦の上に乗り、トラクターは作業機のはしが
+  // 畦まで 4cm の所まで寄って平行になり、そこからは切ると作業機のおしりが畦にかかって どちらへも動けなかった（実測 スマホ横: 見本どおり横へなぞって 3 回目から 0m）。
+  // 1.5m なら 作業機のはし（1.16m）は畦から 34cm。畦ぎわ 50cm は耕した割合に数えないので、耕し残しには ならない
+  clampIn(h) { h.x = Math.max(-HX + 1.5, Math.min(HX - 1.5, h.x)); h.z = Math.max(-HZ + 1.5, Math.min(HZ - 1.5, h.z)); },
   escSide() { const e = this.fPos || this.cps[this.cps.length - 1]; if (!e) return 0; const b = Math.atan2(e[0] - S.x, e[1] - S.z) - S.yaw, bb = Math.atan2(Math.sin(b), Math.cos(b)); return Math.abs(bb) > 0.1 ? Math.sign(bb) : 0; },   // 指（なければ線の終わり）が 向きに対して どちら側か（＋＝yaw が増える側。正面 ±6° は 0）
   passMin: 1e9,   // サイクル190: 線の終点へ最も近づいた距離（行き過ぎたら止まるための記録。点が足されると戻す）
   sPos: null, DZ: 5,   // サイクル116（なぞり）: 最後に受け付けた指の画面位置と、そこから何 px 動いたら新しい点として受け付けるか（指を置いたままの わずかなブレは無視する）
@@ -8193,12 +8197,14 @@ const TRACE = {
     if (!S.started || S.done || INTRO.on || !$('start').classList.contains('hidden')) return false;
     const h = this.ground(e);
     if (!h) return false;   // 地面と交わらない（空）だけ なぞれない＝まわりを見る側へ回す
-    h.x = Math.max(-HX, Math.min(HX, h.x)); h.z = Math.max(-HZ, Math.min(HZ, h.z));   // サイクル101: 地面の上なら どこで始めても なぞり（田んぼの外は ふちへ寄せる）
+    this.clampIn(h);   // サイクル101: 地面の上なら どこで始めても なぞり（田んぼの外は ふちへ寄せる。サイクル260: ふちの 1.5m 内側へ）
     this.pts = [[h.x, h.z]]; this.ctx = 0; this.sync(); this.on = true; this.fade = 0;
     this.fv = 0; this.fHist = [[e.timeStamp || 0, h.x, h.z]]; this.fT = e.timeStamp || 0; this.fPos = [h.x, h.z]; this.scCd = 0;   // サイクル116
     this.sPos = [e.clientX, e.clientY]; this.passMin = 1e9;
     if (camMode !== 0) { camMode = 0; look.yaw = look.pitch = 0; $('bCam').textContent = '👁 ' + CAMS[0]; this.rebase = true; }   // サイクル118: 運転席視点に戻す（ユーザー実機指示 2026-11-05）。なぞりは運転席から前方の田んぼをなぞる形にする。最初の点は旧視点の座標なので、次の add で引き直す（従来の rebase）
-    if (!S.rotDown && !S.stalled) toggleRotary();       // 下りていなければ 自動で下ろす（降下止めの判定は toggleRotary 側）。エンスト中は下げない（なぞりでの再始動が できなくなるため。Codex指摘）
+    // サイクル260・最初の1分: なぞりはじめに自動で下ろす知らせ「…を下げました」は、のんびりでは はじめの 1 回だけ。
+    // 🔰 が白線・旋回で上げるたびに 次のなぞりで下りて同じ吹き出しが出ていた（実測 スマホ横・見本どおりに向きを変える人の はじめの 60 秒: 吹き出し 9 回のうち 7 回がこれ）。ボタン・キーで下げたときと、くわしい説明では従来どおり毎回出す
+    if (!S.rotDown && !S.stalled) { toggleRotary(!DETAIL && this.lowerTold); if (S.rotDown) this.lowerTold = true; }       // 下りていなければ 自動で下ろす（降下止めの判定は toggleRotary 側）。エンスト中は下げない（なぞりでの再始動が できなくなるため。Codex指摘）
     this.draw();
     return true;
   },
@@ -8206,7 +8212,7 @@ const TRACE = {
     if (!this.on) return;
     const h = this.ground(e);
     if (!h) return;
-    h.x = Math.max(-HX, Math.min(HX, h.x)); h.z = Math.max(-HZ, Math.min(HZ, h.z));   // サイクル101: ふちの外へ出ても 線が途切れない
+    this.clampIn(h);   // サイクル101: ふちの外へ出ても 線が途切れない
     if (this.rebase) { this.rebase = false; this.pts = [[h.x, h.z]]; this.ctx = 0; this.sync(); this.fv = 0; this.fHist = [[e.timeStamp || 0, h.x, h.z]]; this.fT = e.timeStamp || 0; this.fPos = [h.x, h.z]; this.sPos = [e.clientX, e.clientY]; this.passMin = 1e9; this.draw(); return; }   // 視点が切りかわった直後: 線をいまの指の位置から引き直す（指速の計測もここから）。引き直しの点は begin と同じ始点として寄せない（Codex設計確認の指摘）
     h.x = this.snapX(h.x);   // サイクル219・類3: 列への軽い吸着（snapX 側で条件判定。begin・rebase の始点は寄せない）
     // サイクル116（なぞり）: 画面上で DZ px 動いていない pointermove は受け付けない（最後に受け付けた位置からの差で見る＝ゆっくりでも動かし続ければ通る）。
@@ -9838,7 +9844,7 @@ function fogDiv() { return DETAIL ? 14 : 3.5; }
 function dankiMuted() { return !DETAIL && FIRSTMIN.on; }
 // サイクル170・最初の1分: のんびり（calm）では開始1分は開始直後の天気・窓の知らせトーストを出さず、まずなぞって耕す楽しさに集中させる。天気・曇り・ライトの状態そのものは従来どおり見た目で伝わり、くわしい説明（DETAIL）では従来どおり知らせる。サイクル201・最初の1分: 点検（+300/+120）・歩行（+120）で S.elapsed が先行するとガードが開始直後から外れたため、判定を FIRSTMIN の実時間へそろえた。S.elapsed の加算自体・作業時間の表示は不変更で、くわしい説明では従来どおり出す。
 function startNoticeMuted() { return !DETAIL && FIRSTMIN.on; }
-function toggleRotary() {
+function toggleRotary(quiet) {   // quiet＝下げた知らせを出さない（サイクル260: なぞりで自動に下ろした 2 回目から）
   if (INTRO.on) return;                           // 草刈りの あいだは 草刈機（ロータリーは まだ ついていない）
   if (S.scrape > 0 || BELT.fixing || COVER.fixing || GREASE.fixing || CLAW.fixing || HERI.fixing || GASU.fixing || KATA.fixing || PANKU.fixing || AIRCL.fixing) return;   // 泥落とし・直しているあいだは さわらない（降下止めをかけてある）
   DRIVER.st.reach = 0.8;
@@ -9852,7 +9858,8 @@ function toggleRotary() {
     return;
   }
   ASSIST.paused = false;
-  toast((OCHI.takeFixed() ? '落下速度の つまみを ゆるめた。' : '') + (S.rotDown ? IMPL + 'を下げました' + (PTO_IMPL ? '（PTO 入）' : '') + '。前へ走ると' + (SHIRO ? '代かきできます' : '耕せます') : IMPL + 'を上げました' + (PTO_IMPL ? '（PTO 切）' : '') + (IS_HARROW ? '。翼を折りたたみます' : '')));
+  const ochi = OCHI.takeFixed(); if (quiet && !ochi && S.rotDown) return;
+  toast((ochi ? '落下速度の つまみを ゆるめた。' : '') + (S.rotDown ? IMPL + 'を下げました' + (PTO_IMPL ? '（PTO 入）' : '') + '。前へ走ると' + (SHIRO ? '代かきできます' : '耕せます') : IMPL + 'を上げました' + (PTO_IMPL ? '（PTO 切）' : '') + (IS_HARROW ? '。翼を折りたたみます' : '')));
 }
 function toggleAssist() {
   const A = ASSIST;

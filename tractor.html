@@ -8313,7 +8313,13 @@ const TRACE = {
     // 指を離すと止まるのは今までどおり（サイクル116）。線まで 0.8m より近づいたら 今までどおり線を追う
     if (this.pull && this.fPos) {
       const q = this.pull, lat = (this.fPos[0] - q.x) * q.fz - (this.fPos[1] - q.z) * q.fx, ahead = (q.x - S.x) * q.fx + (q.z - S.z) * q.fz;
-      if (ahead > 0.8 && Math.abs(lat) > 0.4 && Math.sin(S.yaw) * q.fx + Math.cos(S.yaw) * q.fz > 0.35) { const b = -Math.sign(lat) * MAX_STEER * Math.min(1, Math.abs(lat) / 1.5); if (Math.abs(b) > Math.abs(r.steerT)) r.steerT = b; }   // なぞりはじめの向きから 70° より回ったら やめる（線に着かないまま 置いた指のまわりを回りつづけないように）
+      // Codex 指摘（PR #1075）: 線を追う切れ角（r.steerT）が 逆向きのとき、大きさだけ くらべて えらぶと、指は右に置いたままなのに 目標が 右いっぱい→左いっぱい と入れかわり、
+      // いちど左へ もどってから また右へ曲がった。指の側へ切っている間は 逆向きの切れ角を 使わない（同じ向きで より大きいときだけ 線を追う切れ角を使う）。
+      // 線の近く（0.8m）に着いた・70° 曲がった あとは、その なぞりの間 もう指の側へは切らない（q.off。境目で 行ったり来たり しない）
+      if (!q.off) {
+        if (ahead <= 0.8 || Math.sin(S.yaw) * q.fx + Math.cos(S.yaw) * q.fz <= 0.35) q.off = true;
+        else if (Math.abs(lat) > 0.4) { const b = -Math.sign(lat) * MAX_STEER * Math.min(1, Math.abs(lat) / 1.5); if (!(r.steerT * b > 0 && Math.abs(r.steerT) > Math.abs(b))) r.steerT = b; }
+      }   // なぞりはじめの向きから 70° より回ったら やめる（線に着かないまま 置いた指のまわりを回りつづけないように）
     }
     if (this.blockT > 0 && this.escSide()) r.steerT = -this.escSide() * MAX_STEER * this.escK;
     S.steer += Math.max(-1.8 * dt, Math.min(1.8 * dt, (r.steerT - S.steer) * Math.min(1, dt * 7)));   // サイクル117: 目標へは一次遅れ（約0.14秒）で寄せ、1秒あたりの切れ角の変化も 2.6→1.8rad に（手動の 1.1 に近づける）。点が足されるたびの目標の小さな段差で ハンドルが こきざみに振れないように

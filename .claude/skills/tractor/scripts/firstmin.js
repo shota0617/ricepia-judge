@@ -211,6 +211,14 @@ const srv = http.createServer((r, s) => { const u = decodeURIComponent(r.url.spl
     a0 = await home();
     await T('touchStart', 195, 380); for (let i = 1; i <= 8; i++) { await T('touchMove', 195 + (i % 2 ? 4 : -4), 380 - 60 * i / 8); await adv(0.05); } await adv(0.6); await T('touchEnd'); await adv(1.5); a1 = await st();
     ok('短い「前へ」の なぞりは 今までどおり まっすぐ', dy(a1.yaw, a0.yaw) < 0.1 && mv(a1, a0) > 0.3, [+dy(a1.yaw, a0.yaw).toFixed(2), +mv(a1, a0).toFixed(1)]);
+    // e) Codex 指摘（PR #1075）：横へ なぞって 指を置いたままの間、切り返さない（指は右に置いたままなのに、とちゅうで左へ もどらない）
+    a0 = await home();
+    await T('touchStart', 175, 321); for (let i = 1; i <= 8; i++) { await T('touchMove', 175 + 150 * i / 8, 321); await adv(0.05); }
+    { const ys = []; for (let i = 0; i < 28; i++) { await adv(0.25); ys.push((await st()).yaw); }
+      const sg = a => Math.atan2(Math.sin(a), Math.cos(a)), rel = ys.map(y => sg(y - a0.yaw)), dir = Math.sign(rel[rel.length - 1]) || 1; let peak = 0, back = 0;
+      for (const r of rel) { const v = r * dir; peak = Math.max(peak, v); back = Math.max(back, peak - v); }
+      await T('touchEnd'); await adv(1);
+      ok('横へ なぞって 7 秒 置いた指の間、向きは もどらない（もどりは 6° 未満・15° 以上 曲がる）', back < 0.1 && peak > 0.26, [+peak.toFixed(2), +back.toFixed(2)]); }
     // b) 運転席でない視点から なぞり始めて 横へ（はじめから おわりまで）：運転席にもどり、線ができて 動く
     a0 = await home(); await p.evaluate(() => game.nextCam()); await adv(0.5);
     await T('touchStart', 120, 560); await adv(0.05); for (let i = 1; i <= 10; i++) { await T('touchMove', 120 + 20 * i, 560 - 6 * i); await adv(0.05); }

@@ -58,33 +58,11 @@
   #padB button { width: auto; height: 48px; padding: 0 14px; font-size: 14px; border-radius: 999px; }
   #padD { left: 14px; bottom: calc(max(14px, env(safe-area-inset-bottom)) + 142px); gap: 6px; }
   #padD button { width: auto; height: 40px; padding: 0 12px; font-size: 13px; border-radius: 999px; }
-  /* はじめの画面・読みこみ・おわり */
+  /* おわりの画面・操作の表（シート） */
   .sheet { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(26, 24, 20, .55); }
   .card { width: min(520px, 100%); max-height: 100%; overflow: auto; padding: 22px 20px; border-radius: 18px; background: var(--paper); box-shadow: 0 10px 30px rgba(0,0,0,.3); text-align: center; }
   .card h1 { margin: 0 0 4px; font-size: 22px; }
-  /* 運転する キャラクターとの おはなし（はじめの画面・10/29 店主「素朴な かわいい キャラクターとの 会話で 進む」） */
-  .talk { display: flex; gap: 10px; align-items: flex-start; margin: 4px 0 12px; text-align: left; }
-  .talk[hidden] { display: none; }
-  .talk canvas { flex: none; width: 64px; height: 64px; border-radius: 50%; background: #fbf7ef; box-shadow: 0 2px 8px rgba(0,0,0,.2); }
-  .talkBody { flex: 1; min-width: 0; padding: 8px 12px; border-radius: 14px; background: #fff; border: 2px solid #e3d7bd; position: relative; }
-  .talkBody::before { content: ''; position: absolute; left: -9px; top: 22px; border: 8px solid transparent; border-right-color: #e3d7bd; border-left: 0; }
-  .talkBody p { margin: 0; font-size: 15px; line-height: 1.6; }
-  .talkCh { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-  .talkCh button { padding: 8px 12px; border: 2px solid #d8d0bc; border-radius: 999px; background: #fffdf7; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
-  .talkCh button.main { border-color: var(--green); background: var(--green); color: #fff; }
-  .talkCh button:disabled { opacity: .55; cursor: default; }
-  .card .tag { display: inline-block; margin-bottom: 10px; padding: 2px 10px; border: 1px solid var(--gold); border-radius: 999px; color: #8a6423; font-size: 12px; font-weight: 700; }
   .card p { margin: 8px 0; font-size: 14px; line-height: 1.7; }
-  .seasons { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 14px 0; }
-  .seasons button { padding: 10px 4px; border: 2px solid #d8d0bc; border-radius: 12px; background: #fff; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
-  .seasons button span { display: block; font-size: 24px; }
-  .seasons button.sel { border-color: var(--green); background: #e8efdf; }
-  .times { margin-top: -6px; }
-  #times { grid-template-columns: repeat(4, 1fr); }   /* 朝・昼・夕方・夜 */
-  .arts { grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: -6px; }   /* お題は やさしい順（★ が むずかしさ） */
-  .arts button { padding: 6px 2px; font-size: 12px; }
-  .arts button i { display: block; font-style: normal; font-size: 9px; color: #c08a1e; letter-spacing: -1px; }
-  .arts button span { font-size: 20px; }
   /* 田んぼアートの地図（黄＝まだ耕していない絵の所、緑＝耕せた、赤＝はみ出し）。パソコンは左上、スマホは下のまん中 */
   #artBox { position: fixed; left: 8px; top: calc(max(8px, env(safe-area-inset-top)) + 40px); width: 220px; pointer-events: none; }
   body.touch #artBox { top: auto; left: 50%; bottom: max(14px, env(safe-area-inset-bottom)); width: 150px; transform: translateX(-50%); }
@@ -118,13 +96,7 @@
     .doneBubble { width: 100%; box-sizing: border-box; }
   }
   body.calm #doneText, body.calm #bLineAdd, body.calm #doneScore > .small, body.calm #doneScore > br { display: none; }
-  .challenge { margin: 0 0 10px; padding: 10px 12px; border-radius: 12px; background: #fff3c4; color: #4a3600; font-weight: bold; line-height: 1.5; }
-  .easy { display: flex; gap: 8px; align-items: flex-start; margin: 4px 0 10px; padding: 8px 10px; border: 2px solid #d8d0bc; border-radius: 12px; background: #fff; font-size: 13px; line-height: 1.6; text-align: left; cursor: pointer; }
-  .easy .e { font-style: normal; }
-  .easy input { width: 20px; height: 20px; margin-top: 2px; flex: none; accent-color: var(--green); }
   .go.sub { background: #fff; color: var(--green); border: 2px solid var(--green); }
-  .times button { padding: 6px 4px; }
-  .times button span { display: inline; font-size: 18px; margin-right: 4px; }
   .go { display: inline-flex; align-items: center; justify-content: center; min-height: 52px; padding: 0 36px; border: 0; border-radius: 999px; background: var(--green); color: #fff; font: inherit; font-size: 17px; font-weight: 700; cursor: pointer; }
   .go:disabled { opacity: .5; cursor: default; }
   .how { margin: 12px 0 0; padding: 10px 12px; border-radius: 12px; background: #fff; font-size: 13px; line-height: 1.8; text-align: left; }
@@ -144,8 +116,6 @@
   #coach kbd { padding: 0 5px; border: 1px solid #aaa; border-bottom-width: 2px; border-radius: 4px; background: rgba(255,255,255,.18); font-size: 13px; }
   body.touch #coach { bottom: calc(max(14px, env(safe-area-inset-bottom)) + 136px); max-width: calc(100vw - 400px); font-size: 13px; border-radius: 14px; }
   #keyHint kbd { padding: 0 4px; border: 1px solid #888; border-radius: 4px; background: rgba(255,255,255,.15); font-size: 11.5px; }
-  .prog { height: 8px; margin: 14px 0 6px; border-radius: 99px; background: #e2dccb; overflow: hidden; }
-  .prog i { display: block; height: 100%; width: 0; background: var(--green); transition: width .2s; }
   .small { color: #736c5e; font-size: 12px !important; }
   a { color: var(--green); }
   /* 畦の農家さんのダメ出し（ふきだし）。顔の上に出し、画面の外のときは 左上に寄せる */
@@ -176,41 +146,25 @@
   body.calm #hud, body.calm #toast, body.calm #coach, body.calm #keyHint, body.calm #badgeSt { display: none !important; }
   body.calm #artPop { display: none !important; }   /* サイクル76 総点検：のんびりでは 点数の ＋− ポップ（報酬・罰の 浮き文字）は 出さない */
   /* サイクル117 のんびり・平和監査第1弾「点数で競わせない」：のんびりでは 挑戦・比較・点数の評価は 出さない（くわしい説明を 入れると 従来どおり 出る） */
-  body.calm #loopBox, body.calm #challenge { display: none !important; }
+  body.calm #loopBox { display: none !important; }
   body.calm #doneScore .farmerVerdict, body.calm #doneScore > b { display: none !important; }
   body.calm #doneScore { font-size: 0; }   /* 🔰8割などの 素の文字も 消す（あとから 足す 地図の キャンバスは そのまま 見える） */
   /* サイクル119 のんびり・平和監査第2弾「叱らない」：のんびりでは 農家の ダメ出し（ふきだし）は 出さない */
   body.calm #farmerSay { display: none !important; }
-  /* 文字を 消す：ボタンは 絵（data-i）だけ、はじめの画面は 季節・時刻・天気・絵・▶ だけ（くわしい説明を 入れると もどる） */
+  /* 文字を 消す：ボタンは 絵（data-i）だけ（くわしい説明を 入れると もどる。はじめの画面は サイクル263で全廃） */
   body.calm .ico { font-size: 0 !important; }
   /* 操作を かんたんに：ふだんは よく使う ボタンだけ（くわしい説明を 入れると ぜんぶ 出る。キーボードの キーは いつでも 使える） */
   body.calm #bEco, body.calm #bAssist, body.calm #bFast, body.calm #bHelp, body.calm:not(.needDepth) #bShallow, body.calm:not(.needDepth) #bDeep { display: none !important; }   /* 深さは 案内が 浅くと 言ったら 出す（needDepth） */
-  body.calm.firstmin #bCam, body.calm.firstmin #bSnd, body.calm.firstmin #bEasy, body.calm.firstmin #bGear, body.calm.firstmin #bArt, body.calm.firstmin #padB, body.calm.firstmin #padD { display: none !important; }   /* サイクル159 最初の1分：開始直後は 上のボタンと下のパッドを絞る（キーは従来どおり効く。FIRSTMIN 終了で 静かに もどる）／サイクル214・最初の1分（Fable5設計 項目1）: 🔰（かんたんアシスト入切）も最初の1分は隠し、上のアイコンは 🌙 と ≡ の2つだけにする。アシストは既定で入ったまま効き、入切は ≡ から開くはじめの画面のチェックと K キーで従来どおりできる。padC は上の body.firstmin 行（サイクル185）で別途隠している */
+  body.calm.firstmin #bCam, body.calm.firstmin #bSnd, body.calm.firstmin #bEasy, body.calm.firstmin #bGear, body.calm.firstmin #bArt, body.calm.firstmin #padB, body.calm.firstmin #padD { display: none !important; }   /* サイクル159 最初の1分：開始直後は 上のボタンと下のパッドを絞る（キーは従来どおり効く。FIRSTMIN 終了で 静かに もどる）／サイクル214・最初の1分（Fable5設計 項目1）: 🔰（かんたんアシスト入切）も最初の1分は隠し、上のアイコンは 🌙 だけにする（サイクル263: ≡ は全廃）。アシストは既定で入ったまま効き、入切は K キーと運転中の 🔰 ボタンで従来どおりできる（サイクル263: はじめの画面は全廃）。padC は上の body.firstmin 行（サイクル185）で別途隠している */
   body.calm .ico::before { content: attr(data-i); font-size: 18px; }
   body.calm .pad .ico::before { font-size: 26px; }
-  body.calm #bStart.ico::before { font-size: 30px; }
-  body.calm .seasons button { font-size: 0; }
   body.calm .card h1 { font-size: 0; }
   body.calm .card h1::before { content: '🚜'; font-size: 34px; }
-  body.calm #start .tag, body.calm #start .card > p:not(.err), body.calm #start .how, body.calm #seasons button br, body.calm #seasons button small, body.calm #arts i { display: none !important; }
-  /* はじめは 選ぶ 画面を 出さず、読みこむ あいだは 進みぐあいの 棒（と 読みこめなかった ときの 知らせ）だけ。季節・お題は ≡ メニューで かえる */
-  #loadMark { display: none; }
-  #start.loading { background: #dfe7e4; }   /* サイクル187: 読みこみ中は、作りかけの3Dを透かさない。 */
-  #start.loading #loadMark { display: block; font-size: 48px; line-height: 1.2; margin: 6px 0 2px; }   /* サイクル160: 読みこみ中だけの目印。除外規則に :not(#loadMark) を入れたので隠し規則に当たらず、既定 display:none (特異度 1,0,0) より本規則 (2,1,0) が勝つため !important は不要 */
-  #start.loading .card > :not(.prog):not(#progText):not(#loadMark) { display: none !important; }   /* サイクル98: 案内画面（試作版・安全・制作者の3行）は全廃。読みこむあいだは進みぐあいだけ出す／サイクル160: #loadMark も除外し読みこみ中も出す */
-  #start.loading #progText:not(.err) { display: none !important; }   /* 最初のなぞりまでに読む文字を減らす。読みこみの進みぐあいは棒だけで伝える。 */
-  #start.loading #progText.err { display: block !important; }
+  /* サイクル263（店主指示 2026-11-10）: はじめの画面は全廃。開いたら案内・設定なしで、既定のまま そのまま田んぼから始まる */
   /* サイクル98（ユーザー実機指示 2026-11-04）: 起動時の案内画面と開始カードの案内3行は全廃。開いたら案内なしですぐ遊べる形にする（旧「信頼の観点で残す」判断はユーザーの直接指示で上書き） */
-  body.calm #start label.easy { display: inline-flex; align-items: center; gap: 6px; margin: 2px 4px 8px 0; padding: 6px 10px; }
-  body.calm #start label.easy input { margin-top: 0; }
-  body.calm #start label.easy > span { font-size: 0; line-height: 0; }
-  body.calm #start label.easy .e { font-size: 20px; line-height: 1; }
-  /* 読みこめなかった 知らせと「もう一度 よむ」は のんびりでも 出す（▶ が 押せない わけが わかるように） */
   #badgeSt { margin-top: -9px; padding: 2px 10px; border-radius: 999px; background: rgba(251,248,240,.96); color: #4a3d2c; font-size: 11px; font-weight: 800; white-space: nowrap; box-shadow: 0 1px 4px rgba(0,0,0,.22); }
   #toast { position: fixed; left: 50%; top: 104px; transform: translateX(-50%); padding: 8px 16px; border-radius: 999px; background: rgba(20,18,14,.75); color: #fff; font-size: 14px; font-weight: 700; pointer-events: none; transition: opacity .4s; }
   @media (max-width: 640px) { #hud { right: 8px; top: 56px; } .chip { font-size: 12px; } .pad button { width: 64px; height: 64px; } #toast { top: auto; bottom: 200px; max-width: 86vw; white-space: normal; text-align: center; } }
-  #rotateHint { display: none; }
-  @media (orientation: portrait) and (pointer: coarse) { #rotateHint { display: block; } }
   /* せまい画面（縦のスマホ）：上のボタンは 2 段に折り返し、地図と案内は下の操作ボタンの上に重ねずに置く */
   @media (max-width: 640px) { #bar { flex-wrap: wrap; } #hud { top: 96px; right: 76px; } #badge, body.touch #badge { right: 8px; top: 96px; } #badgeCv { width: 52px; height: 52px; } }   /* 縦：窓は 計器の 右はし（計器は 右を あけて 折り返す。知らせは 下なので 重ならない） */
   @media (max-width: 640px) { body.calm #badge { top: calc(max(8px, env(safe-area-inset-top)) + 48px); } }   /* サイクル194: のんびりでは 計器が出ないので、縦でも 窓と吹き出しを ボタン列のすぐ下へ上げる（田んぼに かぶらないように） */
@@ -252,7 +206,6 @@
   <button id="bFast" class="ico" data-i="⏩" title="早送り（F）">⏩ ×1</button>
   <button id="bArt" class="hidden ico" data-i="📸" title="田んぼアートを仕上げて、ドローンで上から撮る（Enter）">📸 完成</button>
   <button id="bHelp" title="操作の表（H）">？</button>
-  <button id="bMenu" title="はじめの画面へ">≡</button>
 </div>
 <div class="pad hidden" id="padC"><button id="bRot" class="ico" data-i="⬇" aria-label="ロータリーを下げる・上げる">ロータリーを下げる</button></div>
 <div class="pad hidden" id="padD"><button id="bShallow" class="ico" data-i="⇡" aria-label="耕す深さを浅く">浅く</button><button id="bDeep" class="ico" data-i="⇣" aria-label="耕す深さを深く">深く</button><button data-k="diff" id="bDiff" class="hidden ico" data-i="🔒" aria-label="押しているあいだ、デフロック（左右の後輪を いっしょに回す）">デフロック</button></div>
@@ -265,134 +218,7 @@
 <div id="keyHint" class="hidden"><kbd>↑</kbd><kbd>↓</kbd> 前・うしろ　<kbd>←</kbd><kbd>→</kbd> ハンドル　<kbd>スペース</kbd> ロータリー上げ下げ　<kbd>H</kbd> 操作の表</div>
 <div class="sheet hidden" id="help"><div class="card"><div id="helpBody"></div><button class="go" id="bHelpClose">とじる（H）</button></div></div>
 
-<div class="sheet loading" id="start">
-  <div class="card">
-    <div id="loadMark" aria-hidden="true">🚜</div>
-    <p class="challenge hidden" id="challenge"></p>
-    <span class="tag">🧪 試作版</span>
-    <div class="talk" id="talk" hidden><canvas id="talkFace" width="128" height="128" aria-hidden="true"></canvas><div class="talkBody"><p id="talkSay" aria-live="polite"></p><div class="talkCh" id="talkCh"></div></div></div>
-    <h1>🚜 トラクターで<span style="display:inline-block">田んぼを耕そう</span></h1>
-    <p>キャビン付きの 60 馬力のトラクターの運転席に座って、うしろのロータリーで 30m×50m の田んぼを耕し、<b>田んぼに絵を描きます</b>（田んぼアート）。お題を「なし」にすると、田んぼをぜんぶ耕せたらクリア。</p>
-    <div class="seasons" id="seasons">
-      <button data-s="haru"><span>🌸</span>春<br><small>耕す前の田んぼ</small></button>
-      <button data-s="aki"><span>🌾</span>秋<br><small>稲刈りのあと</small></button>
-      <button data-s="shirokaki"><span>💧</span>代かき<br><small>水を張った田んぼ</small></button>
-    </div>
-    <div class="seasons times" id="times">
-      <button data-t="asa"><span>🌅</span>朝</button>
-      <button data-t="hiru"><span>☀️</span>昼</button>
-      <button data-t="yu"><span>🌇</span>夕方</button>
-      <button data-t="yoru"><span>🌙</span>夜</button>
-    </div>
-    <div class="seasons times" id="weathers">
-      <button data-w="hare"><span>🌤️</span>晴れ</button>
-      <button data-w="kumori"><span>☁️</span>くもり</button>
-      <button data-w="ame"><span>🌧️</span>小雨</button>
-    </div>
-    <div class="seasons impls" id="impls">
-      <button data-i="rotary"><span>🌀</span>ロータリー</button>
-      <button data-i="harrow"><span>🌊</span>ハロー</button>
-      <button data-i="plow"><span>⛏️</span>プラウ</button>
-      <button data-i="disc"><span>💿</span>ディスク</button>
-      <button data-i="ditch"><span>🕳️</span>溝掘り</button>
-      <button data-i="aze"><span>🧱</span>畦塗り</button>
-      <button data-i="ridge"><span>⛰️</span>畝立て</button>
-      <button data-i="flail"><span>🌿</span>草刈り</button>
-      <button data-i="sub"><span>🔱</span>深耕</button>
-      <button data-i="mulch"><span>🎞️</span>マルチ</button>
-      <button data-i="caster"><span>🌾</span>施肥</button>
-      <button data-i="drill"><span>🌱</span>播種</button>
-      <button data-i="manure"><span>💩</span>堆肥</button>
-      <button data-i="baler"><span>🧶</span>ベーラー</button>
-      <button data-i="sqbaler"><span>📦</span>角ベール</button>
-      <button data-i="rake"><span>🎡</span>レーキ</button>
-      <button data-i="picker"><span>🪨</span>石拾い</button>
-      <button data-i="mower"><span>✂️</span>モアコン</button>
-      <button data-i="tedder"><span>🌪️</span>テッダー</button>
-      <button data-i="wrapper"><span>🎁</span>ラッパー</button>
-      <button data-i="mixer"><span>🌀</span>ミキサー</button>
-      <button data-i="potato"><span>🥔</span>ポテト</button>
-      <button data-i="chipper"><span>🪵</span>チッパー</button>
-      <button data-i="cart"><span>🌾</span>カート</button>
-      <button data-i="trailer"><span>🚛</span>トレーラー</button>
-      <button data-i="slurry"><span>💧</span>タンカー</button>
-      <button data-i="backhoe"><span>🪣</span>バックホー</button>
-      <button data-i="loader"><span>🏗️</span>ローダー</button>
-      <button data-i="leveler"><span>📐</span>レベラー</button>
-      <button data-i="cult"><span>🧹</span>カルチ</button>
-      <button data-i="auger"><span>🍚</span>オーガ</button>
-      <button data-i="roller"><span>🛞</span>ローラー</button>
-      <button data-i="power"><span>⚙️</span>パワー</button>
-      <button data-i="planter"><span>🌽</span>プランター</button>
-      <button data-i="chisel"><span>🔨</span>チゼル</button>
-      <button data-i="discp"><span>🥏</span>円盤</button>
-      <button data-i="snowb"><span>⛄</span>除雪</button>
-      <button data-i="revp"><span>🔃</span>反転</button>
-      <button data-i="rblade"><span>🛣️</span>整地</button>
-      <button data-i="springh"><span>🦔</span>スプリング</button>
-      <button data-i="rhoe"><span>✴️</span>ホー</button>
-      <button data-i="mspray"><span>💦</span>防除</button>
-      <button data-i="dmower"><span>🔪</span>モア</button>
-      <button data-i="pharrow"><span>🫧</span>代かき</button>
-      <button data-i="spikeh"><span>🪮</span>スパイク</button>
-      <button data-i="phdigger"><span>🪛</span>穴掘り</button>
-      <button data-i="crumbler"><span>🧺</span>クランブラー</button>
-      <button data-i="boxb"><span>🗃️</span>ボックス</button>
-      <button data-i="mfert"><span>🧂</span>肥料散布</button>
-      <button data-i="fblade"><span>🚧</span>排土</button>
-      <button data-i="broom"><span>🖌️</span>掃く</button>
-      <button data-i="bfork"><span>🍴</span>フォーク</button>
-      <button data-i="bedf"><span>🗻</span>畝成形</button>
-      <button data-i="chainh"><span>⛓️</span>チェーン</button>
-      <button data-i="deepr"><span>🪓</span>リッパー</button>
-      <button data-i="lplane"><span>🛷</span>プレーナー</button>
-      <button data-i="aerator"><span>🐡</span>エアレーター</button>
-      <button data-i="trench"><span>🪚</span>トレンチャー</button>
-      <button data-i="groover"><span>🟣</span>溝切り</button>
-      <button data-i="swather"><span>🌻</span>スワッサー</button>
-      <button data-i="forage_wagon"><span>🍀</span>ロードワゴン</button>
-      <button data-i="compost_turner"><span>♻️</span>堆肥反転機</button>
-      <button data-i="potato_planter"><span>🍠</span>芋植え</button>
-      <button data-i="carrot_harvester"><span>🥕</span>ニンジン掘り</button>
-      <button data-i="cabbage_harvester"><span>🥬</span>キャベツ掘り</button>
-      <button data-i="onion_harvester"><span>🧅</span>玉ねぎ掘り</button>
-      <button data-i="garlic_harvester"><span>🧄</span>ニンニク掘り</button>
-      <button data-i="tomato_harvester"><span>🍅</span>トマト掘り</button>
-      <button data-i="pumpkin_harvester"><span>🎃</span>カボチャ掘り</button>
-      <button data-i="sweet_potato_harvester"><span>🍆</span>いも掘り</button>
-      <button data-i="daikon_harvester"><span>🫜</span>大根掘り</button>
-      <button data-i="negi_harvester"><span>🥒</span>ネギ掘り</button>
-      <button data-i="gobo_harvester"><span>🫚</span>ゴボウ掘り</button>
-      <button data-i="broccoli_harvester"><span>🥦</span>ブロッコリー</button>
-      <button data-i="lettuce_harvester"><span>🥗</span>レタス</button>
-      <button data-i="spinach_harvester"><span>🍃</span>ほうれん草</button>
-      <button data-i="bok_choy_harvester"><span>🫛</span>チンゲン菜</button>
-      <button data-i="komatsuna_harvester"><span>☘️</span>小松菜</button>
-      <button data-i="celery_harvester"><span>🫑</span>セロリ</button>
-    </div>
-    <div class="seasons arts" id="arts">
-      <button data-a="shikaku"><span>⬛</span>四角<i>★</i></button>
-      <button data-a="juji"><span>➕</span>十<i>★★</i></button>
-      <button data-a="kome"><span>🌾</span>米<i>★★★</i></button>
-      <button data-a="onigiri"><span>🍙</span>おにぎり<i>★★★</i></button>
-      <button data-a="star"><span>⭐</span>星<i>★★★★</i></button>
-      <button data-a="heart"><span>❤️</span>ハート<i>★★★★</i></button>
-      <button data-a="smile"><span>😊</span>にっこり<i>★★★★★</i></button>
-      <button data-a="none"><span>🚜</span>なし</button>
-    </div>
-    <label class="easy" id="walkLabel"><input type="checkbox" id="walkBox"><span><b><i class="e">👣</i> はじめに田んぼを歩く</b>：耕す前に一回り歩いて、足が沈む やわらかい所を確かめ、モニターの地図に青く印をつける（2 分かかる）</span></label>
-    <label class="easy"><input type="checkbox" id="checkBox"><span><b><i class="e">🔧</i> はじめに点検する</b>：ファンベルト・冷却水・エンジンオイル・燃料・タイヤの空気・エアクリーナー・3 点リンクのグリース・爪のボルトと すり減り・リヤカバーの動き・作業機の傾きを見る（2〜5 分。傷んだ部品は 先に交換）</span></label>
-    <label class="easy" id="rengeLabel"><input type="checkbox" id="rengeBox"><span><b><i class="e">🌸</i> レンゲの田んぼ</b>：秋にまいた 緑肥のレンゲが 花ざかり。耕して 土にすきこむ（春だけ）</span></label>
-    <label class="easy" id="yamaLabel"><input type="checkbox" id="yamaBox"><span><b><i class="e">⛰️</i> 爪を 二山盛りに並べる</b>：1 回通るごとに 土の山が 2 本できる。稲わらが よく埋まる（ふつうは 平らにする平耕）</span></label>
-    <label class="easy" id="ecoLabel"><input type="checkbox" id="ecoBox"><span><b><i class="e">⛽</i> エンジンを 2000 回転に下げて耕す</b>：軽油が 1 時間あたり 3 割ほど へる。走る速さも 爪の回転も 2 割おそい。力の余裕が少ないので、ぬかるみなど重い所では エンストしやすい。重くなったら 回転を 2500 にもどす（I）か、変速を下げる（ふつうは 2500 回転。合う回転は 機種で ちがう）</span></label>
-    <label class="easy" id="stoneLabel"><input type="checkbox" id="stoneBox"><span><b><i class="e">🪨</i> はじめに石を拾う</b>：田んぼを歩いて 土の上の石を拾う（4 分）。石は 耕うんの爪をいためる</span></label>
-    <label class="easy"><input type="checkbox" id="easyBox"><span><b><i class="e">🔰</i> かんたんアシスト</b>：畦の手前で止まる・速さをおさえる・まっすぐを手伝う・白線で上げる（使った回の点数は 8 割。運転中も「🔰」で入切）</span></label>
-    <label class="easy" id="detailLabel"><input type="checkbox" id="detailBox"><span><b><i class="e">📖</i> くわしい説明</b>：計器・知らせ・案内を 文字で ぜんぶ 出す・農家の声も 運転中に 出す（ふだんは 文字なしで、運転する キャラクターが 話しかける）</span></label>
-    <p class="small" id="artHow">耕した所は黒い土になるので、上から見ると絵になります。<b>白線の内側だけ</b>を耕して、外は耕さない。地図で 黄色はまだ・緑は耕せた・赤ははみ出し。点数は<b>上手さ</b>（はみ出しの少なさ・まっすぐ・重ね・速さ）で、走りながら変わります。できたら「📸 完成」（<kbd>Enter</kbd>）でドローンが上から撮り、上手さ × でき で点数が決まります。耕した土と耕していない土の色の差は、春がいちばんはっきり</p>
-    <div class="prog"><i id="progBar"></i></div>
-    <p class="small" id="progText">⏳ トラクターを 田んぼへ はこんでいるよ…</p>
-    <button class="go ico" id="bStart" data-i="▶" disabled>▶ 運転する</button>
-    <p class="small" id="rotateHint">📱 スマホは横向きにすると広く見えます</p>
+<div id="keysSrc" style="display:none">  <!-- サイクル263: 操作の表（？・H）の写し元。はじめの画面は全廃したので、表だけを隠し置き場へ移した -->
     <div class="how" id="keysBox">
       <b>はじめての人へ：耕すのは 3 ステップ</b>
       <ol class="steps">
@@ -430,136 +256,6 @@
         本物と同じく、始点 A で <kbd>G</kbd> → 5m 以上まっすぐ走って終点 B で <kbd>G</kbd>。A・B を結んだ線と平行に、ハンドルから手をはなすとまっすぐ走る。<kbd>Shift</kbd>+<kbd>G</kbd>（ボタンは長押し）で登録しなおし。アシストで耕しながらハンドルを切ると、ロータリーが自動で上がる（旋回連動）。回ったら下げると、アシストがまた入る
       </details>
     </div>
-    <details class="how"><summary><b>本物の耕し方</b>（耕す深さ・耕す順番・点数・安全）</summary>
-      ・耕す深さ（耕深）は、春は 15cm くらい深く、秋起こしは 5cm くらい浅く（藁と土を軽くまぜる）。エンジンは 2500 回転、PTO は 1 速（540 回転）にして、歩くくらいの速さ（時速 2〜3km）でゆっくり耕す。代かきは幅 3.4m のウイングハロー（道では翼を折りたたむ）を PTO 2 速で回し、水は土が 8 割見えるくらいの浅水で。ロータリーを上げると PTO（爪の回転）が止まり、バックすると自動で上がる<br>
-      ・まず田んぼのまん中を<b>往復</b>して耕し、まわりは耕幅の 2.5〜3 倍（外周 3 周分）残しておく（畦の上の 赤いテープの竹が 耕幅の 3 倍の目印）。最後に<b>外周を 3 周</b>して仕上げる。角では少しバックして向きを変える<br>
-      ・となりの耕した跡に 10cm ほど重ねて、耕し残しを作らない。タイヤの跡は次の周で耕して消す<br>
-      ・田んぼから道へ出る前に、タイヤとロータリーの泥を落とす。道に落ちた泥のかたまりは、車や自転車・歩く人のじゃまになる。田んぼの中の平らな所で止まり、エンジンを切って駐車ブレーキをかけ、爪が止まってから、竹ヘラなどで落とす。上げた作業機は エンジンを止めても油圧で下がることがあるので、油圧ロック（降下止め）をかけて台でささえ、下に手や体を入れない（<a href="https://www.naro.go.jp/org/iam/anzenweb/kiken/kiken.html" target="_blank" rel="noopener">農研機構の農作業安全</a>）（<a href="https://www.city.kumamoto.jp/kiji00342791/index.html" target="_blank" rel="noopener">熊本市</a>・<a href="https://www.city.iwaki.lg.jp/www/contents/1621398326632/files/pamphlet.pdf" target="_blank" rel="noopener">いわき市</a>のお願い）。ゲームでは止まって上げてから <kbd>V</kbd>（スマホは「泥落とし」）。耕していない固い所を少し走っても落ちる<br>
-      ・ぬかるみで 片方の後輪だけが空回りしたら、デフロック（左右の後輪を同じ回転にするペダル）を使う。旋回と道路では はなす（左右が同じに回って 曲がれない）（<a href="https://www.naro.go.jp/org/iam/anzenweb/point/point_pdf/tra_01.pdf" target="_blank" rel="noopener">農研機構「農作業安全ポイント（乗用トラクター）」</a>）。空回りしている最中に踏むと デフが傷むので、アクセルをもどして 空回りを止め、エンジンの回転を下げてから踏む（<a href="https://media.kubota.io/uploads/BX1880-BX2380-BX2680-Tractor-Operator-Manual.pdf#page=55" target="_blank" rel="noopener">クボタ BX の取扱説明書</a>。使い方は 機種の取扱説明書で）。深く沈んでからでは効かないので、むりに空回りさせない<br>
-      ・ロータリーを下げたまま大きく曲がると、土が外側へ寄って四隅が盛り上がる。角では上げてから回り、まっすぐ耕しなおすとならせる<br>
-      ・代かきのハローを 旋回でも下げたままにする農家さんもいる。旋回上昇と倍速ターンを切り、回る前に 直進より速さを落とす。畦が近づいたら 深さ・傾きの自動も切る（<a href="https://note.com/wkpxk085/n/n01bee10678c3" target="_blank" rel="noopener">眞木優さん（note）</a>）。ただし 旋回のときは上げるよう書いてある取扱説明書もあるので、本物は 自分のトラクターとハローの取扱説明書（旋回上昇の設定も）にしたがう。ゲームでは 下げたまま 時速 2km までで回ると減点しない（倍速ターンは いつも減点：かんたんにしてある）<br>
-      ・枕地（田んぼのはし）で回るときは、ロータリーを上げてハンドルをいっぱいに切る。内側の後輪に半ブレーキ（オートブレーキ）がかかり、前輪を 35° より大きく切ると前輪が後輪の約 2 倍の速さで回る（倍速ターン）ので、小さく回れて枕地がせまくてすむ。モニターに「倍速」と出る（<kbd>T</kbd> で入切）<br>
-      ・雨の日や雨のすぐあとは耕さない。ぬれた土を耕すと こねられて、かわくと固いかたまりになり なかなか砕けない（<a href="https://newswire.caes.uga.edu/story/5615/wet-soil.html" target="_blank" rel="noopener">ジョージア大学の普及の記事</a>）。秋起こしも乾くのを待つ（X の米農家さん）。ゲームでは「小雨」も選べる（雨の音・ワイパー）<br>
-      ・秋：長雨の年は、ぬかるみで稲を刈ったコンバインの深いわだちが残る。田んぼが乾いてからトラクターを入れ、わだちを耕してならす（<a href="https://x.com/i/status/2112133129792266353" target="_blank" rel="noopener">X の米農家さんの投稿</a>）。ゲームの秋の田んぼにも、外周・往復・出口へ向かったわだちがある<br>
-      ・夜までかかる作業は なるべくしない。暗いと畦や人が見えにくく、事故が多い（<a href="https://www.pref.shimane.lg.jp/industry/norin/kikan/seibu_norin/infomation2/accidents.html" target="_blank" rel="noopener">島根県の農作業事故の防止</a>）。するなら作業灯とライトを点検して、向きを作業する所に合わせる（ヤンマーの説明）。夜の作業灯には虫が集まる<br>
-      ・ジャンボタニシ（スクミリンゴガイ）は 西尾市をふくむ愛知県でも 苗を食べる被害が多い（<a href="https://www.pref.aichi.jp/uploaded/attachment/442532.pdf" target="_blank" rel="noopener">愛知県の実証試験</a>）。土の浅い所で冬をこすので、寒い 12〜2 月に、ゆっくり走って 爪を速く回し、浅く耕して 貝をつぶす・寒さにさらす（時速 1.4km 以下・PTO 2 速：千葉県）。耕したあとの泥に貝がつくので、トラクターの泥は田んぼで落とす<br>
-      ・秋起こしの前には、稲わらを早く腐らせるために石灰窒素（黒っぽい灰色の粒、10a に 20kg ほど）をまき、深さ 5〜7cm で浅く耕してすき込む。稲刈りのあと なるべく早く（<a href="https://www.pref.aomori.lg.jp/soshiki/nourin/ni-nosui/files/241001_seisanjoho.pdf" target="_blank" rel="noopener">青森県の稲作の情報</a>）<br>
-      ・春の田起こしの前に、ケイ酸の資材（白っぽい粒）や堆肥をまいておき、耕して土にまぜる。土づくりは耕す前にしっかりと（<a href="https://www.pref.toyama.jp/documents/7092/r04asahi_10.pdf" target="_blank" rel="noopener">富山県の土づくりの資料</a>）。ゲームの春の田んぼにも まいてある<br>
-      ・西尾市の田んぼには、矢作川から取る明治用水の水が 地下のパイプで来て、田んぼの角の給水栓のバルブを開けて入れる（代かきの田んぼの東の畦）。閉めるときは パイプをいためないよう ゆっくり<br>
-      ・秋：伸びた 2 番穂（ひこばえ）や長い藁が、ロータリーの爪軸に巻きついて重くなる（<a href="https://x.com/i/status/2113052931071336692" target="_blank" rel="noopener">X の米農家さんの投稿</a>）。取るときは PTO を切り、エンジンを止め、上げた作業機は油圧の降下を止めて木の台でささえてから（<a href="https://www.yanmar.com/jp/agri/afterservice_support/selfcheck/tractor/" target="_blank" rel="noopener">ヤンマーの点検の案内</a>）。回っている爪に手を出すと巻きこまれる（ゲームでは 止まって上げたまま待つと取れる）<br>
-      ・耕していると、掘り起こされたミミズや虫をねらってサギが十数羽、カラスやセキレイも集まってくる<br>
-      ・メーターの液晶には、車速・前後と変速・エンジン回転のほかに、<b>エンジン負荷率</b>と<b>アワーメーター</b>（エンジンを回した時間。点検や オイル交換の目安）が出る（<a href="https://www.yanmar.com/jp/agri/products/tractor/yt488s_yt498s_yt4104s_yt5114s/control.html" target="_blank" rel="noopener">ヤンマーのデザインメーターパネルの説明</a>）。深く・速く耕すと負荷は 9 割ほどまで上がる。ぬかるみなどで さらに重くなり、回転が落ちてくるときは、変速を下げて（速さを落として）回転を保つか、浅くする。それでも重いまま進むと エンストする<br>
-      ・寒い朝や夜は、ディーゼルを<b>予熱</b>（グロー）してからかける。キーを回すとメーターの予熱ランプがつき、消えてからセルが回る（暖かいと 2〜3 秒、寒いと 5〜6 秒ほど）。冷えているあいだはカラカラ音が大きい<br>
-      ・季節の生きもの：春の田んぼにはケリが巣をつくり、近づくと「キッ キッ キリッ」と鳴いて頭の上を飛びまわる。巣は地面にあるので、巣とそのまわりは耕さずに残し、タイヤとロータリーを近づけない（耕起や代かきで巣が失われることが多い：<a href="https://www.jstage.jst.go.jp/article/jjo/70/2/70_131/_pdf/-char/ja" target="_blank" rel="noopener">日本鳥学会誌の調査</a>）。代かきの 5 月は だいだい色のアマサギ、秋は渡ってきたばかりのジョウビタキと、山から田んぼへもどった赤とんぼ（アキアカネ。雄と雌がつながって ぬかるみの泥に卵を産む：<a href="https://www.cgr.mlit.go.jp/miyoshi/haizuka/wetland/pdf/haiduka085.pdf" target="_blank" rel="noopener">国土交通省 灰塚ダムの資料</a>）。イナゴやチョウは近づくと よける<br>
-      ・代かきで畦ぎわに渦ができていたら、アメリカザリガニの巣穴から水がもれている。土をつめてふさぐ（放っておくと畦がくずれる：愛知県の防除の手引き）<br>
-      ・作業機の傾きは 平らな所で合わせる（代かきは ロータリーから ハローに付けかえるので、点検で見る）。傾いたままだと 片側だけ深くかいて、反対側は土が水面から出る（<a href="https://note.com/ryutaro0306/n/n014532cd9045" target="_blank" rel="noopener">井上寅雄農園（note）</a>。自動水平は 合わせた水平を保つしくみ：<a href="https://www.yanmar.com/jp/agri/products/tractor/yt6/automatic-control.html" target="_blank" rel="noopener">ヤンマー</a>）<br>
-      ・代かきは<b>浅水</b>で（土が 7〜8 割見えるくらい）。落水口の止水板は高くして、濁った水を川へ流さない。春・秋は水を落としておくので板ははずしてある。代かきの前に<b>畦塗り</b>：畦の内側に泥を塗って、モグラやザリガニの穴からの水もれをふさぐ（ゲームの代かきの畦も塗ってある。早すぎると ひびが入る：<a href="https://www.pref.hiroshima.lg.jp/uploaded/attachment/236669.pdf" target="_blank" rel="noopener">広島県</a>・<a href="https://www.pref.shiga.lg.jp/documents/6940/1009949_1.pdf" target="_blank" rel="noopener">滋賀県</a>の資料）<br>
-      ・<b>点数</b>（右上）：速さ 20・まっすぐ 30・重ね 25・旋回と安全 25 の 100 点。ロータリーを下げたまま回る（代かきは ハローを下げたまま 速く回る・倍速ターンのまま回る）、畦にぶつける、重ねすぎる、坂を速く・ななめに通ると減る<br>
-      ・出入口の坂は、作業機を 地面に当たらない高さにして（上げすぎると 重心が高くなって かえって不安定。取扱説明書で）、坂に入る前に低速に落とし、ハンドルを大きく切らずに まっすぐ通る（ゲームの「上げる」は かんたんにしてある）。坂を削ったり えぐったりすると 形が崩れて、出るときに タイヤがすべって はまることもある（<a href="https://note.com/kozonoikuya/n/n6b8c5a5089aa" target="_blank" rel="noopener">小薗郁也さん（note）</a>）<br>
-      ・安全：シートベルトをしめる。田んぼの出入りの坂は低速で、坂に対してまっすぐ。道では左右のブレーキを連結する（片ブレーキで急に曲がらない）
-    </details>
-    <details class="how"><summary><b>本物の田んぼアート</b></summary>
-      ・青森県田舎館村で 1993 年に始まった。古代米など 葉や穂の色がちがう稲を植え分けて、田んぼに絵や文字を描く。いまは全国の村おこしで作られている<br>
-      ・下絵は、田植えの前に測量して田んぼにうつす（秋田県北秋田市では トータルステーションという測量の機械を使った）<br>
-      ・展望台から斜めに見るものは、上から見るとわざとゆがんだ絵にしてある（遠近法。田舎館村が 2003 年のモナリザで苦労して取り入れた）<br>
-      ゲームでは稲のかわりに、耕した黒い土と耕していない土の色の差で描き、ドローンで真上から撮る。もとの話：<a href="https://serai.jp/tour/325332" target="_blank" rel="noopener">サライ</a>・<a href="https://www.city.kitaakita.akita.jp/archive/contents-623" target="_blank" rel="noopener">北秋田市</a>
-    </details>
-    <details class="how"><summary><b>農家の声</b>（ゲームの中で その場面になると出てくる言葉と、もとの話）</summary>
-      ・「まっすぐ進むのは思いのほか難しい」…<a href="https://www.pref.tochigi.lg.jp/g63/hp/kensyuka/20200825kusakari.html" target="_blank" rel="noopener">栃木県農業大学校の研修</a><br>
-      ・ぬかるみで爪とタイヤが泥に取られ、音が変わってエンストしそうに／黒土では深いわだち／耕すと土がはしに寄る…伊賀の兼業農家さんの記録（<a href="https://note.com/yuki0mori/n/nff90dd208391" target="_blank" rel="noopener">秋起こし</a>・<a href="https://note.com/yuki0mori/n/na89a773a8924" target="_blank" rel="noopener">春の田起こし</a>・<a href="https://note.com/yuki0mori/n/nd13d201e32b2" target="_blank" rel="noopener">土・自然・機械とのコミュニケーション</a>）<br>
-      ・「トラクターは車の運転とは別物」…<a href="https://note.com/mild_wasp1097/n/nefd2e2729a1d" target="_blank" rel="noopener">新規就農した人の記録</a><br>
-      ・振り返ったはずみにハンドルを取られる事故…<a href="https://www.naro.go.jp/org/iam/anzenweb/point/point_pdf/till_02.pdf" target="_blank" rel="noopener">農研機構の農作業事故の事例</a><br>
-      ・「まっすぐ等間隔に往復するのは、ベテランでないと至難の技。まっすぐのつもりでも蛇行している」…<a href="https://www.businessinsider.jp/post-211001" target="_blank" rel="noopener">直進アシストの開発の話（ビジネスインサイダー）</a><br>
-      ・「頭ではわかっていても、ねらった所で止めるのに苦労する」…<a href="https://www.pref.tottori.lg.jp/item/1118891.htm" target="_blank" rel="noopener">鳥取県の農業研修のトラクター実習</a><br>
-      ・田植えの前に測量して下絵をうつす・斜めから見る絵はゆがめて植える…<a href="https://www.city.kitaakita.akita.jp/archive/contents-623" target="_blank" rel="noopener">北秋田市の田んぼアート</a><br>
-      ・ターンでついたタイヤ跡は最後に外周を回って消す…<a href="https://greenland-yoro.jp/shirokaki/" target="_blank" rel="noopener">代かきを図解した作業者</a>／外周を先に 1 周あらくかき、外周に踏みこまないようターン…<a href="https://detail.chiebukuro.yahoo.co.jp/qa/question_detail/q10107576580" target="_blank" rel="noopener">農家さんの回答（Yahoo!知恵袋）</a>／畦の近くは少しバックしてから曲がる…<a href="https://noukiya.co.jp/blogs/column/tractor-tanbo-kotsu" target="_blank" rel="noopener">農機屋のコラム</a>／まっすぐ耕すのがいちばん身につけにくい…<a href="https://www.jstage.jst.go.jp/article/jsfwr/42/2/42_2_91/_article/-char/ja" target="_blank" rel="noopener">日本農作業学会誌</a><br>
-      ・X の米農家さんの投稿（2026 年 8〜10 月）：春の耕しが浅いと代かきが均一にならない（<a href="https://x.com/i/status/2093225433953349943" target="_blank" rel="noopener">@chappy199604</a>）／まっすぐは自動でも四隅は手で苦戦（<a href="https://x.com/i/status/2111710765841563940" target="_blank" rel="noopener">@ham_kaze_choco</a>）／乾くのを待って秋起こし、稲刈りのわだちが残る（<a href="https://x.com/i/status/2112133129792266353" target="_blank" rel="noopener">@F_TERU603</a>）／わらは 1 回では埋まらず、耕す回数をふやす年も（<a href="https://x.com/i/status/2113741376261386271" target="_blank" rel="noopener">@Tyoshi0410Taoka</a>）／どれだけまっすぐ走れるか自分との戦い（<a href="https://x.com/i/status/2107789535816163517" target="_blank" rel="noopener">@BLACKkome96</a>）<br>
-      ・代かきのこなし過ぎは苗の酸欠のもと…<a href="https://www.pref.shiga.lg.jp/documents/6940/1009961_1.pdf" target="_blank" rel="noopener">滋賀県の資料</a>／水もれの大半は畦ぎわから、外周はていねいに…<a href="https://www.pref.tottori.lg.jp/secure/515264/asamizu.pdf" target="_blank" rel="noopener">鳥取県の浅水代かきの資料</a><br>
-      ・新人のころ、はじめて耕した跡はガタガタ。同級生にコツを教わって終わらせた…<a href="https://agri.mynavi.jp/2020_02_15_105161" target="_blank" rel="noopener">農家の息子さんが描いた新人時代のマンガ（マイナビ農業）</a>／研修のときとは土も機械もちがい、操作を一から覚えなおした…<a href="https://www.maff.go.jp/hokkaido/sapporo/shinnki/attach/pdf/shinnki-17.pdf" target="_blank" rel="noopener">北海道の新規就農者の紹介（農林水産省 北海道農政事務所）</a>／代かきのあと、道へ出る坂で前輪が浮き、あわててブレーキを踏んで横転…<a href="https://www.naro.go.jp/org/iam/anzenweb/poster/poster_A4/poster_04.pdf" target="_blank" rel="noopener">農研機構の農作業事故の事例</a><br>
-      ・稲刈りの 2 日あとに秋起こし。秋に起こすと、春に起こすより ガス湧きが少ないと感じる…<a href="https://www.youtube.com/watch?v=iVYUNi42g2Q" target="_blank" rel="noopener">岩手県盛岡市の自然栽培の米農家さんの動画（YouTube）</a>／水を張りすぎると土の表面が見えず平らにしにくい。荒代かきは水 1cm くらいの浅水で…<a href="https://note.com/kome_noka_shinya/n/na7acbb02a6dc" target="_blank" rel="noopener">米農家 いち田さんの note「荒代かきと植え代かき」</a>／前の畦塗り機では畦のはし 5m ほどが塗れず、手で塗っていた…<a href="https://note.com/23owarai/n/n8beeebef58d3" target="_blank" rel="noopener">林さんちのゆかいな米作り（note）「隅々まで塗れる脅威の畦塗り機購入」</a>／固い所やタイヤの跡を耕す はしの爪ほど早く減る。減りやすい爪を入れかえて長く使う…<a href="https://ameblo.jp/yuuyasyoueikoharu/entry-12123637685.html" target="_blank" rel="noopener">愛媛の専業米農家さんのブログ「ちょっぴりお得な、ロータリーの爪交換」</a><br>
-      ・ロータリーの逆転：ロータリーを下ろしたあとに盛り上がった土を前へ戻して平らにしやすい。正転より負荷が大きいので、硬い所や耕作放棄地では故障のもと。エンジンは低回転で（取扱説明書では 1500rpm 以下が目安）…<a href="https://note.com/ryutaro0306/n/n1dec2d4d6705" target="_blank" rel="noopener">井上寅雄農園（note）「トラクターの逆転機能」</a>／四隅などにたまった土を寄せるのに使う。硬い所では使わず、やわらかい所で…<a href="https://note.com/ryutaro0306/n/n9cd5ebffa07d" target="_blank" rel="noopener">同「逆回転機能」</a>（ゲームでは <kbd>O</kbd>）<br>
-      ・春起こしの最中、トラクターの前から煙が上がり、水温計が上がって異音も。冷却ファンを回すベルトが切れていた。型に合うベルトは特殊で、部品が届くまで 3〜4 日…<a href="https://note.com/yuki0mori/n/n54506678cb0e" target="_blank" rel="noopener">大森雄貴さん（note）「ゼロから始める伊賀の米づくり16：田植え機のメンテナンスとトラクターの故障！？」</a>（ゲームでは はじめの画面の「🔧 はじめに点検する」。しないと 春は とちゅうで切れる）<br>
-      ・耕したあとが波うつときは、リヤカバーがなめらかに上下しているかを見る。ワイヤーのサビやアームの固着は、根元にオイルスプレーで よくなる。上下レバーは一番下まで下げ、深さは深さ調整レバーで合わせる（途中まででは センサーがうまく働かない）…<a href="https://note.com/ryutaro0306/n/nc00b16345f07" target="_blank" rel="noopener">井上寅雄農園（note）「耕うん後が波うつ場合の対処法」</a>（ゲームでは 秋に点検をしないと 波うつ）<br>
-      ・バックするときは ミラーだけに頼らず 目で見て確かめ、要るときは クラクションで知らせる。作業機の付けはずしは エンジンを止めて、作業中に降りるときも エンジンを止める…<a href="https://note.com/ryutaro0306/n/n277e4493a3a4" target="_blank" rel="noopener">井上寅雄農園（note）「トラクターにかかわる危険な行動5選」</a>（ゲームでは <kbd>B</kbd>／「うしろを見る」で うしろを見てから バックする）<br>
-      ・小さい田が点在していると ターンの回数がふえ、田の四隅も バックしてから耕すので 手間がふえる…<a href="https://note.com/toshi_chaki/n/n28258f30b67d" target="_blank" rel="noopener">茶木寿夫さん（note）「農業用トラクターは楽し。第2部 馬からトラクターへ」</a>／はじめての田起こし：耕して止まり、バックして向きを変え、また耕す。残った隅を もう一周耕した…<a href="https://note.com/non_non19/n/n146bd6107e07" target="_blank" rel="noopener">のんのんさん（note）「初トラクター運転と田おこし」</a>（ゲームでは 角が残っていると、バックで寄せて耕す案内が出る）<br>
-      ・秋：コンバインは四隅を刈れないので 手でへり刈りし、脱穀で四隅に止めたりするので 藁が山になる。冬に田を起こさないので、山のままだと下の藁が春まで分解しない。稲刈りのあと 熊手で 藁の少ない所へ散らして乾かしておく…<a href="https://komeya4th.exblog.jp/28935485/" target="_blank" rel="noopener">米屋四代目のブログ（岡山）「冬の田んぼ仕事 四隅の藁を散らしておきます」</a>（ゲームでは 秋の田んぼの四隅に 藁の山がある。秋に耕すときも、集まった藁は 耕す前に まんべんなく散らしておくのが本物。ゲームでは 散らす作業は省き、耕すと山が崩れる）<br>
-      ・田んぼを耕していると、トラクターのうしろに ミヤマガラスの群れが集まり、白黒のコクマルガラスが 1 羽まじっていた。トラクターの中から写真をとると、ガラスごしなら 鳥は用心せず すぐそばで見られた。とろうとしてドアを開けると、群れは いっせいに逃げた…<a href="https://ameblo.jp/okda123/entry-12518831230.html" target="_blank" rel="noopener">田んぼを耕す人のブログ（アメブロ）「田畑を耕すといろんな鳥がトラクターの後に集まります。」</a>（ゲームでは 冬鳥のミヤマガラスが渡ってくる 秋の田んぼに来る。耕して 30 秒ほどで群れが降り、泥落としや 2 番穂取りで降りると 飛び立つ）<br>
-      ・電気柵を張るうえで いちばん大事なのは まわりの草刈り。草が線にふれると漏電して 電気が弱くなるので、線のまわりは刈っておく。風でゆれても草にふれないよう、線の高さと張りぐあいを調整する…<a href="https://www.iyokubonofarm.com/post/%E7%AA%AA%E9%87%8E%E7%B1%B3%E6%97%A5%E8%A8%98%EF%BC%9Avol-8-%E5%87%BA%E7%A9%82%E7%9B%B4%E5%89%8D%E3%81%AE%E9%98%B2%E8%A1%9B%E7%AD%96%EF%BC%81%E3%82%A4%E3%83%8E%E3%82%B7%E3%82%B7%E3%81%8B%E3%82%89%E5%A4%A7%E5%88%87%E3%81%AA%E3%81%8A%E7%B1%B3%E3%82%92%E5%AE%88%E3%82%8B%E3%80%8C%E9%9B%BB%E6%B0%97%E6%9F%B5%E3%80%8D%E3%81%AE%E6%BA%96%E5%82%99%E3%81%A8%E9%99%A4%E8%8D%89%E4%BD%9C%E6%A5%AD" target="_blank" rel="noopener">窪野米日記（愛媛の米農家さん）「vol.8 出穂直前の防衛策！イノシシから大切なお米を守る『電気柵』の準備と除草作業」</a>（ゲームでは 秋の田んぼの畦に 電気柵が残っていて、外周を耕すと 知らせが出る）<br>
-      ・アメンボは 水面を自由に動けるので、水面に落ちて動けなくなった虫を食べる。そのなかに ウンカの幼虫もいて、田んぼの害虫を減らしてくれる…<a href="https://rice.tanaka-fukui.jp/archives/276" target="_blank" rel="noopener">福井の米づくりのサイト「お米に悪さをする者たちと、それらを成敗してくれる者たち」</a>（ゲームでは 代かきの田んぼの水面に アメンボがいて、こぐたびに小さな輪の波が立ち、トラクターが近づくと逃げる）<br>
-      ・半枯れのレンゲを 1㎡ に 2kg ほど（10a に 2 トン）すきこんだ。レンゲは 腐りやすい やわらかい緑肥なので、10 日後に もう一度耕すと 細切れになって 土に入りやすい…<a href="https://brassica.exblog.jp/11191106/" target="_blank" rel="noopener">田圃に遊ぶ・・・（エキサイトブログ）「レンゲすき込み」</a>（ゲームでは 春に「🌸 レンゲの田んぼ」を選ぶと、レンゲの田んぼを耕して すきこむ）<br>
-      ・満開のレンゲをすきこんでいたら、2 枚目の田んぼで レンゲにまじった イネ科の草が 爪に巻きついた。そのままだと 軸受けが焼き付くので、2 往復ごとに エンジンを止めて うしろへ回り、からんだ草を取った…<a href="https://ameblo.jp/hunter4436/entry-12024244160.html" target="_blank" rel="noopener">アメブロ「緑肥レンゲを梳き込みました。」</a>（ゲームでは レンゲの田んぼを 2 往復ほど耕すと 草が巻きつき、止まって 作業機を上げると 降りて取る）<br>
-      ・ロータリーを下ろして耕しはじめた所は 高くなり、上げて止めた所は 低くなる（爪が 土をうしろへ けちらしながら耕すから）。はじめは フラップを少し押さえ気味にして 3 秒ほど空回しする。止めた所の穴は、爪の回転を止めて PTO を中立にし、ゆっくり前へ出ると フラップが土を押しこんで うまる…<a href="https://brassica.exblog.jp/32557480/" target="_blank" rel="noopener">田圃に遊ぶ・・・（エキサイトブログ）「トラクターの始発終着」</a>（ゲームでは 耕しはじめの所が 3.5cm 盛り上がり、止めた所が くぼむ。止まって 3 秒空回ししてから走り出すと 盛り上がらない。耕しなおすと ならされる）<br>
-      ・自分の耕運跡と となりの田んぼの耕運跡は ちがう。いちばんの ちがいは 爪の並べ方。自分は 山が 2 本残る並べ方、となりは 平らに仕上がる並べ方で、自分のほうが 稲わらが よく埋まると思う…<a href="https://brassica.exblog.jp/23549552/" target="_blank" rel="noopener">田圃に遊ぶ・・・（エキサイトブログ）「耕運跡」</a><br>
-      ・取扱説明書には 爪の並べ方が 3 とおり（平耕・1 つ盛り耕・2 つ山盛り耕）。前は 稲わらの すきこみに向くと思って ぜんぶ 二山盛りにしていたが、収穫のころの天気が悪く 田面が でこぼこになりがちなので、高い低いが わかりやすく 均平をとりやすい 平耕に もどした。まわりで 二山耕の人は見ない。となりの ベテランは 冬に耕すときだけ 1 つ盛り耕…への字稲作 in 長野「トラクター爪の配列は平耕・１つ盛り耕・２つ山盛り耕どれが良いのか？」（2026年10月に確認。いまはブログのアドレスが切れて 開けません）（ゲームでは はじめの画面の「⛰️ 爪を 二山盛りに並べる」で、1 回通るごとに 高さ ±1.8cm の山が 2 本できる。春と秋だけ）<br>
-      ・3 点リンクを始め、ロータリーを上下させる 全ての 動く所・すべる所に グリースを塗っておく。ロータリーを上げ下げしたときに ギーギー鳴るようでは ユーザー失格…<a href="https://brassica.exblog.jp/26041816/" target="_blank" rel="noopener">田圃に遊ぶ・・・（エキサイトブログ）「農機具雑談」</a>（ゲームでは 春に はじめの点検をしないと グリースが切れていて、上げ下げで ギーギー鳴る。止まって 上げると グリースを入れる。2 分）<br>
-      ・耕す前に 5.5m のメジャーを用意して、耕運幅の 3 倍の所に 目印を付け、その内側から耕す。耕運は かならず少し重ねるので、その分も見て 目印の所を決める…<a href="https://brassica.exblog.jp/33215863/" target="_blank" rel="noopener">田圃に遊ぶ・・・（エキサイトブログ）「耕運実際編」</a>（ゲームでは 畦の上に 赤いテープを巻いた竹を立てた。耕幅の 3 倍の所。お題のときは 白線があるので 出さない）<br>
-      ・トラクターで田んぼへ行くときは、17mm のスパナと 予備の爪ボルトを かならず持っていく…<a href="https://brassica.exblog.jp/32544623/" target="_blank" rel="noopener">田圃に遊ぶ・・・（エキサイトブログ）「いよいよ田んぼへ」</a>（ゲームでは 秋に はじめの点検をしないと、耕しているうちに 爪が 1 本 取れて 細い耕し残しの すじができる。止まって 上げると 予備の爪を付ける。3 分）<br>
-      ・トラクターで耕していたら、ウシガエルを 起こしてしまったようです…<a href="https://ameblo.jp/iko228-yamaha/entry-12891527997.html" target="_blank" rel="noopener">ikoのブログ「田んぼ トラクター」</a>（ゲームでは 春に耕していると、ロータリーのうしろの 耕した土から 冬眠していた ウシガエルが 出てきて、のそのそと 畦のほうへ はねていく。2 ひきまで）<br>
-      ・燃費をよくするため、トラクターのエンジンを 最大の 2500 回転から 2000 回転に下げて 秋の田起こしをしている。燃料の消費は 30% 前後へった（PTO 1・耕深 3）。回転を下げると PTO の回転も下がるので、PTO 2 速で 試したこともある。メーカーや 排気量で ちがう…<a href="https://ameblo.jp/shirouri360/entry-12244846823.html" target="_blank" rel="noopener">shirouri360（アメブロ）「トラクターのエンジン回転数を下げて、田起こしを始めました。」</a>／前の 23 馬力では やわらかい所で エンジンが止まりそうになり 回転を上げていた。27 馬力では 2000 回転でも粘る（作業は 時速 2km 前後）…<a href="https://ameblo.jp/shirouri360/entry-12836656045.html" target="_blank" rel="noopener">同「昨年やり残した田起こししました」</a>（ゲームでは はじめの画面の「⛽ エンジンを 2000 回転に下げて耕す」で、耕すときの回転・走る速さ・爪の回転が 2 割下がり、軽油は 1 時間あたり 3 割ほど（耕した広さあたり 1 割ほど）へる。ぬかるみでは エンストしやすいので、重くなったら I で 2500 回転にもどす。春と秋だけ。回転を下げて PTO を 1 段上げる やり方は <a href="https://gn.nbkbooks.com/?p=11792" target="_blank" rel="noopener">現代農業</a> にも）<br>
-      ・トラクターが ガス欠。軽油を入れても かからない。ディーゼルなので エア抜きが いる。燃料の 管の ボルトを ゆるめて 軽油が あふれるまで 送り、しめなおすのを くりかえして かかった（セルを 回しつづけると セルが こわれる）…<a href="https://gonchannel1117.seesaa.net/article/201607article_18.html" target="_blank" rel="noopener">GONちゃんねる「トラクターがガス欠で」</a>（1973 年の クボタ。手順は 機種で ちがう：<a href="https://inakin.hatenablog.com/entry/2018/07/14/%E3%83%88%E3%83%A9%E3%82%AF%E3%82%BF%E3%83%BC%E3%81%AE%E3%82%A8%E3%83%B3%E3%82%B8%E3%83%B3%E5%86%85%E3%82%A8%E3%82%A2%E3%83%BC%E6%8A%9C%E3%81%8D%E3%83%BB%E6%B0%B4%E6%8A%9C%E3%81%8D" target="_blank" rel="noopener">こぼれたミルク「トラクターのエンジン内エアー抜き・水抜き」</a>。ゲームでは 代かきで はじめの点検をしないと 軽油が 1L ほどで、始めから 燃料の警告が ついている。警告のうちに 止まって上げると 携行缶から 入れる（5 分）。そのまま走ると ガス欠で 止まり、エンジンも 油圧も 止まるので 下ろしたまま 入れて エア抜き（15 分）。警告の残りは 機種で ちがう：<a href="https://media.kubota.io/uploads/M108S01-Tractor-Operator-Manual.pdf" target="_blank" rel="noopener">クボタ M108S の取扱説明書</a> は 11.8L）<br>
-      ・田んぼに 水を入れると、土の中の ケラが 息ができなくなって たくさん浮いてくる（農家さんから聞いた話）…<a href="https://note.com/hinatatsu/n/n9fbedfe54019" target="_blank" rel="noopener">hinatatsu の note「ケラ」</a>。水を入れた はじめは 少なく、代かきで 泥をかきまぜると 浮いてきた…<a href="https://konchuu-view.blog/?p=1094" target="_blank" rel="noopener">昆虫ビュー「田んぼとケラ」</a>（ゲームでは 代かきの ハローのうしろの 泥から ときどき 浮いてきて、脚で 水をかいて 畦のほうへ 泳ぎ、トラクターが近いと 遠ざかる。水から出た土に着くと もぐる。夜と雨の日は 見えないので 出さない）<br>
-      ・畦塗りで 田んぼのまわりを 何度も回ったので、出入口の泥が ゆるんでいた。泥のついた作業機を 上げたまま、最低速でなく 前進で 急な面から上ったら、前輪が浮いて 横転しかけた。前輪が浮きそうなら すぐ もどって、作業機を下げて バックで上る…<a href="https://ameblo.jp/morichin-agri-diary/entry-12910480409.html" target="_blank" rel="noopener">森ちんの農業日記「代掻き・畔塗・【ヒヤリ事例】トラクター前輪浮き」</a>（ゲームでは 代かきで、ハローを上げたまま 2 速以上で 前進で 坂の急な所を上ると 前輪が浮いて 上れない。アクセルをはなして 下がり、1 速で まっすぐ上るか、バックで上る。ゲームの坂は 「下げる」と 坂を削るので、ハローは 上げたままで よい）<br>
-      ・ロータリーの ブレードの回転が 推進力になって、トラクターを止めても ブレーキを踏まないと 止まらないことがある。旋回は 畦を乗りこえないよう 少しそれて耕すか、ロータリーを上げてから…<a href="https://ameblo.jp/100sho/entry-12828825378.html" target="_blank" rel="noopener">100sho のアメブロ「ロータリーとプラウで耕します」</a>。固い田んぼでは 爪が土に入らず はじかれて、アクセルを踏んでいないのに 勝手に前へ進む（ダッシング）…<a href="https://ameblo.jp/yuuyasyoueikoharu/entry-11827681844.html" target="_blank" rel="noopener">アメブロ「荒起こし ロータリー耕耘実践⑥」（作業名人さとちゃんの教材を実践した農家）</a>（ゲームでは アクセルを はなすと ブレーキを踏むが、春・秋に ロータリーを下ろして爪が回っていると、押されて 止まるのが おそい（3 速から 春 約 0.5m 進んで止まる）。逆転ロータリーと 代かきの ハローでは 押さない）<br>
-      ・トラクターの後を カラスや ハクセキレイが ついてきて、耕した土の虫をさがす。ムクドリが近づいてくると カラスが威嚇して 追い払った…<a href="https://ameblo.jp/okda123/entry-12651906774.html" target="_blank" rel="noopener">遠藤環境農園「トラクターの後をついてくるカラスとハクセキレイ」</a>。田植え前の田起こしで、ムクドリは 多い時には 数十羽。カラスが来ると 一斉に逃げるが すぐに またやってくる…『はつかいち』ぶらり「トラクターに付いてくる鳥」（2026年10月に確認。gooブログの終了で いまは開けません）（ゲームでは 春・秋の昼、しばらく耕していると ムクドリの群れ（春 十数羽・秋 二十数羽）が うしろに降りて ついばみ、カラスが近づくと いっせいに飛び立って 少しはなれた所に すぐ降りる）<br>
-      ・田んぼの秋起こしは 来季の収量に つながる作業。畑とちがって、田んぼは 荒く起こして 乾きやすくする…<a href="https://www.youtube.com/watch?v=6s-M-hhOlqs" target="_blank" rel="noopener">岩手・盛岡の農家の YouTube「田んぼの秋起こしは粗めに」</a>（ゲームでは 秋に「速すぎて粗い」とは 言わない。ゆっくり・PTO 2 速で 細かくしすぎると（耕うんピッチ 5cm より細かい）知らせ、その所は 乾くのに 2 倍かかる）<br>
-      ・田んぼの枕地は 土の表土が 高くなりやすい。そして 何回も耕すと 深くなりやすいので、枕地は 浅く耕起している…<a href="https://www.youtube.com/watch?v=BUAWkCl9nZs" target="_blank" rel="noopener">岩手・盛岡の農家の YouTube「秋起こし時の枕地」</a>（ゲームでは 春・秋、同じ所を 3 回目から ふだんに近い深さで 耕すたびに 2cm ずつ 深くなり（10cm まで）、タイヤが さらに沈む。初めより 2cm 以上 浅くすれば 深くならない）<br>
-      ・ロータリーが 降りなくなったら、まず ロータリーの油圧の調節（落下速度の つまみ）を ゆるめる。乗り降りのときに 足が当たって しまる方向に 回ることがある。それでも だめなら ポジションコントロールの 解除を 確かめる…<a href="https://komeya4th.exblog.jp/28259732/" target="_blank" rel="noopener">米屋四代目のブログ「トラクターのロータリーが降りない時の対処方法」</a>（ゲームでは 泥落とし・草とりで 降下止めを かけて 降りたあと、はじめの 1 回だけ 半分の確率で つまみが しまったまま になり、下げても 降りない。もう一度 押すと つまみを ゆるめて（10 秒）下がる）<br>
-      ・耕していたら いきなり 大きな音がして、降りてみると 右前輪の 空気が 抜けていた（パンク）。畑では 直せないので 牛舎まで もどしたが、とちゅうで タイヤが ホイールから 浮いてきた…東京里山農業日誌「トラクタ右前輪がパンク、やれやれ困った」（2026年10月に確認。gooブログの終了で いまは開けません）（ゲームでは 秋に はじめの点検（タイヤの空気）をしないと、耕して 25〜45m で 右前輪が パンクして 右へ とられる。上げて 出入口の坂の下まで もどって 止まると チューブを 交換する（30 分）。速く走ると タイヤが 浮いてきて さらに とられる）<br>
-      ・田畑の 土ぼこりで エアクリーナーが 詰まると、エンジンの 回転が 上がりにくくなり、エンストなどに つながる。オイル・エアクリーナー・爪の 三つを 自分で 手入れして、同じ機種の 近所の農家より 燃料が 4 分の 1 に…<a href="https://gn.nbkbooks.com/?p=35398" target="_blank" rel="noopener">現代農業「農家の痛快節約術 トラクタ 三つのメンテだけで燃料が1/4」</a>（ゲームでは 春・秋に はじめの点検を しないと、耕して 1 分ほどで 詰まる。耕すときの 回転が 下がり、ぬかるみで エンストしやすく、DPF の すすが 2 倍 早く たまり、軽油が ふえる。止まって 上げると 内がわから エアで 吹く（5 分））<br>
-      ・この時期 田んぼで よく見かける カルガモ。繁殖期には つがいが 水田の中で 草を食べる姿が よく見られる。畦の草刈りが 遅れて 草が伸びると、そこに 巣を つくることも…<a href="https://hommfarm.com/wp/archives/3856" target="_blank" rel="noopener">ほんまるビオトープ（農園の ブログ）「小雨の田んぼの畦」</a>（ゲームでは 代かきの昼・朝・夕、しばらく かいていると つがいが 飛んできて 降りる。水が 1cm より浅いと 泳げない（<a href="https://www.naro.go.jp/laboratory/tarc/symple_blog/kome_bird/025980.html" target="_blank" rel="noopener">農研機構「鳥害の図鑑：カルガモ」</a>）ので、浅水では 泥の上を 歩いて ついばむ。9m より近いと 歩いて はなれ、4.5m より近いと 飛び立つ）<br>
-      ・オモダカは 地上の 葉が 枯れても 土の 中で 生きつづけ、春に また 生えてくる。秋に 田を 起こして 乾かすと、根が 地表に 出て 寒さで 朽ちる。水が たまった ままで ロータリーを かけると 土が 練れて 泥の 塊に なる…<a href="https://jikyujisoku-money.com/rice-cultivation-2021-part2/" target="_blank" rel="noopener">小濱達郎「田舎暮らし・自給自足マニュアル」：ようやく秋起こし</a>（ゲームでは 秋、オモダカの 多い 3 か所を はじめて 耕すと、乾いた 所では 白っぽい 塊茎が 土の上に 出る。水の 多い 所・雨の 日は 出てこない）<br>
-      ・稲刈りの あとの 田んぼに 排水の 溝（明渠）を 碁盤の目に 掘る。担当者は 残った 稲株を 目印に して、まっすぐ 走るよう 直しながら 掘っている…<a href="https://note.com/komachikyokai/n/n2a1ef855fb6d" target="_blank" rel="noopener">大潟村あきたこまち生産者協会（note）「晩秋の田んぼと私の間には深い溝（物理）ができていた」</a>（ゲームでは 秋に 稲株の 列から 2〜7° ずれたまま 8m 耕すと、稲株の 列を 目印に する 話が 出る）<br>
-      ・草を おさえようと、深く かいて 下の 土から 草の種を 上げないよう、代かきを なるべく 浅く した。ところが 田植えの あと 苗の 育ちが 進まず、草に 負けた 田も ふえて、収穫が 去年より 35% 弱 へった…<a href="https://kan6en.com/blog/about-agriculture/1728/" target="_blank" rel="noopener">勘六縁（ブログ）「今年の失敗①～代かきについて」</a>（ゲームでは 代かきの 深さを 5cm 以下に すると この声。11cm 以上は 草の種が 上がる 知らせ。おわりの画面に 平均の 深さと その話）<br>
-      ・大きな 田んぼでは、代かきで 水が 濁ると かいた 所が わかりにくい。先に 田んぼの 中に S の字に タイヤの 跡を つけておくと、かいた 所は 跡が 消えるので 区別できる…<a href="https://ameblo.jp/yao312jp/entry-12616720270.html" target="_blank" rel="noopener">アメブロ「トラクターの小技 その2」</a>（ゲームでは 代かきの まだ かいていない 泥にも 跡が 残り、かくと 消える。かく前に ハローを 上げて 25m 走ると この話）<br>
-      ・燃費をよくするため 回転を 下げて、ケイカルを まいた所から 順に 秋の田起こしを している…<a href="https://ameblo.jp/shirouri360/entry-12244846823.html" target="_blank" rel="noopener">shirouri360（アメーバブログ）「トラクターのエンジン回転数を下げて、田起こしを始めました。」</a>（ゲームでは 秋の 田んぼの 西半分に ケイカルが うっすら 白く まいてあり、耕すと 土に まざって 消える。おわりの画面に 何割 まぜたか）<br>
-      ・朝 4 時前に トラクターの 暖機運転を はじめ、4 時すぎに 家を 出て 畑へ。暖機と 移動も ふくめて 1 時間 36 分（アワーメーター）…<a href="https://yuchuni-diy.com/entry/early-morning-tractor-work-300tsubo-kubota_" target="_blank" rel="noopener">camper_bakkasu の日記（はてなブログ）「朝4時起きのトラクター出動！300坪の畑作業と自家消費のリアル」</a>（ゲームでは 朝と夜は エンジンが 冷えていて、水温計が 青いあいだに 耕すと 回転が 上がりにくく、白い煙が 多く、ぬかるみで エンストしやすい。止まって 暖機してから。取扱説明書は 主変速・PTO を 中立に して 駐車ブレーキを かけ、約 1500 回転で 約 5 分。暖まる前に 走ると 寿命を 短くする）<br>
-      ・10 月 30 日、畑を 鍬で 耕していたら、体の色が 灰色に かわった アマガエルを 起こしてしまった。目は ぱっちり。あやまって 耕さない 畑の縁に 埋めもどした。カエルは 10cm 以内の 浅い所で 冬を こすらしい…<a href="http://nanami-ishitsubo.cocolog-nifty.com/blog/2016/11/post-455c.html" target="_blank" rel="noopener">シニアナナ・思考徒然（ココログ）「冬眠中のカエルを起こしてしまった！！」</a>（ゲームでは 秋に 耕すと ときどき ロータリーのうしろの 土から 灰色の 小さな アマガエルが 出てきて、のどを ふくらませて 息をし、まばたきしながら 畦のほうへ ゆっくり はねていく。トラクターが 近いと 少し 急ぐ）<br>
-      ・5 月、田んぼで アメリカザリガニが 大発生。小さな ザリガニが 畦に 上がってくる…<a href="https://negibouzu.org/?p=12819" target="_blank" rel="noopener">南房総 有機農園ねぎぼうず「ザリガニ大発生中(>_<) 田んぼの生き物」</a>（ゲームでは 代かきの 昼、畦の 巣穴の まわりの 水ぎわを 小さな ザリガニが のんびり 歩き、トラクターが 近づくと うしろへ すっと 水に もどる）<br>
-      ・代かきの あとの 田んぼで 草取りを していたら、水の 中に ゲンゴロウ・メダカ・どじょう・オタマジャクシが いた…<a href="https://green-wind.jp/%E7%94%B0%E3%82%93%E3%81%BC%E3%81%A7%E8%A6%8B%E3%81%A4%E3%81%91%E3%81%9F%E7%94%9F%E3%81%8D%E7%89%A9%E3%81%9F%E3%81%A1/" target="_blank" rel="noopener">グリーンウィンド「田んぼで見つけた生き物たち」</a>（ゲームでは 代かきの 昼、小さな ゲンゴロウが ときどき 水面に 上がって おしりを 出して 息つぎし、小さな 輪の 波が 立つ。トラクターが 近いと すっと もぐる。近くで 息つぎすると 運転する キャラクターが 気づく）<br>
-      ・春、気温が 上がった 日に カナヘビが 日向ぼっこ。体温が 上がりきらず 動きは ゆっくりだった…<a href="https://nouson-kaminaka.hatenablog.com/entry/2020/04/30/183946" target="_blank" rel="noopener">かみなか農楽舎「カナヘビの日向ぼっこ」</a>（ゲームでは 春と 代かきの 晴れた 朝・昼、畦の 上で カナヘビが ひなたぼっこ。ときどき 首を かしげ、ゆっくり 少し 歩く。トラクターが 近いと 草の 中へ するっと かくれ、しばらく すると また 出てくる。近くで 見つけると 運転する キャラクターが そっちを 見て 話す）<br>
-      ・稲刈りも 籾摺りも 終えた 日、刈り株だけに なった 田んぼで カエルを 見つけた。かくれる 所の ない カエル…<a href="https://terasawa.substack.com/p/a71" target="_blank" rel="noopener">農業詩人 てらさん「稲刈りが終わった、そのあとで」</a>（ゲームでは 秋の 朝・昼・夕方、刈り株の あいだに 小さな アマガエルが 3 びき。のどで 息を して じっと している。トラクターが 近づくと ぴょん ぴょんと 近くの 畦へ はねていき、草に かくれる。近くで 見つけると 運転する キャラクターが そっちを 見て 話す）<br>
-      ・春に 田んぼを 耕すと、水が ぬけきらない 土から ドジョウが 出てくる。腸や 皮ふでも 息が できる…<a href="https://www.bepal.net/archives/301693" target="_blank" rel="noopener">相川健志 BE-PAL「春の田んぼでコンニチワ！ドジョウの種類はヒゲの数で見分けられる」</a>（ゲームでは 春、ぬかるみ（右下の ぬれた 所）を 耕すと、ロータリーの うしろの 土から ドジョウが 出てきて くねくね 進み、やわらかい 泥に もぐる。近くで 出ると 運転する キャラクターが 見て 話す）<br>
-      ・レンゲの 種を 落とすため 例年より 1 週間 おそく、レンゲ畑を トラクターで 耕した。草が なくなって、テントウムシや ミツバチに 悪いことを した…<a href="https://fortunehills.blogspot.com/2019/05/blog-post_11.html" target="_blank" rel="noopener">幸か福岡かふくおかひろし「水田準備「田起こし」 レンゲ畑トラクターで耕す」</a>（ゲームでは「🌸 レンゲの田んぼ」の 晴れ・くもりの 朝・昼、ミツバチが レンゲの 花から 花へ みつを あつめて まわり、近くを 耕すと まだ 耕していない 遠くの レンゲへ とんでいく。運転する キャラクターが「ミツバチさん、ごめんね」）<br>
-      ・春から 夏は 水路を あけるだけで メダカが 田んぼに 入ってくる。田んぼで 卵を 産み、稲刈りの 前に 川へ もどす…<a href="https://kakunosh.in/kanzaki-aging-beef/cat-foodstuff/rice-medakamai/" target="_blank" rel="noopener">門崎ファーム「めだかが泳げる綺麗な田んぼで作る「めだか米」」</a>（ゲームでは 代かきの 朝・昼・夕方、東の 水口の そばで メダカの むれが 水面の すぐ 下を すいすい。トラクターが 近いと さっと はなれ、しばらく すると もどる。近くで 見つけると 運転する キャラクターが 見て 話す）<br>
-      ・トラクターの うしろの スライドモアを 右へ のばし、農道わきの 土手の 斜面に 合わせて かたむけて 高い 草を 刈る…<a href="https://www.instagram.com/soutome_farm/" target="_blank" rel="noopener">soutome_farm（Instagram の 動画）</a>（ゲームでは はじめに 農道の 東よりを 南へ 走って 土手の 草を 刈る。まえへ すすむ だけで、刈った 草が うしろへ とぶ。田んぼの 北の はしで 付けかえて 耕しはじめる）<br>
-      ・畦塗り機の 爪で 田んぼの ふちの 土を 掘り、回る ステンレスの 円ばんで 畦に ぬりつける（みぞほりも できる）…<a href="https://www.instagram.com/kazue_einou/" target="_blank" rel="noopener">kazue_einou（Instagram の 動画「EG83 で 畦塗り」）</a>（ゲームでは 草かりの つぎに 北の 畦ぞいで あぜぬり。春・代かきは ふちに みぞが でき、畦が つやつやの 泥に。秋は みぞほり だけで、ふちの みぞから 水が ぬける）<br>
-      ・自生の ホタルが 今年も 田んぼと 水路の まわりを 飛んだ。10 年ほど 田んぼと 水路の まわりを 守ってきた…<a href="https://prtimes.jp/main/html/rd/p/000000220.000020935.html" target="_blank" rel="noopener">THE FARM（千葉県 香取市）「千葉・香取の里山に、今年も自生のホタルの光」</a>（ゲームでは 代かきの 夕方・夜、道ぞいの 水路の 上を ホタルが やさしく 光って とぶ。止まって 見ると だんだん ふえる。見つけると 運転する キャラクターが にこっと 見て 話す）<br>
-      ・農薬で 田んぼと 川の 魚が へったが、いまは 農業用水に 生きものが もどりつつある。田んぼの まわりに カワセミが もどってきた…<a href="https://kumamoto-shizen-kome.com/field/index-6689.html" target="_blank" rel="noopener">熊本の 自然栽培米の 農家・植田さんの 田んぼ（取材記事）</a>（ゲームでは 朝・昼・夕方、道ぞいの 水路の 杭に カワセミが とまり、ホバリングしてから 水に とびこんで 小魚を とる。トラクターが 近いと 水路に そって 低く とんで にげる。見つけると 運転する キャラクターが びっくりして 話す）<br>
-      ・田植えの とき、田んぼの ふちに カエルの 卵や オタマジャクシ、足もとには アカハライモリ…<a href="https://www.kikuhime.co.jp/info/%E3%80%8C%E3%82%AA%E3%82%BF%E3%83%9E%E3%82%B8%E3%83%A3%E3%82%AF%E3%82%B7%E3%81%A8%E3%82%A4%E3%83%A2%E3%83%AA%E3%81%AB%E8%A6%8B%E5%AE%88%E3%82%89%E3%82%8C%E3%81%AA%E3%81%8C%E3%82%89%E3%81%AE%E7%94%B0/" target="_blank" rel="noopener">菊姫（石川県 白山市）の 田んぼ「オタマジャクシとイモリに見守られながらの田植え」</a>（ゲームでは 代かきの 朝・昼・夕方、畦ぎわの 水の 中に アカハライモリ。ときどき 息を しに 上がって 赤い おなかが ちらっと。トラクターが 近いと すいっと はなれる）<br>
-      ・田んぼの 土手を 草刈りしたら キジの たまごが 出てきた。草むらが 安全だと 思って 巣を つくった らしい…<a href="https://ameblo.jp/farm-kitamura/entry-12187630407.html" target="_blank" rel="noopener">北村農園（アメブロ）「草刈りしてたらキジの卵！？」</a>（ゲームでは 春の はじめの 草かりで、土手の 草から キジの メスが とびたって 巣と たまごが 見つかる。その 所だけ 草刈機を 持ちあげて 刈りのこすと、あとで メスが もどる。オスは となりの 田んぼで「ケーン ケーン」。秋は 草に ひそむ オスが とびだす）<br>
-      ・トノサマガエルが へった いちばんの 理由は 農薬より 夏の 中干し（オタマジャクシが カエルに なる 前に 田んぼを かわかす）。中干しを おくらせているが まだ ふえない…<a href="https://www.takatsuka-farm.com/%E3%83%88%E3%83%8E%E3%82%B5%E3%83%9E%E3%82%AC%E3%82%A8%E3%83%AB%E3%81%8C%E3%81%84%E3%81%AA%E3%81%8F%E3%81%AA%E3%81%A3%E3%81%9F%E6%9C%AC%E5%BD%93%E3%81%AE%E7%90%86%E7%94%B1%E3%80%82/" target="_blank" rel="noopener">高塚農園「トノサマガエルがいなくなった本当の理由。」</a>（ゲームでは 春・代かきの 北の 畦ぎわに トノサマガエル。トラクターが 近づくと 大きく 3 回 とんで 畦を こえる。めったに 見ない ので キャラクターが「ひさしぶりに みたね」）<br>
-      ・田んぼの 畦に モグラに 穴を あけられて、一晩で ほとんどの 水が ぬけて しまう…<a href="https://detail.chiebukuro.yahoo.co.jp/qa/question_detail/q1181231976" target="_blank" rel="noopener">米農家の 質問（Yahoo!知恵袋「水田のモグラ対策を教えてください」）</a>（畦の モグラや ザリガニの 穴は ふさぎ、畦塗りで 水もれを ふせぐ：<a href="https://www.pref.tokushima.lg.jp/file/attachment/1039858.pdf" target="_blank" rel="noopener">徳島県の 資料</a>。ゲームでは 北の 畦に モグラ塚と 穴。あぜぬりで 穴が ふさがり、トラクターが 近づくと モグラが ピンクの はなを ちょこっと 出す。田んぼの はしの モグラ塚は 耕すと たいらに）<br>
-      ・トラクターで 作業すると 数十羽の ツバメが よってきて、追いだされた 虫を つかまえて 巣の ヒナに はこぶ…<a href="https://kokubo-organicfarm.jp/%E3%83%84%E3%83%90%E3%83%A1%E3%81%A8%E8%BE%B2%E8%96%AC/" target="_blank" rel="noopener">こくぼ農園「ツバメと農薬」</a>（ゲームでは 春・代かきの 朝・昼・夕方、草かりや 耕して いる あいだ ツバメが あつまって トラクターの まわりを ひくく 弧を えがいて とぶ。やめると 高く 上がって はなれる）<br>
-      ・カブトエビは 生えた ばかりの 草だけで なく、土から 出る まえの 芽も 食べて くれた。深水で 泥の 表面を やわらかく して おくと ふえる…<a href="https://ameblo.jp/mocki/entry-12612490580.html" target="_blank" rel="noopener">自然栽培の 農家の ブログ「これがカブトエビの除草能力だ！」</a>（泥を 掘り起こして 水が にごり、草が 生えにくく なる：<a href="http://www.kabukurimai.com/news/2013/06/21_11/" target="_blank" rel="noopener">蕪栗米生産組合</a>。ゲームでは 代かきの 田んぼの ふちの 水の 中を カブトエビが くねくね およぎ、底に もぐって 泥を まきあげる）<br>
-      ・田んぼの 畦に ネズミや モグラが ミミズを さがして 穴を あけると、田んぼの 水が ながれ落ちる。それを ふせぐ ために、球根に 毒の ある ヒガンバナを 畦に 植えた と いわれる（諸説 あり）…<a href="https://data-max.co.jp/article/31739" target="_blank" rel="noopener">「脊振の自然に魅せられて」里山を彩る ヒガンバナ</a>・<a href="https://www.pref.osaka.lg.jp/documents/29942/280730houkoku20maki4.doc" target="_blank" rel="noopener">大阪府 牧地区の 保全活動</a>（ヒガンバナが よく 咲く 畦は よく 手入れ されている：<a href="https://www.cbr.mlit.go.jp/kisojyo/understand/data/ibi_02/140919_aigo.pdf" target="_blank" rel="noopener">木曽川上流河川事務所</a>。ゲームでは 秋起こしの 畦に、花の おわった ヒガンバナの 葉の 株。近くを 通ると キャラクターが 9 月の まっかな 列と 植えた わけを 話す）<br>
-      ・ヒバリの 繁殖期の 雄は 空中で 飛びながら 長時間 さえずる。田んぼには ヒバリなど 多くの 野鳥が すむ…<a href="https://global.canon/ja/environment/bird-branch/photo-gallery/hibari/index.html" target="_blank" rel="noopener">キヤノン 野鳥写真図鑑「ヒバリ」</a>・<a href="https://www.pref.saitama.lg.jp/documents/27960/14823.pdf" target="_blank" rel="noopener">埼玉県の 資料</a>（ゲームでは 春の 田んぼから ヒバリが まっすぐ 空へ のぼって さえずり、すとんと おりる。キャラクターが 空を 見上げる）<br>
-      ・固い畦ぎわを耕すことの多い ロータリーの右はしの爪は とくに減りが はげしく、新品とくらべると 先が 針のように 細くなっていた（使いすぎ）。ほかの爪は 残りが 3〜4 割で ちょうど 交換どき。両はしの爪は 偏心爪で 1 本ずつなので、入れかえて 減りを ならせない…<a href="https://ameblo.jp/oisii-mineasahi/entry-12142804649.html" target="_blank" rel="noopener">アメブロ「トラクターの爪交換」</a>（先の幅が 25mm 以下で交換：<a href="https://faq.yanmar.com/jp/detail?site=FIWWZ5OB&amp;category=1&amp;id=381&amp;hot_list=true" target="_blank" rel="noopener">ヤンマーの FAQ</a>。ゲームでは 春に はじめの点検をしないと 右はしの爪が すり減っていて、耕したあとの 右はしに 20cm の すじが残る。止まって ロータリーを上げると 予備の爪に替える。5 分。爪を見るときは 平らな所で PTO を中立・エンジンを切り、降下止めを閉めて 作業機の下に 台を入れる：<a href="https://www.niplo.co.jp/file2021/manual/man14540562010.pdf#page=44" target="_blank" rel="noopener">ニプロのロータリーの取扱説明書</a>）<br>
-      ・ふだんは 2500 回転・PTO 1 速（540〜580 回転）・時速 2.4km。エンジンを 1800〜2000 回転に下げて PTO を 2 速（580〜650 回転）にすると、8 時間耕して 燃料が 4 分の 1 ほど残った（2500 回転では ほぼ空）。ただ DPF つきは 低い回転のままだと、自動再生のとき 回転を上げないといけない…<a href="https://greenland-yoro.jp/nenpi/" target="_blank" rel="noopener">田んぼの作業を図解する作業者のブログ（greenland-yoro.jp）「【トラクター】PTO2速で燃費良く耕うんする方法」</a>（ゲームでは 2000 回転で P の PTO 2 速にすると 爪の回転が ふつうより 1 割ほど速くなり 土が細かくなる。I か「⛽」で 2500 → 2000 → 1800 回転。DPF の自動再生は 2000 回転より下（1800 回転・PTO 逆転の 1450 回転）では止まり、メーターに「回転を上げて」と出る。同じ人の <a href="https://greenland-yoro.jp/dpf/" target="_blank" rel="noopener">DPF の記事</a> の機種は 再生のとき 2000 回転まで上げる。どの回転かは 機種で ちがう）<br>
-      ・トラクターで耕していると いつものカラスが来て、近ごろは モズも来る。切り株のあいだを 小さな鳥が走り、止まると うずくまって 見えにくい。トラクターを降りて近づくと 走って 草むらへ 飛んでいった。野生のウズラは はじめて見た…<a href="https://ameblo.jp/iko228-yamaha/entry-12730524373.html" target="_blank" rel="noopener">ikoのブログ「珍しい野生の鳥がいたー 田んぼ耕し！」</a>（ゲームでは 春と秋の昼、半分の日に 1 羽が 耕している先の 切り株のあいだに ひそんでいる。トラクターが近づくと 株の列のあいだを 走って逃げ、止まると うずくまる。すぐそばまで来ると 低く飛んで 畦の草むらへ。ウズラは 環境省のレッドリストで 絶滅危惧Ⅱ類：<a href="https://www.env.go.jp/nature/choju/docs/docs5/docs5-uzura.pdf" target="_blank" rel="noopener">環境省の資料</a>）<br>
-      ・春に浅く起こしすぎ、深水で代かきした年は、田植えの日に 稲わらが水面に大量に浮き、レーキで埋めようとしても沈まず 田植えに失敗した。その後は 7〜10cm 起こし、代かきを 2 回にした…<a href="https://komeya4th.exblog.jp/28361023/" target="_blank" rel="noopener">米屋四代目のブログ（岡山）「浅すぎる田起こしと深水代掻きの結末」</a>（ゲームでは 代かきで 浮き藁が畦ぎわに たくさん寄ると出る）<br>
-      ・速く進めば早く終わると思っていたが、自分の田んぼと機械では、速いと 爪が土を十分にまぜられず 浅い耕しになった。ゆっくり進むほど 土が細かくなり、草やワラが むらなく まざる…<a href="https://happy-ricefarm.com/%E5%88%9D%E3%82%81%E3%81%A6%E3%81%AE%E3%83%88%E3%83%A9%E3%82%AF%E3%82%BF%E3%83%BC%E8%80%95%E3%81%97%E3%81%A8%E5%AD%A6%E3%82%93%E3%81%A0%E3%82%B3%E3%83%84/" target="_blank" rel="noopener">happy-ricefarm（ブログ）「初めてのトラクター耕し」</a>（ゲームでは 主変速を 4 速に上げると出る。ゲームの耕す深さは 耕深の設定で決まり、速さで変わるのは 土の細かさ＝耕うんピッチ）<br>
-      ・旋回のときは 油圧でロータリーを上げ、回り終わったら すぐ下ろして 爪を ちょうどよい深さに入れる。ここが腕の見せどころで、雑にあつかうと ロータリーをこわす…<a href="https://note.com/toshi_chaki/n/nf21b7ee32ad2" target="_blank" rel="noopener">茶木寿夫さん（note）「農業用トラクターは楽し。第1部」</a>（ゲームでは 回り終わっても 上げたまま まだ耕していない所を進むと、下ろす案内が出る）<br>
-      ・勘で整地をくり返して 深くなりすぎた所で傾いて はまった。別の田んぼでは 田から出るスロープで動けなくなり、軽トラで引き上げてもらった。出入口のスロープの形は崩さない…<a href="https://note.com/kozonoikuya/n/n6b8c5a5089aa" target="_blank" rel="noopener">小薗郁也さん（note）「田植え終わりました」</a>（ゲームでは 坂を作業機で削ったり 坂の上で大きく切ったりすると 坂が崩れて、出るときに すべる）<br>
-      ・代かきのハローは 旋回でも下げたまま。旋回上昇と倍速ターンを切り、回る前に速さを直進より 3 ポイント落とす（速いと 土が寄り、タイヤ跡が出て、ハローのうしろの板に土がのる）。畦が近づいたら 深さ・傾きも切り、外周 3 周目からは 深さ・傾きと倍速ターンを入れる…<a href="https://note.com/wkpxk085/n/n01bee10678c3" target="_blank" rel="noopener">眞木優さん（note）「トラクター作業機の交換→代搔きハロー」</a>（その農家さんの機械とやり方。ゲームでは 代かきで 下げたまま 時速 2km までで回ると 減点しない）<br>
-      ・作業機の傾きの調整は 平らな所で（ヤンマー AF18 の例）：ロアリンクを水平にし、作業機の中心を PTO 軸に合わせ、左右のチェックチェーンを締めてから、傾きスイッチで水平にして機械に覚えさせる。ボタンや チェーンのゆとりは 機種ごとに取扱説明書で…<a href="https://note.com/ryutaro0306/n/n014532cd9045" target="_blank" rel="noopener">井上寅雄農園（note）「傾き調整についてご紹介」</a>／自動水平（ヤンマーは UFO・クボタはモンロー）は、本体が傾いても作業機を水平に保つ。畝くずしや 田んぼの外周の耕うんに役立つ…<a href="https://note.com/ryutaro0306/n/n7e4973d0892c" target="_blank" rel="noopener">同「トラクターの自動水平機能」</a>（ゲームでは 代かきで点検をしないと ハローが傾いている）<br>
-      ・土の中の石は 耕うんの爪をいため、苗の根張りも悪くする。水を張る前に拾った（拳大〜30cm 余り、50kg ほど）…<a href="https://note.com/yuki0mori/n/n3691961a57a9" target="_blank" rel="noopener">大森雄貴さん（note）「春が来る前に石拾い」</a>／運転席では、爪が土を引っかく音のちがいで 土の固さや深さがわかり、石を掘り起こすと音で気づく…<a href="https://note.com/yuki0mori/n/n5101cc99caee" target="_blank" rel="noopener">同「代かきトラクターの運転席から見える景色」</a>（ゲームでは 春の「🪨 はじめに石を拾う」）<br>
-      ・プラウで天地返しをしていたら、往路でできたタイヤの溝に 復路で前輪が落ちた。バランスが崩れて まっすぐ走れず、切り返した…shoei さん（note）「トラクターを使って『天地返し』の術！？」（2026年10月に確認。いまは記事の公開が終わっています）（ゲームでは 秋の稲刈りのわだちに 前輪が落ちると ハンドルを取られる）<br>
-      ・天気の悪い日に耕していて田んぼにはまり、応援のトラクターとロープで一発で脱出。いつも同じ田んぼの同じ所。悪天候の日は作業しない・大きな機体で入らない・旋回を激しくしない…<a href="https://note.com/okamotonozomu/n/n534d7840e1c6" target="_blank" rel="noopener">岡元望さん（note）「トラクターがはまった話」</a>／となりのトラクタを引き出すとき、畦の外から斜めに引いて動かず、大きいトラクタでまっすぐ引いて救出（ロープが一度ちぎれた）…<a href="https://note.com/marukawadaizu/n/ncc82441beb7e" target="_blank" rel="noopener">マルカワみそ農園（note）「立ち往生したトラクタを救出」</a>／雨の合間に 水がしみた畑で はまり、通りかかった農家さんに言われて デフロックを踏んだが もう沈みすぎて効かず、近所の農家さんの大きなトラクターとワイヤーで救出…<a href="https://ameblo.jp/norakura-diary/entry-11301173783.html" target="_blank" rel="noopener">のらくら農園（ブログ）「トラクター沈没。」</a>／秋から春まで田んぼが乾かなかったのが、雑草のコナギがふえた わけだと考えた。深く起こすと乾きにくいので、この秋は 春までに乾くように、水はけのよい田は 5cm ほど浅く起こし、悪い田は まわりに溝を切った（額縁明渠）…<a href="https://kan6en.com/blog/about-agriculture/14203/" target="_blank" rel="noopener">勘六縁（ブログ）「今年のお米作りを振り返る①」</a>／今年も山の田んぼでトラクターがはまった。粘土の田で長靴は役に立たず はだしで歩き、クレーンつきのトラック（ユニック車）で 何度かやりなおして引き上げた…<a href="https://mitsuono-kome.com/blog/entry-196.html" target="_blank" rel="noopener">光男の米（ブログ）「泥んこのトラクター脱出作戦！」</a>（ゲームでは 取水口のまわりのぬかるみで 下げたまま大きく旋回したり エンストをくり返したりすると はまる。空回りしはじめたら、まっすぐにもどして デフロック）<br>
-      ・土のバランスは 固相・液相・気相が 4:3:3。水分が多いときに耕して 土塊がふえた。握ってホロッとくずれるくらいで耕すと 砕土がうまくいくことがある…<a href="https://note.com/marukawadaizu/n/ncd1c2b06dc04" target="_blank" rel="noopener">マルカワみそ農園（note）「耕起の砕土率を高めるためには土の水分」</a>（ゲームでは <kbd>N</kbd> で土を握る。雨の日や ぬかるみを耕すと 土塊がふえる）<br>
-      ・作業のあと：高圧洗浄機で大きな泥 → ブラシとシャンプーで車体とタイヤ → 乾かしてから車内をエアダスター、ロータリーの土も落とす。洗っていて 爪の摩耗に気づいて発注…<a href="https://note.com/marukawadaizu/n/n10d3042d96dc" target="_blank" rel="noopener">マルカワみそ農園（note）「トラクタの洗車」</a>（ゲームでは おわりの画面の「🚿 洗車して しまう」）<br>
-      ・左右のブレーキの連結を外すのは田んぼの中だけ。道で外したまま急ブレーキをかけると、片ブレーキで車体が大きく振られる…<a href="https://note.com/agile_pothos7003/n/nb8c2bef1af09" target="_blank" rel="noopener">農業モンスター（note）「トラクター操作の 5 つの鉄則」</a><br>
-      ・いちばん多いのは外周 3 周のやり方：ふちからロータリー 3 回分あけてまん中を耕し、最後に外周を 3 周。四隅を先に耕すやり方は タイヤの跡が残らないが、下げたまま向きを変えるので機械に負担がかかる…<a href="https://note.com/ryutaro0306/n/n3a50d73f5b84" target="_blank" rel="noopener">井上寅雄農園（note）「図解でわかる耕耘方法」</a>（ゲームのモニターの点線が 外周 3 周分の目安）<br>
-      ・雨のあと 休んでいた田んぼを耕したら沼にはまり、ユンボで引き上げてもらった。耕す前に地面を一通り歩く…<a href="https://note.com/shizentotonoi/n/nd1f4abd338d7" target="_blank" rel="noopener">自然でトトノウ会（note）「トラクターが沼にはまる→救出しました」</a>（ゲームでは はじめの画面の「👣 はじめに田んぼを歩く」）／初めてのトラクターで、1 枚耕すのに 1 時間半…<a href="https://note.com/non_non19/n/n146bd6107e07" target="_blank" rel="noopener">のんのんさん（note）「初トラクター運転と田おこし」</a><br>
-      ・植え代かきは、風の強い日（水面が見づらい）や雨のすぐあと（土がやわらかくなりすぎる）はさけ、風のない晴れた朝に。水が多すぎると平らにならず、苗が流されることもある／きれいにしすぎない。土をやわらかくしすぎると田植え機が沈んで苗が深く入りすぎる…<a href="https://note.com/kome_noka_shinya/n/n5261c27150cd" target="_blank" rel="noopener">いち田さん（note の米農家）「植え代かきのさじ加減」</a><br>
-      ・同じ所を何度も耕すと、土が細かくなりすぎて、あとの代かきや田植えで泥のようになる。荒起こしは荒く、1 回で均一に…<a href="https://note.com/kome_noka_shinya/n/nc99565cddbe0" target="_blank" rel="noopener">いち田さん（note の米農家）「荒起こしで気をつけたい 6 つの落とし穴」</a>（ゲームでは 3 回通った所が 土くれのない平らな土になる。3 回はゲームの決めごと）<br>
-      ・燃料は半分あったので足りると思ったが、とちゅうで給油して作業が止まった。荒起こしは時間がかかるので満タンで／耕しはじめは入口の反対がわから、最後に外周を回って入口から出る…<a href="https://note.com/kome_noka_shinya/n/n4d9c95f5e653" target="_blank" rel="noopener">いち田さん（note の米農家）「荒起こし準備と手順の基本チェック」</a><br>
-      ・土が乾いていないと、田んぼに入るたびにタイヤに土がつく。作業のあと、ついていれば そのつど移植ゴテで削り落とす…<a href="https://komeya4th.exblog.jp/29289731/" target="_blank" rel="noopener">米農家さんのブログ（komeya4th「トラクターのタイヤに付いた土は田んぼで落としていますか？」）</a><br>
-      ・米づくりを始めたころ、ゆずってもらった 2 駆のトラクターが、大雨のあと 田んぼの深みにはまって動けなくなった…<a href="https://www.bepal.net/?p=577528" target="_blank" rel="noopener">熊本で米をつくって 13 年の書き手の記録（BE-PAL）</a><br>
-      畦では この田んぼの持ち主（近所の米農家さん）が運転を見ていて、旋回で上げない・畦にぶつける・速すぎ・蛇行・すき間・はみ出しなどがあると、ふきだしで ダメ出しする（昼だけ）。<br>
-      ゲームでは：田んぼの東のはし（取水口のまわり）にぬかるみ。速い変速・深い耕深で耕しながら入るとエンストするので、上げてかけなおす。うしろを見ながら走るとハンドルが右へとられていく。蛇行・はみ出し・代かきのかき過ぎ・畦ぎわ・タイヤ跡・畦にぶつけたときにも、その場面で言葉が出る。耕しなおすとタイヤ跡が消え、代かきでは かいた泥の上にタイヤ跡が残る。終わりの画面に、聞いた声の数
-    </details>
-    <p class="small">畦（あぜ）は越えられません。田んぼの右奥の坂から農道に出られます。<br>トラクターは、60 馬力クラスのキャビン付きトラクターを参考にした架空の車体です。農機メーカーの公式のゲームではありません。<br><b style="color:#7a4a12">🚸 本物のトラクターは とても危ないので、子どもは乗ったり、動いているトラクターや作業機に近づいたりしないでください。</b><br>遊んだ記録や操作は、当店にも ほかの会社にも送りません（この端末に 覚えるのは「かんたんアシスト」と「くわしい説明」の入切、耕し終えた回数だけ。LINE の ボタンを 押したときだけ、このゲームから来たことが 当店に わかります）。<br>つくったのは 西尾のお米屋さん らいすぴあ（近藤米穀店）・<a href="https://ricepia.jp/?utm_source=tractor&amp;utm_medium=game&amp;utm_campaign=credit" target="_blank" rel="noopener">ricepia.jp</a><br>農作業の説明に まちがいを見つけたら、<a href="https://ricepia.jp/go/lin.ee/uPhkiiv?from=tractor-report" target="_blank" rel="noopener">当店の LINE</a> で教えてください。</p>
-  </div>
 </div>
 
 <div class="sheet hidden" id="done">
@@ -574,7 +270,7 @@
       <p class="vs hidden" id="vsLine"></p>
       <p class="loopHead">📣 結果を投稿して、友だちに挑戦してもらおう</p>
       <img id="cardImg" class="artImg hidden" alt="ドローンで真上から撮った田んぼと点数">
-      <div class="artBtns"><button class="go sub hidden" id="bShare">📱 シェア</button><a class="go sub" id="bX" target="_blank" rel="noopener">𝕏 ポスト</a><a class="go sub" id="bLine" target="_blank" rel="noopener">LINE で送る</a><a class="go sub" id="bSave" download="tractor.jpg">💾 画像を保存</a></div>
+      <div class="artBtns"><button class="go sub hidden" id="bShare">📱 シェア</button><a class="go sub" id="bX" target="_blank" rel="noopener">𝕏 ポスト</a><a class="go sub" id="bSave" download="tractor.png">💾 画像を保存</a><a class="go sub" id="bLine" target="_blank" rel="noopener">LINE で送る</a><a class="go sub" id="bSave" download="tractor.jpg">💾 画像を保存</a></div>
       <p class="small">投稿のリンクから来た人は、同じ季節・お題で あなたの点数に挑戦できます</p>
       <a class="go line" id="bLineAdd" href="https://ricepia.jp/go/lin.ee/AULbClm?from=tractor-done" target="_blank" rel="noopener">📩 らいすぴあの LINE を友だち追加<small>価格表・売り出し情報</small></a>
     </div>
@@ -627,31 +323,11 @@ const FX_K = TOD === 'yoru' ? 0.18 : TOD === 'yu' ? 0.7 : 1;   // 光を受け�
 // はじめは いちばんやさしい四角。「なし」（art=none）は田んぼをぜんぶ耕す
 const ARTS = ['shikaku', 'juji', 'kome', 'onigiri', 'star', 'heart', 'smile'];
 const ART_ID = params.get('art') === 'none' ? null : ARTS.includes(params.get('art')) ? params.get('art') : 'shikaku';
+const ART_NAME = { shikaku: '四角', juji: '十', kome: '米', onigiri: 'おにぎり', star: '星', heart: 'ハート', smile: 'にっこり' };   // サイクル263: 終わりの画面の「次のお題」の名前（はじめの画面のボタンから読んでいた分）
+const ART_STAR = { shikaku: '★', juji: '★★', kome: '★★★', onigiri: '★★★', star: '★★★★', heart: '★★★★', smile: '★★★★★' };
 // 春：レンゲの田んぼ（renge=1）。秋にまいた緑肥のレンゲが 花ざかりの田んぼを 耕して すきこむ
 const RENGE_ON = season === 'haru' && params.get('renge') === '1';
 const go = (s_, t_, a_ = ART_ID, w_ = WX, r_ = RENGE_ON, i_ = IMPL_ID) => { location.search = '?season=' + s_ + '&time=' + t_ + '&art=' + (a_ || 'none') + (w_ !== 'hare' ? '&w=' + w_ : '') + (r_ && s_ === 'haru' ? '&renge=1' : '') + '&impl=' + i_; };
-document.querySelectorAll('#seasons button').forEach(b => {
-  if (b.dataset.s === season) b.classList.add('sel');
-  b.onclick = () => { if (b.dataset.s !== season) go(b.dataset.s, TOD); };
-});
-document.querySelectorAll('#times button').forEach(b => {
-  if (b.dataset.t === TOD) b.classList.add('sel');
-  b.onclick = () => { if (b.dataset.t !== TOD) go(season, b.dataset.t); };
-});
-document.querySelectorAll('#weathers button').forEach(b => {
-  if (b.dataset.w === WX) b.classList.add('sel');
-  b.onclick = () => { if (b.dataset.w !== WX) go(season, TOD, ART_ID, b.dataset.w); };
-});
-document.querySelectorAll('#impls button').forEach(b => {
-  if (b.dataset.i === IMPL_ID) b.classList.add('sel');
-  b.onclick = () => { if (b.dataset.i !== IMPL_ID) go(season, TOD, ART_ID, WX, RENGE_ON, b.dataset.i); };
-});
-document.querySelectorAll('#arts button').forEach(b => {
-  const a = b.dataset.a === 'none' ? null : b.dataset.a;
-  if (a === ART_ID) b.classList.add('sel');
-  b.onclick = () => { if (a !== ART_ID || S.done) go(season, TOD, a); };
-});
-if (!ART_ID) $('artHow').textContent = 'お題なし：30m×50m の田んぼを ぜんぶ耕せたらクリア。お題を選ぶと、白線の下絵の内側を耕して 田んぼに絵を描きます';
 const LIGHT = {
   hiru: { sky: null, sun: [-0.45, season === 'aki' ? 0.45 : 0.7, -0.55], sunC: 0xfff3e2, sunI: 3.2, hemi: [0xdfe9f5, 0x6b5a40, 0.35], fog: { haru: [120, 950], shirokaki: [140, 1000], aki: [210, 1500] }[season],   // 春は霞（土ぼこり・黄砂・水蒸気）で遠くがかすみ、秋は乾いた空気で澄む（神戸市・気象庁）
     cLit: [1.0, 0.99, 0.96], cDark: [0.72, 0.75, 0.80], disk: [1.0, 0.95, 0.85], exp: 1.0 },
@@ -675,7 +351,7 @@ if (WX !== 'hare') {                            // くもり・小雨：雲が�
 
 // ---- 描くしくみ ----
 const canvas = $('view');
-const renderer = (() => { try { return new THREE.WebGLRenderer({ canvas, antialias: !MOBILE, powerPreference: 'high-performance' }); } catch (e) { $('progText').textContent = '🚜 この スマホ（ブラウザ）では 3D の 絵が 出せない ようです。パソコンや ほかの ブラウザで ひらいてみてね。'; $('progText').classList.add('err'); throw e; } })();   // WebGL が 使えない 端末で「読みこみ中…」の まま 止まらない ように
+const renderer = (() => { try { return new THREE.WebGLRenderer({ canvas, antialias: !MOBILE, powerPreference: 'high-performance' }); } catch (e) { $('toast').textContent = '🚜 この スマホ（ブラウザ）では 3D の 絵が 出せない ようです。パソコンや ほかの ブラウザで ひらいてみてね。'; $('toast').style.opacity = 1; throw e; } })();   // WebGL が 使えない 端末で「読みこみ中…」の まま 止まらない ように
 renderer.setPixelRatio(Math.min(devicePixelRatio, MOBILE ? 1.5 : 2));
 renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -767,18 +443,9 @@ const loader = new THREE.GLTFLoader();
 // サイクル193: 車体（tractor_yt.glb）と田んぼ（field_tanbo*.glb）は Draco 圧縮（tools/tractor/README.md「glb の圧縮」。bpy は使わず gltf-transform で後処理）。
 // 作業機の glb は圧縮なしのまま。同じ loader で両方読める（圧縮のある glb だけ復号器を使う）
 const draco = new THREE.DRACOLoader(); draco.setDecoderPath('https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/libs/draco/'); loader.setDRACOLoader(draco);
-const prog = { t: 0, f: 0 };
-const PROG_SIZE = { t: 0.52e6, f: 2.3e6 };        // サイクル187: 圧縮配信だと全体の大きさが届かない（e.total が 0）。およその大きさで棒を進める。サイクル193: Draco 圧縮後の大きさ（春）
-if (season === 'aki') PROG_SIZE.f = 2.9e6; else if (season === 'shirokaki') PROG_SIZE.f = 2.5e6;   // 季節ごとの田んぼの大きさ
-let LOAD_ST = 'wait';                            // 読みこみ：wait（じゅんび中）・ok・ng（失敗。そのあと 進みぐあいで「もう一度 よむ」を 消さない）
-function showProg() {
-  if (LOAD_ST === 'ng') return;
-  const p = Math.round((prog.t * PROG_SIZE.t + prog.f * PROG_SIZE.f) / (PROG_SIZE.t + PROG_SIZE.f) * 100);
-  $('progBar').style.width = p + '%';
-  $('progText').textContent = p < 100 ? `⏳ トラクターを 田んぼへ はこんでいるよ… ${p}%（はじめは 3MB ほど）` : '🌱 じゅんび できたよ';
-}
+let LOAD_ST = 'wait';                            // 読みこみ：wait（じゅんび中）・ok・ng（失敗）
 function load(url, key) {
-  return new Promise((ok, ng) => loader.load(ASSET + url, ok, e => { prog[key] = Math.min(1, e.loaded / (e.total || PROG_SIZE[key] || e.loaded)); showProg(); }, ng));
+  return new Promise((ok, ng) => loader.load(ASSET + url, ok, undefined, ng));
 }
 const rig = new THREE.Group();                 // トラクター（とロータリー）全体。position＝後輪車軸の真下
 scene.add(rig);
@@ -787,7 +454,6 @@ let field, tilled, stubble = null, stubbleGeo, stubbleMat, hikobae = null, hikob
 
 const IMPL_FILE = { rotary: 'rotary_v2.glb', harrow: 'harrow_v2.glb', plow: 'plow.glb', disc: 'disc_harrow.glb', ditch: 'ditcher_v2.glb', aze: 'azenuri.glb', ridge: 'ridger.glb', flail: 'flail_mower.glb', sub: 'subsoiler.glb', mulch: 'mulcher.glb', caster: 'broadcaster.glb', drill: 'seed_drill.glb', manure: 'manure_spreader.glb', baler: 'roll_baler.glb', sqbaler: 'square_baler.glb', rake: 'rotary_rake.glb', picker: 'stone_picker.glb', mower: 'mower_conditioner.glb', tedder: 'hay_tedder.glb', wrapper: 'bale_wrapper.glb', mixer: 'feed_mixer_wagon.glb', potato: 'potato_harvester.glb', chipper: 'wood_chipper.glb', cart: 'grain_cart.glb', trailer: 'tractor_trailer.glb', slurry: 'slurry_tanker.glb', backhoe: 'backhoe.glb', loader: 'front_loader_v2.glb', leveler: 'laser_leveler.glb', cult: 'cultivator.glb', auger: 'grain_auger_v2.glb', roller: 'land_roller.glb', power: 'power_harrow.glb', planter: 'precision_planter.glb', chisel: 'chisel_plow.glb', discp: 'disc_plow.glb', snowb: 'snow_blower.glb', revp: 'reversible_plow.glb', rblade: 'rear_blade.glb', springh: 'spring_harrow.glb', rhoe: 'rotary_hoe.glb', mspray: 'mounted_sprayer.glb', dmower: 'disc_mower.glb', pharrow: 'paddy_harrow.glb', spikeh: 'spike_harrow.glb', phdigger: 'post_hole_digger.glb', crumbler: 'crumbler.glb', boxb: 'box_blade.glb', mfert: 'mounted_fertilizer.glb', fblade: 'front_blade.glb', broom: 'rotary_broom.glb', bfork: 'bale_fork.glb', bedf: 'bed_former.glb', chainh: 'chain_harrow.glb', deepr: 'deep_ripper.glb', lplane: 'land_plane.glb', aerator: 'plug_aerator.glb', trench: 'trencher.glb', groover: 'groover.glb', swather: 'swather.glb', forage_wagon: 'forage_wagon.glb', compost_turner: 'compost_turner.glb', potato_planter: 'potato_planter.glb', carrot_harvester: 'carrot_harvester.glb', cabbage_harvester: 'cabbage_harvester.glb', onion_harvester: 'onion_harvester.glb', garlic_harvester: 'garlic_harvester.glb', tomato_harvester: 'tomato_harvester.glb', pumpkin_harvester: 'pumpkin_harvester.glb', sweet_potato_harvester: 'sweet_potato_harvester.glb', daikon_harvester: 'daikon_harvester.glb', negi_harvester: 'negi_harvester.glb', gobo_harvester: 'gobo_harvester.glb', broccoli_harvester: 'broccoli_harvester.glb', lettuce_harvester: 'lettuce_harvester.glb', spinach_harvester: 'spinach_harvester.glb', bok_choy_harvester: 'bok_choy_harvester.glb', komatsuna_harvester: 'komatsuna_harvester.glb', celery_harvester: 'celery_harvester.glb' }[IMPL_ID] || null;   // ロータリー／ハローは v2 の姿に差し替え（サイクル65）
 Promise.all([load('tractor_yt.glb', 't'), load(FIELD[season], 'f'), IMPL_FILE ? load(IMPL_FILE, 'h') : null]).then(([t, f, h]) => {
-  prog.t = prog.f = 1; showProg();
   if (h && (IS_HARROW || IMPL_ID === 'rotary')) {   // ハロー／ロータリーv2：Rotary ごと差しかえる（名前・階層・原点は差し替え元と同一）
     const old = t.scene.getObjectByName('Rotary'), hr = h.scene.getObjectByName('Rotary');
     old.parent.add(hr); old.parent.remove(old);
@@ -813,10 +479,9 @@ Promise.all([load('tractor_yt.glb', 't'), load(FIELD[season], 'f'), IMPL_FILE ? 
   INTRO.setup();                                // サイクル98: 既定では無効（setup は OFF で何もしない）。?intro=1 のときだけ農道わきの草かりから始まる
   setRotBtn();
   CLOUDS.apply(scene);                          // 雲の影（ほかの細工のあとで）
-  $('bStart').disabled = false; LOAD_ST = 'ok';
-  $('start').classList.remove('loading');
-  if (!params.has('menu')) $('bStart').onclick();   // そのまま 田んぼから 始める（サイクル98: 案内画面は全廃し、導入フェーズも既定で無効なので開いてすぐ田んぼをなぞれる）
-}).catch(e => { console.error(e); LOAD_ST = 'ng'; $('progText').innerHTML = '🚜 うまく 読みこめませんでした。通信のよい所で、もう一度 ひらいてみてね。 <button type="button" onclick="location.reload()">もう一度 よむ</button>'; $('progText').classList.add('err'); });   // 英語の エラー文は 画面に出さず コンソールへ（素朴な かわいさ）
+  LOAD_ST = 'ok';
+  startGame();   // サイクル263（店主指示 2026-11-10）: はじめの画面は全廃。読みこみが終わったら、案内・設定なしで そのまま田んぼから始める（既定＝春・昼・晴れ・ロータリー・お題は四角）
+}).catch(e => { console.error(e); LOAD_ST = 'ng'; $('toast').textContent = '🚜 うまく 読みこめませんでした。通信のよい所で、もう一度 ひらいてみてね。'; $('toast').style.opacity = 1; });   // 英語の エラー文は 画面に出さず コンソールへ（素朴な かわいさ）
 
 
 // ---- ヘッドライトと作業灯（LED）。夕方は点けて始める。L で入切（本物も作業灯は集中スイッチでまとめて入切） ----
@@ -8198,7 +7863,7 @@ const TRACE = {
   },
   ground(e) { const rc = new THREE.Raycaster(), ndc = new THREE.Vector2((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1), hit = new THREE.Vector3(); rc.setFromCamera(ndc, camera); return rc.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), hit) ? hit : null; },
   begin(e) {
-    if (!S.started || S.done || INTRO.on || !$('start').classList.contains('hidden')) return false;
+    if (!S.started || S.done || INTRO.on) return false;
     const h = this.ground(e);
     if (!h) return false;   // 地面と交わらない（空）だけ なぞれない＝まわりを見る側へ回す
     this.g0 = [h.x, h.z, e.clientX, e.clientY]; this.pull = null; this.pullDone = false;   // サイクル262: 寄せる前の始点（横なぞりの見きわめ用）
@@ -8338,7 +8003,7 @@ const HINT = {
   proj(p) { const v = new THREE.Vector3(p[0], 0.2, p[1]).project(camera); return v.z < 1 ? [(v.x * 0.5 + 0.5) * innerWidth, (-v.y * 0.5 + 0.5) * innerHeight] : null; },
   update(dt) {
     const box = $('hintSwipe'); if (!box) return;
-    const live = S.started && !S.done && !INTRO.on && $('start').classList.contains('hidden') && $('help').classList.contains('hidden');
+    const live = S.started && !S.done && !INTRO.on && $('help').classList.contains('hidden');
     // サイクル260・最初の1分: 畦の手前で止まったまま 前へ なぞり続けている人に、同じ指の見本で「横へ なぞる」を見せる（文字なし・入力をふさがない）。
     // 実測（スマホ縦・ヒントどおり前へ なぞるだけの人）: 29 秒で畦に着き、3 秒の吹き出しのあとは何も出ないまま 90 秒まで同じ所。
     // 畦で止められた なぞり（TRACE.blockT）が合わせて 0.8 秒つづいたら出し、向きが 125° 変わる（ほぼ折り返した）か 9m はなれたら消す。向きは田んぼのまん中の側
@@ -8467,7 +8132,7 @@ const AUTO = {
   },
   toggle() {
     if (this.on) { this.off(); return; }
-    if (!S.started || S.done || INTRO.on || !$('start').classList.contains('hidden')) return;   // 田んぼアート（既定の四角など）でも使える。白線の外では作業機を上げて通る（下の 🔰 と同じ）
+    if (!S.started || S.done || INTRO.on) return;   // 田んぼアート（既定の四角など）でも使える。白線の外では作業機を上げて通る（下の 🔰 と同じ）
     this.build();
     if (this.pts.length < 2) return;
     this.on = true; this.stuckT = 0; this.stallT = 0; this.reLower = false; autoQuiet = true;
@@ -8646,7 +8311,7 @@ const setRpm = () => PTOREV ? REV_RPM : WORK_RPM();   // アクセルレバー�
 function cycleEco() {                              // 2500 → 2000 → 1800 → 2500（I・⛽ ボタン）
   if (SHIRO) return;
   if (!ECO) { ECO = true; ECO_RPM = 2000; } else if (ECO_RPM > 1800) ECO_RPM = 1800; else ECO = false;
-  $('ecoBox').checked = ECO; $('bEco').textContent = ECO ? '⛽' + ECO_RPM : '⛽2500'; $('bEco').classList.toggle('on', ECO);
+  $('bEco').textContent = ECO ? '⛽' + ECO_RPM : '⛽2500'; $('bEco').classList.toggle('on', ECO);
   toast(ECO ? '⛽ 耕すときのエンジンを ' + ECO_RPM + ' 回転に下げた：軽油が へる。走る速さと 爪の回転は ' + Math.round((1 - ecoK()) * 100) + '% おそい。重い所では 力の余裕が少ない' + (ECO_RPM < REGEN_RPM ? '。DPF の自動再生は 進まない' : '') + '（I・⛽）' : 'エンジンを 2500 回転にもどした：力に 余裕がある（I・⛽）', 4);
 }
 const ecoOn = () => ECO && !PTOREV;               // 逆転は もともと 1450 回転なので 関係しない
@@ -8725,7 +8390,7 @@ const EASY = (() => {
 function setEasy(v) {
   EASY.on = v;
   try { localStorage.setItem('tractorEasy', v ? '1' : '0'); } catch (e) {}
-  $('bEasy').classList.toggle('on', v); $('easyBox').checked = v;
+  $('bEasy').classList.toggle('on', v);
   if (v) S.turnUp = true;
   if (S.started) toast('🔰 かんたんアシスト ' + (v ? '入：畦の手前で止まる・速さをおさえる・まっすぐを手伝う' + (ART.on ? '・白線で上げる' : '') : '切') + '（K）', 3);
 }
@@ -9402,8 +9067,8 @@ function startDiesel(ac, out, onReady) {
 }
 // 音は、運転しているあいだだけ鳴らす（おわり・メニュー・ほかのタブでは止める。🔇 のときも止める）
 function syncAudio(running) {
-  // キャラクターの 声（speechSynthesis）は audio と べつ：音を 切った・メニューや 操作の表を 開いた・べつの タブに した・くわしい説明に した ときは すぐ やめる
-  if (window.speechSynthesis && speechSynthesis.speaking && (!soundOn || DETAIL || document.hidden || !$('start').classList.contains('hidden') || !$('help').classList.contains('hidden'))) speechSynthesis.cancel();
+  // キャラクターの 声（speechSynthesis）は audio と べつ：音を 切った・操作の表を 開いた・べつの タブに した・くわしい説明に した ときは すぐ やめる
+  if (window.speechSynthesis && speechSynthesis.speaking && (!soundOn || DETAIL || document.hidden || !$('help').classList.contains('hidden'))) speechSynthesis.cancel();
   if (!audio) return;
   const want = soundOn && running && !document.hidden, st = audio.ac.state;
   if (want && st === 'suspended') audio.ac.resume();
@@ -9802,7 +9467,7 @@ addEventListener('keydown', e => {
     if ((e.code === 'KeyH' || e.code === 'Escape') && !e.repeat) { toggleHelp(); e.preventDefault(); }
     return;
   }
-  if (!$('start').classList.contains('hidden') || !$('done').classList.contains('hidden')) return;   // はじめ・おわりの画面では運転しない
+  if (!$('done').classList.contains('hidden')) return;   // おわりの画面では運転しない
   if (KEYS[e.code]) { key[KEYS[e.code]] = 1; e.preventDefault(); return; }
   if (e.repeat) { if (e.code === 'Space') e.preventDefault(); return; }   // 押しっぱなしでくりかえさない（上げ下げ・視点・音・直進アシストなど）
   if (e.code === 'Space') { AUTO.off(); toggleRotary(); e.preventDefault(); }   // 作業機キーに触れたら自動は切れる
@@ -9833,7 +9498,7 @@ addEventListener('keydown', e => {
   else if (e.code === 'KeyU') { S.turnUp = !S.turnUp; toast('旋回アップ ' + (S.turnUp ? '入：耕しながら大きく切ると ' + IMPL + 'が自動で上がる' : '切') + '（U）'); }
   else if (e.code === 'KeyZ') setDepth(-1);
   else if (e.code === 'KeyX') setDepth(1);
-  else if (e.code === 'Enter' && ART.on && S.started && !S.done && $('start').classList.contains('hidden') && $('help').classList.contains('hidden')
+  else if (e.code === 'Enter' && ART.on && S.started && !S.done && $('help').classList.contains('hidden')
     && !/^(BUTTON|A|INPUT|SELECT|TEXTAREA|SUMMARY)$/.test((document.activeElement || {}).tagName || '')) finish();   // ボタンを押す Enter・操作の表を開いているときは完成にしない
   else if (e.code === 'KeyQ') { AUTO.off(); shiftGear(-1); }   // 変速キーに触れたら自動は切れる
   else if (e.code === 'KeyE') { AUTO.off(); shiftGear(1); }
@@ -9981,13 +9646,11 @@ $('bGear').onclick = () => { AUTO.off(); shiftGear(S.gear >= 4 ? -3 : 1); };   /
 function nextCam() { if (INTRO.cam) { INTRO.cam = false; return; } camMode = (camMode + 1) % CAMS.length; look.yaw = look.pitch = 0; chase.set(0, 0, 0); $('bCam').textContent = '👁 ' + CAMS[camMode]; }
 $('bCam').onclick = nextCam;
 $('bSnd').onclick = toggleSound;
-if (params.has('menu')) $('start').classList.remove('loading');   // ?menu=1：今までの はじめの 画面（通しの テスト）
 // 音：自分で 始めないので、はじめて さわった ときに 音を 出せるように する（ブラウザは さわるまで 音を 出さない）
 for (const ev of ['pointerdown', 'keydown', 'touchend']) addEventListener(ev, function unlock() {
   if (audio && audio.ac.state === 'suspended' && soundOn) audio.ac.resume();
   removeEventListener(ev, unlock, true);
 }, true);
-$('bMenu').onclick = () => { $('start').classList.remove('hidden'); };
 // 操作の表（？・H）：はじめの画面と同じ表を出す
 function toggleHelp() {
   const h = $('help');
@@ -9999,13 +9662,7 @@ $('bHelp').onclick = toggleHelp;
 $('bHelpClose').onclick = toggleHelp;
 $('bEasy').onclick = () => setEasy(!EASY.on);
 $('bEco').onclick = cycleEco;
-$('easyBox').onchange = e => setEasy(e.target.checked);
-if (SHIRO) $('walkLabel').classList.add('hidden');
-if (season !== 'haru') $('stoneLabel').classList.add('hidden');
-if (season !== 'haru') $('rengeLabel').classList.add('hidden');
-if (SHIRO) { $('yamaLabel').classList.add('hidden'); $('ecoLabel').classList.add('hidden'); $('bEco').classList.add('hidden'); }   // 代かきの ハローには 耕うん爪がない
-$('rengeBox').checked = RENGE_ON;
-$('rengeBox').onchange = () => go(season, TOD, ART_ID, WX, $('rengeBox').checked);   // 田んぼの見た目が変わるので 読みなおす   // 石を拾うのは 冬のあいだ（春の田起こしの前）   // 代かきは 水を張っているので 歩いて確かめるのは 田起こしのとき
+if (SHIRO) $('bEco').classList.add('hidden');   // 代かきの ハローには 耕うん爪がない（サイクル263: はじめの画面のチェック類は全廃。レンゲの田んぼは URL の renge=1 のまま）
 // 耕す前に田んぼを一回り歩いて、やわらかい所を確かめる（はまってから気づいた農家さんの教訓：自然でトトノウ会の note）。
 // 歩いた所の印：ぬかるみ（WET）が 0.3 より大きいます目。モニターの地図に青く出す
 const WALK = { mask: null };
@@ -10024,7 +9681,7 @@ $('bDeep').onclick = () => setDepth(1);
 $('bAgain').onclick = () => location.reload();
 $('bWash').onclick = () => WASH.start();
 $('bArt').onclick = () => { if (S.started && !S.done) finish(); };
-$('bOther').onclick = () => { $('done').classList.add('hidden'); $('start').classList.remove('hidden'); };
+$('bOther').onclick = () => location.reload();   // サイクル263: はじめの画面は全廃。別のお題は URL の art= で開く（このボタンは お題なし・田んぼを ぜんぶ耕した ときだけ出る）
 // なぞる（サイクル70）: 運転中は canvas をなぞると跡を追って耕し、離すと止まる。サイクル101: 地面の上なら どこで始めても なぞりになり、まわりを見るのは空のドラッグだけ
 let drag = null;
 // 2本指で寄って見る（運転の操作は増やさない。景色を見るだけ）: 2本目の指で なぞりを やめ、指の開き具合で 画角を せばめる
@@ -10142,8 +9799,6 @@ const speakText = t => {
   return first + (/[！？]$/.test(first) ? ' ' : '。') + (KEYH.test(noParen(act)) ? noParen(act) : cutParen(act) || act);
 };
 function showToast(t, sec) { const el = $('toast'); el.dataset.raw = t; el.textContent = shortText(t); el.style.opacity = 1; toastT = sec; SAY.say(icoWords(speakText(t)), Math.min(sec, 5)); }
-$('detailBox').checked = DETAIL;
-$('detailBox').onchange = e => { DETAIL = e.target.checked; document.body.classList.toggle('calm', !DETAIL); SAY.refresh(); try { localStorage.setItem('tractorDetail', DETAIL ? '1' : '0'); } catch (err) {} };
 $('badgeCv').addEventListener('pointerdown', e => { e.stopPropagation(); SAY.tap(); });
 function toast(t, sec = 2.2) {
   if (autoQuiet && !S.done) return;                    // 農家の声を読んでいる途中にほかの知らせが来たら、声はあとでもう一度出す
@@ -10298,28 +9953,16 @@ function startCrank(first) {
   S.glowClick = false;
   if (S.glow && !S.started) toast((TOD === 'yoru' ? '夜' : '朝') + 'の冷えたエンジンなので、まず予熱。予熱ランプが消えるとセルが回ってかかります', 3.5);
 }
-// はじめの 選ぶ 画面は 出さずに 始まるので、始めた あとで ≡ メニューから「始める ときだけ 使う 選びかた」（点検・歩く・石拾い・爪の 並べ方・回転）を
-// かえて ▶ を 押したら、その 選びかたで 始めから やりなおす（このタブの あいだだけ sessionStorage に 一度 置いて 読みこみなおす）
-const START_OPTS = ['checkBox', 'walkBox', 'stoneBox', 'yamaBox', 'ecoBox'];
-let optsDirty = false;
-try {
-  const o = JSON.parse(sessionStorage.getItem('tractorStartOpts') || 'null');
-  if (o) { sessionStorage.removeItem('tractorStartOpts'); for (const id of START_OPTS) $(id).checked = !!o[id]; }
-} catch (e) {}
-for (const id of START_OPTS) $(id).addEventListener('change', () => { if (S.started) optsDirty = true; });
-$('bStart').onclick = () => {
-  if (S.done) { location.reload(); return; }
-  if (S.started && optsDirty) {
-    try { sessionStorage.setItem('tractorStartOpts', JSON.stringify(Object.fromEntries(START_OPTS.map(id => [id, $(id).checked])))); } catch (e) {}
-    location.reload(); return;
-  }    // 終わったあとは、同じ田んぼ・お題で始めから
-  if (!S.started) startCrank(true);  // エンジンをかける：（冷えていれば予熱）→ セル（1.1 秒）→ かかる → 回転が上がって落ちつく。サイクル161: 初回だけ true（のんびりでは始動を短くする）
+// サイクル263（店主指示 2026-11-10 18:34）: はじめの画面（キャラの吹き出し・季節／時間／天気／作業機／お題の選択グリッド・
+// 点検などのチェック・▶ボタン）は全廃。読みこみが終わったら startGame() が そのまま始める。既定は 春・昼・晴れ・ロータリー・お題は四角
+// （URL で season=／time=／w=／impl=／art= を付けたときだけ その条件で始まる）。「始める ときだけ 使う 選びかた」（点検・歩く・石拾い・
+// 爪の並べ方・回転の下げ）は 画面の廃止で選べなくなり 常に しない（従来の ふつう の始まり）。かんたんアシストと くわしい説明は localStorage の前回のまま
+function startGame() {
+  startCrank(true);  // エンジンをかける：（冷えていれば予熱）→ セル（1.1 秒）→ かかる → 回転が上がって落ちつく。サイクル161: 初回だけ true（のんびりでは始動を短くする）
   if (camMode !== 0) { camMode = 0; look.yaw = look.pitch = 0; $('bCam').textContent = '👁 ' + CAMS[0]; }   // サイクル118: 始まりは運転席視点（洗車などで外から見た後でも）
-  $('start').classList.add('hidden');
   for (const id of MOBILE || params.has('pad') ? ['hud', 'bar', 'badge', 'padC', 'padB', 'padD', 'bigPct'] : ['hud', 'bar', 'badge', 'bigPct']) $(id).classList.remove('hidden');   // サイクル217・類1: のんびりでは大きな％数字も出す（DETAILでは CSS で常時非表示）   // サイクル98: 運転パッドは全廃済み（DOMなし）。運転はなぞり操作のみ（キーボードは予備として残す）
   if (!MOBILE && !params.has('pad')) $('keyHint').classList.remove('hidden');   // パソコン：はじめのうちは 画面の左下に いちばん使うキー
-  if (!S.started) {
-    S.started = true;
+  S.started = true;
     FIRSTMIN.start();   // サイクル159：のんびりでは 開始直後の表示を軽くする（DETAIL では何もしない）
     if (LOOP.friend !== null) setTimeout(() => { if (DETAIL) toast('🏁 友だちは ' + LOOP.friend + ' 点。きみは何点とれる？', 5); }, 6000);   // サイクル171・最初の1分: のんびりでは友だちの点数で挑戦しない（サイクル117）。共有リンクから開いても開始6秒の吹き出し・声で競わせず、まずなぞって耕す楽しさに集中させる。くわしい説明では従来どおり知らせる
     const artGo = () => {   // 田んぼアートの 地図と お題は 草かりの あとで
@@ -10332,32 +9975,27 @@ $('bStart').onclick = () => {
     setTimeout(() => { if (!startNoticeMuted()) voice('car'); }, ART.on ? 12000 : 9000); // サイクル199 最初の1分: のんびりでは開始直後に声を出さず heard を消費しない。くわしい説明では従来どおり出す
     if (ART.on) setTimeout(() => { if (!startNoticeMuted()) voice('art'); }, 30000); // サイクル199 最初の1分: のんびりでは開始直後に声を出さず heard を消費しない。くわしい説明では従来どおり出す
     if (season === 'aki') setTimeout(() => { if (!startNoticeMuted()) voice('dryWait'); }, 20000); // サイクル199 最初の1分: のんびりでは開始直後に声を出さず heard を消費しない。くわしい説明では従来どおり出す
-    BELT.start($('checkBox').checked); COVER.start($('checkBox').checked); GREASE.start($('checkBox').checked); CLAW.start($('checkBox').checked); HERI.start($('checkBox').checked); GASU.start($('checkBox').checked); KATA.start($('checkBox').checked); PANKU.start($('checkBox').checked); AIRCL.start($('checkBox').checked); STONES.start($('stoneBox').checked);
-    YAMA.on = !SHIRO && $('yamaBox').checked;
-    ECO = !SHIRO && $('ecoBox').checked; ECO_RPM = 2000;
+    BELT.start(false); COVER.start(false); GREASE.start(false); CLAW.start(false); HERI.start(false); GASU.start(false); KATA.start(false); PANKU.start(false); AIRCL.start(false); STONES.start(false);
+    YAMA.on = !SHIRO && false;
+    ECO = !SHIRO && false; ECO_RPM = 2000;
     $('bEco').textContent = ECO ? '⛽2000' : '⛽2500'; $('bEco').classList.toggle('on', ECO);
-    if (!SHIRO && $('walkBox').checked) { INTRO.end(true); walkField(); }
+    if (!SHIRO && false) { INTRO.end(true); walkField(); }
     else if (!SHIRO && RAIN) setTimeout(() => { if (!startNoticeMuted()) voice('numa'); }, 11000);   // 雨のあとに耕して はまった話。サイクル200 最初の1分: のんびりでは開始直後に声を出さず heard を消費しない（歩行後・エンスト時の numa は従来どおり。くわしい説明では従来どおり出す）
     if (FOG0) setTimeout(() => { if (!startNoticeMuted()) toast('窓の内側がくもっています。デフロスター（エアコンの除湿した風）で 前ガラスの下から だんだん晴れます', 5); }, 1500);
     if (TOD === 'yoru') setTimeout(() => { if (!startNoticeMuted()) toast('くらく なってきたね。L で ライトを つけて ゆっくり いこう。（本物は 暗くなってからの作業は なるべくしない。畦や足もとが見えにくく、事故が多い）', 6); }, 10000);
     if (SHIRO && RAIN) setTimeout(() => { if (!startNoticeMuted()) { toast('雨の あとで 土が やわらかいね。きょうは そっと かこう（本物は 雨のすぐあとの植え代かきは さける。土がやわらかくなりすぎる。風の強い日も 水面が見づらいので さける）', 6); voice('kaze'); } }, 4000); // サイクル198 最初の1分: のんびりでは開始直後にトーストだけでなく声も出さず heard を消費しない。くわしい説明では従来どおり両方出す
     else if (SHIRO && TOD === 'asa' && WX === 'hare') setTimeout(() => { if (!startNoticeMuted()) { toast('☀️ 風のない晴れた朝：代かきに向いている', 4); voice('kaze'); } }, 4000); // サイクル198 最初の1分: のんびりでは開始直後にトーストだけでなく声も出さず heard を消費しない。くわしい説明では従来どおり両方出す
     if (RAIN && !SHIRO) setTimeout(() => { if (!startNoticeMuted()) toast('ぬれた 土は こねちゃうね。かわいたら また たがやそう（本物は 雨の日や雨のすぐあとには耕さない。ぬれた土を耕すと こねられて、かわくと固いかたまりになる）', 6); }, 4000);
-  }
+  if (!S.started) stampStart();
   if (!soundOn && !audio) toggleSound();
-};
+}
 // ---- バイラルループ：遊ぶ → 結果を投稿する → 見た人が知る → （友だち追加・挑戦）→ 遊ぶ。
 // 投稿のリンクは 同じ季節・お題で開き、はじめの画面に「友だちは ○ 点。きみは何点？」と出す。終わりの画面で 友だちの点と くらべる
 const LOOP = (() => {
   // リンクの 季節・お題・時間・天気が このゲームで そのまま使えるときだけ 挑戦にする（知らない値で ほかの田んぼに 変わっていたら、同じ条件と言えない）
   const same = params.get('season') === season && params.get('art') === (ART.on ? ART.id : 'none') && (!params.has('time') || params.get('time') === TOD) && (!params.has('w') || params.get('w') === WX);
   const p = /^\d{1,3}$/.test(params.get('p')) ? +params.get('p') : -1, friend = params.get('from') === 'share' && same && p >= 0 && p <= 100 ? p : null;
-  const SNAME = { haru: '春の田起こし', aki: '秋起こし', shirokaki: '代かき' };
-  if (friend !== null && DETAIL) {   // サイクル117：のんびりでは 友だちの点数で あおらない
-    const el = $('challenge');
-    el.textContent = `🏁 友だちが「${SNAME[season]}${ART.on ? '・田んぼアート「' + ART.name + '」' : ''}」で ${friend} 点！ きみは何点とれる？（季節・時間・天気${ART.on ? '・お題' : ''}は 友だちと同じにしてあります）`;
-    el.classList.remove('hidden');
-  }
+  // サイクル263: 友だちの点数の知らせは はじめの画面に出していたため、その画面の全廃で いっしょに廃止（のんびりでは もともと出さない。比べるのは おわりの画面の vsLine のまま）
   function result(score, cardUrl, text, artUrl) {
     const img = cardUrl || artUrl;                  // 田んぼアートは 上の写真をそのまま使う
     const url = location.origin + location.pathname + `?season=${season}&time=${TOD}&art=${ART.on ? ART.id : 'none'}${WX !== 'hare' ? '&w=' + WX : ''}${RENGE_ON ? '&renge=1' : ''}${DETAIL ? '&p=' + score + '&from=share' : ''}`;   // サイクル117：のんびりでは 点数を リンクに のせない   // 季節・時間・天気・お題（レンゲの田んぼも）を 友だちと そろえる
@@ -10483,8 +10121,7 @@ function finishArt() {
     (tips.length ? '<br><span class="small">' + tips.map(t => '・' + t).join('<br>') + '</span>' : '') + heardLine();
   const nx = ARTS[ARTS.indexOf(ART.id) + 1];      // 上手に描けたら、ひとつむずかしいお題へ
   if (f >= 70 && nx) {
-    const b = document.querySelector(`#arts button[data-a="${nx}"]`);
-    $('bNext').textContent = `次のお題「${b.childNodes[1].textContent}」${b.querySelector('i').textContent} に挑戦 ▶`;
+    $('bNext').textContent = `次のお題「${ART_NAME[nx]}」${ART_STAR[nx]} に挑戦 ▶`;
     $('bNext').onclick = () => go(season, TOD, nx);
     $('bNext').classList.remove('hidden'); $('bAgain').classList.add('sub');
   }
@@ -10495,70 +10132,6 @@ function finishArt() {
 // ---- 案内（コーチ）：いま何をすればよいかを、画面の下に 1 行で出す ----
 // ①下げる → ②前へ → ③畦が近いので上げる → ④回る → ⑤となりにならんだら下げる。上げて回って下げる旋回が 2 回できたら消える。
 // エンストのときと、田んぼアートが仕上がりそうなときも出す。パソコンはキー、スマホはボタンの場所で書く
-// ---- はじめの画面の おはなし：上の 丸い 窓の キャラクター（麦わら帽子）が 話しかけて、季節・お題を 会話で 決めて 運転を はじめる。
-// （10/29 店主「素朴な かわいい キャラクターとの 会話で ゲームが 進むように」）。下の くわしい えらびかたは そのまま
-const TALK = (() => {
-  const say = $('talkSay'), ch = $('talkCh'), cv = $('talkFace');
-  const SEA = { haru: '🌸 春の 耕す前の田んぼ', aki: '🌾 秋の 稲刈りのあと', shirokaki: '💧 水を張った 代かき' };
-  const artBtn = id => document.querySelector(`#arts button[data-a="${id || 'none'}"]`);
-  const artName = id => { const b = artBtn(id); return b ? [...b.childNodes].filter(n => n.nodeType === 3).map(n => n.textContent).join('').trim() : ''; };   // 絵文字と ★ を のぞいた 名前
-  const artIcon = id => { const b = artBtn(id); return b && b.querySelector('span') ? b.querySelector('span').textContent : ''; };
-  (function face() {                               // 丸い 窓と 同じ 顔（止まっている 絵）
-    const g = cv.getContext('2d'), C = 64;
-    g.fillStyle = '#e8d5ba';
-    for (let k = 0; k < 30; k++) { const a = k / 30 * Math.PI * 2; g.beginPath(); g.arc(C + Math.cos(a) * 40, 84 + Math.sin(a) * 43, 7, 0, 7); g.fill(); }
-    g.beginPath(); g.ellipse(C, 84, 40, 43, 0, 0, 7); g.fill();
-    g.fillStyle = '#f8eadb'; g.beginPath(); g.ellipse(C, 78, 27, 22, 0, 0, 7); g.fill();
-    g.fillStyle = 'rgba(240,130,120,.5)'; for (const sx of [-1, 1]) { g.beginPath(); g.ellipse(C + sx * 16, 85, 5.5, 3.8, 0, 0, 7); g.fill(); }
-    g.fillStyle = '#2a211a'; g.strokeStyle = '#2a211a'; g.lineWidth = 2; g.lineCap = 'round';
-    for (const sx of [-1, 1]) { g.beginPath(); g.arc(C + sx * 9, 76, 3.4, 0, 7); g.fill(); }
-    g.beginPath(); g.arc(C, 83, 4, 0.2 * Math.PI, 0.8 * Math.PI); g.stroke();
-    g.fillStyle = '#e3c27a'; g.beginPath(); g.ellipse(C, 44, 38, 8, 0, 0, 7); g.fill();
-    g.beginPath(); g.ellipse(C, 36, 20, 12, 0, Math.PI, 2 * Math.PI); g.fill(); g.fillRect(C - 20, 36, 40, 6);
-    g.fillStyle = '#b8443a'; g.fillRect(C - 20, 39, 40, 4);
-  })();
-  let page = 'top';                                // いま 出している 会話：top（これで 行く？）・season・art・ng
-  function talk(text, opts, pg) {                  // opts：[[ボタンの字, 押したとき, main]]
-    page = pg;
-    const kb = ch.contains(document.activeElement);   // キーボードで えらんでいた 人は、つぎの ボタンへ
-    $('talk').hidden = false;   // はじめは かくしておく（3D が 出せず ここまで 動かない ときに 空の ふきだしを 出さない）
-    say.textContent = text;
-    ch.innerHTML = '';
-    for (const [t, fn, main] of opts) { const b = document.createElement('button'); b.type = 'button'; b.textContent = t; if (main) b.className = 'main'; b.onclick = fn; ch.append(b); }
-    if (kb && ch.firstChild) ch.firstChild.focus({ preventScroll: true });
-  }
-  // 会話で かえた もの（season・art）を 読みこみなおしの あとに 1回だけ 言う
-  const mark = what => { try { sessionStorage.setItem('tr_talk', what); } catch (e) { /* なしで続ける */ } };
-  const changed = (() => { try { const v = sessionStorage.getItem('tr_talk'); sessionStorage.removeItem('tr_talk'); return v; } catch (e) { return null; } })();
-  let watch = 0;
-  function ready() {
-    const ok = LOAD_ST === 'ok';
-    if (LOAD_ST === 'ng') { talk('ごめんね、うまく じゅんび できなかったよ。下の 知らせを 見てね。', [], 'ng'); return; }   // 読みこみ失敗
-    const sea = SEA[season].replace(/^\S+\s/, ''), art = artName(ART_ID);
-    const lead = changed === 'season' ? `${sea}に したよ。お題は「${art}」。` : changed === 'art' ? `お題を「${art}」に したよ。いまは ${sea}。`
-      : `やあ。いっしょに トラクターを 運転しよう。いまは ${SEA[season]}、お題は「${art}」。`;
-    talk(lead + (ok ? 'これで 行く？' : 'いま じゅんび してるから、ちょっと まってね。'), [
-      [ok ? '▶ これで 運転する' : '⏳ じゅんび中…', () => $('bStart').click(), true],
-      ['季節を かえる', seasons],
-      ['お題を かえる', arts],
-    ], 'top');
-    if (!ok) ch.firstChild.disabled = true;
-  }
-  // 見はりは 1つだけ。じゅんびが できても、季節・お題を えらんでいる 途中なら その 画面の まま（もどったときに「これで 行く？」が 押せる）
-  if (LOAD_ST === 'wait') watch = setInterval(() => {
-    if (LOAD_ST === 'wait') return;
-    clearInterval(watch);
-    if (page === 'top' || LOAD_ST === 'ng') ready();
-  }, 400);
-  function seasons() {
-    talk('どの 田んぼに しよう？', [...Object.keys(SEA).map(k => [SEA[k], () => { if (k === season) { ready(); return; } mark('season'); go(k, TOD); }, k === season]), ['もどる', ready]], 'season');
-  }
-  function arts() {
-    talk('田んぼに なにを 描こう？ ★が 多いほど むずかしいよ。', [...[...ARTS, null].map(a => [`${artIcon(a)} ${artName(a)} ${(artBtn(a) && artBtn(a).querySelector('i') || {}).textContent || ''}`.trim(), () => { if (a === ART_ID) { ready(); return; } mark('art'); go(season, TOD, a); }, a === ART_ID]), ['もどる', ready]], 'art');
-  }
-  ready();
-  return { ready };
-})();
 const COACH = (() => {
   const el = $('coach'), PAD = MOBILE || params.has('pad');
   let shown = '', prevDown = false, liftYaw = null, turns = 0, off = false, afterStall = false, fmMuted = false;
@@ -11089,7 +10662,7 @@ function frame(now) {
   const dt = Math.min(0.05, (now - last) / 1000), realDt = Math.min(0.25, (now - last) / 1000);   // realDt は PLAY の経過用（実時間。サイクル76で制限には使わない）
   last = now;
   if (!P.Rotary) { renderer.render(scene, camera); return; }
-  const running = S.started && $('start').classList.contains('hidden') && $('help').classList.contains('hidden') && !S.done;
+  const running = S.started && $('help').classList.contains('hidden') && !S.done;
   if (!running) { key.fwd = key.back = key.left = key.right = 0; TRACE.end(); }
   TRACE.tick(dt); HINT.update(dt); FIRSTMIN.update(dt);   // 最初の1分の終わり判定（60秒）
   if (!drag && camMode === 0) { look.yaw *= 1 - Math.min(1, dt * 1.5); look.pitch *= 1 - Math.min(1, dt * 1.5); }

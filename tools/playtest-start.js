@@ -64,6 +64,15 @@ async function runStartChecks(browser, url, out, { shareOnly = false } = {}) {
       // （地図の タップで 歩いて いる 間は 手本は 出ない。歩きおわるのを 待ってから、止まって 何秒で 出るかを はかる。下の 合成クリックは 遠くへ 歩きだすので、その 前に）
       const demoOn = async t => { await page.waitForFunction(() => !nishioPixel.tapGoal, null, { timeout: 20000 }).catch(() => {}); await clearOverlays(page).catch(() => {}); const t0 = Date.now(); const on = await page.waitForFunction(() => nishioPixel.tapDemo.on, null, { timeout: t }).then(() => true, () => false); return on ? Date.now() - t0 : -1; };
       const early = await tiltSt();   // 開いて すぐ：名前つきの ボタン（20秒 たつと 📱 だけに なる）
+      // 合成の クリック・引数なし（タイマーや 自動openと 同じ）では 求めない。本当の タップより 前に 見る（Codex 指摘 PR #1083：タップの あとでは もう 聞いた あとで、合成からの 新しい 要求を 防げるかが 分からない）
+      const synthetic = await page.evaluate(() => {   // この 前に 本当の タップで もう 聞いて いる ことが ある（サイクル195）ので、ここでの 増えた ぶんで 見る
+        const a0 = window.__asks, k0 = !!nishioPixel.meiroApi.tilt().asked;
+        nishioPixel.meiroApi.tiltAsk(); nishioPixel.meiroApi.tiltAsk(new Event('click'));
+        document.getElementById('pxCanvas').dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: 5, clientY: 5 }));
+        document.dispatchEvent(new Event('touchend', { bubbles: true }));
+        return { asks: window.__asks - a0, asked: !!nishioPixel.meiroApi.tilt().asked !== k0 };
+      });
+      await clearOverlays(page).catch(() => {}); await page.click('header.bar .brand'); await page.waitForTimeout(100);   // 合成クリックで 遠くへ 歩きだした ぶんを 止める（歩きおわるのを 待つと 1とおりに 25秒 かかる）
       if (['normal', 'granted', 'denied'].includes(kind)) {   // 手本は 3とおりで 見る（許可の いらない 端末・許可する 人・ことわる 人）
       const d1 = await demoOn(4000), n1 = await page.evaluate(() => nishioPixel.tapDemo.n), w1 = await page.evaluate(() => ({ wait: nishioPixel.tapDemo.wait, sight: nishioPixel.sightBusy(), cover: [...document.querySelectorAll('#pxInfo:not([hidden]), .panel:not([hidden]), #intro:not([hidden]), [role="dialog"]:not([hidden]), .medashi:not([hidden])')].map(e => e.id || e.className) }));
       for (let i = 0; i < 6; i++) { try { await tapMap(page); break; } catch (e) { if (i === 5) throw e; await page.waitForTimeout(1500); } }   // 呼びとめ などの 窓が 出て いたら とじるまで 待つ
@@ -74,15 +83,6 @@ async function runStartChecks(browser, url, out, { shareOnly = false } = {}) {
       const dBox = await page.evaluate(() => { const e = document.getElementById('tapDemo'); if (!e) return { pe: '', hit: false, wait: nishioPixel.tapDemo.wait }; return { pe: getComputedStyle(e).pointerEvents, hit: (() => { const r = e.getBoundingClientRect(); return document.elementFromPoint(r.left + r.width / 2, r.top + 4) === document.getElementById('pxCanvas'); })() }; });
       checks[kind + 'IdleDemo'] = { d1, dOff, d2, n1, n2, w1, ...dBox, ok: d1 >= 0 && d1 <= 3500 && dOff && d2 >= 0 && d2 <= 3500 && n2 > n1 && dBox.pe === 'none' && dBox.hit };   // d1・d2：止まってから 手本が 出るまでの ミリ秒（2秒＋こまの 遅れ）
       }
-      // 合成の クリック・引数なし（タイマーや 自動openと 同じ）では 求めない
-      const synthetic = await page.evaluate(() => {   // この 前に 本当の タップで もう 聞いて いる ことが ある（サイクル195）ので、ここでの 増えた ぶんで 見る
-        const a0 = window.__asks, k0 = !!nishioPixel.meiroApi.tilt().asked;
-        nishioPixel.meiroApi.tiltAsk(); nishioPixel.meiroApi.tiltAsk(new Event('click'));
-        document.getElementById('pxCanvas').dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: 5, clientY: 5 }));
-        document.dispatchEvent(new Event('touchend', { bubbles: true }));
-        return { asks: window.__asks - a0, asked: !!nishioPixel.meiroApi.tilt().asked !== k0 };
-      });
-      await clearOverlays(page).catch(() => {}); await page.click('header.bar .brand'); await page.waitForTimeout(100);   // 合成クリックで 遠くへ 歩きだした ぶんを 止める（歩きおわるのを 待つと 1とおりに 25秒 かかる）
       await tapMap(page); await tapMap(page, 170, 170);
       const mapOnly = await tiltSt();   // 地図を 2回 タップした あと（サイクル195）：許可の いる スマホでは 最初の タップで 1回 求めて いる（一時的な 失敗の あとは 次の タップで もう 1回）
       const touchPerm = !['normal', 'unsupported', 'desktop'].includes(kind);

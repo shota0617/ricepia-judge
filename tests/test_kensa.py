@@ -1682,11 +1682,12 @@ P.drag = {id:1, cx:50, cy:50, far:3, x0:100, moved:false};   endBagDrag({pointer
         node = shutil.which("node")
         if not node:
             self.skipTest("node がないので実行の確認は飛ばす")
-        start = HTML.index("const DEMO_FIRST = 800, DEMO_BACK = 2000, DEMO_BACK_SLOW = 4000;")
+        start = HTML.index("const DEMO_FIRST = 800, DEMO_BACK = 300, DEMO_HOLD = 2000, DEMO_LOOK = 2000, DEMO_BACK_SLOW = 4000;")
         fn = HTML[start:HTML.index("(function demoLoop()", start)]
         script = """
 const assert = require('node:assert/strict');
 let T = 0; const performance = {now: () => T};
+let simOn = false; const setTimeout = () => {}; // 動いているものは無い場面（サイクル142の確かめは別のテスト）
 let step = 1, measured = 0, badLeft = 2, spread = false, leaving = false, stamped = false, inked = false, lotIndex = 4, everZoomed = false, isNear = false, hankoMax = 80;
 const finePointer = false, LOT = {moisture:[1, 2, 3]}, P = {done:false, auto:false, inserted:false}, token = {hidden:true}, grains = [], zoomBtn = {}, Z = {s:1, tx:0, ty:0};
 const plate = {getBoundingClientRect: () => ({left:0, top:0, right:300, bottom:300}), clientLeft:0, clientTop:0};
@@ -1697,7 +1698,7 @@ const $ = id => id === 'poke' ? poke : {id};
 const guideOff = () => { on = false; }, guideAt = (kind, el) => { on = true; shown.push(kind + ':' + (el.id || 'point')); };
 const guideSense = () => { on = true; shown.push('sense'); }, pullPoke = () => {}, stabPoke = () => {}, firstBagFace = () => false, lotGrade = () => 0;
 const handlers = {};
-const document = {documentElement:{classList:{contains: () => scrolled}}, addEventListener: (n, f) => { handlers[n] = f; }, querySelectorAll: () => [{id:'grade0'}]};
+const document = {documentElement:{classList:{contains: () => scrolled}}, addEventListener: (n, f) => { handlers[n] = f; }, querySelectorAll: () => [{id:'grade0'}], getAnimations: () => []};
 const window = {addEventListener: () => {}};
 var demoDown = new Set();
 var guideAnchor = null;
@@ -1711,10 +1712,10 @@ at(1100); assert.equal(shown.length, 1);                       // 出ている�
 // 触れたら消える。指がのっている間は出ない
 T = 1200; handlers.pointerdown({pointerId:1}); assert.equal(on, false); assert.equal(poke.style.display, 'none');
 at(5000); assert.equal(shown.length, 1);
-// 離して2秒進まなければ、また出る
+// 離して0.3秒進まなければ、また出る（サイクル142。旧版は2秒）
 T = 5100; handlers.pointerup({pointerId:1});
-at(7000); assert.equal(shown.length, 1);
-at(7200); assert.deepEqual(shown, ['circle:crank', 'circle:crank']);
+at(5300); assert.equal(shown.length, 1);
+at(5500); assert.deepEqual(shown, ['circle:crank', 'circle:crank']);
 // 説明を読んでいる間（scrolled）は出さない
 T = 7300; handlers.pointerdown({pointerId:1}); T = 7400; handlers.pointercancel({pointerId:1});
 scrolled = true; at(9600); assert.equal(shown.length, 2);
@@ -1755,7 +1756,7 @@ at(35200); assert.equal(shown.length, n + 1);
         self.assertNotIn("const demoDown = new Set()", HTML)
         # 手本が指している相手が動いた・消えたら、見回りが消して出し直す（Codex指摘 PR #1076・5回目。場合ごとではなく相手の場所で見る）
         self.assertIn("guideAnchor = el.getBoundingClientRect ? { el, x:r.left, y:r.top, w:r.width } : null;", HTML)
-        self.assertIn("if (Math.hypot(q.left - guideAnchor.x, q.top - guideAnchor.y) > 12 || (guideAnchor.w && !q.width)) { demoHide(); demoAt = now + 400; return; }", HTML)
+        self.assertIn("if (Math.hypot(q.left - guideAnchor.x, q.top - guideAnchor.y) > 12 || (guideAnchor.w && !q.width)) { demoHide(); demoAt = demoHard = now + 400; return; }", HTML)
         self.assertIn('if (shown) guideAt("press", shown.el);', HTML)
         # 手本を消したら相手も捨てる・相手を見るのは #guide が出ている時だけ（Codex指摘 PR #1076・6回目: 古い相手で穀刺しの手本がちらついた）
         off = HTML[HTML.index("function guideOff() {"):HTML.index("var demoDown = new Set();")]
@@ -1763,8 +1764,8 @@ at(35200); assert.equal(shown.length, n + 1);
         self.assertIn('if (vis && guideAnchor && guideEl.classList.contains("on")) {', HTML)
         # 粒を取ったら（キーボードでも）手本を消して、残りの粒を選び直す（Codex指摘 PR #1076・4回目）
         tg = HTML[HTML.index("function tapGrain(g) {"):]
-        self.assertLess(tg.index("g.gone = true; badLeft--;"), tg.index("demoHide(); demoAt = performance.now() + DEMO_BACK;"))
-        self.assertLess(tg.index("demoHide(); demoAt = performance.now() + DEMO_BACK;"), tg.index("\n}\n"))
+        self.assertLess(tg.index("g.gone = true; badLeft--;"), tg.index("demoHide(); demoAt = demoHard = performance.now() + DEMO_LOOK;"))
+        self.assertLess(tg.index("demoHide(); demoAt = demoHard = performance.now() + DEMO_LOOK;"), tg.index("\n}\n"))
         # 押したまま窓の外で離したマウスを「触れている」に残さない（Codex指摘 PR #1076・3回目）
         self.assertIn('document.addEventListener("pointermove", (e) => { if (e.pointerType === "mouse" && !e.buttons && demoDown.has(e.pointerId)) demoUp(e); }, { capture:true, passive:true });', HTML)
         self.assertIn('window.addEventListener("blur", () => { if (demoDown.size) { demoDown.clear(); demoUp({ pointerId:-1 }); } });', HTML)
@@ -1914,6 +1915,94 @@ assert.deepEqual(restRect(hanko), { left:40, top:300, width:60, height:80 }); //
         tick = HTML[HTML.index("function demoTick(syncOnly) {"):HTML.index('document.addEventListener("pointerdown", (e) => {\n  demoTick(true);')]
         self.assertIn("const q = restRect(guideAnchor.el);", tick)  # 見回りで比べる時
         self.assertNotIn("guideAnchor.el.getBoundingClientRect()", tick)
+
+    def test_cycle142_demonstration_comes_back_right_after_the_finger_lifts(self):
+        # サイクル142（最初の1分・店主の実機の声2026-11-10「お手本をすぐに出す」）: 旧版は指を離してから2秒（指をのせたまま所作が変わった時は0.8秒）
+        # 手本が無かった（390×844・390×664実測: 進まなかった指24とおりのうち13とおりで 2030〜2200ms。動きが続くのは長くても1146ms。
+        # 手本をまねる60秒で、指は離れているのに手本が無い時間が合計13.6〜14.7秒）。
+        # 離して0.3秒で出す。動きの途中には重ねず、終わってから出す。待たせる上限は旧版と同じ。つまむ と 慣れた人の4秒は変えない。
+        node = shutil.which("node")
+        if not node:
+            self.skipTest("node がないので実行の確認は飛ばす")
+        start = HTML.index("const DEMO_FIRST = 800,")
+        fn = HTML[start:HTML.index("(function demoLoop()", start)]
+        script = """
+const assert = require('node:assert/strict');
+let T = 0; const performance = {now: () => T};
+let simOn = false; const timers = []; const setTimeout = (f, ms) => { timers.push([f, ms]); };
+let step = 1, measured = 0, badLeft = 2, spread = false, leaving = false, stamped = false, inked = false, lotIndex = 0, everZoomed = false, isNear = false, hankoMax = 80;
+const finePointer = false, LOT = {moisture:[1, 2, 3]}, P = {done:false, auto:false, inserted:false}, token = {hidden:true}, grains = [], zoomBtn = {}, Z = {s:1, tx:0, ty:0};
+const plate = {getBoundingClientRect: () => ({left:0, top:0, right:300, bottom:300}), clientLeft:0, clientTop:0};
+const shown = []; let on = false, anims = [];
+const guideEl = {classList:{contains: () => on}};
+const poke = {style:{display:'none'}};
+const $ = id => id === 'poke' ? poke : {id};
+const guideOff = () => { on = false; }, guideAt = (kind, el) => { on = true; shown.push(kind + ':' + (el.id || 'point')); };
+const guideSense = () => { on = true; shown.push('sense'); }, pullPoke = () => {}, stabPoke = () => {}, firstBagFace = () => false, lotGrade = () => 0;
+const handlers = {};
+const document = {documentElement:{classList:{contains: () => false}}, addEventListener: (n, f) => { handlers[n] = f; }, querySelectorAll: () => [{id:'grade0'}], getAnimations: () => anims};
+const window = {addEventListener: () => {}};
+var demoDown = new Set();
+var guideAnchor = null;
+const moving = (end) => ({playState:'running', effect:{getComputedTiming: () => ({endTime:end})}});
+""" + fn + """
+const at = (t) => { T = t; demoTick(); };
+const touch = (t0, t1) => { T = t0; handlers.pointerdown({pointerId:1}); T = t1; handlers.pointerup({pointerId:1}); };
+at(0); at(900); assert.deepEqual(shown, ['circle:crank']);
+// 1) 回しかけて離す（動いているものは無い）: 0.3秒で戻る。旧版は2秒
+touch(1000, 1300);
+assert.equal(on, false);
+assert.deepEqual(timers[timers.length - 1][1], 320);            // 0.2秒ごとの見回りを待たず、時間になったら見る
+at(1500); assert.equal(shown.length, 1);                        // 0.2秒ではまだ
+at(1620); assert.equal(shown.length, 2);                        // 0.32秒で出ている
+// 2) 動きの途中（道具が半分やって見せている・粒が運ばれている）には重ねない。終わったら出す
+touch(2000, 2100); anims = [moving(640)];
+at(2500); at(2700); assert.equal(shown.length, 2);
+anims = []; at(2760); assert.equal(shown.length, 3);
+// 3) 終わりのない動き（回り続ける手本・ゆれ続ける はんこ）は「動きの途中」に数えない
+touch(3000, 3100); anims = [moving(Infinity), {playState:'finished', effect:{getComputedTiming: () => ({endTime:300})}}];
+at(3420); assert.equal(shown.length, 4);
+// 4) 粒の押し合い・ひとりでにぬける穀刺し の間も重ねない
+anims = []; touch(4000, 4100); simOn = true; at(4500); assert.equal(shown.length, 4);
+simOn = false; P.auto = true; at(4700); assert.equal(shown.length, 4);
+P.auto = false; at(4720); assert.equal(shown.length, 5);
+// 5) 動きが続いていても、旧版と同じ2秒では出す（旧版より遅くならない）
+touch(5000, 5100); anims = [moving(9000)];
+at(7000); assert.equal(shown.length, 5);
+at(7100); assert.equal(shown.length, 6);
+// 6) 動きが見られない端末は、旧版と同じ2秒
+anims = []; touch(8000, 8100); const ga = document.getAnimations; document.getAnimations = undefined;
+at(9900); assert.equal(shown.length, 6);
+at(10100); assert.equal(shown.length, 7);
+document.getAnimations = ga;
+// 7) 指をのせたまま所作が変わった時（朱肉→はんこ など）も、離して0.3秒。見回りの合間に変わって離しても同じ（旧版は0.8秒）
+step = 4; on = false; at(11000); at(11900); assert.equal(shown[7], 'move:pad');
+T = 12000; handlers.pointerdown({pointerId:1}); inked = true; T = 12100; handlers.pointerup({pointerId:1});   // 見回りを はさまずに離す
+assert.equal(demoPhase(), 'stamp');
+at(12300); assert.equal(shown.length, 8);
+at(12420); assert.equal(shown[8], 'move:hanko');
+//    その時も動きの途中には重ねず、上限は旧版の0.8秒
+T = 13000; handlers.pointerdown({pointerId:1}); stamped = true; T = 13100; handlers.pointerup({pointerId:1}); anims = [moving(470)];
+at(13500); assert.equal(shown.length, 9);
+at(13900); assert.equal(shown[9], 'move:bagBig');
+anims = [];
+// 8) つまむ は旧版のまま（手本が わるい粒を指すので、探す間を残す）: はじめ0.8秒・離して2秒
+stamped = false; inked = false; step = 2; spread = true; on = false; at(15000); at(15900); assert.equal(shown[10], 'pinch:point');
+touch(16000, 16100);
+at(18000); assert.equal(shown.length, 11);
+at(18100); assert.equal(shown.length, 12);
+// 9) 慣れた人（出し直しなしで2回やりとげた所作）の4秒も変えない
+step = 1; spread = false; demoDone.crank = 2; on = false; at(20000); at(20900); assert.equal(shown[12], 'circle:crank');
+touch(21000, 21100);
+at(25000); assert.equal(shown.length, 13);
+at(25100); assert.equal(shown.length, 14);
+// 触れている間は出ない（変えていない）
+T = 26000; handlers.pointerdown({pointerId:1}); at(30000); assert.equal(on, false); assert.equal(shown.length, 14);
+"""
+        out = subprocess.run([node, "-e", script], capture_output=True, text=True)
+        self.assertEqual(out.returncode, 0, out.stderr[-900:])
+        tg = HTML[HTML.index("function tapGrain(g) {"):]
+        self.assertIn("demoHide(); demoAt = demoHard = performance.now() + DEMO_LOOK;", tg[:tg.index("\n}\n")])  # 粒を取った後も、つまむの手本は2秒のまま
 
     def test_cycle93_picked_grains_stay_in_quiet_record(self):
         # 類7: 見分けた粒が静かに記録に残る。任意で開く資料（#notes）の中だけに出し、常時表示・競争・スコアにはしない。

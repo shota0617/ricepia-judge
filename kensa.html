@@ -1736,7 +1736,7 @@ function tapGrain(g) {
   }
   g.gone = true; badLeft--;
   /* 取った粒を指していた手本は消し、手が止まれば 残りの粒を選び直して出す（Codex指摘 PR #1076: キーボードで取ると pointerdown を通らず、手本が消えた粒の場所を指し続けた） */
-  demoHide(); demoAt = performance.now() + DEMO_BACK;
+  demoHide(); demoAt = demoHard = performance.now() + DEMO_LOOK; /* つまむの手本は わるい粒を指すので、探す間を残す（サイクル142でも2秒のまま） */
   pickedKinds[g.kind]++; updateGrainRecord(); /* みわけた粒の種類を静かなきろくへ残す（サイクル93・類7） */
   grainDrop();
   setFace("happy", 500);
@@ -2163,12 +2163,32 @@ nextBtn.addEventListener("click", (e) => { if (e.detail === 0) leaveBag(); }); /
 /* お手本モーションの出し直し（サイクル140・店主指示2026-11-10「お手本モーションを出す」）。
    決まりは1つ: いまの所作の手本が出ていなくて、指が画面に触れていなければ、出す。
    ・所作が変わった時は DEMO_FIRST（0.8秒）後までに出る（所作の始まりで出す従来の手本はそのまま先に出る）
-   ・触れたら消える（document の pointerdown）。離して DEMO_BACK（2秒）進まなければ、また出る
+   ・触れたら消える（document の pointerdown）。離して DEMO_BACK（0.3秒）進まなければ、また出る（下のサイクル142）
    ・その所作を手本の出し直しなしで2回やりとげた人には、DEMO_BACK_SLOW（4秒）待ってから出す。出なくなることはない
    空振りの数え方（1回目=手本／2回目=半分やって見せる／3回目=ひとりでに進む）は従来どおりで、これは手が止まった時の道。
    所作ごとのタイマーは持たず、0.2秒ごとに「いまの所作」を見て決めるので、所作や袋が変わった後に古い手本が出ることはない */
-const DEMO_FIRST = 800, DEMO_BACK = 2000, DEMO_BACK_SLOW = 4000;
-let demoKey = "", demoAt = 0, demoTouched = false, demoHelped = false, demoSeen = false;
+/* 指を離したら、手本はすぐ戻る（サイクル142・最初の1分・店主の実機の声2026-11-10「お手本をすぐに出す」）。
+   旧版は離してから2秒（DEMO_BACK）、指をのせたまま所作が変わった時は0.8秒（DEMO_FIRST）待っていた。
+   390×844・390×664の実測: 進まなかった指24とおりのうち13とおりで、離してから手本まで2030〜2200ms。そのうち動きが続いていたのは長くても1146ms
+   （つまんだ粒が小皿へ着くまで）で、回しかけて離す・案内をタップ・山の横をなでる・表をタップ では動きは0msなのに2秒 手本が無かった。
+   手本をまねて60秒遊ぶと、指は離れているのに手本が無い時間が11〜12回・合計13.6〜14.7秒あった。
+   ・離して DEMO_BACK（0.3秒）で出す。ただし動きの途中（demoBusy: 粒が運ばれている・道具が半分やって見せている・場面が入れかわっている）には重ねず、動きが終わってから出す
+   ・待たせる上限は旧版と同じ（DEMO_HOLD 2秒／まだ見せていない所作は DEMO_FIRST 0.8秒）。動きが見られない端末も旧版と同じ早さで、旧版より遅くなることはない
+   ・つまむ（pick）だけは旧版のまま（DEMO_LOOK 2秒・はじめは0.8秒）。手本の指が わるい粒そのものを指すので、自分の目で探す間を残す
+   ・2回やりとげた人の4秒（DEMO_BACK_SLOW）は変えない */
+const DEMO_FIRST = 800, DEMO_BACK = 300, DEMO_HOLD = 2000, DEMO_LOOK = 2000, DEMO_BACK_SLOW = 4000;
+let demoKey = "", demoAt = 0, demoHard = 0, demoTouched = false, demoHelped = false, demoSeen = false;
+function demoBusy() { /* 動きの途中か。終わりのある動き（WAAPI・CSS の animation / transition）と、粒の押し合い・ひとりでにぬける穀刺し。回り続ける手本や ゆれ続ける はんこ（終わりのない動き）は数えない */
+  if (simOn || P.auto) return true;
+  if (!document.getAnimations) return true; /* 見られない端末は、旧版と同じ早さ（上限）で出す */
+  return document.getAnimations().some(a => a.playState === "running" && a.effect && isFinite(a.effect.getComputedTiming().endTime));
+}
+function demoWait() { /* 指を離してから手本を出すまで: [早ければ, 動きが続いていても] */
+  if (demoKey === "pick") { const w = !demoSeen ? DEMO_FIRST : demoDone[demoKey] >= 2 ? DEMO_BACK_SLOW : DEMO_LOOK; return [w, w]; }
+  if (!demoSeen) return [DEMO_BACK, DEMO_FIRST];
+  if (demoDone[demoKey] >= 2) return [DEMO_BACK_SLOW, DEMO_BACK_SLOW];
+  return [DEMO_BACK, DEMO_HOLD];
+}
 const demoDone = {};
 function demoPhase() { /* いま手本を出す所作。待ちの間（粒が落ちている・平均を出している・袋が流れている）は "" */
   if (step === 0) return P.done || P.auto ? "" : P.inserted ? "pull" : "stab";
@@ -2215,7 +2235,7 @@ function demoTick(syncOnly) { /* syncOnly: 所作の切り替わりだけ合わ�
   const k = demoPhase(), now = performance.now();
   if (k !== demoKey) {
     if (demoKey && !demoHelped) demoDone[demoKey] = (demoDone[demoKey] || 0) + 1; /* 出し直しなしでやりとげた回数 */
-    demoKey = k; demoTouched = false; demoHelped = false; demoSeen = false; demoAt = now + DEMO_FIRST;
+    demoKey = k; demoTouched = false; demoHelped = false; demoSeen = false; demoAt = demoHard = now + DEMO_FIRST;
     if (!k) demoHide(); /* 待ちの間は、前の所作の手本を残さない */
   }
   if (!k || syncOnly === true) return;
@@ -2225,11 +2245,12 @@ function demoTick(syncOnly) { /* syncOnly: 所作の切り替わりだけ合わ�
      場合ごとに足すのをやめ、相手の場所を見回りで確かめる。ずれていたら消して、すぐ（0.4秒）選び直して出す */
   if (vis && guideAnchor && guideEl.classList.contains("on")) { /* 相手を覚えているのは #guide の手本だけ。穀刺しの指（#poke）が出ている時には見ない */
     const q = restRect(guideAnchor.el); /* すべり込みの途中は、落ち着く場所で比べる（サイクル141） */
-    if (Math.hypot(q.left - guideAnchor.x, q.top - guideAnchor.y) > 12 || (guideAnchor.w && !q.width)) { demoHide(); demoAt = now + 400; return; }
+    if (Math.hypot(q.left - guideAnchor.x, q.top - guideAnchor.y) > 12 || (guideAnchor.w && !q.width)) { demoHide(); demoAt = demoHard = now + 400; return; }
   }
   if (vis) demoSeen = true;
   if (vis && demoTouched) demoHelped = true; /* 触れた後にもう一度手本が出た（空振りの手本も含む） */
   if (vis || demoDown.size || now < demoAt || document.documentElement.classList.contains("scrolled")) return;
+  if (now < demoHard && demoBusy()) return; /* 動きの途中には重ねない（サイクル142）。終わったら次の見回り（0.2秒以内）で出す */
   if (demoTouched) demoHelped = true;
   demoSeen = true;
   demoShow(k);
@@ -2241,7 +2262,10 @@ document.addEventListener("pointerdown", (e) => {
 function demoUp(e) {
   demoDown.delete(e.pointerId);
   /* この所作の手本をまだ一度も見せていない（前の所作の指がのったまま始まった: さした指を離した直後の ひきぬく など）なら、はじめと同じ早さで出す */
-  demoAt = performance.now() + (!demoSeen ? DEMO_FIRST : demoDone[demoKey] >= 2 ? DEMO_BACK_SLOW : DEMO_BACK);
+  demoTick(true); /* 指をのせている間に所作が変わっていたら、先に「いまの所作」へ合わせる（合わせる前に離すと、次の見回りが0.8秒へ戻していた・サイクル142） */
+  const now = performance.now(), w = demoWait();
+  demoAt = now + w[0]; demoHard = now + w[1];
+  setTimeout(demoTick, w[0] + 20); /* 0.2秒ごとの見回りを待たず、時間になったら見る（サイクル142） */
 }
 document.addEventListener("pointerup", demoUp, { capture:true, passive:true });
 document.addEventListener("pointercancel", demoUp, { capture:true, passive:true });

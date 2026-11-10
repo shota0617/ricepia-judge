@@ -27,6 +27,9 @@ class Tilt194(unittest.TestCase):
         f = fn_src("tiltFirstTouch")
         self.assertIn("if ((tiltG.asked && !tiltG.retry) || !tiltBtnWanted() || lsGet('nsg_tilt_ok', '') === '0') return;", f)
         self.assertIn("tiltAsk(e);", f)
+        # Codex 指摘（PR #1083）：傾きの ボタンの タップは ボタンに まかせる。やりなおしは 同じ 指の 動きの 中では しない
+        self.assertIn("if (e && e.target && e.target.closest && e.target.closest('#pxTilt')) return;", f)
+        self.assertIn("if (now - (tiltFirstTouch.at || -1e9) < 700) return;", f)
         self.assertIn("document.addEventListener('touchend', tiltFirstTouch, { capture: true, passive: true });", PIX)
         self.assertIn("document.addEventListener('click', tiltFirstTouch, { capture: true, passive: true });", PIX)
         self.assertIn("if (!event || !event.isTrusted || tiltG.asked || !tiltNeedsPermission()) return;", fn_src("tiltAsk"))

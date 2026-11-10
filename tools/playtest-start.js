@@ -83,7 +83,8 @@ async function runStartChecks(browser, url, out, { shareOnly = false } = {}) {
       const dBox = await page.evaluate(() => { const e = document.getElementById('tapDemo'); if (!e) return { pe: '', hit: false, wait: nishioPixel.tapDemo.wait }; return { pe: getComputedStyle(e).pointerEvents, hit: (() => { const r = e.getBoundingClientRect(); return document.elementFromPoint(r.left + r.width / 2, r.top + 4) === document.getElementById('pxCanvas'); })() }; });
       checks[kind + 'IdleDemo'] = { d1, dOff, d2, n1, n2, w1, ...dBox, ok: d1 >= 0 && d1 <= 3500 && dOff && d2 >= 0 && d2 <= 3500 && n2 > n1 && dBox.pe === 'none' && dBox.hit };   // d1・d2：止まってから 手本が 出るまでの ミリ秒（2秒＋こまの 遅れ）
       }
-      await tapMap(page); await tapMap(page, 170, 170);
+      if (kind.startsWith('notallowed')) await page.waitForTimeout(800);   // やりなおしは 次の タップで（同じ 指の 動きの 中では しない。0.7秒）
+      await tapMap(page); if (kind.startsWith('notallowed')) await page.waitForTimeout(800); await tapMap(page, 170, 170);
       const mapOnly = await tiltSt();   // 地図を 2回 タップした あと（サイクル195）：許可の いる スマホでは 最初の タップで 1回 求めて いる（一時的な 失敗の あとは 次の タップで もう 1回）
       const touchPerm = !['normal', 'unsupported', 'desktop'].includes(kind);
       const btn0 = early.btn, lab0 = /\blab\b/.test(early.cls);
@@ -151,7 +152,7 @@ async function runStartChecks(browser, url, out, { shareOnly = false } = {}) {
       // 読みなおした あとも、最初の 地図タップで 1回だけ（ページを 開く たびに 1回）。タップで 歩くと たからばこ などで ポイントが かわるので、上の 保存の 確かめの あとで
       await page.waitForTimeout(400);
       const reask0 = await page.evaluate(() => window.__asks);
-      await tapMap(page); await tapMap(page, 170, 170);
+      await tapMap(page); if (kind.startsWith('notallowed')) await page.waitForTimeout(800); await tapMap(page, 170, 170);
       const reaskMap = await page.evaluate(() => window.__asks) - reask0;   // 読みなおした あと：前に 許可した 人には 最初の 地図タップで 聞く。前に ことわった 人には 地図の タップでは 聞かない（サイクル195）
       const savedNow = await page.evaluate(() => localStorage.getItem('nsg_tilt_ok')), reaskMapWant = !permission || (reask0 === 0 && reaskMap === 0 && savedNow === '0') ? 0 : kind.startsWith('notallowed') ? 2 : 1;
       const again = await tiltSt();   // 前の 答えを おぼえて いる：許可した 人には 目立たせる（pro）、ことわった 人には 小さく（quiet）

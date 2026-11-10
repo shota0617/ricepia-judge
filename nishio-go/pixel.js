@@ -9447,8 +9447,14 @@ function tiltAsk(event) {   // 本当の タップで 1回だけ（画面を 最
 // サイクル194 で 地図の タップでは 許可を 聞かなく したら、iPhone では 傾きの ボタンを 押さない かぎり 傾きが ずっと 使えなく なった。
 // iPhone は 本当に さわった 中で しか 許可を 聞けない（開いた だけでは 窓を 出せない）。そこで、画面の どこでも 最初に さわって 指を はなした ところで すぐ 聞く（地図で なくても よい）。
 // 前に ことわった 人（nsg_tilt_ok=0）には 聞かない（傾きの ボタンで だけ）。一時的な 失敗の あとは 次に さわった ときに やりなおす。合成の イベントでは 聞かない（tiltAsk が isTrusted を 見る）
+// Codex 指摘（PR #1083）：傾きの ボタンを 押した ときは ボタンに まかせる（ここで 先に 聞くと、ボタンが「もう 聞いた」と 見て 案内を 出して しまう）。
+// 一時的な 失敗の やりなおしは、同じ 指の 動き（touchend の すぐ あとの click）では なく、次の タップで（0.7秒 あける）
 function tiltFirstTouch(e) {
   if ((tiltG.asked && !tiltG.retry) || !tiltBtnWanted() || lsGet('nsg_tilt_ok', '') === '0') return;
+  if (e && e.target && e.target.closest && e.target.closest('#pxTilt')) return;
+  const now = performance.now();
+  if (now - (tiltFirstTouch.at || -1e9) < 700) return;
+  tiltFirstTouch.at = now;
   tiltAsk(e);
 }
 document.addEventListener('touchend', tiltFirstTouch, { capture: true, passive: true });

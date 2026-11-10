@@ -4489,7 +4489,8 @@ function a2hsLater(when) {
   let n = 0;
   const go = () => {
     if (!a2hsEligible() || !$('a2hs').hidden) return;
-    if (performance.now() < A2HS.minPlayMs || !a2hsCalm()) { if (++n <= A2HS.tries || performance.now() < A2HS.minPlayMs) a2hsTry = setTimeout(go, A2HS.tryMs); return; }
+    if (performance.now() < A2HS.minPlayMs) { a2hsTry = setTimeout(go, A2HS.tryMs); return; }   // 開いて 1分の 間は 待つだけ（下の 回数には 数えない）
+    if (!a2hsCalm()) { if (++n <= A2HS.tries) a2hsTry = setTimeout(go, A2HS.tryMs); return; }
     a2hsOffer(when);
   };
   a2hsTry = setTimeout(go, A2HS.tryMs);

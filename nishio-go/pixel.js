@@ -13332,7 +13332,8 @@ function planPath(sx, sy, gx, gy, goalR, avoid) {
 // 2本指（ピンチ）・せかいちず（ドラッグで 地図を 動かす）・あるいて移動は これまでどおり。CSS の touch-action は pinch-zoom（1本指の なぞりを ブラウザに とられない）
 const swipeS = { down: null, at: -Infinity };
 const SWIPE_MIN = 12;   // これより 短い ずれは ふつうの タップ（click）に まかせる（px）
-cv.addEventListener('pointerdown', e => { swipeS.down = !worldMode && e.isPrimary && e.button === 0 ? { id: e.pointerId, x: e.clientX, y: e.clientY } : null; }, { passive: true });
+cv.addEventListener('pointerdown', e => { swipeS.at = -Infinity;   // 新しい 指の 動きの click は 捨てない（捨てるのは なぞりに ついて くる click だけ）
+  swipeS.down = !worldMode && e.isPrimary && e.button === 0 ? { id: e.pointerId, x: e.clientX, y: e.clientY } : null; }, { passive: true });
 cv.addEventListener('pointercancel', () => { swipeS.down = null; }, { passive: true });
 cv.addEventListener('pointerup', e => {
   const d = swipeS.down;

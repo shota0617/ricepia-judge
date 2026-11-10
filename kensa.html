@@ -1070,6 +1070,7 @@ function guideOff() {
   guideEl.className = "";
 }
 var demoDown = new Set(); /* 画面に触れている指（サイクル140）。guideAt より前に置く（var: 読み込みの途中で guideAt が呼ばれても落ちない） */
+var guideAnchor = null; /* 手本の指が指している相手（要素）と、置いた時の場所。相手が動いた・消えたら、見回り（demoTick）が手本を消して出し直す */
 function guideAt(kind, el, gx, gy, at) { /* at: 手本の指を置く高さ（el の高さに対する割合）。省けば従来どおり */
   guideOff();
   /* 指が触れている間は、どの道から呼ばれても手本を出さない（Codex指摘 PR #1076: 2袋目以降、指を離さずになでて広げ切ると
@@ -1077,6 +1078,7 @@ function guideAt(kind, el, gx, gy, at) { /* at: 手本の指を置く高さ（el
      離して手が止まれば、出し直しの見回り（demoTick）が出す */
   if (demoDown && demoDown.size) return;
   let r = el.getBoundingClientRect ? el.getBoundingClientRect() : { left:el.x, top:el.y, width:0, height:0 }; /* el は要素か、画面上の点 {x, y} */
+  guideAnchor = el.getBoundingClientRect ? { el, x:r.left, y:r.top, w:r.width } : null;
   if (kind === "pinch" && el === plate) r = { left:r.left + r.width * 0.26, top:r.top + r.height * 0.8, width:0, height:0 }; /* ふたゆびの手本は皿の左下に出し、見ている粒を指で隠さない（サイクル140） */
   if (kind === "circle") r = { left:Math.min(r.left + r.width / 2, window.innerWidth - 70), top:r.top + r.height / 2, width:0, height:0 }; /* 回る指が画面の右へはみ出さない所まで寄せる（375×548実測で3pxはみ出し） */
   guideEl.dataset.arrow = kind === "circle" ? "↻" : kind === "sweep" ? "↔" : kind === "pinch" ? "⤢" : kind === "press" ? "↓" : Math.abs(gx || 0) > Math.abs(gy || 0) ? (gx > 0 ? "→" : "←") : (gy > 0 ? "↓" : "↑"); /* 動きを減らす設定の時だけ見える向きの矢印 */
@@ -2130,9 +2132,9 @@ function demoShow(k) {
     /* つまむ手本は、もう見分けがついている わるい粒（最初の袋の顔・寄って見えた顔・ふくらんで知らせた粒）の上でだけ見せる。
        まだ見分けがついていない間は、答えを指ささず、寄り方（🔍・ふたゆび）を見せる */
     const rect = plate.getBoundingClientRect();
-    const shown = grains.filter(g => !g.gone && g.kind !== "seiryu" && (firstBagFace(g) || isNear || g.img.classList.contains("hint"))).map(g => g.el.getBoundingClientRect())
-      .find(b => b.left > rect.left && b.right < rect.right && b.top > rect.top && b.bottom < rect.bottom);
-    if (shown) guideAt("press", { x:shown.left + shown.width / 2, y:shown.top + shown.height / 2 + 6 });
+    const shown = grains.filter(g => !g.gone && g.kind !== "seiryu" && (firstBagFace(g) || isNear || g.img.classList.contains("hint")))
+      .find(g => { const b = g.el.getBoundingClientRect(); return b.left > rect.left && b.right < rect.right && b.top > rect.top && b.bottom < rect.bottom; });
+    if (shown) guideAt("press", shown.el); /* 粒そのものを相手にする（点ではなく）。粒が動いた・消えたら見回りが気づける */
     else if (finePointer || everZoomed) guideAt("press", zoomBtn);
     else guideAt("pinch", plate);
   }
@@ -2152,6 +2154,12 @@ function demoTick(syncOnly) { /* syncOnly: 所作の切り替わりだけ合わ�
   if (!k || syncOnly === true) return;
   const vis = demoVisible(k);
   if (vis && demoDown.size) { demoHide(); return; } /* 触れている間に ほかの道から出た手本（穀刺しの指など）も、見回りで消す */
+  /* 手本が指している相手が動いた・消えた（Codex指摘 PR #1076: キーボードで拡大を切りかえる・粒を取る など、指が触れない道で相手だけ動くと、手本が元の場所に残った）。
+     場合ごとに足すのをやめ、相手の場所を見回りで確かめる。ずれていたら消して、すぐ（0.4秒）選び直して出す */
+  if (vis && guideAnchor) {
+    const q = guideAnchor.el.getBoundingClientRect();
+    if (Math.hypot(q.left - guideAnchor.x, q.top - guideAnchor.y) > 12 || (guideAnchor.w && !q.width)) { demoHide(); demoAt = now + 400; return; }
+  }
   if (vis) demoSeen = true;
   if (vis && demoTouched) demoHelped = true; /* 触れた後にもう一度手本が出た（空振りの手本も含む） */
   if (vis || demoDown.size || now < demoAt || document.documentElement.classList.contains("scrolled")) return;

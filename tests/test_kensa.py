@@ -1555,6 +1555,7 @@ assert.equal(sims, 1);
 const assert = require('node:assert/strict');
 const lotIndex = 0, guideEl = {style:{setProperty(){}}, dataset:{}, className:'', offsetWidth:0}, guideOff = () => {};
 var demoDown = new Set();
+var guideAnchor = null;
 const plate = {}, $ = () => ({style:{}}), window = {innerWidth:390};
 const el = {getBoundingClientRect: () => ({left:0, top:100, width:200, height:400})};
 """ + fn + """
@@ -1698,6 +1699,7 @@ const handlers = {};
 const document = {documentElement:{classList:{contains: () => scrolled}}, addEventListener: (n, f) => { handlers[n] = f; }, querySelectorAll: () => [{id:'grade0'}]};
 const window = {addEventListener: () => {}};
 var demoDown = new Set();
+var guideAnchor = null;
 """ + fn + """
 const at = (t) => { T = t; demoTick(); };
 // 5袋目の はかる（従来は手本なし）: 所作が始まって0.8秒までに出る
@@ -1750,6 +1752,10 @@ at(35200); assert.equal(shown.length, n + 1);
         self.assertLess(g.index("if (demoDown && demoDown.size) return;"), g.index("guideEl.dataset.arrow"))  # 何かを置く前に戻る
         self.assertIn("if (vis && demoDown.size) { demoHide(); return; }", HTML)
         self.assertNotIn("const demoDown = new Set()", HTML)
+        # 手本が指している相手が動いた・消えたら、見回りが消して出し直す（Codex指摘 PR #1076・5回目。場合ごとではなく相手の場所で見る）
+        self.assertIn("guideAnchor = el.getBoundingClientRect ? { el, x:r.left, y:r.top, w:r.width } : null;", HTML)
+        self.assertIn("if (Math.hypot(q.left - guideAnchor.x, q.top - guideAnchor.y) > 12 || (guideAnchor.w && !q.width)) { demoHide(); demoAt = now + 400; return; }", HTML)
+        self.assertIn('if (shown) guideAt("press", shown.el);', HTML)
         # 粒を取ったら（キーボードでも）手本を消して、残りの粒を選び直す（Codex指摘 PR #1076・4回目）
         tg = HTML[HTML.index("function tapGrain(g) {"):]
         self.assertLess(tg.index("g.gone = true; badLeft--;"), tg.index("demoHide(); demoAt = performance.now() + DEMO_BACK;"))

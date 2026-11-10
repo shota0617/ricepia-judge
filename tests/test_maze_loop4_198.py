@@ -38,10 +38,11 @@ class FirstMinute198(unittest.TestCase):
         self.assertIn("shopHits.some(", w)
         self.assertIn("if (fieldHit(x, y, spots)) return false;", w)
         s = fn_src("tapDemoSpot")
-        self.assertIn("for (const slop of [DEMO_SLOP_PX, 0]) for (const d of DEMO_CELLS)", s)   # まず 指が ずれても 歩ける 所
+        self.assertIn("for (const slop of [DEMO_SLOP_PX, 0]) {", s)   # まず 指が ずれても 歩ける 所（サイクル200：手の 絵の 所も 歩ける 置き方を 先に）
+        self.assertIn("for (const d of DEMO_CELLS) {", s)
         self.assertIn("if (i < 1 || i > last) continue;", s)   # いま いる マスは 指さない
         self.assertIn("if (Math.hypot(q.x - rc.x, q.y - rc.y) < DEMO_NEAR_PX) continue;", s)   # お米の すぐ そばは 指さない
-        self.assertIn("if (lay && tapDemoWalks(q, slop, near)) return { q, up: lay.up, side: lay.side };", s)
+        self.assertIn("if (!lay || !tapDemoWalks(q, slop, near)) continue;", s)
         self.assertIn("near = G.spots.filter(", s)   # 重く しない：画面の 近くの 名所だけ
 
     def test_click_and_demo_share_one_hit_test(self):
@@ -77,7 +78,7 @@ class FirstMinute198(unittest.TestCase):
         self.assertTrue(s.rstrip().endswith("}"))
         self.assertIn("  return null;", s)
         self.assertNotIn("return tileClient(path[base]", s)
-        self.assertEqual(s.count("return "), 3)   # near の 絞りこみ・見つけた 置き方・null
+        self.assertEqual(s.count("return "), 4)   # near の 絞りこみ・見つけた 置き方（手も 歩ける／指先だけ）・null（サイクル200 で 1つ ふえた）
         t = fn_src("tapDemoTick")
         self.assertIn("if (!sp) { if (!tapDemo.el.hidden) tapDemo.el.hidden = true; }", t)
         i = t.index("if (!sp) {")

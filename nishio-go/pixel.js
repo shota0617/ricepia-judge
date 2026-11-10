@@ -9401,11 +9401,13 @@ function tiltBtnOk() {   // 許可された：「📱 OK」と 出して 消す
   setTimeout(() => { tiltBtn.classList.remove('ok'); tiltBtn.hidden = true; tiltBtn.querySelector('.tx').textContent = 'かたむけて ころがす'; tiltBtnSync(); }, TILT_BTN.okMs);
 }
 if (tiltBtn) tiltBtn.addEventListener('click', e => {
+  if (tiltBtn.classList.contains('ok')) return;   // サイクル200：許可の すぐ あと「📱 OK」と 出て いる 1.5秒の 間に 押しても 何も 言わない（許可したのに「地図を タップして 遊べるよ」＝ことわった ときの 知らせが 出て いた）
   if (tiltG.asked && !tiltG.retry) { G.toast('地図を タップして 遊べるよ'); return; }   // もう 聞いた（ことわった）：窓は 出さない
   tiltAsk(e);
 });
 // 止まって いる ときの 手本
 const DEMO_IDLE_MS = 2000;
+const DEMO_WORLD_MS = 6000;   // せかいちずの「もどる」手本：はじめてのさんぽの あとの 人には 6秒 待って から（サイクル200）
 // サイクル198（運営者の声 2026-11-10「最初の1分のプレイ離脱をいかに減らすか」）：手本の 指を タップして 進む 人を はかった（iPhone・空の 記録・390×780）。
 // ・1タップで 2マス 歩いた あと、次の 手本まで 2.0〜2.5秒 待つ。はじめての ゴール（17マス）まで 9タップ・35秒（傾けて 転がすと 17秒）。60秒の うち 動いて いたのは 3わり
 // ・2つめの ゴールの 手前（42秒）で、手本の 指が 着いた ばかりの 駅の 特大の 絵の 上を 指した。そこを タップすると 説明の 窓（ボタン 7つ）が 開いて、手本は 消えた
@@ -9432,8 +9434,9 @@ function tapDemoWalks(q, slop, spots) {   // 画面の この 点を タップ�
 //   → 見つからなければ null。指の 手本は 出さず、次の 見回り（0.25秒おき）で さがし直す。傾きが 使えて いる ときは ゆれる 📱 だけ
 // ・さかさの 指と よこの 札が 上の バーの 裏へ 入った（見て いたのは 指先と まわり 18px だけ。手は 指先から 52px のびる）
 //   → 指・札・動き（14px）の しめる 範囲が 地図の 中（上の バーの 下・下の 欄の 上・左右）に 収まり、傾きの ボタンに かからない 置き方だけ えらぶ（tapDemoLayout）
+const DEMO_HAND_TAP = 20;   // 手の 絵の まん中は 指先から 20px（さかさの ときは 上）
 const DEMO_HAND = { w: 44, h: 38, move: 14, pad: 2 }, DEMO_LAB = { w: 96, h: 32, gap: 4, top: 8, below: 46 };   // style.css の #tapDemo・#tapDemo.first::after と 同じ 大きさ（札の 字「タップ！」は 約90×31px）
-function tapDemoLayout(q, first, rc, box) {   // この 点を 指す ときの 向き（up：さかさ）と 札の 場所（''：指の 下・lr：右・ll：左）。地図の 中に 収まらなければ null
+function tapDemoLayout(q, first, rc, box, upOk) {   // upOk(up)：その 向きを 使って よいか（なければ どちらも よい）。この 点を 指す ときの 向き（up：さかさ）と 札の 場所（''：指の 下・lr：右・ll：左）。地図の 中に 収まらなければ null
   const H = DEMO_HAND, Lb = DEMO_LAB, reach = H.h + H.move + H.pad;
   const fits = b => b[0] >= box[0] && b[1] >= box[1] && b[2] <= box[2] && b[3] <= box[3] && !(box[4] && b[0] < box[4][2] && b[2] > box[4][0] && b[1] < box[4][3] && b[3] > box[4][1]);   // box[4]：傾きの ボタン
   const hitsRice = b => b[0] < rc.x + 20 && b[2] > rc.x - 20 && b[1] < rc.y + 14 && b[3] > rc.y - 26;   // 指も 札も お米に かぶせない
@@ -9441,6 +9444,7 @@ function tapDemoLayout(q, first, rc, box) {   // この 点を 指す ときの 
   for (const up of [pref, !pref]) {
     const hand = up ? [q.x - H.w / 2, q.y - reach, q.x + H.w / 2, q.y] : [q.x - H.w / 2, q.y, q.x + H.w / 2, q.y + reach];
     if (!fits(hand) || hitsRice(hand)) continue;
+    if (upOk && !upOk(up)) continue;   // サイクル200：手の 絵の 所を 押すと 窓が 開く 向きは 使わない（tapDemoSpot）
     if (!first) return { up, side: '' };
     const below = [q.x - Lb.w / 2, q.y + Lb.below, q.x + Lb.w / 2, q.y + Lb.below + Lb.h + H.move + H.pad];
     if (!up && fits(below) && !hitsRice(below)) return { up, side: '' };
@@ -9455,15 +9459,24 @@ function tapDemoSpot(path, first) {   // 手本の 指先を 置く 点と 置�
   const c = camTile(), near = G.spots.filter(s => { const p = toTile(s.lat, s.lng); return Math.abs(p.x - c.x) < 30 && Math.abs(p.y - c.y) < 40; });   // 画面の 近くの 名所だけ（名所は 2千こ ある。点ごとに ぜんぶ 調べると 重い）
   const cr = cv.getBoundingClientRect(), sh = $('sheet') ? $('sheet').getBoundingClientRect() : null, tb = tiltBtn && !tiltBtn.hidden ? tiltBtn.getBoundingClientRect() : null;
   const box = [Math.max(0, cr.left), cr.top, Math.min(window.innerWidth, cr.right), Math.min(cr.bottom, sh && sh.height ? sh.top : cr.bottom), tb && tb.width ? [tb.left, tb.top, tb.right, tb.bottom] : null];
-  for (const slop of [DEMO_SLOP_PX, 0]) for (const d of DEMO_CELLS) {   // まず 指が 18px ずれても 歩ける 所。なければ ぴったり 押せば 歩ける 所
-    const i = base + d;
-    if (i < 1 || i > last) continue;
-    for (const [dx, dy] of DEMO_TILES) {
-      const q = tileClient(path[i][0] * MZ_K + dx, path[i][1] * MZ_K + dy);
-      if (Math.hypot(q.x - rc.x, q.y - rc.y) < DEMO_NEAR_PX) continue;   // お米の すぐ そばは 指さない（指の 絵が お米に のる・お米を つつく）
-      const lay = tapDemoLayout(q, first, rc, box);
-      if (lay && tapDemoWalks(q, slop, near)) return { q, up: lay.up, side: lay.side };
+  // サイクル200（はじめの 1分・見えた 絵を タップする 人）：指の 絵（手）を タップする 人は 指先より 20px ほど 手の がわを 押す。2つめの ゴールの 手前で、手が 駅の 特大の 絵に
+  // のって いて、手を タップする たびに 駅の 説明の 窓が 開いた（8回 つづけて・30秒 進まない）。手の まん中（DEMO_HAND_TAP）を 押しても 歩ける 向きを 先に えらぶ（なければ これまでどおり）
+  for (const slop of [DEMO_SLOP_PX, 0]) {   // まず 指が 18px ずれても 歩ける 所。なければ ぴったり 押せば 歩ける 所
+    let plain = null;   // 手の 所は 歩けないが、指先は 歩ける 置き方（手も 歩ける 置き方が なければ これ）
+    for (const d of DEMO_CELLS) {
+      const i = base + d;
+      if (i < 1 || i > last) continue;
+      for (const [dx, dy] of DEMO_TILES) {
+        const q = tileClient(path[i][0] * MZ_K + dx, path[i][1] * MZ_K + dy);
+        if (Math.hypot(q.x - rc.x, q.y - rc.y) < DEMO_NEAR_PX) continue;   // お米の すぐ そばは 指さない（指の 絵が お米に のる・お米を つつく）
+        const lay = tapDemoLayout(q, first, rc, box);
+        if (!lay || !tapDemoWalks(q, slop, near)) continue;
+        const hand = tapDemoLayout(q, first, rc, box, up => tapDemoWalks({ x: q.x, y: q.y + (up ? -DEMO_HAND_TAP : DEMO_HAND_TAP) }, 0, near));
+        if (hand) return { q, up: hand.up, side: hand.side, hand: true };
+        if (!plain) plain = { q, up: lay.up, side: lay.side, hand: false };
+      }
     }
+    if (plain) return plain;
   }
   return null;   // どこも だめ（ゴールの 人が 目の前・地図が せまい など）：確かめて いない 点は 返さない
 }
@@ -9479,11 +9492,31 @@ function tapDemoTick() {
   // まだ 聞いて いない 間は、2秒 待たずに はじめから タップの 手本（指＋「タップ！」の 札）を 出す。タップすると 許可の 窓が 出て、手本は ふだんの 出かた（止まって 2秒）に もどる
   const first = tiltBtnWanted() && !tiltG.asked;
   const ok = active && !meiroPause && !document.hidden && rp.x !== null && mazeOn() && howtoEl.hidden && !mapCovered() && !tapS.goal && !!path && path.length > 1 && now - tapDemo.at >= (first ? 0 : tapDemo.walked ? DEMO_TAP_MS : DEMO_IDLE_MS);
-  if (!ok) { tapDemoHide(); return; }
-  if (!tapDemo.el) {
+  const mkEls = () => {
+    if (tapDemo.el) return;
     const mk = (id, t) => { const e = document.createElement('div'); e.id = id; e.setAttribute('aria-hidden', 'true'); e.textContent = t; e.hidden = true; document.body.appendChild(e); return e; };
     tapDemo.el = mk('tapDemo', '👆'); tapDemo.ph = mk('tiltHint', '📱');
+  };
+  // サイクル200（はじめの 1分）：めいろの とちゅうで せかいちずを 開いた 人（縁の 矢印を タップ・そばを タップして 指が ずれた）に、もどり方の 手本。
+  // はかった：2つめの ゴールの あと 縁の 矢印（大きな 黄色い 矢印）を タップすると せかいちずが 開き、知らせ「👣 で めいろに もどる」が 3.8秒で 消えた あとは 何も 出ない
+  // （14秒 見て いて 手本 0%。お米・旗を タップしても 何も 起きない）。止まって 2秒（はじめてのさんぽの あとは 6秒）で、指が 右上の 👣 を トンと 押す 手本を 出す。さわると 消える
+  const wb = worldMode && !!G.demo && rollOn && !driving ? $('pxWorld') : null;
+  if (wb) {
+    const wok = active && !meiroPause && !document.hidden && rp.x !== null && howtoEl.hidden && !mapCovered() && !wb.hidden && now - tapDemo.at >= (firstWalk() ? DEMO_IDLE_MS : DEMO_WORLD_MS);
+    const r = wok ? wb.getBoundingClientRect() : null, top = r && r.width ? document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2) : null;
+    if (!top || !wb.contains(top)) { tapDemoHide(); return; }   // ボタンが 何かの 下に かくれて いる ときは 指さない
+    mkEls();
+    const el = tapDemo.el;
+    el.style.left = Math.round(r.left + r.width / 2) + 'px'; el.style.top = Math.round(r.top + r.height / 2 - 6) + 'px';   // 指先は ボタンの まん中の 少し 上（手の 絵の まん中を 押しても ボタンの 中）
+    el.classList.remove('first', 'dn', 'lr', 'll'); tapDemo.up = false; tapDemo.side = '';
+    if (el.hidden) { el.hidden = false; tapDemo.n++; }
+    if (!tapDemo.ph.hidden) tapDemo.ph.hidden = true;
+    tapDemo.world = true;
+    return;
   }
+  tapDemo.world = false;
+  if (!ok) { tapDemoHide(); return; }
+  mkEls();
   const sp = tapDemoSpot(path, first);   // 道しるべの 3マス先（ゴールが 近ければ ゴールの マス。窓が 開く 所・地図に 収まらない 所は よける）
   if (!sp) { if (!tapDemo.el.hidden) tapDemo.el.hidden = true; }   // 安全に 置ける 所が ない：指の 手本は 出さない（次の 見回りで さがし直す）。下の ゆれる 📱 は 出す
   else {
@@ -13601,6 +13634,6 @@ window.nishioPixel = { giantWashLayout, drawGiantWash, seimaiLayout, drawShopSei
   nightStartK, get nightK() { return nightK !== null ? nightK : nightStartK(performance.now()); },   // サイクル95：夜の 幕の 立ち上がり（テスト用）
   // いまの町名が新しいか（歩く地図を描いていて、いまの位置で2秒以内に確かめた。せかいちず・ふつうの地図に切り替えたあとの古い町名は使わない）
   get hereFresh() { return active && !worldMode && !!G.me && performance.now() - here.at < 2000; }, spotSprites, spriteOf: sp => spriteOf(sp)[0], npcSprite: look => (npcSprites[look] || npcSprites.man)[0], art: { hiCanvas, shopCanvas, tileRoof, spanRows, pix, genSprite, GEN_DRAW }, get towns() { return towns; }, get here() { return here; }, npcTile, rasterize, chunkQuery, chunkBox, chunkInPlay, luReady, luAt, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, centerOnMe, demFor, get worldMode() { return worldMode; }, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; }, get traffic() { return traffic; }, get driving() { return driving; }, toggleCar, floatText, onPaddy, get tapGoal() { return tapS.goal; }, trailWalk, trailHas, trailClear, get trailCells() { return TRAIL.world.size; }, get trailWorld() { return [...TRAIL.world]; },
-  tileToClient: tileClient, get tapDemo() { return { on: !!tapDemo.el && !tapDemo.el.hidden, n: tapDemo.n, first: !!tapDemo.el && tapDemo.el.classList.contains('first'), side: tapDemo.side, up: tapDemo.up, walked: tapDemo.walked, tapMs: DEMO_TAP_MS, ahead: DEMO_AHEAD, walks: (q, slop = 0) => tapDemoWalks(q, slop), spot: (first = false) => (mzRt.path && mzRt.path.length > 1 ? tapDemoSpot(mzRt.path, first) : null), phone: !!tapDemo.ph && !tapDemo.ph.hidden, idleMs: DEMO_IDLE_MS, wait: [!active && 'active', rp.x === null && 'rice', !mazeOn() && 'maze', !howtoEl.hidden && 'howto', mapCovered() && 'covered', !!tapS.goal && 'walking', !(mzRt.path && mzRt.path.length > 1) && 'route'].filter(Boolean) }; }, tiltBtnCfg: TILT_BTN, ensureAround(lat, lng) { const q = toTile(lat, lng); ensureChunk(Math.floor(q.x / CHUNK), Math.floor(q.y / CHUNK)); } };
+  tileToClient: tileClient, get tapDemo() { return { on: !!tapDemo.el && !tapDemo.el.hidden, world: !!tapDemo.world, worldMs: DEMO_WORLD_MS, n: tapDemo.n, first: !!tapDemo.el && tapDemo.el.classList.contains('first'), side: tapDemo.side, up: tapDemo.up, walked: tapDemo.walked, tapMs: DEMO_TAP_MS, ahead: DEMO_AHEAD, walks: (q, slop = 0) => tapDemoWalks(q, slop), spot: (first = false) => (mzRt.path && mzRt.path.length > 1 ? tapDemoSpot(mzRt.path, first) : null), phone: !!tapDemo.ph && !tapDemo.ph.hidden, idleMs: DEMO_IDLE_MS, wait: [!active && 'active', rp.x === null && 'rice', !mazeOn() && 'maze', !howtoEl.hidden && 'howto', mapCovered() && 'covered', !!tapS.goal && 'walking', !(mzRt.path && mzRt.path.length > 1) && 'route'].filter(Boolean) }; }, tiltBtnCfg: TILT_BTN, ensureAround(lat, lng) { const q = toTile(lat, lng); ensureChunk(Math.floor(q.x / CHUNK), Math.floor(q.y / CHUNK)); } };
 { const rollGet = Object.getOwnPropertyDescriptor(window.nishioPixel, 'roll').get; Object.defineProperty(window.nishioPixel, 'roll', { configurable: true, enumerable: true, get() { const r = rollGet(), ra = rp.x === null ? '' : rollAreaAt(rp.x, rp.y), RSg = window.nishioRollSync; return { ...r, area: ra, feel: RSg && RSg.groundFeel ? RSg.groundFeel(ra) : { crr: 1, lin: 1 }, fps: fpsMeter.fps, shadow: RSg && RSg.shadowStretch ? RSg.shadowStretch(r.v) : 1 }; } }); }   // テスト用：いまの 地区と 地面の感じ（係数）を roll に足す
 })();

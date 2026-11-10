@@ -405,7 +405,7 @@ const srv = http.createServer((r, s) => { const u = decodeURIComponent(r.url.spl
     ok('three が 読みこめない とき、読みこみの おおいは 消えて「うまく 読みこめませんでした」と 出る', lw.off && /読みこめませんでした/.test(lw.toast), lw);
     await ctx.close();
   }
-  // ---- 10) サイクル270（おそい回線・おそい スマホ）：three を待つ間も おおいが見える・読みこみの 進みぐあいの 線・読みこみ中に置いた指の なぞりを 捨てない ----
+  // ---- 10) サイクル271（おそい回線・おそい スマホ）：three を待つ間も おおいが見える・読みこみの 進みぐあいの 線・読みこみ中に置いた指の なぞりを 捨てない ----
   {
     const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true, isMobile: true });
     const p = await ctx.newPage(); p.setDefaultTimeout(180000);

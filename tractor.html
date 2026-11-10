@@ -31,7 +31,7 @@
   #loadWait.off { opacity: 0; visibility: hidden; }
   #loadWait .lwF { position: absolute; left: 50%; top: 66%; font-size: 56px; line-height: 1; margin: -48px 0 0 -12px; filter: drop-shadow(0 3px 5px rgba(0,0,0,.45)); animation: lwUp 2.6s linear infinite; }
   #loadWait .lwT { position: absolute; left: 0; right: 0; top: 76%; text-align: center; color: #fff; font-size: 17px; font-weight: 800; text-shadow: 0 1px 4px rgba(0,0,0,.5); }
-  /* サイクル270: 読みこみの 進みぐあいの 線（押す物では ない）。届いた分だけ 右へ のびる。おそい回線では 車体と田んぼが届くまで 15〜60 秒 かかり、その間 指の見本が くり返すだけで 進んでいるのか 止まっているのか 分からなかった */
+  /* サイクル271: 読みこみの 進みぐあいの 線（押す物では ない）。届いた分だけ 右へ のびる。おそい回線では 車体と田んぼが届くまで 15〜60 秒 かかり、その間 指の見本が くり返すだけで 進んでいるのか 止まっているのか 分からなかった */
   #loadWait .lwB { position: absolute; left: 50%; top: 82%; width: 168px; height: 6px; margin-left: -84px; border-radius: 3px; background: rgba(255,255,255,.35); overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,.25); }
   #lwBar { display: block; width: 3%; height: 100%; border-radius: 3px; background: #fff; transition: width .25s linear; }
   @keyframes lwUp { 0% { transform: translateY(0); opacity: 1; } 85% { transform: translateY(-17vh); opacity: 1; } 86%, 100% { transform: translateY(-17vh); opacity: 0; } }
@@ -190,7 +190,7 @@
 <canvas id="view"></canvas>
 <div id="vignette"></div>
 <div id="loadWait"><div class="lwF">👆</div><div class="lwT">指で なぞると 進みます</div><div class="lwB"><i id="lwBar"></i></div></div>
-<!-- サイクル270・最初の1分（おそい回線）: three.js の 3 本は head では なく、読みこみを待つ おおい（#loadWait）の あとで読む。head に あると、3 本が届くまで body が始まらず 画面は まっ白のまま
+<!-- サイクル271・最初の1分（おそい回線）: three.js の 3 本は head では なく、読みこみを待つ おおい（#loadWait）の あとで読む。head に あると、3 本が届くまで body が始まらず 画面は まっ白のまま
      （はかった数：おそい 4G・CPU 4 倍で 2.1 秒、おそい 3G で 6.9 秒）。順番（three → GLTFLoader → DRACOLoader → 下の確かめ → ゲーム本体）は 変えない -->
 <!-- 外から読む部品は 版を決めて、改ざんチェック（integrity）つきで（three.js は npm の 0.128.0 と同じ中身を jsDelivr から） -->
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js" integrity="sha384-CI3ELBVUz9XQO+97x6nwMDPosPR5XvsxW2ua7N1Xeygeh1IxtgqtCkGfQY9WWdHu" crossorigin="anonymous"></script>
@@ -472,7 +472,7 @@ const loader = new THREE.GLTFLoader();
 // 作業機の glb は圧縮なしのまま。同じ loader で両方読める（圧縮のある glb だけ復号器を使う）
 const draco = new THREE.DRACOLoader(); draco.setDecoderPath('https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/libs/draco/'); loader.setDRACOLoader(draco);
 let LOAD_ST = 'wait';                            // 読みこみ：wait（じゅんび中）・ok・ng（失敗）
-// サイクル270・最初の1分（おそい回線）: 届いた分を #lwBar（読みこみを待つ おおいの 線）に出す。大きさが分からない（圧縮して届く）ときは、置いてある glb の おおよその大きさで割る。線は もどらない
+// サイクル271・最初の1分（おそい回線）: 届いた分を #lwBar（読みこみを待つ おおいの 線）に出す。大きさが分からない（圧縮して届く）ときは、置いてある glb の おおよその大きさで割る。線は もどらない
 const LOADP = { got: {}, need: {}, top: 0.03,
   size: { t: 523e3, f: { haru: 2235e3, aki: 2926e3, shirokaki: 2439e3 }[season], h: IMPL_ID === 'rotary' ? 520e3 : IS_HARROW ? 2792e3 : 600e3 },
   on(key, e) {
@@ -9795,7 +9795,7 @@ canvas.addEventListener('pointerdown', e => {
 const viewPtsClear = () => { viewPts.clear(); viewPinch = null; };
 window.addEventListener('blur', viewPtsClear);
 document.addEventListener('visibilitychange', viewPtsClear);
-// サイクル270・最初の1分（おそい回線）: 読みこみを待つ間（始まる前）に 置いた指は、まわりを見る操作には しない（おおいの下で 目の向きだけが変わっていた）。
+// サイクル271・最初の1分（おそい回線）: 読みこみを待つ間（始まる前）に 置いた指は、まわりを見る操作には しない（おおいの下で 目の向きだけが変わっていた）。
 // なぞった道すじを おぼえておき、指を置いたまま 始まったら、その なぞりを そのまま使う（サイクル116 の「なぞってから 待つ」と同じ。離した指は 今までどおり 何もしない）。
 // それまでは、おおいの「指で なぞると 進みます」を見て なぞり、置いたまま待っても、始まったあとに 動かなかった（指を離して なぞり直すまで）
 const PRE = { id: null, pts: [], go: false,
@@ -10076,7 +10076,7 @@ function startGame() {
   for (const id of MOBILE || params.has('pad') ? ['hud', 'bar', 'badge', 'padC', 'padB', 'padD', 'bigPct'] : ['hud', 'bar', 'badge', 'bigPct']) $(id).classList.remove('hidden');   // サイクル217・類1: のんびりでは大きな％数字も出す（DETAILでは CSS で常時非表示）   // サイクル98: 運転パッドは全廃済み（DOMなし）。運転はなぞり操作のみ（キーボードは予備として残す）
   if (!MOBILE && !params.has('pad')) $('keyHint').classList.remove('hidden');   // パソコン：はじめのうちは 画面の左下に いちばん使うキー
   S.started = true; $('loadWait').classList.add('off');   // サイクル269: 読みこみを待つ間の おおいを消す
-  PRE.go = PRE.id !== null;   // サイクル270: 置いたままの指の なぞりは、はじめの 1 こまの あとで使う
+  PRE.go = PRE.id !== null;   // サイクル271: 置いたままの指の なぞりは、はじめの 1 こまの あとで使う
     FIRSTMIN.start();   // サイクル159：のんびりでは 開始直後の表示を軽くする（DETAIL では何もしない）
     if (LOOP.friend !== null) setTimeout(() => { if (DETAIL) toast('🏁 友だちは ' + LOOP.friend + ' 点。きみは何点とれる？', 5); }, 6000);   // サイクル171・最初の1分: のんびりでは友だちの点数で挑戦しない（サイクル117）。共有リンクから開いても開始6秒の吹き出し・声で競わせず、まずなぞって耕す楽しさに集中させる。くわしい説明では従来どおり知らせる
     const artGo = () => {   // 田んぼアートの 地図と お題は 草かりの あとで

@@ -947,8 +947,11 @@ faceImg.onload = () => {
   drawFace("normal");
 };
 /* 写真（165KB）は、物差しの顔（9KB）が出てから読む。遅い回線でも顔が先に出る */
+function photoAppear(im) {
+  im.animate([{ opacity:0, transform:"scale(.7)" }, { opacity:1, transform:"scale(1.05)", offset:.7 }, { opacity:1, transform:"scale(1)" }], { duration:260 * motion, easing:"ease-out" }); /* 実物の写真（穀刺し・一等米）も、他の現れるもの（チップ=ふわり260ms・差30／つぎの袋ボタン=差31／🔍ボタン=差32／小皿の粒=差33／証印=差34／測定値の枠=差35／平均の数字=差39／段階の名前=差40／進み具合=差41／案内文=差43）と同じくふわりと現れる形にそろえる（サイクル145・差分テーマ差44）。旧版は loadPhotos が src を入れるだけで、顔が出た後に読み込まれた写真が完成形で即座に現れていた（390×844実測で読み込み時のアニメーション0件）。読み込めた時だけ1回付け、写真そのもの・読み込みの順序は従来どおり */
+}
 function loadPhotos() {
-  document.querySelectorAll("img.photo[data-src]").forEach(im => { im.src = im.dataset.src; im.removeAttribute("data-src"); });
+  document.querySelectorAll("img.photo[data-src]").forEach(im => { im.addEventListener("load", () => photoAppear(im), { once:true }); im.src = im.dataset.src; im.removeAttribute("data-src"); });
 }
 faceImg.addEventListener("load", loadPhotos);
 faceImg.addEventListener("error", loadPhotos);

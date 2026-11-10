@@ -15,6 +15,12 @@ const srv=http.createServer((r,s)=>{const u=decodeURIComponent(r.url.split('?')[
   await p.waitForFunction(()=>{ const b=document.getElementById('bStart'); return (window.game&&game.S&&game.S.started) || (b&&!b.disabled); },null,{timeout:180000});
   if (await p.$('#bStart')) { if (!process.env.NOCHECK && await p.$('#checkBox')) await p.check('#checkBox'); await p.click('#bStart'); }
   await p.waitForFunction(()=>window.game&&game.S&&game.S.started,null,{timeout:60000}); await p.waitForTimeout(1500);
+  // 始業点検：はじめの画面が なくなってから、ゲームは いつも「点検しない」で始まる（startGame() の BELT.start(false) …。前の画面でも 印なしが既定だったので、遊ぶ人には 前と同じ）。
+  // 点検しないと 春はファンベルト・代かきは燃料・秋はリヤカバーなどで とちゅうで止まり、通しの運転（畦・旋回・まっすぐ）を はかれない。
+  // そこで 通しでは、前に 印をつけていたのと同じ 9 つを「点検した」に しなおす（石拾いの STONES は 前も 別の印だったので さわらない）。NOCHECK=1 なら 遊ぶ人と同じ 点検なしで通す
+  const checked = await p.evaluate(nocheck=>{ if (nocheck || document.getElementById('bStart')) return 'そのまま';
+    for (const m of ['BELT','COVER','GREASE','CLAW','HERI','GASU','KATA','PANKU','AIRCL']) game[m].start(true); return '点検ずみ'; }, !!process.env.NOCHECK);
+  console.log('始業点検:', checked);
   const res=await p.evaluate(()=>{
     const g=game,S=g.S,K=g.key, HX=15, HZ=25; g.sim(3);
     const log={turns:0, dblSeen:0, levee0:g.SCORE.st.levee, stuck:0};

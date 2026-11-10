@@ -1068,6 +1068,7 @@ function toLocal(cx, cy) {
 const guideEl = $("guide");
 function guideOff() {
   guideEl.className = "";
+  guideAnchor = null; /* 手本を消したら、覚えていた相手も捨てる（Codex指摘 PR #1076: 消えた朱肉を相手に覚えたまま、次の袋の穀刺しの手本を消し続けた） */
 }
 var demoDown = new Set(); /* 画面に触れている指（サイクル140）。guideAt より前に置く（var: 読み込みの途中で guideAt が呼ばれても落ちない） */
 var guideAnchor = null; /* 手本の指が指している相手（要素）と、置いた時の場所。相手が動いた・消えたら、見回り（demoTick）が手本を消して出し直す */
@@ -2156,7 +2157,7 @@ function demoTick(syncOnly) { /* syncOnly: 所作の切り替わりだけ合わ�
   if (vis && demoDown.size) { demoHide(); return; } /* 触れている間に ほかの道から出た手本（穀刺しの指など）も、見回りで消す */
   /* 手本が指している相手が動いた・消えた（Codex指摘 PR #1076: キーボードで拡大を切りかえる・粒を取る など、指が触れない道で相手だけ動くと、手本が元の場所に残った）。
      場合ごとに足すのをやめ、相手の場所を見回りで確かめる。ずれていたら消して、すぐ（0.4秒）選び直して出す */
-  if (vis && guideAnchor) {
+  if (vis && guideAnchor && guideEl.classList.contains("on")) { /* 相手を覚えているのは #guide の手本だけ。穀刺しの指（#poke）が出ている時には見ない */
     const q = guideAnchor.el.getBoundingClientRect();
     if (Math.hypot(q.left - guideAnchor.x, q.top - guideAnchor.y) > 12 || (guideAnchor.w && !q.width)) { demoHide(); demoAt = now + 400; return; }
   }

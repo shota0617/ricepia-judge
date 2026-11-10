@@ -1756,6 +1756,10 @@ at(35200); assert.equal(shown.length, n + 1);
         self.assertIn("guideAnchor = el.getBoundingClientRect ? { el, x:r.left, y:r.top, w:r.width } : null;", HTML)
         self.assertIn("if (Math.hypot(q.left - guideAnchor.x, q.top - guideAnchor.y) > 12 || (guideAnchor.w && !q.width)) { demoHide(); demoAt = now + 400; return; }", HTML)
         self.assertIn('if (shown) guideAt("press", shown.el);', HTML)
+        # 手本を消したら相手も捨てる・相手を見るのは #guide が出ている時だけ（Codex指摘 PR #1076・6回目: 古い相手で穀刺しの手本がちらついた）
+        off = HTML[HTML.index("function guideOff() {"):HTML.index("var demoDown = new Set();")]
+        self.assertIn("guideAnchor = null;", off)
+        self.assertIn('if (vis && guideAnchor && guideEl.classList.contains("on")) {', HTML)
         # 粒を取ったら（キーボードでも）手本を消して、残りの粒を選び直す（Codex指摘 PR #1076・4回目）
         tg = HTML[HTML.index("function tapGrain(g) {"):]
         self.assertLess(tg.index("g.gone = true; badLeft--;"), tg.index("demoHide(); demoAt = performance.now() + DEMO_BACK;"))

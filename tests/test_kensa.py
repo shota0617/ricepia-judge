@@ -206,8 +206,8 @@ class FlowTests(unittest.TestCase):
         self.assertIn('typeof DeviceMotionEvent.requestPermission === "function"', HTML)
 
     def test_poke_demo_moves_as_far_as_needed(self):
-        # 手本の指は、さすのに必要な押しの長さだけ動く（固定の46pxではない）
-        self.assertIn('poke.style.setProperty("--pokeDx", -(P.rest - P.inAt + 8) + "px");', HTML)
+        # 手本の指は、さすのに必要な押しの長さに合わせて動く（固定の46pxではない）。サイクル143で 必要な押しの1.8倍にした
+        self.assertIn('poke.style.setProperty("--pokeDx", stabDx(P.rest) + "px");', HTML)
         self.assertIn("translateX(var(--pokeDx, -46px))", HTML)
 
     def test_probe_inserts_with_a_short_push(self):
@@ -418,8 +418,8 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         # 押しの長さ = (1 - 0.82) * 袋幅184px + 6 ≒ 39px。30pxのわざとらしい短さでは届かない範囲に留める
         self.assertIn("P.inAt = bag.offsetLeft + bag.offsetWidth * 0.82;", HTML)
         self.assertNotIn("P.inAt = bag.offsetLeft + bag.offsetWidth * 0.66;", HTML)
-        # 手本の指は、さすのに必要な押しの長さだけ動く（rest - inAt + 8）
-        self.assertIn('poke.style.setProperty("--pokeDx", -(P.rest - P.inAt + 8) + "px");', HTML)
+        # 手本の指は、さすのに必要な押しの長さに合わせて動く（サイクル143: 必要な押しの1.8倍）
+        self.assertIn('poke.style.setProperty("--pokeDx", stabDx(P.rest) + "px");', HTML)
 
     def test_bad_grain_tap_tolerates_offset_across_short_axis(self):
         # みわける: 粒の短い向き（v）のタップのゆるさは12px（実効の高さ44px）。
@@ -480,7 +480,7 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         # 手本の指👆がもう一度同じ動きを見せる。従来は触った瞬間に消えた指が
         # 戻らず、1回目では道具の小さな揺れしか返らなかった（390×844実測）。
         # 2回目の道具の動き・3回目（等級は2回）の自動代替は従来どおり
-        self.assertIn('if (bagTaps === 1) $("poke").style.display = "";', HTML)  # ぬく（サイクル140でどの袋でも）
+        self.assertIn('if (bagTaps === 1) { stabPoke(); $("poke").style.display = ""; }', HTML)  # ぬく（サイクル140でどの袋でも。サイクル143: 指は いまの握りの所から）
         self.assertIn('if (meterTaps === 1) guideAt("circle", $("crank"));', HTML)  # はかる
         self.assertIn("function guideSense()", HTML)  # 感じる: 開始時と空振り1回目で同じ手本
         self.assertIn("if (senseTaps === 1) guideSense();", HTML)
@@ -501,17 +501,223 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertIn("if (hankoTaps === 2)", HTML)  # おす・おろし: 押せる所までの半分
         self.assertIn('"translateY(" + hankoLand / 2 + "px)"', HTML)
 
-    def test_opening_attract_moves_probe_once_before_touch(self):
+    def test_opening_attract_moves_probe_before_touch(self):
         # 開いた瞬間の誘い（Fable設計の足すもの1・サイクル82）: 最初の袋だけ、
-        # 触れる前に穀刺しが一度だけ約2秒かけて袋の口（P.inAt）へ寄って戻る。
-        # 触れたら（pointerdown／自動代替）止まる。2袋目以降では出さない
+        # 触れる前に穀刺しが袋の口へ寄って戻る。
+        # 触れたら（pointerdown／自動代替）止まる。2袋目以降では出さない。
+        # サイクル143: 1回だけ（2秒）ではなく、触れるまで 手本の指と一緒に くり返す（下の test_cycle143_...）
         self.assertIn("function startProbeAttract()", HTML)
         self.assertIn("if (lotIndex !== 0 || P.done || P.inserted) return;", HTML)
         self.assertIn("startProbeAttract();", HTML)  # startLot から呼ぶ
-        self.assertIn("duration:2000 * motion", HTML)
-        self.assertIn("iterations:1", HTML)
-        self.assertIn('"translate(" + P.inAt + "px," + P.y + "px)", offset:.5', HTML)
-        self.assertIn("stopProbeAttract(); /* 触れたら誘いは止まる（サイクル82） */", HTML)
+        self.assertIn("{ duration:2000 * motion, iterations:1 }", HTML)  # 動きを減らす設定では、従来どおり1回だけ
+        self.assertIn("if (probeAttract) probeAttract.pause(); /* 触れたら誘いは止まる（サイクル82）。", HTML)
+
+    def test_cycle143_attract_repeats_with_the_finger_until_touched(self):
+        # 最初の1分（見ているだけの人）: 旧版は はじめの2秒に1回 穀刺しが寄って戻るだけで、
+        # そのあと60秒まで 指👆だけが 止まった握りの上を行き来していた
+        # （390×664・390×844実測: 12秒で 穀刺しが寄るのは1回・指と握りのずれ 最大38.7〜47.1px）。
+        # 触れるまで、指と同じ長さ・同じ間合い（1.3秒・55%でいちばん奥）で くり返す。
+        node = shutil.which("node")
+        if not node:
+            self.skipTest("node がないので実行の確認は飛ばす")
+        start = HTML.index("function stabDx(from) {")
+        fn = HTML[start:HTML.index("function moveProbe(x) {", start)]
+        script = """
+const assert = require('node:assert/strict');
+const motion = 1; let lotIndex = 0, made = [], cancels = 0;
+const P = {rest:158, inAt:127, y:50, done:false, inserted:false};
+const finger = {startTime:12.5, currentTime:400};
+const probe = {animate(frames, opt) { const a = {frames, opt, startTime:null, currentTime:0, cancel() { cancels++; if (this.oncancel) this.oncancel(); }}; made.push(a); return a; }};
+const poke = {getAnimations: () => [finger]};
+const $ = id => ({probe, poke})[id];
+let shownX = 0; const sets = [];
+const getComputedStyle = () => ({transform: 'x' + shownX});
+class DOMMatrixReadOnly { constructor(t) { this.m41 = +t.slice(1); } }
+const setProbe = x => { sets.push(x); P.x = x; };
+""" + fn + """
+startProbeAttract();
+const a = made[0];
+assert.equal(a.opt.iterations, Infinity);               // 触れるまで くり返す（旧版は1回）
+assert.equal(a.opt.duration, 1300);                     // 指（@keyframes poke 1.3s）と同じ間合い
+assert.equal(a.frames[1].offset, .55);                  // 指と同じ所で いちばん奥
+assert.equal(a.frames[1].transform, 'translate(' + (158 + stabDx(158)) + 'px,50px)');   // 指と同じ長さ
+assert.equal(a.frames[0].easing, 'ease-in-out'); assert.equal(a.frames[1].easing, 'ease-in-out');
+assert.equal(a.startTime, 12.5);                        // 指と同じ時計（指が握りを素通りしない）
+assert.equal(probeAttract, a);
+stopProbeAttract(); assert.equal(cancels, 1); assert.equal(probeAttract, null);   // 触れたら止まる
+assert.deepEqual(sets, []);                                                       // キーボードなど（keep なし）は 元の場所へ
+startProbeAttract(); shownX = 140; stopProbeAttract(true); assert.deepEqual(sets, [140]);   // 指が動かし始めた時は、見えている所に残す（とばない）
+startProbeAttract(); shownX = 110; stopProbeAttract(true); assert.equal(sets[1], 128);      // ささる手前まで。さしたことにはしない
+assert.equal(P.inserted, false); assert.equal(made.length, 3); made.length = 1;
+lotIndex = 1; startProbeAttract(); assert.equal(made.length, 1);                  // 2袋目以降は出さない
+lotIndex = 0; P.inserted = true; startProbeAttract(); assert.equal(made.length, 1);
+"""
+        subprocess.run([node, "-e", "const reduced = false;" + script], capture_output=True, text=True, check=True)
+        # 動きを減らす設定では、くり返さない
+        script_r = script[:script.index("startProbeAttract();")] + """
+startProbeAttract();
+assert.equal(made[0].opt.iterations, 1); assert.equal(made[0].opt.duration, 2000); assert.equal(made[0].startTime, null);
+"""
+        subprocess.run([node, "-e", "const reduced = true;" + script_r], capture_output=True, text=True, check=True)
+        self.assertIn("@keyframes poke { 0%,100% { transform:translateX(0); } 55% { transform:translateX(var(--pokeDx, -46px)); } }", HTML)
+        self.assertIn("#poke { position:absolute; z-index:4; font-size:34px; animation:poke 1.3s ease-in-out infinite;", HTML)
+        # 画面の大きさが変わったら、誘いも新しい場所で やり直す。さす前の手本の指は さす向きのまま（ひきぬく向きにしない）
+        lp = HTML.index("function layoutProbe() {")
+        layout = HTML[lp:HTML.index("function setProbe(x)", lp)]
+        script_l = """
+const assert = require('node:assert/strict');
+const P = {x:0, rest:0, inX:0, inAt:0, y:0, L:0, inserted:false, done:false};
+const poke = {style:{setProperty(k, v) { this[k] = v; }}, dataset:{}};
+const els = {sceneBag:{clientWidth:390}, bagBtn:{offsetLeft:15, offsetWidth:137, offsetTop:10, offsetHeight:160}, probe:{style:{}}, poke};
+const $ = id => els[id];
+let probeAttract = null, restarts = 0, pulls = 0;
+const stabDx = () => -55, setProbe = x => { P.x = x; }, pullPoke = () => { pulls++; }, startProbeAttract = () => { restarts++; };
+""" + layout + """
+layoutProbe();                                   // 開いた時・次の袋: 誘いは まだ無い
+assert.equal(poke.style['--pokeDx'], '-55px'); assert.equal(poke.dataset.arrow, '←');
+assert.equal(pulls, 0); assert.equal(restarts, 0); assert.equal(P.x, P.rest);
+probeAttract = {}; layoutProbe(); assert.equal(restarts, 1); assert.equal(pulls, 0);   // 誘いの途中で大きさが変わった
+probeAttract = null; P.inserted = true; layoutProbe(); assert.equal(pulls, 1); assert.equal(restarts, 1);   // さした後は ひきぬく向き
+P.done = true; layoutProbe(); assert.equal(pulls, 1);
+"""
+        subprocess.run([node, "-e", script_l], capture_output=True, text=True, check=True)
+        # 触れたら その場で止め、動かし始めたら そこから続ける。動かさずに離した指（タップ）では元へ戻し、タップの数え方は変えない
+        down = HTML[HTML.index('$("sceneBag").addEventListener("pointerdown",'):HTML.index('$("sceneBag").addEventListener("pointermove",')]
+        self.assertIn("if (probeAttract) probeAttract.pause();", down)
+        self.assertNotIn("stopProbeAttract(true)", down)
+        mv = HTML[HTML.index('$("sceneBag").addEventListener("pointermove",'):HTML.index("function endBagDrag(e) {")]
+        self.assertIn("if (probeAttract) { stopProbeAttract(true); P.drag.x0 = P.x; }", mv)
+        end = HTML[HTML.index("function endBagDrag(e) {"):HTML.index('$("sceneBag").addEventListener("pointerup", endBagDrag);')]
+        self.assertLess(end.index("stopProbeAttract();"), end.index("const still ="))
+        self.assertNotIn("stopProbeAttract(true)", end)
+        # 終わりのない動きは、手本の出し直しを待たせない
+        self.assertIn("isFinite(a.effect.getComputedTiming().endTime)", HTML)
+
+    def test_cycle143_codex_pull_demo_finger_stays_inside_the_scene(self):
+        # Codex指摘（PR #1089）: 390×844 相当（場面の幅366・袋の左15・幅184・P.L=155）で いちばん深く（P.inX=73.88）さすと、
+        # ひきぬく手本の指の左端が 往復の先で 場面内369.48px になり、34pxの指の大部分が #app に切られた。
+        # 指は場面の中に収め、足りない分は出だしを軸のほうへ寄せる。
+        node = shutil.which("node")
+        if not node:
+            self.skipTest("node がないので実行の確認は飛ばす")
+        ps = HTML.index("function pullPoke() {")
+        fn = HTML[ps:HTML.index("function stabPoke() {", ps)]
+        script = """
+const assert = require('node:assert/strict');
+const poke = {offsetWidth:34, style:{left:'', setProperty(k, v) { this[k] = v; }}, dataset:{}};
+const scene = {clientWidth:366};
+const $ = id => id === 'sceneBag' ? scene : poke;
+const P = {x:73.88, rest:205, L:155};
+""" + fn + """
+const end = () => parseFloat(poke.style.left) + parseFloat(poke.style['--pokeDx']) + 34;
+pullPoke();
+assert.ok(end() <= 366, '指の右はしが場面の中 ' + end());                    // 旧版: 369.48 + 34 = 403.48
+const dx = parseFloat(poke.style['--pokeDx']);
+assert.ok(dx * 0.6 >= (205 - 73.88) * 0.8, '0.6倍でまねても全部ぬける長さは残す ' + dx);
+assert.ok(parseFloat(poke.style.left) >= 73.88 + 155 * 0.3);                 // 指の出だしは穀刺しの上
+// 指が隠れている間（幅0）に呼ばれても、👆の幅（実測42px）の分を空ける
+poke.offsetWidth = 0; pullPoke(); assert.ok(parseFloat(poke.style.left) + parseFloat(poke.style['--pokeDx']) + 42 <= 366);
+assert.ok(parseFloat(poke.style['--pokeDx']) * 0.6 >= (205 - 73.88) * 0.8); poke.offsetWidth = 34;
+// 場面に ゆとりがあれば、従来どおり握りの所から
+scene.clientWidth = 420; P.x = 166; pullPoke(); assert.equal(poke.style.left, 166 + 155 * 0.72 + 'px'); assert.equal(poke.style['--pokeDx'], '55px');
+// せまい場面（横向きなど）でも、場面の外へ出ない。長さは0より小さくならない
+for (const w of [300, 260, 200, 120]) for (const x of [40, 73.88, 120, 166, 200]) { scene.clientWidth = w; P.x = x; pullPoke();
+  assert.ok(end() <= Math.max(w, parseFloat(poke.style.left) + 34), w + ' ' + x); assert.ok(parseFloat(poke.style['--pokeDx']) >= 0); }
+"""
+        subprocess.run([node, "-e", script], capture_output=True, text=True, check=True)
+
+    def test_cycle143_codex_reshown_finger_joins_the_attract_clock(self):
+        # Codex指摘（PR #1089）: 誘いの途中に場面の外（見出しなど）をタップすると 指だけが隠れ、出し直した指は頭から・
+        # 穀刺しは前の時計のまま動いて、ずれたまま往復した。出し直した指の時計を 誘いに合わせる。
+        node = shutil.which("node")
+        if not node:
+            self.skipTest("node がないので実行の確認は飛ばす")
+        start = HTML.index("function syncPokeToAttract() {")
+        fn = HTML[start:HTML.index("function stopProbeAttract(keep)", start)]
+        script = """
+const assert = require('node:assert/strict');
+const finger = {startTime:null, currentTime:0};
+const poke = {getAnimations: () => [finger]};
+const $ = () => poke;
+let probeAttract = {startTime:120, currentTime:777, playState:'running'};
+""" + fn + """
+syncPokeToAttract(); assert.equal(finger.startTime, 120);                    // 動いている誘いと同じ始まり
+probeAttract = {startTime:null, currentTime:300, playState:'paused'}; finger.startTime = null;
+syncPokeToAttract(); assert.equal(finger.currentTime, 300); assert.equal(finger.startTime, null);
+probeAttract = null; finger.currentTime = 5; syncPokeToAttract(); assert.equal(finger.currentTime, 5);   // 誘いが無ければ何もしない
+"""
+        subprocess.run([node, "-e", script], capture_output=True, text=True, check=True)
+        self.assertIn('if (k === "stab") { stabPoke(); $("poke").style.display = ""; syncPokeToAttract(); }', HTML)
+
+    def test_cycle143_codex_resize_while_holding_keeps_the_attract_paused(self):
+        # Codex指摘（PR #1089）: 誘いの途中で指を置いたまま resize が起きると、pointerdown で止めた誘いが
+        # 動いている新しい誘いに置きかわり、指を動かしていないのに穀刺しが また往復した。
+        node = shutil.which("node")
+        if not node:
+            self.skipTest("node がないので実行の確認は飛ばす")
+        lp = HTML.index("function layoutProbe() {")
+        layout = HTML[lp:HTML.index("function setProbe(x)", lp)]
+        script = """
+const assert = require('node:assert/strict');
+const P = {x:0, rest:0, inX:0, inAt:0, y:0, L:0, inserted:false, done:false};
+const poke = {style:{setProperty() {}}, dataset:{}};
+const els = {sceneBag:{clientWidth:390}, bagBtn:{offsetLeft:15, offsetWidth:137, offsetTop:10, offsetHeight:160}, probe:{style:{}}, poke};
+const $ = id => els[id];
+const mk = () => ({playState:'running', currentTime:0, pause() { this.playState = 'paused'; }});
+let probeAttract = mk();
+const stabDx = () => -55, setProbe = () => {}, pullPoke = () => {}, startProbeAttract = () => { probeAttract = mk(); };
+""" + layout + """
+probeAttract.pause(); probeAttract.currentTime = 640; const old = probeAttract;   // 指を置いて止めてある
+layoutProbe();
+assert.notEqual(probeAttract, old);                      // 新しい場所で置き直す
+assert.equal(probeAttract.playState, 'paused');          // 止まったまま（旧版は running）
+assert.equal(probeAttract.currentTime, 640);             // 同じ進み具合
+probeAttract = mk(); probeAttract.currentTime = 300; layoutProbe(); assert.equal(probeAttract.playState, 'running');   // 指を置いていなければ、従来どおり動く
+"""
+        subprocess.run([node, "-e", script], capture_output=True, text=True, check=True)
+
+    def test_cycle143_demo_finger_copied_at_60_percent_still_works(self):
+        # 最初の1分（はじめの手ごたえ）: 手本の指は さすのに必要な押し＋8px ちょうどで、
+        # 手本の0.5〜0.7倍（390×844 は0.8倍まで）の長さでまねる指は 1本目が ささらなかった
+        # （390×664・390×844・360×640・375×548実測。粒が落ちるのは3本目・ぬけるのは4本目）。
+        # さす手本は 必要な押しの1.8倍、ひきぬく手本は 入っている長さの1.4倍。0.6倍でまねても1本で ささり・ぬける。
+        node = shutil.which("node")
+        if not node:
+            self.skipTest("node がないので実行の確認は飛ばす")
+        start = HTML.index("function stabDx(from) {")
+        fn = HTML[start:HTML.index("let probeAttract = null;", start)]
+        ps = HTML.index("function pullPoke() {")
+        fn += HTML[ps:HTML.index("let pullDemo = null;", ps)]
+        script = """
+const assert = require('node:assert/strict');
+const poke = {style:{left:'', setProperty(k, v) { this[k] = v; }}, dataset:{}};
+const scene = {clientWidth:366};
+const $ = id => id === 'sceneBag' ? scene : poke;
+const P = {x:0, rest:0, inAt:0, L:190};
+""" + fn + """
+// [袋の右はし+6, さした判定の所]: 390×664・390×844・360×640・375×548 の実測
+for (const [rest, inAt] of [[158, 127], [205, 166], [149, 120], [126, 101]]) {
+  P.rest = rest; P.inAt = inAt;
+  const need = rest - inAt, demo = -stabDx(rest);
+  assert.ok(demo * 0.6 >= need, 'さす: 手本の0.6倍で届く ' + rest);
+  assert.ok(demo <= need * 2, '長すぎない');
+  // 手本どおり（1.0倍）に さした人・ちょうど届いた人の ひきぬく手本
+  for (const x of [rest - demo, inAt]) {
+    P.x = x; pullPoke(); stabPoke();
+    assert.equal(poke.dataset.arrow, '←'); pullPoke(); assert.equal(poke.dataset.arrow, '→');
+    const pull = parseFloat(poke.style['--pokeDx']);
+    assert.ok(pull * 0.6 >= (rest - x) * 0.8, 'ひきぬく: 手本の0.6倍で 全部の粒が落ちる（8割ひけば全部） ' + rest);
+    assert.ok(pull >= 46);
+  }
+  // 途中まで押して離した人の さす手本も、0.6倍で届く
+  P.x = inAt + 10; stabPoke(); assert.ok(-parseFloat(poke.style['--pokeDx']) * 0.6 >= 10);
+  P.x = inAt + 1; stabPoke(); assert.equal(poke.style['--pokeDx'], '-20px');   // 短すぎる手本にはしない（旧版と同じ下限）
+}
+"""
+        subprocess.run([node, "-e", script], capture_output=True, text=True, check=True)
+        move = HTML[HTML.index("function moveProbe(x) {"):HTML.index("function pourOne(g) {")]
+        self.assertIn("if (x <= P.inAt) {", move)  # さした の決まりは変えない
+        self.assertIn("/ 0.78 * PLATE_GRAINS", move)  # 8割ひけば全部 も変えない
 
     def test_pinch_faces_show_with_a_small_pinch(self):
         # みわける: 顔が出る倍率は1.2倍から受ける。
@@ -1594,13 +1800,14 @@ let step = 0, lotIndex = 0, bagTaps = 0, autos = 0, sounds = 0, cancels = 0; con
 const P = {x:100, y:50, rest:200, L:100, inserted:true, done:false};
 const poke = {style:{display:'none', left:'', setProperty(k, v) { this[k] = v; }}, dataset:{}};
 const probe = {animate(frames, opt) { anims.push([frames[1].transform, opt.duration]); return {cancel() { cancels++; }}; }};
-const $ = id => ({poke, probe})[id];
+const sceneBag = {clientWidth:400};
+const $ = id => ({poke, probe, sceneBag})[id];
 const autoProbe = () => { autos++; }, probeDemoSound = () => { sounds++; };
 """ + fn + """
 pullNudge();                                    // 1回目: 手本の指をひきぬく向きに出し、小さく動く
 assert.equal(poke.style.display, '');
 assert.equal(poke.style.left, '172px');
-assert.equal(poke.style['--pokeDx'], '46px');
+assert.equal(poke.style['--pokeDx'], '140px');   // 入っている長さ（200-100）の1.4倍（サイクル143。旧版は46px固定）
 assert.deepEqual(anims[0], ['translate(118px,50px)', 320]);
 pullNudge();                                    // 2回目: 半分ぬけて戻る。前の手本の動きは止める
 assert.deepEqual(anims[1], ['translate(150px,50px)', 640]);
@@ -1696,7 +1903,7 @@ const guideEl = {classList:{contains: () => on}};
 const poke = {style:{display:'none'}};
 const $ = id => id === 'poke' ? poke : {id};
 const guideOff = () => { on = false; }, guideAt = (kind, el) => { on = true; shown.push(kind + ':' + (el.id || 'point')); };
-const guideSense = () => { on = true; shown.push('sense'); }, pullPoke = () => {}, stabPoke = () => {}, firstBagFace = () => false, lotGrade = () => 0;
+const guideSense = () => { on = true; shown.push('sense'); }, pullPoke = () => {}, stabPoke = () => {}, syncPokeToAttract = () => {}, firstBagFace = () => false, lotGrade = () => 0;
 const handlers = {};
 const document = {documentElement:{classList:{contains: () => scrolled}}, addEventListener: (n, f) => { handlers[n] = f; }, querySelectorAll: () => [{id:'grade0'}], getAnimations: () => []};
 const window = {addEventListener: () => {}};
@@ -1938,7 +2145,7 @@ const guideEl = {classList:{contains: () => on}};
 const poke = {style:{display:'none'}};
 const $ = id => id === 'poke' ? poke : {id};
 const guideOff = () => { on = false; }, guideAt = (kind, el) => { on = true; shown.push(kind + ':' + (el.id || 'point')); };
-const guideSense = () => { on = true; shown.push('sense'); }, pullPoke = () => {}, stabPoke = () => {}, firstBagFace = () => false, lotGrade = () => 0;
+const guideSense = () => { on = true; shown.push('sense'); }, pullPoke = () => {}, stabPoke = () => {}, syncPokeToAttract = () => {}, firstBagFace = () => false, lotGrade = () => 0;
 const handlers = {};
 const document = {documentElement:{classList:{contains: () => false}}, addEventListener: (n, f) => { handlers[n] = f; }, querySelectorAll: () => [{id:'grade0'}], getAnimations: () => anims};
 const window = {addEventListener: () => {}};

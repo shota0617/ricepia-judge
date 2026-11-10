@@ -10,9 +10,11 @@ const srv=http.createServer((r,s)=>{const u=decodeURIComponent(r.url.split('?')[
   await p.route('https://cdnjs.cloudflare.com/**',r=>r.fulfill({path:TN+'/build/three.min.js',contentType:'text/javascript'}));
   await p.route('https://cdn.jsdelivr.net/**',r=>r.fulfill({path:TN+r.request().url().split('/three@0.128.0')[1],contentType:'text/javascript'}));
   await p.goto(`http://localhost:${PORT}/tractor.html?season=${season}&time=hiru&noshadow&menu=1&art=none${qs}`);
-  await p.waitForFunction(()=>!document.getElementById('bStart').disabled,null,{timeout:180000});
-  if (!process.env.NOCHECK && await p.$('#checkBox')) await p.check('#checkBox');   // 始業点検をしてから（しないと 春は ファンベルトが切れる。ベルトは別のテストで見る）
-  await p.click('#bStart'); await p.waitForTimeout(1500);
+  // サイクル263（店主指示 2026-11-10）で はじめの画面（▶ボタン・始業点検のチェック）は なくなり、読みこみが終わると そのまま始まる。始まるのを待つだけにする
+  // （前は #bStart を待って押していたので、ここで止まっていた）。古い版（ボタンが ある）でも動くように、あれば押す
+  await p.waitForFunction(()=>{ const b=document.getElementById('bStart'); return (window.game&&game.S&&game.S.started) || (b&&!b.disabled); },null,{timeout:180000});
+  if (await p.$('#bStart')) { if (!process.env.NOCHECK && await p.$('#checkBox')) await p.check('#checkBox'); await p.click('#bStart'); }
+  await p.waitForFunction(()=>window.game&&game.S&&game.S.started,null,{timeout:60000}); await p.waitForTimeout(1500);
   const res=await p.evaluate(()=>{
     const g=game,S=g.S,K=g.key, HX=15, HZ=25; g.sim(3);
     const log={turns:0, dblSeen:0, levee0:g.SCORE.st.levee, stuck:0};

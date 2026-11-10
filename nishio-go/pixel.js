@@ -4504,7 +4504,14 @@ const SPOT_ORDER = ['park0', 'park1', 'park2', 'park3', 'historic', 'view', 'sig
 //   近藤米穀店（本店）：クリーム色の建物、壁に大きな赤い「米」、1階に「近藤米穀店」の看板とガラス戸・緑のひさし、左に「米のドライブスルー」の屋根
 // 文字の並び（# のところを塗る）で小さな絵を描く
 const pix = (r, rows, ox, oy, col) => rows.forEach((row, y) => [...row].forEach((ch, i) => { if (ch === '#') r(ox + i, oy + y, 1, 1, col); }));
-function shopCanvas(draw, outline = false, size = 32) {   // size：絵の細かさ（32 か、名所の細かい絵は 48）
+// サイクル189（はじめの 1分）：手描きの 名所の 絵（約250枚）は、はじめて 使う ときに 作る。読みこみの ときに ぜんぶ 作ると（1枚ごとに 色の 読みとり 2〜3回）、
+// 地図が 出るまでの 時間の 半分ほどを 使って いた（はかった 数は docs/meiro.md）。返すのは これまでと 同じ [ふつう, 灰色]（[0]・[1] で 使う）
+function shopCanvas(draw, outline = false, size = 32) {
+  let pair = null;
+  const make = () => pair || (pair = shopCanvasNow(draw, outline, size));
+  return { get 0() { return make()[0]; }, set 0(v) { make()[0] = v; }, get 1() { return make()[1]; }, set 1(v) { make()[1] = v; }, length: 2, size, get made() { return !!pair; } };
+}
+function shopCanvasNow(draw, outline, size) {   // size：絵の細かさ（32 か、名所の細かい絵は 48）
   const c = document.createElement('canvas');
   c.width = c.height = size;
   const x = c.getContext('2d'), r = (px, py, w, h, col) => { x.fillStyle = col; x.fillRect(px, py, w, h); };
@@ -7467,7 +7474,8 @@ const bigOf = (s, load = true) => (giantTiles(s) >= 6 ? giantOf(s, load) : null)
 // 名所の絵の大きさ：絵の細かさのまま（特大の絵は6マス・専用の絵は3マス・型の絵は1.5マス）。当店（32×32 の絵）だけは ちょうど2倍の4マスで、遠くからも見つけやすく
 // 当店の特大の絵（128×128）は、地図と同じ点の細かさ（1点＝マスの 1/16）で 8×8 マス。ほかの名所の特大の絵（6マス）より大きい。
 // 倍にすると 点が地図の1.5〜2倍に粗くなり（細かく作りこんだのが見えない）、12〜16 マスで画面を ほぼ おおってしまう。読めるまでの 48×48 の絵は 倍の 6 マス
-const spotSize = (s, spr, T) => dotSize(spr[0], T) * (s.shop && spr[0].width <= 48 ? 2 : 1);
+const sprW = spr => spr.size || spr[0].width;   // 絵の 幅（点）。手描きの 絵は 作らなくても 分かる（画面の 外の 名所の 大きさを はかる だけで 絵を 作らない）
+const spotSize = (s, spr, T) => sprW(spr) * T / 16 * (s.shop && sprW(spr) <= 48 ? 2 : 1);
 // 近づくと大きく迫る名所の絵（biglandmark.js）：描くときも タップの判定も この大きさを使う。特大の絵（giant）は二重に大きくしない・めいろ中・モジュールなしは等倍
 const bigHero = { x: null, y: null };   // お米のいる所（毎こま描くときに入れる）
 // サイクル96：最初の1分の目印。主人公にいちばん近い注目スポット（か自店）の特大の絵を、密集地でも6マスで描く（大きくするのは常に1か所）
@@ -13399,7 +13407,7 @@ const meiroApi = {
   tilt: () => tiltG, tiltAsk, tiltReset, tiltNeedsPermission, koto: (v, low) => kotoSound(v, low), splash: v => splashSound(v), boing: (v, hi) => boingSound(v, hi), rumble: v => rumbleTick(v, GROUND.road),   // rumble：転がる音（速さは 地図の マス/秒）
   pause(on) { meiroPause = !!on; dirty = true; if (on && mzNext.hold) { mzNext.hold = false; if (G.toastFlush) G.toastFlush(); } },   // 止める ときは「つぎの ゴール」で 待たせた 知らせを 出す
 };
-window.nishioPixel = { giantWashLayout, drawGiantWash, seimaiLayout, drawShopSeimai, riceJourneyLayout, drawRiceJourney, blinkOn, BLINK_MS, BLINK_SHUT_MS, get riceEye() { return riceEyeAt; }, grow: { stage: () => grow.stage, stageFor: growStageFor, TH: GROW_TH, popAt: () => grow.popT }, firstRoute: { shape: mzPathShape, simple: mzFirstSimple, LIM: MZ_FIRST_SIMPLE }, collected: { has: collectedOf }, roadShape: { of: roadShapeOf, corner: roadShapeCorner, missing: roadShapeMissing, end: roadShapeEndDir, straight: roadShapeStraightDir }, glanceShift, asleepShut, happyFace, meiroApi, heroGiant: () => heroGiantId, pickHeroGiant, HERO_GIANT_RANGE, maze: { half: () => ({ cell: mzHalf.cell ? [...mzHalf.cell] : null, passed: !!mzHalf.passed }), halfCell: mzHalfCell, halfPassed: mzHalfPassed, HALF_MIN: MZ_HALF_MIN, goalFxSpec: () => ({ ...MZ_GOAL_FX }), wallTheme: () => mzWallTheme(), on: () => mazeOn(), playing: () => active && mazeOn(), next: () => ({ want: mzNext.want, t0: mzNext.t0, on: mzNextOn(), labHide: !!mzNext.labHide, arrowDim: !!mzNext.arrowDim, box: mzNext.box || null }), goal: id => {   // id の 名所が いまの ゴール（か 2分 以内の 前の ゴール）なら、かかった 時間と めいろの 道のり
+window.nishioPixel = { giantWashLayout, drawGiantWash, seimaiLayout, drawShopSeimai, riceJourneyLayout, drawRiceJourney, blinkOn, BLINK_MS, BLINK_SHUT_MS, get riceEye() { return riceEyeAt; }, grow: { stage: () => grow.stage, stageFor: growStageFor, TH: GROW_TH, popAt: () => grow.popT }, firstRoute: { shape: mzPathShape, simple: mzFirstSimple, LIM: MZ_FIRST_SIMPLE }, firstBest: mzFirstBest, collected: { has: collectedOf }, roadShape: { of: roadShapeOf, corner: roadShapeCorner, missing: roadShapeMissing, end: roadShapeEndDir, straight: roadShapeStraightDir }, glanceShift, asleepShut, happyFace, meiroApi, heroGiant: () => heroGiantId, pickHeroGiant, HERO_GIANT_RANGE, maze: { half: () => ({ cell: mzHalf.cell ? [...mzHalf.cell] : null, passed: !!mzHalf.passed }), halfCell: mzHalfCell, halfPassed: mzHalfPassed, HALF_MIN: MZ_HALF_MIN, goalFxSpec: () => ({ ...MZ_GOAL_FX }), wallTheme: () => mzWallTheme(), on: () => mazeOn(), playing: () => active && mazeOn(), next: () => ({ want: mzNext.want, t0: mzNext.t0, on: mzNextOn(), labHide: !!mzNext.labHide, arrowDim: !!mzNext.arrowDim, box: mzNext.box || null }), goal: id => {   // id の 名所が いまの ゴール（か 2分 以内の 前の ゴール）なら、かかった 時間と めいろの 道のり
     mzGoalAsk.id = '';   // 保留中の 着いた名所は 入口で 消す（失敗した goal で 前の id が 残らない。サイクル166 Codex指摘）
     if (!mazeOn()) return null;
     const now = performance.now(), pv = mzRt.prev, g = mzRt.gid === id ? { t0: mzRt.t0, len0: mzRt.len0, warp: mzRt.warp, moves: mzMv.n, run: { ...mzRt.run } } : pv && pv.id === id && now - pv.at < 120000 ? pv : null;

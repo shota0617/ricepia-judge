@@ -10003,7 +10003,7 @@ const SAY = (() => {
     if (t > 0 && (t -= dt) <= 0) { t = 0; kind = ''; render(); }
     if (!S.started) return;
     if (S.done && !doneSaid) { doneSaid = true; say('お疲れ様です！', 8); }
-    if (!S.done && pi < STEPS.length && lastPct >= STEPS[pi][0] && !busy() && !DETAIL && !startNoticeMuted()) { show(STEPS[pi][1], 3, 'step'); pi++; }   // 知らせの あいだは 待つ。サイクル225・最初の1分: のんびりでは最初の1分は進みぐあいの吹き出し・読み上げも出さない（幅広作業機＝テッダー4.3m／スプレイヤー4.6mでは既定3速でも10%＝約140㎡に約48〜51秒で届き、216のロータリー幅前提の「届かない」を覆す実測）。piは進めないので1分を過ぎれば従来どおりその段階から出る（遅れて出す形）。くわしい説明では従来どおり出さない（show自体がDETAILで止まる）
+    if (!S.done && pi < STEPS.length && calmPct >= STEPS[pi][0] && !busy() && !DETAIL && !startNoticeMuted()) { show(STEPS[pi][1], 3, 'step'); pi++; }   // サイクル259: 大きな数字と同じ割合（calmPct）で言う（田んぼアートでは絵の「でき」。数字が 50% のときに「はんぶん できたね」）   // 知らせの あいだは 待つ。サイクル225・最初の1分: のんびりでは最初の1分は進みぐあいの吹き出し・読み上げも出さない（幅広作業機＝テッダー4.3m／スプレイヤー4.6mでは既定3速でも10%＝約140㎡に約48〜51秒で届き、216のロータリー幅前提の「届かない」を覆す実測）。piは進めないので1分を過ぎれば従来どおりその段階から出る（遅れて出す形）。くわしい説明では従来どおり出さない（show自体がDETAILで止まる）
   }
   function tap() {                                 // さわると：知らせの とちゅうは そのまま。案内が あれば もう一度 話す。なければ 雑談
     if (DETAIL || busy()) return;
@@ -10014,18 +10014,23 @@ const SAY = (() => {
   return { say, note, coach, update, tap, refresh, get talking() { return talkT > 0; }, get free() { return !(t > 0 && kind !== 'chat'); }, get text() { return [t > 0 && !DETAIL ? mainText : '', DETAIL ? '' : coachLine]; } };
 })();
 const KEYH = /[A-Z] で|（[A-Z]）|[A-Z]・|スペース|ボタン|押す|押して|押すと|ゆるめる|解除|止まって|上げると/;   // 操作の 案内
-const cutParen = x => x.replace(/（[^）]*）/g, m => KEYH.test(m) ? m : '').replace(/[、\s]+$/, '').trim();
+// サイクル259・最初の1分: かっこの中の「。」で文を切らない・入れ子のかっこも ひとまとまりで扱う。
+// それまでは「〜だね。とまって みるよ（…。…。止まって 上げると 見ます）」のような知らせが かっこの途中で切れ、吹き出しが「…見ます）」と閉じかっこだけ残っていた
+// （のんびりでは最初の1分が明けた直後の吹き出しがこれ。知らせの文 97 個のうち 12 個で かっこが合わなかった）。
+const mapParen = (x, f) => { let out = '', d = 0, g = ''; for (const ch of x) { if (ch === '（') { d++; g += ch; } else if (ch === '）' && d > 0) { g += ch; if (--d === 0) { out += f(g); g = ''; } } else if (d > 0) g += ch; else out += ch; } return out + g; };   // いちばん外の かっこ書きを f で置きかえる
+const sentences = t => mapParen(t, g => g.replace(/。/g, '\u0001')).split('。').map(x => x.replace(/\u0001/g, '。').trim()).filter(Boolean);   // 文に分ける（かっこの中の「。」では切らない）
+const cutParen = x => mapParen(x, m => KEYH.test(m) && !m.includes('。') ? m : '').replace(/[、\s]+$/, '').trim();   // かっこ書きは 短い 操作の案内だけ残す（「。」をふくむ 長い説明は落とす）
 const shortText = t => {
   if (DETAIL) return t;
-  const ss = t.split('。').map(x => x.trim()).filter(Boolean);
+  const ss = sentences(t);
   if (!ss.length) return t;
   const head = cutParen(ss[0]) || ss[0], act = ss.slice(1).find(x => KEYH.test(x));
   return act ? head + '。' + (cutParen(act) || act) : head;
 };
 // キャラクターの セリフ：はじめの 一文（あとに 操作の 案内が あれば その 一言目＋案内）。かっこ書きは キーの 案内だけ
-const noParen = x => x.replace(/（[^）]*）/g, '').trim();
+const noParen = x => mapParen(x, () => '').trim();
 const speakText = t => {
-  const ss = t.split('。').map(x => x.trim()).filter(Boolean);
+  const ss = sentences(t);
   if (!ss.length) return t;
   const head = (cutParen(ss[0]) || ss[0]).replace(/（[^）]*$/, '').trim() || ss[0], act = ss.slice(1).find(x => KEYH.test(x));   // 閉じていない かっこは 落とす
   if (!act) return head;
@@ -10974,7 +10979,7 @@ const PLAY = (() => {
 })();
 
 // ---- まわす ----
-let last = performance.now(), hudT = 0, meterT = 0, monT = 0, lastPct = 0;
+let last = performance.now(), hudT = 0, meterT = 0, monT = 0, lastPct = 0, calmPct = 0;   // calmPct＝のんびりの大きな数字に出している割合（サイクル259）
 function frame(now) {
   requestAnimationFrame(frame);
   const dt = Math.min(0.05, (now - last) / 1000), realDt = Math.min(0.25, (now - last) / 1000);   // realDt は PLAY の経過用（実時間。サイクル76で制限には使わない）
@@ -11037,11 +11042,17 @@ function frame(now) {
     $('rot').textContent = S.rotDown ? IMPL + ' 下（' + (SHIRO ? 'かく' : '耕す') + '）' : IMPL + ' 上';
     $('rot').classList.toggle('on', S.rotDown);
     $('pct').textContent = pct;
-    $('bigPct').textContent = pct + '%';   // サイクル217・類1: のんびりの大きな数字も同じ pct で静かに差し替える
+    // サイクル217・類1: のんびりの大きな数字を静かに差し替える。
+    // サイクル259・最初の1分: 数字を「いまの目当て」に合わせ、耕しはじめてすぐ動くようにする（実測：はじめての人が なぞって耕しても 約20秒「0%」のまま・1分で 2%）。
+    // 田んぼアート（既定のお題）では 絵の中を耕せた割合（地図の「でき」と同じ数）。それまでは田んぼ全体の割合だったので、白線の外を耕しても数字が上がり、絵の中を耕しても ほとんど動かなかった。
+    // お題なしでは従来どおり田んぼ全体の割合で、10% までは小数 1 けた（0.1% ＝ 約 1.5m²）まで出す。点滅・音・文字は足さない
+    const artR = ART.on ? ART.score() : null, fill = artR ? artR.fill : tilledCount / workCount;
+    calmPct = Math.min(100, Math.floor(fill * 100 + 1e-9));
+    $('bigPct').textContent = (!artR && fill < 0.1 ? (Math.floor(fill * 1000 + 1e-9) / 10).toFixed(1) : calmPct) + '%';
     COACH.update(running && !INTRO.on);
     if (pct >= 3 && !S.hintGone) { S.hintGone = true; $('keyHint').style.opacity = 0; }
     $('time').textContent = fmtTime(S.elapsed);
-    if (ART.on) { const r = ART.score(); $('sc').textContent = r.skill === null ? '—' : r.skill; $('sim').textContent = Math.round(r.fill * 100); }
+    if (artR) { const r = artR; $('sc').textContent = r.skill === null ? '—' : r.skill; $('sim').textContent = Math.round(r.fill * 100); }
     else $('sc').textContent = SCORE.ready() ? Math.round(SCORE.calc() * (EASY.used ? 0.8 : 1)) + (EASY.used ? '🔰' : '') : '—';   // 10m² 耕すまでは点数を出さない（まだ上手か下手かわからない）
     hudT = 0.15;
   }

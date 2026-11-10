@@ -663,7 +663,7 @@ function talkNpc(id, page = 0) {
       brief.icons += '🎉';
       say.push(`🎉 ${S.guide.byId ? 'イベント達成：' : ''}${n.name}に会えた${pts ? ` +${pts}pt` : ''}`);
       const ml = [], mb = mazeGoal(n.id, n.name, ml), mz = takeMzShare();   // 地図の めいろの ゴールが この人だった：名所と 同じ ように 時間・★と 紙ふぶき
-      if (mz) { mzNpcShare = { ...mz, id: n.id }; playAsk(mz); }   // 話の 窓に「📣 シェア」（人の ゴールにも ごほうびの 窓は 出ないので）。「めいろ、どうだった？」は 話の 窓を とじた あと
+      if (mz) { mzNpcShare = { ...mz, id: n.id }; if (playAskOk(mz)) playAsk(mz); }   // 話の 窓に「📣 シェア」（人の ゴールにも ごほうびの 窓は 出ないので）。「めいろ、どうだった？」は 話の 窓を とじた あと
       const spl = ml.find(l => l.startsWith('🏃'));
       if (spl && simple()) toastAfter(spl);   // はやさ：文字を少なく では 下の 知らせが 絵だけに なるので、あとに 文で 出す
       if (ml.length) { if (mb) gainPoints(mb); brief.icons += '🏁'; say.unshift(...ml); }
@@ -1447,7 +1447,7 @@ function checkin() {
   setTimeout(() => { if (react.pending) reactShow(); else if (playQ.pending) playShow(); }, 1500);   // 下の小さなひとこと欄だけ（カードが無いので ここから）
   reactAsk(s);
   if (courseDone) courseCelebrate();   // コースを まわりきった：ごほうびの 窓が とじたら 1枚絵
-  if (mz) playAsk(mz);   // めいろの ゴール：「めいろ、どうだった？」（1日1回。名所の ひとこと より 先に）
+  if (mz && playAskOk(mz)) playAsk(mz);   // めいろの ゴール：「めいろ、どうだった？」（1日1回。名所の ひとこと より 先に）
   // 当店の窓（shopAfter）は 自動では 開かない：カードが無いので、窓が いきなり 開いて 歩きを 止めない（お店の窓は 自分で タップして 開く）
   map.closePopup();
   renderMarkers();
@@ -3904,6 +3904,10 @@ function reactAsk(s) {
 // 1日1回、名所の ひとこと（reactBar）と 同じ 場所に 出す。運営者の声「どのようにレビューを受けるのか。ゲーム改善につながるか」2026-10-27
 const playQ = { pending: null, r: 0, shown: 0, sent: false, t: 0 };
 const PLAY_MIN_MS = 900;   // api/feedback.js の PLAY_MIN_MS（800）より すこし 長く
+// サイクル189（はじめの 1分）：はじめてのさんぽ（3ゴールまで）の 間は、1分 より 短く 着いた ゴールでは たずねない（自分で 遊んで 分かった：はじめての ゴールに 15秒で 着くと、
+// まだ 遊んで いないのに ★の 札が 行き先の 札に かぶって 出た）。たずねるのは その日の 次の ゴールに とっておく
+const PLAY_ASK_MIN_S = 60;
+const playAskOk = mz => !(demo && !(store.get('nsg_mzgoals', 0) >= 3) && mz && mz.sec < PLAY_ASK_MIN_S);
 function playAsk(mz) {
   if (store.get('nsg_play_ask', '') === ymd()) return;
   playQ.pending = { sec: Math.round(mz.sec), st: 0, mz };   // mz：★4〜5 の ときの「友だちに」で シェアする ゴール（takeMzShare）

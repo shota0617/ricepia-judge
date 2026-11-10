@@ -77,7 +77,7 @@ class GiantWash188(unittest.TestCase):
                 if s["fill"].startswith("rgba(255,255,255,"):
                     holes += 1
             self.assertEqual(holes, 1)
-        self.assertEqual(len(fills), 6)
+        self.assertEqual(len(fills), 5)   # 192で濃さを半分にし、.12と.11の白がどちらも.06になった
         self.assertEqual(len(wobs), 6)
 
     def draw_calls(self):

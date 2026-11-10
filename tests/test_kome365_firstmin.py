@@ -44,7 +44,7 @@ class TestKome365FirstMinute(unittest.TestCase):
         pause = HTML[HTML.index("function ghostPause(){"):HTML.index("function ghostBack(){")]
         self.assertNotIn("store.set", pause)
         self.assertIn("function ghostBack(){ var on = !ghostDone && choices.length === 0 && !calmOn();", HTML)
-        self.assertRegex(HTML, r"choose\('right', v\); \} else \{ (if \(tapMax < 12\) tapOnly\+\+; )?reset\(\); ghostBack\(\); \}")
+        self.assertRegex(HTML, r"choose\('right', v\); \} else \{ (if \(tapMax < 12\) tapOnly\+\+; (else tapOnly = 0; )?)?reset\(\); ghostBack\(\); \}")
         # 決めたとき(choose)は これまでどおり二度と出さない
         choose = HTML[HTML.index("function choose(side, vel){"):HTML.index("function choose(side, vel){") + 200]
         self.assertIn("ghostOff();", choose)
@@ -91,11 +91,17 @@ class TestKome365FirstMinute(unittest.TestCase):
         self.assertIn("function ghostPause(){ demoSet(false);", HTML)
         self.assertIn("$('swGhostArrows').classList.toggle('on', on); demoSet(demoWant()); }", HTML)
         self.assertIn("function ghostOff(){ tapOnly = 0; demoSet(false);", HTML)
-        self.assertIn("} else { if (tapMax < 12) tapOnly++; reset(); ghostBack(); }", HTML)
+        self.assertIn("} else { if (tapMax < 12) tapOnly++; else tapOnly = 0; reset(); ghostBack(); }", HTML)
         # 指を置く高さは大きな絵の段(日付・題・札にかけない)
         self.assertIn("hd.style.setProperty('--hy', (ic.offsetTop + 4) + 'px')", HTML)
         # カードそのものは手本では動かさない: 手本の動きは #swHand・#swGhost・札の光だけ
         self.assertNotRegex(HTML, r"#swWrap\.demoOn #swCard[^{]*\{[^}]*(transform|animation)")
+
+    def test_swipe_demo_review_fixes(self):
+        # Codex指摘(PR #1071): 押しただけが「つづいて」2回のときだけ手本を出す(間に引いたら数えなおす)
+        self.assertIn("if (tapMax < 12) tapOnly++; else tapOnly = 0; reset(); ghostBack();", HTML)
+        # 手本が出ている間に画面の大きさが変わったら、指の高さを測り直す
+        self.assertIn("window.addEventListener('resize', function(){ if ($('swWrap').classList.contains('demoOn')) demoSet(true); });", HTML)
 
     def test_owner_rules_kept(self):
         # 店主の指示(2026-11-08・11-09)で入れたものは そのまま

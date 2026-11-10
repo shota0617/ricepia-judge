@@ -106,6 +106,8 @@
 <!-- ドット絵の地図 -->
 <section id="pxView" aria-label="ドット絵の地図">
   <canvas id="pxCanvas"></canvas>
+  <!-- 傾きの ボタン（サイクル194）：許可の いる スマホだけ。押した ときだけ 許可を 聞く -->
+  <button type="button" id="pxTilt" hidden aria-label="かたむけて ころがす（傾きの 許可を 聞きます）"><span class="ic" aria-hidden="true">📱</span><span class="tx">かたむけて ころがす</span></button>
   <div class="px-zoom"><button type="button" id="pxWorld" aria-label="せかいちず（西尾市と となりの市町）" title="せかいちず（西尾市と となりの市町）"><i data-pi="globe" data-art="btn-globe"></i></button><button type="button" id="pxZoomIn" aria-label="拡大">＋</button><button type="button" id="pxZoomOut" aria-label="縮小">－</button><button type="button" id="pxHarvest" class="h" hidden aria-label="コンバインで稲刈り（田んぼの上で）" title="コンバインで稲刈り（田んぼの上で）"><i data-pi="star" data-art="btn-combine"></i></button><button type="button" id="pxDankyu" class="h" hidden aria-label="段丘をのぼる（急な坂のそばで）" title="段丘をのぼる（急な坂のそばで）">⛰️</button><button type="button" id="pxHiryo" class="h" hidden aria-label="肥料山の草刈り（丘や山のそばで）" title="肥料山の草刈り（丘や山のそばで）">🌿</button></div>
   <div class="dq px-msg" id="pxMsg" hidden></div>
   <div class="px-attr">© OpenStreetMap contributors／地理院タイル／国土数値情報を加工</div>
@@ -366,7 +368,7 @@
     <!-- 押すのに 抵抗が ある人へ：お金・登録・アプリ・位置情報の 心配が ないことを ボタンの すぐ下に（運営者の声「プレイボタンを押すのに抵抗がある人対策」） -->
     <p class="no-risk" aria-label="無料・登録なし・アプリ不要・位置情報なし"><span>✓ 無料</span><span>✓ 登録なし</span><span>✓ アプリ不要</span><span>✓ 位置情報なし</span></p>
     <p class="no-risk-sub">押すと すぐ 地図が 出ます</p>
-    <p class="no-risk-sub ios-tilt" id="iosTiltNote" hidden>📱 iPhone は、最初に地図をタップすると「動きと方向」の確認が出ます。「許可」で 傾けて遊べます（地図を タップしても 遊べます）</p>
+    <p class="no-risk-sub ios-tilt" id="iosTiltNote" hidden>📱 iPhone は、右上の「📱 かたむけて ころがす」を 押すと「動きと方向」の確認が出ます。「許可」で 傾けて遊べます（地図を タップしても 遊べます）</p>
     <button type="button" class="btn big mode-pick" id="demoBtn" hidden>📱 操作して遊ぶ</button>
     <p class="warn">⚠️ 立ち止まって 遊んでね</p>
     <!-- プレイ画面（どんなゲームか、絵で分かるように。遊びかたのボタンより下に置き、ボタンはスクロールしなくても見えるまま） -->
@@ -413,7 +415,7 @@
   </div>
 </div>
 
-<!-- ホーム画面に追加のおすすめ（ごほうびを2回もらったあとに、7日に1回まで） -->
+<!-- ひと休みの 札（idlecard.js） -->
 <div class="idle-card" id="idleCard" hidden role="dialog" aria-label="お疲れ様です">
   <p>🍚 お疲れ様です</p>
   <div class="idle-btns">
@@ -422,9 +424,9 @@
     <button type="button" class="btn mini ghost" id="idleKeep">つづける</button>
   </div>
 </div>
-<div class="a2hs" id="a2hs" hidden role="dialog" aria-label="ホーム画面に追加">
-  <p id="a2hsText">📲 ホーム画面に追加すると、あしたもワンタップで遊べます</p>
-  <div class="a2hs-btns"><button type="button" class="btn mini" id="a2hsAdd">追加する</button><button type="button" class="btn mini ghost" id="a2hsNo">あとで</button></div>
+<!-- ホーム画面に追加の おすすめ（サイクル193・運営者の声 2026-11-10「控えめに促す」）：小さな 1行の 札。地図を ふさがない・ひとりでに 消える（game.js の a2hsOffer） -->
+<div class="a2hs" id="a2hs" hidden role="status" aria-live="polite">
+  <button type="button" class="a2hs-go" id="a2hsAdd">📲 ホーム画面に 追加</button><span class="a2hs-tx" id="a2hsText" hidden></span><button type="button" class="a2hs-x" id="a2hsNo" aria-label="とじる">✕</button>
 </div>
 
 <!-- シェア（SNS・LINE・画像） -->

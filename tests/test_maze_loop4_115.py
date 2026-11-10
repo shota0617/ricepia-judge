@@ -1,4 +1,5 @@
-"""サイクル115：開いた直後の手本はアイコンだけ。"""
+"""サイクル115：開いた直後の手本はアイコンだけ。→ サイクル194（運営者の声 2026-11-10）で、止まって 2秒の たびに 出る 指の 手本と 傾きの ボタンに かわった（くわしくは test_maze_loop4_194.py）。
+ここでは 115 の ねらいの うち いまも のこる もの（手本は 絵だけ・入力を じゃましない・さわると 消える・転がりは かえない）を 見る。"""
 import os
 import unittest
 
@@ -7,19 +8,20 @@ with open(os.path.join(ROOT, "nishio-go", "pixel.js"), encoding="utf-8") as f:
     PIX = f.read()
 with open(os.path.join(ROOT, "nishio-go", "style.css"), encoding="utf-8") as f:
     CSS = f.read()
-FN = PIX[PIX.index("function tiltHintShow() {"):]
-FN = FN[:FN.index("\nsetTimeout(tiltHintShow")]
+FN = PIX[PIX.index("function tapDemoTick() {"):]
+FN = FN[:FN.index("\nsetInterval(tapDemoTick")]
 
 
 class TestTiltHint(unittest.TestCase):
     def test_icon_only(self):
-        self.assertIn("? '👆' : '📱'", FN)
+        self.assertIn("tapDemo.el = mk('tapDemo', '👆'); tapDemo.ph = mk('tiltHint', '📱');", FN)
 
     def test_does_not_block_input(self):
         self.assertRegex(CSS, r"#tiltHint\{[^}]*pointer-events:none")
+        self.assertRegex(CSS, r"#tapDemo\{[^}]*pointer-events:none")
 
     def test_goes_away(self):
-        self.assertIn("tiltHintOff", FN)
+        self.assertIn("tapDemoHide", FN)
         self.assertIn("deviceorientation", FN)
 
     def test_physics_unchanged(self):

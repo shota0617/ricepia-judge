@@ -192,10 +192,129 @@ async function firstMinuteChecks(browser, R) {
         return { before, open, back, ok: before === true && open.world && !open.hidden && open.w >= 36 && open.inView && !back.world && back.hidden === true };
       });
       // サイクル191：傾きの 許可を ことわった スマホの 知らせに 矢印キーの 話を 入れない
-      const px = fs.readFileSync(path.join(__dirname, '..', 'nishio-go', 'pixel.js'), 'utf8'), fbm = (px.match(/const fallback = \(\) => G\.toast\('([^']*)'\)/) || [])[1] || '';
-      const tm = { text: fbm, ok: /タップ/.test(fbm) && !/矢印キー|キーボード/.test(fbm) };
-      return { firstGoalNear: fg, lazySprites: lz, playAskQuick: pa, worldBack: wb, tiltDeniedMsg: tm, ...(await startSteadyChecks(browser, R)) };
+      const px = fs.readFileSync(path.join(__dirname, '..', 'nishio-go', 'pixel.js'), 'utf8'), fbs = [...px.matchAll(/G\.toast\('([^']*タップして 遊べるよ[^']*)'\)/g)].map(m => m[1]), fbm = fbs[0] || '';
+      const tm = { text: fbm, n: fbs.length, ok: fbs.length >= 1 && fbs.every(t => /タップ/.test(t) && !/矢印キー|キーボード/.test(t)) };
+      // サイクル192：なぞっても 進む（タップの つもりで 指が ずれた・お米から 行きたい 方へ なぞった）。本当の タッチで 道すじの 2マス先へ 30px なぞって はなす。窓は 開かない。2本指は 歩かない
+      await p2.evaluate(() => { const i = document.getElementById('pxInfo'); if (nishioPixel.worldMode) nishioPixel.setWorld(false); i.hidden = true; });
+      await p2.waitForFunction(() => !nishioPixel.tapGoal && !!nishioPixel.maze.routePath(), null, { timeout: 8000 }).catch(() => {});
+      const sp = await p2.evaluate(() => { const P = nishioPixel, K = P.maze.K, rp = P.maze.routePath() || [], c = rp[Math.min(2, rp.length - 1)]; return c ? { ...P.tileToClient(c[0] * K + 1, c[1] * K + 1), ta: getComputedStyle(document.getElementById('pxCanvas')).touchAction, len: rp.length } : null; });
+      let sw = { ok: false, why: 'no-route' };
+      if (sp) {
+        const cdp = await v.ctx.newCDPSession(p2), touch = (type, pts) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: pts.map(([x, y], id) => ({ x, y, id })) });
+        await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: true });
+        await touch('touchStart', [[sp.x - 30, sp.y - 10]]);
+        for (let i = 1; i <= 5; i++) { await touch('touchMove', [[sp.x - 30 + i * 6, sp.y - 10 + i * 2]]); await p2.waitForTimeout(16); }
+        await touch('touchEnd', []);
+        const started = await p2.waitForFunction(() => !!nishioPixel.tapGoal, null, { timeout: 1500 }).then(() => true, () => false);
+        const info = await p2.evaluate(() => !document.getElementById('pxInfo').hidden);
+        await p2.waitForFunction(() => !nishioPixel.tapGoal, null, { timeout: 8000 }).catch(() => {});
+        const two = await p2.evaluate(([x, y]) => {   // 2本指：1本めを おいて 2本めを おき、1本めを 遠くで はなしても 歩かない
+          const cv = document.getElementById('pxCanvas'), ev = (t, id, pr, cx, cy) => cv.dispatchEvent(new PointerEvent(t, { pointerId: id, isPrimary: pr, button: 0, clientX: cx, clientY: cy, bubbles: true, pointerType: 'touch' }));
+          ev('pointerdown', 11, true, x - 20, y); ev('pointerdown', 12, false, x + 20, y); ev('pointerup', 11, true, x - 80, y); ev('pointerup', 12, false, x + 80, y);
+          return !!nishioPixel.tapGoal;
+        }, [sp.x, sp.y]);
+        sw = { started, info, two, touchAction: sp.ta, ok: started && !info && !two && sp.ta === 'pinch-zoom' };
+      }
+      // サイクル192：めいろで ゴールの 名所に 着いた しゅんかん、下の チェックインの ボタンを 出さない（ひとりでに チェックインする）。ゴールで ない 名所の そばでは これまでどおり 出る
+      const an = await p2.evaluate(async () => {
+        const G = nishioGo, P = nishioPixel, wait = ms => new Promise(r => setTimeout(r, ms)), b = document.getElementById('spinBtn'), g = G.guide;
+        if (!g || g.kind === 'npc') return { ok: false, why: 'no-spot-goal', g: g && g.name };
+        let shown = 0; const mo = new MutationObserver(() => { if (!b.hidden) shown++; }); mo.observe(b, { attributes: true, attributeFilter: ['hidden'] });
+        const h0 = Math.round(document.getElementById('sheet').getBoundingClientRect().height);
+        G.moveTo(g.lat, g.lng);
+        let hMax = h0; for (let i = 0; i < 30; i++) { await wait(50); hMax = Math.max(hMax, Math.round(document.getElementById('sheet').getBoundingClientRect().height)); }
+        mo.disconnect();
+        const checked = !!G.state.visits[g.id], g2 = G.guide || {}, other = G.spots.filter(s => s.id !== g.id && s.id !== g2.id && !s.shop && !G.state.visits[s.id]).map(s => [G.dist(G.me, s), s]).sort((a, c) => a[0] - c[0])[0][1];
+        G.moveTo(other.lat, other.lng); await wait(300);
+        const otherBtn = !b.hidden && document.getElementById('spinName').textContent === other.name && !G.state.visits[other.id];
+        return { goal: g.name, shown, h0, hMax, checked, other: other.name, otherBtn, ok: shown === 0 && checked && otherBtn };
+      });
+      return { firstGoalNear: fg, lazySprites: lz, playAskQuick: pa, worldBack: wb, tiltDeniedMsg: tm, swipeWalk: sw, arriveNoSpin: an, ...(await startSteadyChecks(browser, R)), ...(await a2hsChecks(browser, R)) };
     } finally { R.errors.push(...v.errors); await v.ctx.close(); }
+}
+// サイクル193（運営者の声 2026-11-10「さんぽGOホーム画面に追加を控えめに促す」）：ホーム画面に追加の おすすめは 小さな 1行の 札。
+// はじめてのさんぽ・開いて 1分の 間は 出ない／その あと 落ちついたら 出る／ひとりでに 消える／✕ で 30日 あける／ホーム画面から 開いた 人には 出ない／
+// iPhone の Safari は 手順の 1行・Android は 札が ボタン／アプリの 中の ブラウザ（LINE など）は 何も 出さない
+const A2HS_UA = { ios: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1',
+  line: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Safari Line/14.9.0',
+  android: 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36' };
+async function a2hsChecks(browser, R) {
+  const out = {};
+  const openAs = async ua => { const v = await newPage(browser, { howto: true, auto: true, userAgent: A2HS_UA[ua] }); await v.page.goto(URL); await v.page.waitForFunction(() => window.nishioPixel && window.nishioGo && nishioGo.a2hs && nishioPixel.maze.route(), null, { timeout: 20000 }).catch(() => {}); return v; };
+  const noApi = p => p.evaluate(() => !(window.nishioGo && nishioGo.a2hs));
+  const shown = (p, t) => p.waitForFunction(() => !document.getElementById('a2hs').hidden, null, { timeout: t }).then(() => true, () => false);
+  const gone = (p, t) => p.waitForFunction(() => document.getElementById('a2hs').hidden, null, { timeout: t }).then(() => true, () => false);
+  {   // iPhone の Safari
+    const v = await openAs('ios'), p = v.page;
+    try {
+      if (await noApi(p)) { for (const k of ['a2hsFirstWalk', 'a2hsShown', 'a2hsAutoHide', 'a2hsClose', 'a2hsStandalone']) out[k] = { ok: false, why: 'no-api' }; }
+      else {
+        await p.evaluate(() => { for (const k of ['nsg_a2hs_t', 'nsg_a2hs_x', 'nsg_a2hs_done']) localStorage.removeItem(k); nishioGo.a2hs.cfg.tryMs = 200; });
+        // はじめてのさんぽ（ゴール 0〜2）の 間は 出ない。ゴール 3つ でも 開いて 1分の 間は 出ない
+        const fw = await p.evaluate(async () => { const A = nishioGo.a2hs, wait = ms => new Promise(r => setTimeout(r, ms)), el = document.getElementById('a2hs'), res = {};
+          A.cfg.minPlayMs = 0; localStorage.setItem('nsg_mzgoals', '2'); res.elig2 = A.eligible(); A.later('goal'); await wait(900); res.shown2 = !el.hidden; res.offer2 = A.offer('goal');
+          A.cfg.minPlayMs = 600000; localStorage.setItem('nsg_mzgoals', '3'); res.elig3 = A.eligible(); A.later('goal'); await wait(900); res.shownEarly = !el.hidden;
+          return res; });
+        out.a2hsFirstWalk = { ...fw, ok: fw.elig2 === false && !fw.shown2 && fw.offer2 === false && fw.elig3 === true && !fw.shownEarly };
+        // 落ちついたら 出る（せかいちずの 間は 待つ）。小さな 1行・role="status"・地図を ふさがない・お米と 下の 札に かからない
+        const sh0 = await p.evaluate(async () => { const A = nishioGo.a2hs, wait = ms => new Promise(r => setTimeout(r, ms)), el = document.getElementById('a2hs'); A.cfg.minPlayMs = 0; A.cfg.showMs = 2500; document.getElementById('toast').classList.remove('show');
+          nishioPixel.setWorld(true); A.later('goal'); await wait(900); const inWorld = !el.hidden; nishioPixel.setWorld(false); return { inWorld }; });
+        const on = await shown(p, 6000);
+        const sh = await p.evaluate(() => { const el = document.getElementById('a2hs'), kids = [...el.children].filter(c => !c.hidden), boxes = kids.map(c => c.getBoundingClientRect()), hit = (r, q) => r.left < q.right && q.left < r.right && r.top < q.bottom && q.top < r.bottom;
+          const cv = document.getElementById('pxCanvas'), cr = cv.getBoundingClientRect(), k = cr.width / cv.width, rb = nishioPixel.roll.box, rice = rb ? { left: cr.left + rb[0] * k, top: cr.top + rb[1] * k, right: cr.left + rb[2] * k, bottom: cr.top + rb[3] * k } : null, sheet = document.getElementById('sheet').getBoundingClientRect();
+          return { role: el.getAttribute('role'), ids: kids.map(c => c.id), text: document.getElementById('a2hsText').textContent, h: Math.round(Math.max(0, ...boxes.map(r => r.height))), inView: boxes.every(r => r.left >= 0 && r.right <= innerWidth), covered: nishioPixel.mapCovered(true), overRice: boxes.some(r => rice && hit(r, rice)), overSheet: boxes.some(r => hit(r, sheet)), how: el.dataset.how, t: !!localStorage.getItem('nsg_a2hs_t'), dialogs: document.querySelectorAll('[role="dialog"]:not([hidden])').length }; });
+        out.a2hsShown = { ...sh0, on, ...sh, ok: !sh0.inWorld && on && sh.role === 'status' && String(sh.ids) === 'a2hsText,a2hsNo' && /ホーム画面に追加/.test(sh.text) && sh.text.length <= 30 && sh.h > 0 && sh.h <= 40 && sh.inView && !sh.covered && !sh.overRice && !sh.overSheet && sh.how === 'ios' && sh.t && sh.dialogs === 0 };
+        // ひとりでに 消える。✕ では ないので 30日の しるしは つかない。7日の 間は もう 出ない
+        const off = await gone(p, 6000);
+        const ah = await p.evaluate(async () => { const A = nishioGo.a2hs, wait = ms => new Promise(r => setTimeout(r, ms)); const x = localStorage.getItem('nsg_a2hs_x'), elig = A.eligible(); A.later('goal'); await wait(700); return { x, elig, again: !document.getElementById('a2hs').hidden }; });
+        out.a2hsAutoHide = { off, ...ah, ok: on && off && ah.x === null && ah.elig === false && !ah.again };
+        // ✕（本当の タップ）で 閉じる：30日 あける（7日の しるしを 消しても 出ない）
+        await p.evaluate(() => { localStorage.removeItem('nsg_a2hs_t'); nishioGo.a2hs.cfg.showMs = 20000; document.getElementById('toast').classList.remove('show'); nishioGo.a2hs.later('goal'); });
+        const on2 = await shown(p, 6000);
+        if (on2) await p.click('#a2hsNo');
+        const off2 = await gone(p, 3000);
+        const cl = await p.evaluate(() => { const A = nishioGo.a2hs, x = localStorage.getItem('nsg_a2hs_x'); localStorage.removeItem('nsg_a2hs_t'); const elig = A.eligible(); localStorage.removeItem('nsg_a2hs_x'); return { x: !!x, elig, eligAfter: A.eligible(), days: A.cfg.closedMs / 86400000, every: A.cfg.everyMs / 86400000 }; });
+        out.a2hsClose = { on2, off2, ...cl, ok: on2 && off2 && cl.x && cl.elig === false && cl.eligAfter === true && cl.days === 30 && cl.every === 7 };
+        // ホーム画面から 開いた（standalone）・追加ずみ の 人には 出ない
+        const sa = await p.evaluate(() => { const A = nishioGo.a2hs; Object.defineProperty(navigator, 'standalone', { value: true, configurable: true }); const st = A.eligible(), offer = A.offer('goal'); Object.defineProperty(navigator, 'standalone', { value: false, configurable: true });
+          localStorage.setItem('nsg_a2hs_done', 'true'); const done = A.eligible(); localStorage.removeItem('nsg_a2hs_done'); return { st, offer, done, back: A.eligible(), hidden: document.getElementById('a2hs').hidden }; });
+        out.a2hsStandalone = { ...sa, ok: sa.st === false && sa.offer === false && sa.done === false && sa.back === true && sa.hidden };
+      }
+    } finally { R.errors.push(...v.errors); await v.ctx.close(); }
+  }
+  {   // Android の Chrome：合図（beforeinstallprompt）が 来るまで 出ない。来たら 札が そのまま ボタン
+    const v = await openAs('android'), p = v.page;
+    try {
+      if (await noApi(p)) out.a2hsPrompt = { ok: false, why: 'no-api' };
+      else {
+        const pre = await p.evaluate(async () => { const A = nishioGo.a2hs, wait = ms => new Promise(r => setTimeout(r, ms)); for (const k of ['nsg_a2hs_t', 'nsg_a2hs_x', 'nsg_a2hs_done']) localStorage.removeItem(k);
+          localStorage.setItem('nsg_mzgoals', '3'); A.cfg.minPlayMs = 0; A.cfg.tryMs = 200; A.cfg.showMs = 20000; document.getElementById('toast').classList.remove('show');
+          const how0 = A.how(); A.later('goal'); await wait(900); const before = !document.getElementById('a2hs').hidden;
+          const e = new Event('beforeinstallprompt', { cancelable: true }); window.__prompted = 0; e.prompt = () => { window.__prompted++; }; e.userChoice = Promise.resolve({ outcome: 'accepted' }); window.dispatchEvent(e);
+          return { how0, before, how1: A.how() }; });
+        const on = await shown(p, 6000);
+        const st = await p.evaluate(() => { const el = document.getElementById('a2hs'); return { ids: [...el.children].filter(c => !c.hidden).map(c => c.id), label: document.getElementById('a2hsAdd').textContent, tag: document.getElementById('a2hsAdd').tagName, covered: nishioPixel.mapCovered(true) }; });
+        if (on) await p.click('#a2hsAdd');
+        const off = await gone(p, 3000);
+        const aft = await p.evaluate(() => ({ prompted: window.__prompted, how: nishioGo.a2hs.how() }));
+        out.a2hsPrompt = { ...pre, on, ...st, off, ...aft, ok: pre.how0 === '' && !pre.before && pre.how1 === 'prompt' && on && String(st.ids) === 'a2hsAdd,a2hsNo' && st.tag === 'BUTTON' && /ホーム画面に 追加/.test(st.label) && !st.covered && off && aft.prompted === 1 && aft.how === '' };
+      }
+    } finally { R.errors.push(...v.errors); await v.ctx.close(); }
+  }
+  {   // LINE の 中の ブラウザ（iPhone）：ホーム画面に 追加できないので 何も 出さない
+    const v = await openAs('line'), p = v.page;
+    try {
+      if (await noApi(p)) out.a2hsInApp = { ok: false, why: 'no-api' };
+      else {
+        const r = await p.evaluate(async () => { const A = nishioGo.a2hs, wait = ms => new Promise(r => setTimeout(r, ms)); for (const k of ['nsg_a2hs_t', 'nsg_a2hs_x', 'nsg_a2hs_done']) localStorage.removeItem(k);
+          localStorage.setItem('nsg_mzgoals', '3'); A.cfg.minPlayMs = 0; A.cfg.tryMs = 200; document.getElementById('toast').classList.remove('show');
+          const elig = A.eligible(), how = A.how(); A.later('goal'); await wait(1500);
+          return { elig, how, shown: !document.getElementById('a2hs').hidden, t: localStorage.getItem('nsg_a2hs_t'), uas: ['Mozilla/5.0 (iPhone) Line/14.9.0', 'Mozilla/5.0 (iPhone) Instagram 300.0', 'Mozilla/5.0 (iPhone) [FBAN/FBIOS;FBAV/450.0]', 'Mozilla/5.0 (iPhone) Version/17.5 Mobile/15E148 Safari/604.1', 'Mozilla/5.0 (iPhone) CriOS/126.0 Mobile/15E148 Safari/604.1'].map(u => A.inApp(u)) }; });
+        out.a2hsInApp = { ...r, ok: r.elig === true && r.how === '' && !r.shown && r.t === null && String(r.uas) === 'true,true,true,false,false' };
+      }
+    } finally { R.errors.push(...v.errors); await v.ctx.close(); }
+  }
+  return out;
 }
 // サイクル191（はじめの 1分・動き）：何も さわらない はじめの 数秒、お米が とばない（始まりの 場所が めいろの 通路の 上）・ゴールの 旗が あちこちへ かわらない（選びなおしは 1こまの 中で）。
 // こまごとに お米の 場所と 行き先を 記録して 見る（知らせや 札の 文字では なく、描く こまで）
@@ -234,6 +353,15 @@ const FIRST_MINUTE_NEED = {
   playAskQuick: 'はじめてのさんぽで すぐ 着いた ゴールでも「どうだった？」を たずねる',
   worldBack: 'はじめてのさんぽで せかいちずを 開くと 👣（もどる）の ボタンが 出ない／もどれない',
   tiltDeniedMsg: '傾きの 許可を ことわった スマホの 知らせに 矢印キーの 話が ある',
+  swipeWalk: '地図を なぞっても（タップの つもりで 指が ずれても）歩きださない／窓が 開く／2本指で 歩く',
+  arriveNoSpin: 'めいろで ゴールの 名所に 着いた しゅんかんに チェックインの ボタンが 出る（下の 欄が とぶ）／ゴールで ない 名所で 出ない',
+  a2hsFirstWalk: 'ホーム画面に追加の 札が はじめてのさんぽ（ゴール 3つ まで）・開いて 1分の 間に 出る',
+  a2hsShown: 'ホーム画面に追加の 札が 落ちついても 出ない／小さな 1行の 札で ない（窓・地図を ふさぐ・お米や 下の 札に かかる）／せかいちずで 出る',
+  a2hsAutoHide: 'ホーム画面に追加の 札が ひとりでに 消えない／7日の うちに また 出る',
+  a2hsClose: 'ホーム画面に追加の 札を ✕ で 閉じても 30日 あけない',
+  a2hsStandalone: 'ホーム画面から 開いた・追加ずみの 人に ホーム画面に追加の 札が 出る',
+  a2hsPrompt: 'Android（追加の 画面を 出せる 端末）で 札が ボタンに ならない／合図の 前に 出る／押しても 追加の 画面を 出さない',
+  a2hsInApp: 'アプリの 中の ブラウザ（LINE など）で ホーム画面に追加の 手順を 出す',
   startNoJump: '何も さわらない うちに お米が とぶ（始まりの 場所が めいろの 通路の 上に ない）',
   firstGoalNoFlip: 'はじめの 数秒で ゴールの 旗が あちこちへ かわる（選びなおしが こまを またいで 見える）',
 };
@@ -307,9 +435,14 @@ function crashFailures(R, fail) {   // 安全網（guardEvaluate）に かかっ
     return null;
   });
   if (tapAt) {
-    await page.mouse.click(tapAt.cx, tapAt.cy); await page.waitForTimeout(300);
+    // サイクル192：着くまで 待つ（決めうちの 2.5秒では、始まりの 場所から 目あてまでの 道が 長い ときや ほかの 仕事で おそい ときに、歩いている とちゅうで 見て 落ちた。10回中 9回）
+    const tw0 = Date.now();
+    await page.mouse.click(tapAt.cx, tapAt.cy);
+    await page.waitForFunction(() => !!nishioPixel.tapGoal, null, { timeout: 2000 }).catch(() => {});
     const goal = await page.evaluate(() => nishioPixel.tapGoal);
-    await page.waitForTimeout(2500);
+    await page.waitForFunction(() => !nishioPixel.tapGoal, null, { timeout: 12000 }).catch(() => {});
+    await page.waitForTimeout(250);
+    R.checks.tapWalkInfo = { ms: Date.now() - tw0, goal };
     R.checks.tapWalk = await page.evaluate(([g, t]) => { const a = nishioPixel.toTile(nishioGo.me.lat, nishioGo.me.lng); return !!g && Math.floor(a.x) === g[0] && Math.floor(a.y) === g[1] && Math.abs(g[0] - t.x) + Math.abs(g[1] - t.y) <= 1 && !nishioPixel.tapGoal; }, [goal, tapAt]);
     // 歩いているとちゅうで きろく を開いたら、うしろで歩きつづけない（もとの所へタップして、すぐ きろく）
     const back = await page.evaluate(() => { const a = nishioPixel.toTile(nishioGo.me.lat, nishioGo.me.lng); return nishioPixel.tileToClient(Math.floor(a.x) - 3, Math.floor(a.y)); });
@@ -328,14 +461,31 @@ function crashFailures(R, fail) {   // 安全網（guardEvaluate）に かかっ
     const at3 = await page.evaluate(() => [nishioGo.me.lat, nishioGo.me.lng]);
     await page.waitForTimeout(1200);
     R.checks.tapWalkStopsOnTouch = started2 && await page.evaluate(at => !nishioPixel.tapGoal && nishioGo.me.lat === at[0] && nishioGo.me.lng === at[1], at3);
-    // 「ホーム画面に追加」の案内が出たときも止まる（行って戻る）。ごほうびの 大きな カード（#reward）は 出なく なった（運営者の声 2026-11-06。game.js の showReward）ので、カードで 止まる 確かめは はずした
-    R.checks.tapWalkStopsOnCover = [];
-    for (const [dx, cover] of [[-3, 'a2hs'], [3, 'a2hs']]) {
-      const p = await page.evaluate(dx => { const a = nishioPixel.toTile(nishioGo.me.lat, nishioGo.me.lng); return nishioPixel.tileToClient(Math.floor(a.x) + dx, Math.floor(a.y)); }, dx);
-      await page.mouse.click(p.x, p.y);
-      const at2 = await page.evaluate(id => { const el = document.getElementById(id); if (id === 'reward') el.classList.add('show'); else el.hidden = false; return [nishioGo.me.lat, nishioGo.me.lng, !!nishioPixel.tapGoal]; }, cover);   // 3つめ：歩きはじめていたか
-      await page.waitForTimeout(1200);
-      R.checks.tapWalkStopsOnCover.push(await page.evaluate(([at, id]) => { const ok = at[2] && !nishioPixel.tapGoal && nishioGo.me.lat === at[0] && nishioGo.me.lng === at[1]; const el = document.getElementById(id); if (id === 'reward') el.classList.remove('show'); else el.hidden = true; return ok && id; }, [at2, cover]));
+    // サイクル193（運営者の声 2026-11-10「さんぽGOホーム画面に追加を控えめに促す」）：「ホーム画面に追加」は 小さな 札に なった。出ても 歩きつづける（地図を ふさがない・role="status"）。
+    // 札は お米にも 下の 行き先の 札にも かからない。これまでの 確かめ（窓が 出たら 止まる）と 逆に なったので 書きなおした
+    R.checks.tapWalkOnPill = [];
+    for (const dx of [-3, 3]) {
+      let p = null;
+      for (const [ox, oy] of [[dx, 0], [-dx, 0], [0, -3], [0, 3], [dx, -2], [-dx, 2]]) {   // 歩きだせる 目あてを えらぶ（サイクル192）
+        await page.waitForFunction(() => !nishioPixel.tapGoal, null, { timeout: 12000 }).catch(() => {});
+        p = await page.evaluate(([ox, oy]) => { const a = nishioPixel.toTile(nishioGo.me.lat, nishioGo.me.lng), q = nishioPixel.tileToClient(Math.floor(a.x) + ox, Math.floor(a.y) + oy); return document.elementFromPoint(q.x, q.y) === document.getElementById('pxCanvas') ? q : null; }, [ox, oy]);
+        if (!p) continue;
+        await page.mouse.click(p.x, p.y);
+        if (await page.evaluate(() => !!nishioPixel.tapGoal && document.getElementById('pxInfo').hidden)) break;
+        await page.evaluate(() => { document.getElementById('pxInfo').hidden = true; });   // 人・名所を タップして 窓が 開いた：とじて ほかの 向き
+      }
+      const at2 = await page.evaluate(() => { const el = document.getElementById('a2hs'); el.hidden = false; el.classList.add('show'); return [nishioGo.me.lat, nishioGo.me.lng, nishioPixel.tapGoal]; });   // 3つめ：歩きはじめた 目あて
+      await page.waitForFunction(() => !nishioPixel.tapGoal, null, { timeout: 12000 }).catch(() => {});
+      R.checks.tapWalkOnPill.push(await page.evaluate(at => {
+        const el = document.getElementById('a2hs'), a = nishioPixel.toTile(nishioGo.me.lat, nishioGo.me.lng), g = at[2];
+        const boxes = [...el.children].filter(c => !c.hidden).map(c => c.getBoundingClientRect()), hit = (r, q) => r.left < q.right && q.left < r.right && r.top < q.bottom && q.top < r.bottom;
+        const cv = document.getElementById('pxCanvas'), cr = cv.getBoundingClientRect(), k = cr.width / cv.width, rb = nishioPixel.roll.box, rice = rb ? { left: cr.left + rb[0] * k, top: cr.top + rb[1] * k, right: cr.left + rb[2] * k, bottom: cr.top + rb[3] * k } : null;
+        const sheet = document.getElementById('sheet').getBoundingClientRect();
+        const ok = !!g && (nishioGo.me.lat !== at[0] || nishioGo.me.lng !== at[1]) && Math.floor(a.x) === g[0] && Math.floor(a.y) === g[1]   // 札が 出て いても 目あてまで 歩いた
+          && !el.hidden && boxes.length > 0 && !nishioPixel.mapCovered(true) && el.getAttribute('role') === 'status' && !boxes.some(r => (rice && hit(r, rice)) || hit(r, sheet));
+        el.classList.remove('show'); el.hidden = true;
+        return ok && 'walk';
+      }, at2));
     }
   } else R.checks.tapWalk = 'no-spot';
   R.checks.operateMode = await page.evaluate(() => nishioGo.demo && !nishioPixel.worldMode && !document.getElementById('pxPad').hidden);
@@ -3614,7 +3764,7 @@ function crashFailures(R, fail) {   // 安全網（guardEvaluate）に かかっ
   need(c.tapWalk === true, '地面をタップしても、そこまで歩かない');
   need(c.tapWalkStopsOnPanel === true, 'タップした所へ歩くとちゅうで きろく を開いても、うしろで歩きつづける');
   need(c.tapWalkStopsOnTouch === true, 'タップした所へ歩くとちゅうで 地図の外（こよみの札）をさわっても、うしろで歩きつづける');
-  need(String(c.tapWalkStopsOnCover) === 'a2hs,a2hs', 'タップした所へ歩くとちゅうで ホーム画面に追加 の案内が出ても、うしろで歩きつづける');
+  need(String(c.tapWalkOnPill) === 'walk,walk', 'ホーム画面に追加 の 小さな 札が 出ると、タップした所へ 歩くのが 止まる／札が 地図を ふさぐ・お米や 行き先の 札に かかる');
   need(c.operateMode && c.bgmStarted && c.checkinSound && c.cooldown && c.shopCard && c.worldBgm && c.walkMode && c.reactOffTab, '操作・音・当店の案内・あるいて移動のどれかが動かない');
   need(c.noRewardCard && c.noRewardCard.ok, `チェックインの あとに 大きな カードが 出て 地図を ふさぐ／上の 1行の「+Npt」が 出ない（${JSON.stringify(c.noRewardCard)}）`);
   need(c.chestsNearby > 0, 'たからばこが置かれていない');

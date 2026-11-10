@@ -83,7 +83,7 @@ class Cycle26Test(unittest.TestCase):
             self.assertNotIn(w, GAME)
         self.assertIn('tomorrowItems', GAME)
         self.assertIn('weekTheme', GAME)
-        self.assertIn('setTimeout(a2hsOffer, 4200)', GAME)
+        self.assertIn("afterRewardClosed(() => a2hsLater('goal'));", GAME)   # サイクル193：ホーム画面の おすすめは のこす（小さな 札に なり、出す 決まりは a2hsLater に）
 
     def test_no_forbidden_words(self):
         r = subprocess.run(['git', 'diff', 'origin/main', '--', 'nishio-go'], capture_output=True, text=True, cwd=ROOT, check=True)

@@ -23,7 +23,8 @@
   .hidden { display: none !important; }
   #vignette { position: fixed; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 45%, rgba(0,0,0,0) 55%, rgba(20,14,6,.28) 100%); }
   /* サイクル101: なぞり方ヒント（指と点線の跡。文字なし・入力をふさがない） */
-  #hintSwipe { position: fixed; inset: 0; pointer-events: none; z-index: 40; }
+  #hintSwipe { position: fixed; inset: 0; pointer-events: none; z-index: 40; animation: hintIn .3s ease-out; }   /* サイクル267: 見本は 0.3 秒で ふわっと出す（次の指が すぐ来て 0.1 秒で消えるときに パッと光らないように） */
+  @keyframes hintIn { from { opacity: 0; } to { opacity: 1; } }
   #hintSwipe .hDot { position: fixed; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; background: #ffd84a; box-shadow: 0 0 0 3px rgba(255,216,74,.35), 0 1px 4px rgba(0,0,0,.4); }
   #hintFinger { position: fixed; font-size: 56px; line-height: 1; margin: -48px 0 0 -12px; filter: drop-shadow(0 3px 5px rgba(0,0,0,.45)); }
   /* 上の計器（速さ・前後・ロータリー・耕した割合） */
@@ -8015,7 +8016,7 @@ const TRACE = {
 // 経路はトラクター前方の点列（3D）を毎フレーム画面へ投影するので、どの視点でも田んぼの上に重なる。入力はふさがない。
 const HINT = {
   t: 0, done: false, okT: 0, pts: null, at: null, dots: [],
-  demoK: -1, demoF: false, sideOK: 0,   // サイクル265: 止まっている間の見本の番（6 秒ごと）・「前へ」の見本を出しているか・横なぞりで 30° 以上 曲がれた回数
+  demoK: -1, demoF: false, sideOK: 0, yaw0: null, bent: false,   // サイクル265: 止まっている間の見本の番（6 秒ごと）・「前へ」の見本を出しているか・横なぞりで 30° 以上 曲がれた回数
   idleT: 0,   // サイクル262: 止まったままの時間（田んぼの中で 前に耕す所がない人への見本用）
   turn: null, stuckT: 0,   // サイクル260: 畦の手前で止まったままの時間と、「横へ なぞる」見本（出している間だけ { yaw, x, z, side }）
   build() {   // トラクターの前方 3〜13m（田んぼの内側へ寄せた点列）
@@ -8029,6 +8030,7 @@ const HINT = {
     const box = $('hintSwipe'); if (!box) return;
     for (let i = 0; i < 10; i++) { const el = document.createElement('div'); el.className = 'hDot'; box.appendChild(el); this.dots.push(el); }
   },
+  wait() { return this.sideOK >= 3 ? 2 : 0.4; },   // サイクル267: 止まってから見本を出すまでの秒
   proj(p) { const v = new THREE.Vector3(p[0], 0.2, p[1]).project(camera); return v.z < 1 ? [(v.x * 0.5 + 0.5) * innerWidth, (-v.y * 0.5 + 0.5) * innerHeight] : null; },
   update(dt) {
     const box = $('hintSwipe'); if (!box) return;
@@ -8050,14 +8052,21 @@ const HINT = {
     // 最初の1分のあと（下のボタンが出ている間）は、曲がり方を覚えるまでだけ出す。畦で止められたときの見本（上）は今までどおりで、出ている間は こちらは出さない
     // Codex 指摘（PR #1076）: 空を押して見回している指・2 本指の拡大も「指がふれている」。なぞり（TRACE.on）だけ見ていたので、その間も見本が消えず、置いたままの指の下に 2 秒で出ていた
     // Codex 指摘（PR #1076・2 回目）: 下のボタン（canvas の外）を押している指・押しているキーも「ふれている」。画面のどこかに指がある間（touchIds）と、前後左右の入力がある間は 止まった時計を 0 に
+    // サイクル267（運営者の実機の声 2026-11-10「曲がり方がわからない」「お手本をすぐに出す」）: 止まってから見本までの待ちを 2 秒 → 0.4 秒に（曲がり方を覚えた人＝sideOK 3 以上 は 2 秒のまま）。
+    // 実測（スマホ縦・本物のタッチ・最初の 60 秒）: 人の なぞりは 1 秒ほどで次の指が来るので、2 秒待つ間に見本は一度も出なかった
+    // （前へ 0.4 秒＋0.6 秒 置いて 1 秒休む人：「横へ」が はじめて見えたのは畦で止まった 35.5 秒。0.3 秒の はじき・タップだけの人：60 秒 ずっと 0 回）。
+    // 待ちを数えるのは 指が全部はなれて 止まりきってから（下の idle）なので、なぞっている間・置いた指で待っている間（サイクル116）・動いている間には出ない。
+    // まだ曲がったことのない人（はじめの向きから 30° 以上 向きが変わったことがない＝this.bent が false）には「横へ」を先に出す（前へは はじめのヒントで もう できている）。
+    // 30° 向きが変わったあとは 今までどおり（前に耕す所が続いていれば「前へ」、なければ 耕す所が多い側へ「横へ」）。6 秒ごとの入れかえも今までどおり
+    if (live && !this.bent) { if (this.yaw0 === null) this.yaw0 = S.yaw; else if (Math.abs(Math.atan2(Math.sin(S.yaw - this.yaw0), Math.cos(S.yaw - this.yaw0))) >= 0.52) this.bent = true; }
     const idle = live && this.done && !TRACE.on && !drag && viewPts.size === 0 && touchIds.size === 0 && !key.fwd && !key.back && !key.left && !key.right && !AUTO.on && !S.stalled && !(S.crank > 0) && Math.abs(S.v) < 0.05 && !(this.turn && !this.turn.idle);
     if (!idle) { this.idleT = 0; this.demoK = -1; this.demoF = false; if (this.turn && this.turn.idle) this.turn = null; }
-    else if ((this.idleT += dt) > 2 && !(this.sideOK >= 3 && FIRSTMIN.over)) {
-      const k = Math.floor((this.idleT - 2) / 6);
+    else if ((this.idleT += dt) > this.wait() && !(this.sideOK >= 3 && FIRSTMIN.over)) {
+      const k = Math.floor((this.idleT - this.wait()) / 6);
       if (k !== this.demoK) {
         this.demoK = k;
         const sd = this.workSide(this.turn ? this.turn.side : 0, true), any = this.workAhead(1);
-        let fwd = this.workAhead(this.sideOK >= 3 ? 1 : 6); if (k % 2) fwd = !fwd; if (!any) fwd = false;
+        let fwd = this.bent && this.workAhead(this.sideOK >= 3 ? 1 : 6); if (k % 2) fwd = !fwd; if (!any) fwd = false;   // サイクル267: まだ曲がったことのない人（this.bent が false）には「横へ」を先に
         this.t = 0; this.demoF = !!sd && fwd; this.turn = sd && !fwd ? { idle: true, side: sd } : null; if (this.demoF) this.pts = this.build();
       }
     } else if (this.sideOK >= 3 && FIRSTMIN.over) { this.demoF = false; if (this.turn && this.turn.idle) this.turn = null; }   // 覚えた人が 1 分をまたいだら、出ていた見本を消す

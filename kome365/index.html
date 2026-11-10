@@ -486,7 +486,8 @@ a{color:var(--acc)}
 #swWrap.demoOn #swEdge .eR{animation:swDemoGlowR 5s ease-in-out infinite}
 #swWrap.demoOn #swEdge .eL{animation:swDemoGlowL 5s ease-in-out infinite}
 @media (prefers-reduced-motion: no-preference){#swWrap.demoOn #swGuide{display:none!important}}   /* 手本が出ている間は丸い ◀ ▶ を出さない(2〜3枚目で押すだけの人に手本を出し直したとき) */
-@media (prefers-reduced-motion: reduce){#swWrap.demoOn #swGhost{display:none;animation:none}#swHand .hdMove,#swHand .hdFinger{animation:none}#swHand .hdFinger{opacity:1}#swHand .hdRing,#swHand .hdTrail{display:none}#swWrap.demoOn #swEdge .eL,#swWrap.demoOn #swEdge .eR{animation:none}}   /* 動きを減らす設定: 指は止まった絵で出し、向きは丸い ◀ ▶ (#swGuide)が示す */
+@media (prefers-reduced-motion: reduce){#swWrap.demoOn #swGhost{display:none;animation:none}#swHand .hdMove,#swHand .hdFinger{animation:none}#swHand .hdFinger{opacity:1}#swHand .hdRing,#swHand .hdTrail{display:none}#swWrap.demoOn #swEdge .eL,#swWrap.demoOn #swEdge .eR{animation:none}}
+@media (prefers-reduced-motion: reduce){#swWrap.demoOn #swGuide{display:block!important}}   /* 周回158: 動きを減らす設定で4枚目から手本を出すと、止まった指だけが出て向きが分からなかった(丸い ◀ ▶ は最初の3枚だけ)。手本が出ている間は、何枚目でも丸い ◀ ▶ を一緒に出す */   /* 動きを減らす設定: 指は止まった絵で出し、向きは丸い ◀ ▶ (#swGuide)が示す */
 .swBack{position:absolute;inset:0;z-index:0;border-radius:20px;background:#efe6cf;box-shadow:0 4px 14px rgba(0,0,0,.22);pointer-events:none;transition:transform .32s cubic-bezier(.22,1.25,.36,1),opacity .22s ease}
 .swBack.b1{transform:translateY(calc(-9px + var(--p) * 5px)) scale(calc(.95 + var(--p) * .04));opacity:calc(.55 + var(--p) * .45)}
 .swBack.b2{background:#e4d9bb;transform:translateY(calc(-17px + var(--p) * 6px)) scale(calc(.90 + var(--p) * .05));opacity:calc(.3 + var(--p) * .5)}
@@ -3041,10 +3042,18 @@ renderTitle();
   var DEMO = 'kome365_demo_seen', demoDone = store.get(DEMO) === '1';
   function demoWant(){ return !demoDone || tapOnly >= 2; }   /* 周回155: 手本を出すのは、まだ一度もスワイプで決めていない最初の1枚と、最初の3枚で2回つづけて押しただけの人 */
   function demoSet(on){ if (on) { try { var ic = $('swIc'), hd = $('swHand'); if (ic && ic.offsetParent) hd.style.setProperty('--hy', (ic.offsetTop + 4) + 'px'); else hd.style.removeProperty('--hy'); } catch (e) {} } $('swWrap').classList.toggle('demoOn', !!on); }   /* 指を置く高さはカードの大きな絵の段(日付・題・札の字にかけない)。絵が無い画面(横向き)ではカードの46% */
+  /* 周回158(最初の1分・運営者の声 2026-11-10「手本は、止まって見ているときにかならず出ていること」): 1回スワイプで決めたあとは、2枚目で10秒・5枚目で12秒止まっても、ためらって短く引いて離しても、縦になぞっても、手本の指は出なかった(出るのは「押しただけ2回」のときだけ)。
+     どのカードでも、決めずに止まっていたら手本を出す: カードが出てから・決めずに離してから 2秒。この読みこみで3回スワイプで決めた人(うまくできている人)は、決めずに離すまでは 6秒に延ばすだけで、出なくなることはない。
+     触れたら消える(ghostPause)・スワイプで決めたら消える(ghostOff)。カードは動かさない・タップでは選ばない(2026-11-09)はそのまま */
+  var DEMO_STOP_MS = 2000, DEMO_STOP_OK_MS = 6000, demoT = null, demoMiss = 0, demoOk = 0;
+  function demoDisarm(){ if (demoT) { clearTimeout(demoT); demoT = null; } }
+  function demoArm(){ demoDisarm(); demoT = setTimeout(function(){ demoT = null; if (startX == null && !busy && !$('sGame').classList.contains('hidden')) demoSet(true); }, (demoMiss > 0 || demoOk < 3) ? DEMO_STOP_MS : DEMO_STOP_OK_MS); }
+  var demoHeld = false;   /* Codex指摘(PR #1082): 別のタブに いる間は 数えない。待ちの とちゅうで 隠れたら 止めて、戻ったら はじめから 数え直す */
+  document.addEventListener('visibilitychange', function(){ if (document.hidden) { demoHeld = !!demoT; demoDisarm(); } else if (demoHeld) { demoHeld = false; demoArm(); } });
   window.addEventListener('resize', function(){ if ($('swWrap').classList.contains('demoOn')) demoSet(true); });   /* Codex指摘(PR #1071): 手本が出ている間に画面を回す・大きさが変わると、指の高さ(--hy)が前の画面のままだった。出ている間は測り直す(絵が無い横向きではカードの46%へ戻る) */
-  function ghostOff(){ tapOnly = 0; if (!demoDone) { demoDone = true; store.set(DEMO, '1'); } demoSet(false); $('swGhost').classList.remove('on'); $('swGhostArrows').classList.remove('on'); if (!ghostDone) { ghostDone = true; store.set(GHOST, '1'); } }
-  function ghostPause(){ demoSet(false); $('swGhost').classList.remove('on'); $('swGhostArrows').classList.remove('on'); }   /* 周回153(最初の1分): つかんでいる間だけ案内を止める(覚えこまない) */
-  function ghostBack(){ var on = !ghostDone && choices.length === 0 && !calmOn(); $('swGhost').classList.toggle('on', on); $('swGhostArrows').classList.toggle('on', on); demoSet(demoWant()); }   /* 周回153(最初の1分): 決めずに離したら、まだ最初の1枚の間は ◀ ▶ の案内をはじめから出し直す。もとは触れた瞬間に ghostOff で二度と出なくなり、札を押して選ぼうとした人は、押しても何も起きず、矢印も消えたまま止まっていた(両端の影だけが残る)。カードは動かさない(店主指示 2026-11-09 のまま) */   /* スワイプ開始/確定で即消え、以降は二度と出さない */
+  function ghostOff(){ tapOnly = 0; if (!demoDone) { demoDone = true; store.set(DEMO, '1'); } demoSet(false); demoDisarm(); demoMiss = 0; demoOk++; $('swGhost').classList.remove('on'); $('swGhostArrows').classList.remove('on'); if (!ghostDone) { ghostDone = true; store.set(GHOST, '1'); } }
+  function ghostPause(){ demoSet(false); demoDisarm(); $('swGhost').classList.remove('on'); $('swGhostArrows').classList.remove('on'); }   /* 周回153(最初の1分): つかんでいる間だけ案内を止める(覚えこまない) */
+  function ghostBack(){ demoMiss++; demoArm(); var on = !ghostDone && choices.length === 0 && !calmOn(); $('swGhost').classList.toggle('on', on); $('swGhostArrows').classList.toggle('on', on); demoSet(demoWant()); }   /* 周回153(最初の1分): 決めずに離したら、まだ最初の1枚の間は ◀ ▶ の案内をはじめから出し直す。もとは触れた瞬間に ghostOff で二度と出なくなり、札を押して選ぼうとした人は、押しても何も起きず、矢印も消えたまま止まっていた(両端の影だけが残る)。カードは動かさない(店主指示 2026-11-09 のまま) */   /* スワイプ開始/確定で即消え、以降は二度と出さない */
   function festKind(c){ return c && ({ plant: 'plant', harvest: 'harvest', qf_festival: 'aki', q_niiname: 'niiname' })[c.key] || null; }
   /* 表示専用の短縮(第4弾サイクル4→サイクル71・INSIDE: 読まなくても絵と題で判断が始まる): 日付の前置きはHUDと重複なので外し、七十二候の定型の定義文も毎回同じなので外す。表面は「場面が分かる文」だけ(通常は18字以上になるまでの文・最大46字。数字や適期が2〜3文目にある必須作業 mid/drain/plant/harvest は最大3文・最大72字)。上限は必ず守り空にはしない。全文と左右のhintはくわしい話の「📖 全文」で読める。card.text 自体は不変 */
   function shortText(t, key){
@@ -3305,7 +3314,7 @@ renderTitle();
     rwUpdate(true);
     el.card.classList.remove('enter', 'wig', 'hinting'); void el.card.offsetWidth; el.card.classList.add('enter'); if (hintOn) el.card.classList.add('hinting');   /* 周回99: 最初の3枚の揺れ(wig)はやめる。◀ ▶ の案内だけで足りる */
     if (card.focus && window.Field3D && window.Field3D.canFocus && use3d) { try { if (window.Field3D.canFocus(card.focus)) window.Field3D.focus(card.focus); } catch (e) {} }
-    $('swGhost').classList.toggle('on', !ghostDone && choices.length === 0 && !calmOn()); $('swGhostArrows').classList.toggle('on', !ghostDone && choices.length === 0 && !calmOn()); demoSet(demoWant());   /* 周回155: スワイプの手本(指)も同じ条件で出す */
+    $('swGhost').classList.toggle('on', !ghostDone && choices.length === 0 && !calmOn()); $('swGhostArrows').classList.toggle('on', !ghostDone && choices.length === 0 && !calmOn()); demoSet(demoWant()); demoArm();   /* 周回155: スワイプの手本(指)も同じ条件で出す */
     el.card.classList.toggle('hintSh', choices.length === 0 && !calmOn());   /* 店主指示 2026-11-09: 最初の1枚だけカード両端の影で左右へ動かせることを促す。最初のスワイプ以降(choices>=1)は render のたび外れるので二度と出ない */
     var kk = $('swKakashi'); kk.classList.toggle('big', card.tag === '見回り');
     festReset();

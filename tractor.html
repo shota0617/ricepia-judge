@@ -8152,7 +8152,7 @@ const T3 = {
 const TRACE = {
   pts: [], cps: [], ctx: 0, on: false, drive: false, line: null, fade: 0,
   fv: 0, fHist: [], fT: 0, fPos: null, scCd: 0, stopBoost: 0,   // サイクル116: 指の速さ（変位ベース）・近道の間隔・離した直後の強い減速
-  backLeft: 0,   // サイクル262: 畦のかどから まっすぐ下がる残りの長さ（m）
+  backLeft: 0, backUp: false,   // サイクル262: 畦のかどから まっすぐ下がる残りの長さ（m）。サイクル263: そのとき作業機を自動で上げたか
   blockT: 0, escK: 1,   // サイクル260: 畦の手前で止められてからの残り時間（秒）と、その間の切れ角（いっぱい＝1）。この間は 指のある側へ切る
   // サイクル260: なぞりの点は 畦から 1.5m 内側までに寄せる（それまでは畦の線の上まで）。畦ぞいに なぞると 線が畦の上に乗り、トラクターは作業機のはしが
   // 畦まで 4cm の所まで寄って平行になり、そこからは切ると作業機のおしりが畦にかかって どちらへも動けなかった（実測 スマホ横: 見本どおり横へなぞって 3 回目から 0m）。
@@ -8233,7 +8233,8 @@ const TRACE = {
     }
     if (this.pull) { const q = this.pull, lat = (h.x - q.x) * q.fz - (h.z - q.z) * q.fx; h.x = q.x + q.fz * lat; h.z = q.z - q.fx * lat; }
     this.clampIn(h);   // サイクル101: ふちの外へ出ても 線が途切れない
-    if (this.rebase) { this.rebase = false; this.pts = [[h.x, h.z]]; this.ctx = 0; this.sync(); this.fv = 0; this.fHist = [[e.timeStamp || 0, h.x, h.z]]; this.fT = e.timeStamp || 0; this.fPos = [h.x, h.z]; this.sPos = [e.clientX, e.clientY]; this.passMin = 1e9; this.draw(); return; }   // 視点が切りかわった直後: 線をいまの指の位置から引き直す（指速の計測もここから）。引き直しの点は begin と同じ始点として寄せない（Codex設計確認の指摘）
+    if (this.rebase) { this.rebase = false; this.g0 = [h.x, h.z, e.clientX, e.clientY]; this.pull = null; this.pullDone = false; this.pts = [[h.x, h.z]];   // サイクル263（Codex 指摘）: 横なぞりの見きわめの始点（g0）も 引き直した点に そろえる。前の視点の交点・画面の位置のままだと、手前から なぞり直した線まで 3.5m 先へ寄せていた
+    this.ctx = 0; this.sync(); this.fv = 0; this.fHist = [[e.timeStamp || 0, h.x, h.z]]; this.fT = e.timeStamp || 0; this.fPos = [h.x, h.z]; this.sPos = [e.clientX, e.clientY]; this.passMin = 1e9; this.draw(); return; }   // 視点が切りかわった直後: 線をいまの指の位置から引き直す（指速の計測もここから）。引き直しの点は begin と同じ始点として寄せない（Codex設計確認の指摘）
     h.x = this.snapX(h.x);   // サイクル219・類3: 列への軽い吸着（snapX 側で条件判定。begin・rebase の始点は寄せない）
     // サイクル116（なぞり）: 画面上で DZ px 動いていない pointermove は受け付けない（最後に受け付けた位置からの差で見る＝ゆっくりでも動かし続ければ通る）。
     // なぞり中の視点（運転席。サイクル118）はトラクターといっしょに動く・回るので、指を置いたままでも地面のほうが指の下を流れる。置いた指のわずかなブレ（1〜2px）で pointermove が来ると、
@@ -8791,11 +8792,12 @@ function step(dt) {
     const cap = S.rotDown ? 3.0 / 3.6 : onSlope ? 1.4 : Infinity;
     if (want > cap) { want = cap; EASY.used = true; EASY.tell('speed', S.rotDown ? '耕すときは時速 3km までにおさえています（速いと土が粗くなる）' : '坂はゆっくり。速さをおさえています'); }
   }
-  if (tracing && TRACE.backLeft > 0) {   // サイクル262: 畦のかどから下がっている間。まっすぐ → 行きたい側へ 浅く切って → いっぱい切って の順に、1.3m うしろまで畦にかからない下がり方をえらぶ（切って下がると 向きが畦の側へ回るので、まっすぐが先。速さはキーのバックと同じ 秒速 0.85m）（下の 🔰 も うしろの畦を見る）
+  if (tracing && TRACE.backLeft > 0 && want > 0) {   // サイクル263（Codex 指摘）: want > 0 のときだけ＝上の走れるかの判定（セル中・エンスト・はまった・前輪が浮いた）で 0 になっていたら 下がらない。それまでは ここで −0.85 に上書きして、はまっていても下がれた
+    // サイクル262: 畦のかどから下がっている間。まっすぐ → 行きたい側へ 浅く切って → いっぱい切って の順に、1.3m うしろまで畦にかからない下がり方をえらぶ（切って下がると 向きが畦の側へ回るので、まっすぐが先。速さはキーのバックと同じ 秒速 0.85m）（下の 🔰 も うしろの畦を見る）
     const es = TRACE.escSide(); let k = null;
     for (const c of [0, 0.12, 0.3, 1]) { const st = -es * MAX_STEER * c; let x = S.x, z = S.z, y = S.yaw, ok = true; for (let i = 0; i < 26 && ok; i++) { y += 0.05 * Math.tan(st) / WB; x -= Math.sin(y) * 0.05; z -= Math.cos(y) * 0.05; ok = canBe(x, z, y); } if (ok) { k = c; break; } }
     if (k === null) TRACE.backLeft = 0;
-    else { TRACE.escK = k; TRACE.blockT = 0.6; TRACE.passMin = 1e9; want = Math.abs(S.steer + es * MAX_STEER * k) < 0.08 ? -0.85 : 0; TRACE.backLeft -= Math.abs(S.v) * dt; }   // 切れ角が そろってから下がる。passMin を戻す：下がると線の終わりから遠ざかるので「行きすぎた」と見て なぞりを打ち切らないように
+    else { TRACE.escK = k; TRACE.blockT = 0.6; TRACE.passMin = 1e9; want = Math.abs(S.steer + es * MAX_STEER * k) < 0.08 ? -Math.min(0.85, RAMPDMG.cap(-1)) : 0; TRACE.backLeft -= Math.abs(S.v) * dt; }   // 切れ角が そろってから下がる。passMin を戻す：下がると線の終わりから遠ざかるので「行きすぎた」と見て なぞりを打ち切らないように
   } else if (!tracing) TRACE.backLeft = 0;
   if (EASY.on && S.started && !AUTO.on && (want !== 0 || Math.abs(S.v) > 0.05)) {   // のんびり自動運転の道すじは 畦にかからないので、止めない。🔰 畦の手前で止まる：止まれる長さ＋ゆとりの先に畦があれば、ゆっくり（6cm 先も畦なら止まる）。アクセルをはなして惰性で進むあいだも見る
     // ハンドルを切っていれば曲がった先で見る。せまい所でも少しずつ動いて抜けられる（動けなくならない）
@@ -8829,12 +8831,19 @@ function step(dt) {
       }
       // サイクル262: 前へは どう切っても動けないとき（畦のかど・畦と ほぼ平行に寄った所。実測 スマホ縦: 畦ぞい z=23.6 で西むきに止まり、見本どおり 11 回なぞって 0m）は、
       // 少し下がってから切る。本物も 畦が近いときは 少しバックしてから曲がる（農家の声 backTurn と同じ出どころ）。作業機は上げて下がる
-      if (tracing && es0 && !farOk && sg > 0 && !(TRACE.backLeft > 0)) { TRACE.backLeft = 3; if (S.rotDown) { S.rotDown = false; EASY.autoUp = true; setRotBtn(); } }
+      if (tracing && es0 && !farOk && sg > 0 && !(TRACE.backLeft > 0)) { TRACE.backLeft = 3; if (S.rotDown) { S.rotDown = false; TRACE.backUp = true; setRotBtn(); } }
       if (tracing || Math.abs(S.v) > 0.2 || !at(0.06) || Math.sign(want) !== sg) { want = 0; S.v *= 0.6; }   // 速いとき・惰性のときは強くブレーキ。6cm 先も畦なら止まる
       else want = sg * Math.min(Math.abs(want), 0.15);                                           // ゆっくりなら、少しずつ動ける（キー操作のとき）
       EASY.used = true;
       EASY.tell('stop', '畦の手前で止めました。' + (S.rotDown && sg > 0 ? IMPL + 'を上げてから回ろう' : 'ハンドルを切るか、反対へ'));
     }
+  }
+  // サイクル263（Codex 指摘）: 切り返しで上げた作業機は、同じ なぞりの中で 前へ もどって ハンドルが ほぼまっすぐになったら下ろす（TRACE.backUp に覚えておく）。
+  // それまでは EASY.autoUp に入れていたが、下げるのは お題ありの絵の中だけ・大きく切ると消える ので、お題なしでは 指を離して なぞり直すまで上がったまま耕せなかった。
+  // お題ありは 絵の中に入ってから下げる今までの決まり（EASY.autoUp）に渡す。お題なしは toggleRotary で下ろす（降下止め・直している間は下りない。知らせは出さない）
+  if (TRACE.backUp) {
+    if (S.rotDown || !tracing) TRACE.backUp = false;
+    else if (!(TRACE.backLeft > 0) && S.v > 0.1 && Math.abs(S.steer) < 0.15) { if (EASY.on && ART.on) EASY.autoUp = true; else toggleRotary(true); }   // 0.15＝点数が「旋回していない」と見る切れ角。回っている間は下ろさない（「下げたまま旋回」に数えさせない）
   }
   // 前後の切りかえ（シャトル）：止まってから逆へ入れると、一瞬まって「ごとん」とつながる
   if (want !== 0 && Math.abs(S.v) < 0.05 && S.lastDir && Math.sign(want) !== S.lastDir && !(S.shuttleT > 0)) {

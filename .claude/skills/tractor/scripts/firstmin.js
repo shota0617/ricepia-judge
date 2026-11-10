@@ -1,4 +1,4 @@
-// 最初の1分の確かめ（サイクル259・260）：node firstmin.js [tractor.html のパス]
+// 最初の1分の確かめ（サイクル259〜263）：node firstmin.js [tractor.html のパス]
 //  1) 知らせの文：吹き出し（speakText）・短い文（shortText）で かっこが合わなくならない（「…見ます）」のような切れ方をしない）
 //  3) 畦の手前で止まった人：「横へ なぞる」見本が出て、見本どおりで向きが変わる。自動で下ろす知らせは 1 回だけ（サイクル260）
 //  2) のんびりの大きな数字：スマホ縦で 1 回なぞって耕したら 0% のままにならない。田んぼアートでは地図の「でき」と同じ数、お題なしでは小数 1 けた
@@ -13,6 +13,11 @@ const ok = (name, cond, info) => { console.log((cond ? 'ok   ' : 'NG   ') + name
   const m = src.match(/clampM\(\) \{ return ([^;]+); \}/), f = m && new Function('TILL_W', 'return ' + m[1]);
   const got = f ? [2.2, 1.35, 0.9, 3.4].map(w => +f(w).toFixed(3)) : null;
   ok('畦から寄せる幅：ロータリー 1.5m・プラウは外の列（1.175m）まで', !!got && got[0] === 1.5 && got[1] === 1.175 && got[2] === 0.95 && got[3] === 1.5 && /clampIn\(h\) \{ const m = this\.clampM\(\);/.test(src), got);
+}
+// ---- 0b) 横なぞりに切りかえた回は、指が 5px 動いていなくても 点を入れる（Codex 指摘 PR #1073。点が空のままだと 指を止めたとき 曲がらずに止まる） ----
+{
+  const i = src.indexOf('this.pull = { x: S.x + fx * 3.5'), seg = i < 0 ? '' : src.slice(i, src.indexOf('}', src.indexOf('this.pts = []', i)) + 1);
+  ok('横なぞりへの切りかえで 点列を消したら 受け付け位置（sPos）も消す', /this\.pts = \[\];[^}]*this\.sPos = null;/.test(seg), seg.slice(-60));
 }
 // ---- 1) 知らせの文 ----
 {
@@ -92,6 +97,89 @@ const srv = http.createServer((r, s) => { const u = decodeURIComponent(r.url.spl
     s = await st(); const dyaw = Math.abs(Math.atan2(Math.sin(s.yaw - yaw0), Math.cos(s.yaw - yaw0)));
     ok('見本どおり横へ 3 回なぞると 向きが変わる（35° 以上）', dyaw > 0.6, [+dyaw.toFixed(2), +(s.x - x0).toFixed(1)]);
     ok('自動で下ろす知らせ「…を下げました」は 1 回だけ', s.low === 1, s.low);
+    await ctx.close();
+  }
+  // ---- 4) 田んぼの中で止まった人（サイクル262・運営者の実機の声「曲がり方がわからない」）----
+  {
+    const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true, isMobile: true });
+    const p = await ctx.newPage(); p.setDefaultTimeout(180000);
+    p.on('pageerror', e => errs.push('pageerror ' + e.message)); p.on('console', m => { if (m.type() === 'error') errs.push('console ' + m.text()); });
+    await p.route('https://cdn.jsdelivr.net/**', r => r.fulfill({ path: TN + r.request().url().split('/three@0.128.0')[1], contentType: 'text/javascript' }));
+    await p.goto(`http://localhost:${PORT}/tractor.html`);
+    await p.waitForFunction(() => window.game && game.S && game.S.started && typeof P !== 'undefined' && P.Rotary);
+    await p.evaluate(() => { const real = performance.now.bind(performance); let now = real(); performance.now = () => now; window.__sync = () => { now = real(); }; window.requestAnimationFrame = () => 0; game.renderer.render = () => {};
+      window.__adv = sec => { for (let i = 0, n = Math.round(sec / 0.05); i < n; i++) { now += 50; frame(now); } }; });
+    await p.waitForTimeout(2500); await p.evaluate(() => window.__sync());
+    const cdp = await ctx.newCDPSession(p), adv = s => p.evaluate(x => window.__adv(x), s);
+    const stroke = async (pts, hold) => { await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: pts[0][0], y: pts[0][1], id: 1 }] });
+      for (let i = 1; i <= 20; i++) { const f = i / 20 * (pts.length - 1), k = Math.min(pts.length - 2, Math.floor(f)), u = f - k; await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: pts[k][0] + (pts[k + 1][0] - pts[k][0]) * u, y: pts[k][1] + (pts[k + 1][1] - pts[k][1]) * u, id: 1 }] }); await adv(0.05); }
+      await adv(hold); await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); await adv(1.2); };
+    const st = () => p.evaluate(() => { const box = document.getElementById('hintSwipe'), vis = [...box.querySelectorAll('.hDot')].filter(e => e.style.display !== 'none');
+      return { z: game.S.z, x: game.S.x, yaw: game.S.yaw, hint: !box.classList.contains('hidden'), dots: vis.length, dy: vis.length ? parseFloat(vis[0].style.top) : 0 }; });
+    const dy = (a, b) => Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b)));
+    await adv(2); await stroke([[195, 481], [195, 397]], 2.5);                      // 前へ 1 回（田んぼのまん中あたり。畦は遠い・前に耕す所も残っている）
+    let s0 = await st();
+    ok('前へ なぞった すぐあとは 見本を出さない', !s0.hint, s0.hint);
+    for (let i = 0; i < 25 && !(s0.hint && s0.dots >= 4); i++) { await adv(0.2); s0 = await st(); }
+    ok('まだ曲がったことのない人が止まっていると「横へ なぞる」見本が出る（6 秒以内）', s0.hint && s0.dots >= 4 && s0.dy < 422, [s0.hint, s0.dots, Math.round(s0.dy)]);
+    await stroke([[195, 321], [273, 317], [363, 313]], 4.0);                         // 見える地面の帯（ボンネットの上）を 横へ
+    let s = await st();
+    ok('見える地面を横へ なぞると 向きが変わる（20° 以上）', dy(s.yaw, s0.yaw) > 0.35, +dy(s.yaw, s0.yaw).toFixed(2));
+    await p.evaluate(() => Object.assign(game.S, { x: 0, z: 17.6, yaw: 0, v: 0, steer: 0 }));   // 持ち主の場面：白線（z=14）をこえた先・畦（z=25）の手前で止まっている
+    await adv(1); s = await st();
+    for (let i = 0; i < 25 && !(s.hint && s.dots >= 4); i++) { await adv(0.2); s = await st(); }
+    ok('前に耕す所がないまま止まっていると「横へ なぞる」見本が出る（5 秒以内）', s.hint && s.dots >= 4 && s.dy < 422, [s.hint, s.dots, Math.round(s.dy)]);
+    await p.evaluate(() => Object.assign(game.S, { x: -11.2, z: 23.6, yaw: -1.69, v: 0, steer: 0 })); await adv(1); s0 = await st();   // 畦のかど（実測で動けなくなった所）
+    for (let i = 0; i < 4; i++) await stroke([[195, 330], [280, 328], [360, 322]], 4.0);
+    s = await st();
+    ok('畦のかどからも 田んぼの側へ なぞれば ぬけられる（下がってから切る）', dy(s.yaw, s0.yaw) > 0.5 && Math.hypot(s.x - s0.x, s.z - s0.z) > 2, [+dy(s.yaw, s0.yaw).toFixed(2), +Math.hypot(s.x - s0.x, s.z - s0.z).toFixed(1)]);
+    // サイクル263（Codex 指摘 1）: 畦のかどから下がっている とちゅうで はまったら（S.stuck）、そこで止まる
+    await p.evaluate(() => Object.assign(game.S, { x: -11.2, z: 23.6, yaw: -1.69, v: 0, steer: 0 })); await adv(1);
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: 195, y: 330, id: 1 }] });
+    for (let i = 1; i <= 20; i++) { await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: 195 + 165 * i / 20, y: 330 - 8 * i / 20, id: 1 }] }); await adv(0.05); }
+    let bk = false; for (let i = 0; i < 40 && !bk; i++) { await adv(0.1); bk = await p.evaluate(() => TRACE.backLeft > 0 && game.S.v < -0.3); }
+    await p.evaluate(() => Object.defineProperty(game.S, 'stuck', { get: () => true, set() {}, configurable: true })); await adv(1); s0 = await st(); await adv(2); s = await st();
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); await p.evaluate(() => { delete game.S.stuck; game.S.stuck = false; }); await adv(1);
+    ok('下がっている とちゅうで はまったら 止まる（サイクル263）', bk && Math.hypot(s.x - s0.x, s.z - s0.z) < 0.05, [bk, +Math.hypot(s.x - s0.x, s.z - s0.z).toFixed(2)]);
+    // サイクル263（Codex 指摘 3）: 運転席でない視点から なぞり始めたとき、横なぞりの見きわめの始点は 引き直した点にそろう
+    await p.evaluate(() => { Object.assign(game.S, { x: 0, z: 0, yaw: 0, v: 0, steer: 0 }); game.nextCam(); }); await adv(0.5);
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: 120, y: 560, id: 1 }] }); await adv(0.05);
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: 195, y: 500, id: 1 }] }); await adv(0.05);
+    const rb = await p.evaluate(() => ({ on: TRACE.on, g: TRACE.g0 && [Math.round(TRACE.g0[2]), Math.round(TRACE.g0[3])], pd: TRACE.pullDone, cam: camMode }));
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); await adv(1);
+    ok('ほかの視点から なぞり始めたら 見きわめの始点も引き直す（サイクル263）', rb.on && rb.cam === 0 && rb.g && rb.g[0] === 195 && rb.g[1] === 500 && !rb.pd, rb);
+    await p.evaluate(() => Object.assign(game.S, { x: 0, z: 0, yaw: 0, v: 0, steer: 0 })); await adv(6); s = await st();   // もう曲がれた人が 絵の中・前に耕す所がある所で止まっている
+    ok('曲がれた人には、前に耕す所があるときは 見本を出さない', !s.hint, s.hint);
+    await ctx.close();
+  }
+  // ---- 5) お題なしで 畦のかどから切り返したあと（サイクル263・Codex 指摘 2）：同じ なぞりの中で 作業機が また下りる ----
+  {
+    const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true, isMobile: true });
+    const p = await ctx.newPage(); p.setDefaultTimeout(180000);
+    p.on('pageerror', e => errs.push('pageerror ' + e.message)); p.on('console', m => { if (m.type() === 'error') errs.push('console ' + m.text()); });
+    await p.route('https://cdn.jsdelivr.net/**', r => r.fulfill({ path: TN + r.request().url().split('/three@0.128.0')[1], contentType: 'text/javascript' }));
+    await p.goto(`http://localhost:${PORT}/tractor.html?art=none`);
+    await p.waitForFunction(() => window.game && game.S && game.S.started && typeof P !== 'undefined' && P.Rotary);
+    await p.evaluate(() => { const real = performance.now.bind(performance); let now = real(); performance.now = () => now; window.__sync = () => { now = real(); }; window.requestAnimationFrame = () => 0; game.renderer.render = () => {};
+      window.__r = { backed: false, relow: false, say: 0 }; let last = '';
+      window.__adv = sec => { for (let i = 0, n = Math.round(sec / 0.05); i < n; i++) { now += 50; frame(now); if (TRACE.backLeft > 0 && game.S.v < -0.1) __r.backed = true; if (__r.backed && TRACE.on && game.S.rotDown && game.S.v > 0.1) __r.relow = true;
+        const e = document.getElementById('say'), t = e.classList.contains('off') ? '' : e.innerText; if (t !== last) { last = t; if (__r.backed && /を下げました/.test(t)) __r.say++; } } }; });
+    await p.waitForTimeout(2500); await p.evaluate(() => window.__sync());
+    const cdp = await ctx.newCDPSession(p), adv = s => p.evaluate(x => window.__adv(x), s);
+    await adv(2);
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: 195, y: 481, id: 1 }] });
+    for (let i = 1; i <= 20; i++) { await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: 195, y: 481 - 84 * i / 20, id: 1 }] }); await adv(0.05); }
+    await adv(2); await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); await adv(1);
+    await p.evaluate(() => Object.assign(game.S, { x: -11.2, z: 23.6, yaw: -1.69, v: 0, steer: 0 })); await adv(1);
+    const t0 = await p.evaluate(() => tilledCount);
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: 195, y: 330, id: 1 }] });   // 指を置いたまま 1 回の なぞりで（離して なぞり直すと そこで下りるので）
+    for (let i = 1; i <= 20; i++) { await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: 195 + 165 * i / 20, y: 330 - 8 * i / 20, id: 1 }] }); await adv(0.05); }
+    await adv(25);
+    const r = await p.evaluate(() => ({ ...window.__r, tilled: tilledCount, down: game.S.rotDown }));
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); await adv(1);
+    ok('お題なし：畦のかどで 下がった', r.backed, r.backed);
+    ok('お題なし：下がったあと 同じ なぞりの中で 作業機が下りて 耕せる（サイクル263）', r.relow && r.tilled > t0 + 20, [r.relow, r.tilled - t0]);
+    ok('お題なし：自動で下ろすとき「…を下げました」は出さない', r.say === 0, r.say);
     await ctx.close();
   }
   ok('エラーなし', errs.length === 0, errs.slice(0, 3));

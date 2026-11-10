@@ -9436,6 +9436,8 @@ function tileClient(tx, ty) {   // 歩く地図のマスのまん中が、画面
 }
 function tiltAsk(event) {   // 本当の タップで 1回だけ（画面を 最初に さわった とき・傾きの ボタン・はじめの画面の「あそぶ」・盤の めいろを 開く ボタン）。前に ことわった 人には 地図の タップでは 聞かない。拒否・例外でも タップで 遊べる。
   if (!event || !event.isTrusted || tiltG.asked || !tiltNeedsPermission()) return;   // userActivation が ない 端末でも、自動表示・合成クリックからは 求めない
+  if (tiltAsk.ev === event || performance.now() - (tiltAsk.at || -1e9) < 250) return;   // 同じ タップで 2回 聞かない（画面の 最初の タップと、あそぶ・盤の めいろの ボタンが 同じ click で 重なる。一時的な 失敗の やりなおしは 次の タップで）
+  tiltAsk.ev = event; tiltAsk.at = performance.now();
   tiltG.asked = true; tiltG.retry = false;
   const fallback = () => G.toast('地図を タップして 遊べるよ');   // サイクル191：傾きの 許可を 聞くのは スマホ・タブレットだけ（矢印キーの 話は しない）
   const denied = () => { lsSet('nsg_tilt_ok', '0'); tiltBtnSync(); fallback(); };   // ことわった・聞けない：おぼえて、ボタンは 小さく

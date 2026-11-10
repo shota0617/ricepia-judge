@@ -30,6 +30,7 @@ class Tilt194(unittest.TestCase):
         self.assertNotIn("=== '0') return;", f)
         self.assertNotIn("document.addEventListener('touchend', tiltFirstTouch", PIX)
         self.assertIn("tiltAsk(e);", f)
+        self.assertIn("if (tiltAsk.ev === event || performance.now() - (tiltAsk.at || -1e9) < 250) return;", fn_src("tiltAsk"))   # 同じ タップで 2回 聞かない
         # Codex 指摘（PR #1083）：傾きの ボタンの タップは ボタンに まかせる。やりなおしは 同じ 指の 動きの 中では しない
         self.assertIn("if (e && e.target && e.target.closest && e.target.closest('#pxTilt')) return;", f)
         self.assertIn("if (now - (tiltFirstTouch.at || -1e9) < 700) return;", f)

@@ -212,6 +212,8 @@
     #sceneSort { flex-direction:column; gap:6px; }
     #ittoPhoto { height:45%; }
     #dish { flex:0 0 40%; width:100%; margin:0; border-radius:24px; padding:4px 8px; }
+    #osu { padding-bottom:0; padding-right:54%; } /* 横向きは下に空きがないので、袋を左へ寄せ、米の流れの絵は右に置く（サイクル136）。下に置いたままだと絵が証印にかぶさる（740×360実測） */
+    #journey { left:46%; top:calc(50% - 52px); bottom:auto; }
     #foot { min-height:calc(46px + env(safe-area-inset-bottom)); }
     #hint { font-size:17px; }
     #nextBtn { min-height:40px; padding:4px 30px; font-size:17px; }

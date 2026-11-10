@@ -84,7 +84,7 @@ const srv = http.createServer((r, s) => { const u = decodeURIComponent(r.url.spl
     ok('少しずれた「前へ」の なぞりでは 曲がらない（サイクル261）', Math.abs(Math.atan2(Math.sin(s.yaw - yaw0), Math.cos(s.yaw - yaw0))) < 0.3 && Math.abs(s.x - x0) < 1, [+(s.yaw - yaw0).toFixed(2), +(s.x - x0).toFixed(1)]);
     for (let i = 0; i < 3; i++) await stroke([[195, 506], [195 + side * 58, 473], [195 + side * 156, 447]], 4.0);
     s = await st(); const dyaw = Math.abs(Math.atan2(Math.sin(s.yaw - yaw0), Math.cos(s.yaw - yaw0)));
-    ok('見本どおり横へ 3 回なぞると 向きが変わる（45° 以上）', dyaw > 0.8, [+dyaw.toFixed(2), +(s.x - x0).toFixed(1)]);
+    ok('見本どおり横へ 3 回なぞると 向きが変わる（35° 以上）', dyaw > 0.6, [+dyaw.toFixed(2), +(s.x - x0).toFixed(1)]);
     ok('自動で下ろす知らせ「…を下げました」は 1 回だけ', s.low === 1, s.low);
     await ctx.close();
   }

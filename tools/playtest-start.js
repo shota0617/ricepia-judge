@@ -59,7 +59,9 @@ async function runStartChecks(browser, url, out, { shareOnly = false } = {}) {
       // サイクル194（運営者の声 2026-11-10「スタート時に反応せず、タップすると動作許可が出る挙動を改善」）：
       // 地図の タップでは 求めない（歩く だけ）。許可の いる スマホには 傾きの ボタン（#pxTilt）が 出て、それを 押した ときだけ 1回 求める。許可の いらない 端末・タッチの ない 端末には ボタンを 出さない
       const tiltSt = () => page.evaluate(() => { const b = document.getElementById('pxTilt'), t = nishioPixel.meiroApi.tilt(), r = b.getBoundingClientRect(); return { asks: window.__asks, asked: !!t.asked, retry: !!t.retry, btn: !b.hidden && r.width > 0, cls: b.className, text: b.textContent.trim(), saved: localStorage.getItem('nsg_tilt_ok') }; });
-      const tapTilt = async () => { await clearOverlays(page); if (!(await tiltSt()).btn) return false; await page.click('#pxTilt'); await page.waitForTimeout(300); return true; };
+      // サイクル198：許可の すぐ あと 1.5秒だけ 出る「📱 OK」の しるしは 押さない（押す とちゅうで 消えると、click が 消えた ボタンを 30秒 待って 台本が 止まる。
+      // 手本が 早く 出る ように なって、ここへ 来るのが「OK」の 出て いる 間に なった。ボタンが 消えた あとと 同じ あつかい＝押せなかった）
+      const tapTilt = async () => { await clearOverlays(page); const b = await tiltSt(); if (!b.btn || /\bok\b/.test(b.cls)) return false; await page.click('#pxTilt'); await page.waitForTimeout(300); return true; };
       // 止まって いる ときの 手本：何も さわらずに 2秒ほどで 指の 手本が 出る。地図を タップすると 消え、また 止まると 出る（はじめての 人 だけで なく、何回でも）
       // （地図の タップで 歩いて いる 間は 手本は 出ない。歩きおわるのを 待ってから、止まって 何秒で 出るかを はかる。下の 合成クリックは 遠くへ 歩きだすので、その 前に）
       const demoOn = async t => { await page.waitForFunction(() => !nishioPixel.tapGoal, null, { timeout: 20000 }).catch(() => {}); await clearOverlays(page).catch(() => {}); const t0 = Date.now(); const on = await page.waitForFunction(() => nishioPixel.tapDemo.on, null, { timeout: t }).then(() => true, () => false); return on ? Date.now() - t0 : -1; };

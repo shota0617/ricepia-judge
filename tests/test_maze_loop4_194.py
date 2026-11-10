@@ -42,7 +42,7 @@ class Tilt194(unittest.TestCase):
         """サイクル197（運営者の声 2026-11-10「１タップを促すお手本」）：まだ 許可を 聞いて いない 間は、待たずに タップの 手本と「タップ！」の 札を 出す"""
         t = fn_src("tapDemoTick")
         self.assertIn("const first = tiltBtnWanted() && !tiltG.asked;", t)
-        self.assertIn("now - tapDemo.at >= (first ? 0 : DEMO_IDLE_MS)", t)
+        self.assertIn("now - tapDemo.at >= (first ? 0 : tapDemo.walked ? DEMO_TAP_MS : DEMO_IDLE_MS)", t)   # サイクル198：タップで 歩いた あとは 0.9秒
         self.assertIn("tapDemo.el.classList.toggle('first', first);", t)
         css = (ROOT / "nishio-go" / "style.css").read_text(encoding="utf-8")
         self.assertIn('#tapDemo.first::after{content:"タップ！"', css)
@@ -72,9 +72,9 @@ class Tilt194(unittest.TestCase):
     def test_idle_demo_repeats_and_does_not_block(self):
         self.assertIn("const DEMO_IDLE_MS = 2000;", PIX)
         t = fn_src("tapDemoTick")
-        self.assertIn("now - tapDemo.at >= (first ? 0 : DEMO_IDLE_MS)", t)
-        self.assertIn("if (rp.x !== tapDemo.x || rp.y !== tapDemo.y) { tapDemo.x = rp.x; tapDemo.y = rp.y; tapDemo.at = now; }", t)
-        self.assertIn("const c = path[Math.min(2, path.length - 1)]", t)
+        self.assertIn("now - tapDemo.at >= (first ? 0 : tapDemo.walked ? DEMO_TAP_MS : DEMO_IDLE_MS)", t)   # サイクル198：タップで 歩いた あとは 0.9秒（その ほかは 2秒）
+        self.assertIn("if (rp.x !== tapDemo.x || rp.y !== tapDemo.y) { tapDemo.x = rp.x; tapDemo.y = rp.y; tapDemo.at = now; tapDemo.walked = now - tapDemo.walkT < 700; }", t)
+        self.assertIn("const sp = tapDemoSpot(path, first);", t)   # サイクル198：道しるべの 3マス先。窓が 開く 所は よける
         self.assertNotIn("localStorage", t)   # はじめての 人 だけ・1回だけ の 条件を もたない
         self.assertNotIn("lsGet", t)
         self.assertIn("document.addEventListener('pointerdown', tapDemoTouch, { capture: true, passive: true });", PIX)

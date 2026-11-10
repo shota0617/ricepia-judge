@@ -229,7 +229,7 @@ async function firstMinuteChecks(browser, R) {
         const otherBtn = !b.hidden && document.getElementById('spinName').textContent === other.name && !G.state.visits[other.id];
         return { goal: g.name, shown, h0, hMax, checked, other: other.name, otherBtn, ok: shown === 0 && checked && otherBtn };
       });
-      return { firstGoalNear: fg, lazySprites: lz, playAskQuick: pa, worldBack: wb, tiltDeniedMsg: tm, swipeWalk: sw, arriveNoSpin: an, ...(await startSteadyChecks(browser, R)), ...(await a2hsChecks(browser, R)) };
+      return { firstGoalNear: fg, lazySprites: lz, playAskQuick: pa, worldBack: wb, tiltDeniedMsg: tm, swipeWalk: sw, arriveNoSpin: an, ...(await startSteadyChecks(browser, R)), ...(await a2hsChecks(browser, R)), ...(await tapDemoChecks(browser, R)) };
     } finally { R.errors.push(...v.errors); await v.ctx.close(); }
 }
 // サイクル193（運営者の声 2026-11-10「さんぽGOホーム画面に追加を控えめに促す」）：ホーム画面に追加の おすすめは 小さな 1行の 札。
@@ -316,6 +316,143 @@ async function a2hsChecks(browser, R) {
   }
   return out;
 }
+// サイクル198（はじめの 1分・やめそうな 所）：手本の 指を タップして 進む 人・なぞって 歩く 人を 本当の タッチで 動かして 見る
+// ・tapDemoLabel：まだ 許可を 聞けて いない（click に ならない なぞり歩きの）人に 出る「タップ！」の 札が お米に かぶらない
+// ・tapDemoFollow：手本の 指の 先を タップし つづけて、説明の 窓・話の 窓が 開かずに ゴール 2つ まで 行ける。はじめての ゴールまでの タップは 7回 まで（前は 9回）
+// ・tapDemoQuick：タップで 歩いて 着いた あと、次の 手本が 1.7秒 より 早く 出る（前は 2秒＋こまの 遅れ）
+async function tapDemoChecks(browser, R) {
+  const out = {};
+  const open = async (ios, view) => {
+    const v = await newPage(browser, { howto: true, auto: true, hasTouch: true, ...(view ? { viewport: view } : {}) });
+    if (ios) await v.ctx.addInitScript(() => { window.__asks = 0; if (window.DeviceOrientationEvent) DeviceOrientationEvent.requestPermission = () => { window.__asks++; return Promise.resolve('denied'); }; });   // newPage の したく（許可の いらない 端末）の あとに 動く
+    await v.page.goto(URL);
+    await v.page.waitForFunction(() => window.nishioPixel && window.nishioGo && nishioPixel.roll.ready && nishioPixel.maze.routePath(), null, { timeout: 20000 }).catch(() => {});
+    const cdp = await v.ctx.newCDPSession(v.page);
+    await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: true });
+    const touch = (type, pts) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: pts.map(([x, y], id) => ({ x, y, id })) });
+    return { ...v, touch };
+  };
+  const demoReady = (p, t) => p.waitForFunction(() => nishioPixel.tapDemo.on && !nishioPixel.tapGoal, null, { timeout: t }).then(() => true, () => false);
+  const spot = p => p.evaluate(() => { const d = document.getElementById('tapDemo'), R = nishioPixel.roll, c = nishioPixel.tileToClient(R.x - 0.5, R.y - 0.5); return { x: parseFloat(d.style.left), y: parseFloat(d.style.top), rx: c.x, ry: c.y }; });
+  {   // なぞって 歩く 人（iPhone：許可を まだ 聞けて いない）
+    const v = await open(true), p = v.page;
+    try {
+      const rows = [];
+      for (let i = 0; i < 8; i++) {
+        if (!(await demoReady(p, 8000))) { rows.push({ i, why: 'no-demo' }); break; }
+        let worst = { lab: 0 };
+        for (let k = 0; k < 8; k++) {   // 手本の 動き（1.5秒）の 間で いちばん かぶる ところ
+          const m = await p.evaluate(() => {
+            const d = document.getElementById('tapDemo'), r = d.getBoundingClientRect(), af = getComputedStyle(d, '::after'), first = d.classList.contains('first');
+            const lw = parseFloat(af.width) + parseFloat(af.paddingLeft) * 2 + 4, lh = parseFloat(af.height) + parseFloat(af.paddingTop) * 2 + 4, cx = (r.left + r.right) / 2;
+            const sd = d.classList.contains('lr') ? 'lr' : d.classList.contains('ll') ? 'll' : '';
+            const dn = d.classList.contains('dn'), ly = dn ? r.bottom - 8 - lh : r.top + 8;   // dn：指が さかさ（札は 手の 下の はしから 8px 上）
+            const lab = sd === 'lr' ? [r.right + 4, ly, r.right + 4 + lw, ly + lh] : sd === 'll' ? [r.left - 4 - lw, ly, r.left - 4, ly + lh] : [cx - lw / 2, r.top + 46, cx + lw / 2, r.top + 46 + lh];
+            const R = nishioPixel.roll, c = nishioPixel.tileToClient(R.x - 0.5, R.y - 0.5), rice = [c.x - 20, c.y - 26, c.x + 20, c.y + 14];
+            const sh = document.getElementById('sheet').getBoundingClientRect();
+            const ov = (a, b) => Math.max(0, Math.min(a[2], b[2]) - Math.max(a[0], b[0])) * Math.max(0, Math.min(a[3], b[3]) - Math.max(a[1], b[1]));
+            return { first, sd, dn, lab: Math.round(ov(lab, rice)), hand: Math.round(ov([r.left + 6, r.top, r.right - 6, r.bottom], rice)), out: Math.round(Math.max(0, -lab[0], lab[2] - innerWidth, lab[3] - sh.top)), asks: window.__asks };
+          });
+          if (m.lab + m.hand + m.out >= worst.lab + (worst.hand || 0) + (worst.out || 0)) worst = m;
+          await p.waitForTimeout(190);
+        }
+        const q = await spot(p);
+        rows.push({ i, dir: [Math.round(q.x - q.rx), Math.round(q.y - q.ry)], ...worst });
+        await v.touch('touchStart', [[q.rx, q.ry]]);   // お米から 手本の 指まで なぞる（click に ならない＝許可は まだ 聞かない）
+        for (let k = 1; k <= 5; k++) { await v.touch('touchMove', [[q.rx + (q.x - q.rx) * k / 5, q.ry + (q.y - q.ry) * k / 5]]); await p.waitForTimeout(16); }
+        await v.touch('touchEnd', []);
+        await p.waitForFunction(() => !!nishioPixel.tapGoal, null, { timeout: 1500 }).catch(() => {});
+      }
+      const seen = rows.filter(r => r.first), up = seen.filter(r => r.dir && r.dir[1] < -20);
+      out.tapDemoLabel = { rows, n: seen.length, up: up.length, ok: seen.length >= 6 && up.length >= 1 && seen.every(r => r.lab === 0 && r.hand === 0 && r.out === 0 && r.asks === 0) };
+    } catch (e) { out.tapDemoLabel = { ok: false, crashed: String(e && e.message || e).split('\n')[0].slice(0, 200) }; }
+    finally { R.errors.push(...v.errors); await v.ctx.close(); }
+  }
+  {   // 手本の 指を タップして 進む 人（許可の いらない 端末）
+    const v = await open(false), p = v.page;
+    try {
+      const goals = () => p.evaluate(() => +localStorage.getItem('nsg_mzgoals') || 0);
+      const t0 = Date.now(), waits = [], wins = [];
+      let taps = 0, taps1 = -1, sec1 = -1;
+      while (Date.now() - t0 < 110000 && (await goals()) < 2) {
+        const tw = Date.now();
+        if (!(await demoReady(p, 9000))) {   // 窓が 開いた など：何が 出て いるかを 記録して 閉じる（前の コードは ここで 止まる）
+          const w = await p.evaluate(() => { const i = document.getElementById('pxInfo'), o = [...document.querySelectorAll('#pxInfo:not([hidden]), .panel:not([hidden]), [role="dialog"]:not([hidden]):not(#a2hs), .medashi:not([hidden])')].map(e => e.id || e.className); i.hidden = true; return { o, wait: nishioPixel.tapDemo.wait, sight: nishioPixel.sightBusy() }; });
+          wins.push({ taps, ...w });
+          if (wins.length > 3) break;
+          continue;
+        }
+        if (taps > 0) waits.push(Date.now() - tw);
+        const q = await spot(p);
+        await v.touch('touchStart', [[q.x, q.y]]); await p.waitForTimeout(90); await v.touch('touchEnd', []);
+        taps++;
+        await p.waitForFunction(() => !!nishioPixel.tapGoal || !document.getElementById('pxInfo').hidden || nishioPixel.sightBusy(), null, { timeout: 1200 }).catch(() => {});
+        await p.waitForFunction(() => !nishioPixel.tapGoal, null, { timeout: 12000 }).catch(() => {});
+        if (taps1 < 0 && (await goals()) >= 1) { taps1 = taps; sec1 = +((Date.now() - t0) / 1000).toFixed(1); }
+      }
+      const g = await goals(), opened = wins.filter(w => w.o.length || w.sight);
+      waits.sort((a, b) => a - b);
+      const med = waits.length ? waits[waits.length >> 1] : -1;
+      out.tapDemoFollow = { goals: g, taps, taps1, sec1, wins, ok: g >= 2 && taps1 > 0 && taps1 <= 7 && opened.length === 0 };
+      out.tapDemoQuick = { n: waits.length, med, min: waits[0], ok: waits.length >= 4 && med > 0 && med < 1700 };   // 歩きおわってから 次の 手本が 見えるまで（ミリ秒・まん中の 値）
+    } catch (e) { out.tapDemoFollow = out.tapDemoFollow || { ok: false, crashed: String(e && e.message || e).split('\n')[0].slice(0, 200) }; out.tapDemoQuick = out.tapDemoQuick || { ok: false, crashed: true }; }
+    finally { R.errors.push(...v.errors); await v.ctx.close(); }
+  }
+  // Codex 指摘（PR #1091）：
+  // ・tapDemoInMap：横向き（740×360・地図の 高さ 166px）で、出て いる 指・札が 地図の 中（上の バーの 下・下の 欄の 上）に 収まり、指先は 歩ける 点
+  // ・tapDemoNoBlind：置ける 所が ない（地図を すきとおった 板で おおう）ときは 指の 手本を 出さない（確かめて いない 点に 出さない）。傾きが 使えて いれば ゆれる 📱 は 出る。板を とると 指が もどる
+  {
+    const v = await open(true, { width: 740, height: 360 }), p = v.page;
+    try {
+      const rows = [];
+      for (let i = 0; i < 8; i++) {
+        await p.waitForFunction(() => !nishioPixel.tapGoal, null, { timeout: 12000 }).catch(() => {});
+        await p.waitForTimeout(700);
+        let worst = null;
+        for (let k = 0; k < 8; k++) {
+          const m = await p.evaluate(() => {
+            const P = nishioPixel, d = document.getElementById('tapDemo'), cr = document.getElementById('pxCanvas').getBoundingClientRect(), sh = document.getElementById('sheet').getBoundingClientRect();
+            const map = [cr.left, cr.top, cr.right, Math.min(cr.bottom, sh.top)];
+            if (!P.tapDemo.on) return { on: false, bad: 0, mapH: Math.round(map[3] - map[1]) };
+            const r = d.getBoundingClientRect(), af = getComputedStyle(d, '::after'), first = d.classList.contains('first'), dn = d.classList.contains('dn'), q = { x: parseFloat(d.style.left), y: parseFloat(d.style.top) };
+            const lw = parseFloat(af.width) + parseFloat(af.paddingLeft) * 2 + 4, lh = parseFloat(af.height) + parseFloat(af.paddingTop) * 2 + 4, cx = (r.left + r.right) / 2;
+            const sd = d.classList.contains('lr') ? 'lr' : d.classList.contains('ll') ? 'll' : '', ly = dn ? r.bottom - 8 - lh : r.top + 8;
+            const lab = !first ? null : sd === 'lr' ? [r.right + 4, ly, r.right + 4 + lw, ly + lh] : sd === 'll' ? [r.left - 4 - lw, ly, r.left - 4, ly + lh] : [cx - lw / 2, r.top + 46, cx + lw / 2, r.top + 46 + lh];
+            const outOf = b => (b ? Math.round(Math.max(0, map[0] - b[0], map[1] - b[1], b[2] - map[2], b[3] - map[3])) : 0);
+            const hand = outOf([r.left + 6, r.top, r.right - 6, r.bottom]), lb = outOf(lab), walks = P.tapDemo.walks(q, 0);
+            return { on: true, q: [Math.round(q.x), Math.round(q.y)], dn, sd, hand, lab: lb, walks, bad: hand + lb + (walks ? 0 : 1000), mapH: Math.round(map[3] - map[1]) };
+          });
+          if (!worst || m.bad > worst.bad || (m.on && !worst.on)) worst = m;
+          await p.waitForTimeout(190);
+        }
+        rows.push({ i, ...worst });
+        const g = await p.evaluate(() => { const P = nishioPixel, K = P.maze.K, rp = P.maze.routePath() || [], c = rp[Math.min(2, rp.length - 1)], R = P.roll, a = P.tileToClient(R.x - 0.5, R.y - 0.5); return c ? { a, b: P.tileToClient(c[0] * K + 1, c[1] * K + 1) } : null; });
+        if (!g) break;
+        await v.touch('touchStart', [[g.a.x, g.a.y]]);   // 道しるべの 2マス先まで なぞる（click に ならない）
+        for (let k = 1; k <= 5; k++) { await v.touch('touchMove', [[g.a.x + (g.b.x - g.a.x) * k / 5, g.a.y + (g.b.y - g.a.y) * k / 5]]); await p.waitForTimeout(16); }
+        await v.touch('touchEnd', []);
+        await p.waitForFunction(() => !!nishioPixel.tapGoal, null, { timeout: 1500 }).catch(() => {});
+      }
+      const on = rows.filter(r => r.on);
+      out.tapDemoInMap = { rows, shown: on.length, ok: rows.length >= 6 && on.length >= 5 && on.every(r => r.hand === 0 && r.lab === 0 && r.walks) && rows.every(r => r.mapH < 200) };
+    } catch (e) { out.tapDemoInMap = { ok: false, crashed: String(e && e.message || e).split('\n')[0].slice(0, 200) }; }
+    finally { R.errors.push(...v.errors); await v.ctx.close(); }
+  }
+  {
+    const v = await open(false), p = v.page;
+    try {
+      const before = await demoReady(p, 9000);
+      await p.evaluate(() => { const o = document.createElement('div'); o.id = 'ptCover'; o.style.cssText = 'position:absolute;inset:0;z-index:9'; document.getElementById('pxView').appendChild(o); for (let i = 0; i < 4; i++) window.dispatchEvent(new DeviceOrientationEvent('deviceorientation', { alpha: 0, beta: 40, gamma: 0 })); });
+      await p.waitForTimeout(1200);   // 見回りは 0.25秒おき
+      const covered = await p.evaluate(() => { const P = nishioPixel, d = document.getElementById('tapDemo'); return { on: P.tapDemo.on, phone: P.tapDemo.phone, spot: P.tapDemo.spot(), wait: P.tapDemo.wait, hit: document.elementFromPoint(parseFloat(d.style.left), parseFloat(d.style.top)) === document.getElementById('pxCanvas') }; });
+      await p.evaluate(() => document.getElementById('ptCover').remove());
+      const back = await p.waitForFunction(() => nishioPixel.tapDemo.on, null, { timeout: 3000 }).then(() => true, () => false);
+      out.tapDemoNoBlind = { before, covered, back, ok: before && !covered.on && covered.spot === null && covered.phone && !covered.wait.length && back };
+    } catch (e) { out.tapDemoNoBlind = { ok: false, crashed: String(e && e.message || e).split('\n')[0].slice(0, 200) }; }
+    finally { R.errors.push(...v.errors); await v.ctx.close(); }
+  }
+  return out;
+}
 // サイクル191（はじめの 1分・動き）：何も さわらない はじめの 数秒、お米が とばない（始まりの 場所が めいろの 通路の 上）・ゴールの 旗が あちこちへ かわらない（選びなおしは 1こまの 中で）。
 // こまごとに お米の 場所と 行き先を 記録して 見る（知らせや 札の 文字では なく、描く こまで）
 async function startSteadyChecks(browser, R) {
@@ -364,6 +501,11 @@ const FIRST_MINUTE_NEED = {
   a2hsInApp: 'アプリの 中の ブラウザ（LINE など）で ホーム画面に追加の 手順を 出す',
   startNoJump: '何も さわらない うちに お米が とぶ（始まりの 場所が めいろの 通路の 上に ない）',
   firstGoalNoFlip: 'はじめの 数秒で ゴールの 旗が あちこちへ かわる（選びなおしが こまを またいで 見える）',
+  tapDemoLabel: 'まだ 許可を 聞けて いない 人に 出る「タップ！」の 札・指の 絵が お米に かぶる・札が 画面や 下の 欄に はみ出す（なぞって 歩く 人）',
+  tapDemoFollow: '手本の 指を タップして 進むと 説明・話の 窓が 開く／ゴール 2つ まで 行けない／はじめての ゴールまで 8タップ 以上',
+  tapDemoQuick: 'タップで 歩いて 着いた あと、次の 手本が 出るまでが 1.7秒 以上',
+  tapDemoInMap: '横向き（地図の 高さ 166px）で 指の 手本・「タップ！」の 札が 上の バーや 下の 欄に かくれる／指先が 歩けない 点／手本が ほとんど 出ない',
+  tapDemoNoBlind: '置ける 所が ない ときに、確かめて いない 点に 指の 手本を 出す／傾きが 使えるのに ゆれる 📱 が 出ない／置ける ように なっても 指が もどらない',
 };
 
 const RUN = { R: null };

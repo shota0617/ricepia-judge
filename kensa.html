@@ -73,6 +73,7 @@
   #mkeys span.pw { background:#f0bd2a; color:#4a3200; }
   #mkeys span.ms { background:#2c63a8; color:#fff; }
   #senseToken { position:absolute; z-index:40; left:50%; top:62%; width:96px; height:96px; margin:-48px 0 0 -48px; border-radius:50%; background:var(--paper); box-shadow:0 3px 14px rgba(26,24,20,.4); font-size:52px; line-height:96px; text-align:center; touch-action:none; transition:scale .12s ease; }
+  #senseToken::before { content:""; position:absolute; inset:-24px; border-radius:50%; } /* 🤲のふちから24px外までを🤲として受ける（サイクル139）。見た目は変えない */
   #senseToken img { display:block; width:72px; height:40px; margin:28px auto 0; }
   #senseToken.squeeze { scale:.78; }
   #face { position:relative; z-index:45; }
@@ -1082,6 +1083,7 @@ function layoutProbe() {
   poke.style.top = P.y - 6 + "px";
   poke.style.setProperty("--pokeDx", -(P.rest - P.inAt + 8) + "px"); /* 手本どおりに押せば、ちょうどさされる */
   if (!P.inserted) setProbe(P.rest);
+  else if (!P.done) pullPoke(); /* さした後に画面の大きさが変わっても、手本の指は ひきぬく向きのまま（サイクル139） */
 }
 function setProbe(x) {
   P.x = x;
@@ -1113,6 +1115,7 @@ function moveProbe(x) {
   if (!P.inserted) {
     if (x <= P.inAt) {
       P.inserted = true;
+      bagTaps = 0; /* ひきぬく側の空振りは、ここから数え直す（サイクル139） */
       P.deep = x;
       pierceSound(); /* 刺さった合図は固有の音にする（サイクル115・差21）。匿名の単音とは分ける */
       $("bagBtn").classList.add("squash");
@@ -1166,6 +1169,7 @@ function autoProbe() {
 $("sceneBag").addEventListener("pointerdown", (e) => {
   if (step !== 0 || P.done) return;
   stopProbeAttract(); /* 触れたら誘いは止まる（サイクル82） */
+  stopPullDemo();
   if (P.drag) return; /* 2本目の指は混ぜない */
   P.drag = { id:e.pointerId, cx:e.clientX, x0:P.x, moved:false };
   capture($("sceneBag"), e);
@@ -1180,7 +1184,9 @@ $("sceneBag").addEventListener("pointermove", (e) => {
 });
 function endBagDrag(e) {
   if (!P.drag || e.pointerId !== P.drag.id) return;
+  const still = !P.drag.moved;
   P.drag = null;
+  if (P.inserted && !P.done && still) { pullNudge(); return; }
   if (P.done || P.inserted) return; /* さす前に指を離したら、タップでも違う向きの引きでも1回と数える */
   if (++bagTaps >= NUDGE_LIMIT) { autoProbe(); return; }
   if (bagTaps === 1 && lotIndex === 0) $("poke").style.display = ""; /* 空振り1回目: 手本の指👆をもう一度出す。触って消えた指は戻らず、動かし方が分からなくなっていた（390×844実測・サイクル81、Fable設計の空振り統一） */
@@ -1193,6 +1199,28 @@ function endBagDrag(e) {
 $("sceneBag").addEventListener("pointerup", endBagDrag);
 $("sceneBag").addEventListener("pointercancel", (e) => { if (P.drag && e.pointerId === P.drag.id) P.drag = null; });
 $("bagBtn").addEventListener("click", (e) => { if (e.detail === 0) autoProbe(); }); /* キーボードの Enter はそのまま進める */
+/* さした後のタップ・置いただけの指も、ほかの所作と同じ空振りの数え方で受ける（サイクル139・最初の1分）。
+   旧版はさした後の空振りを数えず、手本の指も出なかったため、押し込んで指を離し「ひきぬく →」を見て穀刺しをタップする人・指を置くだけの人は
+   何回やっても何も起きなかった（390×664・390×844・360×640の実測: 2回タップと置いた指の各4回×4度が全部進まず、音も動きも0）。
+   1回目=手本の指を ひきぬく向きに出す／2回目=穀刺しが半分ぬけて戻る／3回目=自分でぬける。数はさした時に0へ戻す */
+function pullPoke() {
+  const poke = $("poke");
+  poke.style.left = P.x + P.L * 0.72 + "px";
+  poke.style.setProperty("--pokeDx", "46px");
+}
+let pullDemo = null; /* ひきぬく手本の動き。指が触れたら・次の空振りが来たら止める（手本の動きが残って、指やひとりでにぬける動きを隠さないように） */
+function stopPullDemo() {
+  if (pullDemo) { pullDemo.cancel(); pullDemo = null; }
+}
+function pullNudge() {
+  if (step !== 0 || P.done || !P.inserted) return;
+  stopPullDemo();
+  if (++bagTaps >= NUDGE_LIMIT) { autoProbe(); return; }
+  if (lotIndex === 0) { pullPoke(); $("poke").style.display = ""; }
+  probeDemoSound();
+  const to = bagTaps === 2 ? P.x + (P.rest - P.x) / 2 : P.x + 18;
+  pullDemo = $("probe").animate([{ transform:"translate(" + P.x + "px," + P.y + "px)" }, { transform:"translate(" + to + "px," + P.y + "px)", offset:.55 }, { transform:"translate(" + P.x + "px," + P.y + "px)" }], { duration:(bagTaps === 2 ? 640 : 320) * motion, easing:"ease-in-out" });
+}
 
 /* はかる: 水分計のハンドルをぐるぐる回す。1周で1回はかれる */
 let meterTaps = 0, crankDrag = null, crankAngle = 0, crankTurned = 0; /* 回した角度は指を離しても持ち越す。まっすぐなでるだけでも、いずれはかれる */
@@ -1455,7 +1483,7 @@ function startPinch() {
   sortDrag = null;
 }
 plate.addEventListener("pointerdown", (e) => {
-  if (step !== 2 || e.target === zoomBtn) return;
+  if (step !== 2 || e.target === zoomBtn || !token.hidden) return; /* 感じる所作の間（🤲が出ている間）は、皿は指を受けない（サイクル139）。🤲を少し外した指で粒がなでられ・皿がたたかれ、案内が「わるい粒を つまむ」に戻ることがあった（390×664実測） */
   stopSmoothZoom(); /* 寄りの途中で触れたら、今見えている所から指の操作を始める */
   capture(plate, e);
   if (spread === false) guideOff();
@@ -1782,6 +1810,15 @@ function endToken() {
   }
 }
 token.addEventListener("pointerup", endToken);
+/* 🤲の外に触れた指（少し外した・顔をタップした・皿をタップした）も、🤲の空振りと同じに数える（サイクル139・最初の1分）。
+   旧版は🤲そのものに触れた時しか数えなかったため、🤲のふちから10〜25px外で始めた運びは、4回やっても何も起きなかった
+   （390×664・390×844・360×640の実測: 各4回とも進まず）。1回目=手本の指／2回目=半分やって見せる／3回目=ひとりでに進む、は🤲の上と同じ */
+document.addEventListener("pointerup", (e) => {
+  if (token.hidden || senseDrag || senseHold || e.target === token || token.contains(e.target)) return;
+  if (!e.target.closest || !e.target.closest("#stage, #head") || e.target.closest("#notesLink")) return;
+  if (senseKind === "nigiru") senseHold = {}; else senseDrag = { x:e.clientX, y:e.clientY, moved:false };
+  endToken();
+});
 token.addEventListener("pointercancel", endToken);
 token.addEventListener("click", (e) => { if (e.detail === 0) autoSense(); });
 

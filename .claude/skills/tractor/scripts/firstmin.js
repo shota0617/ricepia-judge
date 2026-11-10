@@ -346,8 +346,10 @@ const srv = http.createServer((r, s) => { const u = decodeURIComponent(r.url.spl
     ok(label + '：なぞって 5 秒 置いた指の間（サイクル116）は 見本を出さない・離すと 止まって 0.6 秒以内に出る', r.bad === 0 && r.w !== null && r.w <= 0.6, r);
     r = await play(cx - 40, yS, cx + 110, yS, 1.0);   // 横へ
     ok(label + '：横へ なぞって離したあとも 止まって 0.6 秒以内に出る・指のある間と動いている間は出ない', r.bad === 0 && r.w !== null && r.w <= 0.6, r);
-    await p.evaluate(() => { HINT.sideOK = 3; }); r = await play(cx, yF0, cx, yF1, 0.6);   // 曲がり方を覚えた人：今までどおり 2 秒 待つ（なぞりの合間に出さない）
+    await p.evaluate(() => { HINT.sideOK = 3; HINT.bent = false; HINT.yaw0 = null; }); r = await play(cx, yF0, cx, yF1, 0.6);   // 曲がり方を覚えた人：今までどおり 2 秒 待つ（なぞりの合間に出さない）。はじめの向きの近くで切り返していて bent が立っていない人として（Codex 指摘 PR #1090）
     ok(label + '：曲がり方を覚えた人には 今までどおり 止まって 2 秒で出す（1.9〜2.3 秒）・はじめの 1 分のうち', r.bad === 0 && r.w !== null && r.w >= 1.9 && r.w <= 2.3 && r.el < 60, r);
+    const learnt = await p.evaluate(() => ({ bent: HINT.bent, fwd: !!HINT.demoF, ahead: HINT.workAhead(1) }));
+    ok(label + '：曲がり方を覚えた人は、まだ 30° 向きが変わっていなくても、前に耕す所があれば「前へ」の見本から（Codex 指摘 PR #1090）', !learnt.ahead || learnt.fwd, learnt);
     const an = await p.evaluate(() => getComputedStyle(document.getElementById('hintSwipe')).animationName);
     ok(label + '：見本は ふわっと出る（0.1 秒で消えるときに光らない）', an === 'hintIn', an);
     await ctx.close();

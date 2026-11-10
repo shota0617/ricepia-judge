@@ -1,4 +1,4 @@
-"""米づくり365: 最初の1分に出る飾りが、カードの日付や天気の丸に重ならない置き方になっているか(周回152)、押しただけでは案内が消えないか(周回153)、出だしのちらつきと2Dの天気(周回154)、スワイプの手本(周回155)、止まったら手本(周回158)。"""
+"""米づくり365: 最初の1分に出る飾りが、カードの日付や天気の丸に重ならない置き方になっているか(周回152)、押しただけでは案内が消えないか(周回153)、出だしのちらつきと2Dの天気(周回154)、スワイプの手本(周回155)、止まったら手本(周回158)、飛んでいる間の指・しるしのあとの手本(周回161)。"""
 import os
 import re
 import unittest
@@ -122,8 +122,41 @@ class TestKome365FirstMinute(unittest.TestCase):
 
     def test_demo_waits_for_judge_mark(self):
         # Codex 指摘(PR #1085): ○✗ の しるしが 出て いる 間は 手本を 待つ
-        self.assertIn("if (performance.now() - markAt < 750) { demoArm(); return; }", HTML)
+        # 周回161: 待ちなおしは しるしの 残りの 時間だけ(0.3秒きざみで 待ちなおすと、しるしから 0.9秒 かかる)
+        self.assertIn("var markLeft = 750 - (performance.now() - markAt); if (markLeft > 0) { demoArm(markLeft); return; }", HTML)
+        self.assertNotIn("if (performance.now() - markAt < 750) { demoArm(); return; }", HTML)
+        self.assertIn("function demoArm(ms){ demoDisarm();", HTML)
+        self.assertIn("}, ms > 0 ? ms : (demoMiss > 0 || demoOk < 3) ? DEMO_STOP_MS : DEMO_STOP_OK_MS); }", HTML)
         self.assertIn("markAt = performance.now();", HTML)
+
+    def test_swipe_during_fly_is_kept(self):
+        # 周回161: 前の カードが 飛んで いる 間(busy・約0.2秒)に 置いた 指を 捨てない。おぼえて おき、次の カードで 同じ 順に 流しなおす
+        down = HTML[HTML.index("el.card.addEventListener('pointerdown'"):HTML.index("el.card.addEventListener('pointermove'")]
+        self.assertIn("pend = e.button > 0 ? null : [pendCopy(e)];", down)
+        self.assertNotIn("if (busy || e.button > 0", down)
+        move = HTML[HTML.index("el.card.addEventListener('pointermove'"):HTML.index("function up(e){")]
+        self.assertIn("if (pend && e.pointerId === pend[0].pointerId) { var pl = null;", move)
+        up = HTML[HTML.index("function up(e){"):HTML.index("el.card.addEventListener('pointerup', up)")]
+        self.assertIn("if (pend && e && e.pointerId === pend[0].pointerId) { pend.push(pendCopy(e)); return; }", up)
+        # 流しなおすのは 次の カードが 出た あと。決める きまりは up の まま(押しただけ では 決まらない)
+        self.assertIn("setTimeout(function(){ advance(side); pendFlush(); }, dur);", HTML)
+        flush = HTML[HTML.index("function pendFlush(){"):HTML.index("el.card.addEventListener('pointerdown'")]
+        self.assertIn("var q = pend; pend = null;", flush)
+        self.assertIn("busy || startX != null", flush)
+        self.assertIn("cardDown(q[0]);", flush)
+        self.assertIn("else { up(q[qi]); break; }", flush)
+        self.assertNotIn("choose(", flush)
+        # 時刻は もとの 指の 時刻を 使う(速さ・0.3秒の 一筆の 見分けが くるわない)
+        self.assertIn("timeStamp: evT(e)", HTML)
+
+    def test_pending_swipe_review_fixes(self):
+        # Codex 指摘(PR #1087): 隠れたら 捨てる・まとめられた 点も おぼえる・2本目の 指で 消さない
+        self.assertIn("document.addEventListener('visibilitychange', function(){ if (document.hidden) pend = null; });", HTML)
+        self.assertIn("if (!q || document.hidden || busy ||", HTML)
+        self.assertIn("pl = e.getCoalescedEvents ? e.getCoalescedEvents() : null;", HTML)
+        self.assertIn("if (busy) { if (e.isPrimary === false) return;", HTML)
+        self.assertIn("(v > 0) === (dx > 0) && Math.abs(dx) >= maxAx - 12;", HTML)   # 速く のぞいて 引き戻した 動きは フリックと しない
+        self.assertIn("if (pend) { try { el.card.setPointerCapture(e.pointerId); } catch (x) {} }", HTML)   # おぼえはじめた ときも つかまえる
 
     def test_demo_timer_does_not_count_hidden_tab(self):
         # Codex指摘(PR #1082): 別のタブに いる間は 手本の 待ちを 数えない。戻ったら 数え直す
@@ -133,7 +166,7 @@ class TestKome365FirstMinute(unittest.TestCase):
         # 周回158(運営者の声 2026-11-10「手本は、止まって見ているときにかならず出ていること」):
         # 何枚目でも・前に決めた人でも、決めずに止まっていたら約2秒で手本を出す(うまくできている人は6秒に延ばすだけ)
         self.assertIn("var DEMO_STOP_MS = 300, DEMO_STOP_OK_MS = 300, demoT = null, demoMiss = 0, demoOk = 0;", HTML)   # 周回160(運営者の声 2026-11-10「スワイプのお手本をすぐにだす」): 2秒・6秒 → 0.3秒
-        arm = HTML[HTML.index("function demoArm(){"):HTML.index("window.addEventListener('resize', function(){ if ($('swWrap')")]
+        arm = HTML[HTML.index("function demoArm(ms){"):HTML.index("window.addEventListener('resize', function(){ if ($('swWrap')")]
         self.assertIn("demoSet(true)", arm)
         self.assertIn("(demoMiss > 0 || demoOk < 3) ? DEMO_STOP_MS : DEMO_STOP_OK_MS", arm)
         # 出す条件に「何枚目まで」「まだ決めていない人だけ」を入れない

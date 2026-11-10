@@ -219,16 +219,6 @@ const srv = http.createServer((r, s) => { const u = decodeURIComponent(r.url.spl
       for (const r of rel) { const v = r * dir; peak = Math.max(peak, v); back = Math.max(back, peak - v); }
       await T('touchEnd'); await adv(1);
       ok('横へ なぞって 7 秒 置いた指の間、向きは もどらない（もどりは 6° 未満・15° 以上 曲がる）', back < 0.1 && peak > 0.26, [+peak.toFixed(2), +back.toFixed(2)]); }
-    // f) Codex 指摘（PR #1075・2 回目）：横への動きが小さい なぞり（30〜60px）でも、置いた指の間に 向きが もどらない
-    for (const w of [32, 45, 60]) {
-      a0 = await home();
-      await T('touchStart', 195, 321); for (let i = 1; i <= 8; i++) { await T('touchMove', 195 + w * i / 8, 321); await adv(0.05); }
-      const ys = []; for (let i = 0; i < 28; i++) { await adv(0.25); ys.push((await st()).yaw); }
-      const sg = a => Math.atan2(Math.sin(a), Math.cos(a)), rel = ys.map(y => sg(y - a0.yaw)), dir = Math.sign(rel[rel.length - 1]) || 1; let peak = 0, back = 0;
-      for (const r of rel) { const v = r * dir; peak = Math.max(peak, v); back = Math.max(back, peak - v); }
-      await T('touchEnd'); await adv(1);
-      ok('横へ ' + w + 'px の小さな なぞりを 7 秒 置いた間も、向きは もどらない（もどりは 6° 未満）', back < 0.1, [+peak.toFixed(2), +back.toFixed(2)]);
-    }
     // b) 運転席でない視点から なぞり始めて 横へ（はじめから おわりまで）：運転席にもどり、線ができて 動く
     a0 = await home(); await p.evaluate(() => game.nextCam()); await adv(0.5);
     await T('touchStart', 120, 560); await adv(0.05); for (let i = 1; i <= 10; i++) { await T('touchMove', 120 + 20 * i, 560 - 6 * i); await adv(0.05); }
@@ -244,6 +234,17 @@ const srv = http.createServer((r, s) => { const u = decodeURIComponent(r.url.spl
     for (let i = 0; i < 150 && !again; i++) { await adv(0.1); again = await p.evaluate(() => EASY.autoUp === true || game.S.rotDown); }
     await T('touchEnd'); await adv(1); const fin = await p.evaluate(() => TRACE.backUp);
     ok('お題あり：とちゅうで消えても また渡る・なぞりを離すと 覚えは消える', re && again && !fin, [re, again, fin]);
+    // （f は b・c のあとに置く：7 秒 置く なぞりを 3 回 足すと 時間が進みすぎて、あとの b・c が はじめの 1 分の条件から外れた）
+    // f) Codex 指摘（PR #1075・2 回目）：横への動きが小さい なぞり（30〜60px）でも、置いた指の間に 向きが もどらない
+    for (const w of [32, 45, 60]) {
+      a0 = await home();
+      await T('touchStart', 195, 321); for (let i = 1; i <= 8; i++) { await T('touchMove', 195 + w * i / 8, 321); await adv(0.05); }
+      const ys = []; for (let i = 0; i < 28; i++) { await adv(0.25); ys.push((await st()).yaw); }
+      const sg = a => Math.atan2(Math.sin(a), Math.cos(a)), rel = ys.map(y => sg(y - a0.yaw)), dir = Math.sign(rel[rel.length - 1]) || 1; let peak = 0, back = 0;
+      for (const r of rel) { const v = r * dir; peak = Math.max(peak, v); back = Math.max(back, peak - v); }
+      await T('touchEnd'); await adv(1);
+      ok('横へ ' + w + 'px の小さな なぞりを 7 秒 置いた間も、向きは もどらない（もどりは 6° 未満）', back < 0.1, [+peak.toFixed(2), +back.toFixed(2)]);
+    }
     await ctx.close();
   }
   ok('エラーなし', errs.length === 0, errs.slice(0, 3));

@@ -38,38 +38,53 @@ async function runStartChecks(browser, url, out, { shareOnly = false } = {}) {
     await page.waitForFunction(() => window.nishioPixel && window.nishioGo && nishioGo.started && nishioPixel.roll.ready);
     return { ctx, page };
   }
-  const visible = page => page.evaluate(() => ({ intro: !document.getElementById('intro').hidden, help: !document.getElementById('howto').hidden, ready: !document.getElementById('playReady').hidden, talk: !!document.querySelector('#komeTalk:not([hidden])'), asks: window.__asks }));
+  // 「あそぶ」の 窓（playReady）は なくなった（運営者の声 2026-10-31。nishio-go/meiro.js・pixel.js の「あそぶ ボタン廃止」）。
+  // いまの きまり：開始を 止める 窓は ない／自動で 始まる ときは 傾きの 許可を 求めない／最初の 本当の 地図タップで 1回だけ 求める（NotAllowedError の ときだけ 次の タップで もう1回）
+  const visible = page => page.evaluate(() => ({ intro: !document.getElementById('intro').hidden, help: !document.getElementById('howto').hidden, panel: !!document.querySelector('#playReady, #playReadyOk'), playing: !!(nishioGo.started && nishioGo.demo && nishioPixel.roll.ready && !nishioPixel.mapCovered(true)), talk: !!document.querySelector('#komeTalk:not([hidden])'), asks: window.__asks }));
   const shot = (page, name) => page.screenshot({ path: path.join(out, `start-${name}.png`) });
+  // 本当の タップ（isTrusted）を 地図に 送る。ほかの 窓が かぶって いたら 先に 閉じる（かぶった ままだと 地図に とどかない）
+  const tapMap = async (page, x = 150, y = 150) => {
+    await clearOverlays(page);
+    const hit = await page.evaluate(([x, y]) => { const cv = document.getElementById('pxCanvas'), r = cv.getBoundingClientRect(); return document.elementFromPoint(r.left + x, r.top + y) === cv; }, [x, y]);
+    if (!hit) throw new Error('map tap blocked');
+    await page.click('#pxCanvas', { position: { x, y } });
+    await page.waitForTimeout(300);
+  };
   for (const kind of (shareOnly ? [] : ['normal', 'unsupported', 'desktop', 'granted', 'denied', 'throws', 'rejected', 'notallowed', 'notallowed-sync'])) {
     const { ctx, page } = await fresh(kind);
     try {
       await page.waitForTimeout(400);
-      const before = await visible(page), permission = !['normal', 'unsupported', 'desktop'].includes(kind);
+      const before = await visible(page), permission = !['normal', 'unsupported'].includes(kind);   // desktop：タッチの ない 端末でも、ブラウザが 許可を 求める 作り（requestPermission が ある）なら 最初の 地図クリックで 1回だけ 聞く（窓が なくなり、タッチの 有無では 分けなく なった）
       await shot(page, kind);
-      if (permission) {
-        await page.click('#playReadyOk');
-        await page.evaluate(() => { for (let i = 0; i < 8; i++) document.getElementById('playReadyOk').click(); });
-        await page.waitForTimeout(300);
-      }
-      const after = await visible(page);
+      // 合成の クリック・引数なし（タイマーや 自動openと 同じ）では 求めない
+      const synthetic = await page.evaluate(() => {
+        nishioPixel.meiroApi.tiltAsk(); nishioPixel.meiroApi.tiltAsk(new Event('click'));
+        document.getElementById('pxCanvas').dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: 5, clientY: 5 }));
+        return { asks: window.__asks, asked: !!nishioPixel.meiroApi.tilt().asked };
+      });
+      await tapMap(page);
+      const first = await page.evaluate(() => ({ asks: window.__asks, asked: !!nishioPixel.meiroApi.tilt().asked, retry: !!nishioPixel.meiroApi.tilt().retry }));
+      await tapMap(page, 170, 170);
+      const second = await page.evaluate(() => ({ asks: window.__asks, asked: !!nishioPixel.meiroApi.tilt().asked, retry: !!nishioPixel.meiroApi.tilt().retry }));
+      for (let i = 0; i < 6; i++) await tapMap(page, 150 + (i % 2) * 20, 150 + (i % 2) * 20);
+      const after = await visible(page), last = await page.evaluate(() => ({ asks: window.__asks, asked: !!nishioPixel.meiroApi.tilt().asked, retry: !!nishioPixel.meiroApi.tilt().retry }));
+      const syntheticOk = synthetic.asks === 0 && !synthetic.asked;
       if (kind.startsWith('notallowed')) {
-        await page.evaluate(() => nishioPixel.meiroApi.tiltAsk(new Event('click')));
-        const synthetic = await page.evaluate(() => window.__asks);
-        await page.click('#pxCanvas', { position: { x: 150, y: 150 } });
-        await page.waitForTimeout(300);
-        const retry = await page.evaluate(() => ({ asks: window.__asks, asked: nishioPixel.meiroApi.tilt().asked }));
-        checks[kind + 'Retry'] = { synthetic, ...retry, ok: synthetic === 1 && retry.asks === 2 && retry.asked };
+        // 一時的に 操作と 認められなかった（NotAllowedError）：次の 本当の タップで 1回だけ やりなおす。その あとは 求めない
+        checks[kind + 'Retry'] = { synthetic, first, second, last, ok: syntheticOk && first.asks === 1 && !first.asked && first.retry && second.asks === 2 && second.asked && !second.retry && last.asks === 2 && last.asked };
       } else if (permission) {
-        await page.click('#pxCanvas', { position: { x: 150, y: 150 } });
-        const noRetry = await page.evaluate(() => ({ asks: window.__asks, retry: nishioPixel.meiroApi.tilt().retry }));
-        checks[kind + 'NoRetry'] = { ...noRetry, ok: noRetry.asks === 1 && !noRetry.retry };
+        // 許可・拒否・例外：最初の 地図タップで 1回だけ。何回 タップしても 2回目は ない
+        checks[kind + 'NoRetry'] = { synthetic, first, second, last, ok: syntheticOk && first.asks === 1 && first.asked && !first.retry && second.asks === 1 && last.asks === 1 && !last.retry };
+      } else {
+        // 許可の いらない 端末・センサーの ない 端末：どの タップでも 求めない
+        checks[kind + 'NoAsk'] = { synthetic, first, last, ok: syntheticOk && first.asks === 0 && last.asks === 0 && !last.asked };
       }
       const fallback = ['denied', 'throws', 'rejected', 'unsupported', 'desktop'].includes(kind) ? await movementWithClear(page, false) : { ok: true };
       checks[kind + 'Controls'] = fallback;
       fs.writeFileSync(path.join(out, 'start-progress.json'), JSON.stringify(checks, null, 2));
       // 保存した 設定・進行を 読みなおしても 消さない。開始連打で ポイントも 増えない。
       const saved = await page.evaluate(() => {
-        localStorage.setItem('nsg_tilt', '26');
+        localStorage.setItem('nsg_tilt', '16');   // 傾きの 強さは 9・12・16 の 3段に なった（運営者の声 2026-10-31「傾き感度上げる」。pixel.js の TILT_DEGS）。はじめの 値（12）で ない 16 を 入れて、読みなおしで 消えない ことを 見る
         localStorage.setItem('nsg_start_test', 'keep');
         localStorage.setItem('nsg_state', JSON.stringify({ v: 1, points: 789, total: 789 }));
         const key = nishioGo.stateKey, data = nishioGo.state;
@@ -79,17 +94,21 @@ async function runStartChecks(browser, url, out, { shareOnly = false } = {}) {
         nishioGo.setGuide(data.guide); return key;
       });
       await page.reload(); await page.waitForFunction(() => window.nishioPixel && nishioGo.started);
-      const revisit = await visible(page);
-      if (permission) await page.click('#playReadyOk');
+      await page.waitForTimeout(400);
+      const revisit = await visible(page);   // 読みなおし：窓は 出ない・自動では 求めない
       const persistence = await page.evaluate(() => {
         for (let i = 0; i < 10; i++) nishioGo.begin(true);
         const points = nishioGo.state.points, total = nishioGo.state.total, tilt = localStorage.getItem('nsg_tilt'), marker = localStorage.getItem('nsg_start_test'), legacyPoints = JSON.parse(localStorage.getItem('nsg_state')).points;
-        return { points, total, tilt, marker, legacyPoints, kept: points === 123 && total === 456 && tilt === '26' && marker === 'keep' && legacyPoints === 789 };
+        return { points, total, tilt, marker, legacyPoints, kept: points === 123 && total === 456 && tilt === '16' && localStorage.getItem('nsg_tilt_v') === '2' && marker === 'keep' && legacyPoints === 789 };
       });
       const kept = persistence.kept;
+      // 読みなおした あとも、最初の 地図タップで 1回だけ（ページを 開く たびに 1回）
+      await tapMap(page); await tapMap(page, 170, 170);
+      const reask = await page.evaluate(() => window.__asks), reaskWant = !permission ? 0 : kind.startsWith('notallowed') ? 2 : 1;
       await page.goto('about:blank'); await page.goBack(); await page.waitForFunction(() => window.nishioPixel && nishioGo.started);
       const back = await page.evaluate(key => !!localStorage.getItem(key) && nishioGo.state.points === 123 && document.getElementById('howto').hidden, saved);
-      checks[kind] = { before, after, revisit, kept, back, persistence, ok: !before.intro && !before.help && !before.talk && before.ready === permission && before.asks === 0 && !after.ready && after.asks === (permission ? 1 : 0) && !revisit.help && kept && back };
+      const wantAsks = !permission ? 0 : kind.startsWith('notallowed') ? 2 : 1;
+      checks[kind] = { before, after, revisit, kept, back, persistence, reask, ok: !before.intro && !before.help && !before.talk && !before.panel && before.playing && before.asks === 0 && !after.panel && after.asks === wantAsks && !revisit.help && !revisit.intro && !revisit.panel && revisit.asks === 0 && reask === reaskWant && kept && back };
     } finally { await ctx.close(); }
   }
   // UserActivation API が ない 端末でも、共有リンクの 自動openから 許可を 求めない。
@@ -108,7 +127,7 @@ async function runStartChecks(browser, url, out, { shareOnly = false } = {}) {
       await page.waitForTimeout(300);
       await page.click('#meiro [data-mz="slow"]');
       const last = await page.evaluate(() => ({ calls: window.__asks, asked: nishioPixel.meiroApi.tilt().asked }));
-      await page.waitForFunction(() => NISHIO_MEIRO.game && NISHIO_MEIRO.game.board && NISHIO_MEIRO.game.cd <= 0);
+      await page.waitForFunction(() => NISHIO_MEIRO.game && NISHIO_MEIRO.game.board && !(NISHIO_MEIRO.game.cd > 0));   // 盤の めいろは 数えずに すぐ 始まる（meiro.js の はじめの 説明「3・2・1 なし」）。盤が できたら 動かせる
       let moved = 0;
       for (const key of ['ArrowRight', 'ArrowDown', 'ArrowLeft', 'ArrowUp']) {
         const at = await page.evaluate(() => [NISHIO_MEIRO.game.x, NISHIO_MEIRO.game.y]);
@@ -254,7 +273,7 @@ module.exports = { runStartChecks };
 if (require.main === module) (async () => {
   const out = path.resolve(process.argv[2]); fs.mkdirSync(out, { recursive: true });
   const { chromium } = require('playwright'), { startServer } = require('./bake-common');
-  const server = startServer(8901), browser = await chromium.launch({ executablePath: process.env.CHROMIUM });
-  try { const r = await runStartChecks(browser, 'http://127.0.0.1:8901/nishio-go.html', out, { shareOnly: process.argv.includes('--share') }); fs.writeFileSync(path.join(out, process.argv.includes('--share') ? 'share.json' : 'start.json'), JSON.stringify(r, null, 2)); console.log(JSON.stringify(r)); process.exitCode = r.ok ? 0 : 1; }
+  const port = Number(process.env.PLAYTEST_PORT) || 8901, server = startServer(port), browser = await chromium.launch({ executablePath: process.env.CHROMIUM });
+  try { const r = await runStartChecks(browser, `http://127.0.0.1:${port}/nishio-go.html`, out, { shareOnly: process.argv.includes('--share') }); fs.writeFileSync(path.join(out, process.argv.includes('--share') ? 'share.json' : 'start.json'), JSON.stringify(r, null, 2)); console.log(JSON.stringify(r)); process.exitCode = r.ok ? 0 : 1; }
   finally { await browser.close(); server.close(); }
 })();

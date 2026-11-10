@@ -237,15 +237,14 @@ const FIRST_MINUTE_NEED = {
     await page.waitForTimeout(1200);
     R.checks.tapWalkStopsOnPanel = started && await page.evaluate(at => !nishioPixel.tapGoal && nishioGo.me.lat === at[0] && nishioGo.me.lng === at[1], at);
     await page.click('[data-tab=map]'); await page.waitForTimeout(300);
-    // 地図より外（こよみの札）をさわったら止まる（札は開いたら閉じておく）
+    // 地図より外（上の バー）をさわったら止まる。こよみの札は ドット絵の 地図では 出さなく なった（運営者の声 2026-11-03「文字が多すぎる」。game.js の renderKoyomi）ので、札が 出て いない ことも ここで 見る
     const fwd = await page.evaluate(() => { const a = nishioPixel.toTile(nishioGo.me.lat, nishioGo.me.lng); return nishioPixel.tileToClient(Math.floor(a.x) + 3, Math.floor(a.y)); });
     await page.mouse.click(fwd.x, fwd.y);
-    const started2 = await page.evaluate(() => !!nishioPixel.tapGoal && !document.getElementById('koyomi').hidden);
-    await page.click('#koyomi');
+    const started2 = await page.evaluate(() => !!nishioPixel.tapGoal && document.getElementById('koyomi').hidden);
+    await page.click('header.bar .brand');
     const at3 = await page.evaluate(() => [nishioGo.me.lat, nishioGo.me.lng]);
     await page.waitForTimeout(1200);
     R.checks.tapWalkStopsOnTouch = started2 && await page.evaluate(at => !nishioPixel.tapGoal && nishioGo.me.lat === at[0] && nishioGo.me.lng === at[1], at3);
-    await page.evaluate(() => { const k = document.getElementById('koyomi'); if (k.classList.contains('open')) k.click(); });
     // ほうびの知らせ（たからばこを開けたとき）や「ホーム画面に追加」の案内が出たときも止まる（行って戻る）
     R.checks.tapWalkStopsOnCover = [];
     for (const [dx, cover] of [[3, 'reward'], [-3, 'a2hs']]) {
@@ -1746,7 +1745,7 @@ const FIRST_MINUTE_NEED = {
     if (!built) { await page.evaluate(() => NISHIO_MEIRO.close()); return { ok: false, built }; }
     const b = await page.evaluate(() => { const g = NISHIO_MEIRO.game, b = g.board; return { spot: g.spot.name, len: b.len, tw: b.tw, th: b.th, x: g.x, y: g.y }; });
     await shot(page, '07d-meiro');
-    await page.waitForFunction(() => NISHIO_MEIRO.game.cd <= 0, null, { timeout: 6000 }).catch(() => {});   // はじめの 3・2・1 が おわるまで
+    await page.waitForFunction(() => NISHIO_MEIRO.game.board && !(NISHIO_MEIRO.game.cd > 0), null, { timeout: 6000 }).catch(() => {});   // はじめの 3・2・1 が おわるまで
     const k = await page.evaluate(() => { const b = NISHIO_MEIRO.game.board, [x, y] = b.start, i = y * b.tw + x; return b.er[i] ? 'ArrowRight' : x > 0 && b.er[i - 1] ? 'ArrowLeft' : b.ed[i] ? 'ArrowDown' : 'ArrowUp'; });   // スタートから 通れる向き
     await page.keyboard.down(k); await page.waitForTimeout(400); await page.keyboard.up(k);
     const moved = await page.evaluate(([x0, y0]) => { const g = NISHIO_MEIRO.game; return Math.hypot(g.x - x0, g.y - y0); }, [b.x, b.y]);
@@ -2000,7 +1999,7 @@ const FIRST_MINUTE_NEED = {
     const built = await w.page.waitForFunction(() => NISHIO_MEIRO.game && NISHIO_MEIRO.game.board, null, { timeout: 30000 }).then(() => true, () => false);
     let r = { built };
     if (built) {
-      await w.page.waitForFunction(() => NISHIO_MEIRO.game.cd <= 0, null, { timeout: 6000 }).catch(() => {});
+      await w.page.waitForFunction(() => NISHIO_MEIRO.game.board && !(NISHIO_MEIRO.game.cd > 0), null, { timeout: 6000 }).catch(() => {});
       await shot(w.page, '07e-meiro-land');
       r = { built, ...await w.page.evaluate(async () => {
         const el = document.getElementById('meiro'), bz = el.querySelector('.mz-bezel').getBoundingClientRect(), bt = [...el.querySelectorAll('.mz-btns button')].map(b => b.getBoundingClientRect());

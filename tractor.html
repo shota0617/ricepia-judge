@@ -8152,6 +8152,8 @@ const T3 = {
 const TRACE = {
   pts: [], cps: [], ctx: 0, on: false, drive: false, line: null, fade: 0,
   fv: 0, fHist: [], fT: 0, fPos: null, scCd: 0, stopBoost: 0,   // サイクル116: 指の速さ（変位ベース）・近道の間隔・離した直後の強い減速
+  blockT: 0, escK: 1,   // サイクル260: 畦の手前で止められてからの残り時間（秒）と、その間の切れ角（いっぱい＝1）。この間は 指のある側へ切る
+  escSide() { const e = this.fPos || this.cps[this.cps.length - 1]; if (!e) return 0; const b = Math.atan2(e[0] - S.x, e[1] - S.z) - S.yaw, bb = Math.atan2(Math.sin(b), Math.cos(b)); return Math.abs(bb) > 0.1 ? Math.sign(bb) : 0; },   // 指（なければ線の終わり）が 向きに対して どちら側か（＋＝yaw が増える側。正面 ±6° は 0）
   passMin: 1e9,   // サイクル190: 線の終点へ最も近づいた距離（行き過ぎたら止まるための記録。点が足されると戻す）
   sPos: null, DZ: 5,   // サイクル116（なぞり）: 最後に受け付けた指の画面位置と、そこから何 px 動いたら新しい点として受け付けるか（指を置いたままの わずかなブレは無視する）
   sync() { this.cps = T3.smooth(this.pts).slice(this.ctx); },   // 制御用点列（平滑化済み）を作り直す（add のたび）。pts の先頭 ctx 個は通過済みで、平滑化の文脈用に2個だけ残す（平滑化は前後2点にしか依存しないため、残りの点の値は全体を平滑化した場合と一致する）
@@ -8234,7 +8236,7 @@ const TRACE = {
     if (this.pts.length < 512) { this.pts.push([h.x, h.z]); this.sync(); this.passMin = 1e9; this.draw(); }
   },
   end() { if (!this.on) return; this.on = false; if (this.drive && Math.abs(S.v) > 0.9) this.stopBoost = 0.8; this.drive = false; this.pts = []; this.cps = []; this.ctx = 0; this.fade = 1; this.fv = 0; },   // 指を離す: 跡を消して止まる。速く追っていたときは 0.8秒だけ減速を強めて スッと止める（サイクル116）
-  tick(dt) { if (this.stopBoost > 0) this.stopBoost = Math.max(0, this.stopBoost - dt); if (this.fade > 0 && this.line) { this.fade = Math.max(0, this.fade - dt * 2.5); this.line.material.opacity = 0.95 * this.fade; if (this.ribbon) this.ribbon.material.opacity = 0.55 * this.fade; if (!this.fade) { this.line.visible = false; if (this.ribbon) this.ribbon.visible = false; } } },
+  tick(dt) { if (this.blockT > 0) this.blockT -= dt; if (this.stopBoost > 0) this.stopBoost = Math.max(0, this.stopBoost - dt); if (this.fade > 0 && this.line) { this.fade = Math.max(0, this.fade - dt * 2.5); this.line.material.opacity = 0.95 * this.fade; if (this.ribbon) this.ribbon.material.opacity = 0.55 * this.fade; if (!this.fade) { this.line.visible = false; if (this.ribbon) this.ribbon.visible = false; } } },
   rlen() { let r = Math.hypot(this.cps[0][0] - S.x, this.cps[0][1] - S.z); for (let i = 0; i < this.cps.length - 1; i++) r += Math.hypot(this.cps[i + 1][0] - this.cps[i][0], this.cps[i + 1][1] - this.cps[i][1]); return r; },   // サイクル116: 残りの軌跡の長さ（＝指への遅れ）
   follow(dt) {                                          // step から毎フレーム: 追従するなら true。切れ角を目標へなめらかに寄せる
     if (!this.on || !this.cps.length) { this.drive = false; return false; }
@@ -8274,6 +8276,11 @@ const TRACE = {
     }
     this.draw();
     const r = T3.steer(this.cps, S.x, S.z, S.yaw, S.v, base);   // T3仕上げ: 弧長先読み＋曲率の先読み＋横ずれ補正（T3 の節）
+    // サイクル260・最初の1分: 畦の手前で止められている間（blockT）は、線の最初の点ではなく 指のある側へ ハンドルを いっぱいに切る。
+    // 運転席から見える田んぼは鼻先より先だけなので、畦の 1m 手前で止まると どの なぞりも 最初の点が「まっすぐ前・畦の上」になり、
+    // そこを先に目指して切れ角がほぼ 0 のまま、横へなぞっても一歩も動けなかった（実測 スマホ縦: 29 秒で畦に着いたあと 右はしへ 8 回なぞって 0m）。
+    // いっぱいに切れば 鼻先は 0.5m ほどしか前へ出ないので、サイクル197 の 1m のゆとりの中で向きを変えられる。まっすぐ前への なぞり（指が正面）では切らない
+    if (this.blockT > 0 && this.escSide()) r.steerT = -this.escSide() * MAX_STEER * this.escK;
     S.steer += Math.max(-1.8 * dt, Math.min(1.8 * dt, (r.steerT - S.steer) * Math.min(1, dt * 7)));   // サイクル117: 目標へは一次遅れ（約0.14秒）で寄せ、1秒あたりの切れ角の変化も 2.6→1.8rad に（手動の 1.1 に近づける）。点が足されるたびの目標の小さな段差で ハンドルが こきざみに振れないように
     const kM = T3.info(this.cps, S.x, S.z).kMax;   // 指追従中は T3 のカーブ上限（0.45/0.60、耕し時代の物差し）を 0.75/0.95 へ緩める
     this.cap = Math.max(r.cap, Math.min(base, kM > 0.45 ? 0.75 : kM > 0.22 ? 0.95 : base));
@@ -8287,6 +8294,7 @@ const TRACE = {
 // 経路はトラクター前方の点列（3D）を毎フレーム画面へ投影するので、どの視点でも田んぼの上に重なる。入力はふさがない。
 const HINT = {
   t: 0, done: false, okT: 0, pts: null, at: null, dots: [],
+  turn: null, stuckT: 0,   // サイクル260: 畦の手前で止まったままの時間と、「横へ なぞる」見本（出している間だけ { yaw, x, z, side }）
   build() {   // トラクターの前方 3〜13m（田んぼの内側へ寄せた点列）
     const fx = Math.sin(S.yaw), fz = Math.cos(S.yaw), pts = [];
     for (let d = 3; d <= 13.01; d += 1) pts.push([Math.max(-HX + 0.5, Math.min(HX - 0.5, S.x + fx * d)), Math.max(-HZ + 0.5, Math.min(HZ - 0.5, S.z + fz * d))]);
@@ -8301,7 +8309,15 @@ const HINT = {
   proj(p) { const v = new THREE.Vector3(p[0], 0.2, p[1]).project(camera); return v.z < 1 ? [(v.x * 0.5 + 0.5) * innerWidth, (-v.y * 0.5 + 0.5) * innerHeight] : null; },
   update(dt) {
     const box = $('hintSwipe'); if (!box) return;
-    const show = !this.done && S.started && !S.done && !INTRO.on && $('start').classList.contains('hidden') && $('help').classList.contains('hidden');
+    const live = S.started && !S.done && !INTRO.on && $('start').classList.contains('hidden') && $('help').classList.contains('hidden');
+    // サイクル260・最初の1分: 畦の手前で止まったまま 前へ なぞり続けている人に、同じ指の見本で「横へ なぞる」を見せる（文字なし・入力をふさがない）。
+    // 実測（スマホ縦・ヒントどおり前へ なぞるだけの人）: 29 秒で畦に着き、3 秒の吹き出しのあとは何も出ないまま 90 秒まで同じ所。
+    // 畦で止められた なぞり（TRACE.blockT）が合わせて 0.8 秒つづいたら出し、向きが 125° 変わる（ほぼ折り返した）か 9m はなれたら消す。向きは田んぼのまん中の側
+    if (live && TRACE.on && TRACE.blockT > 0 && Math.abs(S.v) < 0.3) this.stuckT += dt; else if (Math.abs(S.v) > 0.5) this.stuckT = 0;   // 止められている間も 1m のゆとりの中で じわっと動くので、速さは 0.3m/秒 まで「止まったまま」と見る
+    if (!this.turn && live && this.stuckT > 0.8) this.turn = { yaw: S.yaw, x: S.x, z: S.z, side: -S.x * Math.cos(S.yaw) + S.z * Math.sin(S.yaw) > 0 ? -1 : 1 };   // 左（cos, −sin）の側に まん中があれば 画面の左へ
+    if (this.turn && (Math.abs(Math.atan2(Math.sin(S.yaw - this.turn.yaw), Math.cos(S.yaw - this.turn.yaw))) > 2.2 || Math.hypot(S.x - this.turn.x, S.z - this.turn.z) > 9)) { this.turn = null; this.stuckT = 0; }
+    if (this.turn && live) { this.ensure(); this.sweep(dt, box); return; }
+    const show = !this.done && live;
     if (!show) { box.classList.add('hidden'); return; }
     this.ensure();
     if (tilledCount > 0) { this.done = true; box.classList.add('hidden'); return; }   // サイクル167・最初の1分: なぞり以外の始め方（🌙自動・キーボード）でも、実際に土が耕され始めたらヒントは役目を終えるので消す（従来はなぞり成功でしか消えず、自動運転中は経路を作り直しながら出続けていた）
@@ -8318,6 +8334,16 @@ const HINT = {
       if (s && lit) { el.style.left = s[0] + 'px'; el.style.top = s[1] + 'px'; el.style.display = ''; } else el.style.display = 'none';
     });
   }
+};
+// サイクル260: 「横へ なぞる」見本。画面の上で、鼻先のすぐ先（3m 先の地面）から 少し上（7m 先の高さ）へ上がりながら 画面のはしへ。地面の見える高さだけを通る
+HINT.sweep = function (dt, box) {
+  const fx = Math.sin(S.yaw), fz = Math.cos(S.yaw), a = this.proj([S.x + fx * 3.3, S.z + fz * 3.3]), b = this.proj([S.x + fx * 7, S.z + fz * 7]), fel = $('hintFinger');
+  if (!a || !b) { box.classList.add('hidden'); return; }
+  box.classList.remove('hidden');
+  this.t = (this.t + dt) % 2.6;   // 前へのヒントと同じ速さ：2.2 秒かけてなぞり、0.4 秒休む
+  const ph = this.t / 2.2, at = u => [innerWidth / 2 + this.turn.side * innerWidth * 0.42 * Math.pow(u, 1.4), a[1] + (b[1] - a[1]) * Math.min(1, u * 1.8)];
+  if (ph < 1) { const f = at(ph); fel.style.left = f[0] + 'px'; fel.style.top = f[1] + 'px'; fel.style.display = ''; } else fel.style.display = 'none';
+  this.dots.forEach((el, i) => { const u = i / 9; if (ph < 1 && u <= ph) { const q = at(u); el.style.left = q[0] + 'px'; el.style.top = q[1] + 'px'; el.style.display = ''; } else el.style.display = 'none'; });
 };
 // ---- 最初の1分（サイクル159、最初の1分改善 第2弾「開始直後の表示を軽くする」）----
 // のんびり（calm）だけ：開始直後は body に firstmin を付け、CSS で上のボタン・下のパッドを絞る（上に残るのは 🌙 と ≡ の2つ。padC も最初の1分は隠す。サイクル214で 🔰 も隠して2つにそろえた）。
@@ -8736,6 +8762,10 @@ function step(dt) {
       // サイクル197（最初の1分）: なぞり中は「少しずつ動ける」を使わず、そこで止まる。なぞりでは後ろへ下がれないので、鼻先が畦の 6cm 手前まで
       // にじり寄ると、そのあと横や後ろへなぞっても鼻先が畦にかかって一歩も動けなくなっていた（ループ側 scratchpad/cond197b.js: 畦の 3.16m 手前で
       // 止まったあと 左・真横・後ろへなぞっても 0m）。手前で止まれば、ハンドルを切って抜けられる
+      if (tracing) {   // サイクル260: 畦で止められた なぞり。指のある側へ切って 1m 先まで畦にかからない切れ角（大きい順）を TRACE.follow に渡す。どれも かかるなら いっぱいに切る
+        TRACE.blockT = 0.6; TRACE.escK = 1;
+        for (const k of [1, 0.6, 0.3]) if (path(1.0, 0, -TRACE.escSide() * MAX_STEER * k)) { TRACE.escK = k; break; }
+      }
       if (tracing || Math.abs(S.v) > 0.2 || !at(0.06) || Math.sign(want) !== sg) { want = 0; S.v *= 0.6; }   // 速いとき・惰性のときは強くブレーキ。6cm 先も畦なら止まる
       else want = sg * Math.min(Math.abs(want), 0.15);                                           // ゆっくりなら、少しずつ動ける（キー操作のとき）
       EASY.used = true;

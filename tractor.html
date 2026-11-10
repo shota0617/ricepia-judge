@@ -25,6 +25,13 @@
   /* サイクル101: なぞり方ヒント（指と点線の跡。文字なし・入力をふさがない） */
   #hintSwipe { position: fixed; inset: 0; pointer-events: none; z-index: 40; animation: hintIn .3s ease-out; }   /* サイクル267: 見本は 0.3 秒で ふわっと出す（次の指が すぐ来て 0.1 秒で消えるときに パッと光らないように） */
   @keyframes hintIn { from { opacity: 0; } to { opacity: 1; } }
+  /* サイクル269・最初の1分: 3D の読みこみを待つ間の おおい（空と土の色・なぞり方の指・短い 1 行）。入力は ふさがない・押す物は ない（はじめの画面では ない）。
+     それまでは 車体と田んぼが届くまで、まだ何も置いていない景色を 原点のカメラで写していて、灰色と茶色の大きな三角が画面いっぱいに見えていた */
+  #loadWait { position: fixed; inset: 0; pointer-events: none; background: linear-gradient(#9fb9d6 0%, #d3e3ef 47%, #8a7358 47%, #6c5843 100%); transition: opacity .3s, visibility 0s .3s; }
+  #loadWait.off { opacity: 0; visibility: hidden; }
+  #loadWait .lwF { position: absolute; left: 50%; top: 66%; font-size: 56px; line-height: 1; margin: -48px 0 0 -12px; filter: drop-shadow(0 3px 5px rgba(0,0,0,.45)); animation: lwUp 2.6s linear infinite; }
+  #loadWait .lwT { position: absolute; left: 0; right: 0; top: 76%; text-align: center; color: #fff; font-size: 17px; font-weight: 800; text-shadow: 0 1px 4px rgba(0,0,0,.5); }
+  @keyframes lwUp { 0% { transform: translateY(0); opacity: 1; } 85% { transform: translateY(-17vh); opacity: 1; } 86%, 100% { transform: translateY(-17vh); opacity: 0; } }
   #hintSwipe .hDot { position: fixed; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; background: #ffd84a; box-shadow: 0 0 0 3px rgba(255,216,74,.35), 0 1px 4px rgba(0,0,0,.4); }
   #hintFinger { position: fixed; font-size: 56px; line-height: 1; margin: -48px 0 0 -12px; filter: drop-shadow(0 3px 5px rgba(0,0,0,.45)); }
   /* 上の計器（速さ・前後・ロータリー・耕した割合） */
@@ -183,6 +190,7 @@
 <body>
 <canvas id="view"></canvas>
 <div id="vignette"></div>
+<div id="loadWait"><div class="lwF">👆</div><div class="lwT">指で なぞると 進みます</div></div>
 <div id="hintSwipe" class="hidden"><div id="hintFinger">👆</div></div>
 
 <div id="hud" class="hidden">
@@ -352,7 +360,7 @@ if (WX !== 'hare') {                            // くもり・小雨：雲が�
 
 // ---- 描くしくみ ----
 const canvas = $('view');
-const renderer = (() => { try { return new THREE.WebGLRenderer({ canvas, antialias: !MOBILE, powerPreference: 'high-performance' }); } catch (e) { $('toast').textContent = '🚜 この スマホ（ブラウザ）では 3D の 絵が 出せない ようです。パソコンや ほかの ブラウザで ひらいてみてね。'; $('toast').style.opacity = 1; throw e; } })();   // WebGL が 使えない 端末で「読みこみ中…」の まま 止まらない ように
+const renderer = (() => { try { return new THREE.WebGLRenderer({ canvas, antialias: !MOBILE, powerPreference: 'high-performance' }); } catch (e) { $('toast').textContent = '🚜 この スマホ（ブラウザ）では 3D の 絵が 出せない ようです。パソコンや ほかの ブラウザで ひらいてみてね。'; $('toast').style.opacity = 1; $('loadWait').classList.add('off'); throw e; } })();   // WebGL が 使えない 端末で「読みこみ中…」の まま 止まらない ように
 renderer.setPixelRatio(Math.min(devicePixelRatio, MOBILE ? 1.5 : 2));
 renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -482,7 +490,7 @@ Promise.all([load('tractor_yt.glb', 't'), load(FIELD[season], 'f'), IMPL_FILE ? 
   CLOUDS.apply(scene);                          // 雲の影（ほかの細工のあとで）
   LOAD_ST = 'ok';
   startGame();   // サイクル263（店主指示 2026-11-10）: はじめの画面は全廃。読みこみが終わったら、案内・設定なしで そのまま田んぼから始める（既定＝春・昼・晴れ・ロータリー・お題は四角）
-}).catch(e => { console.error(e); LOAD_ST = 'ng'; $('toast').textContent = '🚜 うまく 読みこめませんでした。通信のよい所で、もう一度 ひらいてみてね。'; $('toast').style.opacity = 1; });   // 英語の エラー文は 画面に出さず コンソールへ（素朴な かわいさ）
+}).catch(e => { console.error(e); LOAD_ST = 'ng'; $('toast').textContent = '🚜 うまく 読みこめませんでした。通信のよい所で、もう一度 ひらいてみてね。'; $('toast').style.opacity = 1; $('loadWait').classList.add('off'); });   // 英語の エラー文は 画面に出さず コンソールへ（素朴な かわいさ）
 
 
 // ---- ヘッドライトと作業灯（LED）。夕方は点けて始める。L で入切（本物も作業灯は集中スイッチでまとめて入切） ----
@@ -8030,7 +8038,7 @@ const HINT = {
     const box = $('hintSwipe'); if (!box) return;
     for (let i = 0; i < 10; i++) { const el = document.createElement('div'); el.className = 'hDot'; box.appendChild(el); this.dots.push(el); }
   },
-  wait() { return this.sideOK >= 3 ? 2 : 0.4; },   // サイクル267: 止まってから見本を出すまでの秒
+  wait() { return this.sideOK >= 3 && this.workAhead(1) ? 2 : 0.4; },   // サイクル267: 止まってから見本を出すまでの秒。サイクル269: 曲がり方を覚えた人（sideOK 3 以上）でも、まっすぐ前に耕す所がないとき（絵の外へ出た・畦へ向いている）は 0.4 秒。実測（スマホ縦・手本どおりの人）: 横なぞり 3 回（16 秒）で「覚えた」になり、23.7 秒に絵の外へ出たあと 60 秒まで 36 秒 前へ なぞり続けた（見本は 2 秒待ちで出ず、数字は 8% のまま）。0.4 秒を 0.15 秒にする案は入れない（0.4 秒なぞって 0.6 秒休む人に 0.1〜0.2 秒の見本が 60 秒で 44 回 ちらつくだけで、% は 9% のまま）
   proj(p) { const v = new THREE.Vector3(p[0], 0.2, p[1]).project(camera); return v.z < 1 ? [(v.x * 0.5 + 0.5) * innerWidth, (-v.y * 0.5 + 0.5) * innerHeight] : null; },
   update(dt) {
     const box = $('hintSwipe'); if (!box) return;
@@ -8643,7 +8651,7 @@ function step(dt) {
   }
   // 旋回アップ（U で入切。はじめは切）：耕しながらハンドルを大きく切ると、作業機が自動で上がる（下げるのは手で）。
   // 判定はキーではなく 実際のハンドルの切れ角で。1 回の旋回で 1 回だけ（ハンドルをもどすと また働く）
-  else if (!tracing && !AUTO.on && S.turnUp && S.rotDown && S.rotPos < 0.08 && Math.abs(S.steer) > 0.45 && S.v > 0.05 && !S.turnLatch) {
+  else if (!tracing && !AUTO.on && key.fwd && S.turnUp && S.rotDown && S.rotPos < 0.08 && Math.abs(S.steer) > 0.45 && S.v > 0.05 && !S.turnLatch) {   // サイクル269: 前進キーで走っているときだけ。横へ なぞった指を離して止まるまでの間（0.4 秒ほど）にも働き、手本どおりの人に 33 字の知らせが 2 回出て、作業機が上がっては 次の なぞりで下りていた（下りきるまで 0.8 秒は耕せない）
     S.rotDown = false; S.turnLatch = true; S.turnUpHold = true; setRotBtn();
     toast('旋回アップ：ハンドルを大きく切ったので ' + IMPL + 'が上がりました。回ったら下げる');
   }
@@ -8655,7 +8663,7 @@ function step(dt) {
     AUTO.reLower = false; S.rotDown = true; setRotBtn();
   } else if (EASY.on && ART.on && S.v > 0.1) {            // 🔰 田んぼアート：白線をこえそうなら上げ、絵の中にもどったら下げる
     const [out, inn] = EASY.ahead();
-    if (S.rotDown && S.rotPos < 0.08 && out >= 2) { S.rotDown = false; EASY.autoUp = true; EASY.used = true; setRotBtn(); EASY.tell('artUp', '白線をこえるので ' + IMPL + 'を上げました。絵の中にもどると下がります'); }
+    if (S.rotDown && S.rotPos < 0.08 && out >= 2) { S.rotDown = false; EASY.autoUp = true; EASY.used = true; setRotBtn(); EASY.tell('artUp', '白線の外は ' + (SHIRO ? 'かきません' : '耕しません') + '、曲がって絵の中へ。' + IMPL + 'を上げました。絵の中にもどると下がります'); }   // サイクル269: 吹き出しは はじめの 1 文だけなので、どうすればよいか（曲がって もどる）を先に
     else if (!S.rotDown && EASY.autoUp && inn >= 2 && Math.abs(S.steer) < 0.2 && !OCHI.armed) { S.rotDown = true; EASY.autoUp = false; setRotBtn(); }
   }
   if (!S.rotDown && Math.abs(S.steer) > 0.45) EASY.autoUp = false;   // 回りはじめたら、自動で下げるのはやめる（下げるのは手で）
@@ -10021,7 +10029,7 @@ function startGame() {
   if (camMode !== 0) { camMode = 0; look.yaw = look.pitch = 0; $('bCam').textContent = '👁 ' + CAMS[0]; }   // サイクル118: 始まりは運転席視点（洗車などで外から見た後でも）
   for (const id of MOBILE || params.has('pad') ? ['hud', 'bar', 'badge', 'padC', 'padB', 'padD', 'bigPct'] : ['hud', 'bar', 'badge', 'bigPct']) $(id).classList.remove('hidden');   // サイクル217・類1: のんびりでは大きな％数字も出す（DETAILでは CSS で常時非表示）   // サイクル98: 運転パッドは全廃済み（DOMなし）。運転はなぞり操作のみ（キーボードは予備として残す）
   if (!MOBILE && !params.has('pad')) $('keyHint').classList.remove('hidden');   // パソコン：はじめのうちは 画面の左下に いちばん使うキー
-  S.started = true;
+  S.started = true; $('loadWait').classList.add('off');   // サイクル269: 読みこみを待つ間の おおいを消す
     FIRSTMIN.start();   // サイクル159：のんびりでは 開始直後の表示を軽くする（DETAIL では何もしない）
     if (LOOP.friend !== null) setTimeout(() => { if (DETAIL) toast('🏁 友だちは ' + LOOP.friend + ' 点。きみは何点とれる？', 5); }, 6000);   // サイクル171・最初の1分: のんびりでは友だちの点数で挑戦しない（サイクル117）。共有リンクから開いても開始6秒の吹き出し・声で競わせず、まずなぞって耕す楽しさに集中させる。くわしい説明では従来どおり知らせる
     const artGo = () => {   // 田んぼアートの 地図と お題は 草かりの あとで

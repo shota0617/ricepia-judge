@@ -342,7 +342,7 @@ function riceYear(d, brand){ const [m, dd] = HARVEST[brand] || [7, 21]; // 銘�
   return (d.getMonth() > m || (d.getMonth()===m && d.getDate()>=dd)) ? d.getFullYear() : d.getFullYear()-1; }
 function shinmaiSeason(d, brand){ return riceYear(d, brand) === d.getFullYear(); }
 function makeBag(k){
-  const N = k>=11 ? 15 + Math.floor(rnd()*4) : Math.min(18, 8 + Math.round(k*1.2)); /* 11袋目からは 15〜18目で ゆらす（同じ 袋が つづかない。80周目） */
+  const N = k>=11 ? 15 + Math.floor(rnd()*4) : Math.min(18, 8 + Math.round(k*1.2)); /* 12袋目（k>=11）からは 15〜18目で ゆらす（同じ 袋が つづかない。80周目） */
   // 表と裏：1袋目は 裏（すぐ ほどける）、2袋目は 表（裏返す 練習）、あとは 半々
   const face = k===0 ? 'back' : k===1 ? 'front' : (rnd()<0.5 ? 'front' : 'back');
   // ほどき始め：たいてい 裏から見て左。5袋目からは ときどき右
@@ -351,7 +351,7 @@ function makeBag(k){
   const single = k>=8 && rnd()<(k>=14 ? 0.3 : 0.15); // 1本糸の袋：どちらからでも ほどける。15袋目からは ふやす（うまい 人の 後半が 同じ 袋ばかりに ならない。151周目）
   const sinceR = k<3 || (start==='R' && !single) ? 0 : (prev ? (prev.sinceR||0) + 1 : 1); // 右から ほどく 袋から いくつ め か
   const knots = new Set();
-  const nk = k<2 ? 0 : k>=11 ? 3 + (rnd()<0.5 ? 1 : 0) : Math.min(4, 1 + Math.floor((k-2)/3)); /* 11袋目からは きつい目 3〜4 */ // 後の 袋ほど きつい目が ふえる（さいだい 4。52周目）
+  const nk = k<2 ? 0 : k>=11 ? 3 + (rnd()<0.5 ? 1 : 0) : Math.min(4, 1 + Math.floor((k-2)/3)); /* 12袋目（k>=11）からは きつい目 3〜4 */ // 後の 袋ほど きつい目が ふえる（さいだい 4。52周目）
   let guard=0;
   while(knots.size<nk && guard++<80){ const i = 3 + Math.floor(rnd()*(N-5));
     if(k>=12 && knots.size===nk-2 && !knots.has(i-1) && !knots.has(i) && !knots.has(i+1) && !knots.has(i+2) && i+1<N-1){ knots.add(i); knots.add(i+1); } // 13袋目から：きつい目が 2つ ならぶ 所（2つで さいごの 2つ。合わせて 4まで）
@@ -1771,7 +1771,7 @@ function syncUI(dt){
   const put = (el, k, v) => { if(el['_' + k] !== v){ el['_' + k] = v; if(k === 'text') el.textContent = v; else if(k === 'low') el.classList.toggle('low', v); else el.style[k] = v; } };
   put(ui.score, 'text', S.score.toLocaleString());
   put(ui.time, 'text', String(Math.ceil(S.time)));
-  put(ui.time, 'low', S.time<8);
+  put(ui.time, 'low', S.time<10); /* 点線の わくは カチカチ（のこり 10秒）と 同じ とき から（音を 切って いる 人にも 同じ 合図。301周目：8秒 だったので「10」「9」が 白い まま 鳴って いた） */
   put(ui.bags, 'text', String(S.bags));
   const mult = multOf();
   put(ui.combo, 'text', S.feverT>0 ? 'フィーバー '+Math.ceil(S.feverT)+'秒' : mult>1 ? (W < 260 ? '×'+mult : 'スルスル ×'+mult) : ''); /* とても せまい（字 200%）と まん中の「+3秒」に かさなる（145周目） */

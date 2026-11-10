@@ -1048,6 +1048,8 @@ img.pq-art{display:block;width:144px;height:144px;margin:6px auto 10px;image-ren
 /* サイクル194：止まって いる ときの 手本。道しるべの 2マス先を 指が トンと タップする（指先が left/top の 点）。さわれない（下の 地図に とどく） */
 #tapDemo{position:fixed;width:44px;margin-left:-22px;text-align:center;font-size:38px;line-height:1;z-index:30;pointer-events:none;filter:drop-shadow(0 2px 3px rgba(0,0,0,.45));animation:tapDemoPress 1.5s ease-in-out infinite;transform-origin:50% 0}
 #tapDemo::before{content:"";position:absolute;left:50%;top:0;width:34px;height:34px;margin:-17px 0 0 -17px;border:3px solid #fff;border-radius:50%;box-shadow:0 0 0 2px rgba(47,93,58,.8);opacity:0;animation:tapDemoRing 1.5s ease-out infinite}
+/* サイクル197：最初の 1タップを うながす 札（まだ 傾きの 許可を 聞いて いない 間だけ。指の 手本の 下に 出る。さわれない＝地図の タップを じゃま しない） */
+#tapDemo.first::after{content:"タップ！";position:absolute;left:50%;top:46px;transform:translateX(-50%);white-space:nowrap;font-size:15px;font-weight:800;line-height:1;padding:6px 12px;border-radius:14px;background:#fff;color:#1d4f4c;border:2px solid #1d4f4c;box-shadow:0 2px 6px rgba(0,0,0,.35)}
 @keyframes tapDemoPress{0%,55%,100%{transform:translateY(14px)}22%,34%{transform:translateY(0) scale(.92)}}
 @keyframes tapDemoRing{0%,22%{opacity:0;transform:scale(.4)}30%{opacity:.95;transform:scale(.6)}70%,100%{opacity:0;transform:scale(1.5)}}
 /* サイクル194：傾きの ボタン（許可の いる スマホだけ）。地図の 左上（右上の 丸い ボタンの 列と 同じ 見た目。はじめの ゴールの 旗が 出やすい 右上・知らせの 出る まん中を さける）。名前つき（.lab）は 右へ のびる */

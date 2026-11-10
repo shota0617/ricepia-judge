@@ -37,6 +37,15 @@ class Tilt194(unittest.TestCase):
         self.assertIn("document.addEventListener('click', tiltFirstTouch, { capture: true, passive: true });", PIX)
         self.assertIn("if (!event || !event.isTrusted || tiltG.asked || !tiltNeedsPermission()) return;", fn_src("tiltAsk"))
 
+    def test_first_tap_demo_shows_at_once(self):
+        """サイクル197（運営者の声 2026-11-10「１タップを促すお手本」）：まだ 許可を 聞いて いない 間は、待たずに タップの 手本と「タップ！」の 札を 出す"""
+        t = fn_src("tapDemoTick")
+        self.assertIn("const first = tiltBtnWanted() && !tiltG.asked;", t)
+        self.assertIn("now - tapDemo.at >= (first ? 0 : DEMO_IDLE_MS)", t)
+        self.assertIn("tapDemo.el.classList.toggle('first', first);", t)
+        css = (ROOT / "nishio-go" / "style.css").read_text(encoding="utf-8")
+        self.assertIn('#tapDemo.first::after{content:"タップ！"', css)
+
     def test_tilt_button_asks_once_per_real_tap(self):
         self.assertIn("if (!event || !event.isTrusted || tiltG.asked || !tiltNeedsPermission()) return;", fn_src("tiltAsk"))
         i = PIX.index("if (tiltBtn) tiltBtn.addEventListener('click', e => {")
@@ -62,7 +71,7 @@ class Tilt194(unittest.TestCase):
     def test_idle_demo_repeats_and_does_not_block(self):
         self.assertIn("const DEMO_IDLE_MS = 2000;", PIX)
         t = fn_src("tapDemoTick")
-        self.assertIn("now - tapDemo.at >= DEMO_IDLE_MS", t)
+        self.assertIn("now - tapDemo.at >= (first ? 0 : DEMO_IDLE_MS)", t)
         self.assertIn("if (rp.x !== tapDemo.x || rp.y !== tapDemo.y) { tapDemo.x = rp.x; tapDemo.y = rp.y; tapDemo.at = now; }", t)
         self.assertIn("const c = path[Math.min(2, path.length - 1)]", t)
         self.assertNotIn("localStorage", t)   # はじめての 人 だけ・1回だけ の 条件を もたない

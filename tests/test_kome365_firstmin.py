@@ -120,6 +120,11 @@ class TestKome365FirstMinute(unittest.TestCase):
         # 速い フリックは ななめ(横が 縦の 0.7倍 以上)でも 決める
         self.assertIn("Math.abs(dx) < dyGuard * (cancel ? 1.5 : flick ? 0.7 : 1)", HTML)
 
+    def test_demo_waits_for_judge_mark(self):
+        # Codex 指摘(PR #1085): ○✗ の しるしが 出て いる 間は 手本を 待つ
+        self.assertIn("if (performance.now() - markAt < 750) { demoArm(); return; }", HTML)
+        self.assertIn("markAt = performance.now();", HTML)
+
     def test_demo_timer_does_not_count_hidden_tab(self):
         # Codex指摘(PR #1082): 別のタブに いる間は 手本の 待ちを 数えない。戻ったら 数え直す
         self.assertIn("if (document.hidden) { demoHeld = !!demoT; demoDisarm(); } else if (demoHeld) { demoHeld = false; demoArm(); }", HTML)

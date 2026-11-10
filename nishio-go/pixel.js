@@ -9414,7 +9414,10 @@ function tapDemoTick() {
   const now = performance.now();
   if (rp.x !== tapDemo.x || rp.y !== tapDemo.y) { tapDemo.x = rp.x; tapDemo.y = rp.y; tapDemo.at = now; }   // 転がって いる・歩いて いる
   const path = mzRt.path;
-  const ok = active && !meiroPause && !document.hidden && rp.x !== null && mazeOn() && howtoEl.hidden && !mapCovered() && !tapS.goal && !!path && path.length > 1 && now - tapDemo.at >= DEMO_IDLE_MS;
+  // サイクル197（運営者の声 2026-11-10「最初の 1 タップを促す表示」「１タップを促すお手本」）：iPhone は 1回 タップしないと 傾きの 許可を 聞けない。
+  // まだ 聞いて いない 間は、2秒 待たずに はじめから タップの 手本（指＋「タップ！」の 札）を 出す。タップすると 許可の 窓が 出て、手本は ふだんの 出かた（止まって 2秒）に もどる
+  const first = tiltBtnWanted() && !tiltG.asked;
+  const ok = active && !meiroPause && !document.hidden && rp.x !== null && mazeOn() && howtoEl.hidden && !mapCovered() && !tapS.goal && !!path && path.length > 1 && now - tapDemo.at >= (first ? 0 : DEMO_IDLE_MS);
   if (!ok) { tapDemoHide(); return; }
   if (!tapDemo.el) {
     const mk = (id, t) => { const e = document.createElement('div'); e.id = id; e.setAttribute('aria-hidden', 'true'); e.textContent = t; e.hidden = true; document.body.appendChild(e); return e; };
@@ -9423,6 +9426,7 @@ function tapDemoTick() {
   const c = path[Math.min(2, path.length - 1)], q = tileClient(c[0] * MZ_K + 1, c[1] * MZ_K + 1);   // 道しるべの 2マス先（ゴールが 近ければ ゴールの マス）
   tapDemo.el.style.left = Math.round(q.x) + 'px'; tapDemo.el.style.top = Math.round(q.y) + 'px';
   if (tapDemo.el.hidden) { tapDemo.el.hidden = false; tapDemo.n++; }
+  if (tapDemo.el.classList.contains('first') !== first) tapDemo.el.classList.toggle('first', first);
   const ph = tiltG.on && Math.hypot(tiltG.x, tiltG.y) <= 0.2;   // 傾きが 使えて いる 端末：傾ける 手本も
   if (tapDemo.ph.hidden === ph) tapDemo.ph.hidden = !ph;
 }

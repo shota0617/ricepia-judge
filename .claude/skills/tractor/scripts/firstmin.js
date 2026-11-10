@@ -117,7 +117,7 @@ const srv = http.createServer((r, s) => { const u = decodeURIComponent(r.url.spl
     let s0 = await st();
     ok('前へ なぞった すぐあとは 見本を出さない', !s0.hint, s0.hint);
     for (let i = 0; i < 25 && !(s0.hint && s0.dots >= 4); i++) { await adv(0.2); s0 = await st(); }
-    ok('まだ曲がったことのない人が止まっていると「横へ なぞる」見本が出る（6 秒以内）', s0.hint && s0.dots >= 4 && s0.dy < 422, [s0.hint, s0.dots, Math.round(s0.dy)]);
+    ok('止まっていると なぞり方の見本が出る（前に耕す所が続いているので「前へ」。サイクル265）', s0.hint && s0.dots >= 4, [s0.hint, s0.dots, Math.round(s0.dy)]);
     await stroke([[195, 321], [273, 317], [363, 313]], 4.0);                         // 見える地面の帯（ボンネットの上）を 横へ
     let s = await st();
     ok('見える地面を横へ なぞると 向きが変わる（20° 以上）', dy(s.yaw, s0.yaw) > 0.35, +dy(s.yaw, s0.yaw).toFixed(2));
@@ -145,7 +145,23 @@ const srv = http.createServer((r, s) => { const u = decodeURIComponent(r.url.spl
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); await adv(1);
     ok('ほかの視点から なぞり始めたら 見きわめの始点も引き直す（サイクル263）', rb.on && rb.cam === 0 && rb.g && rb.g[0] === 195 && rb.g[1] === 500 && !rb.pd, rb);
     await p.evaluate(() => Object.assign(game.S, { x: 0, z: 0, yaw: 0, v: 0, steer: 0 })); await adv(6); s = await st();   // もう曲がれた人が 絵の中・前に耕す所がある所で止まっている
-    ok('曲がれた人には、前に耕す所があるときは 見本を出さない', !s.hint, s.hint);
+    // ---- サイクル265（運営者の実機の声「曲がるお手本が出ない」）：少し曲がって 絵の中で止まった人（前に刈り株が少し残っている）にも、止まって 2 秒ほどで見本が出る ----
+    const cueSt = () => p.evaluate(() => { const b = document.getElementById('hintSwipe'); return { vis: !b.classList.contains('hidden') && [...b.querySelectorAll('.hDot')].some(e => e.style.display !== 'none'), side: !!HINT.turn, fwd: !!HINT.demoF }; });
+    await p.evaluate(() => { if ('sideOK' in HINT) HINT.sideOK = 0; Object.assign(game.S, { x: -1.9, z: 8, yaw: -0.78, v: 0, steer: 0 }); }); await adv(0.2);   // まだ曲がり方を覚えていない人として
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: 195, y: 380, id: 1 }] }); await adv(0.1); await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });   // いちど さわって 止まった時計を 0 から
+    let cu = await cueSt(), tCue = null; ok('さわった すぐあとは 見本を出さない', !cu.vis, cu);
+    for (let i = 1; i <= 40 && tCue === null; i++) { await adv(0.1); cu = await cueSt(); if (cu.vis) tCue = i / 10; }
+    ok('持ち主の場面：止まって 3 秒以内に「横へ なぞる」見本が出る（サイクル265）', tCue !== null && tCue <= 3 && cu.side, [tCue, cu]);
+    await adv(6.2); cu = await cueSt(); if (!cu.vis) { await adv(0.5); cu = await cueSt(); }
+    ok('止まったまま 6 秒で もう片方（「前へ」）の見本に入れかわる', cu.fwd && !cu.side, cu);
+    await p.evaluate(() => document.getElementById('help').classList.remove('hidden')); await adv(0.2); cu = await cueSt();
+    ok('操作の表を開いている間は 見本を出さない', !cu.vis, cu);
+    await p.evaluate(() => document.getElementById('help').classList.add('hidden')); await adv(3); cu = await cueSt();
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: 195, y: 380, id: 1 }] }); await adv(0.1); const touched = await cueSt(); await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); await adv(0.5);
+    ok('指がふれた しゅんかんに 見本は消える', cu.vis && !touched.vis, [cu.vis, touched.vis]);
+    // 曲がり方を覚えた人（横なぞりで 30° 以上を 3 回）には、最初の1分のあとは出さない
+    await p.evaluate(() => { HINT.sideOK = 3; FIRSTMIN.finish(); Object.assign(game.S, { x: -1.9, z: 8, yaw: -0.78, v: 0, steer: 0 }); }); await adv(4); cu = await cueSt();
+    ok('曲がり方を覚えた人には、最初の1分のあとは 見本を出さない', !cu.vis, cu);
     await ctx.close();
   }
   // ---- 5) お題なしで 畦のかどから切り返したあと（サイクル263・Codex 指摘 2）：同じ なぞりの中で 作業機が また下りる ----

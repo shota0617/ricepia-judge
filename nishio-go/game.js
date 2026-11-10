@@ -2203,7 +2203,8 @@ function mzGrain(key) {
   const n = got.length, bonus = n % MZ_GRAIN.every === 0 ? MZ_GRAIN.bonus : 0, pts = MZ_GRAIN.pts + bonus;
   const lvUp = gainPoints(pts);
   if (bonus) S.log.unshift({ type: 'grain', t: Date.now(), pts: MZ_GRAIN.every * MZ_GRAIN.pts + bonus, name: `金の米つぶを ${n}こ ひろった`, icon: '🌾' });   // きろくは 10こごとに まとめて（1こずつだと 最近のポイントが うまる）
-  const msg = bonus ? `🌾 金の米つぶ きょう ${n}こ！ ボーナス +${bonus}pt` : n === 1 ? '🌾 金の米つぶ：めいろの 行き止まりに おちているよ（毎日 かわる）' : '';
+  // サイクル200（はじめの 1分）：はじめの 1つの 知らせは 2行に 収まる 言い方に（「めいろの」を とった。はば 360〜390px で 3行 → 2行。390px は 字の 形に よって 2行に ぎりぎり 入る ことも あった。はじめの 10秒で 出る ことが ある）
+  const msg = bonus ? `🌾 金の米つぶ きょう ${n}こ！ ボーナス +${bonus}pt` : n === 1 ? '🌾 金の米つぶ：行き止まりに おちているよ（毎日 かわる）' : '';
   if (msg || lvUp) toast(`${msg}${lvUp ? `${msg ? ' ' : ''}⭐ レベル${lvUp}！` : ''}`);
   save();
   track('maze_grain', { n });

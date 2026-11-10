@@ -14,6 +14,11 @@ const ok = (name, cond, info) => { console.log((cond ? 'ok   ' : 'NG   ') + name
   const got = f ? [2.2, 1.35, 0.9, 3.4].map(w => +f(w).toFixed(3)) : null;
   ok('畦から寄せる幅：ロータリー 1.5m・プラウは外の列（1.175m）まで', !!got && got[0] === 1.5 && got[1] === 1.175 && got[2] === 0.95 && got[3] === 1.5 && /clampIn\(h\) \{ const m = this\.clampM\(\);/.test(src), got);
 }
+// ---- 0b) 横なぞりに切りかえた回は、指が 5px 動いていなくても 点を入れる（Codex 指摘 PR #1073。点が空のままだと 指を止めたとき 曲がらずに止まる） ----
+{
+  const i = src.indexOf('this.pull = { x: S.x + fx * 3.5'), seg = i < 0 ? '' : src.slice(i, src.indexOf('}', src.indexOf('this.pts = []', i)) + 1);
+  ok('横なぞりへの切りかえで 点列を消したら 受け付け位置（sPos）も消す', /this\.pts = \[\];[^}]*this\.sPos = null;/.test(seg), seg.slice(-60));
+}
 // ---- 1) 知らせの文 ----
 {
   const fn = new Function('DETAIL', src.slice(src.indexOf('const KEYH ='), src.indexOf('function showToast')) + '; return { speakText, shortText };')(false);

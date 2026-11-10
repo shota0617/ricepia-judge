@@ -8228,7 +8228,7 @@ const TRACE = {
       if (Math.hypot(dx, dy) > 24) {
         this.pullDone = true;
         const fx = Math.sin(S.yaw), fz = Math.cos(S.yaw), gap = (this.g0[0] - S.x) * fx + (this.g0[1] - S.z) * fz;
-        if (Math.abs(dx) > 1.5 * Math.abs(dy) && gap > 4.5) { this.pull = { x: S.x + fx * 3.5, z: S.z + fz * 3.5, fx, fz }; this.pts = []; this.ctx = 0; this.sync(); this.fHist = []; this.passMin = 1e9; }
+        if (Math.abs(dx) > 1.5 * Math.abs(dy) && gap > 4.5) { this.pull = { x: S.x + fx * 3.5, z: S.z + fz * 3.5, fx, fz }; this.pts = []; this.ctx = 0; this.sync(); this.fHist = []; this.passMin = 1e9; this.sPos = null; }   // sPos を消す（Codex 指摘 PR #1073）: 点を消した この回の指の位置は かならず新しい点にする。消さないと、直前に受け付けた位置から 5px 未満のとき 点が 1 つも無いまま返り、そこで指を止めると 曲がらずに止まっていた
       }
     }
     if (this.pull) { const q = this.pull, lat = (h.x - q.x) * q.fz - (h.z - q.z) * q.fx; h.x = q.x + q.fz * lat; h.z = q.z - q.fx * lat; }

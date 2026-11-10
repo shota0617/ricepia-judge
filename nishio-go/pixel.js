@@ -9450,14 +9450,16 @@ function tiltAsk(event) {   // 本当の タップで 1回だけ（画面を 最
 // Codex 指摘（PR #1083）：傾きの ボタンを 押した ときは ボタンに まかせる（ここで 先に 聞くと、ボタンが「もう 聞いた」と 見て 案内を 出して しまう）。
 // 一時的な 失敗の やりなおしは、同じ 指の 動き（touchend の すぐ あとの click）では なく、次の タップで（0.7秒 あける）
 function tiltFirstTouch(e) {
-  if ((tiltG.asked && !tiltG.retry) || !tiltBtnWanted() || lsGet('nsg_tilt_ok', '') === '0') return;
+  // サイクル196（運営者の声 2026-11-10「にしおさんぽの動作許可をすぐ出して」「すぐ出るように修正」）：
+  // ・前に ことわった 人にも、開く たびに 最初の タップで 1回 聞く（前は 聞かなかったので、いちど「許可しない」を 押すと 窓が もう 出なかった）
+  // ・聞くのは click だけ（touchend では 聞かない）。iPhone が touchend を「さわった 操作」と 認めないと 失敗に なり、すぐ あとの click も 0.7秒の 間あけで 捨てて、いつまでも 窓が 出ない おそれが あった
+  if ((tiltG.asked && !tiltG.retry) || !tiltBtnWanted()) return;
   if (e && e.target && e.target.closest && e.target.closest('#pxTilt')) return;
   const now = performance.now();
   if (now - (tiltFirstTouch.at || -1e9) < 700) return;
   tiltFirstTouch.at = now;
   tiltAsk(e);
 }
-document.addEventListener('touchend', tiltFirstTouch, { capture: true, passive: true });
 document.addEventListener('click', tiltFirstTouch, { capture: true, passive: true });
 // 「あそぶ」ボタン（playReady）は廃止（運営者の声 2026-10-31）。傾きの許可は、傾きの ボタン（#pxTilt）を 押した ときに 聞く（サイクル194。最初の 地図タップでは 聞かない）
 document.addEventListener('visibilitychange', () => { tiltReset(); rp.vx = rp.vy = 0; });

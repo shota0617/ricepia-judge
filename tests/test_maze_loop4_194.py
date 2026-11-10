@@ -25,12 +25,14 @@ class Tilt194(unittest.TestCase):
         """サイクル195（運営者の声 2026-11-10「傾けた時に反応しなくなった。最優先で直して」「プレイスタート時にすぐ許可が出るように」）：
         画面の どこでも 最初に さわった ときに 1回 聞く。前に ことわった 人には 聞かない"""
         f = fn_src("tiltFirstTouch")
-        self.assertIn("if ((tiltG.asked && !tiltG.retry) || !tiltBtnWanted() || lsGet('nsg_tilt_ok', '') === '0') return;", f)
+        # サイクル196（運営者の声「すぐ出るように修正」）：前に ことわった 人にも 開く たびに 1回 聞く。聞くのは click だけ
+        self.assertIn("if ((tiltG.asked && !tiltG.retry) || !tiltBtnWanted()) return;", f)
+        self.assertNotIn("=== '0') return;", f)
+        self.assertNotIn("document.addEventListener('touchend', tiltFirstTouch", PIX)
         self.assertIn("tiltAsk(e);", f)
         # Codex 指摘（PR #1083）：傾きの ボタンの タップは ボタンに まかせる。やりなおしは 同じ 指の 動きの 中では しない
         self.assertIn("if (e && e.target && e.target.closest && e.target.closest('#pxTilt')) return;", f)
         self.assertIn("if (now - (tiltFirstTouch.at || -1e9) < 700) return;", f)
-        self.assertIn("document.addEventListener('touchend', tiltFirstTouch, { capture: true, passive: true });", PIX)
         self.assertIn("document.addEventListener('click', tiltFirstTouch, { capture: true, passive: true });", PIX)
         self.assertIn("if (!event || !event.isTrusted || tiltG.asked || !tiltNeedsPermission()) return;", fn_src("tiltAsk"))
 

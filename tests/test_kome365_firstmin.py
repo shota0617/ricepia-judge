@@ -106,6 +106,18 @@ class TestKome365FirstMinute(unittest.TestCase):
         # 手本が出ている間に画面の大きさが変わったら、指の高さを測り直す
         self.assertIn("window.addEventListener('resize', function(){ if ($('swWrap').classList.contains('demoOn')) demoSet(true); });", HTML)
 
+    def test_fast_swipe_is_taken(self):
+        # 周回159(運営者の声 2026-11-10・実機 iPhone「素早くスワイプすると反応しない」)
+        # カードの 上では ブラウザに 指を わたさない(ななめの 速い フリックが 縦スクロール あつかいで 取り消されない)
+        m = re.search(r"^#swCard\{[^}]*\}", HTML, re.M)
+        self.assertIn("touch-action:none", m.group(0))
+        self.assertNotIn("touch-action:pan-y", m.group(0))
+        # 0.3秒 以内の 一筆(36px 以上)は 決める。押しただけ では 決めない(36px 以上が 要る)
+        self.assertIn("quick = !cancel && durAll >= 0 && durAll <= 300 && Math.abs(dx) >= Math.max(36, (dragW || 320) * 0.1);", HTML)
+        self.assertIn("if (quick) flick = true;", HTML)
+        # 速い フリックは ななめ(横が 縦の 0.7倍 以上)でも 決める
+        self.assertIn("Math.abs(dx) < dyGuard * (cancel ? 1.5 : flick ? 0.7 : 1)", HTML)
+
     def test_demo_timer_does_not_count_hidden_tab(self):
         # Codex指摘(PR #1082): 別のタブに いる間は 手本の 待ちを 数えない。戻ったら 数え直す
         self.assertIn("if (document.hidden) { demoHeld = !!demoT; demoDisarm(); } else if (demoHeld) { demoHeld = false; demoArm(); }", HTML)

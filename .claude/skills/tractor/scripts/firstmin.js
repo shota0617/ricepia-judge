@@ -1,4 +1,4 @@
-// 最初の1分の確かめ（サイクル259・260）：node firstmin.js [tractor.html のパス]
+// 最初の1分の確かめ（サイクル259〜262）：node firstmin.js [tractor.html のパス]
 //  1) 知らせの文：吹き出し（speakText）・短い文（shortText）で かっこが合わなくならない（「…見ます）」のような切れ方をしない）
 //  3) 畦の手前で止まった人：「横へ なぞる」見本が出て、見本どおりで向きが変わる。自動で下ろす知らせは 1 回だけ（サイクル260）
 //  2) のんびりの大きな数字：スマホ縦で 1 回なぞって耕したら 0% のままにならない。田んぼアートでは地図の「でき」と同じ数、お題なしでは小数 1 けた
@@ -92,6 +92,44 @@ const srv = http.createServer((r, s) => { const u = decodeURIComponent(r.url.spl
     s = await st(); const dyaw = Math.abs(Math.atan2(Math.sin(s.yaw - yaw0), Math.cos(s.yaw - yaw0)));
     ok('見本どおり横へ 3 回なぞると 向きが変わる（35° 以上）', dyaw > 0.6, [+dyaw.toFixed(2), +(s.x - x0).toFixed(1)]);
     ok('自動で下ろす知らせ「…を下げました」は 1 回だけ', s.low === 1, s.low);
+    await ctx.close();
+  }
+  // ---- 4) 田んぼの中で止まった人（サイクル262・運営者の実機の声「曲がり方がわからない」）----
+  {
+    const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true, isMobile: true });
+    const p = await ctx.newPage(); p.setDefaultTimeout(180000);
+    p.on('pageerror', e => errs.push('pageerror ' + e.message)); p.on('console', m => { if (m.type() === 'error') errs.push('console ' + m.text()); });
+    await p.route('https://cdn.jsdelivr.net/**', r => r.fulfill({ path: TN + r.request().url().split('/three@0.128.0')[1], contentType: 'text/javascript' }));
+    await p.goto(`http://localhost:${PORT}/tractor.html`);
+    await p.waitForFunction(() => window.game && game.S && game.S.started && typeof P !== 'undefined' && P.Rotary);
+    await p.evaluate(() => { const real = performance.now.bind(performance); let now = real(); performance.now = () => now; window.__sync = () => { now = real(); }; window.requestAnimationFrame = () => 0; game.renderer.render = () => {};
+      window.__adv = sec => { for (let i = 0, n = Math.round(sec / 0.05); i < n; i++) { now += 50; frame(now); } }; });
+    await p.waitForTimeout(2500); await p.evaluate(() => window.__sync());
+    const cdp = await ctx.newCDPSession(p), adv = s => p.evaluate(x => window.__adv(x), s);
+    const stroke = async (pts, hold) => { await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: pts[0][0], y: pts[0][1], id: 1 }] });
+      for (let i = 1; i <= 20; i++) { const f = i / 20 * (pts.length - 1), k = Math.min(pts.length - 2, Math.floor(f)), u = f - k; await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: pts[k][0] + (pts[k + 1][0] - pts[k][0]) * u, y: pts[k][1] + (pts[k + 1][1] - pts[k][1]) * u, id: 1 }] }); await adv(0.05); }
+      await adv(hold); await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); await adv(1.2); };
+    const st = () => p.evaluate(() => { const box = document.getElementById('hintSwipe'), vis = [...box.querySelectorAll('.hDot')].filter(e => e.style.display !== 'none');
+      return { z: game.S.z, x: game.S.x, yaw: game.S.yaw, hint: !box.classList.contains('hidden'), dots: vis.length, dy: vis.length ? parseFloat(vis[0].style.top) : 0 }; });
+    const dy = (a, b) => Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b)));
+    await adv(2); await stroke([[195, 481], [195, 397]], 2.5);                      // 前へ 1 回（田んぼのまん中あたり。畦は遠い・前に耕す所も残っている）
+    let s0 = await st();
+    ok('前へ なぞった すぐあとは 見本を出さない', !s0.hint, s0.hint);
+    for (let i = 0; i < 25 && !(s0.hint && s0.dots >= 4); i++) { await adv(0.2); s0 = await st(); }
+    ok('まだ曲がったことのない人が止まっていると「横へ なぞる」見本が出る（6 秒以内）', s0.hint && s0.dots >= 4 && s0.dy < 422, [s0.hint, s0.dots, Math.round(s0.dy)]);
+    await stroke([[195, 321], [273, 317], [363, 313]], 4.0);                         // 見える地面の帯（ボンネットの上）を 横へ
+    let s = await st();
+    ok('見える地面を横へ なぞると 向きが変わる（20° 以上）', dy(s.yaw, s0.yaw) > 0.35, +dy(s.yaw, s0.yaw).toFixed(2));
+    await p.evaluate(() => Object.assign(game.S, { x: 0, z: 17.6, yaw: 0, v: 0, steer: 0 }));   // 持ち主の場面：白線（z=14）をこえた先・畦（z=25）の手前で止まっている
+    await adv(1); s = await st();
+    for (let i = 0; i < 25 && !(s.hint && s.dots >= 4); i++) { await adv(0.2); s = await st(); }
+    ok('前に耕す所がないまま止まっていると「横へ なぞる」見本が出る（5 秒以内）', s.hint && s.dots >= 4 && s.dy < 422, [s.hint, s.dots, Math.round(s.dy)]);
+    await p.evaluate(() => Object.assign(game.S, { x: -11.2, z: 23.6, yaw: -1.69, v: 0, steer: 0 })); await adv(1); s0 = await st();   // 畦のかど（実測で動けなくなった所）
+    for (let i = 0; i < 4; i++) await stroke([[195, 330], [280, 328], [360, 322]], 4.0);
+    s = await st();
+    ok('畦のかどからも 田んぼの側へ なぞれば ぬけられる（下がってから切る）', dy(s.yaw, s0.yaw) > 0.5 && Math.hypot(s.x - s0.x, s.z - s0.z) > 2, [+dy(s.yaw, s0.yaw).toFixed(2), +Math.hypot(s.x - s0.x, s.z - s0.z).toFixed(1)]);
+    await p.evaluate(() => Object.assign(game.S, { x: 0, z: 0, yaw: 0, v: 0, steer: 0 })); await adv(6); s = await st();   // もう曲がれた人が 絵の中・前に耕す所がある所で止まっている
+    ok('曲がれた人には、前に耕す所があるときは 見本を出さない', !s.hint, s.hint);
     await ctx.close();
   }
   ok('エラーなし', errs.length === 0, errs.slice(0, 3));

@@ -8152,6 +8152,7 @@ const T3 = {
 const TRACE = {
   pts: [], cps: [], ctx: 0, on: false, drive: false, line: null, fade: 0,
   fv: 0, fHist: [], fT: 0, fPos: null, scCd: 0, stopBoost: 0,   // サイクル116: 指の速さ（変位ベース）・近道の間隔・離した直後の強い減速
+  backLeft: 0,   // サイクル262: 畦のかどから まっすぐ下がる残りの長さ（m）
   blockT: 0, escK: 1,   // サイクル260: 畦の手前で止められてからの残り時間（秒）と、その間の切れ角（いっぱい＝1）。この間は 指のある側へ切る
   // サイクル260: なぞりの点は 畦から 1.5m 内側までに寄せる（それまでは畦の線の上まで）。畦ぞいに なぞると 線が畦の上に乗り、トラクターは作業機のはしが
   // 畦まで 4cm の所まで寄って平行になり、そこからは切ると作業機のおしりが畦にかかって どちらへも動けなかった（実測 スマホ横: 見本どおり横へなぞって 3 回目から 0m）。
@@ -8200,6 +8201,7 @@ const TRACE = {
     if (!S.started || S.done || INTRO.on || !$('start').classList.contains('hidden')) return false;
     const h = this.ground(e);
     if (!h) return false;   // 地面と交わらない（空）だけ なぞれない＝まわりを見る側へ回す
+    this.g0 = [h.x, h.z, e.clientX, e.clientY]; this.pull = null; this.pullDone = false;   // サイクル262: 寄せる前の始点（横なぞりの見きわめ用）
     this.clampIn(h);   // サイクル101: 地面の上なら どこで始めても なぞり（田んぼの外は ふちへ寄せる。サイクル260: ふちの 1.5m 内側へ）
     this.pts = [[h.x, h.z]]; this.ctx = 0; this.sync(); this.on = true; this.fade = 0;
     this.fv = 0; this.fHist = [[e.timeStamp || 0, h.x, h.z]]; this.fT = e.timeStamp || 0; this.fPos = [h.x, h.z]; this.scCd = 0;   // サイクル116
@@ -8215,6 +8217,21 @@ const TRACE = {
     if (!this.on) return;
     const h = this.ground(e);
     if (!h) return;
+    // サイクル262（運営者の実機の声 2026-11-10「曲がり方がわからない」）: 遠くの地面を「横へ」なぞったら、その線を 3.5m 先まで手前へ寄せて すぐ曲がる。
+    // スマホ縦の運転席で見える地面は 9m より先の細い帯だけ。そこを横へなぞると 線は「9m まっすぐ行ってから横」になり、指を置いて待っても 向きはほとんど変わらなかった
+    // （実測 スマホ縦・田んぼの中で止まった所から: 見える地面を右はしまで なぞって 4 秒 → 3.2m 進んで向きは 2°。ハンドルの高さを同じように なぞると 49°）。
+    // 見きわめは 1 回だけ：指が画面の上で 24px 動いたとき、横の動きが たての 1.5 倍より大きく、始点が 4.5m より先なら寄せる。前へ・ななめ前への なぞりと、手前から始めた なぞりは今までどおり。
+    // 画面の上で見る（地面の上で見ると、走りだしで運転席の視点が少し上下するだけで 遠くの点が前後に 1m 以上動き、横なぞりを「前へ」と見まちがえた）。
+    // 寄せた線は、なぞりはじめの向きで 3.5m 先を まよこへ（指の 横の位置だけを使う。前後は視点のゆれを拾うので使わない）
+    if (!this.pullDone && !this.rebase && this.g0) {
+      const dx = e.clientX - this.g0[2], dy = e.clientY - this.g0[3];
+      if (Math.hypot(dx, dy) > 24) {
+        this.pullDone = true;
+        const fx = Math.sin(S.yaw), fz = Math.cos(S.yaw), gap = (this.g0[0] - S.x) * fx + (this.g0[1] - S.z) * fz;
+        if (Math.abs(dx) > 1.5 * Math.abs(dy) && gap > 4.5) { this.pull = { x: S.x + fx * 3.5, z: S.z + fz * 3.5, fx, fz }; this.pts = []; this.ctx = 0; this.sync(); this.fHist = []; this.passMin = 1e9; }
+      }
+    }
+    if (this.pull) { const q = this.pull, lat = (h.x - q.x) * q.fz - (h.z - q.z) * q.fx; h.x = q.x + q.fz * lat; h.z = q.z - q.fx * lat; }
     this.clampIn(h);   // サイクル101: ふちの外へ出ても 線が途切れない
     if (this.rebase) { this.rebase = false; this.pts = [[h.x, h.z]]; this.ctx = 0; this.sync(); this.fv = 0; this.fHist = [[e.timeStamp || 0, h.x, h.z]]; this.fT = e.timeStamp || 0; this.fPos = [h.x, h.z]; this.sPos = [e.clientX, e.clientY]; this.passMin = 1e9; this.draw(); return; }   // 視点が切りかわった直後: 線をいまの指の位置から引き直す（指速の計測もここから）。引き直しの点は begin と同じ始点として寄せない（Codex設計確認の指摘）
     h.x = this.snapX(h.x);   // サイクル219・類3: 列への軽い吸着（snapX 側で条件判定。begin・rebase の始点は寄せない）
@@ -8303,6 +8320,8 @@ const TRACE = {
 // 経路はトラクター前方の点列（3D）を毎フレーム画面へ投影するので、どの視点でも田んぼの上に重なる。入力はふさがない。
 const HINT = {
   t: 0, done: false, okT: 0, pts: null, at: null, dots: [],
+  yaw0: null, turned: false,   // サイクル262: はじめの向きと、そこから 40° 以上 曲がったことがあるか
+  idleT: 0,   // サイクル262: 止まったままの時間（田んぼの中で 前に耕す所がない人への見本用）
   turn: null, stuckT: 0,   // サイクル260: 畦の手前で止まったままの時間と、「横へ なぞる」見本（出している間だけ { yaw, x, z, side }）
   build() {   // トラクターの前方 3〜13m（田んぼの内側へ寄せた点列）
     const fx = Math.sin(S.yaw), fz = Math.cos(S.yaw), pts = [];
@@ -8324,7 +8343,22 @@ const HINT = {
     // 畦で止められた なぞり（TRACE.blockT）が合わせて 0.8 秒つづいたら出し、向きが 125° 変わる（ほぼ折り返した）か 9m はなれたら消す。向きは田んぼのまん中の側
     if (live && TRACE.on && TRACE.blockT > 0 && Math.abs(S.v) < 0.3) this.stuckT += dt; else if (Math.abs(S.v) > 0.5) this.stuckT = 0;   // 止められている間も 1m のゆとりの中で じわっと動くので、速さは 0.3m/秒 まで「止まったまま」と見る
     if (!this.turn && live && this.stuckT > 0.8) this.turn = { yaw: S.yaw, x: S.x, z: S.z, side: -S.x * Math.cos(S.yaw) + S.z * Math.sin(S.yaw) > 0 ? -1 : 1 };   // 左（cos, −sin）の側に まん中があれば 画面の左へ
-    if (this.turn && (Math.abs(Math.atan2(Math.sin(S.yaw - this.turn.yaw), Math.cos(S.yaw - this.turn.yaw))) > 2.2 || Math.hypot(S.x - this.turn.x, S.z - this.turn.z) > 9)) { this.turn = null; this.stuckT = 0; }
+    // サイクル262（運営者の実機の声「曲がり方がわからない」）: 畦でなくても、前に耕す所がないまま止まっている人に 同じ「横へ なぞる」見本を出す。
+    // 実測（スマホ縦・前へ 3 回なぞった人）: 白線をこえて田んぼの中で止まると、数字は 9% のまま・画面には 🌙 と ≡ だけで、曲がり方を教えるものは何も出なかった。
+    // はじめの「前へ」のヒントが終わったあと、止まって 2.5 秒・まっすぐ前に耕す所（お題があれば絵の中）がなければ出す。向きは 耕す所が多く残っている側。
+    // 曲がっている間も出したままにし、耕す所が まっすぐ前に来たら消す（0.5 秒ごとに見る）。向きは、反対側に残りが 1.5 倍より多くなったときだけ変える（畦ぞいに出て 残りが片側だけになったとき）
+    if (live && this.done && !this.turn && !TRACE.on && !AUTO.on && !S.stalled && !(S.crank > 0) && Math.abs(S.v) < 0.05) this.idleT += dt; else this.idleT = 0;
+    // まだ一度も曲がったことのない人（はじめの向きから 40° 未満）には、前に耕す所が残っていても 止まって 4 秒で出し、40° 曲がれたら消す
+    // （運営者の画面は 白線の中で止まっていた。前へは行けるが、曲がり方が分からない）
+    if (live && this.yaw0 === null) this.yaw0 = S.yaw;
+    if (!this.turned && this.yaw0 !== null && Math.abs(Math.atan2(Math.sin(S.yaw - this.yaw0), Math.cos(S.yaw - this.yaw0))) > 0.7) this.turned = true;
+    if (!this.turn && this.idleT > 2.5) {
+      let sd = this.workSide(), lesson = false;
+      if (!sd && !this.turned && this.idleT > 4) { sd = this.workSide(0, true); lesson = true; }
+      if (sd) { this.turn = { idle: true, lesson, chk: 0.5, side: sd }; this.t = 0; this.idleT = 0; } else if (this.turned || this.idleT > 4) this.idleT = 0;
+    }
+    if (this.turn && this.turn.idle && (this.turn.chk -= dt) <= 0) { this.turn.chk = 0.5; const sd = this.workSide(this.turn.side, this.turn.lesson); if (!sd || (this.turn.lesson && this.turned)) this.turn = null; else this.turn.side = sd; }
+    if (this.turn && !this.turn.idle && (Math.abs(Math.atan2(Math.sin(S.yaw - this.turn.yaw), Math.cos(S.yaw - this.turn.yaw))) > 2.2 || Math.hypot(S.x - this.turn.x, S.z - this.turn.z) > 9)) { this.turn = null; this.stuckT = 0; }
     if (this.turn && live) { this.ensure(); this.sweep(dt, box); return; }
     const show = !this.done && live;
     if (!show) { box.classList.add('hidden'); return; }
@@ -8344,13 +8378,24 @@ const HINT = {
     });
   }
 };
+// サイクル262: これから耕す所か（田んぼの中・まだ耕していない・お題があれば絵の中）。まっすぐ前 4〜24m に 1 つもなく、左右のどちらかに残っていれば、多い側（画面の −1＝左・1＝右）を返す。前にある・どこにも残っていないときは 0
+HINT.workSide = function (cur, any) {   // cur＝いま出している向き（あれば、反対側が 1.5 倍より多いときだけ変える）。any＝前に耕す所があっても 向きを返す（はじめて曲がる人への見本用）
+  const todo = (x, z) => { if (Math.abs(x) >= HX - 0.5 || Math.abs(z) >= HZ - 0.5) return false; const i = Math.floor((x + HX) / CELL), j = Math.floor((z + HZ) / CELL); return !tilledMask[i * NZ + j] && (!ART.on || ART.sdAt(x, z) < -0.4); };
+  const fx = Math.sin(S.yaw), fz = Math.cos(S.yaw);
+  if (!any) for (let d = 4; d <= 24; d += 1) for (const l of [-0.8, 0, 0.8]) if (todo(S.x + fx * d + fz * l, S.z + fz * d - fx * l)) return 0;
+  let L = 0, R = 0;
+  for (let x = -HX + 1; x < HX; x += 1) for (let z = -HZ + 1; z < HZ; z += 1) if (todo(x, z)) { if ((x - S.x) * fz - (z - S.z) * fx > 0) L++; else R++; }   // 左＝（cos, −sin）の側
+  if (L + R === 0) return 0;
+  if (cur) return (cur < 0 ? R > L * 1.5 : L > R * 1.5) ? -cur : cur;
+  return L > R ? -1 : 1;
+};
 // サイクル260: 「横へ なぞる」見本。画面の上で、ボンネットのすぐ上（8m 先の地面の高さ）から 少し上（13m 先の高さ）へ上がりながら 画面のはしへ。地面の見える高さだけを通る
 HINT.sweep = function (dt, box) {
   const fx = Math.sin(S.yaw), fz = Math.cos(S.yaw), a = this.proj([S.x + fx * 8, S.z + fz * 8]), b = this.proj([S.x + fx * 13, S.z + fz * 13]), fel = $('hintFinger');   // サイクル261: 本物の運転席で見ると 3.3m 先・7m 先はボンネットとハンドルの上だった（まん中は 9m ほど先まで ボンネットに かくれる）。8m 先・13m 先の高さへ上げ、指が外の地面の上を横へ動くようにする
   if (!a || !b) { box.classList.add('hidden'); return; }
   box.classList.remove('hidden');
   this.t = (this.t + dt) % 2.6;   // 前へのヒントと同じ速さ：2.2 秒かけてなぞり、0.4 秒休む
-  const ph = this.t / 2.2, at = u => [innerWidth / 2 + this.turn.side * innerWidth * 0.42 * Math.pow(u, 1.4), a[1] + (b[1] - a[1]) * Math.min(1, u * 1.8)];
+  const ph = this.t / 2.2, at = u => [innerWidth / 2 + this.turn.side * innerWidth * 0.42 * u, a[1] + (b[1] - a[1]) * 0.6 * u * u];   // サイクル262: はじめは まよこへ（まねた なぞりが「横なぞり」と見きわめられるように）、終わりだけ 少し上へ
   if (ph < 1) { const f = at(ph); fel.style.left = f[0] + 'px'; fel.style.top = f[1] + 'px'; fel.style.display = ''; } else fel.style.display = 'none';
   this.dots.forEach((el, i) => { const u = i / 9; if (ph < 1 && u <= ph) { const q = at(u); el.style.left = q[0] + 'px'; el.style.top = q[1] + 'px'; el.style.display = ''; } else el.style.display = 'none'; });
 };
@@ -8746,6 +8791,12 @@ function step(dt) {
     const cap = S.rotDown ? 3.0 / 3.6 : onSlope ? 1.4 : Infinity;
     if (want > cap) { want = cap; EASY.used = true; EASY.tell('speed', S.rotDown ? '耕すときは時速 3km までにおさえています（速いと土が粗くなる）' : '坂はゆっくり。速さをおさえています'); }
   }
+  if (tracing && TRACE.backLeft > 0) {   // サイクル262: 畦のかどから下がっている間。まっすぐ → 行きたい側へ 浅く切って → いっぱい切って の順に、1.3m うしろまで畦にかからない下がり方をえらぶ（切って下がると 向きが畦の側へ回るので、まっすぐが先。速さはキーのバックと同じ 秒速 0.85m）（下の 🔰 も うしろの畦を見る）
+    const es = TRACE.escSide(); let k = null;
+    for (const c of [0, 0.12, 0.3, 1]) { const st = -es * MAX_STEER * c; let x = S.x, z = S.z, y = S.yaw, ok = true; for (let i = 0; i < 26 && ok; i++) { y += 0.05 * Math.tan(st) / WB; x -= Math.sin(y) * 0.05; z -= Math.cos(y) * 0.05; ok = canBe(x, z, y); } if (ok) { k = c; break; } }
+    if (k === null) TRACE.backLeft = 0;
+    else { TRACE.escK = k; TRACE.blockT = 0.6; TRACE.passMin = 1e9; want = Math.abs(S.steer + es * MAX_STEER * k) < 0.08 ? -0.85 : 0; TRACE.backLeft -= Math.abs(S.v) * dt; }   // 切れ角が そろってから下がる。passMin を戻す：下がると線の終わりから遠ざかるので「行きすぎた」と見て なぞりを打ち切らないように
+  } else if (!tracing) TRACE.backLeft = 0;
   if (EASY.on && S.started && !AUTO.on && (want !== 0 || Math.abs(S.v) > 0.05)) {   // のんびり自動運転の道すじは 畦にかからないので、止めない。🔰 畦の手前で止まる：止まれる長さ＋ゆとりの先に畦があれば、ゆっくり（6cm 先も畦なら止まる）。アクセルをはなして惰性で進むあいだも見る
     // ハンドルを切っていれば曲がった先で見る。せまい所でも少しずつ動いて抜けられる（動けなくならない）
     // 曲がる道すじを 5cm ずつたどって、途中のどこかで畦にかかるかを見る（オートブレーキの小回りと、代かきの泥で曲がりにくいのもふくめる）
@@ -8767,14 +8818,18 @@ function step(dt) {
       return true;
     };
     const at = d => steers.every(st => path(d, Math.abs(S.v), st) && path(d, 0, st));
+    let es0 = 0, farOk = true;
     if (!at((tracing ? 1.0 : 0.45) + Math.abs(S.v) * 0.7)) {   // サイクル197: なぞり中は 鼻先が畦の 1m 手前で止まる（ハンドルいっぱいで向きを変えるとき 鼻先は 0.5m ほど前へ出るため、0.45m では抜けられない）
       // サイクル197（最初の1分）: なぞり中は「少しずつ動ける」を使わず、そこで止まる。なぞりでは後ろへ下がれないので、鼻先が畦の 6cm 手前まで
       // にじり寄ると、そのあと横や後ろへなぞっても鼻先が畦にかかって一歩も動けなくなっていた（ループ側 scratchpad/cond197b.js: 畦の 3.16m 手前で
       // 止まったあと 左・真横・後ろへなぞっても 0m）。手前で止まれば、ハンドルを切って抜けられる
       if (tracing) {   // サイクル260: 畦で止められた なぞり。指のある側へ切って 1m 先まで畦にかからない切れ角（大きい順）を TRACE.follow に渡す。どれも かかるなら いっぱいに切る
-        TRACE.blockT = 0.6; TRACE.escK = 1;
-        for (const k of [1, 0.6, 0.3]) if (path(1.0, 0, -TRACE.escSide() * MAX_STEER * k)) { TRACE.escK = k; break; }
+        TRACE.blockT = 0.6; TRACE.escK = 1; const es = TRACE.escSide(); let far = false; es0 = es;
+        for (const k of [1, 0.6, 0.3, 0.12]) if (path(1.0, 0, -es * MAX_STEER * k)) { TRACE.escK = k; far = true; break; } farOk = far;   // サイクル262: 0.12 を足した。畦と平行に 作業機のはしが数 cm まで寄った所からは、ごく浅く切って 3m ほど進まないと おしりが畦にかかる
       }
+      // サイクル262: 前へは どう切っても動けないとき（畦のかど・畦と ほぼ平行に寄った所。実測 スマホ縦: 畦ぞい z=23.6 で西むきに止まり、見本どおり 11 回なぞって 0m）は、
+      // 少し下がってから切る。本物も 畦が近いときは 少しバックしてから曲がる（農家の声 backTurn と同じ出どころ）。作業機は上げて下がる
+      if (tracing && es0 && !farOk && sg > 0 && !(TRACE.backLeft > 0)) { TRACE.backLeft = 3; if (S.rotDown) { S.rotDown = false; EASY.autoUp = true; setRotBtn(); } }
       if (tracing || Math.abs(S.v) > 0.2 || !at(0.06) || Math.sign(want) !== sg) { want = 0; S.v *= 0.6; }   // 速いとき・惰性のときは強くブレーキ。6cm 先も畦なら止まる
       else want = sg * Math.min(Math.abs(want), 0.15);                                           // ゆっくりなら、少しずつ動ける（キー操作のとき）
       EASY.used = true;

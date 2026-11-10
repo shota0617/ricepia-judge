@@ -110,9 +110,9 @@ class GiantWash192(unittest.TestCase):
     def test_fixed_values(self):
         got = [(s["fill"], [h["fill"] for h in s["halo"]]) for s in spots(run_node(LAYOUT))]
         self.assertEqual(got[0], ("rgba(255,255,255,.06)", ["rgba(255,255,255,.02)", "rgba(255,255,255,.04)"]))
-        self.assertEqual(got[1], ("rgba(215,175,80,.05)", ["rgba(215,175,80,.02)", "rgba(215,175,80,.03)"]))
-        self.assertEqual(got[3], ("rgba(255,255,255,.06)", ["rgba(255,255,255,.02)", "rgba(255,255,255,.04)"]))
-        self.assertEqual(got[4], ("rgba(255,255,255,.07)", ["rgba(255,255,255,.02)", "rgba(255,255,255,.04)"]))
+        self.assertEqual(got[1], ("rgba(215,175,80,.05)", ["rgba(215,175,80,.017)", "rgba(215,175,80,.033)"]))
+        self.assertEqual(got[3], ("rgba(255,255,255,.055)", ["rgba(255,255,255,.018)", "rgba(255,255,255,.037)"]))
+        self.assertEqual(got[4], ("rgba(255,255,255,.065)", ["rgba(255,255,255,.022)", "rgba(255,255,255,.043)"]))
 
     def draw_calls(self):
         return run_node(STUB + "drawGiantWash(100, 200, 400); drawGiantWash(0, 0, 0); console.log(JSON.stringify(calls));")

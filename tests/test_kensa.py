@@ -1783,6 +1783,19 @@ guideAt('move', el, 0, -48);      assert.equal(guideEl.style.top, '428px');   //
         # pips へのアニメーションは setStep の中だけ（出現は段階の切り替え時だけ・今のバーだけ）
         self.assertEqual(HTML.count('$("pips").children[i].animate'), 1)
 
+    def test_cycle144_hint_gently_appears(self):
+        # 差43: 段階が変わる瞬間、案内文（#hint）だけが textContent の差し替えで
+        # 即座に出ていた（出現アニメーション0件）。段階の名前（差40）・進み具合の
+        # 今のバー（差41）と同じ260msのふわりとした出現を、setStep の時だけ付ける。
+        start = HTML.index("function setStep(i, text)")
+        body = HTML[start:HTML.index("function showTop", start)]
+        self.assertIn('hint.animate([{ opacity:0, transform:"scale(.7)" }', body)
+        self.assertIn('duration:260 * motion', body)
+        # textContent を入れてから動きを付ける（中身が変わった後に現れる）
+        self.assertLess(body.index("hint.textContent = text;"), body.index("hint.animate("))
+        # 案内文へのアニメーションは setStep の中だけ（途中の案内の差し替えは従来どおり即時）
+        self.assertEqual(HTML.count("hint.animate("), 1)
+
     def test_cycle139_taps_after_inserting_are_caught(self):
         # 最初の1分（本物の指）: さした後の空振りは数えず手本も出なかったため、押し込んで指を離し
         # 「ひきぬく →」を見て穀刺しをタップする人・指を置くだけの人は、4回やっても何も起きなかった

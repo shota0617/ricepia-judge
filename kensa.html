@@ -979,6 +979,7 @@ function setStep(i, text) {
   [...$("pips").children].forEach((p, k) => { p.className = k < i ? "done" : k === i ? "now" : ""; });
   $("pips").children[i].animate([{ opacity:0, transform:"scale(.7)" }, { opacity:1, transform:"scale(1.05)", offset:.7 }, { opacity:1, transform:"scale(1)" }], { duration:260 * motion, easing:"ease-out" }); /* 段階の進み具合（#pips の今のバー）も、段階の名前（差40）など他の現れるものと同じくふわりと現れる形にそろえる（サイクル137・差分テーマ差41）。旧版は className の差し替えだけで色が即座に切り替わっていた（390×844実測で出現時のアニメーション0件）。段階が変わる時（setStep）だけ、今のバーに1回付ける。済んだバー（done）や先のバーには付けない */
   hint.textContent = text;
+  hint.animate([{ opacity:0, transform:"scale(.7)" }, { opacity:1, transform:"scale(1.05)", offset:.7 }, { opacity:1, transform:"scale(1)" }], { duration:260 * motion, easing:"ease-out" }); /* 案内文（#hint）も、段階の名前（差40）・進み具合の今のバー（差41）など他の現れるものと同じくふわりと現れる形にそろえる（サイクル144・差分テーマ差43）。旧版は setStep の中で段階名とバーには260msの出現がある一方、案内文だけが textContent の差し替えで即座に出ていた（390×844実測で出現時のアニメーション0件）。段階が変わる時（setStep）だけ1回付け、途中の案内の差し替え（「ひきぬく →」「あと N回」等）は従来どおり即時 */
   document.documentElement.dataset.step = STEPS[i];
 }
 function showTop(id) {

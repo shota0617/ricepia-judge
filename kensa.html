@@ -1449,9 +1449,11 @@ function firstBagFace(g) { return lotIndex === 0 && spread && g.kind !== "seiryu
 function grainMood(g) { return (isNear || firstBagFace(g)) ? "normal" : "far"; }
 function refreshBadFaces() {
   grains.forEach(g => { if (g.gone || g.kind === "seiryu") return;
+    const faceNew = firstBagFace(g) && g.img.style.transform !== "scale(1.5)"; /* 顔が新しく出る時だけ、後のふわりとした出現を付ける（サイクル149・差45） */
     g.img.src = grainSprite(g.kind, grainMood(g));
     g.img.style.transform = firstBagFace(g) ? "scale(1.5)" : ""; /* 寄った後も維持し、倍率の境界で突然縮まないようにする（Codexレビュー指摘・サイクル83） */
-    if (firstBagFace(g)) { g.z = FACE_Z; g.el.style.zIndex = FACE_Z; } /* 最初の袋で顔が出たわるい粒は、良い粒の上に出す（サイクル136・最初の1分）。山の下に隠すための重なり順（1）のままだったため、広げた後も大きくなった顔が良い粒の下に半分隠れていた（390×844実測） */ });
+    if (firstBagFace(g)) { g.z = FACE_Z; g.el.style.zIndex = FACE_Z; } /* 最初の袋で顔が出たわるい粒は、良い粒の上に出す（サイクル136・最初の1分）。山の下に隠すための重なり順（1）のままだったため、広げた後も大きくなった顔が良い粒の下に半分隠れていた（390×844実測） */
+    if (faceNew && g.img.animate) g.img.animate([{ transform:"scale(1)" }, { transform:"scale(1.575)", offset:.7 }, { transform:"scale(1.5)" }], { duration:260 * motion, easing:"ease-out" }); /* 最初の袋で顔が出る瞬間も、他の現れるもの（チップ=ふわり260ms・差30／実物の写真=差44）と同じくふわりと現れる形にそろえる（サイクル149・差分テーマ差45）。旧版は src の差し替えと scale(1.5) の即切り替えだけで、顔が出た瞬間のアニメーションは0件だった（390×844実測・わるい粒2粒とも）。最終の大きさ（1.5倍）は従来どおりで、顔が新しく出た時だけ1回付け、すでに顔が出ている粒（refreshBadFaces の再呼び出し）には付けない。寄って顔が出る経路（2袋目以降）は従来どおり即時 */ });
 }
 let zoomAnimTimer = null;
 function applyZoom(smooth) {

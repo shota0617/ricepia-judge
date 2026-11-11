@@ -1814,6 +1814,21 @@ guideAt('move', el, 0, -48);      assert.equal(guideEl.style.top, '428px');   //
         self.assertIn('data-src="kensa/kokusashi.webp"', HTML)
         self.assertIn('data-src="kensa/ittomai.webp"', HTML)
 
+    def test_cycle149_first_bag_bad_grain_faces_gently_appear(self):
+        # 差45: 最初の袋でなでて広げた時にわるい粒（2粒）に顔が出て1.5倍になる瞬間だけが、
+        # src の差し替えと transform の即切り替えで完成形が即座に出ていた
+        # （390×844実測: 旧版は顔が出た瞬間のアニメーション0件・わるい粒2粒とも）。
+        # 他の現れるものと同じ260msのふわりとした出現を、顔が新しく出た時だけ1回付ける。
+        start = HTML.index("function refreshBadFaces()")
+        body = HTML[start:HTML.index("let zoomAnimTimer", start)]
+        # 顔が新しく出た時だけ（すでに scale(1.5) の粒には付けない）
+        self.assertIn('const faceNew = firstBagFace(g) && g.img.style.transform !== "scale(1.5)";', body)
+        self.assertIn('if (faceNew && g.img.animate) g.img.animate([{ transform:"scale(1)" }, { transform:"scale(1.575)", offset:.7 }, { transform:"scale(1.5)" }], { duration:260 * motion, easing:"ease-out" });', body)
+        # 最終の大きさ・顔の出し方・重なり順は従来どおり
+        self.assertIn('g.img.style.transform = firstBagFace(g) ? "scale(1.5)" : "";', body)
+        self.assertIn("g.img.src = grainSprite(g.kind, grainMood(g));", body)
+        self.assertEqual(HTML.count("scale(1.575)"), 1)
+
     def test_cycle146_nothing_broken_shows_while_the_script_is_still_coming(self):
         # 最初の1分（おそい回線・おそいスマホ）: スクリプトはページのいちばん後ろにあり、届くまでの間
         # （おそい3G・CPU6倍の実測で0.8〜2.1秒）は、置き場所の決まっていない手本の指👆が左はしに半分・

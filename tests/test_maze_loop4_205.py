@@ -14,6 +14,10 @@ def fn(name):
     return GAME[i:GAME.index("\n}\n", i) + 2]
 
 
+def base():
+    return subprocess.run(["git", "merge-base", "origin/main", "HEAD"], cwd=ROOT, capture_output=True, text=True).stdout.strip()
+
+
 def run(arg):
     code = fn("guideDispName") + "console.log(JSON.stringify(%s));" % arg
     return json.loads(subprocess.run(["node", "-e", code], capture_output=True, text=True, check=True).stdout)
@@ -51,7 +55,7 @@ class GuideDispName205(unittest.TestCase):
         self.assertIn("guideDispName, decideGuide,", GAME)
 
     def test_no_forbidden(self):
-        d = subprocess.run(["git", "diff", "origin/main", "--", "nishio-go"], cwd=ROOT, capture_output=True, text=True).stdout
+        d = subprocess.run(["git", "diff", base(), "--", "nishio-go"], cwd=ROOT, capture_output=True, text=True).stdout
         added = "\n".join(l for l in d.splitlines() if l.startswith("+") and not l.startswith("+++"))
         for w in ["ぼ" + "く", "だ" + "に", "約" + "20%"]:
             self.assertNotIn(w, added)
@@ -59,7 +63,7 @@ class GuideDispName205(unittest.TestCase):
     def test_scope(self):
         out = subprocess.run(["git", "status", "--porcelain"], cwd=ROOT, capture_output=True, text=True).stdout
         files = {l[3:] for l in out.splitlines()}
-        files |= set(subprocess.run(["git", "diff", "--name-only", "origin/main", "HEAD"], cwd=ROOT, capture_output=True, text=True).stdout.split())
+        files |= set(subprocess.run(["git", "diff", "--name-only", base()], cwd=ROOT, capture_output=True, text=True).stdout.split())
         self.assertLessEqual(files, {"nishio-go/game.js", "tests/test_maze_loop4_205.py"})
 
 

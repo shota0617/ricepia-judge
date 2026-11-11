@@ -2459,13 +2459,17 @@ function offMiss(d) {
   }
 }
 document.addEventListener("pointerdown", (e) => {
-  offDown = offStage(e) ? { id:e.pointerId, x:e.clientX, y:e.clientY } : null;
+  offDown = offStage(e) ? { id:e.pointerId, x:e.clientX, y:e.clientY, far:false } : null;
+}, { passive:true });
+document.addEventListener("pointermove", (e) => { /* とちゅうで 8pxより大きく動いた指は、元の所へ戻して離しても空振りに数えない */
+  const d = offDown;
+  if (d && d.id === e.pointerId && !d.far && Math.hypot(e.clientX - d.x, e.clientY - d.y) > 8) d.far = true;
 }, { passive:true });
 document.addEventListener("pointerup", (e) => {
   const d = offDown;
   offDown = null;
   if (!d || d.id !== e.pointerId) return;
-  if (Math.hypot(e.clientX - d.x, e.clientY - d.y) > 8) return; /* 場面の外で動かした指（8pxより大きい）は空振りに数えない。場面の中と同じ線引き */
+  if (d.far || Math.hypot(e.clientX - d.x, e.clientY - d.y) > 8) return; /* 場面の外で動かした指（8pxより大きい）は空振りに数えない。場面の中と同じ線引き */
   if (step === 0 && !P.done && !P.auto && !P.drag) {
     P.drag = { id:d.id, cx:e.clientX, cy:e.clientY, far:0, x0:P.x, moved:false };
     endBagDrag(e);

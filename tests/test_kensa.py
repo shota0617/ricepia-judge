@@ -1842,7 +1842,7 @@ guideAt('move', el, 0, -48);      assert.equal(guideEl.style.top, '428px');   //
             self.skipTest("node がないので実行の確認は飛ばす")
         start = HTML.index("let offDown = null;")
         fn = HTML[start:HTML.index("armIdle();\nstartLot();", start)]
-        self.assertIn("if (Math.hypot(e.clientX - d.x, e.clientY - d.y) > 8) return;", fn)
+        self.assertIn("if (d.far || Math.hypot(e.clientX - d.x, e.clientY - d.y) > 8) return;", fn)
         script = """
 const assert = require('node:assert/strict');
 let step = 0, measured = 0, crankDrag = null; const calls = [];
@@ -1858,6 +1858,12 @@ go(120); go(9); assert.deepEqual(calls, []);
 go(8); assert.deepEqual(calls, ['bag']);
 step = 1; go(120); assert.deepEqual(calls, ['bag']);
 go(0); assert.deepEqual(calls, ['bag', 'crank']);
+// とちゅうで大きく動かして 元の所へ戻して離した指も数えない（なぞって戻すだけで ひとりでに進まないように）
+const back = () => { on.pointerdown.forEach(f => f({pointerId:1, clientX:10, clientY:20, target:t})); on.pointermove.forEach(f => f({pointerId:1, clientX:90, clientY:20})); on.pointerup.forEach(f => f({pointerId:1, clientX:10, clientY:20, target:t})); };
+back(); assert.deepEqual(calls, ['bag', 'crank']);
+// ほかの指の動きでは 数えない指に ならない
+on.pointerdown.forEach(f => f({pointerId:1, clientX:10, clientY:20, target:t})); on.pointermove.forEach(f => f({pointerId:2, clientX:90, clientY:20})); on.pointerup.forEach(f => f({pointerId:1, clientX:10, clientY:20, target:t}));
+assert.deepEqual(calls, ['bag', 'crank', 'crank']);
 """
         r = subprocess.run([node, "-e", script], capture_output=True, text=True)
         self.assertEqual(r.returncode, 0, r.stderr)

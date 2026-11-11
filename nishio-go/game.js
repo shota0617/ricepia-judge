@@ -966,6 +966,7 @@ function gainPoints(n) {
   S.points += n; S.total += n;
   session.gained += n;   // 1回に遊んだ間にふえたポイント（session_end）
   S.log = S.log.slice(0, 200);
+  renderHeader.gained = n;   // サイクル204：上の 数字の 札を 光らせる ために、ふえた 数を わたす
   renderHeader();
   if (demo && !(store.get('nsg_mzgoals', 0) >= 3)) return 0;   // にしおサイクル122：転がして 遊ぶ 人は、めいろの はじめてのさんぽ（3ゴールまで）レベルが 上がっても 知らせない（⭐ の 知らせ・音・🎉 Lv。レベル表示は サイクル113 で しまってあり、レベルの 記録は そのまま 上がる。4つめのゴールからは これまでどおり。歩いて 遊ぶ 人は かわらない）
   return levelOf(S.total) > before ? levelOf(S.total) : 0;
@@ -2926,6 +2927,14 @@ function renderUps() {
 /* ---------- 画面 ---------- */
 function setStatus(html, isHtml) { const el = $('status'); if (isHtml) el.innerHTML = html; else el.textContent = html; el.hidden = !html; }   // 空のときは段ごと隠す
 
+const PTS_POP_MIN = 5, PTS_POP_MS = 600;   // ふくらむのは 5pt から（歩いた 距離の +1 では 動かさない）・0.6秒
+function ptsPop(el) {   // つづけて ふえた ときは はじめから やりなおす
+  el.classList.remove('pop');
+  void el.offsetWidth;
+  el.classList.add('pop');
+  clearTimeout(ptsPop.timer);
+  ptsPop.timer = setTimeout(() => el.classList.remove('pop'), PTS_POP_MS);
+}
 function renderHeader() {
   const lv = levelOf(S.total);
   const lo = needFor(lv), hi = needFor(lv + 1);
@@ -2933,6 +2942,11 @@ function renderHeader() {
   $('lvFill').style.width = Math.min(100, ((S.total - lo) / (hi - lo)) * 100) + '%';
   $('ptsNum').textContent = S.points.toLocaleString();
   const ptsEl = $('ptsNum').closest('.pts'); if (ptsEl) ptsEl.hidden = !(S.points > 0);   // 0pt の間は 数字を 出さない
+  // サイクル204（はじめの 1分）：ポイントが ふえたら、上の 数字の 札が ぽんと ふくらんで 金色に 光る（字は 足さない）。
+  // はじめてのさんぽの 間は 数の 浮き文字・知らせを 出さない（サイクル122・123）ので、たからばこ・クエスト・ゴールで ふえても 小さな 数字が かわるだけ だった
+  // ふえた 数は gainPoints が わたす（記録の 読みこみ・あるいて移動との 切りかえで 数字が かわっても 光らない）
+  const gained = renderHeader.gained; renderHeader.gained = 0;
+  if (ptsEl && gained >= PTS_POP_MIN) ptsPop(ptsEl);
   document.querySelectorAll('.mode-sw [data-mode]').forEach(b => b.setAttribute('aria-pressed', String((b.dataset.mode === 'demo') === demo)));
 }
 

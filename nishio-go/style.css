@@ -29,6 +29,10 @@ header.bar{position:fixed;top:0;left:0;right:0;height:var(--bar-h);display:flex;
 .pts{display:flex;align-items:baseline;gap:2px;background:rgba(0,0,0,.2);padding:4px 10px;border-radius:14px}
 .pts b{font-size:18px;font-variant-numeric:tabular-nums}
 .pts small{font-size:11px}
+/* サイクル204：ポイントが ふえたら 数字の 札が ぽんと ふくらんで 金色に 光る（0.6秒。右の ボタンに かぶらない ように 右はしを 軸に） */
+.pts.pop{transform-origin:right center;animation:ptsPop .6s ease-out}
+@keyframes ptsPop{0%{transform:scale(1)}25%{transform:scale(1.5);background:#ffd84a;color:#3a2a00;box-shadow:0 0 0 4px rgba(255,216,74,.45)}60%{transform:scale(1.15);background:#ffd84a;color:#3a2a00;box-shadow:0 0 0 2px rgba(255,216,74,.3)}100%{transform:scale(1)}}
+@media (prefers-reduced-motion:reduce){@keyframes ptsPop{0%,100%{transform:none}25%,60%{transform:none;background:#ffd84a;color:#3a2a00}}}
 /* 当店のホームページへ戻るボタン（同じタブで ricepia.jp へ。記録はブラウザに残るので、またすぐ続きから遊べる） */
 .home-btn{flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;width:44px;height:40px;border-radius:10px;background:#fff;color:var(--green);text-decoration:none;line-height:1.1;box-shadow:0 1px 0 rgba(0,0,0,.25)}
 .home-btn span{font-size:17px}

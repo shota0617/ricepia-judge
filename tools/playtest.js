@@ -214,6 +214,37 @@ async function firstMinuteChecks(browser, R) {
           return !!nishioPixel.tapGoal;
         }, [sp.x, sp.y]);
         sw = { started, info, two, touchAction: sp.ta, ok: started && !info && !two && sp.ta === 'pinch-zoom' };
+        // サイクル203：なぞった 先で 指を おいた まま 待つ 人。指を はなさなくても 0.3秒 止まれば 歩きだす（前は はなすまで 動かない）。
+        // 歩きだした あとに 指を うごかしても・はなしても 行き先は かわらない／窓は 開かない／動かさない 長押しは 指を おいて いる 間 歩かない（タップに まかせる）
+        await p2.waitForFunction(() => !nishioPixel.tapGoal && !!nishioPixel.maze.routePath(), null, { timeout: 8000 }).catch(() => {});
+        const hp = await p2.evaluate(() => { const P = nishioPixel, K = P.maze.K, R = P.roll, rp = P.maze.routePath() || [], cx = Math.floor(R.x / K), cy = Math.floor(R.y / K); let j = rp.findIndex(c => c[0] === cx && c[1] === cy); if (j < 0) j = 0; const c = rp[Math.min(j + 3, rp.length - 1)];
+          return c ? { from: P.tileToClient(R.x - 0.5, R.y - 0.5), to: P.tileToClient(c[0] * K + 1, c[1] * K + 1), cfg: P.swipeHoldCfg || null } : null; });
+        const goalKey = () => p2.evaluate(() => JSON.stringify(nishioPixel.tapGoal || null));
+        if (hp) {
+          await touch('touchStart', [[hp.to.x, hp.to.y]]);   // 動かさない 長押し：おいて いる 間は 歩かない
+          await p2.waitForTimeout(700);
+          const still = await goalKey();
+          await touch('touchEnd', []);
+          await p2.waitForFunction(() => !!nishioPixel.tapGoal, null, { timeout: 1500 }).catch(() => {});
+          await p2.evaluate(() => { document.getElementById('pxInfo').hidden = true; });
+          await p2.waitForFunction(() => !nishioPixel.tapGoal, null, { timeout: 8000 }).catch(() => {});
+          const hq = await p2.evaluate(() => { const P = nishioPixel, K = P.maze.K, R = P.roll, rp = P.maze.routePath() || [], cx = Math.floor(R.x / K), cy = Math.floor(R.y / K); let j = rp.findIndex(c => c[0] === cx && c[1] === cy); if (j < 0) j = 0; const c = rp[Math.min(j + 3, rp.length - 1)];
+            return { from: P.tileToClient(R.x - 0.5, R.y - 0.5), to: P.tileToClient(c[0] * K + 1, c[1] * K + 1) }; });
+          await touch('touchStart', [[hq.from.x, hq.from.y]]);
+          for (let i = 1; i <= 6; i++) { await touch('touchMove', [[hq.from.x + (hq.to.x - hq.from.x) * i / 6, hq.from.y + (hq.to.y - hq.from.y) * i / 6]]); await p2.waitForTimeout(16); }
+          const t0 = Date.now();
+          const held = await p2.waitForFunction(() => !!nishioPixel.tapGoal, null, { timeout: 1500 }).then(() => true, () => false);   // 指は まだ おいた まま
+          const ms = Date.now() - t0, g1 = await goalKey();
+          for (let i = 1; i <= 4; i++) { await touch('touchMove', [[hq.to.x + i * 12, hq.to.y + i * 6]]); await p2.waitForTimeout(16); }
+          await p2.waitForTimeout(450);
+          const g2 = await goalKey();
+          await touch('touchEnd', []);
+          await p2.waitForTimeout(150);
+          const g3 = await goalKey(), info2 = await p2.evaluate(() => !document.getElementById('pxInfo').hidden);
+          const same = g => g === 'null' || g === g1;
+          sw.hold = { held, ms, still, g1, g2, g3, info: info2, cfg: hp.cfg };
+          sw.holdOk = held && still === 'null' && same(g2) && same(g3) && !info2 && !!hp.cfg && hp.cfg.ms <= 400;
+        }
       }
       // サイクル192：めいろで ゴールの 名所に 着いた しゅんかん、下の チェックインの ボタンを 出さない（ひとりでに チェックインする）。ゴールで ない 名所の そばでは これまでどおり 出る
       const an = await p2.evaluate(async () => {
@@ -229,7 +260,7 @@ async function firstMinuteChecks(browser, R) {
         const otherBtn = !b.hidden && document.getElementById('spinName').textContent === other.name && !G.state.visits[other.id];
         return { goal: g.name, shown, h0, hMax, checked, other: other.name, otherBtn, ok: shown === 0 && checked && otherBtn };
       });
-      return { firstGoalNear: fg, lazySprites: lz, playAskQuick: pa, worldBack: wb, tiltDeniedMsg: tm, swipeWalk: sw, arriveNoSpin: an, ...(await startSteadyChecks(browser, R)), ...(await a2hsChecks(browser, R)), ...(await tapDemoChecks(browser, R)), ...(await slowStartChecks(browser, R)) };
+      return { firstGoalNear: fg, lazySprites: lz, playAskQuick: pa, worldBack: wb, tiltDeniedMsg: tm, swipeWalk: sw, swipeHold: { ...(sw.hold || { why: 'no-route' }), ok: !!sw.holdOk }, arriveNoSpin: an, ...(await startSteadyChecks(browser, R)), ...(await a2hsChecks(browser, R)), ...(await tapDemoChecks(browser, R)), ...(await slowStartChecks(browser, R)) };
     } finally { R.errors.push(...v.errors); await v.ctx.close(); }
 }
 // サイクル193（運営者の声 2026-11-10「さんぽGOホーム画面に追加を控えめに促す」）：ホーム画面に追加の おすすめは 小さな 1行の 札。
@@ -577,6 +608,7 @@ const FIRST_MINUTE_NEED = {
   worldBack: 'はじめてのさんぽで せかいちずを 開くと 👣（もどる）の ボタンが 出ない／もどれない',
   tiltDeniedMsg: '傾きの 許可を ことわった スマホの 知らせに 矢印キーの 話が ある',
   swipeWalk: '地図を なぞっても（タップの つもりで 指が ずれても）歩きださない／窓が 開く／2本指で 歩く',
+  swipeHold: 'なぞった 先で 指を おいた まま 待っても、指を はなすまで 歩きださない／歩きだした あとに 指の 動きで 行き先が かわる／動かさない 長押しで 指を おいた まま 歩く／窓が 開く',
   arriveNoSpin: 'めいろで ゴールの 名所に 着いた しゅんかんに チェックインの ボタンが 出る（下の 欄が とぶ）／ゴールで ない 名所で 出ない',
   a2hsFirstWalk: 'ホーム画面に追加の 札が はじめてのさんぽ（ゴール 3つ まで）・開いて 1分の 間に 出る',
   a2hsShown: 'ホーム画面に追加の 札が 落ちついても 出ない／小さな 1行の 札で ない（窓・地図を ふさぐ・お米や 下の 札に かかる）／せかいちずで 出る',

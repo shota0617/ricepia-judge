@@ -1832,6 +1832,91 @@ guideAt('move', el, 0, -48);      assert.equal(guideEl.style.top, '428px');   //
         # 写真は data-src のまま（顔が先・写真は後の順は変えない）
         self.assertIn('faceImg.addEventListener("load", loadPhotos);', HTML)
 
+    def test_cycle147_drags_outside_the_scene_are_not_misses(self):
+        # 場面の外で動かした指（8pxより大きい）は空振りに数えない（場面の中と同じ線引き）。
+        # 旧版は離した所を始点にしていたので、皿から120px動かす指を3回で ひとりでに ぬけた
+        node = shutil.which("node")
+        if not node:
+            self.skipTest("node がないので実行の確認は飛ばす")
+        start = HTML.index("let offDown = null;")
+        fn = HTML[start:HTML.index("armIdle();\nstartLot();", start)]
+        self.assertIn("if (Math.hypot(e.clientX - d.x, e.clientY - d.y) > 8) return;", fn)
+        script = """
+const assert = require('node:assert/strict');
+let step = 0, measured = 0, crankDrag = null; const calls = [];
+const P = {x:200, done:false, auto:false, drag:null}, LOT = {moisture:[1, 2, 3]};
+const endBagDrag = (e) => { calls.push('bag'); P.drag = null; };
+const endCrank = (e) => { calls.push('crank'); crankDrag = null; };
+const on = {};
+const document = {addEventListener(type, fn) { (on[type] = on[type] || []).push(fn); }};
+""" + fn + """
+const t = {closest(sel) { return sel === '#app' ? {} : null; }};
+const go = (dx) => { on.pointerdown.forEach(f => f({pointerId:1, clientX:10, clientY:20, target:t})); on.pointerup.forEach(f => f({pointerId:1, clientX:10 + dx, clientY:20, target:t})); };
+go(120); go(9); assert.deepEqual(calls, []);
+go(8); assert.deepEqual(calls, ['bag']);
+step = 1; go(120); assert.deepEqual(calls, ['bag']);
+go(0); assert.deepEqual(calls, ['bag', 'crank']);
+"""
+        r = subprocess.run([node, "-e", script], capture_output=True, text=True)
+        self.assertEqual(r.returncode, 0, r.stderr)
+
+    def test_cycle147_touches_outside_the_scene_count_as_misses(self):
+        # 最初の1分（まちがった所をさわる人）: ぬく・はかるの間、上の場面の外（下の大きな皿・案内文・顔）への指は
+        # 手本の指が0.3秒消えて戻るだけで、何回さわっても進まなかった（390×844・320×568実測:
+        # ぬくで皿・案内文・顔を各4回=音と道具の動き0回・進み0／さした後に皿を4回=0／はかるで皿の粒・案内文を各4回=はかれた回数0）。
+        # 場面の中の空振りと同じ数え方（endBagDrag・endCrank）へ そのまま渡す。3回目に ひとりでに進む。
+        node = shutil.which("node")
+        if not node:
+            self.skipTest("node がないので実行の確認は飛ばす")
+        start = HTML.index("let offDown = null;")
+        fn = HTML[start:HTML.index("armIdle();\nstartLot();", start)]
+        script = """
+const assert = require('node:assert/strict');
+let step = 0, measured = 0, crankDrag = null; const calls = [];
+const P = {x:200, done:false, auto:false, drag:null}, LOT = {moisture:[1, 2, 3]};
+const endBagDrag = (e) => { calls.push(['bag', P.drag.id, P.drag.moved, e.pointerId]); P.drag = null; };
+const endCrank = (e) => { calls.push(['crank', crankDrag.id, crankDrag.moved, e.pointerId]); crankDrag = null; };
+const on = {};
+const document = {addEventListener(type, fn) { (on[type] = on[type] || []).push(fn); }};
+""" + fn + """
+const el = (hit) => ({closest(sel) { return sel.split(', ').some(x => hit.includes(x)) ? {} : null; }});
+const touch = (hit, id, up) => {
+  const e = {pointerId:id, clientX:10, clientY:20, target:el(hit)};
+  on.pointerdown.forEach(f => f(e));
+  if (up !== false) on.pointerup.forEach(f => f(e));
+};
+// ぬく: 皿・案内文（#app の中・場面の外）は 空振りとして endBagDrag へ。動かしていない指として渡す
+touch(['#app'], 1);
+assert.deepEqual(calls, [['bag', 1, false, 1]]);
+// 場面の中・📖・終了カード・つぎの袋・資料（#app の外）は数えない
+touch(['#app', '#sceneBag'], 2); touch(['#app', '#notesLink'], 3); touch(['#app', '#idleCard'], 4); touch(['#app', '#nextBtn'], 5); touch([], 6);
+assert.equal(calls.length, 1);
+// 場面の中で指が動いている間・ひとりでに ぬけている間・ぬき終わった後は 混ぜない
+P.drag = {id:9}; touch(['#app'], 7); assert.equal(calls.length, 1); P.drag = null;
+P.auto = true; touch(['#app'], 7); assert.equal(calls.length, 1); P.auto = false;
+P.done = true; touch(['#app'], 7); assert.equal(calls.length, 1); P.done = false;
+// 別の指の pointerup・とちゅうで取り消された指は数えない
+touch(['#app'], 8, false); on.pointerup.forEach(f => f({pointerId:99, clientX:0, clientY:0, target:el(['#app'])}));
+touch(['#app'], 8, false); on.pointercancel.forEach(f => f({pointerId:8})); on.pointerup.forEach(f => f({pointerId:8, clientX:0, clientY:0, target:el(['#app'])}));
+assert.equal(calls.length, 1);
+// はかる: 皿の粒・案内文は endCrank へ（タップとして）。はかり終えた後・場面の中は数えない
+step = 1;
+touch(['#app'], 10);
+assert.deepEqual(calls[1], ['crank', 10, false, 10]);
+touch(['#app', '#sceneMeter'], 11);
+measured = 3; touch(['#app'], 12); measured = 0;
+assert.equal(calls.length, 2);
+// みわける より後は変えない
+for (const s of [2, 3, 4]) { step = s; touch(['#app'], 20 + s); }
+assert.equal(calls.length, 2);
+"""
+        subprocess.run([node, "-e", script], capture_output=True, text=True, check=True)
+        # 空振りの数え方は場面の中と同じ道（別の数え方を足さない）
+        self.assertNotIn("bagTaps", fn)
+        self.assertNotIn("meterTaps", fn)
+        # 始まりの順（サイクル146）は変えない
+        self.assertIn('armIdle();\nstartLot();\n$("app").classList.remove("boot");', HTML)
+
     def test_cycle139_taps_after_inserting_are_caught(self):
         # 最初の1分（本物の指）: さした後の空振りは数えず手本も出なかったため、押し込んで指を離し
         # 「ひきぬく →」を見て穀刺しをタップする人・指を置くだけの人は、4回やっても何も起きなかった

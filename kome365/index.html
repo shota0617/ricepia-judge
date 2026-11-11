@@ -3773,6 +3773,9 @@ renderTitle();
   var dragW = 0, lastP = null, lastShadowKey = '';   /* スワイプの滑らかさ用: カード幅はつかんだ時点で固定し(毎moveのレイアウト読みをなくす)、影と--pは値が変わったときだけ書き直す(毎moveの再描画・スタイル再計算が引っかかりの主因) */
   function up(e){
     if (pend && e && e.pointerId === pend[0].pointerId) { pend.push(pendCopy(e)); return; }   /* 周回161: 飛んで いる 間に 離した 指も おぼえて おく */
+    /* 周回165: 取り消し(pointercancel)は 場所が (0,0) で 届く ことが ある(田んぼから はじめて 縦に 動かし、ブラウザが 縦スクロールと 見た とき)。そのまま 使うと「左へ 大きく 動いた」と 見て 決まって いた(田んぼから 縦に 120px:4/25 決まる)。
+       場所が 無い 取り消しは、さいごに 届いた 動きの 場所で 見る */
+    if (e && e.type === 'pointercancel' && e.clientX === 0 && e.clientY === 0 && startX != null && e.pointerId === pid) e = { type: 'pointercancel', pointerId: e.pointerId, timeStamp: e.timeStamp, clientX: samples.length ? samples[samples.length - 1][1] : startX, clientY: lastY != null ? lastY : startY };
     if (startX == null || (e && e.pointerId !== pid)) return; cancelDragFrame(); var sx0 = startX, sy0 = startY, isUp = !!e && e.type === 'pointerup'; startX = null; el.card.classList.remove('drag'); festReset();
     var th = (dragW || el.card.offsetWidth || 320) * 0.22, n = e ? evT(e) : (samples.length ? samples[samples.length - 1][0] : performance.now()), v = 0;   /* 通常判定はカード幅の約22% */
     if (samples.length && n < samples[samples.length - 1][0]) n = samples[samples.length - 1][0];   /* 判定に使う時刻もサンプルと同じ単調な並びにそろえる(Codex再レビューP2への対応) */
@@ -3794,6 +3797,16 @@ renderTitle();
     dx = 0; samples = [];
   }
   el.card.addEventListener('pointerup', up); el.card.addEventListener('pointercancel', up);
+  /* 周回165(最初の1分): カードの 上の 田んぼから はじめた スワイプは、何も 起きなかった(390×844 で カードは 画面の 36%)。
+     田んぼ(#swStage)に 置いた 指も、カードに 置いた 指と 同じに あつかう(cardDown が 指を カードに つかまえるので、動き・離しは カードに 届く)。決める きまり(up)は 同じ。
+     押しただけ では カードは 動かない・選ばない(2026-11-09)。ボタン・顔を なでる 指・かかしを 押す 指(finger)・「お疲れ様です」の カード・うしろの 絵(#field。3D の 見回しが ある)は これまで どおり */
+  document.addEventListener('pointerdown', function(e){
+    var t = e.target;
+    if (!t || !t.closest || !card || !f || KomeCards.over(f) || !fingerReady() || finger || startX != null) return;
+    if (t.closest('#swCard') || !t.closest('#swStage')) return;
+    if (t.closest('button, a, input, select, textarea, [role="button"], #swDetail, #swIdle')) return;
+    cardDown(e);
+  });
   /* キーボードの左右キーはスワイプの代替ではなく補助(PC用)。判定・結果はスワイプと同じ choose を通る */
   document.addEventListener('keydown', function(e){ if ($('sGame').classList.contains('hidden') || !$('sheetBg').classList.contains('hidden')) return; if (e.key === 'ArrowLeft') { e.preventDefault(); choose('left'); } else if (e.key === 'ArrowRight') { e.preventDefault(); choose('right'); } });
   $('swHome').onclick = function(){ careClear(); greetClear(); sunHide(); greetDone = false; show('sTitle'); renderTitle(); };

@@ -2405,6 +2405,34 @@ $("notesLink").addEventListener("click", () => { notesSound(); }); /* 資料を�
 $("notesReturnLink").addEventListener("click", () => { returnSound(); }); /* 資料の末尾のサイトリンクも、同じ戻り先（ricepia.jp）なので戻る合図は同じ音にする（サイクル113・差19）。終了カードの戻る（差17）には音があるのに、このリンクだけが無音だった */
 $("gameReturnLink").addEventListener("click", () => { gameReturnSound(); }); /* 資料の末尾からゲームへ戻る合図も固有の音にする（サイクル117・差23）。資料を開く合図には音があるのに、末尾にはサイトへのリンクしかなく、ゲームへ戻る道そのものがなかった。アンカーのスクロールは従来どおり */
 document.querySelectorAll(".sourceLink").forEach(a => a.addEventListener("click", () => { notesSound(); })); /* 資料の出典リンク（農林水産省・3件）も、資料を開くときと同じ小さな音で知らせる（サイクル116・差22）。差19では「ゲームの操作ではない」として対象外にしたが、資料を開く操作（差18）も同じくゲームの操作ではなく音を付けた前例があり、資料内のリンク5件で出典3件だけが無音だった（390×844実測で押下の同期音0件）。新しいタブで開く動きは従来どおり妨げない */
+/* 場面の外（下の大きな皿・案内文・顔・見出し）への指も、ぬく・はかるの空振りとして受ける（サイクル147・最初の1分・まちがった所をさわる人）。
+   旧版は ぬく・はかるの間、上の場面（袋・水分計）の外では 手本の指が0.3秒消えて戻るだけで、音も道具の動きもなく、何回さわっても進まなかった
+   （390×844・320×568の実測: ぬくで皿を8回＋案内文を4回タップ=音と道具の動き0回・進み0。さした後に皿を5回=0。はかるで皿の粒を8回＋案内文を3回=はかれた回数0）。
+   皿は画面のいちばん大きな所で、はかるの間は ぬいた粒がのっているので、はじめての人が さわりやすい。
+   場面の中の空振りと同じ数え方へ そのまま渡す（1回目=手本の指と道具の小さな動き・音／2回目=半分やって見せる／3回目=ひとりでに進む）。
+   場面の中の指・📖・終了カード・「つぎの ふくろ」・資料の中は数えない。みわける より後の所作は変えない */
+let offDown = null;
+function offStage(e) {
+  if (step > 1 || !e.target.closest || !e.target.closest("#app")) return false;
+  return !e.target.closest("#sceneBag, #sceneMeter, #notesLink, #idleCard, #nextBtn");
+}
+document.addEventListener("pointerdown", (e) => {
+  offDown = offStage(e) ? { id:e.pointerId, x:e.clientX, y:e.clientY } : null;
+}, { passive:true });
+document.addEventListener("pointerup", (e) => {
+  const d = offDown;
+  offDown = null;
+  if (!d || d.id !== e.pointerId) return;
+  if (Math.hypot(e.clientX - d.x, e.clientY - d.y) > 8) return; /* 場面の外で動かした指（8pxより大きい）は空振りに数えない。場面の中と同じ線引き */
+  if (step === 0 && !P.done && !P.auto && !P.drag) {
+    P.drag = { id:d.id, cx:e.clientX, cy:e.clientY, far:0, x0:P.x, moved:false };
+    endBagDrag(e);
+  } else if (step === 1 && measured < LOT.moisture.length && !crankDrag) {
+    crankDrag = { id:d.id, last:0, sum:0, x:d.x, y:d.y, moved:false };
+    endCrank(e);
+  }
+}, { passive:true });
+document.addEventListener("pointercancel", () => { offDown = null; }, { passive:true });
 armIdle();
 startLot();
 $("app").classList.remove("boot"); /* 読みこみの とちゅうに隠していた 手本の指・案内文を出す（サイクル146） */

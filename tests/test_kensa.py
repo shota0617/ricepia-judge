@@ -392,7 +392,9 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         # 380msの押しでも付かず「はなさず ぎゅっと」で戻ってしまった（390×844実測）
         self.assertIn("const INK_MS = 250;", HTML)
         self.assertNotIn("const INK_MS = 450;", HTML)
-        self.assertIn("INK_MS * motion", HTML)  # 動きを減らす設定では待ちも短くなる従来どおり
+        # サイクル151 で 変えた: 動きを へらす 設定でも 押す長さの しきいは 同じ（旧版は INK_MS * motion = 37.5ms で、110ms の タップで 付いた）
+        self.assertNotIn("INK_MS * motion", HTML)
+        self.assertIn("inkToHanko(y); }, INK_MS);", HTML)
 
     def test_grade_pull_takes_with_a_short_pull(self):
         # きめる: 上へ引く判定は-24px。-34pxでは-30pxの自然な短い引き上げが
@@ -414,7 +416,9 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         # 500msの押しでも届かず「はなさず にぎる」で戻ってしまった（390×844実測）
         self.assertIn("const NIGIRU_MS = 350;", HTML)
         self.assertNotIn("const NIGIRU_MS = 600;", HTML)
-        self.assertIn("NIGIRU_MS * motion", HTML)  # 動きを減らす設定では待ちも短くなる従来どおり
+        # サイクル151 で 変えた: 動きを へらす 設定でも にぎる 長さの しきいは 同じ（旧版は NIGIRU_MS * motion = 52.5ms）
+        self.assertNotIn("NIGIRU_MS * motion", HTML)
+        self.assertIn("senseDone(); } }, NIGIRU_MS);", HTML)
 
     def test_probe_inserts_with_a_short_push_of_about_forty_px(self):
         # ぬく・押し込み: 先が袋に少し入る約40pxの短い押しで「さした」になる。
@@ -480,7 +484,7 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertNotIn("Math.abs(p.twist) >= 35", HTML)
 
     def test_first_miss_reshows_guide_finger(self):
-        # 空振りの受け止め統一（Fable設計・サイクル81）: どの所作も空振り1回目で
+        # 空振りの受け止め統一（設計・サイクル81）: どの所作も空振り1回目で
         # 手本の指👆がもう一度同じ動きを見せる。従来は触った瞬間に消えた指が
         # 戻らず、1回目では道具の小さな揺れしか返らなかった（390×844実測）。
         # 2回目の道具の動き・3回目（等級は2回）の自動代替は従来どおり
@@ -495,7 +499,7 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertIn('if (hankoTaps === 1) guideAt("move", $("hanko"), 0, hankoMax);', HTML)  # おす・おろし
 
     def test_second_miss_tool_does_half(self):
-        # 空振りの受け止め統一（Fable設計・サイクル84）: 2回目では道具が半分やって見せる。
+        # 空振りの受け止め統一（設計・サイクル84）: 2回目では道具が半分やって見せる。
         # 従来は2回目も1回目と同じ小さな揺れ（ぬく18px）か無反応（はこぶ・おろし）で、
         # 3回目の自動代替まで「半分」の段階がなかった。状態は進めない（アニメーションのみ）
         self.assertIn("if (bagTaps === 2)", HTML)  # ぬく: さす所までの半分
@@ -506,7 +510,7 @@ assert.equal(lcd.textContent, LOT.moisture[1].toFixed(1));
         self.assertIn('"translateY(" + hankoLand / 2 + "px)"', HTML)
 
     def test_opening_attract_moves_probe_before_touch(self):
-        # 開いた瞬間の誘い（Fable設計の足すもの1・サイクル82）: 最初の袋だけ、
+        # 開いた瞬間の誘い（設計の足すもの1・サイクル82）: 最初の袋だけ、
         # 触れる前に穀刺しが袋の口へ寄って戻る。
         # 触れたら（pointerdown／自動代替）止まる。2袋目以降では出さない。
         # サイクル143: 1回だけ（2秒）ではなく、触れるまで 手本の指と一緒に くり返す（下の test_cycle143_...）
@@ -1146,7 +1150,9 @@ for (const [rest, inAt] of [[158, 127], [205, 166], [149, 120], [126, 101]]) {
         # 次の袋の開始（startLot）で、炊き上がりの返りがある時だけ、到着の後に遅れて1回鳴らす
         start_lot = HTML[HTML.index("function startLot()"):HTML.index("/* 皿の粒:")]
         # サイクル124（差30）で表示と音を同じコールバックに統合: 320ms後に1回鳴る点は不変
-        self.assertIn("cookedSound(); }, 320 * motion)", start_lot)
+        # サイクル151: 320ms は 到着の音と 分けて 聞かせる 間なので、動きを へらす 設定でも 縮めない（READ_MS.chip。旧版は 48ms で 到着音と 重なった）
+        self.assertIn("cookedSound(); }, READ_MS.chip)", start_lot)
+        self.assertIn("chip:320", HTML[HTML.index("const READ_MS"):HTML.index("});", HTML.index("const READ_MS"))])
         self.assertIn("arriveSound();", start_lot)
         self.assertEqual(HTML.count("cookedSound"), 2)  # 定義1＋呼び出し1（サイクル124の統合コールバック内）
         # 押印の瞬間（stampNow の updateCooked）では鳴らさない: 返りが見えるのは次の袋の開始時だけ
@@ -1483,8 +1489,9 @@ for (const [rest, inAt] of [[158, 127], [205, 166], [149, 120], [126, 101]]) {
         self.assertIn("chip.hidden = false;", start_lot)
         self.assertIn("chip.animate(", start_lot)
         # 音（cookedSound）と同じ 320ms のタイミングで、同じコールバックから現れる
-        self.assertIn("}, 320 * motion); } /* 炊き上がりチップの見た目も", start_lot)
-        self.assertIn("cookedSound(); }, 320 * motion)", start_lot)
+        # サイクル151: 320ms は READ_MS.chip（動きを へらす 設定でも 同じ）
+        self.assertIn("}, READ_MS.chip); } /* 炊き上がりチップの見た目も", start_lot)
+        self.assertIn("cookedSound(); }, READ_MS.chip)", start_lot)
         self.assertNotIn("setTimeout(cookedSound", start_lot)
         # 別の袋へ移っていたら古いチップは出さない
         self.assertIn("if (lotIndex !== chipLot || !cookedReturns.length) return;", start_lot)
@@ -2699,6 +2706,7 @@ const bagBig = { style:{ transform:'' }, animate() { const a = { cancel() {} }; 
 const $ = () => bagBig;
 const stopSwipeDemo = () => {}, bagSound = () => { sounds++; }, swipeNudge = () => { nudges++; };
 const goNext = () => { nexts++; leaving = false; step = 0; stamped = false; };   // 次の袋: ぬく から・まだ押していない
+const docOn = {}; const document = { addEventListener(t, f) { docOn[t] = f; } }, window = { addEventListener() {} };   // サイクル151: タップの 連打を 見分ける capture の 聞き手
 """ + fn + """
 const tap = (id) => { on.pointerdown({ pointerId:id }); on.pointerup({ pointerId:id }); };
 // 出てから十分たったタップ: 流れる
@@ -2713,7 +2721,8 @@ on.pointerup({ pointerId:3 });
 assert.equal(anims.length, 1); assert.equal(leaving, false); assert.equal(nudges, 0);
 tap(4); assert.equal(anims.length, 1);                     // 次の袋の ぬく の間も、かくれたボタンでは流れない
 // 押してすぐ（0.9秒より前）に下ろした指: 流さず、流す空振りへ（音と ふくろの小さな動き。何も起きないタップには しない）
-step = 4; stamped = true; nextShownAt = 10000; now = 10400; tap(5);
+// サイクル151: この 守りは はんこが ひとりでに 押された 時（3回目の タップ: nextAuto）と タップの 連打の 時だけ。ここは ひとりでに 押された 場合
+step = 4; stamped = true; nextAuto = true; nextShownAt = 10000; now = 10400; tap(5);
 assert.equal(anims.length, 1); assert.equal(nudges, 1);
 now = 10899; tap(6); assert.equal(nudges, 2); assert.equal(anims.length, 1);
 now = 10900; tap(7); assert.equal(anims.length, 2); assert.equal(nudges, 2);   // 0.9秒たてば流れる
@@ -3174,11 +3183,233 @@ fresh(); fire('pointerdown', 1, 300, 100); fire('pointermove', 1, 300, 160); fir
 assert.equal(pageSlid(undefined), false);   // 指なしで呼ばれる道（場面の外のタップの受け皿）は そのまま
 """)
         # ほかの所作も、状態を変える前・離した時に 同じ見分けを通る
-        self.assertIn("if (pageFinger(dx, dy)) return; /* ページを動かす指では 🤲 を運ばない */", HTML)
+        # サイクル151（Codex指摘）: 触れた 指かは その 指の できごと e で 決めるので、e も わたす
+        self.assertIn("if (pageFinger(dx, dy, e)) return; /* ページを動かす指では 🤲 を運ばない */", HTML)
         self.assertIn("if (pageSlid(e)) cancelled = true;", HTML[HTML.index("function endPlatePointer(e, cancelled) {"):HTML.index("/* 振る:")])
         self.assertIn('$("bagBig").addEventListener("pointerup", (e) => { bagPage = pageSlid(e); }, true);', HTML)
         self.assertIn("if (pageSlid(e)) return; /* ページを動かした指は タップに数えない */", HTML)
         self.assertIn("if (pageSlid(e)) return; /* ページを動かした指は 🤲 の空振りに数えない */", HTML)
+
+
+    # ---- サイクル151（最初の1分・見つけ役の表から）----
+
+    def test_cycle151_mouse_and_pen_are_never_page_fingers(self):
+        # サイクル150 の もどり: ホイール・キーで 少しでも 下へ 動いた 後は、たてに 動かす マウスが ぜんぶ「ページを動かす指」として 捨てられた
+        # （1280×720・マウス実測: 🤲 を 50〜57回 運んでも 進まず、1袋目を 60秒で 終えられない 3回中3回 → 直した後 3回中3回 1袋目を 終える）。
+        # 見分けは 触れた 指（touch）だけ。本物の pageFinger・pageSlid で 確かめる
+        helpers = HTML[HTML.index("var pageScrolled = false;"):HTML.index("/* 指の動きはどれも止まらないように")]
+        self._node150("""
+const assert = require('node:assert/strict');
+const doc = {}, win = {};
+const document = { addEventListener(t, f) { (doc[t] = doc[t] || []).push(f); } }, window = { addEventListener(t, f) { (win[t] = win[t] || []).push(f); } };
+""" + helpers + """
+const fire = (type, id, x, y, kind) => { const e = { type, pointerId:id, clientX:x, clientY:y, pointerType:kind, buttons:1 }; (doc[type] || []).forEach(f => f(e)); return e; };
+pageScrolled = true;   // ホイールで 100px 下へ
+for (const kind of ['mouse', 'pen']) {
+  const d = fire('pointerdown', 1, 100, 100, kind);
+  assert.equal(pageFinger(0, 1, d), false, kind);           // 置いたまま待つ所作（朱肉の ぎゅっ・にぎる）も 時計を始める
+  const e = fire('pointermove', 1, 102, 160, kind);
+  assert.equal(pageFinger(2, 60, e), false, kind);          // 🤲 を 顔へ・等級を 上へ・はんこを 下へ 動かせる
+  assert.equal(pageSlid(e), false, kind);                   // 離した時も 所作に 数える
+  (win.pointerup || []).forEach(f => f(e));
+}
+// 触れた 指は サイクル150 のまま: 説明を読んでいる間の たての指は ページを動かす
+const d2 = fire('pointerdown', 2, 100, 100, 'touch');
+assert.equal(pageFinger(0, 1, d2), true);
+const e2 = fire('pointermove', 2, 102, 160, 'touch');
+assert.equal(pageSlid(e2), true);
+assert.equal(pageFinger(30, 4, e2), false);                 // よこの 指は 今までどおり
+pageScrolled = false; assert.equal(pageFinger(0, 60, e2), false);
+""")
+        # たての所作・置いたまま待つ所作の 見分けは どれも pageFinger を 通る（pageScrolled を じかに 見る所を 残さない）
+        self.assertEqual(HTML.count("pageScrolled"), 3)   # 決める所（var）・pageFinger・syncScrolled
+        self.assertIn('return !!e && e.pointerType === "touch";', HTML)
+        self.assertNotIn("pageTouch", HTML)   # 最後に 押された 機械を 1つの 旗に 覚えない（Codex指摘）
+        self.assertIn("if (!drag || pageFinger(0, e.clientY - drag.y, e)) return;", HTML)
+        self.assertEqual(HTML.count("if (!pageFinger(0, 1, e)) h.timer = setTimeout("), 2)   # 朱肉・にぎる
+        # pageFinger は どこでも その 指の できごと e と いっしょに 呼ぶ
+        calls = re.findall(r"pageFinger\(((?:[^()]|\([^()]*\))*)\)", HTML[HTML.index("var pageScrolled = false;"):])
+        self.assertTrue(len(calls) >= 12)
+        for c in calls:
+            self.assertTrue(c.endswith(", e") or c == "dx, dy, e" or c == "0, …, e", c)
+
+    @staticmethod
+    def _set_timeouts(src):
+        # setTimeout( … ) を かっこの 対で 切り出し、(コールバック, 待ち) に 分ける
+        out, i = [], 0
+        while True:
+            i = src.find("setTimeout(", i)
+            if i < 0:
+                return out
+            j, depth, comma, quote = i + len("setTimeout("), 1, None, None
+            while depth:
+                c = src[j]
+                if quote:
+                    if c == "\\":
+                        j += 1
+                    elif c == quote:
+                        quote = None
+                elif c in "\"'`":
+                    quote = c
+                elif c in "([{":
+                    depth += 1
+                elif c in ")]}":
+                    depth -= 1
+                elif c == "," and depth == 1:
+                    comma = j
+                j += 1
+            args = src[i + len("setTimeout("):j - 1]
+            if comma is not None:
+                k = comma - (i + len("setTimeout("))
+                out.append((args[:k], args[k + 1:].strip()))
+            i = j
+
+    def test_cycle151_reduced_motion_never_shortens_reading_or_press(self):
+        # 動きを へらす 設定では motion = 0.15 が 待ちにも かかり、平均の「ちょうどいい」0.14秒・「水分が 高い！」0.26秒・「きれいに なった！」0.16秒・
+        # におい・かみ心地の 答え 0.17〜0.24秒・顔が 大きく なる 0.14秒 しか 見えず、朱肉 0.04秒・にぎる 0.05秒の 押しで 付いて タップと 区別が なかった
+        # （390×844実測 → 直した後 ふつうと 同じ 955・1706・1056・1109ms）。
+        # きまり: motion を かけて よいのは 飾りの 動きだけ。setTimeout の 待ちに motion を かけて よいのは、下の 飾りの 合図だけ
+        decoration = {
+            "tick": "粒が 落ちる 動き（430ms × motion）に 合わせた 音",
+            'classList.add("on"); checkSound();': "等級の 表の 点が 順に つく 飾り",
+            'classList.add("wig")': "粒が 順に わらう 波",
+            'token.classList.remove("squeeze")': "にぎる 手本の 形を 短く 見せる 飾り（空振り2回目）",
+        }
+        scaled = [(cb, d) for cb, d in self._set_timeouts(HTML) if "motion" in d]
+        self.assertTrue(scaled)
+        for cb, d in scaled:
+            self.assertTrue(any(k in cb for k in decoration), "待ちに motion が かかっている: setTimeout(" + cb.strip()[:80] + ", " + d + ")")
+            for scene in ("toHakaru", "showAverage", "toMiwakeru", "toSense", "toKimeru", "senseDone", "inkDone", "resetZoomForSmiles", '"big"', "cookedSound", "goNext", "leaveBag"):
+                self.assertNotIn(scene, cb, d)
+        # 読む間・ほめる間は READ_MS の 表から。押す 長さの しきいも motion を かけない
+        for call in ("setTimeout(toHakaru, READ_MS.zarazara);", "setTimeout(showAverage, READ_MS.lastMeasure);",
+                     "setTimeout(toMiwakeru, high ? READ_MS.averageHigh : READ_MS.average);", "}, READ_MS.cleanSmile);",
+                     "setTimeout(toSense, READ_MS.clean);", 'setTimeout(() => $("face").classList.remove("big"), READ_MS.faceBig);',
+                     "setTimeout(toKimeru, READ_MS.senseRead);", "cookedSound(); }, READ_MS.chip)"):
+            self.assertIn(call, HTML)
+        self.assertIsNone(re.search(r"(READ_MS(\.\w+)?|INK_MS|NIGIRU_MS)\s*\)?\s*\*", HTML))
+        self.assertIsNone(re.search(r"\*\s*\(?\s*(READ_MS|INK_MS|NIGIRU_MS)", HTML))
+        # 表の 数は 動きを へらしても 変わらない（ふつうの 長さ そのもの）
+        block = HTML[HTML.index("const READ_MS"):HTML.index("});", HTML.index("const READ_MS")) + 3]
+        self.assertNotIn("motion", block)
+        self._node150("""
+const assert = require('node:assert/strict');
+""" + block + """
+assert.deepEqual(READ_MS, { zarazara:560, lastMeasure:240, average:950, averageHigh:1700, cleanSmile:300, clean:1050, faceBig:900, senseRead:1100, chip:320 });
+assert.ok(Object.isFrozen(READ_MS));
+""")
+
+    def test_cycle151_next_guard_only_for_auto_stamps_and_tap_bursts(self):
+        # サイクル150 の NEXT_GUARD（0.9秒）は、自分で はんこを 下ろした すばやい人の すなおな 1回目も 流さなかった
+        # （4つの 画面の 大きさ 実測: 出て 0.35〜0.86秒の タップ 59回中27回 → 直した後 0回）。
+        # 守るのは ひとりでに 押された 時（3回目の タップ・Enter）と、タップの 連打（前の タップから 0.5秒より 早い）だけ
+        fn = HTML[HTML.index("function leaveBag() {"):HTML.index('nextBtn.addEventListener("click",')]
+        self.assertIn("const NEXT_BURST = 500;", fn)
+        self._node150("""
+const assert = require('node:assert/strict');
+const motion = 1; let leaving = false, step = 4, stamped = true, now = 0, nudges = 0, leaves = 0;
+globalThis.performance = { now: () => now };
+const on = {}; const nextBtn = { addEventListener(t, f) { on[t] = f; } };
+const docOn = {}; const document = { addEventListener(t, f) { docOn[t] = f; } }, window = { addEventListener() {} };
+const bagBig = { style:{ transform:'' }, animate() { leaves++; return { cancel() {} }; } };
+const $ = () => bagBig;
+const stopSwipeDemo = () => {}, bagSound = () => {}, swipeNudge = () => { nudges++; }, goNext = () => {};
+""" + fn + """
+const ev = (id, x = 200, y = 700) => ({ pointerId:id, clientX:x, clientY:y });
+const press = (id, ms, onBtn) => { const e = ev(id); docOn.pointerdown(e); if (onBtn) on.pointerdown(e); now += ms; docOn.pointerup(e); if (onBtn) on.pointerup(e); };
+const fresh = () => { leaving = false; stamped = true; step = 4; };
+// 自分で はんこを 下ろした（nextAuto = false）後、ボタンが 出て 0.4秒の 1回目の タップ: そのまま 流れる
+now = 10000; docOn.pointerdown(ev(1)); now += 260; docOn.pointermove && docOn.pointermove(ev(1)); docOn.pointerup(ev(1, 200, 760));   // 下ろす 指（動いた 指は タップに 数えない）
+nextAuto = false; nextShownAt = now; now += 400; press(2, 70, true);
+assert.equal(leaves, 1); assert.equal(nudges, 0);
+// ひとりでに 押された（3回目の タップ）後は、ゆっくりの タップ（間 0.8秒）でも 0.9秒までは 流す空振りへ（サイクル150 の 守り）
+fresh(); now = 20000; nextAuto = true; nextShownAt = now; now += 800; press(3, 70, true);
+assert.equal(leaves, 1); assert.equal(nudges, 1);
+now = 20000 + 950; press(4, 70, true); assert.equal(leaves, 2);
+// タップの 連打: 前の タップから 0.5秒より 早い 指は、自分で 押した 後でも 流す空振りへ
+fresh(); now = 30000; nextAuto = false; nextShownAt = now; press(5, 70, false); now += 200; press(6, 70, true);
+assert.equal(leaves, 2); assert.equal(nudges, 2);
+// 連打が とぎれた（前の タップから 0.5秒より あと）指は 流れる
+now += 600; press(7, 70, true); assert.equal(leaves, 3);
+""")
+        stamp = HTML[HTML.index("function stampNow() {"):HTML.index("function dropHanko() {")]
+        self.assertIn("nextAuto = false;", stamp)
+        drop = HTML[HTML.index("function dropHanko() {"):HTML.index('$("bagBig").addEventListener("pointerdown",')]
+        self.assertIn(".onfinish = () => { const was = stamped; stampNow(); if (!was && stamped) nextAuto = true; };", drop)
+
+    def test_cycle151_face_never_stays_blank_and_broken_photos_hide(self):
+        # 顔の 絵（face_dot.webp）が 読めない・来ない と、検査員の 顔は 中身の ない 丸の まま だった（6回中6回・12.5秒で 絵の 点 0）。
+        # 写真が 読めないと こわれた 絵の しるしと はみ出す 説明の 字が ずっと 出ていた。
+        face = HTML[HTML.index('const faceCtx = $("face").getContext("2d");'):HTML.index("/* 進行 */")]
+        self._node150("""
+const assert = require('node:assert/strict');
+const motion = 1; let now = 0; const timers = [], frames = [];
+globalThis.performance = { now: () => now };
+const setTimeout = (f, ms) => { timers.push([ms, f]); return timers.length; }, clearTimeout = () => {};
+const requestAnimationFrame = f => frames.push(f);
+const mkCtx = () => ({ draws:[], alpha:[], set globalAlpha(v) { this.alpha.push(v); }, clearRect() { this.draws = []; }, drawImage(src) { this.draws.push(src); }, fillRect() {}, getImageData() { return { data:[1, 2, 3, 255] }; } });
+const faceCanvas = { ctx:mkCtx(), getContext() { return this.ctx; }, classList:{ toggle() {} } };
+const $ = id => faceCanvas;
+const photo = { dataset:{ src:'kensa/kokusashi.webp' }, style:{}, on:{}, addEventListener(t, f) { this.on[t] = f; }, removeAttribute() {} };
+const document = { createElement() { return { kind:'fallback', getContext() { return mkCtx(); } }; }, querySelectorAll() { return [photo]; } };
+class Image { constructor() { this.on = {}; this.complete = false; this.naturalWidth = 0; globalThis.img = this; } addEventListener(t, f) { (this.on[t] = this.on[t] || []).push(f); } }
+""" + face + """
+const ctx = faceCanvas.ctx;
+assert.equal(ctx.draws.length, 0);
+// 2.5秒 たっても 来ない: かわりの 顔
+timers.filter(([ms]) => ms === 2500).forEach(([, f]) => f());
+assert.equal(ctx.draws.length, 1); assert.equal(ctx.draws[0].kind, 'fallback');
+setFace('happy'); assert.equal(ctx.draws[0].kind, 'fallback');   // 表情も かさなる
+// おくれて 本物が 来た: ぱっと 切りかえず 重ねかえる
+img.complete = true; img.naturalWidth = 256; img.onload();
+assert.equal(faceFade, 0); assert.deepEqual(ctx.draws.map(d => d.kind || 'real'), ['fallback', 'real']);
+now = 200; frames.shift()(); assert.ok(faceFade > 0.4 && faceFade < 0.6);
+now = 400; frames.shift()(); assert.equal(faceFade, 1); assert.deepEqual(ctx.draws.map(d => d.kind || 'real'), ['real']);
+// 写真: 読めなければ かくす（場所は そのまま）
+loadPhotos(); photo.on.error(); assert.equal(photo.style.visibility, 'hidden');
+""")
+        self.assertIn('faceImg.addEventListener("error", () => {\n  showFaceFallback();', face)
+        self.assertIn("setTimeout(showFaceFallback, 2500);", face)
+
+
+    def test_cycle151_codex_touch_is_judged_per_pointer_not_by_the_last_device(self):
+        # Codex指摘: 「触れた 指か」を 最後に 押された 機械の 旗 1つで 決めていた。説明を読んでいる間に 指を ふくろに 置いたまま
+        # マウスを ほかの 所で 押すと、その 指の たての 動き（18px）が「ページの 指」で なくなり 朱肉が 付いた。逆の 順では
+        # マウスの ドラッグが 指として 捨てられた。どちらの 順でも、その 指の できごと e で 決める
+        helpers = HTML[HTML.index("var pageScrolled = false;"):HTML.index("/* 指の動きはどれも止まらないように")]
+        fn = HTML[HTML.index('$("bagBig").addEventListener("pointerdown",'):HTML.index('$("bagBig").addEventListener("click",')]
+        world = self._hanko_world().replace(
+            "let pageScrolled = false; const pageFinger = (dx, dy) => pageScrolled && Math.abs(dy) >= Math.abs(dx); const slid = new Set(), pageSlid = (e) => !!e && slid.has(e.pointerId);\n",
+            "const doc = {}, win = {}; const document = { hidden:false, addEventListener(t, f) { (doc[t] = doc[t] || []).push(f); } }, window = { addEventListener(t, f) { (win[t] = win[t] || []).push(f); } };\n")
+        self.assertNotEqual(world, self._hanko_world())
+        self._node150(world + helpers + fn + """
+const ev = (id, kind, x, y) => ({ pointerId:id, pointerType:kind, clientX:x, clientY:y, buttons:1 });
+const send = (type, e, toBag) => { (doc[type] || []).forEach(f => f(e)); if (toBag) { if (cap[type]) cap[type](e); if (on[type]) on[type](e); } (win[type] || []).forEach(f => f(e)); };
+pageScrolled = true;   // 説明を 読んでいる間
+// 順1: 指を ふくろに 置く → マウスを ほかの 所で 押す → 指を 下へ 18px 以上 → 朱肉は 付かない（ページを 動かす 指）
+send('pointerdown', ev(1, 'touch', 100, 100), true);
+assert.equal(inkHold.timer, undefined);                 // 置いたまま待つ 時計も 始めない
+send('pointerdown', ev(2, 'mouse', 300, 40), false);
+for (const y of [106, 112, 120, 130]) send('pointermove', ev(1, 'touch', 100, y), true);
+assert.equal(inks, 0); assert.equal(inked, false);
+send('pointercancel', ev(1, 'touch', 100, 130), true); send('pointerup', ev(2, 'mouse', 300, 40), false);
+assert.equal(inked, false); assert.equal(hankoTaps, 0);
+// 順2: 指を ほかの 所に 置く → マウスで ふくろを 押し下げる → 朱肉が 付く（マウスは ページを 動かさない）
+send('pointerdown', ev(3, 'touch', 300, 40), false);
+send('pointerdown', ev(4, 'mouse', 100, 100), true);
+assert.notEqual(inkHold.timer, undefined);              // マウスの 置いたまま待つ 時計は 始まる
+for (const y of [106, 112, 120]) send('pointermove', ev(4, 'mouse', 100, y), true);
+assert.equal(inks, 1); assert.equal(inked, true);
+send('pointerup', ev(4, 'mouse', 100, 120), true); send('pointerup', ev(3, 'touch', 300, 40), false);
+assert.equal(pageDowns.size, 0);
+// 離した 知らせが 来ないまま 画面を 離れた 指は 残さない
+send('pointerdown', ev(5, 'touch', 10, 10), false); assert.equal(pageDowns.size, 1);
+(win.blur || []).forEach(f => f()); assert.equal(pageDowns.size, 0);
+""")
+        # 連打の 記録（つぎの ふくろ）も 指ごとで、離した 知らせが 来ない 指は 画面を 離れた 時に 消す
+        nxt = HTML[HTML.index("const tapDowns = new Map();"):HTML.index('nextBtn.addEventListener("pointerdown",')]
+        self.assertIn('window.addEventListener("blur", () => { tapDowns.clear(); });', nxt)
+        self.assertIn("if (document.hidden) tapDowns.clear();", nxt)
 
 
 if __name__ == "__main__":

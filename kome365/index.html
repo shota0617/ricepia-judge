@@ -942,7 +942,7 @@ window.__k3d = (function(){
     if (!no3d) add('vendor/three.min.js', SRI, function(){ window.dispatchEvent(new Event('three-ready')); });
   }
   function soon(ms){
-    if (st === 2) return; clearTimeout(timer);
+    if (st === 2 || timer) return;   /* いちど予約したら、つづけて決めても のばさない(0.9秒より速く決めつづけると 3D が いつまでも来なかった) */
     timer = setTimeout(function tick(){ if (down && tries++ < 12) { timer = setTimeout(tick, 400); return; } go(); }, ms);
   }
   function idleArm(){ clearTimeout(idleT); idleT = null; if (st !== 2 && idleMs) idleT = setTimeout(function(){ if (down) idleArm(); else go(); }, idleMs); }

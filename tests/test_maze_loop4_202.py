@@ -47,7 +47,9 @@ class SlowStart202(unittest.TestCase):
         """地図が 動きだす 前の タップ・キーでは 曲を 鳴らさない（読みこまない）。動きだした あとの はじめの 操作で 鳴らす"""
         i = GAME.index("const mapUp = () =>")
         s = GAME[i:GAME.index("document.addEventListener('visibilitychange', apply);", i)]
-        self.assertIn("const mapUp = () => !!(window.nishioPixel && window.nishioPixel.roll && window.nishioPixel.roll.ready);", s)
+        self.assertIn("const mapUp = () => !!(window.nishioPixel && window.nishioPixel.roll && window.nishioPixel.roll.up);", s)
+        self.assertIn("up: riceSprites.ready || !!riceSprites.failed,", PIX)
+        self.assertIn("img.onerror = () => { riceSprites.failed = true; };", PIX)
         self.assertIn("if (unlocked || !mapUp()) return;", s)
         self.assertIn("['pointerdown', 'keydown'].forEach(ev => document.removeEventListener(ev, unlock, true));", s)
         self.assertIn("['pointerdown', 'keydown'].forEach(ev => document.addEventListener(ev, unlock, true));", s)

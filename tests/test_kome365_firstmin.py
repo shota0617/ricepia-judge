@@ -213,6 +213,7 @@ class TestKome365FirstMinute(unittest.TestCase):
         loader = HTML[HTML.index("window.__k3d = (function(){"):HTML.index("const K = window.Kome365")]
         # 指が画面にある間は はじめない(待つのは 12回まで)
         self.assertIn("if (down && tries++ < 12) { timer = setTimeout(tick, 400); return; } go();", loader)
+        self.assertIn("if (st === 2 || timer) return;", loader)   # 速く決めつづけても 3D の開始をのばさない
         self.assertIn("if (down) idleArm(); else go();", loader)
 
     def test_boot_title_has_moving_dot(self):

@@ -60,6 +60,7 @@ class SwipeHold203(unittest.TestCase):
         self.assertIn("function tapDemoTick() {", PIX)
         self.assertIn("if (!d.key && Math.hypot(e.clientX - d.x, e.clientY - d.y) < SWIPE_MIN) return;", SW)
         self.assertIn("if (e.pointerType === 'mouse' && !e.buttons) { clearTimeout(swipeS.timer); swipeS.down = null; return; }", SW)   # 外で はなした マウスが もどって きても 歩きださない
+        self.assertIn("cv.addEventListener('pointerleave', () => { clearTimeout(swipeS.timer); }, { passive: true });", PIX)   # 外へ 出たら 待たない
         self.assertIn("if (tapWalk(q[0], q[1])) d.key = q[0] + ',' + q[1];", SW)   # 歩きだせた ときだけ 行き先を きめる   # 歩きだした 指は、もどして はなしても click を 使わない
 
     def test_playtest_and_doc(self):

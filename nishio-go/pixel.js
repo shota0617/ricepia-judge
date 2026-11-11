@@ -13537,6 +13537,7 @@ cv.addEventListener('pointerdown', e => { swipeS.at = -Infinity;   // 新しい 
   clearTimeout(swipeS.timer);
   swipeS.down = !worldMode && e.isPrimary && e.button === 0 ? { id: e.pointerId, x: e.clientX, y: e.clientY, ax: e.clientX, ay: e.clientY, ex: e.clientX, ey: e.clientY, key: '' } : null; }, { passive: true });
 cv.addEventListener('pointercancel', () => { clearTimeout(swipeS.timer); swipeS.down = null; }, { passive: true });
+cv.addEventListener('pointerleave', () => { clearTimeout(swipeS.timer); }, { passive: true });   // 地図の 外へ 出た 指・マウスは 待たない（外で はなしても、のこった タイマーで 歩きださない）。押した まま もどれば、次の 動きから また はかる
 function swipeTile(cx, cy) {   // 画面の 点（clientX・clientY）の 下の マス
   const r = cv.getBoundingClientRect(), dpr = cv.width / r.width, T = fieldT(Math.min(window.devicePixelRatio || 1, 3)), c = camTile();
   const x = (cx - r.left) * dpr, y = (cy - r.top) * dpr;

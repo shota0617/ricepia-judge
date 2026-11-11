@@ -9880,6 +9880,11 @@ window.addEventListener('pointermove', e => { if (e.pointerType === 'mouse' && !
 window.addEventListener('blur', () => touchIds.clear());
 document.addEventListener('visibilitychange', () => touchIds.clear());
 let viewPinch = null;
+// Codex 指摘（サイクル274 の PR）: 寄って見る ときの もとの数（指の間の長さ d0・画角 z0）は、2 本目の指が ふれた ときの数（viewBase）を使う。
+// 「寄って見る」と決まった ときの数を使うと、決まるまでに 広げた分（はじめの 1 回の知らせで 30px ずつ 広げた・なぞり から 直した）が 消え、広げて もどしても 元の画角に もどらなかった。
+// 画角は いつも z0 × 今の長さ ÷ d0（1〜2.2 倍）。広げて 元の間に もどせば 元の画角
+let viewBase = null;
+function viewZoomSet() { if (!viewPinch || viewPts.size < 2) return; fovZoom = Math.max(1, Math.min(2.2, viewPinch.z0 * viewPtsDist() / viewPinch.d0)); camera.fov = baseFov / fovZoom; camera.updateProjectionMatrix(); }
 function viewPtsDist() { const [a, b] = [...viewPts.values()]; return Math.hypot(a.x - b.x, a.y - b.y) || 1; }
 let viewAuto = { was: false, t: 0, re: false };   // 2本指で寄るだけなら 自動運転を やめない
 function viewZoomBack() { if (fovZoom === 1) return false; fovZoom = 1; camera.fov = baseFov; camera.updateProjectionMatrix(); return true; }   // きまり 5
@@ -9900,7 +9905,7 @@ function viewHand(id, e) {
 // 置いただけの指が あるときの なぞりはじめは 2 こま（1 秒に 60 こまの スマホで 0.03 秒）おそくなる。決まるまで、もう なぞっている指の なぞりは そのまま続く（きまり 3）
 let viewPend = null, viewRe = null;
 function viewToPinch() {
-  viewPend = viewRe = null; viewTwo = 'pinch'; viewPinch = { d0: viewPtsDist(), z0: fovZoom }; drag = null; TRACE.end(); viewTid = null; PRE.clear();
+  viewPend = viewRe = null; viewTwo = 'pinch'; viewPinch = viewBase ? { d0: viewBase.d0, z0: viewBase.z0 } : { d0: viewPtsDist(), z0: fovZoom }; drag = null; TRACE.end(); viewTid = null; PRE.clear(); viewZoomSet();
   if (viewAuto.re && !AUTO.on) AUTO.toggle();
 }
 function viewTick(dt) {   // frame から 毎こま
@@ -9921,15 +9926,15 @@ function viewTick(dt) {   // frame から 毎こま
 }
 canvas.addEventListener('pointerdown', e => {
   viewLost = false;
-  if (e.isPrimary) { viewPts.clear(); viewPinch = null; viewTwo = null; viewAuto = { was: AUTO.on, t: performance.now(), re: false }; }   // 1本目の指：取り残された指の 記録を 消す
+  if (e.isPrimary) { viewPts.clear(); viewPinch = null; viewBase = null; viewTwo = null; viewAuto = { was: AUTO.on, t: performance.now(), re: false }; }   // 1本目の指：取り残された指の 記録を 消す
   viewPts.set(e.pointerId, { x: e.clientX, y: e.clientY, ax: e.clientX, ay: e.clientY, hx: e.clientX, hy: e.clientY, at: e.timeStamp, solo: false }); HINT.holdT = 0;
   if (viewPts.size === 2) {
     for (const q of viewPts.values()) { q.ax = q.x; q.ay = q.y; q.solo = false; }
-    viewTwo = 'wait'; viewPinch = null; viewPend = viewRe = null;
+    viewTwo = 'wait'; viewPinch = null; viewPend = viewRe = null; viewBase = { d0: viewPtsDist(), z0: fovZoom };
     viewAuto.re = viewAuto.was && !AUTO.on && performance.now() - viewAuto.t < 450;
   }
 });
-const viewPtsClear = () => { viewLost = viewLost || viewPts.size > 0; viewPts.clear(); viewPinch = null; viewTwo = null; viewTid = null; viewPend = viewRe = null; };   // viewLost：置いたままの指の 記録を ここで消した（その指が動いたら おぼえ直す）
+const viewPtsClear = () => { viewLost = viewLost || viewPts.size > 0; viewPts.clear(); viewPinch = null; viewBase = null; viewTwo = null; viewTid = null; viewPend = viewRe = null; };   // viewLost：置いたままの指の 記録を ここで消した（その指が動いたら おぼえ直す）
 window.addEventListener('blur', viewPtsClear);
 document.addEventListener('visibilitychange', viewPtsClear);
 // サイクル271・最初の1分（おそい回線）: 読みこみを待つ間（始まる前）に 置いた指は、まわりを見る操作には しない（おおいの下で 目の向きだけが変わっていた）。
@@ -9961,11 +9966,7 @@ canvas.addEventListener('pointermove', e => {
     else if (!viewPend) viewPend = { id, n: 0 };   // きまり 1: 動いたのは この指だけ「らしい」。もう 1 本の指の知らせが あとから届くことが あるので、2 こま待ってから決める（viewTick）
   } else if (q && viewTwo === 'trace' && viewRe && id !== viewRe.id && viewPts.size === 2 && Math.hypot(q.x - q.ax, q.y - q.ay) >= 12) viewToPinch();   // 決めた すぐあと（0.15 秒）に もう 1 本も 大きく動いた＝寄って見る に 直す
   else if (q && q.solo && viewPts.size === 1 && !TRACE.on && !drag && Math.hypot(q.x - q.ax, q.y - q.ay) >= 12) { q.solo = false; viewHand(id, e); return; }   // きまり 4
-  if (viewPinch && viewPts.size >= 2) {
-    fovZoom = Math.max(1, Math.min(2.2, viewPinch.z0 * viewPtsDist() / viewPinch.d0));
-    camera.fov = baseFov / fovZoom; camera.updateProjectionMatrix();
-    return;
-  }
+  if (viewPinch && viewPts.size >= 2) { viewZoomSet(); return; }
   if (TRACE.on) {
     if (viewTid !== null && id !== viewTid) return;   // なぞっていない指の ゆれは 線に足さない
     if (viewTwo !== 'wait' && viewZoomBack()) TRACE.rebase = true;   // きまり 5: 画角を もどしたら、線は 今の指の場所から 引き直す（視点が変わった ときと同じ）
@@ -9985,9 +9986,9 @@ const endDrag = e => {
   if (id === viewTid || viewTid === null || viewPts.size === 0) { TRACE.end(); viewTid = null; }
   if (drag && (drag.id === id || drag.id === undefined || viewPts.size === 0)) drag = null;
   if (viewPts.size < 2) {
-    const pinched = viewTwo === 'pinch'; viewPinch = null; viewTwo = null; viewPend = viewRe = null;
+    const pinched = viewTwo === 'pinch'; viewPinch = null; viewBase = null; viewTwo = null; viewPend = viewRe = null;
     for (const q of viewPts.values()) { q.ax = q.x; q.ay = q.y; q.at = e.timeStamp; q.solo = !pinched; if (pinched) q.view = true; }   // きまり 4: 残った指は ここから 12px 動いたら なぞる
-  } else if (viewPinch) viewPinch = { d0: viewPtsDist(), z0: fovZoom };   // 3本目以降の指が残るときは、残った指で 測りなおす
+  } else { viewBase = { d0: viewPtsDist(), z0: fovZoom }; if (viewPinch) viewPinch = { d0: viewBase.d0, z0: viewBase.z0 }; }   // 3本目以降の指が残るときは、残った指で 測りなおす
 };
 canvas.addEventListener('pointerup', endDrag); canvas.addEventListener('pointercancel', endDrag);
 let toastT = 0, curVoice = null;

@@ -740,6 +740,25 @@ const srv = http.createServer((r, s) => { const u = decodeURIComponent(r.url.spl
       let lf = 0; for (; lf < 10; lf++) { if (await p.evaluate(t => TRACE.on && viewTid !== null && viewTid !== t, t0)) break; await adv(0.05); }
       await mv(1, [195, 461], [195, 397], 8, [{ x: 20, y: 820, id: 7 }]); await adv(2); const l1 = await jv(); await T('touchEnd', []); await adv(1.5);
       ok('親指を置いたままの人：人さし指が 12px 動いて 2 こま以内に なぞりが始まる・そのまま進む', lf >= 1 && lf <= 2 && l1.on && l1.z > -11, [lf, l1.on, l1.z]);
+      // (m)〜(q) Codex 指摘：寄って見る ときの 画角は、2 本目の指が ふれた ときの 指の間・画角から はかる（決まるまでに 動いた分を なくさない）
+      const fl = () => p.evaluate(() => new Promise(r => setTimeout(r, 250))), zs = z => p.evaluate(v => { fovZoom = v; camera.fov = baseFov / v; camera.updateProjectionMatrix(); Object.assign(game.S, { x: 0, z: -12, yaw: 0, v: 0, steer: 0 }); }, z);
+      const P2 = (a, c) => [{ x: a, y: 520, id: 1 }, { x: c, y: 520, id: 2 }];
+      await zs(1); await adv(0.5); await T('touchStart', P2(165, 225));   // (m) ゆっくり広げる：60px → 108px ＝ 1.8 倍
+      for (let i = 1; i <= 8; i++) { await T('touchMove', P2(165 - i * 3, 225 + i * 3)); await adv(0.05); } await fl(); await adv(0.2); const zm = (await jv()).zoom; await T('touchEnd', []); await adv(0.5);
+      await zs(1); await adv(0.5); await T('touchStart', P2(165, 225)); await T('touchMove', P2(135, 255)); await fl(); await adv(0.2); const zn = await jv();   // (n) 1 回の知らせで 60px → 120px ＝ 2 倍（直す前 1 倍）
+      await T('touchEnd', []); await adv(0.5);
+      await zs(1.5); await adv(0.5); await T('touchStart', P2(145, 245)); await T('touchMove', P2(165, 225)); await fl(); await adv(0.2); const zo1 = (await jv()).zoom;   // (o) 1.5 倍から せばめて（100 → 60px）元の間に もどす：1.5 倍に もどる（直す前 2.2 倍）
+      await T('touchMove', P2(145, 245)); await fl(); await adv(0.2); const zo2 = (await jv()).zoom; await T('touchEnd', []); await adv(0.5);
+      await zs(1); await adv(0.5); await T('touchStart', P2(165, 225)); await T('touchMove', P2(145, 225)); await fl(); await adv(0.1); const p1 = await jv();   // (p) なぞり に決まってから 直した とき：60 → 100px ＝ 1.67 倍（直す前 1 倍）
+      await T('touchMove', P2(145, 245)); await fl(); await adv(0.05); const p2 = await jv();
+      await T('touchEnd', [{ x: 245, y: 520, id: 2 }]); await adv(0.3);   // (q) 片方を離して 新しい 2 本目で せばめる：今の画角（1.67 倍）から 100 → 70px ＝ 1.17 倍
+      await T('touchStart', [{ x: 145, y: 520, id: 1 }, { x: 245, y: 520, id: 3 }]); await T('touchMove', [{ x: 160, y: 520, id: 1 }, { x: 230, y: 520, id: 3 }]); await fl(); await adv(0.2); const q1 = await jv();
+      await T('touchEnd', []); await adv(0.5); await zs(1); await adv(0.5);
+      const near = (a, c) => Math.abs(a - c) <= 0.03;
+      ok('寄って見る：ゆっくり 60 → 108px で 1.8 倍・1 回の知らせで 60 → 120px でも 2 倍（直す前 1 倍）', near(zm, 1.8) && zn.two === 'pinch' && near(zn.zoom, 2) && !zn.on, [zm, zn.two, zn.zoom]);
+      ok('1.5 倍から せばめて 元の間に もどすと 1.5 倍に もどる（直す前 2.2 倍）', zo1 === 1 && near(zo2, 1.5), [zo1, zo2]);
+      ok('なぞり に決まってから 寄って見る に直した ときも、2 本目が ふれた ときから はかる（60 → 100px ＝ 1.67 倍。直す前 1 倍）', p1.two === 'trace' && p2.two === 'pinch' && near(p2.zoom, 1.67), [p1.two, p2.two, p2.zoom]);
+      ok('片方を離して 新しい 2 本目で せばめる：今の画角から つづく（1.67 倍 × 70 ÷ 100 ＝ 1.17 倍）', q1.two === 'pinch' && near(q1.zoom, 1.17), [q1.two, q1.zoom]);
       await ctx.close();
     }
     // ---- 14-2) 「横へ」の見本の向き・畦の吹き出し ----

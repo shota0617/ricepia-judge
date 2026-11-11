@@ -13555,8 +13555,7 @@ function swipeHold() {
   const r = cv.getBoundingClientRect();
   if (d.ex < r.left || d.ex > r.right || d.ey < r.top || d.ey > r.bottom) return;   // 地図の 外へ 出た 指は 追わない
   const q = swipeTile(d.ex, d.ey);
-  tapWalk(q[0], q[1]);
-  if (tapS.goal) d.key = q[0] + ',' + q[1];   // 歩きだせた ときだけ 行き先を きめる（いまの マス・道が ない マスなら、同じ 指の つづきの なぞり・はなした 所を これまでどおり 受ける）
+  if (tapWalk(q[0], q[1])) d.key = q[0] + ',' + q[1];   // 歩きだせた ときだけ 行き先を きめる（いまの マス・道が ない マスなら、同じ 指の つづきの なぞり・はなした 所を これまでどおり 受ける）
 }
 cv.addEventListener('pointermove', e => {
   const d = swipeS.down;
@@ -13649,14 +13648,15 @@ function tapWalk(gx, gy) {
   G.notePlayInput();
   idleTouch();
   tapWalkStop();
-  if (driving) { G.toast('🚗 車は スティックで うごかします'); return; }
+  if (driving) { G.toast('🚗 車は スティックで うごかします'); return false; }
   const t = targetTile(), sx = Math.floor(t.x), sy = Math.floor(t.y);
-  if (sx === gx && sy === gy) return;
+  if (sx === gx && sy === gy) return false;
   const avoid = new Set((G.npcs || []).map(n => { const q = npcTile(n); return q.x + ',' + q.y; }));   // 人のマスは通らない（ぶつかると話しかけてしまう）
   const path = planPath(sx, sy, gx, gy, mazeOn() ? (mzType(Math.floor(gx / MZ_K), Math.floor(gy / MZ_K)) === 1 ? 0 : 2) : BLOCK.has(codeAt(gx, gy)) ? 1 : 0, avoid);   // 建物や水（めいろでは 壁の かたまり）をタップしたら、そのそばまで
-  if (!path.length) { if (navigator.vibrate) navigator.vibrate(20); return; }
+  if (!path.length) { if (navigator.vibrate) navigator.vibrate(20); return false; }
   tapS.path = path; tapS.goal = path[path.length - 1];
   tapWalkTick();
+  return true;   // 歩きだせた（となりの マスへ 1歩で 着いて、もう 行き先が のこって いない ときも）
 }
 $('pxInfo').addEventListener('click', e => {
   if (e.target === $('pxInfo') || e.target.closest('[data-close]') || e.target.closest('[data-move]')) {

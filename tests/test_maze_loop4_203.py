@@ -25,7 +25,7 @@ class SwipeHold203(unittest.TestCase):
         i = SW.index("function swipeHold() {")
         f = SW[i:SW.index("cv.addEventListener('pointermove'", i)]
         self.assertIn("const q = swipeTile(d.ex, d.ey);", f)
-        self.assertIn("tapWalk(q[0], q[1]);", f)
+        self.assertIn("if (tapWalk(q[0], q[1])) d.key = q[0] + ',' + q[1];", f)
         # 同じ マスの 決め方を はなした ときも 使う
         self.assertIn("const q = swipeTile(e.clientX, e.clientY);", SW)
         self.assertEqual(SW.count("function swipeTile(cx, cy) {"), 1)
@@ -60,7 +60,7 @@ class SwipeHold203(unittest.TestCase):
         self.assertIn("function tapDemoTick() {", PIX)
         self.assertIn("if (!d.key && Math.hypot(e.clientX - d.x, e.clientY - d.y) < SWIPE_MIN) return;", SW)
         self.assertIn("if (e.pointerType === 'mouse' && !e.buttons) { clearTimeout(swipeS.timer); swipeS.down = null; return; }", SW)   # 外で はなした マウスが もどって きても 歩きださない
-        self.assertIn("if (tapS.goal) d.key = q[0] + ',' + q[1];", SW)   # 歩きだせた ときだけ 行き先を きめる   # 歩きだした 指は、もどして はなしても click を 使わない
+        self.assertIn("if (tapWalk(q[0], q[1])) d.key = q[0] + ',' + q[1];", SW)   # 歩きだせた ときだけ 行き先を きめる   # 歩きだした 指は、もどして はなしても click を 使わない
 
     def test_playtest_and_doc(self):
         self.assertIn("swipeHold: { ...(sw.hold || { why: 'no-route' }), ok: !!sw.holdOk },", PLAY)

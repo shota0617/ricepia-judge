@@ -13561,6 +13561,7 @@ function swipeHold() {
 cv.addEventListener('pointermove', e => {
   const d = swipeS.down;
   if (!d || e.pointerId !== d.id || d.key) return;
+  if (e.pointerType === 'mouse' && !e.buttons) { clearTimeout(swipeS.timer); swipeS.down = null; return; }   // 地図の 外で ボタンを はなした マウス：押して いない 動きでは 歩きださない
   d.ex = e.clientX; d.ey = e.clientY;
   if (Math.hypot(d.ex - d.ax, d.ey - d.ay) <= SWIPE_HOLD_PX) return;
   d.ax = d.ex; d.ay = d.ey;   // 動いた：止まった 時間を はかりなおす

@@ -20,9 +20,11 @@ document.documentElement.classList.add('booting');
 document.addEventListener('DOMContentLoaded', function(){ document.documentElement.classList.remove('booting'); });
 /* 周回168(engine.js・cards.js が 返事を しない とき): 回線が つながった まま 止まると、題字と 小さな 丸 だけで 文字も やりなおす 物も 出なかった(4秒・61秒とも。動きを減らす 設定では 丸も 止まる)。
    ここ(ゲームの スクリプトより 前)で 見はる: 読みこみが 8秒 進まない(画面の 部品の 数も 届いた ファイルの 数も 変わらない)まま ゲームが 始まって いなければ、
-   「よみこみに 時間が かかって います」と「タップで もう一度」を 出す。ゲームの スクリプトが 読めない・エラーで 止まった ときは すぐ 出す。押すと 読みこみなおす。
-   ゲームが 始まったら(さいごの スクリプトの 終わりで ready())見はりを やめ、おそいだけで 出て いた 知らせは 消す(エラーで 出した 知らせは 消さない: engine.js が 読めなくても さいごの スクリプトは 終わりまで 進み、題の 画面の ボタンが から に なる)。
-   ページの 本体が まだ 届いて いる 途中なら 20秒まで 待つ */
+   「よみこみに 時間が かかって います」と「タップで もう一度」を 出す。押すと 読みこみなおす。ページの 本体が まだ 届いて いる 途中なら 20秒まで 待つ。
+   engine.js・cards.js が 読めなかった ときは すぐ 出し、消さない(さいごの スクリプトは engine.js が 無くても 終わりまで 進み、題の 画面の ボタンが から に なる)。
+   ほかの エラー(ブラウザの 拡張など)では すぐには 出さない(ゲームが そのあと ふつうに 始まる ことが ある。始まらなければ 8秒の 見はりで 出る)。
+   さいごの スクリプトの 終わりの ready() は、本当に 始まった とき(engine・cards が あり、1枚目の カードの 日付 か 1年の 記録が 見えて いる)だけ 見はりを やめ、出て いた 知らせを 消す。
+   始まって いなければ すぐ 知らせを 出す(Codex 指摘: 前は エラーが 1つ あると、ゲームが ふつうに 始まっても 知らせが 画面を おおった まま だった) */
 (function(){
   var d = document, w = window, seen = -1, last = Date.now(), box = null, iv = 0, bad = false;
   function count(){ var n = d.getElementsByTagName('*').length; try { n += performance.getEntriesByType('resource').length; } catch(e){} return n; }
@@ -40,9 +42,20 @@ document.addEventListener('DOMContentLoaded', function(){ document.documentEleme
     if (n !== seen) { seen = n; last = now; }
     else if (now - last >= (loading() ? 20000 : 8000)) { clearInterval(iv); show(); }
   }
-  w.__komeBoot = { show: show, tick: tick, ready: function(){ if (bad) return; w.__komeReady = true; clearInterval(iv); if (box && box.parentNode) box.parentNode.removeChild(box); box = null; } };
+  function booted(){
+    try {
+      if (!w.Kome365 || !w.KomeCards) return false;
+      var g = d.getElementById('sGame'), r = d.getElementById('sResult'), dt = d.getElementById('swBigDate');
+      return !!((g && !g.classList.contains('hidden') && dt && dt.textContent) || (r && !r.classList.contains('hidden')));
+    } catch(e){ return false; }
+  }
+  w.__komeBoot = { show: show, tick: tick, ready: function(){
+    clearInterval(iv);
+    if (bad || !booted()) { show(); return; }
+    w.__komeReady = true; if (box && box.parentNode) box.parentNode.removeChild(box); box = null;
+  } };
   iv = setInterval(tick, 500);
-  w.addEventListener('error', function(e){ var t = e && e.target; if (t && t.tagName && !(t.tagName === 'SCRIPT' && /(^|\/)(engine|cards)\.js(\?|$)/.test(t.src || ''))) return; if (!w.__komeReady) { bad = true; clearInterval(iv); show(); } }, true);   /* 絵・3D の ファイルが 読めないのは 見ない(2D の まま 遊べる) */
+  w.addEventListener('error', function(e){ var t = e && e.target; if (!t || t.tagName !== 'SCRIPT' || !/(^|\/)(engine|cards)\.js(\?|$)/.test(t.src || '')) return; if (!w.__komeReady) { bad = true; clearInterval(iv); show(); } }, true);   /* engine.js・cards.js の 読みこみ失敗だけ。絵・3D の ファイル(2D の まま 遊べる)・ほかの エラーは ここでは 見ない */
 })();
 </script>
 <style>

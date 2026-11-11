@@ -101,7 +101,10 @@ const plan = JSON.parse(process.argv[2]);
 let now = 0, timers = [], tid = 0, nodes = 20, resources = 1, navEnd = plan.navEnd === undefined ? 30 : plan.navEnd, reloads = 0;
 const body = { kids: [], appendChild(e){ e.parentNode = body; this.kids.push(e); return e; }, removeChild(e){ this.kids = this.kids.filter(k => k !== e); e.parentNode = null; return e; } };
 const htmlEl = { classList: { add(){}, remove(){} } };
-const document = { documentElement: htmlEl, body: body, getElementsByTagName(){ return { length: nodes }; }, addEventListener(){}, createElement(tag){ return { tagName: tag.toUpperCase(), id: '', innerHTML: '', parentNode: null }; } };
+const els = {};
+const document = { documentElement: htmlEl, body: body, getElementById(id){ return els[id] || null; }, getElementsByTagName(){ return { length: nodes }; }, addEventListener(){}, createElement(tag){ return { tagName: tag.toUpperCase(), id: '', innerHTML: '', parentNode: null }; } };
+function screen(hidden){ return { classList: { contains(c){ return c === 'hidden' && hidden; } } }; }
+els.sTitle = screen(false); els.sGame = screen(true); els.sResult = screen(true); els.swBigDate = { textContent: '' };
 const wl = {};
 const window = { addEventListener(t, fn){ (wl[t] = wl[t] || []).push(fn); } };
 const performance = { getEntriesByType(t){ return t === 'navigation' ? [{ responseEnd: now >= navEnd ? navEnd : 0 }] : { length: resources }; } };
@@ -120,7 +123,9 @@ for (let t = 0; t <= plan.until; t += 50) {
     const e = ev.shift();
     if (e[1] === 'grow') nodes += 5;
     else if (e[1] === 'file') resources++;
-    else if (e[1] === 'ready') window.__komeBoot.ready();
+    else if (e[1] === 'ready') { window.Kome365 = {}; window.KomeCards = {}; els.sTitle = screen(true); els.sGame = screen(false); els.swBigDate.textContent = '1月1日'; window.__komeBoot.ready(); }   // 本当に 始まった(1枚目の カード)
+    else if (e[1] === 'readyResult') { window.Kome365 = {}; window.KomeCards = {}; els.sTitle = screen(true); els.sResult = screen(false); window.__komeBoot.ready(); }   // 1年が 終わった 記録
+    else if (e[1] === 'tail') { if (e[2]) window.KomeCards = {}; window.__komeBoot.ready(); }   // さいごの 行は 通ったが ゲームは 始まって いない(engine.js が 無い)
     else if (e[1] === 'scriptError') (wl.error || []).forEach(fn => fn({ target: { tagName: 'SCRIPT', src: 'https://go.ricepia.jp/kome365/' + e[2] } }));
     else if (e[1] === 'imgError') (wl.error || []).forEach(fn => fn({ target: { tagName: 'IMG', src: 'x.webp' } }));
     else if (e[1] === 'runError') (wl.error || []).forEach(fn => fn({ target: window, message: 'x' }));
@@ -680,11 +685,29 @@ class TestKome365FirstMinute(unittest.TestCase):
     def test_failed_game_script_shows_retry_at_once(self):
         # engine.js が 失敗すると、題の 画面の いちばん 上の ボタンが から(文字なし)で、知らせも なかった。今は すぐ 出す・ゲームの さいごまで 進んでも 消さない
         for name in ("engine.js", "cards.js", "engine.js?v=2"):
-            r = boot_run({"until": 4000, "events": [[300, "grow"], [500, "scriptError", name], [700, "ready"]]})
+            r = boot_run({"until": 4000, "events": [[300, "grow"], [500, "scriptError", name], [700, "tail", 1]]})
             self.assertEqual(r["firstOn"], 500, name)
             self.assertTrue(r["endOn"], name)
-        r = boot_run({"until": 4000, "events": [[300, "grow"], [400, "runError"], [700, "ready"]]})
-        self.assertEqual(r["firstOn"], 400)
+        # エラーが 無くても、さいごの 行で ゲームが 始まって いなければ すぐ 出す
+        r = boot_run({"until": 4000, "events": [[300, "grow"], [700, "tail"]]})
+        self.assertEqual(r["firstOn"], 700)
+        self.assertTrue(r["endOn"])
+
+    def test_unrelated_error_does_not_cover_booted_game(self):
+        # Codex 指摘(周回168): 始まる 前の 関係ない エラー(ブラウザの 拡張など)で 知らせが 出て、ゲームが ふつうに 始まっても 消えなかった
+        r = boot_run({"until": 12000, "events": [[300, "grow"], [400, "runError"], [700, "ready"]]})
+        self.assertIsNone(r["firstOn"])
+        self.assertFalse(r["endOn"])
+        r = boot_run({"until": 12000, "events": [[300, "grow"], [400, "runError"], [700, "readyResult"]]})
+        self.assertIsNone(r["firstOn"])
+        # おそくて 出た 知らせも、エラーの あと 本当に 始まれば 消える
+        r = boot_run({"until": 14000, "events": [[300, "grow"], [400, "runError"], [12000, "ready"]]})
+        self.assertIsNotNone(r["firstOn"])
+        self.assertFalse(r["endOn"])
+        # エラーで 止まって 始まらなければ、8秒の 見はりで 出る
+        r = boot_run({"until": 12000, "events": [[300, "grow"], [400, "runError"]]})
+        self.assertGreaterEqual(r["firstOn"], 8400)
+        self.assertLessEqual(r["firstOn"], 9000)
         self.assertTrue(r["endOn"])
 
     def test_boot_retry_visible_with_reduced_motion(self):

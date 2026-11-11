@@ -13675,7 +13675,7 @@ function fingerDown(e) {   // 指・マウスが ついた（ここだけ）：�
     restS.pts.set(e.pointerId, { x: e.clientX, y: e.clientY, t: performance.now(), far: 0, multi: false, map });
     if (restS.pts.size > 1) for (const p of restS.pts.values()) p.multi = true;
   }
-  const second = map && touch && !e.isPrimary && restOthers(e.pointerId);
+  const second = map && touch && !e.isPrimary && restS.pts.size === 2 && restOthers(e.pointerId);
   if (map && !worldMode && (e.isPrimary || second) && e.button === 0) swipeBegin(e, second);
   else if (map || touch) swipeCancel();   // 受けない 指が ついた（地図の 上でも 外でも）：2本指の 動き。地図の 外の マウスは これまでどおり 何も しない
   if (touch) restSync();

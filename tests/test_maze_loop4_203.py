@@ -58,7 +58,7 @@ class SwipeHold203(unittest.TestCase):
 
     def test_two_fingers_and_cancel_stop_the_timer(self):
         """2本め の 指（isPrimary で ない）・とりけし で 待ちを やめる。サイクル206：ほかの 指が ぜんぶ「置いた まま の 指」の ときだけ、2本め を 受ける（second）"""
-        self.assertIn("const second = map && touch && !e.isPrimary && restOthers(e.pointerId);", SW)
+        self.assertIn("const second = map && touch && !e.isPrimary && restS.pts.size === 2 && restOthers(e.pointerId);", SW)
         self.assertIn("  if (map && !worldMode && (e.isPrimary || second) && e.button === 0) swipeBegin(e, second);\n  else if (map || touch) swipeCancel();", SW)   # 受けない 指が ついたら とりけし（待ちも やめる。地図の 外に ついた 指でも）
         self.assertIn("function swipeCancel() {", SW)
         self.assertIn("  clearTimeout(swipeS.timer);\n  swipeS.down = null;", SW[SW.index("function swipeCancel() {"):])

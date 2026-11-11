@@ -1,4 +1,4 @@
-// 最初の1分の確かめ（サイクル259〜274）：node firstmin.js [tractor.html のパス]
+// 最初の1分の確かめ（サイクル259〜275）：node firstmin.js [tractor.html のパス]
 //  1) 知らせの文：吹き出し（speakText）・短い文（shortText）で かっこが合わなくならない（「…見ます）」のような切れ方をしない）
 //  3) 畦の手前で止まった人：「横へ なぞる」見本が出て、見本どおりで向きが変わる。自動で下ろす知らせは 1 回だけ（サイクル260）
 //  2) のんびりの大きな数字：スマホ縦で 1 回なぞって耕したら 0% のままにならない。田んぼアートでは地図の「でき」と同じ数、お題なしでは小数 1 けた
@@ -630,11 +630,11 @@ const srv = http.createServer((r, s) => { const u = decodeURIComponent(r.url.spl
   }
   // ---- 14) サイクル274（はじめの 1 分で やめる人を へらす）：2 本目の指・見本の向き・60 秒のボタン・読みこめないとき・畦の吹き出し・ケリの巣・おおいの上の指 ----
   {
-    const open14 = async (qs, pre, quiet) => { const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true, isMobile: true }), p = await ctx.newPage(); p.setDefaultTimeout(180000);
+    const open14 = async (qs, pre, quiet, vp = [390, 844], wu = 'load') => { const ctx = await b.newContext({ viewport: { width: vp[0], height: vp[1] }, deviceScaleFactor: 2, hasTouch: true, isMobile: true }), p = await ctx.newPage(); p.setDefaultTimeout(180000);
       p.on('pageerror', e => errs.push('pageerror ' + e.message)); if (!quiet) p.on('console', m => { if (m.type() === 'error') errs.push('console ' + m.text()); });   // quiet＝わざと読みこみを失敗させる場面（コンソールの エラーは 数えない）
       await p.route('https://cdn.jsdelivr.net/**', r => r.fulfill({ path: TN + r.request().url().split('/three@0.128.0')[1], contentType: 'text/javascript' }));
       if (pre) await pre(p);
-      await p.goto(`http://localhost:${PORT}/tractor.html${qs}`);
+      await p.goto(`http://localhost:${PORT}/tractor.html${qs}`, { waitUntil: wu });   // wu＝'commit'：three が 返事を しない 場面（load が 来ない）
       return { ctx, p, cdp: await ctx.newCDPSession(p) }; };
     // にせの時計（0.05 秒ずつ）。予約ずみの 本物の こまは 先に消す（あとから回ると 時間が 逆もどりする）
     const fake14 = async p => { await p.waitForFunction(() => window.game && game.S && game.S.started && typeof P !== 'undefined' && P.Rotary);
@@ -779,21 +779,26 @@ const srv = http.createServer((r, s) => { const u = decodeURIComponent(r.url.spl
         ['見回す', '1 本の指で 空を なぞる', [1, 1.15], async z => { await T('touchStart', [G(280, 150, 1)]); await mv(1, [280, 150], [220, 150], 3); return z; }],
         ['見回す', '空に 1 本 置いたまま、もう 1 本で 空を なぞる', [1, 1.15], async z => { await T('touchStart', [G(100, 150, 1)]); await T('touchStart', [G(100, 150, 1), G(280, 150, 2)]); await mv(2, [280, 150], [220, 150], 3, [G(100, 150, 1)]); await adv(0.15); return z; }],
         ['見回す', '地面に 親指を置いたまま、もう 1 本で 空を なぞる', [1, 1.15], async z => { await T('touchStart', [THM]); await adv(0.3); await setZ(z); await T('touchStart', [THM, G(280, 150, 2)]); await mv(2, [280, 150], [220, 150], 3, [THM]); await adv(0.15); return z; }],
+        // サイクル275 きまり 6：置いただけの 1 本目（5px 動いていない）で 進んでいる ときに 2 本目が ふれる。1 本目の なぞりは やめ、ハンドルは その指を置く前（0）に もどる・画角は そのまま（直す前：決まるまで 親指の側へ 切りつづける）
+        ['まつ', '置いただけの 1 本目（左へ 切っている）に 2 本目が ふれる', [1, 1.6], async z => { await T('touchStart', [G(80, 520, 1)]); await adv(0.5); const sv = await p.evaluate(() => game.S.steer); await T('touchStart', [G(80, 520, 1), G(300, 600, 2)]); return Math.abs(sv) > 0.1 ? z : null; }, 'wait'],
+        // 置いただけの 1 本目に 2 本目が 0.1 秒 ふれて離れる：1 本目は また 押した所へ 進む（サイクル274 きまり 3 と同じく 押した指は 止めない）。画角 1 倍だけ（動かしていない指は 拡大を もどさない＝きまり 5）
+        ['なぞり', '置いただけの 1 本目に 2 本目が 0.1 秒 ふれて離れる（1 本目は また 押した所へ）', [1], async z => { await T('touchStart', [G(195, 481, 1)]); await adv(0.3); await T('touchStart', [G(195, 481, 1), G(300, 600, 2)]); await adv(0.1); const w = await p.evaluate(() => viewTwo === 'wait' && !TRACE.on); await T('touchEnd', [G(300, 600, 2)]); return w ? [195, 481] : null; }, null],
       ];
-      const badRows = { なぞり: [], 寄る: [], 見回す: [] }, cnt = { なぞり: 0, 寄る: 0, 見回す: 0 };
+      const badRows = { なぞり: [], 寄る: [], 見回す: [], まつ: [] }, cnt = { なぞり: 0, 寄る: 0, 見回す: 0, まつ: 0 };
       for (const [kind, name, zooms, run, now] of rows) for (const z of zooms) {   // now（5 つ目）が あれば：指を止めた道。決まった その こまで読む（走りだすと 運転席の目が ゆれて、止めた指の下の地面が ずれる）。中身は そのときの viewTwo
         await zs(z); await adv(0.5);
         const sky = kind === '見回す' ? await p.evaluate(() => [[100, 150], [280, 150], [220, 150]].every(([x, y]) => !TRACE.ground({ clientX: x, clientY: y }) && document.elementFromPoint(x, y) === canvas)) : true;
         const exp = await run(z); await fl(); if (now === undefined) await adv(0.1);
-        const r = await p.evaluate(f => { const g = f ? TRACE.ground({ clientX: f[0], clientY: f[1] }) : null; return { zoom: +fovZoom.toFixed(3), on: TRACE.on, two: viewTwo, drag: !!drag, err: g && TRACE.fPos ? +Math.hypot(g.x - TRACE.fPos[0], g.z - TRACE.fPos[1]).toFixed(2) : null }; }, kind === 'なぞり' ? exp : null);
-        const pass = kind === 'なぞり' ? r.zoom === 1 && r.on && r.err !== null && r.err < 1 && (now === undefined || r.two === now) && (await p.evaluate(() => document.elementFromPoint(60, 600) === canvas)) : kind === '寄る' ? r.two === 'pinch' && !r.on && Math.abs(r.zoom - exp) <= 0.03 : sky && r.drag && !r.on && Math.abs(r.zoom - exp) <= 0.001;
-        cnt[kind]++; if (!pass) badRows[kind].push([name, z, kind === 'なぞり' ? null : +exp.toFixed(2), r]);
+        const r = await p.evaluate(f => { const g = f ? TRACE.ground({ clientX: f[0], clientY: f[1] }) : null; return { zoom: +fovZoom.toFixed(3), on: TRACE.on, two: viewTwo, drag: !!drag, steer: +game.S.steer.toFixed(3), err: g && TRACE.fPos ? +Math.hypot(g.x - TRACE.fPos[0], g.z - TRACE.fPos[1]).toFixed(2) : null }; }, kind === 'なぞり' ? exp : null);
+        const pass = kind === 'なぞり' ? r.zoom === 1 && r.on && r.err !== null && r.err < 1 && (now === undefined || r.two === now) && (await p.evaluate(() => document.elementFromPoint(60, 600) === canvas)) : kind === '寄る' ? r.two === 'pinch' && !r.on && Math.abs(r.zoom - exp) <= 0.03 : kind === 'まつ' ? exp !== null && r.two === now && !r.on && Math.abs(r.steer) < 0.01 && Math.abs(r.zoom - exp) <= 0.001 : sky && r.drag && !r.on && Math.abs(r.zoom - exp) <= 0.001;
+        cnt[kind]++; if (!pass) badRows[kind].push([name, z, kind === 'なぞり' || exp === null ? null : +exp.toFixed(2), r]);
         await T('touchEnd', []); await adv(1);
       }
       await zs(1); await adv(0.3);
-      ok('2 本の指の表：地面の なぞり に なる道 ' + cnt.なぞり + ' 行（6 つの道 × 画角 1 倍・1.6 倍）は、決まった あと 1 倍・線の先は 指の下', cnt.なぞり === 12 && badRows.なぞり.length === 0, badRows.なぞり);
+      ok('2 本の指の表：地面の なぞり に なる道 ' + cnt.なぞり + ' 行（6 つの道 × 画角 1 倍・1.6 倍 ＋ サイクル275 の 1 行）は、決まった あと 1 倍・線の先は 指の下', cnt.なぞり === 13 && badRows.なぞり.length === 0, badRows.なぞり);
       ok('2 本の指の表：寄って見る に なる道 ' + cnt.寄る + ' 行は、2 本目が ふれた ときの画角 × 指の間の比（1〜2.2 倍）・なぞらない', cnt.寄る === 8 && badRows.寄る.length === 0, badRows.寄る);
       ok('2 本の指の表：見回す に なる道 ' + cnt.見回す + ' 行は、画角そのまま・なぞらない', cnt.見回す === 6 && badRows.見回す.length === 0, badRows.見回す);
+      ok('2 本の指の表（サイクル275）：置いただけの 1 本目で 進む 所に 2 本目が ふれる ' + cnt.まつ + ' 行は、決まる前（wait）・1 本目の なぞりは やめる・ハンドルは 置く前に もどる・画角そのまま（直す前：親指の側へ 切りつづける）', cnt.まつ === 2 && badRows.まつ.length === 0, badRows.まつ);
       await ctx.close();
     }
     // ---- 14-2) 「横へ」の見本の向き・畦の吹き出し ----
@@ -881,6 +886,70 @@ const srv = http.createServer((r, s) => { const u = decodeURIComponent(r.url.spl
       const pr = await p.evaluate(() => ({ started: !!game.S.started, on: TRACE.on, zoom: +fovZoom.toFixed(2) })); await T('touchEnd', []);
       ok('2 本の指の表（のこり 1 行）：読みこみ中の なぞりを 置いたまま 始まると、拡大（1.6 倍）は 1 倍に もどって なぞりが 動く', pr.started && pr.on && pr.zoom === 1, pr);
       await ctx.close();
+    }
+    // ---- 15) サイクル275（はじめの 1 分で やめる人を へらす）：始まった あとの エラー・止まった 読みこみ・前の くわしい説明・置いただけの 親指 ----
+    // 15-1) 音を 作れない ブラウザ（Web Audio が ない・作ると エラー）：始まった ゲームは かくれず、なぞれば 進む（直す前：田んぼが かくれ「読みこめませんでした」・なぞって 0m）
+    for (const [lab, init] of [['Web Audio が ない', 'window.AudioContext = undefined; window.webkitAudioContext = undefined;'], ['Web Audio を 作ると エラー', 'window.AudioContext = function () { throw new DOMException("denied", "NotSupportedError"); }; window.webkitAudioContext = window.AudioContext;']]) {
+      const { ctx, p, cdp } = await open14('', q => q.addInitScript(init)); await fake14(p);
+      const adv = s => p.evaluate(x => window.__adv(x), s), T = (type, pts) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: pts });
+      const sv = () => p.evaluate(() => ({ started: !!game.S.started, loadng: document.body.classList.contains('loadng'), cv: getComputedStyle(document.getElementById('view')).visibility, err: document.getElementById('toast').classList.contains('err'), snd: document.getElementById('bSnd').textContent, z: game.S.z, til: tilledCount }));
+      await adv(2); const a0 = await sv();
+      await T('touchStart', [{ x: 195, y: 481, id: 1 }]); for (let i = 1; i <= 18; i++) { await T('touchMove', [{ x: 195, y: 481 - 84 * i / 18, id: 1 }]); await adv(0.05); }
+      await adv(3.5); await T('touchEnd', []); await adv(1); const a1 = await sv();
+      ok(lab + '：始まった ゲームは かくれない・知らせも 出ない・🔇 のまま なぞれば 進む（直す前：かくれて 0m）', a0.started && !a0.loadng && a0.cv === 'visible' && !a0.err && a0.snd === '🔇' && a1.z - a0.z > 1 && a1.til > a0.til, [a0.loadng, a0.cv, a0.err, a0.snd, +(a1.z - a0.z).toFixed(2), a1.til - a0.til]);
+      await ctx.close();
+    }
+    // 15-1b) 読みこみ中に ほかの所（拡張・アプリの ブラウザ）の エラーが 来ても、おおいは そのまま・読みこみは つづく。この ページの スクリプトの エラーは 今までどおり 知らせる。始まった あとの エラーでは かくさない
+    {
+      let go; const gate = new Promise(r => { go = r; }), { ctx, p } = await open14('', q => q.route('**/field_tanbo*.glb', async r => { await gate; r.continue(); }));
+      await p.waitForFunction(() => typeof PRE !== 'undefined' && document.getElementById('lwBar'));
+      const sv = () => p.evaluate(() => ({ started: !!(window.game && game.S.started), cover: !document.getElementById('loadWait').classList.contains('off'), loadng: document.body.classList.contains('loadng'), cv: getComputedStyle(document.getElementById('view')).visibility }));
+      await p.evaluate(() => window.dispatchEvent(new ErrorEvent('error', { message: 'x', filename: 'chrome-extension://abc/inject.js' }))); await p.evaluate(() => window.dispatchEvent(new ErrorEvent('error', { message: 'Script error.' })));
+      const e1 = await sv();
+      await p.evaluate(() => window.dispatchEvent(new ErrorEvent('error', { message: 'x', filename: location.href }))); const e2 = await sv();
+      go(); await p.waitForFunction(() => window.game && game.S.started); await p.evaluate(() => { window.dispatchEvent(new ErrorEvent('error', { message: 'x', filename: location.href })); LOAD_NG(); }); const e3 = await sv();
+      ok('読みこみ中の ほかの所の エラー：おおいは そのまま（直す前：おおいが消え 田んぼを かくして「読みこめませんでした」）。この ページの エラーは 知らせる・始まった あとは かくさない', !e1.started && e1.cover && !e1.loadng && !e2.started && e2.loadng && !e2.cover && e3.started && !e3.loadng && e3.cv === 'visible', [e1, e2, e3]);
+      await ctx.close();
+    }
+    // 15-2) 読みこみが とちゅうで 止まる（田んぼの glb・three が 返事を しない）：線も 届いた数も 8 秒 ふえないと「時間が かかっています・タップで やりなおす」。線が 動けば もとの 文字。タップで 読みこみ直す
+    //       （直す前：「指で なぞると 進みます」と 止まった線の まま ずっと。three が 来ない ときは 見はりが 1 つも 動かない）
+    for (const [lab, pend] of [['田んぼの glb', q => q.route('**/field_tanbo*.glb', () => {})], ['three.min.js', q => q.route('https://cdn.jsdelivr.net/**/three.min.js', () => {})]]) {
+      let html = 0; const { ctx, p } = await open14('', async q => { await pend(q); q.on('request', r => { if (/\/tractor\.html/.test(r.url())) html++; }); }, true, [390, 844], 'commit');
+      const lw = () => p.evaluate(() => { const w = document.getElementById('loadWait'), t = w.querySelector('.lwT'), r = t.getBoundingClientRect(), b = w.querySelector('.lwB').getBoundingClientRect(); return { slow: w.classList.contains('slow'), text: t.textContent, cover: !w.classList.contains('off'), started: !!(window.game && game.S && game.S.started), gap: Math.round(b.top - r.bottom) }; });
+      await p.waitForTimeout(2500); const s0 = await lw();
+      await p.waitForFunction(() => document.getElementById('loadWait').classList.contains('slow'), null, { timeout: 90000 }).catch(() => {}); const s1 = await lw();
+      let mv = null; if (lab === '田んぼの glb') { await p.evaluate(() => { document.getElementById('lwBar').style.width = '50%'; }); await p.waitForFunction(() => !document.getElementById('loadWait').classList.contains('slow'), null, { timeout: 20000 }).catch(() => {}); mv = await lw();
+        await p.waitForFunction(() => document.getElementById('loadWait').classList.contains('slow'), null, { timeout: 90000 }).catch(() => {}); }
+      const h0 = html; await p.touchscreen.tap(195, 420);
+      for (let i = 0; i < 40 && html === h0; i++) await p.waitForTimeout(250);
+      ok(lab + 'が 返事を しない：はじめは いつもの 文字・8 秒 止まると「時間が かかっています・タップ」（文字は 線に かぶらない）・タップで 読みこみ直す（直す前：ずっと 同じ 文字）', !s0.slow && /なぞると/.test(s0.text) && s1.slow && /時間が かかって/.test(s1.text) && /タップ/.test(s1.text) && s1.cover && !s1.started && s1.gap >= 0 && html > h0 && (!mv || (!mv.slow && /なぞると/.test(mv.text))), [s0.slow, s1.slow, s1.gap, mv && mv.slow, h0, html]);
+      await ctx.close();
+    }
+    // 15-3) 前に「くわしい説明」を 入れていた人（localStorage に tractorDetail=1）：ほかの人と 同じ しずかな はじめの 1 分（直す前：計器・知らせが 出て 重なり スマホ縦 5〜6 組・320×568 で 22〜25 組）。記録は 消さない
+    for (const vp of [[390, 844], [320, 568]]) {
+      const { ctx, p } = await open14('', q => q.addInitScript(() => { try { localStorage.setItem('tractorDetail', '1'); localStorage.setItem('tractorPlays', '4'); } catch (e) {} }), false, vp);
+      await p.waitForFunction(() => window.game && game.S && game.S.started); await p.waitForTimeout(1500);
+      const r = await p.evaluate(() => { const vis = e => { const cs = getComputedStyle(e), q = e.getBoundingClientRect(); return cs.display !== 'none' && cs.visibility !== 'hidden' && +cs.opacity > 0.05 && q.width > 0 && q.height > 0; };
+        const ls = [...document.querySelectorAll('#hud .chip, #bigPct, #toast, #bar button, #padB button, #padD button, #badgeCv, #badgeSt, #say')].filter(vis); let n = 0;
+        for (let i = 0; i < ls.length; i++) for (let j = i + 1; j < ls.length; j++) { const a = ls[i].getBoundingClientRect(), c = ls[j].getBoundingClientRect(); if (Math.min(a.right, c.right) - Math.max(a.left, c.left) > 2 && Math.min(a.bottom, c.bottom) - Math.max(a.top, c.top) > 2) n++; }
+        return { calm: document.body.classList.contains('calm'), hud: vis(document.getElementById('hud')), pairs: n, keep: localStorage.getItem('tractorDetail'), plays: localStorage.getItem('tractorPlays') }; });
+      ok('前に くわしい説明を 入れていた人（' + vp.join('×') + '）：のんびりの はじめの 1 分・計器は 出ない・重なり 0 組・記録は 消さない', r.calm && !r.hud && r.pairs === 0 && r.keep === '1' && r.plays !== null, r);
+      await ctx.close();
+    }
+    // 15-4) 親指を 先に 置いてから、もう 1 本で まっすぐ前へ なぞる（スマホ横・縦の 左右のはし）：ほとんど 曲がらない（直す前：親指の側へ 0.38〜0.44rad＝22〜25°）
+    {
+      const out = [];
+      for (const [vp, th] of [[[844, 390], [10, 340]], [[844, 390], [834, 340]], [[390, 844], [8, 800]], [[390, 844], null]]) {
+        const { ctx, p, cdp } = await open14('', null, false, vp); await fake14(p);
+        const adv = s => p.evaluate(x => window.__adv(x), s), T = (type, pts) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: pts }), sv = () => p.evaluate(() => ({ x: game.S.x, z: game.S.z, yaw: game.S.yaw }));
+        const [W, H] = vp, y0 = (W > H ? 0.58 : 0.57) * H, TH = th ? { x: th[0], y: th[1], id: 2 } : null, F = y => ({ x: W / 2, y, id: 1 });
+        await adv(1.5); const a = await sv(); if (TH) { await T('touchStart', [TH]); await adv(0.5); }
+        await T('touchStart', TH ? [TH, F(y0)] : [F(y0)]); for (let i = 1; i <= 10; i++) { await T('touchMove', TH ? [TH, F(y0 - 84 * i / 10)] : [F(y0 - 84 * i / 10)]); await adv(0.05); }
+        await adv(2.5); const c = await sv(); await T('touchEnd', []); await adv(0.5);
+        out.push([vp.join('x') + (th ? ' ' + th.join(',') : ' 親指なし'), +(c.yaw - a.yaw).toFixed(3), +Math.hypot(c.x - a.x, c.z - a.z).toFixed(2)]);
+        await ctx.close();
+      }
+      ok('親指を 先に置いて もう 1 本で まっすぐ前へ：向きの ずれ 0.1rad（6°）より 小さい・3m 以上 進む（直す前 0.38〜0.44rad）', out.every(([, dy, m]) => Math.abs(dy) < 0.1 && m > 3), out);
     }
   }
   ok('エラーなし', errs.length === 0, errs.slice(0, 3));

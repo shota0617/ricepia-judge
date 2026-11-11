@@ -33,6 +33,9 @@
   #loadWait .lwT { position: absolute; left: 0; right: 0; top: 76%; text-align: center; color: #fff; font-size: 17px; font-weight: 800; text-shadow: 0 1px 4px rgba(0,0,0,.5); }
   /* サイクル271: 読みこみの 進みぐあいの 線（押す物では ない）。届いた分だけ 右へ のびる。おそい回線では 車体と田んぼが届くまで 15〜60 秒 かかり、その間 指の見本が くり返すだけで 進んでいるのか 止まっているのか 分からなかった */
   #loadWait .lwB { position: absolute; left: 50%; top: 82%; width: 168px; height: 6px; margin-left: -84px; border-radius: 3px; background: rgba(255,255,255,.35); overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,.25); }
+  /* サイクル275: 読みこみが 止まった ときだけ（.slow）、文字を「時間が かかっています・タップで やりなおす」に かえ、2 行に なっても 線に かぶらない ように 字を 少し小さく・線を 下へ */
+  #loadWait.slow .lwT { font-size: 15px; padding: 0 16px; white-space: pre-line; }
+  #loadWait.slow .lwB { top: 88%; }
   #lwBar { display: block; width: 3%; height: 100%; border-radius: 3px; background: #fff; transition: width .25s linear; }
   @keyframes lwUp { 0% { transform: translateY(0); opacity: 1; } 85% { transform: translateY(-17vh); opacity: 1; } 86%, 100% { transform: translateY(-17vh); opacity: 0; } }
   #hintSwipe .hDot { position: fixed; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; background: #ffd84a; box-shadow: 0 0 0 3px rgba(255,216,74,.35), 0 1px 4px rgba(0,0,0,.4); }
@@ -206,6 +209,27 @@
 <canvas id="view"></canvas>
 <div id="vignette"></div>
 <div id="loadWait"><div class="lwF">👆</div><div class="lwT">指で なぞると 進みます</div><div class="lwB"><i id="lwBar"></i></div></div>
+<script>
+// サイクル275・最初の1分: 読みこみが とちゅうで 止まった（エラーに ならず、返事が 来ない）ときの 見はり。three の 3 本より 前に置く（three が 来ないと、あとの スクリプトは 1 つも 動かない）。
+// それまでは 車体・田んぼ・作業機・復号器・three の どれかが 返事を しないと、おおいは「指で なぞると 進みます」と 止まった線の まま ずっと 出ていた。さわっても 黄色い点が 出るだけで 始まらない
+// （見つけ役の 実測: 6 とおりの 止まり方の 6 とおりとも 30 秒たっても 文字は 同じ。three が 来ない ときは 60 秒）。
+// 線（#lwBar）も 届いた ファイルの 数も 8 秒 ふえず、まだ 始まっていない ときだけ、文字を「時間が かかっています・タップで やりなおす」に かえる。タップで 読みこみ直す。
+// 線が また 動いたら もとの 文字に もどす。ふつうに 読みこんでいる間は 文字も 指の絵も 線も 今までどおり（かくれた タブの 間は 数えない）
+(function () {
+  var still = 0, last = '', stall = false, t0 = '指で なぞると 進みます', t1 = '読みこみに 時間が かかっています。\n画面を タップすると やりなおします';
+  function started() { try { return !!game.S.started; } catch (e) { return false; } }
+  function mark() { var b = document.getElementById('lwBar'), n = 0; try { n = performance.getEntriesByType('resource').length; } catch (e) {} return (b ? b.style.width : '') + '/' + n; }
+  var iv = setInterval(function () {
+    if (started() || document.body.classList.contains('loadng')) { stall = false; clearInterval(iv); return; }   // 始まった・読みこめなかった 知らせが 出た
+    if (document.hidden) return;
+    var m = mark(), t = document.querySelector('#loadWait .lwT');
+    if (m !== last) { last = m; still = 0; } else still++;
+    stall = still >= 8;
+    if (t && t.textContent !== (stall ? t1 : t0)) { t.textContent = stall ? t1 : t0; document.getElementById('loadWait').classList.toggle('slow', stall); }
+  }, 1000);
+  document.addEventListener('click', function () { if (stall && !started()) location.reload(); });
+})();
+</script>
 <!-- サイクル271・最初の1分（おそい回線）: three.js の 3 本は head では なく、読みこみを待つ おおい（#loadWait）の あとで読む。head に あると、3 本が届くまで body が始まらず 画面は まっ白のまま
      （はかった数：おそい 4G・CPU 4 倍で 2.1 秒、おそい 3G で 6.9 秒）。順番（three → GLTFLoader → DRACOLoader → 下の確かめ → ゲーム本体）は 変えない -->
 <!-- 外から読む部品は 版を決めて、改ざんチェック（integrity）つきで（three.js は npm の 0.128.0 と同じ中身を jsDelivr から） -->
@@ -217,6 +241,10 @@
 (function () {
   var w = document.getElementById('loadWait');
   function fail() {
+    // サイクル275・最初の1分: もう 始まった ゲームは、あとから エラーが 来ても かくさない（知らせも 出さない）。
+    // それまでは 始まった あとの エラー（音の 出ない ブラウザで 音を つける 所など）も ここへ 来て、田んぼを かくし「読みこめませんでした…タップして」を 出した。
+    // タップしても 始まった あとなので 読みこみ直さず、なぞっても 0m（実測 2 回のうち 2 回。サイクル274 より前は 1.0〜1.1m 進んでいた）
+    if (started()) return;
     w.classList.add('off');
     // サイクル274・最初の1分: この知らせは のんびり（body.calm）でも 見えるようにする（#toast.err）。画面を タップすると 読みこみ直す。
     // それまでは 車体・田んぼ・作業機の どれかが届かないと、おおいが消えて、知らせは のんびりでは かくれている #toast に入り、
@@ -228,7 +256,10 @@
   window.LOAD_NG = fail;
   function started() { try { return !!game.S.started; } catch (e) { return false; } }
   if (!window.THREE || !THREE.GLTFLoader || !THREE.DRACOLoader) fail();
-  window.addEventListener('error', function () { if (!started()) fail(); });
+  // サイクル275: 始まる前の エラーは、この ページか three の スクリプトから 来た ものだけ 失敗に する。ほかの所（ブラウザの 拡張・アプリの 中の ブラウザが 足す スクリプトなど）の エラーは、
+  // 読みこみが つづいていても おおいを消して「読みこめませんでした」を 出し、タップで 読みこみ直していた（読みこみは そのまま 始まる）。
+  // 本当に 止まった ときは、上の 見はり（線が 8 秒 動かない）が「時間が かかっています・タップで やりなおす」を 出す
+  window.addEventListener('error', function (e) { var f = (e && e.filename) || ''; if (!started() && f && (f.split('#')[0] === location.href.split('#')[0] || f.indexOf('https://cdn.jsdelivr.net/npm/three@0.128.0/') === 0)) fail(); });
 })();
 </script>
 <div id="hintSwipe" class="hidden"><div id="hintFinger">👆</div></div>
@@ -540,7 +571,7 @@ Promise.all([load('tractor_yt.glb', 't'), load(FIELD[season], 'f'), IMPL_FILE ? 
   CLOUDS.apply(scene);                          // 雲の影（ほかの細工のあとで）
   LOAD_ST = 'ok';
   startGame();   // サイクル263（店主指示 2026-11-10）: はじめの画面は全廃。読みこみが終わったら、案内・設定なしで そのまま田んぼから始める（既定＝春・昼・晴れ・ロータリー・お題は四角）
-}).catch(e => { console.error(e); LOAD_ST = 'ng'; $('toast').textContent = ''; LOAD_NG(); });   // 英語の エラー文は 画面に出さず コンソールへ（素朴な かわいさ）
+}).catch(e => { console.error(e); try { if (S.started) return; } catch (x) {} LOAD_ST = 'ng'; $('toast').textContent = ''; LOAD_NG(); });   // サイクル275: 始まった あとの エラーは 読みこみの 失敗に しない（田んぼを かくさない・出ている 知らせを 消さない）   // 英語の エラー文は 画面に出さず コンソールへ（素朴な かわいさ）
 
 
 // ---- ヘッドライトと作業灯（LED）。夕方は点けて始める。L で入切（本物も作業灯は集中スイッチでまとめて入切） ----
@@ -8968,7 +8999,7 @@ const CAMS = ['運転席', 'うしろから', '上から'];
 let camMode = 0;
 const look = { yaw: 0, pitch: 0 };
 const chase = new THREE.Vector3(), tmpV = new THREE.Vector3();
-let headLag = 0, lastV = 0, glance = 0, lean = 0, lastYaw = 0, lookBack = 0, clodBump = 0, seatY = 0, seatV = 0, lastRy = null, lastRvy = 0;   // seat：座席のサスペンション   // 曲がる先を見る・体のかたむき・うしろを見る
+let headLag = 0, lastV = 0, glance = 0, glanceBack = 0, lean = 0, lastYaw = 0, lookBack = 0, clodBump = 0, seatY = 0, seatV = 0, lastRy = null, lastRvy = 0;   // seat：座席のサスペンション   // 曲がる先を見る・体のかたむき・うしろを見る
 const DBG = {};
 function updateCamera(dt) {
   if (INTRO.cam) INTRO.camera(dt);              // はじめの 草かりは うしろから
@@ -8997,7 +9028,8 @@ function updateCamera(dt) {
     if (S.bite > 0) { headLag += 0.02 * S.bite * Math.sin((1 - S.bite) * 18); S.bite = Math.max(0, S.bite - dt * 2.5); }
     lastV = S.v;
     // 曲がる先へ目がいく（ハンドルを切ったほう。右へ切ると右を見る）。B を押しているあいだは右肩ごしに うしろの作業機を見る
-    glance += (-S.steer / MAX_STEER * 0.3 * Math.min(1, Math.abs(S.v) / 0.5 + 0.3) - glance) * Math.min(1, dt * 2.5);
+    glance += (-S.steer / MAX_STEER * 0.3 * Math.min(1, Math.abs(S.v) / 0.5 + 0.3) - glance) * Math.min(1, dt * (glanceBack > 0 ? 15 : 2.5));   // サイクル275: 置いただけの指の ハンドルを もどした ときは 0.3 秒 すばやく もどす（glanceBack）
+    glanceBack = Math.max(0, glanceBack - dt);
     camera.rotation.set((camera.aspect < 1 ? -0.42 : -0.21) + look.pitch + headLag + 0.006 * rough * Math.sin(tt * 3.1) - 0.5 * lookBack,
       Math.PI + look.yaw + glance * (1 - lookBack) - 2.7 * lookBack + 0.004 * rough * Math.sin(tt * 2.2), 0.006 * rough * Math.sin(tt * 1.9) - 0.04 * lean, 'YXZ');   // 縦長の画面は天井が多いので下を向く
     camera.near = 0.05;
@@ -9247,7 +9279,12 @@ function syncAudio(running) {
   if (want && st === 'suspended') audio.ac.resume();
   else if (!want && st === 'running') audio.ac.suspend();
 }
+// サイクル275・最初の1分: 音を 作れない ブラウザ（Web Audio が ない・作ると エラー）でも、音なしで そのまま 遊べる ように する（🔇 のまま）。
+// それまでは 始まりの おわり（startGame）で 音を つける ときの エラーが 外へ 出て、読みこめなかった ときの 知らせに 入り、田んぼが かくれて なぞっても 0m だった
 function toggleSound() {
+  try { toggleSoundRaw(); } catch (e) { console.warn(e); if (!audio) { soundOn = false; $('bSnd').textContent = '🔇'; } }
+}
+function toggleSoundRaw() {
   soundOn = !soundOn;
   $('bSnd').textContent = soundOn ? '🔊' : '🔇';
   if (soundOn && !audio) {
@@ -9869,6 +9906,9 @@ let drag = null;
 // 3) 決まるまでは、なぞっている指の なぞりを そのまま続ける。決まったあとは、どちらかの指が離れるまで 変えない
 // 4) 片方の指が離れたら、残った指が そこから 12px 動いたときに なぞりを始める（寄って見た あとの指は 始めない。離れたのが なぞっていた指なら、今までどおり そこで止まる）
 // 5) 拡大した画角は、次に 1 本の指で なぞった（動かした）ときに 元にもどす（拡大したまま 運転しつづけない）
+// 6) サイクル275: 置いただけの 1 本目（5px 動いていない。スマホを持つ親指など）で 進んでいる ときに 2 本目が ふれたら、1 本目の なぞりは そこで やめ、ハンドルを その指を置く前に もどす。
+//    それまでは 決まるまで（きまり 3）親指の側へ 切りつづけ、目も そちらへ 向いたまま 2 本目の なぞりを 地面に 写したので、まっすぐ前へ なぞっても 親指の側へ 22〜26° 曲がった
+//    （見つけ役の 実測: スマホ横・縦の 4 か所 × 2 回、親指なし・あとから 親指は 0°）。2 本目が 決まる前に 離れたら、1 本目は また 押した所へ 進む
 // なぞりの点を足すのは なぞっている指だけ・まわりを見るのは 空を押した その指だけ（もう 1 本の指の わずかな ゆれで 線や目の向きが とばない）
 const viewPts = new Map();
 let viewTwo = null, viewTid = null, viewLost = false;   // viewTwo：2 本の指が そろってから null → 'wait'（まだ決めていない）→ 'trace'（片方が なぞる）か 'pinch'（寄って見る）。viewTid：なぞっている指
@@ -9942,6 +9982,10 @@ canvas.addEventListener('pointerdown', e => {
     for (const q of viewPts.values()) { q.ax = q.x; q.ay = q.y; q.solo = false; }
     viewTwo = 'wait'; viewPinch = null; viewPend = viewRe = null; viewBase = { d0: viewPtsDist(), z0: fovZoom };
     viewAuto.re = viewAuto.was && !AUTO.on && performance.now() - viewAuto.t < 450;
+    // サイクル275 きまり 6: 置いただけの 1 本目（5px 動いていない）の なぞりは、2 本目が ふれたら そこで やめて、ハンドルを その指を 置く前に もどす（目の向きも すぐ もどす）。
+    // 2 本目が すぐ離れたら（決まる前）、1 本目は また 押した所へ 進む（q.rest。下の endDrag）。1 本目を 動かせば 今までどおり その指の なぞり
+    const r = viewTid !== null ? viewPts.get(viewTid) : null;
+    if (r && !r.mv && TRACE.on) { TRACE.end(); viewTid = null; r.rest = true; if (r.s0 !== undefined) S.steer = r.s0; glanceBack = 0.3; }
   }
 });
 const viewPtsClear = () => { viewLost = viewLost || viewPts.size > 0; viewPts.clear(); viewPinch = null; viewBase = null; viewTwo = null; viewTid = null; viewPend = viewRe = null; };   // viewLost：置いたままの指の 記録を ここで消した（その指が動いたら おぼえ直す）
@@ -9964,7 +10008,7 @@ const PRE = { id: null, pts: [], go: false,
 // Codex 指摘（PR #1100）：読みこみ中に なぞってから タブを はなれたら、おぼえた 道すじは 捨てる（戻った あとの 別の 指に 古い なぞりを かぶせない）
 addEventListener('blur', () => PRE.clear());
 document.addEventListener('visibilitychange', () => { if (document.hidden) PRE.clear(); });
-canvas.addEventListener('pointerdown', e => { if (viewPts.size >= 2) { PRE.clear(); return; } if (!S.started) { if (e.isPrimary) PRE.down(e); canvas.setPointerCapture(e.pointerId); return; } if (TRACE.begin(e)) { AUTO.off(); drag = null; viewTid = e.pointerId; canvas.setPointerCapture(e.pointerId); return; } drag = { id: e.pointerId, x: e.clientX, y: e.clientY, yaw: look.yaw, pitch: look.pitch }; canvas.setPointerCapture(e.pointerId); });
+canvas.addEventListener('pointerdown', e => { if (viewPts.size >= 2) { PRE.clear(); return; } if (!S.started) { if (e.isPrimary) PRE.down(e); canvas.setPointerCapture(e.pointerId); return; } if (TRACE.begin(e)) { AUTO.off(); drag = null; viewTid = e.pointerId; { const q = viewPts.get(e.pointerId); if (q) q.s0 = S.steer; } canvas.setPointerCapture(e.pointerId); return; } drag = { id: e.pointerId, x: e.clientX, y: e.clientY, yaw: look.yaw, pitch: look.pitch }; canvas.setPointerCapture(e.pointerId); });
 canvas.addEventListener('pointermove', e => {
   const id = e.pointerId; let q = viewPts.get(id);
   // サイクル274: ほかの窓・タブから もどった あと（指の記録を消した あと）も 置いたままの指は、動いたら 1 本目の指として おぼえ直す（下の きまり 4 で、12px 動いたら なぞりを始める）
@@ -9996,16 +10040,22 @@ const endDrag = e => {
   if (id === viewTid || viewTid === null || viewPts.size === 0) { TRACE.end(); viewTid = null; }
   if (drag && (drag.id === id || drag.id === undefined || viewPts.size === 0)) drag = null;
   if (viewPts.size < 2) {
-    const pinched = viewTwo === 'pinch'; viewPinch = null; viewBase = null; viewTwo = null; viewPend = viewRe = null;
-    for (const q of viewPts.values()) { q.ax = q.x; q.ay = q.y; q.at = e.timeStamp; q.solo = !pinched; if (pinched) q.view = true; }   // きまり 4: 残った指は ここから 12px 動いたら なぞる
+    const pinched = viewTwo === 'pinch', undecided = viewTwo === 'wait'; viewPinch = null; viewBase = null; viewTwo = null; viewPend = viewRe = null;
+    for (const [k, q] of viewPts) { q.ax = q.x; q.ay = q.y; q.at = e.timeStamp; q.solo = !pinched; if (pinched) q.view = true;   // きまり 4: 残った指は ここから 12px 動いたら なぞる
+      // きまり 6 の つづき: 2 本目が 決まる前に 離れたら、置いただけの 1 本目は また 押した所へ 進む（手のひらが 0.1 秒 ふれた ときも 押した指は 止めない。サイクル274 きまり 3 と同じ）
+      if (q.rest && undecided && !q.mv && !TRACE.on && !drag && TRACE.begin({ clientX: q.x, clientY: q.y, timeStamp: e.timeStamp })) { AUTO.off(); viewTid = k; q.solo = false; q.s0 = S.steer; }
+      q.rest = false; }
   } else { viewBase = { d0: viewPtsDist(), z0: fovZoom }; if (viewPinch) viewPinch = { d0: viewBase.d0, z0: viewBase.z0 }; }   // 3本目以降の指が残るときは、残った指で 測りなおす
 };
 canvas.addEventListener('pointerup', endDrag); canvas.addEventListener('pointercancel', endDrag);
 let toastT = 0, curVoice = null;
 // のんびり：画面の 知らせは はじめの 一文だけ（かっこ書きは キーの 案内だけ 残す）＋ あとの 文に 操作の 案内（押す・ゆるめる・解除・「O で」など）が あれば その 1 文。はじめの画面の「📖 くわしい説明」を 入れると ぜんぶ 出す。
 // もとの 文は dataset.raw に 残す（知らせが 消されたかを くらべる 所は raw を 見る）
+// サイクル275・最初の1分: くわしい説明（DETAIL）は もう 入れられないので、前に 入れた人の 記録（localStorage の tractorDetail）は 読まない（消しも しない）。
+// 入れる 所（はじめの画面の「📖 くわしい説明」）は サイクル263 で 全廃した。前に 入れた人だけ、はじめから 計器・知らせ・ボタンが ぜんぶ出て、
+// 大きな数字が 計器に、知らせが ボタンと 見本の指に かぶっていた（重なり スマホ縦 6 組・スマホ横 7 組・320×568 で 25 組）。切る 所も なかった。
+// これで だれでも 同じ しずかな はじめの 1 分（のんびり）になる（はじめの 1 分は 下のボタンも 出ないので、親指が 🧽 泥落とし に ふれて 5〜6 秒 動かなくなる ことも ない）
 let DETAIL = false;
-try { DETAIL = localStorage.getItem('tractorDetail') === '1'; } catch (e) {}
 document.body.classList.toggle('calm', !DETAIL);
 // ---- 運転する キャラクターとの 対話：ふだん（くわしい説明 なし）は 画面に 文字を 出さず、上の 丸い 窓の キャラクターが 吹き出しで 一言 話す。
 // 知らせは はじめの 一文（操作の 案内つき）、案内（COACH）は いま やること。進みぐあいも 声で 知らせる。
@@ -10242,7 +10292,7 @@ function startCrank(first) {
 // サイクル263（店主指示 2026-11-10 18:34）: はじめの画面（キャラの吹き出し・季節／時間／天気／作業機／お題の選択グリッド・
 // 点検などのチェック・▶ボタン）は全廃。読みこみが終わったら startGame() が そのまま始める。既定は 春・昼・晴れ・ロータリー・お題は四角
 // （URL で season=／time=／w=／impl=／art= を付けたときだけ その条件で始まる）。「始める ときだけ 使う 選びかた」（点検・歩く・石拾い・
-// 爪の並べ方・回転の下げ）は 画面の廃止で選べなくなり 常に しない（従来の ふつう の始まり）。かんたんアシストと くわしい説明は localStorage の前回のまま
+// 爪の並べ方・回転の下げ）は 画面の廃止で選べなくなり 常に しない（従来の ふつう の始まり）。かんたんアシストは localStorage の前回のまま（くわしい説明は サイクル275 から 読まない）
 function startGame() {
   startCrank(true);  // エンジンをかける：（冷えていれば予熱）→ セル（1.1 秒）→ かかる → 回転が上がって落ちつく。サイクル161: 初回だけ true（のんびりでは始動を短くする）
   if (camMode !== 0) { camMode = 0; look.yaw = look.pitch = 0; $('bCam').textContent = '👁 ' + CAMS[0]; }   // サイクル118: 始まりは運転席視点（洗車などで外から見た後でも）

@@ -2117,6 +2117,7 @@ P.done = false; P.inserted = false; pullNudge(); assert.equal(autos, 1);   // �
         script2 = """
 const assert = require('node:assert/strict');
 const motion = 1; let step = 0, now = 0; const q = []; const moves = [];
+const pageFinger = () => false, pageSlid = () => false;   // サイクル150: 説明を読んでいない時（ページは上）
 globalThis.performance = { now: () => now };
 globalThis.requestAnimationFrame = f => { q.push(f); };
 const P = {x:100, inX:100, rest:200, inserted:true, done:false, auto:false, drag:null};
@@ -2576,6 +2577,7 @@ assert.equal(w.hanko.style.top, '');
         script = """
 const assert = require('node:assert/strict');
 const NUDGE_LIMIT = 3, NIGIRU_MS = 350, motion = 1;
+let pageScrolled = false; const pageFinger = (dx, dy) => pageScrolled && Math.abs(dy) >= Math.abs(dx); const slid = new Set(), pageSlid = (e) => !!e && slid.has(e.pointerId);
 let senseKind = 'niou', senseDrag = null, senseHold = null, senseTaps = 0;
 let off = { x:0, y:0 }, anims = [], guides = 0, guideOffs = 0, done = 0;
 const handlers = {};
@@ -2620,6 +2622,12 @@ fresh(); handlers.pointerdown({ pointerId:1, clientX:215, clientY:559 }); endTok
 // 取り消された指（pointercancel）は とばさず、元の場所へ戻す
 fresh(); drag(0.7, 'pointercancel'); assert.equal(anims.length, 0); assert.deepEqual(off, { x:0, y:0 }); assert.equal(senseFly, false);
 assert.equal(senseTaps, 0); assert.equal(guides, 0); // 取り消された指は 空振りにも数えない（説明を読んでいる間に ページを動かし始めた指 など）
+// ページを動かす指（説明を読んでいる間の たての指）では 🤲 を運ばない。離しても（pointerup）数えない・とばさない（Codex指摘）
+fresh(); pageScrolled = true; slid.add(1); handlers.pointerdown({ pointerId:1, clientX:215, clientY:559 });
+for (let i = 1; i <= 10; i++) handlers.pointermove({ pointerId:1, clientX:215 + DX * 0.9 * i / 10, clientY:559 + DY * 0.9 * i / 10 });
+assert.equal(done, 0); assert.deepEqual(off, { x:0, y:0 });
+endToken({ type:'pointerup', pointerId:1 }); assert.equal(senseTaps, 0); assert.equal(anims.length, 0); assert.equal(senseFly, false);
+pageScrolled = false; slid.clear();
 // 空振り3回目に ひとりでに運ばれる動きは、元の場所から・0.36秒のまま
 fresh(); drag(0.2); drag(0.2); drag(0.2);
 assert.equal(anims.length, 2); // 2回目の「半分やって見せる」と、3回目の ひとりでに運ばれる動き
@@ -2780,7 +2788,7 @@ on.touchcancel({ touches:{ length:0 } }); run(); assert.equal(tos.length, 3);
         self.assertNotIn('$("bagBig").addEventListener("pointercancel", endHanko);', HTML)
         self.assertIn('token.addEventListener("pointercancel", endToken);', HTML)
         end = HTML[HTML.index("function endToken(e) {"):HTML.index('token.addEventListener("pointerup", endToken);')]
-        self.assertIn('const cancelled = !!e && e.type === "pointercancel";', end)
+        self.assertIn('const cancelled = !!e && (e.type === "pointercancel" || pageSlid(e));', end)
         self.assertEqual(end.count("if (cancelled) return;"), 2)   # にぎる・はこぶ の どちらも
         self.assertLess(end.index("if (cancelled) return;"), end.index("++senseTaps"))
         fn = HTML[HTML.index('$("bagBig").addEventListener("pointerdown",'):HTML.index('$("bagBig").addEventListener("click",')]
@@ -2805,6 +2813,15 @@ down(100); assert.equal(inkHold.timer, undefined); move(110); move(125); move(16
 assert.equal(inked, false); assert.equal(hankoTaps, 0);
 inked = true; down(100); move(130); move(170); assert.equal(stamps, 0); on.pointercancel({ pointerId:1 }); assert.equal(hankoTaps, 0);
 down(100); on.pointerup({ pointerId:1 }); assert.equal(hankoTaps, 1);
+// 取り消しが来ないまま離れた ページの指（pointerup）も、空振りに数えない（Codex指摘）。capture の聞き手が 先に見る
+const upPage = () => { cap.pointerup({ pointerId:1 }); on.pointerup({ pointerId:1 }); };
+hankoTaps = 0; slid.add(1);
+for (let i = 0; i < 3; i++) { down(100); move(140); upPage(); }
+assert.equal(hankoTaps, 0); assert.equal(stamps, 0); assert.equal(drops, 0); assert.equal(hankoDrag, null);
+inked = false; for (let i = 0; i < 3; i++) { down(100); move(140); upPage(); }
+assert.equal(inked, false); assert.equal(hankoTaps, 0); assert.equal(inkHold, null);
+stamped = true; down(100); move(140); upPage(); assert.equal(nudges, 1); assert.equal(bagSwipe, null); stamped = false; inked = true;
+slid.clear(); down(100); upPage(); assert.equal(hankoTaps, 1);   // ふつうのタップは 今までどおり
 // よこへ流す指は 今までどおり（たてに大きく動いた指では流さない）
 stamped = true; let left = 0; leaveBag = () => { left++; };
 on.pointerdown({ pointerId:1, clientX:100, clientY:100 }); on.pointermove({ pointerId:1, clientX:145, clientY:190 }); assert.equal(left, 0); on.pointercancel({ pointerId:1 });
@@ -2818,7 +2835,7 @@ const assert = require('node:assert/strict');
 const NUDGE_LIMIT = 3, INK_MS = 250, motion = 1;
 let step = 4, leaving = false, stamped = false, inked = false, hankoTaps = 0, swipeTaps = 0, hankoDrag = null, inkDrag = null, inkHold = null, bagSwipe = null, hankoBob = null, hankoMax = 96, hankoLand = 50;
 const ys = []; let stamps = 0, nudges = 0, drops = 0, inks = 0;
-const on = {}; const bag = { style:{}, addEventListener(t, f) { on[t] = f; } };
+const on = {}, cap = {}; const bag = { style:{}, addEventListener(t, f, c) { (c ? cap : on)[t] = f; } };
 const hanko = { animate() { return {}; } };
 const $ = id => id === 'bagBig' ? bag : hanko;
 const hint = {};
@@ -2828,7 +2845,7 @@ const setHanko = y => { ys.push(y); };
 const inkDone = () => { inks++; inked = true; inkHold = null; inkDrag = null; ys.push(0); bobHanko(); };
 const stampNow = () => { if (stamped) return; stamped = true; hankoDrag = null; stamps++; };
 const swipeNudge = () => { nudges++; }, dropHanko = () => { drops++; };
-let pageScrolled = false; const pageFinger = (dx, dy) => pageScrolled && Math.abs(dy) >= Math.abs(dx);
+let pageScrolled = false; const pageFinger = (dx, dy) => pageScrolled && Math.abs(dy) >= Math.abs(dx); const slid = new Set(), pageSlid = (e) => !!e && slid.has(e.pointerId);
 """
 
     def test_cycle150_one_stroke_inks_and_stamps(self):
@@ -2872,6 +2889,7 @@ const $ = id => ({ sceneBag:scene, poke, probe })[id];
 const capture = () => {}, stopPullDemo = () => {}, stopProbeAttract = () => {}, stabPoke = () => {}, probeDemoSound = () => {};
 const moveProbe = x => { moves.push(x); P.x = x; if (x <= P.inAt) P.inserted = true; };
 const autoProbe = () => { autos++; }, pullNudge = () => { nudges++; };
+let pageScrolled = false; const pageFinger = (dx, dy) => pageScrolled && Math.abs(dy) >= Math.abs(dx); const slid = new Set(), pageSlid = (e) => !!e && slid.has(e.pointerId);
 """ + bag + """
 const ev = (id, x, y, type) => ({ pointerId:id, clientX:x, clientY:y, pointerType:type || 'touch', buttons:1 });
 const fresh = () => { P.x = 205; P.inserted = false; P.drag = null; bagTaps = 0; moves = []; bagPts.clear(); };
@@ -2887,6 +2905,15 @@ fresh(); on.pointerdown(ev(1, 60, 120)); on.pointerdown(ev(2, 330, 100));
 on.pointermove(ev(1, 64, 123)); on.pointermove(ev(2, 322, 100)); assert.equal(P.drag.id, 1);
 on.pointermove(ev(2, 321, 100)); assert.equal(P.drag.id, 2);
 on.pointerup(ev(2, 321, 100)); on.pointerup(ev(1, 64, 123));
+// Codex指摘: 先の指が 6px 動いて もう穀刺しに写った後は、入れかえない（旧版は 入れかえて 2本の動きを足した: 178 → 163 で ささった）
+fresh(); P.x = 178; on.pointerdown(ev(1, 60, 120)); on.pointerdown(ev(2, 330, 100));
+on.pointermove(ev(1, 54, 120)); assert.equal(P.x, 172);
+on.pointermove(ev(2, 321, 100));
+assert.equal(P.drag.id, 1); assert.equal(P.x, 172); assert.equal(P.inserted, false);   // どちらの指も ひとりでは とどいていない
+on.pointerup(ev(2, 321, 100)); on.pointerup(ev(1, 54, 120));
+// ページを動かす指（説明を読んでいる間の たての指）は、追う指に ならない
+fresh(); pageScrolled = true; on.pointerdown(ev(1, 60, 120)); on.pointerdown(ev(2, 330, 100)); on.pointermove(ev(2, 327, 112));
+assert.equal(P.drag.id, 1); pageScrolled = false; on.pointerup(ev(2, 327, 112)); on.pointerup(ev(1, 60, 120));
 // 2本とも動かす: 先に動いた指だけを追う。進むのは1本ぶん
 fresh(); on.pointerdown(ev(1, 330, 100)); on.pointerdown(ev(2, 330, 140));
 on.pointermove(ev(1, 310, 100)); on.pointermove(ev(2, 300, 140)); on.pointermove(ev(1, 305, 100)); on.pointermove(ev(2, 280, 140));
@@ -2917,7 +2944,7 @@ const els = { sceneMeter:scene, crank:{ getBoundingClientRect: () => ({ left:260
 const $ = id => els[id];
 const capture = () => {}, guideOff = () => {}, guideAt = () => {}, crankSound = () => { clicks++; };
 const takeReading = () => { measured++; };
-let pageScrolled = false; const pageFinger = (dx, dy) => pageScrolled && Math.abs(dy) >= Math.abs(dx);
+let pageScrolled = false; const pageFinger = (dx, dy) => pageScrolled && Math.abs(dy) >= Math.abs(dx); const slid = new Set(), pageSlid = (e) => !!e && slid.has(e.pointerId);
 """ + meter + """
 const ev = (id, x, y) => ({ pointerId:id, clientX:x, clientY:y, pointerType:'touch', buttons:1 });
 const turn = (id, turns) => { const n = Math.round(turns * 24); for (let i = 1; i <= n; i++) { const a = -Math.PI / 2 + i / 24 * 2 * Math.PI; on.pointermove(ev(id, 310 + 33 * Math.cos(a), 110 + 33 * Math.sin(a))); } };
@@ -2928,6 +2955,17 @@ turn(2, 1);
 assert.equal(crankDrag.id, 2); assert.equal(measured, 3);
 on.pointerup(ev(1, 120, 130)); assert.equal(meterTaps, 0);     // 押さえていた指は タップに数えない
 on.pointerup(ev(2, 310, 77)); assert.equal(meterTaps, 0); assert.equal(crankDrag, null);
+// Codex指摘の同じ形: 先の指が ハンドルの上で 8px まで ゆれても 回さない（写さない）。入れかえた後に進むのは 後の指の分だけ
+measured = 0; crankTurned = 0; crankAngle = 0; meterPts.clear();
+on.pointerdown(ev(1, 310, 77)); on.pointermove(ev(1, 317, 78));
+assert.equal(crankTurned, 0); assert.equal(crankAngle, 0);
+on.pointerdown(ev(2, 310, 143)); for (let i = 1; i <= 4; i++) { const a = Math.PI / 2 + i / 24 * 2 * Math.PI; on.pointermove(ev(2, 310 + 33 * Math.cos(a), 110 + 33 * Math.sin(a))); }
+assert.equal(crankDrag.id, 2); assert.ok(Math.abs(crankTurned - 60) < 0.01, String(crankTurned)); assert.equal(measured, 0);   // 60°ぶんだけ（先の指の ゆれ 12°は足さない）
+on.pointerup(ev(1, 317, 78)); on.pointerup(ev(2, 0, 0));
+// ためた分は捨てない: 1本の指の 90°の回しは、小さく きざんでも 今までどおり 1回はかれる
+measured = 0; crankTurned = 0; crankAngle = 0;
+on.pointerdown(ev(1, 310, 77)); for (let i = 1; i <= 18; i++) { const a = -Math.PI / 2 + i / 72 * 2 * Math.PI; on.pointermove(ev(1, 310 + 33 * Math.cos(a), 110 + 33 * Math.sin(a))); }
+assert.equal(measured, 1); assert.ok(Math.abs(crankAngle - 90) < 0.01); on.pointerup(ev(1, 0, 0));
 // 2本とも回す: 先に動いた指だけ。進むのは1本ぶん（1/4周 = 1回）
 measured = 0; crankTurned = 0; meterPts.clear();
 on.pointerdown(ev(1, 310, 77)); on.pointerdown(ev(2, 310, 143));
@@ -3009,7 +3047,8 @@ tall(); layoutProbe(); fresh(); wide(); layoutProbe(); near(P.x, P.rest);
         fn = HTML[HTML.index("const gradeResets = [];"):HTML.index("/* おす: 朱肉に", HTML.index("const gradeResets = [];"))]
         self._node150("""
 const assert = require('node:assert/strict');
-const motion = 1, LOT = {}; let step = 3, sounds = 0, pageScrolled = false; const picks = [];
+const motion = 1, LOT = {}; let step = 3, sounds = 0; const picks = [];
+let pageScrolled = false; const pageFinger = (dx, dy) => pageScrolled && Math.abs(dy) >= Math.abs(dx); const slid = new Set(), pageSlid = (e) => !!e && slid.has(e.pointerId);
 const btns = [0, 1, 2, 3].map(i => { const b = { i, ev:{}, style:{}, dataset:{ i:String(i) }, addEventListener(t, f) { b.ev[t] = f; }, animate() {} }; return b; });
 const document = { querySelectorAll: () => btns };
 const capture = () => {}, guideOff = () => {}, guideAt = () => {}, gradeDemoSound = () => { sounds++; }, lotGrade = () => 0;
@@ -3025,6 +3064,8 @@ tap(1); gradeResets.forEach(f => f()); tap(1); assert.deepEqual(picks, [3]);
 // 上へ引けば その場で決まる（今までどおり）。説明を読んでいる間（ページが下にある間）の たての指では 決めない
 const pull = (i) => { btns[i].ev.pointerdown({ pointerId:1, clientY:500 }); btns[i].ev.pointermove({ pointerId:1, clientY:470 }); btns[i].ev.pointercancel({ pointerId:1 }); };
 pageScrolled = true; pull(2); assert.deepEqual(picks, [3]);
+// 取り消しが来ないまま離れた ページの指（pointerup）も、タップに数えない（Codex指摘）
+slid.add(1); tap(0); tap(0); assert.deepEqual(picks, [3]); slid.clear();
 pageScrolled = false; pull(2); assert.deepEqual(picks, [3, 2]);
 """)
         kimeru = HTML[HTML.index("function toKimeru() {"):HTML.index("function pickGrade(btn) {")]
@@ -3040,7 +3081,7 @@ let step = 2, spread = false, badLeft = 2, lastGoodTap = 0, lastGoodX = 0, lastG
 const Z = { s:1, tx:0, ty:0 }, ZOOM_MAX = 3.4;
 const on = {}; const plate = { clientLeft:0, clientTop:0, getBoundingClientRect: () => ({ left:0, top:0 }), addEventListener(t, f) { on[t] = f; } };
 const zoomBtn = {}, token = { hidden:true };
-let pageScrolled = false; const pageFinger = (dx, dy) => pageScrolled && Math.abs(dy) >= Math.abs(dx);
+let pageScrolled = false; const pageFinger = (dx, dy) => pageScrolled && Math.abs(dy) >= Math.abs(dx); const slid = new Set(), pageSlid = (e) => !!e && slid.has(e.pointerId);
 const brush = () => { calls.push('brush'); return hitPile; };
 const toLocal = (x, y) => ({ x, y }), grainAt = () => null;
 const stopSmoothZoom = () => {}, capture = () => {}, guideOff = () => {}, applyZoom = () => { calls.push('pan'); }, twistPlate = () => {}, resetZoom = () => {}, zoomTo = () => {};
@@ -3075,8 +3116,69 @@ on.pointerdown({ pointerId:1, clientX:100, clientY:100, target:plate });
 for (let y = 110; y <= 200; y += 10) on.pointermove({ pointerId:1, clientX:102, clientY:y });
 endPlatePointer({ pointerId:1, clientX:102, clientY:200 }, true);
 assert.deepEqual(calls, []);
+// 取り消しが来ないまま離れた ページの指（pointerup）も、空振り・タップ・はじき に数えない（Codex指摘）
+slid.add(1); calls = [];
+on.pointerdown({ pointerId:1, clientX:100, clientY:100, target:plate });
+for (let y = 110; y <= 200; y += 10) on.pointermove({ pointerId:1, clientX:102, clientY:y });
+endPlatePointer({ pointerId:1, clientX:102, clientY:200 }, false);
+on.pointerdown({ pointerId:1, clientX:100, clientY:100, target:plate }); on.pointermove({ pointerId:1, clientX:101, clientY:118 });
+endPlatePointer({ pointerId:1, clientX:101, clientY:118 }, false);
+assert.deepEqual(calls, []); slid.clear();
 sweep(); assert.ok(calls.includes('brush'));
 """)
+
+
+    def test_cycle150_codex_page_fingers_never_drive_the_probe(self):
+        # Codex指摘: 説明から戻る たての指は ふくろの場面の上からも始められるのに、穀刺しの動きには「ページを動かす指」の見分けが無く、
+        # よこへ 5px より ぶれると ささった（ささる 1px 手前で (dx, dy) = (-6, 8) → ささる。取り消しでも戻らない）。
+        # 状態を変える前に見分ける。取り消しが来ないまま離れた指（pointerup）も数えない。見分けは 本物の pageFinger・pageSlid で確かめる
+        helpers = HTML[HTML.index("var pageScrolled = false;"):HTML.index("/* 指の動きはどれも止まらないように")]
+        bag = HTML[HTML.index("const bagPts = new Map(), meterPts = new Map();"):HTML.index('$("bagBtn").addEventListener("click",')]
+        self._node150("""
+const assert = require('node:assert/strict');
+const NUDGE_LIMIT = 3, motion = 1;
+let step = 0, bagTaps = 0, probeAttract = null, autos = 0, nudges = 0;
+const P = { x:167, rest:205, inAt:166, inX:74, y:50, inserted:false, done:false, drag:null, auto:false };
+const doc = {}, win = {}, on = {};
+const document = { addEventListener(t, f) { (doc[t] = doc[t] || []).push(f); } }, window = { addEventListener(t, f) { (win[t] = win[t] || []).push(f); } };
+const scene = { addEventListener(t, f) { on[t] = f; } };
+const $ = id => ({ sceneBag:scene, poke:{ style:{} }, probe:{ animate() { return {}; } } })[id];
+const capture = () => {}, stopPullDemo = () => {}, stopProbeAttract = () => {}, stabPoke = () => {}, probeDemoSound = () => {};
+const moveProbe = x => { P.x = x; if (x <= P.inAt) P.inserted = true; };
+const autoProbe = () => { autos++; }, pullNudge = () => { nudges++; };
+""" + helpers + bag + """
+// 本物の順: document（capture）→ 場面 → window
+const fire = (type, id, x, y) => { const e = { type, pointerId:id, clientX:x, clientY:y, pointerType:'touch', buttons:1 }; (doc[type] || []).forEach(f => f(e)); if (on[type]) on[type](e); (win[type] || []).forEach(f => f(e)); };
+const fresh = () => { P.x = 167; P.inserted = false; P.drag = null; bagTaps = 0; bagPts.clear(); };
+// 説明を読んでいる間: ささる 1px 手前で、たてに大きく動く指（よこへ 6px・たてへ 8px）→ 動かない・ささらない
+pageScrolled = true;
+fire('pointerdown', 1, 300, 100); fire('pointermove', 1, 294, 108);
+assert.equal(P.x, 167); assert.equal(P.inserted, false);
+fire('pointercancel', 1, 294, 108); assert.equal(P.inserted, false); assert.equal(bagTaps, 0); assert.equal(pageDowns.size, 0);
+// 取り消しが来ないまま離れても（pointerup）、空振りに数えない。3回なぞっても ひとりでに ぬけない
+for (let i = 0; i < 3; i++) { fire('pointerdown', 1, 300, 100); fire('pointermove', 1, 296, 130); fire('pointermove', 1, 290, 180); fire('pointerup', 1, 290, 180); }
+assert.equal(P.x, 167); assert.equal(P.inserted, false); assert.equal(bagTaps, 0); assert.equal(autos, 0);
+// たてに大きく動いてから 元の所へ戻して離した指も 数えない
+fire('pointerdown', 1, 300, 100); fire('pointermove', 1, 300, 140); fire('pointermove', 1, 300, 101); fire('pointerup', 1, 300, 101);
+assert.equal(bagTaps, 0);
+// さした後: ページを動かす指では 粒は落ちない・ひきぬく空振りにも数えない
+P.inserted = true; P.x = 120; fire('pointerdown', 1, 200, 100); fire('pointermove', 1, 209, 115); fire('pointerup', 1, 209, 115);
+assert.equal(P.x, 120); assert.equal(nudges, 0);
+// 説明を読んでいる間でも、よこの指（さす）と タップは 今までどおり
+fresh(); fire('pointerdown', 1, 300, 100); fire('pointermove', 1, 292, 103); assert.equal(P.inserted, true); fire('pointerup', 1, 292, 103);
+fresh(); fire('pointerdown', 1, 300, 100); fire('pointerup', 1, 301, 100); assert.equal(bagTaps, 1);
+// ページが上にある時（遊んでいる間）は、たての引きも 今までどおり1回と数える（ちがう向きの引き）
+pageScrolled = false; fresh();
+fire('pointerdown', 1, 300, 100); fire('pointermove', 1, 294, 108); assert.equal(P.inserted, true);
+fresh(); fire('pointerdown', 1, 300, 100); fire('pointermove', 1, 300, 160); fire('pointerup', 1, 300, 160); assert.equal(bagTaps, 1);
+assert.equal(pageSlid(undefined), false);   // 指なしで呼ばれる道（場面の外のタップの受け皿）は そのまま
+""")
+        # ほかの所作も、状態を変える前・離した時に 同じ見分けを通る
+        self.assertIn("if (pageFinger(dx, dy)) return; /* ページを動かす指では 🤲 を運ばない */", HTML)
+        self.assertIn("if (pageSlid(e)) cancelled = true;", HTML[HTML.index("function endPlatePointer(e, cancelled) {"):HTML.index("/* 振る:")])
+        self.assertIn('$("bagBig").addEventListener("pointerup", (e) => { bagPage = pageSlid(e); }, true);', HTML)
+        self.assertIn("if (pageSlid(e)) return; /* ページを動かした指は タップに数えない */", HTML)
+        self.assertIn("if (pageSlid(e)) return; /* ページを動かした指は 🤲 の空振りに数えない */", HTML)
 
 
 if __name__ == "__main__":

@@ -35,6 +35,11 @@ class GuideDispName205(unittest.TestCase):
         self.assertEqual(run("guideDispName({kind:'npc',name:'米屋さん'})"), "米屋さん")
         self.assertEqual(run("[guideDispName(null), guideDispName({kind:'npc'}), guideDispName({kind:'npc',name:''})]"), ["", "", ""])
 
+    def test_boundary_unchanged(self):
+        """Codex注記（サイクル205）の境界：入れ子・複数組・半角だけ・空・先頭かっこは壊さずそのまま"""
+        for n in ["店員さん（本店（永吉））", "ガイドさん（西尾城跡）（別館）", "学生 (Nishio)", "（西尾城跡）", "ガイドさん（）", "ガイドさん（西尾城跡"]:
+            self.assertEqual(run("guideDispName({kind:'npc',name:'%s'})" % n), n, n)
+
     def test_deterministic_and_permutation(self):
         n = "駅前の学生（西尾駅）"
         r = run("[guideDispName({kind:'npc',name:'%s'}), guideDispName({kind:'npc',name:'%s'})]" % (n, n))

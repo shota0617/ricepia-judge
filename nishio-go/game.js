@@ -2491,7 +2491,7 @@ function spotThumb(sp) {
   const u = thumbCache.get(sp.id);
   return u ? `<img class="gthumb" src="${u}" alt="" width="28" height="28"/>` : '';
 }
-// 下の札の 名前：人は「場所（人）」の 順に（狭い画面で「…」に なるのは 人の 説明がわ。行き先の 場所は 最後まで 読める）。並べかえ だけで 字は ふえない。名所は もともと 場所が 先
+// 下の札の 名前：人は「場所（人）」の 順に（狭い画面で「…」に なるのは 人の 説明がわ。行き先の 場所が 先に 読める）。並べかえ だけで 字は ふえない。名所は もともと 場所が 先
 function guideDispName(g) {
   if (!g || !g.name) return '';
   if (g.kind !== 'npc') return g.name;

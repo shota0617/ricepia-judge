@@ -8549,7 +8549,7 @@ function step(dt) {
   if (key.fwd && S.autoUp && S.v >= 0 && !OCHI.armed) { S.rotDown = true; S.autoUp = false; setRotBtn(); }   // 降下止めの つまみが しまっていると 自動では 下がらない
   // ぬかるみ：耕していると エンジンが重くなる。速さ（変速）と耕深が大きいほど重い。重すぎるとエンスト
   const wet = WET.at(S.x, S.z), workingNow = S.rotDown && S.rotPos < 0.08;
-  if (wet > 0.2 && S.started) voice('wet');
+  if (wet > 0.2 && S.started && !startNoticeMuted()) voice('wet');   // ぬかるみの一角に来た。サイクル272・最初の1分: のんびりでは最初の1分はぬかるみの声を消費しない。声だけの経路で、条件は位置（WET.at>0.2 ⇔ 楕円の正規化距離 d<0.875、中心 (11.8,-18)・rx=4.2・rz=5.5）と started だけで、作業・速度・確率の前提はなく、実測の再現では圏境界の最近点 (10.02,-13.79) は開始点から約17.05mで、東南の一角へ直接なぞれば開始約11.57秒（キー運転約17.95秒・のんびり自動でも約20.97秒）に届き、聞いていない声が終わりの画面の数だけに入っていた。条件は瞬時の状態のみのため、ガード中は呼ばずに過ぎ、1分を過ぎて圏内にいれば従来どおり1回出る遅延形（圏外にいれば次に圏内へ来た時点で出る）。WET の式としきい値・ぬかるみの重さとエンスト側の処理は不変更。くわしい説明では従来どおり開始直後から出す
   S.wetLoad = workingNow && Math.abs(S.v) > 0.1 ? wet * (260 + 230 * S.gear) * (DEPTH / DEPTH0) + WRAP.v * 220 + (PTO2 && !SHIRO ? 80 : 0) + (PTOREV ? 160 + (S.revHard || 0) * (600 + 120 * S.gear) : 0) : 0;   // 秋は 爪軸に巻きついた 2 番穂でも重い。逆転は 正転より重く、まだ耕していない硬い所ではとても重い
   S.lugT = S.wetLoad > STALL_LOAD() ? (S.lugT || 0) + dt : 0;
   if (ecoOn() && S.wetLoad > 600) voice('teikaiten2');   // 2000 回転で 重い所に入った：回転を上げる話

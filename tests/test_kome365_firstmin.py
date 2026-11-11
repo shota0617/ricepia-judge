@@ -1,4 +1,4 @@
-"""米づくり365: 最初の1分に出る飾りが、カードの日付や天気の丸に重ならない置き方になっているか(周回152)、押しただけでは案内が消えないか(周回153)、出だしのちらつきと2Dの天気(周回154)、スワイプの手本(周回155)、止まったら手本(周回158)、飛んでいる間の指・しるしのあとの手本(周回161)、おそい回線・おそいスマホ(周回164)、田んぼから はじめた スワイプ(周回165)、しるしに 重なる 丸い ◀ ▶・点の列の さいごの 絵(周回166)。"""
+"""米づくり365: 最初の1分に出る飾りが、カードの日付や天気の丸に重ならない置き方になっているか(周回152)、押しただけでは案内が消えないか(周回153)、出だしのちらつきと2Dの天気(周回154)、スワイプの手本(周回155)、止まったら手本(周回158)、飛んでいる間の指・しるしのあとの手本(周回161)、おそい回線・おそいスマホ(周回164)、田んぼから はじめた スワイプ(周回165)、しるしに 重なる 丸い ◀ ▶・点の列の さいごの 絵(周回166)、読みこみが 止まった ときの 知らせ・低い 縦の 画面の 天気(周回168)。"""
 import json
 import os
 import re
@@ -89,6 +89,65 @@ def pinch(t0, on="stage", gap=12, each=95, ms=350, y=330):
     o.append(["up", {"id": 1, "x": 170 - each, "y": y, "t": t0 + gap + ms + 20, "on": on}])
     o.append(["up", {"id": 2, "x": 220 + each, "y": y, "t": t0 + gap + ms + 20, "on": on, "primary": False}])
     return o
+
+
+# 周回168: いちばん 上の インライン スクリプト(読みこみの 見はり)を index.html から 取り出し、にせの 時計・画面で 本当に 動かす。
+# 場面(plan)の とおりに 時計を 進め、知らせ(#bootSlow)が 出て いるかを ミリ秒ごとに 返す
+BOOT_JS = r"""
+const fs = require('fs');
+const html = fs.readFileSync(process.argv[1], 'utf8');
+const a = html.indexOf('<script>'), b = html.indexOf('</script>', a);
+const plan = JSON.parse(process.argv[2]);
+let now = 0, timers = [], tid = 0, nodes = 20, resources = 1, navEnd = plan.navEnd === undefined ? 30 : plan.navEnd, reloads = 0;
+const body = { kids: [], appendChild(e){ e.parentNode = body; this.kids.push(e); return e; }, removeChild(e){ this.kids = this.kids.filter(k => k !== e); e.parentNode = null; return e; } };
+const htmlEl = { classList: { add(){}, remove(){} } };
+const els = {};
+const document = { documentElement: htmlEl, body: body, getElementById(id){ return els[id] || null; }, getElementsByTagName(){ return { length: nodes }; }, addEventListener(){}, createElement(tag){ return { tagName: tag.toUpperCase(), id: '', innerHTML: '', parentNode: null }; } };
+function screen(hidden){ return { classList: { contains(c){ return c === 'hidden' && hidden; } } }; }
+els.sTitle = screen(false); els.sGame = screen(true); els.sResult = screen(true); els.swBigDate = { textContent: '' };
+const wl = {};
+const window = { addEventListener(t, fn){ (wl[t] = wl[t] || []).push(fn); } };
+const performance = { getEntriesByType(t){ return t === 'navigation' ? [{ responseEnd: now >= navEnd ? navEnd : 0 }] : { length: resources }; } };
+const location = { reload(){ reloads++; } };
+const Date_ = { now: () => now };
+function setInterval(fn, ms){ const id = ++tid; timers.push({ id, fn, ms, at: now + ms }); return id; }
+function clearInterval(id){ timers = timers.filter(t => t.id !== id); }
+const src = html.slice(a + 8, b).replace(/Date\.now\(\)/g, 'Date_.now()');
+eval(src);
+const shown = () => body.kids.some(k => k.id === 'bootSlow');
+const log = [];
+const ev = (plan.events || []).slice().sort((x, y) => x[0] - y[0]);
+for (let t = 0; t <= plan.until; t += 50) {
+  now = t;
+  while (ev.length && ev[0][0] <= t) {
+    const e = ev.shift();
+    if (e[1] === 'grow') nodes += 5;
+    else if (e[1] === 'file') resources++;
+    else if (e[1] === 'ready') { window.Kome365 = {}; window.KomeCards = {}; els.sTitle = screen(true); els.sGame = screen(false); els.swBigDate.textContent = '1月1日'; window.__komeBoot.ready(); }   // 本当に 始まった(1枚目の カード)
+    else if (e[1] === 'readyResult') { window.Kome365 = {}; window.KomeCards = {}; els.sTitle = screen(true); els.sResult = screen(false); window.__komeBoot.ready(); }   // 1年が 終わった 記録
+    else if (e[1] === 'tail') { if (e[2]) window.KomeCards = {}; window.__komeBoot.ready(); }   // さいごの 行は 通ったが ゲームは 始まって いない(engine.js が 無い)
+    else if (e[1] === 'scriptError') (wl.error || []).forEach(fn => fn({ target: { tagName: 'SCRIPT', src: 'https://go.ricepia.jp/kome365/' + e[2] } }));
+    else if (e[1] === 'imgError') (wl.error || []).forEach(fn => fn({ target: { tagName: 'IMG', src: 'x.webp' } }));
+    else if (e[1] === 'runError') (wl.error || []).forEach(fn => fn({ target: window, message: 'x' }));
+    else if (e[1] === 'tap') { const k = body.kids.find(k => k.id === 'bootSlow'); if (k) k.onclick(); }
+  }
+  for (const tm of timers.slice()) while (timers.indexOf(tm) >= 0 && tm.at <= now) { tm.at += tm.ms; tm.fn(); }
+  log.push([t, shown()]);
+}
+const firstOn = (log.find(x => x[1]) || [null])[0];
+const box = body.kids.find(k => k.id === 'bootSlow');
+console.log(JSON.stringify({ firstOn: firstOn, endOn: shown(), reloads: reloads, text: box ? box.innerHTML : '' }));
+"""
+
+
+def boot_run(plan):
+    node = shutil.which("node")
+    if not node:
+        raise unittest.SkipTest("node がないので実行の確認は飛ばす")
+    out = subprocess.run([node, "-e", BOOT_JS, HTML_PATH, json.dumps(plan)], capture_output=True, text=True)
+    if out.returncode != 0:
+        raise AssertionError(out.stderr[-2000:])
+    return json.loads(out.stdout.strip().splitlines()[-1])
 
 
 def css_rule(selector):
@@ -588,6 +647,103 @@ class TestKome365FirstMinute(unittest.TestCase):
         self.assertIn("document.addEventListener(t, function(){ down = Math.max(0, down - 1); }, true);", loader)
         self.assertIn("document.addEventListener('visibilitychange', function(){ if (document.hidden) down = 0; });", loader)
         self.assertNotIn("down = false", loader)
+
+
+    def test_stalled_game_script_shows_retry(self):
+        # 周回168: engine.js・cards.js が 返事を しない(つながった まま 止まる)と、題字と 丸 だけで 61秒 たっても 何も 出なかった。
+        # 見はりは いちばん 上の インライン スクリプト(ゲームの スクリプトが 来なくても 動く)
+        head = HTML[:HTML.index('<script src="engine.js">')]
+        self.assertIn("w.__komeBoot = {", head)
+        self.assertLess(HTML.index("w.__komeBoot = {"), HTML.index("<style>"))
+        # 読みこみが 止まって 8秒(0.5秒ごとに 見る)で 知らせ。7.9秒までは 出ない
+        r = boot_run({"until": 12000, "events": [[300, "grow"], [600, "file"]]})
+        self.assertIsNotNone(r["firstOn"])
+        self.assertGreaterEqual(r["firstOn"], 8600)
+        self.assertLessEqual(r["firstOn"], 9200)
+        self.assertTrue(r["endOn"])
+        self.assertIn("よみこみに 時間が かかって います", r["text"])
+        self.assertIn("タップで もう一度 よみこむ", r["text"])
+        # 押すと 読みこみなおす
+        r = boot_run({"until": 10000, "events": [[300, "grow"], [9500, "tap"]]})
+        self.assertEqual(r["reloads"], 1)
+
+    def test_normal_and_slow_loads_show_nothing(self):
+        # ふつうの 読みこみ(すぐ 始まる)・おそくても 進んで いる 読みこみ・ページの 本体が まだ 届いて いる 途中(20秒まで)は 何も 出さない
+        self.assertIsNone(boot_run({"until": 60000, "events": [[300, "grow"], [900, "ready"]]})["firstOn"])
+        steps = [[t, "grow"] for t in range(0, 40000, 6000)] + [[40500, "ready"]]
+        self.assertIsNone(boot_run({"until": 60000, "events": steps})["firstOn"])
+        self.assertIsNone(boot_run({"until": 19000, "navEnd": 10 ** 9, "events": [[300, "grow"]]})["firstOn"])
+        # おそいだけで 出た 知らせは、ゲームが 始まったら 消える
+        r = boot_run({"until": 14000, "events": [[300, "grow"], [12000, "ready"]]})
+        self.assertIsNotNone(r["firstOn"])
+        self.assertFalse(r["endOn"])
+        # 絵が 読めないのは 見ない
+        self.assertIsNone(boot_run({"until": 5000, "events": [[300, "grow"], [500, "imgError"], [900, "ready"]]})["firstOn"])
+        # ゲームが 始まった あとの エラー・3D の スクリプトの 失敗でも 出さない
+        self.assertIsNone(boot_run({"until": 20000, "events": [[300, "grow"], [900, "ready"], [3000, "runError"], [3100, "scriptError", "field3d.js"]]})["firstOn"])
+
+    def test_failed_game_script_shows_retry_at_once(self):
+        # engine.js が 失敗すると、題の 画面の いちばん 上の ボタンが から(文字なし)で、知らせも なかった。今は すぐ 出す・ゲームの さいごまで 進んでも 消さない
+        for name in ("engine.js", "cards.js", "engine.js?v=2"):
+            r = boot_run({"until": 4000, "events": [[300, "grow"], [500, "scriptError", name], [700, "tail", 1]]})
+            self.assertEqual(r["firstOn"], 500, name)
+            self.assertTrue(r["endOn"], name)
+        # エラーが 無くても、さいごの 行で ゲームが 始まって いなければ すぐ 出す
+        r = boot_run({"until": 4000, "events": [[300, "grow"], [700, "tail"]]})
+        self.assertEqual(r["firstOn"], 700)
+        self.assertTrue(r["endOn"])
+
+    def test_unrelated_error_does_not_cover_booted_game(self):
+        # Codex 指摘(周回168): 始まる 前の 関係ない エラー(ブラウザの 拡張など)で 知らせが 出て、ゲームが ふつうに 始まっても 消えなかった
+        r = boot_run({"until": 12000, "events": [[300, "grow"], [400, "runError"], [700, "ready"]]})
+        self.assertIsNone(r["firstOn"])
+        self.assertFalse(r["endOn"])
+        r = boot_run({"until": 12000, "events": [[300, "grow"], [400, "runError"], [700, "readyResult"]]})
+        self.assertIsNone(r["firstOn"])
+        # おそくて 出た 知らせも、エラーの あと 本当に 始まれば 消える
+        r = boot_run({"until": 14000, "events": [[300, "grow"], [400, "runError"], [12000, "ready"]]})
+        self.assertIsNotNone(r["firstOn"])
+        self.assertFalse(r["endOn"])
+        # エラーで 止まって 始まらなければ、8秒の 見はりで 出る
+        r = boot_run({"until": 12000, "events": [[300, "grow"], [400, "runError"]]})
+        self.assertGreaterEqual(r["firstOn"], 8400)
+        self.assertLessEqual(r["firstOn"], 9000)
+        self.assertTrue(r["endOn"])
+
+    def test_boot_retry_visible_with_reduced_motion(self):
+        # 知らせは 動かない 文字(動きを減らす 設定でも 同じに 見える)。画面の どこを 押しても 読みこみなおす
+        rule = css_rule("#bootSlow")
+        self.assertIn("position:fixed;inset:0", rule)
+        self.assertNotIn("animation", rule)
+        self.assertNotIn("#bootSlow", "".join(re.findall(r"@media \(prefers-reduced-motion[^{]*\{[^\n]*", HTML)))
+        # ゲームが 始まった ところ(さいごの スクリプトの はじめの 1枚の あと)で 見はりを やめる
+        tail = HTML[HTML.rindex("if (loadSave()) { resumeSwipe();"):]
+        self.assertIn("window.__k3d.idle(8000); }\n  if (window.__komeBoot) window.__komeBoot.ready();", tail)
+        # これまでの 読みこみ中の 丸は そのまま
+        self.assertIn("@media (prefers-reduced-motion:reduce){html.booting #sTitle h1::after{animation:none}}", HTML)
+
+    def test_short_portrait_weather_clears_card_date(self):
+        # 周回168: 320×568 で カードの 上の 端が 238〜262px まで 上がり、季節の 景色・今日の 天気・あしたの 空が 日付に かぶって いた(24枚中 22・12・5枚)
+        rule = "@media (min-height:441px) and (max-height:600px) and (min-width:301px) and (max-width:480px){#swSeasonScene{display:none!important}#swSkyWx{top:172px;width:60px;height:60px}#swSkyWx .wxIc{width:42px;height:42px}#swAheadWx{top:84px;right:100px;width:44px;height:44px;font-size:28px}#swAheadWx .ahIc{width:30px;height:30px}#swAheadWx .ahBadge{right:-6px;top:-6px;width:18px;height:18px;background-size:14px 14px}}"
+        self.assertIn(rule, HTML)
+        body = rule[rule.index("{") + 1:]
+        # あしたの 空は 遊びの 知らせなので 消さない(置き場所と 大きさだけ。消す・動かす は 運営者の 見た目の 決めごと・周回167)。消すのは 飾りの 景色だけ
+        self.assertNotIn("#swAheadWx{display:none", body)
+        self.assertNotIn("#swAheadWx,", body)
+        self.assertIn("#swSeasonScene{display:none!important}", body)
+        # 今日の 天気の 下の 端(172 + 60 = 232px)は カードの いちばん 上(238px)より 上・かかし(下の 端 169px)より 下
+        self.assertLessEqual(172 + 60, 238)
+        self.assertGreaterEqual(172, 169)
+        # あしたの 空(320px 幅で 左 160〜右 204px・上 84〜下 128px。小さな 日の出の しるしは 6px はみ出す)は かかし(左の 端 210px)の 左・顔(右の 端 123px)の 右・カードより ずっと 上
+        swipe_right = 320 - 16
+        left, right = swipe_right - 100 - 44, swipe_right - 100
+        self.assertLessEqual(right + 6, 210)
+        self.assertGreaterEqual(left, 123)
+        self.assertLess(84 + 44, 238)
+        # 横向き(440px 以下)・390×844 などの 大きい 画面の 置き方は 変えない
+        self.assertIn("#swSkyWx{position:absolute;right:8px;top:196px;", HTML)
+        self.assertIn("#swAheadWx{position:absolute;right:14px;top:272px;", HTML)
+        self.assertIn("@media (max-height:440px) and (min-width:564px){#swMood{left:calc(10px - (100vw - 480px) / 2)}", HTML)
 
 
 if __name__ == "__main__":

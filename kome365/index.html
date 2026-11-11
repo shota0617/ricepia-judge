@@ -18,6 +18,45 @@
 <script>/* 読みこみ中は題字だけ。スクリプトが読めなくても DOMContentLoaded で元に戻す */
 document.documentElement.classList.add('booting');
 document.addEventListener('DOMContentLoaded', function(){ document.documentElement.classList.remove('booting'); });
+/* 周回168(engine.js・cards.js が 返事を しない とき): 回線が つながった まま 止まると、題字と 小さな 丸 だけで 文字も やりなおす 物も 出なかった(4秒・61秒とも。動きを減らす 設定では 丸も 止まる)。
+   ここ(ゲームの スクリプトより 前)で 見はる: 読みこみが 8秒 進まない(画面の 部品の 数も 届いた ファイルの 数も 変わらない)まま ゲームが 始まって いなければ、
+   「よみこみに 時間が かかって います」と「タップで もう一度」を 出す。押すと 読みこみなおす。ページの 本体が まだ 届いて いる 途中なら 20秒まで 待つ。
+   engine.js・cards.js が 読めなかった ときは すぐ 出し、消さない(さいごの スクリプトは engine.js が 無くても 終わりまで 進み、題の 画面の ボタンが から に なる)。
+   ほかの エラー(ブラウザの 拡張など)では すぐには 出さない(ゲームが そのあと ふつうに 始まる ことが ある。始まらなければ 8秒の 見はりで 出る)。
+   さいごの スクリプトの 終わりの ready() は、本当に 始まった とき(engine・cards が あり、1枚目の カードの 日付 か 1年の 記録が 見えて いる)だけ 見はりを やめ、出て いた 知らせを 消す。
+   始まって いなければ すぐ 知らせを 出す(Codex 指摘: 前は エラーが 1つ あると、ゲームが ふつうに 始まっても 知らせが 画面を おおった まま だった) */
+(function(){
+  var d = document, w = window, seen = -1, last = Date.now(), box = null, iv = 0, bad = false;
+  function count(){ var n = d.getElementsByTagName('*').length; try { n += performance.getEntriesByType('resource').length; } catch(e){} return n; }
+  function loading(){ try { var nv = performance.getEntriesByType('navigation')[0]; return !!nv && !(nv.responseEnd > 0); } catch(e){ return false; } }
+  function show(){
+    if (w.__komeReady || box) return;
+    box = d.createElement('button'); box.type = 'button'; box.id = 'bootSlow';
+    box.innerHTML = '<b>米づくり365</b><span>よみこみに 時間が かかって います</span><span>タップで もう一度 よみこむ</span>';
+    box.onclick = function(){ location.reload(); };
+    (d.body || d.documentElement).appendChild(box);
+  }
+  function tick(){
+    if (w.__komeReady) { clearInterval(iv); return; }
+    var n = count(), now = Date.now();
+    if (n !== seen) { seen = n; last = now; }
+    else if (now - last >= (loading() ? 20000 : 8000)) { clearInterval(iv); show(); }
+  }
+  function booted(){
+    try {
+      if (!w.Kome365 || !w.KomeCards) return false;
+      var g = d.getElementById('sGame'), r = d.getElementById('sResult'), dt = d.getElementById('swBigDate');
+      return !!((g && !g.classList.contains('hidden') && dt && dt.textContent) || (r && !r.classList.contains('hidden')));
+    } catch(e){ return false; }
+  }
+  w.__komeBoot = { show: show, tick: tick, ready: function(){
+    clearInterval(iv);
+    if (bad || !booted()) { show(); return; }
+    w.__komeReady = true; if (box && box.parentNode) box.parentNode.removeChild(box); box = null;
+  } };
+  iv = setInterval(tick, 500);
+  w.addEventListener('error', function(e){ var t = e && e.target; if (!t || t.tagName !== 'SCRIPT' || !/(^|\/)(engine|cards)\.js(\?|$)/.test(t.src || '')) return; if (!w.__komeReady) { bad = true; clearInterval(iv); show(); } }, true);   /* engine.js・cards.js の 読みこみ失敗だけ。絵・3D の ファイル(2D の まま 遊べる)・ほかの エラーは ここでは 見ない */
+})();
 </script>
 <style>
 html.booting #sTitle{display:flex;align-items:center;justify-content:center;min-height:100vh}
@@ -26,6 +65,9 @@ html.booting #sTitle>:not(h1){display:none}
 html.booting #sTitle h1::after{content:"";display:block;width:8px;height:8px;margin:16px auto 0;border-radius:50%;background:#6f9a3f;animation:bootDot .8s ease-in-out infinite alternate}
 @keyframes bootDot{from{transform:translateX(-20px)}to{transform:translateX(20px)}}
 @media (prefers-reduced-motion:reduce){html.booting #sTitle h1::after{animation:none}}
+#bootSlow{position:fixed;inset:0;z-index:2147483647;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;width:100%;margin:0;padding:24px 16px;border:0;background:var(--bg);color:var(--ink);font:inherit;font-size:17px;line-height:1.6;text-align:center;cursor:pointer}   /* 周回168: 読みこみが 止まった ときの 知らせ(画面の どこを 押しても 読みこみなおす。動きは 無いので 動きを減らす 設定でも 同じに 見える) */
+#bootSlow b{font-size:28px;letter-spacing:.04em}
+#bootSlow span:last-child{margin-top:6px;padding:10px 18px;border-radius:12px;background:var(--acc);color:#fff;font-weight:700}
 :root{
   --bg:#f6f1e4; --card:#fffdf7; --ink:#2b2a24; --sub:#6b665a; --line:#e2d9c3;
   --acc:#3f7d3a; --acc2:#c8902c; --warn:#b4472f; --water:#6aa6c8; --chip:#efe7d2;
@@ -770,6 +812,7 @@ html:has(#sGame.swipeMode:not(.hidden)),body:has(#sGame.swipeMode:not(.hidden)){
 @media (max-height:700px) and (min-width:301px){#swSeasonScene{width:72px;height:72px}#swSeasonScene .scPix{width:72px;height:72px;background-size:72px 72px}#swSeasonScene .scStage{width:34px;height:34px;background-size:34px 34px}}   /* サイクル147(差16): 低い画面では季節の景色を小さくし、カードの上端と「1月1日」に下端(幹・雪・段階絵)が重ならないようにする。位置・絵は不変。幅300px以下は既存の「景色を隠す」が優先するよう対象外にする */
 @media (max-height:600px) and (min-width:301px){#swSeasonScene{width:52px;height:52px}#swSeasonScene .scPix{width:52px;height:52px;background-size:52px 52px}#swSeasonScene .scStage{width:26px;height:26px;background-size:26px 26px}}   /* サイクル147(差16): さらに低い画面では景色をもう一段小さくする */
 @media (max-height:520px) and (min-width:301px){#swSeasonScene{display:none!important}}   /* サイクル147(差16): 極端に低い縦画面では左列(顔・育ち・太陽)とカードの間に景色の置き場がないため、440px以下の作法を520pxまで広げて景色を出さない */
+@media (min-height:441px) and (max-height:600px) and (min-width:301px) and (max-width:480px){#swSeasonScene{display:none!important}#swSkyWx{top:172px;width:60px;height:60px}#swSkyWx .wxIc{width:42px;height:42px}#swAheadWx{top:84px;right:100px;width:44px;height:44px;font-size:28px}#swAheadWx .ahIc{width:30px;height:30px}#swAheadWx .ahBadge{right:-6px;top:-6px;width:18px;height:18px;background-size:14px 14px}}   /* 周回168: 320×568 など 低い 縦の 画面では、カードの 上の 端が 238〜262px まで 上がり、季節の 景色(左上)・今日の 天気(右上)・あしたの 空(点線の 丸)が カードの 日付に かぶって いた(24枚中 22枚・12枚・5枚)。今日の 天気は 少し 小さく して かかしの 下・カードの 上へ。あしたの 空(遊びの 知らせ。消さない)も 少し 小さく して かかしの 左の 空へ(顔・かかし・手本の 指・カードに かからない)。景色(飾り)は 置き場が ないので 出さない(520px 以下・幅300px 以下と 同じ) */
 @media (max-height:440px){#swGuide,#swSeasonStrip,#swIc,#swSeasonScene,#swDayGuest{display:none!important}#swTop{margin-bottom:2px}#swCard{padding-top:6px;padding-bottom:6px}#swTitle{margin:0 0 2px}#swText{line-height:1.4}#swEdge{margin-top:4px}#swEdge>span{padding:6px 9px}}
 @media (max-height:440px){#swCard.fest #swFest{display:none}}   /* 横向き(周回94): 田植え・稲刈りのちょうちん・花火の段を出さない(日付に重なり、選ぶ部分を画面の下へ押していた) */
 @media (max-width:300px){#swipe{overflow-x:clip}#swMood,#swGrow,#swKakashi,#swSkyWx,#swAheadWx,#swTrace,#swRich,#swReunion,#swSeasonScene,#swDayGuest,#swDelay{display:none!important}}   /* 文字200%(周回96・幅300px以下=拡大表示): 太陽の光の円盤で横にスクロールし、顔・育ち・かかし・天気がカードの字に重なっていた。飾りを控えてカードだけにする */
@@ -3916,6 +3959,7 @@ renderTitle();
   /* 周回167(2回目に開いた人・おそいスマホ): つづきの人は 開いてすぐ 3D のしたくを はじめていたので、開いたとたんに画面が止まり、はじめのスワイプが効くのが おくれていた。
      つづきの人も はじめての人と同じに待つ(カードを 1枚 決めた 0.9秒あと か、さわらずに 8秒)。1年が終わった記録(結果の画面)は スワイプするカードが無いので、これまでどおり すぐ動かす */
   if (loadSave()) { resumeSwipe(); window.__k3d.pre(); if (f && !KomeCards.over(f)) window.__k3d.idle(8000); else window.__k3d.go(); } else { guideFresh = true; $('bStart').click(); guideFresh = false; window.__k3d.pre(); window.__k3d.idle(8000); }
+  if (window.__komeBoot) window.__komeBoot.ready();   /* 周回168: ゲームが 始まった。読みこみの 見はり(いちばん 上の スクリプト)を やめる */
 })();
 </script>
 </body>

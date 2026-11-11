@@ -1,4 +1,4 @@
-"""米づくり365: 最初の1分に出る飾りが、カードの日付や天気の丸に重ならない置き方になっているか(周回152)、押しただけでは案内が消えないか(周回153)、出だしのちらつきと2Dの天気(周回154)、スワイプの手本(周回155)、止まったら手本(周回158)、飛んでいる間の指・しるしのあとの手本(周回161)、おそい回線・おそいスマホ(周回164)。"""
+"""米づくり365: 最初の1分に出る飾りが、カードの日付や天気の丸に重ならない置き方になっているか(周回152)、押しただけでは案内が消えないか(周回153)、出だしのちらつきと2Dの天気(周回154)、スワイプの手本(周回155)、止まったら手本(周回158)、飛んでいる間の指・しるしのあとの手本(周回161)、おそい回線・おそいスマホ(周回164)、田んぼから はじめた スワイプ(周回165)。"""
 import os
 import re
 import unittest
@@ -221,6 +221,32 @@ class TestKome365FirstMinute(unittest.TestCase):
         self.assertIn('html.booting #sTitle h1::after{content:"";display:block;width:8px;height:8px;margin:16px auto 0;border-radius:50%;background:#6f9a3f;animation:bootDot .8s ease-in-out infinite alternate}', HTML)
         self.assertIn("@keyframes bootDot{from{transform:translateX(-20px)}to{transform:translateX(20px)}}", HTML)
         self.assertIn("@media (prefers-reduced-motion:reduce){html.booting #sTitle h1::after{animation:none}}", HTML)
+
+    def test_swipe_from_field_reaches_card(self):
+        # 周回165: カードの 上の 田んぼ(#swStage)に 置いた 指も、カードに 置いた 指と 同じ 入口(cardDown)を 通る
+        i = HTML.index("el.card.addEventListener('pointerup', up); el.card.addEventListener('pointercancel', up);")
+        blk = HTML[i:i + 1400]
+        self.assertIn("document.addEventListener('pointerdown', function(e){", blk)
+        self.assertIn("if (t.closest('#swCard') || !t.closest('#swStage')) return;", blk)
+        # 顔を なでる 指・かかしを 押す 指(finger)、ボタン、「お疲れ様です」の カードは 取らない
+        self.assertIn("|| !fingerReady() || finger || startX != null) return;", blk)
+        self.assertIn("if (t.closest('button, a, input, select, textarea, [role=\"button\"], #swDetail, #swIdle')) return;", blk)
+        self.assertIn("cardDown(e);", blk)
+        # 決める きまりは 1つ(up)。田んぼ用の choose は 作らない
+        self.assertNotIn("choose(", blk[:blk.index("cardDown(e);")])
+        # 田んぼは 縦スクロールを 止めない(pan-y の まま)。カードは none の まま(周回159)
+        self.assertIn("min-height:0;touch-action:pan-y}", css_rule("#swStage") + "}")
+        self.assertIn("touch-action:none", css_rule("#swCard"))
+
+    def test_cancel_without_place_does_not_decide(self):
+        # 周回165: 場所が (0,0) の 取り消し(pointercancel)を「左へ 大きく 動いた」と 見ない。さいごに 届いた 動きの 場所で 見る
+        up = HTML[HTML.index("  function up(e){"):HTML.index("el.card.addEventListener('pointerup', up);")]
+        fix = "if (e && e.type === 'pointercancel' && e.clientX === 0 && e.clientY === 0 && startX != null && e.pointerId === pid) e = { type: 'pointercancel', pointerId: e.pointerId, timeStamp: e.timeStamp, clientX: samples.length ? samples[samples.length - 1][1] : startX, clientY: lastY != null ? lastY : startY };"
+        self.assertIn(fix, up)
+        # 指を はなした とき の 動き(sx0 を 取る 行)より 前に 直す
+        self.assertLess(up.index(fix), up.index("var sx0 = startX"))
+        # 取り消しは 横が 縦の 1.5倍 以上の ときだけ 決める きまりは そのまま
+        self.assertIn("Math.abs(dx) < dyGuard * (cancel ? 1.5 : flick ? 0.7 : 1)", up)
 
 
 if __name__ == "__main__":

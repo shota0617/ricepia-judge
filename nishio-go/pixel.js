@@ -13531,20 +13531,51 @@ function fieldHit(x, y, spots = G.spots) {   // spots：調べる 名所（手�
 // サイクル192（はじめの 1分）：なぞっても 進む。自分で 遊んで 分かった：タップの つもりで 指が 30px ずれる・お米から 行きたい 方へ なぞる と、ブラウザは タップ（click）に せず、
 // 地図は 何も 起こさなかった（15とおりの 指で ためした うち、何も 起きない 2つ）。指を はなした 所まで 歩く（タップと 同じ tapWalk。窓は 開かない）。
 // 2本指（ピンチ）・せかいちず（ドラッグで 地図を 動かす）・あるいて移動は これまでどおり。CSS の touch-action は pinch-zoom（1本指の なぞりを ブラウザに とられない）
-const swipeS = { down: null, at: -Infinity };
+const swipeS = { down: null, at: -Infinity, timer: null };
 const SWIPE_MIN = 12;   // これより 短い ずれは ふつうの タップ（click）に まかせる（px）
 cv.addEventListener('pointerdown', e => { swipeS.at = -Infinity;   // 新しい 指の 動きの click は 捨てない（捨てるのは なぞりに ついて くる click だけ）
-  swipeS.down = !worldMode && e.isPrimary && e.button === 0 ? { id: e.pointerId, x: e.clientX, y: e.clientY } : null; }, { passive: true });
-cv.addEventListener('pointercancel', () => { swipeS.down = null; }, { passive: true });
+  clearTimeout(swipeS.timer);
+  swipeS.down = !worldMode && e.isPrimary && e.button === 0 ? { id: e.pointerId, x: e.clientX, y: e.clientY, ax: e.clientX, ay: e.clientY, ex: e.clientX, ey: e.clientY, key: '' } : null; }, { passive: true });
+cv.addEventListener('pointercancel', () => { clearTimeout(swipeS.timer); swipeS.down = null; }, { passive: true });
+function swipeTile(cx, cy) {   // 画面の 点（clientX・clientY）の 下の マス
+  const r = cv.getBoundingClientRect(), dpr = cv.width / r.width, T = fieldT(Math.min(window.devicePixelRatio || 1, 3)), c = camTile();
+  const x = (cx - r.left) * dpr, y = (cy - r.top) * dpr;
+  return [Math.floor(c.x + (x - cv.width / 2) / T), Math.floor(c.y + (y - fieldCy) / T)];
+}
+// サイクル203（はじめの 1分）：なぞった 指を おいた まま 待つ 人は、指を はなすまで お米が 動かなかった（3秒 おいて いれば 3秒 何も 起きない）。
+// なぞった 先で 指が SWIPE_HOLD_MS 止まったら（SWIPE_HOLD_PX より 動かない）、指を はなさなくても そこへ 歩きだす。行き先は はなした ときと 同じ 決め方（指の 下の マス・窓は 開かない）。
+// 歩きだした あとは、その 指を はなすまで 行き先を かえない（歩くと 地図が 流れて、指の 下の マスが ずれる。なぞって いる 間じゅう 指を 追わせて ためしたら、
+// 道を なぞる 指で 行ったり 来たり して、60秒で ゴールに 着かなかった）。次の 行き先は 次の タップ・なぞりで。
+// 素早い なぞり・動かさない 長押し（click）・2本指・せかいちず・窓が 出て いる 間は これまでどおり。傾きの 許可（click で 聞く）には さわらない
+const SWIPE_HOLD_MS = 300, SWIPE_HOLD_PX = 5;
+function swipeHold() {
+  const d = swipeS.down;
+  if (!d || d.key || worldMode || !G.demo || driving || !howtoEl.hidden || mapCovered(false, true)) return;
+  if (Math.hypot(d.ex - d.x, d.ey - d.y) < SWIPE_MIN) return;   // 動かして いない 長押しは タップ（click）に まかせる
+  const r = cv.getBoundingClientRect();
+  if (d.ex < r.left || d.ex > r.right || d.ey < r.top || d.ey > r.bottom) return;   // 地図の 外へ 出た 指は 追わない
+  const q = swipeTile(d.ex, d.ey);
+  d.key = q[0] + ',' + q[1];
+  tapWalk(q[0], q[1]);
+}
+cv.addEventListener('pointermove', e => {
+  const d = swipeS.down;
+  if (!d || e.pointerId !== d.id || d.key) return;
+  d.ex = e.clientX; d.ey = e.clientY;
+  if (Math.hypot(d.ex - d.ax, d.ey - d.ay) <= SWIPE_HOLD_PX) return;
+  d.ax = d.ex; d.ay = d.ey;   // 動いた：止まった 時間を はかりなおす
+  clearTimeout(swipeS.timer); swipeS.timer = setTimeout(swipeHold, SWIPE_HOLD_MS);
+}, { passive: true });
 cv.addEventListener('pointerup', e => {
   const d = swipeS.down;
+  clearTimeout(swipeS.timer);
   swipeS.down = null;
   if (!d || e.pointerId !== d.id || worldMode || !G.demo || !howtoEl.hidden || mapCovered(false, true)) return;
   if (Math.hypot(e.clientX - d.x, e.clientY - d.y) < SWIPE_MIN) return;
   swipeS.at = performance.now();   // この あとに 来る click（マウスの ドラッグ）は 使わない
-  const r = cv.getBoundingClientRect(), dpr = cv.width / r.width, T = fieldT(Math.min(window.devicePixelRatio || 1, 3)), c = camTile();
-  const x = (e.clientX - r.left) * dpr, y = (e.clientY - r.top) * dpr;
-  tapWalk(Math.floor(c.x + (x - cv.width / 2) / T), Math.floor(c.y + (y - fieldCy) / T));
+  if (d.key) return;   // 止めた 所へ もう 歩きだして いる（歩きなおさない・行き先も かえない）
+  const q = swipeTile(e.clientX, e.clientY);
+  tapWalk(q[0], q[1]);
 }, { passive: true });
 // スポットをタップすると、ドラクエ風のウィンドウで説明
 cv.addEventListener('click', e => {
@@ -13669,7 +13700,7 @@ window.nishioPixel = { get houseCut() { return houseCut; }, giantWashLayout, dra
   UNREAD_BG, UNREAD_DOT,   // サイクル98：未読込は 淡い霧（テスト用）
   nightStartK, get nightK() { return nightK !== null ? nightK : nightStartK(performance.now()); },   // サイクル95：夜の 幕の 立ち上がり（テスト用）
   // いまの町名が新しいか（歩く地図を描いていて、いまの位置で2秒以内に確かめた。せかいちず・ふつうの地図に切り替えたあとの古い町名は使わない）
-  get hereFresh() { return active && !worldMode && !!G.me && performance.now() - here.at < 2000; }, spotSprites, spriteOf: sp => spriteOf(sp)[0], npcSprite: look => (npcSprites[look] || npcSprites.man)[0], art: { hiCanvas, shopCanvas, tileRoof, spanRows, pix, genSprite, GEN_DRAW }, get towns() { return towns; }, get here() { return here; }, npcTile, rasterize, chunkQuery, chunkBox, chunkInPlay, luReady, luAt, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, centerOnMe, demFor, get worldMode() { return worldMode; }, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; }, get traffic() { return traffic; }, get driving() { return driving; }, toggleCar, floatText, onPaddy, get tapGoal() { return tapS.goal; }, trailWalk, trailHas, trailClear, get trailCells() { return TRAIL.world.size; }, get trailWorld() { return [...TRAIL.world]; },
+  get hereFresh() { return active && !worldMode && !!G.me && performance.now() - here.at < 2000; }, spotSprites, spriteOf: sp => spriteOf(sp)[0], npcSprite: look => (npcSprites[look] || npcSprites.man)[0], art: { hiCanvas, shopCanvas, tileRoof, spanRows, pix, genSprite, GEN_DRAW }, get towns() { return towns; }, get here() { return here; }, npcTile, rasterize, chunkQuery, chunkBox, chunkInPlay, luReady, luAt, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, centerOnMe, demFor, get worldMode() { return worldMode; }, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; }, get traffic() { return traffic; }, get driving() { return driving; }, toggleCar, floatText, onPaddy, get tapGoal() { return tapS.goal; }, swipeHoldCfg: { ms: SWIPE_HOLD_MS, px: SWIPE_HOLD_PX, min: SWIPE_MIN }, trailWalk, trailHas, trailClear, get trailCells() { return TRAIL.world.size; }, get trailWorld() { return [...TRAIL.world]; },
   tileToClient: tileClient, get tapDemo() { return { on: !!tapDemo.el && !tapDemo.el.hidden, world: !!tapDemo.world, worldMs: DEMO_WORLD_MS, n: tapDemo.n, first: !!tapDemo.el && tapDemo.el.classList.contains('first'), side: tapDemo.side, up: tapDemo.up, walked: tapDemo.walked, tapMs: DEMO_TAP_MS, ahead: DEMO_AHEAD, walks: (q, slop = 0) => tapDemoWalks(q, slop), spot: (first = false) => (mzRt.path && mzRt.path.length > 1 ? tapDemoSpot(mzRt.path, first) : null), phone: !!tapDemo.ph && !tapDemo.ph.hidden, idleMs: DEMO_IDLE_MS, wait: [!active && 'active', rp.x === null && 'rice', !mazeOn() && 'maze', !howtoEl.hidden && 'howto', mapCovered() && 'covered', !!tapS.goal && 'walking', !(mzRt.path && mzRt.path.length > 1) && 'route'].filter(Boolean) }; }, tiltBtnCfg: TILT_BTN, ensureAround(lat, lng) { const q = toTile(lat, lng); ensureChunk(Math.floor(q.x / CHUNK), Math.floor(q.y / CHUNK)); } };
 { const rollGet = Object.getOwnPropertyDescriptor(window.nishioPixel, 'roll').get; Object.defineProperty(window.nishioPixel, 'roll', { configurable: true, enumerable: true, get() { const r = rollGet(), ra = rp.x === null ? '' : rollAreaAt(rp.x, rp.y), RSg = window.nishioRollSync; return { ...r, area: ra, feel: RSg && RSg.groundFeel ? RSg.groundFeel(ra) : { crr: 1, lin: 1 }, fps: fpsMeter.fps, shadow: RSg && RSg.shadowStretch ? RSg.shadowStretch(r.v) : 1 }; } }); }   // テスト用：いまの 地区と 地面の感じ（係数）を roll に足す
 })();

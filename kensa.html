@@ -1084,25 +1084,31 @@ function capture(el, e) {
    ホイール・キーで 少しでも 下へ 動いた 後は、たてに 動かす マウスが ぜんぶ「ページを動かす指」として 捨てられていた
    （1280×720・マウス実測: ホイール 1目もり（100px）の 後、🤲 を 顔へ 運べない・等級を 上へ 引けない・朱肉も はんこも 下りない。
    1袋目を 60秒で 終えられない 3回中3回 → サイクル150 の 前は 15〜17秒）。触れた 指の 見分けは サイクル150 のまま。
-   どの 指かは、どの 所作より 先に 聞く document の capture の pointerdown で 覚える。置いたまま待つ所作・たての所作の 見分けも pageFinger(0, …) で 同じ 決まりを 通す */
+   どの 指かは、その 指の できごと（e）の pointerType で 決める（touchPointer の 1か所）。最後に 押された 機械では 決めない（Codex指摘: 指を ふくろに 置いたまま
+   マウスを 押すと、その 指の たての 動きが「ページの 指」で なくなり 朱肉が 付いた。逆の 順では マウスの ドラッグが 指として 捨てられた）。
+   置いたまま待つ所作・たての所作の 見分けも pageFinger(0, …, e) で 同じ 決まりを 通す */
 var pageScrolled = false;
-var pageTouch = true;
-function pageFinger(dx, dy) {
-  return pageScrolled && pageTouch && Math.abs(dy) >= Math.abs(dx);
+function touchPointer(e) {
+  return !!e && e.pointerType === "touch";
+}
+function pageFinger(dx, dy, e) {
+  return pageScrolled && touchPointer(e) && Math.abs(dy) >= Math.abs(dx);
 }
 /* ページを動かす指は、ブラウザの取り消しを待たずに見分ける（Codex指摘）。置いた所から たてに大きく 8px より動いた指は、離した時（pointerup）にも
    タップ・空振り・はじき・運び に数えない。取り消しが来ない・おくれる端末でも、説明を動かしただけで 所作が進まない */
 const pageDowns = new Map();
-document.addEventListener("pointerdown", (e) => { pageTouch = e.pointerType === "touch"; pageDowns.set(e.pointerId, { x:e.clientX, y:e.clientY, slid:false }); }, { capture:true, passive:true });
+document.addEventListener("pointerdown", (e) => { pageDowns.set(e.pointerId, { x:e.clientX, y:e.clientY, slid:false }); }, { capture:true, passive:true });
 document.addEventListener("pointermove", (e) => {
   const d = pageDowns.get(e.pointerId);
-  if (d && !d.slid && pageFinger(e.clientX - d.x, e.clientY - d.y) && Math.hypot(e.clientX - d.x, e.clientY - d.y) > 8) d.slid = true;
+  if (d && !d.slid && pageFinger(e.clientX - d.x, e.clientY - d.y, e) && Math.hypot(e.clientX - d.x, e.clientY - d.y) > 8) d.slid = true;
 }, { capture:true, passive:true });
 window.addEventListener("pointerup", (e) => { pageDowns.delete(e.pointerId); });
 window.addEventListener("pointercancel", (e) => { pageDowns.delete(e.pointerId); });
+window.addEventListener("blur", () => { pageDowns.clear(); }); /* 指を のせたまま 画面を 離れた 時、離した 知らせが 来ない 指を 残さない（サイクル151） */
+document.addEventListener("visibilitychange", () => { if (document.hidden) pageDowns.clear(); });
 function pageSlid(e) {
   const d = e ? pageDowns.get(e.pointerId) : null;
-  return !!d && (d.slid || pageFinger(e.clientX - d.x, e.clientY - d.y) && Math.hypot(e.clientX - d.x, e.clientY - d.y) > 8);
+  return !!d && (d.slid || pageFinger(e.clientX - d.x, e.clientY - d.y, e) && Math.hypot(e.clientX - d.x, e.clientY - d.y) > 8);
 }
 /* 指の動きはどれも止まらないように、3回タップされたら自動でやってみせる */
 const NUDGE_LIMIT = 3;
@@ -1408,7 +1414,7 @@ const bagPts = new Map(), meterPts = new Map();
 function restingTakeover(pts, drag, e, applied) { /* 追う指を e の指へ入れかえる時だけ、その指の置いた所を返す。applied: 追っている指の動きが もう道具に写っている */
   const from = pts.get(e.pointerId);
   if (!drag || e.pointerId === drag.id || !from || applied || (drag.far || 0) > 8) return null;
-  if (pageFinger(e.clientX - from.x, e.clientY - from.y)) return null;
+  if (pageFinger(e.clientX - from.x, e.clientY - from.y, e)) return null;
   return Math.hypot(e.clientX - from.x, e.clientY - from.y) > 8 ? from : null;
 }
 $("sceneBag").addEventListener("pointerdown", (e) => {
@@ -1429,7 +1435,7 @@ $("sceneBag").addEventListener("pointermove", (e) => {
   const dx = e.clientX - P.drag.cx;
   P.drag.dx = dx;
   P.drag.far = Math.max(P.drag.far || 0, Math.hypot(dx, e.clientY - P.drag.cy)); /* たて・ななめも含めて指がどれだけ動いたか（さした後の空振りの見きわめ用） */
-  if (pageFinger(dx, e.clientY - P.drag.cy)) return; /* ページを動かす指では 穀刺しを動かさない（Codex指摘: 説明を動かす指の よこの ぶれ 6px で ささった） */
+  if (pageFinger(dx, e.clientY - P.drag.cy, e)) return; /* ページを動かす指では 穀刺しを動かさない（Codex指摘: 説明を動かす指の よこの ぶれ 6px で ささった） */
   if (Math.abs(dx) > 5) {
     if (probeAttract) { stopProbeAttract(true); P.drag.x0 = P.x; } /* 誘いで寄っていた所から、指で続きを押す（サイクル143） */
     P.drag.moved = true; $("poke").style.display = "none";
@@ -1537,7 +1543,7 @@ $("sceneMeter").addEventListener("pointermove", (e) => {
   if (!crankDrag.go) return; /* 8px までは回さずに ためる（last は置いた所のまま。こえた所で まとめて回す） */
   const p = crankPointer(e);
   if (!p.far) return;
-  if (pageFinger(e.clientX - crankDrag.x, e.clientY - crankDrag.y)) { crankDrag.last = p.a; return; } /* ページを動かす指では回さない（サイクル150） */
+  if (pageFinger(e.clientX - crankDrag.x, e.clientY - crankDrag.y, e)) { crankDrag.last = p.a; return; } /* ページを動かす指では回さない（サイクル150） */
   let d = p.a - crankDrag.last;
   if (d > 180) d -= 360;
   if (d < -180) d += 360;
@@ -1795,7 +1801,7 @@ plate.addEventListener("pointermove", (e) => {
   }
   if (!sortDrag) return;
   if (Math.hypot(e.clientX - sortDrag.x, e.clientY - sortDrag.y) > 12) sortDrag.moved = true; /* 指が少しずれてもタップ（Chrome のタップのゆるさ 15px に近づける） */
-  if (sortDrag.moved && !pageFinger(e.clientX - sortDrag.x, e.clientY - sortDrag.y)) { /* ページを動かす指では なでない・見る場所も動かさない（サイクル150） */
+  if (sortDrag.moved && !pageFinger(e.clientX - sortDrag.x, e.clientY - sortDrag.y, e)) { /* ページを動かす指では なでない・見る場所も動かさない（サイクル150） */
     /* 広げる前は、寄っていても なでれば粒を押す（サイクル150）。旧版は 広げる前に ふたゆびで寄ってしまうと、手本どおりに なでても 見る場所が動くだけで、
        山は広がらなかった（390×844実測: 寄った後に 山を横切る なで 8回 × 3回とも 広がらない・音 0回）。広げた後は 今までどおり、寄っている間の指は見る場所を動かす */
     if (Z.s > 1.001 && spread) {
@@ -2093,7 +2099,7 @@ token.addEventListener("pointerdown", (e) => {
   if (senseKind === "nigiru") {
     token.classList.add("squeeze");
     const h = senseHold = {};
-    if (!pageFinger(0, 1)) h.timer = setTimeout(() => { if (senseHold === h) { token.classList.remove("squeeze"); senseDone(); } }, NIGIRU_MS); /* 押す長さの しきいは 動きを へらす 設定でも 同じ（READ_MS の きまり・サイクル151） */
+    if (!pageFinger(0, 1, e)) h.timer = setTimeout(() => { if (senseHold === h) { token.classList.remove("squeeze"); senseDone(); } }, NIGIRU_MS); /* 押す長さの しきいは 動きを へらす 設定でも 同じ（READ_MS の きまり・サイクル151） */
     return;
   }
   senseDrag = { x:e.clientX, y:e.clientY, moved:false };
@@ -2101,7 +2107,7 @@ token.addEventListener("pointerdown", (e) => {
 token.addEventListener("pointermove", (e) => {
   if (!senseDrag) return;
   const dx = e.clientX - senseDrag.x, dy = e.clientY - senseDrag.y;
-  if (pageFinger(dx, dy)) return; /* ページを動かす指では 🤲 を運ばない */
+  if (pageFinger(dx, dy, e)) return; /* ページを動かす指では 🤲 を運ばない */
   if (Math.hypot(dx, dy) > 6) senseDrag.moved = true;
   senseDrag.dx = dx; senseDrag.dy = dy;
   placeToken(dx, dy);
@@ -2211,7 +2217,7 @@ document.querySelectorAll(".gradeBtn").forEach(btn => {
     drag = { y:e.clientY, moved:false };
   });
   btn.addEventListener("pointermove", (e) => {
-    if (!drag || pageFinger(0, e.clientY - drag.y)) return; /* 説明を読んでいる間の たての指は ページを動かす（サイクル150。触れた指だけ・サイクル151）。タップは数える */
+    if (!drag || pageFinger(0, e.clientY - drag.y, e)) return; /* 説明を読んでいる間の たての指は ページを動かす（サイクル150。触れた指だけ・サイクル151）。タップは数える */
     const dy = Math.min(0, e.clientY - drag.y);
     if (dy < -6) drag.moved = true;
     btn.style.transform = "translateY(" + dy + "px)";
@@ -2335,7 +2341,7 @@ $("bagBig").addEventListener("pointerdown", (e) => {
     inkDrag = { y:e.clientY };
     setHanko(10);
     const h = inkHold = {};
-    if (!pageFinger(0, 1)) h.timer = setTimeout(() => { if (inkHold !== h) return; const y = inkDrag ? (inkDrag.ly === undefined ? inkDrag.y : inkDrag.ly) : null; inkDone(); if (y !== null) inkToHanko(y); }, INK_MS); /* 押す長さの しきいは 動きを へらす 設定でも 同じ（READ_MS の きまり・サイクル151） */
+    if (!pageFinger(0, 1, e)) h.timer = setTimeout(() => { if (inkHold !== h) return; const y = inkDrag ? (inkDrag.ly === undefined ? inkDrag.y : inkDrag.ly) : null; inkDone(); if (y !== null) inkToHanko(y); }, INK_MS); /* 押す長さの しきいは 動きを へらす 設定でも 同じ（READ_MS の きまり・サイクル151） */
     return;
   }
   hankoDrag = { cy:e.clientY, moved:false };
@@ -2343,12 +2349,12 @@ $("bagBig").addEventListener("pointerdown", (e) => {
 $("bagBig").addEventListener("pointermove", (e) => {
   if (bagSwipe) {
     const dx = e.clientX - bagSwipe.x;
-    if (pageFinger(dx, e.clientY - bagSwipe.y)) return; /* ページを動かす指では流さない（サイクル150） */
+    if (pageFinger(dx, e.clientY - bagSwipe.y, e)) return; /* ページを動かす指では流さない（サイクル150） */
     $("bagBig").style.transform = "translateX(" + Math.max(0, dx) + "px) rotate(" + Math.max(0, dx) / 30 + "deg)";
     if (dx >= 40) { bagSwipe = null; leaveBag(); } /* 横なで: 40pxの短いなででも流れる。70pxでは30〜65pxの自然な短いなでが全て戻ってしまった（390×844実測・サイクル78）。タップのずれ（24px以下）と間違えないよう40pxに留める。手本の90pxはそのまま目安として残す */
     return;
   }
-  if (pageFinger(0, 1)) return; /* 朱肉・はんこは たての所作。説明を読んでいる間の たての指は ページを動かす（サイクル150。触れた指だけ・サイクル151）。タップは数える */
+  if (pageFinger(0, 1, e)) return; /* 朱肉・はんこは たての所作。説明を読んでいる間の たての指は ページを動かす（サイクル150。触れた指だけ・サイクル151）。タップは数える */
   if (!inked && inkDrag) { /* 朱肉の押し下げ: 18px下へ押し下げたらその場で付く（待ち時間なし） */
     const idy = e.clientY - inkDrag.y;
     inkDrag.ly = e.clientY;
@@ -2474,6 +2480,8 @@ document.addEventListener("pointerup", (e) => {
   if (d && now - d.t < 300 && Math.hypot(e.clientX - d.x, e.clientY - d.y) <= 10) lastTapUpAt = now;
 }, { capture:true, passive:true });
 document.addEventListener("pointercancel", (e) => { tapDowns.delete(e.pointerId); }, { capture:true, passive:true });
+window.addEventListener("blur", () => { tapDowns.clear(); }); /* 離した 知らせが 来ない 指は 残さない（指ごとの 記録・Codex指摘の なかま） */
+document.addEventListener("visibilitychange", () => { if (document.hidden) tapDowns.clear(); });
 nextBtn.addEventListener("pointerdown", (e) => {
   const now = performance.now();
   nextPress = { id:e.pointerId, early:now - nextShownAt < NEXT_GUARD && (nextAuto || now - lastTapUpAt < NEXT_BURST) };

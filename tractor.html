@@ -33,7 +33,7 @@
   #loadWait .lwT { position: absolute; left: 0; right: 0; top: 76%; text-align: center; color: #fff; font-size: 17px; font-weight: 800; text-shadow: 0 1px 4px rgba(0,0,0,.5); }
   /* サイクル271: 読みこみの 進みぐあいの 線（押す物では ない）。届いた分だけ 右へ のびる。おそい回線では 車体と田んぼが届くまで 15〜60 秒 かかり、その間 指の見本が くり返すだけで 進んでいるのか 止まっているのか 分からなかった */
   #loadWait .lwB { position: absolute; left: 50%; top: 82%; width: 168px; height: 6px; margin-left: -84px; border-radius: 3px; background: rgba(255,255,255,.35); overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,.25); }
-  /* サイクル275: 読みこみが 止まった ときだけ（.slow）、文字を「時間が かかっています・タップで やりなおす」に かえ、2 行に なっても 線に かぶらない ように 字を 少し小さく・線を 下へ */
+  /* サイクル275: 読みこみが 止まった ときだけ（.slow）、文字を「時間が かかっています・このまま 待つか、タップで やりなおし」に かえ、2 行に なっても 線に かぶらない ように 字を 少し小さく・線を 下へ */
   #loadWait.slow .lwT { font-size: 15px; padding: 0 16px; white-space: pre-line; }
   #loadWait.slow .lwB { top: 88%; }
   #lwBar { display: block; width: 3%; height: 100%; border-radius: 3px; background: #fff; transition: width .25s linear; }
@@ -213,18 +213,25 @@
 // サイクル275・最初の1分: 読みこみが とちゅうで 止まった（エラーに ならず、返事が 来ない）ときの 見はり。three の 3 本より 前に置く（three が 来ないと、あとの スクリプトは 1 つも 動かない）。
 // それまでは 車体・田んぼ・作業機・復号器・three の どれかが 返事を しないと、おおいは「指で なぞると 進みます」と 止まった線の まま ずっと 出ていた。さわっても 黄色い点が 出るだけで 始まらない
 // （見つけ役の 実測: 6 とおりの 止まり方の 6 とおりとも 30 秒たっても 文字は 同じ。three が 来ない ときは 60 秒）。
-// 線（#lwBar）も 届いた ファイルの 数も 8 秒 ふえず、まだ 始まっていない ときだけ、文字を「時間が かかっています・タップで やりなおす」に かえる。タップで 読みこみ直す。
-// 線が また 動いたら もとの 文字に もどす。ふつうに 読みこんでいる間は 文字も 指の絵も 線も 今までどおり（かくれた タブの 間は 数えない）
+// 線（#lwBar）も 届いた ファイルの 数も ふえず、まだ 始まっていない ときだけ、文字を「時間が かかっています・このまま 待つか、タップで やりなおし」に かえる。タップで 読みこみ直す。
+// 線が また 動く・ファイルが 届く・始まる と すぐ もとに もどす。ふつうに 読みこんでいる間は 文字も 指の絵も 線も 今までどおり（かくれた タブの 間は 数えない）
+// 待つ 長さは 2 とおり（Codex 指摘）:
+// ・three の 3 本を 読んでいる間（ゲームの スクリプトが まだ 動いていない＝window.game が ない）は 20 秒。この 間は 届いた バイトを ページから 見る 手が ない（ふつうの <script> は
+//   とちゅうの 進みが 分からず、届き終わるまで 数も ふえない）ので、おそいのか 止まったのかを 見分けられない。いちばん 大きい three.min.js は 圧縮して 149KB・圧縮なしで 603KB。
+//   おそい 3G（下り 400kbps＝約 50KB/秒）で 3 秒・圧縮なしでも 12 秒なので、20 秒 待てば ふつうに 届く 回線で 知らせを 出さない
+// ・ゲームの スクリプトが 動いて 車体・田んぼ・作業機を 読みはじめたら 8 秒（届いた 分が 線に 出るので、止まったと 分かる）
+// 文字は「止まった」とは 言わない（おそいだけ かもしれない）。待っても よいし、タップで やりなおしても よい
 (function () {
-  var still = 0, last = '', stall = false, t0 = '指で なぞると 進みます', t1 = '読みこみに 時間が かかっています。\n画面を タップすると やりなおします';
+  var still = 0, last = '', stall = false, t0 = '指で なぞると 進みます', t1 = '読みこみに 時間が かかっています\nこのまま 待つか、タップで やりなおし';
   function started() { try { return !!game.S.started; } catch (e) { return false; } }
   function mark() { var b = document.getElementById('lwBar'), n = 0; try { n = performance.getEntriesByType('resource').length; } catch (e) {} return (b ? b.style.width : '') + '/' + n; }
   var iv = setInterval(function () {
-    if (started() || document.body.classList.contains('loadng')) { stall = false; clearInterval(iv); return; }   // 始まった・読みこめなかった 知らせが 出た
+    if (started() || document.body.classList.contains('loadng')) {   // 始まった・読みこめなかった 知らせが 出た：見はりを やめ、知らせも もとに もどす
+      stall = false; clearInterval(iv); var w = document.getElementById('loadWait'), t2 = w.querySelector('.lwT'); w.classList.remove('slow'); if (t2) t2.textContent = t0; return; }
     if (document.hidden) return;
     var m = mark(), t = document.querySelector('#loadWait .lwT');
     if (m !== last) { last = m; still = 0; } else still++;
-    stall = still >= 8;
+    stall = still >= (window.game ? 8 : 20);   // three の 3 本を 読む間は 20 秒・そのあとは 8 秒（上の わけ）
     if (t && t.textContent !== (stall ? t1 : t0)) { t.textContent = stall ? t1 : t0; document.getElementById('loadWait').classList.toggle('slow', stall); }
   }, 1000);
   document.addEventListener('click', function () { if (stall && !started()) location.reload(); });

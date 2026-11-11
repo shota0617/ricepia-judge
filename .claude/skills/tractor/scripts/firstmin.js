@@ -911,18 +911,33 @@ const srv = http.createServer((r, s) => { const u = decodeURIComponent(r.url.spl
       ok('読みこみ中の ほかの所の エラー：おおいは そのまま（直す前：おおいが消え 田んぼを かくして「読みこめませんでした」）。この ページの エラーは 知らせる・始まった あとは かくさない', !e1.started && e1.cover && !e1.loadng && !e2.started && e2.loadng && !e2.cover && e3.started && !e3.loadng && e3.cv === 'visible', [e1, e2, e3]);
       await ctx.close();
     }
-    // 15-2) 読みこみが とちゅうで 止まる（田んぼの glb・three が 返事を しない）：線も 届いた数も 8 秒 ふえないと「時間が かかっています・タップで やりなおす」。線が 動けば もとの 文字。タップで 読みこみ直す
-    //       （直す前：「指で なぞると 進みます」と 止まった線の まま ずっと。three が 来ない ときは 見はりが 1 つも 動かない）
-    for (const [lab, pend] of [['田んぼの glb', q => q.route('**/field_tanbo*.glb', () => {})], ['three.min.js', q => q.route('https://cdn.jsdelivr.net/**/three.min.js', () => {})]]) {
+    // 15-2) 読みこみが おそい・とちゅうで 止まる：線も 届いた数も ふえないと「時間が かかっています・このまま 待つか、タップで やりなおし」。three の 3 本を 読む間は 20 秒・ゲームが 読みはじめたら 8 秒。
+    //       進みが もどる・始まる と 知らせは 消える。タップで 読みこみ直す（直す前：「指で なぞると 進みます」と 止まった線の まま ずっと。three が 来ない ときは 見はりが 1 つも 動かない）
+    //       Codex 指摘：three.min.js が おそいだけ（12 秒で 届く）なら 知らせを 出さない（ページからは 届いた バイトが 見えないので、おそい 3G でも 届く 長さ＝20 秒 待つ）
+    const DELAY = ms => q => q.route('https://cdn.jsdelivr.net/**/three.min.js', async r => { await new Promise(z => setTimeout(z, ms)); r.fulfill({ path: TN + '/build/three.min.js', contentType: 'text/javascript' }); });
+    for (const [lab, pend, kind] of [['田んぼの glb が 返事を しない', q => q.route('**/field_tanbo*.glb', () => {}), 'stall8'], ['three.min.js が 返事を しない', q => q.route('https://cdn.jsdelivr.net/**/three.min.js', () => {}), 'stall20'],
+      ['three.min.js が 12 秒 おくれて 届く', DELAY(12000), 'late12'], ['three.min.js が 25 秒 おくれて 届く', DELAY(25000), 'late25']]) {
       let html = 0; const { ctx, p } = await open14('', async q => { await pend(q); q.on('request', r => { if (/\/tractor\.html/.test(r.url())) html++; }); }, true, [390, 844], 'commit');
-      const lw = () => p.evaluate(() => { const w = document.getElementById('loadWait'), t = w.querySelector('.lwT'), r = t.getBoundingClientRect(), b = w.querySelector('.lwB').getBoundingClientRect(); return { slow: w.classList.contains('slow'), text: t.textContent, cover: !w.classList.contains('off'), started: !!(window.game && game.S && game.S.started), gap: Math.round(b.top - r.bottom) }; });
-      await p.waitForTimeout(2500); const s0 = await lw();
-      await p.waitForFunction(() => document.getElementById('loadWait').classList.contains('slow'), null, { timeout: 90000 }).catch(() => {}); const s1 = await lw();
-      let mv = null; if (lab === '田んぼの glb') { await p.evaluate(() => { document.getElementById('lwBar').style.width = '50%'; }); await p.waitForFunction(() => !document.getElementById('loadWait').classList.contains('slow'), null, { timeout: 20000 }).catch(() => {}); mv = await lw();
-        await p.waitForFunction(() => document.getElementById('loadWait').classList.contains('slow'), null, { timeout: 90000 }).catch(() => {}); }
-      const h0 = html; await p.touchscreen.tap(195, 420);
-      for (let i = 0; i < 40 && html === h0; i++) await p.waitForTimeout(250);
-      ok(lab + 'が 返事を しない：はじめは いつもの 文字・8 秒 止まると「時間が かかっています・タップ」（文字は 線に かぶらない）・タップで 読みこみ直す（直す前：ずっと 同じ 文字）', !s0.slow && /なぞると/.test(s0.text) && s1.slow && /時間が かかって/.test(s1.text) && /タップ/.test(s1.text) && s1.cover && !s1.started && s1.gap >= 0 && html > h0 && (!mv || (!mv.slow && /なぞると/.test(mv.text))), [s0.slow, s1.slow, s1.gap, mv && mv.slow, h0, html]);
+      const t0 = Date.now(), lw = () => p.evaluate(() => { const w = document.getElementById('loadWait'), t = w.querySelector('.lwT'), r = t.getBoundingClientRect(), b = w.querySelector('.lwB').getBoundingClientRect(); return { slow: w.classList.contains('slow'), text: t.textContent, cover: !w.classList.contains('off'), started: !!(window.game && game.S && game.S.started), three: !!window.THREE, gap: Math.round(b.top - r.bottom) }; }).catch(() => null);
+      // 0.5 秒ごとに 見る：はじめて 知らせが 出た 秒・three が 届いた 秒・始まった 秒
+      let first = null, s1 = null, three = null, st = null, slowAfterThree = false, s0 = null;
+      for (let i = 0; i < 160; i++) { const s = await lw(), t = (Date.now() - t0) / 1000; if (!s) { await p.waitForTimeout(500); continue; } if (!s0 && t > 2) s0 = s;
+        if (s.slow && first === null) { first = +t.toFixed(1); s1 = s; } if (s.three && three === null) three = +t.toFixed(1); if (s.started && st === null) st = +t.toFixed(1);
+        if (three !== null && s.slow && t > three + 3) slowAfterThree = true;
+        if ((kind === 'stall8' || kind === 'stall20') && first !== null) break; if (kind.startsWith('late') && st !== null && t > st + 2.5) break; await p.waitForTimeout(500); }   // late：見はりは 1 秒ごと。始まった あとの 1 回で 知らせを もとに もどすのを 待つ
+      if (kind === 'stall8' || kind === 'stall20') {
+        let mv = null; if (kind === 'stall8') { await p.evaluate(() => { document.getElementById('lwBar').style.width = '50%'; }); await p.waitForFunction(() => !document.getElementById('loadWait').classList.contains('slow'), null, { timeout: 20000 }).catch(() => {}); mv = await lw();
+          await p.waitForFunction(() => document.getElementById('loadWait').classList.contains('slow'), null, { timeout: 90000 }).catch(() => {}); }
+        const h0 = html; await p.touchscreen.tap(195, 420);
+        for (let i = 0; i < 40 && html === h0; i++) await p.waitForTimeout(250);
+        const lim = kind === 'stall8' ? [8, 18] : [20, 32];   // 見はりは 1 秒ごと（こんだ 機械では おくれる）。三 本の間は 20 秒より 前に 出ない
+        ok(lab + '：はじめは いつもの 文字・' + (kind === 'stall8' ? 8 : 20) + ' 秒 ふえないと「時間が かかっています・待つか タップ」（文字は 線に かぶらない）・線が 動けば もとの 文字・タップで 読みこみ直す（直す前：ずっと 同じ 文字）',
+          !!s0 && !s0.slow && /なぞると/.test(s0.text) && !!s1 && /時間が かかって/.test(s1.text) && /待つ/.test(s1.text) && /タップ/.test(s1.text) && s1.cover && !s1.started && s1.gap >= 0 && first >= lim[0] && first <= lim[1] && html > h0 && (!mv || (!mv.slow && /なぞると/.test(mv.text))), [first, s1 && s1.gap, mv && mv.slow, h0, html]);
+      } else {
+        const fin = await lw();
+        ok(lab + '：' + (kind === 'late12' ? '知らせは 出ない' : '20 秒で 知らせ・届いたら 消える') + '・そのまま 始まる・読みこみ直さない（Codex 指摘：おそいだけの three で やりなおしを すすめない）',
+          (kind === 'late12' ? first === null : first !== null && first >= 20 && three !== null && first < three + 1) && !slowAfterThree && st !== null && !!fin && !fin.slow && !fin.cover && /なぞると/.test(fin.text) && html === 1, [first, three, st, slowAfterThree, html]);
+      }
       await ctx.close();
     }
     // 15-3) 前に「くわしい説明」を 入れていた人（localStorage に tractorDetail=1）：ほかの人と 同じ しずかな はじめの 1 分（直す前：計器・知らせが 出て 重なり スマホ縦 5〜6 組・320×568 で 22〜25 組）。記録は 消さない

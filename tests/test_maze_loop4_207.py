@@ -55,7 +55,7 @@ def node(code):
 
 # tapDemoTick の 中（置き場を さがした あと）と カメラの 1こま。お米（10.5, 10.5）・道すじは 下へ。見える 地図 106px（568×320 で 1回 歩いた あと）
 LEAD_STUB = """
-let rp = { x: 10.5, y: 10.5, vx: 0, vy: 0 }, cover = 214, sp = null, cam = { x: 10.5, y: 10.5 };
+let rp = { x: 10.5, y: 10.5, vx: 0, vy: 0 }, cover = 214, sp = null, cam = { x: 10.5, y: 10.5 }, T = 16, dpr = 1, w = 568, h = 320;   // T：マスの 大きさ（px）・w・h：地図の 大きさ
 const MZ_K = 3, DEMO_AHEAD = 3, path = [[3, 3], [3, 5], [3, 7], [4, 7]], first = false, dt = 0.016;
 const cv = { getBoundingClientRect: () => ({ width: 568, height: 320 }) }, tileClient = (x, y) => ({ x: x * 16, y: y * 16 });
 const tapDemo = { el: { hidden: false } }, tapDemoSpot = () => sp;
@@ -100,6 +100,24 @@ class DemoLead207(unittest.TestCase):
         self.assertGreater(o["a"], 10.5)
         self.assertAlmostEqual(o["b"], o["a"], places=6, msg="手本を 出さない 間も 地図が 動きつづける")
         self.assertAlmostEqual(o["c"] - 10.5, (106 / 2 - 34) / 16, places=2)   # また 出せる ように なったら つづきから
+
+    def test_rice_stays_inside_through_view_changes(self):
+        """Codex の 指摘（3回目）：寄せた あとに「＋」で 大きく すると、お米が 地図の 上の 外へ（16 → 64px で −23px）。
+        きまり：どの こまでも、お米は 見える 地図の ふちから 34px（DEMO_LEAD_PX）より 内がわ。寄せる → 大きく ×1〜×4 → 小さく → 568 ↔ 480 → たて向き → 窓を 開く・とじる"""
+        gate = line(PIX, "  if (!ok && !moved) { demoLead.tx", "")
+        steps = [("寄せる", ""), ("大きく ×2", "T = 32;"), ("大きく ×3", "T = 48;"), ("大きく ×4", "T = 64;"), ("小さく", "T = 16;"),
+                 ("480×320", "w = 480;"), ("568×320", "w = 568;"), ("たて向き 390×844", "w = 390; h = 844 - 214;"), ("よこ向きへ もどす", "w = 568; h = 320;"),
+                 ("窓を 開く", "gate(false, false);"), ("「＋」（窓の 間）", "T = 64;"), ("窓を とじる", "gate(true, false); pick();"), ("小さく", "T = 16; pick();")]
+        js = "function gate(ok, moved) {\n" + gate + "}\nconst out = [], M = 34;\n"
+        js += "function riceAt() { const cy = (h - cover * dpr) / 2, cx = w / 2; return [cx + (rp.x - cam.x) * T, cy + (rp.y - cam.y) * T, h - cover * dpr]; }\n"
+        js += "pick();\n"
+        for name, code in steps:
+            js += code + " { let worst = 1e9; for (let i = 0; i < 120; i++) { frame(true); const [x, y, vh] = riceAt(); worst = Math.min(worst, y, vh - y, x, w - x); } out.push([" + json.dumps(name) + ", +worst.toFixed(2)]); }\n"
+        js += "console.log(JSON.stringify(out));"
+        o = node(lead_code(js))
+        bad = [(n, v) for n, v in o if v < 34 - 0.01]
+        self.assertEqual(bad, [], "お米が 見える 地図の ふちから 34px より 外へ 出る こまが ある: %s" % o)
+        self.assertGreater(dict(o)["寄せる"], 0)
 
     def test_low_landscape_hides_only_the_counter_row(self):
         """R2：高さ 340px より 低い 横向きの めいろでは「たんけん ○/100」の 1行を 下の 欄に 出さない（気をつける 知らせは 出す）"""

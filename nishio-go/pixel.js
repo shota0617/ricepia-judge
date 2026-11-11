@@ -8091,7 +8091,13 @@ function frame(now) {
   if (rolling) {   // 転がしているときは、お米の少し先を見る（進む向きが よく見えて、速さも感じられる）
     const k = Math.min(1, dt * 2.5);
     camLead.x += (Math.max(-1.1, Math.min(1.1, rp.vx * 0.2)) - camLead.x) * k; camLead.y += (Math.max(-1.1, Math.min(1.1, rp.vy * 0.2)) - camLead.y) * k;
+    // サイクル207（Codex の 指摘 3回目）：寄せる 分は、それを 決めた ときの 見え方（マスの 大きさ・地図の 高さ）で しか 正しくない。「＋」で 大きく する・画面の 向き・
+    // 下の 欄の 高さが かわると、お米が 地図の 上の 外へ 出た（マス 16 → 64px で 34px → −23px）。きまり：どの こまでも、お米は 見える 地図の ふちから DEMO_LEAD_PX より 内がわ。
+    // そのため 寄せる 分（目当ても）を こまごとに いまの 見え方で おさえる（見え方が かわった その こまから 効く）
+    const leadLim = (half, v) => { const m = Math.max(0, half - DEMO_LEAD_PX * dpr) / T; return Math.max(-m, Math.min(m, v)); }, leadW = w / 2, leadH = (h - cover * dpr) / 2;
+    demoLead.tx = leadLim(leadW, demoLead.tx); demoLead.ty = leadLim(leadH, demoLead.ty);
     demoLead.x += (demoLead.tx - demoLead.x) * k; demoLead.y += (demoLead.ty - demoLead.y) * k;
+    demoLead.x = leadLim(leadW, demoLead.x); demoLead.y = leadLim(leadH, demoLead.y);
     cam.x = rp.x + camLead.x + demoLead.x; cam.y = rp.y + camLead.y + demoLead.y;
   } else camLead.x = camLead.y = demoLead.x = demoLead.y = demoLead.tx = demoLead.ty = 0;
   const hp = rolling ? { x: rp.x, y: rp.y } : { x: cam.x, y: cam.y };   // お米のいる所（転がす：rp・ほかは 画面のまん中）

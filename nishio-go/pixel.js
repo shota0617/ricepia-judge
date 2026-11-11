@@ -13696,7 +13696,7 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) swipe
 window.addEventListener('blur', swipeReset);
 cv.addEventListener('pointerdown', e => { swipeS.at = -Infinity; }, { passive: true });   // 新しい 指の 動きの click は 捨てない（捨てるのは なぞりに ついて くる click だけ）。受ける・とりけす は 上の fingerDown
 cv.addEventListener('pointercancel', () => swipeCancel(), { passive: true });
-cv.addEventListener('pointerleave', () => { clearTimeout(swipeS.timer); }, { passive: true });   // 地図の 外へ 出た 指・マウスは 待たない（外で はなしても、のこった タイマーで 歩きださない）。押した まま もどれば、次の 動きから また はかる
+cv.addEventListener('pointerleave', e => { const d = swipeS.down; if (!d || e.pointerId === d.id) clearTimeout(swipeS.timer); }, { passive: true });   // 地図の 外へ 出た 指・マウスは 待たない（外で はなしても、のこった タイマーで 歩きださない）。押した まま もどれば、次の 動きから また はかる
 function swipeAt(cx, cy) {   // 画面の 点（clientX・clientY）の 地図の 上の 場所（マス。小数つき）と、画面の 1px が 何マスか（k）
   const r = cv.getBoundingClientRect(), dpr = cv.width / r.width, T = fieldT(Math.min(window.devicePixelRatio || 1, 3)), c = camTile();
   const x = (cx - r.left) * dpr, y = (cy - r.top) * dpr;

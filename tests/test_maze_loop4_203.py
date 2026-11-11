@@ -73,7 +73,7 @@ class SwipeHold203(unittest.TestCase):
         self.assertIn("if (!d.key && Math.hypot(e.clientX - d.x, e.clientY - d.y) < SWIPE_MIN) {", SW)   # サイクル206：あとから ついた 指の タップだけ、ここで click を 出す
         self.assertIn("if (d.key && Math.hypot(e.clientX - d.x, e.clientY - d.y) < SWIPE_MIN) return;", SW)   # 歩きだした 指を はじめの 所へ もどして はなした：行き先は かえない
         self.assertIn("if (e.pointerType === 'mouse' && !e.buttons) { swipeCancel(); return; }", SW)   # 外で はなした マウスが もどって きても 歩きださない
-        self.assertIn("cv.addEventListener('pointerleave', () => { clearTimeout(swipeS.timer); }, { passive: true });", PIX)   # 外へ 出たら 待たない
+        self.assertIn("cv.addEventListener('pointerleave', e => { const d = swipeS.down; if (!d || e.pointerId === d.id) clearTimeout(swipeS.timer); }, { passive: true });", PIX)   # 外へ 出たら 待たない
         self.assertIn("if (!tapWalk(q[0], q[1])) return false;", SW)   # 歩きだせた ときだけ 行き先を きめる   # 歩きだした 指は、もどして はなしても click を 使わない
 
     def test_playtest_and_doc(self):

@@ -51,6 +51,11 @@ const srv = http.createServer((r, s) => { const u = decodeURIComponent(r.url.spl
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: 195, y: 481, id: 1 }] });   // ヒントの指と同じ：前へ 1 回なぞる
     for (let i = 1; i <= 20; i++) { await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: 195, y: 481 - 84 * i / 20, id: 1 }] }); await adv(0.05); }
     await adv(3); await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); await adv(0.5);
+    // 大きな数字は 0.15 秒ごとに 書きかえる。こんでいる機械では 指を離す知らせが おくれて届き、まだ耕している とちゅうで 読むと、数字だけ 1 回ぶん古い（0.7% と 0.83%）。
+    // 指を離す知らせを 受けとってから、耕した ます目の数が 0.5 秒 変わらなくなるまで待ち、数字が もう 1 回 書きかわってから、2 つを 同じ しゅんかんに読む（ゆるす差 0.11 は 変えない）
+    await p.evaluate(() => new Promise(r => setTimeout(r, 300)));
+    for (let i = 0, c = -1; i < 12; i++) { const n = await p.evaluate(() => { window.__adv(0.5); return tilledCount; }); if (n === c) break; c = n; }
+    await adv(0.2);
     const r = await p.evaluate(() => ({ big: document.getElementById('bigPct').textContent, tilled: tilledCount, art: ART.on ? Math.floor(ART.score().fill * 100 + 1e-9) : null, field: tilledCount / workCount * 100 }));
     ok(label + '：1 回なぞって耕した（4 秒）', r.tilled > 100, r.tilled);
     ok(label + '：数字が 0 のままでない', !/^0(\.0)?%$/.test(r.big), r.big);
@@ -691,6 +696,26 @@ const srv = http.createServer((r, s) => { const u = decodeURIComponent(r.url.spl
       await p.mouse.move(195, 481); await p.mouse.move(195, 440); await adv(0.5); const g1 = await st();
       await p.mouse.down(); for (let i = 1; i <= 10; i++) { await p.mouse.move(195, 440 - i * 6); await adv(0.05); } await adv(2); const g2 = await st(); await p.mouse.up(); await adv(1.5); const g3 = await st();
       ok('マウス：押さずに動かしても始まらない・押して なぞると進む・離すと終わる', !g1.on && g1.pts === 0 && g2.on && g2.z - g0.z > 1 && !g3.on && g3.ids === 0, [g1.on, g1.pts, g2.on, +(g2.z - g0.z).toFixed(2), g3.on, g3.ids]);
+      // (h) Codex 指摘：寄って見た あと 片方の指だけ離す。残った指は 見るだけの指なので、置いたままでも 見本は出ない（直す前：1 秒で 拡大した画面に 見本が出る）
+      await p.evaluate(() => Object.assign(game.S, { x: 0, z: -12, yaw: 0, v: 0, steer: 0 })); await adv(1.5);
+      const hv = () => p.evaluate(() => ({ hold: +HINT.holdT.toFixed(2), hint: !document.getElementById('hintSwipe').classList.contains('hidden'), idle: !!(HINT.turn && HINT.turn.idle) || HINT.demoF, zoom: +fovZoom.toFixed(2), on: TRACE.on, drag: !!drag, ids: touchIds.size, look: +look.yaw.toFixed(2) }));
+      const h0 = await hv();
+      await T('touchStart', [{ x: 165, y: 520, id: 1 }, { x: 225, y: 520, id: 2 }]);
+      for (let i = 1; i <= 8; i++) { await T('touchMove', [{ x: 165 - i * 8, y: 520, id: 1 }, { x: 225 + i * 8, y: 520, id: 2 }]); await adv(0.05); }
+      await adv(0.3); await T('touchEnd', [{ x: 289, y: 520, id: 2 }]); await adv(1.5); const h1 = await hv(); await adv(1.5); const h2 = await hv();
+      await T('touchEnd', []); await adv(1.5); const h3 = await hv();
+      ok('寄って見た あと 片方の指だけ離す：残った指を 3 秒 置いても 見本は出ない・拡大のまま（直す前：1 秒で 見本が出る）。ぜんぶ離すと いつもの見本', h0.hint && !h1.hint && !h2.hint && h1.hold === 0 && h2.hold === 0 && !h2.idle && h2.zoom > 1.5 && !h2.on && h2.ids === 1 && h3.hint && h3.zoom === h2.zoom, [h0.hint, h1.hint, h2.hint, h2.hold, h2.idle, h2.zoom, h2.ids, h3.hint]);
+      // (i) Codex 指摘：拡大したまま、空に 1 本 置いて もう 1 本で 空を なぞる（見回す）：拡大は そのまま（直す前：1 倍に もどる）。地面を なぞったときは 1 倍に もどって進む
+      const sky = await p.evaluate(() => { fovZoom = 1.15; camera.fov = baseFov / fovZoom; camera.updateProjectionMatrix(); look.yaw = look.pitch = 0; const at = (x, y) => !TRACE.ground({ clientX: x, clientY: y }) && document.elementFromPoint(x, y) === canvas; return [at(100, 150), at(280, 150)]; });   // どちらも 空の上・canvas の上
+      await T('touchStart', [{ x: 100, y: 150, id: 1 }]); await adv(0.3); const i0 = await hv();
+      await T('touchStart', [{ x: 100, y: 150, id: 1 }, { x: 280, y: 150, id: 2 }]); await adv(0.1);
+      for (let i = 1; i <= 6; i++) { await T('touchMove', [{ x: 100, y: 150, id: 1 }, { x: 280 - i * 10, y: 150, id: 2 }]); await adv(0.05); }
+      await p.evaluate(() => new Promise(r => setTimeout(r, 300))); await adv(0.3); const i1 = await hv(); await T('touchEnd', [{ x: 220, y: 150, id: 2 }]); await adv(0.3);
+      const zb = (await st()).z;
+      await T('touchStart', [{ x: 100, y: 150, id: 1 }, { x: 195, y: 481, id: 2 }]); await mv(2, [195, 481], [195, 397], 10, [{ x: 100, y: 150, id: 1 }]); await adv(2); const i2 = await hv(), za = (await st()).z;
+      await T('touchEnd', []); await adv(1.5);
+      ok('拡大したまま 空に 1 本 置いて、もう 1 本で 空を なぞる：見回すだけで 拡大は そのまま（直す前：1 倍に もどる）', sky[0] && sky[1] && i0.drag && i0.ids === 1 && i1.zoom === 1.15 && !i1.on && i1.drag && i1.ids === 2 && i1.look !== 0, [sky, i0.drag, i1.zoom, i1.on, i1.drag, i1.ids, i1.look]);
+      ok('同じ形で 地面を なぞったときは 1 倍に もどって 進む', i2.zoom === 1 && i2.on && za - zb > 1, [i2.zoom, i2.on, +(za - zb).toFixed(2)]);
       await ctx.close();
     }
     // ---- 14-2) 「横へ」の見本の向き・畦の吹き出し ----

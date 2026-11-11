@@ -8152,7 +8152,9 @@ const HINT = {
     // 数えるのは 田んぼ（canvas）の上の なぞりの指だけ：空を押して見回している指・2 本指で寄って見ている間・下のボタンを押している指・キーの間は 今までどおり出さない（Codex 指摘 PR #1076）。
     // 指が 5px 動いた・置き直した ら 消して 数え直す（pointermove・pointerdown で holdT を 0 に）。指を離したら そのまま「止まった人への見本」に つながる。トラクターの動き（サイクル116）は 変えない
     const rest = live && this.done && !key.fwd && !key.back && !key.left && !key.right && !AUTO.on && !S.stalled && !(S.crank > 0) && Math.abs(S.v) < 0.05 && !(this.turn && !this.turn.idle && !this.turn.out);
-    const free = !TRACE.on && !drag && viewPts.size === 0 && touchIds.size === 0, hold = !free && !drag && !viewPinch && viewPts.size > 0 && touchIds.size <= viewPts.size && !TRACE.drive;
+    const free = !TRACE.on && !drag && viewPts.size === 0 && touchIds.size === 0, hold = rest && !free && !drag && !viewPinch && viewTwo !== 'pinch' && viewPts.size > 0 && touchIds.size <= viewPts.size && !TRACE.drive && [...viewPts.values()].every(q => !q.view && TRACE.ground({ clientX: q.x, clientY: q.y }));
+    // Codex 指摘（サイクル274 の PR）: 「置いたままの指」に数えるのは、地面（ボンネットも）の上に ある なぞりの指だけ。寄って見た あとに 1 本だけ残った指（q.view。なぞりは始めない）と、
+    // 空の上の指（見回す指。ほかの窓から もどって 記録だけ残った ときも）は 数えない。それまでは 寄って見たまま 片方の指を離して 1 秒で、拡大した画面に 見本が出ていた
     if (rest && hold) this.holdT += dt; else this.holdT = 0;
     const idle = rest && (free || this.holdT >= 0.6);
     if (!idle) { this.idleT = 0; this.demoK = -1; this.demoF = false; if (this.turn && this.turn.idle) this.turn = null; }
@@ -9884,8 +9886,10 @@ function viewZoomBack() { if (fovZoom === 1) return false; fovZoom = 1; camera.f
 // きまり 1・4: 動いた指に なぞりを わたす。その指の はじめの場所（ax, ay）から始めて、今の場所まで足す。空なら まわりを見る
 function viewHand(id, e) {
   const q = viewPts.get(id); if (!q || !S.started) return;
-  TRACE.end(); drag = null; viewTid = null; viewZoomBack();
-  if (TRACE.begin({ clientX: q.ax, clientY: q.ay, timeStamp: q.at })) { AUTO.off(); viewTid = id; try { canvas.setPointerCapture(id); } catch (err) {} TRACE.add(e); }
+  TRACE.end(); drag = null; viewTid = null; q.view = false;
+  // Codex 指摘（サイクル274 の PR）: 画角を もどすのは、地面の なぞりが 始まったと 分かってから（きまり 5）。空を見回す指に わたった ときは 拡大のまま（1 本の指で 空を押して見回す ときと同じ）。
+  // もどしたら、線は 今の指の場所から 引き直す（1 本の指の ときと同じ）
+  if (TRACE.begin({ clientX: q.ax, clientY: q.ay, timeStamp: q.at })) { AUTO.off(); viewTid = id; try { canvas.setPointerCapture(id); } catch (err) {} if (viewZoomBack()) TRACE.rebase = true; TRACE.add(e); }
   else drag = { id, x: e.clientX, y: e.clientY, yaw: look.yaw, pitch: look.pitch };
 }
 canvas.addEventListener('pointerdown', e => {
@@ -9959,7 +9963,7 @@ const endDrag = e => {
   if (drag && (drag.id === id || drag.id === undefined || viewPts.size === 0)) drag = null;
   if (viewPts.size < 2) {
     const pinched = viewTwo === 'pinch'; viewPinch = null; viewTwo = null;
-    for (const q of viewPts.values()) { q.ax = q.x; q.ay = q.y; q.at = e.timeStamp; q.solo = !pinched; }   // きまり 4: 残った指は ここから 12px 動いたら なぞる
+    for (const q of viewPts.values()) { q.ax = q.x; q.ay = q.y; q.at = e.timeStamp; q.solo = !pinched; if (pinched) q.view = true; }   // きまり 4: 残った指は ここから 12px 動いたら なぞる
   } else if (viewPinch) viewPinch = { d0: viewPtsDist(), z0: fovZoom };   // 3本目以降の指が残るときは、残った指で 測りなおす
 };
 canvas.addEventListener('pointerup', endDrag); canvas.addEventListener('pointercancel', endDrag);

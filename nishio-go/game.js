@@ -4122,8 +4122,16 @@ const sound = (() => {
     $('bgmNow').textContent = k ? `♪ いまの曲：${TITLE[k] || k}` : '';
     $('bgmNext').hidden = !k || scene === 'world';
   }
-  const unlock = () => { if (unlocked) return; unlocked = true; apply(); };
-  ['pointerdown', 'keydown'].forEach(ev => document.addEventListener(ev, unlock, { once: true, capture: true }));
+  // サイクル202（おそい 回線）：地図が 動きだす 前の タップでは 曲を 読みはじめない。読みこみ中に 画面を さわると、曲（1曲 160KB ほど）が 地図の 読みこみと 回線を 取りあって、
+  //   地図が 出るのが おくれて いた（おそい 4G・CPU 4倍：さわらない 人 8.1秒・さわる 人 12.3秒）。地図が 動きだした あとの はじめの タップ・キーで 鳴らす（鳴らす きっかけは これまでどおり 本人の 操作）
+  const mapUp = () => !!(window.nishioPixel && window.nishioPixel.roll && window.nishioPixel.roll.up);   // up：お米の 絵が 読めた か、読めずに 前からの 絵で 進む と 決まった（絵が 読めない ときに 曲が ずっと 鳴らない ことが ない ように）
+  const unlock = () => {
+    if (unlocked || !mapUp()) return;
+    unlocked = true;
+    ['pointerdown', 'keydown'].forEach(ev => document.removeEventListener(ev, unlock, true));
+    apply();
+  };
+  ['pointerdown', 'keydown'].forEach(ev => document.addEventListener(ev, unlock, true));
   document.addEventListener('visibilitychange', apply);
   setInterval(() => { if (cur && cur !== pick()) apply(); }, 60000);   // 時間帯や天気が変わったら曲を変える（1分ごとに見る）
   return {

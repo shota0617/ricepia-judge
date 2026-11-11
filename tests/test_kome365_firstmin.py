@@ -1,4 +1,4 @@
-"""米づくり365: 最初の1分に出る飾りが、カードの日付や天気の丸に重ならない置き方になっているか(周回152)、押しただけでは案内が消えないか(周回153)、出だしのちらつきと2Dの天気(周回154)、スワイプの手本(周回155)、止まったら手本(周回158)、飛んでいる間の指・しるしのあとの手本(周回161)。"""
+"""米づくり365: 最初の1分に出る飾りが、カードの日付や天気の丸に重ならない置き方になっているか(周回152)、押しただけでは案内が消えないか(周回153)、出だしのちらつきと2Dの天気(周回154)、スワイプの手本(周回155)、止まったら手本(周回158)、飛んでいる間の指・しるしのあとの手本(周回161)、おそい回線・おそいスマホ(周回164)。"""
 import os
 import re
 import unittest
@@ -190,6 +190,37 @@ class TestKome365FirstMinute(unittest.TestCase):
         # タップでは選ばない・カードを動かさない(2026-11-09): 指を離したときの分かれ道は choose か reset だけ
         self.assertNotIn("toggleDetail(); } else { reset()", HTML)
         self.assertIn("#swVib,#swHelp,#swJudge,#swBanner,#swMonth,#swHint,#swLog,#swRewind,#swDetailBtn,#swCard.hinting #swHint{display:none!important}", HTML)
+
+    def test_3d_files_wait_for_first_card(self):
+        # 周回164(おそい回線): カードが出るまで 3D のファイル(three.js・field3d.js)を取りに行かない
+        self.assertNotIn('<script src="field3d.js"></script>', HTML)
+        self.assertIn('<script src="engine.js"></script>\n<script src="cards.js"></script>\n<script>', HTML)
+        loader = HTML[HTML.index("window.__k3d = (function(){"):HTML.index("const K = window.Kome365")]
+        self.assertIn("l.rel = 'preload'; l.as = 'script';", loader)
+        self.assertIn("add('field3d.js');", loader)
+        self.assertIn("if (!no3d) add('vendor/three.min.js', SRI, function(){ window.dispatchEvent(new Event('three-ready')); });", loader)
+        self.assertLess(loader.index("add('field3d.js');"), loader.index("add('vendor/three.min.js'"))
+        self.assertIn("sc.async = false;", loader)
+        self.assertIn("sha512-dLxUelApnYxpLt6K2iomGngnHO83iUvZytA3YjDUCjT0HDOHKXnVYdf3hU4JjM8uEhxf9nD1/ey98U3t2vZ0qQ==", loader)
+        # 読みこみの はじめに すぐ three.js を足す書き方は もう無い
+        self.assertNotIn("sc.src = 'vendor/three.min.js'; sc.async = true;", HTML)
+
+    def test_3d_setup_waits_for_first_swipe(self):
+        # 周回164(おそいスマホ): はじめての人は 1枚目を決めた 0.9秒あと か、さわらずに 8秒で 3D のしたくを はじめる。つづきの人は すぐ
+        choose = HTML[HTML.index("function choose(side, vel){"):HTML.index("function choose(side, vel){") + 260]
+        self.assertIn("window.__k3d.soon(900);", choose)
+        self.assertIn("if (loadSave()) { resumeSwipe(); window.__k3d.pre(); window.__k3d.go(); } else { guideFresh = true; $('bStart').click(); guideFresh = false; window.__k3d.pre(); window.__k3d.idle(8000); }", HTML)
+        loader = HTML[HTML.index("window.__k3d = (function(){"):HTML.index("const K = window.Kome365")]
+        # 指が画面にある間は はじめない(待つのは 12回まで)
+        self.assertIn("if (down && tries++ < 12) { timer = setTimeout(tick, 400); return; } go();", loader)
+        self.assertIn("if (st === 2 || timer) return;", loader)   # 速く決めつづけても 3D の開始をのばさない
+        self.assertIn("if (down) idleArm(); else go();", loader)
+
+    def test_boot_title_has_moving_dot(self):
+        # 周回164: 読みこみ中の題字の下で 丸が動く(transform だけ・押す物ではない)
+        self.assertIn('html.booting #sTitle h1::after{content:"";display:block;width:8px;height:8px;margin:16px auto 0;border-radius:50%;background:#6f9a3f;animation:bootDot .8s ease-in-out infinite alternate}', HTML)
+        self.assertIn("@keyframes bootDot{from{transform:translateX(-20px)}to{transform:translateX(20px)}}", HTML)
+        self.assertIn("@media (prefers-reduced-motion:reduce){html.booting #sTitle h1::after{animation:none}}", HTML)
 
 
 if __name__ == "__main__":

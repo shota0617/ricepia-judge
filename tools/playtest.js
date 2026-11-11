@@ -229,7 +229,7 @@ async function firstMinuteChecks(browser, R) {
         const otherBtn = !b.hidden && document.getElementById('spinName').textContent === other.name && !G.state.visits[other.id];
         return { goal: g.name, shown, h0, hMax, checked, other: other.name, otherBtn, ok: shown === 0 && checked && otherBtn };
       });
-      return { firstGoalNear: fg, lazySprites: lz, playAskQuick: pa, worldBack: wb, tiltDeniedMsg: tm, swipeWalk: sw, arriveNoSpin: an, ...(await startSteadyChecks(browser, R)), ...(await a2hsChecks(browser, R)), ...(await tapDemoChecks(browser, R)) };
+      return { firstGoalNear: fg, lazySprites: lz, playAskQuick: pa, worldBack: wb, tiltDeniedMsg: tm, swipeWalk: sw, arriveNoSpin: an, ...(await startSteadyChecks(browser, R)), ...(await a2hsChecks(browser, R)), ...(await tapDemoChecks(browser, R)), ...(await slowStartChecks(browser, R)) };
     } finally { R.errors.push(...v.errors); await v.ctx.close(); }
 }
 // サイクル193（運営者の声 2026-11-10「さんぽGOホーム画面に追加を控えめに促す」）：ホーム画面に追加の おすすめは 小さな 1行の 札。
@@ -536,7 +536,41 @@ async function startSteadyChecks(browser, R) {
       firstGoalNoFlip: { ids: r.ids, ok: r.settled && r.ids.length === 1 } };
   } finally { R.errors.push(...v.errors); await v.ctx.close(); }
 }
+// サイクル202（おそい 回線・おそい スマホ）：pixel.js を 1.5秒 おくらせて「読みこみ中」を 作り、その 間に 画面を タップする。
+// ①題字は スタイルシートより 前に 出て、下で 米つぶが 動く ②地図が 動きだす 前の タップでは 曲を 読みはじめない（動きだした あとの タップで 鳴る） ③家の 絵は 使う マスだけ 切りだす
+async function slowStartChecks(browser, R) {
+  const v = await newPage(browser, { howto: true, auto: true, hasTouch: true }), p = v.page, out = {};
+  try {
+    const mp3 = [];
+    p.on('request', r => { if (/\/bgm\/.*\.mp3/.test(r.url())) mp3.push(r.url().split('/').pop()); });
+    await p.route('**/nishio-go/pixel.js', async r => { await new Promise(res => setTimeout(res, 1500)); await r.continue(); });
+    await p.goto(URL, { waitUntil: 'commit' });
+    await p.waitForSelector('link[href$="nishio-go/style.css"]', { state: 'attached', timeout: 10000 }).catch(() => {});
+    const cv = await p.evaluate(() => {
+      const c = document.getElementById('bootCover'), i = c && c.querySelector('i'), cs = i && getComputedStyle(i), sheets = [...document.querySelectorAll('link[rel="stylesheet"]')];
+      return { cover: !!c, dot: !!i, anim: cs ? cs.animationName : '', pos: c ? getComputedStyle(c).position : '', sheets: sheets.length, inHead: sheets.filter(l => l.parentNode === document.head).length, after: !!c && sheets.every(l => !!(c.compareDocumentPosition(l) & Node.DOCUMENT_POSITION_FOLLOWING)) };
+    });
+    out.slowCover = { ...cv, ok: cv.cover && cv.dot && cv.anim === 'bootRoll' && cv.pos === 'fixed' && cv.sheets === 3 && cv.inHead === 0 && cv.after };
+    await p.waitForFunction(() => !!window.nishioGo, null, { timeout: 15000 }).catch(() => {});
+    const early = await p.evaluate(() => ({ go: !!window.nishioGo, up: !!(window.nishioPixel && nishioPixel.roll.ready) }));
+    await p.touchscreen.tap(195, 400);
+    await p.waitForTimeout(700);
+    const earlyMp3 = mp3.length, earlyPlayed = await p.evaluate(() => window.__played.length);
+    await p.waitForFunction(() => window.nishioPixel && window.nishioGo && nishioGo.started && nishioPixel.roll.ready && !document.getElementById('bootCover'), null, { timeout: 20000 }).catch(() => {});
+    await p.waitForTimeout(400);
+    const r = await p.evaluate(() => { const c = document.getElementById('pxCanvas').getBoundingClientRect(); return { x: c.left + c.width / 2 + 40, y: c.top + c.height / 2 + 40 }; });
+    await p.touchscreen.tap(r.x, r.y);
+    const late = await p.waitForFunction(() => window.__played.some(f => /\.mp3$/.test(f)), null, { timeout: 4000 }).then(() => true, () => false);
+    out.bgmAfterMap = { early, earlyMp3, earlyPlayed, late, ok: early.go && !early.up && earlyMp3 === 0 && earlyPlayed === 0 && late };
+    const hc = await p.evaluate(() => ({ cut: nishioPixel.houseCut, type: typeof nishioPixel.houseCut }));
+    out.houseLazy = { ...hc, ok: hc.type === 'number' && hc.cut < 1000 };
+  } finally { R.errors.push(...v.errors); await v.ctx.close(); }
+  return out;
+}
 const FIRST_MINUTE_NEED = {
+  slowCover: '読みこみ中の 題字が スタイルシートを 待つ（head に ある）／題字の 下に 動く しるし（米つぶ）が ない',
+  bgmAfterMap: '地図が 動きだす 前の タップで 曲（mp3）を 読みはじめる／動きだした あとの タップで 曲が 鳴らない',
+  houseLazy: '家の 絵（2500マス）を 読みこみの ときに ぜんぶ 切りだして いる',
   firstGoalNear: 'はじめての ゴールが 遠い（選びなおしで 近くの 帯の 外へ 出た・道のりが 長い）',
   lazySprites: '手描きの 名所の 絵を 読みこみの ときに ぜんぶ 作って いる／使う ときに 作れない',
   playAskQuick: 'はじめてのさんぽで すぐ 着いた ゴールでも「どうだった？」を たずねる',
@@ -3656,6 +3690,9 @@ function crashFailures(R, fail) {   // 安全網（guardEvaluate）に かかっ
     });
     // 浮かぶ 文字（「おしい！ ベストまで あと1…」など）は、めいろの 縁の 矢印と 道のりの 札に 重ねない（自分で 遊んで 分かった：西の ゴールの「2.4km」に 重なった）
     // 描く 命令から 文字の 位置と はばを はかる（2行に 分けても 合わせて はかる。直す 前の コードでも はかれる）。東西の ゴールを いくつか ためし、重なるか よけた こまが 出るまで
+    // ためす ゴールは「自分で 選んだ 行き先」（mine）に する：めいろでは 4.5km より 遠い 行き先を 10秒ごとの 見なおし（game.js の checkGuide・refreshNearby）が 近くの 行き先へ かえる。
+    //   その 見なおしが はかって いる とちゅうに 来ると、矢印が 別の 所へ とび、絵文字つきの 文字は 置き場が なくて 待った（split 0）・とんだ こまで 1こま 重なった（hits 1）。
+    //   来る 時は ページを 開いてからの 秒数で 決まるので、前の 確かめの 長さが 少し かわると 落ちた。はかって いる 間に ゴールが かわった こま（swapped）は 0 で ある ことも 見る
     R.checks.floatArrow = await (async () => {
       const vp = w.page.viewportSize();
       await w.page.setViewportSize({ width: 320, height: 568 }); await w.page.waitForTimeout(400);
@@ -3669,10 +3706,11 @@ function crashFailures(R, fail) {   // 安全網（guardEvaluate）に かかっ
         ctx.fillText = function (t, x, y) { if (pieces && t.length >= 2 && T1.includes(t) && !pieces.includes(t)) pieces.push(t); if (t.length >= 4 && T0.includes(t)) { const fz = parseFloat((/(\d+(?:\.\d+)?)px/.exec(this.font) || [])[1]) || 16, fw = this.measureText(t).width; const b = [x - fw / 2, y - fz, x + fw / 2, y]; box = box ? [Math.min(box[0], b[0]), Math.min(box[1], b[1]), Math.max(box[2], b[2]), Math.max(box[3], b[3])] : b; } return keep.apply(this, arguments); };
         const ov = (b, a) => !!(b && a && b[0] < a[2] && b[2] > a[0] && b[1] < a[3] && b[3] > a[1]);
         const me = G.me, ew = G.spots.filter(x => x.lat && G.dist(me, x) > 1200 && G.dist(me, x) < 6000 && Math.abs(x.lat - me.lat) < Math.abs(x.lng - me.lng) * 0.6).sort((a, b) => Math.abs(a.lat - me.lat) / Math.abs(a.lng - me.lng) - Math.abs(b.lat - me.lat) / Math.abs(b.lng - me.lng)).slice(0, 10);   // 東西の ゴール（まっすぐ 東西に ちかい 順）
-        let goal = 'none', frames = 0, hits = 0, dodged = 0, tried = 0, emoji = null, split = 0;
+        let goal = 'none', frames = 0, hits = 0, dodged = 0, tried = 0, emoji = null, split = 0, swapped = 0, gNow = '';
+        const mineOk = () => !!(G.guide && G.guide.id === gNow);   // ためして いる ゴールの まま か
         for (const g of ew) {
           tried++;
-          G.setGuide({ kind: 'spot', id: g.id, name: g.name, why: 'テスト', by: 'テスト' }); await wait(6500); shut();   // 「🏁 つぎの ゴール」の 札が 消えるまで
+          gNow = g.id; G.setGuide({ kind: 'spot', id: g.id, name: g.name, why: 'テスト', by: 'テスト', mine: true }); await wait(6500); shut();   // 「🏁 つぎの ゴール」の 札が 消えるまで
           for (let n = 0; n < 50 && P.maze.next().on; n++) { await wait(100); shut(); }   // 窓が 開いて いて 札が おくれて 出た ときも（札の 間は 浮かべない）
           let fr = 0, hi = 0, dg = 0;
           for (let k = 0; k < 2; k++) {
@@ -3681,6 +3719,7 @@ function crashFailures(R, fail) {   // 安全網（guardEvaluate）に かかっ
               box = null;
               await new Promise(res => requestAnimationFrame(res));
               const A = P.maze.mapArrow;
+              if (!mineOk()) swapped++;
               if (box && A) { fr++; if (ov(box, A)) hi++; const sh = P.floatShift; if (sh && (sh[0] || sh[1])) dg++; }
               await wait(60);
             }
@@ -3688,7 +3727,7 @@ function crashFailures(R, fail) {   // 安全網（guardEvaluate）に かかっ
           if (hi || dg) {
             goal = g.name; frames = fr; hits = hi; dodged = dg;
             pieces = []; P.floatsClear(); P.floatText(T1);
-            for (let i = 0; i < 14; i++) { await new Promise(res => requestAnimationFrame(res)); await wait(60); }
+            for (let i = 0; i < 14; i++) { await new Promise(res => requestAnimationFrame(res)); if (!mineOk()) swapped++; await wait(60); }
             emoji = pieces.length === 1 ? pieces[0] === T1 : pieces.length === 2 ? pieces.join(' ') === T1 : false; split = pieces.length; pieces = null;
             break;
           }
@@ -3709,10 +3748,10 @@ function crashFailures(R, fail) {   // 安全網（guardEvaluate）に かかっ
         }
         ctx.fillText = keep; P.floatsClear(); G.setGuide(null);
         const dbg = after ? undefined : { q: P.floats(), covered: P.mapCovered(true), banner: P.maze.banner, drawn: P.floatsDrawn };
-        return { tried, goal, frames, hits, dodged, emoji, split, g2: g2 && g2.name, bannerFrames, during, after, dbg };
+        return { tried, goal, frames, hits, dodged, emoji, split, swapped, g2: g2 && g2.name, bannerFrames, during, after, dbg };
       });
       await w.page.setViewportSize(vp); await w.page.waitForTimeout(400);
-      return { ...r, ok: r.frames > 0 && (r.hits > 0 || r.dodged > 0) && r.hits === 0 && r.emoji === true && r.bannerFrames === 0 && r.during === 0 && r.after };
+      return { ...r, ok: r.frames > 0 && (r.hits > 0 || r.dodged > 0) && r.hits === 0 && r.emoji === true && r.swapped === 0 && r.bannerFrames === 0 && r.during === 0 && r.after };
     })();
     // 浮かぶ 文字は 上の 知らせ（DOM。キャンバスの 上に 重なる）に かくれない：知らせの 下へ ずれるか、消えるまで 待つ（自分で 遊んで 分かった：320×568 で 4行の「🌙 夜のさんぽ…」が「おしい！ ベストまで…」の 1行目を かくした）
     R.checks.floatToast = await (async () => {

@@ -22,7 +22,8 @@ const b = html.indexOf(endMark, a);
 if (a < 0 || b < 0) { console.log(JSON.stringify({ error: 'no code' })); process.exit(0); }
 const code = html.slice(a, b + endMark.length);
 const log = { chosen: [], markOff: 0, stops: 0, idleTouch: 0 };
-function mkEl(id){ const cl = new Set(); return { id: id, style: { setProperty(){} }, offsetWidth: 360, classList: { add(){ for (const x of arguments) cl.add(x); }, remove(){ for (const x of arguments) { if (id === 'swMark' && x === 'on') log.markOff++; cl.delete(x); } }, contains(x){ return cl.has(x); }, toggle(x, v){ if (v) cl.add(x); else cl.delete(x); } }, _l: {}, addEventListener(t, fn){ (this._l[t] = this._l[t] || []).push(fn); }, setPointerCapture(){}, releasePointerCapture(){} }; }
+function mkEl(id){ const cl = new Set(); return { id: id, style: { setProperty(){} }, offsetWidth: 360, classList: { add(){ for (const x of arguments) cl.add(x); }, remove(){ for (const x of arguments) { if (id === 'swMark' && x === 'on') log.markOff++; cl.delete(x); } }, contains(x){ return cl.has(x); }, toggle(x, v){ if (v) cl.add(x); else cl.delete(x); } }, _l: {}, addEventListener(t, fn){ (this._l[t] = this._l[t] || []).push(fn); }, setPointerCapture(p){ caught.add(p); }, releasePointerCapture(p){ caught.delete(p); } }; }
+const caught = new Set();
 const els = {}; const $ = id => els[id] || (els[id] = mkEl(id));
 const el = { card: $('swCard') }; $('sGame').classList.add('swipeMode');
 const docL = { cap: {}, bub: {} };
@@ -42,7 +43,8 @@ function fire(type, o){
   const e = { type: type, pointerId: o.id, clientX: o.x, clientY: o.y, timeStamp: o.t, button: o.button || 0, isPrimary: o.primary !== false, target: { id: kind === 'field' ? 'field' : '', closest(sel){ return SEL[kind].some(s => sel.split(',').map(x => x.trim()).some(p => s.split(',').map(x => x.trim()).indexOf(p) >= 0)) ? {} : null; } } };
   now = o.t;
   (docL.cap[type] || []).forEach(fn => fn(e));
-  if (type !== 'pointerdown' || kind === 'card') (el.card._l[type] || []).forEach(fn => fn(e));
+  if (kind === 'card' || (type !== 'pointerdown' && caught.has(o.id))) (el.card._l[type] || []).forEach(fn => fn(e));   // カードに 届くのは、カードの 上の 指と、カードが つかまえた 指だけ
+  if (type === 'pointerup' || type === 'pointercancel') caught.delete(o.id);
   (docL.bub[type] || []).forEach(fn => fn(e));
 }
 const steps = JSON.parse(process.argv[2]);
@@ -500,6 +502,51 @@ class TestKome365FirstMinute(unittest.TestCase):
         self.assertIsNone(r["holder"])
         self.assertEqual(pointer_run(stroke(1, 250, 452, 0, 120, 2000, on="idle"))["chosen"], [])
         self.assertIn("#swIdle[data-on] button,#swIdle[data-on] a{pointer-events:auto;touch-action:none}", HTML)
+
+    @staticmethod
+    def _two_then_one(on):
+        # 2本を 10ms ずらして 置く → 2本とも 20px 動く → 190ms あと、1本だけ 横へ 120px 動いて 離す(もう 1本は 置いた まま)
+        s = [["down", {"id": 1, "x": 120, "y": 452, "t": 2000, "on": on}], ["down", {"id": 2, "x": 290, "y": 452, "t": 2010, "on": on, "primary": False}]]
+        s += [["move", {"id": 1, "x": 100, "y": 452, "t": 2060, "on": on}], ["move", {"id": 2, "x": 310, "y": 452, "t": 2060, "on": on, "primary": False}]]
+        s += [["move", {"id": 1, "x": 100 - 20 * i, "y": 452, "t": 2250 + 15 * i, "on": on}] for i in range(1, 7)]
+        return s + [["up", {"id": 1, "x": -20, "y": 452, "t": 2350, "on": on}]]
+
+    @staticmethod
+    def _down_then_side(on, dy=100, dx=40):
+        # 置く → 50ms あと 縦に dy → 50ms あと 横に dx → 離す(ぜんたいは 縦の 動き)
+        return [["down", {"id": 1, "x": 200, "y": 452, "t": 2000, "on": on}], ["move", {"id": 1, "x": 200, "y": 452 + dy, "t": 2050, "on": on}],
+                ["move", {"id": 1, "x": 200 + dx, "y": 452 + dy, "t": 2100, "on": on}], ["up", {"id": 1, "x": 200 + dx, "y": 452 + dy, "t": 2104, "on": on}]]
+
+    def test_two_moved_fingers_stay_out_until_lifted(self):
+        # Codex 指摘(周回167): 2本とも 動いた あとは、1本が 止まって もう 1本が 動いても、離すまで カードを 持てない。ボタンの 上から はじめた 指でも 同じ
+        for on in ("idle", "stage", "card", "field"):
+            r = pointer_run(self._two_then_one(on))
+            self.assertEqual(r["chosen"], [], on)
+            self.assertIsNone(r["holder"], on)
+        # 離して 置きなおせば 決まる
+        s = self._two_then_one("idle") + [["up", {"id": 2, "x": 310, "y": 452, "t": 2400, "on": "idle", "primary": False}]] + stroke(3, 250, 452, -120, 0, 3000, on="idle")
+        self.assertEqual(pointer_run(s)["chosen"], ["left"])
+        self.assertIn("if (had || !calm) touchSet.bar();", HTML)
+
+    def test_takeover_keeps_start_point_and_history(self):
+        # Codex 指摘(周回167): あとから カードを 持った 指も、置いた 所からの 動きで 見る(縦に 100px 引いて 横へ 40px では 決まらない)
+        for on in ("idle", "stage", "card", "field"):
+            self.assertEqual(pointer_run(self._down_then_side(on))["chosen"], [], on)
+            self.assertEqual(pointer_run(self._down_then_side(on, dy=-100, dx=-40))["chosen"], [], on)
+            # 縦が 小さければ 横の スワイプ(同じ 道すじで 縦 10px・横 120px)
+            self.assertEqual(pointer_run(self._down_then_side(on, dy=10, dx=120))["chosen"], ["right"], on)
+        # 休めて いた 指(カードを ゆずった あと)が 縦に 動いてから 横へ 少し 動いても 決まらない。横に 大きく 動かせば 決まる
+        for on in ("stage", "card"):
+            rest = [["down", {"id": 1, "x": 200, "y": 500, "t": 2000, "on": on}]] + stroke(2, 250, 640, 0, 0, 3000, primary=False)
+            v = [["move", {"id": 1, "x": 200, "y": 600, "t": 3600, "on": on}], ["move", {"id": 1, "x": 240, "y": 600, "t": 3650, "on": on}], ["up", {"id": 1, "x": 240, "y": 600, "t": 3654, "on": on}]]
+            self.assertEqual(pointer_run(rest + v)["chosen"], [], on)
+            h = [["move", {"id": 1, "x": 200 - 22 * i, "y": 500, "t": 3600 + 30 * i, "on": on}] for i in range(1, 7)] + [["up", {"id": 1, "x": 68, "y": 500, "t": 3800, "on": on}]]
+            self.assertEqual(pointer_run(rest + h)["chosen"], ["left"], on)
+        # のぞいて 引き戻した 動き(ボタンの 上から 60px 出て 20px まで 戻る)も、置いた 所から 見て 決まらない
+        peek = [["down", {"id": 1, "x": 200, "y": 452, "t": 2000, "on": "idle"}]] + [["move", {"id": 1, "x": 200 + 15 * i, "y": 452, "t": 2000 + 20 * i, "on": "idle"}] for i in range(1, 5)]
+        peek += [["move", {"id": 1, "x": 260 - 10 * i, "y": 452, "t": 2080 + 20 * i, "on": "idle"}] for i in range(1, 5)] + [["up", {"id": 1, "x": 220, "y": 452, "t": 2170, "on": "idle"}]]
+        self.assertEqual(pointer_run(peek)["chosen"], [])
+        self.assertIn("cardDown({ type: 'pointerdown', pointerId: id, clientX: g.x0, clientY: g.y0, timeStamp: g.t0, button: 0, isPrimary: e.isPrimary });", HTML)
         self.assertIn('<a id="swIdleHome" draggable="false" href="https://ricepia.jp/?from=kome365-idle">', HTML)
 
     def test_side_picture_reaches_card_in_2d(self):

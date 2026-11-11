@@ -3795,8 +3795,9 @@ renderTitle();
      はじめの 指(isPrimary)が 来たら おぼえを 空に する・隠れたら 空に する(離したのが 届かなかった 指を 残さない) */
   var touchSet = (function(){ var m = {}, n = 0; return {
     clear: function(){ m = {}; n = 0; },
-    down: function(id, x, y, t){ if (!m[id]) n++; m[id] = { x: x, y: y, t: t }; },
-    move: function(id, x, y, t){ var g = m[id]; if (!g || Math.hypot(x - g.x, y - g.y) < 12) return false; g.x = x; g.y = y; g.t = t; return true; },
+    down: function(id, x, y, t){ if (!m[id]) n++; m[id] = { x: x, y: y, t: t, x0: x, y0: y, t0: t, mx: 0, my: 0 }; },
+    move: function(id, x, y, t){ var g = m[id]; if (!g) return false; g.mx = Math.max(g.mx, Math.abs(x - g.x0)); g.my = Math.max(g.my, Math.abs(y - g.y0)); if (Math.hypot(x - g.x, y - g.y) < 12) return false; g.x = x; g.y = y; g.t = t; return true; },
+    get: function(id){ return m[id] || null; },
     up: function(id){ if (m[id]) { delete m[id]; n--; } },
     calm: function(t, but){ for (var k in m) { if (String(but) !== k && !(t - m[k].t >= 150)) return false; } return true; },
     bar: function(){ for (var k in m) m[k].out = true; },
@@ -3816,10 +3817,16 @@ renderTitle();
     if (e.pointerType === 'mouse' && e.buttons === 0) { touchSet.up(id); return; }   /* ボタンを 押して いない マウスの 動きは 指では ない(窓の 外で 離した マウスを おぼえた ままに しない) */
     if (!touchSet.move(id, e.clientX, e.clientY, t)) return;
     if ((startX != null && id === pid) || (pend && id === pend[0].pointerId)) return;   /* カードを 持って いる 指・おぼえて いる 指の 動きは、これまで どおり カードへ */
-    if (!touchSet.free(id) || !touchSet.calm(t, id)) { var had = startX != null || !!pend; if (startX != null) dragStop(); pend = null; if (had) touchSet.bar(); return; }
+    var calm = touchSet.calm(t, id);
+    if (!touchSet.free(id) || !calm) { var had = startX != null || !!pend; if (startX != null) dragStop(); pend = null; if (had || !calm) touchSet.bar(); return; }   /* Codex 指摘(周回167): だれも カードを 持って いなくても(ボタンの 上の 2本など)、2本とも 動いたら 離すまで 持てなく する */
     pend = null; if (busy || pendRun || !card || !f || KomeCards.over(f) || !fingerReady() || finger) return;
     if (startX != null) { cancelDragFrame(); reset(); }
-    idleTouch(); pendRun = true; try { cardDown({ type: 'pointerdown', pointerId: e.pointerId, clientX: e.clientX, clientY: e.clientY, timeStamp: evT(e), button: 0, isPrimary: e.isPrimary }); } finally { pendRun = false; }
+    /* Codex 指摘(周回167): 持ちはじめは、その 指を 置いた 所・置いた 時刻から(今の 場所からに すると、それまでの 縦の 動きが 消えて、縦に 引いて 少し 横へ 動かした だけで 決まった)。
+       それまでに いちばん 遠くまで 行った 横・縦(mx・my)も 引きつぐ。今の 動きは、カードに 届かない 指(田んぼ・ボタンの 上)の ときだけ ここで わたす */
+    var g = touchSet.get(id);
+    idleTouch(); pendRun = true; try { cardDown({ type: 'pointerdown', pointerId: id, clientX: g.x0, clientY: g.y0, timeStamp: g.t0, button: 0, isPrimary: e.isPrimary }); } finally { pendRun = false; }
+    maxAx = Math.max(maxAx, g.mx); maxDy = Math.max(maxDy, g.my); tapMax = Math.max(tapMax, g.mx, g.my);
+    if (!(e.target && e.target.closest && e.target.closest('#swCard'))) cardMove(e);
   }, true);
   ['pointerup', 'pointercancel'].forEach(function(ty){ document.addEventListener(ty, function(e){ touchSet.up(e.pointerId); }, true); });
   document.addEventListener('visibilitychange', function(){ if (document.hidden) { pend = null; pendQ.length = 0; touchSet.clear(); } });   /* Codex 指摘(PR #1087): 別の タブへ 行ったら、おぼえた 指は 捨てる(隠れて いる 間・戻った ときに 次の カードを 決めない) */

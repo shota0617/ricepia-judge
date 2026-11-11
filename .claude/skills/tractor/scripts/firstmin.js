@@ -1,4 +1,4 @@
-// 最初の1分の確かめ（サイクル259〜270）：node firstmin.js [tractor.html のパス]
+// 最初の1分の確かめ（サイクル259〜272）：node firstmin.js [tractor.html のパス]
 //  1) 知らせの文：吹き出し（speakText）・短い文（shortText）で かっこが合わなくならない（「…見ます）」のような切れ方をしない）
 //  3) 畦の手前で止まった人：「横へ なぞる」見本が出て、見本どおりで向きが変わる。自動で下ろす知らせは 1 回だけ（サイクル260）
 //  2) のんびりの大きな数字：スマホ縦で 1 回なぞって耕したら 0% のままにならない。田んぼアートでは地図の「でき」と同じ数、お題なしでは小数 1 けた
@@ -54,7 +54,9 @@ const srv = http.createServer((r, s) => { const u = decodeURIComponent(r.url.spl
     const r = await p.evaluate(() => ({ big: document.getElementById('bigPct').textContent, tilled: tilledCount, art: ART.on ? Math.floor(ART.score().fill * 100 + 1e-9) : null, field: tilledCount / workCount * 100 }));
     ok(label + '：1 回なぞって耕した（4 秒）', r.tilled > 100, r.tilled);
     ok(label + '：数字が 0 のままでない', !/^0(\.0)?%$/.test(r.big), r.big);
-    if (r.art !== null) ok(label + '：数字＝地図の「でき」', r.big === r.art + '%', [r.big, r.art]);
+    // サイクル271 の店主指示（2026-11-11）で、大きな数字は お題が あっても「田んぼ全体の耕し率」に なった。それまでの「数字＝地図の でき」の確かめは main の tractor.html で落ちていたので、
+    // 店主指示どおりの形に 書きかえた（サイクル272）：お題ありでも 田んぼ全体の割合・小数 1 けた。地図の「でき」は 別の数として 今までどおり 取れる
+    if (r.art !== null) ok(label + '：数字＝田んぼ全体の耕し率（小数 1 けた）。地図の「でき」は 別に 数えている', /^\d\.\d%$/.test(r.big) && Math.abs(parseFloat(r.big) - r.field) < 0.11 && r.art >= 1, [r.big, +r.field.toFixed(2), r.art]);
     else ok(label + '：10% までは小数 1 けた（田んぼ全体）', /^\d\.\d%$/.test(r.big) && Math.abs(parseFloat(r.big) - r.field) < 0.11, [r.big, +r.field.toFixed(2)]);
     await ctx.close();
   }
@@ -466,6 +468,63 @@ const srv = http.createServer((r, s) => { const u = decodeURIComponent(r.url.spl
     const src = require('fs').readFileSync(require('path').join(__dirname, '../../../../tractor.html'), 'utf8');
     ok('読みこみ中に おぼえた なぞりは、タブを はなれたら 捨て、同じ 指が 置かれた まま の ときだけ 使う（コードの 形）',
       src.includes("addEventListener('blur', () => PRE.clear());") && src.includes("document.addEventListener('visibilitychange', () => { if (document.hidden) PRE.clear(); });") && src.includes('!viewPts.has(id)'), null);
+  }
+  // ---- 11) サイクル272（はじめの 1 分で やめる人を へらす）：なぞった指の あと が 画面に出る・吹き出しが 大きな数字に かぶらない ----
+  {
+    const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true, isMobile: true });
+    const p = await ctx.newPage(); p.setDefaultTimeout(180000);
+    p.on('pageerror', e => errs.push('pageerror ' + e.message)); p.on('console', m => { if (m.type() === 'error') errs.push('console ' + m.text()); });
+    await p.route('https://cdn.jsdelivr.net/**', r => r.fulfill({ path: TN + r.request().url().split('/three@0.128.0')[1], contentType: 'text/javascript' }));
+    await p.goto(`http://localhost:${PORT}/tractor.html`);
+    await p.waitForFunction(() => window.game && game.S && game.S.started && typeof P !== 'undefined' && P.Rotary);
+    await p.evaluate(() => { const real = performance.now.bind(performance); let now = real(); performance.now = () => now; window.__sync = () => { now = real(); }; window.requestAnimationFrame = () => 0; game.renderer.render = () => {};
+      window.__adv = sec => { for (let i = 0, n = Math.round(sec / 0.05); i < n; i++) { now += 50; frame(now); } }; });
+    await p.waitForTimeout(2500); await p.evaluate(() => window.__sync());
+    const cdp = await ctx.newCDPSession(p), adv = sec => p.evaluate(x => window.__adv(x), sec), T = (type, x, y) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: type === 'touchEnd' ? [] : [{ x, y, id: 1 }] });
+    const dots = () => p.evaluate(() => { const bx = document.getElementById('traceDots'), d = bx ? [...bx.querySelectorAll('.tDot')].filter(e => e.style.display === 'block').map(e => [parseFloat(e.style.left), parseFloat(e.style.top)]) : [];
+      return { box: !!bx, on: !!bx && !bx.classList.contains('off'), n: d.length, d, pe: bx ? getComputedStyle(bx).pointerEvents : '', text: bx ? bx.textContent.length : -1, z: +game.S.z.toFixed(2), v: +game.S.v.toFixed(2), trace: TRACE.on }; });
+    await adv(2); const z0 = (await dots()).z;
+    // 11-1) タップだけ：さわった所に 点が 1 つ出る（直す前は 何も出ない）。トラクターは 今までどおり 進まない（離すと止まる＝サイクル116）
+    await T('touchStart', 235, 422); await adv(0.1); await T('touchEnd'); await adv(0.2); const t1 = await dots();
+    ok('タップ：さわった所に 黄色い点が 1 つ出る・押す物でも 文字でも ない（直す前は 何も出ない）', t1.on && t1.n === 1 && Math.abs(t1.d[0][0] - 235) < 1 && Math.abs(t1.d[0][1] - 422) < 1 && t1.pe === 'none' && t1.text === 0, t1);
+    await adv(1.0); const t2 = await dots();
+    ok('タップのあと：点は 消える・トラクターは 進んでいない（サイクル116 のまま）', !t2.on && Math.abs(t2.z - z0) < 0.15 && Math.abs(t2.v) < 0.05, { z0, ...t2 });
+    // 11-2) 見本の高さ（ボンネットの上）を 前へ なぞる：指の道すじに 点が ならぶ（直す前は 地面の線が ボンネットに かくれて 何も見えない）
+    await T('touchStart', 195, 481); for (let i = 1; i <= 10; i++) { await T('touchMove', 195, 481 - 84 * i / 10); await adv(0.05); } await p.waitForTimeout(150); const s1 = await dots();   // さいごの指の動きが ページに届くのを待つ
+    ok('前へ なぞる：指の道すじに 点が 4 つ以上 ならび、いちばん新しい点は 指の 16px 以内', s1.on && s1.n >= 4 && s1.n <= 24 && s1.d.every(q => Math.abs(q[0] - 195) < 1 && q[1] <= 481.5 && q[1] >= 396.5) && Math.min(...s1.d.map(q => q[1])) < 397 + 16, s1);
+    // 11-3) 置いて待つ間は 点を 出したままに しない（0.6 秒で消える）。トラクターは なぞりを追って進む（サイクル116 のまま）
+    await adv(1.0); const s2 = await dots();
+    ok('置いて待つ間：点は 消え、トラクターは なぞりを追って進む', !s2.on && s2.trace && s2.z - z0 > 0.5, { z0, ...s2 });
+    await T('touchEnd'); await adv(1.5); const s3 = await dots();
+    ok('指を離すと 止まる（サイクル116 のまま）', !s3.trace && Math.abs(s3.v) < 0.05, s3);
+    // 11-4) 吹き出しが 左上の 大きな数字に かぶらない（直す前は 12 字より長い吹き出しの 左はしが 数字の下に 58px 入る）。数字の大きさは 変えない
+    const say = async txt => { await p.evaluate(x => toast(x, 4), txt); await adv(0.1); return p.evaluate(() => { const s = document.getElementById('say'), a = s.getBoundingClientRect(), rg = document.createRange(), bp = document.getElementById('bigPct'); rg.selectNodeContents(bp); const c = rg.getBoundingClientRect();
+      return { on: !s.classList.contains('off'), text: s.innerText, sayL: Math.round(a.left), sayR: Math.round(a.right), sayT: Math.round(a.top), sayB: Math.round(a.bottom), pad: parseFloat(getComputedStyle(s).paddingLeft), numR: Math.round(c.right), numB: Math.round(c.bottom), font: getComputedStyle(bp).fontSize, shown: getComputedStyle(bp).display !== 'none' }; }); };
+    for (const txt of ['🔰 白線の外は 耕しません、曲がって絵の中へ', 'カラスが近づいたら、ムクドリの群れが いっせいに飛び立った']) {
+      const r = await say(txt);
+      ok('スマホ縦：吹き出し「' + txt.slice(0, 8) + '…」の文字が 大きな数字（56px）に かぶらない', r.on && r.text.length > 12 && r.shown && r.font === '56px' && r.sayT < r.numB && r.sayL + r.pad >= r.numR && r.sayR - r.sayL >= 120, r);
+      await adv(5);
+    }
+    // 11-5) 1 分を すぎたら 指の点は 出さない（はじめの 1 分だけ）。なぞりは 今までどおり効く
+    await p.evaluate(() => FIRSTMIN.finish()); const z1 = (await dots()).z;
+    await T('touchStart', 195, 481); for (let i = 1; i <= 10; i++) { await T('touchMove', 195, 481 - 84 * i / 10); await adv(0.05); } await p.waitForTimeout(150); const o1 = await dots(); await adv(1.5); const o2 = await dots(); await T('touchEnd');
+    ok('1 分を すぎたら 指の点は 出ない・なぞりは 今までどおり効く', !o1.on && o2.trace && o2.z - z1 > 0.5, { z1, on: o1.on, z: o2.z });
+    await ctx.close();
+  }
+  {   // 11-6) スマホ横・パソコンの幅では 吹き出しは 今までどおり 240px まで
+    const ctx = await b.newContext({ viewport: { width: 844, height: 390 }, deviceScaleFactor: 2, hasTouch: true, isMobile: true });
+    const p = await ctx.newPage(); p.setDefaultTimeout(180000);
+    p.on('pageerror', e => errs.push('pageerror ' + e.message)); p.on('console', m => { if (m.type() === 'error') errs.push('console ' + m.text()); });
+    await p.route('https://cdn.jsdelivr.net/**', r => r.fulfill({ path: TN + r.request().url().split('/three@0.128.0')[1], contentType: 'text/javascript' }));
+    await p.goto(`http://localhost:${PORT}/tractor.html`);
+    await p.waitForFunction(() => window.game && game.S && game.S.started && typeof P !== 'undefined' && P.Rotary);
+    await p.evaluate(() => { const real = performance.now.bind(performance); let now = real(); performance.now = () => now; window.__sync = () => { now = real(); }; window.requestAnimationFrame = () => 0; game.renderer.render = () => {};
+      window.__adv = sec => { for (let i = 0, n = Math.round(sec / 0.05); i < n; i++) { now += 50; frame(now); } }; });
+    await p.waitForTimeout(2500); await p.evaluate(() => window.__sync()); await p.evaluate(() => window.__adv(2));
+    const r = await p.evaluate(() => { toast('🔰 白線の外は 耕しません、曲がって絵の中へ', 4); window.__adv(0.1); const s = document.getElementById('say'), a = s.getBoundingClientRect(), rg = document.createRange(); rg.selectNodeContents(document.getElementById('bigPct')); const c = rg.getBoundingClientRect();
+      return { on: !s.classList.contains('off'), w: Math.round(a.width), maxW: getComputedStyle(s).maxWidth, sayL: Math.round(a.left), numR: Math.round(c.right) }; });
+    ok('スマホ横：吹き出しの幅は 今までどおり（240px まで）・数字に かぶらない', r.on && r.maxW === '240px' && r.w > 200 && r.sayL > r.numR, r);
+    await ctx.close();
   }
   ok('エラーなし', errs.length === 0, errs.slice(0, 3));
   console.log(ng ? `NG ${ng} 件` : 'ぜんぶ ok'); await b.close(); srv.close(); process.exit(ng ? 1 : 0);

@@ -36,6 +36,11 @@
   #lwBar { display: block; width: 3%; height: 100%; border-radius: 3px; background: #fff; transition: width .25s linear; }
   @keyframes lwUp { 0% { transform: translateY(0); opacity: 1; } 85% { transform: translateY(-17vh); opacity: 1; } 86%, 100% { transform: translateY(-17vh); opacity: 0; } }
   #hintSwipe .hDot { position: fixed; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; background: #ffd84a; box-shadow: 0 0 0 3px rgba(255,216,74,.35), 0 1px 4px rgba(0,0,0,.4); }
+  /* サイクル272・最初の1分: なぞった指の あと（見本と同じ 黄色い点）。押す物では ない・文字なし。指が止まって 0.6 秒で うすく消える */
+  #traceDots { position: fixed; inset: 0; pointer-events: none; z-index: 39; transition: opacity .3s; }
+  #traceDots.off { opacity: 0; }
+  #traceDots .tDot { position: fixed; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; background: #ffd84a; box-shadow: 0 0 0 3px rgba(255,216,74,.35), 0 1px 4px rgba(0,0,0,.4); display: none; }
+  #traceDots .tDot.t0 { width: 26px; height: 26px; margin: -13px 0 0 -13px; background: rgba(255,216,74,.55); }
   #hintFinger { position: fixed; font-size: 56px; line-height: 1; margin: -48px 0 0 -12px; filter: drop-shadow(0 3px 5px rgba(0,0,0,.45)); }
   /* 上の計器（速さ・前後・ロータリー・耕した割合） */
   #hud { position: fixed; top: max(8px, env(safe-area-inset-top)); left: 8px; right: 8px; display: flex; gap: 6px; flex-wrap: wrap; pointer-events: none; }
@@ -152,6 +157,10 @@
      小さい画面（320×568）や文字 200% では なぞり方ヒントの点まで隠していた。左どなりなら 屋根と空の高さに収まる */
   body.calm #badge { flex-direction: row-reverse; align-items: flex-start; }
   body.calm #say { margin-top: 10px; margin-right: 8px; }
+  /* サイクル272・最初の1分: スマホ縦では 吹き出しの幅を せまくして、左上の 大きな数字（耕し率・56px）に かぶらないようにする。
+     はかった数（390×844）: 12 字より長い吹き出し（「🔰 白線の外は 耕しません、曲がって絵の中へ」など）は 左はしが 82px まで のび、数字（右はし 140px）の下に 58px 入って 4 字が読めなかった。
+     数字の大きさ・場所は 変えない。広い画面（スマホ横・パソコン）は 今までどおり 240px */
+  body.calm #say { max-width: min(240px, max(120px, calc(100vw - 206px))); }
   body.calm #say::before { top: 12px; right: -6px; left: auto; border: 6px solid transparent; border-right: 0; border-top-color: transparent; border-bottom-color: transparent; border-left-color: rgba(251,248,240,.97); }
   /* のんびり（くわしい説明 なし）：計器の 札・知らせ・案内・キーの 一覧・窓の 札は 出さない（キャラクターが 話す） */
   body.calm #hud, body.calm #toast, body.calm #coach, body.calm #keyHint, body.calm #badgeSt { display: none !important; }
@@ -211,6 +220,7 @@
 })();
 </script>
 <div id="hintSwipe" class="hidden"><div id="hintFinger">👆</div></div>
+<div id="traceDots" class="off"></div>
 
 <div id="hud" class="hidden">
   <span class="chip"><b id="spd">0.0</b> km/h</span>
@@ -7865,6 +7875,21 @@ const TRACE = {
   clampIn(h) { const m = this.clampM(); h.x = Math.max(-HX + m, Math.min(HX - m, h.x)); h.z = Math.max(-HZ + m, Math.min(HZ - m, h.z)); },
   escSide() { const e = this.fPos || this.cps[this.cps.length - 1]; if (!e) return 0; const b = Math.atan2(e[0] - S.x, e[1] - S.z) - S.yaw, bb = Math.atan2(Math.sin(b), Math.cos(b)); return Math.abs(bb) > 0.1 && Math.abs(Math.hypot(e[0] - S.x, e[1] - S.z) * Math.sin(bb)) > 0.8 ? Math.sign(bb) : 0; },   // 指（なければ線の終わり）が 向きに対して どちら側か（＋＝yaw が増える側）。正面 ±6° と、横へ 0.8m 未満は 0（サイクル261: 本物の画面で確かめたら、前へ なぞっただけでも 指が 30cm ほど横へずれていると 畦の手前で勝手に曲がっていた。点を畦の 1.5m 内側へ寄せたので 指が近く、角度だけでは小さなずれを拾う）
   passMin: 1e9,   // サイクル190: 線の終点へ最も近づいた距離（行き過ぎたら止まるための記録。点が足されると戻す）
+  // サイクル272・最初の1分: なぞった指の あと を、見本と同じ 黄色い点で 画面の上に出す（のんびりの はじめの 1 分だけ。文字・音なし・入力は ふさがない）。
+  // はかった数（スマホ縦 390×844・運転席）: 見本の高さ（画面の 57% → 47%）は ボンネットの上なので、地面の線は ボンネットに かくれて 1 画素も見えなかった。
+  // 横なぞりの線は 3.5m 先へ寄せるので これも見えない。タップだけの人は 38 回 さわって、見える変化は 0 回（1 回 1cm しか進まない）。
+  // 点は 指の 画面の位置に置く（16px おき・24 個まで。古い点から使い回す）。置いた所の点だけ 少し大きい。指が止まって 0.6 秒で消える（置いて待つ間は 出したままにしない）。
+  // トラクターの動き・離すと止まる きまり（サイクル116）は 変えない
+  tBox: null, tDots: [], tN: 0, tT: 0, tLast: null,
+  mark(e, first) {
+    if (DETAIL || !FIRSTMIN.on) return;
+    if (!this.tBox) { this.tBox = $('traceDots'); if (!this.tBox) return; for (let i = 0; i < 24; i++) { const el = document.createElement('div'); el.className = 'tDot'; this.tBox.appendChild(el); this.tDots.push(el); } this.tLast = [0, 0]; }
+    if (first) { for (const el of this.tDots) el.style.display = 'none'; this.tN = 0; }
+    else if (Math.hypot(e.clientX - this.tLast[0], e.clientY - this.tLast[1]) < 16) { this.tT = 0.6; return; }
+    const el = this.tDots[this.tN % 24]; this.tN++;
+    el.className = first ? 'tDot t0' : 'tDot'; el.style.left = e.clientX + 'px'; el.style.top = e.clientY + 'px'; el.style.display = 'block';
+    this.tLast[0] = e.clientX; this.tLast[1] = e.clientY; this.tT = 0.6; this.tBox.classList.remove('off');
+  },
   sPos: null, DZ: 5,   // サイクル116（なぞり）: 最後に受け付けた指の画面位置と、そこから何 px 動いたら新しい点として受け付けるか（指を置いたままの わずかなブレは無視する）
   sync() { this.cps = T3.smooth(this.pts).slice(this.ctx); },   // 制御用点列（平滑化済み）を作り直す（add のたび）。pts の先頭 ctx 個は通過済みで、平滑化の文脈用に2個だけ残す（平滑化は前後2点にしか依存しないため、残りの点の値は全体を平滑化した場合と一致する）
   snapX(x) { if (ART.on) return x; if (Math.abs(Math.cos(S.yaw)) < 0.7) return x; const ls = T4.lanes(); let best = null, bd = 1e9; for (const cx of ls) { const d = Math.abs(cx - x); if (d < bd) { bd = d; best = cx; } } if (best === null || bd > 0.30) return x; return x + (best - x) * 0.35; },   // サイクル219・類似ゲーム類3（Farming Simulator の GPS 補助）: 列の端での軽い吸着。なぞりの新しい点の x を最寄りの列へ軽く寄せ、操作を奪わない範囲でまっすぐ耕せるようにする（距離0.30m以内だけ・寄せは距離の35%で最大0.105m。向きが列とほぼ平行なときだけ。田んぼアートでは下絵を優先して効かせない）
@@ -7908,6 +7933,7 @@ const TRACE = {
     this.pts = [[h.x, h.z]]; this.ctx = 0; this.sync(); this.on = true; this.fade = 0;
     this.fv = 0; this.fHist = [[e.timeStamp || 0, h.x, h.z]]; this.fT = e.timeStamp || 0; this.fPos = [h.x, h.z]; this.scCd = 0;   // サイクル116
     this.sPos = [e.clientX, e.clientY]; this.passMin = 1e9;
+    this.mark(e, true);
     if (camMode !== 0) { camMode = 0; look.yaw = look.pitch = 0; $('bCam').textContent = '👁 ' + CAMS[0]; this.rebase = true; }   // サイクル118: 運転席視点に戻す（ユーザー実機指示 2026-11-05）。なぞりは運転席から前方の田んぼをなぞる形にする。最初の点は旧視点の座標なので、次の add で引き直す（従来の rebase）
     // サイクル260・最初の1分: なぞりはじめに自動で下ろす知らせ「…を下げました」は、のんびりでは はじめの 1 回だけ。
     // 🔰 が白線・旋回で上げるたびに 次のなぞりで下りて同じ吹き出しが出ていた（実測 スマホ横・見本どおりに向きを変える人の はじめの 60 秒: 吹き出し 9 回のうち 7 回がこれ）。ボタン・キーで下げたときと、くわしい説明では従来どおり毎回出す
@@ -7952,6 +7978,7 @@ const TRACE = {
     // 物差し（スマホ 390×844・運転席視点・ブレ ±1.5px、ループ側 scratchpad/nazoru_cam.js）: 6m 先に置いたまま 11.73m 走って止まらず（線が 15.5m 先まで伸びた）→5.45m で停止（ブレなしと同じ）／U ターンを描いて置いたまま 線が 22m 伸びて走り続け→止まる
     if (this.sPos && Math.hypot(e.clientX - this.sPos[0], e.clientY - this.sPos[1]) < this.DZ) return;
     this.sPos = [e.clientX, e.clientY];
+    this.mark(e, false);
     // サイクル116: 指の速さを測る（直近0.45秒の変位÷時間。イベント間隔の生速度はブレが大きいため使わない。Codex指摘）
     const tms = e.timeStamp || 0;
     this.fHist.push([tms, h.x, h.z]);
@@ -7974,7 +8001,7 @@ const TRACE = {
   },
   end() { if (!this.on) return; this.on = false; if (this.yawB !== undefined && Math.abs(Math.atan2(Math.sin(S.yaw - this.yawB), Math.cos(S.yaw - this.yawB))) >= 0.52) HINT.sideOK++;   // サイクル265: この なぞりで 30° 以上 曲がれた（曲がり方を覚えたかの数）
     if (this.drive && Math.abs(S.v) > 0.9) this.stopBoost = 0.8; this.drive = false; this.pts = []; this.cps = []; this.ctx = 0; this.fade = 1; this.fv = 0; },   // 指を離す: 跡を消して止まる。速く追っていたときは 0.8秒だけ減速を強めて スッと止める（サイクル116）
-  tick(dt) { if (this.blockT > 0) this.blockT -= dt; if (this.stopBoost > 0) this.stopBoost = Math.max(0, this.stopBoost - dt); if (this.fade > 0 && this.line) { this.fade = Math.max(0, this.fade - dt * 2.5); this.line.material.opacity = 0.95 * this.fade; if (this.ribbon) this.ribbon.material.opacity = 0.55 * this.fade; if (!this.fade) { this.line.visible = false; if (this.ribbon) this.ribbon.visible = false; } } },
+  tick(dt) { if (this.tT > 0 && (this.tT -= dt) <= 0) this.tBox.classList.add('off'); if (this.blockT > 0) this.blockT -= dt; if (this.stopBoost > 0) this.stopBoost = Math.max(0, this.stopBoost - dt); if (this.fade > 0 && this.line) { this.fade = Math.max(0, this.fade - dt * 2.5); this.line.material.opacity = 0.95 * this.fade; if (this.ribbon) this.ribbon.material.opacity = 0.55 * this.fade; if (!this.fade) { this.line.visible = false; if (this.ribbon) this.ribbon.visible = false; } } },
   rlen() { let r = Math.hypot(this.cps[0][0] - S.x, this.cps[0][1] - S.z); for (let i = 0; i < this.cps.length - 1; i++) r += Math.hypot(this.cps[i + 1][0] - this.cps[i][0], this.cps[i + 1][1] - this.cps[i][1]); return r; },   // サイクル116: 残りの軌跡の長さ（＝指への遅れ）
   follow(dt) {                                          // step から毎フレーム: 追従するなら true。切れ角を目標へなめらかに寄せる
     if (!this.on || !this.cps.length) { this.drive = false; return false; }

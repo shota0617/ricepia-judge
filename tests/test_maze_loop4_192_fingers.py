@@ -27,14 +27,14 @@ class Fingers192(unittest.TestCase):
         src = block(PIX, "const swipeS = ", "}, { passive: true });\n// スポットをタップすると")
         stub = """
 const L = {}, cv = { width: 780, style: {}, addEventListener: (t, f) => { (L[t] = L[t] || []).push(f); }, getBoundingClientRect: () => ({ left: 0, top: 52, width: 390 }) };
-const document = { hidden: false, addEventListener: () => {} };   // サイクル206：置いた まま の 指を おぼえる 聞き手（ここでは 使わない）
+const D = {}, document = { hidden: false, addEventListener: (t, f) => { (D[t] = D[t] || []).push(f); } };   // サイクル206：指が つく・はなれる は 文書の 聞き手が 先に 受ける（受ける・とりけす も そこで 決める）
 let worldMode = false, covered = false, fieldCy = 600; const walks = [], G = { demo: true }, howtoEl = { hidden: true };
 const mapCovered = () => covered, fieldT = () => 32, camTile = () => ({ x: 100, y: 200 }), tapWalk = (x, y) => walks.push([x, y]);
 const tapS = { goal: null }, tapWalkStop = () => {};   // サイクル206：とりけしで 止める 歩き（ここでは 使わない）
 globalThis.window = { devicePixelRatio: 2, addEventListener: () => {} }; globalThis.performance = { now: () => 1000 };
 """
         run = """
-const ev = (t, o) => L[t].forEach(f => f({ pointerId: 1, isPrimary: true, button: 0, clientX: 0, clientY: 0, ...o }));
+const ev = (t, o) => { const e = { pointerId: 1, isPrimary: true, button: 0, clientX: 0, clientY: 0, target: cv, ...o }; (D[t] || []).forEach(f => f(e)); L[t].forEach(f => f(e)); };
 const out = {};
 ev('pointerdown', { clientX: 195, clientY: 352 }); ev('pointerup', { clientX: 225, clientY: 362 }); out.swipe = walks.slice(); out.at = swipeS.at;
 walks.length = 0; ev('pointerdown', { clientX: 195, clientY: 352 }); ev('pointerup', { clientX: 200, clientY: 355 }); out.tap = walks.length;

@@ -231,7 +231,8 @@ const walks = [], G = { demo: true }, howtoEl = { hidden: true };
 const tapS = { goal: null }; let stops = 0; const tapWalkStop = () => { stops++; tapS.goal = null; };
 const mapCovered = () => covered, fieldT = () => 32, camTile = () => cam, tapWalk = (x, y) => { if (!canWalk) return false; walks.push([x, y]); tapS.goal = [x, y]; return true; };
 // 指の イベント：地図の 上（onCv）なら 文書 → 地図の 順に とどく。地図の 外（タブ など）なら 文書だけ
-const ev = (t, o, onCv = true) => { const e = { pointerId: 1, isPrimary: true, button: 0, buttons: 1, pointerType: 'touch', clientX: 0, clientY: 0, target: onCv ? cv : {}, ...o }; (D[t] || []).forEach(f => f(e)); if (onCv) (L[t] || []).forEach(f => f(e)); };
+const BTN = { id: 'btn' }, PAGE = { id: 'page' };   // 地図の 外：ボタン（タブ）・何も ない 所
+const ev = (t, o, onCv = true) => { const e = { pointerId: 1, isPrimary: true, button: 0, buttons: 1, pointerType: 'touch', clientX: 0, clientY: 0, target: onCv === true ? cv : onCv || BTN, ...o }; (D[t] || []).forEach(f => f(e)); if (e.target === cv) (L[t] || []).forEach(f => f(e)); };
 """
 
 
@@ -371,14 +372,16 @@ const tiltG = { asked: false, retry: false }; let asks = 0; const taps = [];
 const tiltBtnWanted = () => true, tiltNeedsPermission = () => true, lsSet = () => {}, tiltReset = () => {}, tiltBtnOk = () => {}, tiltBtnSync = () => {};
 G.toast = () => {};
 const DeviceOrientationEvent = { requestPermission: () => { asks++; return 'granted'; } };
-cv.dispatchEvent = e => { click(e); };
-const click = e => { (D.click || []).forEach(f => f(e)); (L.click || []).forEach(f => f(e)); };
+cv.dispatchEvent = e => { e.target = cv; click(e); };
+let off = 0, blocked = 0;   // off：地図の 外の ボタン・ページに とどいた click。blocked：とちゅうで 止められた click（あっては いけない）
+const click = e => { e.stopPropagation = e.stopImmediatePropagation = e.preventDefault = () => { blocked++; }; (D.click || []).forEach(f => f(e)); if (e.target === cv) (L.click || []).forEach(f => f(e)); else off++; };
 """
 MATRIX_RUN = """
 document.addEventListener('click', tiltFirstTouch);
+const LOC = { map: [12, 600, cv], btn: [40, 770, BTN], page: [200, 20, PAGE] };
 const F = { S: { pointerId: 1, isPrimary: true }, A: { pointerId: 1, isPrimary: true }, B: { pointerId: 2, isPrimary: false }, C: { pointerId: 3, isPrimary: false } }, pos = {};
 const out = ROWS.map(row => {
-  T += 5000; walks.length = 0; taps.length = 0; stops = 0; asks = 0; tapS.goal = null; worldMode = false; covered = false; canWalk = true; cam = { x: 100, y: 200 }; document.hidden = false;
+  T += 5000; walks.length = 0; taps.length = 0; stops = 0; asks = 0; off = 0; blocked = 0; tapS.goal = null; worldMode = false; covered = false; canWalk = true; cam = { x: 100, y: 200 }; document.hidden = false;
   tiltG.asked = false; tiltG.retry = false; tiltFirstTouch.at = undefined; tiltAsk.at = undefined; tiltAsk.ev = null; swipeS.at = -Infinity; (W.blur || []).forEach(f => f());
   for (const st of row.steps) {
     const [op, f, x, y] = st;
@@ -386,13 +389,15 @@ const out = ROWS.map(row => {
     if (op === 'hide') { document.hidden = true; D.visibilitychange.forEach(g => g()); document.hidden = false; continue; }
     if (op === 'blur') { W.blur.forEach(g => g()); continue; }
     if (op === 'set') { if (f === 'world') worldMode = x; else if (f === 'covered') covered = x; else if (f === 'cam') cam = { x: x, y: 200 }; continue; }
-    if (x !== undefined) pos[f] = [Math.abs(x), x < 0 ? 770 : y, x >= 0];
+    if (typeof x === 'string') pos[f] = LOC[x].slice();   // 'map'・'btn'・'page'：置く 所
+    else if (x !== undefined && y === 'by') pos[f] = [pos[f][0] + x, pos[f][1], pos[f][2]];   // いまの 所から x だけ よこへ（同じ 相手の 上）
+    else if (x !== undefined) pos[f] = [Math.abs(x), x < 0 ? 770 : y, x >= 0 ? cv : BTN];
     const p = pos[f], e = { ...F[f], clientX: p[0], clientY: p[1] };
-    if (op === 'c') { click({ type: 'click', isTrusted: true, target: cv, clientX: p[0], clientY: p[1], pointerId: F[f].pointerId }); continue; }
+    if (op === 'c') { click({ type: 'click', isTrusted: true, target: p[2], clientX: p[0], clientY: p[1], pointerId: F[f].pointerId }); continue; }
     ev({ d: 'pointerdown', m: 'pointermove', u: 'pointerup', x: 'pointercancel', l: 'pointerleave' }[op], e, p[2]);
     adv(1);
   }
-  return { walks: walks.slice(), stops, taps: taps.slice(), asks, down: !!swipeS.down, ta: cv.style.touchAction, goal: !!tapS.goal };
+  return { walks: walks.slice(), stops, taps: taps.slice(), asks, off, blocked, down: !!swipeS.down, ta: cv.style.touchAction, goal: !!tapS.goal, pts: restS.pts.size };
 });
 console.log(JSON.stringify(out));
 """
@@ -461,6 +466,46 @@ MATRIX = [
 ]
 
 
+# Codex 指摘（2回目）：置いた 指・3本め の 指が 地図の 外に ある ときも 同じ きまり。上の 2本指の 行を「置いた 指の 所（地図・ボタン・何も ない 所）」×「3本め の 所」で ふやす
+def _grid():
+    rows = []
+    for loc, nm in [("map", "地図"), ("btn", "ボタン"), ("page", "ページ")]:
+        rest = [['d', 'A', loc], ['w', 350]]
+        o = 0 if loc == "map" else 1   # 置いた 指の 本当の click：地図の 外なら その ボタン・ページには とどく（地図の 歩き・許可には 使わない）
+        n = "置く(%s)" % nm
+        rows += [
+            (n + "＋タップ", rest + [['d', 'B', 243, 352], ['w', 70], ['u', 'B']], dict(taps=['syn'], walks=[], asks=0, off=0, down=False)),
+            (n + "＋タップ → 1秒 あとに 置いた 指を はなす：その click で 歩かない・許可を 聞かない", rest + [['d', 'B', 243, 352], ['u', 'B'], ['w', 1000], ['u', 'A'], ['c', 'A']], dict(taps=['syn'], walks=[], asks=0, off=o, blocked=0, pts=0)),
+            (n + "＋なぞりの とちゅうで 置いた 指を はなす → なぞりは 効く", rest + [['d', 'B', 195, 352], ['m', 'B', 243, 352], ['u', 'A'], ['c', 'A'], ['u', 'B']], dict(walks=W103, taps=[], asks=0, off=o, blocked=0)),
+            (n + "＋止めて 歩きだす → 2秒 あとに 置いた 指を はなす", rest + B_HOLD + [['u', 'B'], ['w', 2000], ['u', 'A'], ['c', 'A']], dict(walks=W103, taps=[], stops=0, asks=0, off=o, goal=True)),
+            (n + "＋止めて 歩きだした あと、置いた 指が 20px 動く → 歩きを 止める", rest + B_HOLD + [['m', 'A', 20, 'by'], ['m', 'B', 291, 352], ['u', 'B'], ['u', 'A']], dict(walks=W103, stops=1, goal=False, down=False)),
+            (n + "＋止めて 歩きだした あと、置いた 指を 40px 先で はなす → 歩きを 止める", rest + B_HOLD + [['u', 'A', 40, 'by'], ['m', 'B', 291, 352], ['u', 'B']], dict(walks=W103, stops=1, goal=False)),
+            (n + "＋2本め を ついた あと、置いた 指を 40px 先で はなす → タップは 受けない", rest + [['d', 'B', 243, 352], ['u', 'A', 40, 'by'], ['c', 'A'], ['u', 'B']], dict(taps=[], walks=[], asks=0, off=o)),
+            (n + "＋2本め を ついた あと、置いた 指が とりけされる → タップは 受けない", rest + [['d', 'B', 243, 352], ['x', 'A'], ['u', 'B']], dict(taps=[], walks=[], asks=0)),
+            (n + "＋タップ → 置いた 指を はなす → 次の 本当の タップは 効く・許可を 聞く（1回）", rest + [['d', 'B', 243, 352], ['u', 'B'], ['u', 'A'], ['c', 'A'], ['w', 50], ['d', 'S', 243, 352], ['u', 'S'], ['c', 'S']], dict(taps=['syn', 'real'], asks=1, off=o)),
+            (n + "：2本を ほぼ 同時 → どの click でも 歩かない・許可を 聞かない", [['d', 'A', loc], ['w', 40], ['d', 'B', 243, 352], ['w', 60], ['u', 'B'], ['w', 60], ['u', 'A'], ['c', 'A']], dict(taps=[], walks=[], asks=0, off=o, down=False)),
+        ]
+        for cl, cn in [("map", "地図"), ("btn", "ボタン"), ("page", "ページ")]:
+            c = " → 3本め が %s に つく" % cn
+            rows += [
+                (n + "＋止めて 歩きだす" + c + " → 歩きを 止める・その あと 先へ 進めても 歩かない", rest + B_HOLD + [['d', 'C', cl], ['w', 100], ['m', 'B', 291, 352], ['w', 400], ['u', 'B'], ['u', 'C']], dict(walks=W103, stops=1, goal=False, down=False, taps=[])),
+                (n + "＋なぞりの とちゅう" + c + " → 歩かない", rest + [['d', 'B', 195, 352], ['m', 'B', 243, 352], ['d', 'C', cl], ['w', 400], ['u', 'B'], ['u', 'C']], dict(walks=[], taps=[], stops=0)),
+                (n + "＋2本め を ついた すぐ あと" + c + " → タップは 受けない", rest + [['d', 'B', 243, 352], ['w', 100], ['d', 'C', cl], ['w', 100], ['u', 'B'], ['u', 'C'], ['u', 'A']], dict(taps=[], walks=[], asks=0, pts=0)),
+            ]
+    for cl, cn in [("btn", "ボタン"), ("page", "ページ")]:
+        rows += [
+            ("1本で なぞって いる とちゅうで、2本め が %s に つく → 歩かない" % cn, [['d', 'A', 195, 352], ['m', 'A', 243, 352], ['d', 'B', cl], ['w', 400], ['u', 'A'], ['u', 'B']], dict(walks=[], taps=[], down=False)),
+            ("1本で 歩きだした あとに、2本め が %s に つく → 外を さわった ので 歩きは 止まる（これまでどおり）・先へ 進めても 歩かない" % cn, [['d', 'A', 195, 352], ['m', 'A', 243, 352], ['w', 310], ['d', 'B', cl], ['m', 'A', 291, 352], ['u', 'A'], ['u', 'B']], dict(walks=W103, stops=1, goal=False)),
+            ("1本：%s の はじめての タップ（これまでどおり とどく・許可を 聞く）" % cn, [['d', 'S', cl], ['w', 80], ['u', 'S'], ['c', 'S']], dict(off=1, asks=1, taps=[], walks=[], blocked=0)),
+            ("1本：%s に 2秒 置いて はなす（ほかの 指 なし）→ ふつうの タップ" % cn, [['d', 'S', cl], ['w', 2000], ['u', 'S'], ['c', 'S']], dict(off=1, asks=1, ta='')),
+            ("1本：%s を タップ 2回（許可は 1回だけ）" % cn, [['d', 'S', cl], ['u', 'S'], ['c', 'S'], ['w', 1000], ['d', 'S', cl], ['u', 'S'], ['c', 'S']], dict(off=2, asks=1)),
+        ]
+    return rows
+
+
+MATRIX += _grid()
+
+
 def matrix_run(pix):
     """2本の 指の 表を、わたされた pixel.js の 中身で 動かす（直す 前の ファイルでも 動かせる）"""
     i = pix.index(SW_HEAD)
@@ -472,6 +517,8 @@ def matrix_run(pix):
         k = pix.index("function %s(" % name)
         fns += pix[k:pix.index("\n}\n", k) + 3]
     rows = json.dumps([{"steps": r[1]} for r in MATRIX])
+    k = pix.index("document.addEventListener('pointerdown', e => { if (tapS.goal && e.target !== cv) tapWalkStop(); }, true);")   # 地図の 外を さわったら 歩きを やめる（これまでの きまり）
+    fns += pix[k:pix.index("\n", k) + 1]
     r = subprocess.run(["node", "-e", MATRIX_STUB + sw + gate + fns + "const ROWS = " + rows + ";" + MATRIX_RUN], capture_output=True, text=True, timeout=60)
     if r.returncode:
         raise RuntimeError(r.stderr[-800:])
@@ -489,7 +536,7 @@ class TwoFingerMatrix206(unittest.TestCase):
     def test_every_row(self):
         out = matrix_run(PIX)
         self.assertEqual(len(out), len(MATRIX))
-        self.assertGreaterEqual(len(MATRIX), 45)
+        self.assertGreaterEqual(len(MATRIX), 115)
         for (name, _, want), got in zip(MATRIX, out):
             with self.subTest(name):
                 for k, v in want.items():
@@ -507,7 +554,12 @@ class TwoFingerMatrix206(unittest.TestCase):
         self.assertIn("document.addEventListener('pointerup', e => restLift(e, false), { capture: true, passive: true });", sw)
         self.assertIn("document.addEventListener('pointercancel', e => restLift(e, true), { capture: true, passive: true });", sw)
         self.assertIn("cv.addEventListener('pointercancel', () => swipeCancel(), { passive: true });", sw)
-        self.assertIn("  if (!worldMode && (e.isPrimary || second) && e.button === 0) swipeBegin(e, second); else swipeCancel(); }, { passive: true });", sw)
+        self.assertIn("  if (map && !worldMode && (e.isPrimary || second) && e.button === 0) swipeBegin(e, second);\n  else if (map || touch) swipeCancel();", fn("fingerDown"))
+        self.assertIn("document.addEventListener('pointerdown', fingerDown, { capture: true, passive: true });", sw)   # 指が つく：画面の どこでも 同じ 関数
+        self.assertEqual(sw.count("swipeBegin(e, second);"), 1)
+        self.assertIn("cv.addEventListener('pointerdown', e => { swipeS.at = -Infinity; }, { passive: true });", sw)
+        self.assertIn("  if (p.multi && !cancelled) restS.eatAt = performance.now();", fn("restLift"))   # 地図の 外の 指も 同じ
+        self.assertNotIn("p.cv", sw)
         c = block("cv.addEventListener('click', e => {\n", "\n});\n")
         self.assertTrue(c.startswith("cv.addEventListener('click', e => {\n  if (performance.now() - swipeS.at < 400) return;   // なぞって 歩きだした すぐ あとの click\n  if (swipeEats(e)) return;"))
         t = fn("tiltFirstTouch")

@@ -13658,20 +13658,29 @@ function restLift(e, cancelled) {   // 指が はなれた・とりけされた�
   if (!p) return;
   if (!cancelled) p.far = Math.max(p.far, Math.hypot(e.clientX - p.x, e.clientY - p.y));
   restS.pts.delete(e.pointerId);
-  if (p.multi && p.cv && !cancelled) restS.eatAt = performance.now();   // この 指の click（来る なら すぐ あと）は 使わない
+  if (p.multi && !cancelled) restS.eatAt = performance.now();   // この 指の click（来る なら すぐ あと）は、地図の 歩きにも 傾きの 許可にも 使わない。地図の 外の 指も 同じ（その 指が のって いた ボタン・タブ 自身は ふつうに 押される）
   const d = swipeS.down;
   if (d && d.second && d.id !== e.pointerId && (cancelled || p.far > REST_PX)) swipeCancel();   // 置いて いた 指が 動いて いた・とりけされた：2本指の 動き
   restSync();
 }
 function swipeReset() { swipeCancel(); restS.pts.clear(); restS.eatAt = -Infinity; restSync(); }   // 画面が かくれた・前面で なくなった：指の おぼえを ぜんぶ 消す（はなした 知らせが 来ない ことが ある）
-document.addEventListener('pointerdown', e => {
+// Codex 指摘（PR・2回目）：地図の 外に ついた 指を、地図の 上の 指と 別の 所で あつかって いた（3本め が 外に ついても とりけさない／外に 置いた 指の click で 許可を 聞く）。
+// 指が つく・動く・はなれる・とりけされる は、画面の どこでも 同じ 関数（fingerDown・下の pointermove・restLift）を 通す。「地図の 上か」は 指の おぼえの 1つ（map）で、
+// 受けて よいか（地図の 上の 指だけ が 歩かせる）に だけ 使う
+function fingerDown(e) {   // 指・マウスが ついた（ここだけ）：おぼえる → 受ける か とりけす
   restS.eatAt = -Infinity;   // 新しい 指：前の 指の click は もう 来ない
-  if (e.pointerType !== 'touch') return;
-  if (e.isPrimary) restS.pts.clear();   // 主の 指＝ほかに ついて いる 指は ない（はなした 知らせを のがした おぼえが のこって いたら 消す）
-  restS.pts.set(e.pointerId, { x: e.clientX, y: e.clientY, t: performance.now(), far: 0, multi: false, cv: e.target === cv });
-  if (restS.pts.size > 1) for (const p of restS.pts.values()) p.multi = true;
-  restSync();
-}, { capture: true, passive: true });
+  const map = e.target === cv, touch = e.pointerType === 'touch';
+  if (touch) {
+    if (e.isPrimary) restS.pts.clear();   // 主の 指＝ほかに ついて いる 指は ない（はなした 知らせを のがした おぼえが のこって いたら 消す）
+    restS.pts.set(e.pointerId, { x: e.clientX, y: e.clientY, t: performance.now(), far: 0, multi: false, map });
+    if (restS.pts.size > 1) for (const p of restS.pts.values()) p.multi = true;
+  }
+  const second = map && touch && !e.isPrimary && restOthers(e.pointerId);
+  if (map && !worldMode && (e.isPrimary || second) && e.button === 0) swipeBegin(e, second);
+  else if (map || touch) swipeCancel();   // 受けない 指が ついた（地図の 上でも 外でも）：2本指の 動き。地図の 外の マウスは これまでどおり 何も しない
+  if (touch) restSync();
+}
+document.addEventListener('pointerdown', fingerDown, { capture: true, passive: true });
 document.addEventListener('pointermove', e => {
   const p = restS.pts.get(e.pointerId);
   if (!p || p.far > REST_PX) return;
@@ -13685,9 +13694,7 @@ document.addEventListener('pointerup', e => restLift(e, false), { capture: true,
 document.addEventListener('pointercancel', e => restLift(e, true), { capture: true, passive: true });
 document.addEventListener('visibilitychange', () => { if (document.hidden) swipeReset(); });
 window.addEventListener('blur', swipeReset);
-cv.addEventListener('pointerdown', e => { swipeS.at = -Infinity;   // 新しい 指の 動きの click は 捨てない（捨てるのは なぞりに ついて くる click だけ）
-  const second = !e.isPrimary && e.pointerType === 'touch' && restOthers(e.pointerId);
-  if (!worldMode && (e.isPrimary || second) && e.button === 0) swipeBegin(e, second); else swipeCancel(); }, { passive: true });
+cv.addEventListener('pointerdown', e => { swipeS.at = -Infinity; }, { passive: true });   // 新しい 指の 動きの click は 捨てない（捨てるのは なぞりに ついて くる click だけ）。受ける・とりけす は 上の fingerDown
 cv.addEventListener('pointercancel', () => swipeCancel(), { passive: true });
 cv.addEventListener('pointerleave', () => { clearTimeout(swipeS.timer); }, { passive: true });   // 地図の 外へ 出た 指・マウスは 待たない（外で はなしても、のこった タイマーで 歩きださない）。押した まま もどれば、次の 動きから また はかる
 function swipeAt(cx, cy) {   // 画面の 点（clientX・clientY）の 地図の 上の 場所（マス。小数つき）と、画面の 1px が 何マスか（k）

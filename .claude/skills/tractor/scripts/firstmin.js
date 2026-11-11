@@ -716,6 +716,30 @@ const srv = http.createServer((r, s) => { const u = decodeURIComponent(r.url.spl
       await T('touchEnd', []); await adv(1.5);
       ok('拡大したまま 空に 1 本 置いて、もう 1 本で 空を なぞる：見回すだけで 拡大は そのまま（直す前：1 倍に もどる）', sky[0] && sky[1] && i0.drag && i0.ids === 1 && i1.zoom === 1.15 && !i1.on && i1.drag && i1.ids === 2 && i1.look !== 0, [sky, i0.drag, i1.zoom, i1.on, i1.drag, i1.ids, i1.look]);
       ok('同じ形で 地面を なぞったときは 1 倍に もどって 進む', i2.zoom === 1 && i2.on && za - zb > 1, [i2.zoom, i2.on, +(za - zb).toFixed(2)]);
+      // (j) Codex 指摘：速く広げる（はじめの 1 回の知らせで 2 本とも 30px 動いている。1 本目の知らせを見たとき もう 1 本は まだ はじめの場所）：寄って見る になる・走りださない（直す前：なぞり に決まって 拡大できず 走りだす）
+      await p.evaluate(() => Object.assign(game.S, { x: 0, z: -12, yaw: 0, v: 0, steer: 0 })); await adv(1);
+      const jv = () => p.evaluate(() => ({ two: viewTwo, zoom: +fovZoom.toFixed(2), on: TRACE.on, z: +game.S.z.toFixed(2), til: tilledCount }));
+      const j0 = await jv();
+      await T('touchStart', [{ x: 165, y: 520, id: 1 }, { x: 225, y: 520, id: 2 }]);
+      await T('touchMove', [{ x: 135, y: 520, id: 1 }, { x: 255, y: 520, id: 2 }]); await adv(0.05);
+      for (let i = 2; i <= 4; i++) { await T('touchMove', [{ x: 165 - i * 30, y: 520, id: 1 }, { x: 225 + i * 30, y: 520, id: 2 }]); await adv(0.05); }
+      await p.evaluate(() => new Promise(r => setTimeout(r, 300))); await adv(0.5); const j1 = await jv(); await T('touchEnd', []); await adv(1); const j2 = await jv();
+      ok('速く広げる（1 回の知らせで 2 本とも 30px）：寄って見る になり、走りださない・耕さない（直す前：なぞり に決まる）', j1.two === 'pinch' && j1.zoom > 1.5 && !j1.on && Math.abs(j2.z - j0.z) < 0.05 && j2.til === j0.til, [j1.two, j1.zoom, j1.on, +(j2.z - j0.z).toFixed(2), j2.til - j0.til]);
+      // (k) 片方の指が 先に 20px 動き、2 こま あと（なぞり に決まった すぐあと）に もう片方も 20px 動く：寄って見る に直り、なぞりは やめる
+      await p.evaluate(() => { fovZoom = 1; camera.fov = baseFov; camera.updateProjectionMatrix(); }); await adv(0.5); const k0 = await jv();
+      await T('touchStart', [{ x: 165, y: 520, id: 1 }, { x: 225, y: 520, id: 2 }]);
+      await T('touchMove', [{ x: 145, y: 520, id: 1 }, { x: 225, y: 520, id: 2 }]); await p.evaluate(() => new Promise(r => setTimeout(r, 200))); await adv(0.1); const k1 = await jv();
+      await T('touchMove', [{ x: 145, y: 520, id: 1 }, { x: 245, y: 520, id: 2 }]); await p.evaluate(() => new Promise(r => setTimeout(r, 200))); await adv(0.05);
+      for (let i = 1; i <= 4; i++) { await T('touchMove', [{ x: 145 - i * 15, y: 520, id: 1 }, { x: 245 + i * 15, y: 520, id: 2 }]); await adv(0.05); }
+      await p.evaluate(() => new Promise(r => setTimeout(r, 300))); await adv(0.3); const k2 = await jv(); await T('touchEnd', []); await adv(1); const k3 = await jv();
+      ok('片方が先に動き、2 こま あとに もう片方も動く：いちど なぞり に決まっても 寄って見る に直る・0.3m より進まない', k1.two === 'trace' && k2.two === 'pinch' && k2.zoom > 1.3 && !k2.on && Math.abs(k3.z - k0.z) < 0.3, [k1.two, k2.two, k2.zoom, k2.on, +(k3.z - k0.z).toFixed(2)]);
+      // (l) 親指を置いたままの人の なぞりはじめ：人さし指が 12px 動いてから 2 こま（0.1 秒）以内に その指の なぞりになる（待ちすぎない）
+      await p.evaluate(() => { fovZoom = 1; camera.fov = baseFov; camera.updateProjectionMatrix(); Object.assign(game.S, { x: 0, z: -12, yaw: 0, v: 0, steer: 0 }); }); await adv(0.5);
+      await T('touchStart', [{ x: 20, y: 820, id: 7 }]); await adv(1); const t0 = await p.evaluate(() => viewTid);
+      await T('touchStart', [{ x: 20, y: 820, id: 7 }, { x: 195, y: 481, id: 1 }]); await T('touchMove', [{ x: 20, y: 820, id: 7 }, { x: 195, y: 461, id: 1 }]); await p.evaluate(() => new Promise(r => setTimeout(r, 200)));
+      let lf = 0; for (; lf < 10; lf++) { if (await p.evaluate(t => TRACE.on && viewTid !== null && viewTid !== t, t0)) break; await adv(0.05); }
+      await mv(1, [195, 461], [195, 397], 8, [{ x: 20, y: 820, id: 7 }]); await adv(2); const l1 = await jv(); await T('touchEnd', []); await adv(1.5);
+      ok('親指を置いたままの人：人さし指が 12px 動いて 2 こま以内に なぞりが始まる・そのまま進む', lf >= 1 && lf <= 2 && l1.on && l1.z > -11, [lf, l1.on, l1.z]);
       await ctx.close();
     }
     // ---- 14-2) 「横へ」の見本の向き・畦の吹き出し ----

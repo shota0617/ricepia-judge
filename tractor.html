@@ -37,9 +37,9 @@
   /* 上の計器（速さ・前後・ロータリー・耕した割合） */
   #hud { position: fixed; top: max(8px, env(safe-area-inset-top)); left: 8px; right: 8px; display: flex; gap: 6px; flex-wrap: wrap; pointer-events: none; }
   .chip { padding: 5px 10px; border-radius: 999px; background: rgba(20, 18, 14, .62); color: #fff; font-size: 13px; font-weight: 700; white-space: nowrap; }
-  /* サイクル217・類似ゲーム類1（PowerWash Simulator）: のんびりでは進み具合（耕した割合）を大きな数字1つだけで静かに見せる。説明の文字は足さず、点滅・ポップ・音も付けない。くわしい説明（DETAIL）では従来の計器チップが正で、こちらは決して出さない */
-  #bigPct { position: fixed; left: 12px; top: calc(max(8px, env(safe-area-inset-top)) + 50px); font-size: 44px; font-weight: 800; line-height: 1; color: #fff; text-shadow: 0 2px 6px rgba(0,0,0,.45); opacity: .92; pointer-events: none; }
-  body:not(.calm) #bigPct { display: none !important; }
+  /* サイクル217・類似ゲーム類1（PowerWash Simulator）: のんびりでは進み具合（耕した割合）を大きな数字1つだけで静かに見せる。説明の文字は足さず、点滅・ポップ・音も付けない。店主指示 2026-11-11 で DETAIL でも常時表示に変更（値は田んぼ全体の耕し率に統一） */
+  #bigPct { position: fixed; left: 12px; top: calc(max(8px, env(safe-area-inset-top)) + 50px); font-size: 56px; font-weight: 800; line-height: 1; color: #fff; text-shadow: 0 2px 6px rgba(0,0,0,.45); opacity: .92; pointer-events: none; }
+  /* 店主指示（2026-11-11）「耕し率を追加」: 大きな％は くわしい説明（DETAIL）でも常時出す。計器チップ（#hud）は のんびりで隠れるため、DETAIL でだけ両方が出る形になるが、数字は同じ耕し率で矛盾しない */
   .chip b { font-size: 16px; }
   .chip.on { background: rgba(195, 20, 27, .85); }
   .chip.score { background: rgba(31, 77, 43, .82); }
@@ -217,7 +217,7 @@
   <span class="chip score hidden" id="artChip">でき <b id="sim">0</b>%</span>
   <span id="scorePop"></span>
 </div>
-<div id="bigPct" class="hidden">0%</div> <!-- サイクル217・類1: のんびり専用の大きな進み具合の数字（％だけ） -->
+<div id="bigPct" class="hidden">0%</div> <!-- サイクル217・類1: 大きな進み具合の数字（％だけ）。店主指示 2026-11-11 で常時表示・値は田んぼ全体の耕し率 -->
 <div id="bar" class="hidden">
   <button id="bCam" class="ico" data-i="👁" title="視点を切りかえる（C）">👁 運転席</button>
   <button id="bSnd" title="音（M）">🔇</button>
@@ -9845,7 +9845,7 @@ const SAY = (() => {
     if (t > 0 && (t -= dt) <= 0) { t = 0; kind = ''; render(); }
     if (!S.started) return;
     if (S.done && !doneSaid) { doneSaid = true; say('お疲れ様です！', 8); }
-    if (!S.done && pi < STEPS.length && calmPct >= STEPS[pi][0] && !busy() && !DETAIL && !startNoticeMuted()) { show(STEPS[pi][1], 3, 'step'); pi++; }   // サイクル259: 大きな数字と同じ割合（calmPct）で言う（田んぼアートでは絵の「でき」。数字が 50% のときに「はんぶん できたね」）   // 知らせの あいだは 待つ。サイクル225・最初の1分: のんびりでは最初の1分は進みぐあいの吹き出し・読み上げも出さない（幅広作業機＝テッダー4.3m／スプレイヤー4.6mでは既定3速でも10%＝約140㎡に約48〜51秒で届き、216のロータリー幅前提の「届かない」を覆す実測）。piは進めないので1分を過ぎれば従来どおりその段階から出る（遅れて出す形）。くわしい説明では従来どおり出さない（show自体がDETAILで止まる）
+    if (!S.done && pi < STEPS.length && calmPct >= STEPS[pi][0] && !busy() && !DETAIL && !startNoticeMuted()) { show(STEPS[pi][1], 3, 'step'); pi++; }   // 店主指示 2026-11-11: calmPct は田んぼ全体の耕し率（大きな数字と一致）。サイクル259では田んぼアートで絵の fill だった   // 知らせの あいだは 待つ。サイクル225・最初の1分: のんびりでは最初の1分は進みぐあいの吹き出し・読み上げも出さない（幅広作業機＝テッダー4.3m／スプレイヤー4.6mでは既定3速でも10%＝約140㎡に約48〜51秒で届き、216のロータリー幅前提の「届かない」を覆す実測）。piは進めないので1分を過ぎれば従来どおりその段階から出る（遅れて出す形）。くわしい説明では従来どおり出さない（show自体がDETAILで止まる）
   }
   function tap() {                                 // さわると：知らせの とちゅうは そのまま。案内が あれば もう一度 話す。なければ 雑談
     if (DETAIL || busy()) return;
@@ -10041,7 +10041,7 @@ function startCrank(first) {
 function startGame() {
   startCrank(true);  // エンジンをかける：（冷えていれば予熱）→ セル（1.1 秒）→ かかる → 回転が上がって落ちつく。サイクル161: 初回だけ true（のんびりでは始動を短くする）
   if (camMode !== 0) { camMode = 0; look.yaw = look.pitch = 0; $('bCam').textContent = '👁 ' + CAMS[0]; }   // サイクル118: 始まりは運転席視点（洗車などで外から見た後でも）
-  for (const id of MOBILE || params.has('pad') ? ['hud', 'bar', 'badge', 'padC', 'padB', 'padD', 'bigPct'] : ['hud', 'bar', 'badge', 'bigPct']) $(id).classList.remove('hidden');   // サイクル217・類1: のんびりでは大きな％数字も出す（DETAILでは CSS で常時非表示）   // サイクル98: 運転パッドは全廃済み（DOMなし）。運転はなぞり操作のみ（キーボードは予備として残す）
+  for (const id of MOBILE || params.has('pad') ? ['hud', 'bar', 'badge', 'padC', 'padB', 'padD', 'bigPct'] : ['hud', 'bar', 'badge', 'bigPct']) $(id).classList.remove('hidden');   // サイクル217・類1: 大きな％数字も出す（店主指示 2026-11-11 で DETAIL でも常時表示に変更）   // サイクル98: 運転パッドは全廃済み（DOMなし）。運転はなぞり操作のみ（キーボードは予備として残す）
   if (!MOBILE && !params.has('pad')) $('keyHint').classList.remove('hidden');   // パソコン：はじめのうちは 画面の左下に いちばん使うキー
   S.started = true; $('loadWait').classList.add('off');   // サイクル269: 読みこみを待つ間の おおいを消す
     FIRSTMIN.start();   // サイクル159：のんびりでは 開始直後の表示を軽くする（DETAIL では何もしない）
@@ -10737,7 +10737,7 @@ const PLAY = (() => {
 })();
 
 // ---- まわす ----
-let last = performance.now(), hudT = 0, meterT = 0, monT = 0, lastPct = 0, calmPct = 0;   // calmPct＝のんびりの大きな数字に出している割合（サイクル259）
+let last = performance.now(), hudT = 0, meterT = 0, monT = 0, lastPct = 0, calmPct = 0;   // calmPct＝大きな数字に出している割合（田んぼ全体の耕し率。サイクル259は田んぼアートでは絵の fill だったが、店主指示 2026-11-11 で全体率に統一）
 function frame(now) {
   requestAnimationFrame(frame);
   const dt = Math.min(0.05, (now - last) / 1000), realDt = Math.min(0.25, (now - last) / 1000);   // realDt は PLAY の経過用（実時間。サイクル76で制限には使わない）
@@ -10804,9 +10804,11 @@ function frame(now) {
     // サイクル259・最初の1分: 数字を「いまの目当て」に合わせ、耕しはじめてすぐ動くようにする（実測：はじめての人が なぞって耕しても 約20秒「0%」のまま・1分で 2%）。
     // 田んぼアート（既定のお題）では 絵の中を耕せた割合（地図の「でき」と同じ数）。それまでは田んぼ全体の割合だったので、白線の外を耕しても数字が上がり、絵の中を耕しても ほとんど動かなかった。
     // お題なしでは従来どおり田んぼ全体の割合で、10% までは小数 1 けた（0.1% ＝ 約 1.5m²）まで出す。点滅・音・文字は足さない
-    const artR = ART.on ? ART.score() : null, fill = artR ? artR.fill : tilledCount / workCount;
+    const artR = ART.on ? ART.score() : null;
+    // 店主指示（2026-11-11）「耕し率を追加」: 大きな数字は お題（田んぼアート）の有無にかかわらず常に「田んぼ全体の耕し率」（耕した面積÷田んぼ全体＝計器チップの pct と同じ割合）にする。お題の「でき」は地図と点数の側（artR）で従来どおり見る。10% までは小数 1 けた（0.1% ＝ 約 1.5m²）まで出し、耕しはじめてすぐ動くようにする（サイクル259の狙いは全体率でも保たれる）。点滅・音・文字は足さない
+    const fill = tilledCount / workCount;
     calmPct = Math.min(100, Math.floor(fill * 100 + 1e-9));
-    $('bigPct').textContent = (!artR && fill < 0.1 ? (Math.floor(fill * 1000 + 1e-9) / 10).toFixed(1) : calmPct) + '%';
+    $('bigPct').textContent = (fill < 0.1 ? (Math.floor(fill * 1000 + 1e-9) / 10).toFixed(1) : calmPct) + '%';
     COACH.update(running && !INTRO.on);
     if (pct >= 3 && !S.hintGone) { S.hintGone = true; $('keyHint').style.opacity = 0; }
     $('time').textContent = fmtTime(S.elapsed);

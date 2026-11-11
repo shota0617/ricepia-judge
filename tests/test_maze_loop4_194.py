@@ -73,7 +73,9 @@ class Tilt194(unittest.TestCase):
         self.assertIn("const DEMO_IDLE_MS = 2000;", PIX)
         t = fn_src("tapDemoTick")
         self.assertIn("now - tapDemo.at >= (first ? 0 : tapDemo.walked ? DEMO_TAP_MS : DEMO_IDLE_MS)", t)   # サイクル198：タップで 歩いた あとは 0.9秒（その ほかは 2秒）
-        self.assertIn("if (rp.x !== tapDemo.x || rp.y !== tapDemo.y) { tapDemo.x = rp.x; tapDemo.y = rp.y; tapDemo.at = now; tapDemo.walked = now - tapDemo.walkT < 700; }", t)
+        # サイクル206：お米が 動いたか は、0.25秒の 見回りの 間に DEMO_MOVE マスより 動いたか で 決める（センサーの ふるえ・じわっと した ずれでは 待ち時間を もどさない）
+        self.assertIn("const moved = rp.x === null || tapDemo.x === null ? rp.x !== tapDemo.x : Math.hypot(rp.x - tapDemo.x, rp.y - tapDemo.y) > DEMO_MOVE;", t)
+        self.assertIn("if (moved) { tapDemo.at = now; tapDemo.walked = now - tapDemo.walkT < 700; }", t)
         self.assertIn("const sp = tapDemoSpot(path, first);", t)   # サイクル198：道しるべの 3マス先。窓が 開く 所は よける
         self.assertNotIn("localStorage", t)   # はじめての 人 だけ・1回だけ の 条件を もたない
         self.assertNotIn("lsGet", t)

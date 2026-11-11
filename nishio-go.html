@@ -95,7 +95,7 @@
 <!-- サイクル202（おそい 回線）：スタイルシートは 題字の あとに 置く（head に 置くと、3つとも 届くまで 画面が まっ白の まま。ここなら 題字と 米つぶが 先に 出る）。
      下の スクリプトは スタイルシートを 待って から 動くので、題字が 消える（DOMContentLoaded）ときには そろって いる -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap"/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" media="print" onload="this.media='all'"/><!-- サイクル206：字の スタイルシートは 待たずに 読む（この 相手の 返事が おそいと、下の スクリプトが その 間 ずっと 始まらなかった。字は 同じ・とどいたら 切りかわる） -->
 <link rel="stylesheet" href="nishio-go/style.css"/>
 <script>/* 文字を少なく（ふだん）。せってい の「文字を多めに出す」をオンにすると外す */try{if(localStorage.getItem('nsg_text_more')!=='1')document.body.classList.add('simple')}catch(e){document.body.classList.add('simple')}</script>
 

@@ -22,7 +22,11 @@ class TestTiltHint(unittest.TestCase):
 
     def test_goes_away(self):
         self.assertIn("tapDemoHide", FN)
-        self.assertIn("deviceorientation", FN)
+        # サイクル206：傾けて お米が 動いたら 消える（0.25秒の 見回りで 0.05マスより 動いた とき）。センサーの 値 そのもの では 消さない
+        # （持ち方が 1.2度 ずれて いる だけ・手が ふるえて いる だけで、止まって いるのに 手本が 出なかった）
+        self.assertIn("if (moved) { tapDemo.at = now;", FN)
+        self.assertIn("if (!ok) { tapDemoHide(); return; }", FN)
+        self.assertNotIn("deviceorientation", FN)
 
     def test_physics_unchanged(self):
         self.assertIn("ROLL_MAX = 4.2", PIX)

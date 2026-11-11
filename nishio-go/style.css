@@ -420,6 +420,9 @@ body.px #map{visibility:hidden}
 .px-info .popup .tag.shop{border-color:#ff8a80;color:#ff8a80}
 .px-info .btn{background:#000;border:2px solid #fff;border-radius:4px;font-family:inherit}
 .dq-close{display:block;margin:8px 0 0 auto;background:none;border:0;color:#fff;font-family:inherit;font-size:14px}
+/* サイクル206（はじめの 1分・はば 320px）：名所の 窓は 地図の 高さの 7わり で 切れる。文が 長い 窓（はじめての ゴールの 駅）では「▶ とじる」が 切れた 先に あって、
+   中を なぞらないと 押せなかった（3回 押しても とじない）。「▶ とじる」は 窓の 下の はしに はりつける（中の 文だけが 流れる）。うしろの 文が すけない ように 黒い 帯に する */
+.px-info .dq-close{position:sticky;bottom:0;width:100%;margin:0;padding:8px 0 0;text-align:right;background:#000;box-shadow:0 10px 0 #000}
 /* ドット絵表示のときは、下のウィンドウもドラクエ風に */
 body.px .sheet{background:#000;color:#fff;border:3px solid #fff;border-radius:6px;box-shadow:0 0 0 3px #000;font-family:"DotGothic16","Hiragino Sans",monospace}
 body.px .status{color:#fff;font-size:14px}

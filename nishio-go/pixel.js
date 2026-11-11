@@ -8859,7 +8859,14 @@ function riceJourneyLayout(sx, sy, size) {
   try {
     if (![sx, sy, size].every(v => typeof v === 'number' && isFinite(v)) || size <= 0) return null;
     const ground = sy + size * 0.72, x = sx + size * 0.38, w = size * 0.44, r = size * 0.034, cy = ground - size * 0.07;
-    const stages = ['ine', 'momi', 'genmai', 'hakumai'].map((kind, i) => ({ kind, cx: x + w * (0.125 + 0.25 * i), cy, r }));
+    // 下地の色（各段階 [c0, c1, c0] の順で3枚）と、輪郭の揺らぎ（特大絵のにじみの3層と同じ3組を、段階ごとに3つずつずらして使う。固定値）
+    const WASH = { ine: ['rgba(255,224,130,.28)', 'rgba(200,225,120,.22)'], momi: ['rgba(255,236,170,.3)', 'rgba(255,214,120,.2)'], genmai: ['rgba(238,210,160,.3)', 'rgba(226,190,140,.2)'], hakumai: ['rgba(255,255,255,.4)', 'rgba(220,235,250,.25)'] };
+    const WOB = [[1, .96, .93, .97, .91, .95, .98, .92, .96, .94, .99, .95], [.95, .99, .92, .96, .94, .90, .97, .93, 1, .95, .91, .96], [.93, .97, 1, .94, .98, .92, .95, .99, .90, .96, .94, .97]];
+    const stages = ['ine', 'momi', 'genmai', 'hakumai'].map((kind, i) => {
+      const cx = x + w * (0.125 + 0.25 * i), c = WASH[kind], rot = b => b.map((_, k) => b[(k + 3 * i) % 12]);
+      const wash = [[0, 0, 1.55, 1.2, c[0]], [0.3, 0.15, 1.2, 1.05, c[1]], [-0.25, -0.2, 1.0, 0.85, c[0]]].map(([dx, dy, rx, ry, fill], j) => ({ cx: cx + r * dx, cy: cy + r * dy, rx: r * rx, ry: r * ry, fill, wob: rot(WOB[j]) }));
+      return { kind, cx, cy, r, wash };
+    });
     const arrows = [0, 1, 2].map(i => ({ x0: stages[i].cx + r * 1.2, x1: stages[i + 1].cx - r * 1.2, y: cy }));
     const pyY = ground + size * 0.065;
     const piles = [{ kind: 'wara', cx: x + w * 0.2, cy: pyY, w: size * 0.07, h: size * 0.035 }, { kind: 'momigara', cx: x + w * 0.5, cy: pyY, w: size * 0.07, h: size * 0.035 }, { kind: 'nuka', cx: x + w * 0.8, cy: pyY, w: size * 0.07, h: size * 0.035 }];
@@ -8874,12 +8881,16 @@ function drawRiceJourney(sx, sy, size) {   // 静止画：動きも文字もな�
     ctx.fillStyle = fill; ctx.beginPath(); ctx.ellipse(cx, cy, rx, ry, rot, 0, Math.PI * 2); ctx.fill();
     if (line) { ctx.strokeStyle = line; ctx.lineWidth = Math.max(1, size * 0.004); ctx.stroke(); }
   };
-  const wash = { ine: ['rgba(255,224,130,.28)', 'rgba(200,225,120,.22)'], momi: ['rgba(255,236,170,.3)', 'rgba(255,214,120,.2)'], genmai: ['rgba(238,210,160,.3)', 'rgba(226,190,140,.2)'], hakumai: ['rgba(255,255,255,.4)', 'rgba(220,235,250,.25)'] };
+  const U = [[1, 0], [.866, .5], [.5, .866], [0, 1], [-.5, .866], [-.866, .5], [-1, 0], [-.866, -.5], [-.5, -.866], [0, -1], [.5, -.866], [.866, -.5]];   // 単位円の12点（30度刻み）
+  const blob = o => {   // 下地：半径を固定値で揺らした、閉じたなめらかな曲線（乱数・時刻なし）
+    const P = U.map((u, i) => [o.cx + u[0] * o.rx * o.wob[i], o.cy + u[1] * o.ry * o.wob[i]]);
+    ctx.fillStyle = o.fill; ctx.beginPath();
+    ctx.moveTo((P[11][0] + P[0][0]) / 2, (P[11][1] + P[0][1]) / 2);
+    for (let i = 0; i < 12; i++) { const a = P[i], b = P[(i + 1) % 12]; ctx.quadraticCurveTo(a[0], a[1], (a[0] + b[0]) / 2, (a[1] + b[1]) / 2); }
+    ctx.closePath(); ctx.fill();
+  };
   for (const s of L.stages) {
-    const c = wash[s.kind];
-    oval(s.cx, s.cy, s.r * 1.55, s.r * 1.2, c[0]);
-    oval(s.cx + s.r * 0.3, s.cy + s.r * 0.15, s.r * 1.2, s.r * 1.05, c[1]);
-    oval(s.cx - s.r * 0.25, s.cy - s.r * 0.2, s.r * 1.0, s.r * 0.85, c[0]);
+    for (const w of s.wash) blob(w);
     const u = s.r;
     if (s.kind === 'ine') {
       ctx.lineCap = 'round';

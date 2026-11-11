@@ -1812,6 +1812,26 @@ guideAt('move', el, 0, -48);      assert.equal(guideEl.style.top, '428px');   //
         self.assertIn('data-src="kensa/kokusashi.webp"', HTML)
         self.assertIn('data-src="kensa/ittomai.webp"', HTML)
 
+    def test_cycle146_nothing_broken_shows_while_the_script_is_still_coming(self):
+        # 最初の1分（おそい回線・おそいスマホ）: スクリプトはページのいちばん後ろにあり、届くまでの間
+        # （おそい3G・CPU6倍の実測で0.8〜2.1秒）は、置き場所の決まっていない手本の指👆が左はしに半分・
+        # 写真の代わりの文字「穀刺しの実物の写真」・袋が描かれる前の案内文「ふくろを タップ」が見えていた。
+        # 始まるまでは見せず、始まったら（startLot の後）今までどおり出す。
+        self.assertIn('<main id="app" class="boot">', HTML)
+        self.assertIn(".boot #poke, .boot #hint, .photo[data-src] { visibility:hidden; }", HTML)
+        # boot を外すのは startLot（指の置き場所・案内文が決まる）の後・スクリプトの最後で1回だけ
+        tail = HTML[HTML.rindex("armIdle();\nstartLot();"):]
+        self.assertIn('startLot();\n$("app").classList.remove("boot");', tail)
+        # 外すのは 2 か所だけ: 始まった時（上）と、始まるとちゅうで エラーで止まった時（Codex 指摘 PR #1100）
+        self.assertEqual(HTML.count('classList.remove("boot")'), 2)
+        self.assertIn('window.addEventListener("error", function(){ var a = document.getElementById("app"); if (a) a.classList.remove("boot"); });', HTML)
+        self.assertNotIn('classList.add("boot")', HTML)
+        # 隠すだけで、場所は取ったまま（始まった時に舞台の高さが動かない）
+        css = HTML[HTML.index(".boot #poke"):HTML.index("\n", HTML.index(".boot #poke"))]
+        self.assertNotIn("display", css)
+        # 写真は data-src のまま（顔が先・写真は後の順は変えない）
+        self.assertIn('faceImg.addEventListener("load", loadPhotos);', HTML)
+
     def test_cycle139_taps_after_inserting_are_caught(self):
         # 最初の1分（本物の指）: さした後の空振りは数えず手本も出なかったため、押し込んで指を離し
         # 「ひきぬく →」を見て穀刺しをタップする人・指を置くだけの人は、4回やっても何も起きなかった

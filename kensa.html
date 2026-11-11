@@ -21,6 +21,10 @@
   [hidden] { display:none !important; }
   img,canvas { image-rendering:pixelated; -webkit-user-select:none; user-select:none; -webkit-user-drag:none; }
   .photo { image-rendering:auto; }
+  /* 読みこみの とちゅう（サイクル146・最初の1分・おそい回線）: ページの後ろにある スクリプトが届くまでの間、まだ置き場所の決まっていない 手本の指👆（画面の左はしに半分）・
+     写真の代わりの文字（「穀刺しの実物の写真」）・はじめの案内文「ふくろを タップ」（袋は まだ描かれていない）は見せない。
+     おそい 3G・CPU 6 倍の実測（390×844）で、この こわれて見える間は 0.8〜2.1 秒（圧縮なしの配信では 1.0〜4.5 秒）。始まったら（startLot の後で boot を外す）今までどおり出る */
+  .boot #poke, .boot #hint, .photo[data-src] { visibility:hidden; }
 
   #app { height:100vh; height:100dvh; max-width:520px; margin:0 auto; display:flex; flex-direction:column;
     padding:max(6px, env(safe-area-inset-top)) 12px 0; -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; overflow:hidden; } /* 写真や🤲を長押ししても iOS の「画像を保存」は出さない（子に継承） */
@@ -249,7 +253,7 @@
 </style>
 </head>
 <body>
-<main id="app">
+<main id="app" class="boot">
   <div id="head">
     <canvas id="face" width="256" height="256" aria-hidden="true"></canvas>
     <div id="headText">
@@ -364,6 +368,8 @@
 </section>
 <script>
 "use strict";
+/* Codex 指摘（PR #1100）: 始まる とちゅうで エラーで 止まっても（古い ブラウザなど）、隠して いた 手本の指・案内文は 出す */
+window.addEventListener("error", function(){ var a = document.getElementById("app"); if (a) a.classList.remove("boot"); });
 /* KENSA-RULES-START */
 /* 水稲うるち玄米の品位（農産物規格規程。農林水産省「玄米の検査規格」2026-11-06確認）。
    水分は表の15.0%に附の「当分の間 1.0%加算」を入れて16.0%まで。ロットは15.0〜16.0%の帯を使わない */
@@ -2401,6 +2407,7 @@ $("gameReturnLink").addEventListener("click", () => { gameReturnSound(); }); /* 
 document.querySelectorAll(".sourceLink").forEach(a => a.addEventListener("click", () => { notesSound(); })); /* 資料の出典リンク（農林水産省・3件）も、資料を開くときと同じ小さな音で知らせる（サイクル116・差22）。差19では「ゲームの操作ではない」として対象外にしたが、資料を開く操作（差18）も同じくゲームの操作ではなく音を付けた前例があり、資料内のリンク5件で出典3件だけが無音だった（390×844実測で押下の同期音0件）。新しいタブで開く動きは従来どおり妨げない */
 armIdle();
 startLot();
+$("app").classList.remove("boot"); /* 読みこみの とちゅうに隠していた 手本の指・案内文を出す（サイクル146） */
 </script>
 </body>
 </html>

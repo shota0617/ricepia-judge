@@ -2323,12 +2323,12 @@ function ktAskGuide(lead, mood) {
   const Q = 'つぎは どこへ 行く？', last = lead[lead.length - 1];
   const pages = !last ? [Q] : [...lead.slice(0, -1), typeof last === 'string' ? `${last}\n${Q}` : { ...last, t: `${last.t}\n${Q}` }];
   return KT.say(pages, { mood, key: 'guide', busy: () => ktBusy() || !S.guide,
-    choices: () => { const g = S.guide; shown = g ? [g, ...(g.alts || [])].map(o => o.id) : []; return g ? [g, ...(g.alts || [])].map((o, i) => `${o.kind === 'npc' ? '👤' : '📍'} ${o.name}${i ? '' : ' ← おすすめ'}`) : []; },
+    choices: () => { const g = S.guide; shown = g ? [g, ...(g.alts || [])].map(o => o.id) : []; return g ? [g, ...(g.alts || [])].map((o, i) => `${o.kind === 'npc' ? '👤' : '📍'} ${guideDispName(o)}${i ? '' : ' ← おすすめ'}`) : []; },
     then: i => {
       const id = shown[i], g = S.guide;
       if (!id || !g) return;
       if (g.id !== id) { const k = (g.alts || []).findIndex(a => a.id === id); if (k < 0) return; pickAlt(k); }   // 押した 所が もう 候補に ないときは 何も しない
-      toast(`🧭 ${S.guide.name}へ 行こう`); track('kome_talk_pick', { alt: i > 0 });
+      toast(`🧭 ${guideDispName(S.guide)}へ 行こう`); track('kome_talk_pick', { alt: i > 0 });
     } });
 }
 // お米つぶの 西尾ばなし（komebanashi.js）：着いた 名所の 地区と いまの 月に 合う 話を 1つ。出る ページが 最初に 表示された ときに「話した」と おぼえる
@@ -2427,9 +2427,9 @@ function npcBriefMsg(brief, got, lv, maze) {
 // 3行に なって、ゴールの 札・つぎの ゴールの 札と 同じ 名前を くりかえした。運営者の声「文字は 少なく」2026-10-29）
 function arriveMsg(g, pts, next, maze) {
   const icon = g.byId ? '🎉' : '🧭', p = pts ? ` +${pts}pt` : '';
-  if (!simple()) return `${g.byId ? '🎉 イベント達成：' : '🧭 '}${g.name}に着いた${p}${next ? `　→ ${next.why}` : ''}`;
+  if (!simple()) return `${g.byId ? '🎉 イベント達成：' : '🧭 '}${guideDispName(g)}に着いた${p}${next ? `　→ ${next.why}` : ''}`;
   if (maze) return p ? icon + p : '';
-  return `${icon} ${g.name}${p}`;
+  return `${icon} ${guideDispName(g)}${p}`;
 }
 // さんぽ仲間（ライバル）：行き先（名所・すすめられた人）に3回着くごとに1回、同じくらいの年の さんぽ好きが先に来ていて、次の行き先へ先回りする。
 // その行き先に着くと、また会える（昔のドット絵RPGの、先々で待っているライバルのしくみ）。g.name は着いた所の名前
@@ -2476,7 +2476,7 @@ function pickAlt(i) {
   save();
   $('guide').classList.remove('open');
   renderGuide();
-  toast(`🧭 行き先を「${a.name}」にした`);
+  toast(`🧭 行き先を「${guideDispName(a)}」にした`);
   track('guide_pick', { kind: a.kind, mode: demo ? 'play' : 'walk' });
 }
 // 行き先の名所のドット絵（歩く地図と同じ絵）。人が行き先のときは出さない
@@ -2491,6 +2491,13 @@ function spotThumb(sp) {
   const u = thumbCache.get(sp.id);
   return u ? `<img class="gthumb" src="${u}" alt="" width="28" height="28"/>` : '';
 }
+// 下の札の 名前：人は「場所（人）」の 順に（狭い画面で「…」に なるのは 人の 説明がわ。行き先の 場所が 先に 読める）。並べかえ だけで 字は ふえない。名所は もともと 場所が 先
+function guideDispName(g) {
+  if (!g || !g.name) return '';
+  if (g.kind !== 'npc') return g.name;
+  const m = /^([^（）]+)（([^（）]+)）$/.exec(g.name);
+  return m ? `${m[2]}（${m[1]}）` : g.name;
+}
 function renderGuide() {
   const el = $('guide');
   const g = guideTarget();
@@ -2501,10 +2508,10 @@ function renderGuide() {
   const alts = (S.guide && S.guide.alts) || [];
   const mr = demo && window.nishioPixel && nishioPixel.maze && nishioPixel.maze.route ? nishioPixel.maze.route() : null;   // 地図の めいろ：まっすぐ ではなく めいろの 道のり
   const far = fmtM(mr ? mr.m : dist(me, g));   // 道のりは 数字だけ（めいろの ときは めいろの 道のり。しるしは 名前の 🏁 に まかせる）
-  const gname = `<em class="gn">${mr ? '🏁 ' : ''}${esc(g.name)}</em>`;   // めいろの ときは 行き先が ゴール（地図の 🏁 と おなじ しるし）。長い 名前は こちらを「…」に して 道のりは のこす
+  const gname = `<em class="gn">${mr ? '🏁 ' : ''}${esc(guideDispName(g))}</em>`;   // めいろの ときは 行き先が ゴール（地図の 🏁 と おなじ しるし）。長い 名前は こちらを「…」に して 道のりは のこす
   const head = simple() && window.NSG_ICONS ? `${NSG_ICONS.arrow(bearing(me, g))}${guideThumb(g)}${g.byId ? PIA('scroll', 'イベント') : ''} ${gname}<span>　${far}</span>` : `${g.byId ? '📜' : '🧭'} ${gname}<span>　${far}</span>`;   // 1行だけ：目的地の名前と 距離（運営者の声 2026-11-03「文字が多すぎる」）
   el.innerHTML = `<b>${head}</b>`
-    + (alts.length ? `<span class="alts"><em>ほかの行き先：</em>${alts.map((a, i) => `<button type="button" class="btn mini" data-alt="${i}">↪ ${esc(a.name)}${me ? `（${fmtM(dist(me, a))}）` : ''}</button>`).join('')}</span>` : '');
+    + (alts.length ? `<span class="alts"><em>ほかの行き先：</em>${alts.map((a, i) => `<button type="button" class="btn mini" data-alt="${i}">↪ ${esc(guideDispName(a))}${me ? `（${fmtM(dist(me, a))}）` : ''}</button>`).join('')}</span>` : '');
   el.title = `${g.by}「${g.why}」`;
   // glowHtml / treasureHtml は 文字を 減らすため ここでは 呼ばない（サイクル25。関数は 残す）
   el.classList.remove('hasChips');   // 距離順チップは 出さない（guideChips は 純関数として 残す）
@@ -4774,7 +4781,7 @@ window.nishioGo = {
   spotTip, dist, cooldownLeft, inReach, reachOf, guideRadius, renderGuide, checkin, checkinSpot, popupHtml, toast, toastAfter, renderLog, ymd, refreshNearby, reactLine, get npcs() { return placeNpcs(); }, weekTheme, giveBag, talkNpc, callNpc(id) { calledBy = id || null; }, meetCritter, critterLeft, critterFirst: () => !Object.keys(S.critters || {}).length, watchOpen, watchWater, alleyFind, mzGrain, mzFruit, mzPiece, mzView, mzCache, mzQuest, mzDino, mzChase, mzEnergy, mzShoo, mzTorch, mzBrigade, mzPurify, mzRescueJoin, mzRescue, mzCube, mzGrainHas: key => mzGrainGot().includes(key), get mzGrains() { return mzGrainGot().length; }, alleyOpen: (x, y) => (dayState().alleys || 0) < ALLEY.daily && !(S.alleys || []).includes(`${x},${y}`), sealCands, sealPickCheck, clearInfo: () => ({ cleared: !!S.cleared, got: SEAL_MAIN.filter(id => (S.seals || []).includes(id)).length, need: SEAL_MAIN.length }), get rival() { return rivalWhere(); }, rivalSay, RIVAL, areaArt, npcMet, chestOpened: id => dayState().chests.includes(id), liveChests, get welcomeChest() { return welcomeDue(); },
   moveTo(lat, lng, kind) { if (!demo) return; follow = false; stepMove = kind === 'step'; try { onFix(lat, lng, 5, Date.now()); } finally { stepMove = false; } },
   get driving() { return driving; },
-  get guide() { return guideTarget(); }, decideGuide, setGuide, guideNoPath, guideKept: () => !!(S.guide && (S.guide.mine || S.guide.refer || S.guide.byId)),   // guideKept：自分で 選んだ・人の すすめの 行き先か（かってに かえない）
+  get guide() { return guideTarget(); }, guideDispName, decideGuide, setGuide, guideNoPath, guideKept: () => !!(S.guide && (S.guide.mine || S.guide.refer || S.guide.byId)),   // guideKept：自分で 選んだ・人の すすめの 行き先か（かってに かえない）
   autoInterval, autoLearn, idleCheck, buyUp, IDLE,
   setDriving(on) { driving = !!on && demo; if (!driving) tryChest(); refreshNearby(); },
   invalidateMap() { setTimeout(() => { map.invalidateSize(); if (me) map.setView([me.lat, me.lng]); }, 0); },

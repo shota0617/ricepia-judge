@@ -164,6 +164,8 @@
   body.calm #say::before { top: 12px; right: -6px; left: auto; border: 6px solid transparent; border-right: 0; border-top-color: transparent; border-bottom-color: transparent; border-left-color: rgba(251,248,240,.97); }
   /* のんびり（くわしい説明 なし）：計器の 札・知らせ・案内・キーの 一覧・窓の 札は 出さない（キャラクターが 話す） */
   body.calm #hud, body.calm #toast, body.calm #coach, body.calm #keyHint, body.calm #badgeSt { display: none !important; }
+  body.calm #toast.err { display: block !important; }   /* サイクル274: 読みこめなかった知らせだけは のんびりでも出す */
+  body.loadng canvas#view { visibility: hidden; }
   body.calm #artPop { display: none !important; }   /* サイクル76 総点検：のんびりでは 点数の ＋− ポップ（報酬・罰の 浮き文字）は 出さない */
   /* サイクル117 のんびり・平和監査第1弾「点数で競わせない」：のんびりでは 挑戦・比較・点数の評価は 出さない（くわしい説明を 入れると 従来どおり 出る） */
   body.calm #loopBox { display: none !important; }
@@ -176,6 +178,11 @@
   /* 操作を かんたんに：ふだんは よく使う ボタンだけ（くわしい説明を 入れると ぜんぶ 出る。キーボードの キーは いつでも 使える） */
   body.calm #bEco, body.calm #bAssist, body.calm #bFast, body.calm #bHelp, body.calm:not(.needDepth) #bShallow, body.calm:not(.needDepth) #bDeep { display: none !important; }   /* 深さは 案内が 浅くと 言ったら 出す（needDepth） */
   body.calm.firstmin #bCam, body.calm.firstmin #bSnd, body.calm.firstmin #bEasy, body.calm.firstmin #bGear, body.calm.firstmin #bArt, body.calm.firstmin #padB, body.calm.firstmin #padD { display: none !important; }   /* サイクル159 最初の1分：開始直後は 上のボタンと下のパッドを絞る（キーは従来どおり効く。FIRSTMIN 終了で 静かに もどる）／サイクル214・最初の1分（Fable5設計 項目1）: 🔰（かんたんアシスト入切）も最初の1分は隠し、上のアイコンは 🌙 だけにする（サイクル263: ≡ は全廃）。アシストは既定で入ったまま効き、入切は K キーと運転中の 🔰 ボタンで従来どおりできる（サイクル263: はじめの画面は全廃）。padC は上の body.firstmin 行（サイクル185）で別途隠している */
+  /* サイクル274・最初の1分: 🌙 は 1 分を またいでも 同じ場所（上の右はし）に置く。📸 完成 は 反対の左はしへ。
+     それまでは 60 秒で ほかのボタンが もどると 🌙 が左へ 85px ずれ、🌙 が あった場所に 📸 完成 が来ていた。
+     🌙 を入れて見ていた人が 同じ場所を もう一度 押すと、たずねられずに ゲームが おわった（実測 2 回のうち 2 回）。ボタンの はたらきは 変えない */
+  body.calm #bAuto { order: 9; }
+  body.calm #bArt { order: -1; }
   body.calm .ico::before { content: attr(data-i); font-size: 18px; }
   body.calm .pad .ico::before { font-size: 26px; }
   body.calm .card h1 { font-size: 0; }
@@ -211,9 +218,14 @@
   var w = document.getElementById('loadWait');
   function fail() {
     w.classList.add('off');
-    var say = function () { var t = document.getElementById('toast'); if (t && !t.textContent) { t.textContent = '🚜 うまく 読みこめませんでした。通信のよい所で、もう一度 ひらいてみてね。'; t.style.opacity = 1; } };
+    // サイクル274・最初の1分: この知らせは のんびり（body.calm）でも 見えるようにする（#toast.err）。画面を タップすると 読みこみ直す。
+    // それまでは 車体・田んぼ・作業機の どれかが届かないと、おおいが消えて、知らせは のんびりでは かくれている #toast に入り、
+    // 灰色と茶色の三角だけの画面に 文字もボタンも なかった（実測 4 回のうち 4 回。さわっても何も起きない）。こわれた景色（canvas）は かくす（body.loadng）
+    var say = function () { var t = document.getElementById('toast'); if (!t) return; if (!t.textContent) { t.textContent = '🚜 うまく 読みこめませんでした。通信のよい所で、画面を タップして やりなおしてね。'; t.style.opacity = 1; } t.classList.add('err'); document.body.classList.add('loadng'); };
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', say); else say();
+    if (!fail.on) { fail.on = true; document.addEventListener('click', function () { if (!started() && document.body.classList.contains('loadng')) location.reload(); }); }
   }
+  window.LOAD_NG = fail;
   function started() { try { return !!game.S.started; } catch (e) { return false; } }
   if (!window.THREE || !THREE.GLTFLoader || !THREE.DRACOLoader) fail();
   window.addEventListener('error', function () { if (!started()) fail(); });
@@ -528,7 +540,7 @@ Promise.all([load('tractor_yt.glb', 't'), load(FIELD[season], 'f'), IMPL_FILE ? 
   CLOUDS.apply(scene);                          // 雲の影（ほかの細工のあとで）
   LOAD_ST = 'ok';
   startGame();   // サイクル263（店主指示 2026-11-10）: はじめの画面は全廃。読みこみが終わったら、案内・設定なしで そのまま田んぼから始める（既定＝春・昼・晴れ・ロータリー・お題は四角）
-}).catch(e => { console.error(e); LOAD_ST = 'ng'; $('toast').textContent = '🚜 うまく 読みこめませんでした。通信のよい所で、もう一度 ひらいてみてね。'; $('toast').style.opacity = 1; $('loadWait').classList.add('off'); });   // 英語の エラー文は 画面に出さず コンソールへ（素朴な かわいさ）
+}).catch(e => { console.error(e); LOAD_ST = 'ng'; $('toast').textContent = ''; LOAD_NG(); });   // 英語の エラー文は 画面に出さず コンソールへ（素朴な かわいさ）
 
 
 // ---- ヘッドライトと作業灯（LED）。夕方は点けて始める。L で入切（本物も作業灯は集中スイッチでまとめて入切） ----
@@ -5003,7 +5015,7 @@ const KERI = (() => {
     update(dt) {
       if (nest && nest.visible) {
         if (!nestTold && S.started && Math.hypot(S.x - NEST[0], S.z - NEST[1]) < 9 && !startNoticeMuted()) { nestTold = true; toast('ケリの巣（地面に卵が 4 つ）があります。巣とそのまわりは耕さずに残し、タイヤとロータリーを近づけない', 5); }
-        if (tilledMask[ni * NZ + nj]) { nest.visible = false; toast('ケリの巣を耕してしまった…。本物は 巣のまわりを残して よける', 5); }
+        if (tilledMask[ni * NZ + nj]) { nest.visible = false; if (!startNoticeMuted()) toast('ケリの巣を耕してしまった…。本物は 巣のまわりを残して よける', 5); }   // サイクル274・最初の1分: のんびりの はじめの 1 分は「巣があります」の知らせを出さないので、「耕してしまった…」も出さない（知らされていない事で しかられない。実測 2 回のうち 2 回 出ていた）
       }
       alarmT = Math.hypot(S.x - NEST[0], S.z - NEST[1]) < 14 ? 6 : alarmT - dt;   // 巣から 14m 以内に来たら騒ぐ（はなれて 6 秒で落ちつく）
       birds.forEach((b, k) => {
@@ -7882,7 +7894,7 @@ const TRACE = {
   // トラクターの動き・離すと止まる きまり（サイクル116）は 変えない
   tBox: null, tDots: [], tN: 0, tT: 0, tLast: null,
   mark(e, first) {
-    if (DETAIL || !FIRSTMIN.on) return;
+    if (DETAIL || !(FIRSTMIN.on || !S.started)) return;   // サイクル274: 読みこみを待つ間（始まる前）の指にも出す（おおいは「指で なぞると 進みます」と言うのに、さわっても 何も見えなかった。実測 10 回のうち 0 回）
     if (!this.tBox) { this.tBox = $('traceDots'); if (!this.tBox) return; for (let i = 0; i < 24; i++) { const el = document.createElement('div'); el.className = 'tDot'; this.tBox.appendChild(el); this.tDots.push(el); } this.tLast = [0, 0]; }
     if (first) { for (const el of this.tDots) el.style.display = 'none'; this.tN = 0; }
     else if (Math.hypot(e.clientX - this.tLast[0], e.clientY - this.tLast[1]) < 16) { this.tT = 0.6; return; }
@@ -8080,6 +8092,7 @@ const TRACE = {
 const HINT = {
   t: 0, done: false, okT: 0, pts: null, at: null, dots: [],
   demoK: -1, demoF: false, sideOK: 0, yaw0: null, bent: false,   // サイクル265: 止まっている間の見本の番（6 秒ごと）・「前へ」の見本を出しているか・横なぞりで 30° 以上 曲がれた回数
+  holdT: 0,   // サイクル274: 指を置いたまま 止まっている時間（秒）
   idleT: 0,   // サイクル262: 止まったままの時間（田んぼの中で 前に耕す所がない人への見本用）
   turn: null, stuckT: 0,   // サイクル260: 畦の手前で止まったままの時間と、「横へ なぞる」見本（出している間だけ { yaw, x, z, side }）
   outT: 0, outYaw: null,   // サイクル273: 絵の外を まっすぐ なぞって走っている時間（秒）と、その はじめの向き
@@ -8103,7 +8116,7 @@ const HINT = {
     // 実測（スマホ縦・ヒントどおり前へ なぞるだけの人）: 29 秒で畦に着き、3 秒の吹き出しのあとは何も出ないまま 90 秒まで同じ所。
     // 畦で止められた なぞり（TRACE.blockT）が合わせて 0.8 秒つづいたら出し、向きが 125° 変わる（ほぼ折り返した）か 9m はなれたら消す。向きは田んぼのまん中の側
     if (live && TRACE.on && TRACE.blockT > 0 && Math.abs(S.v) < 0.3) this.stuckT += dt; else if (Math.abs(S.v) > 0.5) this.stuckT = 0;   // 止められている間も 1m のゆとりの中で じわっと動くので、速さは 0.3m/秒 まで「止まったまま」と見る
-    if ((!this.turn || this.turn.out) && live && this.stuckT > 0.8) this.turn = { yaw: S.yaw, x: S.x, z: S.z, side: -S.x * Math.cos(S.yaw) + S.z * Math.sin(S.yaw) > 0 ? -1 : 1 };   // 左（cos, −sin）の側に まん中があれば 画面の左へ。サイクル273 の見本（下）が出ていても、畦で止まったら こちらに かえる
+    if ((!this.turn || this.turn.out) && live && this.stuckT > 0.8) this.turn = { yaw: S.yaw, x: S.x, z: S.z, side: this.pick(true), ck: 0 };   // 向きは pick（下。サイクル274）。サイクル273 の見本（下）が出ていても、畦で止まったら こちらに かえる（向きは 同じ決め方なので 入れかわらない）
     // サイクル273・最初の1分: 白線（絵）の外へ出て、前に耕す所がないまま まっすぐ なぞり続けている人に、畦に着く前から 同じ「横へ なぞる」見本を出す（文字なし・入力は ふさがない・動きは変えない）。
     // 実測（スマホ縦・本物のタッチ・前へ 0.5 秒なぞって 4 秒置く人）: 16 秒ごろ白線を出て「曲がって絵の中へ」の吹き出しが出るが、指を置いている間は 見本が出ない決まりなので、
     // 「横へ」の指が はじめて見えたのは 畦で止められたあと（白線を出て 7.4〜7.7 秒・7m 走ったあと）。直した後は 白線を出て 0.8 秒（走っている間・畦の 4〜5m 手前）。
@@ -8113,7 +8126,7 @@ const HINT = {
     // 向きは 耕す所が多く残っている側（なければ 田んぼのまん中の側）
     const outNow = live && this.done && ART.on && this.sideOK < 3 && ART.sdAt(S.x, S.z) > 0.4 && !this.workAhead(1), outDy = this.outYaw === null ? 9 : Math.abs(Math.atan2(Math.sin(S.yaw - this.outYaw), Math.cos(S.yaw - this.outYaw)));
     if (outNow && TRACE.on && S.v > 0.3 && outDy < 0.26) this.outT += dt; else { this.outT = 0; this.outYaw = S.yaw; }
-    if (!this.turn && this.outT > 0.5) this.turn = { out: true, yaw: this.outYaw, x: S.x, z: S.z, side: this.workSide(0, true) || (-S.x * Math.cos(S.yaw) + S.z * Math.sin(S.yaw) > 0 ? -1 : 1) };
+    if (!this.turn && this.outT > 0.5) this.turn = { out: true, yaw: this.outYaw, x: S.x, z: S.z, side: this.pick(true) };
     if (this.turn && this.turn.out && (!outNow || (!TRACE.on && (drag || viewPts.size > 0 || touchIds.size > 0 || key.fwd || key.back || key.left || key.right || AUTO.on)) || Math.abs(Math.atan2(Math.sin(S.yaw - this.turn.yaw), Math.cos(S.yaw - this.turn.yaw))) >= 0.26)) this.turn = null;
     // サイクル262（運営者の実機の声「曲がり方がわからない」）: 畦でなくても、前に耕す所がないまま止まっている人に 同じ「横へ なぞる」見本を出す。
     // 実測（スマホ縦・前へ 3 回なぞった人）: 白線をこえて田んぼの中で止まると、数字は 9% のまま・画面には 🌙 と ≡ だけで、曲がり方を教えるものは何も出なかった。
@@ -8134,18 +8147,30 @@ const HINT = {
     // まだ曲がったことのない人（はじめの向きから 30° 以上 向きが変わったことがない＝this.bent が false）には「横へ」を先に出す（前へは はじめのヒントで もう できている）。
     // 30° 向きが変わったあとは 今までどおり（前に耕す所が続いていれば「前へ」、なければ 耕す所が多い側へ「横へ」）。6 秒ごとの入れかえも今までどおり
     if (live && !this.bent) { if (this.yaw0 === null) this.yaw0 = S.yaw; else if (Math.abs(Math.atan2(Math.sin(S.yaw - this.yaw0), Math.cos(S.yaw - this.yaw0))) >= 0.52) this.bent = true; }
-    const idle = live && this.done && !TRACE.on && !drag && viewPts.size === 0 && touchIds.size === 0 && !key.fwd && !key.back && !key.left && !key.right && !AUTO.on && !S.stalled && !(S.crank > 0) && Math.abs(S.v) < 0.05 && !(this.turn && !this.turn.idle && !this.turn.out);
+    // サイクル274・最初の1分: 指を置いたまま トラクターが止まった人（なぞった線を走りきった・地面やボンネットを押しただけ）にも、止まって 0.6 秒たったら 同じ見本を出す（そこから いつもの 0.4 秒で 見える）。
+    // それまでは 見本は「指が ぜんぶ離れてから」だけで、置いたまま待つ人の画面は 指を離すまで 何も変わらなかった（実測 スマホ縦: 前へ なぞって置いたまま 5.5 秒で止まり、そのあと 17 秒 見本・点・吹き出し 0）。
+    // 数えるのは 田んぼ（canvas）の上の なぞりの指だけ：空を押して見回している指・2 本指で寄って見ている間・下のボタンを押している指・キーの間は 今までどおり出さない（Codex 指摘 PR #1076）。
+    // 指が 5px 動いた・置き直した ら 消して 数え直す（pointermove・pointerdown で holdT を 0 に）。指を離したら そのまま「止まった人への見本」に つながる。トラクターの動き（サイクル116）は 変えない
+    const rest = live && this.done && !key.fwd && !key.back && !key.left && !key.right && !AUTO.on && !S.stalled && !(S.crank > 0) && Math.abs(S.v) < 0.05 && !(this.turn && !this.turn.idle && !this.turn.out);
+    const free = !TRACE.on && !drag && viewPts.size === 0 && touchIds.size === 0, hold = rest && !free && !drag && !viewPinch && viewTwo !== 'pinch' && viewPts.size > 0 && touchIds.size <= viewPts.size && !TRACE.drive && [...viewPts.values()].every(q => !q.view && TRACE.ground({ clientX: q.x, clientY: q.y }));
+    // Codex 指摘（サイクル274 の PR）: 「置いたままの指」に数えるのは、地面（ボンネットも）の上に ある なぞりの指だけ。寄って見た あとに 1 本だけ残った指（q.view。なぞりは始めない）と、
+    // 空の上の指（見回す指。ほかの窓から もどって 記録だけ残った ときも）は 数えない。それまでは 寄って見たまま 片方の指を離して 1 秒で、拡大した画面に 見本が出ていた
+    if (rest && hold) this.holdT += dt; else this.holdT = 0;
+    const idle = rest && (free || this.holdT >= 0.6);
     if (!idle) { this.idleT = 0; this.demoK = -1; this.demoF = false; if (this.turn && this.turn.idle) this.turn = null; }
     else if ((this.idleT += dt) > this.wait() && !(this.sideOK >= 3 && FIRSTMIN.over)) {
       const k = Math.floor((this.idleT - this.wait()) / 6);
       if (k !== this.demoK) {
         this.demoK = k;
-        const sd = this.workSide(this.turn ? this.turn.side : 0, true), any = this.workAhead(1);
+        const sd = this.pick(false), any = this.workAhead(1);
         let fwd = (this.bent || this.sideOK >= 3) && this.workAhead(this.sideOK >= 3 ? 1 : 6); if (k % 2) fwd = !fwd; if (!any) fwd = false;   // Codex 指摘（PR #1090）：曲がり方を 覚えた 人（sideOK >= 3）は、はじめの 向きの 近くで 切り返して いて bent が 立って いなくても、これまで どおり（前に 耕す 所が あれば「前へ」から）。   // サイクル267: まだ曲がったことのない人（this.bent が false）には「横へ」を先に
         this.t = 0; this.demoF = !!sd && fwd; this.turn = sd && !fwd ? { idle: true, side: sd } : null; if (this.demoF) this.pts = this.build();
       }
     } else if (this.sideOK >= 3 && FIRSTMIN.over) { this.demoF = false; if (this.turn && this.turn.idle) this.turn = null; }   // 覚えた人が 1 分をまたいだら、出ていた見本を消す
     if (this.turn && !this.turn.idle && !this.turn.out && (Math.abs(Math.atan2(Math.sin(S.yaw - this.turn.yaw), Math.cos(S.yaw - this.turn.yaw))) > 2.2 || Math.hypot(S.x - this.turn.x, S.z - this.turn.z) > 9)) { this.turn = null; this.stuckT = 0; }
+    // サイクル274・最初の1分: 畦の見本を出している間も、0.5 秒ごとに 向きを決め直す（pick）。それまでは 止まったときの向きのまま 125° 曲がるまで変えなかったので、
+    // 見本と反対へ 1 回 曲がった人には、すぐ横の畦のほうを さす指が出つづけた（実測 スマホ縦: 畦まで 1.3〜3.5m の側を さす見本どおりに 5〜11 回なぞって、向きは 57〜101° のまま・絵の中へ もどれない）
+    if (this.turn && !this.turn.idle && !this.turn.out && live && (this.turn.ck = (this.turn.ck || 0) + dt) >= 0.5) { this.turn.ck = 0; const sd = this.pick(true); if (sd !== this.turn.side) { this.turn.side = sd; this.t = 0; } }
     if (this.turn && live) { this.ensure(); this.sweep(dt, box); return; }
     const show = (!this.done || this.demoF) && live;
     if (!show) { box.classList.add('hidden'); return; }
@@ -8181,6 +8206,26 @@ HINT.workSide = function (cur, any) {   // cur＝いま出している向き（�
   if (L + R === 0) return 0;
   if (cur) return (cur < 0 ? R > L * 1.5 : L > R * 1.5) ? -cur : cur;
   return L > R ? -1 : 1;
+};
+// サイクル274・最初の1分: 「横へ なぞる」見本の向き（画面の −1＝左・1＝右）を、3 つの見本（畦で止まった・白線の外を走っている・止まっている）で 同じ決め方にする。
+// それまでは 畦の見本だけ「田んぼのまん中の側」、ほかは「耕す所が多く残っている側」で、白線の外で 5〜7 秒 見せた向きと 畦に着いてからの向きが 逆になることがあった（実測 9 回のうち 3 回）。
+// 決め方: ① その側へ ま横に 5m 行くまでに 畦がある側は さけて、反対側（片方だけ畦が近いとき。畦ぞいに止まった・かどに寄った）
+//         ② どちらも あいている（または どちらも畦）ときは 耕す所が多く残っている側。前に出した向きが あれば、反対側が 1.5 倍より多いときだけ変える（workSide）
+//         ③ 耕す所が どこにも残っていないとき：mid が true なら 田んぼのまん中の側、false なら 0（見本を出さない）
+// 前に出した向き（lastSide）は、そのときの向きから 30° 曲がったら 忘れる（曲がったあとは 画面の左右が 別の方角になるため）
+HINT.lastSide = 0; HINT.lastYaw = 0;
+HINT.room = function (sd) {   // sd の側へ ま横に、田んぼのふちまで 何 m あるか
+  const dx = -sd * Math.cos(S.yaw), dz = sd * Math.sin(S.yaw);
+  const tx = Math.abs(dx) < 1e-6 ? 1e9 : ((dx > 0 ? HX : -HX) - S.x) / dx, tz = Math.abs(dz) < 1e-6 ? 1e9 : ((dz > 0 ? HZ : -HZ) - S.z) / dz;
+  return Math.max(0, Math.min(tx, tz));
+};
+HINT.pick = function (mid) {
+  let cur = this.lastSide; if (cur && Math.abs(Math.atan2(Math.sin(S.yaw - this.lastYaw), Math.cos(S.yaw - this.lastYaw))) >= 0.52) cur = 0;
+  const l = this.room(-1) >= 5, r = this.room(1) >= 5;
+  let sd = l !== r ? (l ? -1 : 1) : this.workSide(cur, true);
+  if (!sd && mid) sd = cur || (-S.x * Math.cos(S.yaw) + S.z * Math.sin(S.yaw) > 0 ? -1 : 1);   // 左（cos, −sin）の側に まん中があれば 画面の左へ
+  if (sd && (sd !== cur || !cur)) { this.lastSide = sd; this.lastYaw = S.yaw; }
+  return sd;
 };
 // サイクル260: 「横へ なぞる」見本。画面の上で、ボンネットのすぐ上（8m 先の地面の高さ）から 少し上（13m 先の高さ）へ上がりながら 画面のはしへ。地面の見える高さだけを通る
 HINT.sweep = function (dt, box) {
@@ -8627,7 +8672,8 @@ function step(dt) {
       if (tracing || Math.abs(S.v) > 0.2 || !at(0.06) || Math.sign(want) !== sg) { want = 0; S.v *= 0.6; }   // 速いとき・惰性のときは強くブレーキ。6cm 先も畦なら止まる
       else want = sg * Math.min(Math.abs(want), 0.15);                                           // ゆっくりなら、少しずつ動ける（キー操作のとき）
       EASY.used = true;
-      EASY.tell('stop', '畦の手前で止めました。' + (S.rotDown && sg > 0 ? IMPL + 'を上げてから回ろう' : 'ハンドルを切るか、反対へ'));
+      // サイクル274・最初の1分: なぞっている人の吹き出しは「何を するか」を はじめの 1 文に入れる（吹き出しは はじめの 1 文だけ。それまでは「畦の手前で止めました」だけで、どうするかは出なかった。実測 10 回のうち 10 回）。サイクル269 の白線の吹き出しと同じ
+      EASY.tell('stop', (tracing ? '畦の手前です、横へ なぞって曲がろう。' : '畦の手前で止めました。') + (S.rotDown && sg > 0 ? IMPL + 'を上げてから回ろう' : 'ハンドルを切るか、反対へ'));
     }
   }
   // サイクル263（Codex 指摘）: 切り返しで上げた作業機は、同じ なぞりの中で 前へ もどって ハンドルが ほぼまっすぐになったら下ろす（TRACE.backUp に覚えておく）。
@@ -8764,7 +8810,7 @@ function step(dt) {
   const yaw = S.yaw - S.v * Math.tan(S.steer + rutPull + PANKU.pull()) / WB * turnRate(Math.abs(S.v), S.x, S.z, onRoad) * dt;
   const x = S.x + Math.sin(yaw) * S.v * dt, z = S.z + Math.cos(yaw) * S.v * dt;
   if (canBe(x, z, yaw)) { S.x = x; S.z = z; S.yaw = yaw; }
-  else if (EASY.on) { if (Math.abs(S.v) > 0.3) EASY.tell('stop', '畦の手前で止めました。ハンドルを切るか、反対へ'); S.v = 0; EASY.used = true; }   // 🔰 予測で止めきれなかったときも、ぶつけずにその場で止める（減点しない）
+  else if (EASY.on) { if (Math.abs(S.v) > 0.3) EASY.tell('stop', (TRACE.on ? '畦の手前です、横へ なぞって曲がろう。' : '畦の手前で止めました。') + 'ハンドルを切るか、反対へ'); S.v = 0; EASY.used = true; }   // 🔰 予測で止めきれなかったときも、ぶつけずにその場で止める（減点しない）
   else { if (Math.abs(S.v) > 0.5) { toast('畦（あぜ）です。もどってください'); if (Math.abs(S.x) < HX + 1 && Math.abs(S.z) < HZ + 1) SCORE.levee(); } S.v = 0; }
   placeRig(dt);
   // ロータリー：下げると爪が回り、通ったところを耕す
@@ -9811,61 +9857,149 @@ $('bArt').onclick = () => { if (S.started && !S.done) finish(); };
 $('bOther').onclick = () => location.reload();   // サイクル263: はじめの画面は全廃。別のお題は URL の art= で開く（このボタンは お題なし・田んぼを ぜんぶ耕した ときだけ出る）
 // なぞる（サイクル70）: 運転中は canvas をなぞると跡を追って耕し、離すと止まる。サイクル101: 地面の上なら どこで始めても なぞりになり、まわりを見るのは空のドラッグだけ
 let drag = null;
-// 2本指で寄って見る（運転の操作は増やさない。景色を見るだけ）: 2本目の指で なぞりを やめ、指の開き具合で 画角を せばめる
+// 2本指で寄って見る（運転の操作は増やさない。景色を見るだけ）: 2本の指が どちらも動いたら、なぞりを やめて、指の開き具合で 画角を せばめる
+// サイクル274・最初の1分: 置いただけの指（スマホを持つ手の親指・手のひらのふち）は、もう 1 本の指の なぞりを じゃましない。
+// それまでは 2 本目の指が ふれた しゅんかんに なぞりを やめて「寄って見る」に していたので、
+// ・親指を画面のはしに置いたまま なぞると、どの なぞりも 拡大になり、トラクターは ついてこず、拡大したまま もどらなかった（実測 スマホ縦: 3 回なぞって 0.09m・画角 1.7〜2.0 倍のまま）
+// ・なぞって置いた指の ほかに 0.1 秒 ふれただけで止まり、置いた指を動かしても 動かなかった（5 秒で 0m。ふれなければ 6.9m）
+// ・左右の親指で かわりばんこに なぞる人は、次の指が 前の指より 0.1 秒 早く ふれると、2 回目から 1m も動かなかった
+// きまり（2 本の指が そろった ときの それぞれの場所から はかる）:
+// 1) 先に 12px 動いた指が出て、2 こま たっても もう 1 本が 6px より動いていなければ、動いた指が なぞる（もう なぞっている指なら そのまま。ちがう指なら、その指の はじめの場所から なぞりを始める）
+// 2) そのとき（か、決めて 0.15 秒の間に 12px）もう 1 本も 動いていたら「寄って見る」（なぞりを やめて 画角を変える。今までと同じ）
+// 3) 決まるまでは、なぞっている指の なぞりを そのまま続ける。決まったあとは、どちらかの指が離れるまで 変えない
+// 4) 片方の指が離れたら、残った指が そこから 12px 動いたときに なぞりを始める（寄って見た あとの指は 始めない。離れたのが なぞっていた指なら、今までどおり そこで止まる）
+// 5) 拡大した画角は、次に 1 本の指で なぞった（動かした）ときに 元にもどす（拡大したまま 運転しつづけない）
+// なぞりの点を足すのは なぞっている指だけ・まわりを見るのは 空を押した その指だけ（もう 1 本の指の わずかな ゆれで 線や目の向きが とばない）
 const viewPts = new Map();
+let viewTwo = null, viewTid = null, viewLost = false;   // viewTwo：2 本の指が そろってから null → 'wait'（まだ決めていない）→ 'trace'（片方が なぞる）か 'pinch'（寄って見る）。viewTid：なぞっている指
 // 画面のどこか（canvas の外の ボタンも）に ふれている指。止まったときの なぞりの見本（HINT）を「指がふれている間は出さない」ために見る（Codex 指摘 PR #1076）
 const touchIds = new Set();
 window.addEventListener('pointerdown', e => { touchIds.add(e.pointerId); }, { capture: true, passive: true });
 for (const ev of ['pointerup', 'pointercancel']) window.addEventListener(ev, e => { touchIds.delete(e.pointerId); }, { capture: true, passive: true });
-window.addEventListener('pointermove', e => { if (e.pointerType === 'mouse' && !e.buttons) touchIds.delete(e.pointerId); }, { capture: true, passive: true });   // 窓の外で はなした マウスを 取り残さない
+window.addEventListener('pointermove', e => { if (e.pointerType === 'mouse' && !e.buttons) touchIds.delete(e.pointerId); else if (e.buttons) touchIds.add(e.pointerId); }, { capture: true, passive: true });   // 窓の外で はなした マウスを 取り残さない。サイクル274: ほかの窓から もどった あとも 置いたままの指は、動いたら また「ふれている」に数える
 window.addEventListener('blur', () => touchIds.clear());
 document.addEventListener('visibilitychange', () => touchIds.clear());
 let viewPinch = null;
+// Codex 指摘（サイクル274 の PR）: 寄って見る ときの もとの数（指の間の長さ d0・画角 z0）は、2 本目の指が ふれた ときの数（viewBase）を使う。
+// 「寄って見る」と決まった ときの数を使うと、決まるまでに 広げた分（はじめの 1 回の知らせで 30px ずつ 広げた・なぞり から 直した）が 消え、広げて もどしても 元の画角に もどらなかった。
+// 画角は いつも z0 × 今の長さ ÷ d0（1〜2.2 倍）。広げて 元の間に もどせば 元の画角
+let viewBase = null;
+function viewZoomSet() { if (!viewPinch || viewPts.size < 2) return; fovZoom = Math.max(1, Math.min(2.2, viewPinch.z0 * viewPtsDist() / viewPinch.d0)); camera.fov = baseFov / fovZoom; camera.updateProjectionMatrix(); }
 function viewPtsDist() { const [a, b] = [...viewPts.values()]; return Math.hypot(a.x - b.x, a.y - b.y) || 1; }
-let viewAuto = { was: false, t: 0 };   // 2本指で寄るだけなら 自動運転を やめない
+let viewAuto = { was: false, t: 0, re: false };   // 2本指で寄るだけなら 自動運転を やめない
+// きまり 5 は ここ 1 か所で行う（Codex 指摘：分かれ道ごとに 書くと、もどし忘れる道が出る。2 本目が ふれたあと 同じ指が そのまま「なぞる」に決まった ときに 拡大のまま 走っていた）。
+// 「地面の なぞりが 動いていて、それが なぞり だと 決まっている」なら 画角は 1 倍・線は なぞっている指の 今の場所から 引き直す。毎こま（viewTick）と、指が動いたとき・なぞりを わたしたとき に呼ぶ。
+// 決まっていない のは：2 本の指が そろって まだ決めていない間（wait）と、1 本目の指を 置いただけで まだ動かしていない間（2 本目が来て 寄って見る かもしれない）
+function viewTraceSure() {
+  if (!TRACE.on || fovZoom === 1 || viewTwo === 'wait') return;
+  const q = viewTid !== null ? viewPts.get(viewTid) : null;
+  if (viewPts.size === 1 && q && !q.mv) return;
+  fovZoom = 1; camera.fov = baseFov; camera.updateProjectionMatrix();
+  TRACE.rebase = true; if (q) TRACE.add({ clientX: q.x, clientY: q.y, timeStamp: q.t || q.at });
+}
+// きまり 1・4: 動いた指に なぞりを わたす。その指の はじめの場所（ax, ay）から始めて、今の場所まで足す。空なら まわりを見る
+function viewHand(id, e) {
+  const q = viewPts.get(id); if (!q || !S.started) return;
+  TRACE.end(); drag = null; viewTid = null; q.view = false;
+  // Codex 指摘（サイクル274 の PR）: 画角を もどすのは、地面の なぞりが 始まったと 分かってから（きまり 5）。空を見回す指に わたった ときは 拡大のまま（1 本の指で 空を押して見回す ときと同じ）。
+  // もどすのは viewTraceSure（線も 今の指の場所から 引き直す）
+  if (TRACE.begin({ clientX: q.ax, clientY: q.ay, timeStamp: q.at })) { AUTO.off(); viewTid = id; try { canvas.setPointerCapture(id); } catch (err) {} q.mv = true; viewTraceSure(); TRACE.add(e); }
+  else drag = { id, x: e.clientX, y: e.clientY, yaw: look.yaw, pitch: look.pitch };
+}
+// Codex 指摘（サイクル274 の PR）: 「動いたのは 片方の指だけ」は、2 本の指の知らせが どちらも届いてから決める。
+// 速く広げた・知らせの間が長い スマホでは、はじめの 1 回の知らせで 2 本とも 12px 以上 動いていて、1 本目の知らせを見た ときには もう 1 本の場所が まだ古い。
+// そこで「なぞり」と決めると、指を離すまで 寄って見られず、地面の上では なぞりで 走りだしていた。
+// ・12px 動いた指が出ても すぐには決めず（viewPend）、こまを 2 回 またいでから（その間に届いた知らせで）もう 1 本が 6px 以上 動いていれば 寄って見る・いなければ その指が なぞる
+// ・「なぞる」と決めて 0.15 秒の間（viewRe）に もう 1 本が 12px 動いたら、寄って見る に直して なぞりを やめる（指を離したときと同じ止まり方）
+// 置いただけの指が あるときの なぞりはじめは 2 こま（1 秒に 60 こまの スマホで 0.03 秒）おそくなる。決まるまで、もう なぞっている指の なぞりは そのまま続く（きまり 3）
+let viewPend = null, viewRe = null;
+function viewToPinch() {
+  viewPend = viewRe = null; viewTwo = 'pinch'; viewPinch = viewBase ? { d0: viewBase.d0, z0: viewBase.z0 } : { d0: viewPtsDist(), z0: fovZoom }; drag = null; TRACE.end(); viewTid = null; PRE.clear(); viewZoomSet();
+  if (viewAuto.re && !AUTO.on) AUTO.toggle();
+}
+function viewTick(dt) {   // frame から 毎こま
+  if (viewPend) {
+    const q = viewPts.get(viewPend.id);
+    if (viewTwo !== 'wait' || viewPts.size !== 2 || !q) viewPend = null;
+    else if (++viewPend.n >= 2) {
+      const id = viewPend.id; let o = null; for (const [k, v] of viewPts) if (k !== id) o = v;
+      viewPend = null;
+      if (Math.hypot(o.x - o.ax, o.y - o.ay) >= 6) viewToPinch();
+      else {
+        viewTwo = 'trace'; viewRe = { id, t: 0 };
+        if (!(TRACE.on && (viewTid === id || viewTid === null)) && !(drag && drag.id === id)) viewHand(id, { clientX: q.x, clientY: q.y, timeStamp: q.t });
+      }
+    }
+  }
+  if (viewRe && (viewTwo !== 'trace' || (viewRe.t += dt) > 0.15)) viewRe = null;
+  viewTraceSure();   // きまり 5
+}
 canvas.addEventListener('pointerdown', e => {
-  if (e.isPrimary) { viewPts.clear(); viewPinch = null; viewAuto = { was: AUTO.on, t: performance.now() }; }   // 1本目の指：取り残された指の 記録を 消す
-  viewPts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  viewLost = false;
+  if (e.isPrimary) { viewPts.clear(); viewPinch = null; viewBase = null; viewTwo = null; viewAuto = { was: AUTO.on, t: performance.now(), re: false }; }   // 1本目の指：取り残された指の 記録を 消す
+  viewPts.set(e.pointerId, { x: e.clientX, y: e.clientY, ax: e.clientX, ay: e.clientY, hx: e.clientX, hy: e.clientY, at: e.timeStamp, solo: false }); HINT.holdT = 0;
   if (viewPts.size === 2) {
-    viewPinch = { d0: viewPtsDist(), z0: fovZoom }; drag = null; TRACE.end();
-    if (viewAuto.was && !AUTO.on && performance.now() - viewAuto.t < 450) AUTO.toggle();
+    for (const q of viewPts.values()) { q.ax = q.x; q.ay = q.y; q.solo = false; }
+    viewTwo = 'wait'; viewPinch = null; viewPend = viewRe = null; viewBase = { d0: viewPtsDist(), z0: fovZoom };
+    viewAuto.re = viewAuto.was && !AUTO.on && performance.now() - viewAuto.t < 450;
   }
 });
-const viewPtsClear = () => { viewPts.clear(); viewPinch = null; };
+const viewPtsClear = () => { viewLost = viewLost || viewPts.size > 0; viewPts.clear(); viewPinch = null; viewBase = null; viewTwo = null; viewTid = null; viewPend = viewRe = null; };   // viewLost：置いたままの指の 記録を ここで消した（その指が動いたら おぼえ直す）
 window.addEventListener('blur', viewPtsClear);
 document.addEventListener('visibilitychange', viewPtsClear);
 // サイクル271・最初の1分（おそい回線）: 読みこみを待つ間（始まる前）に 置いた指は、まわりを見る操作には しない（おおいの下で 目の向きだけが変わっていた）。
 // なぞった道すじを おぼえておき、指を置いたまま 始まったら、その なぞりを そのまま使う（サイクル116 の「なぞってから 待つ」と同じ。離した指は 今までどおり 何もしない）。
 // それまでは、おおいの「指で なぞると 進みます」を見て なぞり、置いたまま待っても、始まったあとに 動かなかった（指を離して なぞり直すまで）
 const PRE = { id: null, pts: [], go: false,
-  down(e) { this.id = e.pointerId; this.pts = [this.pt(e)]; },
-  move(e) { if (e.pointerId !== this.id) return; if (this.pts.length >= 120) this.pts.splice(1, 1); this.pts.push(this.pt(e)); },
+  down(e) { this.id = e.pointerId; this.pts = [this.pt(e)]; TRACE.mark(e, true); },
+  move(e) { if (e.pointerId !== this.id) return; if (this.pts.length >= 120) this.pts.splice(1, 1); this.pts.push(this.pt(e)); TRACE.mark(e, false); },
   pt(e) { return { clientX: e.clientX, clientY: e.clientY, timeStamp: e.timeStamp }; },
   clear() { this.id = null; this.pts = []; this.go = false; },
   flush() {   // 始まって はじめの 1 こまを描いた あと（運転席の視点が決まってから）に 1 回だけ
     this.go = false; if (this.id === null) return;
     const pts = this.pts, id = this.id; this.id = null; this.pts = [];
     if (viewPts.size !== 1 || !viewPts.has(id) || !TRACE.begin(pts[0])) return;   // Codex 指摘（PR #1100）：おぼえた 指と 同じ 指が 置かれた まま の ときだけ 使う
-    AUTO.off(); drag = null; for (let i = 1; i < pts.length; i++) TRACE.add(pts[i]);
+    AUTO.off(); drag = null; viewTid = id; for (let i = 1; i < pts.length; i++) TRACE.add(pts[i]);
   } };
 // Codex 指摘（PR #1100）：読みこみ中に なぞってから タブを はなれたら、おぼえた 道すじは 捨てる（戻った あとの 別の 指に 古い なぞりを かぶせない）
 addEventListener('blur', () => PRE.clear());
 document.addEventListener('visibilitychange', () => { if (document.hidden) PRE.clear(); });
-canvas.addEventListener('pointerdown', e => { if (viewPts.size >= 2) { PRE.clear(); return; } if (!S.started) { if (e.isPrimary) PRE.down(e); canvas.setPointerCapture(e.pointerId); return; } if (TRACE.begin(e)) { AUTO.off(); drag = null; canvas.setPointerCapture(e.pointerId); return; } drag = { x: e.clientX, y: e.clientY, yaw: look.yaw, pitch: look.pitch }; canvas.setPointerCapture(e.pointerId); });
+canvas.addEventListener('pointerdown', e => { if (viewPts.size >= 2) { PRE.clear(); return; } if (!S.started) { if (e.isPrimary) PRE.down(e); canvas.setPointerCapture(e.pointerId); return; } if (TRACE.begin(e)) { AUTO.off(); drag = null; viewTid = e.pointerId; canvas.setPointerCapture(e.pointerId); return; } drag = { id: e.pointerId, x: e.clientX, y: e.clientY, yaw: look.yaw, pitch: look.pitch }; canvas.setPointerCapture(e.pointerId); });
 canvas.addEventListener('pointermove', e => {
-  if (viewPts.has(e.pointerId)) viewPts.set(e.pointerId, { x: e.clientX, y: e.clientY });
-  if (viewPinch && viewPts.size >= 2) {
-    fovZoom = Math.max(1, Math.min(2.2, viewPinch.z0 * viewPtsDist() / viewPinch.d0));
-    camera.fov = baseFov / fovZoom; camera.updateProjectionMatrix();
-    return;
+  const id = e.pointerId; let q = viewPts.get(id);
+  // サイクル274: ほかの窓・タブから もどった あと（指の記録を消した あと）も 置いたままの指は、動いたら 1 本目の指として おぼえ直す（下の きまり 4 で、12px 動いたら なぞりを始める）
+  if (!q && viewLost && e.buttons && viewPts.size === 0 && S.started) { viewLost = false; q = { x: e.clientX, y: e.clientY, ax: e.clientX, ay: e.clientY, hx: e.clientX, hy: e.clientY, at: e.timeStamp, solo: true }; viewPts.set(id, q); }
+  if (q) { q.x = e.clientX; q.y = e.clientY; q.t = e.timeStamp; if (Math.hypot(q.x - q.hx, q.y - q.hy) >= 5) { q.hx = q.x; q.hy = q.y; q.mv = true; HINT.holdT = 0; } }   // 指が動いたら「置いたまま」を数え直す（HINT）
+  if (q && viewTwo === 'wait' && viewPts.size === 2 && Math.hypot(q.x - q.ax, q.y - q.ay) >= 12) {
+    let o = null; for (const [k, v] of viewPts) if (k !== id) o = v;
+    if (Math.hypot(o.x - o.ax, o.y - o.ay) >= 6) viewToPinch();   // きまり 2: どちらも動いた＝寄って見る
+    else if (!viewPend) viewPend = { id, n: 0 };   // きまり 1: 動いたのは この指だけ「らしい」。もう 1 本の指の知らせが あとから届くことが あるので、2 こま待ってから決める（viewTick）
+  } else if (q && viewTwo === 'trace' && viewRe && id !== viewRe.id && viewPts.size === 2 && Math.hypot(q.x - q.ax, q.y - q.ay) >= 12) viewToPinch();   // 決めた すぐあと（0.15 秒）に もう 1 本も 大きく動いた＝寄って見る に 直す
+  else if (q && q.solo && viewPts.size === 1 && !TRACE.on && !drag && Math.hypot(q.x - q.ax, q.y - q.ay) >= 12) { q.solo = false; viewHand(id, e); return; }   // きまり 4
+  if (viewPinch && viewPts.size >= 2) { viewZoomSet(); return; }
+  if (TRACE.on) {
+    if (viewTid !== null && id !== viewTid) return;   // なぞっていない指の ゆれは 線に足さない
+    viewTraceSure();   // きまり 5
+    TRACE.add(e); return;
   }
-  if (TRACE.on) { TRACE.add(e); return; }
   if (PRE.id !== null) { PRE.move(e); return; }
-  if (!drag) return;
+  if (!drag || (drag.id !== undefined && drag.id !== id)) return;
   look.yaw = Math.max(-2.2, Math.min(2.2, drag.yaw - (e.clientX - drag.x) * 0.005));
   look.pitch = Math.max(-0.6, Math.min(0.5, drag.pitch - (e.clientY - drag.y) * 0.004));
 });
-const endDrag = e => { if (e.pointerId === PRE.id) PRE.clear(); viewPts.delete(e.pointerId); if (viewPts.size < 2) viewPinch = null; else if (viewPinch) viewPinch = { d0: viewPtsDist(), z0: fovZoom }; drag = null; TRACE.end(); };   // 3本目以降の指が残るときは、残った指で 測りなおす
+// 指が離れた（pointerup・pointercancel）: なぞっていた指なら なぞりを終える（サイクル116: 指を離すと止まる）。置いただけの指が離れても、もう 1 本の なぞりは 終えない（サイクル274）。
+// 指が 1 本も残っていなければ、今までどおり ぜんぶ終える
+const endDrag = e => {
+  const id = e.pointerId; viewLost = false;
+  if (id === PRE.id) PRE.clear();
+  viewPts.delete(id);
+  if (id === viewTid || viewTid === null || viewPts.size === 0) { TRACE.end(); viewTid = null; }
+  if (drag && (drag.id === id || drag.id === undefined || viewPts.size === 0)) drag = null;
+  if (viewPts.size < 2) {
+    const pinched = viewTwo === 'pinch'; viewPinch = null; viewBase = null; viewTwo = null; viewPend = viewRe = null;
+    for (const q of viewPts.values()) { q.ax = q.x; q.ay = q.y; q.at = e.timeStamp; q.solo = !pinched; if (pinched) q.view = true; }   // きまり 4: 残った指は ここから 12px 動いたら なぞる
+  } else { viewBase = { d0: viewPtsDist(), z0: fovZoom }; if (viewPinch) viewPinch = { d0: viewBase.d0, z0: viewBase.z0 }; }   // 3本目以降の指が残るときは、残った指で 測りなおす
+};
 canvas.addEventListener('pointerup', endDrag); canvas.addEventListener('pointercancel', endDrag);
 let toastT = 0, curVoice = null;
 // のんびり：画面の 知らせは はじめの 一文だけ（かっこ書きは キーの 案内だけ 残す）＋ あとの 文に 操作の 案内（押す・ゆるめる・解除・「O で」など）が あれば その 1 文。はじめの画面の「📖 くわしい説明」を 入れると ぜんぶ 出す。
@@ -10114,7 +10248,7 @@ function startGame() {
   if (camMode !== 0) { camMode = 0; look.yaw = look.pitch = 0; $('bCam').textContent = '👁 ' + CAMS[0]; }   // サイクル118: 始まりは運転席視点（洗車などで外から見た後でも）
   for (const id of MOBILE || params.has('pad') ? ['hud', 'bar', 'badge', 'padC', 'padB', 'padD', 'bigPct'] : ['hud', 'bar', 'badge', 'bigPct']) $(id).classList.remove('hidden');   // サイクル217・類1: 大きな％数字も出す（店主指示 2026-11-11 で DETAIL でも常時表示に変更）   // サイクル98: 運転パッドは全廃済み（DOMなし）。運転はなぞり操作のみ（キーボードは予備として残す）
   if (!MOBILE && !params.has('pad')) $('keyHint').classList.remove('hidden');   // パソコン：はじめのうちは 画面の左下に いちばん使うキー
-  S.started = true; $('loadWait').classList.add('off');   // サイクル269: 読みこみを待つ間の おおいを消す
+  S.started = true; $('loadWait').classList.add('off'); $('toast').classList.remove('err'); document.body.classList.remove('loadng');   // サイクル269: 読みこみを待つ間の おおいを消す
   PRE.go = PRE.id !== null;   // サイクル271: 置いたままの指の なぞりは、はじめの 1 こまの あとで使う
     FIRSTMIN.start();   // サイクル159：のんびりでは 開始直後の表示を軽くする（DETAIL では何もしない）
     if (LOOP.friend !== null) setTimeout(() => { if (DETAIL) toast('🏁 友だちは ' + LOOP.friend + ' 点。きみは何点とれる？', 5); }, 6000);   // サイクル171・最初の1分: のんびりでは友だちの点数で挑戦しない（サイクル117）。共有リンクから開いても開始6秒の吹き出し・声で競わせず、まずなぞって耕す楽しさに集中させる。くわしい説明では従来どおり知らせる
@@ -10808,16 +10942,47 @@ const PLAY = (() => {
   return { update, LIMIT, get t() { return t; }, get left() { return 1; }, get up() { return false; } };
 })();
 
+// ---- サイクル274・最初の1分: おそい スマホでは 絵の こまかさを 自分で 下げる（LITE）----
+// 動きの 1 こまは 0.05 秒まで（下の dt）なので、1 秒に 20 こまより おそい スマホでは ゲームの中の時間が 本物の時計より おそく進む。
+// はかった数（にせの時計・スマホ縦・本物のタッチ・前へ なぞって 4 秒置く）: 1 秒に 20 こま以上なら 4 秒で 5.2m 進み 数字は 0.8%。
+// 1 秒に 10 こまの スマホでは 2.7m・0.4%、5 こまでは 1.1m・0.2%（同じ 4 秒で）。指を離して止まってから 見本が出るまでは 0.45 秒 → 0.9 秒 → 1.8 秒。
+// これまで ゲームは 絵を軽くする手を 何も持っていなかった（画素の倍率は 開いたときに 決めた まま）。
+// CPU だけを 4 倍・6 倍 おそくした形（絵は描かない）では 1 秒に 55・50 こま出ていたので、こまが落ちるのは 絵を描く側が重いとき。
+// 絵の こまかさを下げると 1 こまを描く秒は：倍率 1.5 → 1 で 2.8 倍・0.75 で 4.5 倍 速い（ぬる所が おそい GPU の かわりに swiftshader で はかった比。実機の数では ない）。
+// そこで、始まって 1 秒たったあと、20 こま（か 2 秒ぶんで 4 こま以上）のうち 8 割が 0.055 秒より おそかったら、絵の こまかさ（画素の倍率）を 1 だん下げる（1.5 → 1 → 0.75）。
+// 下げるのは 3D の絵だけ（文字・数字・見本の指・ボタンは 今までどおり くっきり）。動き・耕し方・時間の進み方の きまりは 変えない。上げ直しは しない（ちらつかせない）。
+// たまの 1 こまの 引っかかり・タブを かくした あとの 1 こまでは 下げない（8 割の きまり と、かくれている間は 数えない）。?nolite で 切れる（画面写真を くっきり とりたい とき）
+const LITE = {
+  lv: 0, n: 0, slow: 0, t: 0, warm: 0,
+  clear() { this.n = this.slow = this.t = 0; },
+  tick(gap) {   // gap＝前の こまからの 本物の ミリ秒。frame() から 毎こま
+    if (params.has('nolite') || !S.started || document.hidden) { this.clear(); return; }
+    if (this.warm < 1000) { this.warm += Math.min(gap, 250); return; }
+    this.n++; this.t += gap; if (gap > 55) this.slow++;
+    if (this.n < 20 && !(this.t >= 2000 && this.n >= 4)) return;
+    const bad = this.slow >= this.n * 0.8;
+    this.clear();
+    if (!bad) return;
+    const pr = renderer.getPixelRatio(), to = pr > 1.55 ? 1.5 : pr > 1.05 ? 1 : pr > 0.8 ? 0.75 : 0;
+    if (!to) return;
+    renderer.setPixelRatio(to); this.lv++; this.warm = 700;
+  }
+};
+document.addEventListener('visibilitychange', () => { LITE.clear(); LITE.warm = Math.min(LITE.warm, 700); });
+
 // ---- まわす ----
 let last = performance.now(), hudT = 0, meterT = 0, monT = 0, lastPct = 0, calmPct = 0;   // calmPct＝大きな数字に出している割合（田んぼ全体の耕し率。サイクル259は田んぼアートでは絵の fill だったが、店主指示 2026-11-11 で全体率に統一）
 function frame(now) {
   requestAnimationFrame(frame);
-  const dt = Math.min(0.05, (now - last) / 1000), realDt = Math.min(0.25, (now - last) / 1000);   // realDt は PLAY の経過用（実時間。サイクル76で制限には使わない）
+  // サイクル274: 時間が 逆もどりした こま（rAF の時刻が 前の こまより 古い）は 0 秒として あつかう。負の dt では 見本の指（HINT）の番号が 負になって 止まっていた
+  const dt = Math.max(0, Math.min(0.05, (now - last) / 1000)), realDt = Math.max(0, Math.min(0.25, (now - last) / 1000));   // realDt は PLAY の経過用（実時間。サイクル76で制限には使わない）
+  const gapMs = now - last;
   last = now;
-  if (!P.Rotary) { renderer.render(scene, camera); return; }
+  if (!P.Rotary) { TRACE.tick(dt); renderer.render(scene, camera); return; }   // サイクル274: 読みこみを待つ間も、指の あと（黄色い点）は 0.6 秒で消す
+  LITE.tick(gapMs);
   const running = S.started && $('help').classList.contains('hidden') && !S.done;
   if (!running) { key.fwd = key.back = key.left = key.right = 0; TRACE.end(); }
-  TRACE.tick(dt); HINT.update(dt); FIRSTMIN.update(dt);   // 最初の1分の終わり判定（60秒）
+  viewTick(dt); TRACE.tick(dt); HINT.update(dt); FIRSTMIN.update(dt);   // 最初の1分の終わり判定（60秒）
   if (!drag && camMode === 0) { look.yaw *= 1 - Math.min(1, dt * 1.5); look.pitch *= 1 - Math.min(1, dt * 1.5); }
   // 止まっているあいだ（メニュー・操作の表・おわり）は、トラクターの動き・時間・燃料を進めない。始める前はエンジンをかける所だけ進める
   let pct = lastPct;

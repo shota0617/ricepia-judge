@@ -1,4 +1,4 @@
-// 最初の1分の確かめ（サイクル259〜272）：node firstmin.js [tractor.html のパス]
+// 最初の1分の確かめ（サイクル259〜273）：node firstmin.js [tractor.html のパス]
 //  1) 知らせの文：吹き出し（speakText）・短い文（shortText）で かっこが合わなくならない（「…見ます）」のような切れ方をしない）
 //  3) 畦の手前で止まった人：「横へ なぞる」見本が出て、見本どおりで向きが変わる。自動で下ろす知らせは 1 回だけ（サイクル260）
 //  2) のんびりの大きな数字：スマホ縦で 1 回なぞって耕したら 0% のままにならない。田んぼアートでは地図の「でき」と同じ数、お題なしでは小数 1 けた
@@ -524,6 +524,54 @@ const srv = http.createServer((r, s) => { const u = decodeURIComponent(r.url.spl
     const r = await p.evaluate(() => { toast('🔰 白線の外は 耕しません、曲がって絵の中へ', 4); window.__adv(0.1); const s = document.getElementById('say'), a = s.getBoundingClientRect(), rg = document.createRange(); rg.selectNodeContents(document.getElementById('bigPct')); const c = rg.getBoundingClientRect();
       return { on: !s.classList.contains('off'), w: Math.round(a.width), maxW: getComputedStyle(s).maxWidth, sayL: Math.round(a.left), numR: Math.round(c.right) }; });
     ok('スマホ横：吹き出しの幅は 今までどおり（240px まで）・数字に かぶらない', r.on && r.maxW === '240px' && r.w > 200 && r.sayL > r.numR, r);
+    await ctx.close();
+  }
+  // ---- 12) サイクル273（はじめの 1 分で やめる人を へらす）：白線の外へ出たら 畦に着く前から、指を置いたままでも「横へ なぞる」見本 ----
+  {
+    const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true, isMobile: true });
+    const p = await ctx.newPage(); p.setDefaultTimeout(180000);
+    p.on('pageerror', e => errs.push('pageerror ' + e.message)); p.on('console', m => { if (m.type() === 'error') errs.push('console ' + m.text()); });
+    await p.route('https://cdn.jsdelivr.net/**', r => r.fulfill({ path: TN + r.request().url().split('/three@0.128.0')[1], contentType: 'text/javascript' }));
+    await p.goto(`http://localhost:${PORT}/tractor.html`);
+    await p.waitForFunction(() => window.game && game.S && game.S.started && typeof P !== 'undefined' && P.Rotary);
+    await p.evaluate(() => { const real = performance.now.bind(performance); let now = real(); performance.now = () => now; window.__sync = () => { now = real(); }; window.requestAnimationFrame = () => 0; game.renderer.render = () => {};
+      window.__adv = sec => { for (let i = 0, n = Math.round(sec / 0.05); i < n; i++) { now += 50; frame(now); } }; });
+    await p.waitForTimeout(2500); await p.evaluate(() => window.__sync());
+    let down = false;   // 指が ふれているか（離れている指を もう一度 離さない＝直す前のコードで 確かめが とちゅうで止まらないように）
+    const cdp = await ctx.newCDPSession(p), adv = sec => p.evaluate(x => window.__adv(x), sec), T = async (type, x, y) => { if (type === 'touchEnd' && !down) return; down = type !== 'touchEnd'; await cdp.send('Input.dispatchTouchEvent', { type, touchPoints: type === 'touchEnd' ? [] : [{ x, y, id: 1 }] }); };
+    const st = () => p.evaluate(() => { const S = game.S, box = document.getElementById('hintSwipe'), vis = [...box.querySelectorAll('.hDot')].filter(e => e.style.display !== 'none').map(e => [parseFloat(e.style.left), parseFloat(e.style.top)]), o = ART.score();
+      return { x: +S.x.toFixed(2), z: +S.z.toFixed(2), yaw: +S.yaw.toFixed(3), v: +S.v.toFixed(2), rot: S.rotDown, til: tilledCount, over: +o.over.toFixed(2), out: ART.sdAt(S.x, S.z) > 0.4, trace: TRACE.on, blk: TRACE.blockT > 0, turn: !!HINT.turn, shown: !!HINT.turn && !box.classList.contains('hidden'),
+        side: !box.classList.contains('hidden') && vis.length >= 2 && Math.abs(vis[vis.length - 1][0] - vis[0][0]) > 40, dir: vis.length >= 2 ? Math.sign(vis[vis.length - 1][0] - vis[0][0]) : 0, y0: vis.length ? Math.round(vis[0][1]) : 0, pe: getComputedStyle(box).pointerEvents, say: document.getElementById('say').classList.contains('off') ? '' : document.getElementById('say').innerText }; });
+    const fwdDown = async () => { await T('touchStart', 195, 481); for (let i = 1; i <= 10; i++) { await T('touchMove', 195, 481 - 84 * i / 10); await adv(0.05); } };   // 見本と同じ「前へ」を 0.5 秒で なぞって 指は置いたまま
+    const set = o => p.evaluate(x => { Object.assign(game.S, { v: 0, steer: 0 }, x); }, o);
+    // 12-1) 前へ なぞって 置くだけの人：白線の外へ出て 2.5 秒以内・畦に着く前に、指を置いたままでも「横へ なぞる」見本が出る（直す前は 畦で止められるまで 出ない）
+    await adv(2); let s = await st(), tOut = null, tSide = null, sS = null, t = 0, moved = true;
+    for (let n = 0; n < 8 && tSide === null && !s.blk; n++) {
+      await fwdDown(); t += 0.5;
+      for (let i = 0; i < 40 && tSide === null && !s.blk; i++) { await adv(0.1); t += 0.1; s = await st(); if (tOut === null && s.out) tOut = t; if (s.side && s.trace) { tSide = t; sS = s; } }
+      if (tSide === null) { await T('touchEnd'); await adv(1); t += 1; }
+    }
+    ok('白線の外へ出たら、指を置いたままでも 2.5 秒以内に「横へ なぞる」見本が出る（直す前は 畦で止められるまで 出ない）', tOut !== null && tSide !== null && tSide - tOut <= 2.5 && sS.pe === 'none', [tOut && +tOut.toFixed(1), tSide && +tSide.toFixed(1), sS && sS.pe]);
+    ok('見本が出るのは 畦に着く前（まだ走っている・止められていない）で、見本は 画面の上半分から', !!sS && sS.v > 0.3 && !sS.blk && sS.z < 19.5 && sS.y0 > 0 && sS.y0 < 422, sS && [sS.z, sS.v, sS.blk, sS.y0]);
+    // 12-2) 見本は見せるだけ：トラクターは 今までどおり まっすぐ進む（勝手に曲がらない）
+    await adv(0.5); let s2 = await st();
+    ok('見本が出ても トラクターは まっすぐ進む（向きは変えない）', !!sS && Math.abs(s2.yaw - sS.yaw) < 0.05 && Math.abs(s2.yaw) < 0.1 && (s2.z > sS.z + 0.2 || s2.blk), sS && [sS.yaw, s2.yaw, sS.z, s2.z]);
+    // 12-3) 指を離して止まるまでの間も 見本は とぎれない（止まって 0.4 秒で「止まった人への見本」に かわる）。離すと止まるのは 今までどおり（サイクル116）
+    await T('touchEnd'); let gap = 0, seen = 0; for (let i = 0; i < 25; i++) { await adv(0.1); s = await st(); if (!s.shown) gap++; else seen++; }
+    ok('指を離してから 2.5 秒：見本は 出たまま・トラクターは 止まる', gap === 0 && seen === 25 && Math.abs(s.v) < 0.05 && !s.trace, [gap, seen, s.v]);
+    // 12-4) なぞりで ない指（空を押して まわりを見る）の間は 消える。その指を離すと また出る
+    await set({ x: 3, z: 15.5, yaw: 0 }); await adv(0.3); await fwdDown(); for (let i = 0; i < 15 && !(s.side && s.trace); i++) { await adv(0.1); s = await st(); }
+    const g0 = s; await T('touchEnd'); await adv(0.1); const g1 = await st(); await T('touchStart', 40, 175); await adv(0.15); const g2 = await st(); await adv(1.5); const g3 = await st(); await T('touchEnd'); await adv(2.5); const g4 = await st();
+    ok('まわりを見る指の間は 見本を出さない・離すと また出る', g0.side && g1.shown && !g2.shown && !g3.shown && g4.shown, [g0.side, g1.shown, g2.shown, g3.shown, g4.shown]);
+    // 12-5) 絵の中で なぞりはじめたら 今までどおり すぐ下ろす（作業機の下ろし方は 変えていない）
+    await set({ x: -5, z: 0, yaw: 0, rotDown: false }); await adv(1.0); await T('touchStart', 195, 481); await adv(0.1); const c1 = await st(); await T('touchEnd'); await adv(1.0);
+    ok('絵の中で なぞりはじめたら 今までどおり すぐ下ろす', c1.rot && !c1.out, [c1.rot, c1.out]);
+    // 12-6) 🔰（かんたんアシスト）を切っている人は 白線の外でも 今までどおり なぞりはじめに下ろす
+    await p.evaluate(() => { EASY.on = false; }); await set({ x: 3, z: 16.5, yaw: 0, rotDown: false }); await adv(1.0); await T('touchStart', 195, 481); await adv(0.1); const e1 = await st(); await T('touchEnd'); await adv(1.0); await p.evaluate(() => { EASY.on = true; });
+    ok('🔰 を切っている人は 白線の外でも 今までどおり なぞりはじめに下ろす', e1.rot && e1.out, [e1.rot, e1.out]);
+    // 12-7) 曲がり方を覚えた人（横なぞりで 30° 以上を 3 回）には、なぞっている間の見本は出さない（今までどおり）
+    await p.evaluate(() => { HINT.sideOK = 3; }); await set({ x: -3, z: 15.5, yaw: 0, rotDown: false }); await adv(0.5); await fwdDown(); let any = false; for (let i = 0; i < 15; i++) { await adv(0.1); s = await st(); if (s.shown && !s.blk) any = true; } await T('touchEnd'); await adv(1.0);
+    ok('曲がり方を覚えた人には、白線の外を なぞっている間の見本は出さない', !any && s.z > 16.5, [any, s.z]);
     await ctx.close();
   }
   ok('エラーなし', errs.length === 0, errs.slice(0, 3));

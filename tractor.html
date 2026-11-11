@@ -8082,6 +8082,7 @@ const HINT = {
   demoK: -1, demoF: false, sideOK: 0, yaw0: null, bent: false,   // サイクル265: 止まっている間の見本の番（6 秒ごと）・「前へ」の見本を出しているか・横なぞりで 30° 以上 曲がれた回数
   idleT: 0,   // サイクル262: 止まったままの時間（田んぼの中で 前に耕す所がない人への見本用）
   turn: null, stuckT: 0,   // サイクル260: 畦の手前で止まったままの時間と、「横へ なぞる」見本（出している間だけ { yaw, x, z, side }）
+  outT: 0, outYaw: null,   // サイクル273: 絵の外を まっすぐ なぞって走っている時間（秒）と、その はじめの向き
   build() {   // トラクターの前方 3〜13m（田んぼの内側へ寄せた点列）
     const fx = Math.sin(S.yaw), fz = Math.cos(S.yaw), pts = [];
     for (let d = 3; d <= 13.01; d += 1) pts.push([Math.max(-HX + 0.5, Math.min(HX - 0.5, S.x + fx * d)), Math.max(-HZ + 0.5, Math.min(HZ - 0.5, S.z + fz * d))]);
@@ -8102,7 +8103,18 @@ const HINT = {
     // 実測（スマホ縦・ヒントどおり前へ なぞるだけの人）: 29 秒で畦に着き、3 秒の吹き出しのあとは何も出ないまま 90 秒まで同じ所。
     // 畦で止められた なぞり（TRACE.blockT）が合わせて 0.8 秒つづいたら出し、向きが 125° 変わる（ほぼ折り返した）か 9m はなれたら消す。向きは田んぼのまん中の側
     if (live && TRACE.on && TRACE.blockT > 0 && Math.abs(S.v) < 0.3) this.stuckT += dt; else if (Math.abs(S.v) > 0.5) this.stuckT = 0;   // 止められている間も 1m のゆとりの中で じわっと動くので、速さは 0.3m/秒 まで「止まったまま」と見る
-    if (!this.turn && live && this.stuckT > 0.8) this.turn = { yaw: S.yaw, x: S.x, z: S.z, side: -S.x * Math.cos(S.yaw) + S.z * Math.sin(S.yaw) > 0 ? -1 : 1 };   // 左（cos, −sin）の側に まん中があれば 画面の左へ
+    if ((!this.turn || this.turn.out) && live && this.stuckT > 0.8) this.turn = { yaw: S.yaw, x: S.x, z: S.z, side: -S.x * Math.cos(S.yaw) + S.z * Math.sin(S.yaw) > 0 ? -1 : 1 };   // 左（cos, −sin）の側に まん中があれば 画面の左へ。サイクル273 の見本（下）が出ていても、畦で止まったら こちらに かえる
+    // サイクル273・最初の1分: 白線（絵）の外へ出て、前に耕す所がないまま まっすぐ なぞり続けている人に、畦に着く前から 同じ「横へ なぞる」見本を出す（文字なし・入力は ふさがない・動きは変えない）。
+    // 実測（スマホ縦・本物のタッチ・前へ 0.5 秒なぞって 4 秒置く人）: 16 秒ごろ白線を出て「曲がって絵の中へ」の吹き出しが出るが、指を置いている間は 見本が出ない決まりなので、
+    // 「横へ」の指が はじめて見えたのは 畦で止められたあと（白線を出て 7.4〜7.7 秒・7m 走ったあと）。直した後は 白線を出て 0.8 秒（走っている間・畦の 4〜5m 手前）。
+    // 出すのは：お題（絵）があり、車体が白線の 0.4m より外・まっすぐ前 3〜14m に耕す所がない・なぞって前へ走っている・向きが 15° より変わらないまま 0.5 秒。
+    // 曲がり方を覚えた人（sideOK 3 以上）には出さない。曲がりはじめた・絵の中へ もどった・前に耕す所が来た ら消す。なぞりで ない指（まわりを見る・ボタン）・キー・自動運転の間も消す。
+    // 指を離して止まるまでの間は 出したままにし、止まって 0.4 秒で 今までどおり「止まった人への見本」に かわる（その間 見本が とぎれない）。
+    // 向きは 耕す所が多く残っている側（なければ 田んぼのまん中の側）
+    const outNow = live && this.done && ART.on && this.sideOK < 3 && ART.sdAt(S.x, S.z) > 0.4 && !this.workAhead(1), outDy = this.outYaw === null ? 9 : Math.abs(Math.atan2(Math.sin(S.yaw - this.outYaw), Math.cos(S.yaw - this.outYaw)));
+    if (outNow && TRACE.on && S.v > 0.3 && outDy < 0.26) this.outT += dt; else { this.outT = 0; this.outYaw = S.yaw; }
+    if (!this.turn && this.outT > 0.5) this.turn = { out: true, yaw: this.outYaw, x: S.x, z: S.z, side: this.workSide(0, true) || (-S.x * Math.cos(S.yaw) + S.z * Math.sin(S.yaw) > 0 ? -1 : 1) };
+    if (this.turn && this.turn.out && (!outNow || (!TRACE.on && (drag || viewPts.size > 0 || touchIds.size > 0 || key.fwd || key.back || key.left || key.right || AUTO.on)) || Math.abs(Math.atan2(Math.sin(S.yaw - this.turn.yaw), Math.cos(S.yaw - this.turn.yaw))) >= 0.26)) this.turn = null;
     // サイクル262（運営者の実機の声「曲がり方がわからない」）: 畦でなくても、前に耕す所がないまま止まっている人に 同じ「横へ なぞる」見本を出す。
     // 実測（スマホ縦・前へ 3 回なぞった人）: 白線をこえて田んぼの中で止まると、数字は 9% のまま・画面には 🌙 と ≡ だけで、曲がり方を教えるものは何も出なかった。
     // はじめの「前へ」のヒントが終わったあと、止まって 2.5 秒・まっすぐ前に耕す所（お題があれば絵の中）がなければ出す。向きは 耕す所が多く残っている側。
@@ -8122,7 +8134,7 @@ const HINT = {
     // まだ曲がったことのない人（はじめの向きから 30° 以上 向きが変わったことがない＝this.bent が false）には「横へ」を先に出す（前へは はじめのヒントで もう できている）。
     // 30° 向きが変わったあとは 今までどおり（前に耕す所が続いていれば「前へ」、なければ 耕す所が多い側へ「横へ」）。6 秒ごとの入れかえも今までどおり
     if (live && !this.bent) { if (this.yaw0 === null) this.yaw0 = S.yaw; else if (Math.abs(Math.atan2(Math.sin(S.yaw - this.yaw0), Math.cos(S.yaw - this.yaw0))) >= 0.52) this.bent = true; }
-    const idle = live && this.done && !TRACE.on && !drag && viewPts.size === 0 && touchIds.size === 0 && !key.fwd && !key.back && !key.left && !key.right && !AUTO.on && !S.stalled && !(S.crank > 0) && Math.abs(S.v) < 0.05 && !(this.turn && !this.turn.idle);
+    const idle = live && this.done && !TRACE.on && !drag && viewPts.size === 0 && touchIds.size === 0 && !key.fwd && !key.back && !key.left && !key.right && !AUTO.on && !S.stalled && !(S.crank > 0) && Math.abs(S.v) < 0.05 && !(this.turn && !this.turn.idle && !this.turn.out);
     if (!idle) { this.idleT = 0; this.demoK = -1; this.demoF = false; if (this.turn && this.turn.idle) this.turn = null; }
     else if ((this.idleT += dt) > this.wait() && !(this.sideOK >= 3 && FIRSTMIN.over)) {
       const k = Math.floor((this.idleT - this.wait()) / 6);
@@ -8133,7 +8145,7 @@ const HINT = {
         this.t = 0; this.demoF = !!sd && fwd; this.turn = sd && !fwd ? { idle: true, side: sd } : null; if (this.demoF) this.pts = this.build();
       }
     } else if (this.sideOK >= 3 && FIRSTMIN.over) { this.demoF = false; if (this.turn && this.turn.idle) this.turn = null; }   // 覚えた人が 1 分をまたいだら、出ていた見本を消す
-    if (this.turn && !this.turn.idle && (Math.abs(Math.atan2(Math.sin(S.yaw - this.turn.yaw), Math.cos(S.yaw - this.turn.yaw))) > 2.2 || Math.hypot(S.x - this.turn.x, S.z - this.turn.z) > 9)) { this.turn = null; this.stuckT = 0; }
+    if (this.turn && !this.turn.idle && !this.turn.out && (Math.abs(Math.atan2(Math.sin(S.yaw - this.turn.yaw), Math.cos(S.yaw - this.turn.yaw))) > 2.2 || Math.hypot(S.x - this.turn.x, S.z - this.turn.z) > 9)) { this.turn = null; this.stuckT = 0; }
     if (this.turn && live) { this.ensure(); this.sweep(dt, box); return; }
     const show = (!this.done || this.demoF) && live;
     if (!show) { box.classList.add('hidden'); return; }

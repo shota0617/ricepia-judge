@@ -2591,7 +2591,8 @@ renderTitle();
      品種・年・地力・植え方を engine の 一覧と くらべ、合わない 記録は「記録 なし」と して 新しく 始める。消さずに 別の 名前(kome365_swipe_save_bad)へ うつして のこす
      (新しい 田んぼの 1枚目で もとの 名前は 上書き される。直して 戻す ことが できる ように) */
   function saveOk(o){ var has = Object.prototype.hasOwnProperty, ok = function(list, k){ return k == null || k === '' || has.call(list, k); };
-    return ok(K.VARIETIES, o.v) && ok(K.YEARS, o.y) && ok(K.SOIL, o.so) && (o.m == null || o.m === 'transplant' || o.m === 'direct'); }
+    return ok(K.VARIETIES, o.v) && ok(K.YEARS, o.y) && ok(K.SOIL, o.so) && (o.m == null || o.m === 'transplant' || o.m === 'direct')
+      && typeof o.ch === 'string' && /^[LR]*$/.test(o.ch) && (o.fm == null || o.fm === '' || o.fm === 'oneshot' || o.fm === 'split'); }   /* 選んだ 向き(ch)は L・R だけ、肥料(fm)は 2つの やり方 だけ(save() が 書くのは これだけ。FERT_OPTS も 歴史で この 2つ だけ) */
   function loadSave(){ try { var raw = store.get(SAVE), o = JSON.parse(raw || 'null'); if (!(o && o.ch != null && o.s != null)) return null; if (!saveOk(o)) { if (store.get(SAVE + '_bad') !== raw) store.set(SAVE + '_bad', raw); return null; } return o; } catch (e) { return null; } }
   function bar(id, name, st){ return '<span data-k="' + id + '" class="' + (st.v < 0.35 ? 'lo' : '') + '">' + name + '<b><i style="width:' + Math.round(st.v * 100) + '%"></i></b>' + st.label + '</span>'; }
   /* あした・再訪バー(サイクル18): あしたの天気は f.w の読み取りのみ。再訪は seenCards(メモリ)で判定する */

@@ -116,6 +116,7 @@ function setInterval(fn, ms){ const id = ++tid; timers.push({ id, fn, ms, at: no
 function clearInterval(id){ timers = timers.filter(t => t.id !== id); }
 const src = html.slice(a + 8, b).replace(/Date\.now\(\)/g, 'Date_.now()');
 eval(src);
+// 見はりの 無い 版(周回167 まで)でも 同じ 場面を 流し、知らせが 出ない ことで 落ちる ように する(名前が 無い ことで 落とさない)
 const shown = () => body.kids.some(k => k.id === 'bootSlow');
 const log = [];
 const ev = (plan.events || []).slice().sort((x, y) => x[0] - y[0]);
@@ -125,10 +126,10 @@ for (let t = 0; t <= plan.until; t += 50) {
     const e = ev.shift();
     if (e[1] === 'grow') nodes += 5;
     else if (e[1] === 'file') resources++;
-    else if (e[1] === 'ready') { window.Kome365 = {}; window.KomeCards = {}; els.sTitle = screen(true); els.sGame = screen(false); els.swBigDate.textContent = '1月1日'; window.__komeBoot.ready(); }   // 本当に 始まった(1枚目の カード)
-    else if (e[1] === 'readyResult') { window.Kome365 = {}; window.KomeCards = {}; els.sTitle = screen(true); els.sResult = screen(false); window.__komeBoot.ready(); }   // 1年が 終わった 記録
+    else if (e[1] === 'ready') { window.Kome365 = {}; window.KomeCards = {}; els.sTitle = screen(true); els.sGame = screen(false); els.swBigDate.textContent = '1月1日'; if (window.__komeBoot) window.__komeBoot.ready(); }   // 本当に 始まった(1枚目の カード)
+    else if (e[1] === 'readyResult') { window.Kome365 = {}; window.KomeCards = {}; els.sTitle = screen(true); els.sResult = screen(false); if (window.__komeBoot) window.__komeBoot.ready(); }   // 1年が 終わった 記録
     else if (e[1] === 'scripts') { window.Kome365 = {}; window.KomeCards = {}; }   // engine.js・cards.js が 届いて 動いた(まだ 始まって いない)
-    else if (e[1] === 'tail') { if (e[2]) window.KomeCards = {}; window.__komeBoot.ready(); }   // さいごの 行は 通ったが ゲームは 始まって いない(engine.js が 無い)
+    else if (e[1] === 'tail') { if (e[2]) window.KomeCards = {}; if (window.__komeBoot) window.__komeBoot.ready(); }   // さいごの 行は 通ったが ゲームは 始まって いない(engine.js が 無い)
     else if (e[1] === 'scriptError') (wl.error || []).forEach(fn => fn({ target: { tagName: 'SCRIPT', src: 'https://go.ricepia.jp/kome365/' + e[2] } }));
     else if (e[1] === 'imgError') (wl.error || []).forEach(fn => fn({ target: { tagName: 'IMG', src: 'x.webp' } }));
     else if (e[1] === 'runError') (wl.error || []).forEach(fn => fn({ target: window, message: 'x' }));
@@ -655,9 +656,6 @@ class TestKome365FirstMinute(unittest.TestCase):
     def test_stalled_game_script_shows_retry(self):
         # 周回168: engine.js・cards.js が 返事を しない(つながった まま 止まる)と、題字と 丸 だけで 61秒 たっても 何も 出なかった。
         # 見はりは いちばん 上の インライン スクリプト(ゲームの スクリプトが 来なくても 動く)
-        head = HTML[:HTML.index('<script src="engine.js">')]
-        self.assertIn("w.__komeBoot = {", head)
-        self.assertLess(HTML.index("w.__komeBoot = {"), HTML.index("<style>"))
         # 周回169: ゲームの スクリプト(engine.js・cards.js)が まだ 動いて いない 間は、おそいのか 止まったのか 分からない。20秒 待って から 出す(0.5秒ごとに 見る)
         r = boot_run({"until": 24000, "events": [[300, "grow"], [600, "file"]]})
         self.assertIsNotNone(r["firstOn"])
@@ -675,9 +673,12 @@ class TestKome365FirstMinute(unittest.TestCase):
         self.assertGreaterEqual(r["firstOn"], 8600)
         self.assertLessEqual(r["firstOn"], 9200)
         # 20秒の わけ: 2つの スクリプトを 約 50KB/秒(おそい 3G)で 取っても 約 4.2秒(圧縮なし)
-        root = os.path.dirname(HTML_PATH)
+        root = os.path.join(ROOT, "kome365")
         kb = (os.path.getsize(os.path.join(root, "engine.js")) + os.path.getsize(os.path.join(root, "cards.js"))) / 1000
         self.assertLess(kb / 50 * 4, 20)
+        head = HTML[:HTML.index('<script src="engine.js">')]
+        self.assertIn("w.__komeBoot = {", head)
+        self.assertLess(HTML.index("w.__komeBoot = {"), HTML.index("<style>"))
 
     def test_trickling_game_script_is_not_called_stopped(self):
         # 周回169: engine.js が 10〜15秒 かけて 少しずつ 届く(おそいが 進んで いる)と、8.6〜9.2秒で「タップで もう一度」が 出て、押すと 0 から 取りなおして 8.1〜8.8秒 おそく なった(6/6)
@@ -700,6 +701,7 @@ class TestKome365FirstMinute(unittest.TestCase):
         self.assertIsNone(boot_run({"until": 19000, "navEnd": 10 ** 9, "events": [[300, "grow"]]})["firstOn"])
         # おそいだけで 出た 知らせは、ゲームが 始まったら 消える
         r = boot_run({"until": 24000, "events": [[300, "grow"], [22000, "ready"]]})
+        self.assertIsNotNone(r["firstOn"])
         self.assertGreaterEqual(r["firstOn"], 20000)
         self.assertFalse(r["endOn"])
         # 絵が 読めないのは 見ない
@@ -798,23 +800,28 @@ class TestKome365FirstMinute(unittest.TestCase):
         js = r"""
 const fs = require('fs'), path = require('path');
 const html = fs.readFileSync(process.argv[1], 'utf8');
-const K = require(path.join(path.dirname(process.argv[1]), 'engine.js'));
-const a = html.indexOf('  function saveOk(o){'), b = html.indexOf('\n', html.indexOf('  function loadSave(){'));
+const K = require(process.argv[2]);
+// loadSave は いつも 取り出す(直す 前の 版でも 同じ 確かめまで 進む)。saveOk は ある ときだけ
+const l = html.indexOf('  function loadSave(){');
+if (l < 0) { console.log(JSON.stringify({ error: 'no loadSave' })); process.exit(0); }
+const code = html.slice(l, html.indexOf('\n', l)), s0 = html.indexOf('  function saveOk(o){');
 const db = {}; const store = { get(k){ return k in db ? db[k] : null; }, set(k, v){ db[k] = v; } }; const SAVE = 'kome365_swipe_save';
-eval(html.slice(a, b));
+eval((s0 >= 0 && s0 < l ? html.slice(s0, l) : '') + code);
 const out = [];
-for (const o of JSON.parse(process.argv[2])) { for (const k in db) delete db[k]; db[SAVE] = typeof o === 'string' ? o : JSON.stringify(o); const r = loadSave(); out.push({ ok: !!r, bad: db[SAVE + '_bad'] || null, kept: db[SAVE] }); }
+for (const o of JSON.parse(process.argv[3])) { for (const k in db) delete db[k]; db[SAVE] = typeof o === 'string' ? o : JSON.stringify(o); const r = loadSave(); out.push({ ok: !!r, bad: db[SAVE + '_bad'] || null, kept: db[SAVE] }); }
 console.log(JSON.stringify(out));
 """
         base = {"v": "kaori", "y": "normal", "so": "mid", "m": "transplant", "c": 0, "s": 7, "fm": "", "yh": 0, "ch": "LR"}
         cases = [base, dict(base, y="zzz"), dict(base, v="old_variety"), dict(base, so="rock"), dict(base, m="air"), dict(base, y="constructor"),
-                 dict(base, v=None, y=None, so=None, m=None), {k: v for k, v in base.items() if k not in ("v", "y", "so", "m")}, dict(base, y="cool", v="koshi", m="direct", so="high"), "{broken"]
-        out = subprocess.run([node, "-e", js, HTML_PATH, json.dumps(cases)], capture_output=True, text=True)
+                 dict(base, v=None, y=None, so=None, m=None), {k: v for k, v in base.items() if k not in ("v", "y", "so", "m")}, dict(base, y="cool", v="koshi", m="direct", so="high"), "{broken",
+                 dict(base, ch="LRX"), dict(base, ch=5), dict(base, fm="zzz"), dict(base, fm="split", ch=""), {k: v for k, v in base.items() if k != "fm"}]
+        out = subprocess.run([node, "-e", js, HTML_PATH, os.path.join(ROOT, "kome365", "engine.js"), json.dumps(cases)], capture_output=True, text=True)
         if out.returncode != 0:
             raise AssertionError(out.stderr[-2000:])
         r = json.loads(out.stdout.strip().splitlines()[-1])
-        self.assertEqual([x["ok"] for x in r], [True, False, False, False, False, False, True, True, True, False])
-        for i in (1, 2, 3, 4, 5):
+        self.assertNotIn("error", r)
+        self.assertEqual([x["ok"] for x in r], [True, False, False, False, False, False, True, True, True, False, False, False, False, True, True])
+        for i in (1, 2, 3, 4, 5, 10, 11, 12):
             # 消さない: 別の 名前に のこる(もとの 名前も その まま。新しい 田んぼの 1枚目で 上書き される)
             self.assertEqual(json.loads(r[i]["bad"]), cases[i], i)
             self.assertEqual(json.loads(r[i]["kept"]), cases[i], i)
@@ -823,9 +830,6 @@ console.log(JSON.stringify(out));
 
     def test_cards_behind_sink_while_finger_down(self):
         # 周回169(案1): 指を 置いた とたん(動かす 前)、後ろの 2枚が 2・3px 沈む。translate だけ(ならびは 動かない)。動きを減らす 設定では 沈めない
-        self.assertIn("#swCard.drag ~ .swBack.b1{translate:0 2px}#swCard.drag ~ .swBack.b2{translate:0 3px}", HTML)
-        self.assertIn("@media (prefers-reduced-motion: reduce){#swCard.drag ~ .swBack.b1,#swCard.drag ~ .swBack.b2{translate:none}}", HTML)
-        self.assertIn("#swCard.drag ~ .swBack{transition:none}", HTML)   # 置いた その コマで 変わる
         # 指を 置いた ところで drag が つく(タップで 選ばない・手本は これまで どおり)
         self.assertIn("try { pvCompute(); } catch (x) {} el.card.classList.add('drag');", HTML)
         r = pointer_run([["down", {"id": 1, "x": 195, "y": 640, "t": 1000}]])
@@ -834,6 +838,11 @@ console.log(JSON.stringify(out));
         r = pointer_run([["down", {"id": 1, "x": 195, "y": 640, "t": 1000}], ["up", {"id": 1, "x": 196, "y": 640, "t": 1090}]])
         self.assertFalse(r["dragging"])
         self.assertEqual(r["chosen"], [])
+        # drag の 間 後ろの 札を 何px 沈めるか(CSS の きまりを 読む。無ければ 0)
+        sink = {b: int(m.group(1)) if m else 0 for b in ("b1", "b2") for m in [re.search(r"#swCard\.drag ~ \.swBack\." + b + r"\{translate:0 (\d+)px\}", HTML)]}
+        self.assertEqual(sink, {"b1": 2, "b2": 3}, "指を 置いても 後ろの 札が 動かない")
+        self.assertIn("@media (prefers-reduced-motion: reduce){#swCard.drag ~ .swBack.b1,#swCard.drag ~ .swBack.b2{translate:none}}", HTML)
+        self.assertIn("#swCard.drag ~ .swBack{transition:none}", HTML)   # 置いた その コマで 変わる
 
 
 if __name__ == "__main__":

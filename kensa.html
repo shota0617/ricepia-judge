@@ -2423,6 +2423,7 @@ document.addEventListener("pointerup", (e) => {
   const d = offDown;
   offDown = null;
   if (!d || d.id !== e.pointerId) return;
+  if (Math.hypot(e.clientX - d.x, e.clientY - d.y) > 8) return; /* 場面の外で動かした指（8pxより大きい）は空振りに数えない。場面の中と同じ線引き */
   if (step === 0 && !P.done && !P.auto && !P.drag) {
     P.drag = { id:d.id, cx:e.clientX, cy:e.clientY, far:0, x0:P.x, moved:false };
     endBagDrag(e);

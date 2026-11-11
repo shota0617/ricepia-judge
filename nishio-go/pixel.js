@@ -13571,7 +13571,7 @@ cv.addEventListener('pointerup', e => {
   clearTimeout(swipeS.timer);
   swipeS.down = null;
   if (!d || e.pointerId !== d.id || worldMode || !G.demo || !howtoEl.hidden || mapCovered(false, true)) return;
-  if (Math.hypot(e.clientX - d.x, e.clientY - d.y) < SWIPE_MIN) return;
+  if (!d.key && Math.hypot(e.clientX - d.x, e.clientY - d.y) < SWIPE_MIN) return;   // 止めた 所へ もう 歩きだした 指は、はじめの 所へ もどして はなしても タップに しない
   swipeS.at = performance.now();   // この あとに 来る click（マウスの ドラッグ）は 使わない
   if (d.key) return;   // 止めた 所へ もう 歩きだして いる（歩きなおさない・行き先も かえない）
   const q = swipeTile(e.clientX, e.clientY);

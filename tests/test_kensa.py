@@ -1832,6 +1832,34 @@ guideAt('move', el, 0, -48);      assert.equal(guideEl.style.top, '428px');   //
         # 写真は data-src のまま（顔が先・写真は後の順は変えない）
         self.assertIn('faceImg.addEventListener("load", loadPhotos);', HTML)
 
+    def test_cycle147_drags_outside_the_scene_are_not_misses(self):
+        # 場面の外で動かした指（8pxより大きい）は空振りに数えない（場面の中と同じ線引き）。
+        # 旧版は離した所を始点にしていたので、皿から120px動かす指を3回で ひとりでに ぬけた
+        node = shutil.which("node")
+        if not node:
+            self.skipTest("node がないので実行の確認は飛ばす")
+        start = HTML.index("let offDown = null;")
+        fn = HTML[start:HTML.index("armIdle();\nstartLot();", start)]
+        self.assertIn("if (Math.hypot(e.clientX - d.x, e.clientY - d.y) > 8) return;", fn)
+        script = """
+const assert = require('node:assert/strict');
+let step = 0, measured = 0, crankDrag = null; const calls = [];
+const P = {x:200, done:false, auto:false, drag:null}, LOT = {moisture:[1, 2, 3]};
+const endBagDrag = (e) => { calls.push('bag'); P.drag = null; };
+const endCrank = (e) => { calls.push('crank'); crankDrag = null; };
+const on = {};
+const document = {addEventListener(type, fn) { (on[type] = on[type] || []).push(fn); }};
+""" + fn + """
+const t = {closest(sel) { return sel === '#app' ? {} : null; }};
+const go = (dx) => { on.pointerdown.forEach(f => f({pointerId:1, clientX:10, clientY:20, target:t})); on.pointerup.forEach(f => f({pointerId:1, clientX:10 + dx, clientY:20, target:t})); };
+go(120); go(9); assert.deepEqual(calls, []);
+go(8); assert.deepEqual(calls, ['bag']);
+step = 1; go(120); assert.deepEqual(calls, ['bag']);
+go(0); assert.deepEqual(calls, ['bag', 'crank']);
+"""
+        r = subprocess.run([node, "-e", script], capture_output=True, text=True)
+        self.assertEqual(r.returncode, 0, r.stderr)
+
     def test_cycle147_touches_outside_the_scene_count_as_misses(self):
         # 最初の1分（まちがった所をさわる人）: ぬく・はかるの間、上の場面の外（下の大きな皿・案内文・顔）への指は
         # 手本の指が0.3秒消えて戻るだけで、何回さわっても進まなかった（390×844・320×568実測:

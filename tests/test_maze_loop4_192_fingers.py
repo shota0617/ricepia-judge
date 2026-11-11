@@ -30,6 +30,7 @@ const L = {}, cv = { width: 780, style: {}, addEventListener: (t, f) => { (L[t] 
 const document = { hidden: false, addEventListener: () => {} };   // サイクル206：置いた まま の 指を おぼえる 聞き手（ここでは 使わない）
 let worldMode = false, covered = false, fieldCy = 600; const walks = [], G = { demo: true }, howtoEl = { hidden: true };
 const mapCovered = () => covered, fieldT = () => 32, camTile = () => ({ x: 100, y: 200 }), tapWalk = (x, y) => walks.push([x, y]);
+const tapS = { goal: null }, tapWalkStop = () => {};   // サイクル206：とりけしで 止める 歩き（ここでは 使わない）
 globalThis.window = { devicePixelRatio: 2, addEventListener: () => {} }; globalThis.performance = { now: () => 1000 };
 """
         run = """

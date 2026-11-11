@@ -9659,6 +9659,7 @@ function tiltFirstTouch(e) {
   // ・聞くのは click だけ（touchend では 聞かない）。iPhone が touchend を「さわった 操作」と 認めないと 失敗に なり、すぐ あとの click も 0.7秒の 間あけで 捨てて、いつまでも 窓が 出ない おそれが あった
   if ((tiltG.asked && !tiltG.retry) || !tiltBtnWanted()) return;
   if (e && e.target && e.target.closest && e.target.closest('#pxTilt')) return;
+  if (swipeEats(e)) return;   // サイクル206：ほかの 指と 同時に ついて いた 指の click では 聞かない（置いた まま の 指を はなした だけ）。間あけにも 数えない
   if (e && e.isTrusted === false) return;   // サイクル206：作った click（置いた まま の 指が ある ときの タップ）では 聞けない。下の 0.7秒の 間あけにも 数えない（すぐ あとの 本当の タップで 聞ける）
   const now = performance.now();
   if (now - (tiltFirstTouch.at || -1e9) < 700) return;
@@ -13613,7 +13614,15 @@ const SWIPE_MIN = 12;   // これより 短い ずれは ふつうの タップ�
 // ・傾きの 許可は 本当の click で しか 聞けない（iPhone の 決まり。ここで 出す click は 本当の 操作では ないので、許可は 聞かれない）
 // 置いた まま の 指が ある 間は 地図の touch-action を none に する（あとから ついた 指の なぞりを、ブラウザが つまむ 動きと 見て 取り消さない）
 const REST_MS = 300, REST_PX = 10;
-const restS = { pts: new Map(), timer: null };
+// Codex 指摘（PR・サイクル206）：2本指の あつかいの ぬけを 3つ（歩きだした あとの とりけしで 歩きが 止まらない／ゆずった 主の 指の click が 通る／はなした ときの 場所だけに 出る 動きを 見て いない）。
+// 1つずつ ふさがず、指の 一生を 1まいの 表（docs/meiro.md サイクル206「2本の 指の 表」）に して、出口を 1つずつに まとめた：
+// ・受ける＝swipeBegin だけ（指の おぼえを 作る）　・とりけし＝swipeCancel だけ（待ちを やめる・おぼえを 消す・あとから ついた 指が 始めた 歩きを 止める）
+// ・指が はなれる・とりけされる＝restLift だけ（はなした 場所まで 見て「動いたか」を 決める・ゆずった 指の click を 使わない しるしを つける）
+// ・click を 使うか＝swipeEats だけ（地図の click と、傾きの 許可を 聞く 所の 両方が ここを 見る）
+// ほかの 指と 同時に ついて いた ことの ある 指（multi）の 本当の click は、地図では 使わない・許可も 聞かない（はなす 順・たった 時間に よらない）。
+// 使わない しるし（eatAt）は 次に 指が ついたら 消す（click は その 指が はなれた すぐ あと・次の 指が つく 前に 来る）
+const REST_EAT_MS = 700;
+const restS = { pts: new Map(), timer: null, eatAt: -Infinity };
 function restOthers(id) {   // この 指の ほかは ぜんぶ「置いた まま の 指」か
   const now = performance.now();
   for (const [k, p] of restS.pts) if (k !== id && (p.far > REST_PX || now - p.t < REST_MS)) return false;
@@ -13631,8 +13640,38 @@ function restSync() {
   clearTimeout(restS.timer);
   restS.timer = soon < Infinity ? setTimeout(restSync, soon + 5) : null;
 }
-function swipeReset() { clearTimeout(swipeS.timer); swipeS.down = null; restS.pts.clear(); restSync(); }   // 画面が かくれた・前面で なくなった：指の おぼえを ぜんぶ 消す（はなした 知らせが 来ない ことが ある）
-document.addEventListener('pointerdown', e => { if (e.pointerType !== 'touch') return; restS.pts.set(e.pointerId, { x: e.clientX, y: e.clientY, t: performance.now(), far: 0 }); restSync(); }, { capture: true, passive: true });
+function swipeBegin(e, second) {   // 受ける（ここだけ）：この 指の 動きを おぼえはじめる。second：ほかの 指が ぜんぶ 置いた まま の ときに あとから ついた 指
+  clearTimeout(swipeS.timer);
+  swipeS.down = { id: e.pointerId, x: e.clientX, y: e.clientY, ax: e.clientX, ay: e.clientY, ex: e.clientX, ey: e.clientY, hx: 0, hy: 0, wx: 0, wy: 0, key: '', goal: null, second };
+}
+function swipeCancel() {   // とりけし（ここだけ）：待ちを やめて おぼえを 消す。あとから ついた 指が 始めた 歩きは 止める（2本指の 動きに なったら 歩かない）。1本指の 歩きは これまでどおり つづける
+  const d = swipeS.down;
+  clearTimeout(swipeS.timer);
+  swipeS.down = null;
+  if (d && d.second && d.goal && tapS.goal === d.goal) tapWalkStop();
+}
+function swipeEats(e) {   // この 本当の click は、ほかの 指と 同時に ついて いた 指の もの（地図では 使わない・傾きの 許可も 聞かない）。作った click（isTrusted が false）は ここでは 見ない
+  return !!e && e.isTrusted !== false && performance.now() - restS.eatAt < REST_EAT_MS;
+}
+function restLift(e, cancelled) {   // 指が はなれた・とりけされた（ここだけ）。はなした 場所まで 入れて「動いたか」を 決めてから、おぼえを 消す
+  const p = restS.pts.get(e.pointerId);
+  if (!p) return;
+  if (!cancelled) p.far = Math.max(p.far, Math.hypot(e.clientX - p.x, e.clientY - p.y));
+  restS.pts.delete(e.pointerId);
+  if (p.multi && p.cv && !cancelled) restS.eatAt = performance.now();   // この 指の click（来る なら すぐ あと）は 使わない
+  const d = swipeS.down;
+  if (d && d.second && d.id !== e.pointerId && (cancelled || p.far > REST_PX)) swipeCancel();   // 置いて いた 指が 動いて いた・とりけされた：2本指の 動き
+  restSync();
+}
+function swipeReset() { swipeCancel(); restS.pts.clear(); restS.eatAt = -Infinity; restSync(); }   // 画面が かくれた・前面で なくなった：指の おぼえを ぜんぶ 消す（はなした 知らせが 来ない ことが ある）
+document.addEventListener('pointerdown', e => {
+  restS.eatAt = -Infinity;   // 新しい 指：前の 指の click は もう 来ない
+  if (e.pointerType !== 'touch') return;
+  if (e.isPrimary) restS.pts.clear();   // 主の 指＝ほかに ついて いる 指は ない（はなした 知らせを のがした おぼえが のこって いたら 消す）
+  restS.pts.set(e.pointerId, { x: e.clientX, y: e.clientY, t: performance.now(), far: 0, multi: false, cv: e.target === cv });
+  if (restS.pts.size > 1) for (const p of restS.pts.values()) p.multi = true;
+  restSync();
+}, { capture: true, passive: true });
 document.addEventListener('pointermove', e => {
   const p = restS.pts.get(e.pointerId);
   if (!p || p.far > REST_PX) return;
@@ -13640,16 +13679,16 @@ document.addEventListener('pointermove', e => {
   if (p.far <= REST_PX) return;
   restSync();
   const d = swipeS.down;
-  if (d && d.second && d.id !== e.pointerId) { clearTimeout(swipeS.timer); swipeS.down = null; }   // 置いて いた 指が 動いた：2本指の 動き。受けた 指は 取り消す
+  if (d && d.second && d.id !== e.pointerId) swipeCancel();   // 置いて いた 指が 動いた：2本指の 動き。受けた 指は 取り消す
 }, { capture: true, passive: true });
-for (const ty of ['pointerup', 'pointercancel']) document.addEventListener(ty, e => { if (restS.pts.delete(e.pointerId)) restSync(); }, { capture: true, passive: true });
+document.addEventListener('pointerup', e => restLift(e, false), { capture: true, passive: true });
+document.addEventListener('pointercancel', e => restLift(e, true), { capture: true, passive: true });
 document.addEventListener('visibilitychange', () => { if (document.hidden) swipeReset(); });
 window.addEventListener('blur', swipeReset);
 cv.addEventListener('pointerdown', e => { swipeS.at = -Infinity;   // 新しい 指の 動きの click は 捨てない（捨てるのは なぞりに ついて くる click だけ）
-  clearTimeout(swipeS.timer);
   const second = !e.isPrimary && e.pointerType === 'touch' && restOthers(e.pointerId);
-  swipeS.down = !worldMode && (e.isPrimary || second) && e.button === 0 ? { id: e.pointerId, x: e.clientX, y: e.clientY, ax: e.clientX, ay: e.clientY, ex: e.clientX, ey: e.clientY, hx: 0, hy: 0, wx: 0, wy: 0, key: '', second } : null; }, { passive: true });
-cv.addEventListener('pointercancel', () => { clearTimeout(swipeS.timer); swipeS.down = null; }, { passive: true });
+  if (!worldMode && (e.isPrimary || second) && e.button === 0) swipeBegin(e, second); else swipeCancel(); }, { passive: true });
+cv.addEventListener('pointercancel', () => swipeCancel(), { passive: true });
 cv.addEventListener('pointerleave', () => { clearTimeout(swipeS.timer); }, { passive: true });   // 地図の 外へ 出た 指・マウスは 待たない（外で はなしても、のこった タイマーで 歩きださない）。押した まま もどれば、次の 動きから また はかる
 function swipeAt(cx, cy) {   // 画面の 点（clientX・clientY）の 地図の 上の 場所（マス。小数つき）と、画面の 1px が 何マスか（k）
   const r = cv.getBoundingClientRect(), dpr = cv.width / r.width, T = fieldT(Math.min(window.devicePixelRatio || 1, 3)), c = camTile();
@@ -13680,7 +13719,7 @@ function swipeWalk(d, cx, cy) {   // 指の 所の マスへ 歩く。歩きだ�
   const q = [Math.floor(w.x), Math.floor(w.y)], key = q[0] + ',' + q[1];
   if (key === d.key) return false;   // 同じ マス：歩きなおさない
   if (!tapWalk(q[0], q[1])) return false;   // いまの マス・道が ない マスなら、同じ 指の つづきの なぞり・はなした 所を これまでどおり 受ける
-  d.key = key; d.hx = cx; d.hy = cy; d.wx = w.x; d.wy = w.y;
+  d.key = key; d.hx = cx; d.hy = cy; d.wx = w.x; d.wy = w.y; d.goal = tapS.goal;   // goal：この 指が 始めた 歩き（とりけしで 止める 相手）
   return true;
 }
 function swipeHold() {
@@ -13694,7 +13733,7 @@ function swipeHold() {
 cv.addEventListener('pointermove', e => {
   const d = swipeS.down;
   if (!d || e.pointerId !== d.id) return;
-  if (e.pointerType === 'mouse' && !e.buttons) { clearTimeout(swipeS.timer); swipeS.down = null; return; }   // 地図の 外で ボタンを はなした マウス：押して いない 動きでは 歩きださない
+  if (e.pointerType === 'mouse' && !e.buttons) { swipeCancel(); return; }   // 地図の 外で ボタンを はなした マウス：押して いない 動きでは 歩きださない
   d.ex = e.clientX; d.ey = e.clientY;
   if (!swipeOn(d, d.ex, d.ey)) { clearTimeout(swipeS.timer); return; }   // 歩きだした あと、止めた 所の そばに いる（もどって きた）間は 待たない
   if (Math.hypot(d.ex - d.ax, d.ey - d.ay) <= SWIPE_HOLD_PX) return;
@@ -13719,6 +13758,7 @@ cv.addEventListener('pointerup', e => {
 // スポットをタップすると、ドラクエ風のウィンドウで説明
 cv.addEventListener('click', e => {
   if (performance.now() - swipeS.at < 400) return;   // なぞって 歩きだした すぐ あとの click
+  if (swipeEats(e)) return;   // ほかの 指と 同時に ついて いた 指の click（置いた まま の 指を はなした など）
   // 傾きの 許可は、画面の どこでも 最初に さわった ときに 聞く（下の tiltFirstTouch。サイクル195）
   const r = cv.getBoundingClientRect(), dpr = cv.width / r.width;
   if (mazeOn() && !worldMode && demoTapWalk(e.clientX, e.clientY)) return;   // サイクル206：ぎりぎりの 所を 指して いる 手本の そばの タップは、手本の マスへ 歩く

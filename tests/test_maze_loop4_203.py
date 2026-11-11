@@ -59,9 +59,10 @@ class SwipeHold203(unittest.TestCase):
     def test_two_fingers_and_cancel_stop_the_timer(self):
         """2本め の 指（isPrimary で ない）・とりけし で 待ちを やめる。サイクル206：ほかの 指が ぜんぶ「置いた まま の 指」の ときだけ、2本め を 受ける（second）"""
         self.assertIn("const second = !e.isPrimary && e.pointerType === 'touch' && restOthers(e.pointerId);", SW)
-        self.assertIn("swipeS.down = !worldMode && (e.isPrimary || second) && e.button === 0 ?", SW)
-        self.assertLess(SW.index("cv.addEventListener('pointerdown', e => { swipeS.at = -Infinity;"), SW.index("  clearTimeout(swipeS.timer);\n  const second ="))
-        self.assertIn("cv.addEventListener('pointercancel', () => { clearTimeout(swipeS.timer); swipeS.down = null; }, { passive: true });", SW)
+        self.assertIn("if (!worldMode && (e.isPrimary || second) && e.button === 0) swipeBegin(e, second); else swipeCancel(); }, { passive: true });", SW)   # 受けない 指が ついたら とりけし（待ちも やめる）
+        self.assertIn("function swipeCancel() {", SW)
+        self.assertIn("  clearTimeout(swipeS.timer);\n  swipeS.down = null;", SW[SW.index("function swipeCancel() {"):])
+        self.assertIn("cv.addEventListener('pointercancel', () => swipeCancel(), { passive: true });", SW)
 
     def test_owner_rules_kept(self):
         """今日 決まった こと：最初の click で 許可（なぞり・長押しの 待ちでは 聞かない）・「タップ！」の 手本・素早い なぞりは はなした 所で 決まる"""
@@ -71,7 +72,7 @@ class SwipeHold203(unittest.TestCase):
         self.assertIn("function tapDemoTick() {", PIX)
         self.assertIn("if (!d.key && Math.hypot(e.clientX - d.x, e.clientY - d.y) < SWIPE_MIN) {", SW)   # サイクル206：あとから ついた 指の タップだけ、ここで click を 出す
         self.assertIn("if (d.key && Math.hypot(e.clientX - d.x, e.clientY - d.y) < SWIPE_MIN) return;", SW)   # 歩きだした 指を はじめの 所へ もどして はなした：行き先は かえない
-        self.assertIn("if (e.pointerType === 'mouse' && !e.buttons) { clearTimeout(swipeS.timer); swipeS.down = null; return; }", SW)   # 外で はなした マウスが もどって きても 歩きださない
+        self.assertIn("if (e.pointerType === 'mouse' && !e.buttons) { swipeCancel(); return; }", SW)   # 外で はなした マウスが もどって きても 歩きださない
         self.assertIn("cv.addEventListener('pointerleave', () => { clearTimeout(swipeS.timer); }, { passive: true });", PIX)   # 外へ 出たら 待たない
         self.assertIn("if (!tapWalk(q[0], q[1])) return false;", SW)   # 歩きだせた ときだけ 行き先を きめる   # 歩きだした 指は、もどして はなしても click を 使わない
 

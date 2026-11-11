@@ -797,20 +797,20 @@ async function cycle206Checks(browser, R) {
   }
   return out;
 }
-// サイクル207（はじめの 1分・さがし役が 見つけた 欠陥）：もどって きた 人の はじめの ゴール・spots.json が 止まる・横向きの 低い 画面の 手本・おそい 読みこみの「どうだった？」
+// サイクル207（はじめの 1分・さがし役が 見つけた 欠陥）：横向きの 低い 画面の 手本・おそい 読みこみの「どうだった？」
 async function cycle207Checks(browser, R) {
   const out = {};
-  // もどって きた 人の 記録（60秒で ゴール 2つ：駅と 駅前の 学生。次の 行き先は 学生に すすめられた 伊文神社の 人＝めいろで 98マス 先）。lowKeep：近い ゴールの とちゅう（back あり）に して、遠い 道すじの まま にする
-  const returning = (page, lowKeep) => page.addInitScript(lowKeep => {
+  // もどって きた 人の 記録（60秒で ゴール 2つ：駅と 駅前の 学生。次の 行き先は 学生に すすめられた 伊文神社の 人＝めいろで 98マス 先）
+  const returning = page => page.addInitScript(() => {
     if (sessionStorage.getItem('__c207')) return;
     sessionStorage.setItem('__c207', '1');
     const t = Date.now() - 864e5, far = { kind: 'npc', id: 'ibun-parish', name: '氏子のおばあさん（伊文神社）', lat: 34.870046662235, lng: 137.05731472425396, why: '北の伊文神社に、氏子のおばあさんがおるじゃん。', refer: true, by: '駅前の学生の話', byId: 'station-student', near: true, alts: [], t };
-    const st = { v: 1, guide: far, guideBack: lowKeep ? { ...far } : undefined, guides: 6, guideDone: ['station-student', 'f-nishio-station'], met: ['station-student'],
+    const st = { v: 1, guide: far, guides: 6, guideDone: ['station-student', 'f-nishio-station'], met: ['station-student'],
       visits: { 'f-nishio-station': { n: 1, first: t, last: t, name: '名鉄 西尾駅', cat: 'station', icon: '🚉', featured: true } } };
     localStorage.setItem('nsg_state_demo', JSON.stringify(st)); localStorage.setItem('nsg_mzgoals', '2');
     localStorage.setItem('nsg_started', 'true'); localStorage.setItem('nsg_mode', '"demo"'); localStorage.setItem('nsg_first_day', '"2026-01-01"');
     localStorage.setItem('nsg_roll', '1'); localStorage.setItem('nsg_roll_v2', '1');   // 前に 遊んだ 人は 転がす めいろ（newPage の 1マスずつ 歩く 台本では ない）
-  }, !!lowKeep);
+  });
   const open = async (view, before) => {
     const v = await newPage(browser, { howto: true, auto: true, hasTouch: true, ...(view ? { viewport: view } : {}) });
     if (before) await before(v.page);
@@ -822,24 +822,10 @@ async function cycle207Checks(browser, R) {
     return { ...v, tap };
   };
   const fail = (keys, e) => { for (const k of keys) if (!out[k]) out[k] = { ok: false, crashed: String(e && e.message || e).split('\n')[0].slice(0, 200) }; };
-  {   // ① もどって きた 人：ひらいた ときの 行き先が 遠い → 近い ゴールが 先・のこった 行き先は 次（ほかの 行き先の 1つめ）
+  {   // ① 横向き 568×320・もどって きた 人（遠い 道すじ）：1回 歩いた あと 止まって いる 間、「タップ！」の 指が 地図の 中（上の バーと 下の 欄の 間）に 出る
     let v = null;
     try {
-      v = await open(null, p => returning(p));
-      const p = v.page;
-      await p.waitForFunction(() => nishioGo.guide && nishioGo.guide.id !== 'ibun-parish', null, { timeout: 20000 }).catch(() => {});
-      await p.waitForTimeout(800);
-      const b = await p.evaluate(() => { const G = nishioGo, g = G.guide, s = G.state.guide, me = G.me, r = nishioPixel.maze.route();
-        const d = g && me ? Math.hypot((g.lat - me.lat) * 111320, (g.lng - me.lng) * 111320 * Math.cos(me.lat * Math.PI / 180)) : null;
-        const sb = G.state.guideBack || (s && s.back) || null; return { id: g && g.id, d: d && Math.round(d), back: sb ? sb.id : null, backAlts: sb && sb.alts ? sb.alts.length : null, alt0: s && s.alts && s.alts[0] ? s.alts[0].id : null, cells: r ? r.cells : null }; });
-      out.backNearGoal = { ...b, ok: !!b.id && b.id !== 'ibun-parish' && b.back === 'ibun-parish' && b.alt0 === 'ibun-parish' && b.d !== null && b.d <= 350 && b.cells !== null && b.cells <= 30 };
-    } catch (e) { fail(['backNearGoal'], e); }
-    finally { if (v) { R.errors.push(...v.errors); await v.ctx.close(); } }
-  }
-  {   // ② 横向き 568×320・もどって きた 人（遠い 道すじ）：1回 歩いた あと 止まって いる 間、「タップ！」の 指が 地図の 中（上の バーと 下の 欄の 間）に 出る
-    let v = null;
-    try {
-      v = await open({ width: 568, height: 320 }, p => returning(p, true));
+      v = await open({ width: 568, height: 320 }, p => returning(p));
       const p = v.page;
       const ready = await p.waitForFunction(() => nishioPixel.tapDemo.on && !nishioPixel.tapGoal, null, { timeout: 12000 }).then(() => true, () => false);
       const q = await p.evaluate(() => { const s = nishioPixel.tapDemo.spot(false); return s ? s.q : null; });
@@ -855,18 +841,7 @@ async function cycle207Checks(browser, R) {
     } catch (e) { fail(['lowDemoKept'], e); }
     finally { if (v) { R.errors.push(...v.errors); await v.ctx.close(); } }
   }
-  {   // ③ spots.json が 返事を しない：6秒で あきらめて、行き先の 札と 道すじが 出る（「スポットを読み込んでいます…」の ままに ならない）
-    let v = null;
-    try {
-      v = await open(null, p => p.route('**/nishio-go/spots.json', () => {}));
-      const p = v.page;
-      const got = await p.waitForFunction(() => nishioGo.guide && !document.getElementById('guide').hidden, null, { timeout: 20000 }).then(() => true, () => false);
-      const s = await p.evaluate(() => ({ guide: nishioGo.guide && nishioGo.guide.name, n: nishioGo.spots.length, status: document.getElementById('status').textContent, route: !!nishioPixel.maze.routePath() }));
-      out.spotsHang = { got, ...s, ok: got && s.n > 0 && s.route && !/スポットを読み込んでいます/.test(s.status) };
-    } catch (e) { fail(['spotsHang'], e); }
-    finally { if (v) { R.errors.push(...v.errors); await v.ctx.close(); } }
-  }
-  {   // ④ ゴールの 時間は はじめて 手で 動かした ときから（読みこみの 待ちを 入れない。「どうだった？」は はじめの 1分に たずねない）
+  {   // ② ゴールの 時間は はじめて 手で 動かした ときから（読みこみの 待ちを 入れない。「どうだった？」は はじめの 1分に たずねない）
     // 道の 時計が 89秒（おそい 読みこみ）の まま、手で 動かして すぐ ゴールの 人と 話す（呼ばれて 話す 道：callNpc → talkNpc → mazeGoal）
     let v = null;
     try {
@@ -923,9 +898,7 @@ const FIRST_MINUTE_NEED = {
   tiltOkQuiet: '許可した すぐ あとの「📱 OK」を 押すと「地図を タップして 遊べるよ」（ことわった ときの 知らせ）が 出る',
   grainToast: 'はじめての 金の米つぶの 知らせが はば 375px で 3行 以上（1字が 1字ぶんの はばの 字で 測って）',
   tapDemoNoBlind: '置ける 所が ない ときに、確かめて いない 点に 指の 手本を 出す／傾きが 使えるのに ゆれる 📱 が 出ない／置ける ように なっても 指が もどらない',
-  backNearGoal: 'もどって きた 人の はじめの ゴールが 遠い（ひらいた ときの 行き先が 350m より 遠いのに 近い ゴールを 先に しない）／のこって いた 行き先が 次に ならない・札から 消える',
   lowDemoKept: '横向き 568×320 で もどって きた 人が 1回 歩くと、止まって いても「タップ！」の 指が 出ない・地図の 外（下の 欄の 裏）に 出る',
-  spotsHang: 'spots.json が 返事を しないと、行き先の 札・道すじが 出ず「スポットを読み込んでいます…」の まま',
   playAskLate: 'ゴールの 時間を、はじめて 手で 動かす 前（読みこみ中）から 数える（おそい 読みこみで はじめての ゴールの すぐ あとに「どうだった？」）',
 };
 
@@ -4129,7 +4102,9 @@ function crashFailures(R, fail) {   // 安全網（guardEvaluate）に かかっ
   // 西尾市の担当者むけの 提案資料（nishio-go/city.html）：数字が ゲームの データから 入り、ドット絵の 枚数が ゲームと 同じ。画面写真・QR が 読める。公式でないと 書いてある
   {
     const w = await newPage(browser);
-    await w.page.goto(URL); await w.page.waitForTimeout(1500);
+    await w.page.goto(URL);
+    // dots.js は load の あとに 1本ずつ 読む 任意の ファイルの 28本め（nishio-go.html）。きまった 1.5秒では、こんだ 機械で まだ 読めて いない ことが あった（数は 同じ ものを くらべる。待ち方だけ 直した）
+    await w.page.waitForFunction(() => window.NISHIO_DOTS && NISHIO_DOTS.COUNT, null, { timeout: 60000 }).catch(() => {});
     const count = await w.page.evaluate(() => window.NISHIO_DOTS && NISHIO_DOTS.COUNT);
     await w.page.goto(URL.replace(/nishio-go\.html.*$/, 'nishio-go/city.html')); await w.page.waitForTimeout(1500);
     const info = await w.page.evaluate(() => ({

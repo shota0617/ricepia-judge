@@ -54,7 +54,7 @@ class FirstMinute200(unittest.TestCase):
         g = fn_src("mzGoalWorld")
         self.assertIn("setWorld(true);", g)
         self.assertIn("G.toast('🌏 ゴールは 🏁 の 所（👣 で めいろに もどる）');", g)
-        self.assertIn("if (inR(mzMap.arrow)) {", PIX)   # 縁の 矢印の タップは これまでどおり せかいちず
+        self.assertIn("if (inR(mzMap.arrow) && !arrowYields(px, py)) {", PIX)   # 縁の 矢印の タップは これまでどおり せかいちず（サイクル206：はんいに かぶった 道すじの マスは 歩きが 先）
         self.assertIn("world: !!tapDemo.world, worldMs: DEMO_WORLD_MS,", PIX)
 
     def test_ok_badge_is_silent(self):

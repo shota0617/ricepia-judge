@@ -159,7 +159,8 @@ class FlowTests(unittest.TestCase):
 
     def test_pc_hint_does_not_say_two_fingers(self):
         # マウスの PC では「ふたゆび」ではなく 🔍 を指す
-        self.assertIn('const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)").matches;', HTML)
+        # サイクル152: 読みこみの 時の 見立てから 始め、さいごに 押した ものが 指か どうかで 変わる（let）
+        self.assertIn('let finePointer = window.matchMedia("(hover: hover) and (pointer: fine)").matches;', HTML)
         self.assertIn('if (finePointer) { hint.textContent = "🔍 で 寄る"; guideAt("press", zoomBtn); }', HTML)
 
     def test_non_zoomer_still_gets_a_cue(self):
@@ -262,7 +263,7 @@ class FlowTests(unittest.TestCase):
         reading = HTML[HTML.index("function takeReading() {"):HTML.index("function crankPointer(e) {")]
         move = HTML[HTML.index('$("sceneMeter").addEventListener("pointermove",'):HTML.index("function endCrank(e) {")]
         # サイクル150: 追う指を入れかえる決まり（restingTakeover）も 本物を読みこむ
-        takeover = "const meterPts = new Map(), pageFinger = () => false;\n" + HTML[HTML.index("function restingTakeover("):HTML.index('$("sceneBag").addEventListener("pointerdown",')]
+        takeover = "const meterPts = new Map(), pageFinger = () => false, inContact = (e) => e.buttons > 0 || e.pointerType !== 'mouse' && e.pointerType !== 'pen';\n" + HTML[HTML.index("function restingTakeover("):HTML.index('$("sceneBag").addEventListener("pointerdown",')]
         script = RULES + takeover + """
 const assert = require('node:assert/strict');
 let onMove, measured = 0, lotIndex = 0, crankAngle = 0, step = 1; const motion = 1;
@@ -2899,6 +2900,7 @@ const capture = () => {}, stopPullDemo = () => {}, stopProbeAttract = () => {}, 
 const moveProbe = x => { moves.push(x); P.x = x; if (x <= P.inAt) P.inserted = true; };
 const autoProbe = () => { autos++; }, pullNudge = () => { nudges++; };
 let pageScrolled = false; const pageFinger = (dx, dy) => pageScrolled && Math.abs(dy) >= Math.abs(dx); const slid = new Set(), pageSlid = (e) => !!e && slid.has(e.pointerId);
+const inContact = (e) => e.buttons > 0 || e.pointerType !== 'mouse' && e.pointerType !== 'pen';   // サイクル152: 道具に さわって いる 指か（本物は kensa.html の inContact）
 """ + bag + """
 const ev = (id, x, y, type) => ({ pointerId:id, clientX:x, clientY:y, pointerType:type || 'touch', buttons:1 });
 const fresh = () => { P.x = 205; P.inserted = false; P.drag = null; bagTaps = 0; moves = []; bagPts.clear(); };
@@ -2954,6 +2956,7 @@ const $ = id => els[id];
 const capture = () => {}, guideOff = () => {}, guideAt = () => {}, crankSound = () => { clicks++; };
 const takeReading = () => { measured++; };
 let pageScrolled = false; const pageFinger = (dx, dy) => pageScrolled && Math.abs(dy) >= Math.abs(dx); const slid = new Set(), pageSlid = (e) => !!e && slid.has(e.pointerId);
+const inContact = (e) => e.buttons > 0 || e.pointerType !== 'mouse' && e.pointerType !== 'pen';   // サイクル152: 道具に さわって いる 指か（本物は kensa.html の inContact）
 """ + meter + """
 const ev = (id, x, y) => ({ pointerId:id, clientX:x, clientY:y, pointerType:'touch', buttons:1 });
 const turn = (id, turns) => { const n = Math.round(turns * 24); for (let i = 1; i <= n; i++) { const a = -Math.PI / 2 + i / 24 * 2 * Math.PI; on.pointermove(ev(id, 310 + 33 * Math.cos(a), 110 + 33 * Math.sin(a))); } };
@@ -3410,6 +3413,142 @@ send('pointerdown', ev(5, 'touch', 10, 10), false); assert.equal(pageDowns.size,
         nxt = HTML[HTML.index("const tapDowns = new Map();"):HTML.index('nextBtn.addEventListener("pointerdown",')]
         self.assertIn('window.addEventListener("blur", () => { tapDowns.clear(); });', nxt)
         self.assertIn("if (document.hidden) tapDowns.clear();", nxt)
+
+
+    # ---- サイクル152（最初の1分・見つけ役の表から）----
+
+    def _world152(self):
+        """本物の 指の 見分け（helpers）・ふくろ・水分計 を 読みこむ。document・window の 聞き手は 集めて 自分で 呼ぶ"""
+        helpers = HTML[HTML.index("var pageScrolled = false;"):HTML.index("/* 指の動きはどれも止まらないように")]
+        bag = HTML[HTML.index("const bagPts = new Map(), meterPts = new Map();"):HTML.index('$("bagBtn").addEventListener("click",')]
+        meter = HTML[HTML.index("function crankPointer(e) {"):HTML.index('$("meterBtn").addEventListener("click",')]
+        return """
+const assert = require('node:assert/strict');
+const NUDGE_LIMIT = 3, motion = 1;
+let step = 0, bagTaps = 0, probeAttract = null, autos = 0, nudges = 0, measured = 0, lotIndex = 0, crankAngle = 0, crankTurned = 0, crankDrag = null, meterTaps = 0, crankDemo = null;
+let finePointer = true;
+const LOT = { moisture:[14.1, 14.2, 14.3] };
+const P = { x:205, rest:205, inAt:166, inX:74, y:50, inserted:false, done:false, drag:null, auto:false };
+const doc = {}, win = {}, on = { bag:{}, meter:{} };
+const document = { hidden:false, addEventListener(t, f) { (doc[t] = doc[t] || []).push(f); } }, window = { addEventListener(t, f) { (win[t] = win[t] || []).push(f); } };
+const scene = k => ({ addEventListener(t, f) { on[k][t] = f; } });
+const els = { sceneBag:scene('bag'), sceneMeter:scene('meter'), poke:{ style:{} }, probe:{ animate() { return {}; } },
+  crank:{ getBoundingClientRect: () => ({ left:260, top:60, width:100, height:100 }) }, crankArm:{ style:{}, animate() {} }, lcd:{} };
+const $ = id => els[id];
+const capture = () => {}, stopPullDemo = () => {}, stopProbeAttract = () => {}, stabPoke = () => {}, probeDemoSound = () => {}, guideOff = () => {}, guideAt = () => {}, crankSound = () => {};
+const moveProbe = x => { P.x = x; if (x <= P.inAt) P.inserted = true; };
+const autoProbe = () => { autos++; }, pullNudge = () => { nudges++; }, takeReading = () => { measured++; };
+""" + helpers + bag + meter + """
+const send = (k, type, e) => { (doc[type] || []).forEach(f => f(e)); if (on[k][type]) on[k][type](e); (win[type] || []).forEach(f => f(e)); };
+const ev = (id, x, y, kind, buttons) => ({ type:'', pointerId:id, clientX:x, clientY:y, pointerType:kind || 'touch', buttons:buttons === undefined ? 1 : buttons });
+const crankAt = (a) => [310 + 33 * Math.cos(a), 110 + 33 * Math.sin(a)];
+"""
+
+    def test_cycle152_fingers_left_when_the_page_hides_are_dropped(self):
+        # 動かして いる とちゅうで 画面が かくれ、取り消しが 来なかった 指が 場面に 残り、もどって 新しい 指で なぞっても
+        # 穀刺し 0px（96px なぞって）・水分計 0回（458°）・皿は 20px で ×1.14 に 寄った（指の まねの できごとで 3回中3回 → 直した後 動く・3回・寄らない）。
+        # 画面が かくれた・前面で なくなった 時は、場面ごとの 取り消しと 同じ 片づけを 1か所（dropFingers）で 行う
+        hide = [l for l in HTML.split("\n") if re.match(r'(window|document)\.addEventListener\("(blur|visibilitychange)",', l)
+                and "pageDowns" not in l and "tapDowns" not in l and "demoDown" not in l]
+        m = re.search(r"\nfunction dropFingers\(\) \{[\s\S]*?\n\}", HTML)
+        body = (m.group(0) if m else "") + "\n" + "\n".join(hide)
+        self._node150(self._world152() + """
+var pts = new Map(), plateEnds = [], senseDrag = null, senseHold = null, inkHold = null, inkDrag = null, hankoDrag = null, bagSwipe = null, nextPress = null, offDown = null;
+var endPlatePointer = (e, cancelled) => { plateEnds.push([e.pointerId, cancelled]); pts.delete(e.pointerId); }, endToken = () => {}, cancelHanko = () => {};
+""" + body + """
+const hideShow = () => { document.hidden = true; (doc.visibilitychange || []).forEach(f => f()); document.hidden = false; (doc.visibilitychange || []).forEach(f => f()); };
+// さす: 動かして いた 指（11）が 残った まま かくれる → もどって 新しい 指（12）で 96px なぞる
+send('bag', 'pointerdown', ev(11, 300, 100)); for (let i = 1; i <= 6; i++) send('bag', 'pointermove', ev(11, 300 - i * 6, 100));
+assert.equal(P.drag.id, 11); assert.equal(P.drag.moved, true);
+hideShow();
+const x0 = P.x;
+send('bag', 'pointerdown', ev(12, 300, 104)); for (let i = 1; i <= 16; i++) send('bag', 'pointermove', ev(12, 300 - i * 6, 104));
+assert.ok(P.x < x0 - 40, 'さす: 新しい 指で 穀刺しが 動かない ' + x0 + ' -> ' + P.x);
+send('bag', 'pointerup', ev(12, 204, 104));
+// 水分計: 回して いた 指（21）が 残った まま かくれる → もどって 新しい 指（22）で 1まわり 余り
+step = 1; let q = crankAt(0); send('meter', 'pointerdown', ev(21, q[0], q[1])); for (let i = 1; i <= 6; i++) { q = crankAt(i * 0.15); send('meter', 'pointermove', ev(21, q[0], q[1])); }
+hideShow();
+const m0 = measured;
+q = crankAt(0); send('meter', 'pointerdown', ev(22, q[0], q[1])); for (let i = 1; i <= 40; i++) { q = crankAt(i * 0.2); send('meter', 'pointermove', ev(22, q[0], q[1])); }
+assert.ok(measured - m0 >= 1, '水分計: 458° 回して はかれた 回数 ' + (measured - m0));
+send('meter', 'pointerup', ev(22, q[0], q[1]));
+// 皿: 置いた まま の 指は、取り消しと 同じ 関数（endPlatePointer の 取り消し）で 片づく。前面で なくなった 時（blur）も 同じ
+pts.set(31, { x:100, y:100 }); hideShow(); assert.deepEqual(plateEnds, [[31, true]]);
+pts.set(32, { x:100, y:100 }); (win.blur || []).forEach(f => f()); assert.deepEqual(plateEnds, [[31, true], [32, true]]);
+""")
+        # 場面の 取り消しも 同じ 関数を 呼ぶ（ずれない）
+        self.assertIn('$("sceneBag").addEventListener("pointercancel", (e) => cancelBagPointer(e.pointerId));', HTML)
+        self.assertIn('$("sceneMeter").addEventListener("pointercancel", (e) => cancelMeterPointer(e.pointerId));', HTML)
+        self.assertIn("plate.addEventListener(\"pointercancel\", (e) => endPlatePointer(e, true));", HTML)
+        drop = m.group(0) if m else ""
+        for part in ("cancelBagPointer", "cancelMeterPointer", 'endPlatePointer({ type:"pointercancel", pointerId:id }, true)', 'endToken({ type:"pointercancel" })', "cancelHanko()"):
+            self.assertIn(part, drop)
+
+    def test_cycle152_pen_hover_does_nothing_and_pen_contact_drags(self):
+        # ペンを 浮かせた まま 動かすと（buttons 0）、水分計を 1まわり なぞるだけで 3回 はかれ、穀刺しが すべり、
+        # その あとの ペンの タップは タップに 数えられなかった（820×1180・ペン実測 3回中3回: 3回・149px・0 → 0回・0px・1）
+        self._node150(self._world152() + """
+// 水分計: 浮かせた ペンで 1まわり 余り → はからない・回さない
+step = 1; let q;
+for (let i = 0; i <= 40; i++) { q = crankAt(i * 0.2); send('meter', 'pointermove', ev(7, q[0], q[1], 'pen', 0)); }
+assert.equal(measured, 0, '浮かせた ペンで はかれた'); assert.equal(crankTurned, 0);
+// その あとの ペンの タップは タップに 数える
+q = crankAt(0); send('meter', 'pointerdown', ev(7, q[0], q[1], 'pen')); send('meter', 'pointerup', ev(7, q[0], q[1], 'pen', 0));
+assert.equal(meterTaps, 1, 'ホバーの 後の ペンの タップが 数えられない');
+// さわって いる ペンは マウスの ドラッグと 同じに 回せる
+q = crankAt(0); send('meter', 'pointerdown', ev(8, q[0], q[1], 'pen')); for (let i = 1; i <= 40; i++) { q = crankAt(i * 0.2); send('meter', 'pointermove', ev(8, q[0], q[1], 'pen', 1)); }
+assert.ok(measured >= 1); send('meter', 'pointerup', ev(8, q[0], q[1], 'pen', 0));
+// 穀刺し: 浮かせた ペンで 20回 動かしても すべらない
+step = 0; const x0 = P.x;
+for (let i = 1; i <= 20; i++) send('bag', 'pointermove', ev(9, 300 - i * 5, 100, 'pen', 0));
+assert.equal(P.x, x0, '浮かせた ペンで 穀刺しが すべった'); assert.equal(P.drag, null);
+// さわって いる ペンでは 押せる
+send('bag', 'pointerdown', ev(10, 300, 100, 'pen')); for (let i = 1; i <= 10; i++) send('bag', 'pointermove', ev(10, 300 - i * 5, 100, 'pen', 1));
+assert.ok(P.x < x0 - 30); send('bag', 'pointerup', ev(10, 250, 100, 'pen', 0));
+// 指（touch）は 今までどおり
+""")
+        self.assertIn("if (step !== 1 || measured >= LOT.moisture.length || !inContact(e)) return;", HTML)
+
+    def test_cycle152_scroll_keys_keep_the_game_on_screen(self):
+        # ゲームの 間に ↓・PageDown・スペース・End を 押すと ページが 説明へ 動き、ゲームが 画面から 出ていった
+        # （390×844 キーボード実測: 5回中5回、PageDown 738px・↓ 40px・End 1999px → 直した後 0px）
+        keys = HTML[HTML.index('document.addEventListener("pointerdown", (e) => {\n  if (!e.target.closest || !e.target.closest("#idleCard")) dismissIdleCard();'):HTML.index('likeBtn.addEventListener("click",')]
+        self._node150("""
+const assert = require('node:assert/strict');
+const cls = new Set(), doc = {};
+const app = { id:'app' }, notes = { id:'notes' };
+const el = (inside, tag) => ({ tagName:tag, closest(sel) { return sel.split(',').map(s => s.trim()).includes('#' + inside.id) ? inside : null; } });
+const body = { tagName:'BODY', closest() { return null; } };
+const document = { body, documentElement:{ classList:{ contains: c => cls.has(c) } }, addEventListener(t, f) { doc[t] = f; } };
+let keyUser = false; const dismissIdleCard = () => {}, armIdle = () => {};
+""" + keys + """
+const press = (key, target, mods) => { let held = false; doc.keydown(Object.assign({ key, target, preventDefault() { held = true; } }, mods || {})); return held; };
+for (const k of ['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', 'Home', 'End', ' ']) assert.equal(press(k, body), true, k + ' で ページが 動く');
+const gameBtn = el(app, 'BUTTON');
+assert.equal(press('ArrowDown', gameBtn), true);                 // ゲームの ボタンに フォーカスが あっても ↓ で ページは 動かない
+assert.equal(press(' ', gameBtn), false);                         // ボタンの スペース（押す）は そのまま
+assert.equal(press('Enter', gameBtn), false); assert.equal(press('Tab', gameBtn), false);
+assert.equal(press('End', body, { ctrlKey:true }), false);        // 組み合わせは ブラウザの まま
+assert.equal(press('PageDown', el(notes, 'A')), false);           // 説明の 中は そのまま
+cls.add('scrolled');                                              // 📖 で 説明を 読んで いる 間は そのまま
+for (const k of ['ArrowDown', 'PageDown', ' ', 'Home']) assert.equal(press(k, body), false, k);
+assert.equal(keyUser, true);
+""")
+
+    def test_cycle152_zoom_hint_follows_the_last_pointer(self):
+        # タッチの 画面で マウス・ペンを 使う 人にも 2袋目から「ふたゆびで ズーム」と 出ていた（読みこみの 時の 見立てのまま・2回中2回）
+        helpers = HTML[HTML.index("var pageScrolled = false;"):HTML.index("/* 指の動きはどれも止まらないように")]
+        self._node150("""
+const assert = require('node:assert/strict');
+let finePointer = false;   // タッチが 主の 端末
+const doc = {}; const document = { addEventListener(t, f) { (doc[t] = doc[t] || []).push(f); } }, window = { addEventListener() {} };
+""" + helpers + """
+const down = kind => (doc.pointerdown || []).forEach(f => f({ pointerId:1, clientX:0, clientY:0, pointerType:kind }));
+down('mouse'); assert.equal(finePointer, true, 'マウスで 押しても ふたゆびの 案内のまま');
+down('touch'); assert.equal(finePointer, false);
+down('pen'); assert.equal(finePointer, true);
+""")
+        self.assertIn('if (finePointer) { hint.textContent = "🔍 で 寄る"; guideAt("press", zoomBtn); }', HTML)
 
 
 if __name__ == "__main__":

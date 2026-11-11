@@ -13555,8 +13555,8 @@ function swipeHold() {
   const r = cv.getBoundingClientRect();
   if (d.ex < r.left || d.ex > r.right || d.ey < r.top || d.ey > r.bottom) return;   // 地図の 外へ 出た 指は 追わない
   const q = swipeTile(d.ex, d.ey);
-  d.key = q[0] + ',' + q[1];
   tapWalk(q[0], q[1]);
+  if (tapS.goal) d.key = q[0] + ',' + q[1];   // 歩きだせた ときだけ 行き先を きめる（いまの マス・道が ない マスなら、同じ 指の つづきの なぞり・はなした 所を これまでどおり 受ける）
 }
 cv.addEventListener('pointermove', e => {
   const d = swipeS.down;

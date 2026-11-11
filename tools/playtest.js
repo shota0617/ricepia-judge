@@ -805,7 +805,7 @@ async function cycle207Checks(browser, R) {
     if (sessionStorage.getItem('__c207')) return;
     sessionStorage.setItem('__c207', '1');
     const t = Date.now() - 864e5, far = { kind: 'npc', id: 'ibun-parish', name: '氏子のおばあさん（伊文神社）', lat: 34.870046662235, lng: 137.05731472425396, why: '北の伊文神社に、氏子のおばあさんがおるじゃん。', refer: true, by: '駅前の学生の話', byId: 'station-student', near: true, alts: [], t };
-    const st = { v: 1, guide: lowKeep ? { ...far, back: { ...far } } : far, guides: 6, guideDone: ['station-student', 'f-nishio-station'], met: ['station-student'],
+    const st = { v: 1, guide: far, guideBack: lowKeep ? { ...far } : undefined, guides: 6, guideDone: ['station-student', 'f-nishio-station'], met: ['station-student'],
       visits: { 'f-nishio-station': { n: 1, first: t, last: t, name: '名鉄 西尾駅', cat: 'station', icon: '🚉', featured: true } } };
     localStorage.setItem('nsg_state_demo', JSON.stringify(st)); localStorage.setItem('nsg_mzgoals', '2');
     localStorage.setItem('nsg_started', 'true'); localStorage.setItem('nsg_mode', '"demo"'); localStorage.setItem('nsg_first_day', '"2026-01-01"');
@@ -831,7 +831,7 @@ async function cycle207Checks(browser, R) {
       await p.waitForTimeout(800);
       const b = await p.evaluate(() => { const G = nishioGo, g = G.guide, s = G.state.guide, me = G.me, r = nishioPixel.maze.route();
         const d = g && me ? Math.hypot((g.lat - me.lat) * 111320, (g.lng - me.lng) * 111320 * Math.cos(me.lat * Math.PI / 180)) : null;
-        return { id: g && g.id, d: d && Math.round(d), back: s && s.back ? s.back.id : null, alt0: s && s.alts && s.alts[0] ? s.alts[0].id : null, cells: r ? r.cells : null }; });
+        const sb = G.state.guideBack || (s && s.back) || null; return { id: g && g.id, d: d && Math.round(d), back: sb ? sb.id : null, backAlts: sb && sb.alts ? sb.alts.length : null, alt0: s && s.alts && s.alts[0] ? s.alts[0].id : null, cells: r ? r.cells : null }; });
       out.backNearGoal = { ...b, ok: !!b.id && b.id !== 'ibun-parish' && b.back === 'ibun-parish' && b.alt0 === 'ibun-parish' && b.d !== null && b.d <= 350 && b.cells !== null && b.cells <= 30 };
     } catch (e) { fail(['backNearGoal'], e); }
     finally { if (v) { R.errors.push(...v.errors); await v.ctx.close(); } }

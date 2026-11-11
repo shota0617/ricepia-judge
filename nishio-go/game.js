@@ -383,17 +383,29 @@ async function spotsJson() {
   return config;
 }
 // サイクル207：spots.json の 返事が 来ない（つながった まま 止まる）と、その 間ずっと 行き先の 札・道すじ・旗・「タップ！」の 手本が 出ず、
-// 「スポットを読み込んでいます…」の まま（40秒 見て 3回とも）。6秒 待って 来なければ、読めなかった ときと 同じ 道（注目スポットなし）で 先へ 進み、
-// あとで 1回だけ 裏で 読みなおす（名所は もう 出て いるので 60秒 待つ。読めたら 注目スポットも 入る）。待つのは タイマーと Promise.race だけ（AbortSignal.timeout の ない 古い Safari でも 止まらない）
+// 「スポットを読み込んでいます…」の まま（40秒 見て 3回とも）。6秒 待って 来なければ、読めなかった ときと 同じ 道（注目スポットなし）で 先へ 進む。
+// あとから 来た 返事は すてずに つかう（spotsCfgLate）。来なければ 20秒 あとに 1回だけ 読みなおす（名所は もう 出て いるので 60秒 待つ）。
+// どちらも、読みこみ中（spotsLoading）なら おわるのを 待ってから（spotsAgain）。名所は 作りなおす だけ（ふえない）・行き先は かえない。
+// 待つのは タイマーと Promise.race だけ（AbortSignal.timeout の ない 古い Safari でも 止まらない）
 const SPOTS_WAIT_MS = 6000, SPOTS_RETRY_MS = 20000;
-let spotsLate = 0;   // 待ちきれなかった 回数（読みなおしは 1回だけ）
+let spotsLate = 0, spotsCfgLate = null;   // 待ちきれなかった 回数（読みなおしは 1回だけ）・あとから 来た 返事
 async function spotsConfig() {
+  if (spotsCfgLate) { const c = spotsCfgLate; spotsCfgLate = null; return c; }
   let tm = 0, late = false;
+  const first = spotsJson();
   const wait = new Promise(ok => { tm = setTimeout(() => { late = true; ok([]); }, spotsLate ? SPOTS_WAIT_MS * 10 : SPOTS_WAIT_MS); });
-  const config = await Promise.race([spotsJson(), wait]);
+  const config = await Promise.race([first, wait]);
   clearTimeout(tm);
-  if (late && !spotsLate++) setTimeout(() => { if (!spots.some(x => x.featured)) loadSpots(); }, SPOTS_RETRY_MS);
+  if (late && !spotsLate++) {
+    first.then(c => { if (c.length) { spotsCfgLate = c; spotsAgain(); } });   // おくれて 来た 返事
+    setTimeout(spotsAgain, SPOTS_RETRY_MS);   // 来なければ 読みなおす
+  }
   return config;
+}
+function spotsAgain() {   // 注目スポットを あとから 入れる（読みこみ中なら おわってから・もう あれば 何も しない）
+  if (spots.some(x => x.featured)) { spotsCfgLate = null; return; }
+  if (spotsLoading) { spotsLoading.then(spotsAgain); return; }
+  loadSpots();
 }
 async function doLoadSpots(force) {
   const config = await spotsConfig();   // 読めなければ 注目スポットなしで続行
@@ -694,7 +706,7 @@ function talkNpc(id, page = 0) {
     // 人の話で行き先が決まったら、イベント（みちしるべが案内し、おまかせ歩きならそこへ向かう）
     // 地図の めいろで ゴールへ 向かう とちゅうに、ゴールでない 人と 話しても、ゴールは かえない（自分で 遊んで 分かった：通りすがりに こつんと
     // 話すと ゴールが 別の 人に かわり、時計も 0 から やりなおしに なっていた）。ゴールに 着いてから 話せば、その人の 話で 次が 決まる
-    const mzKeep = !arrived && guideTarget() && mazeNow(), back = arrived && arrived.back;   // back：もどって きた 人の 近い ゴールだった（サイクル207。次は のこして いた 行き先）
+    const mzKeep = !arrived && guideTarget() && mazeNow(), back = arrived ? detourEnd(arrived.id) : null;   // サイクル207：寄り道の とちゅうに 着いた 人：次は のこした 行き先
     const g = mzKeep || back ? null : decideGuide(n);
     if (g) {
       setGuide({ ...g, byId: n.id }); track('guide_set', { by: n.id, kind: g.kind }); say.push(`📜 イベント発生：${g.name}へ行ってみて`); brief.next = g.name;
@@ -1883,12 +1895,12 @@ const mzNoPath = new Map();
 const mzNoPathIds = () => { const t = Date.now(); return [...mzNoPath].filter(([, u]) => u > t).map(([id]) => id); };
 function guideNoPath(g, firstBand) {   // 外して 選びなおす。自分で 選んだ・人の すすめの 行き先は そのまま。続けて 3回（30秒）まで。firstBand：はじめての ゴールの 道すじが 単純で ない とき（pixel.js）。近くの 帯（FIRST_MAX）の 外へは かえない
   const cur = S.guide;
-  if (!g || !cur || cur.id !== g.id || cur.mine || cur.refer || cur.byId || !mazeNow() || !fixOk()) return false;
+  if (!g || !cur || cur.id !== g.id || ownPick(cur) || cur.refer || cur.byId || !mazeNow() || !fixOk()) return false;
   const now = Date.now(), ts = (guideNoPath.ts || []).filter(t => now - t < 30000);
   guideNoPath.ts = ts;
   if (ts.length >= 3) return false;
   ts.push(now); mzNoPath.set(g.id, now + 600000);
-  if (cur.back) { setGuide(backPick(cur.back) || cur.back); return true; }   // サイクル207：もどって きた 人の 近い ゴールに 道すじが ない：ほかの 近い ゴール、なければ のこして いた 行き先へ
+  if (S.guideBack) { const b = S.guideBack, f = backPick(b); if (f) detourStart(b, f); else S.guide = { ...detourEnd(), t: Date.now() }; glowArm(S.guide); save(); renderGuide(); return true; }   // サイクル207：寄り道の 近い ゴールに 道すじが ない：ほかの 近い ゴール、なければ のこした 行き先へ
   const next = decideGuide(null);
   if (!next || (firstBand && dist(me, next) > FIRST_MAX)) { mzNoPath.delete(g.id); return false; }
   setGuide(next);
@@ -2005,29 +2017,48 @@ function decideGuide0(from, wide, tooNearOk, back) {   // back：もどって �
 }
 // サイクル207：もどって きた 人の はじめの ゴールが 遠い（前回 えらばれた 行き先は のこるが、お米は いつも 駅から 始まる。
 // ゴール 2つの 記録で 次の ゴールは めいろの 道のり 98マス・2.3km。手本どおりに 60秒 歩いても 33マス のこり、ゴール 0／4回。はじめての 人は 13.5〜15.9秒で 着く）
-// → ひらいた ときに のこって いた 行き先が まっすぐ 350m（MAZE_NEAR_MIN）より 遠ければ、はじめての 人と 同じ きまり（decideGuide の 順：first1 の 120〜200m・
-// なければ 60m まで・なければ 広い 範囲の いちばん 近い 所）で、のこって いた 行き先より 近い ゴールを 先に する。
-// ゲームが えらんだ 行き先（まわりの ようす・人の すすめ）だけ。自分で 選んだ 行き先（mine：ほかの 行き先の 札・コース。picked：お米つぶの 会話で おすすめを タップ）は かえないのこって いた 行き先は 消さない：ほかの 行き先の 1つめに 出し（札から えらべる）、近い ゴールに 着いたら 次の ゴールに なる（back）
+// → ひらいた ときに のこって いた 行き先が まっすぐ 350m（MAZE_NEAR_MIN）より 遠ければ、はじめての 人の はじめての ゴールと 同じ きまり（decideGuide0 の first1：
+// 120〜200m・なければ 60m まで）で 近い ゴールを 先に する（寄り道）。その 帯に 何も なければ 寄り道しない（広い 範囲の 所は 近くない）。
+// ゲームが えらんだ 行き先（まわりの ようす・人の すすめ）だけ。自分で 選んだ 行き先（ownPick：mine＝ほかの 行き先の 札・コース／picked＝お米つぶの 会話で おすすめを タップ）は かえない。
+// のこした 行き先は 記録の まま 1か所（S.guideBack）に おき、ゲームが 自分から 消す ことは ない（docs/meiro.md の サイクル207 の 表）。出口は 下の detour… だけ
 const backNear = { id: S.guide && S.guide.id };   // ひらいた ときの 行き先（この 1回だけ 見る）
 const guideKeep = ({ kind, id, name, lat, lng, why, by, byId, refer, weather }) => ({ kind, id, name, lat, lng, why, by, byId, refer, weather });
+const ownPick = g => !!(g && (g.mine || g.picked));   // 自分で 選んだ 行き先（ゲームが 自分から かえない）
+const guideFull = g => { const { t: _t, back: _b, ...r } = g; return r; };   // 行き先の 記録 ぜんぶ（ほかの 候補・すすめた 人・しるしも）
+if (S.guide && S.guide.back) { if (!S.guideBack) S.guideBack = S.guide.back; delete S.guide.back; }   // 前の 版（行き先の 中に back を 持って いた）の 記録
+function detourStart(g, f) {   // 寄り道を 始める：近い ゴールを 先に、のこす 行き先は 記録の まま
+  S.guideBack = guideFull(g);
+  S.guide = { ...f, near: true, alts: [guideKeep(g), ...(f.alts || []).filter(a => a.id !== g.id)].slice(0, 2), t: Date.now() };
+}
+function detourEnd(arrivedId) {   // 寄り道を おえる（着いた・ゲームが 行き先を えらびなおす）：のこした 行き先を かえす。着いたのが その 行き先なら null
+  const b = S.guideBack;
+  if (!b) return null;
+  S.guideBack = null;
+  return b.id === arrivedId ? null : b;
+}
+function detourPick(cur, a) {   // 寄り道の 間に 自分で 札を えらんだ：のこした 行き先なら 記録の まま もどす（自分で 選んだ）。ほかなら その 行き先、のこした 行き先は 札に のこす
+  const b = S.guideBack;
+  if (!b) return cur;
+  if (a.id === b.id) return { ...detourEnd(), mine: true, t: Date.now() };
+  if (!(cur.alts || []).some(x => x.id === b.id)) cur.alts = [...(cur.alts || []).slice(0, 1), guideKeep(b)];
+  return cur;
+}
 function backNearCheck() {
   const g = S.guide;
   if (!backNear.id || !g || g.id !== backNear.id) { backNear.id = null; return; }   // 行き先が もう かわった（着いた・えらびなおした）
   if (!mazeNow() || !fixOk() || !spotMeta.loaded) return;   // めいろが 始まり、名所を ぜんぶ 読みおわるまで まつ（駅の そばの 公園などは OpenStreetMap の 名所）
   backNear.id = null;
   const t = guideTarget();
-  if (!t || g.back || g.mine || g.picked || dist(me, t) <= MAZE_NEAR_MIN) return;   // 自分で 選んだ（札・お米つぶの 会話で タップした）行き先は そのまま
+  if (!t || S.guideBack || ownPick(g) || dist(me, t) <= MAZE_NEAR_MIN) return;   // 寄り道の とちゅう・自分で 選んだ 行き先は そのまま
   const f = backPick(g);
   if (!f) return;
-  S.guide = { ...f, t: Date.now() };
+  detourStart(g, f);
   glowArm(S.guide); save(); renderGuide();
   track('guide_back_near', { far: Math.round(dist(me, t)), near: Math.round(dist(me, f)) });
 }
-function backPick(g) {   // g（遠い 行き先）の 前に よる 近い ゴール。なければ null
-  const f = decideGuide0(null, false, false, true) || decideGuide0(null, false, true, true) || decideGuide0(null, true) || decideGuide0(null, true, true);   // decideGuide と 同じ 順（近い 帯 → 60m まで → 広い 範囲）
-  if (!f || f.id === g.id || dist(me, f) >= dist(me, g)) return null;
-  const { back: _b, t: _t, ...far } = g;
-  return { ...f, near: true, back: far, alts: [guideKeep(g), ...(f.alts || []).filter(a => a.id !== g.id)].slice(0, 2) };
+function backPick(g) {   // g（遠い 行き先）の 前に よる 近い ゴール（はじめての 人の はじめての ゴールの 帯だけ）。なければ null
+  const f = decideGuide0(null, false, false, true) || decideGuide0(null, false, true, true);
+  return f && f.id !== g.id && dist(me, f) < dist(me, g) ? f : null;
 }
 // 聞いた名所：人の話に出てきた（すすめられた）まだ行っていない名所。人をすすめられたときは、その人が立っている名所。
 // きろくに影の絵で載り、行くと「めぐったスポット」に入る（昔のドット絵RPGの図鑑の「見た／つかまえた」の2段のしくみ。話を聞くと、行きたい所がふえる）
@@ -2427,7 +2458,7 @@ function guideReward(g) {
 function weatherGuide() {
   const g = S.guide, w = weatherNow(), wet = !!(w && w.raining);
   if (!w) return;   // 天気がまだ届いていない（取れない）ときは、雨宿りの案内も消さない
-  if (!g || g.refer || g.mine || g.back || /の話$/.test(g.by || '') || !!g.weather === wet) return;   // back：もどって きた 人の 近い ゴール（サイクル207。着けば のこした 行き先へ）
+  if (!g || g.refer || ownPick(g) || S.guideBack || /の話$/.test(g.by || '') || !!g.weather === wet) return;   // サイクル207：自分で 選んだ（picked も）・寄り道の とちゅうは 天気で かえない
   if (!fixOk()) return;   // GPS の精度が悪い位置からは決めない（ほかの決め直しと同じ）
   const key = `${demo}:${wet}:${spotsVersion}:${g.id}:${Math.round(me.lat * 550)}:${Math.round(me.lng * 450)}`;
   if (weatherGuide.key === key) return;
@@ -2445,20 +2476,20 @@ function checkGuide() {
   const g = guideTarget();
   if (!g) {   // 行き先がないときは、まわりのようすで決める（決まらなければ少し待ってから、もう一度）
     // 決めるのは、その場にいると認めてよい位置のときだけ（GPS の精度が悪い位置や乗り物で移動中の位置から決めない）
-    if (spots.length && !S.guide && fixOk() && Date.now() - (checkGuide.t || 0) > 5000) { checkGuide.t = Date.now(); setGuide(decideGuide(null)); }
+    if (spots.length && !S.guide && fixOk() && Date.now() - (checkGuide.t || 0) > 5000) { checkGuide.t = Date.now(); setGuide(detourEnd() || decideGuide(null)); }
     return;
   }
   // 遠くへ移った（となりの市町へ行ったなど）ときは、いまいる所のようすで決め直す
   // （人のすすめは10kmまで出すので12km、それ以外は すすめる範囲の2倍まで）
   // 地図の めいろでは、すすめる範囲の 1.5倍より 遠い 行き先（めいろの 前に 人に すすめられた 遠くの 人など）は 決め直す
   // （めいろの 道は ゴールから いちど はなれる ことも あるので、すすめる範囲 ちょうどでは 決め直さない。自分で 選んだ 行き先は そのまま）
-  const farLimit = mazeNow() && !g.mine ? (g.near ? MAZE_NEAR * 1.3 : GUIDE_RANGE.play * 1.5) : g.refer ? GUIDE_FAR : GUIDE_RANGE[demo ? 'play' : 'walk'] * 2;
-  if (dist(me, g) > farLimit && fixOk()) { setGuide(decideGuide(null)); return; }
+  const farLimit = mazeNow() && !ownPick(g) ? (g.near ? MAZE_NEAR * 1.3 : GUIDE_RANGE.play * 1.5) : g.refer ? GUIDE_FAR : GUIDE_RANGE[demo ? 'play' : 'walk'] * 2;
+  if (dist(me, g) > farLimit && fixOk()) { setGuide(detourEnd() || decideGuide(null)); return; }   // サイクル207：寄り道の とちゅうなら のこした 行き先へ（ゲームが 消さない）
   if (g.kind === 'npc') return;
   if (dist(me, g) > guideRadius(g) || !fixOk()) return;
   guideArrived.id = g.id; guideArrived.at = performance.now();
   const pts = guideReward(g);
-  const next = g.back || decideGuide(null);   // サイクル207：もどって きた 人の 近い ゴールの 次は、のこして いた 行き先
+  const next = detourEnd(g.id) || decideGuide(null);   // サイクル207：寄り道の とちゅうに 着いたら（近い ゴールでも 自分で えらんだ 所でも）次は のこした 行き先
   setGuide(next);
   // 着いたときの 一言は 3つを かわりばんこ（三河弁の「じゃん」は ときどき）
   const hi = [`${g.name}に 着いたね！`, `${g.name}、いい所じゃん。`, `${g.name}に とうちゃく！`][(S.guides || 0) % 3];
@@ -2522,6 +2553,7 @@ function pickAlt(i) {
   // refer（人のすすめ：遠くても12kmまで決め直さない）・weather（雨宿り）も持ちこす。戻したときに すぐ決め直されないように
   const keep = ({ kind, id, name, lat, lng, why, by, byId, refer, weather }) => ({ kind, id, name, lat, lng, why, by, byId, refer, weather });
   S.guide = { ...keep(a), byId: a.byId || g.byId, mine: true, alts: [keep(g), ...g.alts.filter((_, k) => k !== i).map(keep)], t: Date.now() };   // 前の行き先も候補に残す（戻せる）
+  S.guide = detourPick(S.guide, a);   // サイクル207：寄り道の 間：のこした 行き先を えらんだら 記録の まま もどす・ほかを えらんでも 札に のこす
   // 人のすすめの中から選び直したときも、その人から聞いた名所にする（きろくの影の絵と、その人の話の 🔍 の手がかり）
   const by = S.guide.byId && placeNpcs().find(n => n.id === S.guide.byId);
   if (by) heardOf(S.guide, by);
@@ -4836,7 +4868,7 @@ window.nishioGo = {
   spotTip, dist, cooldownLeft, inReach, reachOf, guideRadius, renderGuide, checkin, checkinSpot, popupHtml, toast, toastAfter, renderLog, ymd, refreshNearby, reactLine, get npcs() { return placeNpcs(); }, weekTheme, giveBag, talkNpc, callNpc(id) { calledBy = id || null; }, meetCritter, critterLeft, critterFirst: () => !Object.keys(S.critters || {}).length, watchOpen, watchWater, alleyFind, mzGrain, mzFruit, mzPiece, mzView, mzCache, mzQuest, mzDino, mzChase, mzEnergy, mzShoo, mzTorch, mzBrigade, mzPurify, mzRescueJoin, mzRescue, mzCube, mzGrainHas: key => mzGrainGot().includes(key), get mzGrains() { return mzGrainGot().length; }, alleyOpen: (x, y) => (dayState().alleys || 0) < ALLEY.daily && !(S.alleys || []).includes(`${x},${y}`), sealCands, sealPickCheck, clearInfo: () => ({ cleared: !!S.cleared, got: SEAL_MAIN.filter(id => (S.seals || []).includes(id)).length, need: SEAL_MAIN.length }), get rival() { return rivalWhere(); }, rivalSay, RIVAL, areaArt, npcMet, chestOpened: id => dayState().chests.includes(id), liveChests, get welcomeChest() { return welcomeDue(); },
   moveTo(lat, lng, kind) { if (!demo) return; follow = false; stepMove = kind === 'step'; try { onFix(lat, lng, 5, Date.now()); } finally { stepMove = false; } },
   get driving() { return driving; },
-  get guide() { return guideTarget(); }, backPick: () => S.guide && backPick(S.guide), guideDispName, decideGuide, setGuide, guideNoPath, guideKept: () => !!(S.guide && (S.guide.mine || S.guide.refer || S.guide.byId)),   // guideKept：自分で 選んだ・人の すすめの 行き先か（かってに かえない）
+  get guide() { return guideTarget(); }, backPick: () => S.guide && backPick(S.guide), guideDispName, decideGuide, setGuide, guideNoPath, guideKept: () => !!(S.guide && (S.guide.mine || S.guide.refer || S.guide.byId)) || ownPick(S.guide),   // guideKept：自分で 選んだ・人の すすめの 行き先か（かってに かえない）
   autoInterval, autoLearn, idleCheck, buyUp, IDLE,
   setDriving(on) { driving = !!on && demo; if (!driving) tryChest(); refreshNearby(); },
   invalidateMap() { setTimeout(() => { map.invalidateSize(); if (me) map.setView([me.lat, me.lng]); }, 0); },

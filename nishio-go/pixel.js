@@ -9600,6 +9600,7 @@ function tapDemoTick() {
   // まだ 聞いて いない 間は、2秒 待たずに はじめから タップの 手本（指＋「タップ！」の 札）を 出す。タップすると 許可の 窓が 出て、手本は ふだんの 出かた（止まって 2秒）に もどる
   const first = tiltBtnWanted() && !tiltG.asked;
   const ok = active && !meiroPause && !document.hidden && rp.x !== null && mazeOn() && howtoEl.hidden && !mapCovered() && !tapS.goal && !!path && path.length > 1 && now - tapDemo.at >= (first ? 0 : tapDemo.walked ? DEMO_TAP_MS : DEMO_IDLE_MS);
+  if (!ok && !moved) { demoLead.tx = demoLead.x; demoLead.ty = demoLead.y; }   // サイクル207：手本を 出さない 間（窓・せかいちず・歩いて いる・さわった すぐ あと）は、寄せて いる 地図も その 場で 止める（お米が 動いたら 上で もどす）
   const mkEls = () => {
     if (tapDemo.el) return;
     const mk = (id, t) => { const e = document.createElement('div'); e.id = id; e.setAttribute('aria-hidden', 'true'); e.textContent = t; e.hidden = true; document.body.appendChild(e); return e; };

@@ -1,11 +1,92 @@
 """米づくり365: 最初の1分に出る飾りが、カードの日付や天気の丸に重ならない置き方になっているか(周回152)、押しただけでは案内が消えないか(周回153)、出だしのちらつきと2Dの天気(周回154)、スワイプの手本(周回155)、止まったら手本(周回158)、飛んでいる間の指・しるしのあとの手本(周回161)、おそい回線・おそいスマホ(周回164)、田んぼから はじめた スワイプ(周回165)、しるしに 重なる 丸い ◀ ▶・点の列の さいごの 絵(周回166)。"""
+import json
 import os
 import re
+import shutil
+import subprocess
 import unittest
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-with open(os.environ.get("KOME365_HTML") or os.path.join(ROOT, "kome365", "index.html"), encoding="utf-8") as f:
+HTML_PATH = os.environ.get("KOME365_HTML") or os.path.join(ROOT, "kome365", "index.html")
+with open(HTML_PATH, encoding="utf-8") as f:
     HTML = f.read()
+
+# 周回167: 指の 入口(cardDown・cardMove・up・pendFlush・田んぼの 入口)を index.html から 取り出し、にせの 画面で 本当に 動かす。
+# 指の 道すじ(steps)を 流して、決まった 向き(chosen)・カードを 持って いる 指(holder)などを 返す
+POINTER_JS = r"""
+const fs = require('fs');
+const html = fs.readFileSync(process.argv[1], 'utf8');
+const a = html.indexOf("  var pend = null, cardDown = null, cardMove = null");
+const endMark = "    cardDown(e);\n  });";
+const b = html.indexOf(endMark, a);
+if (a < 0 || b < 0) { console.log(JSON.stringify({ error: 'no code' })); process.exit(0); }
+const code = html.slice(a, b + endMark.length);
+const log = { chosen: [], markOff: 0, stops: 0, idleTouch: 0 };
+function mkEl(id){ const cl = new Set(); return { id: id, style: { setProperty(){} }, offsetWidth: 360, classList: { add(){ for (const x of arguments) cl.add(x); }, remove(){ for (const x of arguments) { if (id === 'swMark' && x === 'on') log.markOff++; cl.delete(x); } }, contains(x){ return cl.has(x); }, toggle(x, v){ if (v) cl.add(x); else cl.delete(x); } }, _l: {}, addEventListener(t, fn){ (this._l[t] = this._l[t] || []).push(fn); }, setPointerCapture(){}, releasePointerCapture(){} }; }
+const els = {}; const $ = id => els[id] || (els[id] = mkEl(id));
+const el = { card: $('swCard') }; $('sGame').classList.add('swipeMode');
+const docL = { cap: {}, bub: {} };
+const document = { hidden: false, addEventListener(t, fn, c){ const k = (c === true || (c && c.capture)) ? 'cap' : 'bub'; (docL[k][t] = docL[k][t] || []).push(fn); } };
+const window = { innerWidth: 844 };
+let now = 1000, markAt = -1e9; const performance = { now: () => now };
+let startX = null, startY = 0, dx = 0, dy = 0, samples = [], pid = null, busy = false, card = {}, f = {}, finger = null, use3d = null, dragMoves = 0, dragApplied = 0, tapOnly = 0;
+const KomeCards = { over: () => false };
+function evT(e){ return (e && typeof e.timeStamp === 'number' && e.timeStamp > 0) ? e.timeStamp : performance.now(); }
+function fingerReady(){ return true; } function idleTouch(){ log.idleTouch++; } function greetClear(){} function ghostPause(){} function ghostBack(){ log.stops++; }
+function cancelDragFrame(){} function queueDrag(){} function reset(){ dx = 0; dy = 0; } function festReset(){} function pvCompute(){}
+function choose(side){ if (busy) return; busy = true; log.chosen.push(side); }
+eval(code);
+const SEL = { card: ['#swCard', '#swStage'], stage: ['#swStage'], field: [], idle: ['#swIdleLike, #swIdleHome', '#swIdle', 'button'], top: [] };
+function fire(type, o){
+  const kind = o.on || 'card';
+  const e = { type: type, pointerId: o.id, clientX: o.x, clientY: o.y, timeStamp: o.t, button: o.button || 0, isPrimary: o.primary !== false, target: { id: kind === 'field' ? 'field' : '', closest(sel){ return SEL[kind].some(s => sel.split(',').map(x => x.trim()).some(p => s.split(',').map(x => x.trim()).indexOf(p) >= 0)) ? {} : null; } } };
+  now = o.t;
+  (docL.cap[type] || []).forEach(fn => fn(e));
+  if (type !== 'pointerdown' || kind === 'card') (el.card._l[type] || []).forEach(fn => fn(e));
+  (docL.bub[type] || []).forEach(fn => fn(e));
+}
+const steps = JSON.parse(process.argv[2]);
+for (const s of steps) {
+  if (s[0] === 'land') { busy = false; now = s[1]; pendFlush(); }
+  else if (s[0] === 'hide') { document.hidden = true; (docL.bub.visibilitychange || []).forEach(fn => fn()); document.hidden = false; }
+  else if (s[0] === '3d') use3d = true;
+  else if (s[0] === 'mark') markAt = s[1];
+  else fire('pointer' + s[0], s[1]);
+}
+console.log(JSON.stringify({ chosen: log.chosen, holder: startX != null ? pid : null, markOff: log.markOff, stops: log.stops, idleTouch: log.idleTouch, busy: busy }));
+"""
+
+
+def pointer_run(steps):
+    node = shutil.which("node")
+    if not node:
+        raise unittest.SkipTest("node がないので実行の確認は飛ばす")
+    out = subprocess.run([node, "-e", POINTER_JS, HTML_PATH, json.dumps(steps)], capture_output=True, text=True)
+    if out.returncode != 0:
+        raise AssertionError(out.stderr[-2000:])
+    return json.loads(out.stdout.strip().splitlines()[-1])
+
+
+def stroke(pid, x, y, dx, dy, t0, ms=110, on="card", primary=True, n=6, lift=True):
+    """1本の 指の 動き: 置く → n 回 動かす → 離す"""
+    o = [["down", {"id": pid, "x": x, "y": y, "t": t0, "on": on, "primary": primary}]]
+    for i in range(1, n + 1):
+        o.append(["move", {"id": pid, "x": x + dx * i / n, "y": y + dy * i / n, "t": t0 + ms * i / n, "on": on, "primary": primary}])
+    if lift:
+        o.append(["up", {"id": pid, "x": x + dx, "y": y + dy, "t": t0 + ms + 4, "on": on, "primary": primary}])
+    return o
+
+
+def pinch(t0, on="stage", gap=12, each=95, ms=350, y=330):
+    """2本の 指を gap ミリ秒ずらして 置き、左右へ 開いて、2本とも 離す"""
+    o = [["down", {"id": 1, "x": 170, "y": y, "t": t0, "on": on}], ["down", {"id": 2, "x": 220, "y": y, "t": t0 + gap, "on": on, "primary": False}]]
+    for i in range(1, 9):
+        t = t0 + gap + ms * i / 8
+        o.append(["move", {"id": 1, "x": 170 - each * i / 8, "y": y, "t": t, "on": on}])
+        o.append(["move", {"id": 2, "x": 220 + each * i / 8, "y": y, "t": t, "on": on, "primary": False}])
+    o.append(["up", {"id": 1, "x": 170 - each, "y": y, "t": t0 + gap + ms + 20, "on": on}])
+    o.append(["up", {"id": 2, "x": 220 + each, "y": y, "t": t0 + gap + ms + 20, "on": on, "primary": False}])
+    return o
 
 
 def css_rule(selector):
@@ -135,13 +216,14 @@ class TestKome365FirstMinute(unittest.TestCase):
         self.assertIn("pend = e.button > 0 ? null : [pendCopy(e)];", down)
         self.assertNotIn("if (busy || e.button > 0", down)
         move = HTML[HTML.index("el.card.addEventListener('pointermove'"):HTML.index("function up(e){")]
-        self.assertIn("if (pend && e.pointerId === pend[0].pointerId) { var pl = null;", move)
+        self.assertIn("if (pend && !pendRun && e.pointerId === pend[0].pointerId) { var pl = null;", move)   # 周回167: 流しなおして いる 間(pendRun)の 動きは おぼえに 足さない
         up = HTML[HTML.index("function up(e){"):HTML.index("el.card.addEventListener('pointerup', up)")]
-        self.assertIn("if (pend && e && e.pointerId === pend[0].pointerId) { pend.push(pendCopy(e)); return; }", up)
+        self.assertIn("if (pend && !pendRun && e && e.pointerId === pend[0].pointerId) { pend.push(pendCopy(e)); return; }", up)
         # 流しなおすのは 次の カードが 出た あと。決める きまりは up の まま(押しただけ では 決まらない)
         self.assertIn("setTimeout(function(){ advance(side); pendFlush(); }, dur);", HTML)
         flush = HTML[HTML.index("function pendFlush(){"):HTML.index("el.card.addEventListener('pointerdown'")]
-        self.assertIn("var q = pend; pend = null;", flush)
+        # 周回167: 離し終わった 動きの 列(pendQ)から 古い 順に、無ければ さいごの 指(pend)を 流しなおす
+        self.assertIn("var q = pendQ.length ? pendQ.shift() : pend; if (q === pend) pend = null;", flush)
         self.assertIn("busy || startX != null", flush)
         self.assertIn("cardDown(q[0]);", flush)
         self.assertIn("else { up(q[qi]); break; }", flush)
@@ -151,10 +233,14 @@ class TestKome365FirstMinute(unittest.TestCase):
 
     def test_pending_swipe_review_fixes(self):
         # Codex 指摘(PR #1087): 隠れたら 捨てる・まとめられた 点も おぼえる・2本目の 指で 消さない
-        self.assertIn("document.addEventListener('visibilitychange', function(){ if (document.hidden) pend = null; });", HTML)
-        self.assertIn("if (!q || document.hidden || busy ||", HTML)
+        # 周回167: 隠れたら、列(pendQ)と 指の おぼえ(touchSet)も 捨てる
+        self.assertIn("document.addEventListener('visibilitychange', function(){ if (document.hidden) { pend = null; pendQ.length = 0; touchSet.clear(); } });", HTML)
+        self.assertIn("if (document.hidden || !card || !f || KomeCards.over(f) || $('sGame').classList.contains('hidden')) { pend = null; pendQ.length = 0; return; }", HTML)
         self.assertIn("pl = e.getCoalescedEvents ? e.getCoalescedEvents() : null;", HTML)
-        self.assertIn("if (busy) { if (e.isPrimary === false) return;", HTML)
+        # 周回167: 2本目の 指は fingerIn が 見る(休んで いる 指の ほかに 来た 指は おぼえる・2本とも 動いて いれば おぼえを 消す)
+        self.assertIn("cardDown = function(e){ var solo = pendRun || fingerIn(e);", HTML)
+        self.assertIn("if (busy) { if (!solo) return;", HTML)
+        self.assertNotIn("if (busy) { if (e.isPrimary === false) return;", HTML)
         self.assertIn("(v > 0) === (dx > 0) && Math.abs(dx) >= maxAx - 12;", HTML)   # 速く のぞいて 引き戻した 動きは フリックと しない
         self.assertIn("if (pend) { try { el.card.setPointerCapture(e.pointerId); } catch (x) {} }", HTML)   # おぼえはじめた ときも つかまえる
 
@@ -206,10 +292,11 @@ class TestKome365FirstMinute(unittest.TestCase):
         self.assertNotIn("sc.src = 'vendor/three.min.js'; sc.async = true;", HTML)
 
     def test_3d_setup_waits_for_first_swipe(self):
-        # 周回164(おそいスマホ): はじめての人は 1枚目を決めた 0.9秒あと か、さわらずに 8秒で 3D のしたくを はじめる。つづきの人は すぐ
+        # 周回164(おそいスマホ): はじめての人は 1枚目を決めた 0.9秒あと か、さわらずに 8秒で 3D のしたくを はじめる
         choose = HTML[HTML.index("function choose(side, vel){"):HTML.index("function choose(side, vel){") + 260]
         self.assertIn("window.__k3d.soon(900);", choose)
-        self.assertIn("if (loadSave()) { resumeSwipe(); window.__k3d.pre(); window.__k3d.go(); } else { guideFresh = true; $('bStart').click(); guideFresh = false; window.__k3d.pre(); window.__k3d.idle(8000); }", HTML)
+        # はじめての人の 道(周回164)は そのまま。つづきの人の 道は 周回167 で 同じ 待ち方に した(下の test_returning_player_3d_waits_too)
+        self.assertIn("} else { guideFresh = true; $('bStart').click(); guideFresh = false; window.__k3d.pre(); window.__k3d.idle(8000); }", HTML)
         loader = HTML[HTML.index("window.__k3d = (function(){"):HTML.index("const K = window.Kome365")]
         # 指が画面にある間は はじめない(待つのは 12回まで)
         self.assertIn("if (down && tries++ < 12) { timer = setTimeout(tick, 400); return; } go();", loader)
@@ -225,17 +312,19 @@ class TestKome365FirstMinute(unittest.TestCase):
     def test_swipe_from_field_reaches_card(self):
         # 周回165: カードの 上の 田んぼ(#swStage)に 置いた 指も、カードに 置いた 指と 同じ 入口(cardDown)を 通る
         i = HTML.index("el.card.addEventListener('pointerup', up); el.card.addEventListener('pointercancel', up);")
-        blk = HTML[i:i + 1400]
+        blk = HTML[i:i + 2600]
         self.assertIn("document.addEventListener('pointerdown', function(e){", blk)
-        self.assertIn("if (t.closest('#swCard') || !t.closest('#swStage')) return;", blk)
+        self.assertIn("if (t.closest('#swCard') || !(onPic || t.closest('#swStage'))) return;", blk)
         # 顔を なでる 指・かかしを 押す 指(finger)、ボタン、「お疲れ様です」の カードは 取らない
-        self.assertIn("|| !fingerReady() || finger || startX != null) return;", blk)
+        # 周回167: カードを 持って いる 指が あっても cardDown へ 通す(2本の 指の きまりは fingerIn)
+        self.assertIn("|| !fingerReady() || finger) return;", blk)
         self.assertIn("if (t.closest('button, a, input, select, textarea, [role=\"button\"], #swDetail, #swIdle')) return;", blk)
         self.assertIn("cardDown(e);", blk)
         # 決める きまりは 1つ(up)。田んぼ用の choose は 作らない
         self.assertNotIn("choose(", blk[:blk.index("cardDown(e);")])
-        # 田んぼは 縦スクロールを 止めない(pan-y の まま)。カードは none の まま(周回159)
-        self.assertIn("min-height:0;touch-action:pan-y}", css_rule("#swStage") + "}")
+        # 周回167: 田んぼも none(pan-y だと、田んぼからの 45°より 急な フリック・はじめが 上下へ それた スワイプを ブラウザが 取り消して いた)。カードは none の まま(周回159)
+        self.assertIn("min-height:0;touch-action:none}", css_rule("#swStage") + "}")
+        self.assertNotIn("touch-action:pan-y", css_rule("#swStage"))
         self.assertIn("touch-action:none", css_rule("#swCard"))
 
     def test_cancel_without_place_does_not_decide(self):
@@ -265,6 +354,193 @@ class TestKome365FirstMinute(unittest.TestCase):
         self.assertIn("return '<i class=\"' + (gc2.direct && i === 1 && gc2.idx >= 2 ? 'skip' : i < gc2.idx ? 'past' : i === gc2.idx ? 'cur' : '') + '\"></i>'; }).join('');", HTML)
         # 次の 節目の 日数は 60日より 先は 出さない きまり(周回94)の まま
         self.assertIn("mi && mi.days <= 60", HTML)
+
+    def test_returning_player_3d_waits_too(self):
+        # 周回167(2回目に 開いた 人・おそいスマホ): つづきの 人も、カードを 1枚 決めた 0.9秒あと か、さわらずに 8秒まで 3D の したくを はじめない
+        self.assertIn("if (loadSave()) { resumeSwipe(); window.__k3d.pre(); if (f && !KomeCards.over(f)) window.__k3d.idle(8000); else window.__k3d.go(); } else {", HTML)
+        # 開いて すぐ したくを はじめる 書き方は もう 無い
+        self.assertNotIn("resumeSwipe(); window.__k3d.pre(); window.__k3d.go(); }", HTML)
+        # 決めた とき(choose)の 0.9秒は、つづきの 人にも 同じ 所で かかる
+        choose = HTML[HTML.index("function choose(side, vel){"):HTML.index("function choose(side, vel){") + 260]
+        self.assertIn("window.__k3d.soon(900);", choose)
+
+    def test_landscape_small_phone_keeps_card_clear(self):
+        # 周回167(横向きの 小さい スマホ): 顔・育ち・かかし・天気を 左右の 空きへ 出す きまりを、幅564px から(640×360・568×320 で カードに かぶって いた)
+        self.assertIn("@media (max-height:440px) and (min-width:564px){#swMood{left:calc(10px - (100vw - 480px) / 2)}#swGrow{left:calc(8px - (100vw - 480px) / 2)}#swKakashi{right:calc(10px - (100vw - 480px) / 2)}#swSkyWx{right:calc(8px - (100vw - 480px) / 2)}#swAheadWx{right:calc(14px - (100vw - 480px) / 2)}}", HTML)
+        self.assertNotIn("(min-width:660px)", HTML)
+        # 564px = カードの 幅 360px + 左右に 顔の 幅 92px と 空き 10px ずつ
+        self.assertEqual(360 + 2 * (92 + 10), 564)
+        self.assertIn("width:92px", css_rule("#swMood"))
+        # 横向きでは 開いて すぐの 挨拶の 顔を、カードの 日付に かからない 高さへ(縦向きの 34% は そのまま)
+        self.assertIn("@media (max-height:440px){#swGreet{top:min(34%, calc(100% - 246px))}}", HTML)
+        self.assertIn("top:34%", css_rule("#swGreet"))
+
+    # ---------- 周回167: 指の 入口を 本当に 動かして 見る ----------
+    def test_two_finger_pinch_does_not_decide(self):
+        # 田んぼの 絵・カードを 2本の 指で 広げても カードは 決まらない(直す 前は 先に 置いた 指の 動きで 決まった)
+        for on in ("stage", "card"):
+            for kw in ({}, {"each": 60, "ms": 250}, {"gap": 400}, {"each": 100, "ms": 800}):
+                r = pointer_run(pinch(2000, on=on, **kw))
+                self.assertEqual(r["chosen"], [], (on, kw))
+                self.assertIsNone(r["holder"], (on, kw))
+        # カードを 引いて いる ところへ 2本目が 来たら、カードは 元へ 戻る。1本目を そのまま 引いて 離しても 決まらない
+        steps = stroke(1, 250, 640, -60, 0, 2000, ms=300, lift=False)
+        steps += [["down", {"id": 2, "x": 120, "y": 330, "t": 2350, "on": "stage", "primary": False}]]
+        steps += [["move", {"id": 1, "x": 190 - 12 * i, "y": 640, "t": 2400 + 40 * i}] for i in range(1, 7)]
+        steps += [["up", {"id": 1, "x": 118, "y": 640, "t": 2700}], ["up", {"id": 2, "x": 120, "y": 330, "t": 2750, "on": "stage", "primary": False}]]
+        r = pointer_run(steps)
+        self.assertEqual(r["chosen"], [])
+        self.assertGreaterEqual(r["stops"], 1)
+        # ピンチの あと、ぜんぶ 離してから 1本で スワイプすれば 決まる(止まった ままに ならない)
+        r = pointer_run(pinch(2000) + stroke(3, 250, 400, -120, 0, 3200, on="stage"))
+        self.assertEqual(r["chosen"], ["left"])
+        # ピンチの あと 1本だけ 離し、のこった 指を 横に 動かしても 決まらない(離すまで 持てない)
+        steps = pinch(2000)[:-2] + [["up", {"id": 2, "x": 315, "y": 330, "t": 2400, "on": "stage", "primary": False}]]
+        steps += [["move", {"id": 1, "x": 75 + 22 * i, "y": 330, "t": 2500 + 30 * i, "on": "stage"}] for i in range(1, 7)]
+        steps += [["up", {"id": 1, "x": 207, "y": 330, "t": 2700, "on": "stage"}]]
+        self.assertEqual(pointer_run(steps)["chosen"], [])
+
+    def test_resting_finger_does_not_block_swipe(self):
+        # 指を 1本 置いたまま(スマホを 持つ 親指)でも、ほかの 指の スワイプは 決まる(直す 前は 0/6)
+        for on, x, y in (("card", 360, 815), ("stage", 200, 300)):
+            rest = [["down", {"id": 1, "x": x, "y": y, "t": 2000, "on": on}]]
+            r = pointer_run(rest + stroke(2, 250, 640, -120, 0, 3000, primary=False))
+            self.assertEqual(r["chosen"], ["left"], on)
+            # ゆっくり 130px
+            r = pointer_run(rest + stroke(2, 260, 660, 130, 0, 3000, ms=700, primary=False, n=10))
+            self.assertEqual(r["chosen"], ["right"], on)
+            # 押しただけ・縦に 動かしただけ では 決まらない
+            self.assertEqual(pointer_run(rest + stroke(2, 250, 640, 0, 0, 3000, primary=False))["chosen"], [], on)
+            self.assertEqual(pointer_run(rest + stroke(2, 250, 520, 0, 120, 3000, ms=200, primary=False))["chosen"], [], on)
+            # 休めた 指を 置いて すぐ(0.15秒 たたない)の 2本目は ピンチと 同じ(決まらない)
+            self.assertEqual(pointer_run(rest + stroke(2, 250, 640, -120, 0, 2100, primary=False))["chosen"], [], on)
+        # ほかの 指で 押した あと、休めて いた 指で そのまま スワイプ しても 決まる
+        steps = [["down", {"id": 1, "x": 200, "y": 300, "t": 2000, "on": "stage"}]] + stroke(2, 250, 640, 0, 0, 3000, primary=False)
+        steps += [["move", {"id": 1, "x": 200 - 22 * i, "y": 300, "t": 3600 + 30 * i, "on": "stage"}] for i in range(1, 7)] + [["up", {"id": 1, "x": 68, "y": 300, "t": 3800, "on": "stage"}]]
+        self.assertEqual(pointer_run(steps)["chosen"], ["left"])
+        # 2本とも 置いて 休んで いて、先に 置いた 指で スワイプ しても 決まる
+        steps = [["down", {"id": 1, "x": 250, "y": 640, "t": 2000}], ["down", {"id": 2, "x": 330, "y": 330, "t": 2600, "on": "stage", "primary": False}]]
+        steps += [["move", {"id": 1, "x": 250 - 22 * i, "y": 640, "t": 3200 + 30 * i}] for i in range(1, 7)] + [["up", {"id": 1, "x": 118, "y": 640, "t": 3400}]]
+        self.assertEqual(pointer_run(steps)["chosen"], ["left"])
+        # 休めた 指が 取り消された(pointercancel)あとも、次の 1本は 決まる
+        steps = [["down", {"id": 1, "x": 360, "y": 815, "t": 2000}], ["cancel", {"id": 1, "x": 0, "y": 0, "t": 2800}]] + stroke(2, 250, 400, -120, 0, 3200, on="stage")
+        self.assertEqual(pointer_run(steps)["chosen"], ["left"])
+
+    def test_single_finger_rules_kept(self):
+        # 1本の 指の きまりは 同じ: 速い フリック・ゆっくり 大きく は 決まる。押しただけ・縦・急な ななめ は 決まらない
+        for on in ("card", "stage"):
+            self.assertEqual(pointer_run(stroke(1, 250, 500, -120, 0, 2000, on=on))["chosen"], ["left"], on)
+            self.assertEqual(pointer_run(stroke(1, 200, 500, 120, 0, 2000, on=on))["chosen"], ["right"], on)
+            self.assertEqual(pointer_run(stroke(1, 250, 500, -130, 0, 2000, ms=900, on=on, n=12))["chosen"], ["left"], on)
+            self.assertEqual(pointer_run(stroke(1, 250, 500, -85, -85, 2000, on=on))["chosen"], ["left"], on)   # 45°の フリック
+            self.assertEqual(pointer_run(stroke(1, 250, 500, 0, 0, 2000, on=on))["chosen"], [], on)
+            self.assertEqual(pointer_run(stroke(1, 250, 500, 0, 120, 2000, on=on))["chosen"], [], on)
+            self.assertEqual(pointer_run(stroke(1, 250, 500, 0, -220, 2000, ms=300, on=on))["chosen"], [], on)
+            self.assertEqual(pointer_run(stroke(1, 250, 500, -41, -113, 2000, on=on))["chosen"], [], on)   # 70°
+            self.assertEqual(pointer_run(stroke(1, 250, 500, -10, 0, 2000, on=on))["chosen"], [], on)
+        # ボタンを 押して いない マウスの 動きは 指では ない(窓の 外で 離した マウスを おぼえた ままに しない)
+        self.assertIn("if (e.pointerType === 'mouse' && e.buttons === 0) { touchSet.up(id); return; }", HTML)
+        # マウスの 右ボタンでは 動かない
+        steps = stroke(1, 250, 640, -120, 0, 2000)
+        steps[0][1]["button"] = 2
+        self.assertEqual(pointer_run(steps)["chosen"], [])
+
+    def test_judge_mark_survives_finger_returning_during_fly(self):
+        # 前の カードが 飛んで いる 間に 置いた 指(流しなおし)では、○✗ の しるしを 片づけない(直す 前は 出したのと 同じ ときに 消えて 1コマも 出なかった)
+        first = stroke(1, 250, 640, 120, 0, 2000)
+        base = pointer_run(first)["markOff"]
+        for on in ("card", "stage"):
+            tap = [["down", {"id": 2, "x": 200, "y": 660, "t": 2150, "on": on}], ["up", {"id": 2, "x": 200, "y": 660, "t": 2240, "on": on}], ["land", 2300]]
+            r = pointer_run(first + tap)
+            self.assertEqual(r["markOff"], base, on)
+            self.assertEqual(r["chosen"], ["right"], on)
+            # 置いたまま(離さない)でも 同じ。カードは その 指に ついて くる
+            r = pointer_run(first + tap[:1] + tap[2:])
+            self.assertEqual(r["markOff"], base, on)
+            self.assertEqual(r["holder"], 2, on)
+        # しるしを 出して 0.4秒 たたない うちに 触っても 片づけない(飛んで いる 間と 人には 同じ)
+        r = pointer_run(first + [["land", 2300], ["mark", 2300], ["down", {"id": 2, "x": 200, "y": 660, "t": 2400}]])
+        self.assertEqual(r["markOff"], base)
+        # 0.4秒 たった あとで 次の カードに 触ったら、これまで どおり すぐ 片づける(今の きまり)
+        r = pointer_run(first + [["land", 2300], ["mark", 2300], ["down", {"id": 2, "x": 200, "y": 660, "t": 2700}]])
+        self.assertEqual(r["markOff"], base + 1)
+        self.assertIn("if (!pendRun && evT(e) - markAt >= 400) { var mk0 = $('swMark'); if (mk0) mk0.classList.remove('on'); var wy0 = $('swWhy'); if (wy0) wy0.classList.remove('on'); }", HTML)
+        # しるしの 長さ(0.75秒)・✗ の わけの 長さ(2秒)は 変えない
+        self.assertIn("#swMark.on{animation:swMarkIn .75s ease-out both}", HTML)
+        self.assertIn("#swWhy.on{animation:swWhyIn 2s ease-out both}", HTML)
+
+    def test_quick_flicks_wait_in_short_queue(self):
+        # 画面が 止まった あと まとめて 届いた フリックは、古い 順に 1枚ずつ 決まる(直す 前は 3回 送って 2回)
+        def run(k, lands, extra=()):
+            steps = []
+            for g in range(k):
+                steps += stroke(10 + g, 195, 700, 120 if g % 2 else -120, 0, 2000 + 300 * g, ms=95)
+            return pointer_run(steps + list(extra) + [["land", 5000 + 400 * i] for i in range(lands)])
+        self.assertEqual(run(3, 4)["chosen"], ["left", "right", "left"])
+        self.assertEqual(run(5, 6)["chosen"], ["left", "right", "left", "right", "left"])
+        # 1枚 出る たびに 1つ(いちどに 2枚 進まない)
+        self.assertEqual(len(run(4, 1)["chosen"]), 2)
+        self.assertEqual(len(run(4, 2)["chosen"]), 3)
+        # 列は 3つまで(決めた 1回 + 列の 3つ + さいごの 1つ = 5回まで)
+        self.assertEqual(len(run(8, 9)["chosen"]), 5)
+        # 隠れたら 列ごと 捨てる
+        self.assertEqual(run(4, 5, extra=[["hide"]])["chosen"], ["left"])
+        # 列の 中の 押しただけ では 決まらず、次の 動きへ 進む
+        steps = stroke(1, 195, 700, -120, 0, 2000, ms=95) + stroke(2, 195, 700, 0, 0, 2300, ms=60) + stroke(3, 195, 700, 120, 0, 2600, ms=95) + [["land", 5000], ["land", 5400]]
+        self.assertEqual(pointer_run(steps)["chosen"], ["left", "right"])
+        self.assertIn("pendQ.length < 3) pendQ.push(pend);", HTML)
+
+    def test_swipe_from_idle_buttons_reaches_card(self):
+        # 「お疲れ様です」の カードの ボタンの 上から はじめた 横スワイプも 決まる(直す 前は 0/8)。押しただけ なら カードは つかまない(ボタンが 押せる)
+        r = pointer_run(stroke(1, 250, 452, -120, 0, 2000, on="idle"))
+        self.assertEqual(r["chosen"], ["left"])
+        self.assertGreaterEqual(r["idleTouch"], 1)
+        r = pointer_run(stroke(1, 250, 452, 3, 2, 2000, on="idle", lift=False))
+        self.assertEqual(r["chosen"], [])
+        self.assertIsNone(r["holder"])
+        self.assertEqual(pointer_run(stroke(1, 250, 452, 0, 120, 2000, on="idle"))["chosen"], [])
+        self.assertIn("#swIdle[data-on] button,#swIdle[data-on] a{pointer-events:auto;touch-action:none}", HTML)
+        self.assertIn('<a id="swIdleHome" draggable="false" href="https://ricepia.jp/?from=kome365-idle">', HTML)
+
+    def test_side_picture_reaches_card_in_2d(self):
+        # カードの 列の 外の 絵(#field)から はじめた スワイプ: 2D の 間は 決まる(横向き・タブレット・PC。直す 前は 0/8・0/16)
+        self.assertEqual(pointer_run(stroke(1, 300, 200, -120, 0, 2000, on="field"))["chosen"], ["left"])
+        self.assertEqual(pointer_run(stroke(1, 600, 200, 120, 0, 2000, on="field"))["chosen"], ["right"])
+        # 3D の 絵は 見回しが 使う・画面の はし 16px は これまで どおり
+        self.assertEqual(pointer_run([["3d"]] + stroke(1, 300, 200, -120, 0, 2000, on="field"))["chosen"], [])
+        self.assertEqual(pointer_run(stroke(1, 8, 200, 120, 0, 2000, on="field"))["chosen"], [])
+        self.assertEqual(pointer_run(stroke(1, 838, 200, -120, 0, 2000, on="field"))["chosen"], [])
+        # ヘッダーなど ほかの 所は 取らない
+        self.assertEqual(pointer_run(stroke(1, 300, 20, -120, 0, 2000, on="top"))["chosen"], [])
+        self.assertIn("z-index:0;touch-action:none}", HTML)
+        self.assertIn("var onPic = t.id === 'field' && use3d !== true && $('sGame').classList.contains('swipeMode') && e.clientX >= 16 && e.clientX <= window.innerWidth - 16;", HTML)
+
+    def test_idle_card_buttons_do_not_trap_finger(self):
+        # 「いいね」→「ありがとう」で ボタンの 幅が 変わらない(行が 折り返して リンクが 指の 下へ 来ない)
+        self.assertIn("#swIdleLike .idleTx{display:inline-block;min-width:5em;text-align:center}", HTML)
+        self.assertEqual(len("ありがとう"), 5)
+        # 出はじめの まだ うすい 間(濃さ 0.5 未満)・「いいね」の すぐ あと 0.8秒は、リンクを 押した ことに しない
+        self.assertIn("function idleFaint(){ try { return +getComputedStyle($('swIdle')).opacity < 0.5; } catch (x) { return false; } }", HTML)
+        self.assertIn("function idleEarly(ev){ if (!idleFaint() && performance.now() - (idleInfo.likedAt || -1e9) >= 800) return false; if (ev && ev.preventDefault) ev.preventDefault(); return true; }", HTML)
+        self.assertIn("$('swIdleHome').addEventListener('click', function(ev){ if (idleEarly(ev)) return; idleInfo.home++;", HTML)
+        self.assertIn("if (idleInfo.liked || idleFaint()) return;", HTML)
+        self.assertIn("idleInfo.liked = true; idleInfo.likedAt = performance.now();", HTML)
+        # 出て いる 間に 画面を 回したら 置きなおす
+        self.assertIn("window.addEventListener('resize', function(){ if (idleInfo.shown) idlePlace($('swIdle')); });", HTML)
+        # 出る 秒(30秒)・文字は 変えない
+        self.assertIn("var IDLE_MS = 30000,", HTML)
+        self.assertIn('<p id="swIdleSay">お疲れ様です</p>', HTML)
+        self.assertIn('<span class="idleTx">いいね</span>', HTML)
+        self.assertIn('<span class="idleTx">サイトへもどる</span>', HTML)
+
+    def test_3d_loader_counts_fingers(self):
+        # 2本目の 指を 離しても、1本目が 画面に ある 間は 3D の したくを はじめない(指は 数で 数える)
+        loader = HTML[HTML.index("window.__k3d = (function(){"):HTML.index("const K = window.Kome365")]
+        self.assertIn("var st = 0, down = 0, timer = null,", loader)
+        self.assertIn("document.addEventListener('pointerdown', function(e){ down = (e && e.isPrimary === false) ? down + 1 : 1; idleArm(); }, true);", loader)
+        self.assertIn("document.addEventListener(t, function(){ down = Math.max(0, down - 1); }, true);", loader)
+        self.assertIn("document.addEventListener('visibilitychange', function(){ if (document.hidden) down = 0; });", loader)
+        self.assertNotIn("down = false", loader)
 
 
 if __name__ == "__main__":

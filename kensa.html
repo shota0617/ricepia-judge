@@ -422,7 +422,7 @@ function lotGrade(lot) {
 
 const $ = id => document.getElementById(id);
 const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)").matches; /* マウスの PC */
+let finePointer = window.matchMedia("(hover: hover) and (pointer: fine)").matches; /* マウスの PC。さいごに 押した ものが 指か どうかで 変わる（下の pointerdown・サイクル152。旧版は 読みこみの 時に 決めたまま で、タッチの 画面で マウス・ペンを 使う 人にも 2袋目から「ふたゆびで ズーム」と 出ていた） */
 const motion = reduced ? 0.15 : 1;
 /* 動きを へらす 設定（prefers-reduced-motion）の きまり（サイクル151・最初の1分）。ここ 1か所で 決める。
    ・「* motion」は 飾りの 動きの 長さ（animate の duration・delay、その 動きに 合わせて 鳴る 小さな 合図）だけに かける。
@@ -1094,10 +1094,16 @@ function touchPointer(e) {
 function pageFinger(dx, dy, e) {
   return pageScrolled && touchPointer(e) && Math.abs(dy) >= Math.abs(dx);
 }
+/* 道具に さわって いる 指か（サイクル152・最初の1分）。touchPointer の となり。ペンを 浮かせた まま 動かすと（ペンの ホバー: buttons 0）、
+   水分計を 1まわり なぞるだけで 3回 はかれ、穀刺しが 12px すべり、その あとの ペンの タップは タップに 数えられなかった（820×1180・ペン実測 3回中3回）。
+   さわって いない ペン・ボタンを 押して いない マウスでは 何も しない。さわって いる ペンは マウスの ドラッグと 同じ。触れた 指は いつも さわって いる */
+function inContact(e) {
+  return !!e && (e.buttons > 0 || e.pointerType !== "mouse" && e.pointerType !== "pen"); /* 浮かせて 動かせるのは マウスと ペン だけ */
+}
 /* ページを動かす指は、ブラウザの取り消しを待たずに見分ける（Codex指摘）。置いた所から たてに大きく 8px より動いた指は、離した時（pointerup）にも
    タップ・空振り・はじき・運び に数えない。取り消しが来ない・おくれる端末でも、説明を動かしただけで 所作が進まない */
 const pageDowns = new Map();
-document.addEventListener("pointerdown", (e) => { pageDowns.set(e.pointerId, { x:e.clientX, y:e.clientY, slid:false }); }, { capture:true, passive:true });
+document.addEventListener("pointerdown", (e) => { finePointer = !touchPointer(e); pageDowns.set(e.pointerId, { x:e.clientX, y:e.clientY, slid:false }); }, { capture:true, passive:true });
 document.addEventListener("pointermove", (e) => {
   const d = pageDowns.get(e.pointerId);
   if (d && !d.slid && pageFinger(e.clientX - d.x, e.clientY - d.y, e) && Math.hypot(e.clientX - d.x, e.clientY - d.y) > 8) d.slid = true;
@@ -1427,7 +1433,7 @@ $("sceneBag").addEventListener("pointerdown", (e) => {
   P.drag = { id:e.pointerId, cx:e.clientX, cy:e.clientY, far:0, x0:P.x, moved:false };
 });
 $("sceneBag").addEventListener("pointermove", (e) => {
-  if (step !== 0 || P.done || !e.buttons && e.pointerType === "mouse") return;
+  if (step !== 0 || P.done || !inContact(e)) return; /* 浮かせた ペン・押して いない マウスでは 動かさない（サイクル152） */
   if (!P.drag) P.drag = { id:e.pointerId, cx:e.clientX, cy:e.clientY, far:0, x0:P.x, moved:true }; /* 先の指を離しても、残った指で続ける */
   const from = restingTakeover(bagPts, P.drag, e, P.drag.moved);
   if (from) P.drag = { id:e.pointerId, cx:from.x, cy:from.y, far:0, x0:P.x, moved:false };
@@ -1461,7 +1467,11 @@ function endBagDrag(e) {
   $("probe").animate([{ transform:"translate(" + P.x + "px," + P.y + "px)" }, { transform:"translate(" + (P.x - 18) + "px," + P.y + "px)" }, { transform:"translate(" + P.x + "px," + P.y + "px)" }], { duration:320 * motion, easing:"ease-in-out" });
 }
 $("sceneBag").addEventListener("pointerup", endBagDrag);
-$("sceneBag").addEventListener("pointercancel", (e) => { bagPts.delete(e.pointerId); if (P.drag && e.pointerId === P.drag.id) { P.drag = null; stopProbeAttract(); } });
+function cancelBagPointer(id) {
+  bagPts.delete(id);
+  if (P.drag && id === P.drag.id) { P.drag = null; stopProbeAttract(); }
+}
+$("sceneBag").addEventListener("pointercancel", (e) => cancelBagPointer(e.pointerId));
 $("bagBtn").addEventListener("click", (e) => { if (e.detail === 0) autoProbe(); }); /* キーボードの Enter はそのまま進める */
 /* さした後のタップ・置いただけの指も、ほかの所作と同じ空振りの数え方で受ける（サイクル139・最初の1分）。
    旧版はさした後の空振りを数えず、手本の指も出なかったため、押し込んで指を離し「ひきぬく →」を見て穀刺しをタップする人・指を置くだけの人は
@@ -1532,7 +1542,7 @@ $("sceneMeter").addEventListener("pointerdown", (e) => {
   crankDrag = { id:e.pointerId, last:crankPointer(e).a, sum:0, x:e.clientX, y:e.clientY, moved:false, far:0 };
 });
 $("sceneMeter").addEventListener("pointermove", (e) => {
-  if (step !== 1 || measured >= LOT.moisture.length || !e.buttons && e.pointerType === "mouse") return;
+  if (step !== 1 || measured >= LOT.moisture.length || !inContact(e)) return; /* 浮かせた ペン・押して いない マウスでは 回さない（サイクル152） */
   if (!crankDrag) crankDrag = { id:e.pointerId, last:crankPointer(e).a, sum:0, x:e.clientX, y:e.clientY, moved:true, far:0, go:true }; /* 先の指を離しても、残った指で続ける */
   const from = restingTakeover(meterPts, crankDrag, e, crankDrag.go);
   if (from) crankDrag = { id:e.pointerId, last:crankPointer({ clientX:from.x, clientY:from.y }).a, sum:0, x:from.x, y:from.y, moved:true, far:0 }; /* 押さえている指の代わりに、回している指を追う */
@@ -1570,7 +1580,11 @@ function endCrank(e) {
   $("crankArm").animate([{ transform:"rotate(" + crankAngle + "deg)" }, { transform:"rotate(" + (crankAngle + 60) + "deg)" }, { transform:"rotate(" + crankAngle + "deg)" }], { duration:380 * motion, easing:"ease-in-out" });
 }
 $("sceneMeter").addEventListener("pointerup", endCrank);
-$("sceneMeter").addEventListener("pointercancel", (e) => { meterPts.delete(e.pointerId); if (crankDrag && e.pointerId === crankDrag.id) crankDrag = null; });
+function cancelMeterPointer(id) {
+  meterPts.delete(id);
+  if (crankDrag && id === crankDrag.id) crankDrag = null;
+}
+$("sceneMeter").addEventListener("pointercancel", (e) => cancelMeterPointer(e.pointerId));
 $("meterBtn").addEventListener("click", (e) => {
   if (e.detail === 0 && step === 1 && measured < LOT.moisture.length) takeReading();
 });
@@ -2683,8 +2697,21 @@ document.addEventListener("pointerdown", (e) => {
   if (!e.target.closest || !e.target.closest("#idleCard")) dismissIdleCard();
   armIdle();
 }, { passive:true });
+/* 遊んで いる 間の 動かす キー（サイクル152・最初の1分）。旧版は ゲームの 間に ↓・PageDown・スペース・End を 押すと、ページが 下の 説明へ 動き、
+   ゲームが 画面から 出ていった（390×844 キーボード実測: どの 段でも 5回中5回、PageDown 738px・↓ 40px・End で いちばん 下）。手本の 指も かくれる。
+   ゲームが 見えて いて（説明を 読んで いない: html.scrolled が 無い）、キーが ゲームの 中・ページ そのもの に 来た 時だけ、ページを 動かさない。
+   ゲームの ボタンの Enter・スペース（押す）、Tab の 順、📖 で 説明へ 行った 後の キー、Ctrl などとの 組み合わせ は 今までどおり */
+const PAGE_KEYS = new Set(["ArrowDown", "ArrowUp", "PageDown", "PageUp", "Home", "End", " ", "Spacebar"]);
+function holdPageKey(e) {
+  if (!PAGE_KEYS.has(e.key) || e.ctrlKey || e.altKey || e.metaKey || document.documentElement.classList.contains("scrolled")) return false;
+  const t = e.target, onPage = t === document.body || t === document.documentElement || !t.closest;
+  if (!onPage && !t.closest("#app")) return false; /* 説明（#notes）の 中の キーは そのまま */
+  if ((e.key === " " || e.key === "Spacebar") && !onPage) return false; /* フォーカスの ある ボタン・リンクの スペースは 押す */
+  return true;
+}
 document.addEventListener("keydown", (e) => {
   keyUser = true;
+  if (holdPageKey(e)) e.preventDefault();
   if (!e.target.closest || !e.target.closest("#idleCard")) dismissIdleCard();
   armIdle();
 });
@@ -2777,6 +2804,23 @@ document.addEventListener("pointercancel", () => { offDown = null; }, { passive:
 armIdle();
 startLot();
 $("app").classList.remove("boot"); /* 読みこみの とちゅうに隠していた 手本の指・案内文を出す（サイクル146） */
+/* 画面が かくれた・前面で なくなった 時の 指の あとかたづけ（サイクル152・最初の1分）。旧版は 指の 記録の 一部（pageDowns など）しか 消さず、
+   動かして いる とちゅうで 画面が かくれ、取り消し（pointercancel）が 来なかった 指が 場面に 残った。もどって 新しい 指で なぞっても
+   穀刺しは 0px（96px なぞって）・水分計は 0回（458° 回して）・皿は 20px 動かすだけで ×1.14 に 寄った（指の まねの できごとで 3回中3回）。
+   ここ 1か所で、場面ごとの 取り消しと 同じ 関数（cancelBagPointer・cancelMeterPointer・endPlatePointer(…, true)・endToken の 取り消し・cancelHanko）を
+   のこって いる 指 ぜんぶに 呼ぶ。場面の pointercancel も 同じ 関数なので、2つが ずれない。指ごとの 記録（pageDowns・tapDowns・demoDown）は それぞれの 所で 消す（サイクル151） */
+function dropFingers() {
+  [...bagPts.keys()].forEach(cancelBagPointer);
+  if (P.drag) cancelBagPointer(P.drag.id);
+  [...meterPts.keys()].forEach(cancelMeterPointer);
+  if (crankDrag) cancelMeterPointer(crankDrag.id);
+  [...pts.keys()].forEach(id => endPlatePointer({ type:"pointercancel", pointerId:id }, true));
+  if (senseDrag || senseHold) endToken({ type:"pointercancel" });
+  if (inkHold || inkDrag || hankoDrag || bagSwipe) cancelHanko();
+  nextPress = null; offDown = null;
+}
+window.addEventListener("blur", dropFingers);
+document.addEventListener("visibilitychange", () => { if (document.hidden) dropFingers(); });
 /* 読みこみの とちゅうに 📖 を押して 下へ行っていたら、ここで「説明を読んでいる」印を合わせる（サイクル150）。印は scroll の知らせでしか付かなかったので、
    スクリプトが届く前に とんだ人は 印が付かず、上へも下へも 指で 1px も動かせなかった（おそい 3G の実測 3回中3回・5本なぞっても scrollY 844 のまま） */
 syncScrolled();

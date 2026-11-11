@@ -491,6 +491,7 @@ a{color:var(--acc)}
 #swWrap.demoOn #swEdge .eR{animation:swDemoGlowR 5s ease-in-out infinite}
 #swWrap.demoOn #swEdge .eL{animation:swDemoGlowL 5s ease-in-out infinite}
 @media (prefers-reduced-motion: no-preference){#swWrap.demoOn #swGuide{display:none!important}}   /* 手本が出ている間は丸い ◀ ▶ を出さない(2〜3枚目で押すだけの人に手本を出し直したとき) */
+@media (prefers-reduced-motion: no-preference){#swWrap:not(:has(#swCard.drag)) #swGuide{display:none!important}}   /* 周回166: 丸い ◀ ▶ は、指を置いている間だけ出す。決めたあと、○✗ のしるしが出ている約0.7秒だけ ◀ ▶ が出て、手本の指が出ると消えていた(2・3枚目。しるしに重なる)。止まっている間の向きは手本の指が見せる。動きを減らす設定は これまでどおり */
 @media (prefers-reduced-motion: reduce){#swWrap.demoOn #swGhost{display:none;animation:none}#swHand .hdMove,#swHand .hdFinger{animation:none}#swHand .hdFinger{opacity:1}#swHand .hdRing,#swHand .hdTrail{display:none}#swWrap.demoOn #swEdge .eL,#swWrap.demoOn #swEdge .eR{animation:none}}
 @media (prefers-reduced-motion: reduce){#swWrap.demoOn #swGuide{display:block!important}}   /* 周回158: 動きを減らす設定で4枚目から手本を出すと、止まった指だけが出て向きが分からなかった(丸い ◀ ▶ は最初の3枚だけ)。手本が出ている間は、何枚目でも丸い ◀ ▶ を一緒に出す */   /* 動きを減らす設定: 指は止まった絵で出し、向きは丸い ◀ ▶ (#swGuide)が示す */
 .swBack{position:absolute;inset:0;z-index:0;border-radius:20px;background:#efe6cf;box-shadow:0 4px 14px rgba(0,0,0,.22);pointer-events:none;transition:transform .32s cubic-bezier(.22,1.25,.36,1),opacity .22s ease}
@@ -668,6 +669,7 @@ a{color:var(--acc)}
 #swGrow .grDots i.past{background:#7cb342}
 #swGrow .grDots i.skip{background:transparent;border:1.5px solid rgba(255,255,255,.85);box-sizing:border-box}   /* 直播で飛ばした段階は中空にして未来の点と区別する(Codexレビュー対応・サイクル50) */
 #swGrow .grDots i.cur{width:11px;height:11px;background:#7cb342;border:2px solid #fff;box-sizing:border-box}
+#swGrow .grDots i:last-child:not(.cur){width:16px;height:16px;margin:-3px 0 -3px 1px;border-radius:0;background:var(--grGoal,rgba(255,255,255,.55)) center/16px 16px no-repeat;image-rendering:pixelated}   /* 周回166: 点の列の さいごは「ごはん」の絵(収穫ずみの段階の絵を そのまま 16px で)。はじめの1分は 点が 1つも 進まず(準備の段階が 種まきまで つづく)、どこへ 向かうのかが 画面に 無かった。文字・数は 足さない。さいごの段階に 着いたら これまでどおりの 丸 */
 #swSkyWx .wxIc{display:block;width:48px;height:48px;background-size:contain;background-repeat:no-repeat;background-position:center;image-rendering:pixelated}   /* ドット絵の天気(サイクル59): 絵文字ではなく16x16ドット絵を背景で出す */
 #swSkyWx{position:absolute;right:8px;top:196px;z-index:3;pointer-events:none;display:flex;align-items:center;justify-content:center;width:68px;height:68px;border-radius:50%;background:rgba(255,253,247,.92);border:3px solid #fff;box-shadow:0 3px 10px rgba(0,0,0,.25);font-size:44px;line-height:1;transition:background-color 1.2s ease}   /* 空で読む今日の天気(サイクル55・Cloud Gardens: 空が景色の一部。絵文字のみ・文字なし・表示のみ) */
 #swSkyWx[data-wx="rain"]{background:rgba(205,225,242,.95)}
@@ -3041,7 +3043,7 @@ renderTitle();
     try { var gc = growthCalc(), ge2 = $('swStageTrack');   /* 生育ステージトラック: 節目日の読み取りだけ。現在段階を大きく丸で強調し、過ぎた段階は色つき、未来は薄く出す */
       ge2.innerHTML = '<span class="gName">' + gc.name + '</span>' + GSTAGES.map(function(s, i){ return '<span class="gSt' + (i < gc.idx && !(gc.direct && i === 1) ? ' past' : i === gc.idx ? ' cur' : '') + '" data-gi="' + i + '">' + s.icon + '</span>'; }).join(''); } catch (e) {}
     try { var gr = $('swGrow');   /* 田んぼ側の大きな生育アイコン(サイクル50): トラックと同じ growthCalc() の読み取りのみ。現在の段階を顔の下に大きく出し、進みは点で示す(文字なし) */
-      if (gr) { var gc2 = growthCalc(); growInfo = { idx: gc2.idx, key: gc2.key, icon: gc2.icon }; pixGrowSet(gr.querySelector('.grIc'), gc2.key); gr.querySelector('.grDots').innerHTML = GSTAGES.map(function(s, i){ return '<i class="' + (gc2.direct && i === 1 && gc2.idx >= 2 ? 'skip' : i < gc2.idx ? 'past' : i === gc2.idx ? 'cur' : '') + '"></i>'; }).join(''); } } catch (e) {}
+      if (gr) { var gc2 = growthCalc(); growInfo = { idx: gc2.idx, key: gc2.key, icon: gc2.icon }; pixGrowSet(gr.querySelector('.grIc'), gc2.key); if (!gr.style.getPropertyValue('--grGoal')) gr.style.setProperty('--grGoal', 'url("' + pixGrowURL('done') + '")'); gr.querySelector('.grDots').innerHTML = GSTAGES.map(function(s, i){ return '<i class="' + (gc2.direct && i === 1 && gc2.idx >= 2 ? 'skip' : i < gc2.idx ? 'past' : i === gc2.idx ? 'cur' : '') + '"></i>'; }).join(''); } } catch (e) {}
     try { var tn = $('swStageTint');   /* 生育段階で移ろう田んぼの色み(サイクル51): growthCalc() の読み取りのみ。段階ごとの薄い色みを田んぼ側に敷き、1.2秒かけて穏やかに移る(色のみ・文字なし) */
       if (tn) { var gc3 = growthCalc(); stageTintInfo = { idx: gc3.idx, key: gc3.key }; tn.setAttribute('data-stage', String(gc3.idx)); } } catch (e) {}
     try { var ht = $('swHealthTint'); if (ht) { var hc = healthCalc(st); healthInfo = hc; ht.setAttribute('data-health', hc.key); ht.style.backgroundColor = hc.bg; } } catch (e) {}   /* 田んぼの調子で移ろう色み(サイクル64): moodCalc読み取りのみ。弱い項目の色みを弱さに比例して敷く(色のみ) */

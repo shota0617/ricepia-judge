@@ -2002,6 +2002,16 @@ function pickGrade(btn) {
   setFace("happy", 700);
   toOsu();
 }
+/* 等級のボタンの外（案内文・表の ● の列・顔）をさわった時の空振り（サイクル148）。ボタンの空振り1回目と同じ形で、
+   手本の指が指している 正しい等級のボタンが小さく上がり、その列の ● が光る。等級は えらばない（きめるのは遊び手） */
+function gradeNudge() {
+  if (step !== 3) return;
+  const right = lotGrade(LOT), btn = document.querySelectorAll(".gradeBtn")[right];
+  gradeDemoSound();
+  guideAt("move", btn, 0, -48);
+  btn.animate([{ transform:"none" }, { transform:"translateY(-12px)" }, { transform:"none" }], { duration:260 * motion, easing:"ease-out" });
+  $("rows").querySelectorAll('.dot[data-g="' + right + '"]').forEach(d => { d.classList.remove("ping"); void d.offsetWidth; d.classList.add("ping"); });
+}
 document.querySelectorAll(".gradeBtn").forEach(btn => {
   let drag = null, taps = 0;
   btn.addEventListener("pointerdown", (e) => {
@@ -2410,11 +2420,43 @@ document.querySelectorAll(".sourceLink").forEach(a => a.addEventListener("click"
    （390×844・320×568の実測: ぬくで皿を8回＋案内文を4回タップ=音と道具の動き0回・進み0。さした後に皿を5回=0。はかるで皿の粒を8回＋案内文を3回=はかれた回数0）。
    皿は画面のいちばん大きな所で、はかるの間は ぬいた粒がのっているので、はじめての人が さわりやすい。
    場面の中の空振りと同じ数え方へ そのまま渡す（1回目=手本の指と道具の小さな動き・音／2回目=半分やって見せる／3回目=ひとりでに進む）。
-   場面の中の指・📖・終了カード・「つぎの ふくろ」・資料の中は数えない。みわける より後の所作は変えない */
+   場面の中の指・📖・終了カード・「つぎの ふくろ」・資料の中は数えない。みわける より後の所作は、下のサイクル148 */
+/* みわける より後（なでて ひろげる・つまむ・はこぶ・きめる・朱肉・はんこ・ふくろを流す）でも、その所作の相手の外への指を 空振りとして受ける（サイクル148・最初の1分・まちがった所をさわる人）。
+   旧版は ぬく・はかる だけで、後の所作では 案内文・顔・見出し・表の ● の列・ふくろの横 をさわっても、手本の指が0.3秒消えて戻るだけだった
+   （390×844・320×568の実測: 7つの所作 × 5か所［案内文・顔・見出し・場面のすみ・相手のすぐ外］を 各5回タップ。音か道具の動きが あったのは どちらも 35とおり中6、進んだのは 35とおり中5。
+   「● の下を 上へ」の案内文そのもの・表の ● をさわった人は、何回さわっても 音も動きも 0回。案内文だけを1秒おきにタップする人は「なでて ひろげる」で止まり、60秒たっても進まなかった）。
+   どれも、その所作の中の空振りと同じ道へ そのまま渡す（別の数え方は足さない）:
+   ・なでて ひろげる = 山の粒をタップした時と同じ数え方（1回目=トンの音・粒がゆれる・手本の指／2回目=山がほどける。1回では広げない）　・つまむ = 皿をたたいた時と同じ（トントン。粒は取らない）
+   ・はこぶ・にぎる = 🤲の空振り（下の案内文も。顔・皿はサイクル139のまま）　・きめる = 正しい等級のボタンが小さく上がり、● が光る（等級は えらばない）
+   ・朱肉・はんこ・ふくろを流す = ふくろをタップした時と同じ（3回目に ひとりでに進む）
+   ほかの指が まだ画面にある間（ふたゆびのズーム・ボタンを引いている途中）は数えない。8pxより大きく動いた指・取り消された指・📖・終了カード・「つぎの ふくろ」・資料の中は、ぬく・はかると同じく数えない */
 let offDown = null;
 function offStage(e) {
-  if (step > 1 || !e.target.closest || !e.target.closest("#app")) return false;
-  return !e.target.closest("#sceneBag, #sceneMeter, #notesLink, #idleCard, #nextBtn");
+  if (!e.target.closest || !e.target.closest("#app") || e.target.closest("#notesLink, #idleCard, #nextBtn")) return false;
+  if (step <= 1) return !e.target.closest("#sceneBag, #sceneMeter");
+  if (step === 2) return !e.target.closest(token.hidden ? "#plate" : "#stage, #head");
+  if (step === 3) return !e.target.closest(".gradeBtn");
+  return !e.target.closest("#bagBig");
+}
+function offMiss(d) {
+  if (demoDown.size) return;
+  if (step === 2 && !token.hidden) {
+    if (senseDrag || senseHold) return;
+    if (senseKind === "nigiru") senseHold = {}; else senseDrag = { x:d.x, y:d.y, moved:false };
+    endToken();
+  } else if (step === 2 && badLeft > 0) {
+    if (spread) { knockPlate(); return; }
+    knockSound();
+    grains.forEach(g => { if (!g.gone) { g.img.classList.remove("wig"); void g.img.offsetWidth; g.img.classList.add("wig"); } });
+    nudgeSpread();
+  } else if (step === 3) gradeNudge();
+  else if (step === 4 && !leaving) {
+    if (stamped) { swipeNudge(); return; }
+    if (inkHold || inkDrag || hankoDrag) return;
+    stopBob();
+    if (inked) hankoDrag = { cy:d.y, moved:false }; else inkHold = {};
+    endHanko();
+  }
 }
 document.addEventListener("pointerdown", (e) => {
   offDown = offStage(e) ? { id:e.pointerId, x:e.clientX, y:e.clientY } : null;
@@ -2430,7 +2472,7 @@ document.addEventListener("pointerup", (e) => {
   } else if (step === 1 && measured < LOT.moisture.length && !crankDrag) {
     crankDrag = { id:d.id, last:0, sum:0, x:d.x, y:d.y, moved:false };
     endCrank(e);
-  }
+  } else if (step > 1) offMiss(d);
 }, { passive:true });
 document.addEventListener("pointercancel", () => { offDown = null; }, { passive:true });
 armIdle();

@@ -1417,7 +1417,9 @@ for (const [rest, inAt] of [[158, 127], [205, 166], [149, 120], [126, 101]]) {
         self.assertIn("o.frequency.exponentialRampToValueAtTime(560, t + 0.13);", fn)
         self.assertIn('o.type = "sine";', fn)
         self.assertIn("g.gain.setValueAtTime(0.018, t);", fn)
-        self.assertEqual(HTML.count("gradeDemoSound"), 2)  # 定義1＋呼び出し1
+        self.assertEqual(HTML.count("gradeDemoSound"), 3)  # 定義1＋呼び出し2（ボタンの空振り1回目／サイクル148: ボタンの外をさわった時の同じ手本 gradeNudge）
+        nudge = HTML[HTML.index("function gradeNudge() {"):HTML.index('document.querySelectorAll(".gradeBtn").forEach(btn => {')]
+        self.assertEqual(nudge.count("gradeDemoSound();"), 1)
         # 間違えたとき（等級を選び外れたとき）は従来どおり無音のまま（類4）
         pick = HTML[HTML.index("function pickGrade(btn) {"):HTML.index('document.querySelectorAll(".gradeBtn")')]
         self.assertNotIn("gradeDemoSound", pick)
@@ -1876,6 +1878,8 @@ let step = 0, measured = 0, crankDrag = null; const calls = [];
 const P = {x:200, done:false, auto:false, drag:null}, LOT = {moisture:[1, 2, 3]};
 const endBagDrag = (e) => { calls.push(['bag', P.drag.id, P.drag.moved, e.pointerId]); P.drag = null; };
 const endCrank = (e) => { calls.push(['crank', crankDrag.id, crankDrag.moved, e.pointerId]); crankDrag = null; };
+const demoDown = new Set(), token = {hidden:true}, late = []; let badLeft = 0, leaving = true;
+const gradeNudge = () => { late.push('grade'); };
 const on = {};
 const document = {addEventListener(type, fn) { (on[type] = on[type] || []).push(fn); }};
 """ + fn + """
@@ -1906,9 +1910,10 @@ assert.deepEqual(calls[1], ['crank', 10, false, 10]);
 touch(['#app', '#sceneMeter'], 11);
 measured = 3; touch(['#app'], 12); measured = 0;
 assert.equal(calls.length, 2);
-// みわける より後は変えない
+// みわける より後は ぬく・はかるの数え方へは渡さない（サイクル148: その所作の空振りへ渡す。下の test_cycle148_...）
 for (const s of [2, 3, 4]) { step = s; touch(['#app'], 20 + s); }
 assert.equal(calls.length, 2);
+assert.deepEqual(late, ['grade']);
 """
         subprocess.run([node, "-e", script], capture_output=True, text=True, check=True)
         # 空振りの数え方は場面の中と同じ道（別の数え方を足さない）
@@ -1916,6 +1921,129 @@ assert.equal(calls.length, 2);
         self.assertNotIn("meterTaps", fn)
         # 始まりの順（サイクル146）は変えない
         self.assertIn('armIdle();\nstartLot();\n$("app").classList.remove("boot");', HTML)
+
+    def test_cycle148_touches_outside_the_target_count_as_misses_in_later_steps(self):
+        # 最初の1分（まちがった所をさわる人）: みわける より後の所作では、案内文・顔・見出し・表の ● の列・ふくろの横を
+        # さわっても、手本の指が0.3秒消えて戻るだけだった（390×844・320×568実測: 7つの所作 × 5か所 × 5回タップで、
+        # 音か道具の動きが あったのは どちらも 35とおり中6 → 直した後 35とおり中35。案内文だけをタップする人は
+        # 「なでて ひろげる」で止まって60秒 進まなかった → 証印まで 33〜34秒）。その所作の中の空振りと同じ道へ そのまま渡す。
+        node = shutil.which("node")
+        if not node:
+            self.skipTest("node がないので実行の確認は飛ばす")
+        start = HTML.index("let offDown = null;")
+        fn = HTML[start:HTML.index("armIdle();\nstartLot();", start)]
+        script = """
+const assert = require('node:assert/strict');
+let step = 2, measured = 0, crankDrag = null; const calls = [];
+const P = {x:200, done:false, auto:false, drag:null}, LOT = {moisture:[1, 2, 3]};
+const endBagDrag = () => { calls.push('bag'); }, endCrank = () => { calls.push('crank'); };
+const demoDown = new Set(), token = {hidden:true};
+let badLeft = 2, spread = false, senseKind = 'niou', senseDrag = null, senseHold = null;
+let leaving = false, stamped = false, inked = false, inkHold = null, inkDrag = null, hankoDrag = null;
+const knockPlate = () => { calls.push('knock'); }, nudgeSpread = () => { calls.push('spread'); }, knockSound = () => { calls.push('sound'); };
+const mk = (gone) => ({gone, img:{offsetWidth:0, classList:{remove() {}, add(c) { calls.push('wig'); }}}});
+const grains = [mk(false), mk(true)];
+const endToken = () => { calls.push(['token', !!senseDrag, !!senseHold]); senseDrag = senseHold = null; };
+const gradeNudge = () => { calls.push('grade'); }, swipeNudge = () => { calls.push('swipe'); }, stopBob = () => { calls.push('stopBob'); };
+const endHanko = () => { calls.push(['hanko', !!inkHold, !!hankoDrag && hankoDrag.moved === false]); inkHold = hankoDrag = null; };
+const on = {};
+const document = {addEventListener(type, fn) { (on[type] = on[type] || []).push(fn); }};
+""" + fn + """
+const el = (hit) => ({closest(sel) { return sel.split(', ').some(x => hit.includes(x)) ? {} : null; }});
+const touch = (hit, dx) => {
+  const t = el(hit);
+  on.pointerdown.forEach(f => f({pointerId:1, clientX:10, clientY:20, target:t}));
+  on.pointerup.forEach(f => f({pointerId:1, clientX:10 + (dx || 0), clientY:20, target:t}));
+  return calls.splice(0);
+};
+const out = ['#app'];
+// なでて ひろげる: 皿の外（案内文・顔）は、音・のこっている粒のゆれ・広げる空振り（nudgeSpread: 2回目に山がほどける）。
+// 皿をたたく動き（knockPlate: 粒が動いて1回で広がる）は使わない。皿の中は皿が受ける
+assert.deepEqual(touch(out), ['sound', 'wig', 'spread']);
+assert.deepEqual(touch(['#app', '#plate']), []);
+// つまむ: トントンだけ（粒は取らない・広げる空振りは数えない）
+spread = true; assert.deepEqual(touch(out), ['knock']);
+// 8pxより大きく動いた指・📖・終了カード・つぎの袋・資料（#app の外）は数えない
+assert.deepEqual(touch(out, 9), []);
+assert.deepEqual(touch(out, 8), ['knock']);
+for (const x of ['#notesLink', '#idleCard', '#nextBtn']) assert.deepEqual(touch(['#app', x]), []);
+assert.deepEqual(touch([]), []);
+// ほかの指が まだ画面にある間（ふたゆびのズームなど）は数えない
+demoDown.add(7); assert.deepEqual(touch(out), []); demoDown.clear();
+// 取り消された指は数えない
+on.pointerdown.forEach(f => f({pointerId:1, clientX:10, clientY:20, target:el(out)}));
+on.pointercancel.forEach(f => f({pointerId:1}));
+on.pointerup.forEach(f => f({pointerId:1, clientX:10, clientY:20, target:el(out)}));
+assert.deepEqual(calls, []);
+// ぜんぶ取った後の待ちの間は数えない
+badLeft = 0; assert.deepEqual(touch(out), []); badLeft = 2;
+// はこぶ: 下の案内文は 🤲の空振りへ。顔・皿（#stage・#head）はサイクル139の道が受けるので、ここでは数えない（2回数えない）
+token.hidden = false;
+assert.deepEqual(touch(out), [['token', true, false]]);
+assert.deepEqual(touch(['#app', '#stage']), []);
+assert.deepEqual(touch(['#app', '#head']), []);
+senseKind = 'nigiru'; assert.deepEqual(touch(out), [['token', false, true]]);
+senseHold = {}; on.pointerdown.forEach(f => f({pointerId:1, clientX:10, clientY:20, target:el(out)})); on.pointerup.forEach(f => f({pointerId:1, clientX:10, clientY:20, target:el(out)}));
+assert.deepEqual(calls, []); senseHold = null;
+token.hidden = true;
+// きめる: 等級のボタンの外は 手本の空振りへ。ボタンはボタンが受ける
+step = 3;
+assert.deepEqual(touch(out), ['grade']);
+assert.deepEqual(touch(['#app', '.gradeBtn']), []);
+// おす: 朱肉の前=朱肉の空振り／朱肉の後=はんこの空振り（動かしていない指として）／押した後=流す空振り。ふくろの中は ふくろが受ける
+step = 4;
+assert.deepEqual(touch(out), ['stopBob', ['hanko', true, false]]);
+inked = true; assert.deepEqual(touch(out), ['stopBob', ['hanko', false, true]]);
+assert.deepEqual(touch(['#app', '#bagBig']), []);
+hankoDrag = {cy:0, moved:true}; assert.deepEqual(touch(out), []); hankoDrag = null;
+stamped = true; assert.deepEqual(touch(out), ['swipe']);
+leaving = true; assert.deepEqual(touch(out), []);
+// ぬく・はかるの数え方へは まざらない
+assert.equal(calls.includes('bag') || calls.includes('crank'), false);
+"""
+        r = subprocess.run([node, "-e", script], capture_output=True, text=True)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        # 別の数え方は足さない（その所作の中の空振りと同じ道だけ）
+        for name in ("spreadTaps", "hankoTaps", "swipeTaps", "senseTaps", "bagTaps", "meterTaps"):
+            self.assertNotIn(name, fn)
+        # 等級は ひとりでに えらばない
+        self.assertNotIn("pickGrade", fn)
+        # 運営者が まだ決めていない所は変えない（終了カードの45秒・手本を出し直す早さ・3回目に進む）
+        self.assertIn("const IDLE_MS = 45000, pageStart = Date.now();", HTML)
+        self.assertIn("const DEMO_FIRST = 800, DEMO_BACK = 300, DEMO_HOLD = 2000, DEMO_LOOK = 2000, DEMO_BACK_SLOW = 4000;", HTML)
+        self.assertIn("const NUDGE_LIMIT = 3;", HTML)
+
+    def test_cycle148_grade_nudge_shows_the_right_button_without_picking(self):
+        # きめるで 等級のボタンの外（案内文「● の下を 上へ」・表の ●・顔）をさわった人には、
+        # 手本の指が指している 正しい等級のボタンが小さく上がり、その列の ● が光る。等級は えらばず、場面も進めない。
+        node = shutil.which("node")
+        if not node:
+            self.skipTest("node がないので実行の確認は飛ばす")
+        start = HTML.index("function gradeNudge() {")
+        fn = HTML[start:HTML.index('document.querySelectorAll(".gradeBtn").forEach(btn => {', start)]
+        script = """
+const assert = require('node:assert/strict');
+const motion = 1, LOT = {}; let step = 3, sounds = 0; const guides = [], anims = [], pings = [];
+const lotGrade = () => 1;
+const btns = [0, 1, 2, 3].map(i => ({i, animate(frames, opt) { anims.push([i, frames[1].transform, opt.duration]); }}));
+const dot = {offsetWidth:0, classList:{remove(c) { pings.push('-' + c); }, add(c) { pings.push('+' + c); }}};
+const document = {querySelectorAll(sel) { assert.equal(sel, '.gradeBtn'); return btns; }};
+const $ = id => ({rows:{querySelectorAll(sel) { assert.equal(sel, '.dot[data-g="1"]'); return [dot]; }}})[id];
+const gradeDemoSound = () => { sounds++; };
+const guideAt = (kind, el, gx, gy) => { guides.push([kind, el.i, gx, gy]); };
+""" + fn + """
+gradeNudge();
+assert.equal(sounds, 1);
+assert.deepEqual(guides, [['move', 1, 0, -48]]);
+assert.deepEqual(anims, [[1, 'translateY(-12px)', 260]]);
+assert.deepEqual(pings, ['-ping', '+ping']);
+assert.equal(step, 3);
+step = 4; gradeNudge(); assert.equal(sounds, 1);   // きめる の外では何もしない
+"""
+        r = subprocess.run([node, "-e", script], capture_output=True, text=True)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertNotIn("pickGrade", fn)
+        self.assertNotIn("toOsu", fn)
 
     def test_cycle139_taps_after_inserting_are_caught(self):
         # 最初の1分（本物の指）: さした後の空振りは数えず手本も出なかったため、押し込んで指を離し

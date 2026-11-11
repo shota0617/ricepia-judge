@@ -253,14 +253,21 @@ async function firstMinuteChecks(browser, R) {
         let shown = 0; const mo = new MutationObserver(() => { if (!b.hidden) shown++; }); mo.observe(b, { attributes: true, attributeFilter: ['hidden'] });
         const h0 = Math.round(document.getElementById('sheet').getBoundingClientRect().height);
         G.moveTo(g.lat, g.lng);
-        let hMax = h0; for (let i = 0; i < 30; i++) { await wait(50); hMax = Math.max(hMax, Math.round(document.getElementById('sheet').getBoundingClientRect().height)); }
+        // サイクル204：ポイントが ふえたら 上の 数字の 札が ふくらんで 金色に 光る（字は 足さない）。0.6秒で もとに もどる
+        const pe = document.querySelector('.pts'), pts0 = G.state.points, pop = { seen: false, scale: 1, gold: false };
+        let hMax = h0; for (let i = 0; i < 30; i++) { await wait(50); hMax = Math.max(hMax, Math.round(document.getElementById('sheet').getBoundingClientRect().height));
+          const cs = getComputedStyle(pe), m = /matrix\(([-\d.]+)/.exec(cs.transform);
+          if (pe.classList.contains('pop')) pop.seen = true;
+          if (m) pop.scale = Math.max(pop.scale, +m[1]);
+          if (/255, 216, 74/.test(cs.backgroundColor)) pop.gold = true; }
         mo.disconnect();
+        Object.assign(pop, { scale: +pop.scale.toFixed(2), gained: G.state.points - pts0, left: pe.classList.contains('pop'), shown: !pe.hidden, text: pe.innerText.replace(/\s+/g, '') });
         const checked = !!G.state.visits[g.id], g2 = G.guide || {}, other = G.spots.filter(s => s.id !== g.id && s.id !== g2.id && !s.shop && !G.state.visits[s.id]).map(s => [G.dist(G.me, s), s]).sort((a, c) => a[0] - c[0])[0][1];
         G.moveTo(other.lat, other.lng); await wait(300);
         const otherBtn = !b.hidden && document.getElementById('spinName').textContent === other.name && !G.state.visits[other.id];
-        return { goal: g.name, shown, h0, hMax, checked, other: other.name, otherBtn, ok: shown === 0 && checked && otherBtn };
+        return { goal: g.name, shown, h0, hMax, checked, other: other.name, otherBtn, pop, ok: shown === 0 && checked && otherBtn };
       });
-      return { firstGoalNear: fg, lazySprites: lz, playAskQuick: pa, worldBack: wb, tiltDeniedMsg: tm, swipeWalk: sw, swipeHold: { ...(sw.hold || { why: 'no-route' }), ok: !!sw.holdOk }, arriveNoSpin: an, ...(await startSteadyChecks(browser, R)), ...(await a2hsChecks(browser, R)), ...(await tapDemoChecks(browser, R)), ...(await slowStartChecks(browser, R)) };
+      return { firstGoalNear: fg, lazySprites: lz, playAskQuick: pa, worldBack: wb, tiltDeniedMsg: tm, swipeWalk: sw, swipeHold: { ...(sw.hold || { why: 'no-route' }), ok: !!sw.holdOk }, arriveNoSpin: an, ptsPop: { ...(an.pop || { why: an.why || 'no-goal' }), ok: !!an.pop && an.pop.gained >= 5 && an.pop.seen && (an.pop.scale >= 1.05 || an.pop.gold) && !an.pop.left && an.pop.shown && /^[\d,]+(pt)?$/.test(an.pop.text) }, ...(await startSteadyChecks(browser, R)), ...(await a2hsChecks(browser, R)), ...(await tapDemoChecks(browser, R)), ...(await slowStartChecks(browser, R)) };
     } finally { R.errors.push(...v.errors); await v.ctx.close(); }
 }
 // サイクル193（運営者の声 2026-11-10「さんぽGOホーム画面に追加を控えめに促す」）：ホーム画面に追加の おすすめは 小さな 1行の 札。
@@ -609,6 +616,7 @@ const FIRST_MINUTE_NEED = {
   tiltDeniedMsg: '傾きの 許可を ことわった スマホの 知らせに 矢印キーの 話が ある',
   swipeWalk: '地図を なぞっても（タップの つもりで 指が ずれても）歩きださない／窓が 開く／2本指で 歩く',
   swipeHold: 'なぞった 先で 指を おいた まま 待っても、指を はなすまで 歩きださない／歩きだした あとに 指の 動きで 行き先が かわる／動かさない 長押しで 指を おいた まま 歩く／窓が 開く',
+  ptsPop: 'ゴールで ポイントが ふえても 上の 数字の 札が ふくらまない・金色に 光らない／0.6秒 たっても もどらない／札に 字が ふえた',
   arriveNoSpin: 'めいろで ゴールの 名所に 着いた しゅんかんに チェックインの ボタンが 出る（下の 欄が とぶ）／ゴールで ない 名所で 出ない',
   a2hsFirstWalk: 'ホーム画面に追加の 札が はじめてのさんぽ（ゴール 3つ まで）・開いて 1分の 間に 出る',
   a2hsShown: 'ホーム画面に追加の 札が 落ちついても 出ない／小さな 1行の 札で ない（窓・地図を ふさぐ・お米や 下の 札に かかる）／せかいちずで 出る',

@@ -1,4 +1,4 @@
-"""米づくり365: 最初の1分に出る飾りが、カードの日付や天気の丸に重ならない置き方になっているか(周回152)、押しただけでは案内が消えないか(周回153)、出だしのちらつきと2Dの天気(周回154)、スワイプの手本(周回155)、止まったら手本(周回158)、飛んでいる間の指・しるしのあとの手本(周回161)、おそい回線・おそいスマホ(周回164)、田んぼから はじめた スワイプ(周回165)。"""
+"""米づくり365: 最初の1分に出る飾りが、カードの日付や天気の丸に重ならない置き方になっているか(周回152)、押しただけでは案内が消えないか(周回153)、出だしのちらつきと2Dの天気(周回154)、スワイプの手本(周回155)、止まったら手本(周回158)、飛んでいる間の指・しるしのあとの手本(周回161)、おそい回線・おそいスマホ(周回164)、田んぼから はじめた スワイプ(周回165)、しるしに 重なる 丸い ◀ ▶・点の列の さいごの 絵(周回166)。"""
 import os
 import re
 import unittest
@@ -247,6 +247,24 @@ class TestKome365FirstMinute(unittest.TestCase):
         self.assertLess(up.index(fix), up.index("var sx0 = startX"))
         # 取り消しは 横が 縦の 1.5倍 以上の ときだけ 決める きまりは そのまま
         self.assertIn("Math.abs(dx) < dyGuard * (cancel ? 1.5 : flick ? 0.7 : 1)", up)
+
+    def test_round_arrows_do_not_pop_under_judge_mark(self):
+        # 周回166: 丸い ◀ ▶ は 指を 置いて いる 間だけ。決めた あと ○✗ の しるしの 間(約0.7秒)だけ 出て、手本の 指と 入れかわる ちらつきを なくす
+        self.assertIn("@media (prefers-reduced-motion: no-preference){#swWrap:not(:has(#swCard.drag)) #swGuide{display:none!important}}", HTML)
+        # 手本が 出て いる 間は 出さない きまり・動きを 減らす 設定で いっしょに 出す きまりは そのまま
+        self.assertIn("@media (prefers-reduced-motion: no-preference){#swWrap.demoOn #swGuide{display:none!important}}", HTML)
+        self.assertIn("@media (prefers-reduced-motion: reduce){#swWrap.demoOn #swGuide{display:block!important}}", HTML)
+        # 出す 枚数(2〜3枚目)の きまりは 変えない
+        self.assertIn("$('swGuide').style.display = (guideLeft && choices.length < 3 && (choices.length >= 1 || calmOn())) ? 'block' : 'none';", HTML)
+
+    def test_growth_dots_end_with_goal_picture(self):
+        # 周回166: 育ちの 点の 列の さいごは「ごはん」の 絵(収穫ずみの 段階の 絵)。文字・数は 足さない
+        self.assertIn("#swGrow .grDots i:last-child:not(.cur){width:16px;height:16px;margin:-3px 0 -3px 1px;border-radius:0;background:var(--grGoal,rgba(255,255,255,.55)) center/16px 16px no-repeat;image-rendering:pixelated}", HTML)
+        self.assertIn("if (!gr.style.getPropertyValue('--grGoal')) gr.style.setProperty('--grGoal', 'url(\"' + pixGrowURL('done') + '\")');", HTML)
+        # 点の 数・クラスの つけ方は 変えない(さいごの 段階に 着いたら 丸の まま)
+        self.assertIn("return '<i class=\"' + (gc2.direct && i === 1 && gc2.idx >= 2 ? 'skip' : i < gc2.idx ? 'past' : i === gc2.idx ? 'cur' : '') + '\"></i>'; }).join('');", HTML)
+        # 次の 節目の 日数は 60日より 先は 出さない きまり(周回94)の まま
+        self.assertIn("mi && mi.days <= 60", HTML)
 
 
 if __name__ == "__main__":

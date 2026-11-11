@@ -424,6 +424,24 @@ const $ = id => document.getElementById(id);
 const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)").matches; /* マウスの PC */
 const motion = reduced ? 0.15 : 1;
+/* 動きを へらす 設定（prefers-reduced-motion）の きまり（サイクル151・最初の1分）。ここ 1か所で 決める。
+   ・「* motion」は 飾りの 動きの 長さ（animate の duration・delay、その 動きに 合わせて 鳴る 小さな 合図）だけに かける。
+   ・読む 間・ほめる 間（場面を 進める 前の 待ち）は READ_MS、押す 長さの しきいは INK_MS・NIGIRU_MS。どれも だれにでも 同じ 長さで、motion を かけない。
+   旧版は 待ちにも motion を かけていて、動きを へらす 人は 平均の「ちょうどいい」を 0.14秒・「水分が 高い！」を 0.26秒・「きれいに なった！」を 0.16秒・
+   におい・かみ心地の 答えを 0.17〜0.24秒しか 見られず、朱肉は 0.04秒・にぎるは 0.05秒の 押しで 付いて タップと 区別が なかった
+   （390×844実測: ふつう 955・1706・1056・1109ms → 144・256・160・172ms。110ms の タップで 朱肉が 付いた 3回中3回 → ふつうは 0回）。
+   この きまりは テスト（test_cycle151_reduced_motion_never_shortens_reading_or_press）が 見はる */
+const READ_MS = Object.freeze({
+  zarazara:560,     /* ぬいた 後の「ざらざら…」→ はかる */
+  lastMeasure:240,  /* 5回目の 数 → 平均 */
+  average:950,      /* 平均「ちょうどいい」→ みわける */
+  averageHigh:1700, /* 平均「水分が 高い！」→ みわける */
+  cleanSmile:300,   /* 「きれいに なった！」→ 粒が わらう */
+  clean:1050,       /* 「きれいに なった！」→ 感覚 */
+  faceBig:900,      /* 顔が 大きく なって 答える 間 */
+  senseRead:1100,   /* 「くんくん… いい におい」など → きめる */
+  chip:320          /* 次の 袋が 着いて から 炊き上がりの チップ・音 */
+});
 const STEPS = ["ぬく", "はかる", "みわける", "きめる", "おす"];
 
 /* 音: ごく小さく。最初のタップから鳴らせる */
@@ -926,11 +944,38 @@ drawBag($("bagCanvas")); drawBag($("bagBigCanvas"));
 const faceCtx = $("face").getContext("2d");
 const faceImg = new Image();
 let faceSkin = "#f6cfa8", faceTimer = null;
+/* 顔の 絵が 来ない 時の かわりの 顔（サイクル151・最初の1分）。旧版は face_dot.webp が 読めない・2.5秒たっても 来ない と、検査員の 顔が
+   中身の ない うすい 丸の まま 1回の 遊びの 間 ずっと 残り、とんだり かたむいたり するのも から の 丸だった（顔の 絵を 止めた・止めたまま の 実測 6回中6回、12.5秒で 絵の 点 0）。
+   同じ 色（はだ・黒い かみ・青い えり）で 点の 絵の 顔を 自分で かき、表情（にこっ・おっ）は 本物と 同じ 場所に かさねる。おくれて 本物が 来たら 0.4秒で 重ねかえる（ぱっと 切りかえない） */
+let faceMood = "normal", faceFallback = null, faceFade = 1;
+function makeFaceFallback() {
+  const c = document.createElement("canvas"); c.width = c.height = 256;
+  const x = c.getContext("2d"), r = (col, a, b, w, h) => { x.fillStyle = col; x.fillRect(a, b, w, h); };
+  const skin = "#f6cfa8", hair = "#1f1b19", ink = "#2a1c12";
+  r("#3a5a8c", 64, 224, 128, 32); r("#f6f1e6", 112, 224, 32, 16);           /* えり */
+  r(skin, 112, 200, 32, 28);                                                  /* くび */
+  r(skin, 64, 80, 128, 136); r(skin, 72, 216, 112, 8); r(skin, 48, 128, 16, 32); r(skin, 192, 128, 16, 32); /* 顔・耳 */
+  r(hair, 56, 32, 144, 48); r(hair, 72, 24, 112, 8); r(hair, 48, 56, 16, 64); r(hair, 192, 56, 16, 64); r(hair, 64, 80, 56, 16); r(hair, 136, 80, 40, 12);
+  r(ink, 80, 124, 32, 6); r(ink, 144, 124, 32, 6);                            /* まゆ */
+  r(ink, 88, 140, 16, 16); r(ink, 152, 140, 16, 16); r("#fff6ea", 96, 142, 6, 6); r("#fff6ea", 160, 142, 6, 6); /* 目 */
+  r("#f2a48a", 76, 172, 20, 10); r("#f2a48a", 160, 172, 20, 10);              /* ほお */
+  r("#8c3a2c", 112, 198, 32, 6);                                              /* 口 */
+  return c;
+}
+function faceReady() { return faceImg.complete && faceImg.naturalWidth > 0; }
+function showFaceFallback() {
+  if (faceReady() || faceFallback) return;
+  faceFallback = makeFaceFallback();
+  drawFace(faceMood);
+}
 function drawFace(mood) {
-  if (!faceImg.complete || !faceImg.naturalWidth) return;
+  faceMood = mood;
+  const real = faceReady();
+  if (!real && !faceFallback) return;
   faceCtx.imageSmoothingEnabled = false;
   faceCtx.clearRect(0, 0, 256, 256);
-  faceCtx.drawImage(faceImg, 0, 0, 256, 256);
+  if (faceFallback && (!real || faceFade < 1)) faceCtx.drawImage(faceFallback, 0, 0);
+  if (real) { faceCtx.globalAlpha = faceFade; faceCtx.drawImage(faceImg, 0, 0, 256, 256); faceCtx.globalAlpha = 1; }
   const r = (c, a, b, w, h) => { faceCtx.fillStyle = c; faceCtx.fillRect(a, b, w, h); };
   const ink = "#2a1c12";
   if (mood === "happy") {
@@ -953,20 +998,35 @@ function setFace(mood, ms) {
   if (ms) faceTimer = setTimeout(() => setFace("normal"), ms);
 }
 faceImg.onload = () => {
+  faceCtx.clearRect(0, 0, 256, 256);
   faceCtx.drawImage(faceImg, 0, 0, 256, 256);
   try { const d = faceCtx.getImageData(128, 172, 1, 1).data; faceSkin = "rgb(" + d[0] + "," + d[1] + "," + d[2] + ")"; } catch (_) {}
-  drawFace("normal");
+  if (!faceFallback) { drawFace(faceMood); return; }
+  /* かわりの 顔を 出した 後に 来た 本物は、0.4秒で 重ねかえる（動きを へらす 設定では 短く） */
+  const t0 = performance.now(), dur = 400 * motion;
+  faceFade = 0;
+  (function fade() {
+    faceFade = Math.min(1, (performance.now() - t0) / dur);
+    drawFace(faceMood);
+    if (faceFade < 1) requestAnimationFrame(fade);
+  })();
 };
 /* 写真（165KB）は、物差しの顔（9KB）が出てから読む。遅い回線でも顔が先に出る */
 function photoAppear(im) {
   im.animate([{ opacity:0, transform:"scale(.7)" }, { opacity:1, transform:"scale(1.05)", offset:.7 }, { opacity:1, transform:"scale(1)" }], { duration:260 * motion, easing:"ease-out" }); /* 実物の写真（穀刺し・一等米）も、他の現れるもの（チップ=ふわり260ms・差30／つぎの袋ボタン=差31／🔍ボタン=差32／小皿の粒=差33／証印=差34／測定値の枠=差35／平均の数字=差39／段階の名前=差40／進み具合=差41／案内文=差43）と同じくふわりと現れる形にそろえる（サイクル145・差分テーマ差44）。旧版は loadPhotos が src を入れるだけで、顔が出た後に読み込まれた写真が完成形で即座に現れていた（390×844実測で読み込み時のアニメーション0件）。読み込めた時だけ1回付け、写真そのもの・読み込みの順序は従来どおり */
 }
 function loadPhotos() {
-  document.querySelectorAll("img.photo[data-src]").forEach(im => { im.addEventListener("load", () => photoAppear(im), { once:true }); im.src = im.dataset.src; im.removeAttribute("data-src"); });
+  document.querySelectorAll("img.photo[data-src]").forEach(im => { im.addEventListener("load", () => photoAppear(im), { once:true }); im.addEventListener("error", () => { im.style.visibility = "hidden"; }, { once:true }); /* 読めない 写真は こわれた 絵の しるしと はみ出す 説明の 字を 出さない（場所は そのまま・サイクル151） */ im.src = im.dataset.src; im.removeAttribute("data-src"); });
 }
 faceImg.addEventListener("load", loadPhotos);
 faceImg.addEventListener("error", loadPhotos);
 setTimeout(loadPhotos, 2500); /* 顔が来なくても写真は読む */
+let faceRetried = false;
+faceImg.addEventListener("error", () => {
+  showFaceFallback();
+  if (!faceRetried) { faceRetried = true; setTimeout(() => { faceImg.src = "kensa/face_dot.webp?r=1"; }, 4000); } /* 1回だけ 読みなおす */
+});
+setTimeout(showFaceFallback, 2500); /* 2.5秒 たっても 来なければ かわりの 顔 */
 faceImg.src = "kensa/face_dot.webp";
 
 /* 進行 */
@@ -1020,14 +1080,20 @@ function capture(el, e) {
    わずかな動きで、粒がなでられる・朱肉が付く・等級が決まる ことが無いように（390×844実測: 説明の とちゅうから 皿の山の上を下へなぞる → 山が広がった。
    ふくろの上を下へ → 朱肉が付いた。等級のボタンの上を上へ → 等級が決まった）、ページを動かす指では どの所作も進めない。
    置いたまま待つ所作（朱肉の ぎゅっ・にぎる）も、説明を読んでいる間は 時計を始めない。タップと よこの所作（さす・ひきぬく・なでる・ふくろを流す）は 今までどおり */
+/* この 見分けは 触れた 指（pointerType が touch）だけ（サイクル151・最初の1分）。マウス・ペンでは ページは 動かないのに、
+   ホイール・キーで 少しでも 下へ 動いた 後は、たてに 動かす マウスが ぜんぶ「ページを動かす指」として 捨てられていた
+   （1280×720・マウス実測: ホイール 1目もり（100px）の 後、🤲 を 顔へ 運べない・等級を 上へ 引けない・朱肉も はんこも 下りない。
+   1袋目を 60秒で 終えられない 3回中3回 → サイクル150 の 前は 15〜17秒）。触れた 指の 見分けは サイクル150 のまま。
+   どの 指かは、どの 所作より 先に 聞く document の capture の pointerdown で 覚える。置いたまま待つ所作・たての所作の 見分けも pageFinger(0, …) で 同じ 決まりを 通す */
 var pageScrolled = false;
+var pageTouch = true;
 function pageFinger(dx, dy) {
-  return pageScrolled && Math.abs(dy) >= Math.abs(dx);
+  return pageScrolled && pageTouch && Math.abs(dy) >= Math.abs(dx);
 }
 /* ページを動かす指は、ブラウザの取り消しを待たずに見分ける（Codex指摘）。置いた所から たてに大きく 8px より動いた指は、離した時（pointerup）にも
    タップ・空振り・はじき・運び に数えない。取り消しが来ない・おくれる端末でも、説明を動かしただけで 所作が進まない */
 const pageDowns = new Map();
-document.addEventListener("pointerdown", (e) => { pageDowns.set(e.pointerId, { x:e.clientX, y:e.clientY, slid:false }); }, { capture:true, passive:true });
+document.addEventListener("pointerdown", (e) => { pageTouch = e.pointerType === "touch"; pageDowns.set(e.pointerId, { x:e.clientX, y:e.clientY, slid:false }); }, { capture:true, passive:true });
 document.addEventListener("pointermove", (e) => {
   const d = pageDowns.get(e.pointerId);
   if (d && !d.slid && pageFinger(e.clientX - d.x, e.clientY - d.y) && Math.hypot(e.clientX - d.x, e.clientY - d.y) > 8) d.slid = true;
@@ -1065,11 +1131,11 @@ function startLot() {
   bagPts.clear();
   $("probe").style.opacity = "1";
   layoutProbe();
-  startProbeAttract(); /* 開いた瞬間の誘い: 最初の袋だけ、触れる前に穀刺しが袋の口へ寄って戻る（サイクル82、Fable設計の足すもの1）。触れるまで指と一緒にくり返す（サイクル143） */
+  startProbeAttract(); /* 開いた瞬間の誘い: 最初の袋だけ、触れる前に穀刺しが袋の口へ寄って戻る（サイクル82、設計の足すもの1）。触れるまで指と一緒にくり返す（サイクル143） */
   setStep(0, "穀刺しを ふくろへ さす ←");
   setFace("normal");
   updateCooked(); /* 前の袋があれば、そのお米が小さく炊き上がって返ってくる（サイクル94・類8） */
-  if (lotIndex > 0 && cookedReturns.length) { const chipLot = lotIndex, chip = $("cookedReturn"); chip.hidden = true; setTimeout(() => { if (lotIndex !== chipLot || !cookedReturns.length) return; chip.hidden = false; chip.animate([{ opacity:0, transform:"scale(.7)" }, { opacity:1, transform:"scale(1.05)", offset:.7 }, { opacity:1, transform:"scale(1)" }], { duration:260 * motion, easing:"ease-out" }); cookedSound(); }, 320 * motion); } /* 炊き上がりチップの見た目も、音（差16）と同じく袋が着いて落ち着いた後（320ms）に、ふわりと現れる形にそろえる（サイクル124・差30）。旧版は場面の切り替わりと同時に完成形で現れ、動きがなく、音より約320ms先に出ていた（390×844実測）。音と表示は同じコールバックにまとめ、別の袋へ移っていたらどちらも出さない（Codexレビュー反映） */
+  if (lotIndex > 0 && cookedReturns.length) { const chipLot = lotIndex, chip = $("cookedReturn"); chip.hidden = true; setTimeout(() => { if (lotIndex !== chipLot || !cookedReturns.length) return; chip.hidden = false; chip.animate([{ opacity:0, transform:"scale(.7)" }, { opacity:1, transform:"scale(1.05)", offset:.7 }, { opacity:1, transform:"scale(1)" }], { duration:260 * motion, easing:"ease-out" }); cookedSound(); }, READ_MS.chip); } /* 炊き上がりチップの見た目も、音（差16）と同じく袋が着いて落ち着いた後（320ms）に、ふわりと現れる形にそろえる（サイクル124・差30）。旧版は場面の切り替わりと同時に完成形で現れ、動きがなく、音より約320ms先に出ていた（390×844実測）。音と表示は同じコールバックにまとめ、別の袋へ移っていたらどちらも出さない（Codexレビュー反映） */
   if (lotIndex > 0) { arriveSound(); $("bagBtn").animate([{ transform:"translateX(120%)" }, { transform:"none" }], { duration:260 * motion, easing:"ease-out" }); } /* 次の袋が運ばれてくる合図も固有の音にする（サイクル104・差10）。流れる bagSound とは分ける。炊き上がって返ってくる合図は、袋が着いて落ち着いた後に固有の音で知らせる（サイクル110・差16→サイクル124で表示と同じコールバックへ統合）。到着音とは分ける */
 }
 
@@ -1310,7 +1376,7 @@ function finishProbe() {
   probeDoneSound(); /* ぬく完了の合図は固有の音にする（サイクル103・差9）。粒が落ちる tick とは分ける */
   hint.textContent = "ざらざら…";
   $("probe").animate([{ opacity:1 }, { opacity:0 }], { duration:280 * motion, fill:"forwards" }).onfinish = function () { this.cancel(); $("probe").style.opacity = "0"; };
-  setTimeout(toHakaru, 560 * motion);
+  setTimeout(toHakaru, READ_MS.zarazara);
 }
 function autoProbe() {
   if (P.done || step !== 0 || P.auto) return; /* 自分でぬける動きの間は、もう一度始めない（Codex指摘 PR #1074: 3回目のタップの後にまたタップすると動きが2本になり、穀刺しが さした所へ押し戻されていた） */
@@ -1381,8 +1447,8 @@ function endBagDrag(e) {
   if (P.inserted && !P.done && still) { pullNudge(); return; }
   if (P.done || P.inserted) return; /* さす前に指を離したら、タップでも違う向きの引きでも1回と数える */
   if (++bagTaps >= NUDGE_LIMIT) { autoProbe(); return; }
-  if (bagTaps === 1) { stabPoke(); $("poke").style.display = ""; } /* 手本の指は、穀刺しの いまの握りの所から（サイクル143） */ /* 空振り1回目: 手本の指👆をもう一度出す。触って消えた指は戻らず、動かし方が分からなくなっていた（390×844実測・サイクル81、Fable設計の空振り統一） */
-  /* 空振り2回目: 道具が半分やって見せる（Fable設計の空振り統一・サイクル84）。さす所までの半分まで穀刺しが進んで戻る。状態は進めない */
+  if (bagTaps === 1) { stabPoke(); $("poke").style.display = ""; } /* 手本の指は、穀刺しの いまの握りの所から（サイクル143） */ /* 空振り1回目: 手本の指👆をもう一度出す。触って消えた指は戻らず、動かし方が分からなくなっていた（390×844実測・サイクル81、設計の空振り統一） */
+  /* 空振り2回目: 道具が半分やって見せる（設計の空振り統一・サイクル84）。さす所までの半分まで穀刺しが進んで戻る。状態は進めない */
   if (bagTaps === 2) { probeDemoSound(); /* 半分デモにも手本の音を付ける（サイクル120・差26） */ const halfX = P.x - (P.x - P.inAt) / 2; $("probe").animate([{ transform:"translate(" + P.x + "px," + P.y + "px)" }, { transform:"translate(" + halfX + "px," + P.y + "px)", offset:.55 }, { transform:"translate(" + P.x + "px," + P.y + "px)" }], { duration:640 * motion, easing:"ease-in-out" }); return; }
   /* 進まなかったときは、動かし方を穀刺しが見せる。手本の動きにも固有の小さな音を付ける（サイクル120・差26）。はかるの手本の揺れ（差25）と同じく、手本だけが無音だった */
   probeDemoSound();
@@ -1443,7 +1509,7 @@ function takeReading() {
   const slot = $("slots").children[i];
   slot.textContent = value.toFixed(1);
   slot.animate([{ opacity:0, transform:"scale(.7)" }, { opacity:1, transform:"scale(1.05)", offset:.7 }, { opacity:1, transform:"scale(1)" }], { duration:260 * motion, easing:"ease-out" }); /* 測定値の枠（slots）も、他の現れるもの（チップ=ふわり260ms・差30／つぎの袋ボタン=差31／🔍ボタン=差32／小皿の粒=差33／証印=差34）と同じくふわりと現れる形にそろえる（サイクル129・差分テーマ差35）。旧版は数字が入るだけで完成形が即座に出ていた（390×844実測で出現時のアニメーション0件・opacity即1） */
-  if (measured === LOT.moisture.length) setTimeout(showAverage, 240 * motion);
+  if (measured === LOT.moisture.length) setTimeout(showAverage, READ_MS.lastMeasure);
   else hint.textContent = "💧 あと " + (LOT.moisture.length - measured) + "回";
 }
 function crankPointer(e) {
@@ -1511,14 +1577,14 @@ function showAverage() {
   hint.textContent = high ? "水分が 高い！" : "ちょうどいい";
   setFace(high ? "wow" : "happy", high ? 1700 : 900);
   avgSound(high); /* 平均が決まった合図は固有の音にする（サイクル114・差20）。1回ごとの meterBeep とは分ける */
-  setTimeout(toMiwakeru, (high ? 1700 : 950) * motion);
+  setTimeout(toMiwakeru, high ? READ_MS.averageHigh : READ_MS.average);
 }
 
 /* みわける: なでて広げる／ズームして見る／つまんで小皿へ */
 const Z = { s:1, tx:0, ty:0 };
 const ZOOM_MAX = 3.4, FACE_AT = 1.2; /* 顔が出る倍率: 1.2倍から。1.5倍では指を少し開く自然なピンチ（1.2〜1.35倍）で寄っても顔が出ず、寄れていないように見えた（390×844実測・サイクル85）。ごく小さなピンチ（1.1倍以下）では顔を出さない範囲に留める */
 let isNear = false, everZoomed = false, spread = false;
-/* 最初の袋だけ、広げた時点でわるい粒に顔が出る（サイクル83、Fable設計の候補2）: 寄らなくても見分けられる */
+/* 最初の袋だけ、広げた時点でわるい粒に顔が出る（サイクル83、設計の候補2）: 寄らなくても見分けられる */
 const FACE_Z = 100; /* 良い粒の重なり順（2〜21）より上 */
 function firstBagFace(g) { return lotIndex === 0 && spread && g.kind !== "seiryu"; }
 function grainMood(g) { return (isNear || firstBagFace(g)) ? "normal" : "far"; }
@@ -1925,8 +1991,8 @@ function tapGrain(g) {
     zoomBtn.hidden = true;
     setTimeout(() => {
       resetZoomForSmiles();
-    }, 300 * motion);
-    setTimeout(toSense, 1050 * motion);
+    }, READ_MS.cleanSmile);
+    setTimeout(toSense, READ_MS.clean);
   }
 }
 function resetZoomForSmiles() {
@@ -1978,7 +2044,7 @@ function senseDone() {
   const wet = itemGrades(lotPercents(LOT)).moisture === 3;
   $("face").classList.remove("call");
   $("face").classList.add("big");
-  setTimeout(() => $("face").classList.remove("big"), 900 * motion);
+  setTimeout(() => $("face").classList.remove("big"), READ_MS.faceBig);
   if (senseKind === "niou") {
     tone(520, 0.2, 0.03, "sine");
     setFace("happy", 900);
@@ -1991,7 +2057,7 @@ function senseDone() {
     setFace("happy", 900);
     hint.textContent = "さらさら…";
   }
-  setTimeout(toKimeru, 1100 * motion);
+  setTimeout(toKimeru, READ_MS.senseRead);
 }
 function tokenNearFace() {
   const t = token.getBoundingClientRect(), f = $("face").getBoundingClientRect();
@@ -2027,7 +2093,7 @@ token.addEventListener("pointerdown", (e) => {
   if (senseKind === "nigiru") {
     token.classList.add("squeeze");
     const h = senseHold = {};
-    if (!pageScrolled) h.timer = setTimeout(() => { if (senseHold === h) { token.classList.remove("squeeze"); senseDone(); } }, NIGIRU_MS * motion);
+    if (!pageFinger(0, 1)) h.timer = setTimeout(() => { if (senseHold === h) { token.classList.remove("squeeze"); senseDone(); } }, NIGIRU_MS); /* 押す長さの しきいは 動きを へらす 設定でも 同じ（READ_MS の きまり・サイクル151） */
     return;
   }
   senseDrag = { x:e.clientX, y:e.clientY, moved:false };
@@ -2145,7 +2211,7 @@ document.querySelectorAll(".gradeBtn").forEach(btn => {
     drag = { y:e.clientY, moved:false };
   });
   btn.addEventListener("pointermove", (e) => {
-    if (!drag || pageScrolled) return; /* 説明を読んでいる間の たての指は ページを動かす（サイクル150）。タップは数える */
+    if (!drag || pageFinger(0, e.clientY - drag.y)) return; /* 説明を読んでいる間の たての指は ページを動かす（サイクル150。触れた指だけ・サイクル151）。タップは数える */
     const dy = Math.min(0, e.clientY - drag.y);
     if (dy < -6) drag.moved = true;
     btn.style.transform = "translateY(" + dy + "px)";
@@ -2228,6 +2294,7 @@ function inkDone() {
 function stampNow() {
   if (stamped || step !== 4) return;
   stamped = true;
+  nextAuto = false; /* 自分で 下ろして 押した。ひとりでに 押した 時は dropHanko が すぐ後に true へ（「つぎの ふくろ」の 守り・サイクル151） */
   swipeTaps = 0; /* 流す所作の空振りは、押した時から数え直す（サイクル140・差42） */
   cookedReturns.push(GRADES[lotGrade(LOT)]); updateCooked(); /* 押した袋を覚える。次の袋で炊き上がって返ってくる（サイクル94・類8） */
   hankoDrag = null;
@@ -2254,7 +2321,7 @@ function dropHanko() {
   if (!inked) inkDone();
   stopBob();
   $("hanko").animate([{ transform:"translateY(0)" }, { transform:"translateY(" + hankoMax + "px)" }],
-    { duration:130 * motion, easing:"cubic-bezier(.6,0,1,.7)" }).onfinish = stampNow;
+    { duration:130 * motion, easing:"cubic-bezier(.6,0,1,.7)" }).onfinish = () => { const was = stamped; stampNow(); if (!was && stamped) nextAuto = true; };
 }
 $("bagBig").addEventListener("pointerdown", (e) => {
   if (step !== 4 || leaving) return;
@@ -2268,7 +2335,7 @@ $("bagBig").addEventListener("pointerdown", (e) => {
     inkDrag = { y:e.clientY };
     setHanko(10);
     const h = inkHold = {};
-    if (!pageScrolled) h.timer = setTimeout(() => { if (inkHold !== h) return; const y = inkDrag ? (inkDrag.ly === undefined ? inkDrag.y : inkDrag.ly) : null; inkDone(); if (y !== null) inkToHanko(y); }, INK_MS * motion);
+    if (!pageFinger(0, 1)) h.timer = setTimeout(() => { if (inkHold !== h) return; const y = inkDrag ? (inkDrag.ly === undefined ? inkDrag.y : inkDrag.ly) : null; inkDone(); if (y !== null) inkToHanko(y); }, INK_MS); /* 押す長さの しきいは 動きを へらす 設定でも 同じ（READ_MS の きまり・サイクル151） */
     return;
   }
   hankoDrag = { cy:e.clientY, moved:false };
@@ -2281,7 +2348,7 @@ $("bagBig").addEventListener("pointermove", (e) => {
     if (dx >= 40) { bagSwipe = null; leaveBag(); } /* 横なで: 40pxの短いなででも流れる。70pxでは30〜65pxの自然な短いなでが全て戻ってしまった（390×844実測・サイクル78）。タップのずれ（24px以下）と間違えないよう40pxに留める。手本の90pxはそのまま目安として残す */
     return;
   }
-  if (pageScrolled) return; /* 朱肉・はんこは たての所作。説明を読んでいる間の たての指は ページを動かす（サイクル150）。タップは数える */
+  if (pageFinger(0, 1)) return; /* 朱肉・はんこは たての所作。説明を読んでいる間の たての指は ページを動かす（サイクル150。触れた指だけ・サイクル151）。タップは数える */
   if (!inked && inkDrag) { /* 朱肉の押し下げ: 18px下へ押し下げたらその場で付く（待ち時間なし） */
     const idy = e.clientY - inkDrag.y;
     inkDrag.ly = e.clientY;
@@ -2321,7 +2388,7 @@ function endHanko() {
     setHanko(0);
     if (++hankoTaps >= NUDGE_LIMIT) { hankoTaps = 0; inkDone(); return; }
     if (hankoTaps === 1) guideAt("move", $("pad"), 0, 24); /* 空振り1回目: 手本の指をもう一度出す（サイクル81）。朱肉は押し下げの動きで出す（サイクル87） */
-    if (hankoTaps === 2) { /* 空振り2回目: 道具が半分やって見せる（Fable設計の空振り統一・サイクル84）。朱肉側だけ半分デモがなかったため、手本の指の押し下げ（24px）の半分（12px）だけ はんこが朱肉へ押し下がって戻る形で足す（サイクル123・差29）。状態は進めない（朱肉は付かない）。揺れ（bob）は半分デモが終わってから戻す */
+    if (hankoTaps === 2) { /* 空振り2回目: 道具が半分やって見せる（設計の空振り統一・サイクル84）。朱肉側だけ半分デモがなかったため、手本の指の押し下げ（24px）の半分（12px）だけ はんこが朱肉へ押し下がって戻る形で足す（サイクル123・差29）。状態は進めない（朱肉は付かない）。揺れ（bob）は半分デモが終わってから戻す */
       inkDemoSound(); /* 半分デモにも手本の音を付ける（サイクル123・差29） */
       hint.textContent = "はなさず ぎゅっと";
       $("hanko").animate([{ transform:"translateY(0)" }, { transform:"translateY(12px)", offset:.55 }, { transform:"translateY(0)" }], { duration:560 * motion, easing:"ease-in-out" }).onfinish = () => { if (!inked && !inkHold && !inkDrag) bobHanko(); }; /* デモの間に押し直していたら揺れは戻さない（Codexレビュー指摘・サイクル123） */
@@ -2389,10 +2456,28 @@ function leaveBag() {
    ボタンは 案内文と同じ場所に出る。案内文をタップして進む人は、3回目のタップで ひとりでに押された すぐ後、次のタップが そのまま ボタンを押して、
    証印・ドン・米の流れの絵が 0.6〜1.0秒で消えていた（390×844実測 3回: 914ms・574ms・1035ms＝タップの間かくと同じ）。
    出てすぐ（0.9秒より前）に下ろした指は、ふくろを流す空振り（swipeNudge: 手本の指と ふくろの小さな動き・音。3回目に ひとりでに流れる）へ渡し、何も起きないタップには しない。
-   ボタンが出る前から下りていた指・取り消された指では 流さない */
+   ボタンが出る前から下りていた指・取り消された指では 流さない
+   守るのは「タップで 押した 人」だけに しぼる（サイクル151・最初の1分）。旧版は 自分で はんこを 下ろした 人の すなおな 1回目も 0.9秒より前なら 流さず、
+   すばやい人は「つぎの ふくろ」を 2回 押す ことに なっていた（390×844・844×390・320×568・568×320 実測: ボタンが 出て 0.35〜0.86秒の タップ 59回中27回が 流れない・1回 ふえて 1.0〜1.3秒 おくれる）。
+   0.9秒より前の 指を 流す空振りへ 渡すのは、次の どちらかの 時だけ:
+   ・はんこが ひとりでに 押された（3回目の タップ・Enter: nextAuto）。案内文を タップして 進む人は ここで 守られる（サイクル150 の 3回中3回）
+   ・前の タップ（短く 置いて 離した 指）から NEXT_BURST（0.5秒）より 早い（タップの 連打）
+   自分で はんこを 下ろした 後の 1回目の タップは、出て すぐでも そのまま 流れる */
 const NEXT_GUARD = 900;
-let nextShownAt = 0, nextPress = null;
-nextBtn.addEventListener("pointerdown", (e) => { nextPress = { id:e.pointerId, early:performance.now() - nextShownAt < NEXT_GUARD }; });
+const NEXT_BURST = 500;
+let nextShownAt = 0, nextPress = null, nextAuto = false, lastTapUpAt = -Infinity;
+const tapDowns = new Map(); /* 連打の 見分け: 0.3秒より 短く・10px より 動かずに 離した 指を タップと する */
+document.addEventListener("pointerdown", (e) => { tapDowns.set(e.pointerId, { t:performance.now(), x:e.clientX, y:e.clientY }); }, { capture:true, passive:true });
+document.addEventListener("pointerup", (e) => {
+  const d = tapDowns.get(e.pointerId), now = performance.now();
+  tapDowns.delete(e.pointerId);
+  if (d && now - d.t < 300 && Math.hypot(e.clientX - d.x, e.clientY - d.y) <= 10) lastTapUpAt = now;
+}, { capture:true, passive:true });
+document.addEventListener("pointercancel", (e) => { tapDowns.delete(e.pointerId); }, { capture:true, passive:true });
+nextBtn.addEventListener("pointerdown", (e) => {
+  const now = performance.now();
+  nextPress = { id:e.pointerId, early:now - nextShownAt < NEXT_GUARD && (nextAuto || now - lastTapUpAt < NEXT_BURST) };
+});
 nextBtn.addEventListener("pointerup", (e) => { /* 袋を速くなでた直後は click が来ないことがあるので、指を離した時に流す */
   const d = nextPress;
   nextPress = null;

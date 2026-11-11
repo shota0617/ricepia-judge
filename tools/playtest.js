@@ -295,7 +295,7 @@ async function firstMinuteChecks(browser, R) {
         const otherBtn = !b.hidden && document.getElementById('spinName').textContent === other.name && !G.state.visits[other.id];
         return { goal: g.name, shown, h0, hMax, checked, other: other.name, otherBtn, pop, ok: shown === 0 && checked && otherBtn };
       });
-      return { firstGoalNear: fg, lazySprites: lz, playAskQuick: pa, worldBack: wb, tiltDeniedMsg: tm, swipeWalk: sw, swipeHold: { ...(sw.hold || { why: 'no-route' }), ok: !!sw.holdOk }, tapStepPace: { ...(sw.pace || { why: 'no-route' }), ok: !!sw.paceOk }, arriveNoSpin: an, ptsPop: { ...(an.pop || { why: an.why || 'no-goal' }), ok: !!an.pop && an.pop.gained >= 5 && an.pop.seen && (an.pop.scale >= 1.05 || an.pop.gold) && !an.pop.left && an.pop.shown && /^[\d,]+(pt)?$/.test(an.pop.text) }, ...(await startSteadyChecks(browser, R)), ...(await a2hsChecks(browser, R)), ...(await tapDemoChecks(browser, R)), ...(await cycle206Checks(browser, R)), ...(await slowStartChecks(browser, R)) };
+      return { firstGoalNear: fg, lazySprites: lz, playAskQuick: pa, worldBack: wb, tiltDeniedMsg: tm, swipeWalk: sw, swipeHold: { ...(sw.hold || { why: 'no-route' }), ok: !!sw.holdOk }, tapStepPace: { ...(sw.pace || { why: 'no-route' }), ok: !!sw.paceOk }, arriveNoSpin: an, ptsPop: { ...(an.pop || { why: an.why || 'no-goal' }), ok: !!an.pop && an.pop.gained >= 5 && an.pop.seen && (an.pop.scale >= 1.05 || an.pop.gold) && !an.pop.left && an.pop.shown && /^[\d,]+(pt)?$/.test(an.pop.text) }, ...(await startSteadyChecks(browser, R)), ...(await a2hsChecks(browser, R)), ...(await tapDemoChecks(browser, R)), ...(await cycle207Checks(browser, R)), ...(await cycle206Checks(browser, R)), ...(await slowStartChecks(browser, R)) };
     } finally { R.errors.push(...v.errors); await v.ctx.close(); }
 }
 // サイクル193（運営者の声 2026-11-10「さんぽGOホーム画面に追加を控えめに促す」）：ホーム画面に追加の おすすめは 小さな 1行の 札。
@@ -797,6 +797,93 @@ async function cycle206Checks(browser, R) {
   }
   return out;
 }
+// サイクル207（はじめの 1分・さがし役が 見つけた 欠陥）：もどって きた 人の はじめの ゴール・spots.json が 止まる・横向きの 低い 画面の 手本・おそい 読みこみの「どうだった？」
+async function cycle207Checks(browser, R) {
+  const out = {};
+  // もどって きた 人の 記録（60秒で ゴール 2つ：駅と 駅前の 学生。次の 行き先は 学生に すすめられた 伊文神社の 人＝めいろで 98マス 先）。lowKeep：近い ゴールの とちゅう（back あり）に して、遠い 道すじの まま にする
+  const returning = (page, lowKeep) => page.addInitScript(lowKeep => {
+    if (sessionStorage.getItem('__c207')) return;
+    sessionStorage.setItem('__c207', '1');
+    const t = Date.now() - 864e5, far = { kind: 'npc', id: 'ibun-parish', name: '氏子のおばあさん（伊文神社）', lat: 34.870046662235, lng: 137.05731472425396, why: '北の伊文神社に、氏子のおばあさんがおるじゃん。', refer: true, by: '駅前の学生の話', byId: 'station-student', near: true, alts: [], t };
+    const st = { v: 1, guide: lowKeep ? { ...far, back: { ...far } } : far, guides: 6, guideDone: ['station-student', 'f-nishio-station'], met: ['station-student'],
+      visits: { 'f-nishio-station': { n: 1, first: t, last: t, name: '名鉄 西尾駅', cat: 'station', icon: '🚉', featured: true } } };
+    localStorage.setItem('nsg_state_demo', JSON.stringify(st)); localStorage.setItem('nsg_mzgoals', '2');
+    localStorage.setItem('nsg_started', 'true'); localStorage.setItem('nsg_mode', '"demo"'); localStorage.setItem('nsg_first_day', '"2026-01-01"');
+    localStorage.setItem('nsg_roll', '1'); localStorage.setItem('nsg_roll_v2', '1');   // 前に 遊んだ 人は 転がす めいろ（newPage の 1マスずつ 歩く 台本では ない）
+  }, !!lowKeep);
+  const open = async (view, before) => {
+    const v = await newPage(browser, { howto: true, auto: true, hasTouch: true, ...(view ? { viewport: view } : {}) });
+    if (before) await before(v.page);
+    await v.page.goto(URL);
+    await v.page.waitForFunction(() => window.nishioPixel && window.nishioGo && nishioPixel.roll.ready && nishioPixel.maze.routePath(), null, { timeout: 20000 }).catch(() => {});
+    const cdp = await v.ctx.newCDPSession(v.page);
+    await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: true });
+    const tap = async (x, y) => { await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] }); await v.page.waitForTimeout(70); await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); };
+    return { ...v, tap };
+  };
+  const fail = (keys, e) => { for (const k of keys) if (!out[k]) out[k] = { ok: false, crashed: String(e && e.message || e).split('\n')[0].slice(0, 200) }; };
+  {   // ① もどって きた 人：ひらいた ときの 行き先が 遠い → 近い ゴールが 先・のこった 行き先は 次（ほかの 行き先の 1つめ）
+    let v = null;
+    try {
+      v = await open(null, p => returning(p));
+      const p = v.page;
+      await p.waitForFunction(() => nishioGo.guide && nishioGo.guide.id !== 'ibun-parish', null, { timeout: 20000 }).catch(() => {});
+      await p.waitForTimeout(800);
+      const b = await p.evaluate(() => { const G = nishioGo, g = G.guide, s = G.state.guide, me = G.me, r = nishioPixel.maze.route();
+        const d = g && me ? Math.hypot((g.lat - me.lat) * 111320, (g.lng - me.lng) * 111320 * Math.cos(me.lat * Math.PI / 180)) : null;
+        return { id: g && g.id, d: d && Math.round(d), back: s && s.back ? s.back.id : null, alt0: s && s.alts && s.alts[0] ? s.alts[0].id : null, cells: r ? r.cells : null }; });
+      out.backNearGoal = { ...b, ok: !!b.id && b.id !== 'ibun-parish' && b.back === 'ibun-parish' && b.alt0 === 'ibun-parish' && b.d !== null && b.d <= 350 && b.cells !== null && b.cells <= 30 };
+    } catch (e) { fail(['backNearGoal'], e); }
+    finally { if (v) { R.errors.push(...v.errors); await v.ctx.close(); } }
+  }
+  {   // ② 横向き 568×320・もどって きた 人（遠い 道すじ）：1回 歩いた あと 止まって いる 間、「タップ！」の 指が 地図の 中（上の バーと 下の 欄の 間）に 出る
+    let v = null;
+    try {
+      v = await open({ width: 568, height: 320 }, p => returning(p, true));
+      const p = v.page;
+      const ready = await p.waitForFunction(() => nishioPixel.tapDemo.on && !nishioPixel.tapGoal, null, { timeout: 12000 }).then(() => true, () => false);
+      const q = await p.evaluate(() => { const s = nishioPixel.tapDemo.spot(false); return s ? s.q : null; });
+      let walked = false;
+      if (q) { await v.tap(q.x, q.y); walked = await p.waitForFunction(() => !!nishioPixel.tapGoal, null, { timeout: 1500 }).then(() => true, () => false); }
+      await p.waitForFunction(() => !nishioPixel.tapGoal, null, { timeout: 9000 }).catch(() => {});
+      const look = () => p.evaluate(() => { const el = document.getElementById('tapDemo'), cr = document.getElementById('pxCanvas').getBoundingClientRect(), sh = document.getElementById('sheet').getBoundingClientRect();
+        const on = !!el && !el.hidden, x = on ? parseFloat(el.style.left) : null, y = on ? parseFloat(el.style.top) : null;
+        return { on, x, y, inMap: on && y > cr.top && y < sh.top && document.elementFromPoint(x, y) === document.getElementById('pxCanvas'), free: Math.round(sh.top - cr.top), status: !document.getElementById('status').hidden, guide: nishioGo.guide && nishioGo.guide.id }; });
+      await p.waitForTimeout(3500); const a = await look();
+      await p.waitForTimeout(5000); const b = await look();
+      out.lowDemoKept = { ready, walked, a, b, ok: ready && walked && a.inMap && b.inMap && b.guide === 'ibun-parish' };
+    } catch (e) { fail(['lowDemoKept'], e); }
+    finally { if (v) { R.errors.push(...v.errors); await v.ctx.close(); } }
+  }
+  {   // ③ spots.json が 返事を しない：6秒で あきらめて、行き先の 札と 道すじが 出る（「スポットを読み込んでいます…」の ままに ならない）
+    let v = null;
+    try {
+      v = await open(null, p => p.route('**/nishio-go/spots.json', () => {}));
+      const p = v.page;
+      const got = await p.waitForFunction(() => nishioGo.guide && !document.getElementById('guide').hidden, null, { timeout: 20000 }).then(() => true, () => false);
+      const s = await p.evaluate(() => ({ guide: nishioGo.guide && nishioGo.guide.name, n: nishioGo.spots.length, status: document.getElementById('status').textContent, route: !!nishioPixel.maze.routePath() }));
+      out.spotsHang = { got, ...s, ok: got && s.n > 0 && s.route && !/スポットを読み込んでいます/.test(s.status) };
+    } catch (e) { fail(['spotsHang'], e); }
+    finally { if (v) { R.errors.push(...v.errors); await v.ctx.close(); } }
+  }
+  {   // ④ ゴールの 時間は はじめて 手で 動かした ときから（読みこみの 待ちを 入れない。「どうだった？」は はじめの 1分に たずねない）
+    // 道の 時計が 89秒（おそい 読みこみ）の まま、手で 動かして すぐ ゴールの 人と 話す（呼ばれて 話す 道：callNpc → talkNpc → mazeGoal）
+    let v = null;
+    try {
+      v = await open();
+      const r = await v.page.evaluate(async () => { const G = nishioGo, P = nishioPixel, n = (G.npcs || []).find(x => !G.state.met.includes(x.id));
+        if (!n || !G.callNpc) return { why: 'no-npc' };
+        G.notePlayInput(); await new Promise(res => setTimeout(res, 300));
+        P.maze.goal = () => ({ sec: 89, m: 400 });
+        G.setGuide({ kind: 'npc', id: n.id, name: n.name, lat: n.lat, lng: n.lng, why: '', by: '' });
+        G.callNpc(n.id); G.talkNpc(n.id, 0); G.callNpc(null);
+        const pq = G.playPending; return { npc: n.id, pending: pq ? pq.sec : null, ask89: G.playAskOk({ sec: 89 }) }; });
+      out.playAskLate = { ...r, ok: !!r.npc && r.pending === null && r.ask89 === true };
+    } catch (e) { fail(['playAskLate'], e); }
+    finally { if (v) { R.errors.push(...v.errors); await v.ctx.close(); } }
+  }
+  return out;
+}
 const FIRST_MINUTE_NEED = {
   slowCover: '読みこみ中の 題字が スタイルシートを 待つ（head に ある）／題字の 下に 動く しるし（米つぶ）が ない',
   bgmAfterMap: '地図が 動きだす 前の タップで 曲（mp3）を 読みはじめる／動きだした あとの タップで 曲が 鳴らない',
@@ -836,6 +923,10 @@ const FIRST_MINUTE_NEED = {
   tiltOkQuiet: '許可した すぐ あとの「📱 OK」を 押すと「地図を タップして 遊べるよ」（ことわった ときの 知らせ）が 出る',
   grainToast: 'はじめての 金の米つぶの 知らせが はば 375px で 3行 以上（1字が 1字ぶんの はばの 字で 測って）',
   tapDemoNoBlind: '置ける 所が ない ときに、確かめて いない 点に 指の 手本を 出す／傾きが 使えるのに ゆれる 📱 が 出ない／置ける ように なっても 指が もどらない',
+  backNearGoal: 'もどって きた 人の はじめの ゴールが 遠い（ひらいた ときの 行き先が 350m より 遠いのに 近い ゴールを 先に しない）／のこって いた 行き先が 次に ならない・札から 消える',
+  lowDemoKept: '横向き 568×320 で もどって きた 人が 1回 歩くと、止まって いても「タップ！」の 指が 出ない・地図の 外（下の 欄の 裏）に 出る',
+  spotsHang: 'spots.json が 返事を しないと、行き先の 札・道すじが 出ず「スポットを読み込んでいます…」の まま',
+  playAskLate: 'ゴールの 時間を、はじめて 手で 動かす 前（読みこみ中）から 数える（おそい 読みこみで はじめての ゴールの すぐ あとに「どうだった？」）',
 };
 
 const RUN = { R: null };

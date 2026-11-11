@@ -411,6 +411,12 @@ body.px #map{visibility:hidden}
 .px-pad .a{font-size:19px}.px-pad .a.on{background:rgba(31,77,43,.9);border-color:#ffd54f;animation:autoGlow 1.6s ease-in-out infinite}
 @keyframes autoGlow{50%{box-shadow:0 0 0 3px rgba(255,213,79,.45)}}
 @media (prefers-reduced-motion:reduce){.px-pad .a.on{animation:none}}
+/* サイクル207（568×320・480×320 の 横向き）：🌀（西尾めいろ）の ボタンは 地図の 下から 176px の 所に 置くので、地図が 低いと 上が 上の バーの 下に 8〜28px もぐり（上の 3分の1を 押しても 開かない 0/4）、
+   傾きの ボタン（左上 10px・高さ 40px）にも かさなった（iPhone で 🌀 を 押すと 傾きの ボタンに なる 0/6）。高さ 340px まで の 横向きだけ、傾きの ボタンの 下（上から 58px）に 置く。
+   下の 欄（--sheet-h）に かかる ほど 低い ときは 欄の 4px 上まで 上げる。傾きの ボタン・ほかの 画面の 置き方は かえない */
+@media (orientation:landscape) and (max-height:340px){
+  .px-pad{top:max(0px,min(58px,calc(100% - var(--sheet-h,0px) - 46px)));bottom:auto}
+}
 .px-info{pointer-events:none;position:absolute;inset:0;display:flex;align-items:flex-start;justify-content:center;padding:16px;background:rgba(0,0,0,.25)}
 .px-info .dq{pointer-events:auto;width:100%;max-width:420px;max-height:70%;overflow-y:auto}
 .px-info .popup h4{font-size:17px;margin:0 0 6px;color:#ffd54f}

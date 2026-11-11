@@ -7823,6 +7823,7 @@ function drawTraffic(ox, oy, T, w, h) {
 
 let cam = null, last = null, facing = 'down', lastT = 0, lastEnsure = 0;
 const camLead = { x: 0, y: 0 };   // 転がしているときに 少し先を見る分（マス）
+const demoLead = { x: 0, y: 0, tx: 0, ty: 0 };   // サイクル207：止まって いて 手本の 置き場が ない ときに、道すじの 先を 見る 分（マス。tapDemoTick の demoLeadAim が tx・ty を 決める）
 let heroScr = { x: 0, y: 0 };   // お米の画面での位置（まん中から どれだけ ずれているか。夜の明かり・札に使う）
 try { scale = Math.min(4, Math.max(1, +localStorage.getItem('nsg_px_scale') || 2)); mzScale = Math.min(4, Math.max(1, +localStorage.getItem('nsg_mz_scale') || 1)); } catch (e) { /* 既定 */ }
 
@@ -8090,8 +8091,9 @@ function frame(now) {
   if (rolling) {   // 転がしているときは、お米の少し先を見る（進む向きが よく見えて、速さも感じられる）
     const k = Math.min(1, dt * 2.5);
     camLead.x += (Math.max(-1.1, Math.min(1.1, rp.vx * 0.2)) - camLead.x) * k; camLead.y += (Math.max(-1.1, Math.min(1.1, rp.vy * 0.2)) - camLead.y) * k;
-    cam.x = rp.x + camLead.x; cam.y = rp.y + camLead.y;
-  } else camLead.x = camLead.y = 0;
+    demoLead.x += (demoLead.tx - demoLead.x) * k; demoLead.y += (demoLead.ty - demoLead.y) * k;
+    cam.x = rp.x + camLead.x + demoLead.x; cam.y = rp.y + camLead.y + demoLead.y;
+  } else camLead.x = camLead.y = demoLead.x = demoLead.y = demoLead.tx = demoLead.ty = 0;
   const hp = rolling ? { x: rp.x, y: rp.y } : { x: cam.x, y: cam.y };   // お米のいる所（転がす：rp・ほかは 画面のまん中）
   bigHero.x = hp.x; bigHero.y = hp.y;
   if (roll.last) { const ddx = hp.x - roll.last.x, ddy = hp.y - roll.last.y, d = Math.hypot(ddx, ddy); if (d < 3) roll.d += d; riceSpin(ddx, ddy, dt); }
@@ -9564,6 +9566,20 @@ function tapDemoSpot(path, first) {   // 手本の 指先を 置く 点と 置�
   }
   return null;   // どこも だめ（ゴールの 人が 目の前・地図が せまい など）：確かめて いない 点は 返さない
 }
+// サイクル207（はじめの 1分・横向きの 低い 画面）：568×320・480×320 で、もどって きた 人が 1回 歩いた あと、「タップ！」の 指が 二度と 出なかった（4回とも）。
+// 下の 欄に 1行 ふえて 見える 地図が 高さ 106px。お米は その まん中に いて、道すじの 1〜3マス先が ぜんぶ 下の 欄の 裏（20〜70px 下）。指を 置ける 所が なく、止まった まま 何も 指さない。
+// → 止まって いて 置き場が ない ときは、地図を 道すじの 3マス先の 方へ 寄せる（お米は 見える 所の ふちから 34px（DEMO_LEAD_PX）より 内がわに のこす）。
+// 寄せた 地図で、ふだんと 同じ さがし方（tapDemoSpot）が 見える 道すじの マスに 指を 置く。お米が 動いたら もどす。欄の 裏の マスや お米の 上には これまでどおり 置かない
+const DEMO_LEAD_PX = 34;
+function demoLeadAim(path) {
+  const i = Math.min(DEMO_AHEAD, path.length - 1);
+  if (i < 1 || rp.x === null) return;
+  const r = cv.getBoundingClientRect(), a = tileClient(0, 0), b = tileClient(1, 0), T = b.x - a.x;
+  if (!(T > 0) || !r.height) return;
+  const lim = (half, v) => { const m = Math.max(0, half - DEMO_LEAD_PX) / T; return Math.max(-m, Math.min(m, v)); };
+  demoLead.tx = lim(r.width / 2, path[i][0] * MZ_K + MZ_K / 2 - rp.x);
+  demoLead.ty = lim((r.height - cover) / 2, path[i][1] * MZ_K + MZ_K / 2 - rp.y);
+}
 const tapDemo = { el: null, ph: null, at: performance.now(), x: null, y: null, n: 0, side: '', up: false, walked: false, walkT: -1e9, sp: null, last: null };
 function tapDemoTouch() {
   tapDemo.at = performance.now();
@@ -9578,6 +9594,7 @@ function tapDemoTick() {
   const moved = rp.x === null || tapDemo.x === null ? rp.x !== tapDemo.x : Math.hypot(rp.x - tapDemo.x, rp.y - tapDemo.y) > DEMO_MOVE;
   tapDemo.x = rp.x; tapDemo.y = rp.y;
   if (moved) { tapDemo.at = now; tapDemo.walked = now - tapDemo.walkT < 700; }   // 転がって いる・歩いて いる（walked：さいごに 動いたのは タップ・なぞりの 歩き。歩きの 1歩は 0.18秒おき）
+  if (moved) demoLead.tx = demoLead.ty = 0;   // サイクル207：動いたら 道すじの 先を 見る 分は もどす   // 転がって いる・歩いて いる（walked：さいごに 動いたのは タップ・なぞりの 歩き。歩きの 1歩は 0.18秒おき）
   const path = mzRt.path;
   // サイクル197（運営者の声 2026-11-10「最初の 1 タップを促す表示」「１タップを促すお手本」）：iPhone は 1回 タップしないと 傾きの 許可を 聞けない。
   // まだ 聞いて いない 間は、2秒 待たずに はじめから タップの 手本（指＋「タップ！」の 札）を 出す。タップすると 許可の 窓が 出て、手本は ふだんの 出かた（止まって 2秒）に もどる
@@ -9610,6 +9627,7 @@ function tapDemoTick() {
   mkEls();
   const sp = tapDemoSpot(path, first);   // 道しるべの 3マス先（ゴールが 近ければ ゴールの マス。窓が 開く 所・地図に 収まらない 所は よける）
   tapDemo.sp = sp ? { x: sp.q.x, y: sp.q.y } : null;   // サイクル206：いま 指して いる 所（さわって 消える ときに tapDemo.last へ。demoTapWalk）
+  if (!sp) demoLeadAim(path);   // サイクル207：置き場が ない：地図を 道すじの 先へ 寄せて、次の 見回りで 見える 所を さがす
   if (!sp) { if (!tapDemo.el.hidden) tapDemo.el.hidden = true; }   // 安全に 置ける 所が ない：指の 手本は 出さない（次の 見回りで さがし直す）。下の ゆれる 📱 は 出す
   else {
     const q = sp.q;

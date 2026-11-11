@@ -28,7 +28,8 @@ const els = {}; const $ = id => els[id] || (els[id] = mkEl(id));
 const el = { card: $('swCard') }; $('sGame').classList.add('swipeMode');
 const docL = { cap: {}, bub: {} };
 const document = { hidden: false, addEventListener(t, fn, c){ const k = (c === true || (c && c.capture)) ? 'cap' : 'bub'; (docL[k][t] = docL[k][t] || []).push(fn); } };
-const window = { innerWidth: 844 };
+const winL = {};
+const window = { innerWidth: 844, addEventListener(t, fn){ (winL[t] = winL[t] || []).push(fn); } };
 let now = 1000, markAt = -1e9; const performance = { now: () => now };
 let startX = null, startY = 0, dx = 0, dy = 0, samples = [], pid = null, busy = false, card = {}, f = {}, finger = null, use3d = null, dragMoves = 0, dragApplied = 0, tapOnly = 0;
 const KomeCards = { over: () => false };
@@ -50,12 +51,13 @@ function fire(type, o){
 const steps = JSON.parse(process.argv[2]);
 for (const s of steps) {
   if (s[0] === 'land') { busy = false; now = s[1]; pendFlush(); }
+  else if (s[0] === 'resize') { window.innerWidth = s[1]; (winL.resize || []).forEach(fn => fn()); }
   else if (s[0] === 'hide') { document.hidden = true; (docL.bub.visibilitychange || []).forEach(fn => fn()); document.hidden = false; }
   else if (s[0] === '3d') use3d = true;
   else if (s[0] === 'mark') markAt = s[1];
   else fire('pointer' + s[0], s[1]);
 }
-console.log(JSON.stringify({ chosen: log.chosen, holder: startX != null ? pid : null, markOff: log.markOff, stops: log.stops, idleTouch: log.idleTouch, busy: busy }));
+console.log(JSON.stringify({ chosen: log.chosen, holder: startX != null ? pid : null, dx: dx, dragging: el.card.classList.contains('drag'), markOff: log.markOff, stops: log.stops, idleTouch: log.idleTouch, busy: busy }));
 """
 
 
@@ -125,6 +127,7 @@ for (let t = 0; t <= plan.until; t += 50) {
     else if (e[1] === 'file') resources++;
     else if (e[1] === 'ready') { window.Kome365 = {}; window.KomeCards = {}; els.sTitle = screen(true); els.sGame = screen(false); els.swBigDate.textContent = '1月1日'; window.__komeBoot.ready(); }   // 本当に 始まった(1枚目の カード)
     else if (e[1] === 'readyResult') { window.Kome365 = {}; window.KomeCards = {}; els.sTitle = screen(true); els.sResult = screen(false); window.__komeBoot.ready(); }   // 1年が 終わった 記録
+    else if (e[1] === 'scripts') { window.Kome365 = {}; window.KomeCards = {}; }   // engine.js・cards.js が 届いて 動いた(まだ 始まって いない)
     else if (e[1] === 'tail') { if (e[2]) window.KomeCards = {}; window.__komeBoot.ready(); }   // さいごの 行は 通ったが ゲームは 始まって いない(engine.js が 無い)
     else if (e[1] === 'scriptError') (wl.error || []).forEach(fn => fn({ target: { tagName: 'SCRIPT', src: 'https://go.ricepia.jp/kome365/' + e[2] } }));
     else if (e[1] === 'imgError') (wl.error || []).forEach(fn => fn({ target: { tagName: 'IMG', src: 'x.webp' } }));
@@ -655,17 +658,39 @@ class TestKome365FirstMinute(unittest.TestCase):
         head = HTML[:HTML.index('<script src="engine.js">')]
         self.assertIn("w.__komeBoot = {", head)
         self.assertLess(HTML.index("w.__komeBoot = {"), HTML.index("<style>"))
-        # 読みこみが 止まって 8秒(0.5秒ごとに 見る)で 知らせ。7.9秒までは 出ない
-        r = boot_run({"until": 12000, "events": [[300, "grow"], [600, "file"]]})
+        # 周回169: ゲームの スクリプト(engine.js・cards.js)が まだ 動いて いない 間は、おそいのか 止まったのか 分からない。20秒 待って から 出す(0.5秒ごとに 見る)
+        r = boot_run({"until": 24000, "events": [[300, "grow"], [600, "file"]]})
         self.assertIsNotNone(r["firstOn"])
-        self.assertGreaterEqual(r["firstOn"], 8600)
-        self.assertLessEqual(r["firstOn"], 9200)
+        self.assertGreaterEqual(r["firstOn"], 20600)
+        self.assertLessEqual(r["firstOn"], 21200)
         self.assertTrue(r["endOn"])
         self.assertIn("よみこみに 時間が かかって います", r["text"])
-        self.assertIn("タップで もう一度 よみこむ", r["text"])
+        self.assertIn("このまま 待つか、タップで やりなおし", r["text"])
+        self.assertNotIn("止ま", r["text"])
         # 押すと 読みこみなおす
-        r = boot_run({"until": 10000, "events": [[300, "grow"], [9500, "tap"]]})
+        r = boot_run({"until": 22000, "events": [[300, "grow"], [21500, "tap"]]})
         self.assertEqual(r["reloads"], 1)
+        # スクリプトは 動いたのに 始まらない(止まった)ときは これまで どおり 8秒
+        r = boot_run({"until": 12000, "events": [[300, "grow"], [600, "file"], [600, "scripts"]]})
+        self.assertGreaterEqual(r["firstOn"], 8600)
+        self.assertLessEqual(r["firstOn"], 9200)
+        # 20秒の わけ: 2つの スクリプトを 約 50KB/秒(おそい 3G)で 取っても 約 4.2秒(圧縮なし)
+        root = os.path.dirname(HTML_PATH)
+        kb = (os.path.getsize(os.path.join(root, "engine.js")) + os.path.getsize(os.path.join(root, "cards.js"))) / 1000
+        self.assertLess(kb / 50 * 4, 20)
+
+    def test_trickling_game_script_is_not_called_stopped(self):
+        # 周回169: engine.js が 10〜15秒 かけて 少しずつ 届く(おそいが 進んで いる)と、8.6〜9.2秒で「タップで もう一度」が 出て、押すと 0 から 取りなおして 8.1〜8.8秒 おそく なった(6/6)
+        for t in (10000, 12000, 15000, 19000):
+            r = boot_run({"until": t + 3000, "events": [[300, "grow"], [600, "file"], [t, "file"], [t, "scripts"], [t + 50, "grow"], [t + 300, "ready"]]})
+            self.assertIsNone(r["firstOn"], t)
+            self.assertFalse(r["endOn"], t)
+        # cards.js だけ おそい(engine.js は 動いた)ときも 同じ
+        r = boot_run({"until": 18000, "events": [[300, "grow"], [500, "file"], [14000, "file"], [14000, "scripts"], [14300, "ready"]]})
+        self.assertIsNone(r["firstOn"])
+        # 読めなかった(エラー)ときは これまで どおり すぐ
+        r = boot_run({"until": 4000, "events": [[300, "grow"], [500, "scriptError", "cards.js"]]})
+        self.assertEqual(r["firstOn"], 500)
 
     def test_normal_and_slow_loads_show_nothing(self):
         # ふつうの 読みこみ(すぐ 始まる)・おそくても 進んで いる 読みこみ・ページの 本体が まだ 届いて いる 途中(20秒まで)は 何も 出さない
@@ -674,8 +699,8 @@ class TestKome365FirstMinute(unittest.TestCase):
         self.assertIsNone(boot_run({"until": 60000, "events": steps})["firstOn"])
         self.assertIsNone(boot_run({"until": 19000, "navEnd": 10 ** 9, "events": [[300, "grow"]]})["firstOn"])
         # おそいだけで 出た 知らせは、ゲームが 始まったら 消える
-        r = boot_run({"until": 14000, "events": [[300, "grow"], [12000, "ready"]]})
-        self.assertIsNotNone(r["firstOn"])
+        r = boot_run({"until": 24000, "events": [[300, "grow"], [22000, "ready"]]})
+        self.assertGreaterEqual(r["firstOn"], 20000)
         self.assertFalse(r["endOn"])
         # 絵が 読めないのは 見ない
         self.assertIsNone(boot_run({"until": 5000, "events": [[300, "grow"], [500, "imgError"], [900, "ready"]]})["firstOn"])
@@ -701,11 +726,11 @@ class TestKome365FirstMinute(unittest.TestCase):
         r = boot_run({"until": 12000, "events": [[300, "grow"], [400, "runError"], [700, "readyResult"]]})
         self.assertIsNone(r["firstOn"])
         # おそくて 出た 知らせも、エラーの あと 本当に 始まれば 消える
-        r = boot_run({"until": 14000, "events": [[300, "grow"], [400, "runError"], [12000, "ready"]]})
+        r = boot_run({"until": 14000, "events": [[300, "grow"], [350, "scripts"], [400, "runError"], [12000, "ready"]]})
         self.assertIsNotNone(r["firstOn"])
         self.assertFalse(r["endOn"])
         # エラーで 止まって 始まらなければ、8秒の 見はりで 出る
-        r = boot_run({"until": 12000, "events": [[300, "grow"], [400, "runError"]]})
+        r = boot_run({"until": 12000, "events": [[300, "grow"], [350, "scripts"], [400, "runError"]]})
         self.assertGreaterEqual(r["firstOn"], 8400)
         self.assertLessEqual(r["firstOn"], 9000)
         self.assertTrue(r["endOn"])
@@ -744,6 +769,71 @@ class TestKome365FirstMinute(unittest.TestCase):
         self.assertIn("#swSkyWx{position:absolute;right:8px;top:196px;", HTML)
         self.assertIn("#swAheadWx{position:absolute;right:14px;top:272px;", HTML)
         self.assertIn("@media (max-height:440px) and (min-width:564px){#swMood{left:calc(10px - (100vw - 480px) / 2)}", HTML)
+
+
+    def test_rotation_mid_drag_does_not_decide(self):
+        # 周回169: 指で カードを 持った まま 画面を 回すと(取り消しは 来ない)、カードが 指と とんで 決まった(2/2)
+        hold = [["down", {"id": 1, "x": 195, "y": 640, "t": 1000}], ["move", {"id": 1, "x": 201, "y": 640, "t": 1080}]]
+        jump = [["move", {"id": 1, "x": 662, "y": 189, "t": 1500}], ["move", {"id": 1, "x": 700, "y": 189, "t": 1560}], ["up", {"id": 1, "x": 700, "y": 189, "t": 1580}]]
+        r = pointer_run(hold + [["resize", 390]] + jump)   # にせの 画面は 幅 844 から 始まる
+        self.assertEqual(r["chosen"], [])
+        self.assertIsNone(r["holder"])
+        self.assertFalse(r["dragging"])
+        self.assertEqual(r["dx"], 0)
+        self.assertGreaterEqual(r["stops"], 1)   # 手本は 戻る
+        # 次の スワイプは ふつうに 効く
+        r = pointer_run(hold + [["resize", 390]] + jump + stroke(2, 420, 250, -150, 0, 3000))
+        self.assertEqual(r["chosen"], ["left"])
+        # 回して いない(幅が 同じ)ときは これまで どおり 指で 決まる
+        self.assertEqual(pointer_run(hold + [["resize", 844]] + jump)["chosen"], ["right"])   # 高さ だけ の 変化(幅 844 の まま)
+        self.assertEqual(pointer_run(hold + jump)["chosen"], ["right"])
+        # 指が 無い ときに 回しても 何も しない
+        self.assertEqual(pointer_run([["resize", 390]] + stroke(1, 200, 640, 150, 0, 2000))["chosen"], ["right"])
+
+    def test_unknown_save_keys_start_fresh(self):
+        # 周回169: 記録の 年(y)が engine の 一覧に 無いと 始まる ところで 止まり、やりなおしても 同じだった。合わない 記録は 記録 なし と して、別の 名前に のこす
+        node = shutil.which("node")
+        if not node:
+            raise unittest.SkipTest("node がないので実行の確認は飛ばす")
+        js = r"""
+const fs = require('fs'), path = require('path');
+const html = fs.readFileSync(process.argv[1], 'utf8');
+const K = require(path.join(path.dirname(process.argv[1]), 'engine.js'));
+const a = html.indexOf('  function saveOk(o){'), b = html.indexOf('\n', html.indexOf('  function loadSave(){'));
+const db = {}; const store = { get(k){ return k in db ? db[k] : null; }, set(k, v){ db[k] = v; } }; const SAVE = 'kome365_swipe_save';
+eval(html.slice(a, b));
+const out = [];
+for (const o of JSON.parse(process.argv[2])) { for (const k in db) delete db[k]; db[SAVE] = typeof o === 'string' ? o : JSON.stringify(o); const r = loadSave(); out.push({ ok: !!r, bad: db[SAVE + '_bad'] || null, kept: db[SAVE] }); }
+console.log(JSON.stringify(out));
+"""
+        base = {"v": "kaori", "y": "normal", "so": "mid", "m": "transplant", "c": 0, "s": 7, "fm": "", "yh": 0, "ch": "LR"}
+        cases = [base, dict(base, y="zzz"), dict(base, v="old_variety"), dict(base, so="rock"), dict(base, m="air"), dict(base, y="constructor"),
+                 dict(base, v=None, y=None, so=None, m=None), {k: v for k, v in base.items() if k not in ("v", "y", "so", "m")}, dict(base, y="cool", v="koshi", m="direct", so="high"), "{broken"]
+        out = subprocess.run([node, "-e", js, HTML_PATH, json.dumps(cases)], capture_output=True, text=True)
+        if out.returncode != 0:
+            raise AssertionError(out.stderr[-2000:])
+        r = json.loads(out.stdout.strip().splitlines()[-1])
+        self.assertEqual([x["ok"] for x in r], [True, False, False, False, False, False, True, True, True, False])
+        for i in (1, 2, 3, 4, 5):
+            # 消さない: 別の 名前に のこる(もとの 名前も その まま。新しい 田んぼの 1枚目で 上書き される)
+            self.assertEqual(json.loads(r[i]["bad"]), cases[i], i)
+            self.assertEqual(json.loads(r[i]["kept"]), cases[i], i)
+        self.assertIsNone(r[0]["bad"])
+        self.assertIsNone(r[9]["bad"])
+
+    def test_cards_behind_sink_while_finger_down(self):
+        # 周回169(案1): 指を 置いた とたん(動かす 前)、後ろの 2枚が 2・3px 沈む。translate だけ(ならびは 動かない)。動きを減らす 設定では 沈めない
+        self.assertIn("#swCard.drag ~ .swBack.b1{translate:0 2px}#swCard.drag ~ .swBack.b2{translate:0 3px}", HTML)
+        self.assertIn("@media (prefers-reduced-motion: reduce){#swCard.drag ~ .swBack.b1,#swCard.drag ~ .swBack.b2{translate:none}}", HTML)
+        self.assertIn("#swCard.drag ~ .swBack{transition:none}", HTML)   # 置いた その コマで 変わる
+        # 指を 置いた ところで drag が つく(タップで 選ばない・手本は これまで どおり)
+        self.assertIn("try { pvCompute(); } catch (x) {} el.card.classList.add('drag');", HTML)
+        r = pointer_run([["down", {"id": 1, "x": 195, "y": 640, "t": 1000}]])
+        self.assertTrue(r["dragging"])
+        self.assertEqual(r["chosen"], [])
+        r = pointer_run([["down", {"id": 1, "x": 195, "y": 640, "t": 1000}], ["up", {"id": 1, "x": 196, "y": 640, "t": 1090}]])
+        self.assertFalse(r["dragging"])
+        self.assertEqual(r["chosen"], [])
 
 
 if __name__ == "__main__":

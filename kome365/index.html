@@ -24,7 +24,11 @@ document.addEventListener('DOMContentLoaded', function(){ document.documentEleme
    engine.js・cards.js が 読めなかった ときは すぐ 出し、消さない(さいごの スクリプトは engine.js が 無くても 終わりまで 進み、題の 画面の ボタンが から に なる)。
    ほかの エラー(ブラウザの 拡張など)では すぐには 出さない(ゲームが そのあと ふつうに 始まる ことが ある。始まらなければ 8秒の 見はりで 出る)。
    さいごの スクリプトの 終わりの ready() は、本当に 始まった とき(engine・cards が あり、1枚目の カードの 日付 か 1年の 記録が 見えて いる)だけ 見はりを やめ、出て いた 知らせを 消す。
-   始まって いなければ すぐ 知らせを 出す(Codex 指摘: 前は エラーが 1つ あると、ゲームが ふつうに 始まっても 知らせが 画面を おおった まま だった) */
+   始まって いなければ すぐ 知らせを 出す(Codex 指摘: 前は エラーが 1つ あると、ゲームが ふつうに 始まっても 知らせが 画面を おおった まま だった)
+   周回169(おそいけれど 届いて いる engine.js・cards.js を「止まった」と 見て いた): ページは 読みこみ中の スクリプトの 届いた 量を 見られない(おそい と 止まった の 区別が つかない)。
+   8秒で「タップで もう一度」を 出して いたので、押した 人は 84% まで 届いて いた engine.js を 0 から 取りなおし、始まるのが 8.1〜8.8秒 おそく なった(6/6。例 10.9秒 → 19.0秒)。
+   ゲームの スクリプト(engine.js 83KB + cards.js 126KB = 約 209KB)が まだ 動いて いない 間は、20秒 待ってから 出す(おそい 3G の 約 50KB/秒 でも 圧縮なしで 約 4.2秒。その 約 5倍)。
+   文字は「止まった」とは 言わない: 「時間が かかって います・このまま 待つか、タップで やりなおし」。始まったら ひとりでに 消える(ready)。読めなかった(エラー)ときは これまで どおり すぐ */
 (function(){
   var d = document, w = window, seen = -1, last = Date.now(), box = null, iv = 0, bad = false;
   function count(){ var n = d.getElementsByTagName('*').length; try { n += performance.getEntriesByType('resource').length; } catch(e){} return n; }
@@ -32,7 +36,7 @@ document.addEventListener('DOMContentLoaded', function(){ document.documentEleme
   function show(){
     if (w.__komeReady || box) return;
     box = d.createElement('button'); box.type = 'button'; box.id = 'bootSlow';
-    box.innerHTML = '<b>米づくり365</b><span>よみこみに 時間が かかって います</span><span>タップで もう一度 よみこむ</span>';
+    box.innerHTML = '<b>米づくり365</b><span>よみこみに 時間が かかって います</span><span>このまま 待つか、タップで やりなおし</span>';
     box.onclick = function(){ location.reload(); };
     (d.body || d.documentElement).appendChild(box);
   }
@@ -40,7 +44,7 @@ document.addEventListener('DOMContentLoaded', function(){ document.documentEleme
     if (w.__komeReady) { clearInterval(iv); return; }
     var n = count(), now = Date.now();
     if (n !== seen) { seen = n; last = now; }
-    else if (now - last >= (loading() ? 20000 : 8000)) { clearInterval(iv); show(); }
+    else if (now - last >= (loading() || !w.Kome365 || !w.KomeCards ? 20000 : 8000)) { clearInterval(iv); show(); }   /* ページの 本体 か ゲームの スクリプトが まだ 届いて いる かも しれない 間は 20秒 */
   }
   function booted(){
     try {
@@ -543,6 +547,8 @@ a{color:var(--acc)}
 .swBack.b1{transform:translateY(calc(-9px + var(--p) * 5px)) scale(calc(.95 + var(--p) * .04));opacity:calc(.55 + var(--p) * .45)}
 .swBack.b2{background:#e4d9bb;transform:translateY(calc(-17px + var(--p) * 6px)) scale(calc(.90 + var(--p) * .05));opacity:calc(.3 + var(--p) * .5)}
 #swCard.drag ~ .swBack{transition:none}
+#swCard.drag ~ .swBack.b1{translate:0 2px}#swCard.drag ~ .swBack.b2{translate:0 3px}   /* 周回169: 指を 置いた とたん(動かす 前)、後ろの 2枚が 2・3px 沈む(さわった 手ごたえ。translate だけ なので ならびは 動かない。動きを減らす 設定では 沈めない) */
+@media (prefers-reduced-motion: reduce){#swCard.drag ~ .swBack.b1,#swCard.drag ~ .swBack.b2{translate:none}}
 /* 左右は同じ中立色。方向は位置と形で示し、世話の良し悪しは田んぼと顔で伝える。 */
 #swCard::after{content:"";position:absolute;inset:0;border-radius:inherit;background:transparent;opacity:calc(var(--p) * .42);pointer-events:none;z-index:2}
 #swCard.tL::after,#swCard.tR::after{background:#526879}
@@ -2581,7 +2587,12 @@ renderTitle();
       store.set(SAVE, JSON.stringify({ v: f.vKey, y: f.yearKey, so: Object.keys(K.SOIL).find(function(k){ return K.SOIL[k] === f.soil; }) || 'mid', m: f.method, c: f.contract ? 1 : 0, s: f.seedP, fm: fertMode, yh: yearHidden ? 1 : 0, ch: choices }));
     } catch (e) {}
   }
-  function loadSave(){ try { var o = JSON.parse(store.get(SAVE) || 'null'); return o && o.ch != null && o.s != null ? o : null; } catch (e) { return null; } }
+  /* 周回169: 記録の 年(y)が engine の 一覧に 無いと、始まる ところで 止まり(Cannot read 'anom')、知らせの「やりなおし」でも 同じ 所で 止まった(1/1)。
+     品種・年・地力・植え方を engine の 一覧と くらべ、合わない 記録は「記録 なし」と して 新しく 始める。消さずに 別の 名前(kome365_swipe_save_bad)へ うつして のこす
+     (新しい 田んぼの 1枚目で もとの 名前は 上書き される。直して 戻す ことが できる ように) */
+  function saveOk(o){ var has = Object.prototype.hasOwnProperty, ok = function(list, k){ return k == null || k === '' || has.call(list, k); };
+    return ok(K.VARIETIES, o.v) && ok(K.YEARS, o.y) && ok(K.SOIL, o.so) && (o.m == null || o.m === 'transplant' || o.m === 'direct'); }
+  function loadSave(){ try { var raw = store.get(SAVE), o = JSON.parse(raw || 'null'); if (!(o && o.ch != null && o.s != null)) return null; if (!saveOk(o)) { if (store.get(SAVE + '_bad') !== raw) store.set(SAVE + '_bad', raw); return null; } return o; } catch (e) { return null; } }
   function bar(id, name, st){ return '<span data-k="' + id + '" class="' + (st.v < 0.35 ? 'lo' : '') + '">' + name + '<b><i style="width:' + Math.round(st.v * 100) + '%"></i></b>' + st.label + '</span>'; }
   /* あした・再訪バー(サイクル18): あしたの天気は f.w の読み取りのみ。再訪は seenCards(メモリ)で判定する */
   function aheadCalc(){ var cal = 0, tom = null, rev = null; try { cal = KomeCards.day(f); var td = cal + 1;
@@ -3873,6 +3884,11 @@ renderTitle();
   }, true);
   ['pointerup', 'pointercancel'].forEach(function(ty){ document.addEventListener(ty, function(e){ touchSet.up(e.pointerId); }, true); });
   document.addEventListener('visibilitychange', function(){ if (document.hidden) { pend = null; pendQ.length = 0; touchSet.clear(); } });   /* Codex 指摘(PR #1087): 別の タブへ 行ったら、おぼえた 指は 捨てる(隠れて いる 間・戻った ときに 次の カードを 決めない) */
+  /* 周回169: 指で カードを 持った まま 画面を 回す(幅が 変わる)と、取り消し(pointercancel)は 来ず、カードが 指と いっしょに とんで(横 467px・14°)、スワイプ して いないのに 決まった(2/2)。
+     幅が 変わったら、離して 決まらなかった ときと 同じ 片づけ(dragStop)で カードを 元へ 戻し、その 指は 離すまで カードを 持てない(touchSet.bar)。次の スワイプは ふつうに 効く。
+     高さだけ の 変化(アドレスバー・キーボード)は 見ない */
+  var vwSeen = window.innerWidth;
+  window.addEventListener('resize', function(){ var w = window.innerWidth; if (w === vwSeen) return; vwSeen = w; if (startX == null && !pend) return; if (startX != null) dragStop(); pend = null; touchSet.bar(); });
   function pendCopy(e){ return { type: e.type, pointerId: e.pointerId, clientX: e.clientX, clientY: e.clientY, timeStamp: evT(e), button: e.button, isPrimary: e.isPrimary }; }
   function pendFlush(){
     for (;;) {

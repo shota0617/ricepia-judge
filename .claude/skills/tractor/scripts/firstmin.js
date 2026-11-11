@@ -759,6 +759,41 @@ const srv = http.createServer((r, s) => { const u = decodeURIComponent(r.url.spl
       ok('1.5 倍から せばめて 元の間に もどすと 1.5 倍に もどる（直す前 2.2 倍）', zo1 === 1 && near(zo2, 1.5), [zo1, zo2]);
       ok('なぞり に決まってから 寄って見る に直した ときも、2 本目が ふれた ときから はかる（60 → 100px ＝ 1.67 倍。直す前 1 倍）', p1.two === 'trace' && p2.two === 'pinch' && near(p2.zoom, 1.67), [p1.two, p2.two, p2.zoom]);
       ok('片方を離して 新しい 2 本目で せばめる：今の画角から つづく（1.67 倍 × 70 ÷ 100 ＝ 1.17 倍）', q1.two === 'pinch' && near(q1.zoom, 1.17), [q1.two, q1.zoom]);
+      // (表) Codex 指摘：2 本の指の 状態の表を、道すじ × はじめの画角 で ぜんぶ回す。
+      //  ・「地面の なぞり」に なる道：決まった あと 画角は 1 倍・なぞりは 動いていて・線の先は 指の下の地面（1m 以内）
+      //  ・「寄って見る」に なる道：画角は 2 本目が ふれた ときの画角 × 指の間の比（1〜2.2 倍）・なぞらない
+      //  ・「見回す」に なる道：画角は そのまま・なぞらない
+      const setZ = z => p.evaluate(v => { fovZoom = v; camera.fov = baseFov / v; camera.updateProjectionMatrix(); }, z), cl = v => Math.max(1, Math.min(2.2, v));
+      const THM = { x: 20, y: 820, id: 7 }, G = (x, y, id) => ({ x, y, id });
+      const rows = [
+        ['なぞり', '1 本の指で なぞる', [1, 1.6], async z => { await T('touchStart', [G(195, 481, 1)]); await mv(1, [195, 481], [195, 397], 6); return [195, 397]; }],
+        ['なぞり', '親指を置いたまま もう 1 本で なぞる（わたす）', [1, 1.6], async z => { await T('touchStart', [THM]); await adv(0.5); await setZ(z); await T('touchStart', [THM, G(195, 481, 1)]); await mv(1, [195, 481], [195, 397], 6, [THM]); return [195, 397]; }],
+        ['なぞり', '1 本目を置き、2 本目が ふれてから、1 本目だけ 20px 動かして止める（同じ指に決まる）', [1, 1.6], async z => { await T('touchStart', [G(195, 481, 1)]); await T('touchStart', [G(195, 481, 1), G(60, 600, 2)]); await T('touchMove', [G(195, 461, 1), G(60, 600, 2)]); await fl(); await adv(0.1); return [195, 461]; }, 'trace'],
+        ['なぞり', '1 本目を置き、2 本目が 0.1 秒 ふれて離れてから、1 本目を動かす', [1, 1.6], async z => { await T('touchStart', [G(195, 481, 1)]); await T('touchStart', [G(195, 481, 1), G(60, 600, 2)]); await adv(0.1); const n2 = await p.evaluate(() => viewPts.size); await T('touchEnd', [G(60, 600, 2)]); await adv(0.1); await T('touchMove', [G(195, 461, 1)]); return n2 === 2 ? [195, 461] : null; }, null],
+        ['なぞり', 'なぞっていた指が離れ、残った指を動かす', [1, 1.6], async z => { await T('touchStart', [G(195, 481, 1)]); await mv(1, [195, 481], [195, 397], 6); await T('touchStart', [G(195, 397, 1), G(300, 500, 2)]); await adv(0.2); await T('touchEnd', [G(195, 397, 1)]); await adv(0.5); await setZ(z); await mv(2, [300, 500], [300, 440], 6); return [300, 440]; }],
+        ['なぞり', 'ほかの窓から もどって、置いたままの指を動かす', [1, 1.6], async z => { await T('touchStart', [G(195, 481, 1)]); await mv(1, [195, 481], [195, 397], 6); await adv(0.3); await p.evaluate(() => window.dispatchEvent(new Event('blur'))); await adv(0.5); await setZ(z); await mv(1, [195, 397], [195, 340], 6); return [195, 340]; }],
+        ['寄る', 'ゆっくり広げる（60 → 108px）', [1, 1.6], async z => { await T('touchStart', P2(165, 225)); for (let i = 1; i <= 8; i++) { await T('touchMove', P2(165 - i * 3, 225 + i * 3)); await adv(0.05); } return cl(z * 1.8); }],
+        ['寄る', '1 回の知らせで広げる（60 → 120px）', [1, 1.6], async z => { await T('touchStart', P2(165, 225)); await T('touchMove', P2(135, 255)); return cl(z * 2); }],
+        ['寄る', 'なぞり に決まってから 0.15 秒の間に もう片方も動く（60 → 100px）', [1, 1.6], async z => { await T('touchStart', P2(165, 225)); await T('touchMove', P2(145, 225)); await fl(); await adv(0.1); await T('touchMove', P2(145, 245)); return cl(z * 100 / 60); }],
+        ['寄る', '寄って見て 片方を離し、新しい 2 本目で せばめる（140 → 100px）', [1, 1.6], async z => { await T('touchStart', P2(145, 245)); await T('touchMove', P2(125, 265)); await fl(); await adv(0.1); await T('touchEnd', [G(265, 520, 2)]); await adv(0.2); await T('touchStart', [G(125, 520, 1), G(265, 520, 3)]); await T('touchMove', [G(145, 520, 1), G(245, 520, 3)]); return cl(cl(z * 1.4) * 100 / 140); }],
+        ['見回す', '1 本の指で 空を なぞる', [1, 1.15], async z => { await T('touchStart', [G(280, 150, 1)]); await mv(1, [280, 150], [220, 150], 3); return z; }],
+        ['見回す', '空に 1 本 置いたまま、もう 1 本で 空を なぞる', [1, 1.15], async z => { await T('touchStart', [G(100, 150, 1)]); await T('touchStart', [G(100, 150, 1), G(280, 150, 2)]); await mv(2, [280, 150], [220, 150], 3, [G(100, 150, 1)]); await adv(0.15); return z; }],
+        ['見回す', '地面に 親指を置いたまま、もう 1 本で 空を なぞる', [1, 1.15], async z => { await T('touchStart', [THM]); await adv(0.3); await setZ(z); await T('touchStart', [THM, G(280, 150, 2)]); await mv(2, [280, 150], [220, 150], 3, [THM]); await adv(0.15); return z; }],
+      ];
+      const badRows = { なぞり: [], 寄る: [], 見回す: [] }, cnt = { なぞり: 0, 寄る: 0, 見回す: 0 };
+      for (const [kind, name, zooms, run, now] of rows) for (const z of zooms) {   // now（5 つ目）が あれば：指を止めた道。決まった その こまで読む（走りだすと 運転席の目が ゆれて、止めた指の下の地面が ずれる）。中身は そのときの viewTwo
+        await zs(z); await adv(0.5);
+        const sky = kind === '見回す' ? await p.evaluate(() => [[100, 150], [280, 150], [220, 150]].every(([x, y]) => !TRACE.ground({ clientX: x, clientY: y }) && document.elementFromPoint(x, y) === canvas)) : true;
+        const exp = await run(z); await fl(); if (now === undefined) await adv(0.1);
+        const r = await p.evaluate(f => { const g = f ? TRACE.ground({ clientX: f[0], clientY: f[1] }) : null; return { zoom: +fovZoom.toFixed(3), on: TRACE.on, two: viewTwo, drag: !!drag, err: g && TRACE.fPos ? +Math.hypot(g.x - TRACE.fPos[0], g.z - TRACE.fPos[1]).toFixed(2) : null }; }, kind === 'なぞり' ? exp : null);
+        const pass = kind === 'なぞり' ? r.zoom === 1 && r.on && r.err !== null && r.err < 1 && (now === undefined || r.two === now) && (await p.evaluate(() => document.elementFromPoint(60, 600) === canvas)) : kind === '寄る' ? r.two === 'pinch' && !r.on && Math.abs(r.zoom - exp) <= 0.03 : sky && r.drag && !r.on && Math.abs(r.zoom - exp) <= 0.001;
+        cnt[kind]++; if (!pass) badRows[kind].push([name, z, kind === 'なぞり' ? null : +exp.toFixed(2), r]);
+        await T('touchEnd', []); await adv(1);
+      }
+      await zs(1); await adv(0.3);
+      ok('2 本の指の表：地面の なぞり に なる道 ' + cnt.なぞり + ' 行（6 つの道 × 画角 1 倍・1.6 倍）は、決まった あと 1 倍・線の先は 指の下', cnt.なぞり === 12 && badRows.なぞり.length === 0, badRows.なぞり);
+      ok('2 本の指の表：寄って見る に なる道 ' + cnt.寄る + ' 行は、2 本目が ふれた ときの画角 × 指の間の比（1〜2.2 倍）・なぞらない', cnt.寄る === 8 && badRows.寄る.length === 0, badRows.寄る);
+      ok('2 本の指の表：見回す に なる道 ' + cnt.見回す + ' 行は、画角そのまま・なぞらない', cnt.見回す === 6 && badRows.見回す.length === 0, badRows.見回す);
       await ctx.close();
     }
     // ---- 14-2) 「横へ」の見本の向き・畦の吹き出し ----
@@ -838,7 +873,14 @@ const srv = http.createServer((r, s) => { const u = decodeURIComponent(r.url.spl
       const c1 = await dots(); await T('touchEnd', []);
       await p.waitForFunction(() => document.getElementById('traceDots').classList.contains('off'), null, { timeout: 120000 }).catch(() => {}); const c2 = await dots();
       ok('おおいの上を なぞると 黄色い点が出る（直す前 0 個）・離すと消える', c1.cover && !c1.started && c1.n >= 4 && !c1.off && c2.off && !c2.started, [c1, c2]);
-      go(); await ctx.close();
+      // 表の のこり 1 行（読みこみ中の なぞりを 置いたまま 始まる）：拡大していても、始まって その なぞりが 動きだしたら 1 倍に もどる（本物の時計・本物の こま）
+      await T('touchStart', [{ x: 195, y: 557, id: 1 }]); for (let i = 1; i <= 8; i++) await T('touchMove', [{ x: 195, y: 557 - i * 12, id: 1 }]);
+      await p.evaluate(() => { fovZoom = 1.6; camera.fov = baseFov / fovZoom; camera.updateProjectionMatrix(); }); go();
+      await p.waitForFunction(() => game.S.started && TRACE.on, null, { timeout: 170000 }).catch(() => {});
+      await p.waitForFunction(() => fovZoom === 1, null, { timeout: 60000 }).catch(() => {});
+      const pr = await p.evaluate(() => ({ started: !!game.S.started, on: TRACE.on, zoom: +fovZoom.toFixed(2) })); await T('touchEnd', []);
+      ok('2 本の指の表（のこり 1 行）：読みこみ中の なぞりを 置いたまま 始まると、拡大（1.6 倍）は 1 倍に もどって なぞりが 動く', pr.started && pr.on && pr.zoom === 1, pr);
+      await ctx.close();
     }
   }
   ok('エラーなし', errs.length === 0, errs.slice(0, 3));

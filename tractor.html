@@ -9887,14 +9887,23 @@ let viewBase = null;
 function viewZoomSet() { if (!viewPinch || viewPts.size < 2) return; fovZoom = Math.max(1, Math.min(2.2, viewPinch.z0 * viewPtsDist() / viewPinch.d0)); camera.fov = baseFov / fovZoom; camera.updateProjectionMatrix(); }
 function viewPtsDist() { const [a, b] = [...viewPts.values()]; return Math.hypot(a.x - b.x, a.y - b.y) || 1; }
 let viewAuto = { was: false, t: 0, re: false };   // 2本指で寄るだけなら 自動運転を やめない
-function viewZoomBack() { if (fovZoom === 1) return false; fovZoom = 1; camera.fov = baseFov; camera.updateProjectionMatrix(); return true; }   // きまり 5
+// きまり 5 は ここ 1 か所で行う（Codex 指摘：分かれ道ごとに 書くと、もどし忘れる道が出る。2 本目が ふれたあと 同じ指が そのまま「なぞる」に決まった ときに 拡大のまま 走っていた）。
+// 「地面の なぞりが 動いていて、それが なぞり だと 決まっている」なら 画角は 1 倍・線は なぞっている指の 今の場所から 引き直す。毎こま（viewTick）と、指が動いたとき・なぞりを わたしたとき に呼ぶ。
+// 決まっていない のは：2 本の指が そろって まだ決めていない間（wait）と、1 本目の指を 置いただけで まだ動かしていない間（2 本目が来て 寄って見る かもしれない）
+function viewTraceSure() {
+  if (!TRACE.on || fovZoom === 1 || viewTwo === 'wait') return;
+  const q = viewTid !== null ? viewPts.get(viewTid) : null;
+  if (viewPts.size === 1 && q && !q.mv) return;
+  fovZoom = 1; camera.fov = baseFov; camera.updateProjectionMatrix();
+  TRACE.rebase = true; if (q) TRACE.add({ clientX: q.x, clientY: q.y, timeStamp: q.t || q.at });
+}
 // きまり 1・4: 動いた指に なぞりを わたす。その指の はじめの場所（ax, ay）から始めて、今の場所まで足す。空なら まわりを見る
 function viewHand(id, e) {
   const q = viewPts.get(id); if (!q || !S.started) return;
   TRACE.end(); drag = null; viewTid = null; q.view = false;
   // Codex 指摘（サイクル274 の PR）: 画角を もどすのは、地面の なぞりが 始まったと 分かってから（きまり 5）。空を見回す指に わたった ときは 拡大のまま（1 本の指で 空を押して見回す ときと同じ）。
-  // もどしたら、線は 今の指の場所から 引き直す（1 本の指の ときと同じ）
-  if (TRACE.begin({ clientX: q.ax, clientY: q.ay, timeStamp: q.at })) { AUTO.off(); viewTid = id; try { canvas.setPointerCapture(id); } catch (err) {} if (viewZoomBack()) TRACE.rebase = true; TRACE.add(e); }
+  // もどすのは viewTraceSure（線も 今の指の場所から 引き直す）
+  if (TRACE.begin({ clientX: q.ax, clientY: q.ay, timeStamp: q.at })) { AUTO.off(); viewTid = id; try { canvas.setPointerCapture(id); } catch (err) {} q.mv = true; viewTraceSure(); TRACE.add(e); }
   else drag = { id, x: e.clientX, y: e.clientY, yaw: look.yaw, pitch: look.pitch };
 }
 // Codex 指摘（サイクル274 の PR）: 「動いたのは 片方の指だけ」は、2 本の指の知らせが どちらも届いてから決める。
@@ -9923,6 +9932,7 @@ function viewTick(dt) {   // frame から 毎こま
     }
   }
   if (viewRe && (viewTwo !== 'trace' || (viewRe.t += dt) > 0.15)) viewRe = null;
+  viewTraceSure();   // きまり 5
 }
 canvas.addEventListener('pointerdown', e => {
   viewLost = false;
@@ -9959,7 +9969,7 @@ canvas.addEventListener('pointermove', e => {
   const id = e.pointerId; let q = viewPts.get(id);
   // サイクル274: ほかの窓・タブから もどった あと（指の記録を消した あと）も 置いたままの指は、動いたら 1 本目の指として おぼえ直す（下の きまり 4 で、12px 動いたら なぞりを始める）
   if (!q && viewLost && e.buttons && viewPts.size === 0 && S.started) { viewLost = false; q = { x: e.clientX, y: e.clientY, ax: e.clientX, ay: e.clientY, hx: e.clientX, hy: e.clientY, at: e.timeStamp, solo: true }; viewPts.set(id, q); }
-  if (q) { q.x = e.clientX; q.y = e.clientY; q.t = e.timeStamp; if (Math.hypot(q.x - q.hx, q.y - q.hy) >= 5) { q.hx = q.x; q.hy = q.y; HINT.holdT = 0; } }   // 指が動いたら「置いたまま」を数え直す（HINT）
+  if (q) { q.x = e.clientX; q.y = e.clientY; q.t = e.timeStamp; if (Math.hypot(q.x - q.hx, q.y - q.hy) >= 5) { q.hx = q.x; q.hy = q.y; q.mv = true; HINT.holdT = 0; } }   // 指が動いたら「置いたまま」を数え直す（HINT）
   if (q && viewTwo === 'wait' && viewPts.size === 2 && Math.hypot(q.x - q.ax, q.y - q.ay) >= 12) {
     let o = null; for (const [k, v] of viewPts) if (k !== id) o = v;
     if (Math.hypot(o.x - o.ax, o.y - o.ay) >= 6) viewToPinch();   // きまり 2: どちらも動いた＝寄って見る
@@ -9969,7 +9979,7 @@ canvas.addEventListener('pointermove', e => {
   if (viewPinch && viewPts.size >= 2) { viewZoomSet(); return; }
   if (TRACE.on) {
     if (viewTid !== null && id !== viewTid) return;   // なぞっていない指の ゆれは 線に足さない
-    if (viewTwo !== 'wait' && viewZoomBack()) TRACE.rebase = true;   // きまり 5: 画角を もどしたら、線は 今の指の場所から 引き直す（視点が変わった ときと同じ）
+    viewTraceSure();   // きまり 5
     TRACE.add(e); return;
   }
   if (PRE.id !== null) { PRE.move(e); return; }

@@ -245,6 +245,103 @@ const IDS = ['swCard', 'swHand', 'swKakashi', 'swSkyWx', 'swAheadWx', 'swDayGues
 """
 
 
+# サイクル173(運営者の声 2026-11-12「米作り３６５にほのぼのした音を入れる」): にせの AudioContext で、いつ 音が 作られたかを 数える。
+# 場面ごとに 新しい 画面を 開き、本物に 近い 指(CDP の タッチ)で カードを はじく。サーバーは 立てず ディスクから 返す
+SOUND_BROWSER_JS = r"""
+const fs = require('fs'), path = require('path');
+let chromium; try { ({ chromium } = require('playwright')); } catch (e) { console.log(JSON.stringify({ skip: 'playwright なし' })); process.exit(0); }
+const [htmlPath, root, plansJ] = process.argv.slice(1, 4);
+const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.json': 'application/json', '.png': 'image/png', '.svg': 'image/svg+xml', '.css': 'text/css' };
+const FAKE = (mode) => {
+  window.__fa = { made: 0, osc: 0, src: 0, resume: 0, suspend: 0, allow: mode !== 'lateAllow', srcs: [] };
+  // 周回173 の 直し(レビュー P2): 音の つながりを 覚え、まだ 鳴って いない 音が スピーカーまで つながって いる 数を 数える
+  window.__fa.live = (bornBefore, bornAfter) => { const now = performance.now() / 1000; const reach = (n, d) => !!n && (n._dest || (d < 12 && (n._out || []).some(x => reach(x, d + 1)))); return window.__fa.srcs.filter(x => x.born <= bornBefore && x.born >= (bornAfter || 0) && x.t > now + 0.05 && reach(x.n, 0)).length; };
+  if (mode === 'none') { try { delete window.AudioContext; delete window.webkitAudioContext; } catch (e) {} window.AudioContext = undefined; window.webkitAudioContext = undefined; return; }
+  const P = () => ({ value: 0, setValueAtTime(){}, linearRampToValueAtTime(){}, exponentialRampToValueAtTime(){}, setTargetAtTime(){} });
+  const N = (src) => { const n = { _out: [], connect(x){ if (x && typeof x === 'object' && !('value' in x)) n._out.push(x); return x; }, disconnect(){ n._out = []; }, start(t){ if (src) window.__fa.srcs.push({ n: n, born: performance.now(), t: typeof t === 'number' && t > 0 ? t : performance.now() / 1000 }); }, stop(){}, gain: P(), frequency: P(), detune: P(), Q: P(), type: '', buffer: null, loop: false }; return n; };
+  function AC(){ if (mode === 'throw') throw new Error('no audio'); window.__fa.made++; this.state = 'suspended'; this.sampleRate = 22050; this.destination = N(); this.destination._dest = true; window.__fa.ac = this; }
+  Object.defineProperty(AC.prototype, 'currentTime', { get(){ return performance.now() / 1000; } });
+  AC.prototype.resume = function(){ window.__fa.resume++; const me = this; if (mode === 'slow') return new Promise(r => setTimeout(() => { me.state = 'running'; r(); }, 60));   // 解けるまで 0.06秒 かかる
+    if (window.__fa.allow) this.state = 'running'; return Promise.resolve(); };
+  AC.prototype.suspend = function(){ window.__fa.suspend++; this.state = 'suspended'; return Promise.resolve(); };
+  AC.prototype.createOscillator = function(){ window.__fa.osc++; return N(true); };
+  AC.prototype.createBufferSource = function(){ window.__fa.src++; return N(true); };
+  AC.prototype.createGain = AC.prototype.createBiquadFilter = function(){ return N(); };
+  AC.prototype.createBuffer = function(ch, len){ return { getChannelData(){ return new Float32Array(len); } }; };
+  window.AudioContext = AC; window.webkitAudioContext = AC;
+};
+(async () => {
+  let b; try { b = await chromium.launch(); } catch (e) { console.log(JSON.stringify({ skip: 'chromium が 起動しない' })); return; }
+  const out = {};
+  for (const pl of JSON.parse(plansJ)) {
+    const ctx = await b.newContext({ viewport: { width: pl.w || 390, height: pl.h || 844 }, isMobile: true, hasTouch: true, reducedMotion: pl.reduce ? 'reduce' : 'no-preference' });
+    const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
+    await ctx.addInitScript(FAKE, pl.mode || 'ok');
+    if (pl.store === 'throw') await ctx.addInitScript(() => { const g = Storage.prototype.getItem, s = Storage.prototype.setItem; Storage.prototype.getItem = function(){ throw new Error('blocked'); }; Storage.prototype.setItem = function(){ throw new Error('blocked'); }; });
+    if (pl.save) await ctx.addInitScript(s => { try { if (!sessionStorage.getItem('sv')) { sessionStorage.setItem('sv', '1'); localStorage.setItem('kome365_swipe_save', s); } } catch (e) {} }, pl.save);
+    if (pl.store === 'junk') await ctx.addInitScript(() => { try { localStorage.setItem('kome365_sound', '{{oops'); localStorage.setItem('kome365_swipe_save', '{"v":'); } catch (e) {} });
+    await p.route('http://kome.test/**', r => { const u = new URL(r.request().url()); let f = u.pathname === '/kome365/index.html' ? htmlPath : path.join(root, decodeURIComponent(u.pathname));
+      if ((!f.startsWith(root) && f !== htmlPath) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) return r.fulfill({ status: 404, body: '' });
+      r.fulfill({ status: 200, contentType: TYPES[path.extname(f)] || 'application/octet-stream', body: fs.readFileSync(f) }); });
+    const cdp = await ctx.newCDPSession(p);
+    const swipe = async (dir) => { const bx = await p.locator('#swCard').boundingBox(); const x = bx.x + bx.width / 2, y = bx.y + bx.height / 2;
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] });
+      for (let i = 1; i <= 6; i++) { await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: x + dir * 30 * i, y }] }); await p.waitForTimeout(16); }
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); await p.waitForTimeout(1300); };
+    const st = () => p.evaluate(() => ({ fa: (({ srcs, live, ac, ...o }) => o)(window.__fa || {}), ctxState: window.__fa && window.__fa.ac ? window.__fa.ac.state : '', screen: ['sTitle', 'sGame', 'sResult'].filter(id => !document.getElementById(id).classList.contains('hidden')).join(),
+      tgl: (() => { const e = [...document.querySelectorAll('#swSnd, [data-snd]')].find(x => x.getClientRects().length && getComputedStyle(x).visibility !== 'hidden'); if (!e) return null; const b = e.getBoundingClientRect(); return { id: e.id, text: e.textContent, box: [b.left, b.top, b.right, b.bottom], inView: b.left >= 0 && b.top >= 0 && b.right <= innerWidth && b.bottom <= innerHeight };   })(), ks: window.__ks ? window.__ks.state() : { on: null, dead: false, ctx: '', bgm: false, fx: {}, log: [] }, date: (document.getElementById('swBigDate') || {}).textContent || '', btn: (document.getElementById('swSnd') || {}).textContent || '', store: (() => { try { return localStorage.getItem('kome365_sound'); } catch (e) { return 'x'; } })() }));
+    const r = { steps: [] };
+    if (pl.loadTap) { await p.goto('http://kome.test/kome365/index.html?no3d', { waitUntil: 'domcontentloaded' }); await p.touchscreen.tap(200, 160); r.steps.push(['loadTap', await st()]); }
+    else await p.goto('http://kome.test/kome365/index.html?no3d');
+    await p.waitForFunction(() => window.__komeReady, null, { timeout: 60000 }).catch(() => {});
+    await p.waitForTimeout(800);
+    r.steps.push(['ready', await st()]);
+    for (const a of pl.acts || []) {
+      if (a === 'allow') await p.evaluate(() => { window.__fa.allow = true; });
+      else if (a === 'L' || a === 'R') await swipe(a === 'L' ? -1 : 1);
+      else if (a === 'mute') { if (await p.locator('#swSnd').count()) await p.tap('#swSnd', { timeout: 5000 }); await p.waitForTimeout(300); }   // ボタンが 無い 版では 押せない(下の 確かめで 落ちる)
+      else if (a === 'wait') await p.waitForTimeout(2500);
+      else if (a === 'keyL') { await p.keyboard.press('ArrowLeft'); r.js = r.js || []; r.js.push(await p.evaluate(() => window.__fa.live(window.__tc, window.__ts))); }   // 決めた すぐ あとに 古い 予約が のこって いるか
+      else if (a === 'dailyKey') {   // 3回めの レビュー(P2): ← で 決めて すぐ ⌂ → 今日の 田んぼ(bDaily) → 新しい ゲームで すぐ ←
+        await p.keyboard.press('ArrowLeft'); await p.evaluate(() => { document.getElementById('swHome').click(); document.getElementById('bDaily').click(); });
+        const n = await p.evaluate(() => window.__ks.state().log.length); await p.keyboard.press('ArrowLeft'); r.js = r.js || []; r.js.push(n); }
+      else if (a === 'homeKey') {   // 2回めの レビュー(P2): ⌂ を マウスで 押した まま ← で 決め、すぐ はなす(選んで すぐ 題へ)
+        const hb = await p.locator('#swHome').boundingBox(); await p.mouse.move(hb.x + hb.width / 2, hb.y + hb.height / 2); await p.mouse.down(); await p.keyboard.press('ArrowLeft'); await p.mouse.up();
+        r.js = r.js || []; r.js.push(await p.evaluate(() => ({ screen: document.getElementById('sTitle').classList.contains('hidden') ? 'game' : 'title', n: window.__ks.state().log.length }))); }
+      else if (a === 'home') { await p.tap('#swHome'); r.js = r.js || []; r.js.push(await p.evaluate(() => window.__fa.live(window.__tc || 1e12, window.__ts || 0))); await p.waitForTimeout(150); }
+      else if (a === 'tapTgl') { const h = await p.evaluateHandle(() => [...document.querySelectorAll('#swSnd, [data-snd]')].find(x => x.getClientRects().length)); const e = h.asElement(); if (e) await e.tap(); await p.waitForTimeout(300); }
+      else if (a.startsWith('js:')) { r.js = r.js || []; r.js.push(await p.evaluate(a.slice(3))); }
+      else if (a === 'olap') { r.olap = r.olap || []; r.olap.push(await p.evaluate(() => {   // 見えて いる 画面の 字・ボタン・絵と 音の ボタンの 重なり
+        const t = [...document.querySelectorAll('#swSnd, [data-snd]')].find(x => x.getClientRects().length); if (!t) return { none: true }; const A = t.getBoundingClientRect(), o = {};
+        const sec = ['sTitle', 'sResult'].map(id => document.getElementById(id)).find(x => !x.classList.contains('hidden'));
+        for (const x of sec.querySelectorAll('*')) { if (x === t || x.contains(t) || t.contains(x) || !x.getClientRects().length) continue; const cs = getComputedStyle(x); if (cs.visibility === 'hidden' || +cs.opacity < 0.3) continue;
+          const leaf = !x.children.length || /^(BUTTON|A|SUMMARY|H1|H2|P|IMG|CANVAS|SPAN|B|SMALL)$/.test(x.tagName); if (!leaf) continue; const B = x.getBoundingClientRect(); const ix = Math.min(A.right, B.right) - Math.max(A.left, B.left), iy = Math.min(A.bottom, B.bottom) - Math.max(A.top, B.top); if (ix > 0.5 && iy > 0.5) o[x.tagName + '#' + (x.id || x.className || '').toString().slice(0, 20)] = Math.round(ix * iy); }
+        const hit = document.elementFromPoint((A.left + A.right) / 2, (A.top + A.bottom) / 2); return { o: o, box: [A.left, A.top, A.width, A.height], top: !!hit && (hit === t || t.contains(hit)), hscroll: document.documentElement.scrollWidth > innerWidth }; })); }
+      else if (a === 'hide' || a === 'show') { await p.evaluate((h) => { Object.defineProperty(document, 'hidden', { configurable: true, get: () => h }); Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => h ? 'hidden' : 'visible' }); document.dispatchEvent(new Event('visibilitychange')); }, a === 'hide'); await p.waitForTimeout(300); }
+      else if (a === 'reload') { await p.reload(); await p.waitForFunction(() => window.__komeReady, null, { timeout: 60000 }).catch(() => {}); await p.waitForTimeout(800); }
+      r.steps.push([a, await st()]);
+    }
+    if (pl.box) r.box = await p.evaluate(() => { const e = document.getElementById('swSnd'); const b = e && e.getBoundingClientRect(); return b ? [b.left, b.top, b.width, b.height] : null; });
+    r.errs = errs; out[pl.name] = r; await ctx.close();
+  }
+  await b.close(); console.log(JSON.stringify(out));
+})();
+"""
+
+
+def sound_run(plans):
+    node = shutil.which("node")
+    if not node:
+        raise unittest.SkipTest("node がないので実行の確認は飛ばす")
+    out = subprocess.run([node, "-e", SOUND_BROWSER_JS, HTML_PATH, ROOT, json.dumps(plans)], capture_output=True, text=True, timeout=900)
+    if out.returncode != 0:
+        raise AssertionError(out.stderr[-2000:])
+    r = json.loads(out.stdout.strip().splitlines()[-1])
+    if isinstance(r, dict) and r.get("skip"):
+        raise unittest.SkipTest(r["skip"])
+    return r
+
+
 # 周回172: 6つの 画面 × 保存 の 場面で、太陽(運営者が のこす と 決めた)が 田んぼの 絵に かかって よい 場面の 数の 上の かぎり(いまの 数。ふえたら 落ちる)
 SUN_HITS_MAX = 0
 
@@ -1199,6 +1296,228 @@ console.log(JSON.stringify(out));
                 self.assertTrue(x["wet"], name)
                 self.assertEqual(x["rainAnim"], "none" if x["rm"] else "swPdRain", name)
         self.assertLessEqual(len(sun_hits), SUN_HITS_MAX, "太陽が 田んぼの 絵に かかる 場面が ふえた: %r" % (sun_hits,))
+
+
+class TestKome365Sound(unittest.TestCase):
+    """サイクル173(運営者の声 2026-11-12「米作り３６５にほのぼのした音を入れる」。それまでの「音なし」は 運営者 本人が 変えた)"""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.r = sound_run([
+            {"name": "decide", "acts": ["L", "R", "L"], "box": True},
+            {"name": "reduce", "reduce": True, "acts": ["L"]},
+            {"name": "mute", "acts": ["L", "mute", "R", "L", "wait", "reload", "R"]},
+            {"name": "hide", "acts": ["L", "wait", "hide", "wait", "show", "wait"]},
+            {"name": "loadTap", "mode": "lateAllow", "loadTap": True, "acts": ["allow", "L"]},
+            {"name": "noaudio", "mode": "none", "acts": ["L", "R", "mute", "L"]},
+            {"name": "throw", "mode": "throw", "acts": ["L", "R"]},
+            {"name": "storeThrow", "store": "throw", "acts": ["L", "mute", "R"]},
+            {"name": "storeJunk", "store": "junk", "acts": ["L"]},
+        ])
+
+    def steps(self, name):
+        x = self.r[name]
+        self.assertEqual(x["errs"], [], name)
+        return {k: v for k, v in x["steps"]}, x["steps"]
+
+    def test_no_sound_before_touch_then_pon_and_answer(self):
+        d, seq = self.steps("decide")
+        self.assertEqual(d["ready"]["fa"]["osc"], 0)            # さわる まで 音を 作らない(はじめの プログラムの click でも 作らない)
+        self.assertEqual(d["ready"]["fa"]["made"], 0)
+        self.assertTrue(d["ready"]["ks"]["on"])                  # はじめは 入り
+        self.assertEqual(d["ready"]["btn"], "🔊")
+        self.assertGreater(seq[-1][1]["fa"]["osc"], seq[0][1]["fa"]["osc"], "決めても 音を 作って いない")
+        log = seq[-1][1]["ks"]["log"]
+        self.assertEqual(log.count("pon"), 3, log)              # 決めた 3回 → ぽん 3回
+        self.assertEqual(sum(1 for k in log if k in ("ok", "ng")), 3, log)   # ○/✗ の 音も 毎回
+        self.assertGreater(seq[-1][1]["fa"]["osc"], seq[0][1]["fa"]["osc"])
+        self.assertEqual(seq[-1][1]["ks"]["ctx"], "running")
+        self.assertTrue(seq[-1][1]["ks"]["bgm"])                 # うしろの ふしも 鳴る
+        self.assertGreater(seq[-1][1]["ks"]["fx"].get("bgm", 0), 0)
+        self.assertNotEqual(seq[0][1]["date"], seq[-1][1]["date"])   # 音を 入れても カードは 進む
+        b = self.r["decide"]["box"]
+        self.assertGreaterEqual(b[2], 44)
+        self.assertGreaterEqual(b[3], 44)
+
+    def test_reduced_motion_does_not_mute(self):
+        d, seq = self.steps("reduce")
+        self.assertGreater(seq[-1][1]["fa"]["osc"], 0)
+        self.assertIn("pon", seq[-1][1]["ks"]["log"])
+
+    def test_mute_button_silences_and_is_saved(self):
+        d, seq = self.steps("mute")
+        after = dict(seq)
+        m = after["mute"]
+        self.assertFalse(m["ks"]["on"])
+        self.assertEqual(m["btn"], "🔇")
+        self.assertEqual(m["store"], "0")
+        self.assertFalse(m["ks"]["bgm"])
+        i = [k for k, _ in seq].index("mute")
+        later = seq[-3][1]   # 切った あと 2枚 はじいて 2.5秒 待った ところ
+        self.assertEqual(later["fa"]["osc"], m["fa"]["osc"], "🔇 の あとに 音を 作った")
+        self.assertNotEqual(later["date"], m["date"])
+        re_ = after["reload"]
+        self.assertFalse(re_["ks"]["on"])                       # 開きなおしても 切りの まま
+        self.assertEqual(re_["btn"], "🔇")
+        self.assertEqual(seq[-1][1]["fa"]["osc"], 0)
+
+    def test_hidden_page_stops_sound_and_comes_back(self):
+        d, seq = self.steps("hide")
+        h = [v for k, v in seq if k == "hide"][0]
+        self.assertGreater(h["fa"]["suspend"], 0)
+        self.assertFalse(h["ks"]["bgm"])
+        w = seq[4][1]   # かくれた まま 2.5秒
+        self.assertEqual(w["fa"]["osc"], h["fa"]["osc"], "かくれて いる 間に 音を 作った")
+        s = [v for k, v in seq if k == "show"][0]
+        self.assertTrue(s["ks"]["bgm"])
+        self.assertGreater(seq[-1][1]["fa"]["osc"], s["fa"]["osc"])   # もどったら つづける
+
+    def test_touch_while_loading_then_first_swipe_unlocks(self):
+        d, seq = self.steps("loadTap")
+        self.assertGreaterEqual(d["loadTap"]["fa"]["resume"], 1)     # 読みこみ中の 1回めは 解けなかった
+        self.assertNotEqual(d["ready"]["ks"]["ctx"], "running")
+        self.assertEqual(seq[-1][1]["ks"]["ctx"], "running")           # 始まって 最初の スワイプで 解ける
+        self.assertIn("pon", seq[-1][1]["ks"]["log"])
+        self.assertGreater(seq[-1][1]["fa"]["resume"], d["ready"]["fa"]["resume"])
+
+    def test_plays_without_audio(self):
+        for name in ("noaudio", "throw"):
+            d, seq = self.steps(name)
+            self.assertTrue(seq[-1][1]["ks"]["dead"], name)
+            self.assertNotEqual(seq[0][1]["date"], seq[-1][1]["date"], name)   # 音なしで カードが 進む
+
+    def test_broken_storage_still_starts_with_sound(self):
+        for name in ("storeThrow", "storeJunk"):
+            d, seq = self.steps(name)
+            self.assertTrue(d["ready"]["ks"]["on"], name)
+            self.assertTrue(d["ready"]["date"], name)
+            self.assertIn("pon", d["L"]["ks"]["log"], name)
+        d, seq = self.steps("storeThrow")
+        self.assertFalse(d["mute"]["ks"]["on"])                          # 保存できなくても 切れる
+        self.assertEqual(d["R"]["fa"]["osc"], d["mute"]["fa"]["osc"])
+
+    def test_sound_rules_in_code(self):
+        code = HTML[HTML.index("// ---------- ほのぼのした 音(サイクル173"):HTML.index("// ---------- 田んぼの音(はじめは消音。")]
+        for bad in ("prefers-reduced-motion", "calmOn", ".mp3", ".ogg", ".wav", "http", "new Audio("):
+            self.assertNotIn(bad, code, bad)                              # 動きを へらす 設定は 音に かけない・音の ファイルや 外の 部品なし
+        self.assertIn("['pointerup', 'touchend', 'click', 'keydown'].forEach", code)
+        self.assertNotIn("once: true", code)                              # 解けるまで 何度でも
+        self.assertNotIn("removeEventListener", code)
+        # 鳴らす だけ: 決めた とき・○✗・田んぼが 変わった とき・30秒の カード・1年の 区切り
+        self.assertIn("busy = true; ksCancel(); if (ksSameScreen()) ksFx('pon');", HTML)   # レビュー P2: 前の カードの 予約を 取り消してから ぽん(ゲームの 画面の ときだけ)
+        self.assertIn("if (kLive) ksFx(ok ? 'ok' : 'ng'); vibJudge(ok);", HTML)
+        self.assertIn("idleInfo.shown = true; ksFx('idle');", HTML)
+        self.assertIn("showResult(); if (kLive) ksFx('year'); return; }", HTML)   # レビュー P2: 結果の 画面へ かわって(古い 予約を 取り消して)から 1年の ふし
+        self.assertNotIn("sndJudge", HTML)
+
+
+
+# 周回173 の 直し: 12月31日(365枚めの カード)の 保存。あと 1枚 決めると 結果の 画面
+END_SAVE = '{\"v\":\"kokoro\",\"y\":\"recent\",\"so\":\"high\",\"m\":\"transplant\",\"c\":0,\"s\":206412282,\"fm\":\"oneshot\",\"yh\":0,\"ch\":\"LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL\"}'
+VPS5 = [[320, 568], [390, 844], [568, 320], [844, 390], [820, 1180]]
+
+
+class TestKome365SoundReview(unittest.TestCase):
+    """サイクル173 の レビュー(PR #1127): 題・結果でも 音を 切れる／再開の 途中で 止める／予約した 音を 取り消す"""
+
+    @classmethod
+    def setUpClass(cls):
+        plans = [
+            {"name": "home", "acts": ["L", "home", "tapTgl", "wait"]},
+            {"name": "result", "save": END_SAVE, "acts": ["L", "tapTgl", "wait"]},
+            {"name": "slowPause", "mode": "slow", "acts": ["js:(ksUnlock(), ksPause(), 1)", "wait", "js:(window.dispatchEvent(new Event('focus')), 1)", "wait"]},
+            {"name": "homeKey", "acts": ["L", "homeKey", "wait"]},
+            {"name": "dailyKey", "acts": ["L", "dailyKey", "wait"]},
+            {"name": "homeKeyReduce", "reduce": True, "acts": ["L", "homeKey", "wait"]},
+            {"name": "pauseSnd", "save": PADDY_SAVES["nae"], "acts": ["L", "js:(SND.on = true, SND.ctx = ksCtx(), SND.season = '', sndSet(), SND.season)", "wait", "js:(ksPause(), window.__o1 = window.__fa.osc, 1)", "wait", "js:window.__fa.osc - window.__o1"]},
+            {"name": "leaveSong", "acts": ["L", "js:(songPlay(), songTimers.length > 0)", "home", "js:songTimers.length"]},
+            {"name": "cancelHome", "acts": ["L", "js:(window.__ts = performance.now(), ksFx('grow', 0.45), window.__tc = performance.now(), window.__fa.live(window.__tc, window.__ts))", "home"]},
+            {"name": "cancelNext", "acts": ["L", "js:(window.__ts = performance.now(), ksFx('rain', 0.45), window.__tc = performance.now(), window.__fa.live(window.__tc, window.__ts))", "keyL"]},
+            {"name": "cancelResult", "save": END_SAVE, "acts": ["js:(ksUnlock(), 1)", "js:(window.__ts = performance.now(), ksFx('grow', 0.45), window.__tc = performance.now(), window.__fa.live(window.__tc, window.__ts))", "keyL", "wait"]},
+        ]
+        for w, h in VPS5:
+            plans.append({"name": "t%dx%d" % (w, h), "w": w, "h": h, "acts": ["L", "home", "olap"]})
+            plans.append({"name": "r%dx%d" % (w, h), "w": w, "h": h, "save": END_SAVE, "acts": ["L", "olap"]})
+        cls.r = sound_run(plans)
+
+    def seq(self, name):
+        x = self.r[name]
+        self.assertEqual(x["errs"], [], name)
+        return x["steps"]
+
+    def test_title_and_result_can_mute(self):
+        for name, screen in (("home", "sTitle"), ("result", "sResult")):
+            seq = self.seq(name)
+            before = seq[2 if name == "home" else 1][1]   # ⌂ ／ 結果へ 進んだ ところ
+            self.assertEqual(before["screen"], screen, name)
+            self.assertTrue(before["ks"]["bgm"], name)  # うしろの ふしが 鳴って いる
+            self.assertIsNotNone(before["tgl"], name + ": 音の ボタンが 見えない")
+            self.assertTrue(before["tgl"]["inView"], name)
+            tap = [v for k, v in seq if k == "tapTgl"][0]
+            self.assertFalse(tap["ks"]["on"], name)
+            self.assertFalse(tap["ks"]["bgm"], name)
+            self.assertEqual(tap["store"], "0", name)
+            self.assertEqual(seq[-1][1]["fa"]["osc"], tap["fa"]["osc"], name + ": 切った あとも 音を 作った")
+
+    def test_title_and_result_switch_clear_on_five_screens(self):
+        for w, h in VPS5:
+            for k in ("t", "r"):
+                name = "%s%dx%d" % (k, w, h)
+                seq = self.seq(name)
+                o = self.r[name]["olap"][0]
+                self.assertNotIn("none", o, name)
+                self.assertEqual(o["o"], {}, name + " %r" % (o,))
+                self.assertTrue(o["top"], name + ": ボタンの 上に ほかの ものが ある")
+                self.assertGreaterEqual(o["box"][2], 44, name)
+                self.assertGreaterEqual(o["box"][3], 44, name)
+                self.assertFalse(o["hscroll"], name)
+
+    def test_pause_during_pending_resume_stays_quiet(self):
+        seq = self.seq("slowPause")
+        after = seq[2][1]   # 解く → すぐ 止める → 2.5秒
+        self.assertEqual(after["ctxState"], "suspended")
+        self.assertFalse(after["ks"]["bgm"])
+        back = seq[-1][1]   # 前面に もどったら つづく
+        self.assertEqual(back["ctxState"], "running")
+        self.assertTrue(back["ks"]["bgm"])
+
+    def test_late_choice_after_leaving_makes_no_sound(self):
+        # 2回めの レビュー(P2): 決めて 0.17秒 あとの 処理(advance)が、題へ もどった あとに ○✗・田んぼの 音を 新しく 作って いた
+        for name in ("homeKey", "homeKeyReduce"):
+            seq = self.seq(name)
+            j = self.r[name]["js"][-1]
+            self.assertEqual(j["screen"], "title", name)
+            log = seq[-1][1]["ks"]["log"]
+            self.assertEqual(log[j["n"]:], [], name + ": 題へ もどった あとに 鳴った %r" % (log[j["n"]:],))
+
+    def test_old_choice_in_new_game_makes_no_sound(self):
+        # 3回めの レビュー(P2): 古い 選択の 遅れた 処理が、新しい ゲームの 選択の 世代で 鳴って いた(新しい 選択 1回 なのに 判定の 音 2回)
+        seq = self.seq("dailyKey")
+        n = self.r["dailyKey"]["js"][-1]
+        new = seq[-1][1]["ks"]["log"][n:]
+        self.assertEqual(seq[-1][1]["screen"], "sGame")
+        self.assertEqual(new.count("pon"), 1, new)
+        self.assertEqual(sum(1 for k in new if k in ("ok", "ng")), 1, "新しい 選択 1回で 判定の 音 %r" % (new,))
+
+    def test_nature_sounds_and_song_stop_with_page(self):
+        # 止めて いる(前面で ない)間に 田んぼの音が 音を 作りつづけると、もどった ときに まとめて 鳴る
+        x = self.r["pauseSnd"]
+        self.assertEqual(x["errs"], [])
+        self.assertEqual(x["js"][0], "kaeru")   # カエルの 季節(音を くり返し 作る)
+        self.assertEqual(x["js"][-1], 0, "止めて いる 間に 田んぼの音を 作った")
+        y = self.r["leaveSong"]
+        self.assertTrue(y["js"][0])
+        self.assertEqual(y["js"][-1], 0, "題へ もどっても 田植え歌が つづく")
+
+    def test_scheduled_card_sounds_are_cancelled(self):
+        for name in ("cancelHome", "cancelNext", "cancelResult"):
+            x = self.r[name]
+            self.assertEqual(x["errs"], [], name)
+            self.assertGreater(x["js"][-2], 0, name + ": 予約が できて いない")   # 取り消す 前は 予約が ある
+            self.assertEqual(x["js"][-1], 0, name + ": 前の カードの 音が まだ 鳴る 予定")
+        self.assertEqual(self.r["cancelHome"]["steps"][-1][1]["screen"], "sTitle")
+        self.assertEqual(self.r["cancelResult"]["steps"][-1][1]["screen"], "sResult")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -995,10 +995,12 @@ const srv = http.createServer((r, s) => { const u = decodeURIComponent(r.url.spl
         await F(2 * fps); const s0 = await p.evaluate(() => ({ x: game.S.x, z: game.S.z, ft: FIRSTMIN.t, now: window.__now() }));
         await T('touchStart', [{ x: 195, y: 481, id: 1 }]); let s;
         for (let i = 0; i < 4 * fps; i++) { await Tm(195, 481 - 84 * Math.min(1, (i + 1) / fps)); s = await F(1); }
-        const d4 = Math.hypot(s.x - s0.x, s.z - s0.z); await T('touchEnd', []); const tL = s.now;
+        const d4 = Math.hypot(s.x - s0.x, s.z - s0.z), vL = Math.abs(s.v); await T('touchEnd', []); const tL = s.now;
         await p.evaluate(() => new Promise(r => setTimeout(r, 300)));   // 離した 知らせを 先に 受けとる
+        await p.waitForFunction(() => !TRACE.on && touchIds.size === 0, null, { timeout: 60000, polling: 20 });   // サイクル278: 離した 知らせが 届いた のを 見てから こまを 進める
         let hint = null, tStop = null; for (let i = 0; i < 10 * fps && hint === null; i++) { s = await F(1); if (tStop === null && Math.abs(s.v) < 0.05) tStop = s.now; if (s.hint) hint = (s.now - tL) / 1000; }
         const hs = hint === null || tStop === null ? null : (tL + hint * 1000 - tStop) / 1000;   // 止まってから 見本まで（本物の 秒）
+        const glide = tStop === null ? null : (tStop - tL) / 1000;   // サイクル278（Codex 指摘）: 離してから 止まるまで（本物の 秒）。すべりが おそい こまで だけ 長く なる こわれ方を 見る
         // 大きな数字は 耕した ます目が 落ちついてから 読む（firstmin の 2 と 同じ）
         let big = s.big; { let c = -1; for (let i = 0; i < 12; i++) { const q = await F(Math.max(1, Math.round(fps / 2))); if (q.til === c) { big = (await F(Math.max(1, Math.round(fps / 5)))).big; break; } c = q.til; } }
         // はじめの 1 分が おわる 本物の 秒（始まってから）
@@ -1011,7 +1013,7 @@ const srv = http.createServer((r, s) => { const u = decodeURIComponent(r.url.spl
         await T('touchStart', [{ x: 195, y: 481, id: 1 }]); for (let i = 0; i < fps; i++) { await Tm(195, 481 - 200 * Math.min(1, (i + 1) / fps)); await F(1); }
         let zmax = -99; for (let i = 0; i < 10; i++) { const q = await F(fps); zmax = Math.max(zmax, q.z); } await T('touchEnd', []); await F(fps);
         const hz = await p.evaluate(() => HZ), bad = await p.evaluate(() => window.__bad);
-        R[fps] = { d4: +d4.toFixed(2), big, hint: hint === null ? null : +hint.toFixed(2), hs: hs === null ? null : +hs.toFixed(2), fm: fm === null ? null : +fm.toFixed(1), tap: +tp.toFixed(2), flick: +fl.toFixed(2), ridge: +(hz - zmax).toFixed(2), bad };
+        R[fps] = { d4: +d4.toFixed(2), vL: +vL.toFixed(2), glide: glide === null ? null : +glide.toFixed(2), dec: glide ? +(vL / glide).toFixed(2) : null, big, hint: hint === null ? null : +hint.toFixed(2), hs: hs === null ? null : +hs.toFixed(2), fm: fm === null ? null : +fm.toFixed(1), tap: +tp.toFixed(2), flick: +fl.toFixed(2), ridge: +(hz - zmax).toFixed(2), bad };
         await ctx.close();
       }
       const a = R[60], near = (x, y, e) => Math.abs(x - y) <= e;
@@ -1019,6 +1021,10 @@ const srv = http.createServer((r, s) => { const u = decodeURIComponent(r.url.spl
       // 20 こま（1 こま ちょうど 0.05 秒）は 直す前も 後も 同じ 道。指の 知らせと こまの 前後で 走りが 少し ゆれる（直す前も 5.28〜5.39m・1.65〜1.75 秒）ので、おそい こまと 同じ ものさしで 見る
       for (const f of [20, 10, 5]) ok('1 秒に ' + f + ' こま：本物の 時計どおり（4 秒で 60 こまの 9 割 以上・数字は 同じ ±0.1・止まってから 見本まで 0.4 秒 ＋2 こま 以内（サイクル277：離してから 見本までは 止まるまでの すべり（約 1.2 秒）が 開く たびに ゆれる＝60 こまで 1.42〜1.67 秒 なので、べつの ページの 60 こまとは くらべない）・はじめの 1 分は 60±2 秒。直す前 ' + ({ 20: '60 こまと 同じ', 10: '2.70m・0.4%・1.8 秒・120 秒', 5: '0.71m・0.1%・3.6 秒・240 秒' })[f] + '）',
         R[f].d4 >= 0.9 * a.d4 && near(parseFloat(R[f].big), parseFloat(a.big), 0.1) && R[f].hs !== null && R[f].hs <= 0.4 + 2 / f + 0.05 && near(R[f].fm, 60, 2), [R[f], a.hint]);
+      // サイクル278（Codex 指摘）: 離してから 止まるまでの すべりも 見る（見本の 待ちは 止まってから はかる ように したので、ここが ないと「離した あとの 減速 だけ おそい こまで のろく なる」こわれ方を 見のがす）。
+      // 離した ときの 速さが 開く たびに 少し ゆれる（0.64〜0.83 m/秒）ので、減り方（離した ときの 速さ ÷ 止まるまでの 秒）で くらべる。はかった数: 60・20・10・5 こまで 0.59〜0.65 m/秒²・すべり 1.0〜1.4 秒。
+      // 「指が ない ときは こまを わけずに 1 回だけ 進める」に こわした コピーでは 10 こま 0.31・5 こま 0.16（すべり 2.6・5.2 秒）
+      ok('離してから 止まるまで：どの こまの 速さでも 減り方が 60 こまの 8 割 以上・すべりは 2 秒 以内（Codex 指摘）', [60, 20, 10, 5].every(f => R[f].glide !== null && R[f].glide <= 2 && R[f].dec >= 0.8 * a.dec), Object.fromEntries(Object.entries(R).map(([k, v]) => [k, [v.vL, v.glide, v.dec]])));
       ok('おそい こまでも タップ・はじきで 60 こまより 進まない（+0.15m まで）・畦の 手前で 止まる（60 こまと ±0.3m）・NaN なし', [20, 10, 5].every(f => R[f].tap <= a.tap + 0.15 && R[f].flick <= a.flick + 0.15 && near(R[f].ridge, a.ridge, 0.3) && R[f].ridge > 0 && R[f].bad === 0) && a.bad === 0, Object.fromEntries(Object.entries(R).map(([k, v]) => [k, [v.tap, v.flick, v.ridge, v.bad]])));
     }
     // 16-2) なぞっている 指を 置いたまま 画面を 回す（縦 → 横）：同じ 指を 動かすと また なぞれる（直す前：120px 動かして 2 秒で 0.02m。回さなければ 2.4〜2.7m）。回した しゅんかんの 線は つづけない（とばない）
@@ -1180,6 +1186,38 @@ const srv = http.createServer((r, s) => { const u = decodeURIComponent(r.url.spl
         await T('touchEnd', []); await p.waitForFunction(() => game.audio && game.audio.ac.state === 'running', null, { timeout: 8000, polling: 100 }).catch(() => {}); const sUp = await st();   // 離した 知らせは 本物の 次の こまで 届き、resume も あとから 効く：鳴りだすのを 8 秒まで 待つ
         snd[cs] = [s0, sHold, sUp]; await ctx.close();
       }
+      // 18-2) Codex 指摘：読みこみが おわってから 最初の こま（frame）までに 離した タップでも 音が 鳴りだす（直す前：前の こまの おぼえ audioWant が まだ false で 何も しない）。
+      //       本物の こまを 回さない（requestAnimationFrame を 止める）ので、ずっと「最初の こまの 前」の まま
+      { let go; const gate = new Promise(r => { go = r; });
+        const { ctx, p, cdp } = await open14('', async q => { await q.route('**/field_tanbo*.glb', async r => { await gate; r.continue(); });
+          await q.addInitScript(() => { window.requestAnimationFrame = () => 0; const G = ['touchend', 'pointerup', 'click', 'keydown', 'mouseup'], A = window.AudioContext; if (!A) return; const R = A.prototype.resume;
+            A.prototype.resume = function () { const e = window.event; return e && G.includes(e.type) ? R.call(this) : Promise.resolve(); };
+            window.AudioContext = class extends A { constructor(...a) { super(...a); this.suspend(); } }; }); });
+        await p.waitForFunction(() => typeof PRE !== 'undefined' && document.getElementById('lwBar'), null, { polling: 100 }); go();
+        await p.waitForFunction(() => window.game && game.S && game.S.started && game.audio, null, { polling: 100, timeout: 180000 });
+        const f0 = await p.evaluate(() => [game.audio.ac.state, typeof last]);
+        await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: 195, y: 481, id: 1 }] }); await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+        await p.waitForFunction(() => game.audio.ac.state === 'running', null, { timeout: 8000, polling: 100 }).catch(() => {});
+        snd.preFrame = [f0[0], await p.evaluate(() => game.audio.ac.state)]; await ctx.close(); }
+      ok('始まった すぐ あと・最初の こまの 前に 離した タップでも 音が 鳴りだす（Codex 指摘。直す前：鳴らない）', snd.preFrame[0] !== 'running' && snd.preFrame[1] === 'running', snd.preFrame);
+      // 18-3) Codex の はかり方：1 度 鳴った あとに 止まる 場面。操作の 表（H）を 開いて、とじる ボタンを タップ → その 操作で 鳴る。かくれて もどる（さわらない 間は 鳴らない）→ 1 回 さわれば 鳴る
+      //       （直す前：1 度 鳴ると 聞き手を 外していたので、どちらも 次の 指の 操作でも 鳴らない）
+      { const { ctx, p, cdp } = await open14('', q => q.addInitScript(() => { const G = ['touchend', 'pointerup', 'click', 'keydown', 'mouseup'], A = window.AudioContext; if (!A) return; const R = A.prototype.resume;
+          A.prototype.resume = function () { const e = window.event; return e && G.includes(e.type) ? R.call(this) : Promise.resolve(); };
+          window.AudioContext = class extends A { constructor(...a) { super(...a); this.suspend(); } };
+          let hid = false; Object.defineProperty(document, 'hidden', { get: () => hid, configurable: true }); window.__hide = v => { hid = v; document.dispatchEvent(new Event('visibilitychange')); }; }));
+        const T = (type, pts) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: pts }), st = () => p.evaluate(() => game.audio ? game.audio.ac.state : 'none');
+        const run = () => p.waitForFunction(() => game.audio && game.audio.ac.state === 'running', null, { timeout: 8000, polling: 100 }).catch(() => {});
+        await p.waitForFunction(() => window.game && game.S && game.S.started && game.audio); await p.waitForTimeout(1500);
+        await T('touchStart', [{ x: 195, y: 481, id: 1 }]); await T('touchEnd', []); await run(); const a0 = await st();   // まず 鳴らす
+        await p.keyboard.press('h'); await p.waitForTimeout(1200); const a1 = await st(), hv = await p.evaluate(() => !document.getElementById('help').classList.contains('hidden'));   // 開いた 間は 鳴らない
+        await p.locator('#bHelpClose').tap(); await run(); const a2 = await st(), hc = await p.evaluate(() => document.getElementById('help').classList.contains('hidden'));   // 表は 長いので とじる ボタンは 下の ほう（見える 所まで 送って タップ）
+        await p.evaluate(() => window.__hide(true)); await p.waitForTimeout(1200); const a3 = await st();
+        await p.evaluate(() => window.__hide(false)); await p.waitForTimeout(1500); const a4 = await st();
+        await T('touchStart', [{ x: 195, y: 481, id: 1 }]); await T('touchEnd', []); await run(); const a5 = await st();
+        snd.again = { first: a0, helpOpen: [hv, a1], helpClosed: [hc, a2], hidden: a3, back: a4, tapped: a5 }; await ctx.close(); }
+      ok('操作の 表を とじた その タップで 音が もどる（開いて いる 間は 鳴らない。Codex の ⑤。直す前：鳴らない）', snd.again.first === 'running' && snd.again.helpOpen[0] && snd.again.helpOpen[1] !== 'running' && snd.again.helpClosed[0] && snd.again.helpClosed[1] === 'running', snd.again);
+      ok('かくれて もどった あと：さわらない 間は もどらなくても、1 回 さわれば 鳴る（かくれて いる 間は 鳴らない。Codex の ④。直す前：さわっても 鳴らない）', snd.again.hidden !== 'running' && snd.again.tapped === 'running', snd.again);
       ok('読みこみ中に 1 回 タップした 人も、始まって なぞって 離すと 音が 鳴りだす（直す前：ずっと 鳴らない）', snd.tapLoad[2] === 'running', snd.tapLoad);
       ok('タップせずに 始まった 人は なぞって 離すと 鳴る・指を 置いた まま の 間は 鳴らない（ブラウザの きまりの まね）・🔇 に した 人は 鳴らない', snd.plain[1] !== 'running' && snd.plain[2] === 'running' && snd.mute[2] !== 'running', [snd.plain, snd.mute]);
     }

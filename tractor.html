@@ -9310,11 +9310,15 @@ function startDiesel(ac, out, onReady) {
   }).catch(() => {}).finally(() => URL.revokeObjectURL(url));
 }
 // 音は、運転しているあいだだけ鳴らす（おわり・メニュー・ほかのタブでは止める。🔇 のときも止める）
+// サイクル278（Codex 指摘）: 「いま 鳴らす か」は 1 か所で 決める（syncAudio と、さわった ときの unlockAudio の 両方から 使う）。前の こまの おぼえ（audioWant）を 使うと、
+// 読みこみが おわってから 最初の こま までに 離した タップでは まだ false で、音を 解く 機会を 失っていた（1 秒に 1〜2 こまの 機械で 目立つ）
+const gameRunning = () => S.started && $('help').classList.contains('hidden') && !S.done;   // frame() の running と 同じ
+const audioWanted = (running = gameRunning()) => soundOn && running && !document.hidden;
 function syncAudio(running) {
   // キャラクターの 声（speechSynthesis）は audio と べつ：音を 切った・操作の表を 開いた・べつの タブに した・くわしい説明に した ときは すぐ やめる
   if (window.speechSynthesis && speechSynthesis.speaking && (!soundOn || DETAIL || document.hidden || !$('help').classList.contains('hidden'))) speechSynthesis.cancel();
   if (!audio) return;
-  const want = soundOn && running && !document.hidden, st = audio.ac.state; audioWant = want;   // サイクル278: さわった ときの 解き方（unlockAudio）も 同じ きまりで
+  const want = audioWanted(running), st = audio.ac.state;   // サイクル278: さわった ときの 解き方（unlockAudio）も 同じ きまりで
   if (want && st === 'suspended') audio.ac.resume();
   else if (!want && st === 'running') audio.ac.suspend();
 }
@@ -9896,19 +9900,20 @@ function nextCam() { if (INTRO.cam) { INTRO.cam = false; return; } camMode = (ca
 $('bCam').onclick = nextCam;
 $('bSnd').onclick = toggleSound;
 // 音：自分で 始めないので、はじめて さわった ときに 音を 出せるように する（ブラウザは さわるまで 音を 出さない）
-// サイクル278（運営者の 実機の 声 2026-11-12「スタート直後に音が出ない」）: 聞き手は 音が 鳴りだす（running）まで 外さない。
+// サイクル278（運営者の 実機の 声 2026-11-12「スタート直後に音が出ない」）: 聞き手は 外さない（鳴りだした あとも。下）。
 // それまでは pointerdown・keydown・touchend の それぞれ 1 回目で、音が まだ 無くても・resume が 効かなくても 外していた。読みこみ中（おおいの 間）に 1 回 さわって 離した 人は、
 // 音が できる 前に 聞き手が なくなり、そのあと 鳴らす 道は 毎こまの syncAudio だけ（さわった 操作の 外の resume は 効かない ブラウザが ある）。
 // はかった数（Chromium・resume は touchend・pointerup・click・keydown の 中だけ 効く 形の まね）: 読みこみ中に 1 回 タップした 人は 5 回のうち 5 回 ずっと 鳴らなかった。
 // 音が まだ 無い・🔇（soundOn が false）・運転していない（おわり・メニュー・かくれた タブ＝syncAudio の きまり）ときは 何も せず 聞き手を のこす。新しい 音は 足さない。
 // 指を 置いた まま の なぞりの 間は 鳴らない（タッチは 離した とき（touchend・pointerup）・click で はじめて「さわった」に なる ブラウザが ある。ページから 変えられない）
-let audioWant = false;   // syncAudio が 決めた「いま 鳴らす」（運転中・🔊・見えている）
 const UNLOCK = ['pointerup', 'touchend', 'click', 'keydown', 'pointerdown', 'touchstart'];
+// サイクル278（Codex の はかり方から）: 聞き手は 鳴りだした あとも 外さない（中身は「音が あり・鳴らす 場面で・止まっていれば resume」だけ）。
+// 操作の 外の resume を 通さない ブラウザでは、かくれて もどった あと・操作の 表を とじた あと も、次に さわった 操作の 中で また 鳴らせる
+// （それまでは 1 度 鳴ると 聞き手を 外していたので、そのあと 止まると 毎こまの syncAudio だけ＝操作の 外 で、鳴らない まま だった）
 function unlockAudio() {
-  if (!audio || !soundOn || !audioWant) return;   // 音が まだ 無い・🔇・鳴らさない 場面：聞き手は のこす
-  const ac = audio.ac, done = () => { if (ac.state === 'running') for (const ev of UNLOCK) removeEventListener(ev, unlockAudio, true); };
-  if (ac.state === 'running') { done(); return; }
-  try { const r = ac.resume(); if (r && r.then) r.then(done, () => {}); } catch (e) {}
+  if (!audio || !audioWanted()) return;   // 音が まだ 無い・🔇・鳴らさない 場面（おわり・メニュー・かくれた タブ）：何も しない（その ときの 状態で 決める。最初の こまの 前でも）
+  const ac = audio.ac;
+  if (ac.state === 'suspended') try { const r = ac.resume(); if (r && r.catch) r.catch(() => {}); } catch (e) {}
 }
 for (const ev of UNLOCK) addEventListener(ev, unlockAudio, true);
 // 操作の表（？・H）：はじめの画面と同じ表を出す
@@ -9916,7 +9921,7 @@ function toggleHelp() {
   const h = $('help');
   releaseAll();                                   // 開くとき：押しっぱなしのまま後ろで走りつづけない
   if (h.classList.contains('hidden')) { $('helpBody').innerHTML = $('keysBox').outerHTML.replace('id="keysBox"', ''); h.classList.remove('hidden'); }
-  else h.classList.add('hidden');
+  else { h.classList.add('hidden'); unlockAudio(); }   // サイクル278: とじた その 操作（click・キー）の 中で 音を もどす（とじる 前は 鳴らさない 場面なので、聞き手では 解けない）
 }
 $('bHelp').onclick = toggleHelp;
 $('bHelpClose').onclick = toggleHelp;
@@ -11121,7 +11126,7 @@ function frame(now) {
   last = now;
   if (!P.Rotary) { TRACE.tick(dt); renderer.render(scene, camera); return; }   // サイクル274: 読みこみを待つ間も、指の あと（黄色い点）は 0.6 秒で消す
   LITE.tick(gapMs);
-  const running = S.started && $('help').classList.contains('hidden') && !S.done;
+  const running = gameRunning();
   if (!running) { key.fwd = key.back = key.left = key.right = 0; TRACE.end(); }
   viewTick(sim); TRACE.tick(sim); HINT.update(sim); FIRSTMIN.update(sim);   // 最初の1分の終わり判定（60秒）。サイクル276: 本物の 時間で
   if (!drag && camMode === 0) { look.yaw *= 1 - Math.min(1, dt * 1.5); look.pitch *= 1 - Math.min(1, dt * 1.5); }

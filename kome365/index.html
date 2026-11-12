@@ -3579,7 +3579,7 @@ renderTitle();
     for (var r = 0; r < h; r++) { var c = 0; while (c < w) { var ch = g[r][c]; if (ch === '.') { c++; continue; } var c2 = c; while (c2 < w && g[r][c2] === ch) c2++; svg += '<rect x="' + c + '" y="' + r + '" width="' + (c2 - c) + '" height="1" fill="' + PDPAL[ch] + '"/>'; c = c2; } }
     pdCache[key] = 'data:image/svg+xml;utf8,' + encodeURIComponent(svg + '</svg>'); return pdCache[key]; }
   function pdSprite(k){ return PD_VEH[k].map(function(r){ return r.split(''); }); }
-  var paddyInfo = { on: false, base: '', from: '', nursery: false, wet: false, veh: '', vehUntil: -1, ok: 0, lv: 0, marks: 0, key: '', changes: 0, lastLen: -1, popLen: -1, pop: '', snap: null };
+  var paddyInfo = { on: false, base: '', from: '', fromDraw: null, lastDraw: null, nursery: false, wet: false, veh: '', vehUntil: -1, ok: 0, lv: 0, marks: 0, key: '', changes: 0, lastLen: -1, popLen: -1, pop: '', snap: null };
   function paddyCalc(){
     var direct = f.method === 'direct', base, since = f.transDoy ? f.doy - f.transDoy : 0;
     if (f.harvestDoy) base = 'stubble';
@@ -3613,20 +3613,23 @@ renderTitle();
       if (!prev.till && pc.snap.till) { paddyInfo.veh = 'tractor'; paddyInfo.from = 'soil'; paddyInfo.vehUntil = len + 2; }
       else if (!prev.puddle && pc.snap.puddle) { paddyInfo.veh = 'tractor'; paddyInfo.from = 'till'; paddyInfo.vehUntil = len + 2; }
       else if (!prev.harv && pc.snap.harv) { paddyInfo.veh = 'combine'; paddyInfo.from = 'ripe'; paddyInfo.vehUntil = len + 2; }
+      if (paddyInfo.vehUntil === len + 2) paddyInfo.fromDraw = paddyInfo.lastDraw;   /* Codex 指摘(周回171・3回め): 機械が 通る 前がわは、作業の 直前に 描いた 絵(冬の 土の 段・かたまり・地面・稲)を そのまま 使う。作業の あとの 地面を わたすと 前と あとが 同じ 絵に なって いた */
     }
     if (len >= paddyInfo.vehUntil || len < paddyInfo.vehUntil - 2) { paddyInfo.veh = ''; paddyInfo.vehUntil = -1; }
     var mk = pdMarks(ok), wet = !!(skyWxInfo && (skyWxInfo.key === 'rain' || skyWxInfo.key === 'typhoon'));
     if (fresh && pc.base === 'soil' && ok === paddyInfo.ok + 1 && mk.newest) { var tok = len; paddyInfo.popLen = tok; Promise.resolve().then(function(){ if (paddyInfo.popLen === tok) paddyInfo.popLen = -1; }); }
     if (paddyInfo.lastLen < 0 || !fresh) { if (len !== paddyInfo.lastLen) paddyInfo.popLen = -1; }
     paddyInfo.lastLen = len; paddyInfo.snap = pc.snap; paddyInfo.ok = ok;
-    var veh = paddyInfo.veh && (paddyInfo.veh === 'combine' ? pc.base === 'stubble' : pc.base === (paddyInfo.from === 'soil' ? 'till' : 'puddle')) ? paddyInfo.veh : '';
+    var veh = paddyInfo.veh && paddyInfo.fromDraw && (paddyInfo.veh === 'combine' ? pc.base === 'stubble' : pc.base === (paddyInfo.from === 'soil' ? 'till' : 'puddle')) ? paddyInfo.veh : '';
     var cd = pc.cond, cKey = ':' + cd.wat + (cd.weed ? 'W' : '') + (cd.blast ? 'B' : '') + (cd.burn ? 'U' : '') + (cd.lodged ? 'L' : '');
-    var newKey = pc.base + cKey + (pc.base === 'soil' ? ':' + mk.lv + ':' + mk.list.map(function(k){ return k.t + k.x + '.' + k.y + (k.alt || ''); }).join(',') : '') + (pc.nursery ? ':box' : '') + (wet ? ':wet' : '');
-    var baseKind = veh ? paddyInfo.from : pc.base, baseKey = veh ? baseKind + (baseKind === 'soil' ? ':' + mk.lv + ':' + mk.list.length : '') + cKey + (wet ? ':wet' : '') + ':from' : newKey;
-    var gB = pdBase(baseKind, { marks: mk, wet: wet, wat: cd.wat, weed: cd.weed, blast: cd.blast, burn: cd.burn, lodged: cd.lodged }); if (pc.nursery) pdNursery(gB);
-    e.querySelector('.pdBase').style.backgroundImage = 'url("' + pdURL(baseKey, gB) + '")';
+    var keyDry = pc.base + cKey + (pc.base === 'soil' ? ':' + mk.lv + ':' + mk.list.map(function(k){ return k.t + k.x + '.' + k.y + (k.alt || ''); }).join(',') : '') + (pc.nursery ? ':box' : ''), newKey = keyDry + (wet ? ':wet' : '');
+    var cur = { kind: pc.base, o: { marks: mk, wat: cd.wat, weed: cd.weed, blast: cd.blast, burn: cd.burn, lodged: cd.lodged }, nursery: pc.nursery, key: keyDry };   /* いまの 状態(雨 なし の キー)。雨は 前・あと とも 今日の 天気で かける */
+    var draw = function(d){ var g = pdBase(d.kind, Object.assign({ wet: wet }, d.o)); if (d.nursery) pdNursery(g); return g; };
+    var src = veh ? paddyInfo.fromDraw : cur, baseKey = src.key + (wet ? ':wet' : '') + (veh ? ':from' : '');
+    e.querySelector('.pdBase').style.backgroundImage = 'url("' + pdURL(baseKey, draw(src)) + '")';
+    paddyInfo.lastDraw = cur; if (!veh) paddyInfo.fromDraw = null;
     var tr = e.querySelector('.pdTrail'), ve = e.querySelector('.pdVeh');
-    if (veh) { var gN = pdBase(pc.base, { marks: mk, wet: wet, wat: cd.wat, weed: cd.weed, blast: cd.blast, burn: cd.burn, lodged: cd.lodged }); if (pc.nursery) pdNursery(gN); tr.style.backgroundImage = 'url("' + pdURL(newKey, gN) + '")'; ve.style.backgroundImage = 'url("' + pdURL('veh:' + veh, pdSprite(veh)) + '")'; e.setAttribute('data-veh', veh); }
+    if (veh) { tr.style.backgroundImage = 'url("' + pdURL(newKey, draw(cur)) + '")'; ve.style.backgroundImage = 'url("' + pdURL('veh:' + veh, pdSprite(veh)) + '")'; e.setAttribute('data-veh', veh); }
     else { tr.style.backgroundImage = ''; ve.style.backgroundImage = ''; e.removeAttribute('data-veh'); }
     var rn = e.querySelector('.pdRain'); if (wet) { rn.style.backgroundImage = 'url("' + pdURL('rain', pdRainGrid()) + '")'; e.setAttribute('data-wet', ''); } else { rn.style.backgroundImage = ''; e.removeAttribute('data-wet'); }
     var pp = e.querySelector('.pdPop'), popOn = paddyInfo.popLen === len && pc.base === 'soil' && !!mk.newest, pk = popOn ? 'pop:' + mk.newest.t + mk.newest.x + '.' + mk.newest.y + (mk.newest.alt || '') : '';

@@ -181,7 +181,7 @@ eval(html.slice(a, b));
     if (st.tick) await new Promise(r => setTimeout(r, 0));
     paddyDraw();
     out.push({ base: paddyInfo.base, nursery: paddyInfo.nursery, wet: root.hasAttribute('data-wet'), veh: root.getAttribute('data-veh') || '', key: paddyInfo.key, lv: paddyInfo.lv, marks: paddyInfo.marks,
-      pop: parts['.pdPop']._cl.has('on'), popKey: paddyInfo.pop, img: parts['.pdBase'].style.backgroundImage || '', cond: paddyInfo.cond || '', water: /%2357b6f2|%232f7fd0/i.test(parts['.pdBase'].style.backgroundImage || ''), crack: /%233a2413/i.test(parts['.pdBase'].style.backgroundImage || ''), bg: (parts['.pdBase'].style.backgroundImage || '').indexOf('data:image/svg+xml') >= 0, trail: (parts['.pdTrail'].style.backgroundImage || '').indexOf('data:image/svg+xml') >= 0 });
+      pop: parts['.pdPop']._cl.has('on'), popKey: paddyInfo.pop, img: parts['.pdBase'].style.backgroundImage || '', trailImg: parts['.pdTrail'].style.backgroundImage || '', cond: paddyInfo.cond || '', water: /%2357b6f2|%232f7fd0/i.test(parts['.pdBase'].style.backgroundImage || ''), crack: /%233a2413/i.test(parts['.pdBase'].style.backgroundImage || ''), bg: (parts['.pdBase'].style.backgroundImage || '').indexOf('data:image/svg+xml') >= 0, trail: (parts['.pdTrail'].style.backgroundImage || '').indexOf('data:image/svg+xml') >= 0 });
   }
   console.log(JSON.stringify(out));
 })();
@@ -1069,6 +1069,43 @@ console.log(JSON.stringify(out));
         self.assertEqual(code.count("pdGround("), 1)
         self.assertNotIn("pdWater", code)
         self.assertNotIn("pdWet(", code)
+
+    def test_paddy_machine_shows_before_and_after(self):
+        # Codex 指摘(周回171・3回め): 代かきの トラクターが 走る 2枚で、通る 前(.pdBase)と 通った あと(.pdTrail)が 同じ 絵 だった(前がわに 作業の あとの 地面を わたして いた)。
+        # 機械が 出る ぜんぶの 切りかわりで: 前がわ = 作業の 直前に 描いた 絵(冬の 土の 段・かたまり・地面・稲)、あとがわ = 作業の あとの 絵、2つは ちがう、2枚の あとは あとの 絵 1つ
+        T = {"method": "transplant", "sowDoy": 95, "doy": 100}
+        cases = [
+            ("冬の 土 → 田起こし", {"ok": 7, "f": dict(T)}, {"f": {"tillDepth": 15, "doy": 101}}, "tractor", "soil", "till"),
+            ("田起こし → 代かき", {"ok": 7, "f": dict(T, tillDepth=15)}, {"f": {"puddleDoy": 115, "doy": 115}}, "tractor", "till", "puddle"),
+            ("実り → 稲刈り", {"ok": 7, "f": dict(T, tillDepth=15, puddleDoy=115, transDoy=120, piDoy=180, headDoy=200, matDoy=240, water="drained", drainDoy=230, doy=245)},
+             {"f": {"harvestDoy": 246, "doy": 246}}, "combine", "ripe", "stubble"),
+        ]
+        for wx in ("fair", "rain"):
+            for name, before, work, veh, b0, b1 in cases:
+                tag = name + " " + wx
+                st0 = dict(before, len=10, wx=wx)
+                r = paddy_run([dict(st0, len=9), st0, dict(work, len=11, wx=wx), {"len": 12, "wx": wx}, {"len": 13, "wx": wx}])
+                self.assertEqual([x["base"] for x in r], [b0, b0, b1, b1, b1], tag)
+                self.assertEqual([x["veh"] for x in r], ["", "", veh, veh, ""], tag)
+                self.assertEqual(r[2]["img"], r[1]["img"], tag + ": 前がわは 作業の 直前の 絵")
+                self.assertEqual(r[3]["img"], r[1]["img"], tag + ": 2枚めも 前がわは 同じ")
+                self.assertNotEqual(r[2]["trailImg"], r[2]["img"], tag + ": 前と あとは ちがう 絵")
+                self.assertEqual(r[4]["img"], r[2]["trailImg"], tag + ": 機械が 消えたら あとの 絵 1つ")
+                self.assertEqual(r[4]["trailImg"], "", tag)
+                # あとの 絵は、保存から 開いて その 状態を 描いた ときと 同じ(雨の 水たまり・すじも 正しい)
+                after = dict(before["f"]); after.update(work["f"])
+                fresh = paddy_run([{"ok": before["ok"], "len": 30, "f": after, "wx": wx}])
+                self.assertEqual(fresh[0]["img"], r[2]["trailImg"], tag)
+                self.assertEqual(fresh[0]["veh"], "", tag)   # 保存から もどった ときは 機械なし
+                self.assertEqual(r[2]["wet"], wx == "rain", tag)
+        # 冬の 土 → 田起こし: 前がわは ○ を 重ねた 冬の 土の まま(○ 7つ = 段 1・かたまり 1)
+        r = paddy_run([{"ok": 7, "len": 9, "f": dict(T)}, {"ok": 7, "len": 10}, {"ok": 8, "len": 11, "f": {"tillDepth": 15, "doy": 101}}])
+        soil7 = paddy_run([{"ok": 7, "len": 50, "f": dict(T)}])[0]["img"]
+        self.assertEqual(r[2]["img"], soil7)
+        # 走った 所 だけ あとの 絵が 見える(のぞき窓と 中身を 逆に ずらす)・動きを へらす 設定では 止まって あとの 絵が ぜんぶ 見える
+        self.assertIn("#swPaddy[data-veh] .pdWin{display:block;animation:swPdWin 3.6s linear infinite}", HTML)
+        self.assertIn("@keyframes swPdWin{from{transform:translateX(-100%)}to{transform:none}}", HTML)
+        self.assertIn("@keyframes swPdWinIn{from{transform:translateX(100%)}to{transform:none}}", HTML)
 
     def test_paddy_drawn_in_pixels_only(self):
         # 字・数字・音は 足さない。動きは transform だけ・動きを へらす 設定では 止める(絵は 見える)

@@ -92,6 +92,24 @@
   });
 })();
 </script>
+<script>/* サイクル208（読みこみの 見はり）：地図の 部品（unpkg の Leaflet）の 返事が 来ないと、題字と 米つぶの まま 文も ボタンも 出なかった（60秒 見て 4回とも。
+   この 部品は 同期の スクリプトなので、来るまで DOMContentLoaded が 来ない）。おそい だけ か 止まった か は ページから 見分けられない ので、「止まった」とは 言わない：
+   題字が 12秒 出た ままで まだ 部品が 無ければ「時間が かかっています・このまま 待つか、タップで やりなおし」を 題字の 下に 出す（米づくり365 周回169・トラクター サイクル275 と 同じ 言い方）。
+   8秒 おくれて 届く 人には 出ない。20秒 おくれて 届く 人は 12秒で 出るが、届けば 題字ごと 消えて ふつうに 始まる。読めなかった（エラー）ときは game.js が すぐ ボタンを 出す */
+(function () {
+  setTimeout(function () {
+    var c = document.getElementById('bootCover');
+    if (!c || window.L || c.classList.contains('off') || document.getElementById('bootSlow')) return;
+    var b = document.createElement('button');
+    b.type = 'button'; b.id = 'bootSlow';
+    b.style.cssText = 'margin-top:22px;padding:10px 16px;border:2px solid #6b5a3a;border-radius:10px;background:#fffdf5;color:#3a2f1c;font:15px/1.6 sans-serif;text-align:center';
+    b.innerHTML = '読みこみに 時間が かかっています<br>このまま 待つか、タップで やりなおし';
+    b.onclick = function () { location.reload(); };
+    c.removeAttribute('aria-hidden');
+    c.appendChild(b);
+  }, 12000);
+})();
+</script>
 <!-- サイクル202（おそい 回線）：スタイルシートは 題字の あとに 置く（head に 置くと、3つとも 届くまで 画面が まっ白の まま。ここなら 題字と 米つぶが 先に 出る）。
      下の スクリプトは スタイルシートを 待って から 動くので、題字が 消える（DOMContentLoaded）ときには そろって いる -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>

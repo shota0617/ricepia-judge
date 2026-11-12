@@ -9104,7 +9104,8 @@ function mzToastDodge(now) {   // めいろ（ふつうの 地図の 描きの �
   const avoid = [];
   const rb = document.getElementById('reactBar');
   if (rb && !rb.hidden) { const b = rb.getBoundingClientRect(); avoid.push({ page: [b.left, b.top, b.right, b.bottom] }); }
-  worldToastDodge(mazeOn() && G.guide && !rec ? mzMap.arrow : null, avoid);
+  // サイクル208（はじめの 1分）：矢印が ない（ゴールが 画面の 中）ときは、ゴールの 輪と 旗を よける（自分で 遊んで 分かった：最初の ゴールの 輪に「🎁 すぐ近くに たからばこ！」が 4回とも 重なった）
+  worldToastDodge(mazeOn() && G.guide && !rec ? mzMap.arrow || mzMap.ring : null, avoid);
 }
 function goalTag(cx, bottom, dpr, text) {   // 殿堂入りの場所・めいろの ゴールの 札：こい紺に金色の字（当店の札とは ちがう色）。札の わく [左, 上, 右, 下] を返す
   const fs = Math.round(13 * dpr), pad = Math.round(3 * dpr), b = Math.max(1, Math.round(dpr)), W = ctx.canvas.width, edge = 4 * dpr;   // 字は 13点（10点では 小さかった 2026-10-27）
@@ -12682,7 +12683,7 @@ function drawMzGoal(gt, ox, oy, T, w, vh, cy, dpr, now) {
   const p = toTile(gt.lat, gt.lng), ex = ox + p.x * T, ey = oy + p.y * T, U = Math.min(Math.max(T, Math.round(24 * dpr)), Math.round(32 * dpr)), pulse = (Math.sin(now / 260) + 1) / 2;   // U：絵の 大きさの もと（地図を 小さく していても 見える 大きさ。大きく しても 画面の 32点まで）
   const far = mzRt.path ? (mzRt.path.length - 1) * MZ_K * TILE_M : Math.hypot(p.x - (rp.x === null ? p.x : rp.x), p.y - (rp.y === null ? p.y : rp.y)) * TILE_M;
   const dist = far < 1000 ? `${Math.round(far / 10) * 10}m` : `${(far / 1000).toFixed(1)}km`;
-  mzMap.goalLab = null;
+  mzMap.goalLab = null; mzMap.ring = null;
   const label = (t, x, y, size, col) => { ctx.font = `bold ${size}px "DotGothic16", sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round'; ctx.lineWidth = Math.max(3, size / 4); ctx.strokeStyle = '#1a1a1a'; ctx.strokeText(t, x, y); ctx.fillStyle = col; ctx.fillText(t, x, y); };
   const flag = (x, y, s) => {   // 白黒の 市松の 旗（x, y：さおの 下）
     const q = Math.max(1, Math.round(s / 8));
@@ -12698,6 +12699,7 @@ function drawMzGoal(gt, ox, oy, T, w, vh, cy, dpr, now) {
     ctx.strokeStyle = 'rgba(26,26,26,.75)'; ctx.beginPath(); ctx.arc(ex, ey, r, 0, Math.PI * 2); ctx.stroke();
     ctx.lineWidth = Math.max(2, U * 0.1); ctx.strokeStyle = `rgba(255,213,79,${0.6 + pulse * 0.4})`; ctx.beginPath(); ctx.arc(ex, ey, r, 0, Math.PI * 2); ctx.stroke();
     flag(ex, ey - U * 0.3, U * 1.3);
+    { const R = Math.max(U * 0.8, G.reachOf(gt) / TILE_M * T) * 1.04 + U * 0.16; mzMap.ring = [ex - R, Math.min(ey - R, ey - U * 0.3 - U * 1.3 * 1.1 - U * 0.2), ex + R, ey + R]; }   // サイクル208：輪と 旗の わく（ふくらむ いちばん 外。知らせが よける。mzToastDodge）
     const gg = G.glowGoal;
     if (gg && gg.id === gt.id) {   // 光るゴール（時限）：金色の ふちが 脈打つ。ゴールの 外がわに もう 1つ 輪
       ctx.lineWidth = Math.max(2, U * 0.12); ctx.strokeStyle = `rgba(255,236,150,${0.35 + pulse * 0.6})`; ctx.beginPath(); ctx.arc(ex, ey, r + U * (0.25 + pulse * 0.2), 0, Math.PI * 2); ctx.stroke();
@@ -12750,7 +12752,7 @@ function drawMzGoal(gt, ox, oy, T, w, vh, cy, dpr, now) {
   if (rec) { mzMap.arrow = null; return; }   // Godot で 描く ときは 矢印の タップを 受けない
   mzMap.arrow = [Math.min(qx, bx) - U * 1.3, Math.min(qy, by) - U * 1.3, Math.max(qx, bx) + U * 1.3, Math.max(qy, by) + U * 1.3];
 }
-const mzMap = { arrow: null, pin: null, tapped: false };   // 縁の 矢印（ゴールまでの めいろ図は 2026-10-29 に なくした）
+const mzMap = { arrow: null, pin: null, ring: null, tapped: false };   // 縁の 矢印（ゴールまでの めいろ図は 2026-10-29 に なくした）
 try { mzMap.tapped = localStorage.getItem('nsg_mz_arrow_tap') === '1'; } catch (e) { /* noop */ }
 // 縁の 矢印を タップすると せかいちず（本当の 地図・地名つき）を、お米と ゴールが 両方 入る ように 開く（運営者の声「ゴールがどこなのかわからない」）。せかいちずには ゴールの 🏁 と 名前と、お米からの 点線
 function mzGoalWorld() {
@@ -13796,7 +13798,17 @@ cv.addEventListener('click', e => {
   if (mazeOn() && !worldMode && demoTapWalk(e.clientX, e.clientY)) return;   // サイクル206：ぎりぎりの 所を 指して いる 手本の そばの タップは、手本の マスへ 歩く
   if (mazeOn() && !worldMode) {   // 縁の 矢印を タップで せかいちず
     const px = (e.clientX - r.left) * dpr, py = (e.clientY - r.top) * dpr, now = performance.now(), inR = q => q && px >= q[0] && px <= q[2] && py >= q[1] && py <= q[3];
-    if (inR(mzMap.arrow) && !arrowYields(px, py)) { if (!mzMap.tapped) { mzMap.tapped = true; try { localStorage.setItem('nsg_mz_arrow_tap', '1'); } catch (err) { /* noop */ } } mzGoalWorld(); return; }   // 縁の 矢印を タップすると せかいちずで ゴールの 場所を 見る（ゴールまでの めいろ図は なくした。運営者の声 2026-10-29）
+    // サイクル208（はじめの 1分）：1つめの ゴールへ 歩いて いる 間に ゴールを もう 1回 タップすると、ゴールが 上の 帯の 下に 入って 縁の 矢印が 出て いて、
+    // その 当たり（矢印と 旗の まわり 1.3U の 四角）に 入り、せかいちずに 切りかわった（0.8・1.2・1.5秒 あけて 3回とも）。ゴールは まだ 帯の すぐ 下に 見えて いて、
+    // 矢印は その すぐ 上に 出る ので、ゴールを ねらった タップも 矢印の 絵の 半径に 入る。はじめての さんぽ（ゴール 3つ まで）と 歩いて いる さいちゅうは、
+    // 矢印の 絵（まん中から 半径 R）を ねらった タップ だけで せかいちずを 開く：余白の タップ・矢印より ゴールの 見えて いる 所に 近い タップは ふつうの 地図の タップ（その 方へ 歩く）
+    const pin = mzMap.pin, careful = firstWalk() || !!tapS.goal, gq = careful && mzGoalOnCanvas(r, dpr);
+    // 歩いて いる 間は 地図が 動くので、見て ねらった 時の ゴールと 指を はなした 時の ゴールが ずれる（0.17秒で 16px）。ゴールより 矢印の 絵の 半径の 半分 以上 近い タップを 矢印と みる
+    // （矢印の 絵の まん中を 押せば、ゴールが 半径の 半分より はなれて いる かぎり これまでどおり せかいちず。運営者の 決めた うごき）
+    const dPin = pin ? Math.hypot(px - pin[0], py - pin[1]) : Infinity, onPin = !!pin && dPin <= pin[2] && !(gq && Math.hypot(px - gq[0], py - gq[1]) <= dPin + pin[2] / 2);
+    if (!careful || onPin) {
+      if (inR(mzMap.arrow) && !arrowYields(px, py)) { if (!mzMap.tapped) { mzMap.tapped = true; try { localStorage.setItem('nsg_mz_arrow_tap', '1'); } catch (err) { /* noop */ } } mzGoalWorld(); return; }   // 縁の 矢印を タップすると せかいちずで ゴールの 場所を 見る（ゴールまでの めいろ図は なくした。運営者の声 2026-10-29）
+    }
   }
   if (!(worldMode && dragMoved)) {   // 当店の札と絵がいちばん上に描かれているので、先に調べる
     const px = (e.clientX - r.left) * dpr, py = (e.clientY - r.top) * dpr;
@@ -13835,6 +13847,12 @@ cv.addEventListener('click', e => {
   }
   if (G.demo) tapWalk(Math.floor(c.x + (x - cv.width / 2) / T), Math.floor(c.y + (y - fieldCy) / T));   // 何もない所：そこまで歩く
 });
+function mzGoalOnCanvas(r, dpr) {   // サイクル208：ゴール（道すじの さいご の マス）の キャンバスの 点。キャンバスの 中に 無ければ null
+  const p = mzRt.path, e = p && p[p.length - 1];
+  if (!e) return null;
+  const q = tileClient(e[0] * MZ_K + 1, e[1] * MZ_K + 1), x = (q.x - r.left) * dpr, y = (q.y - r.top) * dpr;
+  return x >= 0 && x <= cv.width && y >= 0 && y <= cv.height ? [x, y] : null;
+}
 // サイクル206（はじめの 1分）：縁の 矢印の タップの はんい（矢印と 旗の 四角 ＋ まわり 1.3U）が、点線の 道すじの 先の マスに かぶって いた。
 // 道すじの 先（ゴールの 旗の そば）を タップすると、歩かずに せかいちずに 切りかわった（320×568 では 開いた 最初の 画面で お米の 2マス 右上）。
 // 直し：はんいの 中でも、タップした マスが 点線の 道すじの マスなら 歩きを 先に する。矢印の 絵 そのもの（矢印の まん中から 半径 R）を 押した ときは これまでどおり せかいちず
@@ -13908,6 +13926,42 @@ function tapWalk(gx, gy) {
   tapWalkTick();
   return true;   // 歩きだせた（となりの マスへ 1歩で 着いて、もう 行き先が のこって いない ときも）
 }
+// サイクル208（はじめの 1分）：地図の 名所の 絵を タップすると 窓が 地図の 上の がわに 開き、同じ 所を もう 1回 タップすると 窓の「教える」に 当たって、
+// おたよりの 入力の 画面に なった（390×844 で 4回とも。窓は 自分では 閉じない）。地図の タップで 開いた 窓の ボタン（リンク）が タップした 点の まわり
+// （PXINFO_GAP）に 来る ときだけ、窓の 中身を タップした 点の 下へ ずらす（中身の 高さ・流れは かえない。窓は なくさない）。
+// きまりは 1つ：ずらしは「いまの 画面で、ボタン（▶ とじる も）が ぜんぶ 見える 所（下の 欄・キーボードの 上）に 入る」ときだけ。開いた とき・中身が かわった とき・
+// 画面の 大きさや 向き・下の 欄の 高さ・見える 所（visualViewport）が かわった ときに 計算しなおす。回して はばが かわったら、タップの 点は もう 意味が ないので 0 に もどす
+// （外の 読み手の 指摘：390×844 で 開いて 844×390 に 回すと 242px の ずらしが のこり、「▶ とじる」が 画面の 外に 出て 押せなかった）
+const pxInfoTap = { x: 0, y: 0, t: -1e9 };
+const PXINFO_GAP = 24;   // タップした 点と 窓の ボタンの あいだ（px。指の ずれ）
+const pxInfoShift = { on: false, x: 0, y: 0, w: 0 };   // いま 開いて いる 窓を 開いた 地図の タップ（on：地図の タップで 開いた）
+function pxInfoPlace(why) {   // why：'resize'（画面・下の 欄・見える 所が かわった）。ほかは 開いた・閉じた・中身が かわった
+  const el = $('pxInfo'), dq = el && el.querySelector('.dq');
+  if (!el || !dq) return;
+  if (el.hidden) { dq.style.marginTop = ''; pxInfoShift.on = false; return; }   // 閉じたら もとに もどす
+  if (why !== 'resize' && performance.now() - pxInfoTap.t <= 800) Object.assign(pxInfoShift, { on: true, x: pxInfoTap.x, y: pxInfoTap.y, w: innerWidth });   // 地図の タップで 開いた（中身が かわった）
+  else if (why === 'resize' && pxInfoShift.on && innerWidth !== pxInfoShift.w) pxInfoShift.on = false;   // 回した（はばが かわった）
+  dq.style.marginTop = '';
+  if (!pxInfoShift.on) return;
+  const x = pxInfoShift.x, y = pxInfoShift.y, gap = PXINFO_GAP, d = dq.getBoundingClientRect();
+  const near = [...dq.querySelectorAll('button, a')].some(b => { const q = b.getBoundingClientRect();
+    return q.width > 0 && q.top < d.bottom && q.bottom > d.top && q.left < x + gap && q.right > x - gap && q.top < y + gap && q.bottom > y - gap; });   // 見えて いる ボタン だけ
+  if (!near) return;
+  const sh = $('sheet'), sr = sh && sh.getBoundingClientRect(), r = el.getBoundingClientRect(), vv = window.visualViewport;   // 下の 欄は position:fixed（offsetParent では 見えるか 分からない）。かくれて いれば 高さ 0
+  const bottom = Math.min(r.bottom, innerHeight, sr && sr.height > 0 ? sr.top : Infinity, vv ? vv.offsetTop + vv.height : Infinity) - 8;   // 見える 所の 下（下の 欄・キーボードの 上）
+  const down = Math.min(y + gap - d.top, bottom - d.bottom);
+  if (down > 0) dq.style.marginTop = Math.round(down) + 'px';
+}
+const pxInfoResize = { raf: 0 };
+function pxInfoReplace() {   // 画面の 大きさ などが かわった：次の こまで 1回だけ 計算しなおす
+  if (pxInfoResize.raf || !$('pxInfo') || $('pxInfo').hidden) return;
+  pxInfoResize.raf = requestAnimationFrame(() => { pxInfoResize.raf = 0; pxInfoPlace('resize'); });
+}
+document.addEventListener('click', e => { if (e.target === cv) { pxInfoTap.x = e.clientX; pxInfoTap.y = e.clientY; pxInfoTap.t = performance.now(); } }, true);   // 地図の タップの 点（地図の click より 先に 見る）
+if (window.MutationObserver && $('pxInfo')) new MutationObserver(() => pxInfoPlace()).observe($('pxInfo'), { attributes: true, attributeFilter: ['hidden'], childList: true, subtree: true });   // 開いた・閉じた・中身が かわった
+window.addEventListener('resize', pxInfoReplace);   // 回す・アドレスバーの 出入り・大きさ
+if (window.visualViewport) visualViewport.addEventListener('resize', pxInfoReplace);   // キーボード・拡大
+if (window.ResizeObserver) { const ro = new ResizeObserver(pxInfoReplace); if ($('sheet')) ro.observe($('sheet')); if ($('pxInfo')) ro.observe($('pxInfo')); }   // 下の 欄の 高さ・地図の 大きさ
 $('pxInfo').addEventListener('click', e => {
   if (e.target === $('pxInfo') || e.target.closest('[data-close]') || e.target.closest('[data-move]')) {
     $('pxInfo').hidden = true;

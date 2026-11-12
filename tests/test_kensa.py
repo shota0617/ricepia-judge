@@ -3787,5 +3787,21 @@ assert.equal(grainAt({ x:110, y:100 }), face);                   // 絵の 中�
 """)
 
 
+    def test_cycle154_codex_overlapping_bad_grains_take_the_one_drawn_on_top(self):
+        # Codex指摘: 1袋目で 顔つきの 粒どうしが 重なると、見えて いる 手前の 粒では なく 奥の 粒が 取れた。
+        # 被害粒 (100,100)・死米 (130,100)。grains は まぜて あり 被害粒が 先、DOM では 死米が あと（手前）。(122,100) を 押す → 被害粒（直す 前） → 死米
+        self._codex154_world("""
+const higai = mk('higai', 100, 100, 100), shini = mk('shini', 130, 100, 100);
+higai.dom = 4; shini.dom = 11;                      // 皿に 足した 順（あとが 手前）
+grains = [higai, shini];                            // 配列は まぜた 順
+assert.equal(grainAt({ x:122, y:100 }), shini, '手前に えがかれた 死米では なく 奥の 被害粒が 取れた');
+grains = [shini, higai]; assert.equal(grainAt({ x:122, y:100 }), shini);   // 配列の 順に よらない
+higai.dom = 12; assert.equal(grainAt({ x:122, y:100 }), higai);           // 被害粒が 手前なら 被害粒
+// 2袋目から（顔なし・わるい粒は どれも 重なり順 1）も 同じ
+lotIndex = 1; higai.z = 1; shini.z = 1; higai.dom = 4; shini.dom = 11; grains = [higai, shini];
+assert.equal(grainAt({ x:116, y:100 }), shini);
+""")
+
+
 if __name__ == "__main__":
     unittest.main()

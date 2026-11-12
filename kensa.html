@@ -1182,7 +1182,7 @@ function buildGrains() {
     const img = document.createElement("img");
     img.src = grainSprite(kind, "far"); img.alt = "";
     b.appendChild(img);
-    const g = { el:b, img, kind, x:PW / 2 + Math.cos(a) * d, y:PH / 2 + Math.sin(a) * d * 0.8, r:Math.round(Math.random() * 120 - 60), z:bad ? 1 : 2 + i, gone:false, awake:0 };
+    const g = { el:b, img, kind, x:PW / 2 + Math.cos(a) * d, y:PH / 2 + Math.sin(a) * d * 0.8, r:Math.round(Math.random() * 120 - 60), z:bad ? 1 : 2 + i, dom:i, gone:false, awake:0 }; /* dom: 皿に 足した 順（同じ 重なり順なら、あとの 粒が 手前に えがかれる） */
     b.style.zIndex = g.z;
     b.addEventListener("click", () => { tapGrain(g); });
     inner.appendChild(b);
@@ -1794,7 +1794,9 @@ function grainAt(p) {
        絵の ふちを 押すと となりの 良い粒の 当たりが 先に 取られた（390×844実測: 絵の 中の 40点で 取れた 35 → 40、良い粒と 重なる 所 だけの 38点で 12 → 38）。顔つきの 粒の 重なり順は 良い粒より 上（FACE_Z）なので、絵の 中なら 先に 取れる */
     if (!(Math.abs(u) <= GW / 2 + padU && Math.abs(v) <= GH / 2 + padV)) return;
     const on = Math.abs(u) <= GW / 2 && Math.abs(v) <= GH / 2 && (k === 1 || grainOpaque(g, u, v)); /* 顔つきの 粒は 絵の すきとおって いない 所だけ */
-    if (!best || (on && !bestOn) || (on === bestOn && g.z > best.z)) { best = g; bestOn = on; }
+    if (!best || (on && !bestOn) || (on === bestOn && (g.z > best.z || g.z === best.z && g.dom > best.dom))) { best = g; bestOn = on; }
+    /* 重なり順（z）が 同じ 粒どうしは、えがかれる 順（皿に 足した 順 dom。あとが 手前）で 決める（サイクル154・Codex指摘）。grains は 足した あとで まぜて あり、
+       配列の 先の 粒を 返すと、顔つきの 粒どうしが 重なった 所で 見えて いる 手前の 粒では なく 奥の 粒が 取れた。2袋目からの わるい粒どうし（z 1）も 同じ */
   });
   return best;
 }

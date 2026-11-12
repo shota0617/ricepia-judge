@@ -40,7 +40,7 @@ async function runVisibleHandCheck(browser, url, out) {
     if (out) await page.screenshot({ path: path.join(out, 'visible-hand-after.png') });
     const walked = before.inside && !after.world && !after.covered && Math.hypot(after.x - before.x, after.y - before.y) > 0.1;
     if (!walked) return { before, after, errors, ok: false };
-    // 手から 外れた 矢印の 絵は、運営者が 決めた とおり せかいちずを 開く。
+    // この 再現位置では、手から 外れた 矢印の 絵は これまでどおり せかいちずを 開く。
     await page.waitForFunction(() => !nishioPixel.tapGoal, null, { timeout: 10000 });
     await page.evaluate(() => nishioPixel.rollPut(1807.5, 1902.5));
     await page.waitForFunction(() => {

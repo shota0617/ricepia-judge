@@ -1,0 +1,190 @@
+{
+  "game": "/kensa.html",
+  "issue": "縮小中に白黒の皿の背景が枠外へせり出す",
+  "sourceHead": "518459a895fb107dfeda5f8e68231e30a45bfae7",
+  "htmlSha256": {
+    "before": "938e10f33ce033965870faf7bc309bdfb746ce9bcc11bb2dcea8da9fc2a7d85c",
+    "after": "69d635628000f6008b900adbe90e06f788466aa0c29d9b6e0fc7874e68015427"
+  },
+  "viewport": {
+    "width": 844,
+    "height": 390
+  },
+  "mobile": true,
+  "touch": true,
+  "input": "CDP Input.dispatchTouchEvent",
+  "externalRequestsBlocked": true,
+  "originalFinder": {
+    "rawReport": "finder/case-01/play.json",
+    "action": 19,
+    "actionStartSeconds": 29.896,
+    "zoomButtonChange": "➖ → 🔍",
+    "photo": "finder/case-01/play-30s.png",
+    "photoSha256": "ebff98ad4df70741571bb6aea6e8a72ea8261a97d98bdd734a7c8a594623d970",
+    "photoRequestedSeconds": 30.0,
+    "photoCompletedSeconds": 30.073,
+    "headingStillReadable": true
+  },
+  "method": "Read original 844x390 PNGs; fixed x310,y100..300 inclusive must be outside measured plate. Count exact paper RGB233,226,210 to inner-white RGB251,248,239 changes, and exact preserved paper separately. No image alteration or browser interaction.",
+  "qualification": "Before/after use real visible-button trials at the same viewport and timing, but fresh play means different random grain layouts. The fixed outside-background metric is independent of grain placement. Outside-inner hit identity is recorded; geometry candidates are not proof of painted or tappable grains outside the plate. Screenshot request/completion bracket the unknown capture instant.",
+  "independentVisualReview": {
+    "beforePairsViewed": 10,
+    "afterPairsViewed": 10,
+    "beforeBackgroundEscapePairs": 10,
+    "afterBackgroundEscapePairs": 0,
+    "finding": "After all ten returns the plate border remains visible and the white/dark backgrounds stay within it. The left record panel and gap to the plate remain visible. No new overlap is visible in the header, hint, photo or zoom control. Touchability is established separately by input/hit records, not by these images."
+  },
+  "before": {
+    "counts": {
+      "attempted": 10,
+      "validMeasurements": 10,
+      "inputErrors": 0,
+      "recordedDriverErrors": 0,
+      "backgroundOverflowAll201PixelProof": 10,
+      "backgroundPreservedAll201PixelProof": 0,
+      "paperToInnerWhitePixels": 2010,
+      "paperPreservedPixels": 0,
+      "geometryExposureCandidates": 9,
+      "outsideInnerHitTrials": 9,
+      "restingScaleOneOverflowVisibleSmoothAbsent": 10
+    },
+    "byPlannedHoldMs": {
+      "40": {
+        "attempted": 5,
+        "valid": 5,
+        "backgroundOverflow": 5,
+        "backgroundPreserved": 0
+      },
+      "250": {
+        "attempted": 5,
+        "valid": 5,
+        "backgroundOverflow": 5,
+        "backgroundPreserved": 0
+      }
+    },
+    "recordedErrors": [],
+    "rawReport": "zoom-clip-repro/report.json",
+    "rawReportSha256": "ddf98ea1f00c8d895c5caba45a02dc59a49f07cbfcb9413a282acd3c6d225d89",
+    "representative": {
+      "number": 2,
+      "plannedHoldMs": 250,
+      "actualCommandSendHoldMs": 250,
+      "captureRequestedAfterRemovalMs": 131.39990234375,
+      "captureCompletedAfterRemovalMs": 200.39990234375,
+      "scaleBeforeCapture": 1.30252,
+      "scaleAfterCapture": 1.10558,
+      "overflowDuring": "visible",
+      "outsideInnerHitCount": 15,
+      "outsideHitIdentities": [
+        {
+          "id": "plateInner",
+          "tag": "DIV",
+          "classes": "smooth",
+          "count": 15
+        }
+      ],
+      "paperToInnerWhitePixels": 201,
+      "paperPreservedPixels": 0
+    },
+    "photo": "before.png",
+    "photoSha256": "be748128f24e4223607acbafc6bc6222cdd38dca0d8f20b00e2ad6a10809981d"
+  },
+  "after": {
+    "counts": {
+      "attempted": 10,
+      "validMeasurements": 10,
+      "inputErrors": 0,
+      "recordedDriverErrors": 0,
+      "backgroundOverflowAll201PixelProof": 0,
+      "backgroundPreservedAll201PixelProof": 10,
+      "paperToInnerWhitePixels": 0,
+      "paperPreservedPixels": 2010,
+      "geometryExposureCandidates": 0,
+      "outsideInnerHitTrials": 0,
+      "restingScaleOneOverflowVisibleSmoothAbsent": 10
+    },
+    "byPlannedHoldMs": {
+      "40": {
+        "attempted": 5,
+        "valid": 5,
+        "backgroundOverflow": 0,
+        "backgroundPreserved": 5
+      },
+      "250": {
+        "attempted": 5,
+        "valid": 5,
+        "backgroundOverflow": 0,
+        "backgroundPreserved": 5
+      }
+    },
+    "recordedErrors": [],
+    "rawReport": "after-repro/report.json",
+    "rawReportSha256": "8785debab4cd428798234aeb0fd79427563fb31fea789a7b346d9b27cd9a32f5",
+    "representative": {
+      "number": 2,
+      "plannedHoldMs": 250,
+      "actualCommandSendHoldMs": 250,
+      "captureRequestedAfterRemovalMs": 135.5,
+      "captureCompletedAfterRemovalMs": 192.5,
+      "scaleBeforeCapture": 1.2951,
+      "scaleAfterCapture": 1.12653,
+      "overflowDuring": "hidden",
+      "outsideInnerHitCount": 0,
+      "outsideHitIdentities": [],
+      "paperToInnerWhitePixels": 0,
+      "paperPreservedPixels": 201
+    },
+    "photo": "after.png",
+    "photoSha256": "cf4237758a1c42277271cc08803a6d74840e81d1ceefcc0c491ad8f56e8a31ad"
+  },
+  "regressionTests": {
+    "file": "tests/test_kensa_zoom_clipping.py",
+    "sha256": "a44b04c0c79971552033ba6927db3a8690f651266cd3c778aabe7bc28a26501d",
+    "before": {
+      "passed": 1,
+      "failed": 1,
+      "skipped": 0,
+      "seconds": 12.034,
+      "eligibleReturnFrames": 15,
+      "leakedReturnFrames": 15
+    },
+    "after": {
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "seconds": 11.889,
+      "eligibleReturnFrames": 15,
+      "leakedReturnFrames": 0
+    },
+    "reducedMotion": "Passed before and after; after label 🔍 is scale1 and overflow visible."
+  },
+  "afterFirstMinute": {
+    "observationSecondsMinimum": 10,
+    "playSeconds": 60,
+    "actions": 35,
+    "actionsWithObservedResponse": 35,
+    "noObservedResponse": 0,
+    "firstHintSampleSeconds": 0.136800048828125,
+    "firstTouchSeconds": 0.012,
+    "firstHintSampleUpperBoundFromTouchSeconds": 0.124800048828125,
+    "timeFormula": "(trace.timeOrigin + trace.start + sample.t - trace.nodePlayStartedAt) / 1000",
+    "postGestureFirstResponseSeconds": 0.426,
+    "firstGrainRemovalObservedSeconds": 6.027,
+    "firstCleanHintObservedSeconds": 8.327,
+    "errors": [],
+    "blocked": [],
+    "driverErrors": [],
+    "interpretation": "Sampler/post-gesture observations are upper bounds, not physical response onset or retention-rate measurements.",
+    "consoleErrors": 0,
+    "pageErrors": 0,
+    "errorCollection": "browser-resumed.cjs collects console.error and pageerror into errors; both counts are zero."
+  },
+  "limits": [
+    "前後で粒のランダム配置が違う。",
+    "皿外の hit test は背景 DIV であり、米粒や実際の皿外タップ成功の数ではない。",
+    "画像の実際の取得時刻は要求から完了までの間。",
+    "全体テスト・5サイズの最終結果はPR本文に記載する。",
+    "傾きのセンサー・本物の指・回線の速さは実機未確認。",
+    ":has() 非対応ブラウザでは改善が適用されない。"
+  ]
+}

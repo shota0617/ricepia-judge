@@ -105,6 +105,9 @@
   /* 鑑定皿: 白と黒の2つで同じ試料を見る */
   #plate { flex:1; min-height:0; position:relative; border-radius:18px; border:4px solid #4a4136; touch-action:none; background:#1c1a16; }
   #plate.zoomed { overflow:hidden; }
+  @media (prefers-reduced-motion:no-preference) {
+    #plate:has(> #plateInner.smooth) { overflow:hidden; } /* 戻す途中も、皿の絵を枠の中に収める */
+  }
   #plateInner { position:absolute; inset:0; border-radius:14px; transform-origin:0 0;
     background:linear-gradient(90deg,#fbf8ef 0 50%,#1c1a16 50% 100%); }
   #plateInner.smooth { transition:transform .45s cubic-bezier(.25,.8,.3,1); } /* 🔍と2回タップの寄り・戻りだけ、身を寄せるように滑らかにする（サイクル92・類6）。ピンチと寄った後の指の移動には付けず、指にそのまま追随させる */

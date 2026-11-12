@@ -1669,6 +1669,7 @@ for (const [rest, inAt] of [[158, 127], [205, 166], [149, 120], [126, 101]]) {
         script = """
 const assert = require('node:assert/strict');
 const GW = 36, GH = 20, Z = {s:1};
+const firstBagFace = () => false;   // サイクル154: 顔つきの 粒の 当たりの 大きさ（ここでは 顔なし）
 const mk = (kind, x, y, r, z) => ({kind, x, y, r, z, gone:false, el:{hidden:false}});
 const bad = mk('higai', 100, 100, 0, 1), good = mk('seiryu', 100, 130, 0, 5);
 let grains = [bad, good];
@@ -3692,6 +3693,129 @@ advance(200); assert.equal(cls.has('on'), true);
 cls.delete('on'); vis(true); armIdle(); advance(90000); assert.equal(cls.has('on'), false);
 vis(false); advance(45100); assert.equal(cls.has('on'), true);
 """, hidden_at_load=True)
+
+
+    # ---- サイクル154（最初の1分・1袋目の 顔つきの わるい粒）----
+
+    def test_cycle154_face_grain_wins_inside_its_picture(self):
+        # 1袋目の 顔つきの わるい粒は 1.5倍で 見えるのに、当たりは 1倍の まま だった。絵の ふちを 押すと、となりの 良い粒の 当たりが 先に 取られて
+        # 良い粒が ゆれる だけ（390×844実測: 絵の 中の 40点で 取れた 35 → 40。良い粒と 重なる 所だけの 38点で 取れた 12 → 38）
+        fn = HTML[HTML.index("function grainAt(p) {"):HTML.index("const pts = new Map();")]
+        rows = HTML[HTML.index("const GRAIN_ROWS = ["):HTML.index("];", HTML.index("const GRAIN_ROWS = [")) + 2]
+        self._node150("""
+const assert = require('node:assert/strict');
+const GW = 36, GH = 20, Z = { s:1 }; let lotIndex = 0, spread = true;
+const firstBagFace = g => lotIndex === 0 && spread && g.kind !== 'seiryu';
+""" + rows + """
+const LOT_LOOKS = [{ rows:GRAIN_ROWS }], LOT = { look:0 }; let faceScale = 1.5;
+const getComputedStyle = el => ({ transform:el.face ? 'matrix(' + faceScale + ', 0, 0, ' + faceScale + ', 0, 0)' : 'none' });   // サイクル154: その しゅんかん 見えて いる 大きさ
+const mk = (kind, x, y, z) => ({ kind, x, y, r:0, z, gone:false, el:{ hidden:false }, img:{ face:kind !== 'seiryu' } });
+const good = mk('seiryu', 100, 100, 5), face = mk('shini', 125, 100, 100), grains = [good, face];
+""" + fn + """
+// 顔の 絵（1.5倍: 中心から よこ 27px）の 中で、良い粒の 当たりの 中でも ある 所
+assert.equal(grainAt({ x:104, y:100 }), face, '顔つきの 粒の 絵の 中なのに 良い粒が 取られた');
+assert.equal(grainAt({ x:150, y:100 }), face);                          // 絵の 先の はし
+assert.equal(grainAt({ x:125, y:113 }), face);                          // 短い 向きの はし（15px）
+assert.equal(grainAt({ x:90, y:100 }), good);                           // 絵の 外は 今までどおり 良い粒
+// 2袋目から（顔なし）は 今までどおり 1倍の 当たり
+lotIndex = 1; assert.equal(grainAt({ x:104, y:100 }), good);
+""")
+
+    def test_cycle154_face_grain_does_not_shrink_when_it_pulses(self):
+        # 顔つきの 粒（1.5倍）に「ふくらんで 知らせる」動きが 付くと、動きの 1倍の 形が 上書きして 1.0〜1.25倍に ちぢんだ
+        # （390×844実測: 0.2秒おき 100回中91回 1.5倍より 小さい・はば 59 → 35px）。ふくらむ・ゆれる 動きは その 粒の 大きさを 元に する
+        fn = HTML[HTML.index("function refreshBadFaces() {"):HTML.index("let zoomAnimTimer")]
+        node = shutil.which("node")
+        if not node:
+            self.skipTest("node がないので実行の確認は飛ばす")
+        out = subprocess.run([node, "-e", """
+let lotIndex = 0, spread = true, isNear = false; const FACE_Z = 100, motion = 1;
+const firstBagFace = g => lotIndex === 0 && spread && g.kind !== 'seiryu', grainMood = () => 'normal', grainSprite = () => '';
+const props = {}; const g = { kind:'shini', gone:false, el:{ style:{} }, img:{ src:'', style:{ transform:'', setProperty(k, v) { props[k] = v; } }, animate() {} } };
+const grains = [g];
+""" + fn + """
+refreshBadFaces(); console.log(JSON.stringify({ face:props['--face'] || null, transform:g.img.style.transform }));
+"""], capture_output=True, text=True, check=True).stdout
+        st = json.loads(out)
+        self.assertEqual(st["transform"], "scale(1.5)")
+        face = st["face"] or "1"
+        for name in ("hint", "wig"):
+            kf = HTML[HTML.index("@keyframes " + name + " {"):]
+            kf = kf[:kf.index("\n")]
+            scales = []
+            for frame in re.findall(r"\{ transform:([^;]*); \}", kf):
+                frame = re.sub(r"var\(--face, 1\)", face, frame)
+                m = re.findall(r"scale\(([^()]*(?:\([^()]*\))?[^()]*)\)", frame)
+                expr = m[-1].replace("calc(", "(") if m else "1"
+                scales.append(eval(expr, {"__builtins__": {}}))
+            self.assertGreaterEqual(min(scales), 1.5, name + " の 動きで 顔つきの 粒が " + str(min(scales)) + "倍に ちぢむ")
+
+
+    def _codex154_world(self, body):
+        # Codex指摘 2つ（どちらも 390×844・GW 36・GH 20・回転 0°・顔つきの 粒 (125,100)）:
+        # 1. 手本で 1.875倍に ふくらんだ 時、新しく 見えた 絵の ふち (94,100) を 押すと 下の 良い粒 (94,100) が 取られた（当たりが いつも 1.5倍）
+        # 2. 顔の 絵の すきとおった 角 (104,113) から 見える 良い粒 (100,114) を 押すと、顔つきの 粒が 取られた（四角で はかって いた）
+        fn = HTML[HTML.index("function grainAt(p) {"):HTML.index("const pts = new Map();")]
+        rows = HTML[HTML.index("const GRAIN_ROWS = ["):HTML.index("];", HTML.index("const GRAIN_ROWS = [")) + 2]
+        self._node150("""
+const assert = require('node:assert/strict');
+const GW = 36, GH = 20, Z = { s:1 }; let lotIndex = 0, spread = true, faceScale = 1.5;
+const firstBagFace = g => lotIndex === 0 && spread && g.kind !== 'seiryu';
+""" + rows + """
+const LOT_LOOKS = [{ rows:GRAIN_ROWS }], LOT = { look:0 };
+let faceMatrix = null;   // サイクル154（Codex指摘 3つめ）: 倍率 だけで ない 見た目の 行列
+const getComputedStyle = el => ({ transform:el.face ? (faceMatrix || 'matrix(' + faceScale + ', 0, 0, ' + faceScale + ', 0, 0)') : 'none' });
+const mk = (kind, x, y, z) => ({ kind, x, y, r:0, z, gone:false, el:{ hidden:false }, img:{ face:kind !== 'seiryu' } });
+let grains;
+""" + fn + """
+const face = mk('shini', 125, 100, 100);
+""" + body)
+
+    def test_cycle154_codex_pulsing_face_takes_its_new_edge(self):
+        self._codex154_world("""
+// 1. ふくらんだ 1.875倍の 時: 新しく 見えた 絵の ふちを 押せば 顔つきの 粒
+const good = mk('seiryu', 94, 100, 5); grains = [good, face];
+faceScale = 1.875; assert.equal(grainAt({ x:94, y:100 }), face, 'ふくらんだ 絵の ふちで 良い粒が 取られた');
+faceScale = 1.5; assert.equal(grainAt({ x:94, y:100 }), good);   // ふくらんで いない 時は、その 点は 絵の 外 → 良い粒（直しすぎない）
+""")
+
+    def test_cycle154_codex_clear_corner_of_the_face_keeps_the_good_grain(self):
+        self._codex154_world("""
+// 2. 絵の すきとおった 角から 見える 良い粒は 良い粒
+const good = mk('seiryu', 100, 114, 5); grains = [good, face];
+assert.equal(grainAt({ x:104, y:113 }), good, 'すきとおった 角を 押して 顔つきの 粒が 取られた');
+assert.equal(grainAt({ x:110, y:100 }), face);                   // 絵の 中（すきとおって いない 所）は 顔つきの 粒
+""")
+
+
+    def test_cycle154_codex_overlapping_bad_grains_take_the_one_drawn_on_top(self):
+        # Codex指摘: 1袋目で 顔つきの 粒どうしが 重なると、見えて いる 手前の 粒では なく 奥の 粒が 取れた。
+        # 被害粒 (100,100)・死米 (130,100)。grains は まぜて あり 被害粒が 先、DOM では 死米が あと（手前）。(122,100) を 押す → 被害粒（直す 前） → 死米
+        self._codex154_world("""
+const higai = mk('higai', 100, 100, 100), shini = mk('shini', 130, 100, 100);
+higai.dom = 4; shini.dom = 11;                      // 皿に 足した 順（あとが 手前）
+grains = [higai, shini];                            // 配列は まぜた 順
+assert.equal(grainAt({ x:122, y:100 }), shini, '手前に えがかれた 死米では なく 奥の 被害粒が 取れた');
+grains = [shini, higai]; assert.equal(grainAt({ x:122, y:100 }), shini);   // 配列の 順に よらない
+higai.dom = 12; assert.equal(grainAt({ x:122, y:100 }), higai);           // 被害粒が 手前なら 被害粒
+// 2袋目から（顔なし・わるい粒は どれも 重なり順 1）も 同じ
+lotIndex = 1; higai.z = 1; shini.z = 1; higai.dom = 4; shini.dom = 11; grains = [higai, shini];
+assert.equal(grainAt({ x:116, y:100 }), shini);
+""")
+
+
+    def test_cycle154_codex_shaking_face_keeps_the_good_grain_in_its_clear_part(self):
+        # Codex指摘 3つめ: 皿を たたいて ゆれる 間（wig の 30%: translateY(-22%) rotate(-12deg) scale(1.5)）、絵の すきとおった 所 (105,111) から
+        # 見える 良い粒 (100,114) を 押すと、顔つきの 被害粒 (125,100) が 取られた（倍率 だけ もどして、ずれた 所の 透明を 調べて いた）
+        self._codex154_world("""
+const higai = mk('higai', 125, 100, 100), good = mk('seiryu', 100, 114, 5); grains = [good, higai];
+const r = -12 * Math.PI / 180, s = 1.5;   // GH 20 の -22% = -4.4px
+faceMatrix = 'matrix(' + [s * Math.cos(r), s * Math.sin(r), -s * Math.sin(r), s * Math.cos(r), 0, -4.4].join(', ') + ')';
+assert.equal(grainAt({ x:105, y:111 }), good, 'ゆれる 間、すきとおった 所を 押して 顔つきの 粒が 取られた');
+assert.equal(grainAt({ x:125, y:96 }), higai);                    // ゆれた 絵の まんなかは 顔つきの 粒
+faceMatrix = 'matrix3d(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)';   // 読めない 行列は 1.5倍
+assert.equal(grainAt({ x:104, y:100 }), higai);
+""")
 
 
 if __name__ == "__main__":

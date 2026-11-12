@@ -28,7 +28,9 @@
   /* サイクル269・最初の1分: 3D の読みこみを待つ間の おおい（空と土の色・なぞり方の指・短い 1 行）。入力は ふさがない・押す物は ない（はじめの画面では ない）。
      それまでは 車体と田んぼが届くまで、まだ何も置いていない景色を 原点のカメラで写していて、灰色と茶色の大きな三角が画面いっぱいに見えていた */
   #loadWait { position: fixed; inset: 0; pointer-events: none; background: linear-gradient(#9fb9d6 0%, #d3e3ef 47%, #8a7358 47%, #6c5843 100%); transition: opacity .3s, visibility 0s .3s; }
-  #loadWait.off { opacity: 0; visibility: hidden; }
+  /* サイクル277: 始まったら おおいは すぐ 消す（0.3 秒の うすれは やめる）。うすれは こまで すすむので、1 秒に 1.4 こまの スマホでは 始まって から 2〜3 こま（1.4〜2.1 秒）
+     おおいが 画面いっぱいに のこり、始まった 田んぼが 見えなかった（ふつうの こまでは 0.3〜0.6 秒）。消えるのは 次の 1 こま */
+  #loadWait.off { opacity: 0; visibility: hidden; transition: none; }
   #loadWait .lwF { position: absolute; left: 50%; top: 66%; font-size: 56px; line-height: 1; margin: -48px 0 0 -12px; filter: drop-shadow(0 3px 5px rgba(0,0,0,.45)); animation: lwUp 2.6s linear infinite; }
   #loadWait .lwT { position: absolute; left: 0; right: 0; top: 76%; text-align: center; color: #fff; font-size: 17px; font-weight: 800; text-shadow: 0 1px 4px rgba(0,0,0,.5); }
   /* サイクル271: 読みこみの 進みぐあいの 線（押す物では ない）。届いた分だけ 右へ のびる。おそい回線では 車体と田んぼが届くまで 15〜60 秒 かかり、その間 指の見本が くり返すだけで 進んでいるのか 止まっているのか 分からなかった */
@@ -155,6 +157,13 @@
   #say { margin-top: 6px; max-width: min(240px, 62vw); padding: 7px 12px; border-radius: 14px; background: rgba(251,248,240,.97); color: #3a2f22; font-size: 14px; font-weight: 800; line-height: 1.4; box-shadow: 0 2px 8px rgba(0,0,0,.25); position: relative; transition: opacity .3s; }
   #say::before { content: ''; position: absolute; top: -6px; right: 30px; border: 6px solid transparent; border-top: 0; border-bottom-color: rgba(251,248,240,.97); }
   #say.off { opacity: 0; }
+  /* サイクル277: 修理の 間だけ 吹き出しの いちばん 上に 出す 進みぐあいの 細い 棒（字なし）。ぬった 所が 右へ のびて、のびきると 修理が おわる。なぞると 1 回だけ 小さく ゆれる（transform だけ・音なし） */
+  #fixBar { display: none; height: 5px; margin-bottom: 6px; border-radius: 3px; background: rgba(58,47,34,.18); overflow: hidden; }
+  #fixBar.on { display: block; }
+  #fixFill { display: block; height: 100%; border-radius: 3px; background: #6a8f3a; transform-origin: left center; transform: scaleX(0); }
+  #fixBar.nudge { animation: fixNudge .36s ease-out; }
+  @keyframes fixNudge { 0% { transform: translateX(0); } 25% { transform: translateX(-4px); } 50% { transform: translateX(4px); } 75% { transform: translateX(-2px); } 100% { transform: translateX(0); } }
+  @media (prefers-reduced-motion: reduce) { #fixBar.nudge { animation: none; } }
   .sayCoach { font-size: 13px; color: #6a5536; }   /* 下の だん：いま やること */
   /* サイクル194: のんびりでは 吹き出しを 窓の「下」ではなく「左どなり」に出す。下だと 運転席から見える田んぼ（なぞる所）に かぶり、
      小さい画面（320×568）や文字 200% では なぞり方ヒントの点まで隠していた。左どなりなら 屋根と空の高さに収まる */
@@ -1414,7 +1423,7 @@ const BELT = (() => {
       toast('エンジンを切って ボンネットを開けた。冷却ファンを回すベルトが切れていた。予備のベルトに交換します（' + (hot ? '冷めるのを待って 25 分' : '10 分') + '）', 6);
     }
   }
-  return { start, step, get broken() { return broken; }, get fixing() { return fixT > 0; }, get fixed() { return fixed; }, get worn() { return worn; } };
+  return { start, step, get broken() { return broken; }, get fixing() { return fixT > 0; }, get left() { return fixT; }, get fixed() { return fixed; }, get worn() { return worn; } };
 })();
 // リヤカバー：耕す深さの自動制御は、ロータリーのうしろのカバー（リヤカバー）の上下をセンサーで見ている。
 // ワイヤーがさびたり アームの根元が固まったりして なめらかに上下しないと、耕したあとが波うつ（山と谷）。
@@ -1458,7 +1467,7 @@ const COVER = (() => {
     if (i < 0 || j < 0 || i >= NX || j >= NZ || !WAVY[c]) return 0;
     return A * (1 + Math.sin((x * Math.sin(WAVD[c]) + z * Math.cos(WAVD[c])) * K)) / 2;
   }
-  return { start, step, wave, h, get stuck() { return stuck; }, get told() { return told; }, get fixing() { return fixT > 0; }, get fixed() { return fixed; } };
+  return { start, step, wave, h, get stuck() { return stuck; }, get told() { return told; }, get fixing() { return fixT > 0; }, get left() { return fixT; }, get fixed() { return fixed; } };
 })();
 // グリース：ロータリーを上げ下げする 3 点リンクなどの 動く所・すべる所には グリースを入れておく。切れていると 上げ下げで ギーギー鳴る
 // （田圃に遊ぶ・・・「農機具雑談」：3 点リンクを始め、ロータリーを上下させる 全ての可動部・摺動部に グリースを塗る。上げ下げで ギーギー鳴るようでは ユーザー失格）。
@@ -1491,7 +1500,7 @@ const GREASE = (() => {
       toast('エンジンを切って 駐車ブレーキ。上げたロータリーに降下止め（油圧ロック）をかけて、3 点リンクと ロータリーを上下させる 動く所・すべる所に グリースガンで グリースを入れた（2 分）', 5);
     }
   }
-  return { start, step, get dry() { return dry; }, get told() { return told; }, get moves() { return moves; }, get fixing() { return fixT > 0; }, get fixed() { return fixed; } };
+  return { start, step, get dry() { return dry; }, get told() { return told; }, get moves() { return moves; }, get fixing() { return fixT > 0; }, get left() { return fixT; }, get fixed() { return fixed; } };
 })();
 // 爪のボルト：耕うん爪は 1 本ずつ ボルトで留めてある。ゆるんでいると 耕しているうちに 爪が 1 本 取れて、その所だけ 細く 耕し残しの すじになる。
 // 田んぼへ行くときは 17mm のスパナと 予備の爪ボルトを かならず持っていく（田圃に遊ぶ・・・「いよいよ田んぼへ」）。
@@ -1532,7 +1541,7 @@ const CLAW = (() => {
       toast('エンジンを切って 駐車ブレーキ。上げたロータリーに降下止めをかけて 爪を見た。ボルトが ゆるんで 爪が 1 本 なくなっていた。予備の爪とボルトを 17mm のスパナで 付けた（3 分）', 6);
     }
   }
-  return { start, step, skip, get gone() { return gone; }, get told() { return told; }, get need() { return gone && run > 12; }, get L0() { return L0; }, get fixing() { return fixT > 0; }, get fixed() { return fixed; } };
+  return { start, step, skip, get gone() { return gone; }, get told() { return told; }, get need() { return gone && run > 12; }, get L0() { return L0; }, get fixing() { return fixT > 0; }, get left() { return fixT; }, get fixed() { return fixed; } };
 })();
 // 春：ロータリーの はしの爪の すり減り。固い畦ぎわを耕すことの多い 右はしの爪は とくに減り、先が 針のように細くなる（使いすぎ）
 // （アメブロ「トラクターの爪交換」：ほかの爪は 残りが 3〜4 割で 交換どき。両はしの爪は 形のちがう偏心爪なので、入れかえて 減りを ならせない）。
@@ -1569,7 +1578,7 @@ const HERI = (() => {
       toast('平らで かたい所で PTO を中立にし、エンジンを切って 駐車ブレーキ。上げたロータリーは 油圧の降下止めを閉め、下に 木の台を入れて ささえてから 爪を見た。右はしの爪が すり減って 先が 針のように 細い（使いすぎ。先の幅が 25mm より細い）。予備の爪に替えた（5 分）。固い畦ぎわを耕す 右はしの爪が いちばん減る', 8);
     }
   }
-  return { start, step, skip, get worn() { return worn; }, get told() { return told; }, get need() { return worn && run > 12; }, get fixing() { return fixT > 0; }, get fixed() { return fixed; } };
+  return { start, step, skip, get worn() { return worn; }, get told() { return told; }, get need() { return worn && run > 12; }, get fixing() { return fixT > 0; }, get left() { return fixT; }, get fixed() { return fixed; } };
 })();
 // 代かき：はじめの点検で 燃料を見ないと、軽油が わずかしか 入っていない。走りつづけると ガス欠で エンジンが止まる。
 // ディーゼルは 軽油が切れると 燃料の管に 空気が入るので、入れなおしても そのままでは かからない。燃料のボルトを ゆるめて 軽油が あふれるまで 送る
@@ -1610,7 +1619,7 @@ const GASU = (() => {
     }
   }
   const level = () => Math.max(0, Math.min(1, left() / 50));   // 燃料計（E〜F）
-  return { start, step, left, level, get out() { return out; }, get warned() { return warned; }, get fixing() { return fixT > 0; }, get fixed() { return fixed; } };
+  return { start, step, left, level, get out() { return out; }, get warned() { return warned; }, get fixing() { return fixT > 0; }, get left() { return fixT; }, get fixed() { return fixed; } };
 })();
 // 作業機の傾き：自動水平（ヤンマーは UFO・クボタはモンロー）は、トラクターが左右に傾いても 作業機を水平に保つ。
 // 水平の基準がずれていると、作業機は片側に傾いたまま。代かきでは 片側だけ深くかいて、反対側は土が水面から出る（ハローの幅ごとに すじになる）。
@@ -1652,7 +1661,7 @@ const KATA = (() => {
       const i = Math.floor((x + HX) / CELL), j = Math.floor((z + HZ) / CELL);
       return i < 0 || j < 0 || i >= NX || j >= NZ ? 0 : TILTY[i * NZ + j];
     },
-    get tilted() { return tilted; }, get told() { return told; }, get fixing() { return fixT > 0; }, get fixed() { return fixed; },
+    get tilted() { return tilted; }, get told() { return told; }, get fixing() { return fixT > 0; }, get left() { return fixT; }, get fixed() { return fixed; },
   };
 })();
 // 前輪のパンク：耕しているとき いきなり 大きな音がして 降りてみると、右前輪の 空気が 抜けていた。畑では 直せないので 牛舎まで もどしたが、
@@ -1698,7 +1707,7 @@ const PANKU = (() => {
   }
   // 右へ とられる：+ は 右へ 切った向き。浮いてくると 2 倍
   const pull = () => flat && Math.abs(S.v) > 0.05 ? (rimOff ? 0.05 : 0.025) : 0;   // バックでも 同じ向きに 切ったのと 同じ（右の 前輪が 引きずられる）
-  return { start, step, pull, nearExit, get drop() { return drop; }, get flat() { return flat; }, get armed() { return armed; }, get rimOff() { return rimOff; }, get fixing() { return fixT > 0; }, get fixed() { return fixed; } };
+  return { start, step, pull, nearExit, get drop() { return drop; }, get flat() { return flat; }, get armed() { return armed; }, get rimOff() { return rimOff; }, get fixing() { return fixT > 0; }, get left() { return fixT; }, get fixed() { return fixed; } };
 })();
 // エアクリーナー：田畑の 土ぼこりで エレメントの目が 詰まると、エンジンの 回転が 上がりにくくなり、エンストなどに つながる
 // （現代農業「農家の痛快節約術 トラクタ 三つのメンテだけで燃料が1/4」：オイル・エアクリーナー・爪の 三つを 自分で 手入れして、同じ機種の
@@ -1739,7 +1748,7 @@ const AIRCL = (() => {
     loadK: () => full() ? 0.7 : 1,                  // エンストの 限界（ぬかるみの 重さ）
     sootK: () => full() ? 2 : 1,                    // DPF の すすの たまり方
     fuelK: () => full() ? 1.15 : 1,                 // 軽油
-    get clog() { return clog; }, set clog(v) { clog = v; }, get told() { return told; }, get need() { return full(); }, get fixing() { return fixT > 0; }, get fixed() { return fixed; },
+    get clog() { return clog; }, set clog(v) { clog = v; }, get told() { return told; }, get need() { return full(); }, get fixing() { return fixT > 0; }, get left() { return fixT; }, get fixed() { return fixed; },
   };
 })();
 
@@ -9305,7 +9314,7 @@ function syncAudio(running) {
   // キャラクターの 声（speechSynthesis）は audio と べつ：音を 切った・操作の表を 開いた・べつの タブに した・くわしい説明に した ときは すぐ やめる
   if (window.speechSynthesis && speechSynthesis.speaking && (!soundOn || DETAIL || document.hidden || !$('help').classList.contains('hidden'))) speechSynthesis.cancel();
   if (!audio) return;
-  const want = soundOn && running && !document.hidden, st = audio.ac.state;
+  const want = soundOn && running && !document.hidden, st = audio.ac.state; audioWant = want;   // サイクル278: さわった ときの 解き方（unlockAudio）も 同じ きまりで
   if (want && st === 'suspended') audio.ac.resume();
   else if (!want && st === 'running') audio.ac.suspend();
 }
@@ -9887,10 +9896,21 @@ function nextCam() { if (INTRO.cam) { INTRO.cam = false; return; } camMode = (ca
 $('bCam').onclick = nextCam;
 $('bSnd').onclick = toggleSound;
 // 音：自分で 始めないので、はじめて さわった ときに 音を 出せるように する（ブラウザは さわるまで 音を 出さない）
-for (const ev of ['pointerdown', 'keydown', 'touchend']) addEventListener(ev, function unlock() {
-  if (audio && audio.ac.state === 'suspended' && soundOn) audio.ac.resume();
-  removeEventListener(ev, unlock, true);
-}, true);
+// サイクル278（運営者の 実機の 声 2026-11-12「スタート直後に音が出ない」）: 聞き手は 音が 鳴りだす（running）まで 外さない。
+// それまでは pointerdown・keydown・touchend の それぞれ 1 回目で、音が まだ 無くても・resume が 効かなくても 外していた。読みこみ中（おおいの 間）に 1 回 さわって 離した 人は、
+// 音が できる 前に 聞き手が なくなり、そのあと 鳴らす 道は 毎こまの syncAudio だけ（さわった 操作の 外の resume は 効かない ブラウザが ある）。
+// はかった数（Chromium・resume は touchend・pointerup・click・keydown の 中だけ 効く 形の まね）: 読みこみ中に 1 回 タップした 人は 5 回のうち 5 回 ずっと 鳴らなかった。
+// 音が まだ 無い・🔇（soundOn が false）・運転していない（おわり・メニュー・かくれた タブ＝syncAudio の きまり）ときは 何も せず 聞き手を のこす。新しい 音は 足さない。
+// 指を 置いた まま の なぞりの 間は 鳴らない（タッチは 離した とき（touchend・pointerup）・click で はじめて「さわった」に なる ブラウザが ある。ページから 変えられない）
+let audioWant = false;   // syncAudio が 決めた「いま 鳴らす」（運転中・🔊・見えている）
+const UNLOCK = ['pointerup', 'touchend', 'click', 'keydown', 'pointerdown', 'touchstart'];
+function unlockAudio() {
+  if (!audio || !soundOn || !audioWant) return;   // 音が まだ 無い・🔇・鳴らさない 場面：聞き手は のこす
+  const ac = audio.ac, done = () => { if (ac.state === 'running') for (const ev of UNLOCK) removeEventListener(ev, unlockAudio, true); };
+  if (ac.state === 'running') { done(); return; }
+  try { const r = ac.resume(); if (r && r.then) r.then(done, () => {}); } catch (e) {}
+}
+for (const ev of UNLOCK) addEventListener(ev, unlockAudio, true);
 // 操作の表（？・H）：はじめの画面と同じ表を出す
 function toggleHelp() {
   const h = $('help');
@@ -10008,6 +10028,7 @@ function viewTick(dt) {   // frame から 毎こま
   viewTraceSure();   // きまり 5
 }
 canvas.addEventListener('pointerdown', e => {
+  if (e.isPrimary && FIXBAR.on) FIXBAR.nudge();   // サイクル277: 修理の 間に なぞった＝いまは 動かない（1 回の なぞりに 1 回）
   if (e.isPrimary) viewLost.clear(); else viewLost.delete(e.pointerId);   // 1 本目の指が ふれた＝ほかに 置いた指は ない
   if (e.isPrimary) { viewPts.clear(); viewPinch = null; viewBase = null; viewTwo = null; viewAuto = { was: AUTO.on, t: performance.now(), re: false }; }   // 1本目の指：取り残された指の 記録を 消す
   viewPts.set(e.pointerId, { x: e.clientX, y: e.clientY, ax: e.clientX, ay: e.clientY, hx: e.clientX, hy: e.clientY, at: e.timeStamp, solo: false }); HINT.holdT = 0;
@@ -10151,6 +10172,26 @@ const SAY = (() => {
   function refresh() { if (DETAIL) { t = 0; kind = ''; talkT = 0; } render(); }   // くわしい説明の 切りかえ
   const note = (x, sec = 3.5) => show(x, sec, 'step');   // 生きものに 気づいた ひとこと
   return { say, note, coach, update, tap, refresh, get talking() { return talkT > 0; }, get free() { return !(t > 0 && kind !== 'chat'); }, get text() { return [t > 0 && !DETAIL ? mainText : '', DETAIL ? '' : coachLine]; } };
+})();
+// サイクル277・最初の1分すぎ: 修理（爪・グリース・ファンベルト・リヤカバー・燃料・傾き・パンク・エアクリーナー・泥落とし）の 間、吹き出しの いちばん 上に 進みぐあいの 細い 棒を 出す。
+// それまでは 修理の 5〜12 秒、エンジンが 止まって なぞっても 何も 起きず、画面からは「あと どれだけか」「なぞりが 効かないのか」が 分からなかった
+// （はかった数・にせの時計・手本どおりに 耕しつづける 人・スマホ縦: 61〜67 秒の 右はしの爪・77.5〜82.5 秒の グリースで、なぞり 2 回とも 動かない。その 間に 画面で かわる 物は 5 つ（文だけ。そのうち 1 つは ツバメの ひとこと））。
+// 修理の 長さ・起きる きまり・知らせの 文は 変えない（棒は 各修理の 残り秒 left を 見るだけ）。修理の 間に なぞると（1 本目の 指が ふれる たびに 1 回）棒が 小さく ゆれる＝いまは 動かない（音・はじけ・耕し率は 変えない）。
+// 修理が おわると 棒は 消え、いま ある 案内（「…：▲ でエンジンをかける」）が 出る（変えていない）
+const FIXBAR = (() => {
+  const bar = document.createElement('div'), fill = document.createElement('i'); bar.id = 'fixBar'; fill.id = 'fixFill'; bar.append(fill); $('say').prepend(bar);   // 吹き出しの 上の だん（下の だんは 320×568 で 地図に かくれる）
+  let key = '', t0 = 0, n = 0;
+  const mods = () => [['BELT', BELT], ['COVER', COVER], ['GREASE', GREASE], ['CLAW', CLAW], ['HERI', HERI], ['GASU', GASU], ['KATA', KATA], ['PANKU', PANKU], ['AIRCL', AIRCL]];
+  function now() { if (S.scrape > 0) return ['SCRAPE', S.scrape]; for (const [k, m] of mods()) if (m.fixing) return [k, m.left]; return null; }
+  function update() {
+    const c = S.started && !S.done ? now() : null;
+    if (!c) { if (key) { key = ''; bar.classList.remove('on', 'nudge'); } return; }
+    if (c[0] !== key) { key = c[0]; t0 = Math.max(c[1], 1e-6); bar.classList.add('on'); }
+    fill.style.transform = 'scaleX(' + Math.max(0, Math.min(1, 1 - c[1] / t0)).toFixed(3) + ')';
+  }
+  function nudge() { if (!key) return; n++; bar.classList.remove('nudge'); void bar.offsetWidth; bar.classList.add('nudge'); }
+  bar.addEventListener('animationend', () => bar.classList.remove('nudge'));
+  return { update, nudge, get on() { return !!key; }, get key() { return key; }, get n() { return n; } };
 })();
 const KEYH = /[A-Z] で|（[A-Z]）|[A-Z]・|スペース|ボタン|押す|押して|押すと|ゆるめる|解除|止まって|上げると/;   // 操作の 案内
 // サイクル259・最初の1分: かっこの中の「。」で文を切らない・入れ子のかっこも ひとまとまりで扱う。
@@ -11128,7 +11169,7 @@ function frame(now) {
   LIFE.update(dt);
   WIND_T.value += dt;
   CLOUD_T.value += dt;
-  BADGE.draw(dt); SAY.update(dt); if (S.done) DONE_CV.drawImage($('badgeCv'), 0, 0);
+  BADGE.draw(dt); SAY.update(dt); FIXBAR.update(); if (S.done) DONE_CV.drawImage($('badgeCv'), 0, 0);
   if ((meterT -= dt) <= 0) { drawMeter(); meterT = 0.1; }
   if ((monT -= dt) <= 0) { drawMonitor(pct); monT = 0.25; }
   if ((hudT -= dt) <= 0) {
@@ -11177,7 +11218,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { HERI, GASU, get ECO() { return ECO; }, set ECO(v) { ECO = v; }, get ECO_RPM() { return ECO_RPM; }, cycleEco, setRpm, WORK_RPM, DIFF, SAGE, WARAYAMA, FENCE, RENGE, SHIHATSU, DIP, YAMA, MARKS, CLAW, USHI, UZURA, soilY, soilCell, WAVD, CLOD, GREASE, squeak, SCRAPE, BELT, COVER, KATA, RAMPDMG, CORNER, TILTY, WAVY, STONES, HAMARU, WASH, squeeze, moistAt, clodH, ROUGHA: () => ROUGH, engineLoad, engineRpm, WALK, walkField, TILLN, T2, T3, T4, T5, T6, BLOCKS, GROW, SEASONCOL, get overTilled() { return overTilled; }, AKIAKANE, BUTTERFLIES, LEAK, INAGO, ROADSIDE, TOBI, KABASHIRA, LEVEE_FLOWERS, KERI, SNAILS, WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, AMENBO, KERA, KAMO, ZARI, GENGO, KANA, KABU, DOJO, HACHI, MEDAKA, HOTARU, KAWASEMI, IMORI, KIJI, TONOSAMA, MOGURA, TSUBAME, KABUTO, HIGAN, HIBARI, PLAY, INTRO, MAEUKI, OSHI, MUKU, DRY, MAKURA, DEEP, softAt, OCHI, PANKU, AIRCL, OMO, KEIKAL, DANKI, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, TRACE, HINT, AUTO, SOILPOP, updateCamera, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, BADGE, SAY, sim: sec => { for (let t = 0; t < sec; t += 0.05) { lastPct = step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); MUKU.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); USHI.update(0.05); UZURA.update(0.05); AMENBO.update(0.05); KERA.update(0.05); KAMO.update(0.05); ZARI.update(0.05); GENGO.update(0.05); KANA.update(0.05); KABU.update(0.05); DOJO.update(0.05); HACHI.update(0.05); MEDAKA.update(0.05); HOTARU.update(0.05); KAWASEMI.update(0.05); IMORI.update(0.05); KIJI.update(0.05); TONOSAMA.update(0.05); MOGURA.update(0.05); TSUBAME.update(0.05); KABUTO.update(0.05); HIGAN.update(0.05); HIBARI.update(0.05); INTRO.update(0.05); DRY.update(0.05); GROW.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); FARMER.update(0.05, S.started && !S.done); } buildHills(); } };
+window.game = { FIXBAR, HERI, GASU, get ECO() { return ECO; }, set ECO(v) { ECO = v; }, get ECO_RPM() { return ECO_RPM; }, cycleEco, setRpm, WORK_RPM, DIFF, SAGE, WARAYAMA, FENCE, RENGE, SHIHATSU, DIP, YAMA, MARKS, CLAW, USHI, UZURA, soilY, soilCell, WAVD, CLOD, GREASE, squeak, SCRAPE, BELT, COVER, KATA, RAMPDMG, CORNER, TILTY, WAVY, STONES, HAMARU, WASH, squeeze, moistAt, clodH, ROUGHA: () => ROUGH, engineLoad, engineRpm, WALK, walkField, TILLN, T2, T3, T4, T5, T6, BLOCKS, GROW, SEASONCOL, get overTilled() { return overTilled; }, AKIAKANE, BUTTERFLIES, LEAK, INAGO, ROADSIDE, TOBI, KABASHIRA, LEVEE_FLOWERS, KERI, SNAILS, WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, AMENBO, KERA, KAMO, ZARI, GENGO, KANA, KABU, DOJO, HACHI, MEDAKA, HOTARU, KAWASEMI, IMORI, KIJI, TONOSAMA, MOGURA, TSUBAME, KABUTO, HIGAN, HIBARI, PLAY, INTRO, MAEUKI, OSHI, MUKU, DRY, MAKURA, DEEP, softAt, OCHI, PANKU, AIRCL, OMO, KEIKAL, DANKI, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, TRACE, HINT, AUTO, SOILPOP, updateCamera, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, BADGE, SAY, sim: sec => { for (let t = 0; t < sec; t += 0.05) { lastPct = step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); MUKU.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); USHI.update(0.05); UZURA.update(0.05); AMENBO.update(0.05); KERA.update(0.05); KAMO.update(0.05); ZARI.update(0.05); GENGO.update(0.05); KANA.update(0.05); KABU.update(0.05); DOJO.update(0.05); HACHI.update(0.05); MEDAKA.update(0.05); HOTARU.update(0.05); KAWASEMI.update(0.05); IMORI.update(0.05); KIJI.update(0.05); TONOSAMA.update(0.05); MOGURA.update(0.05); TSUBAME.update(0.05); KABUTO.update(0.05); HIGAN.update(0.05); HIBARI.update(0.05); INTRO.update(0.05); DRY.update(0.05); GROW.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); FARMER.update(0.05, S.started && !S.done); } buildHills(); } };
 </script>
 </body>
 </html>

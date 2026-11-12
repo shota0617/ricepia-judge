@@ -1,4 +1,4 @@
-// 最初の1分の確かめ（サイクル259〜275）：node firstmin.js [tractor.html のパス]
+// 最初の1分の確かめ（サイクル259〜276）：node firstmin.js [tractor.html のパス]
 //  1) 知らせの文：吹き出し（speakText）・短い文（shortText）で かっこが合わなくならない（「…見ます）」のような切れ方をしない）
 //  3) 畦の手前で止まった人：「横へ なぞる」見本が出て、見本どおりで向きが変わる。自動で下ろす知らせは 1 回だけ（サイクル260）
 //  2) のんびりの大きな数字：スマホ縦で 1 回なぞって耕したら 0% のままにならない。田んぼアートでは地図の「でき」と同じ数、お題なしでは小数 1 けた
@@ -965,6 +965,132 @@ const srv = http.createServer((r, s) => { const u = decodeURIComponent(r.url.spl
         await ctx.close();
       }
       ok('親指を 先に置いて もう 1 本で まっすぐ前へ：向きの ずれ 0.1rad（6°）より 小さい・3m 以上 進む（直す前 0.38〜0.44rad）', out.every(([, dy, m]) => Math.abs(dy) < 0.1 && m > 3), out);
+    }
+    // ---- 16) サイクル276（はじめの 1 分で やめる人を へらす）：おそい スマホでも ゲームの 時間は 本物の 時計どおり・回したあとも 置いたままの 指で なぞれる・ほかの 通信で 読みこみの 見はりが だまされない ----
+    // 16-1) にせの時計で 1 こまの 間を かえる（frame(now) を now += 1000/fps で 呼ぶ。1 こまに 本物の タッチの 動きを 1 回）。前へ 84px を 1 秒で なぞって 4 秒で 離す（firstmin の 2 と 同じ 指）
+    //       直す前（指の 時刻も にせの時計に そろえた 数）: 1 秒に 60・20 こま 5.29m・"0.8%"・離して 見本まで 1.6 秒・はじめの 1 分 60 秒 → 10 こま 2.70m・"0.4%"・1.8 秒・120 秒 → 5 こま 0.71m・"0.1%"・3.6 秒・240 秒
+    //       （離して 見本までの 1.6 秒は ほとんど 止まるまでの 1.2 秒。止まり方は こまの 速さに よらない。おそい こまでは 見本が 1 こま ぶん おくれて 見える）
+    {
+      const R = {};
+      for (const fps of [60, 20, 10, 5]) {
+        const { ctx, p, cdp } = await open14(''); await p.waitForFunction(() => window.game && game.S && game.S.started && typeof P !== 'undefined' && P.Rotary);
+        await p.evaluate(() => { const real = performance.now.bind(performance); let now = real(); performance.now = () => now; window.__sync = () => { now = real(); }; const rr = window.requestAnimationFrame.bind(window), id = rr(() => {}); for (let k = id; k > id - 6; k--) cancelAnimationFrame(k);
+          window.requestAnimationFrame = () => 0; game.renderer.render = () => {}; window.__now = () => now;
+          Object.defineProperty(Event.prototype, 'timeStamp', { get() { return now; }, configurable: true });   // 指の 時刻も にせの時計に そろえる（本物の スマホでは こまと 指は 同じ 時計。そろえないと 指の 速さ（サイクル116）を 機械の こみぐあいで 読みちがえる）
+          window.__F = (ms, n) => { let bad = 0; for (let i = 0; i < n; i++) { now += ms; frame(now); const S = game.S; if (!isFinite(S.x + S.z + S.yaw + S.v + S.steer)) bad++; } window.__bad = (window.__bad || 0) + bad; return { x: game.S.x, z: game.S.z, v: game.S.v, big: document.getElementById('bigPct').textContent, til: tilledCount, hint: HINT.demoK >= 0 && !document.getElementById('hintSwipe').classList.contains('hidden'), over: FIRSTMIN.over, ft: FIRSTMIN.t, now }; }; });
+        await p.waitForTimeout(2500); await p.evaluate(() => window.__sync());
+        const ms = 1000 / fps, F = n => p.evaluate(([m, k]) => window.__F(m, k), [ms, n]), T = (type, pts) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: pts });
+        await F(2 * fps); const s0 = await p.evaluate(() => ({ x: game.S.x, z: game.S.z, ft: FIRSTMIN.t, now: window.__now() }));
+        await T('touchStart', [{ x: 195, y: 481, id: 1 }]); let s;
+        for (let i = 0; i < 4 * fps; i++) { await T('touchMove', [{ x: 195, y: 481 - 84 * Math.min(1, (i + 1) / fps), id: 1 }]); s = await F(1); }
+        const d4 = Math.hypot(s.x - s0.x, s.z - s0.z); await T('touchEnd', []); const tL = s.now;
+        await p.evaluate(() => new Promise(r => setTimeout(r, 300)));   // 離した 知らせを 先に 受けとる
+        let hint = null; for (let i = 0; i < 10 * fps && hint === null; i++) { s = await F(1); if (s.hint) hint = (s.now - tL) / 1000; }
+        // 大きな数字は 耕した ます目が 落ちついてから 読む（firstmin の 2 と 同じ）
+        let big = s.big; { let c = -1; for (let i = 0; i < 12; i++) { const q = await F(Math.max(1, Math.round(fps / 2))); if (q.til === c) { big = (await F(Math.max(1, Math.round(fps / 5)))).big; break; } c = q.til; } }
+        // はじめの 1 分が おわる 本物の 秒（始まってから）
+        let fm = null; for (let i = 0; i < 1200 && fm === null; i++) { const q = await F(Math.max(1, Math.round(fps / 4))); if (q.over) fm = (q.now - s0.now) / 1000 + s0.ft; }   // 0.25 秒ずつ 見る
+        // タップ（0.1 秒）・はじき（0.2 秒で 40px）で 進む 長さ・畦まで 前へ 走る（畦の 手前で 止まる＝畦を こえない）
+        const tap = async flick => { await p.evaluate(() => Object.assign(game.S, { x: 0, z: -6, yaw: 0, v: 0, steer: 0 })); await F(fps); const a = await F(1); await T('touchStart', [{ x: 195, y: 481, id: 1 }]);
+          const n = Math.floor((flick ? 0.2 : 0.1) * fps + 1e-9); for (let i = 1; i <= n; i++) { if (flick) await T('touchMove', [{ x: 195, y: 481 - 40 * i / n, id: 1 }]); await F(1); } await T('touchEnd', []); await p.evaluate(() => new Promise(r => setTimeout(r, 200))); const c = await F(4 * fps); return Math.hypot(c.x - a.x, c.z - a.z); };   // 0.1 秒の タップは 1 秒に 5 こまでは こまを またがない（0 こま）
+        const tp = await tap(false), fl = await tap(true);
+        await p.evaluate(() => Object.assign(game.S, { x: 0, z: HZ - 9, yaw: 0, v: 0, steer: 0 })); await F(fps);
+        await T('touchStart', [{ x: 195, y: 481, id: 1 }]); for (let i = 0; i < fps; i++) { await T('touchMove', [{ x: 195, y: 481 - 200 * Math.min(1, (i + 1) / fps), id: 1 }]); await F(1); }
+        let zmax = -99; for (let i = 0; i < 10; i++) { const q = await F(fps); zmax = Math.max(zmax, q.z); } await T('touchEnd', []); await F(fps);
+        const hz = await p.evaluate(() => HZ), bad = await p.evaluate(() => window.__bad);
+        R[fps] = { d4: +d4.toFixed(2), big, hint: hint === null ? null : +hint.toFixed(2), fm: fm === null ? null : +fm.toFixed(1), tap: +tp.toFixed(2), flick: +fl.toFixed(2), ridge: +(hz - zmax).toFixed(2), bad };
+        await ctx.close();
+      }
+      const a = R[60], near = (x, y, e) => Math.abs(x - y) <= e;
+      ok('1 秒に 60 こま：4 秒で 4.5m 以上 進む・見本が 出る・はじめの 1 分は 60±2 秒', a.d4 > 4.5 && a.hint !== null && near(a.fm, 60, 2), R[60]);
+      // 20 こま（1 こま ちょうど 0.05 秒）は 直す前も 後も 同じ 道。指の 知らせと こまの 前後で 走りが 少し ゆれる（直す前も 5.28〜5.39m・1.65〜1.75 秒）ので、おそい こまと 同じ ものさしで 見る
+      for (const f of [20, 10, 5]) ok('1 秒に ' + f + ' こま：本物の 時計どおり（4 秒で 60 こまの 9 割 以上・数字は 同じ ±0.1・見本まで 60 こまの 秒 ＋4 こま 以内（止まるまで 1.2 秒は 同じ。止まった・0.4 秒 待った の 判定が こまごと）・はじめの 1 分は 60±2 秒。直す前 ' + ({ 20: '60 こまと 同じ', 10: '2.70m・0.4%・1.8 秒・120 秒', 5: '0.71m・0.1%・3.6 秒・240 秒' })[f] + '）',
+        R[f].d4 >= 0.9 * a.d4 && near(parseFloat(R[f].big), parseFloat(a.big), 0.1) && R[f].hint !== null && R[f].hint <= a.hint + 4 / f + 0.05 && near(R[f].fm, 60, 2), [R[f], a.hint]);
+      ok('おそい こまでも タップ・はじきで 60 こまより 進まない（+0.15m まで）・畦の 手前で 止まる（60 こまと ±0.3m）・NaN なし', [20, 10, 5].every(f => R[f].tap <= a.tap + 0.15 && R[f].flick <= a.flick + 0.15 && near(R[f].ridge, a.ridge, 0.3) && R[f].ridge > 0 && R[f].bad === 0) && a.bad === 0, Object.fromEntries(Object.entries(R).map(([k, v]) => [k, [v.tap, v.flick, v.ridge, v.bad]])));
+    }
+    // 16-2) なぞっている 指を 置いたまま 画面を 回す（縦 → 横）：同じ 指を 動かすと また なぞれる（直す前：120px 動かして 2 秒で 0.02m。回さなければ 2.4〜2.7m）。回した しゅんかんの 線は つづけない（とばない）
+    {
+      const { ctx, p, cdp } = await open14(''); await fake14(p);
+      const adv = s => p.evaluate(x => window.__adv(x), s), T = (type, pts) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: pts }), sv = () => p.evaluate(() => ({ z: game.S.z, v: game.S.v, on: TRACE.on, pts: viewPts.size }));
+      await adv(2); await T('touchStart', [{ x: 195, y: 481, id: 1 }]); for (let i = 1; i <= 10; i++) { await T('touchMove', [{ x: 195, y: 481 - 4 * i, id: 1 }]); await adv(0.05); }
+      const r0 = await sv(); await p.setViewportSize({ width: 844, height: 390 }); await p.evaluate(() => new Promise(r => setTimeout(r, 300))); await adv(1.5); const r1 = await sv();
+      for (let i = 1; i <= 40; i++) { await T('touchMove', [{ x: 422, y: 300 - 3 * i, id: 1 }]); await adv(0.05); } const r2 = await sv(); await T('touchEnd', []); await adv(1); const r3 = await sv();
+      ok('置いたまま 画面を 回す：回すと 止まる・同じ 指を 動かすと また なぞれて 2 秒で 1m 以上（直す前 0.02m）・離すと 終わる', r0.on && !r1.on && Math.abs(r1.v) < 0.05 && r2.on && r2.z - r1.z > 1 && !r3.on && r3.pts === 0, [r0.on, r1.on, +r1.v.toFixed(2), r2.on, +(r2.z - r1.z).toFixed(2), r3.on, r3.pts]);
+      await ctx.close();
+    }
+    // 16-3) 車体の glb が 返事を しない ときに、ページが 5 秒ごとに ほかの 読みこみを する：それでも 8 秒ほどで 知らせ（直す前：32 秒たっても 出ない）
+    {
+      const { ctx, p } = await open14('', q => q.route('**/tractor_yt.glb', () => {}), true, [390, 844], 'commit');
+      await p.waitForFunction(() => window.game, null, { timeout: 90000 }).catch(() => {}); const t0 = Date.now();
+      await p.evaluate(() => { let i = 0; setInterval(() => fetch('/tools/tractor/README.md?x=' + (i++)).catch(() => {}), 5000); });
+      let first = null; for (let i = 0; i < 80 && first === null; i++) { if (await p.evaluate(() => document.getElementById('loadWait').classList.contains('slow'))) first = (Date.now() - t0) / 1000; else await p.waitForTimeout(500); }
+      const n = await p.evaluate(() => performance.getEntriesByType('resource').filter(e => /README/.test(e.name)).length);
+      ok('車体が 返事を しない・ほかの 読みこみが 5 秒ごと：知らせが 20 秒 以内に 出る（直す前：32 秒 出ない）', first !== null && first <= 20 && n >= 1, [first, n]);
+      await ctx.close();
+    }
+    // 16-4) まだ 耕して いない 間に 顔（運転する 人）を 押す：1 回めは する ことを 言う（はじめの 案内と 同じ 文「田んぼを ゆびで なぞる」）。2 回めからは 雑談。耕しはじめた あとは はじめから 雑談
+    //       （直す前：雑談だけ。開いて 3 秒から 1 秒に 1 回 押すと 10 回 ぜんぶ 雑談・する ことは 0 回）
+    {
+      const face = [];
+      for (const tillFirst of [false, true]) {
+        const { ctx, p, cdp } = await open14(''); await fake14(p);
+        const adv = s => p.evaluate(x => window.__adv(x), s), T = (type, pts) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: pts });
+        await adv(2);
+        if (tillFirst) { await T('touchStart', [{ x: 195, y: 481, id: 1 }]); for (let i = 1; i <= 10; i++) { await T('touchMove', [{ x: 195, y: 481 - 8.4 * i, id: 1 }]); await adv(0.05); } await adv(2); await T('touchEnd', []); await adv(5); }
+        const c = await p.evaluate(() => { const q = document.getElementById('badgeCv').getBoundingClientRect(); return [Math.round(q.left + q.width / 2), Math.round(q.top + q.height / 2)]; });
+        const said = [];
+        for (let k = 0; k < 3; k++) { await T('touchStart', [{ x: c[0], y: c[1], id: 1 }]); await T('touchEnd', []); await p.evaluate(() => new Promise(r => setTimeout(r, 200))); await adv(0.1);
+          said.push(await p.evaluate(() => [document.getElementById('say').innerText.split('\n')[0], tilledCount > 0])); await adv(4); }
+        face.push(said); await ctx.close();
+      }
+      const how = x => x[0] === '田んぼを ゆびで なぞる';
+      ok('耕す前に 顔を 押すと 1 回めは「田んぼを ゆびで なぞる」・2 回めからは 雑談。耕しはじめた あとは 雑談（直す前：する ことは 0 回）', how(face[0][0]) && !face[0][0][1] && !how(face[0][1]) && face[0][1][0] !== '' && !how(face[0][2]) && face[1].every(x => x[1] && !how(x) && x[0] !== ''), face);
+    }
+    // 16-5・16-6) Codex 指摘（サイクル276 の PR）。にせの時計（1 こまの 間を かえる・指の 時刻も そろえる）
+    {
+      const open5 = async () => { const { ctx, p, cdp } = await open14(''); await p.waitForFunction(() => window.game && game.S && game.S.started && typeof P !== 'undefined' && P.Rotary);
+        await p.evaluate(() => { const real = performance.now.bind(performance); let now = real(); performance.now = () => now; window.__sync = () => { now = real(); }; const rr = window.requestAnimationFrame.bind(window), id = rr(() => {}); for (let k = id; k > id - 6; k--) cancelAnimationFrame(k);
+          window.requestAnimationFrame = () => 0; game.renderer.render = () => {}; Object.defineProperty(Event.prototype, 'timeStamp', { get() { return now; }, configurable: true });
+          window.__F = (ms, n) => { for (let i = 0; i < n; i++) { now += ms; frame(now); } return { two: viewTwo, on: TRACE.on, zoom: +fovZoom.toFixed(2), x: game.S.x, z: game.S.z, pts: viewPts.size }; }; });
+        await p.waitForTimeout(2500); await p.evaluate(() => window.__sync());
+        return { ctx, p, T: (type, pts) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: pts }), fl: () => p.evaluate(() => new Promise(r => setTimeout(r, 250))) }; };
+      // 16-5) 1 秒に 5 こま・60 こま：片方が 先に 20px 動いて 2 こま あと「なぞる」に 決まり、その すぐ あとに もう片方も 20px 動く → 寄って見る に 直る（直す前：5 こまでは なぞり運転が つづく）
+      const r5 = {};
+      for (const fps of [5, 60]) {
+        const { ctx, p, T, fl } = await open5(); const F = n => p.evaluate(([m, k]) => window.__F(m, k), [1000 / fps, n]), P2 = (a, c) => [{ x: a, y: 520, id: 1 }, { x: c, y: 520, id: 2 }];
+        await F(2 * fps); await T('touchStart', P2(165, 225)); await fl(); await F(1);
+        await T('touchMove', P2(145, 225)); await fl(); await F(1); const d = await F(1);
+        await T('touchMove', P2(145, 245)); await fl(); const a = await F(0); await T('touchEnd', []); await F(fps);
+        r5[fps] = [d.two, a.two, a.on, a.zoom]; await ctx.close();
+      }
+      ok('なぞりに 決まった すぐ あとに もう片方も 動くと 寄って見る に 直る（1 秒に 5 こまでも。直す前：5 こまでは なぞり運転が つづく）', [5, 60].every(f => r5[f][0] === 'trace' && r5[f][1] === 'pinch' && !r5[f][2] && r5[f][3] > 1.5), r5);
+      // 16-6) 2 本の指を 置いたまま 画面を 回す（pointercancel が 来ない）：そのまま 2 本で 広げると 寄って見る（走らない）。片方を 離してから もう 1 本を 動かすと その指で なぞれる
+      //       （直す前：広げると 1 本指の なぞりに なって 0.85m 走る・片方を 離すと のこった 指は 0m）
+      const r6 = {};
+      for (const mode of ['spread', 'liftOne']) {
+        const { ctx, p, T, fl } = await open5(); const F = n => p.evaluate(([m, k]) => window.__F(m, k), [50, n]), A = (x, y) => ({ x, y, id: 1 }), B = (x, y) => ({ x, y, id: 2 });
+        await F(40); await T('touchStart', [A(165, 520), B(225, 520)]); await fl(); await F(2);
+        await p.setViewportSize({ width: 844, height: 390 }); await fl(); const s1 = await F(10); let s2;
+        if (mode === 'spread') { for (let i = 1; i <= 8; i++) { await T('touchMove', [A(392 - 10 * i, 300), B(452 + 10 * i, 300)]); await F(1); } await fl(); s2 = await F(20); }
+        else { await T('touchEnd', [B(452, 300)]); await fl(); await F(2); for (let i = 1; i <= 40; i++) { await T('touchMove', [A(392, 330 - 3 * i)]); await F(1); } await fl(); s2 = await F(1); }
+        await T('touchEnd', []); await F(20); const s3 = await F(0);
+        r6[mode] = { two: s2.two, on: s2.on, zoom: s2.zoom, moved: +Math.hypot(s2.x - s1.x, s2.z - s1.z).toFixed(2), endPts: s3.pts }; await ctx.close();
+      }
+      ok('2 本を 置いたまま 回す：2 本で 広げると 寄って見る・走らない。片方を 離すと のこった 指で なぞれる（直す前：広げて 0.85m 走る・のこった 指は 0m）', r6.spread.two === 'pinch' && !r6.spread.on && r6.spread.zoom > 1.5 && r6.spread.moved < 0.05 && r6.liftOne.on && r6.liftOne.moved > 0.8 && r6.spread.endPts === 0 && r6.liftOne.endPts === 0, r6);
+    }
+    // 16-7) 復号器（Draco）の wasm が こわれて 届く（HTTP 200）：Worker の 中で 止まり、読みこみの 失敗にも ならない → 用意の 間の 40 秒で「時間が かかっています・待つか タップ」・タップで 読みこみ直す
+    //       （直す前 cfb0cec5：ファイルが ぜんぶ 届くと 見はりを 止めていて、ずっと「指で なぞると 進みます」）。wasm が 404：すぐ「読みこめませんでした」（直す前：ずっと おおい）
+    for (const mode of ['broken', '404']) {
+      const e0 = errs.length;   // わざと こわした・404 に した wasm の エラー（Worker の 中の abort・CompileError・受けとられない ProgressEvent）は 数えない（quiet と 同じ。ほかの エラーは 数える）
+      let html = 0; const { ctx, p } = await open14('', async q => { await q.route('https://cdn.jsdelivr.net/**/draco_decoder.wasm', r => mode === 'broken' ? r.fulfill({ status: 200, body: Buffer.from('this is not wasm at all'), contentType: 'application/wasm' }) : r.fulfill({ status: 404, body: '' })); q.on('request', r => { if (/\/tractor\.html/.test(r.url())) html++; }); }, true, [390, 844], 'commit');
+      const t0 = Date.now(); let first = null, ng = null, st = false;
+      for (let i = 0; i < 180 && first === null && ng === null; i++) { const s = await p.evaluate(() => { const w = document.getElementById('loadWait'); return w ? [w.classList.contains('slow'), document.body.classList.contains('loadng'), !!(window.game && game.S && game.S.started)] : [false, false, false]; }).catch(() => [false, false, false]);
+        const t = (Date.now() - t0) / 1000; if (s[0]) first = t; if (s[1]) ng = t; st = st || s[2]; if (first === null && ng === null) await p.waitForTimeout(500); }
+      if (mode === 'broken') { const h0 = html; await p.touchscreen.tap(195, 420); for (let i = 0; i < 40 && html === h0; i++) await p.waitForTimeout(250);
+        ok('復号器の wasm が こわれて 届く：始まらず、40 秒ほどで「時間が かかっています・待つか タップ」（30 秒より 前には 出ない）・タップで 読みこみ直す（直す前：ずっと 出ない）', !st && first !== null && first >= 30 && first <= 75 && html > h0, [first, st, h0, html]); }
+      else ok('復号器の wasm が 404：15 秒 以内に「読みこめませんでした」（直す前：ずっと おおい）', !st && ng !== null && ng <= 15, [ng, st]);
+      await ctx.close();
+      for (let k = errs.length - 1; k >= e0; k--) if (/CompileError|abort\(|wasm|^pageerror ProgressEvent$/.test(errs[k])) errs.splice(k, 1);   // 404 では three の DRACOLoader が 読みこみの 失敗（ProgressEvent）を 受けとらずに 落とす
     }
   }
   ok('エラーなし', errs.length === 0, errs.slice(0, 3));

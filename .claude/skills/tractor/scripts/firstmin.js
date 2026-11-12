@@ -1078,6 +1078,20 @@ const srv = http.createServer((r, s) => { const u = decodeURIComponent(r.url.spl
       }
       ok('2 本を 置いたまま 回す：2 本で 広げると 寄って見る・走らない。片方を 離すと のこった 指で なぞれる（直す前：広げて 0.85m 走る・のこった 指は 0m）', r6.spread.two === 'pinch' && !r6.spread.on && r6.spread.zoom > 1.5 && r6.spread.moved < 0.05 && r6.liftOne.on && r6.liftOne.moved > 0.8 && r6.spread.endPts === 0 && r6.liftOne.endPts === 0, r6);
     }
+    // 16-7) 復号器（Draco）の wasm が こわれて 届く（HTTP 200）：Worker の 中で 止まり、読みこみの 失敗にも ならない → 用意の 間の 40 秒で「時間が かかっています・待つか タップ」・タップで 読みこみ直す
+    //       （直す前 cfb0cec5：ファイルが ぜんぶ 届くと 見はりを 止めていて、ずっと「指で なぞると 進みます」）。wasm が 404：すぐ「読みこめませんでした」（直す前：ずっと おおい）
+    for (const mode of ['broken', '404']) {
+      const e0 = errs.length;   // わざと こわした・404 に した wasm の エラー（Worker の 中の abort・CompileError・受けとられない ProgressEvent）は 数えない（quiet と 同じ。ほかの エラーは 数える）
+      let html = 0; const { ctx, p } = await open14('', async q => { await q.route('https://cdn.jsdelivr.net/**/draco_decoder.wasm', r => mode === 'broken' ? r.fulfill({ status: 200, body: Buffer.from('this is not wasm at all'), contentType: 'application/wasm' }) : r.fulfill({ status: 404, body: '' })); q.on('request', r => { if (/\/tractor\.html/.test(r.url())) html++; }); }, true, [390, 844], 'commit');
+      const t0 = Date.now(); let first = null, ng = null, st = false;
+      for (let i = 0; i < 180 && first === null && ng === null; i++) { const s = await p.evaluate(() => { const w = document.getElementById('loadWait'); return w ? [w.classList.contains('slow'), document.body.classList.contains('loadng'), !!(window.game && game.S && game.S.started)] : [false, false, false]; }).catch(() => [false, false, false]);
+        const t = (Date.now() - t0) / 1000; if (s[0]) first = t; if (s[1]) ng = t; st = st || s[2]; if (first === null && ng === null) await p.waitForTimeout(500); }
+      if (mode === 'broken') { const h0 = html; await p.touchscreen.tap(195, 420); for (let i = 0; i < 40 && html === h0; i++) await p.waitForTimeout(250);
+        ok('復号器の wasm が こわれて 届く：始まらず、40 秒ほどで「時間が かかっています・待つか タップ」（30 秒より 前には 出ない）・タップで 読みこみ直す（直す前：ずっと 出ない）', !st && first !== null && first >= 30 && first <= 75 && html > h0, [first, st, h0, html]); }
+      else ok('復号器の wasm が 404：15 秒 以内に「読みこめませんでした」（直す前：ずっと おおい）', !st && ng !== null && ng <= 15, [ng, st]);
+      await ctx.close();
+      for (let k = errs.length - 1; k >= e0; k--) if (/CompileError|abort\(|wasm|^pageerror ProgressEvent$/.test(errs[k])) errs.splice(k, 1);   // 404 では three の DRACOLoader が 読みこみの 失敗（ProgressEvent）を 受けとらずに 落とす
+    }
   }
   ok('エラーなし', errs.length === 0, errs.slice(0, 3));
   console.log(ng ? `NG ${ng} 件` : 'ぜんぶ ok'); await b.close(); srv.close(); process.exit(ng ? 1 : 0);

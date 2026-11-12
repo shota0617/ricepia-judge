@@ -231,12 +231,20 @@
     if (started() || document.body.classList.contains('loadng')) {   // 始まった・読みこめなかった 知らせが 出た：見はりを やめ、知らせも もとに もどす
       stall = false; clearInterval(iv); var w = document.getElementById('loadWait'), t2 = w.querySelector('.lwT'); w.classList.remove('slow'); if (t2) t2.textContent = t0; return; }
     if (document.hidden) return;
+    // サイクル276: ゲームの ファイル（glb・復号器）が 404 など エラーの 返事で 届いたら すぐ「読みこめませんでした」（LOAD_NG）。
+    // 復号器（Draco）の 404 は three r128 の DRACOLoader が 読みこみの 失敗に 伝えず、おおいが ずっと 出ていた（はかった数：15 秒 そのまま）。返事の 番号が 分からない ブラウザでは 下の 見はり（40 秒）だけ
+    if (window.game && window.LOAD_NG) { try { var rr = performance.getEntriesByType('resource'); for (var j = 0; j < rr.length; j++) if (rr[j].responseStatus >= 400 && /\.glb(\?|$)|\/draco\//.test(rr[j].name)) { LOAD_NG(); return; } } catch (e) {} }
     var m = mark(), t = document.querySelector('#loadWait .lwT');
     if (m !== last) { last = m; still = 0; } else still++;
-    // サイクル276: ゲームの ファイルが ぜんぶ 届いた あと（車体・田んぼ・作業機の glb と 復号器 2 つ＝LW_NEED）は 回線では なく スマホが 用意している 間なので 数えない。
-    // それまでは 届いた あとの 用意が 8 秒より 長い（こんだ 機械で 8.7〜11.4 秒）と「時間が かかっています・タップで やりなおし」が 出て、もう すぐ 始まる 人に やりなおしを すすめた（firstmin の three 25 秒 おくれ で 11 回のうち 4 回）
-    if (window.game && window.LW_NEED && +m.split('/')[1] >= window.LW_NEED) still = 0;
-    stall = still >= (window.game ? 8 : 20);   // three の 3 本を 読む間は 20 秒・そのあとは 8 秒（上の わけ）
+    // 待つ 長さの きまり（サイクル276。止まった ことが 分かるのは 何も ふえない 秒だけ。どの 場面でも 見はりは 止めない）:
+    //   three の 3 本を 読む間（window.game が まだ ない）……… 20 秒（サイクル275。とちゅうの 進みが 見えない）
+    //   ゲームの ファイルを 読む間（届いた 数 ＜ LW_NEED）……… 8 秒（届いた 分が 線に 出る）
+    //   ゲームの ファイルが ぜんぶ 届いた あと（用意の 間）…… 40 秒
+    // 用意の 間は 回線では なく スマホが 動いている 間。はかった数：ふつう 1 秒 たらず・こんだ 機械で 8.7〜11.4 秒（11 回のうち 4 回 8 秒を こえ、「タップで やりなおし」が 出ていた）・いちばん 長くて 22 秒。
+    // 40 秒は その 2 倍ちかく（おそい スマホでも 出にくい）。それでも 出る 文は「このまま 待つか、タップで やりなおし」なので 待つことも えらべる。
+    // 用意の 間も 見はりは 止めない：復号器（Draco）の wasm が こわれて 届くと、Worker の 中で 止まり、読みこみの 失敗にも ページの エラーにも ならない（three r128 の DRACOLoader は 伝えない）。
+    // 見はりを 止めていた 形（cfb0cec5）では「指で なぞると 進みます」の まま ずっと だった（Codex 指摘・こちらでも 1 回のうち 1 回）
+    stall = still >= (!window.game ? 20 : window.LW_NEED && +m.split('/')[1] >= window.LW_NEED ? 40 : 8);
     if (t && t.textContent !== (stall ? t1 : t0)) { t.textContent = stall ? t1 : t0; document.getElementById('loadWait').classList.toggle('slow', stall); }
   }, 1000);
   document.addEventListener('click', function () { if (stall && !started()) location.reload(); });

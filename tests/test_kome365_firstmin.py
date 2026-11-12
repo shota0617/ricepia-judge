@@ -181,7 +181,7 @@ eval(html.slice(a, b));
     if (st.tick) await new Promise(r => setTimeout(r, 0));
     paddyDraw();
     out.push({ base: paddyInfo.base, nursery: paddyInfo.nursery, wet: root.hasAttribute('data-wet'), veh: root.getAttribute('data-veh') || '', key: paddyInfo.key, lv: paddyInfo.lv, marks: paddyInfo.marks,
-      pop: parts['.pdPop']._cl.has('on'), popKey: paddyInfo.pop, cond: paddyInfo.cond || '', water: /%2357b6f2|%232f7fd0/i.test(parts['.pdBase'].style.backgroundImage || ''), crack: /%233a2413/i.test(parts['.pdBase'].style.backgroundImage || ''), bg: (parts['.pdBase'].style.backgroundImage || '').indexOf('data:image/svg+xml') >= 0, trail: (parts['.pdTrail'].style.backgroundImage || '').indexOf('data:image/svg+xml') >= 0 });
+      pop: parts['.pdPop']._cl.has('on'), popKey: paddyInfo.pop, img: parts['.pdBase'].style.backgroundImage || '', cond: paddyInfo.cond || '', water: /%2357b6f2|%232f7fd0/i.test(parts['.pdBase'].style.backgroundImage || ''), crack: /%233a2413/i.test(parts['.pdBase'].style.backgroundImage || ''), bg: (parts['.pdBase'].style.backgroundImage || '').indexOf('data:image/svg+xml') >= 0, trail: (parts['.pdTrail'].style.backgroundImage || '').indexOf('data:image/svg+xml') >= 0 });
   }
   console.log(JSON.stringify(out));
 })();
@@ -1024,6 +1024,51 @@ console.log(JSON.stringify(out));
         ])
         self.assertEqual([x["cond"] for x in r], ["water", "waterW", "waterB", "waterU", "waterL"])
         self.assertEqual(r[4]["base"], "ripe")
+
+    def test_paddy_ground_table_every_stage(self):
+        # Codex 指摘(周回171・2回め): 穂の もと・出穂では 地面を「水 か 土 か」だけで えらび、しめった 土・乾いた 土・ひび(浅水・深水・間断も)が 同じ 絵に なって いた。
+        # 地面は 1つの 関数(pdGround)で 描き、その 上に 稲を 重ねる。ぜんぶの 段階 × ぜんぶの 水の 状態で「キーが ちがえば 絵も ちがう」を 表で 回す
+        base = {"method": "transplant", "sowDoy": 95, "tillDepth": 15, "puddleDoy": 115, "doy": 200}
+        stages = {"nae": {"transDoy": 195}, "kuki": {"transDoy": 160}, "moto": {"transDoy": 120, "piDoy": 180},
+                  "head": {"transDoy": 120, "piDoy": 170, "headDoy": 190}, "ripe": {"transDoy": 120, "piDoy": 160, "headDoy": 175, "matDoy": 198}}
+        waters = {"water": {"water": "shallow"}, "deep": {"water": "deep"}, "inter": {"water": "intermittent"},
+                  "wet": {"water": "drained", "drainDoy": 199}, "fine": {"water": "drained", "drainDoy": 190}, "crack": {"water": "drained", "drainDoy": 180}}
+        flags = {"": {}, "W": {"pev": [{"kind": "hie", "fixed": False}]}, "B": {"pev": [{"kind": "blast", "fixed": False}]}, "U": {"f": {"bphMax": 80}}, "L": {"f": {"lodged": True}}}
+        clear = {"transDoy": None, "piDoy": None, "headDoy": None, "matDoy": None, "water": None, "drainDoy": None, "midStart": None, "bphMax": 0, "lodged": False}
+        steps, names = [], []
+        for st, sf in stages.items():
+            for w, wf in waters.items():
+                for fl, ff in flags.items():
+                    if fl == "L" and st not in ("head", "ripe"):
+                        continue   # エンジンは 出穂の あとだけ 倒伏を 立てる
+                    if fl in ("W", "B") and st in ("head", "ripe"):
+                        continue   # 草・いもち病の しるしは 出穂 前だけ(field3d.js も 同じ)
+                    f = dict(base); f.update(clear); f.update(sf); f.update(wf); f.update(ff.get("f", {}))
+                    steps.append({"ok": 3, "len": len(steps) + 1, "f": f, "pev": ff.get("pev", [])})
+                    names.append((st, w, fl))
+        r = paddy_run(steps)
+        by = {}
+        for (st, w, fl), x in zip(names, r):
+            self.assertEqual(x["base"], st, (st, w, fl))
+            self.assertEqual(x["cond"], w + fl, (st, w, fl))
+            by[(st, w, fl)] = x
+        # 同じ 段階の 中: キーが ちがえば 絵(ドットの 並び)も ちがう(水の ある どうし・無い どうしも)
+        for st in stages:
+            imgs = {}
+            for (s2, w, fl), x in by.items():
+                if s2 != st:
+                    continue
+                self.assertNotIn(x["img"], imgs, "%s: %s と %s が 同じ 絵" % (st, (w, fl), imgs.get(x["img"])))
+                imgs[x["img"]] = (w, fl)
+            # 水の ある 状態は 水の 色、無い 状態は 水の 色 なし(地面の すきまで 見える)
+            for w in waters:
+                self.assertEqual(by[(st, w, "")]["water"], w in ("water", "deep", "inter"), (st, w))
+            self.assertTrue(by[(st, "crack", "")]["crack"], st)
+        # 段階ごとに 地面の 分かれ道を 持たない(地面を えらぶ のは pdGround だけ)
+        code = HTML[HTML.index("  function pdPlants(g, kind){"):HTML.index("    /* 田んぼの ようす(見回りの 発見")]
+        self.assertEqual(code.count("pdGround("), 1)
+        self.assertNotIn("pdWater", code)
+        self.assertNotIn("pdWet(", code)
 
     def test_paddy_drawn_in_pixels_only(self):
         # 字・数字・音は 足さない。動きは transform だけ・動きを へらす 設定では 止める(絵は 見える)

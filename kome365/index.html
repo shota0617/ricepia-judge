@@ -3524,14 +3524,17 @@ renderTitle();
     return g; }
   function pdWater(x, y){ return y >= 12 ? 'B' : (x * 5 + y * 3) % 17 === 0 ? 'c' : 'b'; }
   /* 田植えの あとの 田の 地面(f.water。field3d.js の 水面・乾いた 土と 同じ 見分け): 浅水・深水・間断(水と 泥)・中干し／落水(しめった 土 → 乾いた 土 → ひび) */
-  function pdGround(wat){
+  function pdGround(wat){   /* 周回171(Codex 指摘 2回め): 冬の 土 より あとの 地面は ぜんぶ ここ 1か所で 描く(段階ごとに 地面の 分かれ道を 持たない)。稲は この 上に 重ねる(pdPlants) */
+    if (wat === 'till') return function(x, y){ return y % 2 ? 'F' : (x + y) % 7 === 0 ? 'h' : 'R'; };   /* 耕した 土・直播の 入水 前(f.water 'dryfield') */
+    if (wat === 'puddle') return function(x, y){ return (x * 3 + y * 7) % 19 === 0 ? 'm' : pdWater(x, y); };   /* 代かきの あと */
+    if (wat === 'stub') return function(x, y){ return (x * 11 + y * 5) % 23 === 0 ? 'y' : 's'; };   /* 刈りとりの あと(乾いた 田・わら くず) */
     if (wat === 'deep') return function(x, y){ return y >= 8 ? 'B' : (x * 5 + y * 3) % 17 === 0 ? 'c' : 'B'; };
     if (wat === 'inter') return function(x, y){ return (x * 3 + y * 5) % 7 === 0 ? 'm' : pdWater(x, y); };
     if (wat === 'wet') return function(x, y){ return (x * 7 + y) % 19 === 0 ? '9' : y % 2 ? 'F' : '4'; };
     if (wat === 'fine') return function(x, y){ return y % 2 ? 'F' : 'R'; };
     if (wat === 'crack') return function(x, y){ return (x + y * 2) % 9 === 0 || (x * 2 + 40 - y) % 11 === 0 ? 'k' : 'R'; };
     return pdWater; }
-  function pdWet(wat){ return !wat || wat === 'water' || wat === 'deep' || wat === 'inter'; }
+  function pdWet(wat){ return !wat || wat === 'water' || wat === 'deep' || wat === 'inter' || wat === 'puddle'; }
   function pdMarks(ok){   /* ○ の 数 → 土の 段と 印(並び順に 1つずつ ふえる) */
     var n = Math.max(0, ok | 0), lv, list = [], newest = null, i, m;
     if (n < 24) { lv = Math.floor(n / 6); for (i = 0; i < n % 6; i++) list.push({ t: 'c', x: PD_CRUMB[i][0], y: PD_CRUMB[i][1] }); if (n % 6) newest = list[list.length - 1]; return { lv: lv, list: list, newest: newest }; }
@@ -3543,31 +3546,30 @@ renderTitle();
     else if (m > 0) newest = list[list.length - 1];
     return { lv: lv, list: list, newest: newest }; }
   function pdMarkPix(k){ return k.t === 'c' ? [[0, 0, 'h'], [1, 0, 'h'], [0, 1, 'k']] : k.t === 's' ? [[0, 0, 'w'], [1, 0, 'h']] : k.alt ? [[0, 1, 'r'], [1, 0, 'r'], [2, 1, 'r']] : [[0, 0, 'r'], [1, 1, 'r'], [2, 0, 'r']]; }
-  function pdBase(kind, o){   /* kind: soil / till / puddle / nae / kuki / moto / head / ripe / stubble / dseed / dsprout。o: { marks, wet } */
-    var mk = o.marks, lv = mk ? mk.lv : 0, g;
-    if (kind === 'soil') g = pdFrame(function(x, y){ return pdTex(x, y) ? PD_TX[lv] : PD_LV[lv]; });
-    else if (kind === 'till' || kind === 'dseed' || kind === 'dsprout') g = pdFrame(function(x, y){ return y % 2 ? 'F' : (x + y) % 7 === 0 ? 'h' : 'R'; });
-    else if (kind === 'puddle') g = pdFrame(function(x, y){ return (x * 3 + y * 7) % 19 === 0 ? 'm' : pdWater(x, y); });
-    else if (kind === 'moto' || kind === 'head') g = pdFrame(function(x, y){ return x % 3 === 0 || (x + y) % 5 === 0 ? 'G' : (x * 5 + y) % 23 === 0 ? (pdWet(o.wat) ? 'b' : 'R') : 'g'; });   /* 株の すきまに 見える 地面(水 か 土) */
-    else if (kind === 'ripe') g = pdFrame(function(x, y){ return x % 3 === 0 ? 'u' : (x + 2 * y) % 4 === 0 ? 'y' : 'Y'; });
-    else if (kind === 'stubble') g = pdFrame(function(x, y){ return (x * 11 + y * 5) % 23 === 0 ? 'y' : 's'; });
-    else g = pdFrame(kind === 'nae' || kind === 'kuki' ? pdGround(o.wat) : pdWater);
-    var x, y;
-    if (kind === 'soil' && mk) mk.list.forEach(function(k){ pdMarkPix(k).forEach(function(p){ var X = k.x + p[0], Y = k.y + p[1]; if (Y <= 13 && X <= 41) g[Y][X] = p[2]; }); });
-    if (kind === 'dseed') for (y = 4; y <= 12; y += 2) for (x = 3; x <= 40; x += 3) g[y][x] = 'h';
-    if (kind === 'dsprout') for (y = 4; y <= 12; y += 2) for (x = 3; x <= 40; x += 3) g[y][x] = 'g';
+  /* 稲(と 直播の 種・芽・刈り株)の 層。地面の 上に 重ねる。どの 段階も すきま(地面が 見える ドット)を 残す ので、水の 状態の ちがいが 見える */
+  function pdPlants(g, kind){ var x, y;
+    if (kind === 'dseed' || kind === 'dsprout') for (y = 4; y <= 12; y += 2) for (x = 3; x <= 40; x += 3) g[y][x] = kind === 'dseed' ? 'h' : 'g';
     if (kind === 'nae' || kind === 'kuki' || kind === 'stubble') PD_ROWS.forEach(function(y){ for (x = 3; x <= 40; x += 3) {
       if (kind === 'nae') g[y][x] = 'g';
       else if (kind === 'kuki') { g[y][x] = 'G'; g[y - 1][x - 1] = 'g'; g[y - 1][x + 1] = 'g'; g[y - 1][x] = 'G'; }
       else g[y][x] = 'S'; } });
+    if (kind === 'moto' || kind === 'head' || kind === 'ripe') for (y = 4; y <= 13; y++) for (x = 2; x <= 41; x++) { if ((x % 3 === 2 && y % 2 === 0) || (x * 5 + y) % 23 === 0) continue;   /* 株の すきま(地面) */
+      g[y][x] = kind === 'ripe' ? (x % 3 === 0 ? 'u' : (x + 2 * y) % 4 === 0 ? 'y' : 'Y') : x % 3 === 0 || (x + y) % 5 === 0 ? 'G' : 'g'; }
     if (kind === 'head') for (y = 4; y <= 12; y += 2) for (x = 3; x <= 40; x += 3) { g[y][x] = 'y'; g[y][x + 1] = 'Y'; }
+    return g; }
+  function pdBase(kind, o){   /* kind: soil / till / puddle / nae / kuki / moto / head / ripe / stubble / dseed / dsprout。o: { marks, wet(雨), wat(地面), weed, blast, burn, lodged } */
+    var mk = o.marks, lv = mk ? mk.lv : 0, g, x, y;
+    if (kind === 'soil') g = pdFrame(function(x, y){ return pdTex(x, y) ? PD_TX[lv] : PD_LV[lv]; });
+    else g = pdFrame(pdGround(o.wat || (kind === 'till' || kind === 'dseed' || kind === 'dsprout' ? 'till' : kind === 'puddle' ? 'puddle' : kind === 'stubble' ? 'stub' : 'water')));
+    if (kind === 'soil' && mk) mk.list.forEach(function(k){ pdMarkPix(k).forEach(function(p){ var X = k.x + p[0], Y = k.y + p[1]; if (Y <= 13 && X <= 41) g[Y][X] = p[2]; }); });
+    pdPlants(g, kind);
     /* 田んぼの ようす(見回りの 発見・エンジンの 状態。field3d.js が 描く ものと 同じ 見分け): 草・いもち病の 斑点・ウンカの 坪枯れ・倒伏 */
     if (o.weed) [[8, 10], [26, 8], [35, 12]].forEach(function(p){ g[p[1]][p[0]] = 'W'; g[p[1] - 1][p[0]] = 'W'; g[p[1] - 2][p[0] - 1] = 'W'; g[p[1] - 2][p[0] + 1] = 'W'; });
     if (o.blast) [[12, 7], [21, 11], [31, 9], [17, 5]].forEach(function(p){ g[p[1]][p[0]] = 'O'; });
     if (o.burn) for (y = 6; y <= 12; y++) for (x = 25; x <= 35; x++) if ((x - 30) * (x - 30) + 2.2 * (y - 9) * (y - 9) <= 10) g[y][x] = (x + y) % 2 ? 'S' : 'O';
-    if (o.lodged && (kind === 'head' || kind === 'ripe')) for (y = 6; y <= 12; y++) for (x = 6; x <= 18; x++) g[y][x] = (x + y) % 3 === 0 ? 'u' : x % 4 === 0 ? 'y' : kind === 'ripe' ? 'Y' : 'g';
+    if (o.lodged) for (y = 6; y <= 12; y++) for (x = 6; x <= 18; x++) g[y][x] = (x + y) % 3 === 0 ? 'u' : x % 4 === 0 ? 'y' : kind === 'ripe' ? 'Y' : 'g';   /* 倒伏(エンジンは 出穂の あとだけ 立てる) */
     if (o.wet) { for (y = 4; y <= 13; y++) for (x = 2; x <= 41; x++) if (PD_WET[g[y][x]]) g[y][x] = PD_WET[g[y][x]];
-      if (kind === 'soil' || kind === 'till' || kind === 'dseed' || kind === 'dsprout' || kind === 'stubble') PD_PUDDLE.forEach(function(p){ for (var i = 0; i < p[2]; i++) g[p[1]][p[0] + i] = 'b'; g[p[1]][p[0]] = 'c'; });
+      if (kind === 'soil' || !pdWet(o.wat)) PD_PUDDLE.forEach(function(p){ for (var i = 0; i < p[2]; i++) g[p[1]][p[0] + i] = 'b'; g[p[1]][p[0]] = 'c'; });
       else for (x = 4; x <= 40; x += 9) { g[6 + (x % 4)][x] = 'c'; g[6 + (x % 4)][x + 1] = 'c'; } }
     return g; }
   function pdNursery(g){ [[4, 10], [12, 18]].forEach(function(b){ for (var x = b[0]; x <= b[1]; x++) { g[0][x] = x % 2 ? 'G' : 'g'; g[1][x] = x % 2 ? 'g' : 'G'; g[2][x] = x === b[0] || x === b[1] ? 'O' : 'o'; } }); return g; }
@@ -3590,7 +3592,10 @@ renderTitle();
     else base = 'soil';
     /* 田植えの あとの 水(engine a_mid: 'mid'・a_drain: 'drained'・a_water: 'deep'/'shallow'/'intermittent')。中干し・落水の 土の 乾き方は field3d.js(1062〜1063行)・engine.js patrolEvents の 見回りの 土と 同じ 式 */
     var wat = '', wk = f.water;
-    if (f.transDoy && !f.harvestDoy) {
+    if (base === 'till' || base === 'dseed' || base === 'dsprout') wat = 'till';
+    else if (base === 'puddle') wat = 'puddle';
+    else if (base === 'stubble') wat = 'stub';
+    else if (base !== 'soil') {
       if (wk === 'deep') wat = 'deep';
       else if (wk === 'intermittent') wat = 'inter';
       else if (wk === 'mid' || wk === 'drained') { var d0 = wk === 'mid' ? f.midStart : f.drainDoy, k = d0 == null ? 99 : f.doy - d0 + (f.mizo ? 2 : 0) - (wk === 'mid' ? Math.min(4, Math.floor((f.midRain || 0) / 15)) : 0); wat = k <= 3 ? 'wet' : k <= 14 ? 'fine' : 'crack'; }

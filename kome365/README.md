@@ -994,6 +994,13 @@ main に入れると Vercel で **https://go.ricepia.jp/kome365/** に自動で�
 - 1年の 遊び（390×844）で 出た 状態：深水（5月21日〜）・草・いもち病・中干し（6月26日 しめった 土 → 6月27日 乾いた 土）・間断（7月8日〜）・落水（8月24日 しめった 土 → 8月25日 乾いた 土）。写真 `shots/cond_*.png`
 - 顔の 先読みの ため だけの 計算（`pvCompute` の `moodCalc` → `card.pvMood`）・顔の ドット絵（`PIXFACE`・`pixFace*`）・`moodInfo`・使われない `pixSceneSet`・確かめ用の 顔の 項目（`moodLevel`・`pixUrl`・`moodPv`）を 外した。きねん写真の 景色の 絵・田んぼの 調子の 色み（`moodCalc`）は 使って いる ので 残した
 
+### Codex 指摘の あと（2回め：地面を 描く 所を 1つに）
+- 穂の もと・出穂では、株の すきまの 地面を「水 か 土 か」だけで えらんで いたので、浅水・深水・間断、しめった 土・乾いた 土・ひび が それぞれ 同じ 絵に なって いた（キーだけ ちがう）
+- 冬の 土 より あとの 地面は ぜんぶ `pdGround(wat)` 1か所で 描き、その 上に 段階の 稲（`pdPlants`）を 重ねる 形に した。耕した 土・代かき・直播の 入水 前・刈りとりの あとも 同じ 関数の 中の 地面。穂の もと・出穂・実りでも 株の すきま（3列に 1列 × 1段おき＋ちらばり）を 残し、地面の ちがいが 見える
+- 草・いもち病・坪枯れ・倒伏の しるしも、どの 段階でも 同じ 所で 重ねる（草・いもち病は 出穂 前、倒伏は 出穂 あと。field3d.js・engine と 同じ）
+- 表で 確かめた：苗・分げつ・穂の もと・出穂・実り × 浅水・深水・間断・しめった 土・乾いた 土・ひび × しるし（なし・草・いもち・坪枯れ・倒伏）の 組み合わせで、キーが ちがえば 絵も ちがう（同じ 絵に なる 組は 0）。まとめた キーは 無い
+- 1年の 遊び（分げつの 保存から）で：穂の もと 間断（7月14日）・出穂 間断（8月6日）・出穂 落水 しめった 土（8月24日）・乾いた 土（8月27日）・実り ひび（9月7日）。写真 `shots/cond2_*.png`
+
 ### 数（1年を 遊び通した 1回・390×844・2D。カードは キーボードで 決めた）
 - 冬の 土の 間（1月1日〜4月25日・121枚）：○ 46回 → 46回とも 絵が 変わった。ふくらんだ のは 42回（のこり 4回は 土の 色が 1段 上がった ○）。✗ では 変わらない
 - 10枚ごとの 絵の 変わり：1〜10枚 7・11〜20枚 7・21〜30枚 7・31〜40枚 6・41〜50枚 6（○ の 数 7・7・7・5・6。雨の 日の 出入りでも 変わる）。周回170 の 前は 11〜20枚で 1〜2
@@ -1012,7 +1019,7 @@ main に入れると Vercel で **https://go.ricepia.jp/kome365/** に自動で�
 - せまい 画面（360px 以下）と 横の 低い 画面の 絵は 1ドット 2px（3px では 生きもの・太陽・育ちの 丸の 間に 入らなかった）
 
 ### 確かめ
-- `pytest tests/test_kome365_firstmin.py tests/test_feedback_kome.py`（58件。Codex 指摘の あと）
+- `pytest tests/test_kome365_firstmin.py tests/test_feedback_kome.py`（59件。Codex 指摘 2回めの あと）
 - 運営者の 声で 仕様が 変わった ので 書きかえた テスト：
   | テスト | 書きかえ |
   |---|---|
@@ -1022,7 +1029,7 @@ main に入れると Vercel で **https://go.ricepia.jp/kome365/** に自動で�
   | test_landscape_small_phone_keeps_card_clear | 顔・挨拶の 顔の 行を 外した（育ち・かかし・天気の きまりは そのまま） |
   | test_short_portrait_weather_clears_card_date | 景色を 消す 行を 外した |
   | 周回170 の 点の 4件 → test_paddy_soil_changes_every_ok・test_paddy_pop_rules_follow_cycle170・test_paddy_drawn_in_pixels_only・test_paddy_fits_six_screens_in_browser | 点を 土の 絵に 移した（○ の たびに 変わる・同じ 判定の 中で ふくらみを 引きつぐ・保存から もどる ときは ふくらまない・6つの 画面で 見える） |
-- 足した テスト：test_paddy_follows_farm_state（エンジンの 状態ごとの 絵・機械は 2枚・保存から もどった ときは 機械なし・直播・雨）、test_paddy_shows_water_and_field_state（Codex 指摘：中干しで 水面が 消える・水の 状態ごとに 絵が ちがう・草・いもち病・坪枯れ・倒伏。ec07505b では 落ちる）
+- 足した テスト：test_paddy_follows_farm_state（エンジンの 状態ごとの 絵・機械は 2枚・保存から もどった ときは 機械なし・直播・雨）、test_paddy_ground_table_every_stage（2回め：段階 × 水の 状態 × しるし の 表。f7b2e1e0 では 落ちる）、test_paddy_shows_water_and_field_state（Codex 指摘：中干しで 水面が 消える・水の 状態ごとに 絵が ちがう・草・いもち病・坪枯れ・倒伏。ec07505b では 落ちる）
 
 ### 未確認
 - 実機（iPhone Safari・Android Chrome）で 2px の 絵（せまい 画面）が 読めるか

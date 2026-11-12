@@ -9587,9 +9587,17 @@ function demoLeadAim(path) {
   demoLead.ty = lim((r.height - cover) / 2, path[i][1] * MZ_K + MZ_K / 2 - rp.y);
 }
 const tapDemo = { el: null, ph: null, at: performance.now(), x: null, y: null, n: 0, side: '', up: false, walked: false, walkT: -1e9, sp: null, last: null };
-function tapDemoTouch() {
+function tapDemoTouch(e) {
   tapDemo.at = performance.now();
+  if (tapDemo.last) { delete tapDemo.last.hand; delete tapDemo.last.handTile; }   // 次の 指・キーでは、前に 押した 手の 当たりを 引き継がない
   if (tapDemo.el && !tapDemo.el.hidden && tapDemo.sp) tapDemo.last = { ...tapDemo.sp, at: tapDemo.at };   // サイクル206：さわって 消える 前の 置き場を おぼえる（demoTapWalk）
+  if (e && e.type === 'pointerdown' && !(e.button > 0) && tapDemo.el && !tapDemo.el.hidden && tapDemo.sp) {
+    const r = tapDemo.el.getBoundingClientRect();   // 押す 動きで 14px ずれる 手も、いま 見えた 場所で 受け取る
+    if (r.width > 0 && r.height > 0 && e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom) {
+      tapDemo.last.hand = [r.left, r.top, r.right, r.bottom];
+      tapDemo.last.handTile = swipeTile(tapDemo.sp.x, tapDemo.sp.y);   // 押して いる 間に 地図が 動いても、見えた 指先の マスへ
+    }
+  }
   tapDemoHide();
 }
 function tapDemoHide() { tapDemo.sp = null; if (tapDemo.el && !tapDemo.el.hidden) tapDemo.el.hidden = true; if (tapDemo.ph && !tapDemo.ph.hidden) tapDemo.ph.hidden = true; }
@@ -13859,10 +13867,11 @@ function demoTapWalk(cx, cy) {   // cx・cy：画面の 点。手本の マス�
     const sp = tapDemoSpot(mzRt.path, tiltBtnWanted() && !tiltG.asked);
     if (sp) l = { x: sp.q.x, y: sp.q.y };
   }
-  if (!l || Math.hypot(cx - l.x, cy - l.y) > DEMO_TAP_R) return false;
-  if (tapDemoWalks(l, DEMO_SLOP_PX)) return false;   // 18px ずれても 歩ける 置き場：これまでどおり（タップした 所で 決まる）
+  const hand = l && l.hand && cx >= l.hand[0] && cx <= l.hand[2] && cy >= l.hand[1] && cy <= l.hand[3];
+  if (!l || (!hand && Math.hypot(cx - l.x, cy - l.y) > DEMO_TAP_R)) return false;
+  if (!hand && tapDemoWalks(l, DEMO_SLOP_PX)) return false;   // 手そのものを 押した ときだけ 指先へ。ほかの 安全な 点は、タップした 所で 決まる
   tapDemo.last = null;
-  const q = swipeTile(l.x, l.y);
+  const q = hand && l.handTile ? l.handTile : swipeTile(l.x, l.y);
   return tapWalk(q[0], q[1]);
 }
 // 操作して移動：地面をタップすると、そこまで道を探して1マスずつ歩く（車のときは道だけなので、スティックで）

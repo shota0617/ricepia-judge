@@ -13135,6 +13135,9 @@ function idleRollForce() {   // 眺めるコロコロ（M5）の 力。条件が
 // TAP_TILT_OVER 以上に しっかり 傾けたら、歩きを やめて 傾きに まかせる（これまでどおり 傾きが 勝つ）。歩いて いない ときの 転がりは 何も 変えない。
 // 0.75 の わけ：tiltCurve の 力は、傾きの 4分の1（ふつうの 設定 12度なら 3度）で 0.65 に とどく（小さな 傾きで 動きだす ための 帯）。
 // そこから 上は ゆっくり ふえて、0.75 は 傾きの 46%（びんかん 9度：4.2度・ふつう 12度：5.6度・やさしい 16度：7.4度）。持ち方の ずれ・手の ふるえ（3〜4度＝0.65〜0.69）は とどかない
+// サイクル209（はじめの 1分）：4度で 転がって いる とちゅうに タップすると、歩いて いる 間も のこりの いきおい（速さ 3.7マス/秒）で お米が すべり、
+// 道から はみ出して 歩きが 取り消される ことが あった（1歩めの 行き先が いまの 位置から 0.6マス 以内だと、下の rollStep の「そこから」の 合わせ（速さ 0）が 起きない ため）。
+// 直し：歩きだす とき（tapWalk）に、小さな 傾きなら 速さを 0 に する。TAP_TILT_OVER 以上の 傾きは これまでどおり（歩きは すぐ やめて、いきおいも 傾きも そのまま）
 const TAP_TILT_OVER = 0.75;
 function tapWalkTilt() {
   if (!tapS.goal) return 1;
@@ -13983,6 +13986,7 @@ function tapWalk(gx, gy) {
   const path = planPath(sx, sy, gx, gy, mazeOn() ? (mzType(Math.floor(gx / MZ_K), Math.floor(gy / MZ_K)) === 1 ? 0 : 2) : BLOCK.has(codeAt(gx, gy)) ? 1 : 0, avoid);   // 建物や水（めいろでは 壁の かたまり）をタップしたら、そのそばまで
   if (!path.length) { if (navigator.vibrate) navigator.vibrate(20); return false; }
   tapS.path = path; tapS.goal = path[path.length - 1]; tapS.due = performance.now();
+  if (Math.hypot(tiltG.x, tiltG.y) < TAP_TILT_OVER) rp.vx = rp.vy = 0;   // サイクル209：転がって いる とちゅうの タップでも、歩きは のこりの いきおいを 持ちこさない（上の TAP_TILT_OVER の 注）
   tapWalkTick();
   return true;   // 歩きだせた（となりの マスへ 1歩で 着いて、もう 行き先が のこって いない ときも）
 }

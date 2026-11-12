@@ -223,6 +223,37 @@ console.log(JSON.stringify({ big: tapDemoLayout(q, 'big', rc, box, up => true), 
         self.assertIsNotNone(o["later"])   # 2回めから の 手本は これまでどおり（手の 絵の 四角は 見ない）
 
 
+class WalkStartMomentum209(unittest.TestCase):
+    """4度で 転がって いる とちゅうの タップ：歩きは のこりの いきおいを 持ちこさない（確かめの tapWalkTilt が 20回に 1〜2回 落ちた もと）。
+    しっかり 傾けて いる とき（TAP_TILT_OVER 以上）・歩けなかった ときは、いきおいを かえない"""
+    def run_walk(self, tilt, path=True):
+        src = line(PIX, "const TAP_TILT_OVER = ") + fn(PIX, "tapWalk")
+        code = """
+const G = { notePlayInput() {}, npcs: [], toast() {} }, tapS = { path: [], timer: null, goal: null, due: 0 };
+const idleTouch = () => {}, tapWalkStop = () => { tapS.path = []; tapS.goal = null; }, tapWalkTick = () => {};
+const driving = false, mazeOn = () => false, BLOCK = new Set(), codeAt = () => 0, npcTile = n => n;
+const targetTile = () => ({ x: 10.9, y: 4.5 }), planPath = () => (%s ? [[11, 4], [12, 4], [13, 4]] : []);
+const tiltG = { x: %r, y: 0.69 }, rp = { x: 11.3, y: 4.6, vx: 3.2, vy: 1.4 };
+%s
+const ok = tapWalk(13, 4);
+console.log(JSON.stringify({ ok, v: [rp.vx, rp.vy], goal: tapS.goal }));
+""" % ("true" if path else "false", tilt, src)
+        return node(code)
+
+    def test_small_tilt_walk_starts_still(self):
+        o = self.run_walk(0.0)
+        self.assertTrue(o["ok"])
+        self.assertEqual(o["goal"], [13, 4])
+        self.assertEqual(o["v"], [0, 0], "転がって いる とちゅうの タップで、歩きに いきおいが のこった: %r" % o)
+
+    def test_strong_tilt_and_no_path_keep_speed(self):
+        o = self.run_walk(0.7)   # 力 0.99：歩きは 次の こまで やめて 傾きに まかせる（傾きが 勝つ。いきおいも そのまま）
+        self.assertEqual(o["v"], [3.2, 1.4])
+        o = self.run_walk(0.0, path=False)   # 歩けない：何も かえない
+        self.assertFalse(o["ok"])
+        self.assertEqual(o["v"], [3.2, 1.4])
+
+
 class Rules209(unittest.TestCase):
     def test_playtest_items(self):
         for k in ["firstTapBig", "firstTapFit6", "laterDemoSame", "lowGoalDemo", "bigHandTap", "handHelpScope"]:

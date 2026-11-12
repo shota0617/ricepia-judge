@@ -1071,8 +1071,8 @@ async function cycle209Checks(browser, R) {
     const v = await newPage(browser, { howto: true, auto: true, hasTouch: true, isMobile: true, locale: 'ja-JP', timezoneId: 'Asia/Tokyo', viewport: view });
     await v.page.addInitScript(f => {
       if (!sessionStorage.getItem('__c209')) { sessionStorage.setItem('__c209', '1'); for (const k of ['nsg_auto', 'nsg_roll', 'nsg_roll_v2', 'nsg_view', 'nsg_world_on', 'nsg_koro', 'nsg_kome_talk']) localStorage.removeItem(k); }
-      if (f && window.DeviceOrientationEvent) DeviceOrientationEvent.requestPermission = () => new Promise(() => {});
-    }, !!first);
+      if (f && window.DeviceOrientationEvent) DeviceOrientationEvent.requestPermission = f === 'deny' ? () => Promise.resolve('denied') : () => new Promise(() => {});
+    }, first || false);
     await v.page.goto(URL);
     await v.page.waitForFunction(() => window.nishioPixel && window.nishioGo && nishioPixel.roll.ready && nishioPixel.maze.routePath(), null, { timeout: 20000 }).catch(() => {});
     return v;
@@ -1156,6 +1156,37 @@ async function cycle209Checks(browser, R) {
     }
     out.bigHandTap = { rows, ok: rows.length === 2 && rows.every(r => !r.none && !r.crashed && !r.world && !r.win && r.walk) };
   }
+  {   // ⑥ サイクル209 の 直し（Codex の 指摘 P2 ×2）：手本の 助けは 手の 絵の 上 だけ・名所の 絵の 上の タップは 説明を 開く・許可を 聞いた あとは 助けない。
+    // 390×844・道すじの 5番めの 置き場で、手の 絵の 上か 前の 助けの はんい（線から 24px）に ある 名所の 絵の 点を さがし（nishioPixel.demoHitAt）、その 点を タップ：説明の 窓が 開く
+    // （前は 手本の 助けに とられて 手本の マスへ 歩いた）。(a) 許可を 聞く 前　(b) 傾きの ボタンで 許可を 聞いて ことわった 150ms あと
+    const rows = [];
+    for (const mode of ['before', 'asked']) {
+      let v = null;
+      try {
+        v = await open({ width: 390, height: 844 }, 'deny');
+        await v.page.waitForTimeout(500);
+        await v.page.evaluate(() => { const P = nishioPixel, M = P.maze, p = M.routePath(); if (!p || p.length < 4) return; const c = p[1 + 15 % (p.length - 2)]; P.rollPut(c[0] * M.K + M.K / 2, c[1] * M.K + M.K / 2, 0, 0); });
+        await v.page.waitForTimeout(1500);
+        const f = await v.page.evaluate(() => { const el = document.getElementById('tapDemo'), P = nishioPixel; if (!el || el.hidden || !P.demoHitAt) return null;
+          const x = parseFloat(el.style.left), y = parseFloat(el.style.top), big = el.classList.contains('big'), s = el.classList.contains('dn') ? -1 : 1, len = big ? 56 : 38;
+          let best = null;
+          for (let dx = -40; dx <= 40; dx += 3) for (let dy = -20; dy <= 100; dy += 3) { if (Math.hypot(dx, dy) <= 24) continue; const px = x + dx, py = y + s * dy; if (!P.demoHitAt(px, py)) continue;
+            const t = Math.max(0, Math.min(len, dy)), dl = Math.hypot(dx, dy - t), inPic = Math.abs(dx) <= (big ? 30 : 22) && dy >= 0 && dy <= len + 16;
+            if ((dl <= 24 || inPic) && (!best || dl < best.dl)) best = { px, py, dl }; }
+          return { tip: [x, y], big, pick: best }; });
+        if (!f || !f.pick) { rows.push({ mode, none: !f ? 'no-demo-or-hook' : 'no-spot-near' }); continue; }
+        const cdp = await v.ctx.newCDPSession(v.page);
+        await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: true });
+        const tap = async (x, y) => { await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] }); await v.page.waitForTimeout(70); await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); };
+        if (mode === 'asked') { const tb = await v.page.evaluate(() => { const t = document.getElementById('pxTilt'); if (!t || t.hidden) return null; const r = t.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; }); if (tb) await tap(tb[0], tb[1]); await v.page.waitForTimeout(150); }
+        const b0 = await v.page.evaluate(() => [nishioPixel.roll.x, nishioPixel.roll.y]);
+        await tap(f.pick.px, f.pick.py); await v.page.waitForTimeout(600);
+        const s = await v.page.evaluate(b => ({ win: !document.getElementById('pxInfo').hidden, world: document.body.classList.contains('pxw'), walk: !!nishioPixel.tapGoal || Math.hypot(nishioPixel.roll.x - b[0], nishioPixel.roll.y - b[1]) > 0.3 }), b0);
+        rows.push({ mode, tip: f.tip, big: f.big, pick: [f.pick.px, f.pick.py], ...s });
+      } catch (e) { rows.push({ mode, crashed: String(e && e.message || e).slice(0, 120) }); } finally { if (v) { R.errors.push(...v.errors); await v.ctx.close(); } }
+    }
+    out.handHelpScope = { rows, ok: rows.length === 2 && rows.every(r => !r.none && !r.crashed && r.win && !r.world) };
+  }
   return out;
 }
 const FIRST_MINUTE_NEED = {
@@ -1204,6 +1235,7 @@ const FIRST_MINUTE_NEED = {
   laterDemoSame: '2回めから の 手本（許可を 聞かない 端末・止まって 2秒）の 大きさが かわった（指 38px で ない・大きい 形に なる）',
   lowGoalDemo: '低い 横向き（568×320・844×390）で ゴールの 1〜2マス 手前に 止まると、手本の 指が 出ない（N1b）',
   bigHandTap: '最初の 手本の 手の まん中・手首（大きい 手 30・52px／入らない ときの ふつうの 手 20・36px）を タップすると、歩かずに せかいちず・名所の 窓に なる（844×390・西尾駅の 3マス 手前）',
+  handHelpScope: '手本の 手の 助けが 名所の 絵の 上・許可を 聞いた あとにも 効いて、手の そばの 名所を タップしても 説明が 開かない（390×844・許可の 前／ことわった 150ms あと）',
   bootLoaded: '地図の 部品が ふつうに 読めた のに「時間が かかっています」の ボタン・「もう 1回 読みこむ」が 出る／始まらない',
   bootFailed: '地図の 部品が 読めなかった（エラー）とき、押せる「もう 1回 読みこむ」の ボタンが 4秒 までに 出ない／押しても 読みこみ なおさない',
   bootSlow: '地図の 部品が 8秒 おくれて 届く 人に「時間が かかっています」が 出る／20秒 おくれの 人が 始まらない・始まった あとも 残る',

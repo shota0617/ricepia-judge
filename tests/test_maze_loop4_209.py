@@ -111,7 +111,7 @@ def spot_code(run):
     defs = defs.replace("const DEMO_TAP_MS = 900, DEMO_AHEAD = 3;", "const DEMO_AHEAD = 3;")
     if "DEMO_AHEAD" not in defs:
         defs += "const DEMO_AHEAD = 3;\n"
-    return SPOT_STUB + defs + fn(PIX, "tapDemoLayout") + fn(PIX, "tapDemoGoalSpot", "") + fn(PIX, "tapDemoSpot") + run
+    return SPOT_STUB + defs + fn(PIX, "demoHandClear", "") + fn(PIX, "tapDemoLayout") + fn(PIX, "tapDemoGoalSpot", "") + fn(PIX, "tapDemoSpot") + run
 
 
 class LowGoalDemo209(unittest.TestCase):
@@ -149,7 +149,9 @@ console.log(JSON.stringify({ wide: wide && !!wide.big, low: low ? !!low.big : nu
 # ---------- サイクル209 の 直し（Codex の 指摘 P2）：大きい 手の まん中・手首の タップ ----------
 TAPWALK_STUB = r"""
 let T = 5000, worldMode = false, driving = false, slopOk = false, spot = null; const performance = { now: () => T }, G = { demo: true }, howtoEl = { hidden: true }, rp = { x: 1 }, tapS = { goal: null }, mzRt = { path: [[0, 0], [1, 0]] };
-const tapDemo = { last: null }, walks = [], DEMO_SLOP_PX = 18;
+const tapDemo = { last: null, at: T - 100 }, walks = [], DEMO_SLOP_PX = 18, tiltAsk = { at: -1e9 };
+// 名所の 絵（タップで 窓が 開く 所）：(140〜154, 420〜430) と (147, 351) の まわり。地図は 画面と 同じ 大きさ（dpr 1）
+let SPOTS = []; const shopHits = [], cv = { width: 390, getBoundingClientRect: () => ({ left: 0, top: 0, width: 390 }) }, fieldHit = (x, y) => SPOTS.some(r => x >= r[0] && x <= r[2] && y >= r[1] && y <= r[3]) ? { spot: 1 } : null;
 const tapDemoWalks = (q, slop) => slopOk, tapDemoSpot = () => spot, tiltBtnWanted = () => true, tiltG = { asked: false }, swipeTile = (x, y) => [Math.floor(x / 16), Math.floor(y / 16)], tapWalk = (x, y) => { walks.push([x, y]); return true; };
 """
 
@@ -158,19 +160,32 @@ class BigHandTap209(unittest.TestCase):
     def test_tap_on_big_hand_walks(self):
         """最初の 手本の 手の 上（大きい 手 56px の まん中 30px・手首 52px、入らない ときの ふつうの 手 38px の 手首 36px）の タップは 手本の マスへ 歩く（指先が 18px ずれても 歩ける 所でも。
         前は 24px より 外は ふつうの タップに なり、844×390 で 縁の 矢印の 当たりに 入って せかいちずに 切りかわった）。ふつうの 大きさの 手は これまでどおり"""
-        code = TAPWALK_STUB + line(PIX, "const DEMO_HAND1 = ", "") + line(PIX, "const DEMO_TAP_R = ") + fn(PIX, "demoTapWalk") + """
-const out = {}, last = (hand, dn) => { tapDemo.last = { x: 147, y: 381, at: T - 100, hand, dn }; walks.length = 0; };
-last(56, false); out.mid = demoTapWalk(147, 411);
-last(56, false); out.wrist = demoTapWalk(147, 433);
-last(56, false); slopOk = true; out.midSafe = demoTapWalk(147, 411); slopOk = false;
-last(56, true); out.midDn = demoTapWalk(147, 351);
-last(56, false); out.side = demoTapWalk(190, 411);
-last(38, false); out.smallFirstWrist = demoTapWalk(147, 417);   // 入らない ときの ふつうの 大きさの 最初の 手本：手首（36px）
-last(38, false); out.smallFirstPast = demoTapWalk(147, 446);   // 手の 先（65px）は 手の 外
+        code = TAPWALK_STUB + line(PIX, "const DEMO_HAND1 = ", "") + line(PIX, "const DEMO_TAP_R = ") + fn(PIX, "demoWinAt", "") + fn(PIX, "demoTapWalk") + """
+const BIG = [72, 60], SMALL = [54, 44];   // 手の 絵の 四角：長さ（指 56／38px ＋ 押す 動き 14 ＋ 2）・はば
+const out = {}, last = (h, dn) => { tapDemo.last = { x: 147, y: 381, at: T - 100, hand: h && h[0], hw: h && h[1], dn }; walks.length = 0; };
+last(BIG, false); out.mid = demoTapWalk(147, 411);
+last(BIG, false); out.wrist = demoTapWalk(147, 433);
+last(BIG, false); slopOk = true; out.midSafe = demoTapWalk(147, 411); slopOk = false;
+last(BIG, true); out.midDn = demoTapWalk(147, 351);
+last(BIG, false); out.side = demoTapWalk(190, 411);
+last(SMALL, false); out.smallFirstWrist = demoTapWalk(147, 417);   // 入らない ときの ふつうの 大きさの 最初の 手本：手首（36px）
+last(SMALL, false); out.smallFirstPast = demoTapWalk(147, 446);   // 手の 先（65px）は 手の 外
 last(undefined, false); out.small30 = demoTapWalk(147, 411);   // 2回めから の 手本（hand なし）
-last(56, false); slopOk = true; out.tipSafe = demoTapWalk(147, 390); slopOk = false;
+last(BIG, false); slopOk = true; out.tipSafe = demoTapWalk(147, 390); slopOk = false;
+// Codex の 指摘 1：許可の ボタンで 聞いた あと（この タップの 前）は 助けない。許可を 聞いた その タップ（この タップの はじめ より あと）は 助ける
+last(BIG, false); tiltG.asked = true; tiltAsk.at = T - 500; out.askedBefore = demoTapWalk(147, 411);
+last(BIG, false); tiltAsk.at = T - 50; out.askedNow = demoTapWalk(147, 411); tiltG.asked = false; tiltAsk.at = -1e9;
+// Codex の 指摘 2：手の 絵の 四角の 外（長さ 72px より 先・前の 助けの 線は 80px まで）は ふつうの タップ
+last(BIG, false); out.pastPicture = demoTapWalk(147, 381 + 77);
+// Codex の 指摘 2：手の 絵の 下に 名所の 絵が ある 所の タップは ふつうの タップ（説明を 開く）
+last(BIG, false); SPOTS = [[140, 420, 154, 430]]; out.spotUnderHand = demoTapWalk(147, 425); out.handBesideSpot = demoTapWalk(147, 411); SPOTS = [];
 console.log(JSON.stringify(out));"""
         o = node(code)
+        self.assertFalse(o["askedBefore"], "許可を 聞いた あとの タップを 手本の マスへ 歩かせた（名所の 説明が 開かない）: %r" % o)
+        self.assertTrue(o["askedNow"], "許可を 聞いた その タップの 助けが ない: %r" % o)
+        self.assertFalse(o["pastPicture"], "手の 絵の 外の タップを 手本の マスへ 歩かせた: %r" % o)
+        self.assertFalse(o["spotUnderHand"], "手の 絵の 下の 名所を タップしても 説明が 開かない: %r" % o)
+        self.assertTrue(o["handBesideSpot"])   # 名所で ない 手の 上は これまでどおり 手本の マスへ
         self.assertTrue(o["mid"], "大きい 手の まん中の タップで 歩かない: %r" % o)
         self.assertTrue(o["wrist"], "大きい 手の 手首の タップで 歩かない: %r" % o)
         self.assertTrue(o["midSafe"], "指先が 歩ける 所でも、大きい 手の まん中は 手本の マスへ: %r" % o)
@@ -194,9 +209,23 @@ console.log(JSON.stringify(sp ? { big: !!sp.big, hand: sp.hand, y: Math.round(sp
         self.assertFalse(r["big"], "大きい 手の まん中・手首が 歩けない 所に かかる のに 大きい 形で 出た: %r" % r)
 
 
+class HandPicture209(unittest.TestCase):
+    def test_spot_under_hand_edge_blocks_big(self):
+        """Codex の 指摘 2：手の 絵の 四角の はし（まん中の 線から 20〜28px）に 名所の 当たりが ある 置き方は 大きい 形に しない（前は まん中の 線 だけ 見て いた）"""
+        code = """
+const T = 8, rc = { x: 900, y: 900 }, box = [0, 0, 2000, 2000, null]; box.near = [];
+const q = { x: 284, y: 300 }, document = { querySelectorAll: () => [] }, tiltBtn = null;
+const tapDemoWalks = (p, slop) => !(p.x >= q.x + 20 && p.x <= q.x + 28);   // 手の 右の はし の 帯 だけ 名所
+""" + "".join(line(PIX, s, "") for s in ["const DEMO_HAND = ", "const DEMO_HAND1 = ", "const DEMO_HAND1_PTS = "]) + fn(PIX, "demoHandClear", "") + fn(PIX, "tapDemoLayout") + """
+console.log(JSON.stringify({ big: tapDemoLayout(q, 'big', rc, box, up => true), later: tapDemoLayout(q, false, rc, box, up => true) }));"""
+        o = node(code)
+        self.assertIsNone(o["big"], "手の 絵の はしに 名所が ある のに 大きい 手を 置いた: %r" % o)
+        self.assertIsNotNone(o["later"])   # 2回めから の 手本は これまでどおり（手の 絵の 四角は 見ない）
+
+
 class Rules209(unittest.TestCase):
     def test_playtest_items(self):
-        for k in ["firstTapBig", "firstTapFit6", "laterDemoSame", "lowGoalDemo", "bigHandTap"]:
+        for k in ["firstTapBig", "firstTapFit6", "laterDemoSame", "lowGoalDemo", "bigHandTap", "handHelpScope"]:
             self.assertIn("  %s: '" % k, PLAY, k)
         self.assertIn("...(await cycle209Checks(browser, R))", PLAY)
 

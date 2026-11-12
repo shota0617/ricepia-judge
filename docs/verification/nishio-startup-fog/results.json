@@ -5306,7 +5306,306 @@
       "exit": 1,
       "limitation": "Uncommitted candidate; one historical scope check could not resolve local main. Separate committed-checkout run is pending."
     },
-    "unitCommitted": null,
+    "unitCommitted": {
+      "command": "PYTHONDONTWRITEBYTECODE=1 NODE_OPTIONS=--require=/workspace/scratch/first-minute/offline.cjs python3 -m unittest discover -s tests -p 'test*.py' -v",
+      "head": "e4e0f8bd7d77d492bdb8bee4265932d7dbe6b96e",
+      "total": 2530,
+      "seconds": 363.045,
+      "success": 2460,
+      "failures": 68,
+      "errors": 1,
+      "skipped": 1,
+      "exit": 1,
+      "failureHeadings": [
+        {
+          "kind": "ERROR",
+          "test": "test_sizes_are_near_the_files (test_boot_screen.TestTractorProgress.test_sizes_are_near_the_files)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_bar_moves_without_total (test_boot_screen.TestTractorProgress.test_bar_moves_without_total)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_diff_scope_and_forbidden_words (test_maze_loop3_34.StationLink.test_diff_scope_and_forbidden_words)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_only_pixel_js_changed_and_no_banned_words (test_maze_loop3_36.WallTheme.test_only_pixel_js_changed_and_no_banned_words)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_changed_files (test_maze_loop3_38.IdleReturnNoCard.test_changed_files)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_only_pixel_changed (test_maze_loop3_39.Diff.test_only_pixel_changed)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_files_and_words (test_maze_loop3_40.Scope.test_files_and_words)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_changed_files_and_words (test_maze_loop3_41.Footprints.test_changed_files_and_words)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_files_and_words (test_maze_loop3_42.Scope.test_files_and_words)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_changed_files (test_maze_loop3_44.Diff.test_changed_files)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_changed_files (test_maze_loop3_45.Diff.test_changed_files)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_changed_files (test_maze_loop3_46.Diff.test_changed_files)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_changed_files (test_maze_loop3_47.Diff.test_changed_files)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_changed_files (test_maze_loop3_48.Diff.test_changed_files)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_changed_files (test_maze_loop3_49.Diff.test_changed_files)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_changed_files (test_maze_loop3_50.Diff.test_changed_files)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_changed_files (test_maze_loop3_51.Diff.test_changed_files)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_changed_files (test_maze_loop3_52.Diff.test_changed_files)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_files_allowed (test_maze_loop3_53.Unchanged.test_files_allowed)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_changed_files (test_maze_loop3_54.Diff.test_changed_files)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_changed_files (test_maze_loop3_55.Diff.test_changed_files)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_files_allowed (test_maze_loop3_56.Safety.test_files_allowed)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_files_allowed (test_maze_loop3_57.Safety.test_files_allowed)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_files_allowed (test_maze_loop3_58.Safety.test_files_allowed)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_files_allowed (test_maze_loop3_59.Safety.test_files_allowed)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_files_allowed (test_maze_loop3_60.Safety.test_files_allowed)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_files_allowed (test_maze_loop3_61.Safety.test_files_allowed)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_scope_and_words (test_maze_loop3_62.Maze.test_scope_and_words)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_files_allowed (test_maze_loop3_63.Scope.test_files_allowed)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_files_allowed (test_maze_loop3_64.Scope.test_files_allowed)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_files_allowed (test_maze_loop3_65.Scope.test_files_allowed)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_files_allowed (test_maze_loop3_66.Scope.test_files_allowed)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_files_allowed (test_maze_loop3_67.Scope.test_files_allowed)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_files_allowed (test_maze_loop3_68.Scope.test_files_allowed)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_exposed (test_maze_loop4_100.Glance100.test_exposed)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_scope (test_maze_loop4_100.Glance100.test_scope)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_scope (test_maze_loop4_101.TestFirstMinuteAmbient.test_scope)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_scope (test_maze_loop4_102.TestFirstMinuteMeetings.test_scope)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_scope (test_maze_loop4_103.TestFirstMinuteGochiso.test_scope)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_scope (test_maze_loop4_104.TestFirstMinuteOtedama.test_scope)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_scope (test_maze_loop4_105.TestHappyFace.test_scope)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_scope (test_maze_loop4_106.TestMichikusaFirstRoll.test_scope)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_files (test_maze_loop4_167.TestScope.test_files)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_files (test_maze_loop4_168.TestScope.test_files)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_files (test_maze_loop4_169.TestScope.test_files)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_scope_and_words (test_maze_loop4_170.Cycle170.test_scope_and_words)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_scope_and_words (test_maze_loop4_171.Cycle171.test_scope_and_words)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_scope_and_words (test_maze_loop4_172.Cycle172.test_scope_and_words)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_scope_and_words (test_maze_loop4_173.Cycle173.test_scope_and_words)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_scope_and_words (test_maze_loop4_174.Cycle174.test_scope_and_words)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_scope_and_words (test_maze_loop4_175.Cycle175.test_scope_and_words)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_scope_and_words (test_maze_loop4_176.Cycle176.test_scope_and_words)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_scope_and_words (test_maze_loop4_177.Cycle177.test_scope_and_words)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_scope_and_words (test_maze_loop4_178.Cycle178.test_scope_and_words)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_scope_and_words (test_maze_loop4_179.Cycle179.test_scope_and_words)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_scope_and_words (test_maze_loop4_180.Cycle180.test_scope_and_words)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_scope_and_words (test_maze_loop4_181.Cycle181.test_scope_and_words)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_scope_and_words (test_maze_loop4_182.Cycle182.test_scope_and_words)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_changed_files_limited (test_maze_loop4_183.Lazy183.test_changed_files_limited)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_scope (test_maze_loop4_205.GuideDispName205.test_scope)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_files_allowed (test_maze_loop4_64.Safety.test_files_allowed)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_changed_files (test_maze_loop4_65.Safety.test_changed_files)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_scope (test_maze_loop4_86.HeroRevert.test_scope)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_diff_words_and_files (test_maze_loop4_9.Scope.test_diff_words_and_files)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_scope (test_maze_loop4_95.DrawNight95.test_scope)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_scope (test_maze_loop4_97.NoNumbers97.test_scope)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_scope (test_maze_loop4_98.UnreadFog98.test_scope)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_eye_saved_and_public (test_maze_loop4_99.Blink99.test_eye_saved_and_public)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_scope (test_maze_loop4_99.Blink99.test_scope)"
+        }
+      ],
+      "logSHA256": "2bc9b40095ea5d50e6f23ed96ac2dfacf0a39aab3b8fcf1b7c36fd55ca62d2ed",
+      "newTests": [
+        "test_pattern_unavailable_keeps_original_tiles_and_identical_background (test_nishio_fog_pattern.NishioFogPatternBrowser.test_pattern_unavailable_keeps_original_tiles_and_identical_background) ... ok",
+        "test_unloaded_world_uses_pattern_and_keeps_regions_normal_and_reduced (test_nishio_fog_pattern.NishioFogPatternBrowser.test_unloaded_world_uses_pattern_and_keeps_regions_normal_and_reduced) ... ok"
+      ],
+      "postGit": {
+        "head": "e4e0f8bd7d77d492bdb8bee4265932d7dbe6b96e",
+        "main": "518459a895fb107dfeda5f8e68231e30a45bfae7",
+        "originMain": "518459a895fb107dfeda5f8e68231e30a45bfae7",
+        "status": ""
+      }
+    },
     "browserFull": {
       "command": "CHROMIUM=/usr/bin/chromium LEAFLET_DIR=/workspace/ricepia-judge/node_modules/leaflet/dist NODE_OPTIONS=--require=/workspace/scratch/first-minute/offline.cjs node tools/playtest.js /workspace/scratch/first-minute/round-53/validation/playtest",
       "exit": 1,
@@ -5368,6 +5667,2184 @@
       "sourcePixelSHA256": "20c6c2dd83c960ee54e88e09652e2756d904a4e44ece76ad0f01576a04f343f2",
       "toolSHA256": "ecf711780051b84a58c811c60e9bd3dda2be7e06e6bbf38df9347d26fcd8d902",
       "note": "One complete required run; non-verdict records are not counted as passed. Native node/Chromium process absence confirmed after exit."
+    },
+    "a2hsIsolated": {
+      "exit": 0,
+      "reportSHA256": "bf13d3544b5e54982dc140a6e77173e8ec09f783c4c0d865d207f254b8f99c1f",
+      "runnerSHA256": "0845b03c2214f60c635d583457ecee772bbfe17da5c5a39fe6444eafb99d9b1d",
+      "manifestSHA256": "d6315c3ab889438797039eb511d22fd212f20cf71c1f75eddc80b06f591fd617",
+      "browserCloseACK": true,
+      "helpersSettled": true,
+      "errors": [],
+      "limits": "Unchanged checks passed only in this isolated run. Full playtest failures remain unresolved.",
+      "versions": [
+        {
+          "name": "before-518",
+          "port": 8004,
+          "expectedHead": "518459a895fb107dfeda5f8e68231e30a45bfae7",
+          "initialVerification": {
+            "at": "2026-11-12T23:05:45.888Z",
+            "head": "518459a895fb107dfeda5f8e68231e30a45bfae7",
+            "files": [
+              {
+                "file": "nishio-go.html",
+                "sha256": "605e0a9c3c530fa9cea45631d4e73f6358d94bb44a018a850e0b47904f17afc8"
+              },
+              {
+                "file": "nishio-go/analytics.js",
+                "sha256": "958885a3da1f1011d535e59e65722bd999109716339a36cd32488d22841e1f92"
+              },
+              {
+                "file": "nishio-go/biglandmark.js",
+                "sha256": "f2615274cb4fc1a4ab7786c08b04acd57a0bda16109e8ca0cda3601e9561cc13"
+              },
+              {
+                "file": "nishio-go/course.js",
+                "sha256": "0bc93c66542587de15c6461d17af550645a683d19b03384667d2b09fa5b5f480"
+              },
+              {
+                "file": "nishio-go/daystamp.js",
+                "sha256": "f5774e75563207930da70b84700f590c748593e1eb13f29d4a891c11ecf7f9c9"
+              },
+              {
+                "file": "nishio-go/edition.js",
+                "sha256": "fc1e11164a115df56943570eea8f50a0e81b132097cb6a20edc232a686b5e157"
+              },
+              {
+                "file": "nishio-go/events.js",
+                "sha256": "58c088ecaa2d8d7273fe4f7c658686d8588b505c824326f7b6bf9f17cc9897c2"
+              },
+              {
+                "file": "nishio-go/game.js",
+                "sha256": "1ac1eee951f7a8889a622121ba4e1e17bbbf0ee695dcdebbc86ade430c9ca610"
+              },
+              {
+                "file": "nishio-go/gochiso.js",
+                "sha256": "7d20b38c86295fa7ae1e95d0cf0767cc5c58827c8aefe71ba22f3900eaa4b6fb"
+              },
+              {
+                "file": "nishio-go/icons.js",
+                "sha256": "3fed8790bc9eeee79eaeccfa430e68a05447e19007bfe4946993940742faed61"
+              },
+              {
+                "file": "nishio-go/kome.js",
+                "sha256": "11ca91dbafd2c618155c6c9df6c36307aa991f650f0fe3755f47ee21daac7343"
+              },
+              {
+                "file": "nishio-go/kometalk.js",
+                "sha256": "00d4ffd055cd896fea4cef8798c1e3370ea45c02d89df457f5fa9eee7c30837f"
+              },
+              {
+                "file": "nishio-go/korostyle.js",
+                "sha256": "954253c2786f59dc0320f4788e3270a93f7b8631f3ad20cb5674fe6a94655281"
+              },
+              {
+                "file": "nishio-go/landmark-gen.js",
+                "sha256": "da52e765ae8ced70230d17d0891150842551d75f0edfa81803711ea9165c6d3f"
+              },
+              {
+                "file": "nishio-go/landscape.js",
+                "sha256": "f6b71b6b7944d489c36f0cbca1f1654304fe1fe5b20b520f0687af1dc6d30c9b"
+              },
+              {
+                "file": "nishio-go/machi.js",
+                "sha256": "5ea5f9e6e3d6f6554f4866ebd57b1ee1eeff181ce5f5c6c9efc0a2eb89469a1d"
+              },
+              {
+                "file": "nishio-go/meibutsu.js",
+                "sha256": "ca230cfcdd8bfb76251bf69ef3f3809863d50e991339a2c11a49ee23546cad80"
+              },
+              {
+                "file": "nishio-go/meiro.js",
+                "sha256": "c8a153a42908a955449858bdea1bdc7c971095fab12174d55cf2eb0fb6bab384"
+              },
+              {
+                "file": "nishio-go/npcs.js",
+                "sha256": "e0e4f3ae807150b0b85902a5ccbdece6a72bd093c00b7a1554a2f00ebe047114"
+              },
+              {
+                "file": "nishio-go/osm-query.js",
+                "sha256": "44be2d414986d6c818b0466cccfab05f445a98b1ad67dcefcda00df873cd2aaa"
+              },
+              {
+                "file": "nishio-go/photoquiz.js",
+                "sha256": "c144988cc9f1eb04f9e2aa1f73da25ffc77db2e3a9115fe2399b17d6919bfe15"
+              },
+              {
+                "file": "nishio-go/pixel.js",
+                "sha256": "8c79616b52c39359aa8d417e667e2d3f3ce56adc6094c28f5c1ecf4be0fd8a35"
+              },
+              {
+                "file": "nishio-go/postcard.js",
+                "sha256": "c97260ec265d08d06b1833008c357c8b100f24e9bf369d90dff7c0c3e8484412"
+              },
+              {
+                "file": "nishio-go/region.js",
+                "sha256": "87280a671988c1e6eb7e7c39522979e18cce6c0bcf1f68dc37157a36b685f581"
+              },
+              {
+                "file": "nishio-go/rollsync.js",
+                "sha256": "723a3ba99f308d2a72cc292b2204d69fee1e4c776ac34c0a315925e9d51baa83"
+              },
+              {
+                "file": "nishio-go/rolltrail.js",
+                "sha256": "519a29363c835b9eab855585f0c8151a95c2810a1e762e0651473905acbb9100"
+              },
+              {
+                "file": "nishio-go/sangyo.js",
+                "sha256": "88be6e0cc8d472f6f33d21e74f0f7eb42d2800e8035eef171dc4032b941f0558"
+              },
+              {
+                "file": "nishio-go/season.js",
+                "sha256": "b8ed2e6ee58015a2d4ee0646c53f52b2a7b0210c69179f61e7493427fbfbb59f"
+              },
+              {
+                "file": "nishio-go/share.js",
+                "sha256": "8e5f923d7a13daa38ddf10290752450e06e14fe594d463af63be85b7750d4f10"
+              },
+              {
+                "file": "nishio-go/shizen.js",
+                "sha256": "b7f94a61c139777f693e7880ea3d706522e00f63e41c1c2d0960ba551b1fb7de"
+              },
+              {
+                "file": "nishio-go/shogo.js",
+                "sha256": "fc195c7bc872959489b87a0245fbc1e1d1fe299b202cb75d45a8fd9a853a851b"
+              },
+              {
+                "file": "nishio-go/style.css",
+                "sha256": "32258e2a0051f97b2d388cc057fb3b35926251e96dd6750f9fb2947d120206a5"
+              },
+              {
+                "file": "nishio-go/weather.js",
+                "sha256": "5b9e8a36bee356eb19c5265851f9b581c94f622b356c88e94e17fbf4c8b2ab95"
+              }
+            ],
+            "served": [
+              {
+                "file": "nishio-go.html",
+                "status": 200,
+                "sha256": "605e0a9c3c530fa9cea45631d4e73f6358d94bb44a018a850e0b47904f17afc8"
+              },
+              {
+                "file": "nishio-go/analytics.js",
+                "status": 200,
+                "sha256": "958885a3da1f1011d535e59e65722bd999109716339a36cd32488d22841e1f92"
+              },
+              {
+                "file": "nishio-go/biglandmark.js",
+                "status": 200,
+                "sha256": "f2615274cb4fc1a4ab7786c08b04acd57a0bda16109e8ca0cda3601e9561cc13"
+              },
+              {
+                "file": "nishio-go/course.js",
+                "status": 200,
+                "sha256": "0bc93c66542587de15c6461d17af550645a683d19b03384667d2b09fa5b5f480"
+              },
+              {
+                "file": "nishio-go/daystamp.js",
+                "status": 200,
+                "sha256": "f5774e75563207930da70b84700f590c748593e1eb13f29d4a891c11ecf7f9c9"
+              },
+              {
+                "file": "nishio-go/edition.js",
+                "status": 200,
+                "sha256": "fc1e11164a115df56943570eea8f50a0e81b132097cb6a20edc232a686b5e157"
+              },
+              {
+                "file": "nishio-go/events.js",
+                "status": 200,
+                "sha256": "58c088ecaa2d8d7273fe4f7c658686d8588b505c824326f7b6bf9f17cc9897c2"
+              },
+              {
+                "file": "nishio-go/game.js",
+                "status": 200,
+                "sha256": "1ac1eee951f7a8889a622121ba4e1e17bbbf0ee695dcdebbc86ade430c9ca610"
+              },
+              {
+                "file": "nishio-go/gochiso.js",
+                "status": 200,
+                "sha256": "7d20b38c86295fa7ae1e95d0cf0767cc5c58827c8aefe71ba22f3900eaa4b6fb"
+              },
+              {
+                "file": "nishio-go/icons.js",
+                "status": 200,
+                "sha256": "3fed8790bc9eeee79eaeccfa430e68a05447e19007bfe4946993940742faed61"
+              },
+              {
+                "file": "nishio-go/kome.js",
+                "status": 200,
+                "sha256": "11ca91dbafd2c618155c6c9df6c36307aa991f650f0fe3755f47ee21daac7343"
+              },
+              {
+                "file": "nishio-go/kometalk.js",
+                "status": 200,
+                "sha256": "00d4ffd055cd896fea4cef8798c1e3370ea45c02d89df457f5fa9eee7c30837f"
+              },
+              {
+                "file": "nishio-go/korostyle.js",
+                "status": 200,
+                "sha256": "954253c2786f59dc0320f4788e3270a93f7b8631f3ad20cb5674fe6a94655281"
+              },
+              {
+                "file": "nishio-go/landmark-gen.js",
+                "status": 200,
+                "sha256": "da52e765ae8ced70230d17d0891150842551d75f0edfa81803711ea9165c6d3f"
+              },
+              {
+                "file": "nishio-go/landscape.js",
+                "status": 200,
+                "sha256": "f6b71b6b7944d489c36f0cbca1f1654304fe1fe5b20b520f0687af1dc6d30c9b"
+              },
+              {
+                "file": "nishio-go/machi.js",
+                "status": 200,
+                "sha256": "5ea5f9e6e3d6f6554f4866ebd57b1ee1eeff181ce5f5c6c9efc0a2eb89469a1d"
+              },
+              {
+                "file": "nishio-go/meibutsu.js",
+                "status": 200,
+                "sha256": "ca230cfcdd8bfb76251bf69ef3f3809863d50e991339a2c11a49ee23546cad80"
+              },
+              {
+                "file": "nishio-go/meiro.js",
+                "status": 200,
+                "sha256": "c8a153a42908a955449858bdea1bdc7c971095fab12174d55cf2eb0fb6bab384"
+              },
+              {
+                "file": "nishio-go/npcs.js",
+                "status": 200,
+                "sha256": "e0e4f3ae807150b0b85902a5ccbdece6a72bd093c00b7a1554a2f00ebe047114"
+              },
+              {
+                "file": "nishio-go/osm-query.js",
+                "status": 200,
+                "sha256": "44be2d414986d6c818b0466cccfab05f445a98b1ad67dcefcda00df873cd2aaa"
+              },
+              {
+                "file": "nishio-go/photoquiz.js",
+                "status": 200,
+                "sha256": "c144988cc9f1eb04f9e2aa1f73da25ffc77db2e3a9115fe2399b17d6919bfe15"
+              },
+              {
+                "file": "nishio-go/pixel.js",
+                "status": 200,
+                "sha256": "8c79616b52c39359aa8d417e667e2d3f3ce56adc6094c28f5c1ecf4be0fd8a35"
+              },
+              {
+                "file": "nishio-go/postcard.js",
+                "status": 200,
+                "sha256": "c97260ec265d08d06b1833008c357c8b100f24e9bf369d90dff7c0c3e8484412"
+              },
+              {
+                "file": "nishio-go/region.js",
+                "status": 200,
+                "sha256": "87280a671988c1e6eb7e7c39522979e18cce6c0bcf1f68dc37157a36b685f581"
+              },
+              {
+                "file": "nishio-go/rollsync.js",
+                "status": 200,
+                "sha256": "723a3ba99f308d2a72cc292b2204d69fee1e4c776ac34c0a315925e9d51baa83"
+              },
+              {
+                "file": "nishio-go/rolltrail.js",
+                "status": 200,
+                "sha256": "519a29363c835b9eab855585f0c8151a95c2810a1e762e0651473905acbb9100"
+              },
+              {
+                "file": "nishio-go/sangyo.js",
+                "status": 200,
+                "sha256": "88be6e0cc8d472f6f33d21e74f0f7eb42d2800e8035eef171dc4032b941f0558"
+              },
+              {
+                "file": "nishio-go/season.js",
+                "status": 200,
+                "sha256": "b8ed2e6ee58015a2d4ee0646c53f52b2a7b0210c69179f61e7493427fbfbb59f"
+              },
+              {
+                "file": "nishio-go/share.js",
+                "status": 200,
+                "sha256": "8e5f923d7a13daa38ddf10290752450e06e14fe594d463af63be85b7750d4f10"
+              },
+              {
+                "file": "nishio-go/shizen.js",
+                "status": 200,
+                "sha256": "b7f94a61c139777f693e7880ea3d706522e00f63e41c1c2d0960ba551b1fb7de"
+              },
+              {
+                "file": "nishio-go/shogo.js",
+                "status": 200,
+                "sha256": "fc195c7bc872959489b87a0245fbc1e1d1fe299b202cb75d45a8fd9a853a851b"
+              },
+              {
+                "file": "nishio-go/style.css",
+                "status": 200,
+                "sha256": "32258e2a0051f97b2d388cc057fb3b35926251e96dd6750f9fb2947d120206a5"
+              },
+              {
+                "file": "nishio-go/weather.js",
+                "status": 200,
+                "sha256": "5b9e8a36bee356eb19c5265851f9b581c94f622b356c88e94e17fbf4c8b2ab95"
+              }
+            ]
+          },
+          "contexts": [
+            {
+              "id": 1,
+              "createdAt": "2026-11-12T23:05:46.580Z",
+              "options": {
+                "viewport": {
+                  "width": 390,
+                  "height": 780
+                },
+                "deviceScaleFactor": 2,
+                "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1"
+              },
+              "routes": {
+                "local": 166,
+                "localLeaflet": 0,
+                "blockedExternal": 2
+              },
+              "closeCalls": 2,
+              "closeACK": true,
+              "closeStartedAt": "2026-11-12T23:06:04.917Z",
+              "closedAt": "2026-11-12T23:06:04.965Z"
+            },
+            {
+              "id": 2,
+              "createdAt": "2026-11-12T23:06:05.007Z",
+              "options": {
+                "viewport": {
+                  "width": 390,
+                  "height": 780
+                },
+                "deviceScaleFactor": 2,
+                "userAgent": "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36"
+              },
+              "routes": {
+                "local": 161,
+                "localLeaflet": 0,
+                "blockedExternal": 2
+              },
+              "closeCalls": 2,
+              "closeACK": true,
+              "closeStartedAt": "2026-11-12T23:06:10.162Z",
+              "closedAt": "2026-11-12T23:06:10.232Z"
+            },
+            {
+              "id": 3,
+              "createdAt": "2026-11-12T23:06:10.268Z",
+              "options": {
+                "viewport": {
+                  "width": 390,
+                  "height": 780
+                },
+                "deviceScaleFactor": 2,
+                "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Safari Line/14.9.0"
+              },
+              "routes": {
+                "local": 154,
+                "localLeaflet": 0,
+                "blockedExternal": 2
+              },
+              "closeCalls": 2,
+              "closeACK": true,
+              "closeStartedAt": "2026-11-12T23:06:17.529Z",
+              "closedAt": "2026-11-12T23:06:17.596Z"
+            }
+          ],
+          "pageErrors": [],
+          "harnessErrors": [],
+          "errors": [],
+          "acceptContexts": false,
+          "before": {
+            "at": "2026-11-12T23:05:46.545Z",
+            "head": "518459a895fb107dfeda5f8e68231e30a45bfae7",
+            "files": [
+              {
+                "file": "nishio-go.html",
+                "sha256": "605e0a9c3c530fa9cea45631d4e73f6358d94bb44a018a850e0b47904f17afc8"
+              },
+              {
+                "file": "nishio-go/analytics.js",
+                "sha256": "958885a3da1f1011d535e59e65722bd999109716339a36cd32488d22841e1f92"
+              },
+              {
+                "file": "nishio-go/biglandmark.js",
+                "sha256": "f2615274cb4fc1a4ab7786c08b04acd57a0bda16109e8ca0cda3601e9561cc13"
+              },
+              {
+                "file": "nishio-go/course.js",
+                "sha256": "0bc93c66542587de15c6461d17af550645a683d19b03384667d2b09fa5b5f480"
+              },
+              {
+                "file": "nishio-go/daystamp.js",
+                "sha256": "f5774e75563207930da70b84700f590c748593e1eb13f29d4a891c11ecf7f9c9"
+              },
+              {
+                "file": "nishio-go/edition.js",
+                "sha256": "fc1e11164a115df56943570eea8f50a0e81b132097cb6a20edc232a686b5e157"
+              },
+              {
+                "file": "nishio-go/events.js",
+                "sha256": "58c088ecaa2d8d7273fe4f7c658686d8588b505c824326f7b6bf9f17cc9897c2"
+              },
+              {
+                "file": "nishio-go/game.js",
+                "sha256": "1ac1eee951f7a8889a622121ba4e1e17bbbf0ee695dcdebbc86ade430c9ca610"
+              },
+              {
+                "file": "nishio-go/gochiso.js",
+                "sha256": "7d20b38c86295fa7ae1e95d0cf0767cc5c58827c8aefe71ba22f3900eaa4b6fb"
+              },
+              {
+                "file": "nishio-go/icons.js",
+                "sha256": "3fed8790bc9eeee79eaeccfa430e68a05447e19007bfe4946993940742faed61"
+              },
+              {
+                "file": "nishio-go/kome.js",
+                "sha256": "11ca91dbafd2c618155c6c9df6c36307aa991f650f0fe3755f47ee21daac7343"
+              },
+              {
+                "file": "nishio-go/kometalk.js",
+                "sha256": "00d4ffd055cd896fea4cef8798c1e3370ea45c02d89df457f5fa9eee7c30837f"
+              },
+              {
+                "file": "nishio-go/korostyle.js",
+                "sha256": "954253c2786f59dc0320f4788e3270a93f7b8631f3ad20cb5674fe6a94655281"
+              },
+              {
+                "file": "nishio-go/landmark-gen.js",
+                "sha256": "da52e765ae8ced70230d17d0891150842551d75f0edfa81803711ea9165c6d3f"
+              },
+              {
+                "file": "nishio-go/landscape.js",
+                "sha256": "f6b71b6b7944d489c36f0cbca1f1654304fe1fe5b20b520f0687af1dc6d30c9b"
+              },
+              {
+                "file": "nishio-go/machi.js",
+                "sha256": "5ea5f9e6e3d6f6554f4866ebd57b1ee1eeff181ce5f5c6c9efc0a2eb89469a1d"
+              },
+              {
+                "file": "nishio-go/meibutsu.js",
+                "sha256": "ca230cfcdd8bfb76251bf69ef3f3809863d50e991339a2c11a49ee23546cad80"
+              },
+              {
+                "file": "nishio-go/meiro.js",
+                "sha256": "c8a153a42908a955449858bdea1bdc7c971095fab12174d55cf2eb0fb6bab384"
+              },
+              {
+                "file": "nishio-go/npcs.js",
+                "sha256": "e0e4f3ae807150b0b85902a5ccbdece6a72bd093c00b7a1554a2f00ebe047114"
+              },
+              {
+                "file": "nishio-go/osm-query.js",
+                "sha256": "44be2d414986d6c818b0466cccfab05f445a98b1ad67dcefcda00df873cd2aaa"
+              },
+              {
+                "file": "nishio-go/photoquiz.js",
+                "sha256": "c144988cc9f1eb04f9e2aa1f73da25ffc77db2e3a9115fe2399b17d6919bfe15"
+              },
+              {
+                "file": "nishio-go/pixel.js",
+                "sha256": "8c79616b52c39359aa8d417e667e2d3f3ce56adc6094c28f5c1ecf4be0fd8a35"
+              },
+              {
+                "file": "nishio-go/postcard.js",
+                "sha256": "c97260ec265d08d06b1833008c357c8b100f24e9bf369d90dff7c0c3e8484412"
+              },
+              {
+                "file": "nishio-go/region.js",
+                "sha256": "87280a671988c1e6eb7e7c39522979e18cce6c0bcf1f68dc37157a36b685f581"
+              },
+              {
+                "file": "nishio-go/rollsync.js",
+                "sha256": "723a3ba99f308d2a72cc292b2204d69fee1e4c776ac34c0a315925e9d51baa83"
+              },
+              {
+                "file": "nishio-go/rolltrail.js",
+                "sha256": "519a29363c835b9eab855585f0c8151a95c2810a1e762e0651473905acbb9100"
+              },
+              {
+                "file": "nishio-go/sangyo.js",
+                "sha256": "88be6e0cc8d472f6f33d21e74f0f7eb42d2800e8035eef171dc4032b941f0558"
+              },
+              {
+                "file": "nishio-go/season.js",
+                "sha256": "b8ed2e6ee58015a2d4ee0646c53f52b2a7b0210c69179f61e7493427fbfbb59f"
+              },
+              {
+                "file": "nishio-go/share.js",
+                "sha256": "8e5f923d7a13daa38ddf10290752450e06e14fe594d463af63be85b7750d4f10"
+              },
+              {
+                "file": "nishio-go/shizen.js",
+                "sha256": "b7f94a61c139777f693e7880ea3d706522e00f63e41c1c2d0960ba551b1fb7de"
+              },
+              {
+                "file": "nishio-go/shogo.js",
+                "sha256": "fc195c7bc872959489b87a0245fbc1e1d1fe299b202cb75d45a8fd9a853a851b"
+              },
+              {
+                "file": "nishio-go/style.css",
+                "sha256": "32258e2a0051f97b2d388cc057fb3b35926251e96dd6750f9fb2947d120206a5"
+              },
+              {
+                "file": "nishio-go/weather.js",
+                "sha256": "5b9e8a36bee356eb19c5265851f9b581c94f622b356c88e94e17fbf4c8b2ab95"
+              }
+            ],
+            "served": [
+              {
+                "file": "nishio-go.html",
+                "status": 200,
+                "sha256": "605e0a9c3c530fa9cea45631d4e73f6358d94bb44a018a850e0b47904f17afc8"
+              },
+              {
+                "file": "nishio-go/analytics.js",
+                "status": 200,
+                "sha256": "958885a3da1f1011d535e59e65722bd999109716339a36cd32488d22841e1f92"
+              },
+              {
+                "file": "nishio-go/biglandmark.js",
+                "status": 200,
+                "sha256": "f2615274cb4fc1a4ab7786c08b04acd57a0bda16109e8ca0cda3601e9561cc13"
+              },
+              {
+                "file": "nishio-go/course.js",
+                "status": 200,
+                "sha256": "0bc93c66542587de15c6461d17af550645a683d19b03384667d2b09fa5b5f480"
+              },
+              {
+                "file": "nishio-go/daystamp.js",
+                "status": 200,
+                "sha256": "f5774e75563207930da70b84700f590c748593e1eb13f29d4a891c11ecf7f9c9"
+              },
+              {
+                "file": "nishio-go/edition.js",
+                "status": 200,
+                "sha256": "fc1e11164a115df56943570eea8f50a0e81b132097cb6a20edc232a686b5e157"
+              },
+              {
+                "file": "nishio-go/events.js",
+                "status": 200,
+                "sha256": "58c088ecaa2d8d7273fe4f7c658686d8588b505c824326f7b6bf9f17cc9897c2"
+              },
+              {
+                "file": "nishio-go/game.js",
+                "status": 200,
+                "sha256": "1ac1eee951f7a8889a622121ba4e1e17bbbf0ee695dcdebbc86ade430c9ca610"
+              },
+              {
+                "file": "nishio-go/gochiso.js",
+                "status": 200,
+                "sha256": "7d20b38c86295fa7ae1e95d0cf0767cc5c58827c8aefe71ba22f3900eaa4b6fb"
+              },
+              {
+                "file": "nishio-go/icons.js",
+                "status": 200,
+                "sha256": "3fed8790bc9eeee79eaeccfa430e68a05447e19007bfe4946993940742faed61"
+              },
+              {
+                "file": "nishio-go/kome.js",
+                "status": 200,
+                "sha256": "11ca91dbafd2c618155c6c9df6c36307aa991f650f0fe3755f47ee21daac7343"
+              },
+              {
+                "file": "nishio-go/kometalk.js",
+                "status": 200,
+                "sha256": "00d4ffd055cd896fea4cef8798c1e3370ea45c02d89df457f5fa9eee7c30837f"
+              },
+              {
+                "file": "nishio-go/korostyle.js",
+                "status": 200,
+                "sha256": "954253c2786f59dc0320f4788e3270a93f7b8631f3ad20cb5674fe6a94655281"
+              },
+              {
+                "file": "nishio-go/landmark-gen.js",
+                "status": 200,
+                "sha256": "da52e765ae8ced70230d17d0891150842551d75f0edfa81803711ea9165c6d3f"
+              },
+              {
+                "file": "nishio-go/landscape.js",
+                "status": 200,
+                "sha256": "f6b71b6b7944d489c36f0cbca1f1654304fe1fe5b20b520f0687af1dc6d30c9b"
+              },
+              {
+                "file": "nishio-go/machi.js",
+                "status": 200,
+                "sha256": "5ea5f9e6e3d6f6554f4866ebd57b1ee1eeff181ce5f5c6c9efc0a2eb89469a1d"
+              },
+              {
+                "file": "nishio-go/meibutsu.js",
+                "status": 200,
+                "sha256": "ca230cfcdd8bfb76251bf69ef3f3809863d50e991339a2c11a49ee23546cad80"
+              },
+              {
+                "file": "nishio-go/meiro.js",
+                "status": 200,
+                "sha256": "c8a153a42908a955449858bdea1bdc7c971095fab12174d55cf2eb0fb6bab384"
+              },
+              {
+                "file": "nishio-go/npcs.js",
+                "status": 200,
+                "sha256": "e0e4f3ae807150b0b85902a5ccbdece6a72bd093c00b7a1554a2f00ebe047114"
+              },
+              {
+                "file": "nishio-go/osm-query.js",
+                "status": 200,
+                "sha256": "44be2d414986d6c818b0466cccfab05f445a98b1ad67dcefcda00df873cd2aaa"
+              },
+              {
+                "file": "nishio-go/photoquiz.js",
+                "status": 200,
+                "sha256": "c144988cc9f1eb04f9e2aa1f73da25ffc77db2e3a9115fe2399b17d6919bfe15"
+              },
+              {
+                "file": "nishio-go/pixel.js",
+                "status": 200,
+                "sha256": "8c79616b52c39359aa8d417e667e2d3f3ce56adc6094c28f5c1ecf4be0fd8a35"
+              },
+              {
+                "file": "nishio-go/postcard.js",
+                "status": 200,
+                "sha256": "c97260ec265d08d06b1833008c357c8b100f24e9bf369d90dff7c0c3e8484412"
+              },
+              {
+                "file": "nishio-go/region.js",
+                "status": 200,
+                "sha256": "87280a671988c1e6eb7e7c39522979e18cce6c0bcf1f68dc37157a36b685f581"
+              },
+              {
+                "file": "nishio-go/rollsync.js",
+                "status": 200,
+                "sha256": "723a3ba99f308d2a72cc292b2204d69fee1e4c776ac34c0a315925e9d51baa83"
+              },
+              {
+                "file": "nishio-go/rolltrail.js",
+                "status": 200,
+                "sha256": "519a29363c835b9eab855585f0c8151a95c2810a1e762e0651473905acbb9100"
+              },
+              {
+                "file": "nishio-go/sangyo.js",
+                "status": 200,
+                "sha256": "88be6e0cc8d472f6f33d21e74f0f7eb42d2800e8035eef171dc4032b941f0558"
+              },
+              {
+                "file": "nishio-go/season.js",
+                "status": 200,
+                "sha256": "b8ed2e6ee58015a2d4ee0646c53f52b2a7b0210c69179f61e7493427fbfbb59f"
+              },
+              {
+                "file": "nishio-go/share.js",
+                "status": 200,
+                "sha256": "8e5f923d7a13daa38ddf10290752450e06e14fe594d463af63be85b7750d4f10"
+              },
+              {
+                "file": "nishio-go/shizen.js",
+                "status": 200,
+                "sha256": "b7f94a61c139777f693e7880ea3d706522e00f63e41c1c2d0960ba551b1fb7de"
+              },
+              {
+                "file": "nishio-go/shogo.js",
+                "status": 200,
+                "sha256": "fc195c7bc872959489b87a0245fbc1e1d1fe299b202cb75d45a8fd9a853a851b"
+              },
+              {
+                "file": "nishio-go/style.css",
+                "status": 200,
+                "sha256": "32258e2a0051f97b2d388cc057fb3b35926251e96dd6750f9fb2947d120206a5"
+              },
+              {
+                "file": "nishio-go/weather.js",
+                "status": 200,
+                "sha256": "5b9e8a36bee356eb19c5265851f9b581c94f622b356c88e94e17fbf4c8b2ab95"
+              }
+            ]
+          },
+          "startedAt": "2026-11-12T23:05:46.567Z",
+          "helperSettled": true,
+          "checks": {
+            "a2hsFirstWalk": {
+              "elig2": false,
+              "shown2": false,
+              "offer2": false,
+              "elig3": true,
+              "shownEarly": false,
+              "ok": true
+            },
+            "a2hsShown": {
+              "inWorld": false,
+              "on": true,
+              "role": "status",
+              "ids": [
+                "a2hsText",
+                "a2hsNo"
+              ],
+              "text": "📲 □↑ →「ホーム画面に追加」で すぐ 開けるよ",
+              "h": 33,
+              "inView": true,
+              "covered": false,
+              "overRice": false,
+              "overSheet": false,
+              "how": "ios",
+              "t": true,
+              "dialogs": 0,
+              "ok": true
+            },
+            "a2hsAutoHide": {
+              "off": true,
+              "x": null,
+              "elig": false,
+              "again": false,
+              "ok": true
+            },
+            "a2hsClose": {
+              "on2": true,
+              "off2": true,
+              "x": true,
+              "elig": false,
+              "eligAfter": true,
+              "days": 30,
+              "every": 7,
+              "ok": true
+            },
+            "a2hsStandalone": {
+              "st": false,
+              "offer": false,
+              "done": false,
+              "back": true,
+              "hidden": true,
+              "ok": true
+            },
+            "a2hsPrompt": {
+              "how0": "",
+              "before": false,
+              "how1": "prompt",
+              "on": true,
+              "ids": [
+                "a2hsAdd",
+                "a2hsNo"
+              ],
+              "label": "📲 ホーム画面に 追加",
+              "tag": "BUTTON",
+              "covered": false,
+              "off": true,
+              "prompted": 1,
+              "how": "",
+              "ok": true
+            },
+            "a2hsInApp": {
+              "elig": true,
+              "how": "",
+              "shown": false,
+              "t": null,
+              "uas": [
+                true,
+                true,
+                true,
+                false,
+                false
+              ],
+              "ok": true
+            }
+          },
+          "helperReturned": true,
+          "elapsedMs": 31029,
+          "evaluateCrashes": [],
+          "after": {
+            "at": "2026-11-12T23:06:17.730Z",
+            "head": "518459a895fb107dfeda5f8e68231e30a45bfae7",
+            "files": [
+              {
+                "file": "nishio-go.html",
+                "sha256": "605e0a9c3c530fa9cea45631d4e73f6358d94bb44a018a850e0b47904f17afc8"
+              },
+              {
+                "file": "nishio-go/analytics.js",
+                "sha256": "958885a3da1f1011d535e59e65722bd999109716339a36cd32488d22841e1f92"
+              },
+              {
+                "file": "nishio-go/biglandmark.js",
+                "sha256": "f2615274cb4fc1a4ab7786c08b04acd57a0bda16109e8ca0cda3601e9561cc13"
+              },
+              {
+                "file": "nishio-go/course.js",
+                "sha256": "0bc93c66542587de15c6461d17af550645a683d19b03384667d2b09fa5b5f480"
+              },
+              {
+                "file": "nishio-go/daystamp.js",
+                "sha256": "f5774e75563207930da70b84700f590c748593e1eb13f29d4a891c11ecf7f9c9"
+              },
+              {
+                "file": "nishio-go/edition.js",
+                "sha256": "fc1e11164a115df56943570eea8f50a0e81b132097cb6a20edc232a686b5e157"
+              },
+              {
+                "file": "nishio-go/events.js",
+                "sha256": "58c088ecaa2d8d7273fe4f7c658686d8588b505c824326f7b6bf9f17cc9897c2"
+              },
+              {
+                "file": "nishio-go/game.js",
+                "sha256": "1ac1eee951f7a8889a622121ba4e1e17bbbf0ee695dcdebbc86ade430c9ca610"
+              },
+              {
+                "file": "nishio-go/gochiso.js",
+                "sha256": "7d20b38c86295fa7ae1e95d0cf0767cc5c58827c8aefe71ba22f3900eaa4b6fb"
+              },
+              {
+                "file": "nishio-go/icons.js",
+                "sha256": "3fed8790bc9eeee79eaeccfa430e68a05447e19007bfe4946993940742faed61"
+              },
+              {
+                "file": "nishio-go/kome.js",
+                "sha256": "11ca91dbafd2c618155c6c9df6c36307aa991f650f0fe3755f47ee21daac7343"
+              },
+              {
+                "file": "nishio-go/kometalk.js",
+                "sha256": "00d4ffd055cd896fea4cef8798c1e3370ea45c02d89df457f5fa9eee7c30837f"
+              },
+              {
+                "file": "nishio-go/korostyle.js",
+                "sha256": "954253c2786f59dc0320f4788e3270a93f7b8631f3ad20cb5674fe6a94655281"
+              },
+              {
+                "file": "nishio-go/landmark-gen.js",
+                "sha256": "da52e765ae8ced70230d17d0891150842551d75f0edfa81803711ea9165c6d3f"
+              },
+              {
+                "file": "nishio-go/landscape.js",
+                "sha256": "f6b71b6b7944d489c36f0cbca1f1654304fe1fe5b20b520f0687af1dc6d30c9b"
+              },
+              {
+                "file": "nishio-go/machi.js",
+                "sha256": "5ea5f9e6e3d6f6554f4866ebd57b1ee1eeff181ce5f5c6c9efc0a2eb89469a1d"
+              },
+              {
+                "file": "nishio-go/meibutsu.js",
+                "sha256": "ca230cfcdd8bfb76251bf69ef3f3809863d50e991339a2c11a49ee23546cad80"
+              },
+              {
+                "file": "nishio-go/meiro.js",
+                "sha256": "c8a153a42908a955449858bdea1bdc7c971095fab12174d55cf2eb0fb6bab384"
+              },
+              {
+                "file": "nishio-go/npcs.js",
+                "sha256": "e0e4f3ae807150b0b85902a5ccbdece6a72bd093c00b7a1554a2f00ebe047114"
+              },
+              {
+                "file": "nishio-go/osm-query.js",
+                "sha256": "44be2d414986d6c818b0466cccfab05f445a98b1ad67dcefcda00df873cd2aaa"
+              },
+              {
+                "file": "nishio-go/photoquiz.js",
+                "sha256": "c144988cc9f1eb04f9e2aa1f73da25ffc77db2e3a9115fe2399b17d6919bfe15"
+              },
+              {
+                "file": "nishio-go/pixel.js",
+                "sha256": "8c79616b52c39359aa8d417e667e2d3f3ce56adc6094c28f5c1ecf4be0fd8a35"
+              },
+              {
+                "file": "nishio-go/postcard.js",
+                "sha256": "c97260ec265d08d06b1833008c357c8b100f24e9bf369d90dff7c0c3e8484412"
+              },
+              {
+                "file": "nishio-go/region.js",
+                "sha256": "87280a671988c1e6eb7e7c39522979e18cce6c0bcf1f68dc37157a36b685f581"
+              },
+              {
+                "file": "nishio-go/rollsync.js",
+                "sha256": "723a3ba99f308d2a72cc292b2204d69fee1e4c776ac34c0a315925e9d51baa83"
+              },
+              {
+                "file": "nishio-go/rolltrail.js",
+                "sha256": "519a29363c835b9eab855585f0c8151a95c2810a1e762e0651473905acbb9100"
+              },
+              {
+                "file": "nishio-go/sangyo.js",
+                "sha256": "88be6e0cc8d472f6f33d21e74f0f7eb42d2800e8035eef171dc4032b941f0558"
+              },
+              {
+                "file": "nishio-go/season.js",
+                "sha256": "b8ed2e6ee58015a2d4ee0646c53f52b2a7b0210c69179f61e7493427fbfbb59f"
+              },
+              {
+                "file": "nishio-go/share.js",
+                "sha256": "8e5f923d7a13daa38ddf10290752450e06e14fe594d463af63be85b7750d4f10"
+              },
+              {
+                "file": "nishio-go/shizen.js",
+                "sha256": "b7f94a61c139777f693e7880ea3d706522e00f63e41c1c2d0960ba551b1fb7de"
+              },
+              {
+                "file": "nishio-go/shogo.js",
+                "sha256": "fc195c7bc872959489b87a0245fbc1e1d1fe299b202cb75d45a8fd9a853a851b"
+              },
+              {
+                "file": "nishio-go/style.css",
+                "sha256": "32258e2a0051f97b2d388cc057fb3b35926251e96dd6750f9fb2947d120206a5"
+              },
+              {
+                "file": "nishio-go/weather.js",
+                "sha256": "5b9e8a36bee356eb19c5265851f9b581c94f622b356c88e94e17fbf4c8b2ab95"
+              }
+            ],
+            "served": [
+              {
+                "file": "nishio-go.html",
+                "status": 200,
+                "sha256": "605e0a9c3c530fa9cea45631d4e73f6358d94bb44a018a850e0b47904f17afc8"
+              },
+              {
+                "file": "nishio-go/analytics.js",
+                "status": 200,
+                "sha256": "958885a3da1f1011d535e59e65722bd999109716339a36cd32488d22841e1f92"
+              },
+              {
+                "file": "nishio-go/biglandmark.js",
+                "status": 200,
+                "sha256": "f2615274cb4fc1a4ab7786c08b04acd57a0bda16109e8ca0cda3601e9561cc13"
+              },
+              {
+                "file": "nishio-go/course.js",
+                "status": 200,
+                "sha256": "0bc93c66542587de15c6461d17af550645a683d19b03384667d2b09fa5b5f480"
+              },
+              {
+                "file": "nishio-go/daystamp.js",
+                "status": 200,
+                "sha256": "f5774e75563207930da70b84700f590c748593e1eb13f29d4a891c11ecf7f9c9"
+              },
+              {
+                "file": "nishio-go/edition.js",
+                "status": 200,
+                "sha256": "fc1e11164a115df56943570eea8f50a0e81b132097cb6a20edc232a686b5e157"
+              },
+              {
+                "file": "nishio-go/events.js",
+                "status": 200,
+                "sha256": "58c088ecaa2d8d7273fe4f7c658686d8588b505c824326f7b6bf9f17cc9897c2"
+              },
+              {
+                "file": "nishio-go/game.js",
+                "status": 200,
+                "sha256": "1ac1eee951f7a8889a622121ba4e1e17bbbf0ee695dcdebbc86ade430c9ca610"
+              },
+              {
+                "file": "nishio-go/gochiso.js",
+                "status": 200,
+                "sha256": "7d20b38c86295fa7ae1e95d0cf0767cc5c58827c8aefe71ba22f3900eaa4b6fb"
+              },
+              {
+                "file": "nishio-go/icons.js",
+                "status": 200,
+                "sha256": "3fed8790bc9eeee79eaeccfa430e68a05447e19007bfe4946993940742faed61"
+              },
+              {
+                "file": "nishio-go/kome.js",
+                "status": 200,
+                "sha256": "11ca91dbafd2c618155c6c9df6c36307aa991f650f0fe3755f47ee21daac7343"
+              },
+              {
+                "file": "nishio-go/kometalk.js",
+                "status": 200,
+                "sha256": "00d4ffd055cd896fea4cef8798c1e3370ea45c02d89df457f5fa9eee7c30837f"
+              },
+              {
+                "file": "nishio-go/korostyle.js",
+                "status": 200,
+                "sha256": "954253c2786f59dc0320f4788e3270a93f7b8631f3ad20cb5674fe6a94655281"
+              },
+              {
+                "file": "nishio-go/landmark-gen.js",
+                "status": 200,
+                "sha256": "da52e765ae8ced70230d17d0891150842551d75f0edfa81803711ea9165c6d3f"
+              },
+              {
+                "file": "nishio-go/landscape.js",
+                "status": 200,
+                "sha256": "f6b71b6b7944d489c36f0cbca1f1654304fe1fe5b20b520f0687af1dc6d30c9b"
+              },
+              {
+                "file": "nishio-go/machi.js",
+                "status": 200,
+                "sha256": "5ea5f9e6e3d6f6554f4866ebd57b1ee1eeff181ce5f5c6c9efc0a2eb89469a1d"
+              },
+              {
+                "file": "nishio-go/meibutsu.js",
+                "status": 200,
+                "sha256": "ca230cfcdd8bfb76251bf69ef3f3809863d50e991339a2c11a49ee23546cad80"
+              },
+              {
+                "file": "nishio-go/meiro.js",
+                "status": 200,
+                "sha256": "c8a153a42908a955449858bdea1bdc7c971095fab12174d55cf2eb0fb6bab384"
+              },
+              {
+                "file": "nishio-go/npcs.js",
+                "status": 200,
+                "sha256": "e0e4f3ae807150b0b85902a5ccbdece6a72bd093c00b7a1554a2f00ebe047114"
+              },
+              {
+                "file": "nishio-go/osm-query.js",
+                "status": 200,
+                "sha256": "44be2d414986d6c818b0466cccfab05f445a98b1ad67dcefcda00df873cd2aaa"
+              },
+              {
+                "file": "nishio-go/photoquiz.js",
+                "status": 200,
+                "sha256": "c144988cc9f1eb04f9e2aa1f73da25ffc77db2e3a9115fe2399b17d6919bfe15"
+              },
+              {
+                "file": "nishio-go/pixel.js",
+                "status": 200,
+                "sha256": "8c79616b52c39359aa8d417e667e2d3f3ce56adc6094c28f5c1ecf4be0fd8a35"
+              },
+              {
+                "file": "nishio-go/postcard.js",
+                "status": 200,
+                "sha256": "c97260ec265d08d06b1833008c357c8b100f24e9bf369d90dff7c0c3e8484412"
+              },
+              {
+                "file": "nishio-go/region.js",
+                "status": 200,
+                "sha256": "87280a671988c1e6eb7e7c39522979e18cce6c0bcf1f68dc37157a36b685f581"
+              },
+              {
+                "file": "nishio-go/rollsync.js",
+                "status": 200,
+                "sha256": "723a3ba99f308d2a72cc292b2204d69fee1e4c776ac34c0a315925e9d51baa83"
+              },
+              {
+                "file": "nishio-go/rolltrail.js",
+                "status": 200,
+                "sha256": "519a29363c835b9eab855585f0c8151a95c2810a1e762e0651473905acbb9100"
+              },
+              {
+                "file": "nishio-go/sangyo.js",
+                "status": 200,
+                "sha256": "88be6e0cc8d472f6f33d21e74f0f7eb42d2800e8035eef171dc4032b941f0558"
+              },
+              {
+                "file": "nishio-go/season.js",
+                "status": 200,
+                "sha256": "b8ed2e6ee58015a2d4ee0646c53f52b2a7b0210c69179f61e7493427fbfbb59f"
+              },
+              {
+                "file": "nishio-go/share.js",
+                "status": 200,
+                "sha256": "8e5f923d7a13daa38ddf10290752450e06e14fe594d463af63be85b7750d4f10"
+              },
+              {
+                "file": "nishio-go/shizen.js",
+                "status": 200,
+                "sha256": "b7f94a61c139777f693e7880ea3d706522e00f63e41c1c2d0960ba551b1fb7de"
+              },
+              {
+                "file": "nishio-go/shogo.js",
+                "status": 200,
+                "sha256": "fc195c7bc872959489b87a0245fbc1e1d1fe299b202cb75d45a8fd9a853a851b"
+              },
+              {
+                "file": "nishio-go/style.css",
+                "status": 200,
+                "sha256": "32258e2a0051f97b2d388cc057fb3b35926251e96dd6750f9fb2947d120206a5"
+              },
+              {
+                "file": "nishio-go/weather.js",
+                "status": 200,
+                "sha256": "5b9e8a36bee356eb19c5265851f9b581c94f622b356c88e94e17fbf4c8b2ab95"
+              }
+            ]
+          },
+          "completedAt": "2026-11-12T23:06:17.736Z",
+          "keysComplete": true,
+          "contextsComplete": true,
+          "ok": true
+        },
+        {
+          "name": "candidate-e4e0",
+          "port": 8000,
+          "expectedHead": "e4e0f8bd7d77d492bdb8bee4265932d7dbe6b96e",
+          "initialVerification": {
+            "at": "2026-11-12T23:05:46.028Z",
+            "head": "e4e0f8bd7d77d492bdb8bee4265932d7dbe6b96e",
+            "files": [
+              {
+                "file": "nishio-go.html",
+                "sha256": "605e0a9c3c530fa9cea45631d4e73f6358d94bb44a018a850e0b47904f17afc8"
+              },
+              {
+                "file": "nishio-go/analytics.js",
+                "sha256": "958885a3da1f1011d535e59e65722bd999109716339a36cd32488d22841e1f92"
+              },
+              {
+                "file": "nishio-go/biglandmark.js",
+                "sha256": "f2615274cb4fc1a4ab7786c08b04acd57a0bda16109e8ca0cda3601e9561cc13"
+              },
+              {
+                "file": "nishio-go/course.js",
+                "sha256": "0bc93c66542587de15c6461d17af550645a683d19b03384667d2b09fa5b5f480"
+              },
+              {
+                "file": "nishio-go/daystamp.js",
+                "sha256": "f5774e75563207930da70b84700f590c748593e1eb13f29d4a891c11ecf7f9c9"
+              },
+              {
+                "file": "nishio-go/edition.js",
+                "sha256": "fc1e11164a115df56943570eea8f50a0e81b132097cb6a20edc232a686b5e157"
+              },
+              {
+                "file": "nishio-go/events.js",
+                "sha256": "58c088ecaa2d8d7273fe4f7c658686d8588b505c824326f7b6bf9f17cc9897c2"
+              },
+              {
+                "file": "nishio-go/game.js",
+                "sha256": "1ac1eee951f7a8889a622121ba4e1e17bbbf0ee695dcdebbc86ade430c9ca610"
+              },
+              {
+                "file": "nishio-go/gochiso.js",
+                "sha256": "7d20b38c86295fa7ae1e95d0cf0767cc5c58827c8aefe71ba22f3900eaa4b6fb"
+              },
+              {
+                "file": "nishio-go/icons.js",
+                "sha256": "3fed8790bc9eeee79eaeccfa430e68a05447e19007bfe4946993940742faed61"
+              },
+              {
+                "file": "nishio-go/kome.js",
+                "sha256": "11ca91dbafd2c618155c6c9df6c36307aa991f650f0fe3755f47ee21daac7343"
+              },
+              {
+                "file": "nishio-go/kometalk.js",
+                "sha256": "00d4ffd055cd896fea4cef8798c1e3370ea45c02d89df457f5fa9eee7c30837f"
+              },
+              {
+                "file": "nishio-go/korostyle.js",
+                "sha256": "954253c2786f59dc0320f4788e3270a93f7b8631f3ad20cb5674fe6a94655281"
+              },
+              {
+                "file": "nishio-go/landmark-gen.js",
+                "sha256": "da52e765ae8ced70230d17d0891150842551d75f0edfa81803711ea9165c6d3f"
+              },
+              {
+                "file": "nishio-go/landscape.js",
+                "sha256": "f6b71b6b7944d489c36f0cbca1f1654304fe1fe5b20b520f0687af1dc6d30c9b"
+              },
+              {
+                "file": "nishio-go/machi.js",
+                "sha256": "5ea5f9e6e3d6f6554f4866ebd57b1ee1eeff181ce5f5c6c9efc0a2eb89469a1d"
+              },
+              {
+                "file": "nishio-go/meibutsu.js",
+                "sha256": "ca230cfcdd8bfb76251bf69ef3f3809863d50e991339a2c11a49ee23546cad80"
+              },
+              {
+                "file": "nishio-go/meiro.js",
+                "sha256": "c8a153a42908a955449858bdea1bdc7c971095fab12174d55cf2eb0fb6bab384"
+              },
+              {
+                "file": "nishio-go/npcs.js",
+                "sha256": "e0e4f3ae807150b0b85902a5ccbdece6a72bd093c00b7a1554a2f00ebe047114"
+              },
+              {
+                "file": "nishio-go/osm-query.js",
+                "sha256": "44be2d414986d6c818b0466cccfab05f445a98b1ad67dcefcda00df873cd2aaa"
+              },
+              {
+                "file": "nishio-go/photoquiz.js",
+                "sha256": "c144988cc9f1eb04f9e2aa1f73da25ffc77db2e3a9115fe2399b17d6919bfe15"
+              },
+              {
+                "file": "nishio-go/pixel.js",
+                "sha256": "20c6c2dd83c960ee54e88e09652e2756d904a4e44ece76ad0f01576a04f343f2"
+              },
+              {
+                "file": "nishio-go/postcard.js",
+                "sha256": "c97260ec265d08d06b1833008c357c8b100f24e9bf369d90dff7c0c3e8484412"
+              },
+              {
+                "file": "nishio-go/region.js",
+                "sha256": "87280a671988c1e6eb7e7c39522979e18cce6c0bcf1f68dc37157a36b685f581"
+              },
+              {
+                "file": "nishio-go/rollsync.js",
+                "sha256": "723a3ba99f308d2a72cc292b2204d69fee1e4c776ac34c0a315925e9d51baa83"
+              },
+              {
+                "file": "nishio-go/rolltrail.js",
+                "sha256": "519a29363c835b9eab855585f0c8151a95c2810a1e762e0651473905acbb9100"
+              },
+              {
+                "file": "nishio-go/sangyo.js",
+                "sha256": "88be6e0cc8d472f6f33d21e74f0f7eb42d2800e8035eef171dc4032b941f0558"
+              },
+              {
+                "file": "nishio-go/season.js",
+                "sha256": "b8ed2e6ee58015a2d4ee0646c53f52b2a7b0210c69179f61e7493427fbfbb59f"
+              },
+              {
+                "file": "nishio-go/share.js",
+                "sha256": "8e5f923d7a13daa38ddf10290752450e06e14fe594d463af63be85b7750d4f10"
+              },
+              {
+                "file": "nishio-go/shizen.js",
+                "sha256": "b7f94a61c139777f693e7880ea3d706522e00f63e41c1c2d0960ba551b1fb7de"
+              },
+              {
+                "file": "nishio-go/shogo.js",
+                "sha256": "fc195c7bc872959489b87a0245fbc1e1d1fe299b202cb75d45a8fd9a853a851b"
+              },
+              {
+                "file": "nishio-go/style.css",
+                "sha256": "32258e2a0051f97b2d388cc057fb3b35926251e96dd6750f9fb2947d120206a5"
+              },
+              {
+                "file": "nishio-go/weather.js",
+                "sha256": "5b9e8a36bee356eb19c5265851f9b581c94f622b356c88e94e17fbf4c8b2ab95"
+              }
+            ],
+            "served": [
+              {
+                "file": "nishio-go.html",
+                "status": 200,
+                "sha256": "605e0a9c3c530fa9cea45631d4e73f6358d94bb44a018a850e0b47904f17afc8"
+              },
+              {
+                "file": "nishio-go/analytics.js",
+                "status": 200,
+                "sha256": "958885a3da1f1011d535e59e65722bd999109716339a36cd32488d22841e1f92"
+              },
+              {
+                "file": "nishio-go/biglandmark.js",
+                "status": 200,
+                "sha256": "f2615274cb4fc1a4ab7786c08b04acd57a0bda16109e8ca0cda3601e9561cc13"
+              },
+              {
+                "file": "nishio-go/course.js",
+                "status": 200,
+                "sha256": "0bc93c66542587de15c6461d17af550645a683d19b03384667d2b09fa5b5f480"
+              },
+              {
+                "file": "nishio-go/daystamp.js",
+                "status": 200,
+                "sha256": "f5774e75563207930da70b84700f590c748593e1eb13f29d4a891c11ecf7f9c9"
+              },
+              {
+                "file": "nishio-go/edition.js",
+                "status": 200,
+                "sha256": "fc1e11164a115df56943570eea8f50a0e81b132097cb6a20edc232a686b5e157"
+              },
+              {
+                "file": "nishio-go/events.js",
+                "status": 200,
+                "sha256": "58c088ecaa2d8d7273fe4f7c658686d8588b505c824326f7b6bf9f17cc9897c2"
+              },
+              {
+                "file": "nishio-go/game.js",
+                "status": 200,
+                "sha256": "1ac1eee951f7a8889a622121ba4e1e17bbbf0ee695dcdebbc86ade430c9ca610"
+              },
+              {
+                "file": "nishio-go/gochiso.js",
+                "status": 200,
+                "sha256": "7d20b38c86295fa7ae1e95d0cf0767cc5c58827c8aefe71ba22f3900eaa4b6fb"
+              },
+              {
+                "file": "nishio-go/icons.js",
+                "status": 200,
+                "sha256": "3fed8790bc9eeee79eaeccfa430e68a05447e19007bfe4946993940742faed61"
+              },
+              {
+                "file": "nishio-go/kome.js",
+                "status": 200,
+                "sha256": "11ca91dbafd2c618155c6c9df6c36307aa991f650f0fe3755f47ee21daac7343"
+              },
+              {
+                "file": "nishio-go/kometalk.js",
+                "status": 200,
+                "sha256": "00d4ffd055cd896fea4cef8798c1e3370ea45c02d89df457f5fa9eee7c30837f"
+              },
+              {
+                "file": "nishio-go/korostyle.js",
+                "status": 200,
+                "sha256": "954253c2786f59dc0320f4788e3270a93f7b8631f3ad20cb5674fe6a94655281"
+              },
+              {
+                "file": "nishio-go/landmark-gen.js",
+                "status": 200,
+                "sha256": "da52e765ae8ced70230d17d0891150842551d75f0edfa81803711ea9165c6d3f"
+              },
+              {
+                "file": "nishio-go/landscape.js",
+                "status": 200,
+                "sha256": "f6b71b6b7944d489c36f0cbca1f1654304fe1fe5b20b520f0687af1dc6d30c9b"
+              },
+              {
+                "file": "nishio-go/machi.js",
+                "status": 200,
+                "sha256": "5ea5f9e6e3d6f6554f4866ebd57b1ee1eeff181ce5f5c6c9efc0a2eb89469a1d"
+              },
+              {
+                "file": "nishio-go/meibutsu.js",
+                "status": 200,
+                "sha256": "ca230cfcdd8bfb76251bf69ef3f3809863d50e991339a2c11a49ee23546cad80"
+              },
+              {
+                "file": "nishio-go/meiro.js",
+                "status": 200,
+                "sha256": "c8a153a42908a955449858bdea1bdc7c971095fab12174d55cf2eb0fb6bab384"
+              },
+              {
+                "file": "nishio-go/npcs.js",
+                "status": 200,
+                "sha256": "e0e4f3ae807150b0b85902a5ccbdece6a72bd093c00b7a1554a2f00ebe047114"
+              },
+              {
+                "file": "nishio-go/osm-query.js",
+                "status": 200,
+                "sha256": "44be2d414986d6c818b0466cccfab05f445a98b1ad67dcefcda00df873cd2aaa"
+              },
+              {
+                "file": "nishio-go/photoquiz.js",
+                "status": 200,
+                "sha256": "c144988cc9f1eb04f9e2aa1f73da25ffc77db2e3a9115fe2399b17d6919bfe15"
+              },
+              {
+                "file": "nishio-go/pixel.js",
+                "status": 200,
+                "sha256": "20c6c2dd83c960ee54e88e09652e2756d904a4e44ece76ad0f01576a04f343f2"
+              },
+              {
+                "file": "nishio-go/postcard.js",
+                "status": 200,
+                "sha256": "c97260ec265d08d06b1833008c357c8b100f24e9bf369d90dff7c0c3e8484412"
+              },
+              {
+                "file": "nishio-go/region.js",
+                "status": 200,
+                "sha256": "87280a671988c1e6eb7e7c39522979e18cce6c0bcf1f68dc37157a36b685f581"
+              },
+              {
+                "file": "nishio-go/rollsync.js",
+                "status": 200,
+                "sha256": "723a3ba99f308d2a72cc292b2204d69fee1e4c776ac34c0a315925e9d51baa83"
+              },
+              {
+                "file": "nishio-go/rolltrail.js",
+                "status": 200,
+                "sha256": "519a29363c835b9eab855585f0c8151a95c2810a1e762e0651473905acbb9100"
+              },
+              {
+                "file": "nishio-go/sangyo.js",
+                "status": 200,
+                "sha256": "88be6e0cc8d472f6f33d21e74f0f7eb42d2800e8035eef171dc4032b941f0558"
+              },
+              {
+                "file": "nishio-go/season.js",
+                "status": 200,
+                "sha256": "b8ed2e6ee58015a2d4ee0646c53f52b2a7b0210c69179f61e7493427fbfbb59f"
+              },
+              {
+                "file": "nishio-go/share.js",
+                "status": 200,
+                "sha256": "8e5f923d7a13daa38ddf10290752450e06e14fe594d463af63be85b7750d4f10"
+              },
+              {
+                "file": "nishio-go/shizen.js",
+                "status": 200,
+                "sha256": "b7f94a61c139777f693e7880ea3d706522e00f63e41c1c2d0960ba551b1fb7de"
+              },
+              {
+                "file": "nishio-go/shogo.js",
+                "status": 200,
+                "sha256": "fc195c7bc872959489b87a0245fbc1e1d1fe299b202cb75d45a8fd9a853a851b"
+              },
+              {
+                "file": "nishio-go/style.css",
+                "status": 200,
+                "sha256": "32258e2a0051f97b2d388cc057fb3b35926251e96dd6750f9fb2947d120206a5"
+              },
+              {
+                "file": "nishio-go/weather.js",
+                "status": 200,
+                "sha256": "5b9e8a36bee356eb19c5265851f9b581c94f622b356c88e94e17fbf4c8b2ab95"
+              }
+            ]
+          },
+          "contexts": [
+            {
+              "id": 1,
+              "createdAt": "2026-11-12T23:06:17.902Z",
+              "options": {
+                "viewport": {
+                  "width": 390,
+                  "height": 780
+                },
+                "deviceScaleFactor": 2,
+                "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1"
+              },
+              "routes": {
+                "local": 165,
+                "localLeaflet": 0,
+                "blockedExternal": 2
+              },
+              "closeCalls": 2,
+              "closeACK": true,
+              "closeStartedAt": "2026-11-12T23:06:34.817Z",
+              "closedAt": "2026-11-12T23:06:34.867Z"
+            },
+            {
+              "id": 2,
+              "createdAt": "2026-11-12T23:06:34.923Z",
+              "options": {
+                "viewport": {
+                  "width": 390,
+                  "height": 780
+                },
+                "deviceScaleFactor": 2,
+                "userAgent": "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36"
+              },
+              "routes": {
+                "local": 161,
+                "localLeaflet": 0,
+                "blockedExternal": 2
+              },
+              "closeCalls": 2,
+              "closeACK": true,
+              "closeStartedAt": "2026-11-12T23:06:41.305Z",
+              "closedAt": "2026-11-12T23:06:41.371Z"
+            },
+            {
+              "id": 3,
+              "createdAt": "2026-11-12T23:06:41.408Z",
+              "options": {
+                "viewport": {
+                  "width": 390,
+                  "height": 780
+                },
+                "deviceScaleFactor": 2,
+                "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Safari Line/14.9.0"
+              },
+              "routes": {
+                "local": 151,
+                "localLeaflet": 0,
+                "blockedExternal": 2
+              },
+              "closeCalls": 2,
+              "closeACK": true,
+              "closeStartedAt": "2026-11-12T23:06:47.198Z",
+              "closedAt": "2026-11-12T23:06:47.239Z"
+            }
+          ],
+          "pageErrors": [],
+          "harnessErrors": [],
+          "errors": [],
+          "acceptContexts": false,
+          "before": {
+            "at": "2026-11-12T23:06:17.840Z",
+            "head": "e4e0f8bd7d77d492bdb8bee4265932d7dbe6b96e",
+            "files": [
+              {
+                "file": "nishio-go.html",
+                "sha256": "605e0a9c3c530fa9cea45631d4e73f6358d94bb44a018a850e0b47904f17afc8"
+              },
+              {
+                "file": "nishio-go/analytics.js",
+                "sha256": "958885a3da1f1011d535e59e65722bd999109716339a36cd32488d22841e1f92"
+              },
+              {
+                "file": "nishio-go/biglandmark.js",
+                "sha256": "f2615274cb4fc1a4ab7786c08b04acd57a0bda16109e8ca0cda3601e9561cc13"
+              },
+              {
+                "file": "nishio-go/course.js",
+                "sha256": "0bc93c66542587de15c6461d17af550645a683d19b03384667d2b09fa5b5f480"
+              },
+              {
+                "file": "nishio-go/daystamp.js",
+                "sha256": "f5774e75563207930da70b84700f590c748593e1eb13f29d4a891c11ecf7f9c9"
+              },
+              {
+                "file": "nishio-go/edition.js",
+                "sha256": "fc1e11164a115df56943570eea8f50a0e81b132097cb6a20edc232a686b5e157"
+              },
+              {
+                "file": "nishio-go/events.js",
+                "sha256": "58c088ecaa2d8d7273fe4f7c658686d8588b505c824326f7b6bf9f17cc9897c2"
+              },
+              {
+                "file": "nishio-go/game.js",
+                "sha256": "1ac1eee951f7a8889a622121ba4e1e17bbbf0ee695dcdebbc86ade430c9ca610"
+              },
+              {
+                "file": "nishio-go/gochiso.js",
+                "sha256": "7d20b38c86295fa7ae1e95d0cf0767cc5c58827c8aefe71ba22f3900eaa4b6fb"
+              },
+              {
+                "file": "nishio-go/icons.js",
+                "sha256": "3fed8790bc9eeee79eaeccfa430e68a05447e19007bfe4946993940742faed61"
+              },
+              {
+                "file": "nishio-go/kome.js",
+                "sha256": "11ca91dbafd2c618155c6c9df6c36307aa991f650f0fe3755f47ee21daac7343"
+              },
+              {
+                "file": "nishio-go/kometalk.js",
+                "sha256": "00d4ffd055cd896fea4cef8798c1e3370ea45c02d89df457f5fa9eee7c30837f"
+              },
+              {
+                "file": "nishio-go/korostyle.js",
+                "sha256": "954253c2786f59dc0320f4788e3270a93f7b8631f3ad20cb5674fe6a94655281"
+              },
+              {
+                "file": "nishio-go/landmark-gen.js",
+                "sha256": "da52e765ae8ced70230d17d0891150842551d75f0edfa81803711ea9165c6d3f"
+              },
+              {
+                "file": "nishio-go/landscape.js",
+                "sha256": "f6b71b6b7944d489c36f0cbca1f1654304fe1fe5b20b520f0687af1dc6d30c9b"
+              },
+              {
+                "file": "nishio-go/machi.js",
+                "sha256": "5ea5f9e6e3d6f6554f4866ebd57b1ee1eeff181ce5f5c6c9efc0a2eb89469a1d"
+              },
+              {
+                "file": "nishio-go/meibutsu.js",
+                "sha256": "ca230cfcdd8bfb76251bf69ef3f3809863d50e991339a2c11a49ee23546cad80"
+              },
+              {
+                "file": "nishio-go/meiro.js",
+                "sha256": "c8a153a42908a955449858bdea1bdc7c971095fab12174d55cf2eb0fb6bab384"
+              },
+              {
+                "file": "nishio-go/npcs.js",
+                "sha256": "e0e4f3ae807150b0b85902a5ccbdece6a72bd093c00b7a1554a2f00ebe047114"
+              },
+              {
+                "file": "nishio-go/osm-query.js",
+                "sha256": "44be2d414986d6c818b0466cccfab05f445a98b1ad67dcefcda00df873cd2aaa"
+              },
+              {
+                "file": "nishio-go/photoquiz.js",
+                "sha256": "c144988cc9f1eb04f9e2aa1f73da25ffc77db2e3a9115fe2399b17d6919bfe15"
+              },
+              {
+                "file": "nishio-go/pixel.js",
+                "sha256": "20c6c2dd83c960ee54e88e09652e2756d904a4e44ece76ad0f01576a04f343f2"
+              },
+              {
+                "file": "nishio-go/postcard.js",
+                "sha256": "c97260ec265d08d06b1833008c357c8b100f24e9bf369d90dff7c0c3e8484412"
+              },
+              {
+                "file": "nishio-go/region.js",
+                "sha256": "87280a671988c1e6eb7e7c39522979e18cce6c0bcf1f68dc37157a36b685f581"
+              },
+              {
+                "file": "nishio-go/rollsync.js",
+                "sha256": "723a3ba99f308d2a72cc292b2204d69fee1e4c776ac34c0a315925e9d51baa83"
+              },
+              {
+                "file": "nishio-go/rolltrail.js",
+                "sha256": "519a29363c835b9eab855585f0c8151a95c2810a1e762e0651473905acbb9100"
+              },
+              {
+                "file": "nishio-go/sangyo.js",
+                "sha256": "88be6e0cc8d472f6f33d21e74f0f7eb42d2800e8035eef171dc4032b941f0558"
+              },
+              {
+                "file": "nishio-go/season.js",
+                "sha256": "b8ed2e6ee58015a2d4ee0646c53f52b2a7b0210c69179f61e7493427fbfbb59f"
+              },
+              {
+                "file": "nishio-go/share.js",
+                "sha256": "8e5f923d7a13daa38ddf10290752450e06e14fe594d463af63be85b7750d4f10"
+              },
+              {
+                "file": "nishio-go/shizen.js",
+                "sha256": "b7f94a61c139777f693e7880ea3d706522e00f63e41c1c2d0960ba551b1fb7de"
+              },
+              {
+                "file": "nishio-go/shogo.js",
+                "sha256": "fc195c7bc872959489b87a0245fbc1e1d1fe299b202cb75d45a8fd9a853a851b"
+              },
+              {
+                "file": "nishio-go/style.css",
+                "sha256": "32258e2a0051f97b2d388cc057fb3b35926251e96dd6750f9fb2947d120206a5"
+              },
+              {
+                "file": "nishio-go/weather.js",
+                "sha256": "5b9e8a36bee356eb19c5265851f9b581c94f622b356c88e94e17fbf4c8b2ab95"
+              }
+            ],
+            "served": [
+              {
+                "file": "nishio-go.html",
+                "status": 200,
+                "sha256": "605e0a9c3c530fa9cea45631d4e73f6358d94bb44a018a850e0b47904f17afc8"
+              },
+              {
+                "file": "nishio-go/analytics.js",
+                "status": 200,
+                "sha256": "958885a3da1f1011d535e59e65722bd999109716339a36cd32488d22841e1f92"
+              },
+              {
+                "file": "nishio-go/biglandmark.js",
+                "status": 200,
+                "sha256": "f2615274cb4fc1a4ab7786c08b04acd57a0bda16109e8ca0cda3601e9561cc13"
+              },
+              {
+                "file": "nishio-go/course.js",
+                "status": 200,
+                "sha256": "0bc93c66542587de15c6461d17af550645a683d19b03384667d2b09fa5b5f480"
+              },
+              {
+                "file": "nishio-go/daystamp.js",
+                "status": 200,
+                "sha256": "f5774e75563207930da70b84700f590c748593e1eb13f29d4a891c11ecf7f9c9"
+              },
+              {
+                "file": "nishio-go/edition.js",
+                "status": 200,
+                "sha256": "fc1e11164a115df56943570eea8f50a0e81b132097cb6a20edc232a686b5e157"
+              },
+              {
+                "file": "nishio-go/events.js",
+                "status": 200,
+                "sha256": "58c088ecaa2d8d7273fe4f7c658686d8588b505c824326f7b6bf9f17cc9897c2"
+              },
+              {
+                "file": "nishio-go/game.js",
+                "status": 200,
+                "sha256": "1ac1eee951f7a8889a622121ba4e1e17bbbf0ee695dcdebbc86ade430c9ca610"
+              },
+              {
+                "file": "nishio-go/gochiso.js",
+                "status": 200,
+                "sha256": "7d20b38c86295fa7ae1e95d0cf0767cc5c58827c8aefe71ba22f3900eaa4b6fb"
+              },
+              {
+                "file": "nishio-go/icons.js",
+                "status": 200,
+                "sha256": "3fed8790bc9eeee79eaeccfa430e68a05447e19007bfe4946993940742faed61"
+              },
+              {
+                "file": "nishio-go/kome.js",
+                "status": 200,
+                "sha256": "11ca91dbafd2c618155c6c9df6c36307aa991f650f0fe3755f47ee21daac7343"
+              },
+              {
+                "file": "nishio-go/kometalk.js",
+                "status": 200,
+                "sha256": "00d4ffd055cd896fea4cef8798c1e3370ea45c02d89df457f5fa9eee7c30837f"
+              },
+              {
+                "file": "nishio-go/korostyle.js",
+                "status": 200,
+                "sha256": "954253c2786f59dc0320f4788e3270a93f7b8631f3ad20cb5674fe6a94655281"
+              },
+              {
+                "file": "nishio-go/landmark-gen.js",
+                "status": 200,
+                "sha256": "da52e765ae8ced70230d17d0891150842551d75f0edfa81803711ea9165c6d3f"
+              },
+              {
+                "file": "nishio-go/landscape.js",
+                "status": 200,
+                "sha256": "f6b71b6b7944d489c36f0cbca1f1654304fe1fe5b20b520f0687af1dc6d30c9b"
+              },
+              {
+                "file": "nishio-go/machi.js",
+                "status": 200,
+                "sha256": "5ea5f9e6e3d6f6554f4866ebd57b1ee1eeff181ce5f5c6c9efc0a2eb89469a1d"
+              },
+              {
+                "file": "nishio-go/meibutsu.js",
+                "status": 200,
+                "sha256": "ca230cfcdd8bfb76251bf69ef3f3809863d50e991339a2c11a49ee23546cad80"
+              },
+              {
+                "file": "nishio-go/meiro.js",
+                "status": 200,
+                "sha256": "c8a153a42908a955449858bdea1bdc7c971095fab12174d55cf2eb0fb6bab384"
+              },
+              {
+                "file": "nishio-go/npcs.js",
+                "status": 200,
+                "sha256": "e0e4f3ae807150b0b85902a5ccbdece6a72bd093c00b7a1554a2f00ebe047114"
+              },
+              {
+                "file": "nishio-go/osm-query.js",
+                "status": 200,
+                "sha256": "44be2d414986d6c818b0466cccfab05f445a98b1ad67dcefcda00df873cd2aaa"
+              },
+              {
+                "file": "nishio-go/photoquiz.js",
+                "status": 200,
+                "sha256": "c144988cc9f1eb04f9e2aa1f73da25ffc77db2e3a9115fe2399b17d6919bfe15"
+              },
+              {
+                "file": "nishio-go/pixel.js",
+                "status": 200,
+                "sha256": "20c6c2dd83c960ee54e88e09652e2756d904a4e44ece76ad0f01576a04f343f2"
+              },
+              {
+                "file": "nishio-go/postcard.js",
+                "status": 200,
+                "sha256": "c97260ec265d08d06b1833008c357c8b100f24e9bf369d90dff7c0c3e8484412"
+              },
+              {
+                "file": "nishio-go/region.js",
+                "status": 200,
+                "sha256": "87280a671988c1e6eb7e7c39522979e18cce6c0bcf1f68dc37157a36b685f581"
+              },
+              {
+                "file": "nishio-go/rollsync.js",
+                "status": 200,
+                "sha256": "723a3ba99f308d2a72cc292b2204d69fee1e4c776ac34c0a315925e9d51baa83"
+              },
+              {
+                "file": "nishio-go/rolltrail.js",
+                "status": 200,
+                "sha256": "519a29363c835b9eab855585f0c8151a95c2810a1e762e0651473905acbb9100"
+              },
+              {
+                "file": "nishio-go/sangyo.js",
+                "status": 200,
+                "sha256": "88be6e0cc8d472f6f33d21e74f0f7eb42d2800e8035eef171dc4032b941f0558"
+              },
+              {
+                "file": "nishio-go/season.js",
+                "status": 200,
+                "sha256": "b8ed2e6ee58015a2d4ee0646c53f52b2a7b0210c69179f61e7493427fbfbb59f"
+              },
+              {
+                "file": "nishio-go/share.js",
+                "status": 200,
+                "sha256": "8e5f923d7a13daa38ddf10290752450e06e14fe594d463af63be85b7750d4f10"
+              },
+              {
+                "file": "nishio-go/shizen.js",
+                "status": 200,
+                "sha256": "b7f94a61c139777f693e7880ea3d706522e00f63e41c1c2d0960ba551b1fb7de"
+              },
+              {
+                "file": "nishio-go/shogo.js",
+                "status": 200,
+                "sha256": "fc195c7bc872959489b87a0245fbc1e1d1fe299b202cb75d45a8fd9a853a851b"
+              },
+              {
+                "file": "nishio-go/style.css",
+                "status": 200,
+                "sha256": "32258e2a0051f97b2d388cc057fb3b35926251e96dd6750f9fb2947d120206a5"
+              },
+              {
+                "file": "nishio-go/weather.js",
+                "status": 200,
+                "sha256": "5b9e8a36bee356eb19c5265851f9b581c94f622b356c88e94e17fbf4c8b2ab95"
+              }
+            ]
+          },
+          "startedAt": "2026-11-12T23:06:17.857Z",
+          "helperSettled": true,
+          "checks": {
+            "a2hsFirstWalk": {
+              "elig2": false,
+              "shown2": false,
+              "offer2": false,
+              "elig3": true,
+              "shownEarly": false,
+              "ok": true
+            },
+            "a2hsShown": {
+              "inWorld": false,
+              "on": true,
+              "role": "status",
+              "ids": [
+                "a2hsText",
+                "a2hsNo"
+              ],
+              "text": "📲 □↑ →「ホーム画面に追加」で すぐ 開けるよ",
+              "h": 33,
+              "inView": true,
+              "covered": false,
+              "overRice": false,
+              "overSheet": false,
+              "how": "ios",
+              "t": true,
+              "dialogs": 0,
+              "ok": true
+            },
+            "a2hsAutoHide": {
+              "off": true,
+              "x": null,
+              "elig": false,
+              "again": false,
+              "ok": true
+            },
+            "a2hsClose": {
+              "on2": true,
+              "off2": true,
+              "x": true,
+              "elig": false,
+              "eligAfter": true,
+              "days": 30,
+              "every": 7,
+              "ok": true
+            },
+            "a2hsStandalone": {
+              "st": false,
+              "offer": false,
+              "done": false,
+              "back": true,
+              "hidden": true,
+              "ok": true
+            },
+            "a2hsPrompt": {
+              "how0": "",
+              "before": false,
+              "how1": "prompt",
+              "on": true,
+              "ids": [
+                "a2hsAdd",
+                "a2hsNo"
+              ],
+              "label": "📲 ホーム画面に 追加",
+              "tag": "BUTTON",
+              "covered": false,
+              "off": true,
+              "prompted": 1,
+              "how": "",
+              "ok": true
+            },
+            "a2hsInApp": {
+              "elig": true,
+              "how": "",
+              "shown": false,
+              "t": null,
+              "uas": [
+                true,
+                true,
+                true,
+                false,
+                false
+              ],
+              "ok": true
+            }
+          },
+          "helperReturned": true,
+          "elapsedMs": 29382,
+          "evaluateCrashes": [],
+          "after": {
+            "at": "2026-11-12T23:06:47.379Z",
+            "head": "e4e0f8bd7d77d492bdb8bee4265932d7dbe6b96e",
+            "files": [
+              {
+                "file": "nishio-go.html",
+                "sha256": "605e0a9c3c530fa9cea45631d4e73f6358d94bb44a018a850e0b47904f17afc8"
+              },
+              {
+                "file": "nishio-go/analytics.js",
+                "sha256": "958885a3da1f1011d535e59e65722bd999109716339a36cd32488d22841e1f92"
+              },
+              {
+                "file": "nishio-go/biglandmark.js",
+                "sha256": "f2615274cb4fc1a4ab7786c08b04acd57a0bda16109e8ca0cda3601e9561cc13"
+              },
+              {
+                "file": "nishio-go/course.js",
+                "sha256": "0bc93c66542587de15c6461d17af550645a683d19b03384667d2b09fa5b5f480"
+              },
+              {
+                "file": "nishio-go/daystamp.js",
+                "sha256": "f5774e75563207930da70b84700f590c748593e1eb13f29d4a891c11ecf7f9c9"
+              },
+              {
+                "file": "nishio-go/edition.js",
+                "sha256": "fc1e11164a115df56943570eea8f50a0e81b132097cb6a20edc232a686b5e157"
+              },
+              {
+                "file": "nishio-go/events.js",
+                "sha256": "58c088ecaa2d8d7273fe4f7c658686d8588b505c824326f7b6bf9f17cc9897c2"
+              },
+              {
+                "file": "nishio-go/game.js",
+                "sha256": "1ac1eee951f7a8889a622121ba4e1e17bbbf0ee695dcdebbc86ade430c9ca610"
+              },
+              {
+                "file": "nishio-go/gochiso.js",
+                "sha256": "7d20b38c86295fa7ae1e95d0cf0767cc5c58827c8aefe71ba22f3900eaa4b6fb"
+              },
+              {
+                "file": "nishio-go/icons.js",
+                "sha256": "3fed8790bc9eeee79eaeccfa430e68a05447e19007bfe4946993940742faed61"
+              },
+              {
+                "file": "nishio-go/kome.js",
+                "sha256": "11ca91dbafd2c618155c6c9df6c36307aa991f650f0fe3755f47ee21daac7343"
+              },
+              {
+                "file": "nishio-go/kometalk.js",
+                "sha256": "00d4ffd055cd896fea4cef8798c1e3370ea45c02d89df457f5fa9eee7c30837f"
+              },
+              {
+                "file": "nishio-go/korostyle.js",
+                "sha256": "954253c2786f59dc0320f4788e3270a93f7b8631f3ad20cb5674fe6a94655281"
+              },
+              {
+                "file": "nishio-go/landmark-gen.js",
+                "sha256": "da52e765ae8ced70230d17d0891150842551d75f0edfa81803711ea9165c6d3f"
+              },
+              {
+                "file": "nishio-go/landscape.js",
+                "sha256": "f6b71b6b7944d489c36f0cbca1f1654304fe1fe5b20b520f0687af1dc6d30c9b"
+              },
+              {
+                "file": "nishio-go/machi.js",
+                "sha256": "5ea5f9e6e3d6f6554f4866ebd57b1ee1eeff181ce5f5c6c9efc0a2eb89469a1d"
+              },
+              {
+                "file": "nishio-go/meibutsu.js",
+                "sha256": "ca230cfcdd8bfb76251bf69ef3f3809863d50e991339a2c11a49ee23546cad80"
+              },
+              {
+                "file": "nishio-go/meiro.js",
+                "sha256": "c8a153a42908a955449858bdea1bdc7c971095fab12174d55cf2eb0fb6bab384"
+              },
+              {
+                "file": "nishio-go/npcs.js",
+                "sha256": "e0e4f3ae807150b0b85902a5ccbdece6a72bd093c00b7a1554a2f00ebe047114"
+              },
+              {
+                "file": "nishio-go/osm-query.js",
+                "sha256": "44be2d414986d6c818b0466cccfab05f445a98b1ad67dcefcda00df873cd2aaa"
+              },
+              {
+                "file": "nishio-go/photoquiz.js",
+                "sha256": "c144988cc9f1eb04f9e2aa1f73da25ffc77db2e3a9115fe2399b17d6919bfe15"
+              },
+              {
+                "file": "nishio-go/pixel.js",
+                "sha256": "20c6c2dd83c960ee54e88e09652e2756d904a4e44ece76ad0f01576a04f343f2"
+              },
+              {
+                "file": "nishio-go/postcard.js",
+                "sha256": "c97260ec265d08d06b1833008c357c8b100f24e9bf369d90dff7c0c3e8484412"
+              },
+              {
+                "file": "nishio-go/region.js",
+                "sha256": "87280a671988c1e6eb7e7c39522979e18cce6c0bcf1f68dc37157a36b685f581"
+              },
+              {
+                "file": "nishio-go/rollsync.js",
+                "sha256": "723a3ba99f308d2a72cc292b2204d69fee1e4c776ac34c0a315925e9d51baa83"
+              },
+              {
+                "file": "nishio-go/rolltrail.js",
+                "sha256": "519a29363c835b9eab855585f0c8151a95c2810a1e762e0651473905acbb9100"
+              },
+              {
+                "file": "nishio-go/sangyo.js",
+                "sha256": "88be6e0cc8d472f6f33d21e74f0f7eb42d2800e8035eef171dc4032b941f0558"
+              },
+              {
+                "file": "nishio-go/season.js",
+                "sha256": "b8ed2e6ee58015a2d4ee0646c53f52b2a7b0210c69179f61e7493427fbfbb59f"
+              },
+              {
+                "file": "nishio-go/share.js",
+                "sha256": "8e5f923d7a13daa38ddf10290752450e06e14fe594d463af63be85b7750d4f10"
+              },
+              {
+                "file": "nishio-go/shizen.js",
+                "sha256": "b7f94a61c139777f693e7880ea3d706522e00f63e41c1c2d0960ba551b1fb7de"
+              },
+              {
+                "file": "nishio-go/shogo.js",
+                "sha256": "fc195c7bc872959489b87a0245fbc1e1d1fe299b202cb75d45a8fd9a853a851b"
+              },
+              {
+                "file": "nishio-go/style.css",
+                "sha256": "32258e2a0051f97b2d388cc057fb3b35926251e96dd6750f9fb2947d120206a5"
+              },
+              {
+                "file": "nishio-go/weather.js",
+                "sha256": "5b9e8a36bee356eb19c5265851f9b581c94f622b356c88e94e17fbf4c8b2ab95"
+              }
+            ],
+            "served": [
+              {
+                "file": "nishio-go.html",
+                "status": 200,
+                "sha256": "605e0a9c3c530fa9cea45631d4e73f6358d94bb44a018a850e0b47904f17afc8"
+              },
+              {
+                "file": "nishio-go/analytics.js",
+                "status": 200,
+                "sha256": "958885a3da1f1011d535e59e65722bd999109716339a36cd32488d22841e1f92"
+              },
+              {
+                "file": "nishio-go/biglandmark.js",
+                "status": 200,
+                "sha256": "f2615274cb4fc1a4ab7786c08b04acd57a0bda16109e8ca0cda3601e9561cc13"
+              },
+              {
+                "file": "nishio-go/course.js",
+                "status": 200,
+                "sha256": "0bc93c66542587de15c6461d17af550645a683d19b03384667d2b09fa5b5f480"
+              },
+              {
+                "file": "nishio-go/daystamp.js",
+                "status": 200,
+                "sha256": "f5774e75563207930da70b84700f590c748593e1eb13f29d4a891c11ecf7f9c9"
+              },
+              {
+                "file": "nishio-go/edition.js",
+                "status": 200,
+                "sha256": "fc1e11164a115df56943570eea8f50a0e81b132097cb6a20edc232a686b5e157"
+              },
+              {
+                "file": "nishio-go/events.js",
+                "status": 200,
+                "sha256": "58c088ecaa2d8d7273fe4f7c658686d8588b505c824326f7b6bf9f17cc9897c2"
+              },
+              {
+                "file": "nishio-go/game.js",
+                "status": 200,
+                "sha256": "1ac1eee951f7a8889a622121ba4e1e17bbbf0ee695dcdebbc86ade430c9ca610"
+              },
+              {
+                "file": "nishio-go/gochiso.js",
+                "status": 200,
+                "sha256": "7d20b38c86295fa7ae1e95d0cf0767cc5c58827c8aefe71ba22f3900eaa4b6fb"
+              },
+              {
+                "file": "nishio-go/icons.js",
+                "status": 200,
+                "sha256": "3fed8790bc9eeee79eaeccfa430e68a05447e19007bfe4946993940742faed61"
+              },
+              {
+                "file": "nishio-go/kome.js",
+                "status": 200,
+                "sha256": "11ca91dbafd2c618155c6c9df6c36307aa991f650f0fe3755f47ee21daac7343"
+              },
+              {
+                "file": "nishio-go/kometalk.js",
+                "status": 200,
+                "sha256": "00d4ffd055cd896fea4cef8798c1e3370ea45c02d89df457f5fa9eee7c30837f"
+              },
+              {
+                "file": "nishio-go/korostyle.js",
+                "status": 200,
+                "sha256": "954253c2786f59dc0320f4788e3270a93f7b8631f3ad20cb5674fe6a94655281"
+              },
+              {
+                "file": "nishio-go/landmark-gen.js",
+                "status": 200,
+                "sha256": "da52e765ae8ced70230d17d0891150842551d75f0edfa81803711ea9165c6d3f"
+              },
+              {
+                "file": "nishio-go/landscape.js",
+                "status": 200,
+                "sha256": "f6b71b6b7944d489c36f0cbca1f1654304fe1fe5b20b520f0687af1dc6d30c9b"
+              },
+              {
+                "file": "nishio-go/machi.js",
+                "status": 200,
+                "sha256": "5ea5f9e6e3d6f6554f4866ebd57b1ee1eeff181ce5f5c6c9efc0a2eb89469a1d"
+              },
+              {
+                "file": "nishio-go/meibutsu.js",
+                "status": 200,
+                "sha256": "ca230cfcdd8bfb76251bf69ef3f3809863d50e991339a2c11a49ee23546cad80"
+              },
+              {
+                "file": "nishio-go/meiro.js",
+                "status": 200,
+                "sha256": "c8a153a42908a955449858bdea1bdc7c971095fab12174d55cf2eb0fb6bab384"
+              },
+              {
+                "file": "nishio-go/npcs.js",
+                "status": 200,
+                "sha256": "e0e4f3ae807150b0b85902a5ccbdece6a72bd093c00b7a1554a2f00ebe047114"
+              },
+              {
+                "file": "nishio-go/osm-query.js",
+                "status": 200,
+                "sha256": "44be2d414986d6c818b0466cccfab05f445a98b1ad67dcefcda00df873cd2aaa"
+              },
+              {
+                "file": "nishio-go/photoquiz.js",
+                "status": 200,
+                "sha256": "c144988cc9f1eb04f9e2aa1f73da25ffc77db2e3a9115fe2399b17d6919bfe15"
+              },
+              {
+                "file": "nishio-go/pixel.js",
+                "status": 200,
+                "sha256": "20c6c2dd83c960ee54e88e09652e2756d904a4e44ece76ad0f01576a04f343f2"
+              },
+              {
+                "file": "nishio-go/postcard.js",
+                "status": 200,
+                "sha256": "c97260ec265d08d06b1833008c357c8b100f24e9bf369d90dff7c0c3e8484412"
+              },
+              {
+                "file": "nishio-go/region.js",
+                "status": 200,
+                "sha256": "87280a671988c1e6eb7e7c39522979e18cce6c0bcf1f68dc37157a36b685f581"
+              },
+              {
+                "file": "nishio-go/rollsync.js",
+                "status": 200,
+                "sha256": "723a3ba99f308d2a72cc292b2204d69fee1e4c776ac34c0a315925e9d51baa83"
+              },
+              {
+                "file": "nishio-go/rolltrail.js",
+                "status": 200,
+                "sha256": "519a29363c835b9eab855585f0c8151a95c2810a1e762e0651473905acbb9100"
+              },
+              {
+                "file": "nishio-go/sangyo.js",
+                "status": 200,
+                "sha256": "88be6e0cc8d472f6f33d21e74f0f7eb42d2800e8035eef171dc4032b941f0558"
+              },
+              {
+                "file": "nishio-go/season.js",
+                "status": 200,
+                "sha256": "b8ed2e6ee58015a2d4ee0646c53f52b2a7b0210c69179f61e7493427fbfbb59f"
+              },
+              {
+                "file": "nishio-go/share.js",
+                "status": 200,
+                "sha256": "8e5f923d7a13daa38ddf10290752450e06e14fe594d463af63be85b7750d4f10"
+              },
+              {
+                "file": "nishio-go/shizen.js",
+                "status": 200,
+                "sha256": "b7f94a61c139777f693e7880ea3d706522e00f63e41c1c2d0960ba551b1fb7de"
+              },
+              {
+                "file": "nishio-go/shogo.js",
+                "status": 200,
+                "sha256": "fc195c7bc872959489b87a0245fbc1e1d1fe299b202cb75d45a8fd9a853a851b"
+              },
+              {
+                "file": "nishio-go/style.css",
+                "status": 200,
+                "sha256": "32258e2a0051f97b2d388cc057fb3b35926251e96dd6750f9fb2947d120206a5"
+              },
+              {
+                "file": "nishio-go/weather.js",
+                "status": 200,
+                "sha256": "5b9e8a36bee356eb19c5265851f9b581c94f622b356c88e94e17fbf4c8b2ab95"
+              }
+            ]
+          },
+          "completedAt": "2026-11-12T23:06:47.385Z",
+          "keysComplete": true,
+          "contextsComplete": true,
+          "ok": true
+        }
+      ]
     }
   },
   "screenshots": {

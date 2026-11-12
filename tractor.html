@@ -224,7 +224,9 @@
 (function () {
   var still = 0, last = '', stall = false, t0 = '指で なぞると 進みます', t1 = '読みこみに 時間が かかっています\nこのまま 待つか、タップで やりなおし';
   function started() { try { return !!game.S.started; } catch (e) { return false; } }
-  function mark() { var b = document.getElementById('lwBar'), n = 0; try { n = performance.getEntriesByType('resource').length; } catch (e) {} return (b ? b.style.width : '') + '/' + n; }
+  // サイクル276: ゲームが 読みはじめたら（window.game が ある）、数えるのは ゲームの ファイル（glb と 復号器）だけ。ほかの 通信（広告・計測・拡張の 読みこみ など）が 数秒ごとに 終わると、
+  // それまでは 車体が 止まっていても 知らせが ずっと 出なかった（見つけ役の 実測: 5 秒ごとに ほかの 読みこみ → 32 秒たっても 出ない 2 回のうち 2 回。ほかの 読みこみ なしなら 12 秒で 出る）。three の 3 本を 読む間は 今までどおり ぜんぶ 数える
+  function mark() { var b = document.getElementById('lwBar'), n = 0; try { var r = performance.getEntriesByType('resource'); if (!window.game) n = r.length; else for (var i = 0; i < r.length; i++) if (/\.glb(\?|$)|\/draco\//.test(r[i].name)) n++; } catch (e) {} return (b ? b.style.width : '') + '/' + n; }
   var iv = setInterval(function () {
     if (started() || document.body.classList.contains('loadng')) {   // 始まった・読みこめなかった 知らせが 出た：見はりを やめ、知らせも もとに もどす
       stall = false; clearInterval(iv); var w = document.getElementById('loadWait'), t2 = w.querySelector('.lwT'); w.classList.remove('slow'); if (t2) t2.textContent = t0; return; }
@@ -9068,7 +9070,9 @@ function resize() {
   // 回したあとは同じ指の位置が別の地面を指すので、そのまま続けると線が 5m ほど飛んでトラクターが急に走った（ループ側 scratchpad/cond195.js rotate）。
   // ツールバーの出入りなど向きの変わらない大きさの変化では やめない
   const portrait = w < h;
-  if (portrait !== wasPortrait) { wasPortrait = portrait; if (TRACE.on) TRACE.end(); }
+  // サイクル276: 指の 記録も ほかの 窓へ 行った ときと 同じに 消す（viewPtsClear・読みこみ中の 道すじ PRE も）。置いたままの 指は、次に 動いたら その 場所から おぼえ直し、12px で また なぞれる（サイクル274 と 同じ）。
+  // それまでは 線だけ 消して 指の 記録が のこり、同じ 指を 120px 動かしても 2 秒で 0.02m（指を 離して 置き直す まで なぞれなかった。回さなければ 2.4〜2.7m）。前の 線は つづけないので 5m とぶ ことは ない
+  if (portrait !== wasPortrait) { wasPortrait = portrait; if (TRACE.on) TRACE.end(); viewPtsClear(); PRE.clear(); }
   renderer.setSize(w, h, false);
   camera.aspect = w / h;
   baseFov = w / h < 1 ? Math.min(82, 2 * Math.atan(Math.tan(32 * Math.PI / 180) / (w / h)) * 180 / Math.PI) : 60; camera.fov = baseFov / fovZoom;   // 縦長の画面でも横が見えるように
@@ -10075,7 +10079,7 @@ const SAY = (() => {
   // 下は いま やること（案内。かわったら すぐ 出す。急ぎの 操作も 待たせない）
   const el = $('say'), mainEl = document.createElement('div'), coachEl = document.createElement('div');
   coachEl.className = 'sayCoach'; el.append(mainEl, coachEl);
-  let t = 0, kind = '', mainText = '', coachLine = '', talkT = 0, chatN = 0, pi = 0, doneSaid = false;
+  let t = 0, kind = '', mainText = '', coachLine = '', talkT = 0, chatN = 0, pi = 0, doneSaid = false, howSaid = false;
   const RANK = { chat: 0, step: 1, toast: 2 };
   const CHAT = [TOD === 'yoru' ? 'ほしが きれいだね' : TOD === 'yu' ? 'ゆうやけ きれいだね' : 'いい てんきだね', 'のんびり いこう', 'つちの においが するね',
     SHIRO ? 'カエルさん いるかな' : season === 'aki' ? 'トンボが とんでるね' : 'ひばりが ないてるね', 'ゆっくりで いいよ', 'とりさんが きてるね'];
@@ -10111,7 +10115,11 @@ const SAY = (() => {
   }
   function tap() {                                 // さわると：知らせの とちゅうは そのまま。案内が あれば もう一度 話す。なければ 雑談
     if (DETAIL || busy()) return;
-    if (coachLine) talk(coachLine); else show(CHAT[chatN++ % CHAT.length], 3.5, 'chat');
+    // サイクル276・最初の1分: まだ 1 ますも 耕して いない 間の 最初の 1 回は、雑談の かわりに する ことを 言う（はじめの 案内と 同じ 文）。2 回め からと 耕しはじめた あとは 今までどおり 雑談。
+    // それまでは 顔を 押す 人に 雑談しか 出ず、する ことを 言う 回数は 0（はかった数: 開いて 3 秒から 1 秒に 1 回 押す 人の 10 回が ぜんぶ 雑談）
+    if (coachLine) talk(coachLine);
+    else if (!howSaid && tilledCount === 0) { howSaid = true; show('田んぼを ゆびで なぞる', 3.5, 'chat'); }
+    else show(CHAT[chatN++ % CHAT.length], 3.5, 'chat');
   }
   function refresh() { if (DETAIL) { t = 0; kind = ''; talkT = 0; } render(); }   // くわしい説明の 切りかえ
   const note = (x, sec = 3.5) => show(x, sec, 'step');   // 生きものに 気づいた ひとこと
@@ -11009,6 +11017,7 @@ const PLAY = (() => {
 // そこで、始まって 1 秒たったあと、20 こま（か 2 秒ぶんで 4 こま以上）のうち 8 割が 0.055 秒より おそかったら、絵の こまかさ（画素の倍率）を 1 だん下げる（1.5 → 1 → 0.75）。
 // 下げるのは 3D の絵だけ（文字・数字・見本の指・ボタンは 今までどおり くっきり）。動き・耕し方・時間の進み方の きまりは 変えない。上げ直しは しない（ちらつかせない）。
 // たまの 1 こまの 引っかかり・タブを かくした あとの 1 こまでは 下げない（8 割の きまり と、かくれている間は 数えない）。?nolite で 切れる（画面写真を くっきり とりたい とき）
+// サイクル276: ゲームの 時間の 進み方は frame() で 本物の 時計に そろえた（1 こまが 0.2 秒までなら スローモーションに ならない）。LITE は 今までどおり 絵だけ
 const LITE = {
   lv: 0, n: 0, slow: 0, t: 0, warm: 0,
   clear() { this.n = this.slow = this.t = 0; },
@@ -11034,17 +11043,24 @@ function frame(now) {
   // サイクル274: 時間が 逆もどりした こま（rAF の時刻が 前の こまより 古い）は 0 秒として あつかう。負の dt では 見本の指（HINT）の番号が 負になって 止まっていた
   const dt = Math.max(0, Math.min(0.05, (now - last) / 1000)), realDt = Math.max(0, Math.min(0.25, (now - last) / 1000));   // realDt は PLAY の経過用（実時間。サイクル76で制限には使わない）
   const gapMs = now - last;
+  // サイクル276・最初の1分: おそい スマホでも ゲームの 時間を 本物の 時計に そろえる。1 こまが 0.05 秒より 長いときは、動き（step と 生きもの）を 0.05 秒 以下に わけて 何回か 進める（sim・simN）。
+  // それまでは 1 こまで 0.05 秒しか 進めず、1 秒に 10 こまの スマホでは ゲームが 半分の 速さ（スローモーション）だった（はかった数・にせの時計（指の 時刻も 同じ 時計）・前へ なぞって 4 秒:
+  // 1 秒に 60 こま 5.3m・0.8% → 10 こま 2.7m・0.4%・5 こま 0.7m・0.1%。はじめの 1 分は 本物の 120・240 秒。直した後は 10 こま 5.4m・0.8%・5 こま 5.6m・0.8%・はじめの 1 分は 60 秒）。
+  // わけて 進めるのは 0.2 秒まで（5 こま／秒まで 本物どおり。それより 長い 1 こま・かくした タブの あとは 0.2 秒で 切って、のこりは ためない＝あとで まとめて 動かさない）。
+  // 1 回ぶんは いつも 0.05 秒 以下なので 動きの 計算の きまりは 今までと 同じ。0.05 秒 以下の こま（1 秒に 20 こま 以上）は 今までと まったく 同じ 道（1 回・dt）。
+  // こまごとの 数（2 本の指の「2 こま」・LITE・絵・カメラ）は 1 こまに 1 回のまま。見本（HINT）・はじめの 1 分（FIRSTMIN）・指の あと・2 本の指の 0.15 秒は 本物の 時間（sim）で 進める
+  const sim = Math.max(0, Math.min(0.2, (now - last) / 1000)), simN = sim > 0.05 ? Math.ceil(sim / 0.05 - 1e-9) : 1, simH = sim / simN;   // 0.05 秒 以下の こまでは sim＝dt・simN＝1
   last = now;
   if (!P.Rotary) { TRACE.tick(dt); renderer.render(scene, camera); return; }   // サイクル274: 読みこみを待つ間も、指の あと（黄色い点）は 0.6 秒で消す
   LITE.tick(gapMs);
   const running = S.started && $('help').classList.contains('hidden') && !S.done;
   if (!running) { key.fwd = key.back = key.left = key.right = 0; TRACE.end(); }
-  viewTick(dt); TRACE.tick(dt); HINT.update(dt); FIRSTMIN.update(dt);   // 最初の1分の終わり判定（60秒）
+  viewTick(sim); TRACE.tick(sim); HINT.update(sim); FIRSTMIN.update(sim);   // 最初の1分の終わり判定（60秒）。サイクル276: 本物の 時間で
   if (!drag && camMode === 0) { look.yaw *= 1 - Math.min(1, dt * 1.5); look.pitch *= 1 - Math.min(1, dt * 1.5); }
   // 止まっているあいだ（メニュー・操作の表・おわり）は、トラクターの動き・時間・燃料を進めない。始める前はエンジンをかける所だけ進める
   let pct = lastPct;
-  if (running || !S.started) { for (let k = 0; k < (running ? SPEEDUP : 1); k++) { pct = step(dt); if (running) { UZURA.update(dt); KERA.update(dt); KAMO.update(dt); ZARI.update(dt); GENGO.update(dt); KANA.update(dt); KABU.update(dt); DOJO.update(dt); HACHI.update(dt); MEDAKA.update(dt); HOTARU.update(dt); KAWASEMI.update(dt); IMORI.update(dt); KIJI.update(dt); TONOSAMA.update(dt); MOGURA.update(dt); TSUBAME.update(dt); KABUTO.update(dt); HIGAN.update(dt); HIBARI.update(dt); MUKU.update(dt, S.rotDown && S.rotPos < 0.08); } } lastPct = pct; }   // 早送り（ウズラも トラクターと同じ時計で、1 こまずつ動かす）
-  if (running) { PLAY.update(realDt); INTRO.update(dt * SPEEDUP); }
+  if (running || !S.started) { for (let k = 0; k < (running ? SPEEDUP : 1) * simN; k++) { const dt = simH; pct = step(dt); if (running) { UZURA.update(dt); KERA.update(dt); KAMO.update(dt); ZARI.update(dt); GENGO.update(dt); KANA.update(dt); KABU.update(dt); DOJO.update(dt); HACHI.update(dt); MEDAKA.update(dt); HOTARU.update(dt); KAWASEMI.update(dt); IMORI.update(dt); KIJI.update(dt); TONOSAMA.update(dt); MOGURA.update(dt); TSUBAME.update(dt); KABUTO.update(dt); HIGAN.update(dt); HIBARI.update(dt); MUKU.update(dt, S.rotDown && S.rotPos < 0.08); } } lastPct = pct; }   // サイクル276: おそい こまでは simN 回（1 回 simH ≤ 0.05 秒）   // 早送り（ウズラも トラクターと同じ時計で、1 こまずつ動かす）
+  if (running) { PLAY.update(realDt); INTRO.update(sim * SPEEDUP); }
   syncAudio(running);
   updateCamera(dt);
   updateSound(dt);

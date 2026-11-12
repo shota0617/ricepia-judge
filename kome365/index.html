@@ -94,6 +94,9 @@ html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"Hiragino S
 body{padding:0 16px 40px}
 .wrap{max-width:480px;margin:0 auto}
 h1{font-size:28px;margin:18px 0 4px;letter-spacing:.04em}
+#sTitle,#sResult{position:relative}#sTitle>h1,#sResult>h1{margin-right:52px;min-height:44px}   /* サイクル173 レビュー P1: 題・結果でも 音を 切れる(右上の 🔊。見出しは ボタンの 左まで) */
+.sndTgl{position:absolute;top:0;right:0;z-index:2;width:44px;height:44px;padding:0;border:0;border-radius:10px;background:rgba(255,253,247,.95);box-shadow:0 1px 4px rgba(0,0,0,.15);font:inherit;font-size:22px;line-height:44px;text-align:center;cursor:pointer}
+.sndTgl[aria-pressed="false"]{opacity:.65}
 h2{font-size:16px;margin:18px 0 8px}
 p{line-height:1.7;margin:6px 0}
 small,.sub{color:var(--sub)}
@@ -786,6 +789,7 @@ html:has(#sGame.swipeMode:not(.hidden)),body:has(#sGame.swipeMode:not(.hidden)){
 
 <!-- タイトル -->
 <section id="sTitle">
+  <button type="button" class="sndTgl" data-snd aria-pressed="true" aria-label="音を 切る">🔊</button>
   <h1>米づくり365</h1>
   <p class="sub">ちびの農家さんと、西尾の田んぼを見回る1年。</p>
 
@@ -893,6 +897,7 @@ html:has(#sGame.swipeMode:not(.hidden)),body:has(#sGame.swipeMode:not(.hidden)){
 
 <!-- 結果 -->
 <section id="sResult" class="hidden">
+  <button type="button" class="sndTgl" data-snd aria-pressed="true" aria-label="音を 切る">🔊</button>
   <h1 style="font-size:22px" id="rTitle" tabindex="-1">今年のお米</h1>
   <div class="bag" id="rBag"></div>
   <button class="patrol face" id="bAgain">🌱 もう1年</button>
@@ -1083,7 +1088,7 @@ $('bStart').onclick = () => {
   f.msg('今年の田んぼは「' + f.soil.name + '」。' + (f.soil.N < 7 ? '肥料は少し多めがよさそう。' : f.soil.N > 7 ? '肥料は少し控えめがよさそう。' : ''));
   show('sGame'); renderGame();
 };
-function show(id){ for (const s of ['sTitle','sGame','sResult']) $(s).classList.toggle('hidden', s !== id); window.scrollTo(0, 0);
+function show(id){ try { ksCancel(); } catch (e) {} for (const s of ['sTitle','sGame','sResult']) $(s).classList.toggle('hidden', s !== id); window.scrollTo(0, 0);
   if (use3d && window.Field3D){ if (id === 'sGame') window.Field3D.start(); else window.Field3D.stop(); } }
 
 const jun = (doy) => { const { m, d } = K.dateOf(doy); return m + '月' + (d <= 10 ? '上旬' : d <= 20 ? '中旬' : '下旬'); };
@@ -1852,17 +1857,19 @@ function ksCtx(){
 function ksOut(c){ return c && c === KS.ctx && KS.master ? KS.master : c.destination; }   /* 田んぼの音・田植え歌も 同じ 出口(🔇で ぜんぶ 切れる) */
 function ksAway(){ return document.hidden || KS.paused; }
 function ksLive(){ var c = KS.ctx; if (!KS.on || !c || ksAway()) return false; return c.state === 'running' || (c.state === 'suspended' && performance.now() - KS.tryAt < 600); }   /* 解いた ばかり(resume を 待つ 間)も 鳴らす */
+/* 再開(resume)は すぐには 終わらない。終わった ときに、その 間に 止める(かくれた・前面で なくなった・🔇)が 来て いたら 止めなおす(レビュー P2) */
+function ksResumed(){ var c = KS.ctx; if (!c) return; if (!KS.on || ksAway()) { try { if (c.state !== 'closed') c.suspend(); } catch (e) {} return; } ksBgmEnsure(); }
 function ksUnlock(){
   if (!KS.on || ksAway()) return; var c = ksCtx(); if (!c) return;
   if (c.state !== 'running') { KS.tryAt = performance.now();
-    try { var p = c.resume(); if (p && p.then) p.then(function(){ ksBgmEnsure(); }, function(){}); } catch (e) {}
+    try { var p = c.resume(); if (p && p.then) p.then(ksResumed, function(){}); } catch (e) {}
     try { var s = c.createBufferSource(); s.buffer = c.createBuffer(1, 1, 22050); s.connect(ksOut(c)); s.start(0); } catch (e) {} }   /* 古い iPhone は 無音を 1つ 鳴らすと 解ける */
   ksBgmEnsure();
 }
 ['pointerup', 'touchend', 'click', 'keydown'].forEach(function(t){ document.addEventListener(t, function(ev){ if (ev && ev.isTrusted === false) return; try { ksUnlock(); } catch (e) {} }, { capture: true, passive: true }); });   /* 1回で 外さない(かくれて もどった あとも また 解ける)。プログラムの click(はじめの bStart)では 作らない */
 /* 1つの 音: box=オルゴール(サイン+上の 倍音 すこし)・wood=木琴(短い)・soft=三角波。ゆるい 立ち上がりと 減衰で とがらせない */
 function ksNote(c, out, t, hz, dur, vol, kind){
-  var parts = kind === 'wood' ? [[1, 1], [3.98, 0.12]] : kind === 'soft' ? [[1, 1]] : [[1, 1], [2, 0.18], [4.01, 0.05]];
+  var parts = kind === 'wood' ? [[1, 1], [3.98, 0.12]] : kind === 'soft' ? [[1, 1]] : kind === 'pure' ? [[1, 1], [2, 0.06]] : [[1, 1], [2, 0.18], [4.01, 0.05]];
   parts.forEach(function(p){ var o = c.createOscillator(), g = c.createGain(); o.type = kind === 'soft' ? 'triangle' : 'sine'; o.frequency.setValueAtTime(hz * p[0], t);
     var d = p[0] > 1.5 ? dur * 0.45 : dur; g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol * p[1], t + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
     o.connect(g); g.connect(out); o.start(t); o.stop(t + d + 0.03); });
@@ -1875,11 +1882,11 @@ function ksRain(c, out, t){   /* さらさら: しずかな ざわめきを 高�
 /* 音の 一覧(秒・音量は 1つの 音の 山。うしろの ふしは 0.04 より 小さい) */
 var KS_FX = {
   pon:   { len: 0.2,  run: function(c, o, t){ ksNote(c, o, t, 587.3, 0.2, 0.10, 'wood'); } },                                              // カードを 決めた: ぽん(レ)
-  ok:    { len: 0.5,  run: function(c, o, t){ ksNote(c, o, t, 659.3, 0.35, 0.09, 'box'); ksNote(c, o, t + 0.12, 880, 0.4, 0.09, 'box'); } },   // ○: ミ→ラ の やさしい 上がり
-  ng:    { len: 0.4,  run: function(c, o, t){ ksNote(c, o, t, 220, 0.4, 0.08, 'soft'); } },                                                 // ✗: 低めの ラ 1音(下がらない・とがらない)
-  grow:  { len: 0.45, run: function(c, o, t){ ksNote(c, o, t, 1174.7, 0.45, 0.06, 'box'); } },                                              // 芽・育ちが 進んだ: 高い レ ひと音
+  ok:    { len: 0.5,  run: function(c, o, t){ ksNote(c, o, t, 659.3, 0.35, 0.08, 'box'); ksNote(c, o, t + 0.12, 880, 0.4, 0.08, 'box'); } },   // ○: ミ→ラ の やさしい 上がり
+  ng:    { len: 0.4,  run: function(c, o, t){ ksNote(c, o, t, 440, 0.4, 0.08, 'soft'); } },                                                 // ✗: 低めの ラ(440Hz) 1音(下がらない・とがらない。小さな スピーカーで 聞こえる 高さ)
+  grow:  { len: 0.45, run: function(c, o, t){ ksNote(c, o, t, 880, 0.45, 0.06, 'pure'); } },                                               // 芽・育ちが 進んだ: ラ(880Hz) ひと音(倍音 うすく・とがらせない)
   rain:  { len: 0.7,  run: function(c, o, t){ ksRain(c, o, t); } },                                                                          // 雨が 降りだした: さらさら
-  machine: { len: 0.45, run: function(c, o, t){ [0, 0.15, 0.3].forEach(function(dt, k){ ksNote(c, o, t + dt, k === 1 ? 246.9 : 220, 0.12, 0.08, 'wood'); }); } },   // 田おこし・代かき・刈り取り: ことこと 3拍
+  machine: { len: 0.45, run: function(c, o, t){ [0, 0.15, 0.3].forEach(function(dt, k){ ksNote(c, o, t + dt, k === 1 ? 493.9 : 440, 0.12, 0.08, 'wood'); }); } },   // 田おこし・代かき・刈り取り: ことこと 3拍
   taue:  { len: 0.5,  run: function(c, o, t){ ksNote(c, o, t, 784, 0.5, 0.07, 'box'); } },                                                   // 田植え: ソ ひと音
   minori: { len: 0.6, run: function(c, o, t){ ksNote(c, o, t, 880, 0.6, 0.06, 'box'); ksNote(c, o, t, 1318.5, 0.5, 0.03, 'box'); } },        // 実り: ラ(と 上の ミ を うすく)
   idle:  { len: 1.2,  run: function(c, o, t){ [[523.3, 0], [587.3, 0.2], [659.3, 0.4], [784, 0.6], [659.3, 0.85]].forEach(function(n){ ksNote(c, o, t + n[1], n[0], 0.45, 0.06, 'box'); }); } },   // 30秒の カード: ド・レ・ミ・ソ・ミ(1.2秒)
@@ -1887,8 +1894,17 @@ var KS_FX = {
 };
 function ksFx(name, delay){
   try { var d = KS_FX[name]; if (!d || !ksLive()) return false; var c = KS.ctx, t = c.currentTime + 0.01 + (delay || 0);
-    var o = c.createGain(); o.gain.value = 1; o.connect(KS.master); d.run(c, o, t); setTimeout(function(){ try { o.disconnect(); } catch (e) {} }, ((delay || 0) + d.len + 0.4) * 1000);
+    var o = c.createGain(); o.gain.value = 1; o.connect(KS.master); d.run(c, o, t); var it = { o: o, t: t, end: t + d.len };
+    KS.pend = (KS.pend || []).filter(function(x){ return x.end > c.currentTime; }); KS.pend.push(it);
+    it.timer = setTimeout(function(){ try { o.disconnect(); } catch (e) {} }, ((delay || 0) + d.len + 0.4) * 1000);
     KS.fx[name] = (KS.fx[name] || 0) + 1; KS.log.push(name); if (KS.log.length > 30) KS.log.shift(); return true; } catch (e) { return false; }
+}
+/* 予約した カードの 音を 取り消す(レビュー P2): 次の カードを 決めた・画面が かわった ときに、前の カードの まだ 鳴って いない 音は すぐ 外し、鳴って いる 音は 0.1秒で 消す */
+function ksCancel(){
+  try { var c = KS.ctx, list = KS.pend || []; KS.pend = []; if (!c) return; var now = c.currentTime;
+    list.forEach(function(x){ if (x.end <= now) return; clearTimeout(x.timer);
+      if (x.t > now + 0.005) { try { x.o.disconnect(); } catch (e) {} return; }
+      try { x.o.gain.setTargetAtTime(0, now, 0.02); } catch (e) {} setTimeout(function(){ try { x.o.disconnect(); } catch (e) {} }, 120); }); } catch (e) {}
 }
 /* うしろの ふし: 自作の 8小節(4拍子)を くり返す。[音の 段, 拍]。段 0〜5 = ド・レ・ミ・ソ・ラ・上の ド、-1 = 休み。小節の 頭に 低い 音を うすく。季節で 高さと 速さを 少し 変える */
 var KS_SCALE = [523.3, 587.3, 659.3, 784, 880, 1046.5], KS_BASS = [130.8, 130.8, 196, 196, 130.8, 220, 196, 130.8];
@@ -1909,18 +1925,18 @@ function ksBgmTick(){
 }
 function ksBgmEnsure(){ if (KS.bgm.timer || !ksLive()) return; KS.bgm.timer = setInterval(ksBgmTick, 200); ksBgmTick(); }
 function ksBgmStop(){ if (KS.bgm.timer) { clearInterval(KS.bgm.timer); KS.bgm.timer = null; } }
-function ksPause(){ KS.paused = true; ksBgmStop(); try { if (KS.ctx && KS.ctx.state === 'running') KS.ctx.suspend(); } catch (e) {} }
-function ksResume(){ KS.paused = false; if (document.hidden) return; try { if (KS.on && KS.ctx && KS.ctx.state !== 'running' && KS.ctx.state !== 'closed') { KS.tryAt = performance.now(); var p = KS.ctx.resume(); if (p && p.then) p.then(function(){ ksBgmEnsure(); }, function(){}); } } catch (e) {} ksBgmEnsure(); }
+function ksPause(){ KS.paused = true; ksBgmStop(); try { if (KS.ctx && KS.ctx.state !== 'closed') KS.ctx.suspend(); } catch (e) {} }   /* 再開の 途中でも 止める 要求を 出す(終わった ときも ksResumed で 見なおす) */
+function ksResume(){ KS.paused = false; if (document.hidden) return; try { if (KS.on && KS.ctx && KS.ctx.state !== 'running' && KS.ctx.state !== 'closed') { KS.tryAt = performance.now(); var p = KS.ctx.resume(); if (p && p.then) p.then(ksResumed, function(){}); } } catch (e) {} ksBgmEnsure(); }
 document.addEventListener('visibilitychange', function(){ if (document.hidden) ksPause(); else ksResume(); });
 window.addEventListener('pagehide', ksPause); window.addEventListener('blur', ksPause); window.addEventListener('focus', ksResume); window.addEventListener('pageshow', function(){ if (!document.hidden) ksResume(); });
-function ksBtnSet(){ var b = $('swSnd'); if (!b) return; b.textContent = KS.on ? '🔊' : '🔇'; b.setAttribute('aria-pressed', KS.on ? 'true' : 'false'); b.setAttribute('aria-label', KS.on ? '音を 切る' : '音を 出す'); }
+function ksBtnSet(){ [].forEach.call(document.querySelectorAll('#swSnd, [data-snd]'), function(b){ b.textContent = KS.on ? '🔊' : '🔇'; b.setAttribute('aria-pressed', KS.on ? 'true' : 'false'); b.setAttribute('aria-label', KS.on ? '音を 切る' : '音を 出す'); }); }   /* ゲーム・題・結果 の 3つの ボタンを そろえる(レビュー P1) */
 function ksToggle(){
   KS.on = !KS.on; store.set('kome365_sound', KS.on ? '1' : '0');
   try { if (KS.master && KS.ctx) KS.master.gain.setTargetAtTime(KS.on ? 1 : 0, KS.ctx.currentTime, 0.03); } catch (e) {}
-  if (KS.on) { ksUnlock(); ksFx('pon'); } else { ksBgmStop(); try { sndStop(); SND.on = false; var sb = $('bSound'); if (sb) { sb.setAttribute('aria-pressed', 'false'); sb.textContent = '🔇 田んぼの音'; } songStop(); } catch (e) {} try { if (KS.ctx && KS.ctx.state === 'running') KS.ctx.suspend(); } catch (e) {} }
+  if (KS.on) { ksUnlock(); ksFx('pon'); } else { ksBgmStop(); try { sndStop(); SND.on = false; var sb = $('bSound'); if (sb) { sb.setAttribute('aria-pressed', 'false'); sb.textContent = '🔇 田んぼの音'; } songStop(); } catch (e) {} try { if (KS.ctx && KS.ctx.state !== 'closed') KS.ctx.suspend(); } catch (e) {} }
   ksBtnSet();
 }
-try { ksBtnSet(); $('swSnd').addEventListener('click', function(ev){ ev.stopPropagation(); ksToggle(); }); } catch (e) {}
+try { ksBtnSet(); $('swSnd').addEventListener('click', function(ev){ ev.stopPropagation(); ksToggle(); }); [].forEach.call(document.querySelectorAll('[data-snd]'), function(b){ b.addEventListener('click', function(ev){ ev.stopPropagation(); ksToggle(); }); }); } catch (e) {}
 window.__ks = { state: function(){ return { on: KS.on, dead: KS.dead, ctx: KS.ctx ? KS.ctx.state : '', paused: KS.paused, bgm: !!KS.bgm.timer, fx: Object.assign({}, KS.fx), log: KS.log.slice() }; } };   /* 確かめ用(読む だけ) */
 // ---------- 田んぼの音(はじめは消音。ボタンで出す。音はその場で合成=ファイルなし) ----------
 // 春〜夏は水を張った田のカエル(アマガエル)、7月下旬〜8月はセミ、9〜10月はコオロギ・スズムシ、雨の日は雨の音
@@ -3785,7 +3801,7 @@ renderTitle();
     $('swLog').innerHTML = (fb && !judged ? '<b' + (cls ? ' class="' + cls + '"' : '') + '>' + esc(fb) + '</b>' : '') + (dl ? '<br>' + dl : '') + (news.length ? (fb || dl ? '<br>' : '') + news.map(esc).join('<br>') : '');
     tallyAdd(d0, fb, over ? 0 : lifeCnt, { t: card.title, s: side === 'left' ? card.left.label : card.right.label, im: impactCalc(st0, stM) });
     save();
-    if (over) { store.set(SAVE, ''); store.set('kome365_streak', '0'); rwClear(); busy = false; sunHide(); ksFx('year'); return showResult(); }   /* 365日目のカードを選び終えたら結果画面 */
+    if (over) { store.set(SAVE, ''); store.set('kome365_streak', '0'); rwClear(); busy = false; sunHide(); showResult(); ksFx('year'); return; }   /* 365日目のカードを選び終えたら結果画面 */
     try { drawField(); } catch (e) { console.error(e); }
     /* 選択のたびに田んぼ側が変わったことを見せる(バーが動かないようす系カードでも田んぼが光る) */
     if (!judged) try { var sg = $('sGame'); sg.classList.remove('fieldTick'); void sg.offsetWidth; sg.classList.add('fieldTick'); setTimeout(function(){ sg.classList.remove('fieldTick'); }, 1400); } catch (e) {}
@@ -3827,7 +3843,7 @@ renderTitle();
     try { fieldBadge(fi, true); } catch (e) {}
   }
   function choose(side, vel){
-    if (busy || !card || !f || KomeCards.over(f)) return; idleTouch(); ghostOff(); busy = true; ksFx('pon'); rwUpdate(false); window.__k3d.soon(900);
+    if (busy || !card || !f || KomeCards.over(f)) return; idleTouch(); ghostOff(); busy = true; ksCancel(); ksFx('pon'); rwUpdate(false); window.__k3d.soon(900);
     var out = side === 'left' ? -1 : 1;
     pvClear(); el.card.classList.remove('drag', 'enter', 'wig'); el.card.classList.add('fly');
     if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) { advance(side); return; }

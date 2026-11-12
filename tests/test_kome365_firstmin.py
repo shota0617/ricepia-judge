@@ -253,16 +253,19 @@ let chromium; try { ({ chromium } = require('playwright')); } catch (e) { consol
 const [htmlPath, root, plansJ] = process.argv.slice(1, 4);
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.json': 'application/json', '.png': 'image/png', '.svg': 'image/svg+xml', '.css': 'text/css' };
 const FAKE = (mode) => {
-  window.__fa = { made: 0, osc: 0, src: 0, resume: 0, suspend: 0, allow: mode !== 'lateAllow' };
+  window.__fa = { made: 0, osc: 0, src: 0, resume: 0, suspend: 0, allow: mode !== 'lateAllow', srcs: [] };
+  // 周回173 の 直し(レビュー P2): 音の つながりを 覚え、まだ 鳴って いない 音が スピーカーまで つながって いる 数を 数える
+  window.__fa.live = (bornBefore, bornAfter) => { const now = performance.now() / 1000; const reach = (n, d) => !!n && (n._dest || (d < 12 && (n._out || []).some(x => reach(x, d + 1)))); return window.__fa.srcs.filter(x => x.born <= bornBefore && x.born >= (bornAfter || 0) && x.t > now + 0.05 && reach(x.n, 0)).length; };
   if (mode === 'none') { try { delete window.AudioContext; delete window.webkitAudioContext; } catch (e) {} window.AudioContext = undefined; window.webkitAudioContext = undefined; return; }
   const P = () => ({ value: 0, setValueAtTime(){}, linearRampToValueAtTime(){}, exponentialRampToValueAtTime(){}, setTargetAtTime(){} });
-  const N = () => ({ connect(){}, disconnect(){}, start(){}, stop(){}, gain: P(), frequency: P(), detune: P(), Q: P(), type: '', buffer: null, loop: false });
-  function AC(){ if (mode === 'throw') throw new Error('no audio'); window.__fa.made++; this.state = 'suspended'; this.sampleRate = 22050; this.destination = N(); }
+  const N = (src) => { const n = { _out: [], connect(x){ if (x && typeof x === 'object' && !('value' in x)) n._out.push(x); return x; }, disconnect(){ n._out = []; }, start(t){ if (src) window.__fa.srcs.push({ n: n, born: performance.now(), t: typeof t === 'number' && t > 0 ? t : performance.now() / 1000 }); }, stop(){}, gain: P(), frequency: P(), detune: P(), Q: P(), type: '', buffer: null, loop: false }; return n; };
+  function AC(){ if (mode === 'throw') throw new Error('no audio'); window.__fa.made++; this.state = 'suspended'; this.sampleRate = 22050; this.destination = N(); this.destination._dest = true; window.__fa.ac = this; }
   Object.defineProperty(AC.prototype, 'currentTime', { get(){ return performance.now() / 1000; } });
-  AC.prototype.resume = function(){ window.__fa.resume++; if (window.__fa.allow) this.state = 'running'; return Promise.resolve(); };
+  AC.prototype.resume = function(){ window.__fa.resume++; const me = this; if (mode === 'slow') return new Promise(r => setTimeout(() => { me.state = 'running'; r(); }, 60));   // 解けるまで 0.06秒 かかる
+    if (window.__fa.allow) this.state = 'running'; return Promise.resolve(); };
   AC.prototype.suspend = function(){ window.__fa.suspend++; this.state = 'suspended'; return Promise.resolve(); };
-  AC.prototype.createOscillator = function(){ window.__fa.osc++; return N(); };
-  AC.prototype.createBufferSource = function(){ window.__fa.src++; return N(); };
+  AC.prototype.createOscillator = function(){ window.__fa.osc++; return N(true); };
+  AC.prototype.createBufferSource = function(){ window.__fa.src++; return N(true); };
   AC.prototype.createGain = AC.prototype.createBiquadFilter = function(){ return N(); };
   AC.prototype.createBuffer = function(ch, len){ return { getChannelData(){ return new Float32Array(len); } }; };
   window.AudioContext = AC; window.webkitAudioContext = AC;
@@ -271,10 +274,11 @@ const FAKE = (mode) => {
   let b; try { b = await chromium.launch(); } catch (e) { console.log(JSON.stringify({ skip: 'chromium が 起動しない' })); return; }
   const out = {};
   for (const pl of JSON.parse(plansJ)) {
-    const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, reducedMotion: pl.reduce ? 'reduce' : 'no-preference' });
+    const ctx = await b.newContext({ viewport: { width: pl.w || 390, height: pl.h || 844 }, isMobile: true, hasTouch: true, reducedMotion: pl.reduce ? 'reduce' : 'no-preference' });
     const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
     await ctx.addInitScript(FAKE, pl.mode || 'ok');
     if (pl.store === 'throw') await ctx.addInitScript(() => { const g = Storage.prototype.getItem, s = Storage.prototype.setItem; Storage.prototype.getItem = function(){ throw new Error('blocked'); }; Storage.prototype.setItem = function(){ throw new Error('blocked'); }; });
+    if (pl.save) await ctx.addInitScript(s => { try { if (!sessionStorage.getItem('sv')) { sessionStorage.setItem('sv', '1'); localStorage.setItem('kome365_swipe_save', s); } } catch (e) {} }, pl.save);
     if (pl.store === 'junk') await ctx.addInitScript(() => { try { localStorage.setItem('kome365_sound', '{{oops'); localStorage.setItem('kome365_swipe_save', '{"v":'); } catch (e) {} });
     await p.route('http://kome.test/**', r => { const u = new URL(r.request().url()); let f = u.pathname === '/kome365/index.html' ? htmlPath : path.join(root, decodeURIComponent(u.pathname));
       if ((!f.startsWith(root) && f !== htmlPath) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) return r.fulfill({ status: 404, body: '' });
@@ -284,7 +288,8 @@ const FAKE = (mode) => {
       await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] });
       for (let i = 1; i <= 6; i++) { await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: x + dir * 30 * i, y }] }); await p.waitForTimeout(16); }
       await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); await p.waitForTimeout(1300); };
-    const st = () => p.evaluate(() => ({ fa: Object.assign({}, window.__fa), ks: window.__ks ? window.__ks.state() : { on: null, dead: false, ctx: '', bgm: false, fx: {}, log: [] }, date: (document.getElementById('swBigDate') || {}).textContent || '', btn: (document.getElementById('swSnd') || {}).textContent || '', store: (() => { try { return localStorage.getItem('kome365_sound'); } catch (e) { return 'x'; } })() }));
+    const st = () => p.evaluate(() => ({ fa: (({ srcs, live, ac, ...o }) => o)(window.__fa || {}), ctxState: window.__fa && window.__fa.ac ? window.__fa.ac.state : '', screen: ['sTitle', 'sGame', 'sResult'].filter(id => !document.getElementById(id).classList.contains('hidden')).join(),
+      tgl: (() => { const e = [...document.querySelectorAll('#swSnd, [data-snd]')].find(x => x.getClientRects().length && getComputedStyle(x).visibility !== 'hidden'); if (!e) return null; const b = e.getBoundingClientRect(); return { id: e.id, text: e.textContent, box: [b.left, b.top, b.right, b.bottom], inView: b.left >= 0 && b.top >= 0 && b.right <= innerWidth && b.bottom <= innerHeight };   })(), ks: window.__ks ? window.__ks.state() : { on: null, dead: false, ctx: '', bgm: false, fx: {}, log: [] }, date: (document.getElementById('swBigDate') || {}).textContent || '', btn: (document.getElementById('swSnd') || {}).textContent || '', store: (() => { try { return localStorage.getItem('kome365_sound'); } catch (e) { return 'x'; } })() }));
     const r = { steps: [] };
     if (pl.loadTap) { await p.goto('http://kome.test/kome365/index.html?no3d', { waitUntil: 'domcontentloaded' }); await p.touchscreen.tap(200, 160); r.steps.push(['loadTap', await st()]); }
     else await p.goto('http://kome.test/kome365/index.html?no3d');
@@ -296,6 +301,16 @@ const FAKE = (mode) => {
       else if (a === 'L' || a === 'R') await swipe(a === 'L' ? -1 : 1);
       else if (a === 'mute') { if (await p.locator('#swSnd').count()) await p.tap('#swSnd', { timeout: 5000 }); await p.waitForTimeout(300); }   // ボタンが 無い 版では 押せない(下の 確かめで 落ちる)
       else if (a === 'wait') await p.waitForTimeout(2500);
+      else if (a === 'keyL') { await p.keyboard.press('ArrowLeft'); r.js = r.js || []; r.js.push(await p.evaluate(() => window.__fa.live(window.__tc, window.__ts))); }   // 決めた すぐ あとに 古い 予約が のこって いるか
+      else if (a === 'home') { await p.tap('#swHome'); r.js = r.js || []; r.js.push(await p.evaluate(() => window.__fa.live(window.__tc || 1e12, window.__ts || 0))); await p.waitForTimeout(150); }
+      else if (a === 'tapTgl') { const h = await p.evaluateHandle(() => [...document.querySelectorAll('#swSnd, [data-snd]')].find(x => x.getClientRects().length)); const e = h.asElement(); if (e) await e.tap(); await p.waitForTimeout(300); }
+      else if (a.startsWith('js:')) { r.js = r.js || []; r.js.push(await p.evaluate(a.slice(3))); }
+      else if (a === 'olap') { r.olap = r.olap || []; r.olap.push(await p.evaluate(() => {   // 見えて いる 画面の 字・ボタン・絵と 音の ボタンの 重なり
+        const t = [...document.querySelectorAll('#swSnd, [data-snd]')].find(x => x.getClientRects().length); if (!t) return { none: true }; const A = t.getBoundingClientRect(), o = {};
+        const sec = ['sTitle', 'sResult'].map(id => document.getElementById(id)).find(x => !x.classList.contains('hidden'));
+        for (const x of sec.querySelectorAll('*')) { if (x === t || x.contains(t) || t.contains(x) || !x.getClientRects().length) continue; const cs = getComputedStyle(x); if (cs.visibility === 'hidden' || +cs.opacity < 0.3) continue;
+          const leaf = !x.children.length || /^(BUTTON|A|SUMMARY|H1|H2|P|IMG|CANVAS|SPAN|B|SMALL)$/.test(x.tagName); if (!leaf) continue; const B = x.getBoundingClientRect(); const ix = Math.min(A.right, B.right) - Math.max(A.left, B.left), iy = Math.min(A.bottom, B.bottom) - Math.max(A.top, B.top); if (ix > 0.5 && iy > 0.5) o[x.tagName + '#' + (x.id || x.className || '').toString().slice(0, 20)] = Math.round(ix * iy); }
+        const hit = document.elementFromPoint((A.left + A.right) / 2, (A.top + A.bottom) / 2); return { o: o, box: [A.left, A.top, A.width, A.height], top: !!hit && (hit === t || t.contains(hit)), hscroll: document.documentElement.scrollWidth > innerWidth }; })); }
       else if (a === 'hide' || a === 'show') { await p.evaluate((h) => { Object.defineProperty(document, 'hidden', { configurable: true, get: () => h }); Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => h ? 'hidden' : 'visible' }); document.dispatchEvent(new Event('visibilitychange')); }, a === 'hide'); await p.waitForTimeout(300); }
       else if (a === 'reload') { await p.reload(); await p.waitForFunction(() => window.__komeReady, null, { timeout: 60000 }).catch(() => {}); await p.waitForTimeout(800); }
       r.steps.push([a, await st()]);
@@ -1383,11 +1398,86 @@ class TestKome365Sound(unittest.TestCase):
         self.assertNotIn("once: true", code)                              # 解けるまで 何度でも
         self.assertNotIn("removeEventListener", code)
         # 鳴らす だけ: 決めた とき・○✗・田んぼが 変わった とき・30秒の カード・1年の 区切り
-        self.assertIn("busy = true; ksFx('pon');", HTML)
+        self.assertIn("busy = true; ksCancel(); ksFx('pon');", HTML)   # レビュー P2: 前の カードの 予約を 取り消してから ぽん
         self.assertIn("ksFx(ok ? 'ok' : 'ng'); vibJudge(ok);", HTML)
         self.assertIn("idleInfo.shown = true; ksFx('idle');", HTML)
-        self.assertIn("ksFx('year'); return showResult();", HTML)
+        self.assertIn("showResult(); ksFx('year'); return; }", HTML)   # レビュー P2: 結果の 画面へ かわって(古い 予約を 取り消して)から 1年の ふし
         self.assertNotIn("sndJudge", HTML)
+
+
+
+# 周回173 の 直し: 12月31日(365枚めの カード)の 保存。あと 1枚 決めると 結果の 画面
+END_SAVE = '{\"v\":\"kokoro\",\"y\":\"recent\",\"so\":\"high\",\"m\":\"transplant\",\"c\":0,\"s\":206412282,\"fm\":\"oneshot\",\"yh\":0,\"ch\":\"LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL\"}'
+VPS5 = [[320, 568], [390, 844], [568, 320], [844, 390], [820, 1180]]
+
+
+class TestKome365SoundReview(unittest.TestCase):
+    """サイクル173 の レビュー(PR #1127): 題・結果でも 音を 切れる／再開の 途中で 止める／予約した 音を 取り消す"""
+
+    @classmethod
+    def setUpClass(cls):
+        plans = [
+            {"name": "home", "acts": ["L", "home", "tapTgl", "wait"]},
+            {"name": "result", "save": END_SAVE, "acts": ["L", "tapTgl", "wait"]},
+            {"name": "slowPause", "mode": "slow", "acts": ["js:(ksUnlock(), ksPause(), 1)", "wait", "js:(window.dispatchEvent(new Event('focus')), 1)", "wait"]},
+            {"name": "cancelHome", "acts": ["L", "js:(window.__ts = performance.now(), ksFx('grow', 0.45), window.__tc = performance.now(), window.__fa.live(window.__tc, window.__ts))", "home"]},
+            {"name": "cancelNext", "acts": ["L", "js:(window.__ts = performance.now(), ksFx('rain', 0.45), window.__tc = performance.now(), window.__fa.live(window.__tc, window.__ts))", "keyL"]},
+            {"name": "cancelResult", "save": END_SAVE, "acts": ["js:(ksUnlock(), 1)", "js:(window.__ts = performance.now(), ksFx('grow', 0.45), window.__tc = performance.now(), window.__fa.live(window.__tc, window.__ts))", "keyL", "wait"]},
+        ]
+        for w, h in VPS5:
+            plans.append({"name": "t%dx%d" % (w, h), "w": w, "h": h, "acts": ["L", "home", "olap"]})
+            plans.append({"name": "r%dx%d" % (w, h), "w": w, "h": h, "save": END_SAVE, "acts": ["L", "olap"]})
+        cls.r = sound_run(plans)
+
+    def seq(self, name):
+        x = self.r[name]
+        self.assertEqual(x["errs"], [], name)
+        return x["steps"]
+
+    def test_title_and_result_can_mute(self):
+        for name, screen in (("home", "sTitle"), ("result", "sResult")):
+            seq = self.seq(name)
+            before = seq[2 if name == "home" else 1][1]   # ⌂ ／ 結果へ 進んだ ところ
+            self.assertEqual(before["screen"], screen, name)
+            self.assertTrue(before["ks"]["bgm"], name)  # うしろの ふしが 鳴って いる
+            self.assertIsNotNone(before["tgl"], name + ": 音の ボタンが 見えない")
+            self.assertTrue(before["tgl"]["inView"], name)
+            tap = [v for k, v in seq if k == "tapTgl"][0]
+            self.assertFalse(tap["ks"]["on"], name)
+            self.assertFalse(tap["ks"]["bgm"], name)
+            self.assertEqual(tap["store"], "0", name)
+            self.assertEqual(seq[-1][1]["fa"]["osc"], tap["fa"]["osc"], name + ": 切った あとも 音を 作った")
+
+    def test_title_and_result_switch_clear_on_five_screens(self):
+        for w, h in VPS5:
+            for k in ("t", "r"):
+                name = "%s%dx%d" % (k, w, h)
+                seq = self.seq(name)
+                o = self.r[name]["olap"][0]
+                self.assertNotIn("none", o, name)
+                self.assertEqual(o["o"], {}, name + " %r" % (o,))
+                self.assertTrue(o["top"], name + ": ボタンの 上に ほかの ものが ある")
+                self.assertGreaterEqual(o["box"][2], 44, name)
+                self.assertGreaterEqual(o["box"][3], 44, name)
+                self.assertFalse(o["hscroll"], name)
+
+    def test_pause_during_pending_resume_stays_quiet(self):
+        seq = self.seq("slowPause")
+        after = seq[2][1]   # 解く → すぐ 止める → 2.5秒
+        self.assertEqual(after["ctxState"], "suspended")
+        self.assertFalse(after["ks"]["bgm"])
+        back = seq[-1][1]   # 前面に もどったら つづく
+        self.assertEqual(back["ctxState"], "running")
+        self.assertTrue(back["ks"]["bgm"])
+
+    def test_scheduled_card_sounds_are_cancelled(self):
+        for name in ("cancelHome", "cancelNext", "cancelResult"):
+            x = self.r[name]
+            self.assertEqual(x["errs"], [], name)
+            self.assertGreater(x["js"][-2], 0, name + ": 予約が できて いない")   # 取り消す 前は 予約が ある
+            self.assertEqual(x["js"][-1], 0, name + ": 前の カードの 音が まだ 鳴る 予定")
+        self.assertEqual(self.r["cancelHome"]["steps"][-1][1]["screen"], "sTitle")
+        self.assertEqual(self.r["cancelResult"]["steps"][-1][1]["screen"], "sResult")
 
 
 if __name__ == "__main__":

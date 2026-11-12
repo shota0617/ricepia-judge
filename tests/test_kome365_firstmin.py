@@ -154,131 +154,84 @@ def boot_run(plan):
     return json.loads(out.stdout.strip().splitlines()[-1])
 
 
-# 周回170: 芽の 列(richDraw)を index.html から 取り出し、にせの 画面で ○ を 1つずつ 足して、列に 残る 物(子の 並び・点)を 記録する
-RICH_JS = r"""
+
+# 周回171(運営者の声 2026-11-12「田んぼの状況の花や木やキャラクターの顔は削除し、…ドット絵を追加。」): 田んぼの 絵(#swPaddy)の コードを index.html から 取り出し、
+# にせの 画面と にせの 田んぼ(f)で 本当に 動かす。手ごとに 何の 絵か・走る 機械・ぬれ・ふくらみ を 返す
+PADDY_JS = r"""
 const fs = require('fs');
 const html = fs.readFileSync(process.argv[1], 'utf8');
-const a = html.indexOf('  var RICH_TH = '), b = html.indexOf('  /* 小さな再会(周回125', a);
-if (a < 0 || b < 0) { console.log(JSON.stringify({ error: 'no code' })); process.exit(0); }
-function mk(tag){ const el = { tagName: tag, className: '', children: [], attrs: {}, style: {},
-  appendChild(c){ this.children.push(c); return c; }, setAttribute(k, v){ this.attrs[k] = String(v); }, getAttribute(k){ return k in this.attrs ? this.attrs[k] : null; },
-  classList: { add(){ for (const x of arguments) el._cl.add(x); }, remove(){ for (const x of arguments) el._cl.delete(x); }, toggle(x, v){ if (v) el._cl.add(x); else el._cl.delete(x); }, contains(x){ return el._cl.has(x); } }, _cl: new Set() };
-  Object.defineProperty(el, 'innerHTML', { set(){ el.children = []; }, get(){ return ''; } }); return el; }
-const row = mk('div'); const $ = id => id === 'swRich' ? row : null;
-const document = { createElement: mk };
-const traceInfo = { okN: 0, count: 0 }; let branchInfo = { key: '', hint: '' };
-function pixRichSet(e, k){ e.setAttribute('data-pixrich', k); } function pixStatSet(){}
+const a = html.indexOf('  var PDPAL = {'), b = html.indexOf('  /* 小さな再会(周回125', a);
+if (a < 0 || b < 0) { console.log(JSON.stringify({ error: 'no paddy code' })); process.exit(0); }
+function mk(){ const el = { style: {}, attrs: {}, _cl: new Set(), offsetWidth: 1, setAttribute(k, v){ this.attrs[k] = String(v); }, removeAttribute(k){ delete this.attrs[k]; }, hasAttribute(k){ return k in this.attrs; }, getAttribute(k){ return k in this.attrs ? this.attrs[k] : null; },
+  classList: { add(x){ el._cl.add(x); }, remove(x){ el._cl.delete(x); }, contains(x){ return el._cl.has(x); }, toggle(x, v){ if (v) el._cl.add(x); else el._cl.delete(x); } } }; return el; }
+const parts = { '.pdBase': mk(), '.pdWin': mk(), '.pdTrail': mk(), '.pdVeh': mk(), '.pdPop': mk(), '.pdRain': mk() };
+const root = mk(); root.querySelector = sel => parts[sel] || null;
+const $ = id => id === 'swPaddy' ? root : null;
+let f = { method: 'transplant', doy: 1, tillDepth: null }, choices = '', skyWxInfo = { key: 'fair' };
+const traceInfo = { okN: 0 };
 eval(html.slice(a, b));
-function sig(e){ return e.className.replace(/\b(new|pop)\b/g, '').trim() + '[' + (e.getAttribute('data-pixrich') || '') + ']' + e.children.map(sig).join(''); }
-(async () => {
-const out = [];
-for (let ok = 0; ok <= +process.argv[2]; ok++) { traceInfo.okN = ok; traceInfo.count = ok; richDraw(ok > 0);   // 1手に ○ 1つ
-  const m = row.children.find(c => /nxMound/.test(c.className));
-  const dots = m ? m.children[0].children : [];
-  out.push({ ok: ok, on: row._cl.has('on'), sig: row.children.map(sig).join('|'), plants: row.children.filter(c => !/nxMound/.test(c.className)).length,
-    got: m ? +m.getAttribute('data-got') : null, need: m ? +m.getAttribute('data-need') : null, lit: dots.filter(d => /\bon\b/.test(d.className)).length, dots: dots.length, pop: dots.filter(d => /\bpop\b/.test(d.className)).length });
-  const pops = () => { const m2 = row.children.find(c => /nxMound/.test(c.className)); return m2 ? m2.children[0].children.filter(d => /\bpop\b/.test(d.className)).length : 0; };
-  richDraw(false); out[out.length - 1].popSame = pops();   // 同じ 手の 描きなおし(気配・色が 変わった 手): ふくらみを 引きつぐ(Codex 指摘)
-  await new Promise(r => setTimeout(r, 0));
-  richDraw(false); out[out.length - 1].popAgain = pops();   // 手が 終わった あとの 描きなおし: 古い 点は ふくらまない
-}
-console.log(JSON.stringify(out));
-})();
-"""
-
-
-def rich_run(n):
-    node = shutil.which("node")
-    if not node:
-        raise unittest.SkipTest("node がないので実行の確認は飛ばす")
-    out = subprocess.run([node, "-e", RICH_JS, HTML_PATH, str(n)], capture_output=True, text=True)
-    if out.returncode != 0:
-        raise AssertionError(out.stderr[-2000:])
-    return json.loads(out.stdout.strip().splitlines()[-1])
-
-
-# 周回170(Codex 指摘): 世話の あと〜芽の 列(traceAdd・branchAdd・richDraw)を まとめて 取り出し、ゲームと 同じ 順(traceAdd(true) → branchAdd(card.key))で 流す。
-# 1手ごとに、点が いくつ ふくらんで いるか(pop)・光った 点の 数を 返す。'tick' は その 手の あと(ゲームの 流れが 終わった あと)
-FLOW_JS = r"""
-const fs = require('fs');
-const html = fs.readFileSync(process.argv[1], 'utf8');
-const a = html.indexOf('  var traceInfo = { list: [], okN: 0'), b = html.indexOf('  /* 小さな再会(周回125', a);
-if (a < 0 || b < 0) { console.log(JSON.stringify({ error: 'no code' })); process.exit(0); }
-function mk(tag){ const el = { tagName: tag, className: '', children: [], attrs: {}, style: {},
-  appendChild(c){ this.children.push(c); return c; }, setAttribute(k, v){ this.attrs[k] = String(v); }, getAttribute(k){ return k in this.attrs ? this.attrs[k] : null; }, removeAttribute(k){ delete this.attrs[k]; },
-  classList: { add(){ for (const x of arguments) el._cl.add(x); }, remove(){ for (const x of arguments) el._cl.delete(x); }, toggle(x, v){ if (v) el._cl.add(x); else el._cl.delete(x); }, contains(x){ return el._cl.has(x); } }, _cl: new Set() };
-  Object.defineProperty(el, 'innerHTML', { set(){ el.children = []; }, get(){ return ''; } }); return el; }
-const row = mk('div'); const $ = id => id === 'swRich' ? row : null;
-const document = { createElement: mk };
-var delayList = [], choices = '';
-function pixStatSet(){}
-eval(html.slice(a, b));
-function state(){ const m = row.children.find(c => /nxMound/.test(c.className)); const d = m ? m.children[0].children : [];
-  return { pop: d.filter(x => /\bpop\b/.test(x.className)).length, lit: d.filter(x => /\bon\b/.test(x.className)).length, popIdx: d.findIndex(x => /\bpop\b/.test(x.className)), branch: row.children.some(c => /\bbranch\b/.test(c.className)), hint: row.children.some(c => /\bhint\b/.test(c.className)) }; }
 (async () => {
   const out = [];
   for (const st of JSON.parse(process.argv[2])) {
-    if (st[0] === 'ok') { traceAdd(true); if (st[1]) branchAdd(st[1]); }   // 判定 ○(index.html の choose と 同じ 順)
-    else if (st[0] === 'ng') traceAdd(false);
-    else if (st[0] === 'tick') await new Promise(r => setTimeout(r, 0));
-    else if (st[0] === 'redraw') richDraw(false);
-    else if (st[0] === 'replay') { traceClear(); for (const x of st[1]) traceReplay(x[0] ? '⭕' : '❌', x[1]); }
-    out.push(Object.assign({ step: st[0] }, state()));
+    if (st.f) Object.assign(f, st.f);
+    if (st.ok != null) traceInfo.okN = st.ok;
+    if (st.len != null) choices = 'L'.repeat(st.len);
+    if (st.wx) skyWxInfo = { key: st.wx };
+    if (st.tick) await new Promise(r => setTimeout(r, 0));
+    paddyDraw();
+    out.push({ base: paddyInfo.base, nursery: paddyInfo.nursery, wet: root.hasAttribute('data-wet'), veh: root.getAttribute('data-veh') || '', key: paddyInfo.key, lv: paddyInfo.lv, marks: paddyInfo.marks,
+      pop: parts['.pdPop']._cl.has('on'), popKey: paddyInfo.pop, bg: (parts['.pdBase'].style.backgroundImage || '').indexOf('data:image/svg+xml') >= 0, trail: (parts['.pdTrail'].style.backgroundImage || '').indexOf('data:image/svg+xml') >= 0 });
   }
   console.log(JSON.stringify(out));
 })();
 """
 
 
-def flow_run(steps):
+def paddy_run(steps):
     node = shutil.which("node")
     if not node:
         raise unittest.SkipTest("node がないので実行の確認は飛ばす")
-    out = subprocess.run([node, "-e", FLOW_JS, HTML_PATH, json.dumps(steps)], capture_output=True, text=True)
+    out = subprocess.run([node, "-e", PADDY_JS, HTML_PATH, json.dumps(steps)], capture_output=True, text=True)
     if out.returncode != 0:
         raise AssertionError(out.stderr[-2000:])
-    return json.loads(out.stdout.strip().splitlines()[-1])
+    r = json.loads(out.stdout.strip().splitlines()[-1])
+    if isinstance(r, dict) and r.get("error"):
+        raise AssertionError(r["error"])
+    return r
 
 
-# 周回170(Codex 指摘): 本物の ブラウザ(Playwright の Chromium)で 小山と 点が 見えるかを はかる。サーバーは 立てず、ページの 読みこみを ディスクから 返す
-BROWSER_JS = r"""
+# 周回171: 本物の ブラウザ(Playwright の Chromium)で、保存から 開いた 田んぼの 絵が 6つの 画面で ほかの 部品に 重ならない・はみ出さないかを はかる。
+# 保存は ふつうに 1年 遊んだ ときの もの(1月の 雨の 日・苗箱・田植えの あと・出穂・実り・刈り株)。サーバーは 立てず ディスクから 返す
+PADDY_SAVES = {'rain': '{"v":"kokoro","y":"recent","so":"high","m":"transplant","c":0,"s":1543068361,"fm":"oneshot","yh":0,"ch":"LL"}', 'nursery': '{"v":"kokoro","y":"recent","so":"high","m":"transplant","c":0,"s":1543068361,"fm":"oneshot","yh":0,"ch":"LLLLRLLLLLRLRLRLRRRLLLLLRLLRRLRLLLRLRLRLLRLLLLRLLLRLRLRLLLRLLLLLLLRLLLLRRLRLLLRLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLR"}', 'nae': '{"v":"kokoro","y":"recent","so":"high","m":"transplant","c":0,"s":1543068361,"fm":"oneshot","yh":0,"ch":"LLLLRLLLLLRLRLRLRRRLLLLLRLLRRLRLLLRLRLRLLRLLLLRLLLRLRLRLLLRLLLLLLLRLLLLRRLRLLLRLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLRLRLLLRLRLRRLLLLLLLRRLRRRL"}', 'head': '{"v":"kokoro","y":"recent","so":"high","m":"transplant","c":0,"s":1543068361,"fm":"oneshot","yh":0,"ch":"LLLLRLLLLLRLRLRLRRRLLLLLRLLRRLRLLLRLRLRLLRLLLLRLLLRLRLRLLLRLLLLLLLRLLLLRRLRLLLRLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLRLRLLLRLRLRRLLLLLLLRRLRRRLLLLLLLRLLLLLRLRLLLLLLLLRRLLRLLLLLLLLLLLLRLLLLRRLRLRLLLLLLLLLLLLLRRLLLLLLLLRLL"}', 'ripe': '{"v":"kokoro","y":"recent","so":"high","m":"transplant","c":0,"s":1543068361,"fm":"oneshot","yh":0,"ch":"LLLLRLLLLLRLRLRLRRRLLLLLRLLRRLRLLLRLRLRLLRLLLLRLLLRLRLRLLLRLLLLLLLRLLLLRRLRLLLRLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLRLRLLLRLRLRRLLLLLLLRRLRRRLLLLLLLRLLLLLRLRLLLLLLLLRRLLRLLLLLLLLLLLLRLLLLRRLRLRLLLLLLLLLLLLLRRLLLLLLLLRLLLRLLLRLLLLLRLRLLLRLRLLLLLLLLLLLRLR"}', 'stubble': '{"v":"kokoro","y":"recent","so":"high","m":"transplant","c":0,"s":1543068361,"fm":"oneshot","yh":0,"ch":"LLLLRLLLLLRLRLRLRRRLLLLLRLLRRLRLLLRLRLRLLRLLLLRLLLRLRLRLLLRLLLLLLLRLLLLRRLRLLLRLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLRLRLLLRLRLRRLLLLLLLRRLRRRLLLLLLLRLLLLLRLRLLLLLLLLRRLLRLLLLLLLLLLLLRLLLLRRLRLRLLLLLLLLLLLLLRRLLLLLLLLRLLLRLLLRLLLLLRLRLLLRLRLLLLLLLLLLLRLRLRL"}'}
+PADDY_BROWSER_JS = r"""
 const fs = require('fs'), path = require('path');
 let chromium; try { ({ chromium } = require('playwright')); } catch (e) { console.log(JSON.stringify({ skip: 'playwright なし' })); process.exit(0); }
-const [htmlPath, root] = process.argv.slice(1, 3);
+const [htmlPath, root, vpsJ, savesJ] = process.argv.slice(1, 5);
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.json': 'application/json', '.png': 'image/png', '.jpg': 'image/jpeg', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.css': 'text/css', '.ico': 'image/x-icon' };
+const IDS = ['swCard', 'swSL', 'swSR', 'swBigDate', 'swHand', 'swKakashi', 'swSkyWx', 'swAheadWx', 'swDayGuest', 'swReunion', 'swHome', 'swTrace', 'swGrow', 'swFriends'];
 (async () => {
   let b; try { b = await chromium.launch(); } catch (e) { console.log(JSON.stringify({ skip: 'chromium が 起動しない' })); return; }
-  const out = [];
-  for (const [w, h, rm] of JSON.parse(process.argv[3])) {
+  const saves = JSON.parse(savesJ), out = [];
+  for (const [w, h] of JSON.parse(vpsJ)) for (const [name, sv] of Object.entries(saves)) for (const rm of name === 'rain' ? [false, true] : [false]) {
     const ctx = await b.newContext({ viewport: { width: w, height: h }, isMobile: true, hasTouch: true, reducedMotion: rm ? 'reduce' : 'no-preference' });
     const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
+    await ctx.addInitScript(s => { try { localStorage.setItem('kome365_swipe_save', s); } catch (e) {} }, sv);
     await p.route('http://kome.test/**', r => { const u = new URL(r.request().url()); let f = u.pathname === '/kome365/index.html' ? htmlPath : path.join(root, decodeURIComponent(u.pathname));
-      if (!f.startsWith(root) && f !== htmlPath || !fs.existsSync(f) || fs.statSync(f).isDirectory()) return r.fulfill({ status: 404, body: '' });
+      if ((!f.startsWith(root) && f !== htmlPath) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) return r.fulfill({ status: 404, body: '' });
       r.fulfill({ status: 200, contentType: TYPES[path.extname(f)] || 'application/octet-stream', body: fs.readFileSync(f) }); });
     await p.goto('http://kome.test/kome365/index.html?no3d');
-    await p.waitForFunction(() => window.__komeReady, null, { timeout: 60000 });
-    // ○ で 点が 1つ 光るまで(芽に かわった 手は 点が 0 なので もう 1枚)カードを 決める。○ に ならなければ 次は 反対へ
-    let key = 'ArrowLeft', res = null;
-    for (let i = 0; i < 16 && !res; i++) {
-      const before = await p.evaluate(() => ({ ok: window.__swipe.richState().okN, d: document.getElementById('swBigDate').innerText }));
-      await p.keyboard.press(key);
-      await p.waitForFunction(d => document.getElementById('swBigDate').innerText !== d, before.d, { timeout: 8000 }).catch(() => {});
-      res = await p.evaluate((ok0) => {
-        const st = window.__swipe.richState(); if (st.okN === ok0) return null;
-        const m = document.querySelector('#swRich .nxMound'); if (!m) return { noMound: true, okN: st.okN };
-        const dots = [...m.querySelectorAll('.nxDots i')], lit = dots.filter(d => d.classList.contains('on'));
-        if (!lit.length) return null;
-        const vis = e => { for (let n = e; n && n.nodeType === 1; n = n.parentElement) { const cs = getComputedStyle(n); if (cs.display === 'none' || cs.visibility === 'hidden' || +cs.opacity < 0.3) return false; } return true; };
-        const box = e => { const r = e.getBoundingClientRect(); return [r.left, r.top, r.width, r.height]; };
-        const inView = b => b[2] > 0 && b[3] > 0 && b[0] >= 0 && b[1] >= 0 && b[0] + b[2] <= innerWidth && b[1] + b[3] <= innerHeight;
-        const pop = m.querySelector('.nxDots i.pop');
-        return { mound: box(m), moundVis: vis(m), moundIn: inView(box(m)), need: +m.getAttribute('data-need'), got: +m.getAttribute('data-got'), dots: dots.length, lit: lit.length,
-          dotsOk: dots.every(d => vis(d) && inView(box(d))), dotW: dots[0].offsetWidth, litBg: getComputedStyle(lit[0]).backgroundColor, offBg: dots.length > lit.length ? getComputedStyle(dots[dots.length - 1]).backgroundColor : '',
-          popAnim: pop ? getComputedStyle(pop).animationName : null, popDur: pop ? getComputedStyle(pop).animationDuration : null };
-      }, before.ok);
-      if (res === null) { const ok1 = await p.evaluate(() => window.__swipe.richState().okN); if (ok1 === before.ok) key = key === 'ArrowLeft' ? 'ArrowRight' : 'ArrowLeft'; await p.waitForTimeout(400); }
-    }
-    out.push(Object.assign({ w, h, rm: !!rm, errs: errs.length }, res || { none: true }));
+    await p.waitForFunction(() => window.__komeReady, null, { timeout: 60000 }).catch(() => {});
+    await p.waitForTimeout(1500);
+    const r = await p.evaluate((IDS) => {
+      const R = e => { const r = e.getBoundingClientRect(); return [r.left, r.top, r.right, r.bottom]; };
+      const vis = e => { if (!e) return false; for (let n = e; n && n.nodeType === 1; n = n.parentElement) { const cs = getComputedStyle(n); if (cs.display === 'none' || cs.visibility === 'hidden' || +cs.opacity < 0.3) return false; } return e.getClientRects().length > 0; };
+      const e = document.getElementById('swPaddy'); if (!window.__swipe || !vis(e)) return { hidden: true };
+      const A = R(e), o = {}; for (const id of IDS) { const x = document.getElementById(id); if (!vis(x)) continue; const B = R(x); const ix = Math.min(A[2], B[2]) - Math.max(A[0], B[0]), iy = Math.min(A[3], B[3]) - Math.max(A[1], B[1]); if (ix > 0.5 && iy > 0.5) o[id] = Math.round(ix * iy); }
+      const st = window.__swipe.paddyState(), rn = e.querySelector('.pdRain');
+      return { box: A.map(Math.round), inView: A[0] >= 0 && A[1] >= 0 && A[2] <= innerWidth && A[3] <= innerHeight && A[2] - A[0] > 0, hscroll: document.documentElement.scrollWidth > innerWidth, over: o, base: st.base, wet: st.wet,
+        rainAnim: getComputedStyle(rn).animationName, removed: ['swMood', 'swGreet', 'swRich', 'swDelay', 'swSeasonScene'].filter(id => document.getElementById(id)) };
+    }, IDS);
+    out.push(Object.assign({ w, h, name, rm, errs: errs.length }, r));
     await ctx.close();
   }
   await b.close(); console.log(JSON.stringify(out));
@@ -292,21 +245,28 @@ def css_rule(selector):
 
 
 class TestKome365FirstMinute(unittest.TestCase):
-    def test_rich_and_delay_live_inside_card_wrap(self):
-        # 蓄積の植物と金の花は、カードの包み(#swWrap)の中で「世話のあと」の次に置く
+    def test_paddy_lives_inside_card_wrap(self):
+        # 周回171(運営者の声で 仕様が 変わった): 蓄積の植物(#swRich)と金の花(#swDelay)は 消し、その 場所(#swWrap の 中・「世話のあと」の 次)に 田んぼの 絵(#swPaddy)
         wrap = HTML[HTML.index('<div id="swWrap">'):HTML.index('<div id="swCard"')]
-        self.assertIn('<div id="swTrace" aria-hidden="true"></div><div id="swRich" aria-hidden="true"></div><div id="swDelay" aria-hidden="true"></div>', wrap)
-        self.assertEqual(HTML.count('id="swRich"'), 1)
-        self.assertEqual(HTML.count('id="swDelay"'), 1)
+        self.assertIn('<div id="swTrace" aria-hidden="true"></div><div id="swPaddy" aria-hidden="true"><span class="pdBase"></span><span class="pdWin"><span class="pdTrail"></span></span><span class="pdVeh"></span><span class="pdPop"></span><span class="pdRain"></span></div>', wrap)
+        self.assertEqual(HTML.count('id="swPaddy"'), 1)
+        # 消した もの(花・芽の 列・金の 花・木・顔・挨拶の 顔)
+        for gone in ("swRich", "swDelay", "swSeasonScene", "swMood", "swGreet"):
+            self.assertNotIn('id="%s"' % gone, HTML, gone)
+            self.assertNotIn("#%s{" % gone, HTML, gone)
+        for fn in ("function richDraw(", "function richNext(", "function delayDraw(", "function branchAdd(", "function greetSet(", "function greetClear(", "function pvMoodSet(", "function fingerStroke("):
+            self.assertNotIn(fn, HTML, fn)
+        # 残す もの(かかし・太陽・育ちの 丸・天気の 丸・その日の 生きもの・土の タイルの 列・カードの 後ろの 稲の 列)
+        for kept in ("swKakashi", "swSun", "swGrow", "swSkyWx", "swAheadWx", "swDayGuest", "swReunion", "swTrace", "swStagePlants"):
+            self.assertEqual(HTML.count('id="%s"' % kept), 1, kept)
 
-    def test_rich_and_delay_are_anchored_above_card(self):
-        # 画面の高さの割合(top:47%・54%)ではなく、カードの上端から数える
-        rich, delay = css_rule("#swRich"), css_rule("#swDelay")
-        self.assertIn("bottom:calc(100% + 48px)", rich)
-        self.assertIn("bottom:calc(100% + 82px)", delay)
-        self.assertNotRegex(rich, r"(^|;)top:")
-        self.assertNotRegex(delay, r"(^|;)top:")
-        self.assertIn("#swRich:not(.on) + #swDelay{bottom:calc(100% + 48px)}", HTML)
+    def test_paddy_is_anchored_above_card(self):
+        # 画面の高さの割合ではなく、カードの上端から数える(土の タイルの 列の すぐ 上)
+        pd = css_rule("#swPaddy")
+        self.assertIn("bottom:calc(100% + 48px)", pd)
+        self.assertNotRegex(pd, r"(^|;)top:")
+        self.assertIn("width:calc(var(--pd) * 44);height:calc(var(--pd) * 16)", pd)
+        self.assertIn("--pd:5px", pd)   # かかし(5.25px)と ほぼ 同じ ドット
 
     def test_day_guest_stays_out_of_weather_column(self):
         # 訪問者は 今日の空・あしたの空の丸の列(右から84px)より左に置く
@@ -329,8 +289,8 @@ class TestKome365FirstMinute(unittest.TestCase):
 
     def test_trace_row_fits_between_side_columns_on_low_screens(self):
         # 周回153: 790px以下では世話のあとを30pxにし、季節の景色・あしたの空の丸にかからない幅にする
-        self.assertIn("@media (max-height:790px){#swTrace .tr{width:30px;height:30px;background-size:30px 30px}#swRich{bottom:calc(100% + 38px)}#swDelay{bottom:calc(100% + 72px)}#swRich:not(.on) + #swDelay{bottom:calc(100% + 38px)}}", HTML)
-        self.assertIn("@media (min-height:701px) and (max-height:790px) and (min-width:301px) and (max-width:410px){#swSeasonScene{width:72px;height:72px}", HTML)
+        self.assertIn("@media (max-height:790px){#swTrace .tr{width:30px;height:30px;background-size:30px 30px}#swPaddy{bottom:calc(100% + 38px)}}", HTML)   # 周回171: 花の 列・金の 花の かわりに 田んぼの 絵
+        self.assertNotIn("#swSeasonScene", HTML)   # 周回171: 季節の 景色(木)は 運営者の 声で 消した
 
     def test_guide_waits_for_entering_card(self):
         # 周回154: カードが入ってくる間は、後ろの案内の影と矢印を先に見せない(暗い箱のちらつき)
@@ -563,14 +523,13 @@ class TestKome365FirstMinute(unittest.TestCase):
 
     def test_landscape_small_phone_keeps_card_clear(self):
         # 周回167(横向きの 小さい スマホ): 顔・育ち・かかし・天気を 左右の 空きへ 出す きまりを、幅564px から(640×360・568×320 で カードに かぶって いた)
-        self.assertIn("@media (max-height:440px) and (min-width:564px){#swMood{left:calc(10px - (100vw - 480px) / 2)}#swGrow{left:calc(8px - (100vw - 480px) / 2)}#swKakashi{right:calc(10px - (100vw - 480px) / 2)}#swSkyWx{right:calc(8px - (100vw - 480px) / 2)}#swAheadWx{right:calc(14px - (100vw - 480px) / 2)}}", HTML)
+        # 周回171: 顔(#swMood)と 挨拶の 顔(#swGreet)は 運営者の 声で 消した。育ち・かかし・天気を 左右へ 出す きまりは そのまま
+        self.assertIn("@media (max-height:440px) and (min-width:564px){#swGrow{left:calc(8px - (100vw - 480px) / 2)}#swKakashi{right:calc(10px - (100vw - 480px) / 2)}#swSkyWx{right:calc(8px - (100vw - 480px) / 2)}#swAheadWx{right:calc(14px - (100vw - 480px) / 2)}}", HTML)
         self.assertNotIn("(min-width:660px)", HTML)
-        # 564px = カードの 幅 360px + 左右に 顔の 幅 92px と 空き 10px ずつ
+        # 564px = カードの 幅 360px + 左右に いちばん 太い 列(もとは 顔の 92px)と 空き 10px ずつ
         self.assertEqual(360 + 2 * (92 + 10), 564)
-        self.assertIn("width:92px", css_rule("#swMood"))
-        # 横向きでは 開いて すぐの 挨拶の 顔を、カードの 日付に かからない 高さへ(縦向きの 34% は そのまま)
-        self.assertIn("@media (max-height:440px){#swGreet{top:min(34%, calc(100% - 246px))}}", HTML)
-        self.assertIn("top:34%", css_rule("#swGreet"))
+        self.assertNotIn("#swMood", HTML)
+        self.assertNotIn("#swGreet", HTML)
 
     # ---------- 周回167: 指の 入口を 本当に 動かして 見る ----------
     def test_two_finger_pinch_does_not_decide(self):
@@ -883,13 +842,13 @@ class TestKome365FirstMinute(unittest.TestCase):
 
     def test_short_portrait_weather_clears_card_date(self):
         # 周回168: 320×568 で カードの 上の 端が 238〜262px まで 上がり、季節の 景色・今日の 天気・あしたの 空が 日付に かぶって いた(24枚中 22・12・5枚)
-        rule = "@media (min-height:441px) and (max-height:600px) and (min-width:301px) and (max-width:480px){#swSeasonScene{display:none!important}#swSkyWx{top:172px;width:60px;height:60px}#swSkyWx .wxIc{width:42px;height:42px}#swAheadWx{top:84px;right:100px;width:44px;height:44px;font-size:28px}#swAheadWx .ahIc{width:30px;height:30px}#swAheadWx .ahBadge{right:-6px;top:-6px;width:18px;height:18px;background-size:14px 14px}}"
+        rule = "@media (min-height:441px) and (max-height:600px) and (min-width:301px) and (max-width:480px){#swSkyWx{top:172px;width:60px;height:60px}#swSkyWx .wxIc{width:42px;height:42px}#swAheadWx{top:84px;right:100px;width:44px;height:44px;font-size:28px}#swAheadWx .ahIc{width:30px;height:30px}#swAheadWx .ahBadge{right:-6px;top:-6px;width:18px;height:18px;background-size:14px 14px}}"
         self.assertIn(rule, HTML)
         body = rule[rule.index("{") + 1:]
         # あしたの 空は 遊びの 知らせなので 消さない(置き場所と 大きさだけ。消す・動かす は 運営者の 見た目の 決めごと・周回167)。消すのは 飾りの 景色だけ
         self.assertNotIn("#swAheadWx{display:none", body)
         self.assertNotIn("#swAheadWx,", body)
-        self.assertIn("#swSeasonScene{display:none!important}", body)
+        self.assertNotIn("#swSeasonScene", HTML)   # 周回171: 季節の 景色(木)は 運営者の 声で 消した
         # 今日の 天気の 下の 端(172 + 60 = 232px)は カードの いちばん 上(238px)より 上・かかし(下の 端 169px)より 下
         self.assertLessEqual(172 + 60, 238)
         self.assertGreaterEqual(172, 169)
@@ -902,7 +861,7 @@ class TestKome365FirstMinute(unittest.TestCase):
         # 横向き(440px 以下)・390×844 などの 大きい 画面の 置き方は 変えない
         self.assertIn("#swSkyWx{position:absolute;right:8px;top:196px;", HTML)
         self.assertIn("#swAheadWx{position:absolute;right:14px;top:272px;", HTML)
-        self.assertIn("@media (max-height:440px) and (min-width:564px){#swMood{left:calc(10px - (100vw - 480px) / 2)}", HTML)
+        self.assertIn("@media (max-height:440px) and (min-width:564px){#swGrow{left:calc(8px - (100vw - 480px) / 2)}", HTML)
 
 
     def test_rotation_mid_drag_does_not_decide(self):
@@ -977,110 +936,104 @@ console.log(JSON.stringify(out));
         self.assertIn("#swCard.drag ~ .swBack{transition:none}", HTML)   # 置いた その コマで 変わる
 
 
-    def test_next_sprout_dots_change_every_ok(self):
-        # 周回170: ○ が 2・4・7・11・16…(RICH_TH)で 芽が ふえるので、○ を 重ねても 列が 変わるのは 間かくの おわり だけ(11〜20枚目で 10枚中 1〜2枚)。
-        # 列の おわりに「次の 芽まで ○ が あと いくつ」の 点を 出し、○ の たびに 点が 1つ 光る
-        r = rich_run(40)
-        self.assertNotIn("error", r)
-        changed = [r[i]["ok"] for i in range(1, 38) if r[i]["sig"] != r[i - 1]["sig"]]
-        self.assertEqual(changed, list(range(1, 38)), "○ を 重ねても 列に 残る 物が 変わらない ○ が ある")
-        # ○ 0こ: 何も 出さない。○ 1こ目から 出す
-        self.assertEqual(r[0]["got"], None)
-        self.assertFalse(r[0]["on"])
-        self.assertTrue(r[1]["on"])
-        th = [2, 4, 7, 11, 16, 22, 29, 37]
-        for x in r[1:37]:
-            lv = sum(1 for t in th if x["ok"] >= t)
-            prev = th[lv - 1] if lv else 0
-            self.assertEqual(x["plants"], lv, x)
-            self.assertEqual((x["need"], x["got"], x["dots"], x["lit"]), (th[lv] - prev, x["ok"] - prev, th[lv] - prev, x["ok"] - prev), x)
-            self.assertLess(x["lit"], x["dots"])   # ぜんぶ 光った ○ で 芽に かわる(光りきった 点は 残らない)
-            self.assertEqual(x["pop"], 1 if x["lit"] else 0, x)   # その ○ で 光った 点だけ ふくらむ
-            self.assertEqual(x["popSame"], x["pop"], x)   # 同じ 手の 描きなおしでは ふくらみを 引きつぐ(Codex 指摘)
-            self.assertEqual(x["popAgain"], 0, x)   # 手が 終わった あとの 描きなおしでは ふくらまない
-        self.assertLessEqual(max(x["dots"] for x in r if x["dots"]), 8)   # 2つずつ 4段に おさまる
-        # 芽が 8つ そろったら 出さない
-        self.assertEqual([x["got"] for x in r[37:]], [None] * len(r[37:]))
-        self.assertEqual(r[40]["plants"], 8)
+    # ---------- 周回171: 田んぼの 絵(#swPaddy)。周回170 の 芽の 列の 点は 運営者の 声で 消した ので、その 手ごたえ(○ の たびに 変わる・ふくらむ)を 土の 絵で 確かめる ----------
+    def test_paddy_soil_changes_every_ok(self):
+        # 冬の 土: ○ の たびに 絵が 変わる(だんご 6つで 土の 色が 1段 よく なる・4段。その あとも つや・みみずで 変わりつづける)。✗ では 変わらない
+        steps = [{"ok": 0, "len": 0}] + [{"ok": i, "len": i} for i in range(1, 71)] + [{"ok": 70, "len": 71}]
+        r = paddy_run(steps)
+        self.assertEqual(r[0]["base"], "soil")
+        changed = [i for i in range(1, 71) if r[i]["key"] != r[i - 1]["key"]]
+        self.assertEqual(changed, list(range(1, 71)), "○ を 重ねても 絵が 変わらない ○ が ある")
+        self.assertEqual(r[71]["key"], r[70]["key"])   # ✗(○ の 数は 同じ)
+        self.assertFalse(r[71]["pop"])
+        self.assertEqual([r[i]["lv"] for i in (0, 5, 6, 12, 18, 23, 24, 70)], [0, 0, 1, 2, 3, 3, 4, 4])
+        # ふえた 印は ふくらむ(段が 上がった ○ は 色が かわる だけ)
+        for i in range(1, 71):
+            self.assertEqual(r[i]["pop"], not (i < 25 and i % 6 == 0), i)
+        self.assertTrue(all(x["bg"] for x in r))
 
-    def test_next_sprout_dots_fit_and_calm(self):
-        # 小山は 列の 外(右どなり)に 置き、植物の ならびは 前と 同じ。せまい 画面(320〜360px)では 列の 左上の 空きへ。字・数字は 出さない
-        # 広い 画面(361px 以上): 小山 22px・点 6px(3つずつ 3段)。まだの 点は 砂色、光った 点は 芽の 緑
-        self.assertIn("#swRich .rc.nxMound{position:absolute;left:100%;bottom:0;margin-left:4px;width:22px;height:32px;filter:none}", HTML)
-        self.assertIn("#swRich .rc.nxMound .nxDots{position:absolute;left:0;width:22px;bottom:9px;", HTML)
-        self.assertIn("#swRich .rc.nxMound .nxDots i{display:block;width:6px;height:6px;border-radius:50%;background:#e2d2ad;", HTML)
-        self.assertIn("#swRich .rc.nxMound .nxDots i.on{background:#5cc23a;", HTML)
-        self.assertEqual((22 + 2) // (6 + 2), 3)   # 3つずつ 並ぶ → 8つでも 3段(6×3 + 2×2 = 22px)に おさまる
-        # せまい 画面(360px 以下): 列の 左上・小山 14px・点 4px(2つずつ 4段)。広い 画面の きまりより あとに 置く(あとの きまりが 勝つ)
-        narrow = "@media (max-width:360px){#swRich .rc.nxMound{left:calc(50% - 32px);bottom:100%;margin-left:0;width:14px;height:30px}#swRich .rc.nxMound::before{height:6px}#swRich .rc.nxMound .nxDots{left:2px;width:10px;bottom:8px}#swRich .rc.nxMound .nxDots i{width:4px;height:4px}}"
-        self.assertIn(narrow, HTML)
-        self.assertGreater(HTML.index(narrow), HTML.index("#swRich .rc.nxMound .nxDots i.pop{"))
-        self.assertEqual((10 + 2) // (4 + 2), 2)
-        # ふくらむ 動きは 0.3秒
-        self.assertIn("#swRich .rc.nxMound .nxDots i.pop{animation:swNextPop .3s ease-out 1 both}", HTML)
-        self.assertIn("#swRich.on{min-height:30px}", HTML)
-        # 動きを減らす 設定では 点は ふくらまない(点の 数は 同じ)
-        self.assertIn("@media (prefers-reduced-motion: reduce){#swRich .rc.new,#swRich .rc.nxMound .nxDots i.pop{animation:none}}", HTML)
-        code = HTML[HTML.index("  function richNext(e, lv, isNew){"):HTML.index("  /* 小さな再会(周回125")]
-        self.assertNotIn("textContent", code)
-        self.assertNotIn("innerText", code)
-        # 確かめ用の 数え(richState)は 植物だけ(小山は 数えない)
-        self.assertIn("rcs = e ? [].map.call(e.querySelectorAll('.rc:not(.nxMound)')", HTML)
+    def test_paddy_pop_rules_follow_cycle170(self):
+        # 周回170 の きまりを 引きつぐ: 同じ 判定の 中の 描きなおしでは ふくらみを 引きつぐ・手が 終わった あと(保存から もどる・あとの 描きなおし)では ふくらまない
+        r = paddy_run([{"ok": 0, "len": 0}, {"ok": 1, "len": 1}, {}, {"tick": True}, {"ok": 2, "len": 2}, {"tick": True}, {}])
+        self.assertEqual([x["pop"] for x in r], [False, True, True, False, True, False, False])
+        # 保存から もどった(はじめての 描きが ○ 9つの 状態): ふくらまない。つぎの ○ は ふくらむ
+        r = paddy_run([{"ok": 9, "len": 15}, {"tick": True}, {"ok": 10, "len": 16}])
+        self.assertEqual([x["pop"] for x in r], [False, False, True])
 
+    def test_paddy_follows_farm_state(self):
+        # どの 状態で どの 絵か(エンジンの 状態を 写す だけ)。機械は その 作業を した 手から 2枚の 間 だけ 走る
+        T = "transplant"
+        steps = [
+            {"ok": 3, "len": 10, "f": {"method": T, "doy": 100}},                                   # 0 冬の 土
+            {"len": 11, "f": {"sowDoy": 101, "phase": "nursery", "doy": 101}},                         # 1 苗箱
+            {"len": 12, "f": {"tillDepth": 15, "doy": 102}},                                          # 2 田起こし → トラクター
+            {"len": 13, "f": {"doy": 103}},                                                           # 3 まだ 走る(2枚め)
+            {"len": 14, "f": {"doy": 104}},                                                           # 4 もう 走らない
+            {"len": 15, "f": {"puddleDoy": 115, "doy": 115}},                                         # 5 代かき → トラクター
+            {"len": 16, "f": {"transDoy": 120, "phase": "field", "doy": 120}},                         # 6 田植え
+            {"len": 17, "f": {"doy": 140}},                                                           # 7 分げつ
+            {"len": 18, "f": {"piDoy": 180, "doy": 180}},                                             # 8 穂の もと
+            {"len": 19, "f": {"headDoy": 210, "doy": 210}},                                           # 9 出穂
+            {"len": 20, "f": {"matDoy": 250, "doy": 250}},                                            # 10 実り
+            {"len": 21, "f": {"harvestDoy": 252, "phase": "harvested", "doy": 252}},                   # 11 稲刈り → コンバイン
+            {"len": 22, "f": {"doy": 253}},                                                           # 12 まだ 走る
+            {"len": 23, "f": {"doy": 254}},                                                           # 13 刈り株
+            {"len": 24, "wx": "rain"},                                                                # 14 雨
+        ]
+        r = paddy_run(steps)
+        self.assertEqual([x["base"] for x in r], ["soil", "soil", "till", "till", "till", "puddle", "nae", "kuki", "moto", "head", "ripe", "stubble", "stubble", "stubble", "stubble"])
+        self.assertEqual([x["veh"] for x in r], ["", "", "tractor", "tractor", "", "tractor", "", "", "", "", "", "combine", "combine", "", ""])
+        self.assertEqual([x["nursery"] for x in r], [False, True, True, True, True, True, False, False, False, False, False, False, False, False, False])
+        self.assertTrue(r[2]["trail"] and r[11]["trail"])   # 走った うしろの 絵(耕した あと・刈った あと)
+        self.assertEqual([x["wet"] for x in r], [False] * 14 + [True])
+        # 保存から もどった ときは 機械を 出さない(はじめての 描きで もう 耕して ある)
+        r = paddy_run([{"ok": 5, "len": 30, "f": {"method": T, "doy": 110, "sowDoy": 95, "tillDepth": 15}}, {"len": 31}])
+        self.assertEqual([x["veh"] for x in r], ["", ""])
+        self.assertEqual(r[0]["base"], "till")
+        # 直播: 種の 列 → 芽(出芽)→ 入水の あとは 稲の 絵(苗の 段は 通らない)
+        D = {"method": "direct", "doy": 90, "sowDoy": 90, "transDoy": 90, "tillDepth": 15, "puddleDoy": 90, "emergeDoy": None, "flooded": None}
+        r = paddy_run([{"ok": 2, "len": 5, "f": D}, {"len": 6, "f": {"emergeDoy": 100, "doy": 100}}, {"len": 7, "f": {"flooded": 110, "doy": 110}}])
+        self.assertEqual([x["base"] for x in r], ["dseed", "dsprout", "kuki"])
+        self.assertEqual([x["veh"] for x in r], ["", "", ""])
 
-    def test_ok_dot_pops_once_even_when_flower_redraws(self):
-        # Codex 指摘(周回170): ○ で 世話の 花の 気配(hint)や 色の 確定(branch)が 変わると、branchAdd が 同じ 流れで richDraw を もう一度 呼び、
-        # その ○ で 光った 点の ふくらみ(pop)が 消えて いた(traceAdd(true) → branchAdd('basal') で pop 1 → 0)
-        r = flow_run([["ok", "basal"], ["tick"], ["ok", "basal"], ["tick"], ["ok", "flood"], ["tick"]])
-        self.assertNotIn("error", r)
-        self.assertTrue(r[0]["hint"])              # 1つめの basal で 気配が 出る(2回目の 描きなおし)
-        self.assertEqual(r[0]["pop"], 1, r[0])     # それでも その ○ の 点は ふくらむ
-        self.assertEqual(r[0]["popIdx"], r[0]["lit"] - 1)
-        self.assertTrue(r[2]["branch"])            # 2つめで 色が 決まる(もう一度 描きなおし)
-        self.assertEqual(r[2]["pop"], 1 if r[2]["lit"] else 0, r[2])
-        self.assertEqual(r[4]["pop"], 1 if r[4]["lit"] else 0, r[4])   # 描きなおしの ない ○ も 同じ
-        # ○ で ない 描きなおし(その 手が 終わった あと)では 古い 点は ふくらまない
-        r = flow_run([["ok", "basal"], ["tick"], ["redraw"], ["ng"], ["tick"], ["redraw"]])
-        self.assertEqual([x["pop"] for x in r], [1, 1, 0, 0, 0, 0])
-        # 保存から もどる(選んだ 列の 再生)では どの 点も ふくらまない。その あとの ○ は ふくらむ
-        r = flow_run([["replay", [[1, "basal"], [0, ""], [1, "flood"]]], ["tick"], ["redraw"], ["ok", "flood"]])
-        self.assertEqual([x["pop"] for x in r], [0, 0, 0, 1])
-        self.assertEqual(r[0]["lit"], 0)   # ○ 2つ = 芽 1つ・次の 点は まだ 0
-        self.assertEqual(r[3]["lit"], 1)
+    def test_paddy_drawn_in_pixels_only(self):
+        # 字・数字・音は 足さない。動きは transform だけ・動きを へらす 設定では 止める(絵は 見える)
+        code = HTML[HTML.index("  var PDPAL = {"):HTML.index("  /* 小さな再会(周回125", HTML.index("  var PDPAL = {"))]
+        for bad in ("textContent", "innerText", "innerHTML", "AudioContext", "SND", "sndChirp"):
+            self.assertNotIn(bad, code, bad)
+        for kf in re.findall(r"@keyframes swPd\w+\{[^\n]*", HTML):
+            self.assertNotRegex(kf, r"(left|top|width|height|opacity|margin)\s*:", kf)
+        self.assertIn("@media (prefers-reduced-motion: reduce){#swPaddy[data-veh] .pdWin,#swPaddy[data-veh] .pdTrail,#swPaddy[data-wet] .pdRain,#swPaddy .pdPop.on{animation:none}#swPaddy[data-veh] .pdVeh{animation:none;transform:translateX(calc(var(--pd) * 30))}}", HTML)
+        self.assertIn("#swPaddy .pdPop.on{display:block;animation:swPdPop .3s ease-out .7s 1 both}", HTML)   # 0.3秒 ふくらむ(大きな ○ が 消える ころ)
+        # 機械の 色は 青みの 緑(特定の メーカーの 赤・橙・青・黄に しない)・ロゴ なし
+        self.assertIn("t: '#5f9ea0', T: '#3f7476'", code)
 
-
-    def test_next_sprout_dots_visible_in_browser(self):
-        # Codex 指摘(周回170): CSS の 文字を 見る だけでは、点を 消す 1行(display:none)を 足しても 通って いた。本物の ブラウザで 四角・見え方・動きを はかる
+    def test_paddy_fits_six_screens_in_browser(self):
+        # 6つの 画面 × 1年の 6つの 場面(保存から 開く): 田んぼの 絵は 見えて 画面の 中、カード・札・日付・手本の 手・かかし・天気の 丸・生きもの・⌂・土の タイルの 列・育ちの 丸 に 重ならない
         node = shutil.which("node")
         if not node:
             raise unittest.SkipTest("node がないので実行の確認は飛ばす")
-        vps = [[320, 568, False], [390, 844, False], [844, 390, False], [390, 844, True], [320, 568, True]]
-        out = subprocess.run([node, "-e", BROWSER_JS, HTML_PATH, ROOT, json.dumps(vps)], capture_output=True, text=True, timeout=600)
+        vps = [[320, 568], [360, 640], [390, 844], [568, 320], [844, 390], [820, 1180]]
+        out = subprocess.run([node, "-e", PADDY_BROWSER_JS, HTML_PATH, ROOT, json.dumps(vps), json.dumps(PADDY_SAVES)], capture_output=True, text=True, timeout=1200)
         if out.returncode != 0:
             raise AssertionError(out.stderr[-2000:])
         r = json.loads(out.stdout.strip().splitlines()[-1])
         if isinstance(r, dict) and r.get("skip"):
             raise unittest.SkipTest(r["skip"])
+        expect = {"rain": "soil", "nursery": "soil", "nae": ("nae", "kuki"), "head": "head", "ripe": "ripe", "stubble": "stubble"}
         for x in r:
-            name = "%dx%d%s" % (x["w"], x["h"], " reduce" if x["rm"] else "")
-            self.assertNotIn("none", x, name + ": ○ で 点が 光らなかった")
-            self.assertNotIn("noMound", x, name + ": 小山が 無い")
+            name = "%dx%d %s%s" % (x["w"], x["h"], x["name"], " reduce" if x["rm"] else "")
+            self.assertNotIn("hidden", x, name + ": 田んぼの 絵が 見えない")
             self.assertEqual(x["errs"], 0, name)
-            self.assertTrue(x["moundVis"] and x["moundIn"], name + ": 小山が 見えない・画面の 外 %r" % (x,))
-            self.assertGreater(x["mound"][2], 0, name)
-            self.assertGreater(x["mound"][3], 0, name)
-            self.assertTrue(x["dotsOk"], name + ": 点が 見えない・画面の 外")
-            self.assertEqual(x["dots"], x["need"], name)   # 点の 数 = 次の 芽までに いる ○(動きを減らす 設定でも 同じ)
-            self.assertEqual(x["lit"], x["got"], name)
-            self.assertGreaterEqual(x["lit"], 1, name)
-            self.assertEqual(x["dotW"], 4 if x["w"] <= 360 else 6, name)
-            if x["offBg"]:
-                self.assertNotEqual(x["litBg"], x["offBg"], name)   # 光った 点と まだの 点は 色が ちがう
-            if x["rm"]:
-                self.assertEqual(x["popAnim"], "none", name)   # 動きを減らす 設定では ふくらまない
-            else:
-                self.assertEqual((x["popAnim"], x["popDur"]), ("swNextPop", "0.3s"), name)
-
+            self.assertEqual(x["removed"], [], name)
+            self.assertTrue(x["inView"], name + " %r" % (x["box"],))
+            self.assertFalse(x["hscroll"], name)
+            self.assertEqual(x["over"], {}, name + ": 重なり %r" % (x["over"],))
+            e = expect[x["name"]]
+            self.assertIn(x["base"], e if isinstance(e, tuple) else (e,), name)
+            if x["name"] == "rain":
+                self.assertTrue(x["wet"], name)
+                self.assertEqual(x["rainAnim"], "none" if x["rm"] else "swPdRain", name)
 
 if __name__ == "__main__":
     unittest.main()

@@ -61,6 +61,10 @@
 
 - コードは 変えない。PR も 作らない。作業場の ブラウザ（Playwright の Chromium）で ゲームを 実際に 開き、はじめての 人の つもりで 遊んで、見た ことを 数字と 画面写真つきで 報告する。
 - 開き方：リポジトリの いちばん 上で `python3 -m http.server 8000` を 動かし、`http://localhost:8000/nishio-go.html`・`/kome365/index.html`・`/tractor.html`・`/kensa.html` を 開く。外の サイトには つながない 前提（地図の 部品などが 来ない ときは、来なかった と 書く）。
+- 外から 取る 部品は、作業場の セットアップで 入れた 手元の ものに 差しかえて 開く（`page.route`。差しかえた ことを 報告に 書く。手元に 無ければ「来なかった」と 書いて 止める）：
+  - にしおさんぽGO：`https://unpkg.com/leaflet@1.9.4/dist/…` → `node_modules/leaflet/dist/…`（`leaflet.css`・`leaflet.js`・`images/`）。文字の 形（Google Fonts）は 来なくて よい。
+  - トラクター：three r128 と `GLTFLoader.js`・`DRACOLoader.js` → `.claude/skills/tractor/scripts/node_modules/three`（差しかえ方は `.claude/skills/tractor/scripts/firstmin.js` と 同じ）。
+  - 米づくり365・検査ゲーム：外の 部品は いらない。
 - スマホの つもりで：画面 390×844（たて）と 844×390（よこ）、`isMobile: true`・`hasTouch: true`。指は 本物に 近い 形で（CDP の `Input.dispatchTouchEvent`、または `page.touchscreen`）。マウスの `click` だけで すませない。
 - 遊び方：まず 何も 読まずに 10秒 ながめる（何が 見えるか・何を しろと 言われて いるか）。つぎに 画面の 手本の とおりに 60秒 遊ぶ。さらに 5分まで つづける。10秒・30秒・60秒・120秒・300秒で 画面写真を とる。
 - 書く こと：何秒に 何が 起きたか／さわってから 手ごたえが 返る までの 秒／最初の ごほうび までの 秒／迷った 所・待たされた 所・何も 起きなかった 操作（回数つき）／コンソールの エラー。「やめたく なった 所」を 正直に。

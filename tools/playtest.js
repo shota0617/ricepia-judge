@@ -1700,19 +1700,20 @@ function crashFailures(R, fail) {   // 安全網（guardEvaluate）に かかっ
     const dbg = { style: await page.evaluate(() => { const k = window.NISHIO_KOROSTYLE && NISHIO_KOROSTYLE.current(); return k ? k.name : ''; }) };   // 落ちたときに 分かるように
     const wall = (await look()).pop();   // 止まった所から いちばん近い かべ
     if (wall[1] < 9) {
-      await page.keyboard.down(wall[0]); await gameTime(g => (g >= 4500 ? true : undefined));   // かべまで転がって、はね返りが おさまるまで（ゲームの 時計で 4.5秒）
+      await page.keyboard.down(wall[0]); const pressed = await gameTime(g => (g >= 4500 ? true : undefined));   // かべまで転がって、はね返りが おさまるまで（ゲームの 時計で 4.5秒）
       // かべの向きの位置（速さは 押しつけている間 1こまだけ 少し つくことがあるので、目に見える 位置のゆれで見る）。ゲームの 時計で 0.1秒 おきに 10回
       const smp = (await gameTime((g, ax) => { const S = window.__rfS = g < 1 ? [] : window.__rfS || []; if (g >= (S.length + 1) * 100) { const r = nishioPixel.roll; S.push([Math.abs(ax ? r.vx : r.vy), ax ? r.x : r.y]); } if (S.length >= 10) return S; }, wall[2])) || [];
       const vs = smp.map(x => x[0]), ps = smp.map(x => x[1]);
       await page.keyboard.up(wall[0]);
       dbg.spread = +(Math.max(...ps) - Math.min(...ps)).toFixed(3); dbg.vmax = +Math.max(...vs).toFixed(3); dbg.wall = wall[0];
-      still = dbg.spread < 0.02 && dbg.vmax < 0.2;   // さいごの1秒で 0.02マス（約16cm）も動かない。速さも はね返りほどには ない
+      dbg.samples = smp.length; dbg.pressed = pressed === true;
+      still = pressed === true && smp.length === 10 && dbg.spread < 0.02 && dbg.vmax < 0.2;   // さいごの1秒で 0.02マス（約16cm）も動かない。速さも はね返りほどには ない。押す 4.5秒・10回の 採取が 時間切れ（こまが 来ない）なら 確かめられて いないので 落とす
     }
     await page.evaluate(() => nishioPixel.setRoll(false));
     const rr = await page.evaluate(() => { const r = nishioPixel.roll; return { round: r.round, flat: r.flat, f0: r.flat }; });
     await page.waitForTimeout(500);
     const flatGrew = (await page.evaluate(() => nishioPixel.roll.flat)) - rr.f0;   // 丸いお米が描けるのに、古い絵（平らな お米）を重ねて描いていないか
-    return { stopS, still, spread: dbg.spread, vmax: dbg.vmax, style: dbg.style, wall: dbg.wall, round: rr.round, flatGrew, ok: stopped && stopS <= 3.5 && still !== false && rr.round && flatGrew === 0 };
+    return { stopS, still, spread: dbg.spread, vmax: dbg.vmax, samples: dbg.samples, pressed: dbg.pressed, style: dbg.style, wall: dbg.wall, round: rr.round, flatGrew, ok: stopped && stopS <= 3.5 && still !== false && rr.round && flatGrew === 0 };
   })();
   // お米の 顔：目の きらっ は そのまま。顔は いつも 笑顔（pixel.js「運営者の声（2026-11-03）『かおりちゃんは いつも 笑顔』…顔は いつも smile」）：止まって 何秒 たっても あくび・ねむい 顔に しない
   R.checks.babyRice = await page.evaluate(() => {

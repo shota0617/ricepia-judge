@@ -1063,6 +1063,7 @@ async function cycle208Checks(browser, R) {
   return out;
 }
 const FIRST_MINUTE_NEED = {
+  visibleHandTap: '動いて いる 手本の 手を 押すと、指先へ 歩かず せかいちずが 開く',
   slowCover: '読みこみ中の 題字が スタイルシートを 待つ（head に ある）／題字の 下に 動く しるし（米つぶ）が ない',
   bgmAfterMap: '地図が 動きだす 前の タップで 曲（mp3）を 読みはじめる／動きだした あとの タップで 曲が 鳴らない',
   houseLazy: '家の 絵（2500マス）を 読みこみの ときに ぜんぶ 切りだして いる',
@@ -1127,6 +1128,7 @@ function crashFailures(R, fail) {   // 安全網（guardEvaluate）に かかっ
   const server = startServer(PORT);
   const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
   const R = RUN.R = { shots: [], checks: {}, walk: [], errors: [] };
+  R.checks.visibleHandTap = await require('./playtest-visible-hand').runVisibleHandCheck(browser, URL, OUT);
   if (process.env.PLAYTEST_ONLY === 'firstMinute') {
     Object.assign(R.checks, await firstMinuteChecks(browser, R));
     await browser.close(); server.close();

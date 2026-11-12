@@ -176,7 +176,10 @@ const save = () => { if (!store.set(stateKey(), S)) toast('このブラウザに
 
 /* ---------- 地図 ---------- */
 if (!window.L) {
-  $('status').textContent = '地図を読み込めませんでした。通信環境を確認して再読み込みしてください。';
+  // サイクル208：読めなかった（エラー）ときに、文だけで 押せる 物が 無かった（4回とも。下の タブは どれも やりなおしでは ない）。その 場で もう 1回 読みこむ ボタンを 出す
+  $('status').innerHTML = '地図を読み込めませんでした。通信環境を確認して、もう 1回 読みこんでください。<br><button type="button" class="btn" id="mapRetry">もう 1回 読みこむ</button>';
+  $('status').hidden = false;
+  $('mapRetry').addEventListener('click', () => location.reload());
   $('intro').hidden = true;
   return;
 }

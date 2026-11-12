@@ -297,7 +297,7 @@ async function firstMinuteChecks(browser, R) {
         const otherBtn = !b.hidden && document.getElementById('spinName').textContent === other.name && !G.state.visits[other.id];
         return { goal: g.name, shown, h0, hMax, checked, other: other.name, otherBtn, pop, ok: shown === 0 && checked && otherBtn };
       });
-      return { firstGoalNear: fg, lazySprites: lz, playAskQuick: pa, worldBack: wb, tiltDeniedMsg: tm, swipeWalk: sw, swipeHold: { ...(sw.hold || { why: 'no-route' }), ok: !!sw.holdOk }, tapStepPace: { ...(sw.pace || { why: 'no-route' }), ok: !!sw.paceOk }, arriveNoSpin: an, ptsPop: { ...(an.pop || { why: an.why || 'no-goal' }), ok: !!an.pop && an.pop.gained >= 5 && an.pop.seen && (an.pop.scale >= 1.05 || an.pop.gold) && !an.pop.left && an.pop.shown && /^[\d,]+(pt)?$/.test(an.pop.text) }, ...(await startSteadyChecks(browser, R)), ...(await a2hsChecks(browser, R)), ...(await tapDemoChecks(browser, R)), ...(await cycle208Checks(browser, R)), ...(await cycle207Checks(browser, R)), ...(await cycle206Checks(browser, R)), ...(await slowStartChecks(browser, R)) };
+      return { firstGoalNear: fg, lazySprites: lz, playAskQuick: pa, worldBack: wb, tiltDeniedMsg: tm, swipeWalk: sw, swipeHold: { ...(sw.hold || { why: 'no-route' }), ok: !!sw.holdOk }, tapStepPace: { ...(sw.pace || { why: 'no-route' }), ok: !!sw.paceOk }, arriveNoSpin: an, ptsPop: { ...(an.pop || { why: an.why || 'no-goal' }), ok: !!an.pop && an.pop.gained >= 5 && an.pop.seen && (an.pop.scale >= 1.05 || an.pop.gold) && !an.pop.left && an.pop.shown && /^[\d,]+(pt)?$/.test(an.pop.text) }, ...(await startSteadyChecks(browser, R)), ...(await a2hsChecks(browser, R)), ...(await tapDemoChecks(browser, R)), ...(await cycle209Checks(browser, R)), ...(await cycle208Checks(browser, R)), ...(await cycle207Checks(browser, R)), ...(await cycle206Checks(browser, R)), ...(await slowStartChecks(browser, R)) };
     } finally { R.errors.push(...v.errors); await v.ctx.close(); }
 }
 // サイクル193（運営者の声 2026-11-10「さんぽGOホーム画面に追加を控えめに促す」）：ホーム画面に追加の おすすめは 小さな 1行の 札。
@@ -1062,6 +1062,79 @@ async function cycle208Checks(browser, R) {
   }
   return out;
 }
+// サイクル209（運営者の声 2026-11-12「最初のタップの文字を大きくわかりやすく」）：最初の タップの 手本の 大きさ・置き場。ゴールの 手前で 手本が 出る（N1b）
+async function cycle209Checks(browser, R) {
+  const out = {};
+  const fail = (keys, e) => { for (const k of keys) if (!out[k]) out[k] = { ok: false, crashed: String(e && e.message || e).split('\n')[0].slice(0, 200) }; };
+  // はじめての 人（記録 なし）。first：まだ 傾きの 許可を 聞いて いない iPhone（許可の 窓は 出す まで 待つ）
+  const open = async (view, first) => {
+    const v = await newPage(browser, { howto: true, auto: true, hasTouch: true, isMobile: true, locale: 'ja-JP', timezoneId: 'Asia/Tokyo', viewport: view });
+    await v.page.addInitScript(f => {
+      if (!sessionStorage.getItem('__c209')) { sessionStorage.setItem('__c209', '1'); for (const k of ['nsg_auto', 'nsg_roll', 'nsg_roll_v2', 'nsg_view', 'nsg_world_on', 'nsg_koro', 'nsg_kome_talk']) localStorage.removeItem(k); }
+      if (f && window.DeviceOrientationEvent) DeviceOrientationEvent.requestPermission = () => new Promise(() => {});
+    }, !!first);
+    await v.page.goto(URL);
+    await v.page.waitForFunction(() => window.nishioPixel && window.nishioGo && nishioPixel.roll.ready && nishioPixel.maze.routePath(), null, { timeout: 20000 }).catch(() => {});
+    return v;
+  };
+  // 手本の ようす：指と 札の 大きさ・箱（札は ::after の 値を 写した span で はかる。外の ふち 5px を ふくめる）・地図の 中か・ボタン／お米に かかるか
+  const look = p => p.evaluate(() => {
+    const el = document.getElementById('tapDemo'); if (!el || el.hidden) return null;
+    const r = el.getBoundingClientRect(), a = getComputedStyle(el, '::after'), first = el.classList.contains('first');
+    let L = null;
+    if (first) {
+      const sp = document.createElement('span'); sp.textContent = 'タップ！';
+      for (const k of ['position', 'left', 'top', 'right', 'transform', 'marginLeft', 'marginRight', 'fontSize', 'fontWeight', 'fontFamily', 'lineHeight', 'padding', 'borderWidth', 'borderStyle', 'whiteSpace', 'boxSizing']) sp.style[k] = a[k];
+      el.appendChild(sp); const q = sp.getBoundingClientRect(); sp.remove();
+      const halo = /0px 0px 0px 5px/.test(a.boxShadow) ? 5 : 0; L = [q.left - halo, q.top - halo, q.right + halo, q.bottom + halo];
+    }
+    const cv = document.getElementById('pxCanvas').getBoundingClientRect(), shE = document.getElementById('sheet'), sh = shE ? shE.getBoundingClientRect() : null;
+    const box = [Math.max(0, cv.left), cv.top, Math.min(innerWidth, cv.right), Math.min(cv.bottom, sh && sh.height ? sh.top : cv.bottom)];
+    const ov = (A, B) => A[0] < B[2] && A[2] > B[0] && A[1] < B[3] && A[3] > B[1], inBox = B => B[0] >= box[0] - 0.5 && B[1] >= box[1] - 0.5 && B[2] <= box[2] + 0.5 && B[3] <= box[3] + 0.5;
+    const btns = [...document.querySelectorAll('#pxView button')].filter(b => !b.closest('#pxInfo')).map(b => b.getBoundingClientRect()).filter(q => q.width > 0 && q.height > 0).map(q => [q.left, q.top, q.right, q.bottom]);
+    const P = nishioPixel, rc = P.tileToClient(P.roll.x - 0.5, P.roll.y - 0.5), rice = [rc.x - 16, rc.y - 22, rc.x + 16, rc.y + 10], H = [r.left, r.top, r.right, r.bottom];
+    const parts = L ? [H, L] : [H];
+    return { first, big: el.classList.contains('big'), handPx: parseFloat(getComputedStyle(el).fontSize), labPx: first ? parseFloat(a.fontSize) : 0, labBox: L && L.map(Math.round),
+      inMap: parts.every(inBox), onBtn: parts.some(B => btns.some(b => ov(B, b))), onRice: parts.some(B => ov(B, rice)) };
+  });
+  const waitDemo = async (p, ms) => { const t0 = Date.now(); while (Date.now() - t0 < ms) { const m = await look(p); if (m) return { ...m, at: +((Date.now() - t0) / 1000).toFixed(2) }; await p.waitForTimeout(100); } return null; };
+  {   // ① 最初の タップの 手本（390×844）：大きい 形・字は 22px 以上・指は 53px 以上
+    let v = null;
+    try { v = await open({ width: 390, height: 844 }, true); const m = await waitDemo(v.page, 3000); out.firstTapBig = { m, ok: !!m && m.first && m.big && m.labPx >= 22 && m.handPx >= 53 && m.inMap && !m.onBtn && !m.onRice }; }
+    catch (e) { fail(['firstTapBig'], e); } finally { if (v) { R.errors.push(...v.errors); await v.ctx.close(); } }
+  }
+  {   // ② 6つの 画面：開いて 3秒の うちに 最初の 手本が 出る・地図の 中・ボタンと お米に かからない（大きい 形が 入らない 画面では これまでの 大きさ）
+    const rows = [];
+    for (const [w, h] of [[320, 568], [360, 640], [390, 844], [568, 320], [844, 390], [820, 1180]]) {
+      let v = null;
+      try { v = await open({ width: w, height: h }, true); const m = await waitDemo(v.page, 3000); rows.push({ vp: w + 'x' + h, ...(m || { none: true }) }); }
+      catch (e) { rows.push({ vp: w + 'x' + h, crashed: String(e && e.message || e).slice(0, 120) }); } finally { if (v) { R.errors.push(...v.errors); await v.ctx.close(); } }
+    }
+    out.firstTapFit6 = { rows, ok: rows.length === 6 && rows.every(r => r.first && r.at <= 3 && r.inMap && !r.onBtn && !r.onRice) };
+  }
+  {   // ③ 2回めから の 手本（許可を 聞かない 端末・止まって 2秒）：大きさは これまでどおり（指 38px・札 なし）
+    let v = null;
+    try { v = await open({ width: 390, height: 844 }, false); const m = await waitDemo(v.page, 5000); out.laterDemoSame = { m, ok: !!m && !m.first && !m.big && m.handPx === 38 }; }
+    catch (e) { fail(['laterDemoSame'], e); } finally { if (v) { R.errors.push(...v.errors); await v.ctx.close(); } }
+  }
+  {   // ④ N1b：低い 横向き（568×320・844×390）で ゴールの 1・2マス 手前に 止まる：止まって 2秒 ＋ 3秒 の うちに 手本が 出る
+    const rows = [];
+    for (const [w, h] of [[568, 320], [844, 390]]) for (const k of [1, 2]) {
+      let v = null;
+      try {
+        v = await open({ width: w, height: h }, false);
+        await v.page.waitForTimeout(800);
+        const put = await v.page.evaluate(k => { const P = nishioPixel, M = P.maze, p = M.routePath(); if (!p) return null; const i = Math.max(0, p.length - 1 - k), c = p[i]; P.rollPut(c[0] * M.K + M.K / 2, c[1] * M.K + M.K / 2, 0, 0); return { last: p.length - 1, i }; }, k);
+        await v.page.waitForTimeout(400);
+        const m = put ? await waitDemo(v.page, 5000) : null;
+        const left = await v.page.evaluate(() => { const p = nishioPixel.maze.routePath(); return p ? p.length - 1 : null; });
+        rows.push({ vp: w + 'x' + h, k, left, shown: !!m, at: m && m.at, inMap: m && m.inMap, onRice: m && m.onRice });
+      } catch (e) { rows.push({ vp: w + 'x' + h, k, crashed: String(e && e.message || e).slice(0, 120) }); } finally { if (v) { R.errors.push(...v.errors); await v.ctx.close(); } }
+    }
+    out.lowGoalDemo = { rows, ok: rows.length === 4 && rows.every(r => r.shown && r.inMap && !r.onRice) };
+  }
+  return out;
+}
 const FIRST_MINUTE_NEED = {
   slowCover: '読みこみ中の 題字が スタイルシートを 待つ（head に ある）／題字の 下に 動く しるし（米つぶ）が ない',
   bgmAfterMap: '地図が 動きだす 前の タップで 曲（mp3）を 読みはじめる／動きだした あとの タップで 曲が 鳴らない',
@@ -1103,6 +1176,10 @@ const FIRST_MINUTE_NEED = {
   tapDemoNoBlind: '置ける 所が ない ときに、確かめて いない 点に 指の 手本を 出す／傾きが 使えるのに ゆれる 📱 が 出ない／置ける ように なっても 指が もどらない',
   lowDemoKept: '横向き 568×320 で もどって きた 人が 1回 歩くと、止まって いても「タップ！」の 指が 出ない・地図の 外（下の 欄の 裏）に 出る',
   playAskLate: 'ゴールの 時間を、はじめて 手で 動かす 前（読みこみ中）から 数える（おそい 読みこみで はじめての ゴールの すぐ あとに「どうだった？」）',
+  firstTapBig: '最初の タップの 手本（まだ 傾きの 許可を 聞いて いない 間）が 小さい（札の 字 22px より 小さい・指 53px より 小さい）／大きい 形で 出ない／地図の 外・ボタンや お米に かかる（390×844）',
+  firstTapFit6: '最初の タップの 手本が 開いて 3秒の うちに 出ない・地図の 外に はみ出す・ボタン（傾き・🌏 など）や お米に かかる（320×568・360×640・390×844・568×320・844×390・820×1180 の どれか）',
+  laterDemoSame: '2回めから の 手本（許可を 聞かない 端末・止まって 2秒）の 大きさが かわった（指 38px で ない・大きい 形に なる）',
+  lowGoalDemo: '低い 横向き（568×320・844×390）で ゴールの 1〜2マス 手前に 止まると、手本の 指が 出ない（N1b）',
   bootLoaded: '地図の 部品が ふつうに 読めた のに「時間が かかっています」の ボタン・「もう 1回 読みこむ」が 出る／始まらない',
   bootFailed: '地図の 部品が 読めなかった（エラー）とき、押せる「もう 1回 読みこむ」の ボタンが 4秒 までに 出ない／押しても 読みこみ なおさない',
   bootSlow: '地図の 部品が 8秒 おくれて 届く 人に「時間が かかっています」が 出る／20秒 おくれの 人が 始まらない・始まった あとも 残る',

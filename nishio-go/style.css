@@ -1069,6 +1069,16 @@ img.pq-art{display:block;width:144px;height:144px;margin:6px auto 10px;image-ren
 /* サイクル198：行き先が お米より 上の ときは 指を さかさに（dn：手は 行き先の 上・指先は 下向き。手が お米に のらない）。札の 字は さかさに しない */
 #tapDemo.dn{margin-top:-38px;transform:scaleY(-1);transform-origin:50% 50%;animation-name:tapDemoPressDn}
 #tapDemo.dn.first.lr::after,#tapDemo.dn.first.ll::after{transform:scaleY(-1)}
+/* サイクル209（運営者の声 2026-11-12「最初のタップの文字を大きくわかりやすく」・実機の 画面写真：「タップ！」の 字は 画面の はばの 約2割・高さ 1.5% で 地図の 絵に まぎれた）：
+   最初の タップの 手本（まだ 傾きの 許可を 聞いて いない 間＝.first。置ける 所が あれば .big）だけ、指を 1.47倍（38 → 56px）、札の 字を 1.6倍（15 → 24px の 太字）に。
+   札は 白地に こい 緑の 字の まま、ふちを 3px に し、外に 白い ふち と こい 緑の 輪・こい かげ を つけて 地図の 上で はっきり 見える ように。2回めから の 手本の 大きさは そのまま。
+   大きさは pixel.js の DEMO_HAND1・DEMO_LAB1 と そろえる（置ける 所の 計算） */
+#tapDemo.first.big{width:60px;margin-left:-30px;font-size:56px}
+#tapDemo.first.big::before{width:50px;height:50px;margin:-25px 0 0 -25px;border-width:4px}
+#tapDemo.first.big::after{top:66px;font-size:24px;padding:9px 16px;border-radius:22px;border-width:3px;box-shadow:0 0 0 3px #fff,0 0 0 5px rgba(29,79,76,.6),0 4px 12px rgba(0,0,0,.55)}
+#tapDemo.first.big.lr::after{top:12px;margin-left:8px}
+#tapDemo.first.big.ll::after{top:12px;margin-right:8px}
+#tapDemo.first.big.dn{margin-top:-56px}
 @keyframes tapDemoPressDn{0%,55%,100%{transform:translateY(-14px) scaleY(-1)}22%,34%{transform:translateY(0) scaleY(-.92) scaleX(.92)}}
 /* サイクル200：せかいちずの 👣 を 押す 手本は 小さく 動く（下へ 6px）。手の まん中が ボタンの 外（下の「＋」）へ 出ない ように */
 #tapDemo.wb{animation-name:tapDemoPressS}

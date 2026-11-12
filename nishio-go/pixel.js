@@ -9533,6 +9533,9 @@ const DEMO_HAND = { w: 44, h: 38, move: 14, pad: 2 }, DEMO_LAB = { w: 96, h: 32,
 // （指 60×56px。札 136×48px ＋ 外の ふち 5px で 146×58px。札の 上の はしは 指先から 66 − 5 ＝ 61px・よこの ときは 12 − 5 ＝ 7px・指との あいだ 8 − 5 ＝ 3px）。
 // 最初の 手本は、画面の 上の ボタン（傾き・🌏・🌀 など 地図の 上の ボタン ぜんぶ）にも かからない 所に だけ 置く
 const DEMO_HAND1 = { w: 60, h: 56, move: 14, pad: 2 }, DEMO_LAB1 = { w: 146, h: 58, gap: 3, top: 7, below: 61 };
+// サイクル209 の 直し（Codex の 指摘 P2）：大きい 手の まん中は 指先から 30px・手首は 52px（ふつうの 手の 20px より 先）。844×390 で 大きい 手の まん中（指先から 30px）を
+// タップすると、縁の 矢印の 当たりに 入って せかいちずに 切りかわった（5回とも）。大きい 形は、手の まん中・手首も 歩ける 所に だけ 置き、手の 上の タップは 手本の マスへ 歩く（demoTapWalk）
+const DEMO_HAND1_PTS = [30, 52];
 function tapDemoLayout(q, first, rc, box, upOk) {   // upOk(up)：その 向きを 使って よいか（なければ どちらも よい）。この 点を 指す ときの 向き（up：さかさ）と 札の 場所（''：指の 下・lr：右・ll：左）。地図の 中に 収まらなければ null
   const big = first === 'big', H = big ? DEMO_HAND1 : DEMO_HAND, Lb = big ? DEMO_LAB1 : DEMO_LAB, reach = H.h + H.move + H.pad;   // サイクル209：最初の 手本の 大きい 形（first === 'big'）
   const fits = b => b[0] >= box[0] && b[1] >= box[1] && b[2] <= box[2] && b[3] <= box[3] && !(box[4] && b[0] < box[4][2] && b[2] > box[4][0] && b[1] < box[4][3] && b[3] > box[4][1])   // box[4]：傾きの ボタン
@@ -9543,6 +9546,7 @@ function tapDemoLayout(q, first, rc, box, upOk) {   // upOk(up)：その 向き�
     const hand = up ? [q.x - H.w / 2, q.y - reach, q.x + H.w / 2, q.y] : [q.x - H.w / 2, q.y, q.x + H.w / 2, q.y + reach];
     if (!fits(hand) || hitsRice(hand)) continue;
     if (upOk && !upOk(up)) continue;   // サイクル200：手の 絵の 所を 押すと 窓が 開く 向きは 使わない（tapDemoSpot）
+    if (upOk && big && !DEMO_HAND1_PTS.every(o => tapDemoWalks({ x: q.x, y: q.y + (up ? -o : o) }, 0, box.near))) continue;   // サイクル209 の 直し：大きい 手の まん中・手首も
     if (!first) return { up, side: '' };
     const below = [q.x - Lb.w / 2, q.y + Lb.below, q.x + Lb.w / 2, q.y + Lb.below + Lb.h + H.move + H.pad];
     if (!up && fits(below) && !hitsRice(below)) return { up, side: '' };
@@ -9582,11 +9586,12 @@ function tapDemoGoalSpot(slop, first, rc, box, near) {   // サイクル209（N1
 }
 function tapDemoSpot(path, first) {   // 手本の 指先を 置く 点と 置き方 { q, up, side }。安全に 置ける 所が なければ null
   // サイクル209：最初の 手本は まず 大きい 形（first === 'big'）で さがし、置けなければ これまでの 大きさで さがす（大きく した ことで 手本が 出ない 場面を ふやさない）
-  if (first === true) { const sp = tapDemoSpot(path, 'big'); if (sp) return { ...sp, big: true }; }
+  if (first === true) { const sp = tapDemoSpot(path, 'big'); if (sp && sp.hand) return { ...sp, big: true }; }   // 大きい 形は 手の 上（指先・まん中・手首）が どこも 歩ける 置き方 だけ（サイクル209 の 直し）
   const last = path.length - 1, base = Math.min(DEMO_AHEAD, last), rc = tileClient(rp.x - 0.5, rp.y - 0.5);
   const c = camTile(), near = G.spots.filter(s => (p => Math.abs(p.x - c.x) < 30 && Math.abs(p.y - c.y) < 40)(toTile(s.lat, s.lng)));   // 画面の 近くの 名所だけ（名所は 2千こ ある。点ごとに ぜんぶ 調べると 重い）
   const cr = cv.getBoundingClientRect(), sh = $('sheet') ? $('sheet').getBoundingClientRect() : null, tb = tiltBtn && !tiltBtn.hidden ? tiltBtn.getBoundingClientRect() : null;
   const box = [Math.max(0, cr.left), cr.top, Math.min(window.innerWidth, cr.right), Math.min(cr.bottom, sh && sh.height ? sh.top : cr.bottom), tb && tb.width ? [tb.left, tb.top, tb.right, tb.bottom] : null];
+  box.near = near;   // サイクル209 の 直し：大きい 手の まん中・手首を 確かめる とき（tapDemoLayout）
   if (first === 'big') box[5] = [...document.querySelectorAll('#pxView button')].filter(b => b !== tiltBtn && !b.closest('#pxInfo')).map(b => b.getBoundingClientRect()).filter(r => r.width > 0 && r.height > 0).map(r => [r.left - 4, r.top - 4, r.right + 4, r.bottom + 4]);   // サイクル209：最初の 大きい 手本は 地図の 上の ボタン（🌏・🌀 など）の まわり 4px にも かけない
   // サイクル200（はじめの 1分・見えた 絵を タップする 人）：指の 絵（手）を タップする 人は 指先より 20px ほど 手の がわを 押す。2つめの ゴールの 手前で、手が 駅の 特大の 絵に
   // のって いて、手を タップする たびに 駅の 説明の 窓が 開いた（8回 つづけて・30秒 進まない）。手の まん中（DEMO_HAND_TAP）を 押しても 歩ける 向きを 先に えらぶ（なければ これまでどおり）
@@ -9671,7 +9676,8 @@ function tapDemoTick() {
   if (!ok) { tapDemoHide(); return; }
   mkEls();
   const sp = tapDemoSpot(path, first);   // 道しるべの 3マス先（ゴールが 近ければ ゴールの マス。窓が 開く 所・地図に 収まらない 所は よける）
-  tapDemo.sp = sp ? { x: sp.q.x, y: sp.q.y } : null;   // サイクル206：いま 指して いる 所（さわって 消える ときに tapDemo.last へ。demoTapWalk）
+  tapDemo.sp = sp ? { x: sp.q.x, y: sp.q.y } : null;
+  if (tapDemo.sp && first) { tapDemo.sp.hand = sp.big ? DEMO_HAND1.h : DEMO_HAND.h; tapDemo.sp.dn = !!sp.up; }   // サイクル209 の 直し：最初の 手本の 手の 長さ（demoTapWalk の 手の 上の はんい）   // サイクル206：いま 指して いる 所（さわって 消える ときに tapDemo.last へ。demoTapWalk）
   if (!sp) demoLeadAim(path);   // サイクル207：置き場が ない：地図を 道すじの 先へ 寄せて、次の 見回りで 見える 所を さがす
   if (!sp) { if (!tapDemo.el.hidden) tapDemo.el.hidden = true; }   // 安全に 置ける 所が ない：指の 手本は 出さない（次の 見回りで さがし直す）。下の ゆれる 📱 は 出す
   else {
@@ -13914,9 +13920,13 @@ function demoTapWalk(cx, cy) {   // cx・cy：画面の 点。手本の マス�
   if (!l && !tapS.goal && mzRt.path && mzRt.path.length > 1) {   // 手本が まだ 出て いない（歩いた すぐ あと など）：いま 出すなら どこを 指すか で 見る（前に 見た 所を 先に 押す 人）
     const sp = tapDemoSpot(mzRt.path, tiltBtnWanted() && !tiltG.asked);
     if (sp) l = { x: sp.q.x, y: sp.q.y };
+    if (sp && tiltBtnWanted() && !tiltG.asked) Object.assign(l, { hand: sp.big ? DEMO_HAND1.h : DEMO_HAND.h, dn: !!sp.up });
   }
-  if (!l || Math.hypot(cx - l.x, cy - l.y) > DEMO_TAP_R) return false;
-  if (tapDemoWalks(l, DEMO_SLOP_PX)) return false;   // 18px ずれても 歩ける 置き場：これまでどおり（タップした 所で 決まる）
+  // サイクル209 の 直し（Codex の 指摘 P2）：最初の 手本（大きい 手 56px・入らない ときの ふつうの 手 38px）は、指先から 手首までの 線から 24px の 中の タップを
+  // 手本の マスへ 歩かせる（指先から 18px より 外。手の まん中・手首で せかいちず・窓に 行かない）。2回めから の 手本は これまでどおり（l.hand が ない）
+  const onHand = !!(l && l.hand) && (() => { const t = Math.max(0, Math.min(l.hand, (cy - l.y) * (l.dn ? -1 : 1))); return Math.hypot(cx - l.x, cy - (l.y + (l.dn ? -t : t))) <= DEMO_TAP_R && Math.hypot(cx - l.x, cy - l.y) > DEMO_SLOP_PX; })();
+  if (!l || (!onHand && Math.hypot(cx - l.x, cy - l.y) > DEMO_TAP_R)) return false;
+  if (!onHand && tapDemoWalks(l, DEMO_SLOP_PX)) return false;   // 18px ずれても 歩ける 置き場：これまでどおり（タップした 所で 決まる）
   tapDemo.last = null;
   const q = swipeTile(l.x, l.y);
   return tapWalk(q[0], q[1]);

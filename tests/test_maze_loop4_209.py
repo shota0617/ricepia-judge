@@ -107,7 +107,7 @@ const tapDemoWalks = (q, slop) => { const g = GOALPX(); return Math.hypot(q.x - 
 
 
 def spot_code(run):
-    defs = "".join(line(PIX, s, "") for s in ["const DEMO_AHEAD", "const DEMO_SLOP = ", "const DEMO_HAND_TAP = ", "const DEMO_HAND = ", "const DEMO_HAND1 = "])
+    defs = "".join(line(PIX, s, "") for s in ["const DEMO_AHEAD", "const DEMO_SLOP = ", "const DEMO_HAND_TAP = ", "const DEMO_HAND = ", "const DEMO_HAND1 = ", "const DEMO_HAND1_PTS = "])
     defs = defs.replace("const DEMO_TAP_MS = 900, DEMO_AHEAD = 3;", "const DEMO_AHEAD = 3;")
     if "DEMO_AHEAD" not in defs:
         defs += "const DEMO_AHEAD = 3;\n"
@@ -146,9 +146,57 @@ console.log(JSON.stringify({ wide: wide && !!wide.big, low: low ? !!low.big : nu
         self.assertIs(out["later"], False)   # 2回めから は 大きく しない
 
 
+# ---------- サイクル209 の 直し（Codex の 指摘 P2）：大きい 手の まん中・手首の タップ ----------
+TAPWALK_STUB = r"""
+let T = 5000, worldMode = false, driving = false, slopOk = false, spot = null; const performance = { now: () => T }, G = { demo: true }, howtoEl = { hidden: true }, rp = { x: 1 }, tapS = { goal: null }, mzRt = { path: [[0, 0], [1, 0]] };
+const tapDemo = { last: null }, walks = [], DEMO_SLOP_PX = 18;
+const tapDemoWalks = (q, slop) => slopOk, tapDemoSpot = () => spot, tiltBtnWanted = () => true, tiltG = { asked: false }, swipeTile = (x, y) => [Math.floor(x / 16), Math.floor(y / 16)], tapWalk = (x, y) => { walks.push([x, y]); return true; };
+"""
+
+
+class BigHandTap209(unittest.TestCase):
+    def test_tap_on_big_hand_walks(self):
+        """最初の 手本の 手の 上（大きい 手 56px の まん中 30px・手首 52px、入らない ときの ふつうの 手 38px の 手首 36px）の タップは 手本の マスへ 歩く（指先が 18px ずれても 歩ける 所でも。
+        前は 24px より 外は ふつうの タップに なり、844×390 で 縁の 矢印の 当たりに 入って せかいちずに 切りかわった）。ふつうの 大きさの 手は これまでどおり"""
+        code = TAPWALK_STUB + line(PIX, "const DEMO_HAND1 = ", "") + line(PIX, "const DEMO_TAP_R = ") + fn(PIX, "demoTapWalk") + """
+const out = {}, last = (hand, dn) => { tapDemo.last = { x: 147, y: 381, at: T - 100, hand, dn }; walks.length = 0; };
+last(56, false); out.mid = demoTapWalk(147, 411);
+last(56, false); out.wrist = demoTapWalk(147, 433);
+last(56, false); slopOk = true; out.midSafe = demoTapWalk(147, 411); slopOk = false;
+last(56, true); out.midDn = demoTapWalk(147, 351);
+last(56, false); out.side = demoTapWalk(190, 411);
+last(38, false); out.smallFirstWrist = demoTapWalk(147, 417);   // 入らない ときの ふつうの 大きさの 最初の 手本：手首（36px）
+last(38, false); out.smallFirstPast = demoTapWalk(147, 446);   // 手の 先（65px）は 手の 外
+last(undefined, false); out.small30 = demoTapWalk(147, 411);   // 2回めから の 手本（hand なし）
+last(56, false); slopOk = true; out.tipSafe = demoTapWalk(147, 390); slopOk = false;
+console.log(JSON.stringify(out));"""
+        o = node(code)
+        self.assertTrue(o["mid"], "大きい 手の まん中の タップで 歩かない: %r" % o)
+        self.assertTrue(o["wrist"], "大きい 手の 手首の タップで 歩かない: %r" % o)
+        self.assertTrue(o["midSafe"], "指先が 歩ける 所でも、大きい 手の まん中は 手本の マスへ: %r" % o)
+        self.assertTrue(o["midDn"])   # さかさの 手（上へ のびる）
+        self.assertFalse(o["side"])   # 手の 横 43px は 手の 外
+        self.assertTrue(o["smallFirstWrist"], "最初の 手本（ふつうの 大きさ）の 手首の タップで 歩かない: %r" % o)
+        self.assertFalse(o["smallFirstPast"])
+        self.assertFalse(o["small30"])   # 2回めから の 手本は これまでどおり（24px まで）
+        self.assertFalse(o["tipSafe"])   # 指先の すぐ そば（9px）で 18px ずれても 歩ける 所：これまでどおり タップした 所で 決まる
+
+    def test_big_hand_needs_safe_middle(self):
+        """大きい 手は、手の まん中（30px）・手首（52px）が 歩けない 所（縁の 矢印・名所の 絵）に かかる 置き方では 出さない（これまでの 大きさで 出す）"""
+        # 道すじの 行（y 131〜147）の 下 13〜58px・上 13〜52px の 帯は 歩けない（大きい 手の まん中・手首が 来る 所。指先から 20px の 所は 一部 歩ける）
+        r = node(spot_code("""
+rp = { x: 1.5, y: 1.5 };
+const path = []; for (let x = 0; x <= 6; x++) path.push([x, 0]);
+BOX = [0, 52, 568, 600];
+const sp = tapDemoSpot(path, true);
+console.log(JSON.stringify(sp ? { big: !!sp.big, hand: sp.hand, y: Math.round(sp.q.y), up: sp.up } : null));""").replace("const tapDemoWalks = (q, slop) => {", "const tapDemoWalks = (q, slop) => { if ((q.y >= 160 && q.y <= 205) || (q.y >= 95 && q.y <= 118)) return false;"))
+        self.assertIsNotNone(r)
+        self.assertFalse(r["big"], "大きい 手の まん中・手首が 歩けない 所に かかる のに 大きい 形で 出た: %r" % r)
+
+
 class Rules209(unittest.TestCase):
     def test_playtest_items(self):
-        for k in ["firstTapBig", "firstTapFit6", "laterDemoSame", "lowGoalDemo"]:
+        for k in ["firstTapBig", "firstTapFit6", "laterDemoSame", "lowGoalDemo", "bigHandTap"]:
             self.assertIn("  %s: '" % k, PLAY, k)
         self.assertIn("...(await cycle209Checks(browser, R))", PLAY)
 

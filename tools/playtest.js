@@ -1133,6 +1133,29 @@ async function cycle209Checks(browser, R) {
     }
     out.lowGoalDemo = { rows, ok: rows.length === 4 && rows.every(r => r.shown && r.inMap && !r.onRice) };
   }
+  {   // ⑤ サイクル209 の 直し（Codex の 指摘 P2）：844×390・許可の 前・西尾駅の 3マス 手前（めいろの 594〜599,632 の 道）で 出る 大きい 手の まん中（指先から 30px）・手首（52px）を
+    // タップしても、せかいちず・名所の 窓に ならず 歩きだす（前は まん中で せかいちずに 切りかわった）。1回 タップすると 許可を 聞くので、1回ずつ 新しい ページ
+    const rows = [];
+    for (const part of ['mid', 'wrist']) {
+      let v = null;
+      try {
+        v = await open({ width: 844, height: 390 }, true);
+        await v.page.waitForTimeout(600);
+        await v.page.evaluate(() => { const P = nishioPixel, M = P.maze; P.rollPut(599 * M.K + M.K / 2, 632 * M.K + M.K / 2, 0, 0); });
+        await v.page.waitForTimeout(900);
+        const d = await v.page.evaluate(() => { const el = document.getElementById('tapDemo'); return el && !el.hidden ? { x: parseFloat(el.style.left), y: parseFloat(el.style.top), dn: el.classList.contains('dn'), big: el.classList.contains('big') } : null; });
+        if (!d) { rows.push({ part, none: true }); continue; }
+        const o = (d.big ? { mid: 30, wrist: 52 } : { mid: 20, wrist: 36 })[part];   // 出て いる 手（大きい・入らない ときの ふつう）の まん中・手首
+        const b0 = await v.page.evaluate(() => [nishioPixel.roll.x, nishioPixel.roll.y]), cdp = await v.ctx.newCDPSession(v.page);
+        await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: true });
+        await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: d.x, y: d.y + (d.dn ? -o : o) }] }); await v.page.waitForTimeout(70); await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+        await v.page.waitForTimeout(700);
+        const s = await v.page.evaluate(b => ({ world: document.body.classList.contains('pxw') || nishioPixel.worldMode, win: !document.getElementById('pxInfo').hidden, walk: !!nishioPixel.tapGoal || Math.hypot(nishioPixel.roll.x - b[0], nishioPixel.roll.y - b[1]) > 0.3 }), b0);
+        rows.push({ part, o, big: d.big, tip: [Math.round(d.x), Math.round(d.y)], ...s });
+      } catch (e) { rows.push({ part, crashed: String(e && e.message || e).slice(0, 120) }); } finally { if (v) { R.errors.push(...v.errors); await v.ctx.close(); } }
+    }
+    out.bigHandTap = { rows, ok: rows.length === 2 && rows.every(r => !r.none && !r.crashed && !r.world && !r.win && r.walk) };
+  }
   return out;
 }
 const FIRST_MINUTE_NEED = {
@@ -1180,6 +1203,7 @@ const FIRST_MINUTE_NEED = {
   firstTapFit6: '最初の タップの 手本が 開いて 3秒の うちに 出ない・地図の 外に はみ出す・ボタン（傾き・🌏 など）や お米に かかる（320×568・360×640・390×844・568×320・844×390・820×1180 の どれか）',
   laterDemoSame: '2回めから の 手本（許可を 聞かない 端末・止まって 2秒）の 大きさが かわった（指 38px で ない・大きい 形に なる）',
   lowGoalDemo: '低い 横向き（568×320・844×390）で ゴールの 1〜2マス 手前に 止まると、手本の 指が 出ない（N1b）',
+  bigHandTap: '最初の 手本の 手の まん中・手首（大きい 手 30・52px／入らない ときの ふつうの 手 20・36px）を タップすると、歩かずに せかいちず・名所の 窓に なる（844×390・西尾駅の 3マス 手前）',
   bootLoaded: '地図の 部品が ふつうに 読めた のに「時間が かかっています」の ボタン・「もう 1回 読みこむ」が 出る／始まらない',
   bootFailed: '地図の 部品が 読めなかった（エラー）とき、押せる「もう 1回 読みこむ」の ボタンが 4秒 までに 出ない／押しても 読みこみ なおさない',
   bootSlow: '地図の 部品が 8秒 おくれて 届く 人に「時間が かかっています」が 出る／20秒 おくれの 人が 始まらない・始まった あとも 残る',

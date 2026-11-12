@@ -3701,11 +3701,15 @@ vis(false); advance(45100); assert.equal(cls.has('on'), true);
         # 1袋目の 顔つきの わるい粒は 1.5倍で 見えるのに、当たりは 1倍の まま だった。絵の ふちを 押すと、となりの 良い粒の 当たりが 先に 取られて
         # 良い粒が ゆれる だけ（390×844実測: 絵の 中の 40点で 取れた 35 → 40。良い粒と 重なる 所だけの 38点で 取れた 12 → 38）
         fn = HTML[HTML.index("function grainAt(p) {"):HTML.index("const pts = new Map();")]
+        rows = HTML[HTML.index("const GRAIN_ROWS = ["):HTML.index("];", HTML.index("const GRAIN_ROWS = [")) + 2]
         self._node150("""
 const assert = require('node:assert/strict');
 const GW = 36, GH = 20, Z = { s:1 }; let lotIndex = 0, spread = true;
 const firstBagFace = g => lotIndex === 0 && spread && g.kind !== 'seiryu';
-const mk = (kind, x, y, z) => ({ kind, x, y, r:0, z, gone:false, el:{ hidden:false } });
+""" + rows + """
+const LOT_LOOKS = [{ rows:GRAIN_ROWS }], LOT = { look:0 }; let faceScale = 1.5;
+const getComputedStyle = el => ({ transform:el.face ? 'matrix(' + faceScale + ', 0, 0, ' + faceScale + ', 0, 0)' : 'none' });   // サイクル154: その しゅんかん 見えて いる 大きさ
+const mk = (kind, x, y, z) => ({ kind, x, y, r:0, z, gone:false, el:{ hidden:false }, img:{ face:kind !== 'seiryu' } });
 const good = mk('seiryu', 100, 100, 5), face = mk('shini', 125, 100, 100), grains = [good, face];
 """ + fn + """
 // 顔の 絵（1.5倍: 中心から よこ 27px）の 中で、良い粒の 当たりの 中でも ある 所
@@ -3745,6 +3749,42 @@ refreshBadFaces(); console.log(JSON.stringify({ face:props['--face'] || null, tr
                 expr = m[-1].replace("calc(", "(") if m else "1"
                 scales.append(eval(expr, {"__builtins__": {}}))
             self.assertGreaterEqual(min(scales), 1.5, name + " の 動きで 顔つきの 粒が " + str(min(scales)) + "倍に ちぢむ")
+
+
+    def _codex154_world(self, body):
+        # Codex指摘 2つ（どちらも 390×844・GW 36・GH 20・回転 0°・顔つきの 粒 (125,100)）:
+        # 1. 手本で 1.875倍に ふくらんだ 時、新しく 見えた 絵の ふち (94,100) を 押すと 下の 良い粒 (94,100) が 取られた（当たりが いつも 1.5倍）
+        # 2. 顔の 絵の すきとおった 角 (104,113) から 見える 良い粒 (100,114) を 押すと、顔つきの 粒が 取られた（四角で はかって いた）
+        fn = HTML[HTML.index("function grainAt(p) {"):HTML.index("const pts = new Map();")]
+        rows = HTML[HTML.index("const GRAIN_ROWS = ["):HTML.index("];", HTML.index("const GRAIN_ROWS = [")) + 2]
+        self._node150("""
+const assert = require('node:assert/strict');
+const GW = 36, GH = 20, Z = { s:1 }; let lotIndex = 0, spread = true, faceScale = 1.5;
+const firstBagFace = g => lotIndex === 0 && spread && g.kind !== 'seiryu';
+""" + rows + """
+const LOT_LOOKS = [{ rows:GRAIN_ROWS }], LOT = { look:0 };
+const getComputedStyle = el => ({ transform:el.face ? 'matrix(' + faceScale + ', 0, 0, ' + faceScale + ', 0, 0)' : 'none' });
+const mk = (kind, x, y, z) => ({ kind, x, y, r:0, z, gone:false, el:{ hidden:false }, img:{ face:kind !== 'seiryu' } });
+let grains;
+""" + fn + """
+const face = mk('shini', 125, 100, 100);
+""" + body)
+
+    def test_cycle154_codex_pulsing_face_takes_its_new_edge(self):
+        self._codex154_world("""
+// 1. ふくらんだ 1.875倍の 時: 新しく 見えた 絵の ふちを 押せば 顔つきの 粒
+const good = mk('seiryu', 94, 100, 5); grains = [good, face];
+faceScale = 1.875; assert.equal(grainAt({ x:94, y:100 }), face, 'ふくらんだ 絵の ふちで 良い粒が 取られた');
+faceScale = 1.5; assert.equal(grainAt({ x:94, y:100 }), good);   // ふくらんで いない 時は、その 点は 絵の 外 → 良い粒（直しすぎない）
+""")
+
+    def test_cycle154_codex_clear_corner_of_the_face_keeps_the_good_grain(self):
+        self._codex154_world("""
+// 2. 絵の すきとおった 角から 見える 良い粒は 良い粒
+const good = mk('seiryu', 100, 114, 5); grains = [good, face];
+assert.equal(grainAt({ x:104, y:113 }), good, 'すきとおった 角を 押して 顔つきの 粒が 取られた');
+assert.equal(grainAt({ x:110, y:100 }), face);                   // 絵の 中（すきとおって いない 所）は 顔つきの 粒
+""")
 
 
 if __name__ == "__main__":

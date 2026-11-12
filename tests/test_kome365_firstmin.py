@@ -302,6 +302,9 @@ const FAKE = (mode) => {
       else if (a === 'mute') { if (await p.locator('#swSnd').count()) await p.tap('#swSnd', { timeout: 5000 }); await p.waitForTimeout(300); }   // ボタンが 無い 版では 押せない(下の 確かめで 落ちる)
       else if (a === 'wait') await p.waitForTimeout(2500);
       else if (a === 'keyL') { await p.keyboard.press('ArrowLeft'); r.js = r.js || []; r.js.push(await p.evaluate(() => window.__fa.live(window.__tc, window.__ts))); }   // 決めた すぐ あとに 古い 予約が のこって いるか
+      else if (a === 'dailyKey') {   // 3回めの レビュー(P2): ← で 決めて すぐ ⌂ → 今日の 田んぼ(bDaily) → 新しい ゲームで すぐ ←
+        await p.keyboard.press('ArrowLeft'); await p.evaluate(() => { document.getElementById('swHome').click(); document.getElementById('bDaily').click(); });
+        const n = await p.evaluate(() => window.__ks.state().log.length); await p.keyboard.press('ArrowLeft'); r.js = r.js || []; r.js.push(n); }
       else if (a === 'homeKey') {   // 2回めの レビュー(P2): ⌂ を マウスで 押した まま ← で 決め、すぐ はなす(選んで すぐ 題へ)
         const hb = await p.locator('#swHome').boundingBox(); await p.mouse.move(hb.x + hb.width / 2, hb.y + hb.height / 2); await p.mouse.down(); await p.keyboard.press('ArrowLeft'); await p.mouse.up();
         r.js = r.js || []; r.js.push(await p.evaluate(() => ({ screen: document.getElementById('sTitle').classList.contains('hidden') ? 'game' : 'title', n: window.__ks.state().log.length }))); }
@@ -1424,6 +1427,7 @@ class TestKome365SoundReview(unittest.TestCase):
             {"name": "result", "save": END_SAVE, "acts": ["L", "tapTgl", "wait"]},
             {"name": "slowPause", "mode": "slow", "acts": ["js:(ksUnlock(), ksPause(), 1)", "wait", "js:(window.dispatchEvent(new Event('focus')), 1)", "wait"]},
             {"name": "homeKey", "acts": ["L", "homeKey", "wait"]},
+            {"name": "dailyKey", "acts": ["L", "dailyKey", "wait"]},
             {"name": "homeKeyReduce", "reduce": True, "acts": ["L", "homeKey", "wait"]},
             {"name": "pauseSnd", "save": PADDY_SAVES["nae"], "acts": ["L", "js:(SND.on = true, SND.ctx = ksCtx(), SND.season = '', sndSet(), SND.season)", "wait", "js:(ksPause(), window.__o1 = window.__fa.osc, 1)", "wait", "js:window.__fa.osc - window.__o1"]},
             {"name": "leaveSong", "acts": ["L", "js:(songPlay(), songTimers.length > 0)", "home", "js:songTimers.length"]},
@@ -1485,6 +1489,15 @@ class TestKome365SoundReview(unittest.TestCase):
             self.assertEqual(j["screen"], "title", name)
             log = seq[-1][1]["ks"]["log"]
             self.assertEqual(log[j["n"]:], [], name + ": 題へ もどった あとに 鳴った %r" % (log[j["n"]:],))
+
+    def test_old_choice_in_new_game_makes_no_sound(self):
+        # 3回めの レビュー(P2): 古い 選択の 遅れた 処理が、新しい ゲームの 選択の 世代で 鳴って いた(新しい 選択 1回 なのに 判定の 音 2回)
+        seq = self.seq("dailyKey")
+        n = self.r["dailyKey"]["js"][-1]
+        new = seq[-1][1]["ks"]["log"][n:]
+        self.assertEqual(seq[-1][1]["screen"], "sGame")
+        self.assertEqual(new.count("pon"), 1, new)
+        self.assertEqual(sum(1 for k in new if k in ("ok", "ng")), 1, "新しい 選択 1回で 判定の 音 %r" % (new,))
 
     def test_nature_sounds_and_song_stop_with_page(self):
         # 止めて いる(前面で ない)間に 田んぼの音が 音を 作りつづけると、もどった ときに まとめて 鳴る

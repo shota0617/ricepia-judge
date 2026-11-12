@@ -3786,9 +3786,9 @@ renderTitle();
   /* 店主指示 2026-11-08: バツ(✗)のときだけ、判定文 why の最初の一文をマークの下に小さく浮かせて約2秒出す。○側は出さない */
   function whyShow(fb){ var e = $('swWhy'); if (!e) return; var t = String(fb || '').replace(/^\S+\s+/, ''); var i = t.indexOf('。'); if (i >= 0) t = t.slice(0, i + 1); if (!t) return; e.textContent = t; e.classList.remove('on'); void e.offsetWidth; e.classList.add('on'); }
   function whyHide(){ var e = $('swWhy'); if (e) e.classList.remove('on'); }
-  var chooseGen = null;   /* 選んだ ときの 画面の 世代(飛んで いる 間は busy なので 次の 選択で 上書き されない) */
-  function advance(side){
-    var kLive = ksSameScreen(chooseGen);   /* 2回めの レビュー(P2): 選んだ あとに ⌂ などで 画面が かわって いたら、この 選択からは 音を 作らない(ゲームの 進み方は 前と 同じ) */
+  /* 3回めの レビュー(P2): 画面の 世代は 選択 ごとに choose() の 中で つかまえて この 関数へ わたす(共有の 変数だと、新しい ゲームで すぐ 選んだ ときに 古い 選択の 分が 上書き されて いた) */
+  function advanceTurn(side, gen){
+    var kLive = ksSameScreen(gen);   /* 2回めの レビュー(P2): 選んだ あとに ⌂ などで 画面が かわって いたら、この 選択からは 音を 作らない(ゲームの 進み方は 前と 同じ) */
     pvClear(); finishFx(); whyHide();   /* 前の判定の光/影が残っていたら消す(素早く次のカードを選んだときの誤認防止。Codex軽微指摘)。バツの理由も前のカードの分はここで片づける */
     var fb = '', n0 = f.msgs.length, st0 = null;
     rwTake(); var d0 = KomeCards.day(f), ks0 = { base: paddyInfo.base, wet: paddyInfo.wet, stage: stageTintInfo.idx };
@@ -3850,7 +3850,8 @@ renderTitle();
     try { fieldBadge(fi, true); } catch (e) {}
   }
   function choose(side, vel){
-    if (busy || !card || !f || KomeCards.over(f)) return; idleTouch(); ghostOff(); busy = true; ksCancel(); if (ksSameScreen()) ksFx('pon'); chooseGen = KS.gen; rwUpdate(false); window.__k3d.soon(900);
+    if (busy || !card || !f || KomeCards.over(f)) return; idleTouch(); ghostOff(); busy = true; ksCancel(); if (ksSameScreen()) ksFx('pon'); rwUpdate(false); window.__k3d.soon(900);
+    var gen = KS.gen, advance = function(sd){ advanceTurn(sd, gen); };   /* 3回めの レビュー(P2): advance は この 選択の 世代を もつ(下の 2つの 呼び出しは この 選択 だけの もの) */
     var out = side === 'left' ? -1 : 1;
     pvClear(); el.card.classList.remove('drag', 'enter', 'wig'); el.card.classList.add('fly');
     if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) { advance(side); return; }

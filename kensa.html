@@ -2713,24 +2713,29 @@ function dismissIdleCard() { /* 自分で閉じる合図も固有の音にする
   idleOutSound();
 }
 function armIdle() {
-  clearTimeout(idleTimer);
-  idleTimer = setTimeout(showIdleCard, IDLE_MS);
-  idleDue = performance.now() + IDLE_MS;
+  idleIn(IDLE_MS);
 }
 /* 画面が かくれて いる 間は、手が 止まった 時計も 止める（サイクル153・最初の1分）。旧版は かくれて いる 間も 45秒を 数え、
    ほかの アプリを 50秒 見て もどると、遊んで いないのに カードが もう 出ていた（仮の 時計で 2回中2回）。
-   かくれた 時に のこりを 覚え、もどったら のこりから 数え直す。45秒と カードそのものは 変えない */
-let idleDue = 0, idleLeft = null;
+   きまりは 1つ: かくれて いる 間は 時計を 走らせない。予約は のこりの 時間（idleLeft）として 覚える だけ。予約は ぜんぶ idleIn を 通る。
+   ・かくれた 時: 走って いる 時計が あれば 止めて のこりを 覚える。出て いる カードは そのまま 残す（Codex指摘: カードが 出て いる 時に 止めるのを 飛ばし、
+     いいねで 予約した 次の 45秒が かくれた まま 進んで、もどる 前に また カードが 出た）
+   ・かくれて いる 間の 予約（背景の タブで 開いた ページの はじめの 予約・さわった 時 など）は のこりと して 覚える だけ（Codex指摘: 背景で 読みこまれた ページに
+     もどる 前に カードが 出ていた）
+   ・見えたら のこりから 走らせる。もどる ボタンの キャッシュ（pagehide／pageshow）でも、かくれる・見える の 知らせが 来るので 同じ 道を 通る
+   45秒と カードそのもの・いいねの 0.9秒は 変えない */
+let idleLeft = null, idleDue = 0;
+function idleIn(ms) {
+  clearTimeout(idleTimer); idleTimer = null;
+  if (document.hidden) { idleLeft = ms; return; }
+  idleLeft = null;
+  idleDue = performance.now() + ms;
+  idleTimer = setTimeout(() => { idleTimer = null; showIdleCard(); }, ms);
+}
 function idleVisibility() {
   if (document.hidden) {
-    if (idleLeft === null && !idleCard.classList.contains("on")) { idleLeft = Math.max(0, idleDue - performance.now()); clearTimeout(idleTimer); }
-  } else if (idleLeft !== null) {
-    const left = idleLeft;
-    idleLeft = null;
-    clearTimeout(idleTimer);
-    idleTimer = setTimeout(showIdleCard, left);
-    idleDue = performance.now() + left;
-  }
+    if (idleTimer !== null) { idleLeft = Math.max(0, idleDue - performance.now()); clearTimeout(idleTimer); idleTimer = null; }
+  } else if (idleLeft !== null) idleIn(idleLeft);
 }
 document.addEventListener("visibilitychange", idleVisibility);
 document.addEventListener("pointerdown", (e) => {

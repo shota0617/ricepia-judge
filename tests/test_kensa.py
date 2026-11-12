@@ -3647,5 +3647,52 @@ lotIndex = 1; everZoomed = true; pickedBare = false; const b2 = guides.length; d
         self.assertIn("pickedBare = false; stamped = false;", HTML[HTML.index("function startLot()"):HTML.index("/* 皿の粒:")])   # 袋ごとに 数え直す
 
 
+    def _idle153(self, body, hidden_at_load=False):
+        idle = HTML[HTML.index("const IDLE_MS = 45000"):HTML.index('returnLink.addEventListener("click",')]
+        self._node150("""
+const assert = require('node:assert/strict');
+let now = 0, timers = [], seq = 0;
+globalThis.performance = { now: () => now }; Date.now = () => now;
+const setTimeout = (f, ms) => { const id = ++seq; timers.push({ id, at:now + ms, f }); return id; }, clearTimeout = id => { timers = timers.filter(t => t.id !== id); };
+const advance = ms => { const end = now + ms; for (;;) { timers.sort((a, b) => a.at - b.at); const t = timers[0]; if (!t || t.at > end) break; timers.shift(); now = t.at; t.f(); } now = end; };
+const cls = new Set(); const idleCard = { inert:true, classList:{ add: c => cls.add(c), remove: c => cls.delete(c), contains: c => cls.has(c) } };
+const likeOn = {}; const likeBtn = { addEventListener(t, f) { likeOn[t] = f; } }, returnLink = { addEventListener() {} };
+const $ = id => ({ idleCard, likeBtn, returnLink })[id];
+const listeners = {}; const document = { hidden:""" + ("true" if hidden_at_load else "false") + """, body:{}, documentElement:{ classList:{ contains: () => false } }, addEventListener(t, f) { (listeners[t] = listeners[t] || []).push(f); } };
+const store = {}; const sessionStorage = { getItem: k => store[k] || null, setItem: (k, v) => { store[k] = v; }, removeItem: k => { delete store[k]; } };
+const fetch = () => new Promise(() => {}), navigator = {};
+let keyUser = false; const idleSound = () => {}, idleOutSound = () => {}, likeSound = () => {}, likeOutSound = () => {}, setFace = () => {};
+const vis = hidden => { document.hidden = hidden; (listeners.visibilitychange || []).forEach(f => f()); };
+const inCard = { closest: s => s === '#idleCard' ? idleCard : null }, onGame = { closest: () => null };
+const down = target => (listeners.pointerdown || []).forEach(f => f({ target }));
+""" + idle + body)
+
+    def test_cycle153_codex_like_then_leave_does_not_bring_the_card_back_while_hidden(self):
+        # 指摘1: 45秒の カードで「いいね」を 押し、0.9秒の うちに ほかの アプリへ 移ると、カードが まだ 出て いるので 時計を 止めず、
+        # 押した 時の 次の 45秒が かくれた まま 進み、もどる 前に また カードが 出た。出て いる カードは そのまま、予約中の 時計は 止める
+        self._idle153("""
+armIdle(); advance(45000); assert.equal(cls.has('on'), true);
+down(inCard); likeOn.click();                     // いいね（押した 指で 次の 45秒が 予約される）
+advance(300); vis(true);                          // 0.9秒の うちに ほかの アプリへ
+advance(1000); assert.equal(cls.has('on'), false); // 0.9秒で カードは 閉じる（今までどおり）
+advance(60000); assert.equal(cls.has('on'), false, 'かくれて いる 間に また カードが 出た');
+vis(false); advance(44000); assert.equal(cls.has('on'), false);
+advance(1000); assert.equal(cls.has('on'), true);  // 見えて いる 間の 45秒で 出る（のこりは かくれる 前の 0.3秒を 引いた 44.7秒）
+""")
+
+    def test_cycle153_codex_page_loaded_in_the_background_waits_for_the_player(self):
+        # 指摘2: 背景の タブで 開いた・読みこみ中に ほかの アプリへ 移った ページは、はじめの 予約が かくれた まま 45秒を 数え、
+        # もどる 前に カードが 出ていた。かくれて いる 間は 時計を 走らせず、もどった 時に 45秒から 始める
+        self._idle153("""
+armIdle();                                        // はじめの 予約（かくれた まま）
+advance(60000); assert.equal(cls.has('on'), false, '背景で 読みこまれた ページに もう カードが 出ていた');
+vis(false); advance(44900); assert.equal(cls.has('on'), false);
+advance(200); assert.equal(cls.has('on'), true);
+// かくれて いる 間に 呼ばれた 予約（さわる・キー）も 走らない
+cls.delete('on'); vis(true); armIdle(); advance(90000); assert.equal(cls.has('on'), false);
+vis(false); advance(45100); assert.equal(cls.has('on'), true);
+""", hidden_at_load=True)
+
+
 if __name__ == "__main__":
     unittest.main()

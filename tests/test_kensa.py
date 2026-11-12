@@ -3763,7 +3763,8 @@ const GW = 36, GH = 20, Z = { s:1 }; let lotIndex = 0, spread = true, faceScale 
 const firstBagFace = g => lotIndex === 0 && spread && g.kind !== 'seiryu';
 """ + rows + """
 const LOT_LOOKS = [{ rows:GRAIN_ROWS }], LOT = { look:0 };
-const getComputedStyle = el => ({ transform:el.face ? 'matrix(' + faceScale + ', 0, 0, ' + faceScale + ', 0, 0)' : 'none' });
+let faceMatrix = null;   // サイクル154（Codex指摘 3つめ）: 倍率 だけで ない 見た目の 行列
+const getComputedStyle = el => ({ transform:el.face ? (faceMatrix || 'matrix(' + faceScale + ', 0, 0, ' + faceScale + ', 0, 0)') : 'none' });
 const mk = (kind, x, y, z) => ({ kind, x, y, r:0, z, gone:false, el:{ hidden:false }, img:{ face:kind !== 'seiryu' } });
 let grains;
 """ + fn + """
@@ -3800,6 +3801,20 @@ higai.dom = 12; assert.equal(grainAt({ x:122, y:100 }), higai);           // 被
 // 2袋目から（顔なし・わるい粒は どれも 重なり順 1）も 同じ
 lotIndex = 1; higai.z = 1; shini.z = 1; higai.dom = 4; shini.dom = 11; grains = [higai, shini];
 assert.equal(grainAt({ x:116, y:100 }), shini);
+""")
+
+
+    def test_cycle154_codex_shaking_face_keeps_the_good_grain_in_its_clear_part(self):
+        # Codex指摘 3つめ: 皿を たたいて ゆれる 間（wig の 30%: translateY(-22%) rotate(-12deg) scale(1.5)）、絵の すきとおった 所 (105,111) から
+        # 見える 良い粒 (100,114) を 押すと、顔つきの 被害粒 (125,100) が 取られた（倍率 だけ もどして、ずれた 所の 透明を 調べて いた）
+        self._codex154_world("""
+const higai = mk('higai', 125, 100, 100), good = mk('seiryu', 100, 114, 5); grains = [good, higai];
+const r = -12 * Math.PI / 180, s = 1.5;   // GH 20 の -22% = -4.4px
+faceMatrix = 'matrix(' + [s * Math.cos(r), s * Math.sin(r), -s * Math.sin(r), s * Math.cos(r), 0, -4.4].join(', ') + ')';
+assert.equal(grainAt({ x:105, y:111 }), good, 'ゆれる 間、すきとおった 所を 押して 顔つきの 粒が 取られた');
+assert.equal(grainAt({ x:125, y:96 }), higai);                    // ゆれた 絵の まんなかは 顔つきの 粒
+faceMatrix = 'matrix3d(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)';   // 読めない 行列は 1.5倍
+assert.equal(grainAt({ x:104, y:100 }), higai);
 """)
 
 

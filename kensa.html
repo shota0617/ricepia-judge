@@ -1789,11 +1789,12 @@ function grainAt(p) {
   let best = null, bestOn = false; /* 指の真下に粒そのものがあれば、その粒を先に取る（サイクル136・最初の1分）。旧版はゆるさの枠（上下12px）に入った粒のうち重なり順が上の粒を選んでいたため、見えているわるい粒の真ん中を押しても、となりの良い粒のゆるさの枠が先に当たり、良い粒が揺れるだけで取れなかった（390×844実測・最初の袋: 真ん中タップ24回中10回が取れず、同じ所を40回押しても取れない袋があった）。ゆるさの枠は、どの粒にも直接当たらなかった時だけ使う */
   grains.forEach(g => {
     if (g.gone || g.el.hidden) return;
-    const a = g.r * Math.PI / 180, dx = p.x - g.x, dy = p.y - g.y, k = grainVisScale(g);
-    const u = (dx * Math.cos(a) + dy * Math.sin(a)) / k, v = (-dx * Math.sin(a) + dy * Math.cos(a)) / k; /* 当たりは 見える 大きさに 合わせる（サイクル154）。1袋目の 顔つきの わるい粒は 1.5倍で 見えるのに 当たりは 1倍の ままで、
+    const a = g.r * Math.PI / 180, dx = p.x - g.x, dy = p.y - g.y, M = grainVisMatrix(g);
+    const u0 = dx * Math.cos(a) + dy * Math.sin(a), v0 = -dx * Math.sin(a) + dy * Math.cos(a), ue = u0 - M.e, ve = v0 - M.f;
+    const u = (M.d * ue - M.c * ve) / M.det, v = (-M.b * ue + M.a * ve) / M.det; /* 当たりは 見える 大きさに 合わせる（サイクル154）。1袋目の 顔つきの わるい粒は 1.5倍で 見えるのに 当たりは 1倍の ままで、
        絵の ふちを 押すと となりの 良い粒の 当たりが 先に 取られた（390×844実測: 絵の 中の 40点で 取れた 35 → 40、良い粒と 重なる 所 だけの 38点で 12 → 38）。顔つきの 粒の 重なり順は 良い粒より 上（FACE_Z）なので、絵の 中なら 先に 取れる */
     if (!(Math.abs(u) <= GW / 2 + padU && Math.abs(v) <= GH / 2 + padV)) return;
-    const on = Math.abs(u) <= GW / 2 && Math.abs(v) <= GH / 2 && (k === 1 || grainOpaque(g, u, v)); /* 顔つきの 粒は 絵の すきとおって いない 所だけ */
+    const on = Math.abs(u) <= GW / 2 && Math.abs(v) <= GH / 2 && (!M.face || grainOpaque(g, u, v)); /* 顔つきの 粒は 絵の すきとおって いない 所だけ */
     if (!best || (on && !bestOn) || (on === bestOn && (g.z > best.z || g.z === best.z && g.dom > best.dom))) { best = g; bestOn = on; }
     /* 重なり順（z）が 同じ 粒どうしは、えがかれる 順（皿に 足した 順 dom。あとが 手前）で 決める（サイクル154・Codex指摘）。grains は 足した あとで まぜて あり、
        配列の 先の 粒を 返すと、顔つきの 粒どうしが 重なった 所で 見えて いる 手前の 粒では なく 奥の 粒が 取れた。2袋目からの わるい粒どうし（z 1）も 同じ */
@@ -1804,11 +1805,20 @@ function grainAt(p) {
    ・大きさ: 手本で ふくらむ 間は 1.5倍より 大きい（いちばん 1.875倍）。いつも 1.5倍で はかると、ふくらんで 新しく 見えた 絵の ふちを 押しても 下の 良い粒が 取られた
    ・形: 絵の 四角の 角は すきとおって いて、下の 良い粒が 見えて いる。そこを「絵への 直撃」と みなすと、良い粒を 押した 人が わるい粒を 取って しまった
    形は 粒の 点の 絵（GRAIN_ROWS など。「.」が すきとおった 所）そのもの。2袋目からは 今までどおり 1倍の 四角 */
-function grainVisScale(g) {
-  if (!firstBagFace(g)) return 1;
-  const m = /matrix\(\s*([-\d.e]+)\s*,\s*([-\d.e]+)/.exec(g.img && getComputedStyle(g.img).transform || "");
-  const s = m ? Math.hypot(+m[1], +m[2]) : 0;
-  return s > 0 ? s : 1.5;
+/* 絵の 変換は 倍率 だけで なく 行列 ぜんぶ（a,b,c,d,e,f）を 逆に かけて もどす（Codex指摘 3つめ）。皿を たたいて ゆれる 間（wig）は 絵が 上へ 4px・-12° 動くので、
+   倍率 だけ もどすと、見えて いる 所と ちがう 所の 透明を 調べて、すきとおった 所から 見える 良い粒を 押しても 顔つきの 粒が 取られた。
+   ふくらむ（hint）・ゆれる（wig）・出て くる 動き の どれも、計算された transform の 行列（その しゅんかんの 見た目）を 使う 同じ 道。
+   行列が 読めない・逆に できない ときは 1.5倍。顔つきで ない 粒は 1倍の 四角の まま（今までどおり） */
+const FLAT = { a:1, b:0, c:0, d:1, e:0, f:0, det:1, face:false };
+function grainVisMatrix(g) {
+  if (!firstBagFace(g)) return FLAT;
+  const m = /^matrix\(([^)]*)\)$/.exec(g.img && getComputedStyle(g.img).transform || "");
+  const n = m ? m[1].split(",").map(Number) : [];
+  if (n.length === 6 && n.every(isFinite)) {
+    const [a, b, c, d, e, f] = n, det = a * d - b * c;
+    if (Math.abs(det) > 1e-6) return { a, b, c, d, e, f, det, face:true };
+  }
+  return { a:1.5, b:0, c:0, d:1.5, e:0, f:0, det:2.25, face:true };
 }
 function grainOpaque(g, u, v) { /* u, v は 1倍に もどした 粒の 中の 場所 */
   const rows = g.kind === "seiryu" || g.kind === "higai" ? LOT_LOOKS[(typeof LOT !== "undefined" && LOT.look) || 0].rows : GRAIN_ROWS;

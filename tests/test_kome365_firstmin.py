@@ -177,10 +177,11 @@ eval(html.slice(a, b));
     if (st.ok != null) traceInfo.okN = st.ok;
     if (st.len != null) choices = 'L'.repeat(st.len);
     if (st.wx) skyWxInfo = { key: st.wx };
+    if (st.pev) { const ev = st.pev; f.patrolEvents = () => ev; }
     if (st.tick) await new Promise(r => setTimeout(r, 0));
     paddyDraw();
     out.push({ base: paddyInfo.base, nursery: paddyInfo.nursery, wet: root.hasAttribute('data-wet'), veh: root.getAttribute('data-veh') || '', key: paddyInfo.key, lv: paddyInfo.lv, marks: paddyInfo.marks,
-      pop: parts['.pdPop']._cl.has('on'), popKey: paddyInfo.pop, bg: (parts['.pdBase'].style.backgroundImage || '').indexOf('data:image/svg+xml') >= 0, trail: (parts['.pdTrail'].style.backgroundImage || '').indexOf('data:image/svg+xml') >= 0 });
+      pop: parts['.pdPop']._cl.has('on'), popKey: paddyInfo.pop, cond: paddyInfo.cond || '', water: /%2357b6f2|%232f7fd0/i.test(parts['.pdBase'].style.backgroundImage || ''), crack: /%233a2413/i.test(parts['.pdBase'].style.backgroundImage || ''), bg: (parts['.pdBase'].style.backgroundImage || '').indexOf('data:image/svg+xml') >= 0, trail: (parts['.pdTrail'].style.backgroundImage || '').indexOf('data:image/svg+xml') >= 0 });
   }
   console.log(JSON.stringify(out));
 })();
@@ -995,6 +996,34 @@ console.log(JSON.stringify(out));
         r = paddy_run([{"ok": 2, "len": 5, "f": D}, {"len": 6, "f": {"emergeDoy": 100, "doy": 100}}, {"len": 7, "f": {"flooded": 110, "doy": 110}}])
         self.assertEqual([x["base"] for x in r], ["dseed", "dsprout", "kuki"])
         self.assertEqual([x["veh"] for x in r], ["", "", ""])
+
+    def test_paddy_shows_water_and_field_state(self):
+        # Codex 指摘(周回171): 中干し(engine a_mid: f.water = 'mid')の あとも 青い 水面が のこって いた(絵の キーが 浅水と 同じ 'kuki')。field3d.js は 水面を 消して 乾いた 土を 見せる
+        T = {"method": "transplant", "sowDoy": 95, "tillDepth": 15, "puddleDoy": 115, "transDoy": 120, "water": "shallow", "doy": 150}
+        r = paddy_run([
+            {"ok": 4, "len": 40, "f": T},                                                    # 0 浅水
+            {"len": 41, "f": {"water": "mid", "midStart": 151, "doy": 152}},                  # 1 中干しの はじめ(しめった 土)
+            {"len": 42, "f": {"doy": 160}},                                                   # 2 乾いた 土
+            {"len": 43, "f": {"doy": 170}},                                                   # 3 ひび
+            {"len": 44, "f": {"water": "intermittent", "doy": 172}},                          # 4 間断(水と 泥)
+            {"len": 45, "f": {"water": "deep", "doy": 174}},                                  # 5 深水
+            {"len": 46, "f": {"piDoy": 180, "water": "drained", "drainDoy": 181, "doy": 200}},  # 6 落水の あと(穂の もと)
+        ])
+        self.assertEqual([x["base"] for x in r], ["kuki"] * 6 + ["moto"])
+        self.assertEqual([x["water"] for x in r], [True, False, False, False, True, True, False])
+        self.assertEqual([x["cond"] for x in r], ["water", "wet", "fine", "crack", "inter", "deep", "crack"])
+        self.assertTrue(r[3]["crack"])
+        self.assertEqual(len({x["key"] for x in r}), 7)   # 水の 状態ごとに 絵が ちがう
+        # 草・いもち病・ウンカの 坪枯れ・倒伏(見回りの 発見と エンジンの 状態)
+        r = paddy_run([
+            {"ok": 4, "len": 40, "f": T},
+            {"len": 41, "pev": [{"kind": "hie", "fixed": False}]},
+            {"len": 42, "pev": [{"kind": "hie", "fixed": True}, {"kind": "blast", "fixed": False}]},
+            {"len": 43, "pev": [], "f": {"bphMax": 80}},
+            {"len": 44, "f": {"headDoy": 210, "matDoy": 250, "lodged": True, "bphMax": 0, "doy": 252}},
+        ])
+        self.assertEqual([x["cond"] for x in r], ["water", "waterW", "waterB", "waterU", "waterL"])
+        self.assertEqual(r[4]["base"], "ripe")
 
     def test_paddy_drawn_in_pixels_only(self):
         # 字・数字・音は 足さない。動きは transform だけ・動きを へらす 設定では 止める(絵は 見える)

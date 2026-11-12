@@ -170,6 +170,9 @@ const $ = id => id === 'swPaddy' ? root : null;
 let f = { method: 'transplant', doy: 1, tillDepth: null }, choices = '', skyWxInfo = { key: 'fair' };
 const traceInfo = { okN: 0 };
 eval(html.slice(a, b));
+// 周回172: 絵に 奥の 水路・水口(水の 色)が ある ので、水・ひびは 田の 中(y 5〜13)の ドット だけで 見る
+function pixMap(img){ const sv = decodeURIComponent(String(img || '')), g = {}; let m; const re = /<rect x="(\d+)" y="(\d+)" width="(\d+)" height="1" fill="(#[0-9a-f]+)"/gi; while ((m = re.exec(sv))) { for (let i = 0; i < +m[3]; i++) g[(+m[1] + i) + ',' + m[2]] = m[4].toLowerCase(); } return g; }
+function fieldHas(img, cols){ const sv = decodeURIComponent(String(img || '')); let m; const re = /<rect x="(\d+)" y="(\d+)" width="(\d+)" height="1" fill="(#[0-9a-f]+)"/gi; while ((m = re.exec(sv))) { const y = +m[2]; if (y >= 5 && y <= 13 && cols.indexOf(m[4].toLowerCase()) >= 0) return true; } return false; }
 (async () => {
   const out = [];
   for (const st of JSON.parse(process.argv[2])) {
@@ -181,7 +184,7 @@ eval(html.slice(a, b));
     if (st.tick) await new Promise(r => setTimeout(r, 0));
     paddyDraw();
     out.push({ base: paddyInfo.base, nursery: paddyInfo.nursery, wet: root.hasAttribute('data-wet'), veh: root.getAttribute('data-veh') || '', key: paddyInfo.key, lv: paddyInfo.lv, marks: paddyInfo.marks,
-      pop: parts['.pdPop']._cl.has('on'), popKey: paddyInfo.pop, img: parts['.pdBase'].style.backgroundImage || '', trailImg: parts['.pdTrail'].style.backgroundImage || '', cond: paddyInfo.cond || '', water: /%2357b6f2|%232f7fd0/i.test(parts['.pdBase'].style.backgroundImage || ''), crack: /%233a2413/i.test(parts['.pdBase'].style.backgroundImage || ''), bg: (parts['.pdBase'].style.backgroundImage || '').indexOf('data:image/svg+xml') >= 0, trail: (parts['.pdTrail'].style.backgroundImage || '').indexOf('data:image/svg+xml') >= 0 });
+      pop: parts['.pdPop']._cl.has('on'), popKey: paddyInfo.pop, img: parts['.pdBase'].style.backgroundImage || '', trailImg: parts['.pdTrail'].style.backgroundImage || '', cond: paddyInfo.cond || '', pix: pixMap(parts['.pdBase'].style.backgroundImage), water: fieldHas(parts['.pdBase'].style.backgroundImage, ['#57b6f2', '#2f7fd0']), crack: fieldHas(parts['.pdBase'].style.backgroundImage, ['#3a2413']), bg: (parts['.pdBase'].style.backgroundImage || '').indexOf('data:image/svg+xml') >= 0, trail: (parts['.pdTrail'].style.backgroundImage || '').indexOf('data:image/svg+xml') >= 0 });
   }
   console.log(JSON.stringify(out));
 })();
@@ -209,7 +212,7 @@ const fs = require('fs'), path = require('path');
 let chromium; try { ({ chromium } = require('playwright')); } catch (e) { console.log(JSON.stringify({ skip: 'playwright なし' })); process.exit(0); }
 const [htmlPath, root, vpsJ, savesJ] = process.argv.slice(1, 5);
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.json': 'application/json', '.png': 'image/png', '.jpg': 'image/jpeg', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.css': 'text/css', '.ico': 'image/x-icon' };
-const IDS = ['swCard', 'swSL', 'swSR', 'swBigDate', 'swHand', 'swKakashi', 'swSkyWx', 'swAheadWx', 'swDayGuest', 'swReunion', 'swHome', 'swTrace', 'swGrow', 'swFriends'];
+const IDS = ['swCard', 'swHand', 'swKakashi', 'swSkyWx', 'swAheadWx', 'swDayGuest', 'swReunion', 'swHome', 'swTrace', 'swGrow', 'swFriends', 'swCount', 'swSun'];   // 周回172: 見る 部品は 下で 機械的に 集める(位置を 持つ 要素 ぜんぶ)。この 一覧は「集めた 中に 入って いる はず」の 確かめ だけ
 (async () => {
   let b; try { b = await chromium.launch(); } catch (e) { console.log(JSON.stringify({ skip: 'chromium が 起動しない' })); return; }
   const saves = JSON.parse(savesJ), out = [];
@@ -227,9 +230,11 @@ const IDS = ['swCard', 'swSL', 'swSR', 'swBigDate', 'swHand', 'swKakashi', 'swSk
       const R = e => { const r = e.getBoundingClientRect(); return [r.left, r.top, r.right, r.bottom]; };
       const vis = e => { if (!e) return false; for (let n = e; n && n.nodeType === 1; n = n.parentElement) { const cs = getComputedStyle(n); if (cs.display === 'none' || cs.visibility === 'hidden' || +cs.opacity < 0.3) return false; } return e.getClientRects().length > 0; };
       const e = document.getElementById('swPaddy'); if (!window.__swipe || !vis(e)) return { hidden: true };
-      const A = R(e), o = {}; for (const id of IDS) { const x = document.getElementById(id); if (!vis(x)) continue; const B = R(x); const ix = Math.min(A[2], B[2]) - Math.max(A[0], B[0]), iy = Math.min(A[3], B[3]) - Math.max(A[1], B[1]); if (ix > 0.5 && iy > 0.5) o[id] = Math.round(ix * iy); }
+      const A = R(e), o = {}, seen = [], skip = new Set(['sGame', 'swipe', 'swStage', 'swWrap', 'swPaddy', 'swPvScene', 'swSkyTint', 'swStageTint', 'swHealthTint', 'swSunLight']);   // 色みの 層(景色 ぜんぶに かける 色)は 部品 では ない
+      for (const x of document.querySelectorAll('#sGame [id]')) { if (skip.has(x.id) || e.contains(x) || x.contains(e)) continue; const cs = getComputedStyle(x); if (cs.position === 'static' && !(x.parentElement && x.parentElement.id === 'swWrap')) continue; if (!vis(x)) continue; const B = R(x); if ((B[2] - B[0]) * (B[3] - B[1]) >= 0.6 * innerWidth * innerHeight) continue; seen.push(x.id);
+        const ix = Math.min(A[2], B[2]) - Math.max(A[0], B[0]), iy = Math.min(A[3], B[3]) - Math.max(A[1], B[1]); if (ix > 0.5 && iy > 0.5) o[x.id] = Math.round(ix * iy); }
       const st = window.__swipe.paddyState(), rn = e.querySelector('.pdRain');
-      return { box: A.map(Math.round), inView: A[0] >= 0 && A[1] >= 0 && A[2] <= innerWidth && A[3] <= innerHeight && A[2] - A[0] > 0, hscroll: document.documentElement.scrollWidth > innerWidth, over: o, base: st.base, wet: st.wet,
+      return { seen: seen.filter(id => IDS.includes(id)), box: A.map(Math.round), inView: A[0] >= 0 && A[1] >= 0 && A[2] <= innerWidth && A[3] <= innerHeight && A[2] - A[0] > 0, hscroll: document.documentElement.scrollWidth > innerWidth, over: o, base: st.base, wet: st.wet,
         rainAnim: getComputedStyle(rn).animationName, removed: ['swMood', 'swGreet', 'swRich', 'swDelay', 'swSeasonScene'].filter(id => document.getElementById(id)) };
     }, IDS);
     out.push(Object.assign({ w, h, name, rm, errs: errs.length }, r));
@@ -238,6 +243,10 @@ const IDS = ['swCard', 'swSL', 'swSR', 'swBigDate', 'swHand', 'swKakashi', 'swSk
   await b.close(); console.log(JSON.stringify(out));
 })();
 """
+
+
+# 周回172: 6つの 画面 × 保存 の 場面で、太陽(運営者が のこす と 決めた)が 田んぼの 絵に かかって よい 場面の 数の 上の かぎり(いまの 数。ふえたら 落ちる)
+SUN_HITS_MAX = 0
 
 
 def css_rule(selector):
@@ -257,17 +266,21 @@ class TestKome365FirstMinute(unittest.TestCase):
             self.assertNotIn("#%s{" % gone, HTML, gone)
         for fn in ("function richDraw(", "function richNext(", "function delayDraw(", "function branchAdd(", "function greetSet(", "function greetClear(", "function pvMoodSet(", "function fingerStroke("):
             self.assertNotIn(fn, HTML, fn)
-        # 残す もの(かかし・太陽・育ちの 丸・天気の 丸・その日の 生きもの・土の タイルの 列・カードの 後ろの 稲の 列)
-        for kept in ("swKakashi", "swSun", "swGrow", "swSkyWx", "swAheadWx", "swDayGuest", "swReunion", "swTrace", "swStagePlants"):
+        # 残す もの(かかし・太陽・育ちの 点の 列・その日の 生きもの・土の タイルの 列・カードの 後ろの 稲の 列)
+        for kept in ("swKakashi", "swSun", "swGrow", "swDayGuest", "swReunion", "swTrace", "swStagePlants"):
             self.assertEqual(HTML.count('id="%s"' % kept), 1, kept)
+        # 周回172(運営者の声「左上や右上の丸いアイコンはなんなんのか分からない。削除」): 天気の 丸・あしたの 空の 丸・育ちの 丸の 絵を 消した
+        for gone in ("swSkyWx", "swAheadWx"):
+            self.assertNotIn(gone, HTML, gone)
+        self.assertNotIn("grIc", HTML)
 
     def test_paddy_is_anchored_above_card(self):
         # 画面の高さの割合ではなく、カードの上端から数える(土の タイルの 列の すぐ 上)
         pd = css_rule("#swPaddy")
-        self.assertIn("bottom:calc(100% + 48px)", pd)
+        self.assertIn("bottom:calc(100% + var(--pdb))", pd)
         self.assertNotRegex(pd, r"(^|;)top:")
-        self.assertIn("width:calc(var(--pd) * 44);height:calc(var(--pd) * 16)", pd)
-        self.assertIn("--pd:5px", pd)   # かかし(5.25px)と ほぼ 同じ ドット
+        self.assertIn("width:calc(var(--pd) * 44);height:calc(var(--pd) * 18)", pd)   # 周回172: ななめ上から 見た 田んぼ(44×18)
+        self.assertIn("#swWrap{--pd:6px;--pdb:48px;--pdx:-3px}", HTML)   # 周回172: 丸が 消えて あいた ぶん 6px(かかしは 5.25px)
 
     def test_day_guest_stays_out_of_weather_column(self):
         # 訪問者は 今日の空・あしたの空の丸の列(右から84px)より左に置く
@@ -290,7 +303,7 @@ class TestKome365FirstMinute(unittest.TestCase):
 
     def test_trace_row_fits_between_side_columns_on_low_screens(self):
         # 周回153: 790px以下では世話のあとを30pxにし、季節の景色・あしたの空の丸にかからない幅にする
-        self.assertIn("@media (max-height:790px){#swTrace .tr{width:30px;height:30px;background-size:30px 30px}#swPaddy{bottom:calc(100% + 38px)}}", HTML)   # 周回171: 花の 列・金の 花の かわりに 田んぼの 絵
+        self.assertIn("@media (max-height:790px){#swTrace .tr{width:30px;height:30px;background-size:30px 30px}#swWrap{--pdb:38px}}", HTML)   # 周回171: 花の 列・金の 花の かわりに 田んぼの 絵(周回172: 高さは 変数で)
         self.assertNotIn("#swSeasonScene", HTML)   # 周回171: 季節の 景色(木)は 運営者の 声で 消した
 
     def test_guide_waits_for_entering_card(self):
@@ -525,7 +538,8 @@ class TestKome365FirstMinute(unittest.TestCase):
     def test_landscape_small_phone_keeps_card_clear(self):
         # 周回167(横向きの 小さい スマホ): 顔・育ち・かかし・天気を 左右の 空きへ 出す きまりを、幅564px から(640×360・568×320 で カードに かぶって いた)
         # 周回171: 顔(#swMood)と 挨拶の 顔(#swGreet)は 運営者の 声で 消した。育ち・かかし・天気を 左右へ 出す きまりは そのまま
-        self.assertIn("@media (max-height:440px) and (min-width:564px){#swGrow{left:calc(8px - (100vw - 480px) / 2)}#swKakashi{right:calc(10px - (100vw - 480px) / 2)}#swSkyWx{right:calc(8px - (100vw - 480px) / 2)}#swAheadWx{right:calc(14px - (100vw - 480px) / 2)}}", HTML)
+        # 周回172: 育ちの 丸・天気の 丸は 運営者の 声で 消した。かかしを 右へ 出す きまりは そのまま
+        self.assertIn("@media (max-height:440px) and (min-width:564px){#swKakashi{right:calc(10px - (100vw - 480px) / 2)}}", HTML)
         self.assertNotIn("(min-width:660px)", HTML)
         # 564px = カードの 幅 360px + 左右に いちばん 太い 列(もとは 顔の 92px)と 空き 10px ずつ
         self.assertEqual(360 + 2 * (92 + 10), 564)
@@ -842,28 +856,14 @@ class TestKome365FirstMinute(unittest.TestCase):
         self.assertIn("@media (prefers-reduced-motion:reduce){html.booting #sTitle h1::after{animation:none}}", HTML)
 
     def test_short_portrait_weather_clears_card_date(self):
-        # 周回168: 320×568 で カードの 上の 端が 238〜262px まで 上がり、季節の 景色・今日の 天気・あしたの 空が 日付に かぶって いた(24枚中 22・12・5枚)
-        rule = "@media (min-height:441px) and (max-height:600px) and (min-width:301px) and (max-width:480px){#swSkyWx{top:172px;width:60px;height:60px}#swSkyWx .wxIc{width:42px;height:42px}#swAheadWx{top:84px;right:100px;width:44px;height:44px;font-size:28px}#swAheadWx .ahIc{width:30px;height:30px}#swAheadWx .ahBadge{right:-6px;top:-6px;width:18px;height:18px;background-size:14px 14px}}"
-        self.assertIn(rule, HTML)
-        body = rule[rule.index("{") + 1:]
-        # あしたの 空は 遊びの 知らせなので 消さない(置き場所と 大きさだけ。消す・動かす は 運営者の 見た目の 決めごと・周回167)。消すのは 飾りの 景色だけ
-        self.assertNotIn("#swAheadWx{display:none", body)
-        self.assertNotIn("#swAheadWx,", body)
-        self.assertNotIn("#swSeasonScene", HTML)   # 周回171: 季節の 景色(木)は 運営者の 声で 消した
-        # 今日の 天気の 下の 端(172 + 60 = 232px)は カードの いちばん 上(238px)より 上・かかし(下の 端 169px)より 下
-        self.assertLessEqual(172 + 60, 238)
-        self.assertGreaterEqual(172, 169)
-        # あしたの 空(320px 幅で 左 160〜右 204px・上 84〜下 128px。小さな 日の出の しるしは 6px はみ出す)は かかし(左の 端 210px)の 左・顔(右の 端 123px)の 右・カードより ずっと 上
-        swipe_right = 320 - 16
-        left, right = swipe_right - 100 - 44, swipe_right - 100
-        self.assertLessEqual(right + 6, 210)
-        self.assertGreaterEqual(left, 123)
-        self.assertLess(84 + 44, 238)
-        # 横向き(440px 以下)・390×844 などの 大きい 画面の 置き方は 変えない
-        self.assertIn("#swSkyWx{position:absolute;right:8px;top:196px;", HTML)
-        self.assertIn("#swAheadWx{position:absolute;right:14px;top:272px;", HTML)
-        self.assertIn("@media (max-height:440px) and (min-width:564px){#swGrow{left:calc(8px - (100vw - 480px) / 2)}", HTML)
-
+        # 周回168: 320×568 で 季節の 景色・今日の 天気・あしたの 空が 日付に かぶって いた(24枚中 22・12・5枚)。
+        # 周回171 で 景色、周回172 で 天気の 丸・あしたの 空の 丸を 運営者の 声で 消した(「左上や右上の丸いアイコンはなんなんのか分からない。削除」)。かぶる もの そのものが 無い
+        self.assertNotIn("#swSeasonScene", HTML)
+        self.assertNotIn("#swSkyWx", HTML)
+        self.assertNotIn("#swAheadWx", HTML)
+        self.assertNotIn("@media (min-height:441px) and (max-height:600px) and (min-width:301px) and (max-width:480px){#swSkyWx", HTML)
+        # 横向きで かかしを 右の 空きへ 出す きまりは そのまま
+        self.assertIn("@media (max-height:440px) and (min-width:564px){#swKakashi{right:calc(10px - (100vw - 480px) / 2)}}", HTML)
 
     def test_rotation_mid_drag_does_not_decide(self):
         # 周回169: 指で カードを 持った まま 画面を 回すと(取り消しは 来ない)、カードが 指と とんで 決まった(2/2)
@@ -1107,6 +1107,53 @@ console.log(JSON.stringify(out));
         self.assertIn("@keyframes swPdWin{from{transform:translateX(-100%)}to{transform:none}}", HTML)
         self.assertIn("@keyframes swPdWinIn{from{transform:translateX(100%)}to{transform:none}}", HTML)
 
+    def test_paddy_reads_as_rice_field(self):
+        # 周回172(運営者の声「茶色い四角では田んぼだとわかりにくいのでわかりやすく」): ななめ上から 見た 田んぼ。冬の 土(○ 0)でも、草の 畦・刈り株の 列・水路の 青が 見える
+        r = paddy_run([{"ok": 0, "len": 0, "f": {"method": "transplant", "doy": 20}}, {"ok": 12, "len": 1}])
+        for x in r:
+            px = x["pix"]
+            grass = sum(1 for v in px.values() if v in ("#8fd45a", "#4e9b3a"))
+            water = [k for k, v in px.items() if v in ("#57b6f2", "#2f7fd0") and int(k.split(",")[1]) <= 4]
+            stubble = [k for k, v in px.items() if v == "#d9b46a" and 5 <= int(k.split(",")[1]) <= 13]
+            self.assertGreaterEqual(grass, 60, "畦の 草が すくない")
+            self.assertGreaterEqual(len(water), 20, "奥の 水路・水口が 無い")
+            self.assertGreaterEqual(len(stubble), 40, "刈り株の 列が 無い")
+            # 台形: 奥(y=5)の 田は 手前(y=13)より せまい
+            row = lambda y: [int(k.split(",")[0]) for k, v in px.items() if int(k.split(",")[1]) == y and v not in ("#8fd45a", "#4e9b3a", "#9c7a45", "#7e6136")]
+            self.assertLess(max(row(5)) - min(row(5)), max(row(13)) - min(row(13)))
+            # 手前の 畦に 高さ(土手の 面)
+            self.assertTrue(any(v == "#5f4528" for k, v in px.items() if k.endswith(",17")))
+        # ○ 0 の 土は 砂場に 見えない こい めの 茶(明るさ 0.5 未満)
+        soil = [v for k, v in r[0]["pix"].items() if 5 <= int(k.split(",")[1]) <= 13 and 12 <= int(k.split(",")[0]) <= 31 and v not in ("#d9b46a", "#a88b55")]
+        light = lambda h: (int(h[1:3], 16) * 299 + int(h[3:5], 16) * 587 + int(h[5:7], 16) * 114) / 255000
+        from collections import Counter
+        main = Counter(soil).most_common(1)[0][0]
+        self.assertLess(light(main), 0.5, main)
+
+    def test_round_icons_removed_dots_kept_above_paddy(self):
+        # 周回172(運営者の声「左上や右上の丸いアイコンはなんなんのか分からない。削除」): 育ちの 丸の 絵・天気の 丸・あしたの 空は 消した。育ちの 点の 列は 田んぼの 絵の すぐ 上へ(いまは 残す・運営者に 聞いて いる)
+        wrap = HTML[HTML.index('<div id="swWrap">'):HTML.index('<div id="swCard"')]
+        self.assertIn('<div id="swGrow" aria-hidden="true"><span class="grDots"></span></div>', wrap)
+        self.assertIn("#swGrow{position:absolute;left:calc(50% + var(--pdx));bottom:calc(100% + var(--pdb) + var(--pd) * 18 + 4px);", HTML)
+        # 点の 列も 消す と 決まったら、この 1行を 足す だけ(CSS)
+        self.assertNotIn("#swGrow{display:none!important}", HTML)
+        for gone in ("swSkyWx", "swAheadWx", "aheadWxInfo", "grIc", "pixWxSet("):
+            self.assertNotIn(gone, HTML, gone)
+        # 今日の 天気の 読みは 田んぼの 絵の 雨の ために 残す
+        self.assertIn("skyWxInfo = { icon: w.icon, key: wk, text: w.text, temp: w.temp, rain: w.rain };", HTML)
+
+    def test_landscape_and_short_screens_keep_paddy_clear(self):
+        # 周回172: 横の 低い 画面では カードの 上の 帯が 太陽の 通り道・仲間・収穫まで の 日数で いっぱいで、絵が かくれて いた(568×320 で 太陽 156枚・日数 27枚)。カードの 左の 空きへ
+        self.assertIn("@media (max-height:440px) and (min-width:564px){#swWrap #swPaddy{left:auto;right:calc(100% + 8px);margin-left:0;bottom:auto;top:14px}", HTML)
+        self.assertIn("@media (max-height:440px){#sGame #swCount{left:auto;right:12px;top:8px;transform:none}", HTML)
+        # カードの うしろの 稲の 列は 絵の 下の 端より 低く(株の 先は カードの 上 46px・36px)
+        self.assertIn('#swStagePlants[data-stage="4"] .pl,#swStagePlants[data-stage="5"] .pl{font-size:min(56px,16.7vw)}', HTML)
+        self.assertLessEqual(56 - 10, 48 - 2)
+        self.assertLessEqual(46 - 10, 38 - 2)
+        # 背の 高い 画面では その日の 生きもの・再会の 生きものを 絵(と 点の 列)より 上へ
+        self.assertIn("@media (min-height:741px){#swDayGuest{top:calc(36% - 120px)}}", HTML)
+        self.assertIn("#swReunion{top:calc(36% - 120px);left:34%}", HTML)
+
     def test_paddy_drawn_in_pixels_only(self):
         # 字・数字・音は 足さない。動きは transform だけ・動きを へらす 設定では 止める(絵は 見える)
         code = HTML[HTML.index("  var PDPAL = {"):HTML.index("  /* 小さな再会(周回125", HTML.index("  var PDPAL = {"))]
@@ -1132,6 +1179,7 @@ console.log(JSON.stringify(out));
         if isinstance(r, dict) and r.get("skip"):
             raise unittest.SkipTest(r["skip"])
         expect = {"rain": "soil", "nursery": "soil", "nae": ("nae", "kuki"), "head": "head", "ripe": "ripe", "stubble": "stubble"}
+        sun_hits = []
         for x in r:
             name = "%dx%d %s%s" % (x["w"], x["h"], x["name"], " reduce" if x["rm"] else "")
             self.assertNotIn("hidden", x, name + ": 田んぼの 絵が 見えない")
@@ -1139,12 +1187,18 @@ console.log(JSON.stringify(out));
             self.assertEqual(x["removed"], [], name)
             self.assertTrue(x["inView"], name + " %r" % (x["box"],))
             self.assertFalse(x["hscroll"], name)
+            # 周回172: 太陽は 運営者が「のこす」と 決めた・通り道で かかる ことが ある。見ない のでは なく 数え、下で 上の かぎりと くらべる
+            sun = x["over"].pop("swSun", 0)
+            if sun:
+                sun_hits.append(name)
             self.assertEqual(x["over"], {}, name + ": 重なり %r" % (x["over"],))
+            self.assertIn("swCard", x["seen"], name)   # 機械で 集めた 部品の 中に カードが ある(集め方が こわれて いない)
             e = expect[x["name"]]
             self.assertIn(x["base"], e if isinstance(e, tuple) else (e,), name)
             if x["name"] == "rain":
                 self.assertTrue(x["wet"], name)
                 self.assertEqual(x["rainAnim"], "none" if x["rm"] else "swPdRain", name)
+        self.assertLessEqual(len(sun_hits), SUN_HITS_MAX, "太陽が 田んぼの 絵に かかる 場面が ふえた: %r" % (sun_hits,))
 
 if __name__ == "__main__":
     unittest.main()

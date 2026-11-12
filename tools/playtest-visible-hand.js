@@ -24,7 +24,9 @@ async function runVisibleHandCheck(browser, url, out) {
     await page.evaluate(() => nishioPixel.rollPut(1807.5, 1902.5));
     await page.waitForFunction(() => {
       const P = nishioPixel, e = document.getElementById('tapDemo'), sp = P.tapDemo.spot();
-      return e && !e.hidden && !P.worldMode && !P.mapCovered(true) && sp && Math.abs(sp.q.x - 374) < 1 && Math.abs(sp.q.y - 70) < 1;
+      const r = e && e.getBoundingClientRect();
+      return e && !e.hidden && !P.worldMode && !P.mapCovered(true) && sp && Math.abs(sp.q.x - 374) < 1 && Math.abs(sp.q.y - 70) < 1
+        && r.left <= 374 && r.right >= 374 && r.top <= 103 && r.bottom >= 103;   // 計算上の 指先だけでなく、実際に 見えた 手も 待つ
     }, null, { timeout: 15000 });
     const before = await page.evaluate(() => {
       const r = document.getElementById('tapDemo').getBoundingClientRect(), P = nishioPixel;
@@ -45,7 +47,9 @@ async function runVisibleHandCheck(browser, url, out) {
     await page.evaluate(() => nishioPixel.rollPut(1807.5, 1902.5));
     await page.waitForFunction(() => {
       const e = document.getElementById('tapDemo'), s = nishioPixel.tapDemo.spot();
-      return e && !e.hidden && s && Math.abs(s.q.x - 374) < 1 && Math.abs(s.q.y - 70) < 1;
+      const r = e && e.getBoundingClientRect();
+      return e && !e.hidden && s && Math.abs(s.q.x - 374) < 1 && Math.abs(s.q.y - 70) < 1
+        && r.left <= 374 && r.right >= 374 && r.top <= 103 && r.bottom >= 103;
     }, null, { timeout: 15000 });
     const outsideHand = await page.evaluate(() => document.getElementById('tapDemo').getBoundingClientRect().left > 345);
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: 345, y: 125, id: 1 }] });

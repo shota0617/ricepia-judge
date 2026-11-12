@@ -112,9 +112,11 @@
   .grain { position:absolute; left:0; top:0; display:block; pointer-events:none; }
   .grain img { display:block; width:100%; height:100%; }
   .grain img.wig { animation:wig .32s ease; }
-  @keyframes wig { 0%,100% { transform:none; } 30% { transform:translateY(-22%) rotate(-12deg); } 65% { transform:rotate(8deg); } }
+  @keyframes wig { 0%,100% { transform:scale(var(--face, 1)); } 30% { transform:translateY(-22%) rotate(-12deg) scale(var(--face, 1)); } 65% { transform:rotate(8deg) scale(var(--face, 1)); } }
   .grain img.hint { animation:hint 1s ease-in-out infinite; }
-  @keyframes hint { 0%,100% { transform:scale(1); } 50% { transform:scale(1.25); } }
+  @keyframes hint { 0%,100% { transform:scale(var(--face, 1)); } 50% { transform:scale(calc(var(--face, 1) * 1.25)); } }
+  /* ふくらむ・ゆれる 動きは、その 粒の いまの 大きさ（--face）を 元に する（サイクル154）。1袋目の 顔つきの 粒（1.5倍）は、旧版では 動きが 1倍の 形で
+     上書きして、ふくらんで 知らせる はずが 1.5倍 から 1.0〜1.25倍へ ちぢんで いた（390×844実測: 0.2秒おき 100回中91回 1.5倍より 小さい）。2袋目からは --face が 1 なので 今までどおり */
   .flyGrain { position:fixed; z-index:50; pointer-events:none; }
 
   /* きめる: 行ごとの ● が下のボタンと同じ列に落ちる。いちばん右の ● が等級 */
@@ -1180,7 +1182,7 @@ function buildGrains() {
     const img = document.createElement("img");
     img.src = grainSprite(kind, "far"); img.alt = "";
     b.appendChild(img);
-    const g = { el:b, img, kind, x:PW / 2 + Math.cos(a) * d, y:PH / 2 + Math.sin(a) * d * 0.8, r:Math.round(Math.random() * 120 - 60), z:bad ? 1 : 2 + i, gone:false, awake:0 };
+    const g = { el:b, img, kind, x:PW / 2 + Math.cos(a) * d, y:PH / 2 + Math.sin(a) * d * 0.8, r:Math.round(Math.random() * 120 - 60), z:bad ? 1 : 2 + i, dom:i, gone:false, awake:0 }; /* dom: 皿に 足した 順（同じ 重なり順なら、あとの 粒が 手前に えがかれる） */
     b.style.zIndex = g.z;
     b.addEventListener("click", () => { tapGrain(g); });
     inner.appendChild(b);
@@ -1616,6 +1618,7 @@ function refreshBadFaces() {
   grains.forEach(g => { if (g.gone || g.kind === "seiryu") return;
     const faceNew = firstBagFace(g) && g.img.style.transform !== "scale(1.5)"; /* 顔が新しく出る時だけ、後のふわりとした出現を付ける（サイクル149・差45） */
     g.img.src = grainSprite(g.kind, grainMood(g));
+    g.img.style.setProperty("--face", firstBagFace(g) ? "1.5" : "1"); /* 動き（ふくらむ・ゆれる）も この 大きさを 元に する（サイクル154） */
     g.img.style.transform = firstBagFace(g) ? "scale(1.5)" : ""; /* 寄った後も維持し、倍率の境界で突然縮まないようにする（Codexレビュー指摘・サイクル83） */
     if (firstBagFace(g)) { g.z = FACE_Z; g.el.style.zIndex = FACE_Z; } /* 最初の袋で顔が出たわるい粒は、良い粒の上に出す（サイクル136・最初の1分）。山の下に隠すための重なり順（1）のままだったため、広げた後も大きくなった顔が良い粒の下に半分隠れていた（390×844実測） */
     if (faceNew && g.img.animate) g.img.animate([{ transform:"scale(1)" }, { transform:"scale(1.575)", offset:.7 }, { transform:"scale(1.5)" }], { duration:260 * motion, easing:"ease-out" }); /* 最初の袋で顔が出る瞬間も、他の現れるもの（チップ=ふわり260ms・差30／実物の写真=差44）と同じくふわりと現れる形にそろえる（サイクル149・差分テーマ差45）。旧版は src の差し替えと scale(1.5) の即切り替えだけで、顔が出た瞬間のアニメーションは0件だった（390×844実測・わるい粒2粒とも）。最終の大きさ（1.5倍）は従来どおりで、顔が新しく出た時だけ1回付け、すでに顔が出ている粒（refreshBadFaces の再呼び出し）には付けない。寄って顔が出る経路（2袋目以降）は従来どおり即時 */ });
@@ -1786,13 +1789,41 @@ function grainAt(p) {
   let best = null, bestOn = false; /* 指の真下に粒そのものがあれば、その粒を先に取る（サイクル136・最初の1分）。旧版はゆるさの枠（上下12px）に入った粒のうち重なり順が上の粒を選んでいたため、見えているわるい粒の真ん中を押しても、となりの良い粒のゆるさの枠が先に当たり、良い粒が揺れるだけで取れなかった（390×844実測・最初の袋: 真ん中タップ24回中10回が取れず、同じ所を40回押しても取れない袋があった）。ゆるさの枠は、どの粒にも直接当たらなかった時だけ使う */
   grains.forEach(g => {
     if (g.gone || g.el.hidden) return;
-    const a = g.r * Math.PI / 180, dx = p.x - g.x, dy = p.y - g.y;
-    const u = dx * Math.cos(a) + dy * Math.sin(a), v = -dx * Math.sin(a) + dy * Math.cos(a);
+    const a = g.r * Math.PI / 180, dx = p.x - g.x, dy = p.y - g.y, M = grainVisMatrix(g);
+    const u0 = dx * Math.cos(a) + dy * Math.sin(a), v0 = -dx * Math.sin(a) + dy * Math.cos(a), ue = u0 - M.e, ve = v0 - M.f;
+    const u = (M.d * ue - M.c * ve) / M.det, v = (-M.b * ue + M.a * ve) / M.det; /* 当たりは 見える 大きさに 合わせる（サイクル154）。1袋目の 顔つきの わるい粒は 1.5倍で 見えるのに 当たりは 1倍の ままで、
+       絵の ふちを 押すと となりの 良い粒の 当たりが 先に 取られた（390×844実測: 絵の 中の 40点で 取れた 35 → 40、良い粒と 重なる 所 だけの 38点で 12 → 38）。顔つきの 粒の 重なり順は 良い粒より 上（FACE_Z）なので、絵の 中なら 先に 取れる */
     if (!(Math.abs(u) <= GW / 2 + padU && Math.abs(v) <= GH / 2 + padV)) return;
-    const on = Math.abs(u) <= GW / 2 && Math.abs(v) <= GH / 2;
-    if (!best || (on && !bestOn) || (on === bestOn && g.z > best.z)) { best = g; bestOn = on; }
+    const on = Math.abs(u) <= GW / 2 && Math.abs(v) <= GH / 2 && (!M.face || grainOpaque(g, u, v)); /* 顔つきの 粒は 絵の すきとおって いない 所だけ */
+    if (!best || (on && !bestOn) || (on === bestOn && (g.z > best.z || g.z === best.z && g.dom > best.dom))) { best = g; bestOn = on; }
+    /* 重なり順（z）が 同じ 粒どうしは、えがかれる 順（皿に 足した 順 dom。あとが 手前）で 決める（サイクル154・Codex指摘）。grains は 足した あとで まぜて あり、
+       配列の 先の 粒を 返すと、顔つきの 粒どうしが 重なった 所で 見えて いる 手前の 粒では なく 奥の 粒が 取れた。2袋目からの わるい粒どうし（z 1）も 同じ */
   });
   return best;
+}
+/* 1袋目の 顔つきの 粒の 当たりは、その しゅんかん 見えて いる 大きさ・形で 決める（サイクル154・Codex指摘 2つ）。
+   ・大きさ: 手本で ふくらむ 間は 1.5倍より 大きい（いちばん 1.875倍）。いつも 1.5倍で はかると、ふくらんで 新しく 見えた 絵の ふちを 押しても 下の 良い粒が 取られた
+   ・形: 絵の 四角の 角は すきとおって いて、下の 良い粒が 見えて いる。そこを「絵への 直撃」と みなすと、良い粒を 押した 人が わるい粒を 取って しまった
+   形は 粒の 点の 絵（GRAIN_ROWS など。「.」が すきとおった 所）そのもの。2袋目からは 今までどおり 1倍の 四角 */
+/* 絵の 変換は 倍率 だけで なく 行列 ぜんぶ（a,b,c,d,e,f）を 逆に かけて もどす（Codex指摘 3つめ）。皿を たたいて ゆれる 間（wig）は 絵が 上へ 4px・-12° 動くので、
+   倍率 だけ もどすと、見えて いる 所と ちがう 所の 透明を 調べて、すきとおった 所から 見える 良い粒を 押しても 顔つきの 粒が 取られた。
+   ふくらむ（hint）・ゆれる（wig）・出て くる 動き の どれも、計算された transform の 行列（その しゅんかんの 見た目）を 使う 同じ 道。
+   行列が 読めない・逆に できない ときは 1.5倍。顔つきで ない 粒は 1倍の 四角の まま（今までどおり） */
+const FLAT = { a:1, b:0, c:0, d:1, e:0, f:0, det:1, face:false };
+function grainVisMatrix(g) {
+  if (!firstBagFace(g)) return FLAT;
+  const m = /^matrix\(([^)]*)\)$/.exec(g.img && getComputedStyle(g.img).transform || "");
+  const n = m ? m[1].split(",").map(Number) : [];
+  if (n.length === 6 && n.every(isFinite)) {
+    const [a, b, c, d, e, f] = n, det = a * d - b * c;
+    if (Math.abs(det) > 1e-6) return { a, b, c, d, e, f, det, face:true };
+  }
+  return { a:1.5, b:0, c:0, d:1.5, e:0, f:0, det:2.25, face:true };
+}
+function grainOpaque(g, u, v) { /* u, v は 1倍に もどした 粒の 中の 場所 */
+  const rows = g.kind === "seiryu" || g.kind === "higai" ? LOT_LOOKS[(typeof LOT !== "undefined" && LOT.look) || 0].rows : GRAIN_ROWS;
+  const c = Math.floor(u / GW * 18 + 9), r = Math.floor(v / GH * 10 + 5);
+  return r >= 0 && r < rows.length && c >= 0 && c < rows[r].length && rows[r][c] !== ".";
 }
 const pts = new Map();
 let sortDrag = null, pinch = null;

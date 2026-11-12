@@ -130,6 +130,11 @@ async function runStartChecks(browser, url, out, { shareOnly = false } = {}) {
       checks[kind + 'Controls'] = fallback;
       fs.writeFileSync(path.join(out, 'start-progress.json'), JSON.stringify(checks, null, 2));
       // 保存した 設定・進行を 読みなおしても 消さない。開始連打で ポイントも 増えない。
+      // サイクル207：記録を 置く 前に、上の 地図タップで 始まった 歩きが おわって お米が 止まるのを 待つ。歩きの とちゅうで 置くと、着いた ごほうび
+      // （人と はじめて 話す +10・すすめられた 所 +5・たからばこ +30）が 置いた 直後〜ページを 読みなおす 前に 入り、読みなおした 記録の ポイントが ふえて いた
+      // （通しで 4回に 3回：+30・+15・+15。置いた とき 歩きが のこって いたのは main の ゲームでも 同じ）。たしかめる 中身（123・456・傾き・しるし・前の 記録）は かえない
+      await page.waitForFunction(() => window.nishioPixel && !nishioPixel.tapGoal && (nishioPixel.roll.v || 0) < 0.05, null, { timeout: 15000 }).catch(() => {});
+      await page.waitForTimeout(400);   // 着いた ときの ごほうびの 保存（会話・行き先）が おわるまで
       const saved = await page.evaluate(() => {
         localStorage.setItem('nsg_tilt', '16');   // 傾きの 強さは 9・12・16 の 3段に なった（運営者の声 2026-10-31「傾き感度上げる」。pixel.js の TILT_DEGS）。はじめの 値（12）で ない 16 を 入れて、読みなおしで 消えない ことを 見る
         localStorage.setItem('nsg_start_test', 'keep');

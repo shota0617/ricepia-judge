@@ -85,8 +85,20 @@
     setInterval(tick, 1000);
   }
 
+  // サイクル207：傾けて 転がす だけの 人は 画面に さわらないので、45秒で カードが 出て（role=dialog）、傾けた まま お米が 止まった
+  // （傾き 6度で 4マス/秒 転がって いる 最中に 45.25秒で カード、50秒 から 速さ 0。2回とも）。遊びの 入力（game.js の notePlayInput：タップ・なぞり・キー・
+  // お米を 転がす ほどの 傾き＝pixel.js の 0.08 より 大きい 力。机に おいた スマホの ゆれは とどかない）でも 無操作の 時計を もどす。45秒・moved の きまりは そのまま
+  var playAt = 0;
+  function play() {
+    var t = Date.now();
+    if (t - playAt < 500) return;   // 転がす 間は 1こまに 何回も 来る
+    playAt = t;
+    act();
+  }
+
   window.NISHIO_IDLE_CARD = {
     IDLE_CARD_SEC: IDLE_CARD_SEC,
+    play: play,
     shouldShow: shouldShow,
     state: function () { return { moved: window.nsgHandMoved === true, shown: shown, liked: liked, idleSec: Math.floor((Date.now() - lastAct) / 1000) }; }
   };

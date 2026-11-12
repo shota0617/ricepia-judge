@@ -163,7 +163,13 @@ let S = loadState();
 let stepMove = false;   // いまの移動が、歩く地図の1歩か（pixel.js の moveTo(…, 'step')）
 // 開始の 位置合わせだけで ようこそ箱を 開かず、最初の 操作から 遊べるようにする。
 let playInteracted = false;
-const notePlayInput = () => { playInteracted = true; window.nsgHandMoved = true; };   // 手で 動かした 合図（無操作カードは 動かした 人にだけ 出す）
+// サイクル207：めいろの 道の 時計（pixel.js の mzRt.t0）は 道すじが できた ときから 数える。読みこみが おそいと、遊びはじめる 前の 待ちも 入る
+// （はかった：ゲームが 始まった ときに もう 89秒。はじめての ゴールの 1.5秒 あとに「めいろ、どうだった？」が 出て、568×320 の 地図の 54% を 20秒 おおった）。
+// はじめて 手で 動かした（タップ・なぞり・キー・傾き）時刻を おぼえ、ゴールの 時間は そこから 数えた ぶんより 長く しない（playSec）。
+// 遊びの 入力は「お疲れ様です」の カードの 無操作の 時計も もどす（idlecard.js の play。傾けて 転がす だけの 人に 45秒で カードが 出て 止まらない ように）
+let playT0 = 0;
+const notePlayInput = () => { playInteracted = true; window.nsgHandMoved = true; if (!playT0) playT0 = performance.now(); if (window.NISHIO_IDLE_CARD && window.NISHIO_IDLE_CARD.play) window.NISHIO_IDLE_CARD.play(); };   // 手で 動かした 合図（無操作カードは 動かした 人にだけ 出す）
+const playSec = sec => (playT0 ? Math.min(sec, (performance.now() - playT0) / 1000) : sec);
 const session = { start: Date.now(), on: false, gained: 0, rewards: 0 };   // 1回に遊んだ間のこと（離脱を減らす：session_end）
 const modeListeners = [];   // あるいて移動／操作して移動の切り替えを知らせる先（pixel.js）
 const save = () => { if (!store.set(stateKey(), S)) toast('このブラウザに きろくを 保存できませんでした。スマホの 空きや、ブラウザの 設定（プライベート モード など）を 見てみてね。'); };
@@ -1348,9 +1354,9 @@ function mazeGoal(id, name, lines) {
   if (MZ.rescueGoal) MZ.rescueGoal(id);   // 迷子の お米と いっしょに 着いた：+30pt と 救助完了の 札（ポイントは mzRescue が 加える）
   let total = 0;
   total += glowArrive(id, lines);   // 光るゴール +20・近くの 寄り道を 光らせる
-  mzShare = { name, sec: gl.sec, stars: 0, m: gl.m || 0, run: gl.run || null, img: snapMaze(), t: Date.now(), city: (me && (cityNear(me.lat, me.lng) || {}).name) || '' };   // ゴールの ごほうびに シェアの ボタン（画面を 投稿する）。city：シェアの 文で 西尾市の 外を「西尾の」と 言わない ため
+  mzShare = { name, sec: playSec(gl.sec), stars: 0, m: gl.m || 0, run: gl.run || null, img: snapMaze(), t: Date.now(), city: (me && (cityNear(me.lat, me.lng) || {}).name) || '' };   // ゴールの ごほうびに シェアの ボタン（画面を 投稿する）。city：シェアの 文で 西尾市の 外を「西尾の」と 言わない ため
   MZ.goalFx('');   // にしおサイクル146（F3）：バナーの 文字は 出さない（紙ふぶきだけ）
-  track('maze_goal', { spot: name, sec: Math.round(gl.sec), m: Math.round(gl.m), stars: 0, way: 0 });
+  track('maze_goal', { spot: name, sec: Math.round(mzShare.sec), m: Math.round(gl.m), stars: 0, way: 0 });
   return total;
 }
 // めいろの ゴールの 名所に 着いた（pixel.js）：その 名所で チェックイン（近くに ほかの 注目スポットが あって 下の 札が そちらでも）。
@@ -2649,7 +2655,10 @@ function refreshNearby() {
   // れんさの 常時表示は しない（サイクル85・Dordogne：続けた数で 優劣を つけない）
   const h1 = dayState().h100, chain = [
     h1 && !h1.done ? `${simple() ? PIA('feet', '100歩たんけん') : '👣'} たんけん <b>${h1.steps}</b>/100` : ''].filter(Boolean).join('　');   // 100歩たんけんの とちゅうも（何歩目か）
-  if (!msgs.length && simple()) { setStatus(chain, true); return; }   // 文字を少なく（ふだん）：気をつけることがないときは、下のパネルは行き先の札だけ（数は きろく・とくてん に）
+  // サイクル207：高さ 340px より 低い 横向きの めいろでは、この 1行（たんけん ○/100）を 下の 欄に 出さない。1回 歩くと 欄が 29px のびて、見える 地図が 135 → 106px。
+  // 道すじの 先が ぜんぶ 欄の 裏に なり、もどって きた 人に「タップ！」の 指が 出なく なった（568×320・480×320 で 4回とも）。数は きろくに のこる。気をつける 知らせ（msgs）は これまでどおり 出す
+  const lowMap = demo && window.innerHeight <= 340 && window.innerWidth > window.innerHeight;
+  if (!msgs.length && simple()) { setStatus(lowMap ? '' : chain, true); return; }   // 文字を少なく（ふだん）：気をつけることがないときは、下のパネルは行き先の札だけ（数は きろく・とくてん に）
   if (!msgs.length) {
     const qd = todaysQuests().filter(q => dayState().done.includes(q.id)).length, bl = bagLine();
     const bag = bl ? (simple() ? `　${PIA('bag', 'おみやげ袋')} <b>${bl.done}</b>/${bl.b.km}km` : `　🎒 袋 <b>${bl.done}</b>/${bl.b.km}km`) : '';

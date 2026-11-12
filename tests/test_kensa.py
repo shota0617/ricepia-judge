@@ -2192,7 +2192,7 @@ P.drag = {id:1, cx:50, cy:50, far:3, x0:100, moved:false};   endBagDrag({pointer
 const assert = require('node:assert/strict');
 let T = 0; const performance = {now: () => T};
 let simOn = false; const setTimeout = () => {}; // 動いているものは無い場面（サイクル142の確かめは別のテスト）
-let step = 1, measured = 0, badLeft = 2, spread = false, leaving = false, stamped = false, inked = false, lotIndex = 4, everZoomed = false, isNear = false, hankoMax = 80;
+let step = 1, measured = 0, badLeft = 2, spread = false, leaving = false, stamped = false, inked = false, lotIndex = 4, everZoomed = false, pickedBare = false, isNear = false, hankoMax = 80;   // pickedBare: サイクル153（寄らずに つまめた 人）
 const finePointer = false, LOT = {moisture:[1, 2, 3]}, P = {done:false, auto:false, inserted:false}, token = {hidden:true}, grains = [], zoomBtn = {}, Z = {s:1, tx:0, ty:0};
 const plate = {getBoundingClientRect: () => ({left:0, top:0, right:300, bottom:300}), clientLeft:0, clientTop:0};
 const shown = []; let on = false, scrolled = false;
@@ -2434,7 +2434,7 @@ assert.deepEqual(restRect(hanko), { left:40, top:300, width:60, height:80 }); //
 const assert = require('node:assert/strict');
 let T = 0; const performance = {now: () => T};
 let simOn = false; const timers = []; const setTimeout = (f, ms) => { timers.push([f, ms]); };
-let step = 1, measured = 0, badLeft = 2, spread = false, leaving = false, stamped = false, inked = false, lotIndex = 0, everZoomed = false, isNear = false, hankoMax = 80;
+let step = 1, measured = 0, badLeft = 2, spread = false, leaving = false, stamped = false, inked = false, lotIndex = 0, everZoomed = false, pickedBare = false, isNear = false, hankoMax = 80;   // pickedBare: サイクル153（寄らずに つまめた 人）
 const finePointer = false, LOT = {moisture:[1, 2, 3]}, P = {done:false, auto:false, inserted:false}, token = {hidden:true}, grains = [], zoomBtn = {}, Z = {s:1, tx:0, ty:0};
 const plate = {getBoundingClientRect: () => ({left:0, top:0, right:300, bottom:300}), clientLeft:0, clientTop:0};
 const shown = []; let on = false, anims = [];
@@ -3449,7 +3449,7 @@ const crankAt = (a) => [310 + 33 * Math.cos(a), 110 + 33 * Math.sin(a)];
         # 穀刺し 0px（96px なぞって）・水分計 0回（458°）・皿は 20px で ×1.14 に 寄った（指の まねの できごとで 3回中3回 → 直した後 動く・3回・寄らない）。
         # 画面が かくれた・前面で なくなった 時は、場面ごとの 取り消しと 同じ 片づけを 1か所（dropFingers）で 行う
         hide = [l for l in HTML.split("\n") if re.match(r'(window|document)\.addEventListener\("(blur|visibilitychange)",', l)
-                and "pageDowns" not in l and "tapDowns" not in l and "demoDown" not in l]
+                and "pageDowns" not in l and "tapDowns" not in l and "demoDown" not in l and "idleVisibility" not in l]   # 手が 止まった 時計（サイクル153）は 指では ない
         m = re.search(r"\nfunction dropFingers\(\) \{[\s\S]*?\n\}", HTML)
         body = (m.group(0) if m else "") + "\n" + "\n".join(hide)
         self._node150(self._world152() + """
@@ -3549,6 +3549,102 @@ down('touch'); assert.equal(finePointer, false);
 down('pen'); assert.equal(finePointer, true);
 """)
         self.assertIn('if (finePointer) { hint.textContent = "🔍 で 寄る"; guideAt("press", zoomBtn); }', HTML)
+
+
+    # ---- サイクル153（最初の1分・おそい スマホ・かくれた 画面）----
+
+    def test_cycle153_grain_push_runs_on_time_not_frames(self):
+        # 粒の 押し合いは 1コマ 1歩 だったので、なでてから「つまむ」の 案内まで 60コマ/秒 で 1.26秒 → 5コマ/秒 で 4.69秒（仮の 時計の 実測）。
+        # 1歩 = 1/60秒 で、たまった 時間の ぶん 進める。60コマ/秒 では 1コマ 1歩の まま。1コマで 進むのは 0.25秒 まで
+        sim = HTML[HTML.index("let simOn = false, lastBrushSound = 0;"):HTML.index("function grainAt(p)")]
+        self._node150("""
+const assert = require('node:assert/strict');
+let now = 0, frames = [];
+globalThis.performance = { now: () => now };
+const requestAnimationFrame = f => frames.push(f);
+const GW = 30, PW = 358, PH = 452; let spread = false, grains = [];
+const renderGrain = () => {}, checkSpread = () => {}, tick = () => {};
+""" + sim + """
+const fresh = () => { grains = []; for (let i = 0; i < 12; i++) grains.push({ x:PW / 2 + (i % 4) * 3, y:PH / 2 + Math.floor(i / 4) * 3, r:0, gone:false, awake:0 }); };
+// なでて 起こした 山が 落ちつくまでの 本当の 秒（コマの 間 ms ごと）
+const settle = (ms) => { fresh(); frames = []; simOn = false; now = 0; grains[0].awake = 16; startSim(); let n = 0;
+  while (frames.length && n < 5000) { now += ms; const f = frames.shift(); f(now); n++; } return n * ms; };
+const t60 = settle(1000 / 60), t10 = settle(100), t5 = settle(200);
+assert.ok(t10 <= t60 + 200, '10コマ/秒 で ' + t10 + 'ms（60コマ/秒 は ' + Math.round(t60) + 'ms）');
+assert.ok(t5 <= t60 + 400, '5コマ/秒 で ' + t5 + 'ms（60コマ/秒 は ' + Math.round(t60) + 'ms）');
+// 60コマ/秒 では 1コマ 1歩（起きている 長さが 1ずつ へる）
+fresh(); frames = []; simOn = false; now = 0; grains.forEach(g => { g.x += g.y; g.y *= 3; }); grains[0].awake = 100; startSim();
+for (let i = 1; i <= 30; i++) { now += 1000 / 60; frames.shift()(now); assert.equal(grains[0].awake, 100 - i); }
+// 画面が かくれて 60秒 後の 1コマでも、進むのは 0.25秒（15歩）まで
+now += 60000; frames.shift()(now); assert.equal(grains[0].awake, 100 - 30 - 15);
+""")
+
+    def test_cycle153_idle_clock_stops_while_the_page_is_hidden(self):
+        # 手が 止まった 時の カード（45秒）は、かくれて いる 間も 数えて いた。開いて 2秒で ほかの アプリへ 行き 50秒 後に もどると、
+        # 遊んで いないのに もう 出ていた（仮の 時計で 2回中2回 → 直した後 0回）。かくれて いる 間は 止め、もどったら のこりから
+        idle = HTML[HTML.index("const IDLE_MS = 45000"):HTML.index("/* 遊んで いる 間の 動かす キー")]
+        self._node150("""
+const assert = require('node:assert/strict');
+let now = 0, timers = [], seq = 0;
+globalThis.performance = { now: () => now }; Date.now = () => now;
+const setTimeout = (f, ms) => { const id = ++seq; timers.push({ id, at:now + ms, f }); return id; }, clearTimeout = id => { timers = timers.filter(t => t.id !== id); };
+const advance = ms => { const end = now + ms; for (;;) { timers.sort((a, b) => a.at - b.at); const t = timers[0]; if (!t || t.at > end) break; timers.shift(); now = t.at; t.f(); } now = end; };
+const cls = new Set(); const idleCard = { inert:true, classList:{ add: c => cls.add(c), remove: c => cls.delete(c), contains: c => cls.has(c) } };
+const likeBtn = { addEventListener() {} }, returnLink = { addEventListener() {} };
+const $ = id => ({ idleCard, likeBtn, returnLink })[id];
+const listeners = {}; const document = { hidden:false, addEventListener(t, f) { (listeners[t] = listeners[t] || []).push(f); } };
+const sessionStorage = { getItem() { return null; } }; const idleSound = () => {}, idleOutSound = () => {};
+const vis = hidden => { document.hidden = hidden; (listeners.visibilitychange || []).forEach(f => f()); };
+""" + idle + """
+armIdle(); advance(2000);
+vis(true); advance(50000); vis(false);
+assert.equal(cls.has('on'), false, '50秒 かくれて もどったら もう カードが 出ていた');
+advance(42900); assert.equal(cls.has('on'), false);
+advance(200); assert.equal(cls.has('on'), true);                 // 見えて いる 間の 合計 45秒で 出る（長さは 同じ）
+// もどって さわれば 今までどおり 45秒から
+cls.delete('on'); armIdle(); vis(true); advance(10000); vis(false); advance(44900); assert.equal(cls.has('on'), false); advance(200); assert.equal(cls.has('on'), true);
+""")
+
+
+    def test_cycle153_picking_without_zoom_switches_the_hint(self):
+        # 2袋目から、寄らずに わるい粒を つまめた 後も 案内が「🔍 ふたゆびで ズーム」の まま、ふたゆびの 手本も 出つづけた
+        # （390×844実測: つまんだ 後 4秒 3回中3回 ズームの 案内のまま・ふたゆびの 手本 27回中14回 → 0回・0回）。
+        # 寄らずに 1粒 つまめたら、今 ある「わるい粒を つまむ」へ。ふたゆびの 手本は 出さない。1袋目と、寄った 人は 今までどおり
+        tap = HTML[HTML.index("function tapGrain(g) {"):HTML.index("function resetZoomForSmiles()")]
+        sort = HTML[HTML.index("function updateSortHint() {"):HTML.index("function armHint(ms) {")]
+        demo = HTML[HTML.index("function demoShow(k) {"):HTML.index("function demoTick(")]
+        self._node150("""
+const assert = require('node:assert/strict');
+let step = 2, lotIndex = 1, badLeft = 2, spread = true, everZoomed = false, pickedBare = false, isNear = false, demoAt = 0, demoHard = 0, hintTimer = null, sortDrag = null, pinch = null;
+const finePointer = false, motion = 1, GW = 30, GH = 18, DEMO_LOOK = 2000, Z = { s:1, tx:0, ty:0 }, READ_MS = { cleanSmile:300, clean:1050 };
+const hint = { textContent:'' }, zoomBtn = { id:'zoomBtn' }, pts = new Map(), pickedKinds = { higai:0, shini:0 };
+const guides = []; let guideOn = false;
+const guideAt = (kind, el) => { guideOn = true; guides.push(kind); }, guideOff = () => { guideOn = false; }, armHint = () => {};
+const rect = { left:0, top:0, right:300, bottom:300, width:20, height:20 };
+const plate = { getBoundingClientRect: () => rect };
+const anim = () => ({});
+const elm = () => ({ style:{}, getBoundingClientRect: () => rect, animate: anim, appendChild() {}, remove() {} });
+const $ = id => elm(); const document = { createElement: elm, body:{ appendChild() {} } };
+const performance = { now: () => 0 }; const setTimeout = () => {}, clearTimeout = () => {};
+const tick = () => {}, grainSprite = () => '', demoHide = () => {}, updateGrainRecord = () => {}, grainDrop = () => {}, setFace = () => {}, toSense = () => {};
+const firstBagFace = () => false, guideSense = () => {}, lotGrade = () => 0, stabPoke = () => {}, pullPoke = () => {}, syncPokeToAttract = () => {}, pilePoint = () => ({});
+const mk = kind => ({ kind, gone:false, r:0, el:{ getBoundingClientRect: () => rect, hidden:false, disabled:false }, img:{ classList:{ add() {}, remove() {}, contains: () => false } } });
+const grains = [mk('higai'), mk('shini'), mk('seiryu')];
+""" + tap + sort + demo + """
+updateSortHint();
+assert.equal(hint.textContent, '🔍 ふたゆびで ズーム'); assert.equal(guides.at(-1), 'pinch');   // 2袋目の はじめは 今までどおり
+tapGrain(grains[0]);                                               // 寄らずに 1粒 つまむ
+assert.equal(hint.textContent, 'わるい粒を つまむ', 'つまめた 後も ' + hint.textContent);
+assert.equal(guideOn, false);
+const before = guides.length; demoShow('pick');                    // 止まった 時の 手本: ふたゆびは 出さない
+assert.ok(!guides.slice(before).includes('pinch'), 'ふたゆびの 手本が また 出た');
+updateSortHint(); assert.equal(hint.textContent, 'わるい粒を つまむ');   // ほかの 所から 呼ばれても もどらない
+// 1袋目は 今までどおり（寄る 案内は もともと 出さない）
+lotIndex = 0; pickedBare = false; badLeft = 2; grains.forEach(g => { g.gone = false; }); updateSortHint(); assert.equal(hint.textContent, 'わるい粒を つまむ');
+// 寄った 人は 今までどおり 🔍 を さす 手本
+lotIndex = 1; everZoomed = true; pickedBare = false; const b2 = guides.length; demoShow('pick'); assert.deepEqual(guides.slice(b2), ['press']);
+""")
+        self.assertIn("pickedBare = false; stamped = false;", HTML[HTML.index("function startLot()"):HTML.index("/* 皿の粒:")])   # 袋ごとに 数え直す
 
 
 if __name__ == "__main__":

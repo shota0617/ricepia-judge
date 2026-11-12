@@ -1126,7 +1126,7 @@ function startLot() {
   hint.style.display = "";
   showTop("sceneBag");
   $("dish").textContent = "";
-  measured = 0; meterTaps = 0; crankTurned = 0; bagTaps = 0; spreadTaps = 0; hankoTaps = 0; swipeTaps = 0; spread = false; stamped = false; inked = false; twistDone = false;
+  measured = 0; meterTaps = 0; crankTurned = 0; bagTaps = 0; spreadTaps = 0; hankoTaps = 0; swipeTaps = 0; spread = false; pickedBare = false; stamped = false; inked = false; twistDone = false;
   token.hidden = true;
   $("lcd").textContent = "--.-";
   $("meterBtn").classList.remove("high");
@@ -1604,6 +1604,10 @@ function showAverage() {
 const Z = { s:1, tx:0, ty:0 };
 const ZOOM_MAX = 3.4, FACE_AT = 1.2; /* 顔が出る倍率: 1.2倍から。1.5倍では指を少し開く自然なピンチ（1.2〜1.35倍）で寄っても顔が出ず、寄れていないように見えた（390×844実測・サイクル85）。ごく小さなピンチ（1.1倍以下）では顔を出さない範囲に留める */
 let isNear = false, everZoomed = false, spread = false;
+/* 2袋目から、寄らずに わるい粒を つまめた 人（サイクル153・最初の1分）。旧版は つまめた 後も 案内が「🔍 ふたゆびで ズーム」の まま で、
+   ふたゆびの 手本も 出つづけ、して いる ことと 案内が 合わなかった（390×844実測: つまんだ 後の 4秒 3回中3回 案内が ズームの まま・ふたゆびの 手本 27回中14回 見えた）。
+   寄らずに 1粒 つまめたら、案内を 今 ある「わるい粒を つまむ」に かえ、ふたゆびの 手本を 出さない。止まれば 今の しくみ（6秒後に わるい粒が ふくらみ、その 粒を さす 手本）が 出る。袋ごとに 数え直す */
+let pickedBare = false;
 /* 最初の袋だけ、広げた時点でわるい粒に顔が出る（サイクル83、設計の候補2）: 寄らなくても見分けられる */
 const FACE_Z = 100; /* 良い粒の重なり順（2〜21）より上 */
 function firstBagFace(g) { return lotIndex === 0 && spread && g.kind !== "seiryu"; }
@@ -1667,7 +1671,7 @@ function zoomTo(s, px, py) {
 function updateSortHint() {
   if (step !== 2) return;
   if (!spread) { hint.textContent = "👋 なでて ひろげる"; guideAt("sweep", plate); }
-  else if (!everZoomed) { /* 指のない PC では、ふたゆびの代わりに 🔍 を押す */
+  else if (!everZoomed && !pickedBare) { /* 指のない PC では、ふたゆびの代わりに 🔍 を押す */
     if (lotIndex === 0) { guideOff(); hint.textContent = "わるい粒を つまむ"; armHint(1200); /* 最初の袋は顔が出ているので寄る案内はしない（サイクル83）。🔍とピンチは残すが案内しない */ }
     else {
       if (finePointer) { hint.textContent = "🔍 で 寄る"; guideAt("press", zoomBtn); }
@@ -1733,12 +1737,31 @@ function brush(from, to) {
   }
   return moved;
 }
+/* 粒の 押し合いは 時間で 進める（サイクル153・最初の1分・おそい スマホ）。旧版は 1コマで 1歩、起きている 長さ（awake）も コマの 数で、
+   60コマ/秒 では 0.27秒の 押し合いが、10コマ/秒 で 1.6秒・5コマ/秒 で 3.2秒 かかり、なでてから「つまむ」の 案内まで
+   1.27秒（60コマ）→ 3.11秒（10コマ）・3.3〜4.7秒（5コマ）待たされた（仮の 時計で コマを 固定した 実測）。
+   1歩は 1/60秒（SIM_STEP）。コマの 間に たまった 時間の ぶんだけ 歩を 進める。1コマに 少なくとも 1歩 なので、60コマ/秒 以上の 端末は 今までと 同じ。
+   1コマで 進めるのは SIM_CATCHUP 歩（0.25秒）まで。画面が かくれて もどった 時などに、大きく とばない */
+const SIM_STEP = 1000 / 60, SIM_CATCHUP = 15;
+let simLast = 0, simDebt = 0;
 function startSim() {
   if (simOn) return;
   simOn = true;
+  simLast = performance.now(); simDebt = 0;
   requestAnimationFrame(simFrame);
 }
 function simFrame() {
+  const now = performance.now();
+  simDebt += now - simLast; simLast = now;
+  const n = Math.max(1, Math.min(SIM_CATCHUP, Math.floor(simDebt / SIM_STEP)));
+  simDebt = Math.max(0, Math.min(simDebt - n * SIM_STEP, SIM_STEP)); /* 上限を こえた 分は 捨てる */
+  let any = false;
+  for (let k = 0; k < n && (any = simStep()); k++);
+  if (any) requestAnimationFrame(simFrame);
+  else simOn = false;
+  checkSpread();
+}
+function simStep() { /* 1/60秒 ぶん。まだ 起きている 粒が あれば true */
   const live = grains.filter(g => !g.gone), minD = GW * 0.82;
   let any = false;
   for (let i = 0; i < live.length; i++) for (let j = i + 1; j < live.length; j++) {
@@ -1756,9 +1779,7 @@ function simFrame() {
     renderGrain(g);
     if (g.awake > 0) { g.awake--; any = true; }
   });
-  if (any) requestAnimationFrame(simFrame);
-  else simOn = false;
-  checkSpread();
+  return any;
 }
 function grainAt(p) {
   const padU = 6 / Z.s, padV = 12 / Z.s; /* 粒の短い向き（v）だけゆるさを12pxにし、タップの実効の高さを44pxにする。6pxでは中心から16pxずれたタップが外れ、20pxずらした実タップでもわるい粒が取れなかった（390×844実測・サイクル75）。長い向き（u）は、となりの粒（広げた時の中心間は最小約30px）と取り合わないよう6pxのまま */
@@ -1975,6 +1996,7 @@ function tapGrain(g) {
   grains.forEach(o => o.img.classList.remove("hint"));
   if (everZoomed) armHint(lotIndex === 0 ? 1200 : 6000);
   else armHint(6000);
+  if (!everZoomed && lotIndex > 0 && !pickedBare) { pickedBare = true; updateSortHint(); } /* 寄らずに つまめた: 案内を「わるい粒を つまむ」へ・ふたゆびの 手本を 消す */
   /* つまんだ粒だけ皿の外へ飛ばせるよう、皿の上に写しを出して小皿まで運ぶ */
   const from = g.el.getBoundingClientRect(), to = $("dish").getBoundingClientRect();
   const cw = GW * Z.s, ch = GH * Z.s;
@@ -2570,6 +2592,7 @@ function demoShow(k) {
     const shown = grains.filter(g => !g.gone && g.kind !== "seiryu" && (firstBagFace(g) || isNear || g.img.classList.contains("hint")))
       .find(g => { const b = g.el.getBoundingClientRect(); return b.left > rect.left && b.right < rect.right && b.top > rect.top && b.bottom < rect.bottom; });
     if (shown) guideAt("press", shown.el); /* 粒そのものを相手にする（点ではなく）。粒が動いた・消えたら見回りが気づける */
+    else if (pickedBare && !everZoomed) return; /* 寄らずに つまめた 人には 寄り方を 見せない。わるい粒が ふくらめば 上の 手本 */
     else if (finePointer || everZoomed) guideAt("press", zoomBtn);
     else guideAt("pinch", plate);
   }
@@ -2692,7 +2715,24 @@ function dismissIdleCard() { /* 自分で閉じる合図も固有の音にする
 function armIdle() {
   clearTimeout(idleTimer);
   idleTimer = setTimeout(showIdleCard, IDLE_MS);
+  idleDue = performance.now() + IDLE_MS;
 }
+/* 画面が かくれて いる 間は、手が 止まった 時計も 止める（サイクル153・最初の1分）。旧版は かくれて いる 間も 45秒を 数え、
+   ほかの アプリを 50秒 見て もどると、遊んで いないのに カードが もう 出ていた（仮の 時計で 2回中2回）。
+   かくれた 時に のこりを 覚え、もどったら のこりから 数え直す。45秒と カードそのものは 変えない */
+let idleDue = 0, idleLeft = null;
+function idleVisibility() {
+  if (document.hidden) {
+    if (idleLeft === null && !idleCard.classList.contains("on")) { idleLeft = Math.max(0, idleDue - performance.now()); clearTimeout(idleTimer); }
+  } else if (idleLeft !== null) {
+    const left = idleLeft;
+    idleLeft = null;
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(showIdleCard, left);
+    idleDue = performance.now() + left;
+  }
+}
+document.addEventListener("visibilitychange", idleVisibility);
 document.addEventListener("pointerdown", (e) => {
   if (!e.target.closest || !e.target.closest("#idleCard")) dismissIdleCard();
   armIdle();

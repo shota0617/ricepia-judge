@@ -302,6 +302,9 @@ const FAKE = (mode) => {
       else if (a === 'mute') { if (await p.locator('#swSnd').count()) await p.tap('#swSnd', { timeout: 5000 }); await p.waitForTimeout(300); }   // ボタンが 無い 版では 押せない(下の 確かめで 落ちる)
       else if (a === 'wait') await p.waitForTimeout(2500);
       else if (a === 'keyL') { await p.keyboard.press('ArrowLeft'); r.js = r.js || []; r.js.push(await p.evaluate(() => window.__fa.live(window.__tc, window.__ts))); }   // 決めた すぐ あとに 古い 予約が のこって いるか
+      else if (a === 'homeKey') {   // 2回めの レビュー(P2): ⌂ を マウスで 押した まま ← で 決め、すぐ はなす(選んで すぐ 題へ)
+        const hb = await p.locator('#swHome').boundingBox(); await p.mouse.move(hb.x + hb.width / 2, hb.y + hb.height / 2); await p.mouse.down(); await p.keyboard.press('ArrowLeft'); await p.mouse.up();
+        r.js = r.js || []; r.js.push(await p.evaluate(() => ({ screen: document.getElementById('sTitle').classList.contains('hidden') ? 'game' : 'title', n: window.__ks.state().log.length }))); }
       else if (a === 'home') { await p.tap('#swHome'); r.js = r.js || []; r.js.push(await p.evaluate(() => window.__fa.live(window.__tc || 1e12, window.__ts || 0))); await p.waitForTimeout(150); }
       else if (a === 'tapTgl') { const h = await p.evaluateHandle(() => [...document.querySelectorAll('#swSnd, [data-snd]')].find(x => x.getClientRects().length)); const e = h.asElement(); if (e) await e.tap(); await p.waitForTimeout(300); }
       else if (a.startsWith('js:')) { r.js = r.js || []; r.js.push(await p.evaluate(a.slice(3))); }
@@ -1398,10 +1401,10 @@ class TestKome365Sound(unittest.TestCase):
         self.assertNotIn("once: true", code)                              # 解けるまで 何度でも
         self.assertNotIn("removeEventListener", code)
         # 鳴らす だけ: 決めた とき・○✗・田んぼが 変わった とき・30秒の カード・1年の 区切り
-        self.assertIn("busy = true; ksCancel(); ksFx('pon');", HTML)   # レビュー P2: 前の カードの 予約を 取り消してから ぽん
-        self.assertIn("ksFx(ok ? 'ok' : 'ng'); vibJudge(ok);", HTML)
+        self.assertIn("busy = true; ksCancel(); if (ksSameScreen()) ksFx('pon');", HTML)   # レビュー P2: 前の カードの 予約を 取り消してから ぽん(ゲームの 画面の ときだけ)
+        self.assertIn("if (kLive) ksFx(ok ? 'ok' : 'ng'); vibJudge(ok);", HTML)
         self.assertIn("idleInfo.shown = true; ksFx('idle');", HTML)
-        self.assertIn("showResult(); ksFx('year'); return; }", HTML)   # レビュー P2: 結果の 画面へ かわって(古い 予約を 取り消して)から 1年の ふし
+        self.assertIn("showResult(); if (kLive) ksFx('year'); return; }", HTML)   # レビュー P2: 結果の 画面へ かわって(古い 予約を 取り消して)から 1年の ふし
         self.assertNotIn("sndJudge", HTML)
 
 
@@ -1420,6 +1423,10 @@ class TestKome365SoundReview(unittest.TestCase):
             {"name": "home", "acts": ["L", "home", "tapTgl", "wait"]},
             {"name": "result", "save": END_SAVE, "acts": ["L", "tapTgl", "wait"]},
             {"name": "slowPause", "mode": "slow", "acts": ["js:(ksUnlock(), ksPause(), 1)", "wait", "js:(window.dispatchEvent(new Event('focus')), 1)", "wait"]},
+            {"name": "homeKey", "acts": ["L", "homeKey", "wait"]},
+            {"name": "homeKeyReduce", "reduce": True, "acts": ["L", "homeKey", "wait"]},
+            {"name": "pauseSnd", "save": PADDY_SAVES["nae"], "acts": ["L", "js:(SND.on = true, SND.ctx = ksCtx(), SND.season = '', sndSet(), SND.season)", "wait", "js:(ksPause(), window.__o1 = window.__fa.osc, 1)", "wait", "js:window.__fa.osc - window.__o1"]},
+            {"name": "leaveSong", "acts": ["L", "js:(songPlay(), songTimers.length > 0)", "home", "js:songTimers.length"]},
             {"name": "cancelHome", "acts": ["L", "js:(window.__ts = performance.now(), ksFx('grow', 0.45), window.__tc = performance.now(), window.__fa.live(window.__tc, window.__ts))", "home"]},
             {"name": "cancelNext", "acts": ["L", "js:(window.__ts = performance.now(), ksFx('rain', 0.45), window.__tc = performance.now(), window.__fa.live(window.__tc, window.__ts))", "keyL"]},
             {"name": "cancelResult", "save": END_SAVE, "acts": ["js:(ksUnlock(), 1)", "js:(window.__ts = performance.now(), ksFx('grow', 0.45), window.__tc = performance.now(), window.__fa.live(window.__tc, window.__ts))", "keyL", "wait"]},
@@ -1469,6 +1476,25 @@ class TestKome365SoundReview(unittest.TestCase):
         back = seq[-1][1]   # 前面に もどったら つづく
         self.assertEqual(back["ctxState"], "running")
         self.assertTrue(back["ks"]["bgm"])
+
+    def test_late_choice_after_leaving_makes_no_sound(self):
+        # 2回めの レビュー(P2): 決めて 0.17秒 あとの 処理(advance)が、題へ もどった あとに ○✗・田んぼの 音を 新しく 作って いた
+        for name in ("homeKey", "homeKeyReduce"):
+            seq = self.seq(name)
+            j = self.r[name]["js"][-1]
+            self.assertEqual(j["screen"], "title", name)
+            log = seq[-1][1]["ks"]["log"]
+            self.assertEqual(log[j["n"]:], [], name + ": 題へ もどった あとに 鳴った %r" % (log[j["n"]:],))
+
+    def test_nature_sounds_and_song_stop_with_page(self):
+        # 止めて いる(前面で ない)間に 田んぼの音が 音を 作りつづけると、もどった ときに まとめて 鳴る
+        x = self.r["pauseSnd"]
+        self.assertEqual(x["errs"], [])
+        self.assertEqual(x["js"][0], "kaeru")   # カエルの 季節(音を くり返し 作る)
+        self.assertEqual(x["js"][-1], 0, "止めて いる 間に 田んぼの音を 作った")
+        y = self.r["leaveSong"]
+        self.assertTrue(y["js"][0])
+        self.assertEqual(y["js"][-1], 0, "題へ もどっても 田植え歌が つづく")
 
     def test_scheduled_card_sounds_are_cancelled(self):
         for name in ("cancelHome", "cancelNext", "cancelResult"):

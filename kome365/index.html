@@ -1088,7 +1088,7 @@ $('bStart').onclick = () => {
   f.msg('今年の田んぼは「' + f.soil.name + '」。' + (f.soil.N < 7 ? '肥料は少し多めがよさそう。' : f.soil.N > 7 ? '肥料は少し控えめがよさそう。' : ''));
   show('sGame'); renderGame();
 };
-function show(id){ try { ksCancel(); } catch (e) {} for (const s of ['sTitle','sGame','sResult']) $(s).classList.toggle('hidden', s !== id); window.scrollTo(0, 0);
+function show(id){ try { KS.gen++; ksCancel(); } catch (e) {} try { if (id !== 'sGame') ksLeaveGame(); } catch (e) {} for (const s of ['sTitle','sGame','sResult']) $(s).classList.toggle('hidden', s !== id); window.scrollTo(0, 0);
   if (use3d && window.Field3D){ if (id === 'sGame') window.Field3D.start(); else window.Field3D.stop(); } }
 
 const jun = (doy) => { const { m, d } = K.dateOf(doy); return m + '月' + (d <= 10 ? '上旬' : d <= 20 ? '中旬' : '下旬'); };
@@ -1846,7 +1846,7 @@ $('bAsk').querySelector('.askIc').innerHTML = FARMER_SVG;
 // はじめは 入り。🔊/🔇(#swSnd)で 入り切りし、端末に 覚える(kome365_sound: '0' の ときだけ 切り。保存が 無い・こわれて いても 入り)。
 // ブラウザは さわる まで 音を 出さない ので、指を はなした とき・click・keydown の たびに 解く(解けるまで 何度でも)。音が 作れない ブラウザでは 音なしで そのまま。
 // 「動きを へらす」設定は 音には かけない。画面が かくれた・前面で なくなった ときは 止め、もどったら つづける。音を 鳴らしても 時間・動きは 変えない(鳴らす だけ)。
-var KS = { ctx: null, master: null, on: true, dead: false, paused: false, tryAt: -1e9, bgm: { timer: null, next: 0, i: 0, loops: 0 }, log: [], fx: {} };
+var KS = { ctx: null, master: null, on: true, dead: false, paused: false, gen: 0, tryAt: -1e9, bgm: { timer: null, next: 0, i: 0, loops: 0 }, log: [], fx: {} };
 try { KS.on = store.get('kome365_sound') !== '0'; } catch (e) { KS.on = true; }
 function ksCtx(){
   if (KS.ctx || KS.dead) return KS.ctx;
@@ -1899,6 +1899,10 @@ function ksFx(name, delay){
     it.timer = setTimeout(function(){ try { o.disconnect(); } catch (e) {} }, ((delay || 0) + d.len + 0.4) * 1000);
     KS.fx[name] = (KS.fx[name] || 0) + 1; KS.log.push(name); if (KS.log.length > 30) KS.log.shift(); return true; } catch (e) { return false; }
 }
+/* 2回めの レビュー(P2): 画面の 世代(KS.gen)。show() の たびに 進む。選んだ ときの 世代と ちがう(画面を はなれた あとの)遅れた 処理からは 音を 作らない */
+function ksSameScreen(gen){ return (gen == null || gen === KS.gen) && !$('sGame').classList.contains('hidden'); }
+/* ゲームの 画面を はなれる とき: 田植え歌と 田んぼの音(ゲームの「くわしく」で 入れる もの)も 止める */
+function ksLeaveGame(){ try { songStop(); } catch (e) {} try { if (SND.on) { sndStop(); SND.on = false; var sb = $('bSound'); if (sb) { sb.setAttribute('aria-pressed', 'false'); sb.textContent = '🔇 田んぼの音'; } } } catch (e) {} }
 /* 予約した カードの 音を 取り消す(レビュー P2): 次の カードを 決めた・画面が かわった ときに、前の カードの まだ 鳴って いない 音は すぐ 外し、鳴って いる 音は 0.1秒で 消す */
 function ksCancel(){
   try { var c = KS.ctx, list = KS.pend || []; KS.pend = []; if (!c) return; var now = c.currentTime;
@@ -1925,7 +1929,7 @@ function ksBgmTick(){
 }
 function ksBgmEnsure(){ if (KS.bgm.timer || !ksLive()) return; KS.bgm.timer = setInterval(ksBgmTick, 200); ksBgmTick(); }
 function ksBgmStop(){ if (KS.bgm.timer) { clearInterval(KS.bgm.timer); KS.bgm.timer = null; } }
-function ksPause(){ KS.paused = true; ksBgmStop(); try { if (KS.ctx && KS.ctx.state !== 'closed') KS.ctx.suspend(); } catch (e) {} }   /* 再開の 途中でも 止める 要求を 出す(終わった ときも ksResumed で 見なおす) */
+function ksPause(){ KS.paused = true; ksBgmStop(); try { songStop(); } catch (e) {} try { if (KS.ctx && KS.ctx.state !== 'closed') KS.ctx.suspend(); } catch (e) {} }   /* 再開の 途中でも 止める 要求を 出す(終わった ときも ksResumed で 見なおす) */
 function ksResume(){ KS.paused = false; if (document.hidden) return; try { if (KS.on && KS.ctx && KS.ctx.state !== 'running' && KS.ctx.state !== 'closed') { KS.tryAt = performance.now(); var p = KS.ctx.resume(); if (p && p.then) p.then(ksResumed, function(){}); } } catch (e) {} ksBgmEnsure(); }
 document.addEventListener('visibilitychange', function(){ if (document.hidden) ksPause(); else ksResume(); });
 window.addEventListener('pagehide', ksPause); window.addEventListener('blur', ksPause); window.addEventListener('focus', ksResume); window.addEventListener('pageshow', function(){ if (!document.hidden) ksResume(); });
@@ -1944,6 +1948,7 @@ const SND = { ctx: null, on: false, nodes: [], season: '' };
 function sndStop(){ SND.nodes.forEach((n) => { try { n.stop ? n.stop() : n.disconnect(); } catch(e){} }); SND.nodes = []; clearInterval(SND.timer); SND.timer = null; SND.season = ''; }
 function sndNoise(c){ const b = c.createBuffer(1, c.sampleRate * 2, c.sampleRate), d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; const n = c.createBufferSource(); n.buffer = b; n.loop = true; return n; }
 function sndChirp(c, out, f0, dur, type, vol){ const o = c.createOscillator(), g = c.createGain(), t = c.currentTime; o.type = type; o.frequency.setValueAtTime(f0, t); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + dur); o.connect(g); g.connect(out); o.start(t); o.stop(t + dur + 0.02); }
+function sndLive(c){ return SND.on && !ksAway() && c.state === 'running'; }   /* 止まって いる 間(かくれた・前面で ない・🔇)は 鳴き声を 作らない(もどった ときに まとめて 鳴らない) */
 function sndSet(){
   if (!SND.on || !f) return;
   const m = K.dateOf(f.doy).m, wet = ['shallow', 'deep', 'intermittent'].includes(f.water) || (f.puddleDoy != null && !f.transDoy), last = f.daily && f.daily[f.daily.length - 1], rain = !!(last && last.rain);
@@ -1952,9 +1957,9 @@ function sndSet(){
   sndStop(); SND.season = season; const c = SND.ctx, out = c.createGain(); out.gain.value = 0.5; out.connect(ksOut(c)); SND.nodes.push(out);
   if (season === 'rain' || season === 'kaze'){ const n = sndNoise(c), fl = c.createBiquadFilter(); fl.type = season === 'rain' ? 'highpass' : 'lowpass'; fl.frequency.value = season === 'rain' ? 1200 : 400; const g = c.createGain(); g.gain.value = season === 'rain' ? 0.18 : 0.05; n.connect(fl); fl.connect(g); g.connect(out); n.start(); SND.nodes.push(n); }
   if (season === 'semi'){ const n = sndNoise(c), bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 4800; bp.Q.value = 3; const am = c.createGain(); am.gain.value = 0.0; const lfo = c.createOscillator(); lfo.frequency.value = 38; const lg = c.createGain(); lg.gain.value = 0.05; lfo.connect(lg); lg.connect(am.gain); n.connect(bp); bp.connect(am); am.connect(out); n.start(); lfo.start(); SND.nodes.push(n, lfo);
-    SND.timer = setInterval(() => { am.gain.setTargetAtTime(0.03 + 0.05 * Math.random(), c.currentTime, 0.8); }, 1800); }
-  if (season === 'kaeru') SND.timer = setInterval(() => { const k = 2 + Math.floor(Math.random() * 4), f0 = 1300 + Math.random() * 700; for (let i = 0; i < k; i++) setTimeout(() => sndChirp(c, out, f0, 0.07, 'square', 0.025), i * 140); }, 420);   // ケロケロ(何匹ものアマガエル)
-  if (season === 'mushi') SND.timer = setInterval(() => { if (Math.random() < 0.5) for (let i = 0; i < 3; i++) setTimeout(() => sndChirp(c, out, 4300 + Math.random() * 300, 0.12, 'sine', 0.03), i * 160); else sndChirp(c, out, 4700, 0.6, 'sine', 0.02); }, 700);   // コロコロ(コオロギ)とリーン(スズムシ)
+    SND.timer = setInterval(() => { if (!sndLive(c)) return; am.gain.setTargetAtTime(0.03 + 0.05 * Math.random(), c.currentTime, 0.8); }, 1800); }
+  if (season === 'kaeru') SND.timer = setInterval(() => { if (!sndLive(c)) return; const k = 2 + Math.floor(Math.random() * 4), f0 = 1300 + Math.random() * 700; for (let i = 0; i < k; i++) setTimeout(() => sndLive(c) && sndChirp(c, out, f0, 0.07, 'square', 0.025), i * 140); }, 420);   // ケロケロ(何匹ものアマガエル)
+  if (season === 'mushi') SND.timer = setInterval(() => { if (!sndLive(c)) return; if (Math.random() < 0.5) for (let i = 0; i < 3; i++) setTimeout(() => sndLive(c) && sndChirp(c, out, 4300 + Math.random() * 300, 0.12, 'sine', 0.03), i * 160); else sndChirp(c, out, 4700, 0.6, 'sine', 0.02); }, 700);   // コロコロ(コオロギ)とリーン(スズムシ)
 }
 $('bSound').addEventListener('click', () => {
   SND.on = !SND.on;
@@ -3781,7 +3786,9 @@ renderTitle();
   /* 店主指示 2026-11-08: バツ(✗)のときだけ、判定文 why の最初の一文をマークの下に小さく浮かせて約2秒出す。○側は出さない */
   function whyShow(fb){ var e = $('swWhy'); if (!e) return; var t = String(fb || '').replace(/^\S+\s+/, ''); var i = t.indexOf('。'); if (i >= 0) t = t.slice(0, i + 1); if (!t) return; e.textContent = t; e.classList.remove('on'); void e.offsetWidth; e.classList.add('on'); }
   function whyHide(){ var e = $('swWhy'); if (e) e.classList.remove('on'); }
+  var chooseGen = null;   /* 選んだ ときの 画面の 世代(飛んで いる 間は busy なので 次の 選択で 上書き されない) */
   function advance(side){
+    var kLive = ksSameScreen(chooseGen);   /* 2回めの レビュー(P2): 選んだ あとに ⌂ などで 画面が かわって いたら、この 選択からは 音を 作らない(ゲームの 進み方は 前と 同じ) */
     pvClear(); finishFx(); whyHide();   /* 前の判定の光/影が残っていたら消す(素早く次のカードを選んだときの誤認防止。Codex軽微指摘)。バツの理由も前のカードの分はここで片づける */
     var fb = '', n0 = f.msgs.length, st0 = null;
     rwTake(); var d0 = KomeCards.day(f), ks0 = { base: paddyInfo.base, wet: paddyInfo.wet, stage: stageTintInfo.idx };
@@ -3801,16 +3808,16 @@ renderTitle();
     $('swLog').innerHTML = (fb && !judged ? '<b' + (cls ? ' class="' + cls + '"' : '') + '>' + esc(fb) + '</b>' : '') + (dl ? '<br>' + dl : '') + (news.length ? (fb || dl ? '<br>' : '') + news.map(esc).join('<br>') : '');
     tallyAdd(d0, fb, over ? 0 : lifeCnt, { t: card.title, s: side === 'left' ? card.left.label : card.right.label, im: impactCalc(st0, stM) });
     save();
-    if (over) { store.set(SAVE, ''); store.set('kome365_streak', '0'); rwClear(); busy = false; sunHide(); showResult(); ksFx('year'); return; }   /* 365日目のカードを選び終えたら結果画面 */
+    if (over) { store.set(SAVE, ''); store.set('kome365_streak', '0'); rwClear(); busy = false; sunHide(); showResult(); if (kLive) ksFx('year'); return; }   /* 365日目のカードを選び終えたら結果画面 */
     try { drawField(); } catch (e) { console.error(e); }
     /* 選択のたびに田んぼ側が変わったことを見せる(バーが動かないようす系カードでも田んぼが光る) */
     if (!judged) try { var sg = $('sGame'); sg.classList.remove('fieldTick'); void sg.offsetWidth; sg.classList.add('fieldTick'); setTimeout(function(){ sg.classList.remove('fieldTick'); }, 1400); } catch (e) {}
     var careD = careAvg(st0, stM), careW = careWorst(st0, stM), careK = judged ? (cls === 'vOK' ? 'good' : 'bad') : careD >= 0.03 ? 'good' : careD <= -0.03 ? 'bad' : careW >= 0.05 ? 'good' : careW <= -0.05 ? 'bad' : 'flat';
-    if (!judged) { render(); ksStep(ks0, 0.15); careSet(careK, careD); rippleSet(careK, chg); pulseBars(chg); busy = false; return; }
+    if (!judged) { render(); if (kLive) ksStep(ks0, 0.15); careSet(careK, careD); rippleSet(careK, chg); pulseBars(chg); busy = false; return; }
     /* 判定カード: ポップ・全画面表示は出さず、確定の瞬間に次のカードへ進む。良し悪しは田んぼ全体の光/影(1.1秒・入力は止めない)とチップの▲▼で見せる */
     var ok = cls === 'vOK', sg2 = $('sGame'), fx = ok ? 'fxGood' : 'fxBad';
-    ksFx(ok ? 'ok' : 'ng'); vibJudge(ok);
-    finishFx(); render(); ksStep(ks0, 0.45); careSet(careK, careD); rippleSet(careK, chg); pulseBars(chg);
+    if (kLive) ksFx(ok ? 'ok' : 'ng'); vibJudge(ok);
+    finishFx(); render(); if (kLive) ksStep(ks0, 0.45); careSet(careK, careD); rippleSet(careK, chg); pulseBars(chg);
     sg2.classList.remove('fxGood', 'fxBad'); void sg2.offsetWidth; sg2.classList.add(fx); fieldSide = ok ? 'ok' : 'ng';
     try { if (danceCalc().count) danceReactSet(ok ? 'cheer' : 'gloom'); } catch (e) {}   /* 応援団が田んぼfxと同時に判断へ反応する(サイクル29) */
     fieldFin = function(){ clearTimeout(fieldTimer); fieldTimer = null; fieldFin = null; fieldSide = null; sg2.classList.remove(fx); };
@@ -3843,7 +3850,7 @@ renderTitle();
     try { fieldBadge(fi, true); } catch (e) {}
   }
   function choose(side, vel){
-    if (busy || !card || !f || KomeCards.over(f)) return; idleTouch(); ghostOff(); busy = true; ksCancel(); ksFx('pon'); rwUpdate(false); window.__k3d.soon(900);
+    if (busy || !card || !f || KomeCards.over(f)) return; idleTouch(); ghostOff(); busy = true; ksCancel(); if (ksSameScreen()) ksFx('pon'); chooseGen = KS.gen; rwUpdate(false); window.__k3d.soon(900);
     var out = side === 'left' ? -1 : 1;
     pvClear(); el.card.classList.remove('drag', 'enter', 'wig'); el.card.classList.add('fly');
     if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) { advance(side); return; }

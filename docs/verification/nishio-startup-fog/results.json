@@ -5304,7 +5304,7 @@
       "skipped": 1,
       "seconds": 366.317,
       "exit": 1,
-      "limitation": "Uncommitted candidate; one historical scope check could not resolve local main. Separate committed-checkout run is pending."
+      "limitation": "Uncommitted candidate; one historical scope check could not resolve local main. This initial record predates the separate committed-checkout run; see unitCommitted for its completed result."
     },
     "unitCommitted": {
       "command": "PYTHONDONTWRITEBYTECODE=1 NODE_OPTIONS=--require=/workspace/scratch/first-minute/offline.cjs python3 -m unittest discover -s tests -p 'test*.py' -v",

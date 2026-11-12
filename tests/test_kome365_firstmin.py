@@ -154,6 +154,45 @@ def boot_run(plan):
     return json.loads(out.stdout.strip().splitlines()[-1])
 
 
+# 周回170: 芽の 列(richDraw)を index.html から 取り出し、にせの 画面で ○ を 1つずつ 足して、列に 残る 物(子の 並び・点)を 記録する
+RICH_JS = r"""
+const fs = require('fs');
+const html = fs.readFileSync(process.argv[1], 'utf8');
+const a = html.indexOf('  var RICH_TH = '), b = html.indexOf('  /* 小さな再会(周回125', a);
+if (a < 0 || b < 0) { console.log(JSON.stringify({ error: 'no code' })); process.exit(0); }
+function mk(tag){ const el = { tagName: tag, className: '', children: [], attrs: {}, style: {},
+  appendChild(c){ this.children.push(c); return c; }, setAttribute(k, v){ this.attrs[k] = String(v); }, getAttribute(k){ return k in this.attrs ? this.attrs[k] : null; },
+  classList: { add(){ for (const x of arguments) el._cl.add(x); }, remove(){ for (const x of arguments) el._cl.delete(x); }, toggle(x, v){ if (v) el._cl.add(x); else el._cl.delete(x); }, contains(x){ return el._cl.has(x); } }, _cl: new Set() };
+  Object.defineProperty(el, 'innerHTML', { set(){ el.children = []; }, get(){ return ''; } }); return el; }
+const row = mk('div'); const $ = id => id === 'swRich' ? row : null;
+const document = { createElement: mk };
+const traceInfo = { okN: 0 }; let branchInfo = { key: '', hint: '' };
+function pixRichSet(e, k){ e.setAttribute('data-pixrich', k); } function pixStatSet(){}
+eval(html.slice(a, b));
+function sig(e){ return e.className.replace(/\b(new|pop)\b/g, '').trim() + '[' + (e.getAttribute('data-pixrich') || '') + ']' + e.children.map(sig).join(''); }
+const out = [];
+for (let ok = 0; ok <= +process.argv[2]; ok++) { traceInfo.okN = ok; richDraw(ok > 0);
+  const m = row.children.find(c => /nxMound/.test(c.className));
+  const dots = m ? m.children[0].children : [];
+  out.push({ ok: ok, on: row._cl.has('on'), sig: row.children.map(sig).join('|'), plants: row.children.filter(c => !/nxMound/.test(c.className)).length,
+    got: m ? +m.getAttribute('data-got') : null, need: m ? +m.getAttribute('data-need') : null, lit: dots.filter(d => /\bon\b/.test(d.className)).length, dots: dots.length, pop: dots.filter(d => /\bpop\b/.test(d.className)).length });
+  richDraw(false);   // 同じ ○ の 数で 描きなおしても(色が 決まった 手・気配の 手)点は ふくらまない
+  const m2 = row.children.find(c => /nxMound/.test(c.className)); out[out.length - 1].popAgain = m2 ? m2.children[0].children.filter(d => /\bpop\b/.test(d.className)).length : 0;
+}
+console.log(JSON.stringify(out));
+"""
+
+
+def rich_run(n):
+    node = shutil.which("node")
+    if not node:
+        raise unittest.SkipTest("node がないので実行の確認は飛ばす")
+    out = subprocess.run([node, "-e", RICH_JS, HTML_PATH, str(n)], capture_output=True, text=True)
+    if out.returncode != 0:
+        raise AssertionError(out.stderr[-2000:])
+    return json.loads(out.stdout.strip().splitlines()[-1])
+
+
 def css_rule(selector):
     m = re.search(r"^" + re.escape(selector) + r"\{([^}]*)\}", HTML, re.M)
     return m.group(1) if m else ""
@@ -843,6 +882,56 @@ console.log(JSON.stringify(out));
         self.assertEqual(sink, {"b1": 2, "b2": 3}, "指を 置いても 後ろの 札が 動かない")
         self.assertIn("@media (prefers-reduced-motion: reduce){#swCard.drag ~ .swBack.b1,#swCard.drag ~ .swBack.b2{translate:none}}", HTML)
         self.assertIn("#swCard.drag ~ .swBack{transition:none}", HTML)   # 置いた その コマで 変わる
+
+
+    def test_next_sprout_dots_change_every_ok(self):
+        # 周回170: ○ が 2・4・7・11・16…(RICH_TH)で 芽が ふえるので、○ を 重ねても 列が 変わるのは 間かくの おわり だけ(11〜20枚目で 10枚中 1〜2枚)。
+        # 列の おわりに「次の 芽まで ○ が あと いくつ」の 点を 出し、○ の たびに 点が 1つ 光る
+        r = rich_run(40)
+        self.assertNotIn("error", r)
+        changed = [r[i]["ok"] for i in range(1, 38) if r[i]["sig"] != r[i - 1]["sig"]]
+        self.assertEqual(changed, list(range(1, 38)), "○ を 重ねても 列に 残る 物が 変わらない ○ が ある")
+        # ○ 0こ: 何も 出さない。○ 1こ目から 出す
+        self.assertEqual(r[0]["got"], None)
+        self.assertFalse(r[0]["on"])
+        self.assertTrue(r[1]["on"])
+        th = [2, 4, 7, 11, 16, 22, 29, 37]
+        for x in r[1:37]:
+            lv = sum(1 for t in th if x["ok"] >= t)
+            prev = th[lv - 1] if lv else 0
+            self.assertEqual(x["plants"], lv, x)
+            self.assertEqual((x["need"], x["got"], x["dots"], x["lit"]), (th[lv] - prev, x["ok"] - prev, th[lv] - prev, x["ok"] - prev), x)
+            self.assertLess(x["lit"], x["dots"])   # ぜんぶ 光った ○ で 芽に かわる(光りきった 点は 残らない)
+            self.assertEqual(x["pop"], 1 if x["lit"] else 0, x)   # その ○ で 光った 点だけ ふくらむ
+            self.assertEqual(x["popAgain"], 0, x)   # 同じ ○ の 数で 描きなおしても ふくらまない
+        self.assertLessEqual(max(x["dots"] for x in r if x["dots"]), 8)   # 2つずつ 4段に おさまる
+        # 芽が 8つ そろったら 出さない
+        self.assertEqual([x["got"] for x in r[37:]], [None] * len(r[37:]))
+        self.assertEqual(r[40]["plants"], 8)
+
+    def test_next_sprout_dots_fit_and_calm(self):
+        # 小山は 列の 外(右どなり)に 置き、植物の ならびは 前と 同じ。せまい 画面(320〜360px)では 列の 左上の 空きへ。字・数字は 出さない
+        # 広い 画面(361px 以上): 小山 22px・点 6px(3つずつ 3段)。まだの 点は 砂色、光った 点は 芽の 緑
+        self.assertIn("#swRich .rc.nxMound{position:absolute;left:100%;bottom:0;margin-left:4px;width:22px;height:32px;filter:none}", HTML)
+        self.assertIn("#swRich .rc.nxMound .nxDots{position:absolute;left:0;width:22px;bottom:9px;", HTML)
+        self.assertIn("#swRich .rc.nxMound .nxDots i{display:block;width:6px;height:6px;border-radius:50%;background:#e2d2ad;", HTML)
+        self.assertIn("#swRich .rc.nxMound .nxDots i.on{background:#5cc23a;", HTML)
+        self.assertEqual((22 + 2) // (6 + 2), 3)   # 3つずつ 並ぶ → 8つでも 3段(6×3 + 2×2 = 22px)に おさまる
+        # せまい 画面(360px 以下): 列の 左上・小山 14px・点 4px(2つずつ 4段)。広い 画面の きまりより あとに 置く(あとの きまりが 勝つ)
+        narrow = "@media (max-width:360px){#swRich .rc.nxMound{left:calc(50% - 32px);bottom:100%;margin-left:0;width:14px;height:30px}#swRich .rc.nxMound::before{height:6px}#swRich .rc.nxMound .nxDots{left:2px;width:10px;bottom:8px}#swRich .rc.nxMound .nxDots i{width:4px;height:4px}}"
+        self.assertIn(narrow, HTML)
+        self.assertGreater(HTML.index(narrow), HTML.index("#swRich .rc.nxMound .nxDots i.pop{"))
+        self.assertEqual((10 + 2) // (4 + 2), 2)
+        # ふくらむ 動きは 0.3秒
+        self.assertIn("#swRich .rc.nxMound .nxDots i.pop{animation:swNextPop .3s ease-out 1 both}", HTML)
+        self.assertIn("#swRich.on{min-height:30px}", HTML)
+        # 動きを減らす 設定では 点は ふくらまない(点の 数は 同じ)
+        self.assertIn("@media (prefers-reduced-motion: reduce){#swRich .rc.new,#swRich .rc.nxMound .nxDots i.pop{animation:none}}", HTML)
+        code = HTML[HTML.index("  function richNext(e, lv, isNew){"):HTML.index("  /* 小さな再会(周回125")]
+        self.assertNotIn("textContent", code)
+        self.assertNotIn("innerText", code)
+        # 確かめ用の 数え(richState)は 植物だけ(小山は 数えない)
+        self.assertIn("rcs = e ? [].map.call(e.querySelectorAll('.rc:not(.nxMound)')", HTML)
 
 
 if __name__ == "__main__":

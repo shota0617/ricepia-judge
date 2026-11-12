@@ -1046,6 +1046,38 @@ const srv = http.createServer((r, s) => { const u = decodeURIComponent(r.url.spl
       const how = x => x[0] === '田んぼを ゆびで なぞる';
       ok('耕す前に 顔を 押すと 1 回めは「田んぼを ゆびで なぞる」・2 回めからは 雑談。耕しはじめた あとは 雑談（直す前：する ことは 0 回）', how(face[0][0]) && !face[0][0][1] && !how(face[0][1]) && face[0][1][0] !== '' && !how(face[0][2]) && face[1].every(x => x[1] && !how(x) && x[0] !== ''), face);
     }
+    // 16-5・16-6) Codex 指摘（サイクル276 の PR）。にせの時計（1 こまの 間を かえる・指の 時刻も そろえる）
+    {
+      const open5 = async () => { const { ctx, p, cdp } = await open14(''); await p.waitForFunction(() => window.game && game.S && game.S.started && typeof P !== 'undefined' && P.Rotary);
+        await p.evaluate(() => { const real = performance.now.bind(performance); let now = real(); performance.now = () => now; window.__sync = () => { now = real(); }; const rr = window.requestAnimationFrame.bind(window), id = rr(() => {}); for (let k = id; k > id - 6; k--) cancelAnimationFrame(k);
+          window.requestAnimationFrame = () => 0; game.renderer.render = () => {}; Object.defineProperty(Event.prototype, 'timeStamp', { get() { return now; }, configurable: true });
+          window.__F = (ms, n) => { for (let i = 0; i < n; i++) { now += ms; frame(now); } return { two: viewTwo, on: TRACE.on, zoom: +fovZoom.toFixed(2), x: game.S.x, z: game.S.z, pts: viewPts.size }; }; });
+        await p.waitForTimeout(2500); await p.evaluate(() => window.__sync());
+        return { ctx, p, T: (type, pts) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: pts }), fl: () => p.evaluate(() => new Promise(r => setTimeout(r, 250))) }; };
+      // 16-5) 1 秒に 5 こま・60 こま：片方が 先に 20px 動いて 2 こま あと「なぞる」に 決まり、その すぐ あとに もう片方も 20px 動く → 寄って見る に 直る（直す前：5 こまでは なぞり運転が つづく）
+      const r5 = {};
+      for (const fps of [5, 60]) {
+        const { ctx, p, T, fl } = await open5(); const F = n => p.evaluate(([m, k]) => window.__F(m, k), [1000 / fps, n]), P2 = (a, c) => [{ x: a, y: 520, id: 1 }, { x: c, y: 520, id: 2 }];
+        await F(2 * fps); await T('touchStart', P2(165, 225)); await fl(); await F(1);
+        await T('touchMove', P2(145, 225)); await fl(); await F(1); const d = await F(1);
+        await T('touchMove', P2(145, 245)); await fl(); const a = await F(0); await T('touchEnd', []); await F(fps);
+        r5[fps] = [d.two, a.two, a.on, a.zoom]; await ctx.close();
+      }
+      ok('なぞりに 決まった すぐ あとに もう片方も 動くと 寄って見る に 直る（1 秒に 5 こまでも。直す前：5 こまでは なぞり運転が つづく）', [5, 60].every(f => r5[f][0] === 'trace' && r5[f][1] === 'pinch' && !r5[f][2] && r5[f][3] > 1.5), r5);
+      // 16-6) 2 本の指を 置いたまま 画面を 回す（pointercancel が 来ない）：そのまま 2 本で 広げると 寄って見る（走らない）。片方を 離してから もう 1 本を 動かすと その指で なぞれる
+      //       （直す前：広げると 1 本指の なぞりに なって 0.85m 走る・片方を 離すと のこった 指は 0m）
+      const r6 = {};
+      for (const mode of ['spread', 'liftOne']) {
+        const { ctx, p, T, fl } = await open5(); const F = n => p.evaluate(([m, k]) => window.__F(m, k), [50, n]), A = (x, y) => ({ x, y, id: 1 }), B = (x, y) => ({ x, y, id: 2 });
+        await F(40); await T('touchStart', [A(165, 520), B(225, 520)]); await fl(); await F(2);
+        await p.setViewportSize({ width: 844, height: 390 }); await fl(); const s1 = await F(10); let s2;
+        if (mode === 'spread') { for (let i = 1; i <= 8; i++) { await T('touchMove', [A(392 - 10 * i, 300), B(452 + 10 * i, 300)]); await F(1); } await fl(); s2 = await F(20); }
+        else { await T('touchEnd', [B(452, 300)]); await fl(); await F(2); for (let i = 1; i <= 40; i++) { await T('touchMove', [A(392, 330 - 3 * i)]); await F(1); } await fl(); s2 = await F(1); }
+        await T('touchEnd', []); await F(20); const s3 = await F(0);
+        r6[mode] = { two: s2.two, on: s2.on, zoom: s2.zoom, moved: +Math.hypot(s2.x - s1.x, s2.z - s1.z).toFixed(2), endPts: s3.pts }; await ctx.close();
+      }
+      ok('2 本を 置いたまま 回す：2 本で 広げると 寄って見る・走らない。片方を 離すと のこった 指で なぞれる（直す前：広げて 0.85m 走る・のこった 指は 0m）', r6.spread.two === 'pinch' && !r6.spread.on && r6.spread.zoom > 1.5 && r6.spread.moved < 0.05 && r6.liftOne.on && r6.liftOne.moved > 0.8 && r6.spread.endPts === 0 && r6.liftOne.endPts === 0, r6);
+    }
   }
   ok('エラーなし', errs.length === 0, errs.slice(0, 3));
   console.log(ng ? `NG ${ng} 件` : 'ぜんぶ ok'); await b.close(); srv.close(); process.exit(ng ? 1 : 0);

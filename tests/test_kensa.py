@@ -1669,6 +1669,7 @@ for (const [rest, inAt] of [[158, 127], [205, 166], [149, 120], [126, 101]]) {
         script = """
 const assert = require('node:assert/strict');
 const GW = 36, GH = 20, Z = {s:1};
+const firstBagFace = () => false;   // サイクル154: 顔つきの 粒の 当たりの 大きさ（ここでは 顔なし）
 const mk = (kind, x, y, r, z) => ({kind, x, y, r, z, gone:false, el:{hidden:false}});
 const bad = mk('higai', 100, 100, 0, 1), good = mk('seiryu', 100, 130, 0, 5);
 let grains = [bad, good];
@@ -3692,6 +3693,58 @@ advance(200); assert.equal(cls.has('on'), true);
 cls.delete('on'); vis(true); armIdle(); advance(90000); assert.equal(cls.has('on'), false);
 vis(false); advance(45100); assert.equal(cls.has('on'), true);
 """, hidden_at_load=True)
+
+
+    # ---- サイクル154（最初の1分・1袋目の 顔つきの わるい粒）----
+
+    def test_cycle154_face_grain_wins_inside_its_picture(self):
+        # 1袋目の 顔つきの わるい粒は 1.5倍で 見えるのに、当たりは 1倍の まま だった。絵の ふちを 押すと、となりの 良い粒の 当たりが 先に 取られて
+        # 良い粒が ゆれる だけ（390×844実測: 絵の 中の 40点で 取れた 35 → 40。良い粒と 重なる 所だけの 38点で 取れた 12 → 38）
+        fn = HTML[HTML.index("function grainAt(p) {"):HTML.index("const pts = new Map();")]
+        self._node150("""
+const assert = require('node:assert/strict');
+const GW = 36, GH = 20, Z = { s:1 }; let lotIndex = 0, spread = true;
+const firstBagFace = g => lotIndex === 0 && spread && g.kind !== 'seiryu';
+const mk = (kind, x, y, z) => ({ kind, x, y, r:0, z, gone:false, el:{ hidden:false } });
+const good = mk('seiryu', 100, 100, 5), face = mk('shini', 125, 100, 100), grains = [good, face];
+""" + fn + """
+// 顔の 絵（1.5倍: 中心から よこ 27px）の 中で、良い粒の 当たりの 中でも ある 所
+assert.equal(grainAt({ x:104, y:100 }), face, '顔つきの 粒の 絵の 中なのに 良い粒が 取られた');
+assert.equal(grainAt({ x:150, y:100 }), face);                          // 絵の 先の はし
+assert.equal(grainAt({ x:125, y:113 }), face);                          // 短い 向きの はし（15px）
+assert.equal(grainAt({ x:90, y:100 }), good);                           // 絵の 外は 今までどおり 良い粒
+// 2袋目から（顔なし）は 今までどおり 1倍の 当たり
+lotIndex = 1; assert.equal(grainAt({ x:104, y:100 }), good);
+""")
+
+    def test_cycle154_face_grain_does_not_shrink_when_it_pulses(self):
+        # 顔つきの 粒（1.5倍）に「ふくらんで 知らせる」動きが 付くと、動きの 1倍の 形が 上書きして 1.0〜1.25倍に ちぢんだ
+        # （390×844実測: 0.2秒おき 100回中91回 1.5倍より 小さい・はば 59 → 35px）。ふくらむ・ゆれる 動きは その 粒の 大きさを 元に する
+        fn = HTML[HTML.index("function refreshBadFaces() {"):HTML.index("let zoomAnimTimer")]
+        node = shutil.which("node")
+        if not node:
+            self.skipTest("node がないので実行の確認は飛ばす")
+        out = subprocess.run([node, "-e", """
+let lotIndex = 0, spread = true, isNear = false; const FACE_Z = 100, motion = 1;
+const firstBagFace = g => lotIndex === 0 && spread && g.kind !== 'seiryu', grainMood = () => 'normal', grainSprite = () => '';
+const props = {}; const g = { kind:'shini', gone:false, el:{ style:{} }, img:{ src:'', style:{ transform:'', setProperty(k, v) { props[k] = v; } }, animate() {} } };
+const grains = [g];
+""" + fn + """
+refreshBadFaces(); console.log(JSON.stringify({ face:props['--face'] || null, transform:g.img.style.transform }));
+"""], capture_output=True, text=True, check=True).stdout
+        st = json.loads(out)
+        self.assertEqual(st["transform"], "scale(1.5)")
+        face = st["face"] or "1"
+        for name in ("hint", "wig"):
+            kf = HTML[HTML.index("@keyframes " + name + " {"):]
+            kf = kf[:kf.index("\n")]
+            scales = []
+            for frame in re.findall(r"\{ transform:([^;]*); \}", kf):
+                frame = re.sub(r"var\(--face, 1\)", face, frame)
+                m = re.findall(r"scale\(([^()]*(?:\([^()]*\))?[^()]*)\)", frame)
+                expr = m[-1].replace("calc(", "(") if m else "1"
+                scales.append(eval(expr, {"__builtins__": {}}))
+            self.assertGreaterEqual(min(scales), 1.5, name + " の 動きで 顔つきの 粒が " + str(min(scales)) + "倍に ちぢむ")
 
 
 if __name__ == "__main__":

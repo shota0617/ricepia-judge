@@ -166,20 +166,24 @@ function mk(tag){ const el = { tagName: tag, className: '', children: [], attrs:
   Object.defineProperty(el, 'innerHTML', { set(){ el.children = []; }, get(){ return ''; } }); return el; }
 const row = mk('div'); const $ = id => id === 'swRich' ? row : null;
 const document = { createElement: mk };
-const traceInfo = { okN: 0 }; let branchInfo = { key: '', hint: '' };
+const traceInfo = { okN: 0, count: 0 }; let branchInfo = { key: '', hint: '' };
 function pixRichSet(e, k){ e.setAttribute('data-pixrich', k); } function pixStatSet(){}
 eval(html.slice(a, b));
 function sig(e){ return e.className.replace(/\b(new|pop)\b/g, '').trim() + '[' + (e.getAttribute('data-pixrich') || '') + ']' + e.children.map(sig).join(''); }
+(async () => {
 const out = [];
-for (let ok = 0; ok <= +process.argv[2]; ok++) { traceInfo.okN = ok; richDraw(ok > 0);
+for (let ok = 0; ok <= +process.argv[2]; ok++) { traceInfo.okN = ok; traceInfo.count = ok; richDraw(ok > 0);   // 1手に ○ 1つ
   const m = row.children.find(c => /nxMound/.test(c.className));
   const dots = m ? m.children[0].children : [];
   out.push({ ok: ok, on: row._cl.has('on'), sig: row.children.map(sig).join('|'), plants: row.children.filter(c => !/nxMound/.test(c.className)).length,
     got: m ? +m.getAttribute('data-got') : null, need: m ? +m.getAttribute('data-need') : null, lit: dots.filter(d => /\bon\b/.test(d.className)).length, dots: dots.length, pop: dots.filter(d => /\bpop\b/.test(d.className)).length });
-  richDraw(false);   // 同じ ○ の 数で 描きなおしても(色が 決まった 手・気配の 手)点は ふくらまない
-  const m2 = row.children.find(c => /nxMound/.test(c.className)); out[out.length - 1].popAgain = m2 ? m2.children[0].children.filter(d => /\bpop\b/.test(d.className)).length : 0;
+  const pops = () => { const m2 = row.children.find(c => /nxMound/.test(c.className)); return m2 ? m2.children[0].children.filter(d => /\bpop\b/.test(d.className)).length : 0; };
+  richDraw(false); out[out.length - 1].popSame = pops();   // 同じ 手の 描きなおし(気配・色が 変わった 手): ふくらみを 引きつぐ(Codex 指摘)
+  await new Promise(r => setTimeout(r, 0));
+  richDraw(false); out[out.length - 1].popAgain = pops();   // 手が 終わった あとの 描きなおし: 古い 点は ふくらまない
 }
 console.log(JSON.stringify(out));
+})();
 """
 
 
@@ -191,6 +195,95 @@ def rich_run(n):
     if out.returncode != 0:
         raise AssertionError(out.stderr[-2000:])
     return json.loads(out.stdout.strip().splitlines()[-1])
+
+
+# 周回170(Codex 指摘): 世話の あと〜芽の 列(traceAdd・branchAdd・richDraw)を まとめて 取り出し、ゲームと 同じ 順(traceAdd(true) → branchAdd(card.key))で 流す。
+# 1手ごとに、点が いくつ ふくらんで いるか(pop)・光った 点の 数を 返す。'tick' は その 手の あと(ゲームの 流れが 終わった あと)
+FLOW_JS = r"""
+const fs = require('fs');
+const html = fs.readFileSync(process.argv[1], 'utf8');
+const a = html.indexOf('  var traceInfo = { list: [], okN: 0'), b = html.indexOf('  /* 小さな再会(周回125', a);
+if (a < 0 || b < 0) { console.log(JSON.stringify({ error: 'no code' })); process.exit(0); }
+function mk(tag){ const el = { tagName: tag, className: '', children: [], attrs: {}, style: {},
+  appendChild(c){ this.children.push(c); return c; }, setAttribute(k, v){ this.attrs[k] = String(v); }, getAttribute(k){ return k in this.attrs ? this.attrs[k] : null; }, removeAttribute(k){ delete this.attrs[k]; },
+  classList: { add(){ for (const x of arguments) el._cl.add(x); }, remove(){ for (const x of arguments) el._cl.delete(x); }, toggle(x, v){ if (v) el._cl.add(x); else el._cl.delete(x); }, contains(x){ return el._cl.has(x); } }, _cl: new Set() };
+  Object.defineProperty(el, 'innerHTML', { set(){ el.children = []; }, get(){ return ''; } }); return el; }
+const row = mk('div'); const $ = id => id === 'swRich' ? row : null;
+const document = { createElement: mk };
+var delayList = [], choices = '';
+function pixStatSet(){}
+eval(html.slice(a, b));
+function state(){ const m = row.children.find(c => /nxMound/.test(c.className)); const d = m ? m.children[0].children : [];
+  return { pop: d.filter(x => /\bpop\b/.test(x.className)).length, lit: d.filter(x => /\bon\b/.test(x.className)).length, popIdx: d.findIndex(x => /\bpop\b/.test(x.className)), branch: row.children.some(c => /\bbranch\b/.test(c.className)), hint: row.children.some(c => /\bhint\b/.test(c.className)) }; }
+(async () => {
+  const out = [];
+  for (const st of JSON.parse(process.argv[2])) {
+    if (st[0] === 'ok') { traceAdd(true); if (st[1]) branchAdd(st[1]); }   // 判定 ○(index.html の choose と 同じ 順)
+    else if (st[0] === 'ng') traceAdd(false);
+    else if (st[0] === 'tick') await new Promise(r => setTimeout(r, 0));
+    else if (st[0] === 'redraw') richDraw(false);
+    else if (st[0] === 'replay') { traceClear(); for (const x of st[1]) traceReplay(x[0] ? '⭕' : '❌', x[1]); }
+    out.push(Object.assign({ step: st[0] }, state()));
+  }
+  console.log(JSON.stringify(out));
+})();
+"""
+
+
+def flow_run(steps):
+    node = shutil.which("node")
+    if not node:
+        raise unittest.SkipTest("node がないので実行の確認は飛ばす")
+    out = subprocess.run([node, "-e", FLOW_JS, HTML_PATH, json.dumps(steps)], capture_output=True, text=True)
+    if out.returncode != 0:
+        raise AssertionError(out.stderr[-2000:])
+    return json.loads(out.stdout.strip().splitlines()[-1])
+
+
+# 周回170(Codex 指摘): 本物の ブラウザ(Playwright の Chromium)で 小山と 点が 見えるかを はかる。サーバーは 立てず、ページの 読みこみを ディスクから 返す
+BROWSER_JS = r"""
+const fs = require('fs'), path = require('path');
+let chromium; try { ({ chromium } = require('playwright')); } catch (e) { console.log(JSON.stringify({ skip: 'playwright なし' })); process.exit(0); }
+const [htmlPath, root] = process.argv.slice(1, 3);
+const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.json': 'application/json', '.png': 'image/png', '.jpg': 'image/jpeg', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.css': 'text/css', '.ico': 'image/x-icon' };
+(async () => {
+  let b; try { b = await chromium.launch(); } catch (e) { console.log(JSON.stringify({ skip: 'chromium が 起動しない' })); return; }
+  const out = [];
+  for (const [w, h, rm] of JSON.parse(process.argv[3])) {
+    const ctx = await b.newContext({ viewport: { width: w, height: h }, isMobile: true, hasTouch: true, reducedMotion: rm ? 'reduce' : 'no-preference' });
+    const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
+    await p.route('http://kome.test/**', r => { const u = new URL(r.request().url()); let f = u.pathname === '/kome365/index.html' ? htmlPath : path.join(root, decodeURIComponent(u.pathname));
+      if (!f.startsWith(root) && f !== htmlPath || !fs.existsSync(f) || fs.statSync(f).isDirectory()) return r.fulfill({ status: 404, body: '' });
+      r.fulfill({ status: 200, contentType: TYPES[path.extname(f)] || 'application/octet-stream', body: fs.readFileSync(f) }); });
+    await p.goto('http://kome.test/kome365/index.html?no3d');
+    await p.waitForFunction(() => window.__komeReady, null, { timeout: 60000 });
+    // ○ で 点が 1つ 光るまで(芽に かわった 手は 点が 0 なので もう 1枚)カードを 決める。○ に ならなければ 次は 反対へ
+    let key = 'ArrowLeft', res = null;
+    for (let i = 0; i < 16 && !res; i++) {
+      const before = await p.evaluate(() => ({ ok: window.__swipe.richState().okN, d: document.getElementById('swBigDate').innerText }));
+      await p.keyboard.press(key);
+      await p.waitForFunction(d => document.getElementById('swBigDate').innerText !== d, before.d, { timeout: 8000 }).catch(() => {});
+      res = await p.evaluate((ok0) => {
+        const st = window.__swipe.richState(); if (st.okN === ok0) return null;
+        const m = document.querySelector('#swRich .nxMound'); if (!m) return { noMound: true, okN: st.okN };
+        const dots = [...m.querySelectorAll('.nxDots i')], lit = dots.filter(d => d.classList.contains('on'));
+        if (!lit.length) return null;
+        const vis = e => { for (let n = e; n && n.nodeType === 1; n = n.parentElement) { const cs = getComputedStyle(n); if (cs.display === 'none' || cs.visibility === 'hidden' || +cs.opacity < 0.3) return false; } return true; };
+        const box = e => { const r = e.getBoundingClientRect(); return [r.left, r.top, r.width, r.height]; };
+        const inView = b => b[2] > 0 && b[3] > 0 && b[0] >= 0 && b[1] >= 0 && b[0] + b[2] <= innerWidth && b[1] + b[3] <= innerHeight;
+        const pop = m.querySelector('.nxDots i.pop');
+        return { mound: box(m), moundVis: vis(m), moundIn: inView(box(m)), need: +m.getAttribute('data-need'), got: +m.getAttribute('data-got'), dots: dots.length, lit: lit.length,
+          dotsOk: dots.every(d => vis(d) && inView(box(d))), dotW: dots[0].offsetWidth, litBg: getComputedStyle(lit[0]).backgroundColor, offBg: dots.length > lit.length ? getComputedStyle(dots[dots.length - 1]).backgroundColor : '',
+          popAnim: pop ? getComputedStyle(pop).animationName : null, popDur: pop ? getComputedStyle(pop).animationDuration : null };
+      }, before.ok);
+      if (res === null) { const ok1 = await p.evaluate(() => window.__swipe.richState().okN); if (ok1 === before.ok) key = key === 'ArrowLeft' ? 'ArrowRight' : 'ArrowLeft'; await p.waitForTimeout(400); }
+    }
+    out.push(Object.assign({ w, h, rm: !!rm, errs: errs.length }, res || { none: true }));
+    await ctx.close();
+  }
+  await b.close(); console.log(JSON.stringify(out));
+})();
+"""
 
 
 def css_rule(selector):
@@ -903,7 +996,8 @@ console.log(JSON.stringify(out));
             self.assertEqual((x["need"], x["got"], x["dots"], x["lit"]), (th[lv] - prev, x["ok"] - prev, th[lv] - prev, x["ok"] - prev), x)
             self.assertLess(x["lit"], x["dots"])   # ぜんぶ 光った ○ で 芽に かわる(光りきった 点は 残らない)
             self.assertEqual(x["pop"], 1 if x["lit"] else 0, x)   # その ○ で 光った 点だけ ふくらむ
-            self.assertEqual(x["popAgain"], 0, x)   # 同じ ○ の 数で 描きなおしても ふくらまない
+            self.assertEqual(x["popSame"], x["pop"], x)   # 同じ 手の 描きなおしでは ふくらみを 引きつぐ(Codex 指摘)
+            self.assertEqual(x["popAgain"], 0, x)   # 手が 終わった あとの 描きなおしでは ふくらまない
         self.assertLessEqual(max(x["dots"] for x in r if x["dots"]), 8)   # 2つずつ 4段に おさまる
         # 芽が 8つ そろったら 出さない
         self.assertEqual([x["got"] for x in r[37:]], [None] * len(r[37:]))
@@ -932,6 +1026,60 @@ console.log(JSON.stringify(out));
         self.assertNotIn("innerText", code)
         # 確かめ用の 数え(richState)は 植物だけ(小山は 数えない)
         self.assertIn("rcs = e ? [].map.call(e.querySelectorAll('.rc:not(.nxMound)')", HTML)
+
+
+    def test_ok_dot_pops_once_even_when_flower_redraws(self):
+        # Codex 指摘(周回170): ○ で 世話の 花の 気配(hint)や 色の 確定(branch)が 変わると、branchAdd が 同じ 流れで richDraw を もう一度 呼び、
+        # その ○ で 光った 点の ふくらみ(pop)が 消えて いた(traceAdd(true) → branchAdd('basal') で pop 1 → 0)
+        r = flow_run([["ok", "basal"], ["tick"], ["ok", "basal"], ["tick"], ["ok", "flood"], ["tick"]])
+        self.assertNotIn("error", r)
+        self.assertTrue(r[0]["hint"])              # 1つめの basal で 気配が 出る(2回目の 描きなおし)
+        self.assertEqual(r[0]["pop"], 1, r[0])     # それでも その ○ の 点は ふくらむ
+        self.assertEqual(r[0]["popIdx"], r[0]["lit"] - 1)
+        self.assertTrue(r[2]["branch"])            # 2つめで 色が 決まる(もう一度 描きなおし)
+        self.assertEqual(r[2]["pop"], 1 if r[2]["lit"] else 0, r[2])
+        self.assertEqual(r[4]["pop"], 1 if r[4]["lit"] else 0, r[4])   # 描きなおしの ない ○ も 同じ
+        # ○ で ない 描きなおし(その 手が 終わった あと)では 古い 点は ふくらまない
+        r = flow_run([["ok", "basal"], ["tick"], ["redraw"], ["ng"], ["tick"], ["redraw"]])
+        self.assertEqual([x["pop"] for x in r], [1, 1, 0, 0, 0, 0])
+        # 保存から もどる(選んだ 列の 再生)では どの 点も ふくらまない。その あとの ○ は ふくらむ
+        r = flow_run([["replay", [[1, "basal"], [0, ""], [1, "flood"]]], ["tick"], ["redraw"], ["ok", "flood"]])
+        self.assertEqual([x["pop"] for x in r], [0, 0, 0, 1])
+        self.assertEqual(r[0]["lit"], 0)   # ○ 2つ = 芽 1つ・次の 点は まだ 0
+        self.assertEqual(r[3]["lit"], 1)
+
+
+    def test_next_sprout_dots_visible_in_browser(self):
+        # Codex 指摘(周回170): CSS の 文字を 見る だけでは、点を 消す 1行(display:none)を 足しても 通って いた。本物の ブラウザで 四角・見え方・動きを はかる
+        node = shutil.which("node")
+        if not node:
+            raise unittest.SkipTest("node がないので実行の確認は飛ばす")
+        vps = [[320, 568, False], [390, 844, False], [844, 390, False], [390, 844, True], [320, 568, True]]
+        out = subprocess.run([node, "-e", BROWSER_JS, HTML_PATH, ROOT, json.dumps(vps)], capture_output=True, text=True, timeout=600)
+        if out.returncode != 0:
+            raise AssertionError(out.stderr[-2000:])
+        r = json.loads(out.stdout.strip().splitlines()[-1])
+        if isinstance(r, dict) and r.get("skip"):
+            raise unittest.SkipTest(r["skip"])
+        for x in r:
+            name = "%dx%d%s" % (x["w"], x["h"], " reduce" if x["rm"] else "")
+            self.assertNotIn("none", x, name + ": ○ で 点が 光らなかった")
+            self.assertNotIn("noMound", x, name + ": 小山が 無い")
+            self.assertEqual(x["errs"], 0, name)
+            self.assertTrue(x["moundVis"] and x["moundIn"], name + ": 小山が 見えない・画面の 外 %r" % (x,))
+            self.assertGreater(x["mound"][2], 0, name)
+            self.assertGreater(x["mound"][3], 0, name)
+            self.assertTrue(x["dotsOk"], name + ": 点が 見えない・画面の 外")
+            self.assertEqual(x["dots"], x["need"], name)   # 点の 数 = 次の 芽までに いる ○(動きを減らす 設定でも 同じ)
+            self.assertEqual(x["lit"], x["got"], name)
+            self.assertGreaterEqual(x["lit"], 1, name)
+            self.assertEqual(x["dotW"], 4 if x["w"] <= 360 else 6, name)
+            if x["offBg"]:
+                self.assertNotEqual(x["litBg"], x["offBg"], name)   # 光った 点と まだの 点は 色が ちがう
+            if x["rm"]:
+                self.assertEqual(x["popAnim"], "none", name)   # 動きを減らす 設定では ふくらまない
+            else:
+                self.assertEqual((x["popAnim"], x["popDur"]), ("swNextPop", "0.3s"), name)
 
 
 if __name__ == "__main__":

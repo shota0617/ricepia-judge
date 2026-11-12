@@ -229,6 +229,7 @@ class WalkStartMomentum209(unittest.TestCase):
     def run_walk(self, tilt, path=True):
         src = line(PIX, "const TAP_TILT_OVER = ") + fn(PIX, "tapWalk")
         code = """
+if (typeof navigator === 'undefined') globalThis.navigator = {};   // Node 20 には navigator が 無い（歩けない ときの ぶるっ を 読む）
 const G = { notePlayInput() {}, npcs: [], toast() {} }, tapS = { path: [], timer: null, goal: null, due: 0 };
 const idleTouch = () => {}, tapWalkStop = () => { tapS.path = []; tapS.goal = null; }, tapWalkTick = () => {};
 const driving = false, mazeOn = () => false, BLOCK = new Set(), codeAt = () => 0, npcTile = n => n;

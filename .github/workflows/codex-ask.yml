@@ -1,0 +1,51 @@
+# Codex に聞く：claude/ の作業ブランチで .codex-ask/prompt.md を変えて push すると、Codex（openai/codex-action・読むだけ）がその依頼に答える
+# - 答えは、この実行の Summary・ログ（「Answer」）・artifact（codex-answer）に出る。Claude Code のセッションはログを読んで使う
+# - main に入れなくても動く（workflow_dispatch は main にあるものしか動かせないため、push で動かす）
+# 必要な準備：Secrets の OPENAI_API_KEY。Variables の CODEX_MODEL でモデルを変えられる
+name: Codex ask
+on:
+  push:
+    branches: ['claude/**']
+    paths: ['.codex-ask/prompt.md']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: codex-ask-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  ask:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check settings
+        env:
+          O: ${{ secrets.OPENAI_API_KEY }}
+        run: if [ -z "$O" ]; then echo "::error::Secrets に OPENAI_API_KEY がありません"; exit 1; fi
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - run: mkdir -p "$RUNNER_TEMP/out"
+      - name: Codex answers
+        uses: openai/codex-action@bdf19a4a223ec2549a3e2274a0cf61556bc07675 # v1
+        with:
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          prompt-file: .codex-ask/prompt.md
+          output-file: ${{ runner.temp }}/out/answer.md
+          permission-profile: ':read-only'
+          model: ${{ vars.CODEX_MODEL }}
+      - name: Answer
+        if: always()
+        run: |
+          if [ -s "$RUNNER_TEMP/out/answer.md" ]; then
+            cat "$RUNNER_TEMP/out/answer.md"
+            { echo '# Codex の答え'; echo; cat "$RUNNER_TEMP/out/answer.md"; } >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "答えがありません"
+          fi
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: codex-answer
+          path: ${{ runner.temp }}/out/
+          retention-days: 30

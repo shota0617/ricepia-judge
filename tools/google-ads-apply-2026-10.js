@@ -21,9 +21,17 @@ const PMAX_AG1_REPLACE = [
   { field: 'LONG_HEADLINE', from: '西尾の米屋 らいすぴあ', to: '一年360日毎日精米。精米したてのお米を西尾の米屋・らいすぴあから' },
   { field: 'DESCRIPTION', from: '車に乗ったまま涼しくお米を受取。西尾の米屋・翔米です。', to: '寒い日も、車に乗ったままお米を受け取れます。西尾の米屋・らいすぴあです。' },
   { field: 'BUSINESS_NAME', from: 'らいすぴあ・秀幸', to: '近藤米穀店 らいすぴあ' },
+  // 効果・文のレビュー（2026-10-24）：サイトは「今年で40年目」「1892年創業」。年が変わっても古くならない言い方に
+  { field: 'HEADLINE', from: '40年続くお米のドライブスルー', to: '40年目のお米のドライブスルー' },
+  { field: 'DESCRIPTION', from: '40年続くお米のドライブスルー。安城・岡崎・碧南からもアクセス良好です。', to: '40年目のお米のドライブスルー。安城・岡崎・碧南からもアクセス良好です。' },
+  { field: 'DESCRIPTION', from: '創業134年。五代目は農産物検査員。一年360日毎日精米。', to: '1892年創業。五代目は農産物検査員。一年360日毎日精米。' },
 ];
 // P-MAX 新米産地レポート：説明文を足す（5-2）
 const PMAX_SHINMAI = '新米産地レポート';
+const PMAX_SHINMAI_REPLACE = [
+  { field: 'HEADLINE', from: '創業134年の米屋', to: '1892年創業の米屋' },
+  { field: 'LONG_HEADLINE', from: '創業134年、五代目は農産物検査員。今年の新米も産地と品質を自分の目で見て選びました', to: '1892年創業、五代目は農産物検査員。産地と品質を自分の目で見てお米を選んでいます' },
+];
 const PMAX_SHINMAI_ADD = [
   { field: 'DESCRIPTION', text: '新米は15℃の大型低温倉庫で保管。必要な分だけ、毎日精米してお渡しします。' },
   { field: 'DESCRIPTION', text: '重いお米は車まで積み込みます。西尾・安城・岡崎・碧南からも通いやすい米屋です。' },
@@ -60,6 +68,7 @@ function main() {
       const ag1 = findAssetGroup(pmax, PMAX_AG1);
       if (ag1) PMAX_AG1_REPLACE.forEach(r => replaceAssetGroupText(ag1, r));
       const shinmai = findAssetGroup(pmax, PMAX_SHINMAI);
+      if (shinmai) PMAX_SHINMAI_REPLACE.forEach(r => replaceAssetGroupText(shinmai, r));
       if (shinmai) PMAX_SHINMAI_ADD.forEach(a => addAssetGroupText(shinmai, a));
     }
     if (search) {
@@ -83,7 +92,7 @@ function main() {
 // ---- 共通 ----
 function width(s) { let w = 0; for (const c of s) w += /[\u0000-ÿ｡-ﾟ]/.test(c) ? 1 : 2; return w; }
 function checkLengths() {
-  const all = PMAX_AG1_REPLACE.map(r => [r.field, r.to]).concat(PMAX_SHINMAI_ADD.map(a => [a.field, a.text]),
+  const all = PMAX_AG1_REPLACE.concat(PMAX_SHINMAI_REPLACE).map(r => [r.field, r.to]).concat(PMAX_SHINMAI_ADD.map(a => [a.field, a.text]),
     Object.keys(RSA_HEADLINES).map(k => ['HEADLINE', RSA_HEADLINES[k]]), RSA_DESCRIPTIONS.map(d => ['DESCRIPTION', d.to]));
   all.forEach(([f, t]) => { if (width(t) > LIMITS[f]) throw new Error('文字数オーバー（' + f + ' ' + width(t) + '/' + LIMITS[f] + '）: ' + t); });
 }

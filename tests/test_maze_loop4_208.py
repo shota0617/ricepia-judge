@@ -220,6 +220,7 @@ class GoalTap208(unittest.TestCase):
 # 390×844 の 窓（さがし役の 再現と 同じ 形）：窓の 箱 52〜786・下の 欄 700〜・中身 68〜368（高さ 300）。
 # ボタンの 列：中身の 上から 177〜213（ミニゲーム・ムービー・ここへ）・219〜255（シェア・教える）・255〜287（▶ とじる）
 PXINFO_STUB = r"""
+const innerWidth = 390, innerHeight = 844, window = {};
 const ROWS = [[20, 370, 177, 213], [20, 370, 219, 255], [100, 290, 255, 287]], TEXT = [20, 370, 0, 170];
 const dq = { style: { marginTop: '' } }, top0 = 68, H = 300;
 const off = () => parseFloat(dq.style.marginTop) || 0;
@@ -233,11 +234,12 @@ const $ = id => (id === 'sheet' ? sheet : el);
 
 
 def pxinfo_code(cases):
-    defs = line(PIX, "const pxInfoTap = ", "const pxInfoTap = { x: 0, y: 0, t: -1e9 };\n") + line(PIX, "const PXINFO_GAP = ", "")
+    defs = line(PIX, "const pxInfoTap = ", "const pxInfoTap = { x: 0, y: 0, t: -1e9 };\n") + line(PIX, "const PXINFO_GAP = ", "") + line(PIX, "const pxInfoShift = ", "")
     place = fn(PIX, "pxInfoPlace", "function pxInfoPlace() {}\n")
     run = """
 const out = [];
 for (const [x, y, ago] of %s) {
+  el.hidden = true; pxInfoPlace(); el.hidden = false;   // 前の 窓を 閉じてから 開く
   pxInfoTap.x = x; pxInfoTap.y = y; pxInfoTap.t = performance.now() - ago;
   dq.style.marginTop = '';
   pxInfoPlace();
@@ -271,6 +273,67 @@ class InfoWindow208(unittest.TestCase):
         self.assertIn("observe($('pxInfo'), { attributes: true, attributeFilter: ['hidden'], childList: true, subtree: true })", PIX)
 
 
+# 窓を 開いた まま 画面を 回す・高さが かわる（外の 読み手の 指摘：390×844 で 開いて 844×390 に 回すと 242px の ずらしが のこり「▶ とじる」が 画面の 外）
+# 窓の 箱：上 52・下 = 高さ − 58（下の タブ）。下の 欄：たて では 窓の 箱の 下から 86px（よこ では かくれる）。中身の 高さ：300 か 窓の 箱の 70%
+ROT_STUB = r"""
+let innerWidth = 390, innerHeight = 844; const window = { visualViewport: { offsetTop: 0, height: 844 } };
+const ROWS = [[20, 370, 177, 213], [20, 370, 219, 255], [100, 290, 255, 287]];
+const dq = { style: { marginTop: '' } };
+const box = () => ({ top: 52, bottom: innerHeight - 58, height: innerHeight - 110 });
+const off = () => parseFloat(dq.style.marginTop) || 0, dqH = () => Math.min(300, box().height * 0.7);
+dq.getBoundingClientRect = () => ({ top: 68 + off(), bottom: 68 + off() + dqH(), left: 0, right: innerWidth });
+const rect = q => ({ left: q[0], right: q[1], width: q[1] - q[0], top: 68 + off() + q[2], bottom: 68 + off() + q[3] });
+dq.querySelectorAll = () => ROWS.map(q => ({ getBoundingClientRect: () => rect(q) }));
+const el = { hidden: false, querySelector: () => dq, getBoundingClientRect: () => box() };
+const sheet = { getBoundingClientRect: () => (innerWidth > innerHeight ? { top: 0, height: 0 } : { top: box().bottom - 86, height: 80 }) };
+const $ = id => (id === 'sheet' ? sheet : el);
+const visible = () => Math.min(box().bottom, innerHeight, innerWidth > innerHeight ? Infinity : box().bottom - 86, window.visualViewport.height);
+"""
+
+
+def rotate_code(cases):
+    defs = line(PIX, "const pxInfoTap = ", "const pxInfoTap = { x: 0, y: 0, t: -1e9 };\n") + line(PIX, "const PXINFO_GAP = ", "") + line(PIX, "const pxInfoShift = ", "")
+    place = fn(PIX, "pxInfoPlace", "function pxInfoPlace() {}\n")
+    run = """
+const out = [];
+for (const [w0, h0, w1, h1] of %s) {
+  innerWidth = w0; innerHeight = h0; window.visualViewport.height = h0; el.hidden = true; pxInfoPlace(); el.hidden = false;
+  pxInfoTap.x = w0 / 2; pxInfoTap.y = 68 + 177 + 10; pxInfoTap.t = performance.now();   // 1つめの ボタンの 列の 上を タップして 開く
+  pxInfoPlace();
+  const m0 = off();
+  pxInfoTap.t = performance.now() - 5000;   // 回すのは 開いて しばらく あと
+  innerWidth = w1; innerHeight = h1; window.visualViewport.height = h1;
+  pxInfoPlace('resize');
+  const d = dq.getBoundingClientRect();
+  out.push({ from: w0 + 'x' + h0, to: w1 + 'x' + h1, m0, m1: off(), dqBottom: d.bottom, visible: visible() });
+}
+console.log(JSON.stringify(out));
+""" % json.dumps(cases)
+    return ROT_STUB + defs + place + run
+
+
+class InfoRotate208(unittest.TestCase):
+    def test_rotate_with_window_open(self):
+        """窓を 開いた まま 回す（5つの 大きさの 組み・両向き）：はばが かわったら ずらしは 0（タップの 点は もう 意味が ない）。ずらしが 画面の 外に のこらない"""
+        o = node(rotate_code([[390, 844, 844, 390], [844, 390, 390, 844], [320, 568, 568, 320], [568, 320, 320, 568], [820, 1180, 1180, 820], [1180, 820, 820, 1180]]))
+        self.assertGreater(o[0]["m0"], 0)   # 390×844 では 開いた とき ずらす（2回めの タップが ボタンに 当たらない）
+        for r in o:
+            self.assertEqual(r["m1"], 0, "回した あとも 窓の ずらしが のこる: %r" % r)
+
+    def test_height_change_keeps_buttons_visible(self):
+        """高さ だけ かわる（アドレスバー・キーボード）：ずらしは のこして よいが、窓の 中身が 見える 所（下の 欄・キーボードの 上）を こえない"""
+        o = node(rotate_code([[390, 844, 390, 760], [390, 844, 390, 560], [820, 1180, 820, 900]]))
+        for r in o:
+            self.assertLessEqual(r["dqBottom"], r["visible"], "高さが かわった あと 窓の 中身が 見える 所の 外: %r" % r)
+        self.assertGreater(o[0]["m1"], 0)   # 少し 低く なった だけ なら ずらしは のこる（2回めの タップを よける）
+
+    def test_resize_is_watched(self):
+        """画面の 大きさ・見える 所・下の 欄の 高さ が かわったら 計算しなおす"""
+        self.assertIn("window.addEventListener('resize', pxInfoReplace);", PIX)
+        self.assertIn("visualViewport.addEventListener('resize', pxInfoReplace);", PIX)
+        self.assertIn("ro.observe($('sheet'))", PIX)
+
+
 # ---------- (C3) 知らせの よけ：mzToastDodge が わたす 札 ----------
 DODGE_STUB = r"""
 let got = 'unset'; const toastDodgeOff = false, rec = false, G = { guide: { id: 'g' } };
@@ -301,7 +364,7 @@ console.log(JSON.stringify({ a, b }));"""
 class Playtest208(unittest.TestCase):
     def test_first_minute_items(self):
         """playtest の はじめの 1分に、読みこみの 4つ（読めた・読めなかった・おそい・来ない）と C1・C2・C3 の 確かめ"""
-        for k in ["bootLoaded", "bootFailed", "bootSlow", "bootNever", "goalTapNoWorld", "arrowPinWorld", "infoSecondTap", "chestToastRing"]:
+        for k in ["bootLoaded", "bootFailed", "bootSlow", "bootNever", "goalTapNoWorld", "arrowPinWorld", "infoSecondTap", "chestToastRing", "infoRotate"]:
             self.assertIn("  %s: '" % k, PLAY, k)
         self.assertIn("...(await cycle208Checks(browser, R))", PLAY)
 

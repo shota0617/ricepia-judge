@@ -996,6 +996,33 @@ async function cycle208Checks(browser, R) {
     } catch (e) { fail(['infoSecondTap'], e); }
     finally { if (v) { R.errors.push(...v.errors); await v.ctx.close(); } }
   }
+  {   // ④' 名所の 窓を 開いた まま 画面の 高さ・向きを かえる（外の 読み手の 指摘：390×844 で 開いて 844×390 に 回すと「▶ とじる」が 画面の 外）。
+    // 2つめの ゴールの 所を タップして 窓を 開き → 大きさを かえる → 「▶ とじる」が 押せる・ボタンが ぜんぶ 画面の 中 → タップで 閉じる
+    const runs = [];
+    for (const [w0, h0, steps] of [[390, 844, [[390, 560], [844, 390]]], [820, 1180, [[1180, 820]]]]) {
+      let v = null;
+      try {
+        v = await open({ width: w0, height: h0 });
+        const p = v.page, g0 = (await goalPt(p) || {}).goal;
+        await follow(v, async () => { const g = await goalPt(p); return !!g && g.goal !== g0; }, 60000);
+        await p.waitForTimeout(800);
+        const g = await goalPt(p), o = { from: w0 + 'x' + h0, steps: [] };
+        if (g && g.x > 0 && g.x < w0 && g.y > 0 && g.y < h0) {
+          await v.tap(g.x, g.y); await p.waitForTimeout(700);
+          const look = () => p.evaluate(() => { const el = document.getElementById('pxInfo'), dq = el.querySelector('.dq'), cl = el.querySelector('[data-close]'), c = cl.getBoundingClientRect(), x = c.left + c.width / 2, y = c.top + c.height / 2;
+            const btns = [...dq.querySelectorAll('button, a')].map(b => b.getBoundingClientRect()).filter(q => q.width > 0);
+            return { open: !el.hidden, mt: dq.style.marginTop || '', close: [Math.round(c.top), Math.round(c.bottom)], pt: [Math.round(x), Math.round(y)], closeOk: !el.hidden && document.elementFromPoint(x, y) === cl, allIn: btns.every(q => q.top >= 0 && q.bottom <= innerHeight) }; });
+          o.opened = await look();
+          for (const [w, h] of steps) { await p.setViewportSize({ width: w, height: h }); await p.waitForTimeout(700); o.steps.push({ to: w + 'x' + h, ...(await look()) }); }
+          const last = o.steps[o.steps.length - 1];
+          if (last && last.open) { await v.tap(last.pt[0], last.pt[1]); await p.waitForTimeout(400); o.closed = await p.evaluate(() => document.getElementById('pxInfo').hidden); }
+        }
+        runs.push(o);
+      } catch (e) { runs.push({ from: w0 + 'x' + h0, crashed: String(e && e.message || e).split('\n')[0].slice(0, 200) }); }
+      finally { if (v) { R.errors.push(...v.errors); await v.ctx.close(); } }
+    }
+    out.infoRotate = { runs, ok: runs.length === 2 && runs.every(o => o.opened && o.opened.open && o.steps.length && o.steps.every(x => x.open && x.closeOk && x.allIn) && o.closed === true) };
+  }
   {   // ⑤ 「🎁 すぐ近くに たからばこ！」の 知らせが 最初の ゴールの 輪と 旗に 重ならない（知らせは 出る・おくれない）
     let v = null;
     try {
@@ -1068,6 +1095,7 @@ const FIRST_MINUTE_NEED = {
   arrowPinWorld: '横向きで 縁の 矢印の 絵を タップしても せかいちずが 開かない',
   infoSecondTap: '名所の 窓を 開いた タップと 同じ 所を もう 1回 タップすると、窓の ボタン（教える など）に 当たる／窓が 開かない',
   chestToastRing: '「🎁 すぐ近くに たからばこ！」の 知らせが 最初の ゴールの 輪・旗に 重なる／知らせが 出ない',
+  infoRotate: '名所の 窓を 開いた まま 画面の 高さ・向きを かえると、「▶ とじる」が 押せない・ボタンが 画面の 外に 出る・タップで 閉じられない（390×844 → 390×560 → 844×390・820×1180 → 1180×820）',
 };
 
 const RUN = { R: null };

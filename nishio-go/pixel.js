@@ -13928,26 +13928,40 @@ function tapWalk(gx, gy) {
 }
 // サイクル208（はじめの 1分）：地図の 名所の 絵を タップすると 窓が 地図の 上の がわに 開き、同じ 所を もう 1回 タップすると 窓の「教える」に 当たって、
 // おたよりの 入力の 画面に なった（390×844 で 4回とも。窓は 自分では 閉じない）。地図の タップで 開いた 窓の ボタン（リンク）が タップした 点の まわり
-// （PXINFO_GAP）に 来る ときだけ、窓の 中身を タップした 点の 下へ ずらす（下の 欄の 上に 入る ところまで。中身の 高さ・流れは かえない。窓は なくさない）。
-// まわりに ボタンが ない（字の 上・画面の 大きさで ずれる）ときは 動かさない
+// （PXINFO_GAP）に 来る ときだけ、窓の 中身を タップした 点の 下へ ずらす（中身の 高さ・流れは かえない。窓は なくさない）。
+// きまりは 1つ：ずらしは「いまの 画面で、ボタン（▶ とじる も）が ぜんぶ 見える 所（下の 欄・キーボードの 上）に 入る」ときだけ。開いた とき・中身が かわった とき・
+// 画面の 大きさや 向き・下の 欄の 高さ・見える 所（visualViewport）が かわった ときに 計算しなおす。回して はばが かわったら、タップの 点は もう 意味が ないので 0 に もどす
+// （外の 読み手の 指摘：390×844 で 開いて 844×390 に 回すと 242px の ずらしが のこり、「▶ とじる」が 画面の 外に 出て 押せなかった）
 const pxInfoTap = { x: 0, y: 0, t: -1e9 };
 const PXINFO_GAP = 24;   // タップした 点と 窓の ボタンの あいだ（px。指の ずれ）
-function pxInfoPlace() {
+const pxInfoShift = { on: false, x: 0, y: 0, w: 0 };   // いま 開いて いる 窓を 開いた 地図の タップ（on：地図の タップで 開いた）
+function pxInfoPlace(why) {   // why：'resize'（画面・下の 欄・見える 所が かわった）。ほかは 開いた・閉じた・中身が かわった
   const el = $('pxInfo'), dq = el && el.querySelector('.dq');
   if (!el || !dq) return;
-  if (el.hidden) { dq.style.marginTop = ''; return; }   // 閉じたら もとに もどす
-  if (performance.now() - pxInfoTap.t > 800) return;   // 地図の タップで 開いた とき だけ（ボタン・話しかけ などは これまでどおり。開いた あとで 中身が かわっても 動かさない）
+  if (el.hidden) { dq.style.marginTop = ''; pxInfoShift.on = false; return; }   // 閉じたら もとに もどす
+  if (why !== 'resize' && performance.now() - pxInfoTap.t <= 800) Object.assign(pxInfoShift, { on: true, x: pxInfoTap.x, y: pxInfoTap.y, w: innerWidth });   // 地図の タップで 開いた（中身が かわった）
+  else if (why === 'resize' && pxInfoShift.on && innerWidth !== pxInfoShift.w) pxInfoShift.on = false;   // 回した（はばが かわった）
   dq.style.marginTop = '';
-  const x = pxInfoTap.x, y = pxInfoTap.y, gap = PXINFO_GAP, d = dq.getBoundingClientRect();
+  if (!pxInfoShift.on) return;
+  const x = pxInfoShift.x, y = pxInfoShift.y, gap = PXINFO_GAP, d = dq.getBoundingClientRect();
   const near = [...dq.querySelectorAll('button, a')].some(b => { const q = b.getBoundingClientRect();
     return q.width > 0 && q.top < d.bottom && q.bottom > d.top && q.left < x + gap && q.right > x - gap && q.top < y + gap && q.bottom > y - gap; });   // 見えて いる ボタン だけ
   if (!near) return;
-  const sh = $('sheet'), r = el.getBoundingClientRect(), bottom = Math.min(r.bottom, sh && sh.offsetParent ? sh.getBoundingClientRect().top : Infinity) - 8;   // 見える 所の 下（下の 欄の 上）
+  const sh = $('sheet'), sr = sh && sh.getBoundingClientRect(), r = el.getBoundingClientRect(), vv = window.visualViewport;   // 下の 欄は position:fixed（offsetParent では 見えるか 分からない）。かくれて いれば 高さ 0
+  const bottom = Math.min(r.bottom, innerHeight, sr && sr.height > 0 ? sr.top : Infinity, vv ? vv.offsetTop + vv.height : Infinity) - 8;   // 見える 所の 下（下の 欄・キーボードの 上）
   const down = Math.min(y + gap - d.top, bottom - d.bottom);
   if (down > 0) dq.style.marginTop = Math.round(down) + 'px';
 }
+const pxInfoResize = { raf: 0 };
+function pxInfoReplace() {   // 画面の 大きさ などが かわった：次の こまで 1回だけ 計算しなおす
+  if (pxInfoResize.raf || !$('pxInfo') || $('pxInfo').hidden) return;
+  pxInfoResize.raf = requestAnimationFrame(() => { pxInfoResize.raf = 0; pxInfoPlace('resize'); });
+}
 document.addEventListener('click', e => { if (e.target === cv) { pxInfoTap.x = e.clientX; pxInfoTap.y = e.clientY; pxInfoTap.t = performance.now(); } }, true);   // 地図の タップの 点（地図の click より 先に 見る）
-if (window.MutationObserver && $('pxInfo')) new MutationObserver(pxInfoPlace).observe($('pxInfo'), { attributes: true, attributeFilter: ['hidden'], childList: true, subtree: true });   // 開いた とき・中身が かわった とき
+if (window.MutationObserver && $('pxInfo')) new MutationObserver(() => pxInfoPlace()).observe($('pxInfo'), { attributes: true, attributeFilter: ['hidden'], childList: true, subtree: true });   // 開いた・閉じた・中身が かわった
+window.addEventListener('resize', pxInfoReplace);   // 回す・アドレスバーの 出入り・大きさ
+if (window.visualViewport) visualViewport.addEventListener('resize', pxInfoReplace);   // キーボード・拡大
+if (window.ResizeObserver) { const ro = new ResizeObserver(pxInfoReplace); if ($('sheet')) ro.observe($('sheet')); if ($('pxInfo')) ro.observe($('pxInfo')); }   // 下の 欄の 高さ・地図の 大きさ
 $('pxInfo').addEventListener('click', e => {
   if (e.target === $('pxInfo') || e.target.closest('[data-close]') || e.target.closest('[data-move]')) {
     $('pxInfo').hidden = true;

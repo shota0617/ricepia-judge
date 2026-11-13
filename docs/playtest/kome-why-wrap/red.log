@@ -1,0 +1,53 @@
+FFFFFF
+======================================================================
+FAIL: test_reason_lines_keep_the_last_character_with_its_sentence (__main__.WhyLineWrapping.test_reason_lines_keep_the_last_character_with_its_sentence) (screen=(568, 320, False), reason='寒い今の時期に種をまいても、芽が出ずに腐ってしまいます')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/ricepia-kome-feedback-wrap/tests/test_kome_why_wrap.py", line 182, in test_reason_lines_keep_the_last_character_with_its_sentence
+    self.assertGreater(len(lines[-1]["text"].strip()), 1,
+AssertionError: 1 not greater than 1 : The last character is alone on its line
+
+======================================================================
+FAIL: test_reason_lines_keep_the_last_character_with_its_sentence (__main__.WhyLineWrapping.test_reason_lines_keep_the_last_character_with_its_sentence) (screen=(568, 320, True), reason='寒い今の時期に種をまいても、芽が出ずに腐ってしまいます')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/ricepia-kome-feedback-wrap/tests/test_kome_why_wrap.py", line 182, in test_reason_lines_keep_the_last_character_with_its_sentence
+    self.assertGreater(len(lines[-1]["text"].strip()), 1,
+AssertionError: 1 not greater than 1 : The last character is alone on its line
+
+======================================================================
+FAIL: test_reason_lines_keep_the_last_character_with_its_sentence (__main__.WhyLineWrapping.test_reason_lines_keep_the_last_character_with_its_sentence) (screen=(844, 390, False), reason='寒い今の時期に種をまいても、芽が出ずに腐ってしまいます')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/ricepia-kome-feedback-wrap/tests/test_kome_why_wrap.py", line 182, in test_reason_lines_keep_the_last_character_with_its_sentence
+    self.assertGreater(len(lines[-1]["text"].strip()), 1,
+AssertionError: 1 not greater than 1 : The last character is alone on its line
+
+======================================================================
+FAIL: test_reason_lines_keep_the_last_character_with_its_sentence (__main__.WhyLineWrapping.test_reason_lines_keep_the_last_character_with_its_sentence) (screen=(844, 390, True), reason='寒い今の時期に種をまいても、芽が出ずに腐ってしまいます')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/ricepia-kome-feedback-wrap/tests/test_kome_why_wrap.py", line 182, in test_reason_lines_keep_the_last_character_with_its_sentence
+    self.assertGreater(len(lines[-1]["text"].strip()), 1,
+AssertionError: 1 not greater than 1 : The last character is alone on its line
+
+======================================================================
+FAIL: test_reason_lines_keep_the_last_character_with_its_sentence (__main__.WhyLineWrapping.test_reason_lines_keep_the_last_character_with_its_sentence) (screen=(820, 1180, False), reason='寒い今の時期に種をまいても、芽が出ずに腐ってしまいます')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/ricepia-kome-feedback-wrap/tests/test_kome_why_wrap.py", line 182, in test_reason_lines_keep_the_last_character_with_its_sentence
+    self.assertGreater(len(lines[-1]["text"].strip()), 1,
+AssertionError: 1 not greater than 1 : The last character is alone on its line
+
+======================================================================
+FAIL: test_reason_lines_keep_the_last_character_with_its_sentence (__main__.WhyLineWrapping.test_reason_lines_keep_the_last_character_with_its_sentence) (screen=(820, 1180, True), reason='寒い今の時期に種をまいても、芽が出ずに腐ってしまいます')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/ricepia-kome-feedback-wrap/tests/test_kome_why_wrap.py", line 182, in test_reason_lines_keep_the_last_character_with_its_sentence
+    self.assertGreater(len(lines[-1]["text"].strip()), 1,
+AssertionError: 1 not greater than 1 : The last character is alone on its line
+
+----------------------------------------------------------------------
+Ran 1 test in 4.060s
+
+FAILED (failures=6)

@@ -1231,9 +1231,9 @@ const srv = http.createServer((r, s) => { const u = decodeURIComponent(r.url.spl
         await p.evaluate(() => window.__hide(true)); await wr('suspended'); const b1 = await st(); await p.evaluate(() => window.__hide(false));
         await p.keyboard.press(how === 'help' ? 'h' : how === 'mute' ? 'm' : 'Enter'); await p.waitForTimeout(1500);
         const b2 = await p.evaluate(() => [game.audio.ac.state, !document.getElementById('help').classList.contains('hidden'), !!game.S.done, document.getElementById('bSnd').textContent]);
-        snd[how] = [b0, b1, ...b2]; await ctx.close();
+        snd['key_' + how] = [b0, b1, ...b2]; await ctx.close();   // 18 の はじめの snd.mute（🔇 に して から なぞって 離す）を 上書き しない ように、別の 名前で 持つ（Codex 指摘）
       }
-      ok('かくして もどし、次の こまの 前に H で 操作の 表を 開く・Enter で おわりに する・M で 🔇：その 操作の 中で 音は 止まる（Codex 指摘。直す前：表が 開いた まま・おわった まま 鳴る）', snd.help[0] === 'running' && snd.help[1] === 'suspended' && snd.help[2] !== 'running' && snd.help[3] && snd.finish[0] === 'running' && snd.finish[2] !== 'running' && snd.finish[4] && snd.mute[0] === 'running' && snd.mute[2] !== 'running' && snd.mute[5] === '🔇', [snd.help, snd.finish, snd.mute]);
+      ok('かくして もどし、次の こまの 前に H で 操作の 表を 開く・Enter で おわりに する・M で 🔇：その 操作の 中で 音は 止まる（Codex 指摘。直す前：表が 開いた まま・おわった まま 鳴る）', snd.key_help[0] === 'running' && snd.key_help[1] === 'suspended' && snd.key_help[2] !== 'running' && snd.key_help[3] && snd.key_finish[0] === 'running' && snd.key_finish[2] !== 'running' && snd.key_finish[4] && snd.key_mute[0] === 'running' && snd.key_mute[2] !== 'running' && snd.key_mute[5] === '🔇', [snd.key_help, snd.key_finish, snd.key_mute]);
       ok('読みこみ中に 1 回 タップした 人も、始まって なぞって 離すと 音が 鳴りだす（直す前：ずっと 鳴らない）', snd.tapLoad[2] === 'running', snd.tapLoad);
       ok('タップせずに 始まった 人は なぞって 離すと 鳴る・指を 置いた まま の 間は 鳴らない（ブラウザの きまりの まね）・🔇 に した 人は 鳴らない', snd.plain[1] !== 'running' && snd.plain[2] === 'running' && snd.mute[2] !== 'running', [snd.plain, snd.mute]);
     }

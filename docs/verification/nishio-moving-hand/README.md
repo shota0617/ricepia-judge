@@ -51,9 +51,11 @@
 | `node tools/playtest.js` | 実終了exit1。247確認群＝明示成功216・明示失敗11・判定なし20、errors配列0件 |
 | 5画面の重なり/押下 | v1は前後各18/20・exit1、390×844補足v2は各4/4・exit0。22観測組／20種類。詳細は下記 |
 | lowGoalDemo / lowDemoKept追加比較 | 前後とも2群中1成功・1失敗、各exit1。元の通し11失敗を保持 |
-| Python全体 | **pending**：まだ実行していない |
+| Python全体（unittest） | 2,544件＝2,474成功・68失敗・1エラー・1スキップ、357.214秒・exit1。新規3件も成功 |
 
-失敗した11項目は `roll`、`swipeHold`、`a2hsAutoHide`、`tapDemoQuick`、`lowGoalDemo`、`infoSecondTap`、`lowDemoKept`、`restFinger`、`tiltDemoShown`、`godotRec`、`speedLines`。247は確認群の数で、成功216はboolean trueまたはok:true、判定なし20は数値等の記録で成功・失敗のどちらにも数えない。errorsが0でも、全体はexit1で失敗した。第53周とはmainとtools/playtest.jsの版が違うため、失敗名の増減だけで今回の回帰とは断定しない。追加比較の結果は以下に分けて記録する。
+Python全体は独立したコミット済みチェックアウト（8fcbefd）で2,544件を実行し、2,474成功・68失敗・1エラー・1スキップ、357.214秒・exit1。新規3テストはこの全体実行でも成功した。第53周の全体実行と69個の失敗・エラーの名前と種別は一致し、追加・消失は0。ただしmainとテストの版が異なるため、原因まで同一・すべて既存不具合とは断定しない。
+
+ブラウザ通しで失敗した11項目は `roll`、`swipeHold`、`a2hsAutoHide`、`tapDemoQuick`、`lowGoalDemo`、`infoSecondTap`、`lowDemoKept`、`restFinger`、`tiltDemoShown`、`godotRec`、`speedLines`。247は確認群の数で、成功216はboolean trueまたはok:true、判定なし20は数値等の記録で成功・失敗のどちらにも数えない。errorsが0でも、全体はexit1で失敗した。第53周とはmainとtools/playtest.jsの版が違うため、失敗名の増減だけで今回の回帰とは断定しない。追加比較の結果は以下に分けて記録する。
 
 同じdc1の工具でlowGoalDemo・lowDemoKeptを各版1回ずつ追加比較した。前後とも2群中1成功・1失敗、実exit1。lowGoalDemoは双方とも568×320・残り1マスで手本が出ず、残り3条件では表示した。lowDemoKeptは隔離実行では双方成功したが、通し実行での失敗原因は未確定。元の通し11失敗は取り消さない。既存の内部配置を使うチェックなので自然な60秒プレイとは別で、各版1回の時刻差から速度や全条件の同等性は主張しない。
 
@@ -61,6 +63,6 @@
 
 成立したv1の18組とv2の4組では、操作部観測117→117、26→26。新しい矩形の切れ・操作部間の重なり・中心hit失敗・disabled・scroll超過・手ホストの画面外は0だった。写真と測定は時刻が異なり、全画素・全操作点の保証ではない。56原画ファイルを実際に開いて確認し、この範囲で新しい手本・札・操作部の切れや重なり増加は見つからなかった。568×320の戻り画面では案内文が下部タブに重なるが、これは既存コード（pixel.js:9067、style.css:501）に明記された透過配置で、前後とも同じ方針。新規不具合や押せない状態とは扱わず、変更する場合は運営者判断とする。
 
-テスト失敗が残るためマージを保留する。[ricepia-flow/SKILL.md:212](https://github.com/shota0617/ricepia-judge/blob/dc1c9d2ee78fc8edf2e693e44f6117de23aab177/.claude/skills/ricepia-flow/SKILL.md#L212) の「Codex の 指摘が のこっている・テストが 落ちている・運営者の 判断が いる 変更は、マージせずに 伝える」に従う。 Python全体は未完了。検証の実コマンド・結果のSHAはresultsに保存し、pending欄は結果が得られてから更新する。
+テスト失敗が残るためマージを保留する。[ricepia-flow/SKILL.md:212](https://github.com/shota0617/ricepia-judge/blob/dc1c9d2ee78fc8edf2e693e44f6117de23aab177/.claude/skills/ricepia-flow/SKILL.md#L212) の「Codex の 指摘が のこっている・テストが 落ちている・運営者の 判断が いる 変更は、マージせずに 伝える」に従う。 検証の実コマンド・結果のSHAはresultsに保存した。unittestの実行でpytestの未導入や通しブラウザの失敗を成功扱いにはしない。
 
 運営者判断に触れる、通常手の拡大・通常手全体への支援拡張・矢印を直接押したときの規則変更は採用していない。初回の許可と大きい手本、止まったときの手本、開始画面なし、到着カードなし、既存fallbackは保持。実機の傾きセンサー・本物の指・回線速度・物理画面は未確認。新しい地理等の事実や外部サービスの変更はない。

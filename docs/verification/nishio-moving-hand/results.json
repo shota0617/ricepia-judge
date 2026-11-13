@@ -2,7 +2,7 @@
   "recordedAtUTC": "2026-11-13T00:01:57.127351+00:00",
   "game": "nishio-go",
   "issue": "通常の手本中央を押すと歩かず世界地図が開く",
-  "status": "targeted reproduction and supplemented layout verified within observed scope; full browser validation failed; full Python validation pending; merge held",
+  "status": "targeted reproduction and supplemented layout verified within observed scope; full browser and Python validation failed; pytest unavailable; merge held",
   "scope": {
     "baseHead": "dc1c9d2ee78fc8edf2e693e44f6117de23aab177",
     "beforePixelSha256": "7c1f8baed5cc3dc09b985a98f6a55f9a20302442477005e1123cf74bb6fa6f70",
@@ -1523,10 +1523,333 @@
       }
     },
     "fullUnit": {
-      "status": "not run yet",
-      "command": null,
-      "result": null,
-      "actualExitCode": null
+      "status": "completed: failed; actual native exit1",
+      "command": "PYTHONDONTWRITEBYTECODE=1 NODE_OPTIONS=--require=/workspace/scratch/first-minute/offline.cjs python3 -m unittest discover -s tests -p 'test*.py' -v",
+      "commandProvenance": "Exact command supplied by executor; stdout/stderr saved, native exit written separately, then gzip -n.",
+      "cwd": "/workspace/scratch/first-minute/round-57/validation/committed-checkout",
+      "codeCommit": "8fcbefd277117e0c4679611e2cf01abf44d64df3",
+      "result": {
+        "testsRun": 2544,
+        "passed": 2474,
+        "failures": 68,
+        "errors": 1,
+        "skipped": 1,
+        "elapsedSeconds": 357.214,
+        "newRegressionMethodsPassed": 3
+      },
+      "actualExitCode": 1,
+      "logSha256": "4fc737d61c71591c9cd18c90874d7057cc2f043dba994991c32c0208c487576c",
+      "exitFileSha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+      "rootSummarySha256": "7a7f0dc1ac5c96ae36a57cd23074ffbbd74ec4c84988febdf93de402ce7de5e5",
+      "clonePreparationSha256": "6e6f4ffd7ce2b499db6da265765d6a250f374ece188730286a889f46824d93ce",
+      "clonePreparation": {
+        "source": "/workspace/ricepia-nishio-moving-hand",
+        "checkout": "/workspace/scratch/first-minute/round-57/validation/committed-checkout",
+        "head": "8fcbefd277117e0c4679611e2cf01abf44d64df3",
+        "branch": "codex/nishio-moving-hand-placement",
+        "main": "dc1c9d2ee78fc8edf2e693e44f6117de23aab177",
+        "originMain": "dc1c9d2ee78fc8edf2e693e44f6117de23aab177",
+        "clean": true,
+        "sourceRefsUnchanged": true,
+        "hashes": {
+          "nishio-go/pixel.js": "cd15578eb309addec0943581db9c671b331e18b735591567291afe2210d22975",
+          "tests/test_nishio_moving_hand.py": "49b4a71340d0750c349c02500df7401c0eadf7769e4bcaf48af7d57d8bcd9bf5"
+        },
+        "changedFiles": [
+          "docs/meiro.md",
+          "docs/verification/nishio-moving-hand/README.md",
+          "docs/verification/nishio-moving-hand/after.png",
+          "docs/verification/nishio-moving-hand/before.png",
+          "docs/verification/nishio-moving-hand/results.json",
+          "nishio-go/pixel.js",
+          "tests/test_nishio_moving_hand.py"
+        ],
+        "scope": "Objects are shared read-only; refs, index and worktree are separate. No global Git environment override."
+      },
+      "failureHeadings": [
+        {
+          "kind": "ERROR",
+          "test": "test_sizes_are_near_the_files (test_boot_screen.TestTractorProgress.test_sizes_are_near_the_files)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_bar_moves_without_total (test_boot_screen.TestTractorProgress.test_bar_moves_without_total)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_diff_scope_and_forbidden_words (test_maze_loop3_34.StationLink.test_diff_scope_and_forbidden_words)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_only_pixel_js_changed_and_no_banned_words (test_maze_loop3_36.WallTheme.test_only_pixel_js_changed_and_no_banned_words)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_changed_files (test_maze_loop3_38.IdleReturnNoCard.test_changed_files)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_only_pixel_changed (test_maze_loop3_39.Diff.test_only_pixel_changed)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_files_and_words (test_maze_loop3_40.Scope.test_files_and_words)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_changed_files_and_words (test_maze_loop3_41.Footprints.test_changed_files_and_words)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_files_and_words (test_maze_loop3_42.Scope.test_files_and_words)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_changed_files (test_maze_loop3_44.Diff.test_changed_files)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_changed_files (test_maze_loop3_45.Diff.test_changed_files)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_changed_files (test_maze_loop3_46.Diff.test_changed_files)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_changed_files (test_maze_loop3_47.Diff.test_changed_files)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_changed_files (test_maze_loop3_48.Diff.test_changed_files)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_changed_files (test_maze_loop3_49.Diff.test_changed_files)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_changed_files (test_maze_loop3_50.Diff.test_changed_files)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_changed_files (test_maze_loop3_51.Diff.test_changed_files)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_changed_files (test_maze_loop3_52.Diff.test_changed_files)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_files_allowed (test_maze_loop3_53.Unchanged.test_files_allowed)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_changed_files (test_maze_loop3_54.Diff.test_changed_files)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_changed_files (test_maze_loop3_55.Diff.test_changed_files)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_files_allowed (test_maze_loop3_56.Safety.test_files_allowed)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_files_allowed (test_maze_loop3_57.Safety.test_files_allowed)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_files_allowed (test_maze_loop3_58.Safety.test_files_allowed)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_files_allowed (test_maze_loop3_59.Safety.test_files_allowed)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_files_allowed (test_maze_loop3_60.Safety.test_files_allowed)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_files_allowed (test_maze_loop3_61.Safety.test_files_allowed)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_scope_and_words (test_maze_loop3_62.Maze.test_scope_and_words)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_files_allowed (test_maze_loop3_63.Scope.test_files_allowed)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_files_allowed (test_maze_loop3_64.Scope.test_files_allowed)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_files_allowed (test_maze_loop3_65.Scope.test_files_allowed)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_files_allowed (test_maze_loop3_66.Scope.test_files_allowed)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_files_allowed (test_maze_loop3_67.Scope.test_files_allowed)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_files_allowed (test_maze_loop3_68.Scope.test_files_allowed)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_exposed (test_maze_loop4_100.Glance100.test_exposed)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_scope (test_maze_loop4_100.Glance100.test_scope)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_scope (test_maze_loop4_101.TestFirstMinuteAmbient.test_scope)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_scope (test_maze_loop4_102.TestFirstMinuteMeetings.test_scope)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_scope (test_maze_loop4_103.TestFirstMinuteGochiso.test_scope)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_scope (test_maze_loop4_104.TestFirstMinuteOtedama.test_scope)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_scope (test_maze_loop4_105.TestHappyFace.test_scope)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_scope (test_maze_loop4_106.TestMichikusaFirstRoll.test_scope)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_files (test_maze_loop4_167.TestScope.test_files)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_files (test_maze_loop4_168.TestScope.test_files)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_files (test_maze_loop4_169.TestScope.test_files)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_scope_and_words (test_maze_loop4_170.Cycle170.test_scope_and_words)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_scope_and_words (test_maze_loop4_171.Cycle171.test_scope_and_words)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_scope_and_words (test_maze_loop4_172.Cycle172.test_scope_and_words)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_scope_and_words (test_maze_loop4_173.Cycle173.test_scope_and_words)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_scope_and_words (test_maze_loop4_174.Cycle174.test_scope_and_words)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_scope_and_words (test_maze_loop4_175.Cycle175.test_scope_and_words)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_scope_and_words (test_maze_loop4_176.Cycle176.test_scope_and_words)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_scope_and_words (test_maze_loop4_177.Cycle177.test_scope_and_words)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_scope_and_words (test_maze_loop4_178.Cycle178.test_scope_and_words)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_scope_and_words (test_maze_loop4_179.Cycle179.test_scope_and_words)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_scope_and_words (test_maze_loop4_180.Cycle180.test_scope_and_words)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_scope_and_words (test_maze_loop4_181.Cycle181.test_scope_and_words)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_scope_and_words (test_maze_loop4_182.Cycle182.test_scope_and_words)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_changed_files_limited (test_maze_loop4_183.Lazy183.test_changed_files_limited)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_scope (test_maze_loop4_205.GuideDispName205.test_scope)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_files_allowed (test_maze_loop4_64.Safety.test_files_allowed)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_changed_files (test_maze_loop4_65.Safety.test_changed_files)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_scope (test_maze_loop4_86.HeroRevert.test_scope)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_diff_words_and_files (test_maze_loop4_9.Scope.test_diff_words_and_files)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_scope (test_maze_loop4_95.DrawNight95.test_scope)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_scope (test_maze_loop4_97.NoNumbers97.test_scope)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_scope (test_maze_loop4_98.UnreadFog98.test_scope)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_eye_saved_and_public (test_maze_loop4_99.Blink99.test_eye_saved_and_public)"
+        },
+        {
+          "kind": "FAIL",
+          "test": "test_scope (test_maze_loop4_99.Blink99.test_scope)"
+        }
+      ],
+      "comparisonWithRound53": {
+        "sameFailureNamesAndTypes": true,
+        "added": [],
+        "removed": [],
+        "limit": "Same failure name/type does not prove same cause; main and tests differ from round53."
+      }
     }
   },
   "limits": [
@@ -1542,7 +1865,7 @@
     "568x320 returned hint-over-tabs is an existing documented pointer-transparent placement tradeoff (pixel.js:9067; style.css:501). Changing it is an operator decision, not a new finding in this change."
   ],
   "publication": {
-    "status": "merge held: failed full browser test; full Python checks pending",
+    "status": "merge held: full browser and Python tests failed; pytest unavailable; no all-tests-pass claim",
     "rule": ".claude/skills/ricepia-flow/SKILL.md:212",
     "ruleUrl": "https://github.com/shota0617/ricepia-judge/blob/dc1c9d2ee78fc8edf2e693e44f6117de23aab177/.claude/skills/ricepia-flow/SKILL.md#L212",
     "quote": "Codex の 指摘が のこっている・テストが 落ちている・運営者の 判断が いる 変更は、マージせずに 伝える",

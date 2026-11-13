@@ -2813,7 +2813,7 @@
     "主観察の470.9→430msはCDP送信から座標変化を観測した上限。実際の指の接触時刻や描画時刻ではない。",
     "30点の観測も既存の表示観測器による上限で、実際の描画開始時刻や報酬付与時刻とは区別する。"
   ],
-  "documentUpdatedAtUTC": "2026-11-13T13:52:29.389067+00:00",
+  "documentUpdatedAtUTC": "2026-11-13T19:15:41.154552+00:00",
   "publicationCodeIdentity": {
     "testedLocalCodeCommit": "1fb111a648b2d9aa20fcd4209dd76e3308263c5a",
     "publicationCodeCommit": "c5c6cebc1e84f5fef8ee076e1e8020929494d0c2",
@@ -2823,6 +2823,8 @@
       "ab12150f581df7908dc1df2c51f4a035ecd88bbb"
     ],
     "onlyChangedCommitMetadata": "author and committer email replaced with generic GitHub noreply format; names, dates and message retained",
-    "reason": "actual push exit1 GH007 email privacy restriction; no external account setting or credential changed"
-  }
+    "reason": "actual push exit1 GH007 email privacy restriction; no external account setting or credential changed",
+    "recordedAtUTC": "2026-11-13T19:12:43.611616+00:00"
+  },
+  "measurementDocumentUpdatedAtUTC": "2026-11-13T13:52:29.389067+00:00"
 }

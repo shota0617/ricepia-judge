@@ -1674,6 +1674,55 @@ class TestKome365CanvasNoFilter(unittest.TestCase):
         self.assertGreater(seen, 0, "動きを へらす で 決めた 直後の 場面を とれて いない")
 
 
+# サイクル177(運営者の声 2026-11-13「⭕️❌とその理由も出す」): ○ でも わけの 一文を 出す(前は ✗ だけ)
+WHY_JS = "(() => { const w = document.getElementById('swWhy'), cs = getComputedStyle(w); return { text: w.textContent, on: w.classList.contains('on'), k: w.getAttribute('data-k'), color: cs.color, op: +cs.opacity, anim: cs.animationName, word: getComputedStyle(document.getElementById('swPdWord')).visibility, mark: document.getElementById('swMark').classList.contains('on'), pe: cs.pointerEvents }; })()"
+
+
+class TestKome365WhyBothSides(unittest.TestCase):
+    """サイクル177: ○ でも ✗ でも 大きな しるしと わけの 一文。場所・2秒・入力を ふさがない のは ✗ と 同じ"""
+
+    @classmethod
+    def setUpClass(cls):
+        plans = []
+        for rm in (False, True):
+            sfx = "R" if rm else ""
+            plans.append({"name": "ok" + sfx, "reduce": rm, "acts": ["keyjs:" + WHY_JS, "js:" + WHY_JS, "wait", "js:" + WHY_JS]})
+            plans.append({"name": "ng" + sfx, "reduce": rm, "acts": ["R", "js:" + WHY_JS, "wait", "js:" + WHY_JS]})
+        cls.r = sound_run(plans)
+
+    def test_ok_shows_reason_with_mark(self):
+        for name in ("ok", "okR"):
+            x = self.r[name]
+            self.assertEqual(x["errs"], [], name)
+            j = x["js"][0]                          # 決めて 0.25秒
+            self.assertTrue(j["on"], name + ": ○ の わけが 出ない")
+            self.assertTrue(j["text"].startswith("○ "), name + " %r" % j["text"])
+            self.assertGreater(len(j["text"]), 4, name)
+            self.assertEqual(j["k"], "ok", name)
+            self.assertEqual(j["color"], "rgb(46, 125, 50)", name)   # ○ は 緑
+            self.assertEqual(j["pe"], "none", name)                   # 入力を ふさがない
+            self.assertEqual(j["word"], "hidden", name)               # 吹き出しの 間は ことばの 札を しまう(✗ と 同じ)
+            self.assertEqual(j["anim"], "swWhyFade" if name.endswith("R") else "swWhyIn", name)   # 動きを へらす 設定でも 2秒
+            end = x["js"][-1]                       # 2.5秒 あと
+            self.assertFalse(end["on"], name)
+            self.assertEqual(end["word"], "visible", name)
+
+    def test_ng_still_shows_reason_with_mark(self):
+        for name in ("ng", "ngR"):
+            x = self.r[name]
+            self.assertEqual(x["errs"], [], name)
+            j = x["js"][0]
+            self.assertTrue(j["on"], name)
+            self.assertTrue(j["text"].startswith("✗ "), name + " %r" % j["text"])
+            self.assertEqual(j["k"], "ng", name)
+            self.assertEqual(j["color"], "rgb(180, 71, 47)", name)    # ✗ は 今の 色の まま
+
+    def test_why_rules_in_code(self):
+        self.assertIn("whyShow(fb, cls === 'vOK' ? 'ok' : 'ng');", HTML)
+        self.assertNotIn("if (cls === 'vNG') whyShow(fb);", HTML)      # 前の「✗ の とき だけ」
+        self.assertIn("#swWhy.on{animation:swWhyIn 2s ease-out both}", HTML)   # 場所と 2秒(運営者の 決めごと)は そのまま
+
+
 class TestKome365PaddyReadable(unittest.TestCase):
     """サイクル174(運営者の声 2026-11-13・3月22日 雨の 日の 画面写真「田んぼの状況がわかりにくい」): 絵を 大きく・ことばで 1行・かざりを へらす"""
 

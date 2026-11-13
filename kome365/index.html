@@ -441,13 +441,13 @@ a{color:var(--acc)}
 #swTrace,#swGrow,#swStagePlants{display:none!important}   /* サイクル174(運営者の 判断・やめた もの): 絵の 下の 小さい 箱 5つ(世話の あと)・絵の 上の 点の 列(●○○○○○🍚)・カードの うしろの 稲の 列。何を 表すか 分かりにくく、田んぼの 絵と まざって いた。育ちは 大きな 絵と ことばで 見せる。もどす ときは この 行を 消す */
 #swPdWord{position:absolute;left:calc(50% + var(--pdx));bottom:calc(100% + var(--pdb) - 28px);word-break:keep-all;transform:translateX(-50%);z-index:3;display:none;box-sizing:border-box;max-width:calc(100% + 8px);padding:2px 12px;border-radius:999px;background:rgba(255,253,247,.94);box-shadow:0 1px 4px rgba(60,40,20,.18);color:#3d2f1f;font-weight:700;font-size:17px;line-height:22px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}   /* サイクル174: 今の 田んぼの ようすを ことばで 1行(絵の すぐ 下・カードの すぐ 上) */
 #swPdWord.on{display:block}
-@media (min-width:700px) and (min-height:1000px){#swWrap{--pdb:230px}}   /* 背の 高い 画面(820×1180): ✗ の わけの 吹き出し(画面の 40% の 下・場所は 運営者の 決めごと)より 上に 絵と ことばを 置く */
+@media (min-width:700px) and (min-height:1000px){#swWrap{--pdb:230px}}   /* 背の 高い 画面(820×1180): ○✗ の わけの 吹き出し(画面の 40% の 下・場所は 運営者の 決めごと)より 上に 絵と ことばを 置く */
 @media (max-width:360px),(max-height:700px){#swPdWord{font-size:13px;line-height:18px;padding:1px 9px}}
 @media (max-width:360px){#swPdWord{bottom:calc(100% + var(--pdb) - 22px);line-height:16px}}   /* カードの 上 6px(手本の かげの 上)・絵の 下 4px */
 #swWrap #swDayGuest{top:auto;right:0;bottom:calc(100% + var(--pdb) + var(--pd) * 18 + 4px)}   /* サイクル174: その日の 生きもの・再会の 生きものは 絵の 上の 右・左(絵に かぶせない) */
 #swWrap #swReunion{top:auto;left:0;transform:none;bottom:calc(100% + var(--pdb) + var(--pd) * 18 + 4px)}
 #swipe:has(#swIdle[data-on]) #swPaddy,#swipe:has(#swIdle[data-on]) #swPdWord{visibility:hidden}   /* 30秒の カード(カードの すぐ 上に 出る)の 間は 絵と ことばを しまう(重ねない) */
-#swipe:has(#swWhy.on) #swPdWord{visibility:hidden}   /* ✗ の わけの 吹き出し(場所と 2秒は 運営者の 決めごと)が 出て いる 2秒は ことばを しまう(同じ 所に 出る) */
+#swipe:has(#swWhy.on) #swPdWord{visibility:hidden}   /* ○✗ の わけの 吹き出し(場所と 2秒は 運営者の 決めごと)が 出て いる 2秒は ことばを しまう(同じ 所に 出る) */
 #swPaddy span{position:absolute;display:block;background-repeat:no-repeat;background-size:100% 100%;image-rendering:pixelated}
 #swPaddy .pdBase,#swPaddy .pdWin,#swPaddy .pdTrail,#swPaddy .pdRain{left:0;top:0;width:100%;height:100%}
 #swPaddy .pdWin{overflow:hidden;display:none}
@@ -653,6 +653,7 @@ a{color:var(--acc)}
 @media (prefers-reduced-motion:reduce){#swMark.on{animation:swMarkFade .75s linear both}@keyframes swMarkFade{0%,70%{opacity:1}100%{opacity:0}}}
 #swWhy{position:absolute;left:50%;top:calc(40% + min(29vw,120px) + 10px);transform:translateX(-50%);width:max-content;max-width:88%;z-index:41;pointer-events:none;opacity:0;background:rgba(255,253,247,.94);color:#b4472f;font-size:15px;font-weight:700;line-height:1.4;padding:5px 12px;border-radius:999px;text-align:center;box-shadow:0 2px 8px rgba(60,40,20,.20)}   /* 店主指示 2026-11-08: バツの一言理由。マークの下に浮かせて約2秒で消す。入力はふさがない */
 #swWhy.on{animation:swWhyIn 2s ease-out both}
+#swWhy[data-k="ok"]{color:#2e7d32}   /* サイクル177: ○ の わけは 緑(✗ は 今の 赤茶の まま)。場所・2秒・入力を ふさがない のは 同じ */
 @keyframes swWhyIn{0%{opacity:0}10%{opacity:1}76%{opacity:1}100%{opacity:0}}
 @media (prefers-reduced-motion:reduce){#swWhy.on{animation:swWhyFade 2s linear both}@keyframes swWhyFade{0%,78%{opacity:1}100%{opacity:0}}}
 #swJudge{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%);z-index:5;width:min(84%,340px);text-align:center;border-radius:24px;padding:18px 16px;box-shadow:0 10px 30px rgba(0,0,0,.28);pointer-events:none;opacity:0;visibility:hidden}
@@ -775,7 +776,7 @@ a{color:var(--acc)}
 #swTop button{pointer-events:auto;background:rgba(255,253,247,.9);border:0;border-radius:10px;padding:8px 12px;font:inherit;font-size:20px;min-height:40px;cursor:pointer}
 #swTop #swSnd{position:absolute;left:0;top:calc(max(8px, env(safe-area-inset-top)) + 48px);width:44px;height:44px;min-height:44px;padding:0;font-size:22px;line-height:44px;text-align:center;z-index:6}   /* サイクル173: 音の 入り切り(⌂ の 下。44px) */
 @media (max-height:440px){#swTop #swSnd{top:auto;bottom:max(14px, env(safe-area-inset-bottom))}}   /* 横の 低い 画面は 左下(⌂ の 下・右は 太陽の 通り道) */
-@media (max-height:440px) and (min-width:564px){#swTop #swSnd{left:calc(10px - (100vw - 480px) / 2)}}   /* カードの 外の 左の 空きへ(カードの 下の ✗ の 吹き出しが 長い ときも かからない) */
+@media (max-height:440px) and (min-width:564px){#swTop #swSnd{left:calc(10px - (100vw - 480px) / 2)}}   /* カードの 外の 左の 空きへ(カードの 下の ○✗ の 吹き出しが 長い ときも かからない) */
 @media (max-width:360px) and (min-height:441px){#swTop #swSnd{left:44px;top:max(8px, env(safe-area-inset-top))}#sGame #swFriends{left:100px;transform:none;gap:2px;padding:3px 5px;border-width:2px}#sGame #swFriends .frMember{width:18px;height:18px;font-size:18px}}   /* せまい 縦は ⌂ の 右(⌂ の 下は 春の 太陽・右上は 見回りの 日の 大きい かかし)。仲間の 帯は 小さく して 🔊 の 右へ */
 @media (prefers-reduced-motion: reduce){.swBack{transition:none}#swCard,#swCard.enter,#swCard.fly,#swCard.hinting.wig{transition:none;animation:none}#swSt span.pulse{animation:none;background:#d6eed0;outline:2px solid #3f9d3a}#swSt span.pulse.dn{background:#f8d8cc;outline-color:#c84628}#sGame.swipeMode.fieldTick canvas#field{animation:none}#sGame.fxGood #swFieldFx,#sGame.fxBad #swFieldFx,#sGame.swipeMode.fxGood canvas#field,#sGame.swipeMode.fxBad canvas#field{animation:none}#sGame.fxGood #swFieldFx,#sGame.fxBad #swFieldFx{opacity:.45}}
 /* 小さい画面(周回93): 選ぶ部分をスクロールなしで画面に収める。足すのではなく、低い画面でだけ減らす。日付(48px)と田んぼ(全面)はそのまま */
@@ -3810,8 +3811,8 @@ renderTitle();
   }
   var markAt = -1e9;   /* ○✗ の しるしを 出した 時刻(手本は しるしが 消えてから) */
   function markShow(k){ var e = $('swMark'); if (!e) return; markAt = performance.now(); e.classList.remove('on'); e.style.backgroundImage = 'url("' + markURL(k) + '")'; void e.offsetWidth; e.classList.add('on'); }
-  /* 店主指示 2026-11-08: バツ(✗)のときだけ、判定文 why の最初の一文をマークの下に小さく浮かせて約2秒出す。○側は出さない */
-  function whyShow(fb){ var e = $('swWhy'); if (!e) return; var t = String(fb || '').replace(/^\S+\s+/, ''); var i = t.indexOf('。'); if (i >= 0) t = t.slice(0, i + 1); if (!t) return; e.textContent = t; e.classList.remove('on'); void e.offsetWidth; e.classList.add('on'); clearTimeout(whyTimer); whyTimer = setTimeout(whyHide, 2100); }   /* サイクル174 の 直し: 吹き出しの 2秒(アニメ)が 終わったら on を 外す(状態の ことばが もどる)。場所と 2秒は そのまま */
+  /* 店主指示 2026-11-08: 判定文 why の最初の一文をマークの下に小さく浮かせて約2秒出す。サイクル177(運営者の声 2026-11-13「⭕️❌とその理由も出す」)で ○ の ときも 出す(前は ✗ だけ) */
+  function whyShow(fb, k){ var e = $('swWhy'); if (!e) return; var t = String(fb || '').replace(/^\S+\s+/, ''); var i = t.indexOf('。'); if (i >= 0) t = t.slice(0, i + 1); if (!t) return; k = k === 'ok' ? 'ok' : 'ng'; e.setAttribute('data-k', k); e.textContent = (k === 'ok' ? '○ ' : '✗ ') + t;   /* サイクル177(運営者の声 2026-11-13「⭕️❌とその理由も出す」): ○ でも わけの 一文を 出す。先頭に ○／✗(色 だけに たよらない) */ e.classList.remove('on'); void e.offsetWidth; e.classList.add('on'); clearTimeout(whyTimer); whyTimer = setTimeout(whyHide, 2100); }   /* サイクル174 の 直し: 吹き出しの 2秒(アニメ)が 終わったら on を 外す(状態の ことばが もどる)。場所と 2秒は そのまま */
   var whyTimer = null;
   function whyHide(){ clearTimeout(whyTimer); whyTimer = null; var e = $('swWhy'); if (e) e.classList.remove('on'); }
   try { $('swWhy').addEventListener('animationend', function(ev){ if (ev.target === this && /^swWhy(In|Fade)$/.test(ev.animationName)) whyHide(); }); } catch (e) {}
@@ -3832,7 +3833,7 @@ renderTitle();
     try { var st1 = KomeCards.status(f), nm = { water: '💧水', weed: '🌿雑草', bug: '🐛虫', fert: '🧺肥料', vigor: '🌾稲' };
       if (st0 && !st0.error && !st1.error) for (var k in nm) { var dv = st1[k].v - st0[k].v; if (Math.abs(dv) >= 0.05) chg[k] = [st0[k].v, dv]; if (Math.abs(dv) >= 0.05) dl += '<span class="dl ' + (dv > 0 ? 'up' : 'dn') + '">' + nm[k] + (dv > 0 ? '▲' : '▼') + '</span>'; } } catch (e) {}
     var over = KomeCards.over(f), judged = !!cls && !over, newLife = over ? null : lifeNew(), rec = 0;
-    if (judged) { markShow(cls === 'vOK' ? 'ok' : 'ng'); if (cls === 'vNG') whyShow(fb); traceAdd(cls === 'vOK'); }   /* 周回118(F2): 答えが田んぼに物として残る。周回132: ○のときだけ世話の色も数える(branchAdd 参照)。周回133(差2): この行のコメントは元々行内で閉じておらず、後続の streak・tallyAdd・save 等がコメントアウトされていた(サイクル132で特定)。終端を足して復旧済み */
+    if (judged) { markShow(cls === 'vOK' ? 'ok' : 'ng'); whyShow(fb, cls === 'vOK' ? 'ok' : 'ng'); traceAdd(cls === 'vOK'); }   /* 周回118(F2): 答えが田んぼに物として残る。周回132: ○のときだけ世話の色も数える(branchAdd 参照)。周回133(差2): この行のコメントは元々行内で閉じておらず、後続の streak・tallyAdd・save 等がコメントアウトされていた(サイクル132で特定)。終端を足して復旧済み */
     if (cls === 'vOK') { streak++; if (streak > streakBest) { streakBest = streak; store.set('kome365_streak_best', String(streak)); if (streak >= 5 && !recDone) { rec = streak; recDone = true; } } store.set('kome365_streak', String(streak)); } else if (cls === 'vNG') { streak = 0; recDone = false; store.set('kome365_streak', '0'); }
     $('swLog').innerHTML = (fb && !judged ? '<b' + (cls ? ' class="' + cls + '"' : '') + '>' + esc(fb) + '</b>' : '') + (dl ? '<br>' + dl : '') + (news.length ? (fb || dl ? '<br>' : '') + news.map(esc).join('<br>') : '');
     tallyAdd(d0, fb, over ? 0 : lifeCnt, { t: card.title, s: side === 'left' ? card.left.label : card.right.label, im: impactCalc(st0, stM) });

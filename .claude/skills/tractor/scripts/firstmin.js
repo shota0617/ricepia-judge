@@ -1,4 +1,4 @@
-// 最初の1分の確かめ（サイクル259〜278）：node firstmin.js [tractor.html のパス]
+// 最初の1分の確かめ（サイクル259〜280）：node firstmin.js [tractor.html のパス]
 //  1) 知らせの文：吹き出し（speakText）・短い文（shortText）で かっこが合わなくならない（「…見ます）」のような切れ方をしない）
 //  3) 畦の手前で止まった人：「横へ なぞる」見本が出て、見本どおりで向きが変わる。自動で下ろす知らせは 1 回だけ（サイクル260）
 //  2) のんびりの大きな数字：スマホ縦で 1 回なぞって耕したら 0% のままにならない。田んぼアートでは地図の「でき」と同じ数、お題なしでは小数 1 けた
@@ -1253,6 +1253,29 @@ const srv = http.createServer((r, s) => { const u = decodeURIComponent(r.url.spl
       ok('かくして もどし、次の こまの 前に H で 操作の 表を 開く・Enter で おわりに する・M で 🔇：その 操作の 中で 音は 止まる（Codex 指摘。直す前：表が 開いた まま・おわった まま 鳴る）', snd.key_help[0] === 'running' && snd.key_help[1] === 'suspended' && snd.key_help[2] !== 'running' && snd.key_help[3] && snd.key_finish[0] === 'running' && snd.key_finish[2] !== 'running' && snd.key_finish[4] && snd.key_mute[0] === 'running' && snd.key_mute[2] !== 'running' && snd.key_mute[5] === '🔇', [snd.key_help, snd.key_finish, snd.key_mute]);
       ok('読みこみ中に 1 回 タップした 人も、始まって なぞって 離すと 音が 鳴りだす（直す前：ずっと 鳴らない）', snd.tapLoad[2] === 'running', snd.tapLoad);
       ok('タップせずに 始まった 人は なぞって 離すと 鳴る・指を 置いた まま の 間は 鳴らない（ブラウザの きまりの まね）・🔇 に した 人は 鳴らない', snd.plain[1] !== 'running' && snd.plain[2] === 'running' && snd.mute[2] !== 'running', [snd.plain, snd.mute]);
+    }
+    // ---- 20) サイクル280（はじめの 1 分 すぎで やめる人を へらす）：せまい たて画面の 2 だんの 吹き出し ----
+    //       直す前（320×568）：顔の 左に 120px の はばで 6 行＋3 行（たて 190px）。大きな 数字に 367px²・1 分 すぎの 地図に 94px²・前への 手本の 指に 3913px² かかる。
+//       直した後：顔の 下に 横長（304px）で 2 行＋1 行（たて 75px）。数字・地図は 0。手本の 指は 約 3000px² のこる（2939〜3260。手本は 変えない きまり）
+    {
+      const lay = () => { const vis = e => { if (!e) return false; const cs = getComputedStyle(e), q = e.getBoundingClientRect(); return cs.display !== 'none' && cs.visibility !== 'hidden' && !e.closest('.hidden') && q.width > 0 && q.height > 0; };
+        const R = e => { const q = e.getBoundingClientRect(); return { l: q.left, t: q.top, r: q.right, b: q.bottom }; }, area = (a, b) => Math.max(0, Math.min(a.r, b.r) - Math.max(a.l, b.l)) * Math.max(0, Math.min(a.b, b.b) - Math.max(a.t, b.t));
+        const say = document.getElementById('say'), s = R(say), kids = [...say.children].filter(c => c.style.display !== 'none' && c.textContent && c.id !== 'fixBar');
+        const ov = {}; for (const id of ['bigPct', 'badgeCv', 'bAuto', 'artBox', 'bar', 'padC', 'padB', 'padD']) { const e = document.getElementById(id); if (vis(e)) ov[id] = Math.round(area(s, R(e))); }
+        let fing = 0; for (let i = 0; i < 52; i++) { const f = document.getElementById('hintFinger'); if (vis(f) && f.style.display !== 'none') fing = Math.max(fing, area(s, R(f))); window.__adv(0.05); }
+        return { on: !say.classList.contains('off'), box: [s.l, s.t, s.r, s.b].map(Math.round), out: Math.round(Math.max(0, -s.l, -s.t, s.r - innerWidth, s.b - innerHeight)), font: kids.map(c => parseFloat(getComputedStyle(c).fontSize)),
+          lines: kids.map(c => Math.round(c.getBoundingClientRect().height / (parseFloat(getComputedStyle(c).fontSize) * 1.4))), ov, finger: Math.round(fing) }; };
+      const r20 = {};
+      for (const vp of [[320, 568], [360, 640], [390, 844]]) {
+        const { ctx, p } = await open14('', null, false, vp); await fake14(p); const adv = s => p.evaluate(x => window.__adv(x), s);
+        await adv(1); await p.evaluate(() => { SAY.coach('田んぼを ゆびで なぞる'); window.__adv(0.1); }); const a = await p.evaluate(lay);   // 1 分の 中：顔を さわった ときの 案内
+        await p.evaluate(() => { SAY.coach(''); FIRSTMIN.finish(); window.__adv(3); SAY.say('右はしの爪を とりかえているよ。終わったら ▲ で エンジンをかけて 続けよう', 30); SAY.coach('止まって ロータリーを上げると 見ます'); window.__adv(0.1); });
+        const c = await p.evaluate(lay); r20[vp.join('x')] = { a, c }; await ctx.close();
+      }
+      for (const k in r20) { const { a, c } = r20[k], z = o => Object.values(o).every(n => n === 0);
+        ok(k + '：吹き出しは 大きな 数字・顔・🌙・地図・ボタンに 重ならない・画面から はみ出さない・字は 14px／13px のまま（1 分の 中の 案内／1 分 すぎの 長い 修理の 文＋案内）', a.on && c.on && z(a.ov) && z(c.ov) && a.out === 0 && c.out === 0 && c.font[0] === 14 && c.font[1] === 13 && 'artBox' in c.ov, { a, c }); }
+      const n = r20['320x568'].c;
+      ok('320×568：長い 修理の 文は 3 行 以内・案内は 2 行 以内・吹き出しの 下はしは 画面の 上から 35% 以内（直す前 6 行・3 行・下はし 45%。前への 手本の 指には まだ かかる：直す前 3913px² → 約 3000px²）', n.lines[0] <= 3 && n.lines[1] <= 2 && n.box[3] <= 568 * 0.35, n);
     }
   }
   ok('エラーなし', errs.length === 0, errs.slice(0, 3));

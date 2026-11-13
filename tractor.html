@@ -172,7 +172,7 @@
   /* サイクル272・最初の1分: スマホ縦では 吹き出しの幅を せまくして、左上の 大きな数字（耕し率・56px）に かぶらないようにする。
      はかった数（390×844）: 12 字より長い吹き出し（「🔰 白線の外は 耕しません、曲がって絵の中へ」など）は 左はしが 82px まで のび、数字（右はし 140px）の下に 58px 入って 4 字が読めなかった。
      数字の大きさ・場所は 変えない。広い画面（スマホ横・パソコン）は 今までどおり 240px */
-  body.calm #say { max-width: min(240px, max(120px, calc(100vw - 206px))); }
+  body.calm #say { max-width: min(240px, max(120px, calc(100vw - 214px))); }   /* サイクル280: 206px では 左はしが 数字の 右はし（140px）より 2px 左へ 入っていた（390×844 で 79px²）。214px＝数字の 右はし＋6px から 計算 */
   body.calm #say::before { top: 12px; right: -6px; left: auto; border: 6px solid transparent; border-right: 0; border-top-color: transparent; border-bottom-color: transparent; border-left-color: rgba(251,248,240,.97); }
   /* のんびり（くわしい説明 なし）：計器の 札・知らせ・案内・キーの 一覧・窓の 札は 出さない（キャラクターが 話す） */
   body.calm #hud, body.calm #toast, body.calm #coach, body.calm #keyHint, body.calm #badgeSt { display: none !important; }
@@ -207,6 +207,14 @@
   /* せまい画面（縦のスマホ）：上のボタンは 2 段に折り返し、地図と案内は下の操作ボタンの上に重ねずに置く */
   @media (max-width: 640px) { #bar { flex-wrap: wrap; } #hud { top: 96px; right: 76px; } #badge, body.touch #badge { right: 8px; top: 96px; } #badgeCv { width: 52px; height: 52px; } }   /* 縦：窓は 計器の 右はし（計器は 右を あけて 折り返す。知らせは 下なので 重ならない） */
   @media (max-width: 640px) { body.calm #badge { top: calc(max(8px, env(safe-area-inset-top)) + 48px); } }   /* サイクル194: のんびりでは 計器が出ないので、縦でも 窓と吹き出しを ボタン列のすぐ下へ上げる（田んぼに かぶらないように） */
+  /* サイクル280: せまい たて画面（幅 363px まで。320×568・360×640）では 顔の 左に 吹き出しを 置くと 120px の はばしか とれず、
+     6 行（たて 132px）に なって 数字（耕し率）に 8px 入り、前への 手本の 指にも かかっていた。顔の 下に 横長で 置く（左右 8px あけ）。
+     上の はしは 数字の 下はし＋4px（顔の 下はしから 10px）。字の 大きさ・ことば・数字・顔・手本は 変えない */
+  @media (max-width: 363px) and (orientation: portrait) {
+    body.calm #badge { width: calc(100vw - 16px); flex-direction: column; align-items: flex-end; }
+    body.calm #say { box-sizing: border-box; width: 100%; max-width: none; margin: 10px 0 0; }
+    body.calm #say::before { top: -6px; right: 20px; left: auto; border: 6px solid transparent; border-top: 0; border-bottom-color: rgba(251,248,240,.97); }
+  }
   @media (max-width: 640px) and (orientation: portrait) {
     body.touch #artBox { bottom: calc(max(14px, env(safe-area-inset-bottom)) + 204px); width: 120px; }
     body.touch #coach { top: auto; bottom: calc(max(14px, env(safe-area-inset-bottom)) + 312px); max-width: calc(100vw - 24px); }

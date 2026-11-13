@@ -297,7 +297,7 @@ async function firstMinuteChecks(browser, R) {
         const otherBtn = !b.hidden && document.getElementById('spinName').textContent === other.name && !G.state.visits[other.id];
         return { goal: g.name, shown, h0, hMax, checked, other: other.name, otherBtn, pop, ok: shown === 0 && checked && otherBtn };
       });
-      return { firstGoalNear: fg, lazySprites: lz, playAskQuick: pa, worldBack: wb, tiltDeniedMsg: tm, swipeWalk: sw, swipeHold: { ...(sw.hold || { why: 'no-route' }), ok: !!sw.holdOk }, tapStepPace: { ...(sw.pace || { why: 'no-route' }), ok: !!sw.paceOk }, arriveNoSpin: an, ptsPop: { ...(an.pop || { why: an.why || 'no-goal' }), ok: !!an.pop && an.pop.gained >= 5 && an.pop.seen && (an.pop.scale >= 1.05 || an.pop.gold) && !an.pop.left && an.pop.shown && /^[\d,]+(pt)?$/.test(an.pop.text) }, ...(await startSteadyChecks(browser, R)), ...(await a2hsChecks(browser, R)), ...(await tapDemoChecks(browser, R)), ...(await cycle210Checks(browser, R)), ...(await cycle209Checks(browser, R)), ...(await cycle208Checks(browser, R)), ...(await cycle207Checks(browser, R)), ...(await cycle206Checks(browser, R)), ...(await slowStartChecks(browser, R)) };
+      return { firstGoalNear: fg, lazySprites: lz, playAskQuick: pa, worldBack: wb, tiltDeniedMsg: tm, swipeWalk: sw, swipeHold: { ...(sw.hold || { why: 'no-route' }), ok: !!sw.holdOk }, tapStepPace: { ...(sw.pace || { why: 'no-route' }), ok: !!sw.paceOk }, arriveNoSpin: an, ptsPop: { ...(an.pop || { why: an.why || 'no-goal' }), ok: !!an.pop && an.pop.gained >= 5 && an.pop.seen && (an.pop.scale >= 1.05 || an.pop.gold) && !an.pop.left && an.pop.shown && /^[\d,]+(pt)?$/.test(an.pop.text) }, ...(await startSteadyChecks(browser, R)), ...(await a2hsChecks(browser, R)), ...(await tapDemoChecks(browser, R)), ...(await cycle209Checks(browser, R)), ...(await cycle208Checks(browser, R)), ...(await cycle207Checks(browser, R)), ...(await cycle206Checks(browser, R)), ...(await slowStartChecks(browser, R)) };
     } finally { R.errors.push(...v.errors); await v.ctx.close(); }
 }
 // サイクル193（運営者の声 2026-11-10「さんぽGOホーム画面に追加を控えめに促す」）：ホーム画面に追加の おすすめは 小さな 1行の 札。
@@ -1189,61 +1189,6 @@ async function cycle209Checks(browser, R) {
   }
   return out;
 }
-// サイクル210（はじめの 1分：開いて から 最初の 手本まで）：傾きの 許可を 聞かない 端末（この 台本の 形）で、開いて まだ 何も して いない 人の 最初の 手本は 2秒 待たない。
-// さわった あとは これまでどおり 2秒・開いて すぐ 傾けて 転がして いる 間は 手本を 出さない
-async function cycle210Checks(browser, R) {
-  const out = {};
-  const fail = (keys, e) => { for (const k of keys) if (!out[k]) out[k] = { ok: false, crashed: String(e && e.message || e).split('\n')[0].slice(0, 200) }; };
-  const open = async (view, tilt) => {
-    const v = await newPage(browser, { howto: true, auto: true, hasTouch: true, isMobile: true, locale: 'ja-JP', timezoneId: 'Asia/Tokyo', viewport: view });
-    await v.page.addInitScript(tilt => {
-      if (!sessionStorage.getItem('__c210')) { sessionStorage.setItem('__c210', '1'); for (const k of ['nsg_auto', 'nsg_roll', 'nsg_roll_v2', 'nsg_view', 'nsg_world_on', 'nsg_koro', 'nsg_kome_talk']) localStorage.removeItem(k); }
-      const T = window.__c210 = { bad: 0, vmax: 0 }, ev = (g, b) => window.dispatchEvent(new DeviceOrientationEvent('deviceorientation', { alpha: 0, beta: b, gamma: g }));
-      setInterval(() => { try {   // 開いて からの 時刻（ms）：お米が 出た・道すじが できた・手本が 見えた
-        const P = window.nishioPixel; if (!P) return;
-        const now = performance.now(), on = P.tapDemo.on, v = P.roll.v || 0;
-        if (T.rice == null && P.roll.x !== null) { T.rice = now; if (tilt) { for (let i = 0; i < 4; i++) ev(0, 40); T.tiv = setInterval(() => ev(tilt, 40 + tilt), 30); } }   // 開いて すぐ 傾ける
-        if (T.route == null && P.maze.routePath()) T.route = now;
-        if (T.demo == null && on) T.demo = now;
-        if (T.rice != null && now - T.rice < 3000) { T.vmax = Math.max(T.vmax, v); if (on && v > 0.2) T.bad++; }
-      } catch (e) {} }, 10);
-    }, tilt || 0);
-    await v.page.goto(URL);
-    return v;
-  };
-  const times = p => p.evaluate(() => { const T = window.__c210, r = k => (T[k] == null ? null : Math.round(T[k])); return { rice: r('rice'), route: r('route'), demo: r('demo'), first: nishioPixel.tapDemo.first, fresh: nishioPixel.tapDemo.fresh, bad: T.bad, vmax: +T.vmax.toFixed(2) }; });
-  {   // ① 390×844：お米が 出て 1.5秒・道すじが できて 0.6秒 の うちに 最初の 手本（前は お米が 出て 2秒 待った）。② その あと さわる（pointerdown）と 消えて、次は 2秒 待つ
-    let v = null;
-    try {
-      v = await open({ width: 390, height: 844 });
-      await v.page.waitForFunction(() => window.__c210 && window.__c210.demo != null, null, { timeout: 10000 }).catch(() => {});
-      const t = await times(v.page);
-      out.firstDemoFast = { ...t, ok: t.demo != null && t.rice != null && t.route != null && t.demo - t.rice < 1500 && t.demo - t.route < 600 };
-      const w = await v.page.evaluate(async () => {
-        const P = nishioPixel, raf = () => new Promise(r => setTimeout(r, 40));
-        if (!P.tapDemo.on) return { shown: false };
-        const t0 = performance.now();
-        document.body.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerType: 'touch', clientX: 5, clientY: 5 }));
-        const hidden = !P.tapDemo.on;
-        let back = null;
-        while (performance.now() - t0 < 3500) { await raf(); if (P.tapDemo.on) { back = Math.round(performance.now() - t0); break; } }
-        return { shown: true, hidden, back, fresh: P.tapDemo.fresh };
-      });
-      out.demoTouchWait = { ...w, ok: w.shown && w.hidden && w.back != null && w.back >= 1900 && w.fresh === false };
-    } catch (e) { fail(['firstDemoFast', 'demoTouchWait'], e); } finally { if (v) { R.errors.push(...v.errors); await v.ctx.close(); } }
-  }
-  {   // ③ 開いて すぐ 傾けて（8度）転がす：転がって いる 間（速さ 0.2 より 上）に 手本を 出さない。転がった あとは はじめての 形（fresh）では なくなる
-    let v = null;
-    try {
-      v = await open({ width: 390, height: 844 }, 8);
-      await v.page.waitForTimeout(500);
-      await v.page.waitForFunction(() => window.__c210 && window.__c210.rice != null && performance.now() - window.__c210.rice > 3000, null, { timeout: 12000 }).catch(() => {});
-      const t = await times(v.page);
-      out.rollNoDemo = { ...t, ok: t.rice != null && t.vmax >= 1 && t.fresh === false && t.bad === 0 };   // かならず 見る：本当に 転がった（速さ 1マス/秒 以上・傾きが 効いた）・はじめての 形（fresh）では なくなった・転がって いる 間に 手本なし（PR #1136 の 指摘：前は 傾きが 効かない・fresh の ない ファイルでも 通った）
-    } catch (e) { fail(['rollNoDemo'], e); } finally { if (v) { R.errors.push(...v.errors); await v.ctx.close(); } }
-  }
-  return out;
-}
 const FIRST_MINUTE_NEED = {
   slowCover: '読みこみ中の 題字が スタイルシートを 待つ（head に ある）／題字の 下に 動く しるし（米つぶ）が ない',
   bgmAfterMap: '地図が 動きだす 前の タップで 曲（mp3）を 読みはじめる／動きだした あとの タップで 曲が 鳴らない',
@@ -1291,9 +1236,6 @@ const FIRST_MINUTE_NEED = {
   lowGoalDemo: '低い 横向き（568×320・844×390）で ゴールの 1〜2マス 手前に 止まると、手本の 指が 出ない（N1b）',
   bigHandTap: '最初の 手本の 手の まん中・手首（大きい 手 30・52px／入らない ときの ふつうの 手 20・36px）を タップすると、歩かずに せかいちず・名所の 窓に なる（844×390・西尾駅の 3マス 手前）',
   handHelpScope: '手本の 手の 助けが 名所の 絵の 上・許可を 聞いた あとにも 効いて、手の そばの 名所を タップしても 説明が 開かない（390×844・許可の 前／ことわった 150ms あと）',
-  firstDemoFast: '開いて まだ 何も して いない 人（傾きの 許可を 聞かない 端末・390×844）の 最初の 手本が、お米が 出て 1.5秒・道すじが できて 0.6秒 の うちに 出ない（前は お米が 出て 2秒 待った。サイクル210）',
-  demoTouchWait: '最初の 手本の あと さわると、手本が すぐ 消えない／次の 手本が 2秒 待たずに 出る（さわった あとの 手本は これまでどおり 2秒。サイクル210）',
-  rollNoDemo: '開いて すぐ 傾けて（8度）も 転がらない（速さ 1マス/秒 に とどかない）／転がって いる 間に 手本が 出る／転がった あとも「はじめての 手本」の まま（サイクル210）',
   bootLoaded: '地図の 部品が ふつうに 読めた のに「時間が かかっています」の ボタン・「もう 1回 読みこむ」が 出る／始まらない',
   bootFailed: '地図の 部品が 読めなかった（エラー）とき、押せる「もう 1回 読みこむ」の ボタンが 4秒 までに 出ない／押しても 読みこみ なおさない',
   bootSlow: '地図の 部品が 8秒 おくれて 届く 人に「時間が かかっています」が 出る／20秒 おくれの 人が 始まらない・始まった あとも 残る',

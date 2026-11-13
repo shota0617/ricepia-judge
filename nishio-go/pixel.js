@@ -601,6 +601,7 @@ function ensureChunk(cx, cy) {
   // 用意した区画（chunks/区画.json）を先に確かめたいので、端末の保存分はここでは使わず pump() で使う
   chunks.set(k, { state: 'queued' });
   queue.push([cx, cy]);
+  bakedFetch(cx, cy);   // サイクル211b：用意した 区画の ファイルは 列に 入れた ときに 取りに いく（下の bakedFetch）
   pump();
 }
 
@@ -634,11 +635,37 @@ const unrle = s => {
   for (const m of s.matchAll(/([\s\S])([0-9a-z]+)\./g)) { const n = parseInt(m[2], 36); if (i + n > g.length) return null; g.fill(m[1].charCodeAt(0) - 48, i, i + n); i += n; }
   return i === g.length ? g : null;
 };
+// サイクル211b（はじめの 1分・おそい 回線）：区画を 作る ワーカは 3つ（PUMP_PAR）で、ワーカが 区画の ファイルを 取りに いく ので、取りに いく のも 3つずつ だった。
+// おそい 回線（3G ほど：往復 0.3秒・1.6Mbps）では 1つの 区画（gzip で 5〜11KB）に 0.8〜1.3秒 かかり、そのうち ほとんどが 待ち（往復）。
+// はかった（390×844・本番と 同じ gzip・区画の ファイルを 0.4秒 おくらせる）：お米が 出て（5.9秒）から 手本（11.6秒）まで 5.7秒、その 間 区画 18個を 3つずつ 6回 待った。
+// 直し：区画を 列に 入れた とき（ensureChunk）に、その 区画の ファイルを 先に 取りに いく（同時に BAKED_PAR まで）。区画を 作る（ほどく・塗る）の は これまでどおり 3つずつ・近い 順。
+// 取る 区画・数は かえない（列に 入った 区画 だけ。地図データ（Overpass）からは 取らない）。取れなかった ときは これまでどおり null（保存分・地図データへ）
+const BAKED_PAR = 8;
+const bakedPre = new Map(), bakedWait = [];
+let bakedLive = 0;
+function bakedFetch(cx, cy) {   // 区画の ファイルの 約束（json か null）。同じ 区画は 1回 だけ 取る
+  const k = cx + '_' + cy;
+  if (BAKE) return Promise.resolve(null);
+  let p = bakedPre.get(k);
+  if (p) return p;
+  p = new Promise(res => {
+    const go = () => {
+      bakedLive++;
+      fetch(`nishio-go/chunks/${k}.json`).then(r => (r.ok ? r.json() : null)).catch(() => null).then(j => {
+        bakedLive--; res(j);
+        const nx = bakedWait.shift(); if (nx) nx();
+      });
+    };
+    if (bakedLive < BAKED_PAR) go(); else bakedWait.push(go);
+  });
+  bakedPre.set(k, p);
+  return p;
+}
 async function bakedChunk(cx, cy) {
   if (BAKE) return null;
   try {
-    const r = await fetch(`nishio-go/chunks/${cx}_${cy}.json`);
-    const j = r.ok ? await r.json() : null;
+    const j = await bakedFetch(cx, cy);
+    bakedPre.delete(cx + '_' + cy);   // 使ったら 手ばなす（あとで 読みなおす ときは もう 1回 取る）
     const g = j && typeof j.d === 'string' ? unrle(j.d) : null;
     if (!g) return null;
     g.pois = Array.isArray(j.p) ? j.p : [];

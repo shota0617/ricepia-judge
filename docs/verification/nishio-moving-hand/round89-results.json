@@ -1,0 +1,2828 @@
+{
+  "round": 89,
+  "publicationStatus": "DRAFT_MERGE_HELD_FAILED_FULL_SUITES",
+  "generatedAtUTC": "2026-11-13T13:14:13.208455+00:00",
+  "source": {
+    "base": "ab12150f581df7908dc1df2c51f4a035ecd88bbb",
+    "candidate": "1fb111a648b2d9aa20fcd4209dd76e3308263c5a",
+    "previousPR1133Head": "9fa4e2b7d15ae1e1d88e8506bcc3532ff3509ed9",
+    "candidatePixelSHA256": "64eeff36107925a20f69e06cd484df975ab000a3eb9f029a5c3d8438f5750ff1",
+    "productDiffAgainstBase": {
+      "file": "nishio-go/pixel.js",
+      "added": 25,
+      "removed": 0,
+      "locations": [
+        "nishio-go/pixel.js:9575",
+        "nishio-go/pixel.js:9650"
+      ]
+    },
+    "existingMainTestFilesPreserved": 304,
+    "existingProposalTestFilesPreserved": {
+      "tests/test_nishio_moving_hand.py": "49b4a71340d0750c349c02500df7401c0eadf7769e4bcaf48af7d57d8bcd9bf5",
+      "tests/test_nishio_hand_midpoints.py": "48dd4a88683df2c5fa9656b2353577abadb04a7b4a290cbe8dfe4e3dec77ace7"
+    },
+    "integrationEvidenceSHA256": "7f797cb940679820e273c42db96d92093b7df1604dad5013d2be08192e3aa122",
+    "comparisonBaselineDescription": "固定したmain ab12150f581df7908dc1df2c51f4a035ecd88bbb。現在のリモート最新版を意味しない。",
+    "mainAdvancedDuringValidation": {
+      "recordedAtUTC": "2026-11-13T13:34:17.373228+00:00",
+      "from": "ab12150f581df7908dc1df2c51f4a035ecd88bbb",
+      "to": "85400c84dd68268120aa4aa27eb96c33758f9011",
+      "changedFiles": [
+        "kome365/README.md",
+        "kome365/index.html",
+        "tests/test_kome365_firstmin.py"
+      ],
+      "candidateAndValidationCloneUnchanged": true,
+      "candidateHead": "1fb111a648b2d9aa20fcd4209dd76e3308263c5a",
+      "comparisonBase": "ab12150f581df7908dc1df2c51f4a035ecd88bbb",
+      "notTestedAtNewMain": true,
+      "recordSHA256": "e37335a19f921d172b375042f05358224b4e3a1141a15eb44630b778a25384c0",
+      "description": "検証中のmain更新は別記録。第89周のテスト結果は固定した比較元と候補に対するもので、85400c84で実行したとはしない。"
+    }
+  },
+  "conditions": {
+    "viewport": [
+      844,
+      390
+    ],
+    "isMobile": true,
+    "hasTouch": true,
+    "cpuRate": 4,
+    "cpuReset": 1,
+    "observationSeconds": 10,
+    "playSeconds": 60,
+    "primaryRequestedHoldMs": 40,
+    "fixed10RequestedHoldsMs": [
+      40,
+      250,
+      40,
+      250,
+      40,
+      250,
+      40,
+      250,
+      40,
+      250
+    ],
+    "freshContextsPerSide": 10,
+    "sequential": true,
+    "input": "CDP Input.dispatchTouchEvent",
+    "externalNetwork": "blocked; Leaflet1.9.4 fulfilled from local files",
+    "snapshots": [
+      "observe10",
+      "play10",
+      "play30",
+      "play60"
+    ],
+    "stateSeedMutation": false
+  },
+  "primary": {
+    "before": {
+      "sourceHead": "ab12150f581df7908dc1df2c51f4a035ecd88bbb",
+      "counts": {
+        "actions": 20,
+        "hand": 16,
+        "normalHand": 15,
+        "handWorldOpenings": 5,
+        "worldReturnInputs": 4,
+        "informationOpenings": 0,
+        "informationClosings": 0,
+        "informationCloseInputs": 0,
+        "fullWindows": 19,
+        "incompleteWindows": 1,
+        "noRecordedResponseFullWindow": 0,
+        "results": {
+          "coordinateChanged": 11,
+          "worldOpened": 5,
+          "worldReturned": 4
+        },
+        "recordedCDPCommandSends": 40,
+        "recordedCDPCommandAcknowledgements": 40,
+        "rawEvents": 60,
+        "trustedEvents": 60,
+        "eventTypes": {
+          "pointerdown": 20,
+          "pointerup": 20,
+          "click": 20
+        },
+        "inputErrors": 0,
+        "touchStartCoordinatesMatched": 20,
+        "observedHitsMatchedDownTarget": 20
+      },
+      "firstFeedback": {
+        "kind": "coordinateChanged",
+        "playSeconds": 0.591900146484375,
+        "sendToObservedMs": 470.900146484375,
+        "action": 1
+      },
+      "firstReward": {
+        "kind": "first observed positive visible center-unobscured displayed points",
+        "value": 30,
+        "playSeconds": 1.088800048828125,
+        "firstInputToObservedMs": 967.800048828125
+      },
+      "firstGoalChangeFromMergedObservations": {
+        "playSeconds": 26.215400146484374,
+        "sendToObservedMs": 2309.400146484375
+      },
+      "startupWait": {
+        "observationToPlaySeconds": 10.341,
+        "firstRetainedSamplePlaySeconds": -9.249099853515625,
+        "lastHandNotVisibleBeforeFirstVisiblePlaySeconds": -7.336,
+        "firstObservedVisibleHandPlaySeconds": -6.35339990234375,
+        "firstObservedTargetableHandPlaySeconds": -6.35339990234375,
+        "firstObservedVisibleHandSinceObservationSeconds": 3.98760009765625,
+        "firstInputPlaySeconds": 0.121,
+        "firstInputSinceObservationSeconds": 10.462,
+        "firstRewardSinceObservationSeconds": 11.429800048828126,
+        "loadingStateOrCompletionTimeDirectlyCaptured": false,
+        "evidenceLimit": "Existing scalar/DOM snapshots record hand visibility. Loading text presence/absence is documented separately in the actual original-image notes. Its continuous duration/completion time and causal function are not instrumented.",
+        "interpretation": "Pre-input wait is separate from input-response latency and no-op count. Read the current response/reward/goal evidence separately; no prior-run recovery result is imported. CPU4 is uncalibrated; no cause or real-device delay inferred."
+      },
+      "deadline": {
+        "nominalSeconds": 60,
+        "actionsStartedWithinPlay": 20,
+        "lastTouchEndPlaySeconds": 59.553,
+        "lateStarts": [],
+        "lateReleases": [],
+        "lateCompletions": [],
+        "afterDeadlineTraceSamples": 3,
+        "traceStoppedAfterDeadlineMs": 223.5,
+        "limits": "Only observations through60s count toward action-response classification. Postdeadline samples and screenshot completion remain retained but do not extend allowed input time."
+      },
+      "errors": []
+    },
+    "after": {
+      "sourceHead": "1fb111a648b2d9aa20fcd4209dd76e3308263c5a",
+      "counts": {
+        "actions": 23,
+        "hand": 17,
+        "normalHand": 16,
+        "handWorldOpenings": 0,
+        "worldReturnInputs": 0,
+        "informationOpenings": 7,
+        "informationClosings": 6,
+        "informationCloseInputs": 6,
+        "fullWindows": 22,
+        "incompleteWindows": 1,
+        "noRecordedResponseFullWindow": 0,
+        "results": {
+          "coordinateChanged": 10,
+          "informationPanelOpened": 7,
+          "informationPanelClosed": 6
+        },
+        "recordedCDPCommandSends": 46,
+        "recordedCDPCommandAcknowledgements": 46,
+        "rawEvents": 69,
+        "trustedEvents": 69,
+        "eventTypes": {
+          "pointerdown": 23,
+          "pointerup": 23,
+          "click": 23
+        },
+        "inputErrors": 0,
+        "touchStartCoordinatesMatched": 23,
+        "observedHitsMatchedDownTarget": 23
+      },
+      "firstFeedback": {
+        "kind": "coordinateChanged",
+        "playSeconds": 0.574,
+        "sendToObservedMs": 430,
+        "action": 1
+      },
+      "firstReward": {
+        "kind": "first observed positive visible center-unobscured displayed points",
+        "value": 30,
+        "playSeconds": 1.039099853515625,
+        "firstInputToObservedMs": 895.099853515625
+      },
+      "firstGoalChangeFromMergedObservations": {
+        "playSeconds": 33.5715,
+        "sendToObservedMs": 1582.5
+      },
+      "startupWait": {
+        "observationToPlaySeconds": 10.428,
+        "firstRetainedSamplePlaySeconds": -8.629900146484376,
+        "lastHandNotVisibleBeforeFirstVisiblePlaySeconds": -6.476800048828125,
+        "firstObservedVisibleHandPlaySeconds": -5.3915,
+        "firstObservedTargetableHandPlaySeconds": -5.3915,
+        "firstObservedVisibleHandSinceObservationSeconds": 5.0365,
+        "firstInputPlaySeconds": 0.144,
+        "firstInputSinceObservationSeconds": 10.572,
+        "firstRewardSinceObservationSeconds": 11.467099853515625,
+        "loadingStateOrCompletionTimeDirectlyCaptured": false,
+        "evidenceLimit": "Existing scalar/DOM snapshots record hand visibility. Loading text presence/absence is documented separately in the actual original-image notes. Its continuous duration/completion time and causal function are not instrumented.",
+        "interpretation": "Pre-input wait is separate from input-response latency and no-op count. Read the current response/reward/goal evidence separately; no prior-run recovery result is imported. CPU4 is uncalibrated; no cause or real-device delay inferred."
+      },
+      "deadline": {
+        "nominalSeconds": 60,
+        "actionsStartedWithinPlay": 23,
+        "lastTouchEndPlaySeconds": 58.771,
+        "lateStarts": [],
+        "lateReleases": [],
+        "lateCompletions": [],
+        "afterDeadlineTraceSamples": 3,
+        "traceStoppedAfterDeadlineMs": 381.7998046875,
+        "limits": "Only observations through60s count toward action-response classification. Postdeadline samples and screenshot completion remain retained but do not extend allowed input time."
+      },
+      "errors": []
+    }
+  },
+  "fixed10": {
+    "before": {
+      "actualExit": 0,
+      "completedAtUTC": "2026-11-13T12:32:47.435456+00:00",
+      "fixedSlots": 10,
+      "established": 10,
+      "reproduced": 10,
+      "unestablished": 0,
+      "originalImagesActuallyViewed": 40,
+      "groups": [
+        {
+          "tapMs": 40,
+          "fixedSlots": 5,
+          "closed": 5,
+          "eligible": 5,
+          "reproduced": 5,
+          "notObservedWithin60": 0,
+          "unestablished": 0,
+          "normalHandInputs": 91,
+          "normalHandWorldOpenings": 71,
+          "incompleteWindows": 5
+        },
+        {
+          "tapMs": 250,
+          "fixedSlots": 5,
+          "closed": 5,
+          "eligible": 5,
+          "reproduced": 5,
+          "notObservedWithin60": 0,
+          "unestablished": 0,
+          "normalHandInputs": 65,
+          "normalHandWorldOpenings": 17,
+          "incompleteWindows": 2
+        }
+      ],
+      "totals": {
+        "actions": 253,
+        "normalHandInputs": 156,
+        "normalHandWorldOpenings": 88,
+        "fullWindows": 246,
+        "incompleteWindows": 7,
+        "noRecordedResponseWithFullWindow": 0,
+        "incompleteNoResponseWindows": 1,
+        "informationOpenings": 2,
+        "CDPCommands": 506,
+        "CDPAcknowledgements": 506,
+        "trustedEvents": 759,
+        "events": 759,
+        "consolePageErrors": 0
+      },
+      "worldCountsPerTrial": [
+        15,
+        2,
+        14,
+        2,
+        15,
+        3,
+        15,
+        9,
+        12,
+        1
+      ],
+      "lateInputEvidence": [
+        {
+          "trial": 10,
+          "action": 15,
+          "kind": "visible-hand-center",
+          "normalHand": true,
+          "sentWithinPlay": true,
+          "sentPlaySeconds": 59.863,
+          "full1100msWindow": false,
+          "result": "incomplete-observation-window",
+          "inputErrors": [],
+          "responseMoments": {
+            "informationPanelOpened": null,
+            "informationPanelClosed": null,
+            "worldOpened": null,
+            "worldReturned": null,
+            "coordinateChanged": null,
+            "displayedPointChanged": null,
+            "storedGoalChanged": null,
+            "toastTextChanged": null
+          },
+          "coordinatesMatch": false,
+          "targetMatches": false,
+          "actualInputCoordinatesMatch": true,
+          "actualInputTargetMatches": true,
+          "actualDownPlaySeconds": 60.066,
+          "releasePlaySeconds": 60.113,
+          "completionPlaySeconds": 60.359,
+          "actualInputEvidenceEndPlaySeconds": 60.359,
+          "requestedHoldMs": 250,
+          "sentHoldMs": 250,
+          "eventHoldMs": null
+        }
+      ],
+      "serialOuter": [
+        {
+          "previous": 1,
+          "next": 2,
+          "ordered": true
+        },
+        {
+          "previous": 2,
+          "next": 3,
+          "ordered": true
+        },
+        {
+          "previous": 3,
+          "next": 4,
+          "ordered": true
+        },
+        {
+          "previous": 4,
+          "next": 5,
+          "ordered": true
+        },
+        {
+          "previous": 5,
+          "next": 6,
+          "ordered": true
+        },
+        {
+          "previous": 6,
+          "next": 7,
+          "ordered": true
+        },
+        {
+          "previous": 7,
+          "next": 8,
+          "ordered": true
+        },
+        {
+          "previous": 8,
+          "next": 9,
+          "ordered": true
+        },
+        {
+          "previous": 9,
+          "next": 10,
+          "ordered": true
+        }
+      ],
+      "serialBrowser": [
+        {
+          "previous": 1,
+          "next": 2,
+          "browserClosedBeforeNextStart": true
+        },
+        {
+          "previous": 2,
+          "next": 3,
+          "browserClosedBeforeNextStart": true
+        },
+        {
+          "previous": 3,
+          "next": 4,
+          "browserClosedBeforeNextStart": true
+        },
+        {
+          "previous": 4,
+          "next": 5,
+          "browserClosedBeforeNextStart": true
+        },
+        {
+          "previous": 5,
+          "next": 6,
+          "browserClosedBeforeNextStart": true
+        },
+        {
+          "previous": 6,
+          "next": 7,
+          "browserClosedBeforeNextStart": true
+        },
+        {
+          "previous": 7,
+          "next": 8,
+          "browserClosedBeforeNextStart": true
+        },
+        {
+          "previous": 8,
+          "next": 9,
+          "browserClosedBeforeNextStart": true
+        },
+        {
+          "previous": 9,
+          "next": 10,
+          "browserClosedBeforeNextStart": true
+        }
+      ],
+      "sourcePost": {
+        "head": "ab12150f581df7908dc1df2c51f4a035ecd88bbb",
+        "status": "",
+        "hashes": {
+          "AGENTS.md": "81c9231e00cec58b8eaf06ab06ea96bd26ce8bd04151c1f7c1017f1dfa4dcbeb",
+          ".claude/skills/ricepia-flow/SKILL.md": "56d075153f561430fee926907a5c97083d9f643e6dd2d3a2f4c5736324a697f0",
+          "nishio-go.html": "605e0a9c3c530fa9cea45631d4e73f6358d94bb44a018a850e0b47904f17afc8",
+          "nishio-go/pixel.js": "95c4ab337520752485b8cdf1f2f5fefd1b542ee47aa374f495fa7529fe0e1c60",
+          "nishio-go/style.css": "c00be168073dab5fbc6e9896f43520af098252a49a3bec5bf5ef8f9ac7621f46",
+          "nishio-go/game.js": "1ac1eee951f7a8889a622121ba4e1e17bbbf0ee695dcdebbc86ade430c9ca610",
+          "nishio-go/icons.js": "3fed8790bc9eeee79eaeccfa430e68a05447e19007bfe4946993940742faed61"
+        },
+        "helperSHA256": "9079e386bdbf50afbb939f9148203beddecb6eab5aaca1c8ff6eaec5e236004d",
+        "leaflet": {
+          "images/layers-2x.png": "066daca850d8ffbef007af00b06eac0015728dee279c51f3cb6c716df7c42edf",
+          "images/layers.png": "1dbbe9d028e292f36fcba8f8b3a28d5e8932754fc2215b9ac69e4cdecf5107c6",
+          "images/marker-icon-2x.png": "00179c4c1ee830d3a108412ae0d294f55776cfeb085c60129a39aa6fc4ae2528",
+          "images/marker-icon.png": "574c3a5cca85f4114085b6841596d62f00d7c892c7b03f28cbfa301deb1dc437",
+          "images/marker-shadow.png": "264f5c640339f042dd729062cfc04c17f8ea0f29882b538e3848ed8f10edb4da",
+          "leaflet-src.esm.js": "39ee93464f11fe3847137e50c0dc8189f706c460e36989ea7871bf7d540f3306",
+          "leaflet-src.esm.js.map": "971637e327b53dfb2894543ca53b04b65801278b56ee96a708146c9b7e4735bb",
+          "leaflet-src.js": "b4fa27bd78a8487450b75fb8ced591e66cffd4a1b55f7c87373557a6b3f680ba",
+          "leaflet-src.js.map": "97b701c5dff0e9864e5c458a8b15c2ec33787a326c5de77b908f9ea13be2d56a",
+          "leaflet.css": "a7837102824184820dfa198d1ebcd109ff6d0ff9a2672a074b9a1b4d147d04c6",
+          "leaflet.js": "db49d009c841f5ca34a888c96511ae936fd9f5533e90d8b2c4d57596f4e5641a",
+          "leaflet.js.map": "600a10dc5cd110de0699510d322afcbe01c7ca90b4c5f48adc20314c70aac753"
+        },
+        "matches": true
+      },
+      "rawAndImageHashesRechecked": true,
+      "staticReviewSHA256": "bf3a4acf5840632a138a0843ab6b4eaac525b396c64dc82160d425445f993d76",
+      "correctionReasonSHA256": "26c8971fea935adf120b852703cf12c8ecf1fdc4df55a2b4790bfa31d57e3ca7",
+      "interpretation": "ExistingPR1133 reproduced in both requested holds. No new issue or causal physical-device/retention comparison. Lateinput confirms actual delivery only and never extends the60s response window."
+    },
+    "after": {
+      "actualExit": 0,
+      "completedAtUTC": "2026-11-13T12:54:10.813750+00:00",
+      "fixedSlots": 10,
+      "established": 10,
+      "reproduced": 0,
+      "notObservedWithin60": 10,
+      "unestablished": 0,
+      "originalImagesActuallyViewed": 40,
+      "groups": [
+        {
+          "tapMs": 40,
+          "fixedSlots": 5,
+          "closed": 5,
+          "eligible": 5,
+          "reproduced": 0,
+          "notObservedWithin60": 5,
+          "unestablished": 0,
+          "normalHandInputs": 75,
+          "normalHandWorldOpenings": 0,
+          "incompleteWindows": 3
+        },
+        {
+          "tapMs": 250,
+          "fixedSlots": 5,
+          "closed": 5,
+          "eligible": 5,
+          "reproduced": 0,
+          "notObservedWithin60": 5,
+          "unestablished": 0,
+          "normalHandInputs": 69,
+          "normalHandWorldOpenings": 0,
+          "incompleteWindows": 4
+        }
+      ],
+      "totals": {
+        "actions": 185,
+        "normalHandInputs": 144,
+        "normalHandWorldOpenings": 0,
+        "fullWindows": 178,
+        "incompleteWindows": 7,
+        "noRecordedResponseWithFullWindow": 0,
+        "incompleteNoResponseWindows": 1,
+        "informationOpenings": 32,
+        "CDPCommands": 370,
+        "CDPAcknowledgements": 370,
+        "trustedEvents": 555,
+        "events": 555,
+        "consolePageErrors": 0,
+        "informationClosings": 31
+      },
+      "worldCountsPerTrial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "informationOpeningsPerTrial": [
+        9,
+        2,
+        6,
+        1,
+        1,
+        5,
+        1,
+        1,
+        5,
+        1
+      ],
+      "lateInputEvidence": [
+        {
+          "trial": 10,
+          "action": 17,
+          "kind": "visible-hand-center",
+          "normalHand": true,
+          "sentWithinPlay": true,
+          "sentPlaySeconds": 59.648,
+          "full1100msWindow": false,
+          "result": "incomplete-observation-window",
+          "inputErrors": [],
+          "responseMoments": {
+            "informationPanelOpened": null,
+            "informationPanelClosed": null,
+            "worldOpened": null,
+            "worldReturned": null,
+            "coordinateChanged": null,
+            "displayedPointChanged": null,
+            "storedGoalChanged": null,
+            "toastTextChanged": null
+          },
+          "coordinatesMatch": true,
+          "targetMatches": true,
+          "actualInputCoordinatesMatch": true,
+          "actualInputTargetMatches": true,
+          "actualDownPlaySeconds": 59.87630004882813,
+          "releasePlaySeconds": 59.899,
+          "completionPlaySeconds": 60.233,
+          "actualInputEvidenceEndPlaySeconds": 60.233,
+          "requestedHoldMs": 250,
+          "sentHoldMs": 251,
+          "eventHoldMs": null
+        }
+      ],
+      "serialOuter": [
+        {
+          "previous": 1,
+          "next": 2,
+          "ordered": true
+        },
+        {
+          "previous": 2,
+          "next": 3,
+          "ordered": true
+        },
+        {
+          "previous": 3,
+          "next": 4,
+          "ordered": true
+        },
+        {
+          "previous": 4,
+          "next": 5,
+          "ordered": true
+        },
+        {
+          "previous": 5,
+          "next": 6,
+          "ordered": true
+        },
+        {
+          "previous": 6,
+          "next": 7,
+          "ordered": true
+        },
+        {
+          "previous": 7,
+          "next": 8,
+          "ordered": true
+        },
+        {
+          "previous": 8,
+          "next": 9,
+          "ordered": true
+        },
+        {
+          "previous": 9,
+          "next": 10,
+          "ordered": true
+        }
+      ],
+      "serialBrowser": [
+        {
+          "previous": 1,
+          "next": 2,
+          "browserClosedBeforeNextStart": true
+        },
+        {
+          "previous": 2,
+          "next": 3,
+          "browserClosedBeforeNextStart": true
+        },
+        {
+          "previous": 3,
+          "next": 4,
+          "browserClosedBeforeNextStart": true
+        },
+        {
+          "previous": 4,
+          "next": 5,
+          "browserClosedBeforeNextStart": true
+        },
+        {
+          "previous": 5,
+          "next": 6,
+          "browserClosedBeforeNextStart": true
+        },
+        {
+          "previous": 6,
+          "next": 7,
+          "browserClosedBeforeNextStart": true
+        },
+        {
+          "previous": 7,
+          "next": 8,
+          "browserClosedBeforeNextStart": true
+        },
+        {
+          "previous": 8,
+          "next": 9,
+          "browserClosedBeforeNextStart": true
+        },
+        {
+          "previous": 9,
+          "next": 10,
+          "browserClosedBeforeNextStart": true
+        }
+      ],
+      "sourcePost": {
+        "head": "1fb111a648b2d9aa20fcd4209dd76e3308263c5a",
+        "status": "",
+        "hashes": {
+          "AGENTS.md": "81c9231e00cec58b8eaf06ab06ea96bd26ce8bd04151c1f7c1017f1dfa4dcbeb",
+          ".claude/skills/ricepia-flow/SKILL.md": "56d075153f561430fee926907a5c97083d9f643e6dd2d3a2f4c5736324a697f0",
+          "nishio-go.html": "605e0a9c3c530fa9cea45631d4e73f6358d94bb44a018a850e0b47904f17afc8",
+          "nishio-go/pixel.js": "64eeff36107925a20f69e06cd484df975ab000a3eb9f029a5c3d8438f5750ff1",
+          "nishio-go/style.css": "c00be168073dab5fbc6e9896f43520af098252a49a3bec5bf5ef8f9ac7621f46",
+          "nishio-go/game.js": "1ac1eee951f7a8889a622121ba4e1e17bbbf0ee695dcdebbc86ade430c9ca610",
+          "nishio-go/icons.js": "3fed8790bc9eeee79eaeccfa430e68a05447e19007bfe4946993940742faed61"
+        },
+        "helperSHA256": "9079e386bdbf50afbb939f9148203beddecb6eab5aaca1c8ff6eaec5e236004d",
+        "leaflet": {
+          "images/layers-2x.png": "066daca850d8ffbef007af00b06eac0015728dee279c51f3cb6c716df7c42edf",
+          "images/layers.png": "1dbbe9d028e292f36fcba8f8b3a28d5e8932754fc2215b9ac69e4cdecf5107c6",
+          "images/marker-icon-2x.png": "00179c4c1ee830d3a108412ae0d294f55776cfeb085c60129a39aa6fc4ae2528",
+          "images/marker-icon.png": "574c3a5cca85f4114085b6841596d62f00d7c892c7b03f28cbfa301deb1dc437",
+          "images/marker-shadow.png": "264f5c640339f042dd729062cfc04c17f8ea0f29882b538e3848ed8f10edb4da",
+          "leaflet-src.esm.js": "39ee93464f11fe3847137e50c0dc8189f706c460e36989ea7871bf7d540f3306",
+          "leaflet-src.esm.js.map": "971637e327b53dfb2894543ca53b04b65801278b56ee96a708146c9b7e4735bb",
+          "leaflet-src.js": "b4fa27bd78a8487450b75fb8ced591e66cffd4a1b55f7c87373557a6b3f680ba",
+          "leaflet-src.js.map": "97b701c5dff0e9864e5c458a8b15c2ec33787a326c5de77b908f9ea13be2d56a",
+          "leaflet.css": "a7837102824184820dfa198d1ebcd109ff6d0ff9a2672a074b9a1b4d147d04c6",
+          "leaflet.js": "db49d009c841f5ca34a888c96511ae936fd9f5533e90d8b2c4d57596f4e5641a",
+          "leaflet.js.map": "600a10dc5cd110de0699510d322afcbe01c7ca90b4c5f48adc20314c70aac753"
+        },
+        "matches": true
+      },
+      "rawAndImageHashesRechecked": true,
+      "staticReviewSHA256": "4625d7fb020e1e6527b3aad8929e43111065a84e33a15747acebe7efbd51aa53",
+      "beforeFinalSHA256": "8f46e7ceb914e1cd8f8e804b67469319de2c882e1b2b3133d3b0e63b20a2dc67",
+      "beforeSummarySHA256": "cd9f8f33e4ed647e91d30ea14618f65f71fea4115a22d2aeaedf4a4fdf677d4d",
+      "comparison": [
+        {
+          "tapMs": 40,
+          "before": {
+            "tapMs": 40,
+            "fixedSlots": 5,
+            "closed": 5,
+            "eligible": 5,
+            "reproduced": 5,
+            "notObservedWithin60": 0,
+            "unestablished": 0,
+            "normalHandInputs": 91,
+            "normalHandWorldOpenings": 71,
+            "incompleteWindows": 5
+          },
+          "after": {
+            "tapMs": 40,
+            "fixedSlots": 5,
+            "closed": 5,
+            "eligible": 5,
+            "reproduced": 0,
+            "notObservedWithin60": 5,
+            "unestablished": 0,
+            "normalHandInputs": 75,
+            "normalHandWorldOpenings": 0,
+            "incompleteWindows": 3
+          },
+          "beforeInformationOpenings": 0,
+          "afterInformationOpenings": 22
+        },
+        {
+          "tapMs": 250,
+          "before": {
+            "tapMs": 250,
+            "fixedSlots": 5,
+            "closed": 5,
+            "eligible": 5,
+            "reproduced": 5,
+            "notObservedWithin60": 0,
+            "unestablished": 0,
+            "normalHandInputs": 65,
+            "normalHandWorldOpenings": 17,
+            "incompleteWindows": 2
+          },
+          "after": {
+            "tapMs": 250,
+            "fixedSlots": 5,
+            "closed": 5,
+            "eligible": 5,
+            "reproduced": 0,
+            "notObservedWithin60": 5,
+            "unestablished": 0,
+            "normalHandInputs": 69,
+            "normalHandWorldOpenings": 0,
+            "incompleteWindows": 4
+          },
+          "beforeInformationOpenings": 2,
+          "afterInformationOpenings": 10
+        }
+      ],
+      "interpretation": "Matched fixed10 conditions and unchanged observed-world definition. Compare observed contexts/exposures; routes, random state and incomplete windows differ. World openings and information panels are separate outcomes. Do not infer overall usability, real-device speed or retention improvement. Actual late-input delivery never extends the60s response window."
+    }
+  },
+  "postHocInterpretation": {
+    "notPrimaryMetric": true,
+    "groups": [
+      {
+        "phase": "before",
+        "tapMs": 40,
+        "fixedSlots": 5,
+        "eligibleContexts": 5,
+        "normalHandInputs": 91,
+        "worldActions": 71,
+        "informationActions": 0,
+        "uniqueUnionActions": 71,
+        "overlapActions": 0,
+        "worldContexts": 5,
+        "informationContexts": 0,
+        "unionContexts": 5,
+        "normalHandIncompleteWindows": 3,
+        "allIncompleteWindows": 5,
+        "firstVisiblePositivePoint": {
+          "observedContexts": 5,
+          "notObservedWithin60": 0,
+          "minObservedPlaySeconds": 0.7572998046875,
+          "maxObservedPlaySeconds": 1.144699951171875,
+          "missingDoesNotMeanZeroOrNever": true
+        },
+        "firstPositiveStoredGoal": {
+          "observedContexts": 0,
+          "notObservedWithin60": 5,
+          "minObservedPlaySeconds": null,
+          "maxObservedPlaySeconds": null,
+          "missingDoesNotMeanZeroOrNever": true
+        }
+      },
+      {
+        "phase": "before",
+        "tapMs": 250,
+        "fixedSlots": 5,
+        "eligibleContexts": 5,
+        "normalHandInputs": 65,
+        "worldActions": 17,
+        "informationActions": 2,
+        "uniqueUnionActions": 19,
+        "overlapActions": 0,
+        "worldContexts": 5,
+        "informationContexts": 2,
+        "unionContexts": 5,
+        "normalHandIncompleteWindows": 1,
+        "allIncompleteWindows": 2,
+        "firstVisiblePositivePoint": {
+          "observedContexts": 5,
+          "notObservedWithin60": 0,
+          "minObservedPlaySeconds": 0.915,
+          "maxObservedPlaySeconds": 3.620300048828125,
+          "missingDoesNotMeanZeroOrNever": true
+        },
+        "firstPositiveStoredGoal": {
+          "observedContexts": 4,
+          "notObservedWithin60": 1,
+          "minObservedPlaySeconds": 22.140900146484373,
+          "maxObservedPlaySeconds": 31.35639990234375,
+          "missingDoesNotMeanZeroOrNever": true
+        }
+      },
+      {
+        "phase": "before",
+        "tapMs": null,
+        "fixedSlots": 10,
+        "eligibleContexts": 10,
+        "normalHandInputs": 156,
+        "worldActions": 88,
+        "informationActions": 2,
+        "uniqueUnionActions": 90,
+        "overlapActions": 0,
+        "worldContexts": 10,
+        "informationContexts": 2,
+        "unionContexts": 10,
+        "normalHandIncompleteWindows": 4,
+        "allIncompleteWindows": 7,
+        "firstVisiblePositivePoint": {
+          "observedContexts": 10,
+          "notObservedWithin60": 0,
+          "minObservedPlaySeconds": 0.7572998046875,
+          "maxObservedPlaySeconds": 3.620300048828125,
+          "missingDoesNotMeanZeroOrNever": true
+        },
+        "firstPositiveStoredGoal": {
+          "observedContexts": 4,
+          "notObservedWithin60": 6,
+          "minObservedPlaySeconds": 22.140900146484373,
+          "maxObservedPlaySeconds": 31.35639990234375,
+          "missingDoesNotMeanZeroOrNever": true
+        }
+      },
+      {
+        "phase": "after",
+        "tapMs": 40,
+        "fixedSlots": 5,
+        "eligibleContexts": 5,
+        "normalHandInputs": 75,
+        "worldActions": 0,
+        "informationActions": 22,
+        "uniqueUnionActions": 22,
+        "overlapActions": 0,
+        "worldContexts": 0,
+        "informationContexts": 5,
+        "unionContexts": 5,
+        "normalHandIncompleteWindows": 0,
+        "allIncompleteWindows": 3,
+        "firstVisiblePositivePoint": {
+          "observedContexts": 5,
+          "notObservedWithin60": 0,
+          "minObservedPlaySeconds": 0.89939990234375,
+          "maxObservedPlaySeconds": 1.130699951171875,
+          "missingDoesNotMeanZeroOrNever": true
+        },
+        "firstPositiveStoredGoal": {
+          "observedContexts": 5,
+          "notObservedWithin60": 0,
+          "minObservedPlaySeconds": 28.00960009765625,
+          "maxObservedPlaySeconds": 38.02910009765625,
+          "missingDoesNotMeanZeroOrNever": true
+        }
+      },
+      {
+        "phase": "after",
+        "tapMs": 250,
+        "fixedSlots": 5,
+        "eligibleContexts": 5,
+        "normalHandInputs": 69,
+        "worldActions": 0,
+        "informationActions": 10,
+        "uniqueUnionActions": 10,
+        "overlapActions": 0,
+        "worldContexts": 0,
+        "informationContexts": 5,
+        "unionContexts": 5,
+        "normalHandIncompleteWindows": 4,
+        "allIncompleteWindows": 4,
+        "firstVisiblePositivePoint": {
+          "observedContexts": 5,
+          "notObservedWithin60": 0,
+          "minObservedPlaySeconds": 0.951699951171875,
+          "maxObservedPlaySeconds": 1.3037998046875,
+          "missingDoesNotMeanZeroOrNever": true
+        },
+        "firstPositiveStoredGoal": {
+          "observedContexts": 5,
+          "notObservedWithin60": 0,
+          "minObservedPlaySeconds": 30.191800048828124,
+          "maxObservedPlaySeconds": 37.301300048828125,
+          "missingDoesNotMeanZeroOrNever": true
+        }
+      },
+      {
+        "phase": "after",
+        "tapMs": null,
+        "fixedSlots": 10,
+        "eligibleContexts": 10,
+        "normalHandInputs": 144,
+        "worldActions": 0,
+        "informationActions": 32,
+        "uniqueUnionActions": 32,
+        "overlapActions": 0,
+        "worldContexts": 0,
+        "informationContexts": 10,
+        "unionContexts": 10,
+        "normalHandIncompleteWindows": 4,
+        "allIncompleteWindows": 7,
+        "firstVisiblePositivePoint": {
+          "observedContexts": 10,
+          "notObservedWithin60": 0,
+          "minObservedPlaySeconds": 0.89939990234375,
+          "maxObservedPlaySeconds": 1.3037998046875,
+          "missingDoesNotMeanZeroOrNever": true
+        },
+        "firstPositiveStoredGoal": {
+          "observedContexts": 10,
+          "notObservedWithin60": 0,
+          "minObservedPlaySeconds": 28.00960009765625,
+          "maxObservedPlaySeconds": 38.02910009765625,
+          "missingDoesNotMeanZeroOrNever": true
+        }
+      }
+    ],
+    "trialRows": [
+      {
+        "phase": "before",
+        "trial": 1,
+        "tapMs": 40,
+        "normalHandInputs": 19,
+        "worldActions": [
+          3,
+          8,
+          10,
+          12,
+          14,
+          16,
+          18,
+          20,
+          22,
+          24,
+          26,
+          28,
+          30,
+          32,
+          34
+        ],
+        "informationActions": [],
+        "unionActions": [
+          3,
+          8,
+          10,
+          12,
+          14,
+          16,
+          18,
+          20,
+          22,
+          24,
+          26,
+          28,
+          30,
+          32,
+          34
+        ],
+        "overlapActions": [],
+        "normalHandIncompleteWindows": 1,
+        "allIncompleteWindows": 1,
+        "firstVisiblePositivePoint": {
+          "playSeconds": 1.144699951171875,
+          "value": 30,
+          "sinceObservationSeconds": 11.506699951171875,
+          "sinceFirstInputSeconds": 1.080699951171875
+        },
+        "firstPositiveStoredGoal": null,
+        "rawSHA256": "eaf75824b66ea18441d8d8e0092173816957a83818c6083d95b6c401f4705263"
+      },
+      {
+        "phase": "before",
+        "trial": 2,
+        "tapMs": 250,
+        "normalHandInputs": 15,
+        "worldActions": [
+          3,
+          8
+        ],
+        "informationActions": [
+          13
+        ],
+        "unionActions": [
+          3,
+          8,
+          13
+        ],
+        "overlapActions": [],
+        "normalHandIncompleteWindows": 0,
+        "allIncompleteWindows": 0,
+        "firstVisiblePositivePoint": {
+          "playSeconds": 1.17310009765625,
+          "value": 30,
+          "sinceObservationSeconds": 11.49810009765625,
+          "sinceFirstInputSeconds": 1.11710009765625
+        },
+        "firstPositiveStoredGoal": {
+          "playSeconds": 29.433800048828125,
+          "storedValue": "1"
+        },
+        "rawSHA256": "513c3d544f83b7b001f5448b6efcb14ed015de0857fd6d1f1f3059b381ac9c70"
+      },
+      {
+        "phase": "before",
+        "trial": 3,
+        "tapMs": 40,
+        "normalHandInputs": 18,
+        "worldActions": [
+          3,
+          8,
+          10,
+          12,
+          14,
+          16,
+          18,
+          20,
+          22,
+          24,
+          26,
+          28,
+          30,
+          32
+        ],
+        "informationActions": [],
+        "unionActions": [
+          3,
+          8,
+          10,
+          12,
+          14,
+          16,
+          18,
+          20,
+          22,
+          24,
+          26,
+          28,
+          30,
+          32
+        ],
+        "overlapActions": [],
+        "normalHandIncompleteWindows": 0,
+        "allIncompleteWindows": 1,
+        "firstVisiblePositivePoint": {
+          "playSeconds": 1.0807001953125,
+          "value": 30,
+          "sinceObservationSeconds": 11.5017001953125,
+          "sinceFirstInputSeconds": 1.0167001953125
+        },
+        "firstPositiveStoredGoal": null,
+        "rawSHA256": "30661158d3e3f873d59f8e6330f1b1aafeadfaa9854671d6480ac1db8efef2b8"
+      },
+      {
+        "phase": "before",
+        "trial": 4,
+        "tapMs": 250,
+        "normalHandInputs": 12,
+        "worldActions": [
+          3,
+          5
+        ],
+        "informationActions": [],
+        "unionActions": [
+          3,
+          5
+        ],
+        "overlapActions": [],
+        "normalHandIncompleteWindows": 0,
+        "allIncompleteWindows": 0,
+        "firstVisiblePositivePoint": {
+          "playSeconds": 1.22739990234375,
+          "value": 30,
+          "sinceObservationSeconds": 11.80139990234375,
+          "sinceFirstInputSeconds": 1.13339990234375
+        },
+        "firstPositiveStoredGoal": {
+          "playSeconds": 31.35639990234375,
+          "storedValue": "1"
+        },
+        "rawSHA256": "ba4d0c8e6e1a4e593dd557a97ce57489921d574b48856ba1ce26a48d6673a51e"
+      },
+      {
+        "phase": "before",
+        "trial": 5,
+        "tapMs": 40,
+        "normalHandInputs": 19,
+        "worldActions": [
+          3,
+          8,
+          10,
+          12,
+          14,
+          16,
+          18,
+          20,
+          22,
+          24,
+          26,
+          28,
+          30,
+          32,
+          34
+        ],
+        "informationActions": [],
+        "unionActions": [
+          3,
+          8,
+          10,
+          12,
+          14,
+          16,
+          18,
+          20,
+          22,
+          24,
+          26,
+          28,
+          30,
+          32,
+          34
+        ],
+        "overlapActions": [],
+        "normalHandIncompleteWindows": 0,
+        "allIncompleteWindows": 1,
+        "firstVisiblePositivePoint": {
+          "playSeconds": 0.97739990234375,
+          "value": 30,
+          "sinceObservationSeconds": 11.29439990234375,
+          "sinceFirstInputSeconds": 0.84639990234375
+        },
+        "firstPositiveStoredGoal": null,
+        "rawSHA256": "77eebc2d1cae67c7422c4d8568a37a0b4498d0c1879b93887e4cab04e935d714"
+      },
+      {
+        "phase": "before",
+        "trial": 6,
+        "tapMs": 250,
+        "normalHandInputs": 15,
+        "worldActions": [
+          3,
+          8,
+          19
+        ],
+        "informationActions": [
+          13
+        ],
+        "unionActions": [
+          3,
+          8,
+          13,
+          19
+        ],
+        "overlapActions": [],
+        "normalHandIncompleteWindows": 0,
+        "allIncompleteWindows": 1,
+        "firstVisiblePositivePoint": {
+          "playSeconds": 1.169199951171875,
+          "value": 30,
+          "sinceObservationSeconds": 11.689199951171876,
+          "sinceFirstInputSeconds": 1.050199951171875
+        },
+        "firstPositiveStoredGoal": {
+          "playSeconds": 29.1485,
+          "storedValue": "1"
+        },
+        "rawSHA256": "e979436828a2eb4463688af6b8cf3912ae7765117fd127c49d5e245e2d8a618e"
+      },
+      {
+        "phase": "before",
+        "trial": 7,
+        "tapMs": 40,
+        "normalHandInputs": 19,
+        "worldActions": [
+          3,
+          5,
+          7,
+          9,
+          11,
+          13,
+          18,
+          20,
+          22,
+          24,
+          26,
+          28,
+          30,
+          32,
+          34
+        ],
+        "informationActions": [],
+        "unionActions": [
+          3,
+          5,
+          7,
+          9,
+          11,
+          13,
+          18,
+          20,
+          22,
+          24,
+          26,
+          28,
+          30,
+          32,
+          34
+        ],
+        "overlapActions": [],
+        "normalHandIncompleteWindows": 1,
+        "allIncompleteWindows": 1,
+        "firstVisiblePositivePoint": {
+          "playSeconds": 0.7572998046875,
+          "value": 30,
+          "sinceObservationSeconds": 11.1792998046875,
+          "sinceFirstInputSeconds": 0.6882998046875
+        },
+        "firstPositiveStoredGoal": null,
+        "rawSHA256": "01e87791d96967c38a3dbb0e7b4dac8ccf0556820bcb48b46806e3e64e8ec21e"
+      },
+      {
+        "phase": "before",
+        "trial": 8,
+        "tapMs": 250,
+        "normalHandInputs": 10,
+        "worldActions": [
+          3,
+          5,
+          7,
+          9,
+          11,
+          13,
+          15,
+          17,
+          19
+        ],
+        "informationActions": [],
+        "unionActions": [
+          3,
+          5,
+          7,
+          9,
+          11,
+          13,
+          15,
+          17,
+          19
+        ],
+        "overlapActions": [],
+        "normalHandIncompleteWindows": 0,
+        "allIncompleteWindows": 0,
+        "firstVisiblePositivePoint": {
+          "playSeconds": 3.620300048828125,
+          "value": 30,
+          "sinceObservationSeconds": 17.763300048828125,
+          "sinceFirstInputSeconds": 2.891300048828125
+        },
+        "firstPositiveStoredGoal": null,
+        "rawSHA256": "bcb71b30e1b9cc9e0de5461f7722c2fd4993781163fb7a46bae104d30a3f66f1"
+      },
+      {
+        "phase": "before",
+        "trial": 9,
+        "tapMs": 40,
+        "normalHandInputs": 16,
+        "worldActions": [
+          3,
+          5,
+          7,
+          12,
+          14,
+          16,
+          18,
+          20,
+          22,
+          24,
+          26,
+          28
+        ],
+        "informationActions": [],
+        "unionActions": [
+          3,
+          5,
+          7,
+          12,
+          14,
+          16,
+          18,
+          20,
+          22,
+          24,
+          26,
+          28
+        ],
+        "overlapActions": [],
+        "normalHandIncompleteWindows": 1,
+        "allIncompleteWindows": 1,
+        "firstVisiblePositivePoint": {
+          "playSeconds": 1.035199951171875,
+          "value": 30,
+          "sinceObservationSeconds": 11.369199951171876,
+          "sinceFirstInputSeconds": 0.986199951171875
+        },
+        "firstPositiveStoredGoal": null,
+        "rawSHA256": "b04f67b083cc3a25be289aa6928094592f5853392e0c9b46b47837e162b991db"
+      },
+      {
+        "phase": "before",
+        "trial": 10,
+        "tapMs": 250,
+        "normalHandInputs": 13,
+        "worldActions": [
+          3
+        ],
+        "informationActions": [],
+        "unionActions": [
+          3
+        ],
+        "overlapActions": [],
+        "normalHandIncompleteWindows": 1,
+        "allIncompleteWindows": 1,
+        "firstVisiblePositivePoint": {
+          "playSeconds": 0.915,
+          "value": 30,
+          "sinceObservationSeconds": 11.29,
+          "sinceFirstInputSeconds": 0.876
+        },
+        "firstPositiveStoredGoal": {
+          "playSeconds": 22.140900146484373,
+          "storedValue": "1"
+        },
+        "rawSHA256": "5f62d1c03e9a01ee7a36752e8a8deea7e816255817d37139757a2ce037578528"
+      },
+      {
+        "phase": "after",
+        "trial": 1,
+        "tapMs": 40,
+        "normalHandInputs": 18,
+        "worldActions": [],
+        "informationActions": [
+          11,
+          13,
+          15,
+          17,
+          19,
+          21,
+          23,
+          25,
+          27
+        ],
+        "unionActions": [
+          11,
+          13,
+          15,
+          17,
+          19,
+          21,
+          23,
+          25,
+          27
+        ],
+        "overlapActions": [],
+        "normalHandIncompleteWindows": 0,
+        "allIncompleteWindows": 1,
+        "firstVisiblePositivePoint": {
+          "playSeconds": 0.940099853515625,
+          "value": 30,
+          "sinceObservationSeconds": 11.269099853515625,
+          "sinceFirstInputSeconds": 0.900099853515625
+        },
+        "firstPositiveStoredGoal": {
+          "playSeconds": 29.268099853515626,
+          "storedValue": "1"
+        },
+        "rawSHA256": "4715512b09b61ae4e441b68629c139d30057852e015945d492a88b6eb108fa16"
+      },
+      {
+        "phase": "after",
+        "trial": 2,
+        "tapMs": 250,
+        "normalHandInputs": 13,
+        "worldActions": [],
+        "informationActions": [
+          11,
+          13
+        ],
+        "unionActions": [
+          11,
+          13
+        ],
+        "overlapActions": [],
+        "normalHandIncompleteWindows": 1,
+        "allIncompleteWindows": 1,
+        "firstVisiblePositivePoint": {
+          "playSeconds": 0.951699951171875,
+          "value": 30,
+          "sinceObservationSeconds": 11.270699951171874,
+          "sinceFirstInputSeconds": 0.873699951171875
+        },
+        "firstPositiveStoredGoal": {
+          "playSeconds": 37.301300048828125,
+          "storedValue": "1"
+        },
+        "rawSHA256": "7e5f9a173fc26e41ed5933adaecafa3c9dea3238c583edade253687788a5c654"
+      },
+      {
+        "phase": "after",
+        "trial": 3,
+        "tapMs": 40,
+        "normalHandInputs": 15,
+        "worldActions": [],
+        "informationActions": [
+          11,
+          13,
+          15,
+          17,
+          19,
+          21
+        ],
+        "unionActions": [
+          11,
+          13,
+          15,
+          17,
+          19,
+          21
+        ],
+        "overlapActions": [],
+        "normalHandIncompleteWindows": 0,
+        "allIncompleteWindows": 1,
+        "firstVisiblePositivePoint": {
+          "playSeconds": 0.89939990234375,
+          "value": 30,
+          "sinceObservationSeconds": 11.21539990234375,
+          "sinceFirstInputSeconds": 0.86339990234375
+        },
+        "firstPositiveStoredGoal": {
+          "playSeconds": 35.83609985351563,
+          "storedValue": "1"
+        },
+        "rawSHA256": "7ea7319d46d30b5386a6c5d422a18cf4d851d751f17ab190954afd301a2ae924"
+      },
+      {
+        "phase": "after",
+        "trial": 4,
+        "tapMs": 250,
+        "normalHandInputs": 13,
+        "worldActions": [],
+        "informationActions": [
+          11
+        ],
+        "unionActions": [
+          11
+        ],
+        "overlapActions": [],
+        "normalHandIncompleteWindows": 1,
+        "allIncompleteWindows": 1,
+        "firstVisiblePositivePoint": {
+          "playSeconds": 1.1032998046875,
+          "value": 30,
+          "sinceObservationSeconds": 11.4472998046875,
+          "sinceFirstInputSeconds": 1.0502998046875
+        },
+        "firstPositiveStoredGoal": {
+          "playSeconds": 31.6307998046875,
+          "storedValue": "1"
+        },
+        "rawSHA256": "4190e84310c61c1447e7d837f322da5651399d5e62d933c9231afbe29e5fe6dc"
+      },
+      {
+        "phase": "after",
+        "trial": 5,
+        "tapMs": 40,
+        "normalHandInputs": 14,
+        "worldActions": [],
+        "informationActions": [
+          11
+        ],
+        "unionActions": [
+          11
+        ],
+        "overlapActions": [],
+        "normalHandIncompleteWindows": 0,
+        "allIncompleteWindows": 0,
+        "firstVisiblePositivePoint": {
+          "playSeconds": 0.931199951171875,
+          "value": 30,
+          "sinceObservationSeconds": 11.782199951171876,
+          "sinceFirstInputSeconds": 0.864199951171875
+        },
+        "firstPositiveStoredGoal": {
+          "playSeconds": 28.00960009765625,
+          "storedValue": "1"
+        },
+        "rawSHA256": "d99b0752516fb89ba7679203fbb68e17e3bbc8cf1c14788a5948fa3682eef784"
+      },
+      {
+        "phase": "after",
+        "trial": 6,
+        "tapMs": 250,
+        "normalHandInputs": 14,
+        "worldActions": [],
+        "informationActions": [
+          11,
+          13,
+          15,
+          17,
+          19
+        ],
+        "unionActions": [
+          11,
+          13,
+          15,
+          17,
+          19
+        ],
+        "overlapActions": [],
+        "normalHandIncompleteWindows": 1,
+        "allIncompleteWindows": 1,
+        "firstVisiblePositivePoint": {
+          "playSeconds": 1.3037998046875,
+          "value": 30,
+          "sinceObservationSeconds": 11.6897998046875,
+          "sinceFirstInputSeconds": 1.1807998046875
+        },
+        "firstPositiveStoredGoal": {
+          "playSeconds": 32.33909985351563,
+          "storedValue": "1"
+        },
+        "rawSHA256": "8a069c0e987dcc0a0f6e902b93e697baa392620b2c5e8d8f8dfd4e561ad859dc"
+      },
+      {
+        "phase": "after",
+        "trial": 7,
+        "tapMs": 40,
+        "normalHandInputs": 14,
+        "worldActions": [],
+        "informationActions": [
+          11
+        ],
+        "unionActions": [
+          11
+        ],
+        "overlapActions": [],
+        "normalHandIncompleteWindows": 0,
+        "allIncompleteWindows": 0,
+        "firstVisiblePositivePoint": {
+          "playSeconds": 1.044900146484375,
+          "value": 30,
+          "sinceObservationSeconds": 11.328900146484376,
+          "sinceFirstInputSeconds": 0.918900146484375
+        },
+        "firstPositiveStoredGoal": {
+          "playSeconds": 31.136400146484377,
+          "storedValue": "1"
+        },
+        "rawSHA256": "a2ccbf7dc028f1b7a55028ef72ab6d505e554832590c1a58dbef60f9b89dc08c"
+      },
+      {
+        "phase": "after",
+        "trial": 8,
+        "tapMs": 250,
+        "normalHandInputs": 14,
+        "worldActions": [],
+        "informationActions": [
+          11
+        ],
+        "unionActions": [
+          11
+        ],
+        "overlapActions": [],
+        "normalHandIncompleteWindows": 0,
+        "allIncompleteWindows": 0,
+        "firstVisiblePositivePoint": {
+          "playSeconds": 1.069699951171875,
+          "value": 30,
+          "sinceObservationSeconds": 11.524699951171876,
+          "sinceFirstInputSeconds": 0.936699951171875
+        },
+        "firstPositiveStoredGoal": {
+          "playSeconds": 33.06939990234375,
+          "storedValue": "1"
+        },
+        "rawSHA256": "e5ae9665b076f39986f1d1511624d3091854363dd4bd5adfc12c4e9a99c728a5"
+      },
+      {
+        "phase": "after",
+        "trial": 9,
+        "tapMs": 40,
+        "normalHandInputs": 14,
+        "worldActions": [],
+        "informationActions": [
+          11,
+          13,
+          15,
+          17,
+          19
+        ],
+        "unionActions": [
+          11,
+          13,
+          15,
+          17,
+          19
+        ],
+        "overlapActions": [],
+        "normalHandIncompleteWindows": 0,
+        "allIncompleteWindows": 1,
+        "firstVisiblePositivePoint": {
+          "playSeconds": 1.130699951171875,
+          "value": 30,
+          "sinceObservationSeconds": 11.513699951171875,
+          "sinceFirstInputSeconds": 1.099699951171875
+        },
+        "firstPositiveStoredGoal": {
+          "playSeconds": 38.02910009765625,
+          "storedValue": "1"
+        },
+        "rawSHA256": "803874f450207f6c2276eaac9fa64522bd6a925da0af903622eda28a77323124"
+      },
+      {
+        "phase": "after",
+        "trial": 10,
+        "tapMs": 250,
+        "normalHandInputs": 15,
+        "worldActions": [],
+        "informationActions": [
+          11
+        ],
+        "unionActions": [
+          11
+        ],
+        "overlapActions": [],
+        "normalHandIncompleteWindows": 1,
+        "allIncompleteWindows": 1,
+        "firstVisiblePositivePoint": {
+          "playSeconds": 1.186,
+          "value": 30,
+          "sinceObservationSeconds": 11.572,
+          "sinceFirstInputSeconds": 1.087
+        },
+        "firstPositiveStoredGoal": {
+          "playSeconds": 30.191800048828124,
+          "storedValue": "1"
+        },
+        "rawSHA256": "a05b1332cb5a5987123f0ea6a65f96aac2bd8ad8871ee516790bbe64f168ed86"
+      }
+    ],
+    "definition": [
+      "Post-hoc descriptive auxiliary metric requested after primary audits; not the preregistered world reproduction criterion. No change to frozen audits, classifiers or raw.",
+      "Unique unit is (phase,trial,normal-hand action). Union=worldOpened OR informationPanelOpened in existing bounded responseMoments. Same action counted once; overlap reported explicitly. First and wb hands excluded exactly as frozen normal-hand flag. This does not label all information openings as unintended or equivalent in severity to world.",
+      "Response moments remain bounded by next input or60s. All incomplete and normal-hand incomplete windows retained. No observed union is not proof of no later opening.",
+      "Point proxy is first observed visible,center-unobscured positive display from existing samples/pointChanges; not precise reward/paint time. Goal is first recorded positive stored goal count from existing merged snapshots, not necessarily visible presentation. No observation is not a zero completion time.",
+      "Same viewport/CPU/holds/input policy but random state,routes,exposures and timestamps differ; no physical-device, causal usability or retention-rate conclusion. Report primary single runs separately. No new observer/browser/test/HTTP."
+    ]
+  },
+  "images": {
+    "before": {
+      "file": "round89-before-primary-play60.png",
+      "sha256": "9f94a45ea0cfb29f73412424090373ec9cb398dbeb077f1cf8986a79a6cc6a36",
+      "originalLocalPath": "/workspace/scratch/first-minute/round-89/preparation-ab121/play-60s.png",
+      "byteIdenticalUnedited": true,
+      "scope": "Single primary observation,40ms; not a fixed10 aggregate or representative random-state match.",
+      "visible": "world map"
+    },
+    "after": {
+      "file": "round89-after-primary-play60.png",
+      "sha256": "26d0f135638a48d53f7a3153aaebfed5c7a69b3f15b077f9cc93ead3280c0f41",
+      "originalLocalPath": "/workspace/scratch/first-minute/round-89/after-preparation/play-60s.png",
+      "byteIdenticalUnedited": true,
+      "scope": "Single primary observation,40ms; not a fixed10 aggregate or representative random-state match.",
+      "visible": "Nishio station information panel"
+    }
+  },
+  "layout": {
+    "sizes": [
+      [
+        320,
+        568
+      ],
+      [
+        390,
+        844
+      ],
+      [
+        568,
+        320
+      ],
+      [
+        844,
+        390
+      ],
+      [
+        820,
+        1180
+      ]
+    ],
+    "actualExitBefore": 0,
+    "actualExitAfter": 0,
+    "beforeCounts": {
+      "states": 20,
+      "establishedStates": 20,
+      "controls": 130,
+      "centerHit": 130,
+      "viewportClipped": 0,
+      "ancestorClipped": 0,
+      "disabled": 0,
+      "overlapPairs": 0,
+      "photos": 25,
+      "actions": 20,
+      "inputKinds": {
+        "first": 5,
+        "normal": 5,
+        "arrow": 5,
+        "back": 5
+      },
+      "normalWalked": 5,
+      "directArrow": 5,
+      "directReturn": 5,
+      "trustedActionEvents": 60
+    },
+    "afterCounts": {
+      "states": 20,
+      "establishedStates": 20,
+      "controls": 130,
+      "centerHit": 130,
+      "viewportClipped": 0,
+      "ancestorClipped": 0,
+      "disabled": 0,
+      "overlapPairs": 0,
+      "photos": 25,
+      "actions": 20,
+      "inputKinds": {
+        "first": 5,
+        "normal": 5,
+        "arrow": 5,
+        "back": 5
+      },
+      "normalWalked": 5,
+      "directArrow": 5,
+      "directReturn": 5,
+      "trustedActionEvents": 60
+    },
+    "matchedStateCount": 20,
+    "controlAndLayoutChanges": 0,
+    "nonHandLandmarkGeometryChanges": 0,
+    "handGeometryChanges": 9,
+    "originalsActuallyViewedByLayoutReview": {
+      "before": 25,
+      "after": 25,
+      "eachSideParent20Child5": true
+    },
+    "existingFinding": "568×320の地図から戻った場面で、案内と中央ナビゲーションの既存の重なりが前後両側にある。",
+    "comparisonSHA256": "c79372899eed359510d12841e495d217d852ac39d8bf923774d1bd9eeac383b6",
+    "observedNewControlIssues": 0,
+    "observationScope": "観察した5サイズ・20状態・操作部中央の範囲で、新たなはみ出し・押下不可・重なりは確認されなかった。全画面・全操作でのリスクゼロを意味しない。568×320の既存の案内とナビゲーションの重なりは両側に残る。"
+  },
+  "tests": {
+    "regressionRED": {
+      "metadataSHA256": "6bc203ecdbed4e12bde2e25e434e0bf46d49c8f3897cbe44c14858b2f2a21507",
+      "runs": [
+        {
+          "command": [
+            "python3",
+            "/workspace/ricepia-nishio-moving-hand-current/tests/test_nishio_moving_hand.py"
+          ],
+          "NISHIO_SOURCE_ROOT": "/workspace/ricepia-current-firstminute",
+          "startedAtUTC": "2026-11-13T12:18:11.049369+00:00",
+          "testSHA256": "49b4a71340d0750c349c02500df7401c0eadf7769e4bcaf48af7d57d8bcd9bf5",
+          "actualExit": 1,
+          "completedAtUTC": "2026-11-13T12:18:12.018700+00:00",
+          "log": "/workspace/scratch/first-minute/round-89/validation/red-test_nishio_moving_hand.py.log"
+        },
+        {
+          "command": [
+            "python3",
+            "/workspace/ricepia-nishio-moving-hand-current/tests/test_nishio_hand_midpoints.py"
+          ],
+          "NISHIO_SOURCE_ROOT": "/workspace/ricepia-current-firstminute",
+          "startedAtUTC": "2026-11-13T12:18:12.018767+00:00",
+          "testSHA256": "48dd4a88683df2c5fa9656b2353577abadb04a7b4a290cbe8dfe4e3dec77ace7",
+          "actualExit": 1,
+          "completedAtUTC": "2026-11-13T12:18:12.189569+00:00",
+          "log": "/workspace/scratch/first-minute/round-89/validation/red-test_nishio_hand_midpoints.py.log"
+        }
+      ],
+      "methods": [
+        3,
+        1
+      ],
+      "failureRecords": [
+        5,
+        1
+      ],
+      "movingFailureBreakdown": {
+        "subTestFailures": 3,
+        "otherMethodFailures": 2
+      },
+      "logs": {
+        "red-test_nishio_moving_hand.py.log": "cd3495dd20eaff12be88bada17367b16a37633682de9fe0547492617279d5f38",
+        "red-test_nishio_hand_midpoints.py.log": "58bad91b159dc2733bad8aee5c02fe131225e5be7925ba08fd3277b08505a676"
+      }
+    },
+    "regressionGREEN": {
+      "metadataSHA256": "61a3c234e744d4ff2d551f5e2eda7c4f36e809f03a3cf22621ceac134320d1f5",
+      "runs": [
+        {
+          "command": [
+            "python3",
+            "/workspace/ricepia-nishio-moving-hand-current/tests/test_nishio_moving_hand.py"
+          ],
+          "NISHIO_SOURCE_ROOT": "/workspace/ricepia-nishio-moving-hand-current",
+          "startedAtUTC": "2026-11-13T12:34:02.973690+00:00",
+          "testSHA256": "49b4a71340d0750c349c02500df7401c0eadf7769e4bcaf48af7d57d8bcd9bf5",
+          "actualExit": 0,
+          "completedAtUTC": "2026-11-13T12:34:04.160748+00:00",
+          "log": "/workspace/scratch/first-minute/round-89/validation/green-test_nishio_moving_hand.py.log"
+        },
+        {
+          "command": [
+            "python3",
+            "/workspace/ricepia-nishio-moving-hand-current/tests/test_nishio_hand_midpoints.py"
+          ],
+          "NISHIO_SOURCE_ROOT": "/workspace/ricepia-nishio-moving-hand-current",
+          "startedAtUTC": "2026-11-13T12:34:04.160802+00:00",
+          "testSHA256": "48dd4a88683df2c5fa9656b2353577abadb04a7b4a290cbe8dfe4e3dec77ace7",
+          "actualExit": 0,
+          "completedAtUTC": "2026-11-13T12:34:04.612424+00:00",
+          "log": "/workspace/scratch/first-minute/round-89/validation/green-test_nishio_hand_midpoints.py.log"
+        }
+      ],
+      "methodsPassed": [
+        3,
+        1
+      ],
+      "logs": {
+        "green-test_nishio_moving_hand.py.log": "c343d987b8503a5591b91851524349fb7a50d3619b5de0fb7a6485816c8002a0",
+        "green-test_nishio_hand_midpoints.py.log": "f17a36550709167f2b82163c302def35a040d2bdef17d3099c1cf041bcfab099"
+      }
+    },
+    "pytest": {
+      "command": [
+        "pytest",
+        "tests/"
+      ],
+      "processCommand": [
+        "bash",
+        "-c",
+        "pytest tests/"
+      ],
+      "actualExit": 127,
+      "testsExecuted": false,
+      "errorText": "bash: line 1: pytest: command not found\n",
+      "executionSHA256": "b29e00ec5c37f320ca034f547129352498c409d759861122baf3451752df0c63",
+      "logSHA256": "b6fe94a4971280b69606b3ad6039ae9ed0e48557776ea68f678174b6c8da879a"
+    },
+    "fullUnittest": {
+      "status": "COMPLETED_FAILED_INDEPENDENTLY_AUDITED",
+      "command": [
+        "python3",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-v"
+      ],
+      "environment": {
+        "NODE_OPTIONS": "--require=/workspace/scratch/first-minute/offline.cjs",
+        "NODE_PATH": "/workspace/ricepia-judge/node_modules",
+        "CHROMIUM": "/usr/bin/chromium"
+      },
+      "actualExit": 1,
+      "completedAtUTC": "2026-11-13T13:07:57.915546+00:00",
+      "testsRun": 2572,
+      "seconds": 524.6,
+      "counts": {
+        "method": {
+          "ok": 2502,
+          "FAIL": 68,
+          "ERROR": 1,
+          "skipped": 1
+        },
+        "class": {},
+        "module": {}
+      },
+      "skips": [
+        {
+          "name": "test_ruler_defined_in_design (test_maze_loop4_149.TestFirstMinuteRuler.test_ruler_defined_in_design)",
+          "kind": "method",
+          "result": "skipped '設計書がこの環境に無い'"
+        }
+      ],
+      "failureHeadings": [
+        {
+          "kind": "ERROR",
+          "name": "test_sizes_are_near_the_files (test_boot_screen.TestTractorProgress.test_sizes_are_near_the_files)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_bar_moves_without_total (test_boot_screen.TestTractorProgress.test_bar_moves_without_total)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_diff_scope_and_forbidden_words (test_maze_loop3_34.StationLink.test_diff_scope_and_forbidden_words)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_only_pixel_js_changed_and_no_banned_words (test_maze_loop3_36.WallTheme.test_only_pixel_js_changed_and_no_banned_words)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_changed_files (test_maze_loop3_38.IdleReturnNoCard.test_changed_files)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_only_pixel_changed (test_maze_loop3_39.Diff.test_only_pixel_changed)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_files_and_words (test_maze_loop3_40.Scope.test_files_and_words)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_changed_files_and_words (test_maze_loop3_41.Footprints.test_changed_files_and_words)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_files_and_words (test_maze_loop3_42.Scope.test_files_and_words)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_changed_files (test_maze_loop3_44.Diff.test_changed_files)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_changed_files (test_maze_loop3_45.Diff.test_changed_files)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_changed_files (test_maze_loop3_46.Diff.test_changed_files)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_changed_files (test_maze_loop3_47.Diff.test_changed_files)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_changed_files (test_maze_loop3_48.Diff.test_changed_files)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_changed_files (test_maze_loop3_49.Diff.test_changed_files)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_changed_files (test_maze_loop3_50.Diff.test_changed_files)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_changed_files (test_maze_loop3_51.Diff.test_changed_files)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_changed_files (test_maze_loop3_52.Diff.test_changed_files)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_files_allowed (test_maze_loop3_53.Unchanged.test_files_allowed)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_changed_files (test_maze_loop3_54.Diff.test_changed_files)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_changed_files (test_maze_loop3_55.Diff.test_changed_files)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_files_allowed (test_maze_loop3_56.Safety.test_files_allowed)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_files_allowed (test_maze_loop3_57.Safety.test_files_allowed)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_files_allowed (test_maze_loop3_58.Safety.test_files_allowed)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_files_allowed (test_maze_loop3_59.Safety.test_files_allowed)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_files_allowed (test_maze_loop3_60.Safety.test_files_allowed)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_files_allowed (test_maze_loop3_61.Safety.test_files_allowed)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_scope_and_words (test_maze_loop3_62.Maze.test_scope_and_words)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_files_allowed (test_maze_loop3_63.Scope.test_files_allowed)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_files_allowed (test_maze_loop3_64.Scope.test_files_allowed)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_files_allowed (test_maze_loop3_65.Scope.test_files_allowed)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_files_allowed (test_maze_loop3_66.Scope.test_files_allowed)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_files_allowed (test_maze_loop3_67.Scope.test_files_allowed)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_files_allowed (test_maze_loop3_68.Scope.test_files_allowed)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_exposed (test_maze_loop4_100.Glance100.test_exposed)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_scope (test_maze_loop4_100.Glance100.test_scope)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_scope (test_maze_loop4_101.TestFirstMinuteAmbient.test_scope)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_scope (test_maze_loop4_102.TestFirstMinuteMeetings.test_scope)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_scope (test_maze_loop4_103.TestFirstMinuteGochiso.test_scope)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_scope (test_maze_loop4_104.TestFirstMinuteOtedama.test_scope)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_scope (test_maze_loop4_105.TestHappyFace.test_scope)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_scope (test_maze_loop4_106.TestMichikusaFirstRoll.test_scope)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_files (test_maze_loop4_167.TestScope.test_files)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_files (test_maze_loop4_168.TestScope.test_files)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_files (test_maze_loop4_169.TestScope.test_files)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_scope_and_words (test_maze_loop4_170.Cycle170.test_scope_and_words)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_scope_and_words (test_maze_loop4_171.Cycle171.test_scope_and_words)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_scope_and_words (test_maze_loop4_172.Cycle172.test_scope_and_words)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_scope_and_words (test_maze_loop4_173.Cycle173.test_scope_and_words)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_scope_and_words (test_maze_loop4_174.Cycle174.test_scope_and_words)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_scope_and_words (test_maze_loop4_175.Cycle175.test_scope_and_words)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_scope_and_words (test_maze_loop4_176.Cycle176.test_scope_and_words)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_scope_and_words (test_maze_loop4_177.Cycle177.test_scope_and_words)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_scope_and_words (test_maze_loop4_178.Cycle178.test_scope_and_words)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_scope_and_words (test_maze_loop4_179.Cycle179.test_scope_and_words)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_scope_and_words (test_maze_loop4_180.Cycle180.test_scope_and_words)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_scope_and_words (test_maze_loop4_181.Cycle181.test_scope_and_words)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_scope_and_words (test_maze_loop4_182.Cycle182.test_scope_and_words)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_changed_files_limited (test_maze_loop4_183.Lazy183.test_changed_files_limited)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_scope (test_maze_loop4_205.GuideDispName205.test_scope)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_files_allowed (test_maze_loop4_64.Safety.test_files_allowed)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_changed_files (test_maze_loop4_65.Safety.test_changed_files)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_scope (test_maze_loop4_86.HeroRevert.test_scope)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_diff_words_and_files (test_maze_loop4_9.Scope.test_diff_words_and_files)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_scope (test_maze_loop4_95.DrawNight95.test_scope)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_scope (test_maze_loop4_97.NoNumbers97.test_scope)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_scope (test_maze_loop4_98.UnreadFog98.test_scope)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_eye_saved_and_public (test_maze_loop4_99.Blink99.test_eye_saved_and_public)"
+        },
+        {
+          "kind": "FAIL",
+          "name": "test_scope (test_maze_loop4_99.Blink99.test_scope)"
+        }
+      ],
+      "sourceUnchanged": true,
+      "cloneUnchanged": true,
+      "executionSHA256": "ef07ad37984de9f58f0984ce1f4f89936f7ebf0ce53473d22b8e34f6c5513bf7",
+      "parsedSHA256": "30fb75cf03775cf69d0d9f221127f69b0ecda90bf4d1554185e753e5d43937b4",
+      "logSHA256": "73030d8e1c79659056384c4eba2b318198e5d3409855de6a7a9b2ebbb1e7255d",
+      "baselineComparisonStatus": "Completed descriptive comparison; matching failure signatures do not prove identical causes or merge readiness.",
+      "independentReview": {
+        "summaryLocalPath": "/workspace/scratch/first-minute/round-89/independent-unit-review/summary.json",
+        "summarySHA256": "e39d5c67ab480b351d71f1cb2f0f0804448f0cc97bf8eca4cee34a7ca7b8f3fa",
+        "failureDetailsSHA256": "87d10ad37108c2aff2a3892bb34cdf9405128195a8a1cb905c3bfea37c73320f",
+        "failureNamesKindsExceptionTypesOrderMatchRound69": true,
+        "addedFailureHeadings": [],
+        "removedFailureHeadings": [],
+        "differentExceptionMessages": 31,
+        "classifications": {
+          "tractor progress regex match is None before group access": 1,
+          "literal tractor progress string assertion": 1,
+          "changed-file allowlist assertion": 65,
+          "literal pixel export string assertion": 2
+        },
+        "regression4AllExplicitOK": true,
+        "main210All11ExplicitOK": true,
+        "limits": [
+          "Full-suite exit1 remains failure. Matching names and exception types do not prove identical causes or imply merge readiness.",
+          "Changed-file allowlists can compare origin/main or HEAD~1; the candidate history and actual compared paths differ from earlier rounds.",
+          "Ran counts methods; distinct classes/modules and internal assertion cases are not added to that denominator. Failure headings and skip events were also checked against the footer.",
+          "The main210 and candidate regression methods are code/fixture checks, not additional natural first-minute browser sessions.",
+          "All306 tracked test paths and selected8 source hashes were rechecked directly; whole tracked tree consistency is additionally checked by HEAD/tree/clean status.",
+          "pytest127 is a separate unavailable-command result and is not replaced by the unittest run.",
+          "No full-node result is claimed here; root owns that separate mandatory run."
+        ]
+      }
+    },
+    "fullNode": {
+      "status": "COMPLETED_FAILED_INDEPENDENTLY_AUDITED",
+      "command": [
+        "node",
+        "tools/playtest.js",
+        "/workspace/scratch/first-minute/round-89/validation/node-playtest"
+      ],
+      "environment": {
+        "NODE_OPTIONS": "--require=/workspace/scratch/first-minute/offline.cjs",
+        "NODE_PATH": "/workspace/ricepia-judge/node_modules",
+        "CHROMIUM": "/usr/bin/chromium",
+        "LEAFLET_DIR": "/workspace/ricepia-judge/node_modules/leaflet/dist",
+        "PLAYTEST_PORT": "8899"
+      },
+      "actualExit": 1,
+      "startedAtUTC": "2026-11-13T13:09:32.561977+00:00",
+      "completedAtUTC": "2026-11-13T13:41:54.743758+00:00",
+      "wallSeconds": 1942.181781,
+      "sourceHead": "1fb111a648b2d9aa20fcd4209dd76e3308263c5a",
+      "privateBaseline": "ab12150f581df7908dc1df2c51f4a035ecd88bbb",
+      "sourceUnchanged": true,
+      "cloneUnchanged": true,
+      "nativeOK": false,
+      "groups": 250,
+      "explicitPass": 217,
+      "explicitFail": 13,
+      "noExplicitVerdict": 20,
+      "categoryCounts": {
+        "booleanTrue": 43,
+        "objectOkTrue": 174,
+        "booleanFalse": 0,
+        "objectOkFalse": 13,
+        "noExplicitVerdict": 20
+      },
+      "failedNames": [
+        "roll",
+        "swipeHold",
+        "a2hsAutoHide",
+        "tapDemoQuick",
+        "rollNoDemo",
+        "lowGoalDemo",
+        "bootSlow",
+        "infoRotate",
+        "lowDemoKept",
+        "restFinger",
+        "tiltDemoShown",
+        "godotRec",
+        "speedLines"
+      ],
+      "failedCheckValues": {
+        "roll": {
+          "ready": true,
+          "moved": 0.36,
+          "rolled": 0.36,
+          "tilt": -4.16,
+          "tries": 0,
+          "env": {
+            "at": [
+              1692.5,
+              1861.5
+            ],
+            "cell": [
+              564,
+              620
+            ],
+            "style": "ロケット・ハート",
+            "accel": 1.25,
+            "slope": {
+              "x": 0,
+              "y": 0,
+              "g": 0,
+              "known": false
+            },
+            "ground": "road",
+            "wx": "",
+            "maze": true
+          },
+          "tr": {
+            "n": 25,
+            "ms": 384,
+            "gap": 16,
+            "busy": {},
+            "rewards": [],
+            "path": [
+              [
+                1692.5,
+                1861.5
+              ],
+              [
+                1692.52,
+                1861.5
+              ],
+              [
+                1692.61,
+                1861.5
+              ],
+              [
+                1692.75,
+                1861.5
+              ],
+              [
+                1692.9,
+                1861.5
+              ]
+            ]
+          },
+          "ok": false
+        },
+        "swipeHold": {
+          "held": true,
+          "ms": 553,
+          "still": "null",
+          "g1": "[1807,1900]",
+          "g2": "[1807,1900]",
+          "g4": "[1807,1900]",
+          "g3": "[1804,1897]",
+          "want": "[1804,1897]",
+          "far": true,
+          "info": false,
+          "cfg": {
+            "ms": 300,
+            "px": 5,
+            "min": 12
+          },
+          "ok": false
+        },
+        "a2hsAutoHide": {
+          "off": false,
+          "x": null,
+          "elig": false,
+          "again": false,
+          "ok": false
+        },
+        "tapDemoQuick": {
+          "n": 7,
+          "med": 3448,
+          "min": 2617,
+          "ok": false
+        },
+        "rollNoDemo": {
+          "rice": 281,
+          "route": 521,
+          "demo": 521,
+          "first": false,
+          "fresh": true,
+          "bad": 0,
+          "vmax": 0,
+          "ok": false
+        },
+        "lowGoalDemo": {
+          "rows": [
+            {
+              "vp": "568x320",
+              "k": 1,
+              "left": 1,
+              "shown": false,
+              "at": null,
+              "inMap": null,
+              "onRice": null
+            },
+            {
+              "vp": "568x320",
+              "k": 2,
+              "left": 2,
+              "shown": true,
+              "at": 4.17,
+              "inMap": true,
+              "onRice": false
+            },
+            {
+              "vp": "844x390",
+              "k": 1,
+              "left": 1,
+              "shown": true,
+              "at": 4.7,
+              "inMap": true,
+              "onRice": false
+            },
+            {
+              "vp": "844x390",
+              "k": 2,
+              "left": 2,
+              "shown": true,
+              "at": 2.95,
+              "inMap": true,
+              "onRice": false
+            }
+          ],
+          "ok": false
+        },
+        "bootSlow": {
+          "slow8": {
+            "slowAt": null,
+            "slowText": "",
+            "retryAt": null,
+            "startAt": null,
+            "slowAfterStart": false,
+            "reload": null
+          },
+          "slow20": {
+            "slowAt": 13.1,
+            "slowText": "読みこみに 時間が かかっていますこのまま 待つか、タップで やりなおし",
+            "retryAt": null,
+            "startAt": 23.2,
+            "slowAfterStart": false,
+            "reload": null
+          },
+          "ok": false
+        },
+        "infoRotate": {
+          "runs": [
+            {
+              "from": "390x844",
+              "steps": [
+                {
+                  "to": "390x560",
+                  "open": false,
+                  "mt": "",
+                  "close": [
+                    0,
+                    0
+                  ],
+                  "pt": [
+                    0,
+                    0
+                  ],
+                  "closeOk": false,
+                  "allIn": true
+                },
+                {
+                  "to": "844x390",
+                  "open": false,
+                  "mt": "",
+                  "close": [
+                    0,
+                    0
+                  ],
+                  "pt": [
+                    0,
+                    0
+                  ],
+                  "closeOk": false,
+                  "allIn": true
+                }
+              ],
+              "opened": {
+                "open": false,
+                "mt": "",
+                "close": [
+                  0,
+                  0
+                ],
+                "pt": [
+                  0,
+                  0
+                ],
+                "closeOk": false,
+                "allIn": true
+              }
+            },
+            {
+              "from": "820x1180",
+              "steps": [
+                {
+                  "to": "1180x820",
+                  "open": true,
+                  "mt": "",
+                  "close": [
+                    323,
+                    355
+                  ],
+                  "pt": [
+                    590,
+                    339
+                  ],
+                  "closeOk": true,
+                  "allIn": true
+                }
+              ],
+              "opened": {
+                "open": true,
+                "mt": "266px",
+                "close": [
+                  589,
+                  621
+                ],
+                "pt": [
+                  410,
+                  605
+                ],
+                "closeOk": true,
+                "allIn": true
+              },
+              "closed": true
+            }
+          ],
+          "ok": false
+        },
+        "lowDemoKept": {
+          "ready": true,
+          "walked": true,
+          "a": {
+            "on": false,
+            "x": null,
+            "y": null,
+            "inMap": false,
+            "free": 135,
+            "status": false,
+            "guide": "ibun-parish"
+          },
+          "b": {
+            "on": true,
+            "x": 269,
+            "y": 128,
+            "inMap": true,
+            "free": 135,
+            "status": false,
+            "guide": "ibun-parish"
+          },
+          "ok": false
+        },
+        "restFinger": {
+          "tap": false,
+          "swipe": false,
+          "pinch": false,
+          "touchAction": "pinch-zoom",
+          "info": false,
+          "ok": false
+        },
+        "tiltDemoShown": {
+          "on": false,
+          "phone": false,
+          "force": 0.28,
+          "at": [
+            1802.232003016373,
+            1895.5000000000177
+          ],
+          "moved": 2.732,
+          "ok": false
+        },
+        "godotRec": {
+          "errs": [],
+          "len": 5919,
+          "shade": 0,
+          "ok": false
+        },
+        "speedLines": {
+          "ok": false,
+          "room": 7,
+          "fast": 0,
+          "vmax": 4.16,
+          "far": 1.05
+        }
+      },
+      "noExplicitVerdictNames": [
+        "welcomeChestM",
+        "tapWalkInfo",
+        "tapWalkOnPill",
+        "chestsNearby",
+        "firstPickN",
+        "firstPickId",
+        "welcomeBag",
+        "trail",
+        "weekTheme",
+        "worldLabels",
+        "quests",
+        "facts",
+        "todayWalk",
+        "dotHints",
+        "eyeTalkWin",
+        "heardHintDbg",
+        "operateFinal",
+        "walkModePoints",
+        "walkChests",
+        "operatePointsKept"
+      ],
+      "countingRule": "One checks property is one group. Only its own boolean value or own boolean ok is explicit. Nested flags/cases are not added; no-verdict groups are not assumed passed, failed or unexecuted.",
+      "errors": [],
+      "errorCollectionLimit": "errors[] is the suite collection scope, mainly pageerror with expected filtering. It is not a complete console/network log. No scriptStopped/crash_* or nonempty nested crashed values were found.",
+      "scriptStoppedPresent": false,
+      "crashCheckNames": [],
+      "nestedNonemptyCrashedFields": [],
+      "requiredMain210Checks": {
+        "firstDemoFast": {
+          "category": "objectOkTrue",
+          "value": {
+            "rice": 326,
+            "route": 516,
+            "demo": 516,
+            "first": false,
+            "fresh": true,
+            "bad": 0,
+            "vmax": 0,
+            "ok": true
+          },
+          "derivedMs": {
+            "demoMinusRice": 190,
+            "demoMinusRoute": 0
+          }
+        },
+        "demoTouchWait": {
+          "category": "objectOkTrue",
+          "value": {
+            "shown": true,
+            "hidden": true,
+            "back": 2200,
+            "fresh": false,
+            "ok": true
+          }
+        },
+        "rollNoDemo": {
+          "category": "objectOkFalse",
+          "value": {
+            "rice": 281,
+            "route": 521,
+            "demo": 521,
+            "first": false,
+            "fresh": true,
+            "bad": 0,
+            "vmax": 0,
+            "ok": false
+          }
+        }
+      },
+      "comparisonWithRound69": {
+        "previousPath": "/workspace/scratch/first-minute/round-69/validation/node-playtest/playtest.json",
+        "previousSHA256": "18a17961f036263cdbd0d1fc0d317b5773360ee42a15d37e4013fdba991b1e69",
+        "previousCounts": {
+          "groups": 247,
+          "explicitPass": 215,
+          "explicitFail": 12,
+          "noExplicitVerdict": 20
+        },
+        "addedGroups": [
+          {
+            "name": "demoTouchWait",
+            "category": "objectOkTrue",
+            "value": {
+              "shown": true,
+              "hidden": true,
+              "back": 2200,
+              "fresh": false,
+              "ok": true
+            }
+          },
+          {
+            "name": "firstDemoFast",
+            "category": "objectOkTrue",
+            "value": {
+              "rice": 326,
+              "route": 516,
+              "demo": 516,
+              "first": false,
+              "fresh": true,
+              "bad": 0,
+              "vmax": 0,
+              "ok": true
+            }
+          },
+          {
+            "name": "rollNoDemo",
+            "category": "objectOkFalse",
+            "value": {
+              "rice": 281,
+              "route": 521,
+              "demo": 521,
+              "first": false,
+              "fresh": true,
+              "bad": 0,
+              "vmax": 0,
+              "ok": false
+            }
+          }
+        ],
+        "removedNames": [],
+        "commonExplicitFailureNames": [
+          "godotRec",
+          "infoRotate",
+          "lowDemoKept",
+          "lowGoalDemo",
+          "restFinger",
+          "roll",
+          "speedLines",
+          "swipeHold",
+          "tapDemoQuick",
+          "tiltDemoShown"
+        ],
+        "newExplicitFailureNames": [
+          "a2hsAutoHide",
+          "bootSlow",
+          "rollNoDemo"
+        ],
+        "noLongerExplicitFailureNames": [
+          "infoSecondTap",
+          "tapWalkTilt"
+        ],
+        "noVerdictNameOrderIdentical": true,
+        "toolsSHAIdentical": false,
+        "pixelSHAIdentical": false,
+        "limit": "Independent historical runs with different source/test versions. Changed verdicts or matching failure names do not establish cause, equivalent environments, or a successful suite."
+      },
+      "normalCloseEvidence": {
+        "browserCloseLine": 4590,
+        "browserCloseAwaitedBeforeFinalReport": true,
+        "serverCloseCalledSameLine": true,
+        "serverCloseAwaited": false,
+        "finalWriteLine": 4881,
+        "finalStdoutLine": 4882,
+        "nativeExitLine": 4883,
+        "limit": "Normal source ordering and final artifacts; no additional process/socket probe."
+      },
+      "scope": {
+        "suiteScope": "Existing full suite with fixed fixtures, separate from natural first-minute play; PLAYTEST_ONLY unset.",
+        "candidateHead": "1fb111a648b2d9aa20fcd4209dd76e3308263c5a",
+        "candidateTree": "b50818570f17ae91f43fa42f57342abeca0ba88f",
+        "baselineHead": "ab12150f581df7908dc1df2c51f4a035ecd88bbb",
+        "notLatestMain": "Main advanced separately to85400c84dd68268120aa4aa27eb96c33758f9011 during execution; this result certifies only recorded candidate1fb/baselineab121 endpoints. It does not claim a run on latest main.",
+        "naturalPlaySeparation": "Fixed fixture suite; synthetic and browser inputs are not natural first-minute retention or real-device input evidence."
+      },
+      "limits": [
+        "A group is one top-level checks property. Nested booleans/cases are not additional groups.",
+        "No-explicit-verdict values contain metrics consumed by native assertions; they are not classified as unexecuted.",
+        "This audit performs no rerun and does not infer a root cause for old/new failures.",
+        "Mandatory pytest separately failed to launch with actual127; the Node and unittest results do not replace it.",
+        "Real tilt sensors, physical touch, real connection speeds and actual player dropout rate remain unverified."
+      ],
+      "independentReview": {
+        "summaryLocalPath": "/workspace/scratch/first-minute/round-89/independent-node-review/summary.json",
+        "summarySHA256": "e72f11814e49e0979f7facbf47ed4abc262c6fb57c3c1e50a13aae138bd26daf",
+        "readmeSHA256": "4f79ef7e3cf86155d118dad525bd388de6a84d90c391e4edad6ae103c6a49532",
+        "failureDetailsSHA256": "efb342fbb243c8b52b709bfbf35baadb0eab3bf1332947e3858c0ed0c04f3c8c"
+      },
+      "executionSHA256": "da08eca7fa2dbc88c7f0bb2435aa0a1093187866a6a0eb0f8abdd1eae586c107",
+      "resultSHA256": "e3914f9e4027da5d20d45e9e2bc39a707ba7856accf3499a12dccf2003a87f32",
+      "logSHA256": "7672d8b1dc77b0ca3a79f08134be0b16f8ee2a024a75e469ce3c1332e78493f7"
+    }
+  },
+  "evidence": {
+    "beforePrimary": {
+      "localEvidencePath": "/workspace/scratch/first-minute/round-89/review/frozen.json",
+      "sha256": "1b600e3ec19ae7c3c457af240efe8124d08b85494e71b64f62a5740eee82d608"
+    },
+    "afterPrimary": {
+      "localEvidencePath": "/workspace/scratch/first-minute/round-89/after-primary-review/frozen.json",
+      "sha256": "05453c493570f0b78cdb238c27183b05f2672d50a7da5ba47f04e08e3b7f5105"
+    },
+    "before10": {
+      "localEvidencePath": "/workspace/scratch/first-minute/round-89/first60-before-audit/frozen.json",
+      "sha256": "c5f53fd61806e15d1b29f9f0e1ac7f17628c63187410eb21e9bf6510bb741f5f"
+    },
+    "after10": {
+      "localEvidencePath": "/workspace/scratch/first-minute/round-89/first60-after-audit/frozen.json",
+      "sha256": "3eb4847c39236cccc508b67de93babf622fe2f9f0903c3b40cc3534559378af8"
+    },
+    "postHoc": {
+      "localEvidencePath": "/workspace/scratch/first-minute/round-89/fixed10-interpretation/frozen.json",
+      "sha256": "4e6fb95aaced2cbdc7241bef979a1eb56392c6f219bf7f4f8395fb1798b3dc69"
+    },
+    "layout": {
+      "localEvidencePath": "/workspace/scratch/first-minute/round-89/layout/review/after-frozen.json",
+      "sha256": "cd924f2dd869eb93b4ba3d0c48e8bb23cf03062ccf38acafbdf463e243e78a59"
+    },
+    "fullNodeIndependent": {
+      "localEvidencePath": "/workspace/scratch/first-minute/round-89/independent-node-review/summary.json",
+      "sha256": "e72f11814e49e0979f7facbf47ed4abc262c6fb57c3c1e50a13aae138bd26daf"
+    }
+  },
+  "limits": [
+    "最初の1分の離脱率は測定していない。実プレーヤーの離脱率について結論を出さない。",
+    "CPU4は校正されていないブラウザー設定で、実機速度を表さない。本物の指・傾きセンサー・回線は未確認。",
+    "新しいブラウザーの試行で自然に進め、状態や乱数seedは置き換えていない。経路・乱数・入力回数は前後で異なる。",
+    "主観察1回ずつ、固定10回比較、後付けの世界地図または施設情報への移動・到達数集計は別の観測。",
+    "観測時間が足りない入力は未完のまま保持。次入力または60秒までの既存の期間だけを反応として数える。",
+    "施設情報は32回開き、候補の全10試行に残る。世界地図への移動が減ったことを最初の1分全体の成功とはしない。",
+    "到達数を観測した試行4/10→10/10は、60秒内の保存値についての後付け集計。変更前の未観測を0秒にしない。",
+    "全体テスト成功ではない。pytestは利用できず、全unittestは実終了1で68失敗・1エラー。第69周と失敗署名は一致するが31件の例外メッセージは異なり、原因同一とはしない。必須ブラウザー全体テストも実終了1（250群中、明示成功217・明示失敗13・明示判定なし20）。20群を成功・未実行とは扱わない。"
+  ],
+  "operatorDecisions": [
+    "最初の本当のタップでclickから傾き許可を1回聞く。既に断った人への扱いと重複要求の防止は既存の方針を維持。",
+    "許可前のタップ手本、停止中の手本、開始画面なし・到着カードなしを維持。"
+  ],
+  "history": [
+    "round69-README.md",
+    "round65-README.md"
+  ],
+  "unresolvedCandidates": [
+    "施設情報が開く挙動は候補版でも32回・全10試行に残る。未解決の候補として記録し、この案では変更していない。"
+  ],
+  "measurementNotes": [
+    "主観察の470.9→430msはCDP送信から座標変化を観測した上限。実際の指の接触時刻や描画時刻ではない。",
+    "30点の観測も既存の表示観測器による上限で、実際の描画開始時刻や報酬付与時刻とは区別する。"
+  ],
+  "documentUpdatedAtUTC": "2026-11-13T13:52:29.389067+00:00",
+  "publicationCodeIdentity": {
+    "testedLocalCodeCommit": "1fb111a648b2d9aa20fcd4209dd76e3308263c5a",
+    "publicationCodeCommit": "c5c6cebc1e84f5fef8ee076e1e8020929494d0c2",
+    "identicalCodeTree": "b50818570f17ae91f43fa42f57342abeca0ba88f",
+    "identicalParents": [
+      "9fa4e2b7d15ae1e1d88e8506bcc3532ff3509ed9",
+      "ab12150f581df7908dc1df2c51f4a035ecd88bbb"
+    ],
+    "onlyChangedCommitMetadata": "author and committer email replaced with generic GitHub noreply format; names, dates and message retained",
+    "reason": "actual push exit1 GH007 email privacy restriction; no external account setting or credential changed"
+  }
+}

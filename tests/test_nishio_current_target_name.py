@@ -15,7 +15,8 @@ PLACE = "西尾市歴史公園（西尾城跡）"
 NAME = f"{PERSON}（{PLACE}）"
 DISPLAY = f"{PLACE}（{PERSON}）"
 NPC = {"id": "castle-guide", "name": PERSON, "spotName": PLACE,
-       "lat": 34.8662, "lng": 137.0478}
+       "lat": 34.8662, "lng": 137.0478, "spot": "nishio-castle",
+       "off": [30, -20], "look": "guide"}
 PROJECTED = {"lat": 34.8663, "lng": 137.0477}
 GUIDE = {"kind": "npc", "id": NPC["id"], "name": NAME,
          "lat": 34.8661, "lng": 137.0479, "why": "既存の案内", "by": "人の話",
@@ -104,7 +105,11 @@ function run(spec) {
     const projected = target && Object.fromEntries(
       ['kind','id','name','lat','lng','why','by','refer','mine','byId','t','alts']
         .filter(k => Object.hasOwn(target,k)).map(k => [k,target[k]]));
-    rows.push({label, projected, formatterDidNotMutate:beforeFormatting===JSON.stringify(target)});
+    const spread = target === null ? null : {...target};
+    rows.push({label, projected, formatterDidNotMutate:beforeFormatting===JSON.stringify(target),
+      targetJSON:JSON.stringify(target), spreadJSON:JSON.stringify(spread),
+      targetKeys:target === null ? null : Object.keys(target),
+      spreadKeys:spread === null ? null : Object.keys(spread)});
   }
   return {rows, calls, unchanged:original===JSON.stringify({S, ns, spots})};
 }
@@ -138,17 +143,26 @@ class CurrentTargetName(unittest.TestCase):
                 self.assertEqual(result["calls"], {"placeNpcs": reads if is_npc else 0,
                     "npcSpot": reads if found else 0, "save": 0, "wrongNpcArgument": 0})
                 expected_target = None if guide is None else dict(guide)
+                expected_full = None if guide is None else dict(guide)
                 if is_npc and not found:
                     expected_target = None
+                    expected_full = None
                 elif found:
                     patch = spec["npcs"][0] if spec["mode"] == "npc" else PROJECTED
                     expected_target.update({k: v for k, v in patch.items() if k in expected_target})
+                    expected_full.update(patch)
                 elif not spec["direct"] and guide is not None and guide["kind"] == "spot":
                     expected_target.update(PROJECTED)
+                    expected_full.update(PROJECTED)
                 self.assertEqual(len(result["rows"]), reads)
                 for row in result["rows"]:
                     self.assertTrue(row["formatterDidNotMutate"])
                     self.assertEqual(row["projected"], expected_target)
+                    self.assertEqual(json.loads(row["targetJSON"]), expected_full)
+                    self.assertEqual(json.loads(row["spreadJSON"]), expected_full)
+                    expected_keys = None if expected_full is None else list(expected_full)
+                    self.assertEqual(row["targetKeys"], expected_keys)
+                    self.assertEqual(row["spreadKeys"], expected_keys)
                     self.assertEqual(row["label"], spec["expected"])
                     if expected_target and isinstance(expected_target.get("name"), str):
                         self.assertEqual(len(row["label"]), len(expected_target["name"]))

@@ -2365,7 +2365,11 @@ const guideTarget = () => {
   if (!g) return null;
   if (g.kind === 'npc') {
     const n = placeNpcs().find(x => x.id === g.id);
-    return n ? { ...g, ...npcSpot(n), guidePersonName: n.name, guidePlaceName: n.spotName } : null;
+    // 表示用の名前は、案内をコピーして保存する時には含めない。
+    return n ? Object.defineProperties({ ...g, ...npcSpot(n) }, {
+      guidePersonName: { value: n.name, enumerable: false },
+      guidePlaceName: { value: n.spotName, enumerable: false }
+    }) : null;
   }
   // 名所は、いま読み込んでいるスポットの位置で（スポットを読み直すと、OpenStreetMap で位置が補正されることがある）
   const s = spots.find(x => x.id === g.id);

@@ -1607,7 +1607,7 @@ class TestKome365PaddyReview(unittest.TestCase):
 
 
 # サイクル175: canvas#field(3D・2D の 絵)と その 親 ぜんぶの 計算された filter・アニメ・transition と、上の うすい 色の 板(#fieldTone)
-CANVAS_JS = "(() => { const c = document.getElementById('field'), out = { chain: [], tone: null }; for (let n = c; n && n.nodeType === 1; n = n.parentElement) { const cs = getComputedStyle(n); out.chain.push({ tag: n.tagName + '#' + (n.id || ''), filter: cs.filter, anim: cs.animationName, trans: cs.transitionProperty, backdrop: cs.backdropFilter || cs.webkitBackdropFilter || 'none', blend: cs.mixBlendMode }); } const t = document.getElementById('fieldTone'); if (t) { const cs = getComputedStyle(t), ca = getComputedStyle(t, '::after'), b = t.getBoundingClientRect(), cb = c.getBoundingClientRect(); out.tone = { bg: cs.backgroundColor, pe: cs.pointerEvents, z: cs.zIndex, box: [b.left, b.top, b.right, b.bottom], cbox: [cb.left, cb.top, cb.right, cb.bottom], afterAnim: ca.animationName, afterOp: ca.opacity, next: t.previousElementSibling && t.previousElementSibling.id }; } const hit = document.elementFromPoint(6, 6); out.hit = hit ? hit.id || hit.tagName : ''; out.season = ['sp', 'su', 'au', 'wi'].find(k => document.getElementById('sGame').classList.contains('season-' + k)) || ''; out.tick = document.getElementById('sGame').classList.contains('fieldTick'); out.fx = ['fxGood', 'fxBad'].filter(k => document.getElementById('sGame').classList.contains(k)); return out; })()"
+CANVAS_JS = "(() => { const c = document.getElementById('field'), out = { chain: [], tone: null }; for (let n = c; n && n.nodeType === 1; n = n.parentElement) { const cs = getComputedStyle(n); out.chain.push({ tag: n.tagName + '#' + (n.id || ''), filter: cs.filter, anim: cs.animationName, trans: cs.transitionProperty, backdrop: cs.backdropFilter || cs.webkitBackdropFilter || 'none', blend: cs.mixBlendMode }); } const t = document.getElementById('fieldTone'); if (t) { const cs = getComputedStyle(t), ca = getComputedStyle(t, '::after'), b = t.getBoundingClientRect(), cb = c.getBoundingClientRect(); out.tone = { bg: cs.backgroundColor, pe: cs.pointerEvents, z: cs.zIndex, box: [b.left, b.top, b.right, b.bottom], cbox: [cb.left, cb.top, cb.right, cb.bottom], afterAnim: ca.animationName, afterOp: ca.opacity, trans: cs.transitionDuration, next: t.previousElementSibling && t.previousElementSibling.id }; } const hit = document.elementFromPoint(6, 6); out.hit = hit ? hit.id || hit.tagName : ''; out.season = ['sp', 'su', 'au', 'wi'].find(k => document.getElementById('sGame').classList.contains('season-' + k)) || ''; out.tick = document.getElementById('sGame').classList.contains('fieldTick'); out.fx = ['fxGood', 'fxBad'].filter(k => document.getElementById('sGame').classList.contains(k)); return out; })()"
 SEASON_SAVES = {
     "wi": '{"v":"kokoro","y":"recent","so":"high","m":"transplant","c":0,"s":1543068361,"fm":"oneshot","yh":0,"ch":"LL"}',
     "sp": '{"v":"kokoro","y":"recent","so":"high","m":"transplant","c":0,"s":1543068361,"fm":"oneshot","yh":0,"ch":"' + "L" * 95 + '"}',
@@ -1656,10 +1656,22 @@ class TestKome365CanvasNoFilter(unittest.TestCase):
                 self.assertEqual(t["box"], t["cbox"], name)        # canvas と 同じ 広さ
                 self.assertNotEqual(t["bg"], "rgba(0, 0, 0, 0)", name)
                 self.assertEqual(j["hit"], "field", name)          # 板の 上を 押しても canvas に とどく
-        ticks = [j for x in self.r.values() for j in x["js"] if j["tick"]]
+        ticks = [j for n, x in self.r.items() if not n.endswith("R") for j in x["js"] if j["tick"]]   # ふつうの 設定（動きを へらす は 下の テスト）
         self.assertTrue(ticks, "決めた 直後の ひと呼吸(fieldTick)が とれて いない")
         for j in ticks:
             self.assertEqual(j["tone"]["afterAnim"], "swToneTick")
+
+    def test_reduced_motion_keeps_tone_panel_still(self):
+        """Codex 指摘: 「動きを へらす」では、板の 色の うつりかわり も 決めた 直後の 明るさ も 動かさない(前は canvas の アニメを 止めて いた)"""
+        seen = 0
+        for k in SEASON_SAVES:
+            for j in self.r[k + "R"]["js"]:
+                self.assertEqual(j["tone"]["afterAnim"], "none", k + "R: 動きを へらす で 明るさの アニメが 走る")
+                self.assertIn(j["tone"]["trans"], ("0s", ""), k + "R: 動きを へらす で 色の うつりかわり が のこる")
+                seen += j["tick"]
+            for j in self.r[k]["js"]:
+                self.assertEqual(j["tone"]["trans"], "1.4s", k)   # ふつうの 設定では 1.4秒の うつりかわり
+        self.assertGreater(seen, 0, "動きを へらす で 決めた 直後の 場面を とれて いない")
 
 
 class TestKome365PaddyReadable(unittest.TestCase):

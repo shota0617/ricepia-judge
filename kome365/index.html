@@ -378,7 +378,7 @@ a{color:var(--acc)}
 #swLiveFx[data-breath="bad"]::before{animation-duration:18s}#swLiveFx[data-breath="bad"]::after{animation-duration:23s}
 #sGame.fxGood #swLiveFx{background:radial-gradient(circle at 50% 55%,rgba(255,236,150,.28),rgba(255,236,150,0) 60%) center/180% 180% no-repeat,linear-gradient(to top,rgba(226,172,52,calc(var(--liveRipe)*.22)),rgba(226,172,52,0) 70%);animation:swLiveSpread 1.4s ease-out}
 #sGame.fxBad #swLiveFx{background:radial-gradient(circle at 50% 55%,rgba(70,80,96,.2),rgba(70,80,96,0) 60%) center/180% 180% no-repeat,linear-gradient(to top,rgba(226,172,52,calc(var(--liveRipe)*.22)),rgba(226,172,52,0) 70%);animation:swLiveSpread 1.4s ease-out}
-@media (prefers-reduced-motion: reduce){#swLiveFx::before,#swLiveFx::after{animation:none}#swLiveFx::before,#swLiveFx::after{transition:none}#swLiveFx{transition:none}#sGame{transition:none}#sGame.fxGood #swLiveFx,#sGame.fxBad #swLiveFx{animation:none}#fieldTone{transition:none}}
+@media (prefers-reduced-motion: reduce){#swLiveFx::before,#swLiveFx::after{animation:none}#swLiveFx::before,#swLiveFx::after{transition:none}#swLiveFx{transition:none}#sGame{transition:none}#sGame.fxGood #swLiveFx,#sGame.fxBad #swLiveFx{animation:none}#sGame.swipeMode #fieldTone{transition:none}#sGame.swipeMode.fieldTick #fieldTone::after{animation:none}}   /* サイクル175(Codex 指摘): 動きを へらす では、板の 色の うつりかわり も 決めた 直後の 明るさ も 動かさない(前の canvas の アニメを 止めて いた のと 同じ) */
 #sGame.fxGood #swFieldFx{background:radial-gradient(ellipse at 50% 45%,rgba(255,226,120,.75),rgba(150,214,110,.45) 55%,rgba(150,214,110,0) 85%);animation:swFxGoodGlow 1.4s ease-in-out}
 #sGame.fxBad #swFieldFx{background:rgba(38,44,54,.40);animation:swFxBadShade 1.4s ease-in-out}
 @keyframes swFxGoodGlow{0%{opacity:0}40%{opacity:.6}100%{opacity:0}}

@@ -1089,7 +1089,7 @@ const srv = http.createServer((r, s) => { const u = decodeURIComponent(r.url.spl
       }
       // 16-5b) 指の 知らせと こまの 順を 決めて 流す（ページの 中で PointerEvent を 出す＝届く 順が きまる）。1 秒に 5 こま・60 こま
       //   o1 決めた こま → もう片方の 動き → 次の こま：寄って見る　o2 決めた こま → 次の こま → もう片方の 動き：60 こまは 寄って見る・5 こまは 0.2 秒 すぎたので なぞりの まま（0.15 秒の きまり どおり）
-      //   o3 両方の 動きが 決める 前に 届く：寄って見る　o4 決める こまの 前に 片方・決めた こまの すぐ あとに もう片方（同じ こまの 間）：寄って見る
+      //   o3 両方の 動きが 1 こま めの 前に 届く：寄って見る　o4 1 こま めの あと・決める こま（2 こま め）の 前に もう片方：決める こまで 寄って見る（o1 は 決めた あとの 見直しで 寄って見る に 直る。道が ちがう）
       const ordR = {};
       { const { ctx, p } = await open5();
         for (const fps of [5, 60]) for (const o of ['o1', 'o2', 'o3', 'o4']) {
@@ -1097,14 +1097,20 @@ const srv = http.createServer((r, s) => { const u = decodeURIComponent(r.url.spl
             const E = (type, id, x, prim) => canvas.dispatchEvent(new PointerEvent(type, { pointerId: id, clientX: x, clientY: 520, isPrimary: prim, pointerType: 'touch', buttons: type === 'pointerup' ? 0 : 1, bubbles: true }));
             E('pointerdown', 901, 165, true); E('pointerdown', 902, 225, false); window.__F(ms, 1);
             E('pointermove', 901, 145, true); if (o === 'o3') E('pointermove', 902, 245, false);
-            window.__F(ms, 1); window.__F(ms, 1);   // 2 こま：ここで 決まる
-            if (o === 'o1' || o === 'o4') E('pointermove', 902, 245, false);
+            const mid = [];   // サイクル278（Codex 指摘・4 回め）: ねらった さかい目を 本当に 通ったかを 途中の 状態で 見る
+            window.__F(ms, 1); mid.push([viewTwo, !!viewPend]);   // 1 こま め：まだ 決めて いない（o3 は もう 寄って見る）
+            if (o === 'o4') { E('pointermove', 902, 233, false); mid.push([viewTwo, !!viewPend]); }   // o4：決める こまの 前（2 こまの 間）に もう片方が 8px 動く（12px 未満なので その 場では 決めず、決める こまで「もう片方も 6px 以上」と 見る）
+            window.__F(ms, 1); mid.push([viewTwo, !!viewRe]);   // 2 こま め：ここで 決まる（o1 は なぞり＋見直し中・o4 は 寄って見る）
+            if (o === 'o1') E('pointermove', 902, 245, false);
             window.__F(ms, 1); if (o === 'o2') E('pointermove', 902, 245, false);
-            const r = [viewTwo, TRACE.on, +fovZoom.toFixed(2)]; E('pointerup', 902, 245, false); E('pointerup', 901, 145, true); window.__F(ms, 3); return r; }, [1000 / fps, o]);
+            const r = [viewTwo, TRACE.on, +fovZoom.toFixed(2), mid]; E('pointerup', 902, 245, false); E('pointerup', 901, 145, true); window.__F(ms, 3); return r; }, [1000 / fps, o]);
         }
         await ctx.close(); }
-      const pin = r => r[0] === 'pinch' && !r[1] && r[2] > 1.5;
-      ok('指の 知らせと こまの 順を 決めて 流す：決めた すぐ あと（o1・o4）・決める 前（o3）は 寄って見る（1 秒に 5 こまも 60 こまも）。決めた 次の こまより あと（o2）は 60 こまで 寄って見る・5 こまは 0.15 秒 すぎで なぞりの まま', ['5o1', '5o3', '5o4', '60o1', '60o2', '60o3', '60o4'].every(k => pin(ordR[k])) && ordR['5o2'][0] === 'trace', ordR);
+      const pin = r => r[0] === 'pinch' && !r[1] && r[2] > 1.5, pin4 = r => r[0] === 'pinch' && !r[1] && r[2] > 1.4;   // o4 は 60 → 88px ＝ 1.47 倍
+      const midOk = (o, m) => o === 'o1' ? m[0][0] === 'wait' && m[0][1] && m[1][0] === 'trace' && m[1][1]   // 決めて なぞり＋見直し中 → もう片方で 寄って見る
+        : o === 'o4' ? m[0][0] === 'wait' && m[0][1] && m[1][0] === 'wait' && m[1][1] && m[2][0] === 'pinch'   // 決める こまで 寄って見る
+        : o === 'o3' ? m[0][0] === 'pinch' : m[1][0] === 'trace';
+      ok('指の 知らせと こまの 順を 決めて 流す：決めた すぐ あと（o1）・決める こまの 前（o4）・1 こま めの 前（o3）は 寄って見る（1 秒に 5 こまも 60 こまも・途中の 状態で 道を 見る）。決めた 次の こまより あと（o2）は 60 こまで 寄って見る・5 こまは 0.15 秒 すぎで なぞりの まま', ['5o1', '5o3', '60o1', '60o2', '60o3'].every(k => pin(ordR[k])) && ['5o4', '60o4'].every(k => pin4(ordR[k])) && ordR['5o2'][0] === 'trace' && Object.entries(ordR).every(([k, r]) => midOk(k.replace(/^\d+/, ''), r[3])), ordR);
       ok('なぞりに 決まった すぐ あとに もう片方も 動くと 寄って見る に 直る（1 秒に 5 こまでも。直す前：5 こまでは なぞり運転が つづく）', [5, 60].every(f => r5[f][0] === 'trace' && r5[f][1] === 'pinch' && !r5[f][2] && r5[f][3] > 1.5), r5);
       // 16-6) 2 本の指を 置いたまま 画面を 回す（pointercancel が 来ない）：そのまま 2 本で 広げると 寄って見る（走らない）。片方を 離してから もう 1 本を 動かすと その指で なぞれる
       //       （直す前：広げると 1 本指の なぞりに なって 0.85m 走る・片方を 離すと のこった 指は 0m）
@@ -1136,8 +1142,11 @@ const srv = http.createServer((r, s) => { const u = decodeURIComponent(r.url.spl
     }
     // ---- 17) サイクル277（はじめの 1 分 すぎで やめる人を へらす）：修理の 間、吹き出しの 上の だんに 進みぐあいの 棒・なぞると 1 回 ゆれる・おわると 棒は 消えて「▲ でエンジンをかける」 ----
     //       直す前（にせの時計・手本どおりに 耕しつづける 人・スマホ縦）：右はしの爪 61〜67 秒・グリース 77.5〜82.5 秒。なぞり 2 回とも 動かない・画面で かわる 物は 5 つ（文だけ）・ゆれ 0 回
-    {
-      const { ctx, p, cdp } = await open14(''); await fake14(p);
+    // サイクル278（Codex 指摘・4 回め）: ゆれは 中の 数（FIXBAR.n）だけで なく、本当に アニメが 始まった（やり直された）かを animationstart・getAnimations で 見る。
+    //   「動きを へらす」設定（reduce）でも 同じ 道を 流し、棒は 見える・ゆれの アニメは 1 回も 始まらない ことを 見る
+    const fx17 = {};
+    for (const motion of ['normal', 'reduce']) {
+      const { ctx, p, cdp } = await open14(''); if (motion === 'reduce') await p.emulateMedia({ reducedMotion: 'reduce' }); await fake14(p);
       let clk = 0; const adv = s => { clk += s; return p.evaluate(x => window.__adv(x), s); }, T = (type, pts) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: pts });   // clk＝進めた ゲームの 秒
       const fx = () => p.evaluate(() => { const b = document.getElementById('fixBar'), f = document.getElementById('fixFill'), say = document.getElementById('say'), r = b ? b.getBoundingClientRect() : null, big = document.getElementById('bigPct').getBoundingClientRect();
         return { on: !!b && b.classList.contains('on') && getComputedStyle(b).display !== 'none' && !say.classList.contains('off'), fill: f ? +(f.style.transform.match(/scaleX\(([\d.]+)\)/) || [0, 0])[1] : null, n: game.FIXBAR ? game.FIXBAR.n : null, heri: game.HERI.fixing, left: game.HERI.left, fm: FIRSTMIN.on,
@@ -1152,18 +1161,26 @@ const srv = http.createServer((r, s) => { const u = decodeURIComponent(r.url.spl
       const b1 = await fx(); await adv(1); const b2 = await fx();
       // 修理の 間に なぞる：1 本の指で 2 回・2 本の指で 1 回 → ゆれは 3 回。動かない・耕さない・数字は かわらない
       const n0 = b2.n;
-      for (let k = 0; k < 2; k++) { await T('touchStart', [{ x: 195, y: 481, id: 1 }]); for (let i = 1; i <= 6; i++) { await T('touchMove', [{ x: 195, y: 481 - 14 * i, id: 1 }]); await adv(0.05); } await T('touchEnd', []); await adv(0.2); }
-      await T('touchStart', [{ x: 165, y: 520, id: 1 }, { x: 225, y: 520, id: 2 }]); for (let i = 1; i <= 4; i++) { await T('touchMove', [{ x: 165 - 8 * i, y: 520, id: 1 }, { x: 225 + 8 * i, y: 520, id: 2 }]); await adv(0.05); } await T('touchEnd', []); await adv(0.2);
-      const b3 = await fx();
+      await p.evaluate(() => { window.__an = 0; window.__ga = []; document.getElementById('fixBar').addEventListener('animationstart', e => { if (e.animationName === 'fixNudge') window.__an++; }); });
+      // なぞりの はじめ（指が ふれた 直後）に、ゆれの アニメが 走っているかを getAnimations で 見る。ゆれの 数（animationstart）は 本物の こまで 届くので、ふえるのを 待つ
+      const ga = () => p.evaluate(() => { window.__ga.push(document.getElementById('fixBar').getAnimations().filter(a => a.animationName === 'fixNudge' && a.playState === 'running').length); });
+      const anWait = k => p.waitForFunction(v => window.__an >= v, k, { timeout: 5000, polling: 50 }).catch(() => {});
+      for (let k = 0; k < 2; k++) { await T('touchStart', [{ x: 195, y: 481, id: 1 }]); await ga(); for (let i = 1; i <= 6; i++) { await T('touchMove', [{ x: 195, y: 481 - 14 * i, id: 1 }]); await adv(0.05); } await T('touchEnd', []); await adv(0.2); if (motion === 'normal') await anWait(k + 1); }
+      await T('touchStart', [{ x: 165, y: 520, id: 1 }, { x: 225, y: 520, id: 2 }]); await ga(); for (let i = 1; i <= 4; i++) { await T('touchMove', [{ x: 165 - 8 * i, y: 520, id: 1 }, { x: 225 + 8 * i, y: 520, id: 2 }]); await adv(0.05); } await T('touchEnd', []); await adv(0.2);
+      if (motion === 'normal') await anWait(3); else await p.waitForTimeout(1000);
+      const b3 = await fx(), an = await p.evaluate(() => [window.__an, window.__ga]);
       for (let i = 0; i < 600 && (await fx()).heri; i++) await adv(0.05);
       const dur = clk - c0;
       await adv(0.5); const b4 = await fx();
       await p.evaluate(() => { game.key.fwd = 0; }); await ctx.close();
+      fx17[motion] = { b2, b3, n0, an };
+      if (motion === 'reduce') continue;   // 動きを へらす：下の 1 項目だけ
       ok('修理（右はしの爪）は はじめの 1 分の あとに 始まり、長さは 今までどおり 6 秒（±0.2）', !pre.heri && a.heri && !a.fm && Math.abs(dur - 6) <= 0.25, [pre.heri, a.heri, +t0.toFixed(1), +dur.toFixed(2)]);
       ok('修理の 間、吹き出しの 上の だんに 進みぐあいの 棒が 出て のびる（1 秒で ふえる）・大きな 数字に かぶらない（直す前：棒なし）', b1.on && b2.on && b2.fill > b1.fill + 0.1 && b2.fill < 1 && !b2.overBig, [b1.on, b1.fill, b2.fill, b2.overBig]);
-      ok('修理の 間に なぞると 1 回の なぞりに 1 回 棒が ゆれる（3 回 → 3）・動かない・耕さない・数字も かわらない（直す前：何も 返らない）', b3.n - n0 === 3 && Math.hypot(b3.x - b2.x, b3.z - b2.z) < 0.05 && b3.til === b2.til && b3.big === b2.big, [b3.n - n0, +Math.hypot(b3.x - b2.x, b3.z - b2.z).toFixed(3), b3.til - b2.til, b2.big, b3.big]);
+      ok('修理の 間に なぞると 1 回の なぞりに 1 回 棒が ゆれる（3 回 → 3。本当に ゆれの アニメが 3 回 始まる・指が ふれた 直後に 走っている）・動かない・耕さない・数字も かわらない（直す前：何も 返らない）', b3.n - n0 === 3 && an[0] === 3 && an[1].length === 3 && an[1].every(x => x === 1) && Math.hypot(b3.x - b2.x, b3.z - b2.z) < 0.05 && b3.til === b2.til && b3.big === b2.big, [b3.n - n0, +Math.hypot(b3.x - b2.x, b3.z - b2.z).toFixed(3), b3.til - b2.til, b2.big, b3.big]);
       ok('修理が おわると 棒は 消え、「▲ でエンジンをかける」が 吹き出しに 出る（今までどおり）', !b4.on && !b4.heri && /▲ でエンジンをかける/.test(b4.say), [b4.on, b4.say]);
     }
+    { const r = fx17.reduce; ok('「動きを へらす」設定：修理の 棒は 見えて のびる・なぞると 数は ふえるが、ゆれの アニメは 1 回も 始まらない', !!r && r.b2.on && r.b3.on && r.b3.n - r.n0 === 3 && r.an[0] === 0 && r.an[1].every(x => x === 0), r && [r.b2.on, r.b3.n - r.n0, r.an]); }
     // ---- 18) サイクル278（運営者の 実機の 声「スタート直後に音が出ない」）：音を 解く 聞き手は 鳴りだすまで 外さない ----
     //       ブラウザの きまりの まね：AudioContext は 止まった まま 作られ、resume は touchend・pointerup・click・keydown・mouseup の 中で だけ 効く（iPhone の Safari に 近い 形の まね。実機では 未確認）
     //       直す前：読みこみ中に 1 回 タップした 人は、聞き手が 音の できる 前に 外れて、なぞって 離しても 鳴らない

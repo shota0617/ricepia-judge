@@ -47,6 +47,14 @@
   #pips i { width:18px; height:5px; border-radius:3px; background:#cfc6b1; }
   #pips i.done { background:var(--gold); }
   #pips i.now { background:var(--green); }
+  /* 何の ために やって いるか・いま 何ふくろめ か（サイクル155・最初の1分）。旧版は 開いた 画面に 目的も 袋の 数も 無く、1ふくろを しらべて
+     さいごに はんこ、と 分かるのは はんこまで 行った 約22秒 後 だった。段の 名前・進みの 棒の 下に 1行。手本の 指と 案内文（23px）より 弱く、読める 大きさ・こさ で */
+  /* 字は 13px・こい 茶（地との コントラスト 7.75:1）。段の 名前（28px・黒）より 弱く、題字（12px・うすい 茶 4.66:1）より はっきり。
+     いま 何ふくろめ か は 段の 名前の 行の 右（📖 の 左）に 分けて、はば 320px でも 切れない */
+  #goal { margin-top:2px; font-size:13px; line-height:1.25; font-weight:700; color:#4a4136; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  #stepRow { display:flex; align-items:baseline; justify-content:space-between; gap:6px; }
+  #lotTag { flex:none; font-size:13px; font-weight:700; color:#4a4136; white-space:nowrap; }
+  @media (max-width:360px) { #goal, #lotTag { font-size:12px; } }
   #notesLink { flex:none; font-size:22px; text-decoration:none; padding:8px 2px 8px 8px; opacity:.75; }
 
   /* 舞台 */
@@ -222,6 +230,8 @@
     h1 { display:none; }
     #stepName { font-size:20px; }
     #pips { margin-top:1px; }
+    #goal, #lotTag { font-size:12px; }
+    #goal { margin-top:0; line-height:1.15; }
     #stage { flex-direction:row; }
     #top { flex:0 0 34%; }
     #bagBtn { height:auto; width:50%; margin-left:0; }
@@ -265,8 +275,9 @@
     <canvas id="face" width="256" height="256" aria-hidden="true"></canvas>
     <div id="headText">
       <h1>農産物検査</h1>
-      <div id="stepName" aria-live="polite">ぬく</div>
+      <div id="stepRow"><div id="stepName" aria-live="polite">ぬく</div><span id="lotTag"><span id="lotNo">1</span>ふくろめ</span></div>
       <div id="pips" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+      <div id="goal">ふくろを しらべて はんこ</div>
     </div>
     <a id="notesLink" href="#notes" aria-label="検査のしくみと出典">📖</a>
   </div>
@@ -1122,6 +1133,7 @@ function pageSlid(e) {
 const NUDGE_LIMIT = 3;
 function startLot() {
   LOT = LOTS[lotIndex % LOTS.length];
+  $("lotNo").textContent = lotIndex + 1; /* いま 何ふくろめ か（サイクル155）。袋は 6しゅるいを くり返し、終わりは 無い */
   drawBag($("bagCanvas"), LOT_LOOKS[LOT.look].stripe); drawBag($("bagBigCanvas"), LOT_LOOKS[LOT.look].stripe); /* 袋の帯もその袋の色で */
   layer($("decide"), false); layer($("osu"), false);
   nextBtn.classList.remove("on");

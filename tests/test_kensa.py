@@ -3818,5 +3818,49 @@ assert.equal(grainAt({ x:104, y:100 }), higai);
 """)
 
 
+    # ---- サイクル155（最初の1分・この 先が 見える）----
+
+    def test_cycle155_the_head_says_what_the_bag_is_for_and_which_bag(self):
+        # 旧版は 開いた 画面に 目的も 袋の 数も 無く、「1ふくろを しらべて さいごに はんこ」と 分かるのは はんこまで 行った 後（約22秒）だった。
+        # 開いた 時から 頭に 1行。袋が かわる たびに 何ふくろめ かも かわる
+        head = HTML[HTML.index('<div id="head">'):HTML.index('<div id="stage">')]
+        goal = re.search(r'<div id="goal">(.*?)</div>', head)
+        self.assertIsNotNone(goal, "開いた 画面の 頭に 目的の 1行が 無い")
+        text = re.sub(r"<[^>]+>", "", goal.group(1))
+        for word in ("ふくろ", "はんこ"):
+            self.assertIn(word, text)
+        self.assertIn("1ふくろめ", re.sub(r"<[^>]+>", "", head))   # いま 何ふくろめ か（段の 名前の 行の 右）
+        start = HTML.index("function startLot() {")
+        head_of_start = HTML[start:HTML.index('drawBag($("bagCanvas")', start)] + "}"
+        self._node150("""
+const assert = require('node:assert/strict');
+const LOTS = [{}, {}, {}, {}, {}, {}]; let LOT = null, lotIndex = 0;
+const lotNo = { textContent:'1' }; const $ = id => id === 'lotNo' ? lotNo : null;
+""" + head_of_start + """
+lotIndex = 1; startLot(); assert.equal(String(lotNo.textContent), '2', '2ふくろめに なっても 1ふくろめ のまま');
+lotIndex = 6; startLot(); assert.equal(String(lotNo.textContent), '7');   // 6しゅるいを くり返す 7ふくろめ
+""")
+        # 読める 大きさ・こさ（運営者の 声: 11px・うすい 色では 目に 入らない）。どの 画面の 決まりでも 12px 以上、たての 画面は 13px。
+        # 地（--bg）との コントラスト 4.5:1 以上。何ふくろめ かは 段の 名前の 行の 右に 分け、目的の 行は 切れない 長さ
+        css = HTML[HTML.index("<style>"):HTML.index("</style>")]
+        sizes = [int(m) for m in re.findall(r"#(?:goal|lotTag)[^{]*\{[^}]*?font-size:(\d+)px", css)]
+        self.assertTrue(sizes, "目的の 行の 字の 大きさが 決まって いない")
+        self.assertGreaterEqual(min(sizes), 12, "字が 小さすぎる: " + str(sizes))
+        self.assertIn(13, sizes)
+        bg = re.search(r"--bg:(#[0-9a-f]{6})", css).group(1)
+        def lum(h):
+            f = lambda c: c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4
+            r, g, b = [int(h[i:i + 2], 16) / 255 for i in (1, 3, 5)]
+            return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b)
+        for sel in ("#goal {", "#lotTag {"):
+            rule = css[css.index(sel):css.index("}", css.index(sel))]
+            color = re.search(r"color:(#[0-9a-f]{6})", rule).group(1)
+            hi, lo = sorted((lum(color), lum(bg)), reverse=True)
+            self.assertGreaterEqual((hi + .05) / (lo + .05), 4.5, sel + " の 字が うすい")
+            self.assertIn("white-space:nowrap;", rule)
+        self.assertIn('<div id="stepRow"><div id="stepName" aria-live="polite">ぬく</div><span id="lotTag"><span id="lotNo">1</span>ふくろめ</span></div>', head)
+        self.assertLessEqual(len(text), 14)   # 320px・12px でも 1行に おさまる 長さ（ブラウザ実測で 5つの 画面とも 切れ 0）
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -134,6 +134,38 @@ class PumpPar210(unittest.TestCase):
 })();""")
         self.assertEqual(o, {"mid": 3, "top": 3, "n": 13, "uniq": 13, "left": 0})
 
+    def test_limit_kept_after_first_round(self):
+        """はじめの ワーカが 終わって（pumping が もどって）も、あとから ふやした ワーカが 読んで いる 間に 足された ときも 3つ まで"""
+        o = node(pump_src() + """
+(async () => {
+  queue.push([1, 1]); pump(); await tick();
+  queue.push([2, 1]); pump(); await tick();
+  waits.shift()(); await tick(); await tick();
+  for (let i = 0; i < 3; i++) queue.push([3 + i, 1]);
+  pump(); await tick();
+  const mid = top;
+  while (waits.length) { waits.shift()(); await tick(); }
+  console.log(JSON.stringify({ mid, top, n: done.length, left: queue.length }));
+})();""")
+        self.assertEqual(o, {"mid": 3, "top": 3, "n": 5, "left": 0})
+
+
+class FastTickAfterHits210(unittest.TestCase):
+    """PR #1136 の 指摘：速い 見回り（はじめての 手本）は、その こまの 絵の 当たり（特大の 名所・当店の 札・街の 建物）を 作り直した あとで 見る。
+    こまの はじめで 見ると 当たりが からで、手本を 絵の 上に 置き、手本どおりに 押すと 説明の 窓が 開く（ふつうの 0.25秒の タイマーは こまの 途中に 割りこまない）"""
+    def test_fast_tick_after_hits_rebuilt(self):
+        f = fn("frame")
+        call = "tapDemo.fastT = now; tapDemoTick();"
+        self.assertEqual(f.count(call), 1)
+        i = f.index(call)
+        for reset in ("shopHits = [];", "giantHits = [];", "poiHits = [];"):
+            self.assertLess(f.index(reset), i, reset)
+        last = max(f.rfind("shopHits.push("), f.rfind("giantHits.push("), f.rfind("poiHits.push("))
+        self.assertGreater(last, 0)
+        self.assertGreater(i, last, "速い 見回りが、こまの 絵の 当たりを 作り直す 前に 走る")
+        self.assertGreater(i, f.index("dirty = false;"), "速い 見回りは こまの さいご（絵を ぜんぶ 描いた あと）")
+        self.assertIn("setInterval(tapDemoTick, 250);", PIX)   # ふつうの 見回りは かえない
+
 
 class Rules210(unittest.TestCase):
     def test_owner_rules_kept(self):

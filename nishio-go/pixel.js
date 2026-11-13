@@ -8078,10 +8078,6 @@ function frame(now) {
   if (G.demo && rollOn && !driving) {   // かたむけて転がす（勢い・はね返り）。1/120秒ずつ くり返して計算する（おそい スマホ・速い画面でも 同じ転がり方に）
     if (howtoEl.hidden && performance.now() >= mzHitStop) for (let rem = dt; rem > 1e-4;) { const h = Math.min(rem, 1 / 120); rollStep(h); rem -= h; if (rp.x !== null && mazeOn()) mzMvStep(mzMv, Math.floor(rp.x / MZ_K), Math.floor(rp.y / MZ_K), performance.now()); }   // 「まよわず ゴール」の 歩数は 転がる 1/120秒ごとに（こまの 間に 2つの さかいを こえても 1つずつ）   // あそびかたを 読んでいる 間は 転がさない（地図は 描く）
     if (mazeOn()) { mzSpotUpdate(now); mzSnap(now); mzRoute(now); mzHintTick(now); mzTrailTick(); mzDeadTick(); mzGrainTick(); mzDotTick(); mzPebTick(); mzMichikusa(now); mzClock(now); mzCrowTick(now); mzSpringTick(now); mzArriveTick(now); mzFruitTick(now); mzPieceTick(now); mzViewTick(now); mzCacheTick(now); mzQuestTick(now); mzDinoTick(now); mzChaseTick(now); mzEnergyTick(now); mzMiniTick(); mzTorchTick(now); mzBrigadeTick(now); mzPurifyTick(now); mzRescueTick(now); mzCubeTick(now); mzTileTick(); } else if (mzFruit.sx >= 0) mzFruitReset(); if (!mazeOn() && mzPiece.sx >= 0) mzPieceReset(); if (!mazeOn() && mzView.sx >= 0) mzViewReset();
-    if (mazeOn() && tapDemo.fresh) {   // サイクル210：はじめての 手本は 道すじが できたら すぐ。開いて すぐ 傾けて 転がりだしたら、次の 見回りを 待たずに 消す（tapDemo の 注）
-      if (!tapDemoFresh()) { if (tapDemo.el && !tapDemo.el.hidden && !tapDemo.world) tapDemoHide(); }
-      else if (!tapDemo.n && mzRt.path && now - tapDemo.fastT >= DEMO_FAST_MS) { tapDemo.fastT = now; tapDemoTick(); }
-    }
   if (!mazeOn() && mzCache.sx >= 0) mzCacheReset();   // かくし宝箱も 同じく はじめから
   }
   if (!mazeOn() && mzPiece.sx >= 0) mzPieceReset();   // 転がすを やめた・車・ワールドなどで めいろで なくなっても、上の 行だけでは 届かないため ここでも はじめから
@@ -8564,6 +8560,13 @@ function frame(now) {
   if (msg) $('pxMsg').textContent = msg;
   if (rec) { rec.end(); rec = null; ctx = ctx0; }
   dirty = false;
+  // サイクル210：はじめての 手本は 道すじが できたら すぐ。開いて すぐ 傾けて 転がりだしたら、次の 見回りを 待たずに 消す（tapDemo の 注）。
+  // こまの さいご（この こまの 絵の 当たり shopHits・giantHits・poiHits を 作り直した あと）で 見る。こまの はじめで 見ると 当たりが からで、
+  // 特大の 名所の 絵・当店の 札の 上を 安全と 見て 手本を 置いた（外の 読み手の 指摘 PR #1136）
+  if (mazeOn() && tapDemo.fresh) {   // mazeOn：遊びの 地図で 転がして いる（車・せかいちず では ない）
+    if (!tapDemoFresh()) { if (tapDemo.el && !tapDemo.el.hidden && !tapDemo.world) tapDemoHide(); }
+    else if (!tapDemo.n && mzRt.path && now - tapDemo.fastT >= DEMO_FAST_MS) { tapDemo.fastT = now; tapDemoTick(); }
+  }
 }
 
 // 大きな道の「縁のマス」（外側が道でなく、内側の隣も大きな道）が、(dx,dy) の向きに続く長さ（自分を含む。前後2マスまで）

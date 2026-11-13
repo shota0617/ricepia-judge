@@ -1239,7 +1239,7 @@ async function cycle210Checks(browser, R) {
       await v.page.waitForTimeout(500);
       await v.page.waitForFunction(() => window.__c210 && window.__c210.rice != null && performance.now() - window.__c210.rice > 3000, null, { timeout: 12000 }).catch(() => {});
       const t = await times(v.page);
-      out.rollNoDemo = { ...t, ok: t.rice != null && t.bad === 0 && (t.vmax < 0.3 || t.fresh !== true) };
+      out.rollNoDemo = { ...t, ok: t.rice != null && t.vmax >= 1 && t.fresh === false && t.bad === 0 };   // かならず 見る：本当に 転がった（速さ 1マス/秒 以上・傾きが 効いた）・はじめての 形（fresh）では なくなった・転がって いる 間に 手本なし（PR #1136 の 指摘：前は 傾きが 効かない・fresh の ない ファイルでも 通った）
     } catch (e) { fail(['rollNoDemo'], e); } finally { if (v) { R.errors.push(...v.errors); await v.ctx.close(); } }
   }
   return out;
@@ -1293,7 +1293,7 @@ const FIRST_MINUTE_NEED = {
   handHelpScope: '手本の 手の 助けが 名所の 絵の 上・許可を 聞いた あとにも 効いて、手の そばの 名所を タップしても 説明が 開かない（390×844・許可の 前／ことわった 150ms あと）',
   firstDemoFast: '開いて まだ 何も して いない 人（傾きの 許可を 聞かない 端末・390×844）の 最初の 手本が、お米が 出て 1.5秒・道すじが できて 0.6秒 の うちに 出ない（前は お米が 出て 2秒 待った。サイクル210）',
   demoTouchWait: '最初の 手本の あと さわると、手本が すぐ 消えない／次の 手本が 2秒 待たずに 出る（さわった あとの 手本は これまでどおり 2秒。サイクル210）',
-  rollNoDemo: '開いて すぐ 傾けて 転がして いる 間に 手本が 出る／転がった あとも「はじめての 手本」の まま（サイクル210）',
+  rollNoDemo: '開いて すぐ 傾けて（8度）も 転がらない（速さ 1マス/秒 に とどかない）／転がって いる 間に 手本が 出る／転がった あとも「はじめての 手本」の まま（サイクル210）',
   bootLoaded: '地図の 部品が ふつうに 読めた のに「時間が かかっています」の ボタン・「もう 1回 読みこむ」が 出る／始まらない',
   bootFailed: '地図の 部品が 読めなかった（エラー）とき、押せる「もう 1回 読みこむ」の ボタンが 4秒 までに 出ない／押しても 読みこみ なおさない',
   bootSlow: '地図の 部品が 8秒 おくれて 届く 人に「時間が かかっています」が 出る／20秒 おくれの 人が 始まらない・始まった あとも 残る',

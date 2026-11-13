@@ -317,6 +317,13 @@ const FAKE = (mode) => {
         if (a === 'keyLeaveNew') await p.keyboard.press('ArrowLeft');
         else { const bx = await p.locator('#swCard').boundingBox(); const x = bx.x + bx.width / 2, y = bx.y + bx.height / 2; await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] }); for (let i = 1; i <= 4; i++) { await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: x - 40 * i, y }] }); await p.waitForTimeout(12); } await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); }
         await p.evaluate(() => { document.getElementById('swHome').click(); document.getElementById('bDaily').click(); }); await p.waitForTimeout(900); }
+      else if (a === 'leaveNewTwo') {   // サイクル178 の 直し: 古い ゲームで スワイプ → すぐ ⌂ → 今日の 田んぼ → 新しい ゲームで 2回 つづけて スワイプ(古い 予約が 鳴る 間に)。CDP の 返事を 待たずに ならべて 送る
+        const bx = await p.locator('#swCard').boundingBox(); const x = bx.x + bx.width / 2, y = bx.y + bx.height / 2;
+        const sw = () => { const ps = [cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] })]; for (let i = 1; i <= 3; i++) ps.push(cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: x - 50 * i, y }] })); ps.push(cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] })); return ps; };
+        await Promise.all(sw());
+        const B = cdp.send('Runtime.evaluate', { expression: "document.getElementById('swHome').click();document.getElementById('bDaily').click();" });
+        const C = sw(), W = cdp.send('Runtime.evaluate', { expression: 'new Promise(r => setTimeout(r, 30))', awaitPromise: true }), D = sw();
+        await Promise.all([B].concat(C, [W], D)); await p.waitForTimeout(1500); }
       else if (a === 'homeKey') {   // 2回めの レビュー(P2): ⌂ を マウスで 押した まま ← で 決め、すぐ はなす(選んで すぐ 題へ)
         const hb = await p.locator('#swHome').boundingBox(); await p.mouse.move(hb.x + hb.width / 2, hb.y + hb.height / 2); await p.mouse.down(); await p.keyboard.press('ArrowLeft'); await p.mouse.up();
         r.js = r.js || []; r.js.push(await p.evaluate(() => ({ screen: document.getElementById('sTitle').classList.contains('hidden') ? 'game' : 'title', n: window.__ks.state().log.length }))); }
@@ -1738,6 +1745,7 @@ class TestKome365LeaveThenNewGame(unittest.TestCase):
         cls.r = sound_run([
             {"name": "swipe", "acts": ["swipeLeaveNew", DATE_JS, "keyjs:" + DATE_JS[3:], "wait", DATE_JS]},
             {"name": "key", "acts": ["keyLeaveNew", DATE_JS]},
+            {"name": "two", "acts": ["leaveNewTwo", DATE_JS]},
         ])
 
     def test_new_game_starts_at_day_one(self):
@@ -1747,6 +1755,9 @@ class TestKome365LeaveThenNewGame(unittest.TestCase):
             j = x["js"][0]
             self.assertEqual(j["screen"], "game", name)
             self.assertEqual(j["date"], "1月1日", name + ": 新しい ゲームが 1日 進んで 始まった")
+        two = self.r["two"]                               # サイクル178 の 直し: 新しい ゲームで 2回 つづけた スワイプが どちらも 決まる(古い 予約が 新しい ゲームの 置いた 指を 消さない)
+        self.assertEqual(two["errs"], [])
+        self.assertEqual(two["js"][0]["date"], "1月3日", "新しい ゲームの 2回めの スワイプが 消えた")
         nxt = self.r["swipe"]["js"][1]                    # その あとの 1枚は ふつうに 1日 進む(古い 選択が あとから 足されない)
         self.assertEqual(nxt["date"], "1月2日")
         self.assertEqual(self.r["swipe"]["js"][2]["date"], "1月2日")

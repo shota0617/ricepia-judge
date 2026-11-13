@@ -3881,7 +3881,7 @@ renderTitle();
   }
   function choose(side, vel){
     if (busy || !card || !f || KomeCards.over(f)) return; idleTouch(); ghostOff(); busy = true; ksCancel(); if (ksSameScreen()) ksFx('pon'); rwUpdate(false); window.__k3d.soon(900);
-    var gen = KS.gen, game = f, advance = function(sd){ if (f !== game) { pend = null; pendQ = []; return; } advanceTurn(sd, gen); };   /* サイクル178: 飛んで いる 間に ⌂ → 新しい ゲームに なって いたら、古い ゲームの この 選択(と 置いて いた 指)は 新しい ゲームに 当てない(前は 新しい ゲームが 1日 進んで 始まった) */   /* 3回めの レビュー(P2): advance は この 選択の 世代を もつ(下の 2つの 呼び出しは この 選択 だけの もの) */
+    var gen = KS.gen, game = f, advance = function(sd){ if (f !== game) return; advanceTurn(sd, gen); };   /* サイクル178: 飛んで いる 間に ⌂ → 新しい ゲームに なって いたら、古い ゲームの この 選択は 新しい ゲームに 当てない(前は 新しい ゲームが 1日 進んで 始まった)。置いて いた 指(pend・pendQ)は ここでは さわらない(新しい ゲームの 指を 消して いた。古い ゲームの 指は 新しく 始める 所で 捨てる) */   /* 3回めの レビュー(P2): advance は この 選択の 世代を もつ(下の 2つの 呼び出しは この 選択 だけの もの) */
     var out = side === 'left' ? -1 : 1;
     pvClear(); el.card.classList.remove('drag', 'enter', 'wig'); el.card.classList.add('fly');
     if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) { advance(side); return; }
@@ -4081,7 +4081,8 @@ renderTitle();
   $('swHelp').onclick = function(){ $('sheet').innerHTML = '<h3 id="sheetTitle">あそびかた</h3><p class="sub" style="font-size:14px">毎日1枚のカードが出ます。カードを<b>左か右にスワイプ</b>(←→キーでもOK)して、どうするかを選びます。選んだ結果で田んぼが変わり、次の日へ進みます。田んぼの状態(天気・季節・稲の様子)を読んで正しく選ぶと田んぼが良くなり、まちがえると悪くなります。左と右では、することと結果がちがいます。ドラッグすると変わるステータスの印が予告になります。結果は田んぼとステータスの変化で分かります。1月1日から12月31日までの365日、毎日1枚。冬は準備、春から稲刈りまでが本番、収穫のあとは出荷や冬じたくの日々です。お米の等級と収量は稲刈りで決まり、結果は365日目のあとに出ます。</p><button class="btn sec" data-cancel>とじる</button>'; openBg(); $('sheet').onclick = function(e){ if (e.target.closest('[data-cancel]')) closeSheet(); }; };
   // はじめる: 既存の bStart の処理(Farm生成・設定)のあと、カード生活に入る
   $('bStart').addEventListener('click', function(){
-    if (!f) return; careClear(); traceClear(); f._fert = fertMode; store.set(RW, ''); choices = ''; goldSeen = {}; bannerDone = false; tally = {}; seenCards = {}; streak = 0; recDone = false; store.set('kome365_streak', '0'); lifeDay = {}; lifeSync(); busy = false; $('swLog').innerHTML = '';
+    if (!f) return; pend = null; pendQ.length = 0;   /* サイクル178 の 直し: 古い ゲームで 置いた 指を 新しい ゲームに 流さない */
+    careClear(); traceClear(); f._fert = fertMode; store.set(RW, ''); choices = ''; goldSeen = {}; bannerDone = false; tally = {}; seenCards = {}; streak = 0; recDone = false; store.set('kome365_streak', '0'); lifeDay = {}; lifeSync(); busy = false; $('swLog').innerHTML = '';
     var intro = f.msgs.slice(-3).map(function(m){ return m.t; }); if (intro.length) $('swLog').innerHTML = intro.map(esc).join('<br>');
     save(); render(); try { drawField(); } catch (e) { console.error(e); } idleTouch();
   });

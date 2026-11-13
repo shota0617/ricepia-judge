@@ -3910,5 +3910,88 @@ const TYPES = { '.html': 'text/html; charset=utf-8', '.webp': 'image/webp', '.pn
             self.assertEqual(len(heads), 1, "%dx%d で 頭の 高さが 段・袋で かわる %s" % (w, h, sorted(heads)))
 
 
+    # ---- サイクル156（最初の1分・何の ための 作業か と、小さな「できた」が 絵で 分かる）----
+
+    def test_cycle156_finished_pip_pulses_once(self):
+        # 段が 終わった しゅんかん、終わった ほうの 頭の 棒が 1回 ふくらんで もどる（旧版は 色が 金に かわる だけで、動くのは 次の 棒 だけ）。
+        # transform だけ（頭の 高さは かわらない）。動きを へらす 設定では 色 だけ
+        fn = HTML[HTML.index("function setStep(i, text) {"):HTML.index("function setStep(i, text) {") + 4000]
+        fn = fn[:fn.index("\n}\n") + 3]
+        for reduced in (False, True):
+            self._node150("""
+const assert = require('node:assert/strict');
+const reduced = """ + ("true" if reduced else "false") + """, motion = 1, STEPS = ["ぬく", "はかる", "みわける", "きめる", "おす"]; let step = 0;
+const calls = []; const mk = k => ({ className:'', animate(frames, o) { calls.push([k, frames, o]); return {}; } });
+const pips = { children:[0, 1, 2, 3, 4].map(k => mk('pip' + k)) }, stepName = mk('name'), hint = mk('hint');
+const els = { pips, stepName }; const $ = id => els[id]; const document = { documentElement:{ dataset:{} } };
+""" + fn + """
+for (let i = 1; i <= 4; i++) {
+  calls.length = 0; setStep(i, '');
+  const prev = calls.filter(c => c[0] === 'pip' + (i - 1));
+  assert.equal(pips.children[i - 1].className, 'done');
+  if (reduced) assert.equal(prev.length, 0, '動きを へらす 設定で 棒が 動いた');
+  else {
+    assert.equal(prev.length, 1, i + '段め の 終わりで、終わった 棒が ふくらまない');
+    assert.ok(JSON.stringify(prev[0][1]).includes('scale('), '終わった 棒の 動きが ふくらむ 形で ない');
+    assert.ok(prev[0][1].every(f => !('height' in f) && !('width' in f)), '大きさ（高さ）を 動かすと 頭の 高さが かわる');
+  }
+}
+calls.length = 0; setStep(0, ''); assert.equal(calls.filter(c => /^pip/.test(c[0]) && c[0] !== 'pip0').length, 0);   // 次の 袋の はじめ（終わった 段 なし）は 今までどおり
+""")
+
+    def test_cycle156_empty_stamp_circle_on_the_bag_label(self):
+        # 袋の 白い 札に、はじめから 証印と 同じ 場所・形の うすい 朱色の 点線の 丸（字なし・押せない）。はんこを おすと 証印が 重なり 点線は 消える。
+        # 旧版は 札が 空の 四角で、はんこで 終わる と 絵で 分かるのは はんこまで 行った あと だった。本物の ブラウザで はかる
+        node = shutil.which("node")
+        if not node:
+            self.skipTest("node がないので実行の確認は飛ばす")
+        js = r"""
+const fs = require('fs'), path = require('path');
+let chromium; try { ({ chromium } = require('playwright')); } catch (e) { console.log(JSON.stringify({ skip: 'playwright なし' })); process.exit(0); }
+const [root] = process.argv.slice(1, 2);
+const TYPES = { '.html': 'text/html; charset=utf-8', '.webp': 'image/webp', '.png': 'image/png' };
+(async () => {
+  let b; try { b = await chromium.launch(); } catch (e) { console.log(JSON.stringify({ skip: 'chromium が 起動しない' })); return; }
+  const out = [];
+  for (const [w, h] of [[320, 568], [390, 844], [844, 390]]) {
+    const ctx = await b.newContext({ viewport: { width: w, height: h }, isMobile: true, hasTouch: true }); const p = await ctx.newPage();
+    await p.route('http://kensa.test/**', r => { const f = path.join(root, decodeURIComponent(new URL(r.request().url()).pathname));
+      if (!f.startsWith(root) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) return r.fulfill({ status: 404, body: '' });
+      r.fulfill({ status: 200, contentType: TYPES[path.extname(f)] || 'application/octet-stream', body: fs.readFileSync(f) }); });
+    await p.goto('http://kensa.test/kensa.html'); await p.waitForTimeout(600);
+    out.push(await p.evaluate(([w, h]) => {
+      const spot = sel => document.querySelector(sel + ' .markSpot');
+      const st = e => e ? { op: +getComputedStyle(e).opacity, pe: getComputedStyle(e).pointerEvents, text: e.textContent, w: e.getBoundingClientRect().width } : null;
+      const nuku = st(spot('#bagBtn'));
+      document.getElementById('osu').classList.add('on');   // おすの 画面を 見える ように する だけ
+      const s = spot('#bagBig'), m = document.getElementById('mark');
+      const c = e => { const r = e.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; };
+      const before = st(s), dc = s ? Math.hypot(c(s)[0] - c(m)[0], c(s)[1] - c(m)[1]) : null;
+      m.classList.add('on'); const stamped = st(s);
+      m.classList.remove('on'); const nextBag = st(s);
+      return { w, h, nuku, before, dc, stamped, nextBag };
+    }, [w, h]));
+    await ctx.close();
+  }
+  await b.close(); console.log(JSON.stringify(out));
+})();
+"""
+        r = subprocess.run([node, "-e", js, ROOT], capture_output=True, text=True, timeout=300)
+        self.assertEqual(r.returncode, 0, r.stderr[-1500:])
+        res = json.loads(r.stdout.strip().splitlines()[-1])
+        if isinstance(res, dict) and res.get("skip"):
+            self.skipTest(res["skip"])
+        for c in res:
+            tag = "%dx%d" % (c["w"], c["h"])
+            for scene in ("nuku", "before"):
+                s = c[scene]
+                self.assertIsNotNone(s, tag + " " + scene + " の 袋に はんこが 入る 丸が 無い")
+                self.assertTrue(0 < s["op"] < 1, tag + " 丸が 見えない か こすぎる")
+                self.assertEqual(s["pe"], "none"); self.assertEqual(s["text"], ""); self.assertGreater(s["w"], 20)
+            self.assertLess(c["dc"], 1.0, tag + " 丸が 証印と 同じ 場所に 無い")
+            self.assertEqual(c["stamped"]["op"], 0, tag + " はんこを おしても 点線が のこる")
+            self.assertGreater(c["nextBag"]["op"], 0, tag + " 次の 袋で 空の 丸に もどらない")
+
+
 if __name__ == "__main__":
     unittest.main()

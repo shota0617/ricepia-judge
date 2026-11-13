@@ -9555,6 +9555,17 @@ function tapDemoLayout(q, first, rc, box, upOk) {   // upOk(up)：その 向き�
     const hand = up ? [q.x - H.w / 2, q.y - reach, q.x + H.w / 2, q.y] : [q.x - H.w / 2, q.y, q.x + H.w / 2, q.y + reach];
     if (!fits(hand) || hitsRice(hand)) continue;
     if (upOk && !upOk(up)) continue;   // サイクル200：手の 絵の 所を 押すと 窓が 開く 向きは 使わない（tapDemoSpot）
+    if (upOk && !first) {
+      // 通常の手も、押す動きの途中の中央が窓や矢印にかからない向きを優先する。
+      // 置く座標は整数。下向きの中央は縮小で0.92倍、反転した手の中央は縮小しても動かない。
+      const x = Math.round(q.x), y = Math.round(q.y);
+      const lo = Math.round(H.h / 2 * (up ? 1 : 0.92)), hi = Math.round(H.h / 2 + H.move);
+      let clear = true;
+      for (let d = lo; d <= hi; d++) {
+        if (!tapDemoWalks({ x, y: y + (up ? -d : d) }, 0, box.near)) { clear = false; break; }
+      }
+      if (!clear) continue;
+    }
     if (upOk && first && !demoHandClear(q, up, H, box.near)) continue;   // サイクル209 の 直し：最初の 手本は 手の 絵の 四角 ぜんぶ 歩ける 所（demoHandClear）
     if (!first) return { up, side: '' };
     const below = [q.x - Lb.w / 2, q.y + Lb.below, q.x + Lb.w / 2, q.y + Lb.below + Lb.h + H.move + H.pad];

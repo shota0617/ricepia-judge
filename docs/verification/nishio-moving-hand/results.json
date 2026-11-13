@@ -1,0 +1,1573 @@
+{
+  "recordedAtUTC": "2026-11-13T00:01:57.127351+00:00",
+  "game": "nishio-go",
+  "issue": "通常の手本中央を押すと歩かず世界地図が開く",
+  "status": "targeted reproduction and supplemented layout verified within observed scope; full browser validation failed; full Python validation pending; merge held",
+  "scope": {
+    "baseHead": "dc1c9d2ee78fc8edf2e693e44f6117de23aab177",
+    "beforePixelSha256": "7c1f8baed5cc3dc09b985a98f6a55f9a20302442477005e1123cf74bb6fa6f70",
+    "afterPixelSha256": "cd15578eb309addec0943581db9c671b331e18b735591567291afe2210d22975",
+    "testSha256": "49b4a71340d0750c349c02500df7401c0eadf7769e4bcaf48af7d57d8bcd9bf5",
+    "sourceChanges": "pixel.jsの通常手の配置優先判定11行。初回手本/許可/サイズ/時刻/直接タップの規則は編集していない。"
+  },
+  "condition": {
+    "viewport": [
+      320,
+      568
+    ],
+    "cpuRate": 4,
+    "isMobile": true,
+    "hasTouch": true,
+    "dpr": 1,
+    "input": "CDP Input.dispatchTouchEvent",
+    "serverCommand": "python3 -m http.server 8000",
+    "serverRootBefore": "/workspace/ricepia-loop-current",
+    "serverRootAfter": "/workspace/ricepia-nishio-moving-hand",
+    "protocol": "Fresh context each run;10s observation;natural visible-guide play until stored goal count>=2;10 ordinary visible-hand-center trials,80/250ms alternating5each;visible return on world;1100ms observation window and screenshot every trial;180s maximum;no game-state fixtures.",
+    "network": "Only local URLs continue;Leaflet from local files;other external URLs fulfilled locally with204;unmuted shared browser launcher.",
+    "sharedLauncherSha256": "9079e386bdbf50afbb939f9148203beddecb6eab5aaca1c8ff6eaec5e236004d"
+  },
+  "definitions": {
+    "movement": "First observed latitude/longitude change against the action before snapshot between touchStart and windowAfter, using periodic/event/after/window samples. Observation upper bound, not physical paint latency.",
+    "world": "Any sampled world=true in the same trial window, starting with world=false. Return actions counted separately.",
+    "trialCompleteness": "Exactly10 ordinary/nonfirst/nonwb trials with>=2 goals,5+5holds,ACKs,all1100mswindows and10photos. Missing opportunities are unverified, not success.",
+    "geometry": "Exported pin/arrow captured before freshDOM selection;requested/pointer/click coordinates kept distinct. Not an internal hit-test trace at click time.",
+    "naturalProgression": "One context per version;walking changes player/guide positions. Before1–7 share an anchor but7walks;later positions differ. Not10 fixed-position independent starts.",
+    "images": "After-window original screenshots;point totals may advance between windowAfter and capture."
+  },
+  "primary57": {
+    "scope": "Separate10s observation +60s play on main;not the supplementary10trial measurement.",
+    "sourceReportSha256": "524096f28f39f6a88d4a36cc89d9bcfc99e66070e98b87e5fe06737e12511a30",
+    "allActions": 17,
+    "handActions": 13,
+    "handMovementResponses": 9,
+    "unexpectedWorldOpenings": 4,
+    "visibleReturns": 4,
+    "noWorldOrPositionResponse": 0,
+    "first30PointDomPlaySec": 0.968699951171875,
+    "goalCounterObservations": [
+      {
+        "storedCount": "1",
+        "firstSampledPlaySec": 29.233699951171875
+      },
+      {
+        "storedCount": "2",
+        "firstSampledPlaySec": 32.65209985351562
+      }
+    ],
+    "errors": []
+  },
+  "before": {
+    "sourceHead": "dc1c9d2ee78fc8edf2e693e44f6117de23aab177",
+    "pixelSha256": "7c1f8baed5cc3dc09b985a98f6a55f9a20302442477005e1123cf74bb6fa6f70",
+    "servedPixelSha256": "7c1f8baed5cc3dc09b985a98f6a55f9a20302442477005e1123cf74bb6fa6f70",
+    "httpStatus": 200,
+    "command": "node /workspace/scratch/first-minute/browser-resumed.cjs < /workspace/scratch/first-minute/round-57/repro/driver-input.txt > /workspace/scratch/first-minute/round-57/repro/run.log 2>&1",
+    "actualExitCode": 0,
+    "counts": {
+      "allActions": 23,
+      "validTrials": 10,
+      "worldOpenings": 6,
+      "positionResponses": 4,
+      "noWorldOrPositionResponse": 0,
+      "visibleReturnActions": 6,
+      "trustedEvents": 69
+    },
+    "byHold": {
+      "80": {
+        "trials": 5,
+        "worldOpened": 3,
+        "positionChanged": 2,
+        "sendHoldMs": {
+          "min": 79,
+          "median": 80,
+          "max": 81
+        },
+        "eventTimestampHoldMs": {
+          "min": 79.0,
+          "median": 80.0,
+          "max": 81.0
+        }
+      },
+      "250": {
+        "trials": 5,
+        "worldOpened": 3,
+        "positionChanged": 2,
+        "sendHoldMs": {
+          "min": 249,
+          "median": 250,
+          "max": 251
+        },
+        "eventTimestampHoldMs": {
+          "min": 249.0,
+          "median": 249.89999999850988,
+          "max": 251.0
+        }
+      }
+    },
+    "trials": [
+      {
+        "trial": 1,
+        "action": 8,
+        "holdMs": 80,
+        "sentPlaySec": 49.441,
+        "goalCountBefore": "2",
+        "ordinaryHandValid": true,
+        "anchorStyle": [
+          "160px",
+          "67px"
+        ],
+        "handClasses": "",
+        "requestedXY": [
+          160,
+          100
+        ],
+        "pointerDownXY": [
+          160,
+          100
+        ],
+        "clickXY": [
+          160,
+          100
+        ],
+        "sendHoldMs": 79,
+        "eventTimestampHoldMs": 79.0,
+        "listenerDownUpMs": 10.900146484375,
+        "worldOpened": true,
+        "positionChanged": false,
+        "sendToObservedMovementMs": null,
+        "sendToObservedWorldMs": 537.39990234375,
+        "windowCompletedMs": 1163,
+        "pinDistanceAtClickXY": 28.076903319183085,
+        "insidePreInputPinRadius": true,
+        "photo": "trial-01-after.png",
+        "photoSha256": "e5a7795581f86081ca14e80c2ed407f13a05470611fa2843ec2e43619fc56b7e"
+      },
+      {
+        "trial": 2,
+        "action": 10,
+        "holdMs": 250,
+        "sentPlaySec": 52.581,
+        "goalCountBefore": "2",
+        "ordinaryHandValid": true,
+        "anchorStyle": [
+          "160px",
+          "67px"
+        ],
+        "handClasses": "",
+        "requestedXY": [
+          160,
+          100
+        ],
+        "pointerDownXY": [
+          160,
+          100
+        ],
+        "clickXY": [
+          160,
+          100
+        ],
+        "sendHoldMs": 250,
+        "eventTimestampHoldMs": 249.89999999850988,
+        "listenerDownUpMs": 323.300048828125,
+        "worldOpened": true,
+        "positionChanged": false,
+        "sendToObservedMovementMs": null,
+        "sendToObservedWorldMs": 708.300048828125,
+        "windowCompletedMs": 1144,
+        "pinDistanceAtClickXY": 28.076903319183085,
+        "insidePreInputPinRadius": true,
+        "photo": "trial-02-after.png",
+        "photoSha256": "14fecd2892937de340faa71daaf8798783439ca6f7781185de9e61442d05755f"
+      },
+      {
+        "trial": 3,
+        "action": 12,
+        "holdMs": 80,
+        "sentPlaySec": 55.998,
+        "goalCountBefore": "2",
+        "ordinaryHandValid": true,
+        "anchorStyle": [
+          "160px",
+          "67px"
+        ],
+        "handClasses": "",
+        "requestedXY": [
+          160,
+          100
+        ],
+        "pointerDownXY": [
+          160,
+          100
+        ],
+        "clickXY": [
+          160,
+          100
+        ],
+        "sendHoldMs": 81,
+        "eventTimestampHoldMs": 81.0,
+        "listenerDownUpMs": 4.39990234375,
+        "worldOpened": true,
+        "positionChanged": false,
+        "sendToObservedMovementMs": null,
+        "sendToObservedWorldMs": 367.199951171875,
+        "windowCompletedMs": 1145,
+        "pinDistanceAtClickXY": 28.076903319183085,
+        "insidePreInputPinRadius": true,
+        "photo": "trial-03-after.png",
+        "photoSha256": "d29383453ef59f2e650cd45e9979de1d651a2a1855d82a78f9f2525934324bb0"
+      },
+      {
+        "trial": 4,
+        "action": 14,
+        "holdMs": 250,
+        "sentPlaySec": 59.037,
+        "goalCountBefore": "2",
+        "ordinaryHandValid": true,
+        "anchorStyle": [
+          "160px",
+          "67px"
+        ],
+        "handClasses": "",
+        "requestedXY": [
+          160,
+          100
+        ],
+        "pointerDownXY": [
+          160,
+          100
+        ],
+        "clickXY": [
+          160,
+          100
+        ],
+        "sendHoldMs": 251,
+        "eventTimestampHoldMs": 251.0,
+        "listenerDownUpMs": 295.300048828125,
+        "worldOpened": true,
+        "positionChanged": false,
+        "sendToObservedMovementMs": null,
+        "sendToObservedWorldMs": 616.099853515625,
+        "windowCompletedMs": 1116,
+        "pinDistanceAtClickXY": 28.076903319183085,
+        "insidePreInputPinRadius": true,
+        "photo": "trial-04-after.png",
+        "photoSha256": "85c7571f4b2ebe002b00fc1de1096371be8875a6686cfe0359a6157b1fb6fa37"
+      },
+      {
+        "trial": 5,
+        "action": 16,
+        "holdMs": 80,
+        "sentPlaySec": 62.421,
+        "goalCountBefore": "2",
+        "ordinaryHandValid": true,
+        "anchorStyle": [
+          "160px",
+          "67px"
+        ],
+        "handClasses": "",
+        "requestedXY": [
+          160,
+          97.95706939697266
+        ],
+        "pointerDownXY": [
+          160,
+          97.95706939697266
+        ],
+        "clickXY": [
+          160,
+          98
+        ],
+        "sendHoldMs": 80,
+        "eventTimestampHoldMs": 80.0,
+        "listenerDownUpMs": 5.39990234375,
+        "worldOpened": true,
+        "positionChanged": false,
+        "sendToObservedMovementMs": null,
+        "sendToObservedWorldMs": 303.800048828125,
+        "windowCompletedMs": 1128,
+        "pinDistanceAtClickXY": 29.90505810050792,
+        "insidePreInputPinRadius": true,
+        "photo": "trial-05-after.png",
+        "photoSha256": "9fe468272f5837752b45dd3cd0ddd4aab53c2c231ffd1fef56a9b7c7deb68643"
+      },
+      {
+        "trial": 6,
+        "action": 18,
+        "holdMs": 250,
+        "sentPlaySec": 65.469,
+        "goalCountBefore": "2",
+        "ordinaryHandValid": true,
+        "anchorStyle": [
+          "160px",
+          "67px"
+        ],
+        "handClasses": "",
+        "requestedXY": [
+          160,
+          97.95425033569336
+        ],
+        "pointerDownXY": [
+          160,
+          97.95425415039062
+        ],
+        "clickXY": [
+          160,
+          98
+        ],
+        "sendHoldMs": 249,
+        "eventTimestampHoldMs": 249.0,
+        "listenerDownUpMs": 190.800048828125,
+        "worldOpened": true,
+        "positionChanged": false,
+        "sendToObservedMovementMs": null,
+        "sendToObservedWorldMs": 462,
+        "windowCompletedMs": 1138,
+        "pinDistanceAtClickXY": 29.90505810050792,
+        "insidePreInputPinRadius": true,
+        "photo": "trial-06-after.png",
+        "photoSha256": "4de9847e0a33462f375d10adae76f3792e5d353880d5483dabf791cffba59489"
+      },
+      {
+        "trial": 7,
+        "action": 20,
+        "holdMs": 80,
+        "sentPlaySec": 68.734,
+        "goalCountBefore": "2",
+        "ordinaryHandValid": true,
+        "anchorStyle": [
+          "160px",
+          "67px"
+        ],
+        "handClasses": "",
+        "requestedXY": [
+          160,
+          97.0306510925293
+        ],
+        "pointerDownXY": [
+          160,
+          97.03065490722656
+        ],
+        "clickXY": [
+          160,
+          97
+        ],
+        "sendHoldMs": 80,
+        "eventTimestampHoldMs": 79.89999999850988,
+        "listenerDownUpMs": 6.5,
+        "worldOpened": false,
+        "positionChanged": true,
+        "sendToObservedMovementMs": 611.199951171875,
+        "sendToObservedWorldMs": null,
+        "windowCompletedMs": 1266,
+        "pinDistanceAtClickXY": 30.827139017345644,
+        "insidePreInputPinRadius": false,
+        "photo": "trial-07-after.png",
+        "photoSha256": "b0829f8e72d7dcd584f97e3bbe853d9ad09bb77cf0de6ceaf612b989ad359f57"
+      },
+      {
+        "trial": 8,
+        "action": 21,
+        "holdMs": 250,
+        "sentPlaySec": 72.214,
+        "goalCountBefore": "2",
+        "ordinaryHandValid": true,
+        "anchorStyle": [
+          "96px",
+          "147px"
+        ],
+        "handClasses": "dn",
+        "requestedXY": [
+          96,
+          114
+        ],
+        "pointerDownXY": [
+          96,
+          114
+        ],
+        "clickXY": [
+          96,
+          114
+        ],
+        "sendHoldMs": 249,
+        "eventTimestampHoldMs": 249.10000000149012,
+        "listenerDownUpMs": 124.89990234375,
+        "worldOpened": false,
+        "positionChanged": true,
+        "sendToObservedMovementMs": 660.5,
+        "sendToObservedWorldMs": null,
+        "windowCompletedMs": 1110,
+        "pinDistanceAtClickXY": 52.046947986497564,
+        "insidePreInputPinRadius": false,
+        "photo": "trial-08-after.png",
+        "photoSha256": "77a89815ba236bffb6ec2f6a9f3e6118c47a902481b2e40ef68fc501aca8fa2f"
+      },
+      {
+        "trial": 9,
+        "action": 22,
+        "holdMs": 80,
+        "sentPlaySec": 77.142,
+        "goalCountBefore": "2",
+        "ordinaryHandValid": true,
+        "anchorStyle": [
+          "96px",
+          "131px"
+        ],
+        "handClasses": "dn",
+        "requestedXY": [
+          96,
+          98
+        ],
+        "pointerDownXY": [
+          96,
+          98
+        ],
+        "clickXY": [
+          96,
+          98
+        ],
+        "sendHoldMs": 81,
+        "eventTimestampHoldMs": 81.0,
+        "listenerDownUpMs": 7.0,
+        "worldOpened": false,
+        "positionChanged": true,
+        "sendToObservedMovementMs": 475.800048828125,
+        "sendToObservedWorldMs": null,
+        "windowCompletedMs": 1181,
+        "pinDistanceAtClickXY": 62.8727739305332,
+        "insidePreInputPinRadius": false,
+        "photo": "trial-09-after.png",
+        "photoSha256": "afe2bc524d3c6c6465a190bdcc913baac4e3c302ba58e5ed1028a5cc9ac11245"
+      },
+      {
+        "trial": 10,
+        "action": 23,
+        "holdMs": 250,
+        "sentPlaySec": 81.106,
+        "goalCountBefore": "2",
+        "ordinaryHandValid": true,
+        "anchorStyle": [
+          "48px",
+          "227px"
+        ],
+        "handClasses": "",
+        "requestedXY": [
+          48,
+          260
+        ],
+        "pointerDownXY": [
+          48,
+          260
+        ],
+        "clickXY": [
+          48,
+          260
+        ],
+        "sendHoldMs": 251,
+        "eventTimestampHoldMs": 250.89999999850988,
+        "listenerDownUpMs": 171.39990234375,
+        "worldOpened": false,
+        "positionChanged": true,
+        "sendToObservedMovementMs": 758.89990234375,
+        "sendToObservedWorldMs": null,
+        "windowCompletedMs": 1255,
+        "pinDistanceAtClickXY": 175.02642657631105,
+        "insidePreInputPinRadius": false,
+        "photo": "trial-10-after.png",
+        "photoSha256": "06486d5944f3f5de47922bf345e1864e6a2a1b67623d7455589492f48a279598"
+      }
+    ],
+    "rawArtifacts": {
+      "follow.json": "311453d64196d01cbb67896f71ab776cdd07d27f7f951ad98f1f69348b9fdd2f",
+      "execution-condition.json": "9aa9397418342efbc41358f89d1e6b3bb22a52ab461db8b614a342a16eb5a80d",
+      "historical-navigation-paint.json": "df8f41d2a4986d5ef779a1d30e653f6b2ac085579be75ea4e0801db834a25a6d",
+      "lifecycle.json": "9a255e89283a879bd675b69764ebe6060cf8a1e0b244de1f423e1f555790c779",
+      "exit-code.txt": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    "drivers": {
+      "follow.cjs": {
+        "sha256": "46c6bd1c75d212f84a3885cc43a230b2c5f02bbf44f5fce32cf9daad53cc1300",
+        "parent57Sha256": "8d30e72767aa1b66510c35f2ad9d62a17f551c727fb7e1d98772de5538f50ef7"
+      },
+      "driver-once.cjs": {
+        "sha256": "5037ffdabc9a3cf49943861dc4696ca4e618dbdc6df260cc27c2f93e1b00d8d6",
+        "parent57Sha256": "a8f8a0e6b21b3228deed2400422c742b559623c2a753e7bf28952c08142bacad"
+      },
+      "driver-input.txt": {
+        "sha256": "38d15cf4285f41e83f00de0443c1f6e224f16078cd1119bc0478b1ce7b2cff00",
+        "parent57Sha256": "48aa7e8e373b9fc1ba71fb923e9b545e9d37307a2a5940900cd00652eef2c0a2"
+      }
+    },
+    "checks": {
+      "cpu4AcknowledgedBeforeNavigation": true,
+      "cpuReset1Acknowledged": true,
+      "browserCloseAcknowledged": true,
+      "runIssues": [],
+      "trialValidation": {
+        "recordedTrials": 10,
+        "hold80Count": 5,
+        "hold250Count": 5,
+        "allInputsAcknowledged": true,
+        "allObservationWindowsCompleted": true,
+        "sequentialTrialIndices": true,
+        "allTrialPhotosSaved": true
+      },
+      "allEventsTrusted": true,
+      "errors": [],
+      "localLeaflet": {
+        "leaflet.js": {
+          "file": "/workspace/ricepia-judge/node_modules/leaflet/dist/leaflet.js",
+          "sha256": "db49d009c841f5ca34a888c96511ae936fd9f5533e90d8b2c4d57596f4e5641a"
+        },
+        "leaflet.css": {
+          "file": "/workspace/ricepia-judge/node_modules/leaflet/dist/leaflet.css",
+          "sha256": "a7837102824184820dfa198d1ebcd109ff6d0ff9a2672a074b9a1b4d147d04c6"
+        }
+      },
+      "routeCounts": {
+        "continue-local": 180,
+        "fulfill-local-leaflet": 2,
+        "fulfill-empty-no-external-request": 6
+      }
+    }
+  },
+  "after": {
+    "sourceHead": "dc1c9d2ee78fc8edf2e693e44f6117de23aab177",
+    "pixelSha256": "cd15578eb309addec0943581db9c671b331e18b735591567291afe2210d22975",
+    "servedPixelSha256": "cd15578eb309addec0943581db9c671b331e18b735591567291afe2210d22975",
+    "httpStatus": 200,
+    "command": "node /workspace/scratch/first-minute/browser-resumed.cjs < /workspace/scratch/first-minute/round-57/repro-after/driver-input.txt > /workspace/scratch/first-minute/round-57/repro-after/run.log 2>&1",
+    "actualExitCode": 0,
+    "counts": {
+      "allActions": 17,
+      "validTrials": 10,
+      "worldOpenings": 0,
+      "positionResponses": 10,
+      "noWorldOrPositionResponse": 0,
+      "visibleReturnActions": 0,
+      "trustedEvents": 51
+    },
+    "byHold": {
+      "80": {
+        "trials": 5,
+        "worldOpened": 0,
+        "positionChanged": 5,
+        "sendHoldMs": {
+          "min": 79,
+          "median": 80,
+          "max": 81
+        },
+        "eventTimestampHoldMs": {
+          "min": 79.0,
+          "median": 80.10000000149012,
+          "max": 81.10000000149012
+        }
+      },
+      "250": {
+        "trials": 5,
+        "worldOpened": 0,
+        "positionChanged": 5,
+        "sendHoldMs": {
+          "min": 249,
+          "median": 251,
+          "max": 251
+        },
+        "eventTimestampHoldMs": {
+          "min": 249.10000000149012,
+          "median": 250.89999999850988,
+          "max": 251.10000000149012
+        }
+      }
+    },
+    "trials": [
+      {
+        "trial": 1,
+        "action": 8,
+        "holdMs": 80,
+        "sentPlaySec": 43.273,
+        "goalCountBefore": "2",
+        "ordinaryHandValid": true,
+        "anchorStyle": [
+          "112px",
+          "67px"
+        ],
+        "handClasses": "",
+        "requestedXY": [
+          112,
+          100
+        ],
+        "pointerDownXY": [
+          112,
+          100
+        ],
+        "clickXY": [
+          112,
+          100
+        ],
+        "sendHoldMs": 81,
+        "eventTimestampHoldMs": 81.10000000149012,
+        "listenerDownUpMs": 6.199951171875,
+        "worldOpened": false,
+        "positionChanged": true,
+        "sendToObservedMovementMs": 451,
+        "sendToObservedWorldMs": null,
+        "windowCompletedMs": 1119,
+        "pinDistanceAtClickXY": 44.320565204159834,
+        "insidePreInputPinRadius": false,
+        "photo": "trial-01-after.png",
+        "photoSha256": "f1305b2d8a0742c322eb4c5c7dfbe0640ffe206006af6aea2103183c347c23ee"
+      },
+      {
+        "trial": 2,
+        "action": 9,
+        "holdMs": 250,
+        "sentPlaySec": 46.843,
+        "goalCountBefore": "2",
+        "ordinaryHandValid": true,
+        "anchorStyle": [
+          "112px",
+          "195px"
+        ],
+        "handClasses": "dn",
+        "requestedXY": [
+          112,
+          162
+        ],
+        "pointerDownXY": [
+          112,
+          162
+        ],
+        "clickXY": [
+          112,
+          162
+        ],
+        "sendHoldMs": 249,
+        "eventTimestampHoldMs": 249.10000000149012,
+        "listenerDownUpMs": 275.699951171875,
+        "worldOpened": false,
+        "positionChanged": true,
+        "sendToObservedMovementMs": 836.5,
+        "sendToObservedWorldMs": null,
+        "windowCompletedMs": 1144,
+        "pinDistanceAtClickXY": 51.559074151636935,
+        "insidePreInputPinRadius": false,
+        "photo": "trial-02-after.png",
+        "photoSha256": "6be0fe1a12f54b6b391d3b3c59856f02a377f011e2d1b8e2ab41c091409dcbe9"
+      },
+      {
+        "trial": 3,
+        "action": 10,
+        "holdMs": 80,
+        "sentPlaySec": 50.45,
+        "goalCountBefore": "2",
+        "ordinaryHandValid": true,
+        "anchorStyle": [
+          "192px",
+          "195px"
+        ],
+        "handClasses": "dn",
+        "requestedXY": [
+          192,
+          162
+        ],
+        "pointerDownXY": [
+          192,
+          162
+        ],
+        "clickXY": [
+          192,
+          162
+        ],
+        "sendHoldMs": 80,
+        "eventTimestampHoldMs": 80.10000000149012,
+        "listenerDownUpMs": 6.89990234375,
+        "worldOpened": false,
+        "positionChanged": true,
+        "sendToObservedMovementMs": 664.7001953125,
+        "sendToObservedWorldMs": null,
+        "windowCompletedMs": 1151,
+        "pinDistanceAtClickXY": 53.504385220389615,
+        "insidePreInputPinRadius": false,
+        "photo": "trial-03-after.png",
+        "photoSha256": "6c96c8ecb432af9185f595945a3e7a48a274fda2a94ed2037b81da105d2a9fb7"
+      },
+      {
+        "trial": 4,
+        "action": 11,
+        "holdMs": 250,
+        "sentPlaySec": 53.788,
+        "goalCountBefore": "2",
+        "ordinaryHandValid": true,
+        "anchorStyle": [
+          "96px",
+          "163px"
+        ],
+        "handClasses": "dn",
+        "requestedXY": [
+          96,
+          130
+        ],
+        "pointerDownXY": [
+          96,
+          130
+        ],
+        "clickXY": [
+          96,
+          130
+        ],
+        "sendHoldMs": 250,
+        "eventTimestampHoldMs": 250.10000000149012,
+        "listenerDownUpMs": 261.199951171875,
+        "worldOpened": false,
+        "positionChanged": true,
+        "sendToObservedMovementMs": 697.800048828125,
+        "sendToObservedWorldMs": null,
+        "windowCompletedMs": 1229,
+        "pinDistanceAtClickXY": 52.63533700844456,
+        "insidePreInputPinRadius": false,
+        "photo": "trial-04-after.png",
+        "photoSha256": "5e68f49223b22182eebc88d6f6ecac5b16d2cd78d1d0c3c931ff0fa203fd4054"
+      },
+      {
+        "trial": 5,
+        "action": 12,
+        "holdMs": 80,
+        "sentPlaySec": 57.499,
+        "goalCountBefore": "2",
+        "ordinaryHandValid": true,
+        "anchorStyle": [
+          "64px",
+          "195px"
+        ],
+        "handClasses": "dn",
+        "requestedXY": [
+          64,
+          162
+        ],
+        "pointerDownXY": [
+          64,
+          162
+        ],
+        "clickXY": [
+          64,
+          162
+        ],
+        "sendHoldMs": 79,
+        "eventTimestampHoldMs": 79.0,
+        "listenerDownUpMs": 4.699951171875,
+        "worldOpened": false,
+        "positionChanged": true,
+        "sendToObservedMovementMs": 374.60009765625,
+        "sendToObservedWorldMs": null,
+        "windowCompletedMs": 1306,
+        "pinDistanceAtClickXY": 98.79344981879478,
+        "insidePreInputPinRadius": false,
+        "photo": "trial-05-after.png",
+        "photoSha256": "9f92e855d65c16f442acb991aebccf70e0e61724fe30dd73acb256b5831c7e7c"
+      },
+      {
+        "trial": 6,
+        "action": 13,
+        "holdMs": 250,
+        "sentPlaySec": 60.574,
+        "goalCountBefore": "2",
+        "ordinaryHandValid": true,
+        "anchorStyle": [
+          "32px",
+          "243px"
+        ],
+        "handClasses": "",
+        "requestedXY": [
+          32,
+          276
+        ],
+        "pointerDownXY": [
+          32,
+          276
+        ],
+        "clickXY": [
+          32,
+          276
+        ],
+        "sendHoldMs": 251,
+        "eventTimestampHoldMs": 250.89999999850988,
+        "listenerDownUpMs": 181.0,
+        "worldOpened": false,
+        "positionChanged": true,
+        "sendToObservedMovementMs": 629.10009765625,
+        "sendToObservedWorldMs": null,
+        "windowCompletedMs": 1122,
+        "pinDistanceAtClickXY": 203.42831357698077,
+        "insidePreInputPinRadius": false,
+        "photo": "trial-06-after.png",
+        "photoSha256": "51e92842c98e331b5e80dbe718919e016e2d85d69e82fc41252674923fba65ba"
+      },
+      {
+        "trial": 7,
+        "action": 14,
+        "holdMs": 80,
+        "sentPlaySec": 64.596,
+        "goalCountBefore": "2",
+        "ordinaryHandValid": true,
+        "anchorStyle": [
+          "144px",
+          "307px"
+        ],
+        "handClasses": "",
+        "requestedXY": [
+          144,
+          340
+        ],
+        "pointerDownXY": [
+          144,
+          340
+        ],
+        "clickXY": [
+          144,
+          340
+        ],
+        "sendHoldMs": 79,
+        "eventTimestampHoldMs": 79.0,
+        "listenerDownUpMs": 75.699951171875,
+        "worldOpened": false,
+        "positionChanged": true,
+        "sendToObservedMovementMs": 587.800048828125,
+        "sendToObservedWorldMs": null,
+        "windowCompletedMs": 1168,
+        "pinDistanceAtClickXY": 218.50363103821655,
+        "insidePreInputPinRadius": false,
+        "photo": "trial-07-after.png",
+        "photoSha256": "3a7736f6212a0ec348138dbfa0d0187cc481619876f8ae70e4b93fcd0f68e393"
+      },
+      {
+        "trial": 8,
+        "action": 15,
+        "holdMs": 250,
+        "sentPlaySec": 68.916,
+        "goalCountBefore": "2",
+        "ordinaryHandValid": true,
+        "anchorStyle": [
+          "32px",
+          "259px"
+        ],
+        "handClasses": "",
+        "requestedXY": [
+          32,
+          292
+        ],
+        "pointerDownXY": [
+          32,
+          292
+        ],
+        "clickXY": [
+          32,
+          292
+        ],
+        "sendHoldMs": 251,
+        "eventTimestampHoldMs": 251.0,
+        "listenerDownUpMs": 197.900146484375,
+        "worldOpened": false,
+        "positionChanged": true,
+        "sendToObservedMovementMs": 580.900146484375,
+        "sendToObservedWorldMs": null,
+        "windowCompletedMs": 1125,
+        "pinDistanceAtClickXY": 226.14993403348006,
+        "insidePreInputPinRadius": false,
+        "photo": "trial-08-after.png",
+        "photoSha256": "f5fe865ac0e46627514fb527af204db7b6202ec3f6cbeb23c7f679b7a5421d68"
+      },
+      {
+        "trial": 9,
+        "action": 16,
+        "holdMs": 80,
+        "sentPlaySec": 76.748,
+        "goalCountBefore": "2",
+        "ordinaryHandValid": true,
+        "anchorStyle": [
+          "144px",
+          "307px"
+        ],
+        "handClasses": "",
+        "requestedXY": [
+          144,
+          340
+        ],
+        "pointerDownXY": [
+          144,
+          340
+        ],
+        "clickXY": [
+          144,
+          340
+        ],
+        "sendHoldMs": 81,
+        "eventTimestampHoldMs": 81.0,
+        "listenerDownUpMs": 5.0,
+        "worldOpened": false,
+        "positionChanged": true,
+        "sendToObservedMovementMs": 365.400146484375,
+        "sendToObservedWorldMs": null,
+        "windowCompletedMs": 1191,
+        "pinDistanceAtClickXY": 221.32885923044665,
+        "insidePreInputPinRadius": false,
+        "photo": "trial-09-after.png",
+        "photoSha256": "7515d495b7da086285a38160a83eda4d904f58ccc41dff303b269632f8249c49"
+      },
+      {
+        "trial": 10,
+        "action": 17,
+        "holdMs": 250,
+        "sentPlaySec": 79.884,
+        "goalCountBefore": "2",
+        "ordinaryHandValid": true,
+        "anchorStyle": [
+          "112px",
+          "163px"
+        ],
+        "handClasses": "dn",
+        "requestedXY": [
+          112,
+          130
+        ],
+        "pointerDownXY": [
+          112,
+          130
+        ],
+        "clickXY": [
+          112,
+          130
+        ],
+        "sendHoldMs": 251,
+        "eventTimestampHoldMs": 251.10000000149012,
+        "listenerDownUpMs": 240.39990234375,
+        "worldOpened": false,
+        "positionChanged": true,
+        "sendToObservedMovementMs": 764,
+        "sendToObservedWorldMs": null,
+        "windowCompletedMs": 1154,
+        "pinDistanceAtClickXY": 85.04770570061388,
+        "insidePreInputPinRadius": false,
+        "photo": "trial-10-after.png",
+        "photoSha256": "bcb8561903ca316703770e534380757ebaa50945d2c574a8dee3828c750e5120"
+      }
+    ],
+    "rawArtifacts": {
+      "follow.json": "4c9763a4ff30bb4c3cb7818a14fc09815dfd1264dc2b76337996ff89236f4826",
+      "execution-condition.json": "1fcd251b90de50f224359d3ec8c8d3883834f849e5529ed03c57ebc84e02a43b",
+      "historical-navigation-paint.json": "45445431bb44b817a366dad613898a016ea35187cf4560519121a501bf8f261a",
+      "lifecycle.json": "b6a983e2a991c68ed3f7cc42544b3b266e4e7104dedf9a3a6e113ab7880a913b",
+      "exit-code.txt": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    "drivers": {
+      "follow.cjs": {
+        "beforeSha256": "46c6bd1c75d212f84a3885cc43a230b2c5f02bbf44f5fce32cf9daad53cc1300",
+        "afterSha256": "0122732ff28debbbce30730e4063aa61ee936bd02af3de7bbc08533e020d2f7c",
+        "reverseSubstitutionIdentical": true
+      },
+      "driver-once.cjs": {
+        "beforeSha256": "5037ffdabc9a3cf49943861dc4696ca4e618dbdc6df260cc27c2f93e1b00d8d6",
+        "afterSha256": "36e1dc3c15f2b68c0d769036e7b42d623729ca11e3add620cd6f26476c5412f8",
+        "reverseSubstitutionIdentical": true
+      },
+      "driver-input.txt": {
+        "beforeSha256": "38d15cf4285f41e83f00de0443c1f6e224f16078cd1119bc0478b1ce7b2cff00",
+        "afterSha256": "542082e4e41b1d7b77b3d1c77531722627f7986075ed088dd0da7fe9afdc6fcc",
+        "reverseSubstitutionIdentical": true
+      }
+    },
+    "checks": {
+      "cpu4AcknowledgedBeforeNavigation": true,
+      "cpuReset1Acknowledged": true,
+      "browserCloseAcknowledged": true,
+      "runIssues": [],
+      "trialValidation": {
+        "recordedTrials": 10,
+        "hold80Count": 5,
+        "hold250Count": 5,
+        "allInputsAcknowledged": true,
+        "allObservationWindowsCompleted": true,
+        "sequentialTrialIndices": true,
+        "allTrialPhotosSaved": true
+      },
+      "allEventsTrusted": true,
+      "errors": [],
+      "localLeaflet": {
+        "leaflet.js": {
+          "file": "/workspace/ricepia-judge/node_modules/leaflet/dist/leaflet.js",
+          "sha256": "db49d009c841f5ca34a888c96511ae936fd9f5533e90d8b2c4d57596f4e5641a"
+        },
+        "leaflet.css": {
+          "file": "/workspace/ricepia-judge/node_modules/leaflet/dist/leaflet.css",
+          "sha256": "a7837102824184820dfa198d1ebcd109ff6d0ff9a2672a074b9a1b4d147d04c6"
+        }
+      },
+      "routeCounts": {
+        "continue-local": 175,
+        "fulfill-local-leaflet": 2,
+        "fulfill-empty-no-external-request": 6
+      }
+    }
+  },
+  "images": {
+    "before.png": {
+      "source": "repro/trial-01-after.png",
+      "sha256": "e5a7795581f86081ca14e80c2ed407f13a05470611fa2843ec2e43619fc56b7e",
+      "screen": "world map"
+    },
+    "after.png": {
+      "source": "repro-after/trial-01-after.png",
+      "sha256": "f1305b2d8a0742c322eb4c5c7dfbe0640ffe206006af6aea2103183c347c23ee",
+      "screen": "walking map"
+    }
+  },
+  "validation": {
+    "cwd": "/workspace/ricepia-nishio-moving-hand",
+    "regressionRed": {
+      "command": "NISHIO_SOURCE_ROOT=/workspace/ricepia-loop-current PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p test_nishio_moving_hand.py -v",
+      "sourceRoot": "/workspace/ricepia-loop-current",
+      "methods": 3,
+      "failureEntries": 5,
+      "failureBreakdown": "3 subtest failures in1method plus2method failures",
+      "elapsedSeconds": 0.816,
+      "actualExitCode": 1,
+      "logSha256": "c16270b10765e7e5065cf056fc9039a32a4c31f08ea00f54b203ab4c676c1ad0"
+    },
+    "regressionGreen": {
+      "command": "NISHIO_SOURCE_ROOT=/workspace/ricepia-nishio-moving-hand PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p test_nishio_moving_hand.py -v",
+      "methods": 3,
+      "passed": 3,
+      "elapsedSeconds": 0.654,
+      "actualExitCode": 0,
+      "logSha256": "03f83bf94a23143d7d18fd89a713f25f918854f39ba8cf5c584df1824c86d6bc"
+    },
+    "nearbyExisting": {
+      "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=tests NODE_OPTIONS=--require=/workspace/scratch/first-minute/offline.cjs python3 -m unittest test_maze_loop4_200 test_maze_loop4_206 test_maze_loop4_207 test_maze_loop4_208 test_maze_loop4_209 -v",
+      "tests": 85,
+      "passed": 85,
+      "elapsedSeconds": 4.352,
+      "actualExitCode": 0,
+      "logSha256": "939417fa0d12861853baba7b7db96c0743c510ebc1fa72fd03a8a1c169adf572"
+    },
+    "pytest": {
+      "command": "pytest tests/",
+      "actualExitCode": 127,
+      "error": "/bin/bash: line 1: pytest: command not found",
+      "logSha256": "884c356a17af2535f8a7a3bbe8d088034a1e58ef021200c45eff7b237b232aa5"
+    },
+    "fullNode": {
+      "status": "completed: failed; actual native exit1",
+      "command": "NODE_OPTIONS=--require=/workspace/scratch/first-minute/offline.cjs CHROMIUM=/usr/bin/chromium LEAFLET_DIR=/workspace/ricepia-nishio-moving-hand/node_modules/leaflet/dist PLAYTEST_PORT=8899 node tools/playtest.js /workspace/scratch/first-minute/round-57/validation/playtest",
+      "startEvidenceSha256": "b0a60030818a438029713c566323af88097a10fddbec0b9ed8780f157f85a4e7",
+      "result": {
+        "totalGroups": 247,
+        "categoryCounts": {
+          "booleanTrue": 43,
+          "objectOkTrue": 173,
+          "booleanFalse": 0,
+          "objectOkFalse": 11,
+          "noExplicitVerdict": 20
+        },
+        "explicitSuccessCount": 216,
+        "explicitFailureCount": 11,
+        "noExplicitVerdictCount": 20,
+        "explicitFailureNames": [
+          "roll",
+          "swipeHold",
+          "a2hsAutoHide",
+          "tapDemoQuick",
+          "lowGoalDemo",
+          "infoSecondTap",
+          "lowDemoKept",
+          "restFinger",
+          "tiltDemoShown",
+          "godotRec",
+          "speedLines"
+        ],
+        "nativeFailureMessageCount": 11,
+        "errors": [],
+        "topLevelOk": false
+      },
+      "actualExitCode": 1,
+      "completedAtUTC": "2026-11-13T00:26:32Z",
+      "reportSha256": "afff9dd241a4f24f9c27e937f56a42da70bcfd3af2e9d7951e24f0192b69cd9f",
+      "exitFileSha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+      "independentSummarySha256": "287175634e38541f50d4e9a3a1938f96b0d90ce5e4bbb25e1c55ba27a3f71977",
+      "sourceHashesMatchStartRecord": true,
+      "comparisonWithRound53": {
+        "differentProductAndTestVersions": true,
+        "previousToolsSha256": "ecf711780051b84a58c811c60e9bd3dda2be7e06e6bbf38df9347d26fcd8d902",
+        "currentToolsSha256": "7b6587c6666d4027edcd71d83535c7ea5901bccc8f7db9e59d95e868953efb80",
+        "newlyExplicitFailureNames": [
+          "lowDemoKept",
+          "lowGoalDemo"
+        ],
+        "limit": "Failure-name differences compare different product/source and test versions and separate executions. New failure names do not establish a regression caused by the moving-hand change; passing names do not establish a causal repair."
+      },
+      "supplementalComparison": {
+        "status": "completed: each source1passed/1failed, native exit1; original full-run11failures preserved",
+        "checks": [
+          "lowGoalDemo",
+          "lowDemoKept"
+        ],
+        "runnerSha256": "a985810e66331972de4a9a240777b140b21c7d4f43a7356301fced89ae6002d2",
+        "independentComparisonSha256": "20900c54ff6e672ca8a58d11506d27bcb664c50a49f18f6a089057f53fb8f692",
+        "sameToolsAsFullRun": true,
+        "fixtureBasedNotNaturalPlay": true,
+        "versions": {
+          "before": {
+            "sourceHead": "dc1c9d2ee78fc8edf2e693e44f6117de23aab177",
+            "pixelSha256": "7c1f8baed5cc3dc09b985a98f6a55f9a20302442477005e1123cf74bb6fa6f70",
+            "elapsedSeconds": 52.69,
+            "actualExitCode": 1,
+            "counts": {
+              "checkGroups": 2,
+              "groupsPassed": 1,
+              "groupsFailed": 1,
+              "lowGoalRows": 4,
+              "lowGoalRowsPassed": 3,
+              "distinctClosedContexts": 5
+            },
+            "checks": {
+              "lowDemoKept": {
+                "ready": true,
+                "walked": true,
+                "a": {
+                  "on": true,
+                  "x": 344,
+                  "y": 168,
+                  "inMap": true,
+                  "free": 135,
+                  "status": false,
+                  "guide": "ibun-parish"
+                },
+                "b": {
+                  "on": true,
+                  "x": 284,
+                  "y": 126,
+                  "inMap": true,
+                  "free": 135,
+                  "status": false,
+                  "guide": "ibun-parish"
+                },
+                "ok": true
+              },
+              "lowGoalDemo": {
+                "rows": [
+                  {
+                    "vp": "568x320",
+                    "k": 1,
+                    "left": 1,
+                    "shown": false,
+                    "at": null,
+                    "inMap": null,
+                    "onRice": null
+                  },
+                  {
+                    "vp": "568x320",
+                    "k": 2,
+                    "left": 2,
+                    "shown": true,
+                    "at": 3.21,
+                    "inMap": true,
+                    "onRice": false
+                  },
+                  {
+                    "vp": "844x390",
+                    "k": 1,
+                    "left": 1,
+                    "shown": true,
+                    "at": 2.92,
+                    "inMap": true,
+                    "onRice": false
+                  },
+                  {
+                    "vp": "844x390",
+                    "k": 2,
+                    "left": 2,
+                    "shown": true,
+                    "at": 2.86,
+                    "inMap": true,
+                    "onRice": false
+                  }
+                ],
+                "ok": false
+              }
+            },
+            "artifactHashes": {
+              "result.json": "0dd631a1b4f14df7331533ed466794557534396870a12f8fb3c86faf5a7e4128",
+              "actualExit": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+              "run.log": "7d2c5c6de72061dee9017d7eda019d33533e3413a9c4df6bd93370d46e948f8c",
+              "runner": "a985810e66331972de4a9a240777b140b21c7d4f43a7356301fced89ae6002d2",
+              "manifest": "4e49d4f24774c1ef9ecf80dec86854df8762e8b8726b25c585465d7107d1c953",
+              "config": "fb8852f4d8be31a6528b77193d6bbaa47603b7acbbe0fba672667e42a23cb80c"
+            },
+            "matches": 113,
+            "totalComparisons": 113,
+            "mismatches": [],
+            "command": "node /workspace/scratch/first-minute/round-57/low-guide-paired/check.cjs /workspace/scratch/first-minute/round-57/low-guide-paired/before-dc1.json",
+            "sourceLocalHttpMatches": "6 checkpoints ×5files confirmed",
+            "cleanup": {
+              "contextsClosed": 5,
+              "helpersSettled": 2,
+              "browserCloseAcknowledged": true,
+              "pageAndHarnessErrors": 0
+            }
+          },
+          "after": {
+            "sourceHead": "dc1c9d2ee78fc8edf2e693e44f6117de23aab177",
+            "pixelSha256": "cd15578eb309addec0943581db9c671b331e18b735591567291afe2210d22975",
+            "elapsedSeconds": 56.812,
+            "actualExitCode": 1,
+            "counts": {
+              "checkGroups": 2,
+              "groupsPassed": 1,
+              "groupsFailed": 1,
+              "lowGoalRows": 4,
+              "lowGoalRowsPassed": 3,
+              "distinctClosedContexts": 5
+            },
+            "checks": {
+              "lowDemoKept": {
+                "ready": true,
+                "walked": true,
+                "a": {
+                  "on": true,
+                  "x": 344,
+                  "y": 168,
+                  "inMap": true,
+                  "free": 135,
+                  "status": false,
+                  "guide": "ibun-parish"
+                },
+                "b": {
+                  "on": true,
+                  "x": 284,
+                  "y": 127,
+                  "inMap": true,
+                  "free": 135,
+                  "status": false,
+                  "guide": "ibun-parish"
+                },
+                "ok": true
+              },
+              "lowGoalDemo": {
+                "rows": [
+                  {
+                    "vp": "568x320",
+                    "k": 1,
+                    "left": 1,
+                    "shown": false,
+                    "at": null,
+                    "inMap": null,
+                    "onRice": null
+                  },
+                  {
+                    "vp": "568x320",
+                    "k": 2,
+                    "left": 2,
+                    "shown": true,
+                    "at": 4.25,
+                    "inMap": true,
+                    "onRice": false
+                  },
+                  {
+                    "vp": "844x390",
+                    "k": 1,
+                    "left": 1,
+                    "shown": true,
+                    "at": 3.08,
+                    "inMap": true,
+                    "onRice": false
+                  },
+                  {
+                    "vp": "844x390",
+                    "k": 2,
+                    "left": 2,
+                    "shown": true,
+                    "at": 2.87,
+                    "inMap": true,
+                    "onRice": false
+                  }
+                ],
+                "ok": false
+              }
+            },
+            "artifactHashes": {
+              "result.json": "0c29e4e0e89f934c0ef37875d833b27c714fb17ef687b31da222aa842e9ab102",
+              "actualExit": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+              "run.log": "4485dff72a57b4e6c18303141fa3328b4437d2ab8b3ca62a6fd02f9e866f0102",
+              "runner": "a985810e66331972de4a9a240777b140b21c7d4f43a7356301fced89ae6002d2",
+              "manifest": "4e49d4f24774c1ef9ecf80dec86854df8762e8b8726b25c585465d7107d1c953",
+              "config": "a22100fff09820fc04fda69301b788abdb414bf35e614ee6c5c12fe2592057b3"
+            },
+            "matches": 113,
+            "totalComparisons": 113,
+            "mismatches": [],
+            "command": "node /workspace/scratch/first-minute/round-57/low-guide-paired/check.cjs /workspace/scratch/first-minute/round-57/low-guide-paired/after-cd155.json",
+            "sourceLocalHttpMatches": "6 checkpoints ×5files confirmed",
+            "cleanup": {
+              "contextsClosed": 5,
+              "helpersSettled": 2,
+              "browserCloseAcknowledged": true,
+              "pageAndHarnessErrors": 0
+            }
+          }
+        },
+        "limits": [
+          "Each source is executed once in an isolated workload; timing differences are not a causal speed comparison.",
+          "The baseline lowGoalDemo failure shows that the failed568x320/1-tile condition also occurs without this11-line change; it does not prove all failure causes or conditions identical.",
+          "The original full-run11failed groups remain failed regardless of isolated results.",
+          "No physical-device or retention conclusion."
+        ]
+      }
+    },
+    "fiveSizeLayout": {
+      "status": "completed with separate390 supplement; v1 exit1 remains;22 observed pairs cover20 distinct size/state types",
+      "sizes": [
+        [
+          320,
+          568
+        ],
+        [
+          390,
+          844
+        ],
+        [
+          568,
+          320
+        ],
+        [
+          844,
+          390
+        ],
+        [
+          820,
+          1180
+        ]
+      ],
+      "result": {
+        "observedPairs": 22,
+        "distinctSizeStateTypes": 20,
+        "duplicateSizeStateTypes": [
+          "390x844 first-guide",
+          "390x844 normal-guide"
+        ],
+        "v1UnestablishedRetained": [
+          "390x844 world",
+          "390x844 returned"
+        ],
+        "newRecordedControlIssues": 0,
+        "newRecordedControlOverlaps": 0,
+        "existingVisualObservation": {
+          "severity": "Existing documented placement tradeoff; not a new PR finding",
+          "size": "568x320",
+          "state": "returned",
+          "what": "The goal/return hint toast visually covers the middle bottom navigation tabs in both before and after originals.",
+          "interpretation": "No newly increased overlap observed. Center-hit checks remain true; control geometry does not measure optical occlusion by a pointer-transparent non-control hint. No claim of unpressability or10-trial reproduction.",
+          "codeRefs": [
+            "nishio-go/pixel.js:9067",
+            "nishio-go/style.css:301",
+            "nishio-go/style.css:501"
+          ],
+          "codeExplanation": "Existing worldToastDodge fallback explicitly places the hint over bottom tabs when other locations conflict, with pointer-events:none. Changing the visual tradeoff requires design/operator consideration; no product change here."
+        },
+        "protocolLimit": "v2 changes operation order for390 only; do not treat as a single original20/20 pass. Sampled geometry/photos do not cover all times or all control points."
+      },
+      "runs": {
+        "v1": {
+          "independentGeometrySha256": "3dd9909e14a78d583b9b4b76c44424328c5f925486fe8e75d2dee66982f8cd6b",
+          "summary": {
+            "expectedPairs": 20,
+            "completedPairs": 18,
+            "excludedPairs": 2,
+            "controlObservationsBefore": 117,
+            "controlObservationsAfter": 117,
+            "newControlIssues": 0,
+            "newOverlaps": 0,
+            "increasedOverlapAreas": 0,
+            "increasedScrollExcessPairs": 0,
+            "newHandViewportClips": 0,
+            "controlKeyChanges": 0,
+            "anyExistingControlIssuesBefore": 0,
+            "anyExistingControlIssuesAfter": 0
+          },
+          "versions": {
+            "before-dc1": {
+              "reportSHA256": "378449cd41c990c1d06eb8fa7ff6ce8e2924471d23a4d61934c4efdd54b8f79a",
+              "actualExitCode": 1,
+              "sourceRoot": "/workspace/ricepia-loop-current",
+              "sourceHead": "dc1c9d2ee78fc8edf2e693e44f6117de23aab177",
+              "browserClosed": true,
+              "allContextsClosed": true,
+              "allSourcePostchecksAgree": true,
+              "cpuSetupAndResetAcknowledged": true,
+              "allInputAcknowledged": true,
+              "inputActions": 19,
+              "actualTargetTaps": 19,
+              "normalProbes": 5,
+              "normalProbesWalked": 5,
+              "drawnArrowEntries": 4,
+              "visibleReturns": 4,
+              "command": "node /workspace/scratch/first-minute/round-57/layout/check.cjs /workspace/scratch/first-minute/round-57/layout/before-dc1.json"
+            },
+            "after-cd155": {
+              "reportSHA256": "c7a209b637d84a1d0d6d4be91eb17cfc5243dac92321c6134e9d339b9f3e58d8",
+              "actualExitCode": 1,
+              "sourceRoot": "/workspace/ricepia-nishio-moving-hand",
+              "sourceHead": "dc1c9d2ee78fc8edf2e693e44f6117de23aab177",
+              "browserClosed": true,
+              "allContextsClosed": true,
+              "allSourcePostchecksAgree": true,
+              "cpuSetupAndResetAcknowledged": true,
+              "allInputAcknowledged": true,
+              "inputActions": 20,
+              "actualTargetTaps": 20,
+              "normalProbes": 5,
+              "normalProbesWalked": 5,
+              "drawnArrowEntries": 4,
+              "visibleReturns": 4,
+              "command": "node /workspace/scratch/first-minute/round-57/layout/check.cjs /workspace/scratch/first-minute/round-57/layout/after-cd155.json"
+            }
+          }
+        },
+        "v2Supplement390": {
+          "independentGeometrySha256": "0af54a79e9b27ae878da5f264db811ade7f2e1f50080257e666ba13f82d7b053",
+          "summary": {
+            "expectedPairs": 4,
+            "completedPairs": 4,
+            "excludedPairs": 0,
+            "controlObservationsBefore": 26,
+            "controlObservationsAfter": 26,
+            "newControlIssues": 0,
+            "newOverlaps": 0,
+            "increasedOverlapAreas": 0,
+            "increasedScrollExcessPairs": 0,
+            "newHandViewportClips": 0,
+            "controlKeyChanges": 0,
+            "anyExistingControlIssuesBefore": 0,
+            "anyExistingControlIssuesAfter": 0
+          },
+          "versions": {
+            "v2/before-dc1-390": {
+              "reportSHA256": "e202808e84c901317cfb6b93114d9ddf8bec37f1eca5bc519a789fe0f63fa649",
+              "actualExitCode": 0,
+              "sourceRoot": "/workspace/ricepia-loop-current",
+              "sourceHead": "dc1c9d2ee78fc8edf2e693e44f6117de23aab177",
+              "browserClosed": true,
+              "allContextsClosed": true,
+              "allSourcePostchecksAgree": true,
+              "cpuSetupAndResetAcknowledged": true,
+              "allInputAcknowledged": true,
+              "inputActions": 4,
+              "actualTargetTaps": 4,
+              "normalProbes": 1,
+              "normalProbesWalked": 1,
+              "drawnArrowEntries": 1,
+              "visibleReturns": 1,
+              "command": "node /workspace/scratch/first-minute/round-57/layout/v2/check.cjs /workspace/scratch/first-minute/round-57/layout/v2/before-dc1.json"
+            },
+            "v2/after-cd155-390": {
+              "reportSHA256": "2444884090f34d22891efe1d426768fdbaebc3240b04a92730c293f829c4b180",
+              "actualExitCode": 0,
+              "sourceRoot": "/workspace/ricepia-nishio-moving-hand",
+              "sourceHead": "dc1c9d2ee78fc8edf2e693e44f6117de23aab177",
+              "browserClosed": true,
+              "allContextsClosed": true,
+              "allSourcePostchecksAgree": true,
+              "cpuSetupAndResetAcknowledged": true,
+              "allInputAcknowledged": true,
+              "inputActions": 4,
+              "actualTargetTaps": 4,
+              "normalProbes": 1,
+              "normalProbesWalked": 1,
+              "drawnArrowEntries": 1,
+              "visibleReturns": 1,
+              "command": "node /workspace/scratch/first-minute/round-57/layout/v2/check.cjs /workspace/scratch/first-minute/round-57/layout/v2/after-cd155.json"
+            }
+          }
+        }
+      },
+      "visualReview": {
+        "status": "completed: original image files directly viewed; no new issue observed in captured scope",
+        "originalImageFilesDirectlyViewed": 56,
+        "v1OriginalImagesReviewed": 46,
+        "v2OriginalImagesReviewed": 10,
+        "controlObservationsBefore": 143,
+        "controlObservationsAfter": 143,
+        "combinedReviewSha256": "7fc6a7941dbe770555f74c7d84fc73b993889750870c56e9418c02558681fd19",
+        "sourceArtifacts": {
+          "visual-comparison.json": "702eb18f5d224c9f8e60bdb3424d5fc6ae207c5ff2f8f551bd414ca690393d6d",
+          "visual-comparison-v2.json": "126afde77acde0b4384a13c320618acc85fd42d2b5efed08e96b08685f2aa9ca",
+          "geometry-comparison.json": "3dd9909e14a78d583b9b4b76c44424328c5f925486fe8e75d2dee66982f8cd6b",
+          "geometry-comparison-v2.json": "0af54a79e9b27ae878da5f264db811ade7f2e1f50080257e666ba13f82d7b053"
+        },
+        "newProblems": {
+          "visualGuideOrLabelOrControlClipping": 0,
+          "visualControlOverlapIncrease": 0,
+          "recordedViewportClips": 0,
+          "recordedAncestorClips": 0,
+          "recordedCenterHitMisses": 0,
+          "recordedDisabledControls": 0,
+          "recordedControlOverlaps": 0,
+          "recordedScrollExcessChanges": 0,
+          "recordedGuideHostViewportClips": 0
+        },
+        "allowedClaim": "Five requested sizes and four state types are covered using18 primary pairs and4 supplemental390 pairs(two overlapping types). Across56 original-image files and143 control observations per version, no new clipping/overlap/recorded hit-test regression was found. Existing toast-over-tab placement remains in both.",
+        "notAllowedClaims": [
+          "Both v1 runs passed20/20 or exit0.",
+          "All optical overlaps are absent.",
+          "Every control point was exercised or every animation frame was inspected.",
+          "Actual player retention, real fingers/sensors/network/audio were verified.",
+          "Supplemental v2 erases original opportunity failures."
+        ]
+      }
+    },
+    "fullUnit": {
+      "status": "not run yet",
+      "command": null,
+      "result": null,
+      "actualExitCode": null
+    }
+  },
+  "limits": [
+    "Measured world transitions6/10→0/10 and movement4/10→10/10 in this protocol;no real player dropout rate was measured.",
+    "No blanket latency/performance claim;CPU4 is simulated anduncalibrated,observer/screenshot work andnatural routes vary.",
+    "Plain fallback remains when no center-safe orientation is available;not all hands/finger positions guaranteed safe.",
+    "Before andafter supplementary trials continue beyond60s;not merged into primary first-minute metrics.",
+    "Tilt sensors,real fingers,network speed andphysical displays remain unverified."
+  ],
+  "operatorJudgment": [
+    "通常の手の拡大・通常手全体へのタップ支援拡張・矢印の直接タップ規則変更は採用していない。",
+    "初回click許可/最初の大きい手本/止まったときの手本/開始画面なし/到着カードなし/既存fallbackは保持。",
+    "568x320 returned hint-over-tabs is an existing documented pointer-transparent placement tradeoff (pixel.js:9067; style.css:501). Changing it is an operator decision, not a new finding in this change."
+  ],
+  "publication": {
+    "status": "merge held: failed full browser test; full Python checks pending",
+    "rule": ".claude/skills/ricepia-flow/SKILL.md:212",
+    "ruleUrl": "https://github.com/shota0617/ricepia-judge/blob/dc1c9d2ee78fc8edf2e693e44f6117de23aab177/.claude/skills/ricepia-flow/SKILL.md#L212",
+    "quote": "Codex の 指摘が のこっている・テストが 落ちている・運営者の 判断が いる 変更は、マージせずに 伝える",
+    "claim": "No merge, publication or all-tests-pass claim."
+  },
+  "performance": {
+    "sourceReport": "round-57/performance-review.json",
+    "sourceReportSha256": "7d68c183d05ed1236aa7af5bff088cd789fdc7823c4d836e6805d59d83ba0301",
+    "sourceArtifactSha256": {
+      "beforeFollow": "311453d64196d01cbb67896f71ab776cdd07d27f7f951ad98f1f69348b9fdd2f",
+      "afterFollow": "4c9763a4ff30bb4c3cb7818a14fc09815dfd1264dc2b76337996ff89236f4826"
+    },
+    "comparison": "First7 preparatory actions had matching starting coordinates,integer click coordinates andrequested80ms;one run per source,not repeated timing trials.",
+    "sendToObservedCoordinateChangeMedianMs": {
+      "before": 519.0,
+      "after": 518.5
+    },
+    "slowerAfterActions": [
+      6,
+      7
+    ],
+    "additionalProbesPerOrientation": {
+      "normalMaximum": 17,
+      "invertedMaximum": 15
+    },
+    "limits": "No claim of speed improvement,significance,performance equivalence orabsence of degradation.Function duration andworst-case placement-search cost remain unmeasured."
+  }
+}

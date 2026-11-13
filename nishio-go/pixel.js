@@ -9630,6 +9630,20 @@ function tapDemoSpot(path, first) {   // 手本の 指先を 置く 点と 置�
         if (!plain) plain = { q, up: lay.up, side: lay.side, hand: false };
       }
     }
+    if (!first && plain && slop === DEMO_SLOP_PX) {   // 通常の手が置けないときだけ、既存9点の間の4点でも18pxの余裕と中央の安全を保てる置き方を探す。
+      midpoints: for (const d of DEMO_CELLS) {
+        const i = base + d;
+        if (i < 1 || i > last) continue;
+        for (const [dx, dy] of [[0.5, 0.5], [1.5, 0.5], [0.5, 1.5], [1.5, 1.5]]) {
+          const q = tileClient(path[i][0] * MZ_K + dx, path[i][1] * MZ_K + dy);
+          if (Math.hypot(q.x - rc.x, q.y - rc.y) < DEMO_NEAR_PX) continue;
+          const lay = tapDemoLayout(q, first, rc, box);
+          if (!lay || !tapDemoWalks(q, slop, near)) continue;
+          const hand = tapDemoLayout(q, first, rc, box, up => tapDemoWalks({ x: q.x, y: q.y + (up ? -DEMO_HAND_TAP : DEMO_HAND_TAP) }, 0, near));
+          if (hand) { plain = { q, up: hand.up, side: hand.side, hand: true }; break midpoints; }
+        }
+      }
+    }
     if (!plain) plain = tapDemoGoalSpot(slop, first, rc, box, near);   // サイクル209（N1b）：道すじの マスに 置けなければ ゴールの 着く 近さの 中の マス
     if (plain) return plain;
   }

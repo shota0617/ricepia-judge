@@ -1,4 +1,5 @@
 """米づくり365: 最初の1分に出る飾りが、カードの日付や天気の丸に重ならない置き方になっているか(周回152)、押しただけでは案内が消えないか(周回153)、出だしのちらつきと2Dの天気(周回154)、スワイプの手本(周回155)、止まったら手本(周回158)、飛んでいる間の指・しるしのあとの手本(周回161)、おそい回線・おそいスマホ(周回164)、田んぼから はじめた スワイプ(周回165)、しるしに 重なる 丸い ◀ ▶・点の列の さいごの 絵(周回166)、読みこみが 止まった ときの 知らせ・低い 縦の 画面の 天気(周回168)。"""
+import copy
 import json
 import os
 import re
@@ -233,9 +234,14 @@ const IDS = ['swCard', 'swHand', 'swKakashi', 'swSkyWx', 'swAheadWx', 'swDayGues
       const A = R(e), o = {}, seen = [], skip = new Set(['sGame', 'swipe', 'swStage', 'swWrap', 'swPaddy', 'swPvScene', 'swSkyTint', 'swStageTint', 'swHealthTint', 'swSunLight']);   // 色みの 層(景色 ぜんぶに かける 色)は 部品 では ない
       for (const x of document.querySelectorAll('#sGame [id]')) { if (skip.has(x.id) || e.contains(x) || x.contains(e)) continue; const cs = getComputedStyle(x); if (cs.position === 'static' && !(x.parentElement && x.parentElement.id === 'swWrap')) continue; if (!vis(x)) continue; const B = R(x); if ((B[2] - B[0]) * (B[3] - B[1]) >= 0.6 * innerWidth * innerHeight) continue; seen.push(x.id);
         const ix = Math.min(A[2], B[2]) - Math.max(A[0], B[0]), iy = Math.min(A[3], B[3]) - Math.max(A[1], B[1]); if (ix > 0.5 && iy > 0.5) o[x.id] = Math.round(ix * iy); }
+      // サイクル174: ことば(#swPdWord)も 同じ 集め方で 重なりを はかる。絵の はば・やめた かざり
+      const W = document.getElementById('swPdWord'), wo = {}; let wb = null;
+      if (vis(W)) { const C = R(W); wb = C.map(Math.round); for (const x of document.querySelectorAll('#sGame [id]')) { if (skip.has(x.id) || x === W || W.contains(x) || x.contains(W) || x.id === 'swPaddy' || e.contains(x)) continue; const cs = getComputedStyle(x); if (cs.position === 'static' && x.id !== 'swHome' && !(x.parentElement && x.parentElement.id === 'swWrap')) continue; if (!vis(x)) continue; const B = R(x); if ((B[2] - B[0]) * (B[3] - B[1]) >= 0.6 * innerWidth * innerHeight) continue;
+          const ix = Math.min(C[2], B[2]) - Math.max(C[0], B[0]), iy = Math.min(C[3], B[3]) - Math.max(C[1], B[1]); if (ix > 0.5 && iy > 0.5) wo[x.id] = Math.round(ix * iy); } }
+      const ws = window.__swipe.paddyWordState ? window.__swipe.paddyWordState() : null;
       const st = window.__swipe.paddyState(), rn = e.querySelector('.pdRain');
       return { seen: seen.filter(id => IDS.includes(id)), box: A.map(Math.round), inView: A[0] >= 0 && A[1] >= 0 && A[2] <= innerWidth && A[3] <= innerHeight && A[2] - A[0] > 0, hscroll: document.documentElement.scrollWidth > innerWidth, over: o, base: st.base, wet: st.wet,
-        rainAnim: getComputedStyle(rn).animationName, removed: ['swMood', 'swGreet', 'swRich', 'swDelay', 'swSeasonScene'].filter(id => document.getElementById(id)) };
+        rainAnim: getComputedStyle(rn).animationName, pdW: A[2] - A[0], word: ws ? ws.items : null, wordBox: wb, wordInView: !!wb && wb[0] >= 0 && wb[1] >= 0 && wb[2] <= innerWidth && wb[3] <= innerHeight, wordOver: wo, deco: ['swTrace', 'swGrow', 'swStagePlants'].filter(id => vis(document.getElementById(id))), removed: ['swMood', 'swGreet', 'swRich', 'swDelay', 'swSeasonScene'].filter(id => document.getElementById(id)) };
     }, IDS);
     out.push(Object.assign({ w, h, name, rm, errs: errs.length }, r));
     await ctx.close();
@@ -346,6 +352,26 @@ def sound_run(plans):
 SUN_HITS_MAX = 0
 
 
+_PADDY_BROWSER = {}
+
+
+def paddy_browser_run():
+    """6つの 画面 × 保存の 場面(1回 だけ 走らせて、いくつかの テストで 使う)"""
+    if "r" not in _PADDY_BROWSER:
+        node = shutil.which("node")
+        if not node:
+            raise unittest.SkipTest("node がないので実行の確認は飛ばす")
+        vps = [[320, 568], [360, 640], [390, 844], [568, 320], [844, 390], [820, 1180]]
+        out = subprocess.run([node, "-e", PADDY_BROWSER_JS, HTML_PATH, ROOT, json.dumps(vps), json.dumps(PADDY_SAVES)], capture_output=True, text=True, timeout=1200)
+        if out.returncode != 0:
+            raise AssertionError(out.stderr[-2000:])
+        r = json.loads(out.stdout.strip().splitlines()[-1])
+        if isinstance(r, dict) and r.get("skip"):
+            raise unittest.SkipTest(r["skip"])
+        _PADDY_BROWSER["r"] = r
+    return copy.deepcopy(_PADDY_BROWSER["r"])
+
+
 def css_rule(selector):
     m = re.search(r"^" + re.escape(selector) + r"\{([^}]*)\}", HTML, re.M)
     return m.group(1) if m else ""
@@ -377,7 +403,7 @@ class TestKome365FirstMinute(unittest.TestCase):
         self.assertIn("bottom:calc(100% + var(--pdb))", pd)
         self.assertNotRegex(pd, r"(^|;)top:")
         self.assertIn("width:calc(var(--pd) * 44);height:calc(var(--pd) * 18)", pd)   # 周回172: ななめ上から 見た 田んぼ(44×18)
-        self.assertIn("#swWrap{--pd:6px;--pdb:48px;--pdx:-3px}", HTML)   # 周回172: 丸が 消えて あいた ぶん 6px(かかしは 5.25px)
+        self.assertIn("#swWrap{--pd:min(8px, calc((100vw - 24px) / 44));--pdb:34px;--pdx:0px}", HTML)   # サイクル174(書きかえ): 画面の はば いっぱい 近く 8px・カードとの 間は ことばの 1行
 
     def test_day_guest_stays_out_of_weather_column(self):
         # 訪問者は 今日の空・あしたの空の丸の列(右から84px)より左に置く
@@ -400,7 +426,7 @@ class TestKome365FirstMinute(unittest.TestCase):
 
     def test_trace_row_fits_between_side_columns_on_low_screens(self):
         # 周回153: 790px以下では世話のあとを30pxにし、季節の景色・あしたの空の丸にかからない幅にする
-        self.assertIn("@media (max-height:790px){#swTrace .tr{width:30px;height:30px;background-size:30px 30px}#swWrap{--pdb:38px}}", HTML)   # 周回171: 花の 列・金の 花の かわりに 田んぼの 絵(周回172: 高さは 変数で)
+        self.assertIn("@media (max-height:790px){#swTrace .tr{width:30px;height:30px;background-size:30px 30px}}", HTML)   # サイクル174(書きかえ): 絵の 高さは どの 画面も ことばの 1行ぶん(--pdb:34px)。世話の あと(#swTrace)は 見せない
         self.assertNotIn("#swSeasonScene", HTML)   # 周回171: 季節の 景色(木)は 運営者の 声で 消した
 
     def test_guide_waits_for_entering_card(self):
@@ -1245,11 +1271,14 @@ console.log(JSON.stringify(out));
         self.assertIn("@media (max-height:440px){#sGame #swCount{left:auto;right:12px;top:8px;transform:none}", HTML)
         # カードの うしろの 稲の 列は 絵の 下の 端より 低く(株の 先は カードの 上 46px・36px)
         self.assertIn('#swStagePlants[data-stage="4"] .pl,#swStagePlants[data-stage="5"] .pl{font-size:min(56px,16.7vw)}', HTML)
-        self.assertLessEqual(56 - 10, 48 - 2)
-        self.assertLessEqual(46 - 10, 38 - 2)
-        # 背の 高い 画面では その日の 生きもの・再会の 生きものを 絵(と 点の 列)より 上へ
-        self.assertIn("@media (min-height:741px){#swDayGuest{top:calc(36% - 120px)}}", HTML)
-        self.assertIn("#swReunion{top:calc(36% - 120px);left:34%}", HTML)
+        # サイクル174(運営者の声「田んぼの状況がわかりにくい」で 書きかえ): 稲の 列・点の 列・小さい 箱 は 見せない(運営者の 判断)。
+        # その日の 生きもの・再会の 生きものは 画面の 割合では なく、絵の 上(右・左)に つける(絵が 大きく なっても かぶせない)
+        self.assertIn("#swTrace,#swGrow,#swStagePlants{display:none!important}", HTML)
+        self.assertIn("#swWrap #swDayGuest{top:auto;right:0;bottom:calc(100% + var(--pdb) + var(--pd) * 18 + 4px)}", HTML)
+        self.assertIn("#swWrap #swReunion{top:auto;left:0;transform:none;bottom:calc(100% + var(--pdb) + var(--pd) * 18 + 4px)}", HTML)
+        wrap = HTML[HTML.index('<div id="swWrap">'):HTML.index('<div id="swCard"')]
+        for k in ("swDayGuest", "swReunion", "swPdWord"):
+            self.assertIn('id="%s"' % k, wrap, k)
 
     def test_paddy_drawn_in_pixels_only(self):
         # 字・数字・音は 足さない。動きは transform だけ・動きを へらす 設定では 止める(絵は 見える)
@@ -1268,13 +1297,7 @@ console.log(JSON.stringify(out));
         node = shutil.which("node")
         if not node:
             raise unittest.SkipTest("node がないので実行の確認は飛ばす")
-        vps = [[320, 568], [360, 640], [390, 844], [568, 320], [844, 390], [820, 1180]]
-        out = subprocess.run([node, "-e", PADDY_BROWSER_JS, HTML_PATH, ROOT, json.dumps(vps), json.dumps(PADDY_SAVES)], capture_output=True, text=True, timeout=1200)
-        if out.returncode != 0:
-            raise AssertionError(out.stderr[-2000:])
-        r = json.loads(out.stdout.strip().splitlines()[-1])
-        if isinstance(r, dict) and r.get("skip"):
-            raise unittest.SkipTest(r["skip"])
+        r = paddy_browser_run()
         expect = {"rain": "soil", "nursery": "soil", "nae": ("nae", "kuki"), "head": "head", "ripe": "ripe", "stubble": "stubble"}
         sun_hits = []
         for x in r:
@@ -1517,6 +1540,45 @@ class TestKome365SoundReview(unittest.TestCase):
             self.assertEqual(x["js"][-1], 0, name + ": 前の カードの 音が まだ 鳴る 予定")
         self.assertEqual(self.r["cancelHome"]["steps"][-1][1]["screen"], "sTitle")
         self.assertEqual(self.r["cancelResult"]["steps"][-1][1]["screen"], "sResult")
+
+
+class TestKome365PaddyReadable(unittest.TestCase):
+    """サイクル174(運営者の声 2026-11-13・3月22日 雨の 日の 画面写真「田んぼの状況がわかりにくい」): 絵を 大きく・ことばで 1行・かざりを へらす"""
+
+    WORD = {"rain": ("田おこし まえ",), "nursery": ("田おこし まえ",), "nae": ("田植え した", "ぐんぐん 育つ"), "head": ("穂が 出た",), "ripe": ("実った",), "stubble": ("刈り おわり",)}
+
+    def test_words_tell_the_paddy_state(self):
+        for x in paddy_browser_run():
+            name = "%dx%d %s%s" % (x["w"], x["h"], x["name"], " reduce" if x["rm"] else "")
+            self.assertTrue(x["word"], name + ": ことばが ない")
+            self.assertIn(x["word"][0], self.WORD[x["name"]], name + " %r" % (x["word"],))
+            self.assertEqual("雨" in x["word"] or "台風" in x["word"], bool(x["wet"]), name + " %r" % (x["word"],))   # 絵に 雨が ある ときだけ「雨」(台風の 日は「台風」)
+            if x["name"] == "nursery":
+                self.assertIn("苗を 育てて いる", x["word"], name)
+            self.assertTrue(x["wordInView"], name + " %r" % (x["wordBox"],))
+            self.assertEqual(x["wordOver"], {}, name + ": ことばの 重なり %r" % (x["wordOver"],))
+
+    def test_paddy_is_big_and_decorations_hidden(self):
+        for x in paddy_browser_run():
+            name = "%dx%d %s" % (x["w"], x["h"], x["name"])
+            self.assertEqual(x["deco"], [], name + ": 点の 列・小さい 箱・稲の 列が 見えて いる")
+            if (x["w"], x["h"]) in ((390, 844), (820, 1180)):
+                self.assertGreaterEqual(x["pdW"], 352, name)   # 1ドット 8px 以上(前は 6px = 264px。1.33倍)
+            if (x["w"], x["h"]) == (390, 844):
+                self.assertGreaterEqual(x["pdW"], 0.85 * 390, name)   # 画面の はば いっぱい 近く
+            if (x["w"], x["h"]) == (844, 390):
+                self.assertGreaterEqual(x["pdW"], 176, name)   # 横の 画面は 前と 同じ 4px(5px では ✗ の 吹き出しに かかる)
+
+    def test_readable_paddy_rules_in_code(self):
+        # 30秒の カードは カードの すぐ 上に 出る ので、その 間は 絵と ことばを しまう(重ねない)
+        self.assertIn("#swipe:has(#swIdle[data-on]) #swPaddy,#swipe:has(#swIdle[data-on]) #swPdWord{visibility:hidden}", HTML)
+        self.assertIn("#swipe:has(#swWhy.on) #swPdWord{visibility:hidden}", HTML)   # ✗ の 吹き出し(場所・2秒は そのまま)の 間も
+        # 絵は ドット絵の まま(字は 絵の 外の 1行 だけ)。冬の 土は 1つの 色の 面
+        code = HTML[HTML.index("  var PDPAL = {"):HTML.index("  /* 小さな再会(周回125", HTML.index("  var PDPAL = {"))]
+        self.assertNotIn("pdTex(", code)
+        self.assertIn("if (kind === 'soil') g = pdFrame(function(x, y){ return PD_LV[lv]; });", code)
+        # 縦の 大きい 画面の 太陽は 絵の 上を 通る(のこす。通り道 だけ 上へ)
+        self.assertIn("@media (min-width:361px) and (min-height:741px){#swSun,#swSunLight{top:calc(20% - var(--sunh, 0) * 6%)!important}}", HTML)
 
 
 if __name__ == "__main__":

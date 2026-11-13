@@ -3993,5 +3993,34 @@ const TYPES = { '.html': 'text/html; charset=utf-8', '.webp': 'image/webp', '.pn
             self.assertGreater(c["nextBag"]["op"], 0, tag + " 次の 袋で 空の 丸に もどらない")
 
 
+    # ---- サイクル157（最初の1分・小さい 画面 と キーボード）----
+
+    def test_cycle157_grade_layer_is_inert_under_the_stamp_layer(self):
+        # おすの 段でも 等級の 層（#decide）が inert に もどらず、Tab で 見えない 等級の ボタン 4つに 止まった（390×844: Tab 20回 中 4回。Enter は 何も しない）。
+        # おすの 層を 出す ときに 等級の 層を inert に する（見た目の on は その まま）。次の 袋の きめるで また 押せる・フォーカスできる
+        osu = HTML[HTML.index("function toOsu() {"):]
+        osu = osu[:osu.index("\n}\n") + 3]
+        lay = HTML[HTML.index("function layer(el, on) {"):HTML.index("function shuffle(a)")]
+        kimeru = HTML[HTML.index("function toKimeru() {"):]
+        kimeru = kimeru[:kimeru.index("\n}\n") + 3]
+        self.assertIn('layer($("decide"), true);', kimeru)
+        self._node150("""
+const assert = require('node:assert/strict');
+const mk = id => { const c = new Set(); return { id, inert:false, style:{}, innerHTML:'', className:'', classList:{ add: x => c.add(x), remove: x => c.delete(x), toggle: (x, v) => v ? c.add(x) : c.delete(x), contains: x => c.has(x) } }; };
+const els = {}; const $ = id => els[id] || (els[id] = mk(id));
+const GRADES = ['1等', '2等', '3等', '規格外'], LOT = {}, lotGrade = () => 0;
+const setHanko = () => {}, setStep = () => {}, layoutStamp = () => {}, bobHanko = () => {}, guideAt = () => {}, focusIfKeys = () => {};
+""" + lay + osu + """
+layer($('decide'), true);                                // きめるの 段
+assert.equal($('decide').inert, false);
+toOsu();
+assert.equal($('decide').inert, true, 'おすの 段で 等級の 層が inert に ならない（見えない ボタンに フォーカスが 行く）');
+assert.equal($('decide').classList.contains('on'), true);  // 見た目（on）は その まま
+assert.equal($('osu').inert, false);
+layer($('decide'), true);                                // 次の 袋の きめる（toKimeru と 同じ 呼び方）
+assert.equal($('decide').inert, false);                  // また 押せる・フォーカスできる
+""")
+
+
 if __name__ == "__main__":
     unittest.main()

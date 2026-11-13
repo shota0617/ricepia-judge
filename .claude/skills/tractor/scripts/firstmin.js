@@ -1266,7 +1266,7 @@ const srv = http.createServer((r, s) => { const u = decodeURIComponent(r.url.spl
         return { on: !say.classList.contains('off'), box: [s.l, s.t, s.r, s.b].map(Math.round), out: Math.round(Math.max(0, -s.l, -s.t, s.r - innerWidth, s.b - innerHeight)), font: kids.map(c => parseFloat(getComputedStyle(c).fontSize)),
           lines: kids.map(c => Math.round(c.getBoundingClientRect().height / (parseFloat(getComputedStyle(c).fontSize) * 1.4))), ov, finger: Math.round(fing) }; };
       const r20 = {};
-      for (const vp of [[320, 568], [360, 640], [390, 844]]) {
+      for (const vp of [[320, 568], [360, 640], [390, 844], [568, 320], [844, 390]]) {   // サイクル281: よこ画面 2 つを 足した
         const { ctx, p } = await open14('', null, false, vp); await fake14(p); const adv = s => p.evaluate(x => window.__adv(x), s);
         await adv(1); await p.evaluate(() => { SAY.coach('田んぼを ゆびで なぞる'); window.__adv(0.1); }); const a = await p.evaluate(lay);   // 1 分の 中：顔を さわった ときの 案内
         await p.evaluate(() => { SAY.coach(''); FIRSTMIN.finish(); window.__adv(3); SAY.say('右はしの爪を とりかえているよ。終わったら ▲ で エンジンをかけて 続けよう', 30); SAY.coach('止まって ロータリーを上げると 見ます'); window.__adv(0.1); });
@@ -1274,6 +1274,15 @@ const srv = http.createServer((r, s) => { const u = decodeURIComponent(r.url.spl
       }
       for (const k in r20) { const { a, c } = r20[k], z = o => Object.values(o).every(n => n === 0);
         ok(k + '：吹き出しは 大きな 数字・顔・🌙・地図・ボタンに 重ならない・画面から はみ出さない・字は 14px／13px のまま（1 分の 中の 案内／1 分 すぎの 長い 修理の 文＋案内）', a.on && c.on && z(a.ov) && z(c.ov) && a.out === 0 && c.out === 0 && c.font[0] === 14 && c.font[1] === 13 && 'artBox' in c.ov, { a, c }); }
+      // サイクル281: ひくい よこ画面（568×320）。直す前：240px の はばで 3 行＋2 行（たて 113px）、赤い ▲ に 134px²・前への 手本の 指に 最大 3913px²・点に 915px²
+      { const L = r20['568x320'].c, W = r20['844x390'].c;
+        ok('568×320：1 分 すぎの 修理の 文は 2 行・案内は 1 行・吹き出しの 下はしは ▲（padC）より 上・手本の 指に かかる 最大は 2600px² まで（直す前 3 行・2 行・▲ に 134px²・指に 3913px²）', L.lines[0] <= 2 && L.lines[1] <= 1 && L.ov.padC === 0 && L.finger <= 2600, L);
+        ok('844×390：今までどおり（240px の はば・3 行＋2 行・重なり なし）', W.box[2] - W.box[0] <= 241 && W.lines[0] === 3 && W.lines[1] === 2 && W.finger === 0, W); }
+      // サイクル281（レビューの 指摘）: マウスの 端末（body.touch なし）は 地図（#artBox）が 左上（x 8〜228）に ある。ひくい よこ画面で 吹き出しを ひろげると 地図に かぶる（640×360 で 直す前 x 184〜）
+      { const { ctx, p } = await open14('', null, false, [640, 360]); await fake14(p);
+        await p.evaluate(() => { window.__adv(1); FIRSTMIN.finish(); window.__adv(3); document.body.classList.remove('touch'); SAY.say('右はしの爪を とりかえているよ。終わったら ▲ で エンジンをかけて 続けよう', 30); SAY.coach('止まって ロータリーを上げると 見ます'); window.__adv(0.1); });
+        const m = await p.evaluate(lay); await ctx.close();
+        ok('640×360・マウスの 端末（body.touch なし）：1 分 すぎの 吹き出しは 左上の 地図に 重ならない・はみ出さない・はばは 240px まで', m.on && 'artBox' in m.ov && m.ov.artBox === 0 && m.out === 0 && m.box[2] - m.box[0] <= 241, m); }
       const n = r20['320x568'].c;
       ok('320×568：長い 修理の 文は 3 行 以内・案内は 2 行 以内・吹き出しの 下はしは 画面の 上から 35% 以内（直す前 6 行・3 行・下はし 45%。前への 手本の 指には まだ かかる：直す前 3913px² → 約 3000px²）', n.lines[0] <= 3 && n.lines[1] <= 2 && n.box[3] <= 568 * 0.35, n);
     }

@@ -307,6 +307,7 @@ const FAKE = (mode) => {
       else if (a === 'L' || a === 'R') await swipe(a === 'L' ? -1 : 1);
       else if (a === 'mute') { if (await p.locator('#swSnd').count()) await p.tap('#swSnd', { timeout: 5000 }); await p.waitForTimeout(300); }   // ボタンが 無い 版では 押せない(下の 確かめで 落ちる)
       else if (a === 'wait') await p.waitForTimeout(2500);
+      else if (a.startsWith('keyjs:')) { await p.keyboard.press('ArrowLeft'); await p.waitForTimeout(250); r.js = r.js || []; r.js.push(await p.evaluate(a.slice(6))); }   // 決めて 0.25秒 あと(決めた 直後の 演出の 間)に はかる
       else if (a === 'wait31') await p.waitForTimeout(31500);   // 30秒の カードが 出る まで
       else if (a === 'keyL') { await p.keyboard.press('ArrowLeft'); r.js = r.js || []; r.js.push(await p.evaluate(() => window.__fa.live(window.__tc, window.__ts))); }   // 決めた すぐ あとに 古い 予約が のこって いるか
       else if (a === 'dailyKey') {   // 3回めの レビュー(P2): ← で 決めて すぐ ⌂ → 今日の 田んぼ(bDaily) → 新しい ゲームで すぐ ←
@@ -1603,6 +1604,62 @@ class TestKome365PaddyReview(unittest.TestCase):
         self.assertFalse(back["idle"])
         self.assertTrue(back["paddyVis"])
         self.assertTrue(back["wordVis"])
+
+
+# サイクル175: canvas#field(3D・2D の 絵)と その 親 ぜんぶの 計算された filter・アニメ・transition と、上の うすい 色の 板(#fieldTone)
+CANVAS_JS = "(() => { const c = document.getElementById('field'), out = { chain: [], tone: null }; for (let n = c; n && n.nodeType === 1; n = n.parentElement) { const cs = getComputedStyle(n); out.chain.push({ tag: n.tagName + '#' + (n.id || ''), filter: cs.filter, anim: cs.animationName, trans: cs.transitionProperty, backdrop: cs.backdropFilter || cs.webkitBackdropFilter || 'none', blend: cs.mixBlendMode }); } const t = document.getElementById('fieldTone'); if (t) { const cs = getComputedStyle(t), ca = getComputedStyle(t, '::after'), b = t.getBoundingClientRect(), cb = c.getBoundingClientRect(); out.tone = { bg: cs.backgroundColor, pe: cs.pointerEvents, z: cs.zIndex, box: [b.left, b.top, b.right, b.bottom], cbox: [cb.left, cb.top, cb.right, cb.bottom], afterAnim: ca.animationName, afterOp: ca.opacity, next: t.previousElementSibling && t.previousElementSibling.id }; } const hit = document.elementFromPoint(6, 6); out.hit = hit ? hit.id || hit.tagName : ''; out.season = ['sp', 'su', 'au', 'wi'].find(k => document.getElementById('sGame').classList.contains('season-' + k)) || ''; out.tick = document.getElementById('sGame').classList.contains('fieldTick'); out.fx = ['fxGood', 'fxBad'].filter(k => document.getElementById('sGame').classList.contains(k)); return out; })()"
+SEASON_SAVES = {
+    "wi": '{"v":"kokoro","y":"recent","so":"high","m":"transplant","c":0,"s":1543068361,"fm":"oneshot","yh":0,"ch":"LL"}',
+    "sp": '{"v":"kokoro","y":"recent","so":"high","m":"transplant","c":0,"s":1543068361,"fm":"oneshot","yh":0,"ch":"' + "L" * 95 + '"}',
+    "su": '{"v":"kokoro","y":"recent","so":"high","m":"transplant","c":0,"s":1543068361,"fm":"oneshot","yh":0,"ch":"' + "L" * 185 + '"}',
+    "au": '{"v":"kokoro","y":"recent","so":"high","m":"transplant","c":0,"s":1543068361,"fm":"oneshot","yh":0,"ch":"' + "L" * 280 + '"}',
+}
+
+
+class TestKome365CanvasNoFilter(unittest.TestCase):
+    """サイクル175(運営者の iPhone の 写真の 3D の 景色の 上の 色の 点): WebGL の 絵(canvas#field)に CSS の filter を かけない。
+    こちらの Chromium では 点は 出ない ので「直った」とは 言えない。ここで 見る のは「canvas と その 親に filter が 1つも 無い」こと"""
+
+    @classmethod
+    def setUpClass(cls):
+        plans = []
+        for k, sv in SEASON_SAVES.items():
+            for rm in (False, True):
+                plans.append({"name": k + ("R" if rm else ""), "save": sv, "reduce": rm, "acts": ["js:" + CANVAS_JS] + ["keyjs:" + CANVAS_JS] * 3})
+        cls.r = sound_run(plans)
+
+    def test_no_filter_on_canvas_ever(self):
+        seen_tick = seen_fx = 0
+        for name, x in self.r.items():
+            self.assertEqual(x["errs"], [], name)
+            for j in x["js"]:
+                for n in j["chain"]:
+                    self.assertEqual(n["filter"], "none", "%s %s" % (name, n))
+                    self.assertNotIn("filter", n["trans"], "%s %s" % (name, n))
+                    self.assertEqual(n["backdrop"], "none", "%s %s" % (name, n))
+                    self.assertEqual(n["blend"], "normal", "%s %s" % (name, n))
+                self.assertEqual(j["chain"][0]["anim"], "none", "%s canvas の アニメ" % name)
+                seen_tick += j["tick"]
+                seen_fx += bool(j["fx"])
+        self.assertGreater(seen_tick + seen_fx, 0, "決めた 直後の 場面を とれて いない")
+
+    def test_tone_panel_keeps_season_color_and_tap(self):
+        for k in SEASON_SAVES:
+            for name in (k, k + "R"):
+                x = self.r[name]
+                j = x["js"][0]
+                self.assertEqual(j["season"], k, name)
+                t = j["tone"]
+                self.assertIsNotNone(t, name + ": 色の 板が 無い")
+                self.assertEqual(t["pe"], "none", name)            # タップを さえぎらない
+                self.assertEqual(t["next"], "field", name)         # canvas の すぐ 上
+                self.assertEqual(t["box"], t["cbox"], name)        # canvas と 同じ 広さ
+                self.assertNotEqual(t["bg"], "rgba(0, 0, 0, 0)", name)
+                self.assertEqual(j["hit"], "field", name)          # 板の 上を 押しても canvas に とどく
+        ticks = [j for x in self.r.values() for j in x["js"] if j["tick"]]
+        self.assertTrue(ticks, "決めた 直後の ひと呼吸(fieldTick)が とれて いない")
+        for j in ticks:
+            self.assertEqual(j["tone"]["afterAnim"], "swToneTick")
 
 
 class TestKome365PaddyReadable(unittest.TestCase):

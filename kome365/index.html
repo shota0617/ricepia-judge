@@ -119,7 +119,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .date{font-size:22px;font-weight:800}
 .stage{font-size:14px;color:var(--sub);margin-top:2px}
 .yr{font-size:13px;font-weight:600;background:var(--chip);border-radius:999px;padding:2px 8px;margin-left:6px;vertical-align:middle}
-canvas#field{width:100%;aspect-ratio:16/10;border-radius:14px;display:block;background:var(--sky2);margin-top:8px;transition:filter 1.4s ease}
+canvas#field{width:100%;aspect-ratio:16/10;border-radius:14px;display:block;background:var(--sky2);margin-top:8px}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .chip{background:var(--chip);border-radius:999px;padding:4px 10px;font-size:13px}
 .chip.warn{background:color-mix(in srgb,var(--warn) 18%,var(--chip));color:var(--warn);font-weight:700}
@@ -255,7 +255,7 @@ a{color:var(--acc)}
 .prevTab td{padding:3px 4px;border-bottom:1px solid #eadfc4}.prevTab td:not(:first-child){text-align:right;white-space:nowrap}
 
 /* ---- カードスワイプ方式 ---- */
-#sGame.swipeMode > :not(#field):not(#swipe):not(#swFieldFx):not(#swLiveFx){display:none!important}
+#sGame.swipeMode > :not(#field):not(#fieldTone):not(#swipe):not(#swFieldFx):not(#swLiveFx){display:none!important}
 #sGame.swipeMode{position:relative}
 /* Field3D は offsetParent が null(position:fixed)だと描画を止めるので、fixed ではなく absolute で全面に敷く */
 #sGame.swipeMode canvas#field{position:absolute;left:50%;top:0;width:100vw;height:100%;margin:0 0 0 -50vw;aspect-ratio:auto;border-radius:0;z-index:0;touch-action:none}
@@ -277,10 +277,16 @@ a{color:var(--acc)}
 #swNextMile .nmIc{font-size:44px;vertical-align:middle;display:inline-block;width:44px;height:44px;background-size:contain;background-repeat:no-repeat;image-rendering:pixelated}
 #swNextMile .nmNum{font-size:40px;font-weight:900;vertical-align:middle}
 #swNextMile .nmDay{font-size:24px;font-weight:900;vertical-align:middle}
-#sGame.season-sp canvas#field{filter:brightness(1.03) saturate(1.12)}
-#sGame.season-su canvas#field{filter:brightness(1.07) saturate(1.2)}
-#sGame.season-au canvas#field{filter:sepia(.18) saturate(1.1) hue-rotate(-10deg)}
-#sGame.season-wi canvas#field{filter:brightness(1.02) saturate(.8) hue-rotate(8deg)}
+/* サイクル175(運営者の iPhone の 写真: 3D の 景色の 上に 色とりどりの 細かい 点): 3D・2D の 絵(canvas#field)には CSS の filter を 1つも かけない
+   (iPhone の Safari で WebGL の 絵に filter を 重ねると くずれる 見こみ)。季節の 色あいと 決めた 直後の 明るさは、canvas の すぐ 上の うすい 色の 板(#fieldTone)で 出す。
+   色と こさは、filter あり/なし の 3D の 絵を 写して いちばん 近く なる 値(scratchpad の fit.py)。板は タップを さえぎらない */
+#fieldTone{display:none;pointer-events:none}
+#sGame.swipeMode #fieldTone{display:block;position:absolute;left:50%;top:0;width:100vw;height:100%;margin-left:-50vw;z-index:0;background-color:rgba(0,0,0,0);transition:background-color 1.4s ease}
+#sGame.season-sp #fieldTone{background-color:rgba(255,255,0,.01)}
+#sGame.season-su #fieldTone{background-color:rgba(255,255,147,.075)}
+#sGame.season-au #fieldTone{background-color:rgba(255,218,159,.04)}
+#sGame.season-wi #fieldTone{background-color:rgba(105,255,255,.03)}
+#fieldTone::after{content:"";position:absolute;inset:0;background:#fff;opacity:0}
 #swCard.season-sp:not(.fest){background:linear-gradient(165deg,#fff0f3,#eaf5dc)}
 #swCard.season-su:not(.fest){background:linear-gradient(165deg,#fff8d6,#dcf1ee)}
 #swCard.season-au:not(.fest){background:linear-gradient(165deg,#fff3d6,#fbf1d3)}
@@ -347,8 +353,8 @@ a{color:var(--acc)}
 @keyframes swPulseUp{0%{transform:scale(1);box-shadow:0 0 0 0 rgba(63,157,58,.9);background:#bfe6b8}25%{transform:scale(1.18);box-shadow:0 0 0 6px rgba(63,157,58,.45);background:#bfe6b8}60%{transform:scale(1.06);box-shadow:0 0 0 3px rgba(63,157,58,.25);background:#d6eed0}100%{transform:scale(1);box-shadow:0 0 0 0 rgba(63,157,58,0);background:#efe7d2}}
 @keyframes swPulseDn{0%{transform:scale(1);box-shadow:0 0 0 0 rgba(200,70,40,.9);background:#f4c4b4}25%{transform:scale(1.18);box-shadow:0 0 0 6px rgba(200,70,40,.45);background:#f4c4b4}60%{transform:scale(1.06);box-shadow:0 0 0 3px rgba(200,70,40,.25);background:#f8d8cc}100%{transform:scale(1);box-shadow:0 0 0 0 rgba(200,70,40,0);background:#efe7d2}}
 /* 選択直後: 田んぼ全体もひと目で変わったと分かるよう、田んぼ側をひと呼吸だけ明るくする(数値・判定は変えない表示側の演出) */
-#sGame.swipeMode.fieldTick canvas#field{animation:swFieldTick 1.4s ease-out}
-@keyframes swFieldTick{0%{filter:brightness(1.06) saturate(1.05)}100%{filter:brightness(1) saturate(1)}}
+#sGame.swipeMode.fieldTick #fieldTone::after{animation:swToneTick 1.4s ease-out}
+@keyframes swToneTick{0%{opacity:.025}100%{opacity:0}}   /* サイクル175: 前の brightness(1.06) を 白の 板 2.5% で */
 /* 判定のあと: 田んぼが良くなった(明るく)/悪くなった(くもる)をひと目で見せる変化フェーズ(CSS filterとオーバーレイのみ) */
 #swFieldFx{position:absolute;inset:0;z-index:1;pointer-events:none;opacity:0}
 /* 田んぼの絵の刻々の変化(第4弾サイクル14・Alba): 止まっていても水面と光がゆっくり呼吸し、状態(水・ステータス平均・登熟)でうっすら色づく。表示のみ・点滅なし */
@@ -372,15 +378,11 @@ a{color:var(--acc)}
 #swLiveFx[data-breath="bad"]::before{animation-duration:18s}#swLiveFx[data-breath="bad"]::after{animation-duration:23s}
 #sGame.fxGood #swLiveFx{background:radial-gradient(circle at 50% 55%,rgba(255,236,150,.28),rgba(255,236,150,0) 60%) center/180% 180% no-repeat,linear-gradient(to top,rgba(226,172,52,calc(var(--liveRipe)*.22)),rgba(226,172,52,0) 70%);animation:swLiveSpread 1.4s ease-out}
 #sGame.fxBad #swLiveFx{background:radial-gradient(circle at 50% 55%,rgba(70,80,96,.2),rgba(70,80,96,0) 60%) center/180% 180% no-repeat,linear-gradient(to top,rgba(226,172,52,calc(var(--liveRipe)*.22)),rgba(226,172,52,0) 70%);animation:swLiveSpread 1.4s ease-out}
-@media (prefers-reduced-motion: reduce){#swLiveFx::before,#swLiveFx::after{animation:none}#swLiveFx::before,#swLiveFx::after{transition:none}#swLiveFx{transition:none}#sGame{transition:none}#sGame.fxGood #swLiveFx,#sGame.fxBad #swLiveFx{animation:none}canvas#field{transition:none}}
+@media (prefers-reduced-motion: reduce){#swLiveFx::before,#swLiveFx::after{animation:none}#swLiveFx::before,#swLiveFx::after{transition:none}#swLiveFx{transition:none}#sGame{transition:none}#sGame.fxGood #swLiveFx,#sGame.fxBad #swLiveFx{animation:none}#fieldTone{transition:none}}
 #sGame.fxGood #swFieldFx{background:radial-gradient(ellipse at 50% 45%,rgba(255,226,120,.75),rgba(150,214,110,.45) 55%,rgba(150,214,110,0) 85%);animation:swFxGoodGlow 1.4s ease-in-out}
 #sGame.fxBad #swFieldFx{background:rgba(38,44,54,.40);animation:swFxBadShade 1.4s ease-in-out}
-#sGame.swipeMode.fxGood canvas#field{animation:swFxGoodField 1.4s ease-in-out}
-#sGame.swipeMode.fxBad canvas#field{animation:swFxBadField 1.4s ease-in-out}
 @keyframes swFxGoodGlow{0%{opacity:0}40%{opacity:.6}100%{opacity:0}}
 @keyframes swFxBadShade{0%{opacity:0}40%{opacity:.7}100%{opacity:0}}
-@keyframes swFxGoodField{0%,100%{filter:brightness(1) saturate(1)}40%{filter:brightness(1.05) saturate(1.06)}}
-@keyframes swFxBadField{0%,100%{filter:brightness(1) saturate(1)}40%{filter:brightness(.94) saturate(.92)}}
 .patrol{display:flex;align-items:center;justify-content:center;gap:8px}.patrol svg{flex:none}.patrol.face{gap:12px}
 .phead{display:flex;align-items:center;justify-content:center;gap:8px}.kkTalk{display:inline-flex;align-items:center;gap:8px}.kkTalk b{font-size:18px}
 #swKakashi{position:absolute;right:10px;top:64px;z-index:3;display:flex;flex-direction:column;align-items:center;pointer-events:none;transform-origin:50% 100%;transition:transform .35s cubic-bezier(.2,.9,.3,1);filter:drop-shadow(0 3px 4px rgba(0,0,0,.3))}
@@ -780,7 +782,7 @@ a{color:var(--acc)}
 body:has(#sGame.swipeMode:not(.hidden)){padding-bottom:0}   /* ページ下の40pxの余白がゲーム中もページを画面より高くしていた */
 #swipe{overflow-y:clip}   /* 横向きで太陽の光の円盤(#swSunLight)が下にはみ出してページを伸ばしていた */
 html:has(#sGame.swipeMode:not(.hidden)),body:has(#sGame.swipeMode:not(.hidden)){overflow-x:clip}   /* 周回101: 右へ飛ぶカードがページの横幅を広げ、スマホで画面全体が一瞬6割ほどに縮んでいた。html と body の両方に要る */
-#sGame.fxGood #swFieldFx,#sGame.fxBad #swFieldFx{animation:none;opacity:0}#sGame.swipeMode.fxGood canvas#field,#sGame.swipeMode.fxBad canvas#field{animation:none}   /* 周回104: 田んぼ全体の金の光・灰色の影(上の幕と田んぼの明るさ)はやめる。良し悪しは大きな○×(店主指示 2026-11-06)で伝わるので、画面全体を暗くしない */
+#sGame.fxGood #swFieldFx,#sGame.fxBad #swFieldFx{animation:none;opacity:0}   /* 周回104: 田んぼ全体の金の光・灰色の影(上の幕と田んぼの明るさ)はやめる。良し悪しは大きな○×(店主指示 2026-11-06)で伝わるので、画面全体を暗くしない */
 #swSkyTint,#swStageTint,#swHealthTint{left:50%;right:auto;width:100vw;margin-left:-50vw}   /* 周回106: 空・育ち・元気の色を画面の幅いっぱいに。カードの列の幅だけにかかり、田んぼの左右の端との間に縦の境目が出ていた */
 #swLiveFx,#swCareGlow{left:50%;right:auto;width:100vw;margin-left:-50vw}   /* 周回107: 田んぼの息づかいの光(#swLiveFx)とめくったあとの世話の余韻(#swCareGlow)も画面の幅いっぱいに(周回106と同じ境目) */
 @media (max-height:700px){#swGuide .gd{top:140px}#swNextMile.on{display:none}#swIc{min-height:60px;max-height:64px}#swIc .icPix{width:56px;height:56px}#swIc .icEmoji{font-size:48px}}   /* もとは600px以下(周回93系)。サイクル147(差16): 季節の景色がカードに重なる帯(実測で〜700px)まで、低い画面でだけカードを低くする作法を広げる */
@@ -852,6 +854,7 @@ html:has(#sGame.swipeMode:not(.hidden)),body:has(#sGame.swipeMode:not(.hidden)){
 <section id="sGame" class="hidden swipeMode">
   <div class="top"><div class="date" id="gDate"></div><div class="stage" id="gStage"></div></div>
   <canvas id="field" width="720" height="450"></canvas>
+  <div id="fieldTone" aria-hidden="true"></div>
   <div id="swFieldFx"></div>
   <div id="swLiveFx" aria-hidden="true"></div>
   <div id="swipe" aria-label="今日のカード">

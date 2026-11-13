@@ -9572,6 +9572,17 @@ function tapDemoLayout(q, first, rc, box, upOk) {   // upOk(up)：その 向き�
     const hand = up ? [q.x - H.w / 2, q.y - reach, q.x + H.w / 2, q.y] : [q.x - H.w / 2, q.y, q.x + H.w / 2, q.y + reach];
     if (!fits(hand) || hitsRice(hand)) continue;
     if (upOk && !upOk(up)) continue;   // サイクル200：手の 絵の 所を 押すと 窓が 開く 向きは 使わない（tapDemoSpot）
+    if (upOk && !first) {
+      // 通常の手も、押す動きの途中の中央が窓や矢印にかからない向きを優先する。
+      // 置く座標は整数。下向きの中央は縮小で0.92倍、反転した手の中央は縮小しても動かない。
+      const x = Math.round(q.x), y = Math.round(q.y);
+      const lo = Math.round(H.h / 2 * (up ? 1 : 0.92)), hi = Math.round(H.h / 2 + H.move);
+      let clear = true;
+      for (let d = lo; d <= hi; d++) {
+        if (!tapDemoWalks({ x, y: y + (up ? -d : d) }, 0, box.near)) { clear = false; break; }
+      }
+      if (!clear) continue;
+    }
     if (upOk && first && !demoHandClear(q, up, H, box.near)) continue;   // サイクル209 の 直し：最初の 手本は 手の 絵の 四角 ぜんぶ 歩ける 所（demoHandClear）
     if (!first) return { up, side: '' };
     const below = [q.x - Lb.w / 2, q.y + Lb.below, q.x + Lb.w / 2, q.y + Lb.below + Lb.h + H.move + H.pad];
@@ -9634,6 +9645,20 @@ function tapDemoSpot(path, first) {   // 手本の 指先を 置く 点と 置�
         const hand = tapDemoLayout(q, first, rc, box, up => tapDemoWalks({ x: q.x, y: q.y + (up ? -DEMO_HAND_TAP : DEMO_HAND_TAP) }, 0, near));
         if (hand) return { q, up: hand.up, side: hand.side, hand: true };
         if (!plain) plain = { q, up: lay.up, side: lay.side, hand: false };
+      }
+    }
+    if (!first && plain && slop === DEMO_SLOP_PX) {   // 通常の手が置けないときだけ、既存9点の間の4点でも18pxの余裕と中央の安全を保てる置き方を探す。
+      midpoints: for (const d of DEMO_CELLS) {
+        const i = base + d;
+        if (i < 1 || i > last) continue;
+        for (const [dx, dy] of [[0.5, 0.5], [1.5, 0.5], [0.5, 1.5], [1.5, 1.5]]) {
+          const q = tileClient(path[i][0] * MZ_K + dx, path[i][1] * MZ_K + dy);
+          if (Math.hypot(q.x - rc.x, q.y - rc.y) < DEMO_NEAR_PX) continue;
+          const lay = tapDemoLayout(q, first, rc, box);
+          if (!lay || !tapDemoWalks(q, slop, near)) continue;
+          const hand = tapDemoLayout(q, first, rc, box, up => tapDemoWalks({ x: q.x, y: q.y + (up ? -DEMO_HAND_TAP : DEMO_HAND_TAP) }, 0, near));
+          if (hand) { plain = { q, up: hand.up, side: hand.side, hand: true }; break midpoints; }
+        }
       }
     }
     if (!plain) plain = tapDemoGoalSpot(slop, first, rc, box, near);   // サイクル209（N1b）：道すじの マスに 置けなければ ゴールの 着く 近さの 中の マス

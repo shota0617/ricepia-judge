@@ -1,0 +1,19 @@
+F
+======================================================================
+FAIL: test_recorded_landscape_guide_uses_a_safe_moving_center (__main__.HandMidpointPlacement.test_recorded_landscape_guide_uses_a_safe_moving_center)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/ricepia-nishio-moving-hand/tests/test_nishio_hand_midpoints.py", line 214, in test_recorded_landscape_guide_uses_a_safe_moving_center
+    self.assertEqual(
+AssertionError: Lists differ: [{'phase': 0, 'x': 470, 'y': 103}, {'phase[1836 chars] 95}] != []
+
+First list contains 55 additional elements.
+First extra element 0:
+{'phase': 0, 'x': 470, 'y': 103}
+
+Diff is 2053 characters long. Set self.maxDiff to None to see it. : Selected moving hand center enters the arrow; a safe route placement must be preferred
+
+----------------------------------------------------------------------
+Ran 1 test in 0.056s
+
+FAILED (failures=1)

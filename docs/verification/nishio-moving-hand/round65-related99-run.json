@@ -1,0 +1,20 @@
+{
+  "recordedAtUTC": "2026-11-13T03:55:03.651632+00:00",
+  "retrospectiveRecord": true,
+  "basis": "Actual root execution transcript session91773, collected2026-11-13T03:24:32Z; original stdout/exit artifacts retained. This file does not claim contemporaneous standalone source attestation.",
+  "cwd": "/workspace/ricepia-nishio-moving-hand",
+  "command": [
+    "python3",
+    "-"
+  ],
+  "stdin": "import sys,unittest\nsys.path.insert(0,'tests')\nnames=['test_maze_loop4_'+str(n) for n in (198,200,206,207,208,209)]+['test_nishio_moving_hand','test_nishio_hand_midpoints']\nr=unittest.TextTestRunner(verbosity=1).run(unittest.defaultTestLoader.loadTestsFromNames(names))\nsys.exit(not r.wasSuccessful())\n",
+  "actualExitCode": 0,
+  "testsRun": 99,
+  "success": 99,
+  "seconds": 4.948,
+  "headAtExecution": "3bd94c13cf5d15d313745a3b8113a3468249d5c1",
+  "pixelSHAReportedInActualToolOutput": "5a4f04ac43a23c83782308fa08b0ddf556799fab4ac300170ed395e15dbd1cae",
+  "testVersionFromRootExecutionHistoryAndSubsequentCanaryFreeze": "425090ff7be542112200aa1306d0f18bf1200f9b351c3b882376cb6094dc571c",
+  "finalTestDifferent": "48dd4a88683df2c5fa9656b2353577abadb04a7b4a290cbe8dfe4e3dec77ace7, separately ran1method+8policycases after integration; do not label prior99 as finaltest48dd execution",
+  "logSHA": "cf968aad489ebd81c6bd07655a2cb41520241690c292e82b8133c6529b3e935e"
+}

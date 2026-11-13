@@ -1,0 +1,50 @@
+FFFFF
+======================================================================
+FAIL: test_mid_animation_and_rounded_anchor_choose_the_safe_direction (__main__.MovingHandPlacement.test_mid_animation_and_rounded_anchor_choose_the_safe_direction) (name='normal middle')
+A safe20px point and safe endpoints do not prove the intervening clicks safe.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/ricepia-nishio-moving-hand/tests/test_nishio_moving_hand.py", line 135, in test_mid_animation_and_rounded_anchor_choose_the_safe_direction
+    self.assertIs(out["chosen"]["up"], expected_up)
+AssertionError: False is not True
+
+======================================================================
+FAIL: test_mid_animation_and_rounded_anchor_choose_the_safe_direction (__main__.MovingHandPlacement.test_mid_animation_and_rounded_anchor_choose_the_safe_direction) (name='inverted middle')
+A safe20px point and safe endpoints do not prove the intervening clicks safe.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/ricepia-nishio-moving-hand/tests/test_nishio_moving_hand.py", line 135, in test_mid_animation_and_rounded_anchor_choose_the_safe_direction
+    self.assertIs(out["chosen"]["up"], expected_up)
+AssertionError: True is not False
+
+======================================================================
+FAIL: test_mid_animation_and_rounded_anchor_choose_the_safe_direction (__main__.MovingHandPlacement.test_mid_animation_and_rounded_anchor_choose_the_safe_direction) (name='rounded anchor')
+A safe20px point and safe endpoints do not prove the intervening clicks safe.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/ricepia-nishio-moving-hand/tests/test_nishio_moving_hand.py", line 135, in test_mid_animation_and_rounded_anchor_choose_the_safe_direction
+    self.assertIs(out["chosen"]["up"], expected_up)
+AssertionError: False is not True
+
+======================================================================
+FAIL: test_plain_fallback_first_hand_and_later_edge_contracts_remain (__main__.MovingHandPlacement.test_plain_fallback_first_hand_and_later_edge_contracts_remain)
+Unsafe centers lower placement preference; they do not delete the last guide.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/ricepia-nishio-moving-hand/tests/test_nishio_moving_hand.py", line 161, in test_plain_fallback_first_hand_and_later_edge_contracts_remain
+    self.assertFalse(out["fallback"]["hand"])
+AssertionError: True is not false
+
+======================================================================
+FAIL: test_recorded_arrow_overlap_is_rejected_while_a_route_point_remains (__main__.MovingHandPlacement.test_recorded_arrow_overlap_is_rejected_while_a_route_point_remains)
+q=(160,67) passes the old20px test but its moving center hits the arrow.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/ricepia-nishio-moving-hand/tests/test_nishio_moving_hand.py", line 106, in test_recorded_arrow_overlap_is_rejected_while_a_route_point_remains
+    self.assertIsNone(out["recordedChoice"], "The observed arrow-overlapping orientation is still preferred")
+AssertionError: {'up': False, 'side': ''} is not None : The observed arrow-overlapping orientation is still preferred
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.627s
+
+FAILED (failures=5)

@@ -2378,6 +2378,9 @@ function toOsu() {
   $("pad").style.display = "";
   setHanko(0);
   layer($("osu"), true);
+  $("decide").inert = true; /* 等級の 層は 見た目は その まま（おすの 層が 上を おおう）、さわれない・フォーカスできない に する（サイクル157）。
+     旧版は おすの 段でも 等級の 層が inert に もどらず、Tab で 見えない 等級の ボタン 4つに 止まった（390×844: Tab 20回 中 4回）。
+     層の 色（on）は 変えない ので 重ねかえの 見た目は 同じ。次の 袋の きめるで layer() が また 外す */
   setStep(4, "朱肉に ぎゅっと");
   layoutStamp();
   bobHanko();

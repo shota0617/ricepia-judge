@@ -9256,7 +9256,12 @@ function drawMonitor(pct) {
 const fmtTime = s => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
 
 // ---- 音（ディーゼルエンジンと、ロータリーの爪が土をかく音） ----
-let audio = null, soundOn = false;
+let audio = null, soundOn = false, audioAsk = '', audioResumeP = null;   // audioAsk：さいごに たのんだ こと（'run'＝resume・'stop'＝suspend）・audioResumeP：さいごの resume
+function audioResume() { audioAsk = 'run'; try { const r = audio.ac.resume(); audioResumeP = r && r.then ? r.catch(() => {}) : null; } catch (e) {} }
+function audioStop() {
+  audioAsk = 'stop'; try { const r = audio.ac.suspend(); if (r && r.catch) r.catch(() => {}); } catch (e) {}
+  if (audioResumeP) audioResumeP.then(() => { if (audio && audioAsk === 'stop' && audio.ac.state === 'running') audio.ac.suspend(); });   // あとから 効いた resume も 止める
+}
 // ---- エンジンの音（ディーゼル 4 気筒・ターボ）：1 回ずつの爆発を AudioWorklet で作る ----
 // 4 ストロークの 4 気筒は 回転数÷30 回/秒 爆発する（アイドル 900 回転で 30 回、耕うんの 2500 回転で 83 回）。
 // 気筒ごとに少しずつ強さがちがい、1 回ごとにもゆらぐので「ドッドッド」とむらのある音になる。
@@ -9319,8 +9324,10 @@ function syncAudio(running) {
   if (window.speechSynthesis && speechSynthesis.speaking && (!soundOn || DETAIL || document.hidden || !$('help').classList.contains('hidden'))) speechSynthesis.cancel();
   if (!audio) return;
   const want = audioWanted(running), st = audio.ac.state;   // サイクル278: さわった ときの 解き方（unlockAudio）も 同じ きまりで
-  if (want && st === 'suspended') audio.ac.resume();
-  else if (!want && st === 'running') audio.ac.suspend();
+  // サイクル278（Codex 指摘・2 回め）: resume は すぐには running に ならない（あとから 効く）。同じ 操作の 中で もどした 音を 止める ときは、まだ suspended に 見えても 止め、
+  // resume が あとから 効いたら その ときにも もう 一度 見て 止める（まだ suspended の うちの suspend は 何も しない ブラウザが ある）
+  if (want && st === 'suspended') audioResume();
+  else if (!want && (st === 'running' || audioAsk === 'run')) audioStop();
 }
 // サイクル275・最初の1分: 音を 作れない ブラウザ（Web Audio が ない・作ると エラー）でも、音なしで そのまま 遊べる ように する（🔇 のまま）。
 // それまでは 始まりの おわり（startGame）で 音を つける ときの エラーが 外へ 出て、読みこめなかった ときの 知らせに 入り、田んぼが かくれて なぞっても 0m だった
@@ -9426,7 +9433,7 @@ function toggleSoundRaw() {
     }
     audio = { ac, hydG, hydP, wipG, rainG, rainF, o1, o2, lfo, lp, out, tg, amb: startAmbient(ac), nbO, nbG, nbP, crowG, crowP, crowT: 4, kO, kG, kP, lO, lG, hO, hG, rO, rG, wG };
   }
-  if (audio) audio.ac[soundOn ? 'resume' : 'suspend']();
+  if (audio) { if (soundOn) audioResume(); else audioStop(); }
 }
 // まわりの生きものの声（音をつけたときだけ）。代かき：水が入ると鳴きだすアマガエルの「グワッグワッ」と
 // シュレーゲルアオガエルの「コロロ…」の合唱、春：空高くでさえずり続けるヒバリ、秋：夕方ほど大きいコオロギの「コロコロリー」
@@ -9913,14 +9920,14 @@ const UNLOCK = ['pointerup', 'touchend', 'click', 'keydown', 'pointerdown', 'tou
 function unlockAudio() {
   if (!audio || !audioWanted()) return;   // 音が まだ 無い・🔇・鳴らさない 場面（おわり・メニュー・かくれた タブ）：何も しない（その ときの 状態で 決める。最初の こまの 前でも）
   const ac = audio.ac;
-  if (ac.state === 'suspended') try { const r = ac.resume(); if (r && r.catch) r.catch(() => {}); } catch (e) {}
+  if (ac.state === 'suspended') audioResume();
 }
 for (const ev of UNLOCK) addEventListener(ev, unlockAudio, true);
 // 操作の表（？・H）：はじめの画面と同じ表を出す
 function toggleHelp() {
   const h = $('help');
   releaseAll();                                   // 開くとき：押しっぱなしのまま後ろで走りつづけない
-  if (h.classList.contains('hidden')) { $('helpBody').innerHTML = $('keysBox').outerHTML.replace('id="keysBox"', ''); h.classList.remove('hidden'); }
+  if (h.classList.contains('hidden')) { $('helpBody').innerHTML = $('keysBox').outerHTML.replace('id="keysBox"', ''); h.classList.remove('hidden'); syncAudio(false); }   // サイクル278（Codex 指摘）: 開いた その 操作の 中で 音を 止める（さわった ときの 聞き手が 先に もどして いても、次の こままで 鳴らない）
   else { h.classList.add('hidden'); unlockAudio(); }   // サイクル278: とじた その 操作（click・キー）の 中で 音を もどす（とじる 前は 鳴らさない 場面なので、聞き手では 解けない）
 }
 $('bHelp').onclick = toggleHelp;
@@ -10483,7 +10490,7 @@ function doneTalk() {
   if (!$('bNext').classList.contains('hidden')) $('doneTalk').after($('bNext'));   // つぎへの ボタンは キャラクターの すぐ 下（スクロール しなくても 見える）
 }
 function finish() {
-  S.done = true;
+  S.done = true; syncAudio(false);   // サイクル278（Codex 指摘）: おわりに した その 操作（📸 完成・Enter）の 中で 音を 止める（さわった ときの 聞き手が 先に もどして いても、次の こままで 鳴らない）
   if (ART.on) return finishArt();
   const fieldName = { haru: '春の田んぼ', aki: '秋の稲刈りあとの田んぼ', shirokaki: '代かきの田んぼ' }[season], pctNow = Math.min(100, Math.floor(tilledCount / workCount * 100));
   $('doneText').textContent = PLAY.up ? `5 分 たちました。${fieldName}の ${pctNow}% を 耕しました。お疲れ様です！` : `${fieldName}を ${fmtTime(S.elapsed)} で耕しました。お疲れ様です！`;

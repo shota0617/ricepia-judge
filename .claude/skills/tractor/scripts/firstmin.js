@@ -1218,6 +1218,22 @@ const srv = http.createServer((r, s) => { const u = decodeURIComponent(r.url.spl
         snd.again = { first: a0, helpOpen: [hv, a1], helpClosed: [hc, a2], hidden: a3, back: a4, tapped: a5 }; await ctx.close(); }
       ok('操作の 表を とじた その タップで 音が もどる（開いて いる 間は 鳴らない。Codex の ⑤。直す前：鳴らない）', snd.again.first === 'running' && snd.again.helpOpen[0] && snd.again.helpOpen[1] !== 'running' && snd.again.helpClosed[0] && snd.again.helpClosed[1] === 'running', snd.again);
       ok('かくれて もどった あと：さわらない 間は もどらなくても、1 回 さわれば 鳴る（かくれて いる 間は 鳴らない。Codex の ④。直す前：さわっても 鳴らない）', snd.again.hidden !== 'running' && snd.again.tapped === 'running', snd.again);
+      // 18-4) Codex 指摘（2 回め）：本物の こまを 回さない（ずっと 次の こまの 前）。1 度 鳴らす → かくす → もどす → H で 操作の 表を 開く／Enter で おわりに する。
+      //       さわった ときの 聞き手が 先に 音を もどしても、開いた・おわった その 操作の 中で 止まる（直す前：次の こまの syncAudio まで 鳴る）
+      for (const how of ['help', 'finish', 'mute']) {
+        const { ctx, p, cdp } = await open14('', q => q.addInitScript(() => { window.requestAnimationFrame = () => 0; const G = ['touchend', 'pointerup', 'click', 'keydown', 'mouseup'], A = window.AudioContext; if (!A) return; const R = A.prototype.resume;
+          A.prototype.resume = function () { const e = window.event; return e && G.includes(e.type) ? R.call(this) : Promise.resolve(); };
+          window.AudioContext = class extends A { constructor(...a) { super(...a); this.suspend(); } };
+          let hid = false; Object.defineProperty(document, 'hidden', { get: () => hid, configurable: true }); window.__hide = v => { hid = v; document.dispatchEvent(new Event('visibilitychange')); }; }));
+        const st = () => p.evaluate(() => game.audio.ac.state), wr = want => p.waitForFunction(w => game.audio.ac.state === w, want, { timeout: 8000, polling: 100 }).catch(() => {});
+        await p.waitForFunction(() => window.game && game.S && game.S.started && game.audio, null, { polling: 100, timeout: 180000 });
+        await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: 195, y: 481, id: 1 }] }); await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); await wr('running'); const b0 = await st();
+        await p.evaluate(() => window.__hide(true)); await wr('suspended'); const b1 = await st(); await p.evaluate(() => window.__hide(false));
+        await p.keyboard.press(how === 'help' ? 'h' : how === 'mute' ? 'm' : 'Enter'); await p.waitForTimeout(1500);
+        const b2 = await p.evaluate(() => [game.audio.ac.state, !document.getElementById('help').classList.contains('hidden'), !!game.S.done, document.getElementById('bSnd').textContent]);
+        snd[how] = [b0, b1, ...b2]; await ctx.close();
+      }
+      ok('かくして もどし、次の こまの 前に H で 操作の 表を 開く・Enter で おわりに する・M で 🔇：その 操作の 中で 音は 止まる（Codex 指摘。直す前：表が 開いた まま・おわった まま 鳴る）', snd.help[0] === 'running' && snd.help[1] === 'suspended' && snd.help[2] !== 'running' && snd.help[3] && snd.finish[0] === 'running' && snd.finish[2] !== 'running' && snd.finish[4] && snd.mute[0] === 'running' && snd.mute[2] !== 'running' && snd.mute[5] === '🔇', [snd.help, snd.finish, snd.mute]);
       ok('読みこみ中に 1 回 タップした 人も、始まって なぞって 離すと 音が 鳴りだす（直す前：ずっと 鳴らない）', snd.tapLoad[2] === 'running', snd.tapLoad);
       ok('タップせずに 始まった 人は なぞって 離すと 鳴る・指を 置いた まま の 間は 鳴らない（ブラウザの きまりの まね）・🔇 に した 人は 鳴らない', snd.plain[1] !== 'running' && snd.plain[2] === 'running' && snd.mute[2] !== 'running', [snd.plain, snd.mute]);
     }

@@ -1,0 +1,1406 @@
+{
+  "status": "FINAL_EVIDENCE_FOR_DRAFT_PR",
+  "updatedAtUTC": "2026-11-13T07:29:41.365480+00:00",
+  "round": 69,
+  "existingPR": 1133,
+  "issue": "The visible moving normal-hand center can open the world map instead of continuing the walk.",
+  "intent": "Reduce confusing detours in the first minute. Actual player dropout has not been measured.",
+  "source": {
+    "beforeHead": "f10bb2cf155e5643b41c7e4e3b6a1afca95484ca",
+    "beforePixelSHA256": "7c1f8baed5cc3dc09b985a98f6a55f9a20302442477005e1123cf74bb6fa6f70",
+    "testedIntegratedLocalHead": "c35d8e242d44e519d92b01fc560f41b790ec4080",
+    "testedTree": "3efff8853cde56d704d58b9d89971e69628999d8",
+    "afterPixelSHA256": "5a4f04ac43a23c83782308fa08b0ddf556799fab4ac300170ed395e15dbd1cae",
+    "equivalentRemoteObjectReportedByParent": "0526f104bba024a07b59d99093e4b45ef3f08a11",
+    "remoteObjectStatus": "Code-only remote object prepared for publication; product/test tree equals tested local c35. All reported execution counts belong to local c35; later documentation-only publication HEAD was not separately full-suite tested.",
+    "productionDiff": "Same existing25 added pixel.js lines; no new product/test edits in round69.",
+    "verificationScope": "All reported round69 runtime/full unittest counts belong to tested local c35d8e242d44e519d92b01fc560f41b790ec4080. Remote code object0526 has the same tree, not a separate full-suite run. Later documentation-only publication HEAD is not full-suite-tested as its own HEAD."
+  },
+  "beforePrimary": {
+    "sourceHead": "f10bb2cf155e5643b41c7e4e3b6a1afca95484ca",
+    "counts": {
+      "actions": 19,
+      "hand": 16,
+      "normalHand": 15,
+      "handWorldOpenings": 3,
+      "worldReturnInputs": 3,
+      "informationOpenings": 0,
+      "informationCloseInputs": 0,
+      "fullWindows": 18,
+      "incompleteWindows": 1,
+      "noRecordedResponseFullWindow": 0,
+      "results": {
+        "coordinateChanged": 13,
+        "worldOpened": 3,
+        "worldReturned": 3
+      },
+      "recordedTouchCommands": 38,
+      "rawEvents": 57,
+      "trustedEvents": 57,
+      "eventTypes": {
+        "pointerdown": 19,
+        "pointerup": 19,
+        "click": 19
+      },
+      "inputErrors": 0
+    },
+    "firstFeedback": {
+      "kind": "coordinateChanged",
+      "playSeconds": 0.153199951171875,
+      "sendToObservedMs": 139.199951171875,
+      "action": 1
+    },
+    "firstReward": {
+      "kind": "first observed positive visible unobscured displayed points",
+      "value": 30,
+      "playSeconds": 0.387800048828125,
+      "firstInputToObservedMs": 373.800048828125
+    },
+    "goals": [
+      {
+        "playSeconds": 23.92410009765625,
+        "storedCount": "1"
+      }
+    ],
+    "worldOpenReturnPairs": {
+      "pairs": [
+        {
+          "openAction": 8,
+          "returnAction": 9,
+          "worldTrueFirstObservedPlaySeconds": 36.24519995117188,
+          "worldFalseFirstObservedPlaySeconds": 37.51760009765625,
+          "observedTimestampDifferenceSeconds": 1.2724001464843724
+        },
+        {
+          "openAction": 10,
+          "returnAction": 11,
+          "worldTrueFirstObservedPlaySeconds": 38.77719995117187,
+          "worldFalseFirstObservedPlaySeconds": 40.01789990234375,
+          "observedTimestampDifferenceSeconds": 1.2406999511718766
+        },
+        {
+          "openAction": 12,
+          "returnAction": 13,
+          "worldTrueFirstObservedPlaySeconds": 41.31539990234375,
+          "worldFalseFirstObservedPlaySeconds": 42.566,
+          "observedTimestampDifferenceSeconds": 1.2506000976562532
+        }
+      ],
+      "sumObservedTimestampDifferencesSeconds": 3.763700195312502,
+      "definition": "Differences between first recorded world=true and subsequent visible-return world=false observations. Not continuous physical screen duration or proof of all player time lost."
+    },
+    "nominalPlayMs": 60000,
+    "actualRootProcess": {
+      "session": 98094,
+      "exitCode": 0,
+      "collectedAtUTC": "2026-11-13T06:00:43Z",
+      "basis": "Parent actual terminal exit notification; child completion checked separately in raw run-result."
+    },
+    "issues": [],
+    "errors": [],
+    "sourceGatesPassed": true,
+    "images": [
+      {
+        "name": "observe-10s",
+        "requestedSeconds": 10.002,
+        "completedSeconds": 10.113,
+        "sha256": "a0d1c31308c498fb166da4baed063c70fa2dc4b6360d3db686eca4dd4de0508d",
+        "physicallyViewedOriginal": true
+      },
+      {
+        "name": "play-10s",
+        "requestedSeconds": 10.001,
+        "completedSeconds": 10.097,
+        "sha256": "236ad8ffa397d4f4cc16f6b900de7411cf723eba754fee46a6fb5452f219e9b0",
+        "physicallyViewedOriginal": true
+      },
+      {
+        "name": "play-30s",
+        "requestedSeconds": 30.001,
+        "completedSeconds": 30.106,
+        "sha256": "3f92abb30599167486b8005207e5fa5646164701920c69c2132bb54100ddb8ac",
+        "physicallyViewedOriginal": true
+      },
+      {
+        "name": "play-60s",
+        "requestedSeconds": 60,
+        "completedSeconds": 60.092,
+        "sha256": "b654a57970e3c387c5f8fca3baa857cd94593683f24fb552d5a28043d75517e6",
+        "physicallyViewedOriginal": true
+      }
+    ],
+    "cleanupConfirmed": {
+      "cpuReset": true,
+      "browserClosed": true
+    }
+  },
+  "afterPrimary": {
+    "sourceHead": "c35d8e242d44e519d92b01fc560f41b790ec4080",
+    "counts": {
+      "actions": 15,
+      "hand": 15,
+      "normalHand": 14,
+      "handWorldOpenings": 0,
+      "worldReturnInputs": 0,
+      "informationOpenings": 0,
+      "informationCloseInputs": 0,
+      "fullWindows": 15,
+      "incompleteWindows": 0,
+      "noRecordedResponseFullWindow": 0,
+      "results": {
+        "coordinateChanged": 15
+      },
+      "recordedTouchCommands": 30,
+      "rawEvents": 45,
+      "trustedEvents": 45,
+      "eventTypes": {
+        "pointerdown": 15,
+        "pointerup": 15,
+        "click": 15
+      },
+      "inputErrors": 0
+    },
+    "firstFeedback": {
+      "kind": "coordinateChanged",
+      "playSeconds": 0.161,
+      "sendToObservedMs": 134,
+      "action": 1
+    },
+    "firstReward": {
+      "kind": "first observed positive visible unobscured displayed points",
+      "value": 30,
+      "playSeconds": 0.40039990234375,
+      "firstInputToObservedMs": 373.39990234375
+    },
+    "goals": [
+      {
+        "playSeconds": 23.943099853515626,
+        "storedCount": "1"
+      }
+    ],
+    "worldOpenReturnPairs": {
+      "pairs": [],
+      "sumObservedTimestampDifferencesSeconds": 0,
+      "definition": "Differences between first recorded world=true and subsequent visible-return world=false observations. Not continuous physical screen duration or proof of all player time lost."
+    },
+    "nominalPlayMs": 60000,
+    "actualRootProcess": {
+      "session": 56031,
+      "exitCode": 0,
+      "collectedAtUTC": "2026-11-13T06:25:02Z",
+      "basis": "Parent actual terminal exit notification; child completion checked separately in raw run-result."
+    },
+    "issues": [],
+    "errors": [],
+    "sourceGatesPassed": true,
+    "images": [
+      {
+        "name": "observe-10s",
+        "requestedSeconds": 10,
+        "completedSeconds": 10.162,
+        "sha256": "7cd7be1d5cb913c46371142ffea85802e3ddcd1f5bdbe01783db2dbf9f619c08",
+        "physicallyViewedOriginal": true
+      },
+      {
+        "name": "play-10s",
+        "requestedSeconds": 10,
+        "completedSeconds": 10.147,
+        "sha256": "f4d89e82631b1d393de92d9cbe51818745209d9aa636c2ec7a64915f0eb94970",
+        "physicallyViewedOriginal": true
+      },
+      {
+        "name": "play-30s",
+        "requestedSeconds": 30,
+        "completedSeconds": 30.094,
+        "sha256": "89e61523aff7f721f2d6c7c5bce96d5a9858178ef9f9f8246c9aedcdbb17371b",
+        "physicallyViewedOriginal": true
+      },
+      {
+        "name": "play-60s",
+        "requestedSeconds": 60,
+        "completedSeconds": 60.149,
+        "sha256": "14707bbcd87038e044383fd1325956a787933a20dbc04a9c4638388b4160e7bf",
+        "physicallyViewedOriginal": true
+      }
+    ],
+    "cleanupConfirmed": {
+      "cpuReset": true,
+      "browserClosed": true
+    }
+  },
+  "beforeTen": {
+    "status": "FINAL_INDEPENDENTLY_AUDITED",
+    "actualExit": {
+      "session": 54641,
+      "exitCode": 0,
+      "collectedAtUTC": "2026-11-13T06:22:02Z",
+      "basis": "Parent notification of actual batch terminal exit, separately checked against retained batch state."
+    },
+    "completed": 10,
+    "valid": 10,
+    "worldContexts": 4,
+    "worldEvents": 5,
+    "totalInputs": 137,
+    "normalHandInputs": 122,
+    "trustedEvents": 411,
+    "recordedCDPSends": 274,
+    "full1100msWindows": 137,
+    "infoOpenEvents": 0,
+    "noRecordedResponseFullWindow": 0,
+    "errors": 0,
+    "groups": [
+      {
+        "holdMs": 80,
+        "plannedContexts": 5,
+        "completedAudited": 5,
+        "technicalRunValid": 5,
+        "validTargetContexts": 5,
+        "validContextsWithNormalHandWorld": 2,
+        "normalHandWorldEventsInValidContexts": 3,
+        "validContextsWithInfoOpen": 0,
+        "validContextsWithHandNoResponse": 0,
+        "firstResponseSendMs": {
+          "n": 5,
+          "min": 136.39990234375,
+          "median": 146.199951171875,
+          "max": 180.60009765625
+        },
+        "firstRewardSendMs": {
+          "n": 5,
+          "min": 339.699951171875,
+          "median": 362.699951171875,
+          "max": 407.60009765625
+        },
+        "normalHandInputs": 63,
+        "totalInputs": 71,
+        "issuedHoldMs": {
+          "n": 71,
+          "min": 79,
+          "median": 80,
+          "max": 84
+        },
+        "eventTimestampHoldMs": {
+          "n": 71,
+          "min": 78.89999999850988,
+          "median": 80.0,
+          "max": 83.89999999850988
+        }
+      },
+      {
+        "holdMs": 250,
+        "plannedContexts": 5,
+        "completedAudited": 5,
+        "technicalRunValid": 5,
+        "validTargetContexts": 5,
+        "validContextsWithNormalHandWorld": 2,
+        "normalHandWorldEventsInValidContexts": 2,
+        "validContextsWithInfoOpen": 0,
+        "validContextsWithHandNoResponse": 0,
+        "firstResponseSendMs": {
+          "n": 5,
+          "min": 311.5,
+          "median": 314.2998046875,
+          "max": 326.699951171875
+        },
+        "firstRewardSendMs": {
+          "n": 5,
+          "min": 509.89990234375,
+          "median": 522.199951171875,
+          "max": 585.2998046875
+        },
+        "normalHandInputs": 59,
+        "totalInputs": 66,
+        "issuedHoldMs": {
+          "n": 66,
+          "min": 249,
+          "median": 250.0,
+          "max": 253
+        },
+        "eventTimestampHoldMs": {
+          "n": 66,
+          "min": 248.89999999850988,
+          "median": 250.0,
+          "max": 253.0
+        }
+      }
+    ],
+    "trials": [
+      {
+        "number": 1,
+        "holdMs": 80,
+        "valid": true,
+        "inputs": 15,
+        "normalHandInputs": 13,
+        "worldEvents": 1,
+        "worldReturnInputs": 1,
+        "infoOpenEvents": 0,
+        "noRecordedResponse": 0,
+        "incompleteWindows": 0,
+        "firstResponseMs": 136.39990234375,
+        "firstRewardMs": 383.89990234375,
+        "firstSavedGoalSeconds": 23.972
+      },
+      {
+        "number": 2,
+        "holdMs": 250,
+        "valid": true,
+        "inputs": 12,
+        "normalHandInputs": 10,
+        "worldEvents": 1,
+        "worldReturnInputs": 1,
+        "infoOpenEvents": 0,
+        "noRecordedResponse": 0,
+        "incompleteWindows": 0,
+        "firstResponseMs": 313.199951171875,
+        "firstRewardMs": 509.89990234375,
+        "firstSavedGoalSeconds": 24.821300048828125
+      },
+      {
+        "number": 3,
+        "holdMs": 80,
+        "valid": true,
+        "inputs": 14,
+        "normalHandInputs": 13,
+        "worldEvents": 0,
+        "worldReturnInputs": 0,
+        "infoOpenEvents": 0,
+        "noRecordedResponse": 0,
+        "incompleteWindows": 0,
+        "firstResponseMs": 141.699951171875,
+        "firstRewardMs": 343.099853515625,
+        "firstSavedGoalSeconds": 23.805300048828126
+      },
+      {
+        "number": 4,
+        "holdMs": 250,
+        "valid": true,
+        "inputs": 14,
+        "normalHandInputs": 13,
+        "worldEvents": 0,
+        "worldReturnInputs": 0,
+        "infoOpenEvents": 0,
+        "noRecordedResponse": 0,
+        "incompleteWindows": 0,
+        "firstResponseMs": 326.699951171875,
+        "firstRewardMs": 555.800048828125,
+        "firstSavedGoalSeconds": 25.362300048828125
+      },
+      {
+        "number": 5,
+        "holdMs": 80,
+        "valid": true,
+        "inputs": 14,
+        "normalHandInputs": 13,
+        "worldEvents": 0,
+        "worldReturnInputs": 0,
+        "infoOpenEvents": 0,
+        "noRecordedResponse": 0,
+        "incompleteWindows": 0,
+        "firstResponseMs": 146.199951171875,
+        "firstRewardMs": 339.699951171875,
+        "firstSavedGoalSeconds": 24.478199951171874
+      },
+      {
+        "number": 6,
+        "holdMs": 250,
+        "valid": true,
+        "inputs": 12,
+        "normalHandInputs": 10,
+        "worldEvents": 1,
+        "worldReturnInputs": 1,
+        "infoOpenEvents": 0,
+        "noRecordedResponse": 0,
+        "incompleteWindows": 0,
+        "firstResponseMs": 311.5,
+        "firstRewardMs": 511,
+        "firstSavedGoalSeconds": 25.1112998046875
+      },
+      {
+        "number": 7,
+        "holdMs": 80,
+        "valid": true,
+        "inputs": 14,
+        "normalHandInputs": 13,
+        "worldEvents": 0,
+        "worldReturnInputs": 0,
+        "infoOpenEvents": 0,
+        "noRecordedResponse": 0,
+        "incompleteWindows": 0,
+        "firstResponseMs": 148.300048828125,
+        "firstRewardMs": 362.699951171875,
+        "firstSavedGoalSeconds": 24.255199951171875
+      },
+      {
+        "number": 8,
+        "holdMs": 250,
+        "valid": true,
+        "inputs": 14,
+        "normalHandInputs": 13,
+        "worldEvents": 0,
+        "worldReturnInputs": 0,
+        "infoOpenEvents": 0,
+        "noRecordedResponse": 0,
+        "incompleteWindows": 0,
+        "firstResponseMs": 314.39990234375,
+        "firstRewardMs": 522.199951171875,
+        "firstSavedGoalSeconds": 25.0192998046875
+      },
+      {
+        "number": 9,
+        "holdMs": 80,
+        "valid": true,
+        "inputs": 14,
+        "normalHandInputs": 11,
+        "worldEvents": 2,
+        "worldReturnInputs": 2,
+        "infoOpenEvents": 0,
+        "noRecordedResponse": 0,
+        "incompleteWindows": 0,
+        "firstResponseMs": 180.60009765625,
+        "firstRewardMs": 407.60009765625,
+        "firstSavedGoalSeconds": 24.034800048828124
+      },
+      {
+        "number": 10,
+        "holdMs": 250,
+        "valid": true,
+        "inputs": 14,
+        "normalHandInputs": 13,
+        "worldEvents": 0,
+        "worldReturnInputs": 0,
+        "infoOpenEvents": 0,
+        "noRecordedResponse": 0,
+        "incompleteWindows": 0,
+        "firstResponseMs": 314.2998046875,
+        "firstRewardMs": 585.2998046875,
+        "firstSavedGoalSeconds": 24.9417998046875
+      }
+    ],
+    "worldEventsByTrial": [
+      1,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      2,
+      0
+    ],
+    "allAuditedChecksPass": true,
+    "originalImages": {
+      "shaAndDimensionsVerified": 40,
+      "viewedAll40": false,
+      "captureIntervalsContainingWorldCandidate": 0,
+      "worldProof": "trusted input and observed state timeline, not these checkpoint images"
+    },
+    "twoGoalsSavedContexts": 2
+  },
+  "pending": {},
+  "testsCompleted": {
+    "red": {
+      "atUTC": "2026-11-13T06:05:50.714541+00:00",
+      "sourceRoot": "/workspace/ricepia-current-firstminute",
+      "sourceHead": "f10bb2cf155e5643b41c7e4e3b6a1afca95484ca",
+      "sourcePixelSHA256": "7c1f8baed5cc3dc09b985a98f6a55f9a20302442477005e1123cf74bb6fa6f70",
+      "testsAlreadyAddedInDraftPR": 1133,
+      "purpose": "Actual RED recheck of existing draft regression tests against new main; no test or product edited. Fixture/Node checks do not substitute for browser reproduction.",
+      "results": [
+        {
+          "test": "test_nishio_moving_hand.py",
+          "testSHA256": "49b4a71340d0750c349c02500df7401c0eadf7769e4bcaf48af7d57d8bcd9bf5",
+          "command": "NISHIO_SOURCE_ROOT=/workspace/ricepia-current-firstminute python3 /workspace/ricepia-nishio-moving-hand/tests/test_nishio_moving_hand.py",
+          "actualExitCode": 1,
+          "logSHA256": "754220326116382310bdfcf9c3920a6b75d75866a8d4fab39f592ef7c769b18f"
+        },
+        {
+          "test": "test_nishio_hand_midpoints.py",
+          "testSHA256": "48dd4a88683df2c5fa9656b2353577abadb04a7b4a290cbe8dfe4e3dec77ace7",
+          "command": "NISHIO_SOURCE_ROOT=/workspace/ricepia-current-firstminute python3 /workspace/ricepia-nishio-moving-hand/tests/test_nishio_hand_midpoints.py",
+          "actualExitCode": 1,
+          "logSHA256": "ad4f6889548ed3a7e5c0827d6ecfe55630430185ef4b338b46c469658fb5d0d4"
+        }
+      ]
+    },
+    "green": {
+      "atUTC": "2026-11-13T06:22:52.997297+00:00",
+      "sourceHead": "c35d8e242d44e519d92b01fc560f41b790ec4080",
+      "sourcePixelSHA": "5a4f04ac43a23c83782308fa08b0ddf556799fab4ac300170ed395e15dbd1cae",
+      "commandPrefix": "NISHIO_SOURCE_ROOT=/workspace/ricepia-nishio-moving-hand python3 /workspace/ricepia-nishio-moving-hand/tests/",
+      "records": [
+        {
+          "test": "test_nishio_moving_hand.py",
+          "testSHA": "49b4a71340d0750c349c02500df7401c0eadf7769e4bcaf48af7d57d8bcd9bf5",
+          "actualExit": 0,
+          "logSHA": "c7596f9eba4cffbdc6e443605189a06a5db3a87deb885a1aa7b1455fe70ea020"
+        },
+        {
+          "test": "test_nishio_hand_midpoints.py",
+          "testSHA": "48dd4a88683df2c5fa9656b2353577abadb04a7b4a290cbe8dfe4e3dec77ace7",
+          "actualExit": 0,
+          "logSHA": "35ea7414ffb5171809327e897ef69295162f3e674bf08c73a9d47ebe72208f26"
+        }
+      ],
+      "existingTestsUnchanged": true
+    },
+    "redCounts": {
+      "movingMethods": 3,
+      "movingFailureEntries": 5,
+      "midpointMethods": 1,
+      "midpointFailureEntries": 1
+    },
+    "greenCounts": {
+      "movingMethodsPassed": 3,
+      "midpointMethodsPassed": 1
+    },
+    "existingTestsUnchanged": true,
+    "scope": "Recorded-geometry real-function Node fixtures; not full browser operation or all layouts.",
+    "pytest": {
+      "startedAtUTC": "2026-11-13T06:39:33.009516+00:00",
+      "completedAtUTC": "2026-11-13T06:39:33.021765+00:00",
+      "cwd": "/workspace/scratch/first-minute/round-69/validation/committed-checkout",
+      "head": "c35d8e242d44e519d92b01fc560f41b790ec4080",
+      "privateBaseline": "f10bb2cf155e5643b41c7e4e3b6a1afca95484ca",
+      "command": [
+        "pytest",
+        "tests/"
+      ],
+      "processCommand": [
+        "bash",
+        "-c",
+        "pytest tests/"
+      ],
+      "environment": {
+        "NODE_OPTIONS": "--require=/workspace/scratch/first-minute/offline.cjs",
+        "NODE_PATH": "/workspace/ricepia-judge/node_modules",
+        "CHROMIUM": "/usr/bin/chromium"
+      },
+      "actualExit": 127,
+      "logSHA256": "b6fe94a4971280b69606b3ad6039ae9ed0e48557776ea68f678174b6c8da879a",
+      "cloneUnchanged": true,
+      "sourceUnchanged": true,
+      "status": "COMMAND_UNAVAILABLE_BODY_NOT_RUN",
+      "exactError": "bash: line 1: pytest: command not found",
+      "bodyRun": false,
+      "publishedLog": "round69-pytest.log"
+    },
+    "fullUnittest": {
+      "startedAtUTC": "2026-11-13T06:43:15.152676+00:00",
+      "completedAtUTC": "2026-11-13T06:51:14.656744+00:00",
+      "cwd": "/workspace/scratch/first-minute/round-69/validation/committed-checkout",
+      "head": "c35d8e242d44e519d92b01fc560f41b790ec4080",
+      "privateBaseline": "f10bb2cf155e5643b41c7e4e3b6a1afca95484ca",
+      "command": [
+        "python3",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-v"
+      ],
+      "environment": {
+        "NODE_OPTIONS": "--require=/workspace/scratch/first-minute/offline.cjs",
+        "NODE_PATH": "/workspace/ricepia-judge/node_modules",
+        "CHROMIUM": "/usr/bin/chromium"
+      },
+      "actualExit": 1,
+      "logSHA256": "040f99b5fa6a26ca7608080259f80b99d36a25ad8f94e723b912c8b7a95e9595",
+      "cloneUnchanged": true,
+      "sourceUnchanged": true,
+      "status": "FINAL_INDEPENDENTLY_AUDITED",
+      "actualRootProcess": {
+        "session": 6817,
+        "exitCode": 1,
+        "collectedAtUTC": "2026-11-13T06:51:56Z"
+      },
+      "methods": 2556,
+      "classes": 544,
+      "counts": {
+        "ok": 2486,
+        "FAIL": 68,
+        "ERROR": 1,
+        "methodSkip": 1,
+        "fixtureEvents": 0,
+        "unclassified": 0
+      },
+      "seconds": 473.318,
+      "nishioFourExplicitOK": true,
+      "failureClassifications": {
+        "tractor progress regex match is None before group access": 1,
+        "literal tractor progress string assertion": 1,
+        "changed-file allowlist assertion": 65,
+        "literal pixel export string assertion": 2
+      },
+      "exceptionTypes": {
+        "AttributeError": 1,
+        "AssertionError": 68
+      },
+      "failureComparison": {
+        "namesKindsExceptionTypesAndOrderMatchRounds": [
+          65,
+          66
+        ],
+        "exceptionTextDifferentCountVs65": 30,
+        "exceptionTextDifferentCountVs66": 66,
+        "sameCauseEstablished": false
+      },
+      "methodCountDifference": {
+        "vs65": 11,
+        "vs66": 14,
+        "explanation": "Current main addsKensa2+Kome9, candidate includesNishio4, unmerged why-wrap1 absent in both f10 and c35; not removed by this change."
+      },
+      "skip": {
+        "method": "test_ruler_defined_in_design",
+        "reason": "設計書がこの環境に無い"
+      },
+      "integrity": {
+        "trackedTestFiles": 305,
+        "selectedSourceFiles": 8,
+        "all313SHAsPreserved": true,
+        "headTreeCleanBeforeAfterAndIndependent": true
+      },
+      "independentReaders": 2,
+      "historySensitiveScope": "Some scope assertions compare HEAD~1. A later docs-only commit changes that history context; these counts must not be attributed to the final publication HEAD."
+    },
+    "nodePlaytest": {
+      "startedAtUTC": "2026-11-13T06:52:30.551215+00:00",
+      "completedAtUTC": "2026-11-13T07:24:15.932341+00:00",
+      "cwd": "/workspace/scratch/first-minute/round-69/validation/committed-checkout",
+      "head": "c35d8e242d44e519d92b01fc560f41b790ec4080",
+      "tree": "3efff8853cde56d704d58b9d89971e69628999d8",
+      "command": [
+        "node",
+        "tools/playtest.js",
+        "/workspace/scratch/first-minute/round-69/validation/node-playtest"
+      ],
+      "environment": {
+        "NODE_OPTIONS": "--require=/workspace/scratch/first-minute/offline.cjs",
+        "NODE_PATH": "/workspace/ricepia-judge/node_modules",
+        "CHROMIUM": "/usr/bin/chromium",
+        "LEAFLET_DIR": "/workspace/ricepia-judge/node_modules/leaflet/dist"
+      },
+      "actualExit": 1,
+      "sourceUnchanged": true,
+      "cloneUnchanged": true,
+      "status": "FINAL_INDEPENDENTLY_AUDITED",
+      "actualRootSession": 32047,
+      "counts": {
+        "groups": 247,
+        "explicitPass": 215,
+        "explicitFail": 12,
+        "noExplicitVerdict": 20,
+        "failureMessages": 12,
+        "errors": 0
+      },
+      "failedNames": [
+        "roll",
+        "swipeHold",
+        "tapDemoQuick",
+        "lowGoalDemo",
+        "infoSecondTap",
+        "infoRotate",
+        "lowDemoKept",
+        "restFinger",
+        "tiltDemoShown",
+        "tapWalkTilt",
+        "godotRec",
+        "speedLines"
+      ],
+      "nativeOK": false,
+      "normalFullCompletion": true,
+      "scriptStopped": false,
+      "guardedOrNestedCrashChecks": 0,
+      "stdoutJSONEqualsSavedJSON": true,
+      "classificationRule": "One top-level group verdict; do not add nested booleans/cases. No explicit verdict does not mean unexecuted.",
+      "comparisonWithRound65": {
+        "previousSHA256": "5b58bad5995c18527062c846ec1b30ff7ad7eb1c993ec0dc17d6cbf9f96016b0",
+        "previousCounts": {
+          "groups": 247,
+          "explicitPass": 217,
+          "explicitFail": 10,
+          "noExplicitVerdict": 20
+        },
+        "newExplicitFailureNames": [
+          "infoRotate",
+          "roll",
+          "tapWalkTilt"
+        ],
+        "noLongerExplicitFailureNames": [
+          "a2hsAutoHide"
+        ],
+        "commonExplicitFailureNames": [
+          "godotRec",
+          "infoSecondTap",
+          "lowDemoKept",
+          "lowGoalDemo",
+          "restFinger",
+          "speedLines",
+          "swipeHold",
+          "tapDemoQuick",
+          "tiltDemoShown"
+        ],
+        "addedGroupNames": [],
+        "removedGroupNames": [],
+        "sameToolsSHA": true,
+        "samePixelSHA": true,
+        "limit": "These are independent historical regression runs, not paired trials or proof that the candidate caused any changed verdict. Counts are recomputed from both raw reports."
+      },
+      "photos": {
+        "reportListed": 20,
+        "allDirectoryPNGs": 31,
+        "startupPNGs": 11,
+        "headerDimensionsSHAMtimeChecked": 31,
+        "actuallyViewedByAggregateReviewer": 0,
+        "visualCorrectnessCertified": false
+      },
+      "integrity": {
+        "trackedTests": 305,
+        "selectedSources": 8,
+        "all313SHAsAndHeadTreeCleanPreserved": true
+      },
+      "completionLimits": {
+        "browserCloseAwaited": true,
+        "serverCloseCalled": true,
+        "serverCloseAwaited": false,
+        "independentSocketOrProcessProbeClaimed": false
+      },
+      "scope": "Existing regression suite uses fixed date/state; separate from natural primary/ten trials. No actual dropout or candidate causal effect measured.",
+      "networkLimit": "Fixed preload and static route review establish the recorded blocking scope. errors0 is not an instrumented count of external connections0.",
+      "artifactHashes": {
+        "playtest.json": "18a17961f036263cdbd0d1fc0d317b5773360ee42a15d37e4013fdba991b1e69",
+        "full-node.log": "d4c43f54d824895c4f8c7640fb6e7155a4f92cd817336e7a2f4ca9d82b69cbeb",
+        "full-node-before.json": "8e43d148ef84399e1d95d26585f9c83a0ae35c2d99d647bfd7728c3c7691c9aa",
+        "full-node-execution.json": "6c008e2b8b035bfb1d5dfa667376c599bed6ba3fbcdf4e3e7c142ccbe1220696",
+        "full-node-exit-code.txt": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+      }
+    }
+  },
+  "operatorDecisionsPreserved": [
+    "First real click requests tilt permission once, including after earlier refusal",
+    "Tap demonstration before permission and while stopped",
+    "No startup screen or arrival card",
+    "First large demonstration, size/timing/support radius/direct arrow operation unchanged"
+  ],
+  "operatorJudgmentCandidates": [
+    "Removing the final plain/goal fallback",
+    "Expanding normal-hand tap support or changing initial demonstration",
+    "Changing direct world-arrow behavior or automatic information-panel closing"
+  ],
+  "limitations": [
+    "One primary before/after run does not prove causal speed or retention improvement.",
+    "World opening is visible feedback, not a freeze/no-op.",
+    "Coordinate change is not proof of path advancement.",
+    "Before primary has18 full1100ms windows and one final incomplete window with coordinate response; never count it as a full no-op opportunity.",
+    "World→return timestamp differences are sampled-state differences, not continuous physical screen duration.",
+    "Selected primary30s photos do not capture brief world detours.",
+    "Round65 different viewport/driver/comparison remains separate; its station-information findings are not erased by this320x568 run.",
+    "Physical finger, tilt sensor, network speed, display latency and real player dropout are unverified."
+  ],
+  "rawLocalProvenance": [
+    {
+      "localPath": "/workspace/scratch/first-minute/round-69/independent-summary.json",
+      "sha256": "e034a8816999bb254cabc41edb458ee6191bf8a919273961af929bb6cc0e8781",
+      "bytes": 81090
+    },
+    {
+      "localPath": "/workspace/scratch/first-minute/round-69/independent-summary.md",
+      "sha256": "17d7c0085236381cdfdbf06337eb622eb4493bc993ee99b3dc587563833ef82b",
+      "bytes": 1868
+    },
+    {
+      "localPath": "/workspace/scratch/first-minute/round-69/after-primary/independent-summary.json",
+      "sha256": "cb52f31a83da544f61b5aaae905e6a512ba6b3666544279704b710f5d1d348b6",
+      "bytes": 67909
+    },
+    {
+      "localPath": "/workspace/scratch/first-minute/round-69/after-primary/independent-summary.md",
+      "sha256": "2a94d6e39f085abe02bc4d5c9ac78e6634fdba4ef238afd1ef2b0912cea40e09",
+      "bytes": 1386
+    },
+    {
+      "localPath": "/workspace/scratch/first-minute/round-69/before-repro/independent-final-summary.json",
+      "sha256": "5bace91a9b0a4edddc969242e917fcb1756d47a9bff05946cf54f207f96a9871",
+      "bytes": 645061
+    },
+    {
+      "localPath": "/workspace/scratch/first-minute/round-69/before-repro/independent-final-summary.md",
+      "sha256": "44ca03a7ab3b980973ef3ef56a71c8f050d304216a38a20d7562e46bce15f4b9",
+      "bytes": 3328
+    },
+    {
+      "localPath": "/workspace/scratch/first-minute/round-69/candidate-audit.json",
+      "sha256": "d7e8376a14c4f8c26610225d20be3182dd95a1fe76102042dd7b30920d3cccba",
+      "bytes": 18576
+    },
+    {
+      "localPath": "/workspace/scratch/first-minute/round-69/candidate-audit.md",
+      "sha256": "499918280772169fcebed7c71ed937a51df46070ab7bf0591593827c8ef64658",
+      "bytes": 6097
+    },
+    {
+      "localPath": "/workspace/scratch/first-minute/round-69/integration/merge-proof.json",
+      "sha256": "5d689434c98f79d0d00664f53f105bf196fca11675935ed3c165e0c14f43d8c3",
+      "bytes": 1900
+    },
+    {
+      "localPath": "/workspace/scratch/first-minute/round-69/red/proof.json",
+      "sha256": "647ba5f8561b6d16560ce4f687e99c0994e812208776c2d1c0671ddb602b6a83",
+      "bytes": 1331
+    },
+    {
+      "localPath": "/workspace/scratch/first-minute/round-69/green/proof.json",
+      "sha256": "dc1b8c2175d9e38a72f0bff7159bd4cbc5d0022c8a4e7d2beb1d1bbef6a580d0",
+      "bytes": 882
+    },
+    {
+      "localPath": "/workspace/scratch/first-minute/round-69/follow.json",
+      "sha256": "af5876a8201680a4dc8a06001375aea24cdce1154dd36194608513e71a64ee90",
+      "bytes": 12921199
+    },
+    {
+      "localPath": "/workspace/scratch/first-minute/round-69/after-primary/follow.json",
+      "sha256": "246eed50b4c36c8ef6d286c2387437698a7985cc4c944eae459f276ead7ff0cc",
+      "bytes": 12385077
+    },
+    {
+      "localPath": "/workspace/scratch/first-minute/round-69/run-result.json",
+      "sha256": "aafe844827cc07ad47d35db3772c402c50653e588a80757e247754bfdbe1f30a",
+      "bytes": 327592
+    },
+    {
+      "localPath": "/workspace/scratch/first-minute/round-69/after-primary/run-result.json",
+      "sha256": "a8cceb3afa293941f152ece7cd9a261b7f51e3d72f8f9c4192e683ed345eb08c",
+      "bytes": 262044
+    },
+    {
+      "localPath": "/workspace/scratch/first-minute/round-69/validation/pytest-execution.json",
+      "sha256": "61734cf8e5a09d4a7e2dd737778a6bec21bf06b3d1643d73ea6d21310fd689bb",
+      "bytes": 177972
+    },
+    {
+      "localPath": "/workspace/scratch/first-minute/round-69/validation/pytest.log",
+      "sha256": "b6fe94a4971280b69606b3ad6039ae9ed0e48557776ea68f678174b6c8da879a",
+      "bytes": 40
+    },
+    {
+      "localPath": "/workspace/scratch/first-minute/round-69/validation/pytest-exit-code.txt",
+      "sha256": "743c7850cccfba5e53a9002663ec1ddd1079315a98bdbfdde10e6044f56abefe",
+      "bytes": 4
+    },
+    {
+      "localPath": "/workspace/scratch/first-minute/round-69/after-repro/independent-final-summary.json",
+      "sha256": "35a1b68fa770f11bf8ea5d2a83a477de3bee13b252b6333fcc48a42b0cb2151a",
+      "bytes": 666523
+    },
+    {
+      "localPath": "/workspace/scratch/first-minute/round-69/after-repro/independent-final-summary.md",
+      "sha256": "4abda9c423d12fc09ec37d5177681bae1f4f4a6617a86140ee92afc758bfec70",
+      "bytes": 3293
+    },
+    {
+      "localPath": "/workspace/scratch/first-minute/round-69/after-repro/final-provenance.json",
+      "sha256": "d0468fa05aa1b4e3fe312c266d39ea354f5d8e32b8a07dd9ce64ed9a95246479",
+      "bytes": 4042
+    },
+    {
+      "localPath": "/workspace/scratch/first-minute/round-69/after-repro/before-after-comparison.json",
+      "sha256": "59a643fd95b193fb4175795559615846b5a0d3907444738804ce8afa446c2d69",
+      "bytes": 4417
+    },
+    {
+      "localPath": "/workspace/scratch/first-minute/round-69/layout/comparison.md",
+      "sha256": "7ceea86c29d13e67a08c13249fc14869f1dd833787b40dc48830a68a9fe9e7c7",
+      "bytes": 2778
+    },
+    {
+      "localPath": "/workspace/scratch/first-minute/round-69/layout/independent-numeric-review.json",
+      "sha256": "c2f0f9475c68082fd1a69cbc0e19e2d9a2e2ac39a2a6e111efb45557bc878f3d",
+      "bytes": 35287
+    },
+    {
+      "localPath": "/workspace/scratch/first-minute/round-69/layout/visual-independent-review.json",
+      "sha256": "6fb66c01abcac05b90139c133e422f069949a2ece830f1f23894fde4ffa2d1f0",
+      "bytes": 36817
+    },
+    {
+      "localPath": "/workspace/scratch/first-minute/round-69/layout/run-result.json",
+      "sha256": "4fbb9fe6577c922548bdadf4373a2dc098037b93e3f72f36a3baf40cfd349eb8",
+      "bytes": 22573
+    },
+    {
+      "localPath": "/workspace/scratch/first-minute/round-69/publication/immutable-doc-objects.json",
+      "sha256": "731c5a6b05ec5427fddcaa8c0e2e54fcf375fdf850e2fa1d9aa25afa9ff46222",
+      "bytes": 4514
+    },
+    {
+      "localPath": "/workspace/scratch/first-minute/round-69/validation/independent-unit-summary.json",
+      "sha256": "0b3cc7854021734fc6de2fbedf6eb78c63abe68f19d0fc8773a1638a08c44086",
+      "bytes": 163801
+    },
+    {
+      "localPath": "/workspace/scratch/first-minute/round-69/validation/independent-unit-summary.md",
+      "sha256": "9b80ef04474536558096feeef330489bfff162b07f6d5ac9ccdb7ab77cc75279",
+      "bytes": 2681
+    },
+    {
+      "localPath": "/workspace/scratch/first-minute/round-69/validation/independent-unit-failures.json",
+      "sha256": "b796d89a709a7d9e7359200d7fa15860d6a9b7ea64a36415b9f22f4787d4a81b",
+      "bytes": 147045
+    },
+    {
+      "localPath": "/workspace/scratch/first-minute/round-69/validation/full-unittest.log",
+      "sha256": "040f99b5fa6a26ca7608080259f80b99d36a25ad8f94e723b912c8b7a95e9595",
+      "bytes": 4199133
+    },
+    {
+      "localPath": "/workspace/scratch/first-minute/round-69/validation/full-unittest-execution.json",
+      "sha256": "d47fac6586eea43588ca1421bbf2b05cac803997b41d9f668194d70b9771f443",
+      "bytes": 178753
+    },
+    {
+      "localPath": "/workspace/scratch/first-minute/round-69/validation/full-unittest-exit-code.txt",
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+      "bytes": 2
+    },
+    {
+      "localPath": "/workspace/scratch/first-minute/round-69/validation/independent-node-summary.json",
+      "sha256": "37ec25a9a2b04a37a8b7fb820286dc0052ec50be673fb0f7b766be1b944fbbe1",
+      "bytes": 43322
+    },
+    {
+      "localPath": "/workspace/scratch/first-minute/round-69/validation/independent-node-summary.md",
+      "sha256": "84b4e925b432c2de46719e99aba4f0b11e12f2ab52ed83da42dbe1b0cba3c239",
+      "bytes": 2248
+    },
+    {
+      "localPath": "/workspace/scratch/first-minute/round-69/validation/full-node-execution.json",
+      "sha256": "6c008e2b8b035bfb1d5dfa667376c599bed6ba3fbcdf4e3e7c142ccbe1220696",
+      "bytes": 178320
+    },
+    {
+      "localPath": "/workspace/scratch/first-minute/round-69/validation/full-node.log",
+      "sha256": "d4c43f54d824895c4f8c7640fb6e7155a4f92cd817336e7a2f4ca9d82b69cbeb",
+      "bytes": 97543
+    },
+    {
+      "localPath": "/workspace/scratch/first-minute/round-69/validation/full-node-exit-code.txt",
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+      "bytes": 2
+    },
+    {
+      "localPath": "/workspace/scratch/first-minute/round-69/validation/node-playtest/playtest.json",
+      "sha256": "18a17961f036263cdbd0d1fc0d317b5773360ee42a15d37e4013fdba991b1e69",
+      "bytes": 97542
+    }
+  ],
+  "oldDocsPreservation": "All12 existing published files are hash-locked in scratch bundle-manifest.json and remain unchanged; new round69-* filenames only.",
+  "conditions": {
+    "viewport": {
+      "width": 320,
+      "height": 568
+    },
+    "isMobile": true,
+    "hasTouch": true,
+    "CPUrate": 1,
+    "observeMs": 10000,
+    "playMs": 60000,
+    "primaryHoldMs": 80,
+    "tenHoldMsAlternating": [
+      80,
+      250
+    ],
+    "eachSpeedContexts": 5,
+    "externalNetwork": "Leaflet fulfilled locally; other external requests blocked"
+  },
+  "afterTen": {
+    "status": "FINAL_INDEPENDENTLY_AUDITED",
+    "actualExit": {
+      "session": 30469,
+      "exitCode": 0,
+      "collectedAtUTC": "2026-11-13T06:39:11Z",
+      "basis": "Parent notification of actual batch terminal exit, separately checked against retained batch state."
+    },
+    "actualRootProcess": {
+      "session": 30469,
+      "exitCode": 0,
+      "collectedAtUTC": "2026-11-13T06:39:11Z"
+    },
+    "completed": 10,
+    "valid": 10,
+    "worldContexts": 0,
+    "worldEvents": 0,
+    "totalInputs": 143,
+    "normalHandInputs": 133,
+    "trustedEvents": 429,
+    "recordedCDPSends": 286,
+    "full1100msWindows": 142,
+    "incompleteWindows": 1,
+    "incompleteWindowDetail": {
+      "trial": 4,
+      "input": 15,
+      "sentAtPlaySeconds": 59.594,
+      "coordinateResponseAtPlaySeconds": 59.95119995117187,
+      "releaseAndCompletionWithin60s": true,
+      "classification": "Responded before deadline;1100ms window incomplete; not a no-op."
+    },
+    "infoOpenEvents": 0,
+    "noRecordedResponseFullWindow": 0,
+    "errors": 0,
+    "groups": [
+      {
+        "holdMs": 80,
+        "validContexts": 5,
+        "worldContexts": 0,
+        "worldEvents": 0,
+        "normalHandInputs": 67,
+        "totalInputs": 72,
+        "firstResponseSendMs": {
+          "n": 5,
+          "min": 130,
+          "median": 140,
+          "max": 155.2998046875
+        },
+        "firstRewardSendMs": {
+          "n": 5,
+          "min": 342.199951171875,
+          "median": 347.7998046875,
+          "max": 372.2998046875
+        },
+        "issuedHoldMs": {
+          "n": 72,
+          "min": 79,
+          "median": 80.0,
+          "max": 81
+        },
+        "eventTimestampHoldMs": {
+          "n": 72,
+          "min": 78.89999999850988,
+          "median": 80.0,
+          "max": 81.10000000149012
+        }
+      },
+      {
+        "holdMs": 250,
+        "validContexts": 5,
+        "worldContexts": 0,
+        "worldEvents": 0,
+        "normalHandInputs": 66,
+        "totalInputs": 71,
+        "firstResponseSendMs": {
+          "n": 5,
+          "min": 307.599853515625,
+          "median": 311.699951171875,
+          "max": 327.5
+        },
+        "firstRewardSendMs": {
+          "n": 5,
+          "min": 495.800048828125,
+          "median": 522.300048828125,
+          "max": 662.099853515625
+        },
+        "issuedHoldMs": {
+          "n": 71,
+          "min": 249,
+          "median": 250,
+          "max": 254
+        },
+        "eventTimestampHoldMs": {
+          "n": 71,
+          "min": 248.89999999850988,
+          "median": 250,
+          "max": 254.0
+        }
+      }
+    ],
+    "trials": [
+      {
+        "number": 1,
+        "holdMs": 80,
+        "valid": true,
+        "inputs": 14,
+        "normalHandInputs": 13,
+        "worldEvents": 0,
+        "infoOpenEvents": 0,
+        "noRecordedResponse": 0,
+        "incompleteWindows": 0,
+        "firstResponseMs": 140,
+        "firstRewardMs": 348.699951171875,
+        "firstSavedGoalSeconds": 24.26910009765625
+      },
+      {
+        "number": 2,
+        "holdMs": 250,
+        "valid": true,
+        "inputs": 14,
+        "normalHandInputs": 13,
+        "worldEvents": 0,
+        "infoOpenEvents": 0,
+        "noRecordedResponse": 0,
+        "incompleteWindows": 0,
+        "firstResponseMs": 307.599853515625,
+        "firstRewardMs": 495.800048828125,
+        "firstSavedGoalSeconds": 25.2755
+      },
+      {
+        "number": 3,
+        "holdMs": 80,
+        "valid": true,
+        "inputs": 14,
+        "normalHandInputs": 13,
+        "worldEvents": 0,
+        "infoOpenEvents": 0,
+        "noRecordedResponse": 0,
+        "incompleteWindows": 0,
+        "firstResponseMs": 133,
+        "firstRewardMs": 347.699951171875,
+        "firstSavedGoalSeconds": 24.098699951171874
+      },
+      {
+        "number": 4,
+        "holdMs": 250,
+        "valid": true,
+        "inputs": 15,
+        "normalHandInputs": 14,
+        "worldEvents": 0,
+        "infoOpenEvents": 0,
+        "noRecordedResponse": 0,
+        "incompleteWindows": 1,
+        "firstResponseMs": 327.5,
+        "firstRewardMs": 525.400146484375,
+        "firstSavedGoalSeconds": 25.24610009765625
+      },
+      {
+        "number": 5,
+        "holdMs": 80,
+        "valid": true,
+        "inputs": 14,
+        "normalHandInputs": 13,
+        "worldEvents": 0,
+        "infoOpenEvents": 0,
+        "noRecordedResponse": 0,
+        "incompleteWindows": 0,
+        "firstResponseMs": 155.2998046875,
+        "firstRewardMs": 372.2998046875,
+        "firstSavedGoalSeconds": 24.040699951171874
+      },
+      {
+        "number": 6,
+        "holdMs": 250,
+        "valid": true,
+        "inputs": 14,
+        "normalHandInputs": 13,
+        "worldEvents": 0,
+        "infoOpenEvents": 0,
+        "noRecordedResponse": 0,
+        "incompleteWindows": 0,
+        "firstResponseMs": 310.60009765625,
+        "firstRewardMs": 522.300048828125,
+        "firstSavedGoalSeconds": 24.82889990234375
+      },
+      {
+        "number": 7,
+        "holdMs": 80,
+        "valid": true,
+        "inputs": 15,
+        "normalHandInputs": 14,
+        "worldEvents": 0,
+        "infoOpenEvents": 0,
+        "noRecordedResponse": 0,
+        "incompleteWindows": 0,
+        "firstResponseMs": 148.199951171875,
+        "firstRewardMs": 347.7998046875,
+        "firstSavedGoalSeconds": 23.945599853515624
+      },
+      {
+        "number": 8,
+        "holdMs": 250,
+        "valid": true,
+        "inputs": 14,
+        "normalHandInputs": 13,
+        "worldEvents": 0,
+        "infoOpenEvents": 0,
+        "noRecordedResponse": 0,
+        "incompleteWindows": 0,
+        "firstResponseMs": 315.7998046875,
+        "firstRewardMs": 662.099853515625,
+        "firstSavedGoalSeconds": 25.3892998046875
+      },
+      {
+        "number": 9,
+        "holdMs": 80,
+        "valid": true,
+        "inputs": 15,
+        "normalHandInputs": 14,
+        "worldEvents": 0,
+        "infoOpenEvents": 0,
+        "noRecordedResponse": 0,
+        "incompleteWindows": 0,
+        "firstResponseMs": 130,
+        "firstRewardMs": 342.199951171875,
+        "firstSavedGoalSeconds": 24.301099853515623
+      },
+      {
+        "number": 10,
+        "holdMs": 250,
+        "valid": true,
+        "inputs": 14,
+        "normalHandInputs": 13,
+        "worldEvents": 0,
+        "infoOpenEvents": 0,
+        "noRecordedResponse": 0,
+        "incompleteWindows": 0,
+        "firstResponseMs": 311.699951171875,
+        "firstRewardMs": 511.60009765625,
+        "firstSavedGoalSeconds": 25.2705
+      }
+    ],
+    "allAuditedChecksPass": true,
+    "originalImages": {
+      "shaAndDimensionsVerified": 40,
+      "viewedAll40": false,
+      "captureIntervalsContainingWorldCandidate": 0,
+      "worldProof": "Input and observed-state timeline; no world-interval original image available."
+    },
+    "sourceGates": {
+      "localHashComparisons": 140,
+      "httpHashComparisons": 100,
+      "allPass": true,
+      "cpuResetAndBrowserClose": 10,
+      "freshProcessesAndTimeOrigins": 10,
+      "serial": true
+    },
+    "firstGoalSaved": {
+      "contexts": 10,
+      "playSecondsMin": 23.9456,
+      "playSecondsMax": 25.3893
+    },
+    "twoGoalsSavedContexts": 4
+  },
+  "tenBeforeAfterComparison": {
+    "worldContexts": [
+      4,
+      0
+    ],
+    "worldEvents": [
+      5,
+      0
+    ],
+    "actions": [
+      137,
+      143
+    ],
+    "incompleteWindows": [
+      0,
+      1
+    ],
+    "worldObservedIntervalSeconds": [
+      6.876100341796878,
+      0
+    ],
+    "twoGoalsSavedContexts": [
+      2,
+      4
+    ],
+    "interpretation": "Same visible-control protocol; later scenes/randomness and actual timing differ. Not causal reward-speed, progression or dropout improvement. In250ms group reward range509.9-585.3ms→495.8-662.1ms; do not claim faster reward."
+  },
+  "fiveSizeLayout": {
+    "status": "FINAL_INDEPENDENTLY_AUDITED",
+    "actualRootProcess": {
+      "session": 22646,
+      "exitCode": 0,
+      "collectedAtUTC": "2026-11-13T06:42:58Z"
+    },
+    "sourceHead": "c35d8e242d44e519d92b01fc560f41b790ec4080",
+    "comparisonBaseline": "Historical round65 candidate5a4f layout evidence, not newly measured current-main before layout.",
+    "viewports": [
+      [
+        320,
+        568
+      ],
+      [
+        390,
+        844
+      ],
+      [
+        568,
+        320
+      ],
+      [
+        844,
+        390
+      ],
+      [
+        820,
+        1180
+      ]
+    ],
+    "CPUrate": 4,
+    "holdMs": 250,
+    "counts": {
+      "statesBefore": 20,
+      "statesAfter": 20,
+      "controlsBefore": 130,
+      "controlsAfter": 130,
+      "centerHitBefore": 130,
+      "centerHitAfter": 130,
+      "viewportClippedBefore": 0,
+      "viewportClippedAfter": 0,
+      "ancestorClippedBefore": 0,
+      "ancestorClippedAfter": 0,
+      "disabledBefore": 0,
+      "disabledAfter": 0,
+      "overlapPairsBefore": 0,
+      "overlapPairsAfter": 0,
+      "photosBefore": 25,
+      "photosAfter": 25,
+      "actions": 20,
+      "normalWalked": 5,
+      "directArrow": 5,
+      "directReturn": 5,
+      "contextClosed": 5,
+      "cpuResetOK": 5,
+      "rowsSourceVerified": 5,
+      "inputProblems": 0
+    },
+    "controlKeyOrRectDifferences": 0,
+    "scrollDimensionDifferences": 0,
+    "newClippingDisabledHitFailureOrControlOverlap": 0,
+    "actualCDPInputs": 20,
+    "actualSendHoldRangeMs": [
+      248.63566499948502,
+      251.70775999873877
+    ],
+    "newOriginalImagesActuallyViewed": 25,
+    "historicalOriginalImagesAdditionallyViewed": 1,
+    "imagePairHashEqualityCount": 0,
+    "landmarkDifferenceStates": 7,
+    "landmarkInterpretation": "Six moving-hand rectangle phase differences;568x320 returned hand hidden at measurement but visible in saved original completed434.23ms later. Not a persistent missing hand.",
+    "existingVisualIssue": "568x320 returned explanation overlaps center of bottom navigation; same in additionally viewed historical original. Separate from control-control overlap count.",
+    "sourceAndCleanup": {
+      "localFiles": 9,
+      "httpFiles": 6,
+      "bothGroupsPassed": true,
+      "unattemptedGroups": 0,
+      "cpuResetContexts": 5,
+      "closedContexts": 5,
+      "bothBrowsersClosed": true,
+      "cleanHeadBeforeAfter": true,
+      "helperConfigLeafletIntegrity": true
+    },
+    "limitations": [
+      "130 center DOM hit checks are not130 real presses;20 actual inputs.",
+      "Historical comparison usesCPU4/250ms, separate from round69CPU1/80-250ms primary and ten trials.",
+      "50 before/after PNG hashes checked is not50 actual image views;25 new originals plus1 historical original actually viewed.",
+      "No physical finger/sensor/network or actual player-retention measurement.",
+      "No claim all animation phases or every dynamic asset are covered."
+    ]
+  },
+  "publicationGate": {
+    "decision": "KEEP_DRAFT_NO_MERGE",
+    "reason": "Full unittest and required node suite failed. pytest command was unavailable. Keep the existing PR as draft; no merge or production publication.",
+    "rule": "ricepia-flow/SKILL.md:212",
+    "ruleURL": "https://github.com/shota0617/ricepia-judge/blob/f10bb2cf155e5643b41c7e4e3b6a1afca95484ca/.claude/skills/ricepia-flow/SKILL.md#L212"
+  }
+}

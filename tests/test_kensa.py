@@ -3818,5 +3818,97 @@ assert.equal(grainAt({ x:104, y:100 }), higai);
 """)
 
 
+    # ---- サイクル155（最初の1分・この 先が 見える）----
+
+    def test_cycle155_the_head_says_what_the_bag_is_for_and_which_bag(self):
+        # 旧版は 開いた 画面に 目的も 袋の 数も 無く、「1ふくろを しらべて さいごに はんこ」と 分かるのは はんこまで 行った 後（約22秒）だった。
+        # 開いた 時から 頭に 1行。袋が かわる たびに 何ふくろめ かも かわる
+        head = HTML[HTML.index('<div id="head">'):HTML.index('<div id="stage">')]
+        goal = re.search(r'<div id="goal">(.*?)</div>', head)
+        self.assertIsNotNone(goal, "開いた 画面の 頭に 目的の 1行が 無い")
+        text = re.sub(r"<[^>]+>", "", goal.group(1))
+        for word in ("ふくろ", "はんこ"):
+            self.assertIn(word, text)
+        self.assertIn("1ふくろめ", re.sub(r"<[^>]+>", "", head))   # いま 何ふくろめ か（段の 名前の 行の 右）
+        start = HTML.index("function startLot() {")
+        head_of_start = HTML[start:HTML.index('drawBag($("bagCanvas")', start)] + "}"
+        self._node150("""
+const assert = require('node:assert/strict');
+const LOTS = [{}, {}, {}, {}, {}, {}]; let LOT = null, lotIndex = 0;
+const lotNo = { textContent:'1' }; const $ = id => id === 'lotNo' ? lotNo : null;
+""" + head_of_start + """
+lotIndex = 1; startLot(); assert.equal(String(lotNo.textContent), '2', '2ふくろめに なっても 1ふくろめ のまま');
+lotIndex = 6; startLot(); assert.equal(String(lotNo.textContent), '7');   // 6しゅるいを くり返す 7ふくろめ
+""")
+        # 読める 大きさ・こさ（運営者の 声: 11px・うすい 色では 目に 入らない）。どの 画面の 決まりでも 12px 以上、たての 画面は 13px。
+        # 地（--bg）との コントラスト 4.5:1 以上。何ふくろめ かは 段の 名前の 行の 右に 分け、目的の 行は 切れない 長さ
+        css = HTML[HTML.index("<style>"):HTML.index("</style>")]
+        sizes = [int(m) for m in re.findall(r"#(?:goal|lotTag)[^{]*\{[^}]*?font-size:(\d+)px", css)]
+        self.assertTrue(sizes, "目的の 行の 字の 大きさが 決まって いない")
+        self.assertGreaterEqual(min(sizes), 12, "字が 小さすぎる: " + str(sizes))
+        self.assertIn(13, sizes)
+        bg = re.search(r"--bg:(#[0-9a-f]{6})", css).group(1)
+        def lum(h):
+            f = lambda c: c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4
+            r, g, b = [int(h[i:i + 2], 16) / 255 for i in (1, 3, 5)]
+            return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b)
+        for sel in ("#goal {", "#lotTag {"):
+            rule = css[css.index(sel):css.index("}", css.index(sel))]
+            color = re.search(r"color:(#[0-9a-f]{6})", rule).group(1)
+            hi, lo = sorted((lum(color), lum(bg)), reverse=True)
+            self.assertGreaterEqual((hi + .05) / (lo + .05), 4.5, sel + " の 字が うすい")
+            self.assertIn("white-space:nowrap;", rule)
+        self.assertIn('<span id="lotTag"><span id="lotNo">1</span>ふくろめ</span>', head)   # 何ふくろめ か は 題字の 行の 右（Codex指摘で 段の 名前の 行から 移した）
+        self.assertLessEqual(len(text), 14)   # 320px・12px でも 1行に おさまる 長さ（ブラウザ実測で 5つの 画面とも 切れ 0）
+
+
+    def test_cycle155_codex_head_height_does_not_change_with_step_or_bag(self):
+        # Codex指摘: 320×568 で 10ふくろめ の「みわける」へ 進むと、段の 名前が「みわけ／る」に 折り返し、頭が 74 → 106px に のびて、
+        # 皿の 内がわが 261 → 240px に ちぢんだ。おぼえた 皿の 高さ（PH 261）は そのまま なので、なでた 粒が 皿の 外へ 出た。
+        # 本物の ブラウザで、6つの 画面 × 5つの 段 × 袋の 番号 1・10・100 の 頭の 高さ・折り返し・皿の 高さと PH を はかる
+        node = shutil.which("node")
+        if not node:
+            self.skipTest("node がないので実行の確認は飛ばす")
+        js = r"""
+const fs = require('fs'), path = require('path');
+let chromium; try { ({ chromium } = require('playwright')); } catch (e) { console.log(JSON.stringify({ skip: 'playwright なし' })); process.exit(0); }
+const [root] = process.argv.slice(1, 2);
+const TYPES = { '.html': 'text/html; charset=utf-8', '.webp': 'image/webp', '.png': 'image/png', '.js': 'text/javascript', '.css': 'text/css' };
+(async () => {
+  let b; try { b = await chromium.launch(); } catch (e) { console.log(JSON.stringify({ skip: 'chromium が 起動しない' })); return; }
+  const out = [];
+  for (const [w, h] of [[320, 568], [360, 640], [390, 844], [568, 320], [844, 390], [820, 1180]]) {
+    const ctx = await b.newContext({ viewport: { width: w, height: h }, isMobile: true, hasTouch: true }); const p = await ctx.newPage();
+    await p.route('http://kensa.test/**', r => { const f = path.join(root, decodeURIComponent(new URL(r.request().url()).pathname));
+      if (!f.startsWith(root) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) return r.fulfill({ status: 404, body: '' });
+      r.fulfill({ status: 200, contentType: TYPES[path.extname(f)] || 'application/octet-stream', body: fs.readFileSync(f) }); });
+    await p.goto('http://kensa.test/kensa.html'); await p.waitForTimeout(800);
+    for (const lot of ['1', '10', '100']) for (let i = 0; i < 5; i++) {
+      const r = await p.evaluate(([lot, i]) => { document.getElementById('lotNo').textContent = lot; setStep(i, '');
+        const s = document.getElementById('stepName'), lh = parseFloat(getComputedStyle(s).lineHeight);
+        return { head: document.getElementById('head').offsetHeight, wrap: s.offsetHeight > lh * 1.5,   /* 出てくる 動き（scale）に よらない 高さ */ inner: document.getElementById('plateInner').clientHeight, PH };
+      }, [lot, i]);
+      out.push(Object.assign({ w, h, lot, i }, r));
+    }
+    await ctx.close();
+  }
+  await b.close(); console.log(JSON.stringify(out));
+})();
+"""
+        r = subprocess.run([node, "-e", js, ROOT], capture_output=True, text=True, timeout=600)
+        self.assertEqual(r.returncode, 0, r.stderr[-1500:])
+        res = json.loads(r.stdout.strip().splitlines()[-1])
+        if isinstance(res, dict) and res.get("skip"):
+            self.skipTest(res["skip"])
+        self.assertEqual(len(res), 6 * 15)
+        for c in res:
+            tag = "%dx%d %sふくろめ %d段め" % (c["w"], c["h"], c["lot"], c["i"] + 1)
+            self.assertFalse(c["wrap"], tag + " で 段の 名前が 折り返した")
+            self.assertLessEqual(abs(c["inner"] - c["PH"]), 1, tag + " で 皿の 高さ %d と PH %d が ずれた" % (c["inner"], c["PH"]))
+        for w, h in {(c["w"], c["h"]) for c in res}:
+            heads = {c["head"] for c in res if (c["w"], c["h"]) == (w, h)}
+            self.assertEqual(len(heads), 1, "%dx%d で 頭の 高さが 段・袋で かわる %s" % (w, h, sorted(heads)))
+
+
 if __name__ == "__main__":
     unittest.main()

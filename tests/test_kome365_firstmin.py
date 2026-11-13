@@ -307,6 +307,7 @@ const FAKE = (mode) => {
       else if (a === 'L' || a === 'R') await swipe(a === 'L' ? -1 : 1);
       else if (a === 'mute') { if (await p.locator('#swSnd').count()) await p.tap('#swSnd', { timeout: 5000 }); await p.waitForTimeout(300); }   // ボタンが 無い 版では 押せない(下の 確かめで 落ちる)
       else if (a === 'wait') await p.waitForTimeout(2500);
+      else if (a === 'wait31') await p.waitForTimeout(31500);   // 30秒の カードが 出る まで
       else if (a === 'keyL') { await p.keyboard.press('ArrowLeft'); r.js = r.js || []; r.js.push(await p.evaluate(() => window.__fa.live(window.__tc, window.__ts))); }   // 決めた すぐ あとに 古い 予約が のこって いるか
       else if (a === 'dailyKey') {   // 3回めの レビュー(P2): ← で 決めて すぐ ⌂ → 今日の 田んぼ(bDaily) → 新しい ゲームで すぐ ←
         await p.keyboard.press('ArrowLeft'); await p.evaluate(() => { document.getElementById('swHome').click(); document.getElementById('bDaily').click(); });
@@ -1540,6 +1541,68 @@ class TestKome365SoundReview(unittest.TestCase):
             self.assertEqual(x["js"][-1], 0, name + ": 前の カードの 音が まだ 鳴る 予定")
         self.assertEqual(self.r["cancelHome"]["steps"][-1][1]["screen"], "sTitle")
         self.assertEqual(self.r["cancelResult"]["steps"][-1][1]["screen"], "sResult")
+
+
+# サイクル174 の 直し: 絵・ことば・太陽・吹き出し・30秒の カードの 見え方を 1回で とる(SOUND_BROWSER_JS の 'js:' で 使う)
+LOOK_JS = "js:(() => { const R = id => { const e = document.getElementById(id); if (!e || !e.getClientRects().length) return null; const b = e.getBoundingClientRect(); return [b.left, b.top, b.right, b.bottom]; }; const cs = id => getComputedStyle(document.getElementById(id)); const vis = id => { for (let n = document.getElementById(id); n && n.nodeType === 1; n = n.parentElement) { const c = getComputedStyle(n); if (c.display === 'none' || c.visibility === 'hidden') return false; } return true; }; return { date: document.getElementById('swBigDate').textContent, sun: R('swSun'), sunW: cs('swSun').width, sunBg: getComputedStyle(document.querySelector('#swSun .sunPix')).backgroundSize, snd: R('swSnd'), home: R('swHome'), why: document.getElementById('swWhy').textContent, whyOn: document.getElementById('swWhy').classList.contains('on'), whyOp: +cs('swWhy').opacity, word: document.getElementById('swPdWord').textContent, wordVis: vis('swPdWord'), paddyVis: vis('swPaddy'), idle: document.getElementById('swIdle').hasAttribute('data-on') }; })()"
+SAVE_DOY120 = '{"v":"kokoro","y":"recent","so":"high","m":"transplant","c":0,"s":1543068361,"fm":"oneshot","yh":0,"ch":"' + "L" * 119 + '"}'
+
+
+def _ov(a, b):
+    if not a or not b:
+        return 0
+    ix = min(a[2], b[2]) - max(a[0], b[0])
+    iy = min(a[3], b[3]) - max(a[1], b[1])
+    return ix * iy if ix > 0.5 and iy > 0.5 else 0
+
+
+class TestKome365PaddyReview(unittest.TestCase):
+    """サイクル174 の レビュー(PR #1131): せまい 画面の 太陽の 大きさ・✗ の 吹き出しの あと ことばが もどる・30秒の カードの 間は 絵と ことばを しまう"""
+
+    @classmethod
+    def setUpClass(cls):
+        plans = []
+        for w, h in ((320, 568), (360, 640)):
+            plans.append({"name": "sun%d" % w, "w": w, "h": h, "reduce": True, "save": SAVE_DOY120, "acts": [LOOK_JS]})
+        for rm in (False, True):
+            plans.append({"name": "why" + ("R" if rm else ""), "reduce": rm, "acts": ["R", LOOK_JS, "wait", LOOK_JS]})
+        plans.append({"name": "idle", "acts": ["L", "wait31", LOOK_JS, "L", "wait", LOOK_JS]})   # とじた あとは ✗ の 吹き出し(2秒)が 終わる まで 待つ
+        cls.r = sound_run(plans)
+
+    def test_narrow_sun_is_small_and_clear_of_buttons(self):
+        for w in (320, 360):
+            x = self.r["sun%d" % w]
+            self.assertEqual(x["errs"], [])
+            j = x["js"][-1]
+            self.assertEqual(j["date"], "4月30日")
+            self.assertEqual(j["sunW"], "68px", w)                 # 基本の 84px に 上書き されない
+            self.assertEqual(j["sunBg"], "62px 62px", w)
+            self.assertEqual(_ov(j["sun"], j["snd"]), 0, "%d: 太陽が 🔊 に かかる %r %r" % (w, j["sun"], j["snd"]))
+            self.assertEqual(_ov(j["sun"], j["home"]), 0, w)
+
+    def test_word_comes_back_after_why_bubble(self):
+        for name in ("why", "whyR"):
+            x = self.r[name]
+            self.assertEqual(x["errs"], [], name)
+            during, after = x["js"][0], x["js"][1]
+            self.assertTrue(during["why"], name + ": ✗ に ならなかった")
+            self.assertTrue(during["whyOn"], name)
+            self.assertFalse(during["wordVis"], name)     # 吹き出しの 2秒の 間は しまう(同じ 所)
+            self.assertFalse(after["whyOn"], name)        # 2秒が 終わったら
+            self.assertEqual(after["whyOp"], 0, name)
+            self.assertTrue(after["wordVis"], name + ": 吹き出しが 消えても ことばが もどらない")
+            self.assertTrue(after["word"], name)
+
+    def test_idle_card_hides_paddy_then_restores(self):
+        x = self.r["idle"]
+        self.assertEqual(x["errs"], [])
+        shown, back = x["js"][0], x["js"][1]
+        self.assertTrue(shown["idle"], "30秒の カードが 出ない")
+        self.assertFalse(shown["paddyVis"])
+        self.assertFalse(shown["wordVis"])
+        self.assertFalse(back["idle"])
+        self.assertTrue(back["paddyVis"])
+        self.assertTrue(back["wordVis"])
 
 
 class TestKome365PaddyReadable(unittest.TestCase):

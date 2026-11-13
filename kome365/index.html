@@ -402,11 +402,12 @@ a{color:var(--acc)}
 @media (prefers-reduced-motion:reduce){#swCareGlow{transition:none}#swKakashi[data-care]{animation:none}#swKakashi[data-care] .kkCare{animation:swCareIconCalm .95s linear 1 forwards}}
 #swSunLight{position:absolute;left:6%;top:calc(31% - var(--sunh, 0) * 15%);width:560px;height:560px;margin:-280px 0 0 -280px;border-radius:50%;z-index:0;pointer-events:none;opacity:0;transition:left 1.2s ease,top 1.2s ease,opacity 1.2s ease}   /* 太陽光の連動(サイクル43・太陽と同じleft/top遷移で動く光の円盤。背景グラデーション自体は補間されないため要素の位置で連動させる=Codex P1対応。表示のみ) */
 @media (min-width:361px) and (min-height:741px){#swSun,#swSunLight{top:calc(20% - var(--sunh, 0) * 6%)!important}}
-@media (max-width:360px) and (min-height:441px){#swSun,#swSunLight{top:calc(31% - var(--sunh, 0) * 22%)!important}#swSun{width:68px;height:68px;margin:-34px 0 0 -34px}#swSun .sunPix{width:68px;height:68px;background-size:62px 62px}}   /* せまい 縦の 画面: 太陽は 少し 小さく、春〜秋は 少し 高く(まん中の 田んぼの 絵の 上を 通る) */   /* サイクル174: 縦の 大きい 画面は 大きな 田んぼの 絵の 上を 通る(冬・年の 終わりも 画面の 20% より 下へ 行かない) */
+@media (max-width:360px) and (min-height:441px){#swSun,#swSunLight{top:max(calc(31% - var(--sunh, 0) * 22%), 93px)!important}}   /* せまい 縦の 画面: 春〜秋は 少し 高く(まん中の 田んぼの 絵の 上を 通る)。ただし ⌂・🔊 の 列(上から 52px)より 下(中心 93px 以上)。小さく する 指定は 下(基本の きまりの あと) */   /* サイクル174: 縦の 大きい 画面は 大きな 田んぼの 絵の 上を 通る(冬・年の 終わりも 画面の 20% より 下へ 行かない) */
 #swSun{position:absolute;left:6%;top:calc(31% - var(--sunh, 0) * 15%);width:84px;height:84px;margin:-42px 0 0 -42px;z-index:3;pointer-events:none;opacity:0;transform:scale(.88);transition:left 1.2s ease,top 1.2s ease,transform 1.2s ease,filter 1.2s ease,opacity .4s ease}   /* 太陽の通り道(サイクル39・表示のみ。#swipe直下の静的要素でrenderでは作り直さない。大きさ・色はサイクル43で連続補間。絵はサイクル74でドット絵化)。重なり順はサイクル148(差17): z1では年初・年末の低い太陽が左右の列(顔・育ち・かかし・今日の空=いずれもz3)の後ろに隠れた(実測: 育ちとの重なり最大3,234px²=360×640)。列と同じz3にし、DOM順(太陽は列より後ろ・収穫カウント#swCountより前)で「列より上・カウントより下」に置く。ドット絵は背景透明のため列を箱で覆わない。通り道・大きさ・色・光は不変 */
 #swSun[data-on]{opacity:.95}
 #swSun .sunPix{display:block;width:84px;height:84px;background-repeat:no-repeat;background-position:center;background-size:76px 76px;image-rendering:pixelated}
 @media (prefers-reduced-motion:reduce){#swSun{transition:none}#swSunLight{transition:none}}
+@media (max-width:360px) and (min-height:441px){#swSun{width:68px;height:68px;margin:-34px 0 0 -34px}#swSun .sunPix{width:68px;height:68px;background-size:62px 62px}}   /* サイクル174 の 直し: せまい 縦の 画面の 太陽は 68px(基本の きまり 84px の あとに 置く。前は 上書き されて 効いて いなかった) */
 #swIdle{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);z-index:5;display:flex;flex-wrap:wrap;justify-content:center;width:max-content;max-width:calc(100vw - 24px);gap:8px 10px;align-items:center;background:rgba(255,253,246,.96);border-radius:18px;box-shadow:0 4px 16px rgba(60,50,20,.25);padding:10px 12px;opacity:0;visibility:hidden;pointer-events:none;transition:opacity 1.2s ease,visibility 0s linear 1.2s}   /* 止まったときの小さなカード(サイクル63・入れ物は pointer-events:none でスワイプを止めない。非表示時は visibility:hidden でボタンも完全に無効=透明なボタンが操作を奪わない(Codex P1対応)) */
 #swIdleSay{flex:0 0 100%;margin:0;text-align:center;font-size:18px;font-weight:700;line-height:1.1;color:#4a3f1d;pointer-events:none}
 #swIdle[data-on]{opacity:1;visibility:visible;transition:opacity 1.2s ease}
@@ -691,8 +692,9 @@ a{color:var(--acc)}
 #swPvAura .pvAuraMod{position:absolute;right:2px;bottom:2px;width:30px;height:30px;display:none;background-repeat:no-repeat;background-position:center;background-size:30px 30px;image-rendering:pixelated}   /* 札の修飾(速い/少し等)も一緒にコピーし、左右が修飾だけで違うカードでも気配が同じ絵にならない(Codexレビュー対応・周回123) */
 @keyframes swPvAuraBob{0%,100%{transform:translateY(2px)}50%{transform:translateY(-3px)}}
 @media (prefers-reduced-motion: reduce){#swPvAura .pvAuraIc{animation:none}}
-#swPvField{position:absolute;left:50%;top:148px;transform:translateX(-50%);z-index:4;display:none;gap:8px;pointer-events:none;width:calc(100% - 16px);flex-wrap:wrap;justify-content:center}
+#swPvField{position:absolute;left:50%;top:148px;transform:translateX(-50%);z-index:4;display:none;gap:8px;pointer-events:none;width:max-content;max-width:calc(100% - 16px);flex-wrap:wrap;justify-content:center}
 #swPvField.on{display:flex}
+@media (max-width:360px) and (min-height:441px){#swPvField{top:96px}}   /* サイクル174 の 直し: せまい 縦の 画面は 決めた あとの しるしを 田んぼの 絵(カードの 上 64px〜)より 上に。しるしの 箱は 中身の はば だけ(width:max-content) */
 #swPvField span{display:flex;align-items:center;gap:2px;font-size:28px;line-height:1.1;font-weight:900;color:#2b3f5c;background:rgba(255,255,255,.92);border:3px solid #4a6a8c;border-radius:20px;padding:2px 8px;box-shadow:0 3px 10px rgba(0,0,0,.3)}
 #swPvField span i{font-style:normal;font-size:28px;letter-spacing:1px;color:#4a6a8c}
 #swPvField span i.fbPix{width:28px;height:28px;flex:none;background-repeat:no-repeat;background-position:center;background-size:28px 28px;image-rendering:pixelated;letter-spacing:0}   /* 影響バッジの状態アイコンもドット絵(サイクル77・PIXSTAT) */
@@ -3049,7 +3051,7 @@ renderTitle();
   function sunApply(cal){   /* 太陽の通り道(サイクル39): 暦の日だけから決める読み取り専用。左右は年初→年末で単調、高さは sin で夏が頂点(連続なので季節境界で跳ねない)。サイクル43: 大きさ・色・輝きと田んぼの光も h=sin(πt) と秋の温かみ warm の連続関数にし、季節境界で跳ねないようにする */
     var doy = Math.max(1, Math.min(365, cal)), t = (doy - 1) / 364, m = K.dateOf(doy).m, se = $('swSun'),
       season = m >= 3 && m <= 5 ? 'spring' : m >= 6 && m <= 8 ? 'summer' : m >= 9 && m <= 11 ? 'autumn' : 'winter',
-      x = 6 + t * 88, h = Math.sin(Math.PI * t), y = (window.matchMedia && matchMedia('(min-width:361px) and (min-height:741px)').matches) ? 20 - h * 6 : (window.matchMedia && matchMedia('(max-width:360px) and (min-height:441px)').matches) ? 31 - h * 22 : 31 - h * 15,   /* 高さは CSS(#swSun の top)。ここは 記録 だけ */
+      x = 6 + t * 88, h = Math.sin(Math.PI * t), y = (window.matchMedia && matchMedia('(min-width:361px) and (min-height:741px)').matches) ? 20 - h * 6 : (window.matchMedia && matchMedia('(max-width:360px) and (min-height:441px)').matches) ? Math.max(31 - h * 22, 9300 / (window.innerHeight || 568)) : 31 - h * 15,   /* 高さは CSS(#swSun の top)。ここは 記録 だけ */
       warm = Math.exp(-Math.pow((t - 0.78) / 0.13, 2)),
       scale = 0.88 + 0.32 * h, sat = 0.55 + 0.75 * h, bright = 1.03 + 0.09 * h,
       sepia = 0.35 * warm, hue = -12 * warm, glow = 0.70 * h,
@@ -3806,8 +3808,10 @@ renderTitle();
   var markAt = -1e9;   /* ○✗ の しるしを 出した 時刻(手本は しるしが 消えてから) */
   function markShow(k){ var e = $('swMark'); if (!e) return; markAt = performance.now(); e.classList.remove('on'); e.style.backgroundImage = 'url("' + markURL(k) + '")'; void e.offsetWidth; e.classList.add('on'); }
   /* 店主指示 2026-11-08: バツ(✗)のときだけ、判定文 why の最初の一文をマークの下に小さく浮かせて約2秒出す。○側は出さない */
-  function whyShow(fb){ var e = $('swWhy'); if (!e) return; var t = String(fb || '').replace(/^\S+\s+/, ''); var i = t.indexOf('。'); if (i >= 0) t = t.slice(0, i + 1); if (!t) return; e.textContent = t; e.classList.remove('on'); void e.offsetWidth; e.classList.add('on'); }
-  function whyHide(){ var e = $('swWhy'); if (e) e.classList.remove('on'); }
+  function whyShow(fb){ var e = $('swWhy'); if (!e) return; var t = String(fb || '').replace(/^\S+\s+/, ''); var i = t.indexOf('。'); if (i >= 0) t = t.slice(0, i + 1); if (!t) return; e.textContent = t; e.classList.remove('on'); void e.offsetWidth; e.classList.add('on'); clearTimeout(whyTimer); whyTimer = setTimeout(whyHide, 2100); }   /* サイクル174 の 直し: 吹き出しの 2秒(アニメ)が 終わったら on を 外す(状態の ことばが もどる)。場所と 2秒は そのまま */
+  var whyTimer = null;
+  function whyHide(){ clearTimeout(whyTimer); whyTimer = null; var e = $('swWhy'); if (e) e.classList.remove('on'); }
+  try { $('swWhy').addEventListener('animationend', function(ev){ if (ev.target === this && /^swWhy(In|Fade)$/.test(ev.animationName)) whyHide(); }); } catch (e) {}
   /* 3回めの レビュー(P2): 画面の 世代は 選択 ごとに choose() の 中で つかまえて この 関数へ わたす(共有の 変数だと、新しい ゲームで すぐ 選んだ ときに 古い 選択の 分が 上書き されて いた) */
   function advanceTurn(side, gen){
     var kLive = ksSameScreen(gen);   /* 2回めの レビュー(P2): 選んだ あとに ⌂ などで 画面が かわって いたら、この 選択からは 音を 作らない(ゲームの 進み方は 前と 同じ) */

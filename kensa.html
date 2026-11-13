@@ -52,8 +52,14 @@
   /* 字は 13px・こい 茶（地との コントラスト 7.75:1）。段の 名前（28px・黒）より 弱く、題字（12px・うすい 茶 4.66:1）より はっきり。
      いま 何ふくろめ か は 段の 名前の 行の 右（📖 の 左）に 分けて、はば 320px でも 切れない */
   #goal { margin-top:2px; font-size:13px; line-height:1.25; font-weight:700; color:#4a4136; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  #stepRow { display:flex; align-items:baseline; justify-content:space-between; gap:6px; }
-  #lotTag { flex:none; font-size:13px; font-weight:700; color:#4a4136; white-space:nowrap; }
+  /* 何ふくろめ か は 題字「農産物検査」の 行の 右に 置く（Codex指摘）。段の 名前の 行に 置くと、320px の はばで 10ふくろめ の「みわける」が
+     「みわけ／る」に 折り返し、頭が 74 → 106px に のびて 皿が 261 → 240px に ちぢみ、おぼえた 皿の 高さ（PH）と ずれて 粒が 皿の 外へ 出た。
+     段の 名前は 行の はば ぜんぶを 使い、折り返さない。横向きの 低い 画面では 題字を 出さず、段の 名前の 行の 右に 置く */
+  #headText { display:grid; grid-template-columns:minmax(0, 1fr) auto; column-gap:8px; align-items:baseline; }
+  #headText h1 { grid-column:1; grid-row:1; }
+  #lotTag { grid-column:2; grid-row:1; font-size:13px; font-weight:700; color:#4a4136; white-space:nowrap; }
+  #stepName { grid-column:1 / -1; white-space:nowrap; }
+  #pips, #goal { grid-column:1 / -1; }
   @media (max-width:360px) { #goal, #lotTag { font-size:12px; } }
   #notesLink { flex:none; font-size:22px; text-decoration:none; padding:8px 2px 8px 8px; opacity:.75; }
 
@@ -232,6 +238,7 @@
     #pips { margin-top:1px; }
     #goal, #lotTag { font-size:12px; }
     #goal { margin-top:0; line-height:1.15; }
+    #stepName { grid-column:1; grid-row:1; }
     #stage { flex-direction:row; }
     #top { flex:0 0 34%; }
     #bagBtn { height:auto; width:50%; margin-left:0; }
@@ -275,7 +282,8 @@
     <canvas id="face" width="256" height="256" aria-hidden="true"></canvas>
     <div id="headText">
       <h1>農産物検査</h1>
-      <div id="stepRow"><div id="stepName" aria-live="polite">ぬく</div><span id="lotTag"><span id="lotNo">1</span>ふくろめ</span></div>
+      <span id="lotTag"><span id="lotNo">1</span>ふくろめ</span>
+      <div id="stepName" aria-live="polite">ぬく</div>
       <div id="pips" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
       <div id="goal">ふくろを しらべて はんこ</div>
     </div>

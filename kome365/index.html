@@ -3881,7 +3881,7 @@ renderTitle();
   }
   function choose(side, vel){
     if (busy || !card || !f || KomeCards.over(f)) return; idleTouch(); ghostOff(); busy = true; ksCancel(); if (ksSameScreen()) ksFx('pon'); rwUpdate(false); window.__k3d.soon(900);
-    var gen = KS.gen, advance = function(sd){ advanceTurn(sd, gen); };   /* 3回めの レビュー(P2): advance は この 選択の 世代を もつ(下の 2つの 呼び出しは この 選択 だけの もの) */
+    var gen = KS.gen, game = f, advance = function(sd){ if (f !== game) { pend = null; pendQ = []; return; } advanceTurn(sd, gen); };   /* サイクル178: 飛んで いる 間に ⌂ → 新しい ゲームに なって いたら、古い ゲームの この 選択(と 置いて いた 指)は 新しい ゲームに 当てない(前は 新しい ゲームが 1日 進んで 始まった) */   /* 3回めの レビュー(P2): advance は この 選択の 世代を もつ(下の 2つの 呼び出しは この 選択 だけの もの) */
     var out = side === 'left' ? -1 : 1;
     pvClear(); el.card.classList.remove('drag', 'enter', 'wig'); el.card.classList.add('fly');
     if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) { advance(side); return; }

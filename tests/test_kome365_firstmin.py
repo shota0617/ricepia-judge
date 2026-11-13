@@ -313,6 +313,10 @@ const FAKE = (mode) => {
       else if (a === 'dailyKey') {   // 3回めの レビュー(P2): ← で 決めて すぐ ⌂ → 今日の 田んぼ(bDaily) → 新しい ゲームで すぐ ←
         await p.keyboard.press('ArrowLeft'); await p.evaluate(() => { document.getElementById('swHome').click(); document.getElementById('bDaily').click(); });
         const n = await p.evaluate(() => window.__ks.state().log.length); await p.keyboard.press('ArrowLeft'); r.js = r.js || []; r.js.push(n); }
+      else if (a === 'swipeLeaveNew' || a === 'keyLeaveNew') {   // サイクル178: 決めて すぐ(カードが 飛んで いる 間)に ⌂ → 今日の 田んぼ(新しい ゲーム)
+        if (a === 'keyLeaveNew') await p.keyboard.press('ArrowLeft');
+        else { const bx = await p.locator('#swCard').boundingBox(); const x = bx.x + bx.width / 2, y = bx.y + bx.height / 2; await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] }); for (let i = 1; i <= 4; i++) { await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: x - 40 * i, y }] }); await p.waitForTimeout(12); } await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); }
+        await p.evaluate(() => { document.getElementById('swHome').click(); document.getElementById('bDaily').click(); }); await p.waitForTimeout(900); }
       else if (a === 'homeKey') {   // 2回めの レビュー(P2): ⌂ を マウスで 押した まま ← で 決め、すぐ はなす(選んで すぐ 題へ)
         const hb = await p.locator('#swHome').boundingBox(); await p.mouse.move(hb.x + hb.width / 2, hb.y + hb.height / 2); await p.mouse.down(); await p.keyboard.press('ArrowLeft'); await p.mouse.up();
         r.js = r.js || []; r.js.push(await p.evaluate(() => ({ screen: document.getElementById('sTitle').classList.contains('hidden') ? 'game' : 'title', n: window.__ks.state().log.length }))); }
@@ -1721,6 +1725,31 @@ class TestKome365WhyBothSides(unittest.TestCase):
         self.assertIn("whyShow(fb, cls === 'vOK' ? 'ok' : 'ng');", HTML)
         self.assertNotIn("if (cls === 'vNG') whyShow(fb);", HTML)      # 前の「✗ の とき だけ」
         self.assertIn("#swWhy.on{animation:swWhyIn 2s ease-out both}", HTML)   # 場所と 2秒(運営者の 決めごと)は そのまま
+
+
+DATE_JS = "js:(() => ({ date: document.getElementById('swBigDate').textContent, screen: document.getElementById('sGame').classList.contains('hidden') ? 'other' : 'game', save: (() => { try { const o = JSON.parse(localStorage.getItem('kome365_swipe_save') || '{}'); return (o.ch || '').length; } catch (e) { return -1; } })() }))()"
+
+
+class TestKome365LeaveThenNewGame(unittest.TestCase):
+    """サイクル178: 決めた 直後(カードが 飛んで いる 約0.2秒)に ⌂ で 題へ もどり 新しい ゲームを 始めても、新しい ゲームは 1月1日から(前は 1日 進んで 始まった)"""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.r = sound_run([
+            {"name": "swipe", "acts": ["swipeLeaveNew", DATE_JS, "keyjs:" + DATE_JS[3:], "wait", DATE_JS]},
+            {"name": "key", "acts": ["keyLeaveNew", DATE_JS]},
+        ])
+
+    def test_new_game_starts_at_day_one(self):
+        for name in ("swipe", "key"):
+            x = self.r[name]
+            self.assertEqual(x["errs"], [], name)
+            j = x["js"][0]
+            self.assertEqual(j["screen"], "game", name)
+            self.assertEqual(j["date"], "1月1日", name + ": 新しい ゲームが 1日 進んで 始まった")
+        nxt = self.r["swipe"]["js"][1]                    # その あとの 1枚は ふつうに 1日 進む(古い 選択が あとから 足されない)
+        self.assertEqual(nxt["date"], "1月2日")
+        self.assertEqual(self.r["swipe"]["js"][2]["date"], "1月2日")
 
 
 class TestKome365PaddyReadable(unittest.TestCase):

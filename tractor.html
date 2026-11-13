@@ -214,7 +214,7 @@
      右下の 赤い ▲（padC）に 134px²・前への 手本の 指に 最大 3913px²・点に 915px² かかっていた。はばを 数字の 右はし＋6px まで（360px まで）ひろげて 2 行＋1 行に し、
      上の あきを 0 に して 顔の 上はしに そろえる（指が いちばん 上に 来る 所より 上に 多く のせる）。字の 大きさ・ことば・数字・顔・手本・ボタンは 変えない */
   @media (orientation: landscape) and (max-height: 360px) {
-    body.calm #say { max-width: min(360px, calc(100vw - 214px)); margin-top: 0; }
+    body.touch.calm #say { max-width: min(360px, calc(100vw - 214px)); margin-top: 0; }   /* スマホ（タッチ）だけ。マウスの 端末は 地図（#artBox）が 左上に ある ので、ひろげると 地図に かぶる（レビューの 指摘） */
   }
   @media (max-width: 363px) and (orientation: portrait) {
     body.calm #badge { width: calc(100vw - 16px); flex-direction: column; align-items: flex-end; }

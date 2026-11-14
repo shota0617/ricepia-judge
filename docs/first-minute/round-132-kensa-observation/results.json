@@ -1,0 +1,1047 @@
+{
+  "round": 132,
+  "game": "kensa",
+  "status": "complete observation; no new confirmed fix selected",
+  "source": {
+    "testedHead": "4eab5db22688eb264948621aa5aac5b4e9fa9dad",
+    "postTestBase": "7a17d1c7c458539c1e5d6b6b65c29d1e9f2958b3",
+    "update": {
+      "atUTC": "2026-11-14T19:58:18.983744+00:00",
+      "testedSource": "4eab5db22688eb264948621aa5aac5b4e9fa9dad",
+      "newBase": "7a17d1c7c458539c1e5d6b6b65c29d1e9f2958b3",
+      "docsOnly": true,
+      "changedPaths": [
+        "docs/first-minute/round-130-kome-first-answer/README.md",
+        "docs/first-minute/round-130-kome-first-answer/diagnostic-trial01-observe.png",
+        "docs/first-minute/round-130-kome-first-answer/diagnostic-trial01-post-window.png",
+        "docs/first-minute/round-130-kome-first-answer/observe-10s.png",
+        "docs/first-minute/round-130-kome-first-answer/play-10s.png",
+        "docs/first-minute/round-130-kome-first-answer/play-30s.png",
+        "docs/first-minute/round-130-kome-first-answer/play-60s.png",
+        "docs/first-minute/round-130-kome-first-answer/results.json"
+      ],
+      "source10Same": true,
+      "wholeNewCommitRetested": false
+    },
+    "selectedHashes": {
+      "AGENTS.md": "3307716adf32bd25c5a9232821447251789c579f3192b423bad0c86c97814ab4",
+      ".claude/skills/ricepia-flow/SKILL.md": "56d075153f561430fee926907a5c97083d9f643e6dd2d3a2f4c5736324a697f0",
+      "kensa.html": "07343e6fed26956548a72ee883caddf4076ca5d62d3550f486bb30f5d383fdfb"
+    },
+    "productEdits": 0,
+    "testEdits": 0,
+    "wholePostTestHeadRetested": false
+  },
+  "method": {
+    "ordinaryRuns": 1,
+    "url": "http://127.0.0.1:8000/kensa.html",
+    "serverCommand": "python3 -m http.server 8000",
+    "viewport": {
+      "width": 320,
+      "height": 568
+    },
+    "isMobile": true,
+    "hasTouch": true,
+    "cpuRate": 1,
+    "input": "CDP Input.dispatchTouchEvent",
+    "selection": "visible instruction, guide and element geometry; no injected state or grain-kind selection",
+    "observationMinimumMs": 10000,
+    "photoSaveWaitMs": 78,
+    "observationToPlayMs": 10078,
+    "playSeconds": 60,
+    "postGesturePollBudgetMs": 650,
+    "pollStopsAtFirstRecordedResponse": true,
+    "budgetMeaning": "Maximum budget, not650ms actually observed after every gesture; all35 nominal windows fit the60-second deadline.",
+    "unissuedOrSuppressedChoicesCount": null
+  },
+  "outcome": {
+    "inputs": 35,
+    "postGestureDOMResponses": 35,
+    "withoutRecordedResponse": 0,
+    "taskOrSubstepUpdates": 34,
+    "viewOnlyZoomUpdates": 1,
+    "updateDefinition": "Includes partial moisture measurements, grain removals and individual substeps; not34 completed stages or35 correct choices.",
+    "progressCategories": {
+      "insertion substep; pull instruction appears": 3,
+      "extraction; tray obtains20 visible grains": 3,
+      "moisture reading/count update": 5,
+      "sorting preparation; next task cue appears": 3,
+      "visible grain removed with flying-grain evidence": 9,
+      "sensory result cue": 2,
+      "grade accepted; stamping phase appears": 2,
+      "ink substep; lower-stamp cue appears": 2,
+      "bag stamped; visible next-bag button": 2,
+      "next bag and initial instruction appear": 2,
+      "guided zoom substep; picking cue appears": 1,
+      "view-only zoom; no grain/task advance observed": 1
+    },
+    "guidePress": 10,
+    "grainRemovalWithFlyingGrain": 9,
+    "explicitPositiveHintCount": 5,
+    "positiveHintTexts": [
+      "きれいに なった！",
+      "くんくん… いい におい",
+      "ちょうどいい"
+    ],
+    "positiveMeaning": "Recorded text in five action responses, not five independently measured psychological rewards.",
+    "completedBagsWithVisibleNextButton": 2,
+    "newConfirmedCandidateCount": 0,
+    "actions": [
+      {
+        "index": 1,
+        "action": "insert left",
+        "startSeconds": 0.01,
+        "endSentSeconds": 0.41,
+        "endAcknowledgedSeconds": 0.424,
+        "recordedResponse": true,
+        "firstResponsePollSeconds": 0.427,
+        "progressCategory": "insertion substep; pull instruction appears",
+        "pickupObserved": false,
+        "viewOnlyZoomObserved": false,
+        "explicitPositiveHint": false,
+        "afterBag": "1ふくろめ"
+      },
+      {
+        "index": 2,
+        "action": "pull right",
+        "startSeconds": 0.919,
+        "endSentSeconds": 1.319,
+        "endAcknowledgedSeconds": 1.323,
+        "recordedResponse": true,
+        "firstResponsePollSeconds": 1.326,
+        "progressCategory": "extraction; tray obtains20 visible grains",
+        "pickupObserved": false,
+        "viewOnlyZoomObserved": false,
+        "explicitPositiveHint": false,
+        "afterBag": "1ふくろめ"
+      },
+      {
+        "index": 3,
+        "action": "rotate visible knob one circle",
+        "startSeconds": 1.832,
+        "endSentSeconds": 3.332,
+        "endAcknowledgedSeconds": 3.341,
+        "recordedResponse": true,
+        "firstResponsePollSeconds": 3.352,
+        "progressCategory": "moisture reading/count update",
+        "pickupObserved": false,
+        "viewOnlyZoomObserved": false,
+        "explicitPositiveHint": true,
+        "afterBag": "1ふくろめ"
+      },
+      {
+        "index": 4,
+        "action": "spread across visible tray",
+        "startSeconds": 4.272,
+        "endSentSeconds": 5.073,
+        "endAcknowledgedSeconds": 5.092,
+        "recordedResponse": true,
+        "firstResponsePollSeconds": 5.095,
+        "progressCategory": "sorting preparation; next task cue appears",
+        "pickupObserved": false,
+        "viewOnlyZoomObserved": false,
+        "explicitPositiveHint": false,
+        "afterBag": "1ふくろめ"
+      },
+      {
+        "index": 5,
+        "action": "tap displayed press guide",
+        "startSeconds": 6.017,
+        "endSentSeconds": 6.057,
+        "endAcknowledgedSeconds": 6.082,
+        "recordedResponse": true,
+        "firstResponsePollSeconds": 6.087,
+        "progressCategory": "visible grain removed with flying-grain evidence",
+        "pickupObserved": true,
+        "viewOnlyZoomObserved": false,
+        "explicitPositiveHint": false,
+        "afterBag": "1ふくろめ"
+      },
+      {
+        "index": 6,
+        "action": "tap displayed press guide",
+        "startSeconds": 8.231,
+        "endSentSeconds": 8.271,
+        "endAcknowledgedSeconds": 8.296,
+        "recordedResponse": true,
+        "firstResponsePollSeconds": 8.299,
+        "progressCategory": "visible grain removed with flying-grain evidence",
+        "pickupObserved": true,
+        "viewOnlyZoomObserved": false,
+        "explicitPositiveHint": true,
+        "afterBag": "1ふくろめ"
+      },
+      {
+        "index": 7,
+        "action": "carry visible token to visible face",
+        "startSeconds": 9.416,
+        "endSentSeconds": 10.316,
+        "endAcknowledgedSeconds": 10.322,
+        "recordedResponse": true,
+        "firstResponsePollSeconds": 10.325,
+        "progressCategory": "sensory result cue",
+        "pickupObserved": false,
+        "viewOnlyZoomObserved": false,
+        "explicitPositiveHint": true,
+        "afterBag": "1ふくろめ"
+      },
+      {
+        "index": 8,
+        "action": "lift guided visible grade 1等",
+        "startSeconds": 11.268,
+        "endSentSeconds": 11.719,
+        "endAcknowledgedSeconds": 11.725,
+        "recordedResponse": true,
+        "firstResponsePollSeconds": 11.729,
+        "progressCategory": "grade accepted; stamping phase appears",
+        "pickupObserved": false,
+        "viewOnlyZoomObserved": false,
+        "explicitPositiveHint": false,
+        "afterBag": "1ふくろめ"
+      },
+      {
+        "index": 9,
+        "action": "press visible ink pad downward",
+        "startSeconds": 12.224,
+        "endSentSeconds": 12.624,
+        "endAcknowledgedSeconds": 12.639,
+        "recordedResponse": true,
+        "firstResponsePollSeconds": 12.643,
+        "progressCategory": "ink substep; lower-stamp cue appears",
+        "pickupObserved": false,
+        "viewOnlyZoomObserved": false,
+        "explicitPositiveHint": false,
+        "afterBag": "1ふくろめ"
+      },
+      {
+        "index": 10,
+        "action": "lower stamp along observed guide motion",
+        "startSeconds": 14.626,
+        "endSentSeconds": 15.227,
+        "endAcknowledgedSeconds": 15.242,
+        "recordedResponse": true,
+        "firstResponsePollSeconds": 15.245,
+        "progressCategory": "bag stamped; visible next-bag button",
+        "pickupObserved": false,
+        "viewOnlyZoomObserved": false,
+        "explicitPositiveHint": false,
+        "afterBag": "1ふくろめ"
+      },
+      {
+        "index": 11,
+        "action": "slide guided bag right",
+        "startSeconds": 16.967,
+        "endSentSeconds": 17.417,
+        "endAcknowledgedSeconds": 17.422,
+        "recordedResponse": true,
+        "firstResponsePollSeconds": 17.53,
+        "progressCategory": "next bag and initial instruction appear",
+        "pickupObserved": false,
+        "viewOnlyZoomObserved": false,
+        "explicitPositiveHint": false,
+        "afterBag": "2ふくろめ"
+      },
+      {
+        "index": 12,
+        "action": "insert left",
+        "startSeconds": 17.615,
+        "endSentSeconds": 18.015,
+        "endAcknowledgedSeconds": 18.022,
+        "recordedResponse": true,
+        "firstResponsePollSeconds": 18.025,
+        "progressCategory": "insertion substep; pull instruction appears",
+        "pickupObserved": false,
+        "viewOnlyZoomObserved": false,
+        "explicitPositiveHint": false,
+        "afterBag": "2ふくろめ"
+      },
+      {
+        "index": 13,
+        "action": "pull right",
+        "startSeconds": 18.516,
+        "endSentSeconds": 18.916,
+        "endAcknowledgedSeconds": 18.922,
+        "recordedResponse": true,
+        "firstResponsePollSeconds": 18.926,
+        "progressCategory": "extraction; tray obtains20 visible grains",
+        "pickupObserved": false,
+        "viewOnlyZoomObserved": false,
+        "explicitPositiveHint": false,
+        "afterBag": "2ふくろめ"
+      },
+      {
+        "index": 14,
+        "action": "rotate visible knob one circle",
+        "startSeconds": 19.425,
+        "endSentSeconds": 20.926,
+        "endAcknowledgedSeconds": 20.939,
+        "recordedResponse": true,
+        "firstResponsePollSeconds": 20.942,
+        "progressCategory": "moisture reading/count update",
+        "pickupObserved": false,
+        "viewOnlyZoomObserved": false,
+        "explicitPositiveHint": false,
+        "afterBag": "2ふくろめ"
+      },
+      {
+        "index": 15,
+        "action": "rotate visible knob one circle",
+        "startSeconds": 21.439,
+        "endSentSeconds": 22.94,
+        "endAcknowledgedSeconds": 22.955,
+        "recordedResponse": true,
+        "firstResponsePollSeconds": 22.958,
+        "progressCategory": "moisture reading/count update",
+        "pickupObserved": false,
+        "viewOnlyZoomObserved": false,
+        "explicitPositiveHint": false,
+        "afterBag": "2ふくろめ"
+      },
+      {
+        "index": 16,
+        "action": "spread across visible tray",
+        "startSeconds": 24.062,
+        "endSentSeconds": 24.863,
+        "endAcknowledgedSeconds": 24.872,
+        "recordedResponse": true,
+        "firstResponsePollSeconds": 24.875,
+        "progressCategory": "sorting preparation; next task cue appears",
+        "pickupObserved": false,
+        "viewOnlyZoomObserved": false,
+        "explicitPositiveHint": false,
+        "afterBag": "2ふくろめ"
+      },
+      {
+        "index": 17,
+        "action": "open two fingers as displayed",
+        "startSeconds": 25.776,
+        "endSentSeconds": 26.376,
+        "endAcknowledgedSeconds": 26.388,
+        "recordedResponse": true,
+        "firstResponsePollSeconds": 26.391,
+        "progressCategory": "guided zoom substep; picking cue appears",
+        "pickupObserved": false,
+        "viewOnlyZoomObserved": false,
+        "explicitPositiveHint": false,
+        "afterBag": "2ふくろめ"
+      },
+      {
+        "index": 18,
+        "action": "tap displayed press guide",
+        "startSeconds": 28.517,
+        "endSentSeconds": 28.556,
+        "endAcknowledgedSeconds": 28.577,
+        "recordedResponse": true,
+        "firstResponsePollSeconds": 28.58,
+        "progressCategory": "visible grain removed with flying-grain evidence",
+        "pickupObserved": true,
+        "viewOnlyZoomObserved": false,
+        "explicitPositiveHint": false,
+        "afterBag": "2ふくろめ"
+      },
+      {
+        "index": 19,
+        "action": "tap displayed press guide",
+        "startSeconds": 30.705,
+        "endSentSeconds": 30.745,
+        "endAcknowledgedSeconds": 30.76,
+        "recordedResponse": true,
+        "firstResponsePollSeconds": 30.763,
+        "progressCategory": "visible grain removed with flying-grain evidence",
+        "pickupObserved": true,
+        "viewOnlyZoomObserved": false,
+        "explicitPositiveHint": true,
+        "afterBag": "2ふくろめ"
+      },
+      {
+        "index": 20,
+        "action": "carry visible token to visible face",
+        "startSeconds": 31.896,
+        "endSentSeconds": 32.796,
+        "endAcknowledgedSeconds": 32.805,
+        "recordedResponse": true,
+        "firstResponsePollSeconds": 32.808,
+        "progressCategory": "sensory result cue",
+        "pickupObserved": false,
+        "viewOnlyZoomObserved": false,
+        "explicitPositiveHint": false,
+        "afterBag": "2ふくろめ"
+      },
+      {
+        "index": 21,
+        "action": "lift guided visible grade 規格外",
+        "startSeconds": 33.913,
+        "endSentSeconds": 34.362,
+        "endAcknowledgedSeconds": 34.372,
+        "recordedResponse": true,
+        "firstResponsePollSeconds": 34.374,
+        "progressCategory": "grade accepted; stamping phase appears",
+        "pickupObserved": false,
+        "viewOnlyZoomObserved": false,
+        "explicitPositiveHint": false,
+        "afterBag": "2ふくろめ"
+      },
+      {
+        "index": 22,
+        "action": "press visible ink pad downward",
+        "startSeconds": 34.869,
+        "endSentSeconds": 35.269,
+        "endAcknowledgedSeconds": 35.273,
+        "recordedResponse": true,
+        "firstResponsePollSeconds": 35.276,
+        "progressCategory": "ink substep; lower-stamp cue appears",
+        "pickupObserved": false,
+        "viewOnlyZoomObserved": false,
+        "explicitPositiveHint": false,
+        "afterBag": "2ふくろめ"
+      },
+      {
+        "index": 23,
+        "action": "lower stamp along observed guide motion",
+        "startSeconds": 37.114,
+        "endSentSeconds": 37.714,
+        "endAcknowledgedSeconds": 37.723,
+        "recordedResponse": true,
+        "firstResponsePollSeconds": 37.727,
+        "progressCategory": "bag stamped; visible next-bag button",
+        "pickupObserved": false,
+        "viewOnlyZoomObserved": false,
+        "explicitPositiveHint": false,
+        "afterBag": "2ふくろめ"
+      },
+      {
+        "index": 24,
+        "action": "slide guided bag right",
+        "startSeconds": 39.448,
+        "endSentSeconds": 39.899,
+        "endAcknowledgedSeconds": 39.904,
+        "recordedResponse": true,
+        "firstResponsePollSeconds": 40.01,
+        "progressCategory": "next bag and initial instruction appear",
+        "pickupObserved": false,
+        "viewOnlyZoomObserved": false,
+        "explicitPositiveHint": false,
+        "afterBag": "3ふくろめ"
+      },
+      {
+        "index": 25,
+        "action": "insert left",
+        "startSeconds": 40.096,
+        "endSentSeconds": 40.497,
+        "endAcknowledgedSeconds": 40.504,
+        "recordedResponse": true,
+        "firstResponsePollSeconds": 40.508,
+        "progressCategory": "insertion substep; pull instruction appears",
+        "pickupObserved": false,
+        "viewOnlyZoomObserved": false,
+        "explicitPositiveHint": false,
+        "afterBag": "3ふくろめ"
+      },
+      {
+        "index": 26,
+        "action": "pull right",
+        "startSeconds": 40.998,
+        "endSentSeconds": 41.398,
+        "endAcknowledgedSeconds": 41.404,
+        "recordedResponse": true,
+        "firstResponsePollSeconds": 41.408,
+        "progressCategory": "extraction; tray obtains20 visible grains",
+        "pickupObserved": false,
+        "viewOnlyZoomObserved": false,
+        "explicitPositiveHint": false,
+        "afterBag": "3ふくろめ"
+      },
+      {
+        "index": 27,
+        "action": "rotate visible knob one circle",
+        "startSeconds": 41.9,
+        "endSentSeconds": 43.4,
+        "endAcknowledgedSeconds": 43.404,
+        "recordedResponse": true,
+        "firstResponsePollSeconds": 43.407,
+        "progressCategory": "moisture reading/count update",
+        "pickupObserved": false,
+        "viewOnlyZoomObserved": false,
+        "explicitPositiveHint": false,
+        "afterBag": "3ふくろめ"
+      },
+      {
+        "index": 28,
+        "action": "rotate visible knob one circle",
+        "startSeconds": 43.901,
+        "endSentSeconds": 45.4,
+        "endAcknowledgedSeconds": 45.404,
+        "recordedResponse": true,
+        "firstResponsePollSeconds": 45.406,
+        "progressCategory": "moisture reading/count update",
+        "pickupObserved": false,
+        "viewOnlyZoomObserved": false,
+        "explicitPositiveHint": true,
+        "afterBag": "3ふくろめ"
+      },
+      {
+        "index": 29,
+        "action": "spread across visible tray",
+        "startSeconds": 45.899,
+        "endSentSeconds": 46.699,
+        "endAcknowledgedSeconds": 46.705,
+        "recordedResponse": true,
+        "firstResponsePollSeconds": 46.708,
+        "progressCategory": "sorting preparation; next task cue appears",
+        "pickupObserved": false,
+        "viewOnlyZoomObserved": false,
+        "explicitPositiveHint": false,
+        "afterBag": "3ふくろめ"
+      },
+      {
+        "index": 30,
+        "action": "tap displayed press guide",
+        "startSeconds": 47.608,
+        "endSentSeconds": 47.649,
+        "endAcknowledgedSeconds": 47.66,
+        "recordedResponse": true,
+        "firstResponsePollSeconds": 47.662,
+        "progressCategory": "view-only zoom; no grain/task advance observed",
+        "pickupObserved": false,
+        "viewOnlyZoomObserved": true,
+        "explicitPositiveHint": false,
+        "afterBag": "3ふくろめ"
+      },
+      {
+        "index": 31,
+        "action": "tap displayed press guide",
+        "startSeconds": 49.79,
+        "endSentSeconds": 49.83,
+        "endAcknowledgedSeconds": 49.842,
+        "recordedResponse": true,
+        "firstResponsePollSeconds": 49.844,
+        "progressCategory": "visible grain removed with flying-grain evidence",
+        "pickupObserved": true,
+        "viewOnlyZoomObserved": false,
+        "explicitPositiveHint": false,
+        "afterBag": "3ふくろめ"
+      },
+      {
+        "index": 32,
+        "action": "tap displayed press guide",
+        "startSeconds": 52.048,
+        "endSentSeconds": 52.088,
+        "endAcknowledgedSeconds": 52.11,
+        "recordedResponse": true,
+        "firstResponsePollSeconds": 52.113,
+        "progressCategory": "visible grain removed with flying-grain evidence",
+        "pickupObserved": true,
+        "viewOnlyZoomObserved": false,
+        "explicitPositiveHint": false,
+        "afterBag": "3ふくろめ"
+      },
+      {
+        "index": 33,
+        "action": "tap displayed press guide",
+        "startSeconds": 54.23,
+        "endSentSeconds": 54.27,
+        "endAcknowledgedSeconds": 54.29,
+        "recordedResponse": true,
+        "firstResponsePollSeconds": 54.293,
+        "progressCategory": "visible grain removed with flying-grain evidence",
+        "pickupObserved": true,
+        "viewOnlyZoomObserved": false,
+        "explicitPositiveHint": false,
+        "afterBag": "3ふくろめ"
+      },
+      {
+        "index": 34,
+        "action": "tap displayed press guide",
+        "startSeconds": 56.417,
+        "endSentSeconds": 56.456,
+        "endAcknowledgedSeconds": 56.474,
+        "recordedResponse": true,
+        "firstResponsePollSeconds": 56.476,
+        "progressCategory": "visible grain removed with flying-grain evidence",
+        "pickupObserved": true,
+        "viewOnlyZoomObserved": false,
+        "explicitPositiveHint": false,
+        "afterBag": "3ふくろめ"
+      },
+      {
+        "index": 35,
+        "action": "tap displayed press guide",
+        "startSeconds": 58.596,
+        "endSentSeconds": 58.636,
+        "endAcknowledgedSeconds": 58.656,
+        "recordedResponse": true,
+        "firstResponsePollSeconds": 58.659,
+        "progressCategory": "visible grain removed with flying-grain evidence",
+        "pickupObserved": true,
+        "viewOnlyZoomObserved": false,
+        "explicitPositiveHint": false,
+        "afterBag": "3ふくろめ"
+      }
+    ]
+  },
+  "primaryTiming": {
+    "clock": "Node play start; separate100ms text trace converted into same epoch, not physical paint",
+    "firstInputSeconds": 0.01,
+    "firstPostGestureDOMPollSeconds": 0.427,
+    "firstInputToPollMs": 417,
+    "firstInputRequestedDurationMs": 400,
+    "firstUnfilteredTraceHintSeconds": 0.1532,
+    "firstAffirmative": {
+      "text": "ちょうどいい",
+      "visibleConditionPollSeconds": 3.352,
+      "fromFirstInputSeconds": 3.342,
+      "unfilteredTraceSeconds": 3.2039
+    },
+    "firstGrainRemovalPollSeconds": 6.087,
+    "sortingComplete": {
+      "text": "きれいに なった！",
+      "pollSeconds": 8.299,
+      "unfilteredTraceSeconds": 8.3057
+    },
+    "stampToNextInputChains": [
+      {
+        "stampingAction": 10,
+        "bag": "1ふくろめ",
+        "stampInputStartSeconds": 14.626,
+        "stampEndSentSeconds": 15.227,
+        "nextButtonFirstVisiblePollSeconds": 15.245,
+        "nextButtonAfterSnapshotInterval": [
+          15.245,
+          15.248
+        ],
+        "nextMoveGuideTraceSeconds": 16.9035,
+        "nextMoveGuideTraceSampleIndex": 168,
+        "precedingGuideTraceSeconds": 16.8037,
+        "precedingGuide": {
+          "classes": "",
+          "x": "160px",
+          "y": "210.01px",
+          "opacity": "0",
+          "display": "block"
+        },
+        "guideObservedInterval": [
+          16.8037,
+          16.9035
+        ],
+        "nextButtonPollToGuideTraceMs": 1658.5,
+        "slideAction": 11,
+        "slideInputSeconds": 16.967,
+        "guideTraceToSlideInputMs": 63.5,
+        "nextButtonPollToSlideInputMs": 1722.0,
+        "nextBag": "2ふくろめ",
+        "nextBagFirstTraceSeconds": 17.5035,
+        "nextBagReadyResponsePollSeconds": 17.53,
+        "nextBagFirstInputAction": 12,
+        "nextBagFirstInputSeconds": 17.615,
+        "nextBagPollToFirstInputMs": 85.0,
+        "limit": "Button visibility is DOM geometry from the action poll; guide samples have class/display/opacity but no clipping/occlusion gate. These are bounded observations, not exact stamp or physical-paint instants."
+      },
+      {
+        "stampingAction": 23,
+        "bag": "2ふくろめ",
+        "stampInputStartSeconds": 37.114,
+        "stampEndSentSeconds": 37.714,
+        "nextButtonFirstVisiblePollSeconds": 37.727,
+        "nextButtonAfterSnapshotInterval": [
+          37.727,
+          37.73
+        ],
+        "nextMoveGuideTraceSeconds": 39.4035,
+        "nextMoveGuideTraceSampleIndex": 393,
+        "precedingGuideTraceSeconds": 39.3036,
+        "precedingGuide": {
+          "classes": "",
+          "x": "160px",
+          "y": "210.009px",
+          "opacity": "0",
+          "display": "block"
+        },
+        "guideObservedInterval": [
+          39.3036,
+          39.4035
+        ],
+        "nextButtonPollToGuideTraceMs": 1676.5,
+        "slideAction": 24,
+        "slideInputSeconds": 39.448,
+        "guideTraceToSlideInputMs": 44.5,
+        "nextButtonPollToSlideInputMs": 1721.0,
+        "nextBag": "3ふくろめ",
+        "nextBagFirstTraceSeconds": 40.0035,
+        "nextBagReadyResponsePollSeconds": 40.01,
+        "nextBagFirstInputAction": 25,
+        "nextBagFirstInputSeconds": 40.096,
+        "nextBagPollToFirstInputMs": 86.0,
+        "limit": "Button visibility is DOM geometry from the action poll; guide samples have class/display/opacity but no clipping/occlusion gate. These are bounded observations, not exact stamp or physical-paint instants."
+      }
+    ],
+    "sampleCount": 602,
+    "samplesWithin60Seconds": 599,
+    "lastSampleSeconds": 60.2036,
+    "lastSampleMeaning": "Post-window recording; do not count as extra play or exact60-second grain count.",
+    "lastInputStartSeconds": 58.596,
+    "lastTouchEndSentSeconds": 58.636,
+    "lastTouchEndACKSeconds": 58.656
+  },
+  "dispatch": {
+    "commands": 490,
+    "ACKs": 490,
+    "cleanupCommands": 0,
+    "commandKinds": {
+      "touchStart": 35,
+      "touchMove": 420,
+      "touchEnd": 35
+    },
+    "trustedTouchPointerEvents": 502,
+    "pointerKinds": {
+      "pointerdown": 36,
+      "pointermove": 430,
+      "pointerup": 36
+    },
+    "sendDurationMsByRequestedMs": {
+      "400": {
+        "count": 8,
+        "min": 400.0,
+        "median": 400.0,
+        "max": 401.0
+      },
+      "1500": {
+        "count": 5,
+        "min": 1499.0,
+        "median": 1500.0,
+        "max": 1501.0
+      },
+      "800": {
+        "count": 3,
+        "min": 800.0,
+        "median": 801.0,
+        "max": 801.0
+      },
+      "40": {
+        "count": 10,
+        "min": 39.0,
+        "median": 40.0,
+        "max": 41.0
+      },
+      "900": {
+        "count": 2,
+        "min": 900.0,
+        "median": 900.0,
+        "max": 900.0
+      },
+      "450": {
+        "count": 4,
+        "min": 449.0,
+        "median": 450.5,
+        "max": 451.0
+      },
+      "600": {
+        "count": 3,
+        "min": 600.0,
+        "median": 600.0,
+        "max": 601.0
+      }
+    },
+    "eventTimestampToPassiveCaptureMs": {
+      "min": 1.7,
+      "median": 23.45,
+      "max": 45.7
+    },
+    "ACKDelayMs": {
+      "min": 1.0,
+      "median": 11.0,
+      "max": 110.0
+    },
+    "limit": "Passive listener, input dispatch, command ACK and actual game-handler/physical-paint times are different observations."
+  },
+  "knownObservation": {
+    "reference": "https://github.com/shota0617/ricepia-judge/pull/1160",
+    "actionIndex": 30,
+    "inputSeconds": 47.608,
+    "guideHit": "zoomBtn",
+    "hint": "わるい粒を つまむ",
+    "grainBefore": 20,
+    "grainAfter": 20,
+    "zoomBefore": "🔍",
+    "zoomAfter": "➖",
+    "newDiscovery": false,
+    "newReproductionTenTrials": false,
+    "productFixed": false
+  },
+  "photos": [
+    {
+      "file": "observe-10s.png",
+      "originalIdentifier": "round-132/preparation-4eab5db2/strict/observe-10s.png",
+      "sha256": "09ee5206396a07a5c79932efe8c039c1e4fe36609df826c12af2d4c177b7d3c2",
+      "bytes": 36412,
+      "width": 320,
+      "height": 568,
+      "clock": "observation",
+      "requestedSeconds": 10.0,
+      "completedSeconds": 10.078,
+      "observation": "1ふくろめ・ぬく。穀刺し右端の指、下部の挿入案内。",
+      "reportAuthorPersonallyViewed": true,
+      "edits": 0
+    },
+    {
+      "file": "play-10s.png",
+      "originalIdentifier": "round-132/preparation-4eab5db2/strict/play-10s.png",
+      "sha256": "f7cd6f1ca6ddbb13a55eedc23e20320559425d437c964d46a9a7dc8b8dc19103",
+      "bytes": 59418,
+      "width": 320,
+      "height": 568,
+      "clock": "play",
+      "requestedSeconds": 10,
+      "completedSeconds": 10.055,
+      "observation": "1ふくろめ・みわける。顔の下の両手マーク、下部「はなへ はこぶ」。",
+      "reportAuthorPersonallyViewed": true,
+      "edits": 0
+    },
+    {
+      "file": "play-30s.png",
+      "originalIdentifier": "round-132/preparation-4eab5db2/strict/play-30s.png",
+      "sha256": "538485f6f2b1994b364f54bd3b4ffae0fb6d2c0683feef4908320489ed19dd44",
+      "bytes": 72242,
+      "width": 320,
+      "height": 568,
+      "clock": "play",
+      "requestedSeconds": 29.999,
+      "completedSeconds": 30.019,
+      "observation": "2ふくろめ・みわける。拡大された粒、縮小ボタン、粒取り文。明瞭な指は写らない。",
+      "reportAuthorPersonallyViewed": true,
+      "edits": 0
+    },
+    {
+      "file": "play-60s.png",
+      "originalIdentifier": "round-132/preparation-4eab5db2/strict/play-60s.png",
+      "sha256": "e23e2d5996800cd147462f8cc7ea8c40695163185c9338e728c078d9ce46d5cd",
+      "bytes": 70634,
+      "width": 320,
+      "height": 568,
+      "clock": "play",
+      "requestedSeconds": 60,
+      "completedSeconds": 60.015,
+      "observation": "3ふくろめ・みわける。緑の粒、縮小ボタン、粒取り文。明瞭な指は写らない。",
+      "reportAuthorPersonallyViewed": true,
+      "edits": 0
+    }
+  ],
+  "execution": {
+    "actualOuterExit": 0,
+    "actualOuterToolChunk": "7a4617",
+    "actualChildExit": null,
+    "requestedProcessExit": 0,
+    "childExitLimit": "No independent actual child exit observation; requested0 is not substituted.",
+    "recordedErrors": {
+      "errors": 0,
+      "blocked": 0,
+      "driverErrors": 0,
+      "forbiddenLateInputs": 0,
+      "unfinishedTouchActions": 0,
+      "cleanupCommands": 0
+    },
+    "cpuResetAcknowledged": true,
+    "browserClosed": true,
+    "rootClosure": {
+      "atUTC": "2026-11-14T19:48:47.249010+00:00",
+      "actualOuterExit": 0,
+      "actualOuterCompletionToolChunk": "7a4617",
+      "source10Match": true,
+      "shared5Match": true,
+      "clean": true,
+      "head": "4eab5db22688eb264948621aa5aac5b4e9fa9dad",
+      "CPUReset": true,
+      "browserClosed": true,
+      "liveRuntimeProcesses": [],
+      "lifecycleSHA256": "2eb3028b8a6a0683eae9485cbcfb758df16b86f9a924eb4e55af00a020ba44d2",
+      "reportSHA256": "ddb6d25faedbf5dd1cb63d2c8a5654581902b90b9899e80bd1eaa05998be2df3"
+    }
+  },
+  "checks": {
+    "pytest": {
+      "command": "pytest tests/",
+      "toolResult": {
+        "chunk_id": "7fa332",
+        "wall_time_seconds": 2.4057e-05,
+        "exit_code": 127,
+        "original_token_count": 12,
+        "output": "/bin/bash: line 1: pytest: command not found\n"
+      }
+    },
+    "pytestSuiteExecuted": false,
+    "newRegressionTest": false,
+    "redGreen": false,
+    "fixedTenTrials": false,
+    "afterReproduction": false,
+    "fiveViewportComparison": false,
+    "reason": "No new reproducible fix selected; product/test changes0. No test pass count invented from command absence."
+  },
+  "operatorDecisionsPreserved": {
+    "preserved": [
+      "first tap alone does not advance",
+      "manual picking and grading boundaries",
+      "display-only form and45-second card boundary",
+      "no45-second card before first bag completion",
+      "first-bag two-miss rescue not extended to other stages"
+    ],
+    "newJudgmentCandidate": null,
+    "notDeliberatelyTested": [
+      "first-bag two-miss rescue",
+      "later rescue and re-guidance",
+      "first bag unfinished at45 seconds",
+      "post-stamp one-second boundary",
+      "rotation",
+      "grade-speed variants"
+    ]
+  },
+  "attachmentCriteria": {
+    "identifier": "sakurai_partial_20261114_2319.md",
+    "sha256": "4e206461abe220bb98ee7eba77c5132bfbe80d9ca9b62ac7e447848ae25ff74e",
+    "providedBodySections": 75,
+    "incompleteSections": 35,
+    "videoPlayed": false,
+    "usage": "Evaluation criteria for response, positive feedback, clear cue and near goal; not a product change or evidence of improved retention.",
+    "references": [
+      "https://www.youtube.com/watch?v=EDs5n39sRFc",
+      "https://www.youtube.com/watch?v=1xRDwQqSn6I",
+      "https://www.youtube.com/watch?v=L1Su0aajYFA",
+      "https://www.youtube.com/watch?v=rA_FN6BTGms"
+    ]
+  },
+  "limits": [
+    "Response polls include gesture duration and may stop early. DOM visibility conditions do not establish actual paint, occlusion-free readability or human comprehension.",
+    "Unfiltered100ms text trace, visible-condition action poll, next-button box and guide class/opacity are distinct channels.",
+    "Original photos do not capture affirmative text, stamp, next button or cooked notice; no claim that these never appeared. Static hands do not prove ongoing transport; missing finger in two frames does not prove a persistent guide loss.",
+    "Discovery A/C inspected image hashes without viewing. Root, B, design reviewer and report author personally viewed all four original photos.",
+    "Unsent/suppressed opportunity count is unknown; no-input waiting is not ignored input.",
+    "The30-second screenshot request is29.999 seconds,1ms before target; completion30.019 seconds. Original timing retained.",
+    "No controlled before/after or cross-round causal comparison; no improvement effect assigned to earlier product changes.",
+    "Real fingers, tilt sensors, network speed, sound, physical paint, understanding and first-minute dropout rate unmeasured."
+  ],
+  "sourceLocations": {
+    "stampNextButton": "https://github.com/shota0617/ricepia-judge/blob/4eab5db22688eb264948621aa5aac5b4e9fa9dad/kensa.html#L2449",
+    "stampLook": "https://github.com/shota0617/ricepia-judge/blob/4eab5db22688eb264948621aa5aac5b4e9fa9dad/kensa.html#L2666",
+    "nextGuide": "https://github.com/shota0617/ricepia-judge/blob/4eab5db22688eb264948621aa5aac5b4e9fa9dad/kensa.html#L2672",
+    "zoomFallback": "https://github.com/shota0617/ricepia-judge/blob/4eab5db22688eb264948621aa5aac5b4e9fa9dad/kensa.html#L2700",
+    "rules": "https://github.com/shota0617/ricepia-judge/blob/4eab5db22688eb264948621aa5aac5b4e9fa9dad/AGENTS.md#L30",
+    "firstBag": "https://github.com/shota0617/ricepia-judge/blob/4eab5db22688eb264948621aa5aac5b4e9fa9dad/kensa.html#L1159",
+    "card": "https://github.com/shota0617/ricepia-judge/blob/4eab5db22688eb264948621aa5aac5b4e9fa9dad/kensa.html#L2807"
+  },
+  "candidateDecision": {
+    "atUTC": "2026-11-14T19:57:13.884084+00:00",
+    "source": "4eab5db22688eb264948621aa5aac5b4e9fa9dad",
+    "game": "kensa",
+    "viewport": [
+      320,
+      568
+    ],
+    "ordinaryActions": 35,
+    "postGestureRecordedResponses": 35,
+    "recordedNoResponse": 0,
+    "knownZoomOnlyAction": 30,
+    "knownCandidatePR": 1160,
+    "newConfirmedCandidateCount": 0,
+    "decision": "No new reproducible fix selected from this ordinary primary. Preserve existing zoom report separately; do not count it as a new defect or modify protected operator decisions.",
+    "productChanges": 0,
+    "testsAdded": 0,
+    "newTenTrialReproduction": false,
+    "redGreen": false,
+    "afterFiveViewportCheck": false,
+    "operatorJudgment": [
+      "First tap alone does not advance; picking and grading stay manual; display-only play form and 45-second card boundary remain unchanged.",
+      "Newer first-bag two-miss rescue and card-only-after-first-bag rules are source context; no intentional diagnostic of those behaviors was executed."
+    ],
+    "audits": {
+      "A": "fb8e17e5d747ba20e298f73bb2aab923c52f2de4bb32b839a7aa4416c257e88d",
+      "B": "5b7427b2028c61e122514214611a0624cbdc012959edd9b3edbf21b138c8dac2",
+      "C": "58bf4b09a595dcd85ec3e8c541f2130bec7061365a38fd9be7e2217fc45c58c9"
+    },
+    "limits": "35 DOM reactions do not mean35 completed agricultural tasks. 650ms is the observation budget and polling can finish early. Real fingers/tilt/network and abandonment rate unmeasured."
+  },
+  "evidence": [
+    {
+      "identifier": "round-132/source-selected.json",
+      "sha256": "9d0355fcd2e4dd3c68ef6d9c4e3ca58fbe26d2b7bab4f49bdab81f6e6dbe200f",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-132/root-closure.json",
+      "sha256": "d57b648fc7c3d3212687e6742ab7e0b1e1cc5466cb96b7edd5184e8ec0be28ae",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-132/actual-completion.json",
+      "sha256": "e2940a8234b5d582bed7c237b93a816c3bca45bb9f4f3c86c602b0cb88751707",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-132/root-photo-observations.json",
+      "sha256": "59fd71d5ba3fbcdcd6d1b87028202301bbbf4d3016d6a8585f904ce07d428dbf",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-132/candidate-decision.json",
+      "sha256": "ff7fdaeb10451eb1167963e2722eacb0fb7a5958f826de9569a3bfc386b3d76e",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-132/main-update.json",
+      "sha256": "66ee0ed39b01ab415fe743d898935562303abefb87cb2665867a22bbd71d425d",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-132/pytest-result.json",
+      "sha256": "60eeafc5a7bbcffd808e2bf3399d55adc0bea6ab1d7c9edc0774671196feb9c9",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-132/preparation-4eab5db2/lifecycle.json",
+      "sha256": "2eb3028b8a6a0683eae9485cbcfb758df16b86f9a924eb4e55af00a020ba44d2",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-132/preparation-4eab5db2/strict/play.json",
+      "sha256": "ddb6d25faedbf5dd1cb63d2c8a5654581902b90b9899e80bd1eaa05998be2df3",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-132/discovery-a/summary.json",
+      "sha256": "162e56605412f064c793a7e6025f5a8b369cca037bc879c56ec3b844b72b2a06",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-132/discovery-a/actions.json",
+      "sha256": "6951944bb7d9ff7050070d543ec6e24da28ff13645af669cfddc60d8a2ae23e9",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-132/discovery-a/frozen.json",
+      "sha256": "fb8e17e5d747ba20e298f73bb2aab923c52f2de4bb32b839a7aa4416c257e88d",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-132/discovery-b/review.json",
+      "sha256": "e746f536850ffb17fd1b5d7eba3268d88b9f124369f0ccf0c46fee82fdece579",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-132/discovery-b/frozen.json",
+      "sha256": "5b7427b2028c61e122514214611a0624cbdc012959edd9b3edbf21b138c8dac2",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-132/discovery-c/summary.json",
+      "sha256": "b7360d3fbb52adf2ee9b80288b1f05b44bf477bfbf8ffd951d30e4655596d7e5",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-132/discovery-c/frozen.json",
+      "sha256": "58bf4b09a595dcd85ec3e8c541f2130bec7061365a38fd9be7e2217fc45c58c9",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-132/design-review/README.md",
+      "sha256": "66338179a7bb734735849f74e8ee7bb888a6b408149e598ba2137027bc289112",
+      "publicLink": false
+    }
+  ]
+}

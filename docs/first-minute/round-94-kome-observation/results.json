@@ -1,0 +1,927 @@
+{
+  "round": 94,
+  "kind": "observation only; no product/test changes",
+  "testedSourceHead": "4568c8792f4c804cf354f6f63a12ef568e2b6748",
+  "primary": {
+    "round": 94,
+    "auditedAtUTC": "2026-11-14T00:25:55.028759+00:00",
+    "scope": "Saved raw/image/source reads and offline counting only. No Git, HTTP, browser, game, product, test or syntax execution by this reviewer. Source and prepared runners unchanged.",
+    "actualExecution": {
+      "command": [
+        "node",
+        "/workspace/scratch/first-minute/round-94/preparation-4568/run.cjs"
+      ],
+      "cwd": "/workspace/ricepia-firstminute-round94",
+      "startedAtUTC": "2026-11-14T00:17:25.952063+00:00",
+      "actualExit": 1,
+      "completedAtUTC": "2026-11-14T00:18:45.694809+00:00"
+    },
+    "sourceHead": "4568c8792f4c804cf354f6f63a12ef568e2b6748",
+    "configuration": {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "CPU": 1,
+      "durationMs": 120,
+      "directionOrder": "RLRL",
+      "interChoiceWaitMs": 2200,
+      "observationMs": 10000,
+      "playMs": 60000,
+      "firstTouchReservationMs": 250,
+      "isMobile": true,
+      "hasTouch": true,
+      "photos": [
+        "observe-10s",
+        "play-10s",
+        "play-30s",
+        "play-60s"
+      ]
+    },
+    "actualExit": 1,
+    "requestedExit": 1,
+    "browserOpened": true,
+    "browserClosed": true,
+    "sourceBeforeVerified": true,
+    "sourceUnchangedAfter": true,
+    "cpuSetup": true,
+    "cpuReset": true,
+    "sourceFiveBeforeAfterEqual": true,
+    "localSevenMatchPreparedManifest": {
+      "AGENTS.md": true,
+      ".claude/skills/ricepia-flow/SKILL.md": true,
+      "kome365/index.html": true,
+      "kome365/engine.js": true,
+      "kome365/field3d.js": true,
+      "kome365/cards.js": true,
+      "kome365/vendor/three.min.js": true
+    },
+    "runnerThreeMatchPreparedManifest": {
+      "run.cjs": true,
+      "helpers.cjs": true,
+      "strict-play.cjs": true
+    },
+    "counts": {
+      "gestures": 20,
+      "dragObserved": 20,
+      "transformObserved": 20,
+      "dateAdvances": 20,
+      "reasons": 20,
+      "noTransformWithinCompleteWindow": 0,
+      "noAdvanceWithinCompleteWindow": 0,
+      "commands": 160,
+      "acknowledgedCommands": 160,
+      "inputCommandErrors": 0,
+      "pointerEvents": 60,
+      "trustedPointerEvents": 60,
+      "pointerByType": {
+        "pointerdown": 20,
+        "pointermove": 20,
+        "pointerup": 20
+      },
+      "marks": {
+        "✗": 13,
+        "○": 7
+      },
+      "skippedInputs": 0,
+      "lateCleanup": 0,
+      "driverErrors": 0,
+      "consoleErrors": 2,
+      "pageErrors": 0,
+      "blockedRequests": 0,
+      "photosSaved": 4,
+      "originalPhotosPersonallyViewed": 4,
+      "recordedSampleCounts": {
+        "ui": 116,
+        "events": 60,
+        "heartbeats": 236,
+        "rafGaps": 319,
+        "paintOpportunities": 103,
+        "longTasks": 320
+      }
+    },
+    "firstGesture": {
+      "inputStartPlaySeconds": 0.251,
+      "dragMs": 600.8,
+      "transformMs": 670.5,
+      "advanceMs": 1076.4001,
+      "reasonMs": 1076.4001
+    },
+    "firstAdvancePlaySeconds": 1.3274001,
+    "firstPositive": {
+      "gesture": 4,
+      "dateBefore": "1月4日",
+      "title": "薄氷",
+      "choice": "くぼみの氷見る",
+      "inputStartPlaySeconds": 8.899,
+      "observedPlaySeconds": 9.9998,
+      "fromInputMs": 1100.8,
+      "fromFirstGestureInputMs": 9748.8,
+      "priorNegativeChoices": 3,
+      "visibleInOriginal": "play-10s.png"
+    },
+    "rangesMs": {
+      "dragMs": {
+        "min": 333.8,
+        "max": 642.2,
+        "median": 523.15
+      },
+      "transformMs": {
+        "min": 506.1001,
+        "max": 670.5,
+        "median": 548.80005
+      },
+      "advanceMs": {
+        "min": 897.1001,
+        "max": 1170.4001,
+        "median": 1053.20005
+      },
+      "reasonMs": {
+        "min": 897.1001,
+        "max": 1170.4001,
+        "median": 1053.20005
+      },
+      "actualTouchSpanMs": {
+        "min": 119.615,
+        "max": 134.3829,
+        "median": 120.7252
+      }
+    },
+    "observationToPlayMs": 16894.859931007028,
+    "observationPhotoCaptureMs": 6795.619642004371,
+    "postObservationPhotoToPlayMs": 99.75069700181484,
+    "firstInputFromObservationSeconds": 17.146,
+    "firstInputFromNavigationSeconds": 17.572,
+    "firstPositiveFromNavigationSeconds": 27.3208,
+    "actualPlayStopMs": 60001.34305100143,
+    "lastTouchPlaySeconds": 55.319,
+    "lastAdvancePlaySeconds": 56.37,
+    "twentyFirstNotSentReason": "The retained strict driver breaks after the wait when elapsed >=58000ms; final wait ends beyond58s. No skipped/broken gesture is counted.",
+    "lastWaitEndPlayMs": 58023.94660399854,
+    "dateStart": "1月1日",
+    "dateFinal": "1月21日",
+    "paddyWords": [
+      "田おこし まえ",
+      "田おこし まえ・雨"
+    ],
+    "visibleStagePhraseInObserveAnd60Original": "田おこし まえ",
+    "shortGoalVisible": false,
+    "humanGoalUnderstanding": "unknown",
+    "oldReasonCandidate": {
+      "target": "✗ 猫は畦のネズミを見てくれます。",
+      "exactTargetOccurrences": 0,
+      "established": false,
+      "outcome": "unreached; not a negative reproduction result",
+      "rangeGeometryCaptured": false
+    },
+    "photoBlankCandidate": {
+      "observedPhotos": [
+        "play-10s",
+        "play-30s"
+      ],
+      "snapshotCount": 2,
+      "permanentFailureEstablished": false,
+      "durationKnown": false,
+      "unpressableEstablished": false,
+      "tenRepetitionsCompleted": false,
+      "speedContrastCompleted": false,
+      "classification": "transition snapshot evidence only; additional reproduction candidate, not a confirmed product defect"
+    },
+    "retainedErrors": [
+      {
+        "at": 126507270.894065,
+        "kind": "console",
+        "message": "Failed to load resource: the server responded with a status of 404 (File not found)"
+      },
+      {
+        "at": 126525609.844377,
+        "kind": "console",
+        "message": "Failed to load resource: the server responded with a status of 404 (File not found)"
+      }
+    ],
+    "resources404": [
+      {
+        "name": "http://localhost:8000/favicon.ico",
+        "status": 404
+      },
+      {
+        "name": "http://localhost:8000/favicon.ico",
+        "status": 404
+      }
+    ],
+    "soleRunIssueStages": [
+      "observed-errors"
+    ],
+    "real3D": {
+      "threeRevision": "128",
+      "active": true,
+      "initialObservation": null
+    },
+    "audio": {
+      "actualUnmuted": true,
+      "on": true,
+      "context": "running",
+      "effectCounts": {
+        "bgm": 62,
+        "pon": 20,
+        "ng": 13,
+        "ok": 7,
+        "rain": 2
+      },
+      "audibilityMeasured": false
+    },
+    "dropped": {
+      "events": 0,
+      "ui": 0,
+      "heartbeats": 0,
+      "rafGaps": 0,
+      "longTasks": 0
+    },
+    "collection": {
+      "gestureCompletion": "settled",
+      "screenshots": "settled",
+      "inputs": "settled"
+    },
+    "limitations": [
+      "Epoch mapping joins integer Date.now with browser timeOrigin+performance.now; tiny fractions near10s are not calibrated exact frame times.",
+      "DOM response, pointer handling, CDP acknowledgement, rAF opportunity and visible pixels are separate.",
+      "Each response window ends at the next sent input or the60s deadline; all20 contain observed response and progress before deadline.",
+      "Photographs are request-to-save intervals. The60s photo is after the play deadline, not an exact60s frame.",
+      "UI/heartbeat/rAF logs lack per-frame card opacity and pointer hit tests, so blank duration and pressability are unknown.",
+      "120ms RLRL and2200ms driver waits are imposed conditions; no natural human decision time or universal first-success delay follows.",
+      "No retained candidate is reproduced10times here; multi-touch/background/rotation/other sizes/reduced motion/real device are untested.",
+      "Observed response ranges do not identify renderer/product/input latency causality; no measured retention rate."
+    ]
+  },
+  "backgroundDiagnostic": {
+    "auditedAtUTC": "2026-11-14T00:30:52.051036+00:00",
+    "scope": "Lightweight saved raw audit only; no browser, test, HTTP, product write or script reexecution.",
+    "actualExit": 2,
+    "requestedExit": 2,
+    "executionTimes": {
+      "startedAtUTC": "2026-11-14T00:27:59.935844+00:00",
+      "completedAtUTC": "2026-11-14T00:28:29.722737+00:00"
+    },
+    "prelaunchAttemptHistory": [
+      {
+        "exit": 1,
+        "error": "KeyError: 'filesSHA256'",
+        "browserLaunched": false,
+        "correction": "Use actual frozen.files mapping; no input files changed"
+      }
+    ],
+    "diagnosticAttempts": 1,
+    "eligibleAttempts": 0,
+    "ineligibleAttempts": 1,
+    "tenAttemptReproductionExecuted": false,
+    "defectReproductions": null,
+    "defectNonReproductions": null,
+    "improvements": null,
+    "result": "ineligible; real backgrounding unestablished",
+    "gatesIndependentlyRecomputed": {
+      "initial": true,
+      "trustedDownAndMove": true,
+      "heldAtSwitch": true,
+      "actualBackground": false,
+      "releasedWhileHidden": false,
+      "actualReturn": false,
+      "sameCard": true,
+      "fixedViewport": true,
+      "withinFirstMinute": true,
+      "photographsSaved": true
+    },
+    "allSavedGatesMatch": true,
+    "eventCounts": {
+      "pageshow": 1,
+      "pointerdown": 1,
+      "touchstart": 1,
+      "gotpointercapture": 1,
+      "pointermove": 4,
+      "touchmove": 1,
+      "pointerup": 1,
+      "lostpointercapture": 1,
+      "touchend": 1
+    },
+    "eventPages": {
+      "game": 12
+    },
+    "allRecordedEventsTrusted": true,
+    "actualDOMPointerId": 2,
+    "cdpTouchId": 1,
+    "cdpInputCommands": 6,
+    "cdpInputACKs": 6,
+    "eventEvidence": [
+      {
+        "received": {
+          "epochMs": 1794616081834,
+          "monotonicMs": 127141348.432044
+        },
+        "page": "game",
+        "kind": "pageshow",
+        "eventTimeStamp": 506.5,
+        "at": 506.79999999701977,
+        "timeOrigin": 1794616081315.1,
+        "epochMs": 1794616081821,
+        "isTrusted": true,
+        "pointerId": null,
+        "pointerType": null,
+        "isPrimary": null,
+        "x": null,
+        "y": null,
+        "buttons": null,
+        "target": "#document",
+        "path": [],
+        "touches": null,
+        "hidden": false,
+        "visibility": "visible",
+        "focused": true,
+        "url": "http://localhost:8000/kome365/index.html",
+        "cardClass": "season-wi enter hinting hintSh",
+        "cardTransform": "",
+        "wrapClass": "demoOn",
+        "phaseMeaning": "capture listener; product handlers may run later"
+      },
+      {
+        "received": {
+          "epochMs": 1794616098676,
+          "monotonicMs": 127158189.959716
+        },
+        "page": "game",
+        "kind": "pointerdown",
+        "eventTimeStamp": 16458.70000000298,
+        "at": 17352.20000000298,
+        "timeOrigin": 1794616081315.1,
+        "epochMs": 1794616098667,
+        "isTrusted": true,
+        "pointerId": 2,
+        "pointerType": "touch",
+        "isPrimary": true,
+        "x": 194.9921875,
+        "y": 677.8367309570312,
+        "buttons": 1,
+        "target": "SPAN",
+        "path": [
+          "swIc",
+          "swCard",
+          "swWrap",
+          "swStage",
+          "swipe",
+          "sGame"
+        ],
+        "touches": null,
+        "hidden": false,
+        "visibility": "visible",
+        "focused": true,
+        "url": "http://localhost:8000/kome365/index.html",
+        "cardClass": "season-wi enter hinting hintSh",
+        "cardTransform": "",
+        "wrapClass": "demoOn",
+        "phaseMeaning": "capture listener; product handlers may run later"
+      },
+      {
+        "received": {
+          "epochMs": 1794616098677,
+          "monotonicMs": 127158190.897037
+        },
+        "page": "game",
+        "kind": "touchstart",
+        "eventTimeStamp": 16458.70000000298,
+        "at": 17357.09999999404,
+        "timeOrigin": 1794616081315.1,
+        "epochMs": 1794616098672,
+        "isTrusted": true,
+        "pointerId": null,
+        "pointerType": null,
+        "isPrimary": null,
+        "x": null,
+        "y": null,
+        "buttons": null,
+        "target": "SPAN",
+        "path": [
+          "swIc",
+          "swCard",
+          "swWrap",
+          "swStage",
+          "swipe",
+          "sGame"
+        ],
+        "touches": [
+          {
+            "id": 1,
+            "x": 194.9921875,
+            "y": 677.8367309570312
+          }
+        ],
+        "hidden": false,
+        "visibility": "visible",
+        "focused": true,
+        "url": "http://localhost:8000/kome365/index.html",
+        "cardClass": "season-wi hinting hintSh drag",
+        "cardTransform": "",
+        "wrapClass": "",
+        "phaseMeaning": "capture listener; product handlers may run later"
+      },
+      {
+        "received": {
+          "epochMs": 1794616099289,
+          "monotonicMs": 127158802.987599
+        },
+        "page": "game",
+        "kind": "gotpointercapture",
+        "eventTimeStamp": 17543.09999999404,
+        "at": 17961.09999999404,
+        "timeOrigin": 1794616081315.1,
+        "epochMs": 1794616099276,
+        "isTrusted": true,
+        "pointerId": 2,
+        "pointerType": "touch",
+        "isPrimary": true,
+        "x": 199.9921875,
+        "y": 677.8367309570312,
+        "buttons": 1,
+        "target": "swCard",
+        "path": [
+          "swCard",
+          "swWrap",
+          "swStage",
+          "swipe",
+          "sGame"
+        ],
+        "touches": null,
+        "hidden": false,
+        "visibility": "visible",
+        "focused": true,
+        "url": "http://localhost:8000/kome365/index.html",
+        "cardClass": "season-wi hinting hintSh drag",
+        "cardTransform": "",
+        "wrapClass": "",
+        "phaseMeaning": "capture listener; product handlers may run later"
+      },
+      {
+        "received": {
+          "epochMs": 1794616099290,
+          "monotonicMs": 127158803.692471
+        },
+        "page": "game",
+        "kind": "pointermove",
+        "eventTimeStamp": 17543.09999999404,
+        "at": 17961.40000000596,
+        "timeOrigin": 1794616081315.1,
+        "epochMs": 1794616099276,
+        "isTrusted": true,
+        "pointerId": 2,
+        "pointerType": "touch",
+        "isPrimary": true,
+        "x": 199.9921875,
+        "y": 677.8367309570312,
+        "buttons": 1,
+        "target": "swCard",
+        "path": [
+          "swCard",
+          "swWrap",
+          "swStage",
+          "swipe",
+          "sGame"
+        ],
+        "touches": null,
+        "hidden": false,
+        "visibility": "visible",
+        "focused": true,
+        "url": "http://localhost:8000/kome365/index.html",
+        "cardClass": "season-wi hinting hintSh drag",
+        "cardTransform": "",
+        "wrapClass": "",
+        "phaseMeaning": "capture listener; product handlers may run later"
+      },
+      {
+        "received": {
+          "epochMs": 1794616099882,
+          "monotonicMs": 127159395.921847
+        },
+        "page": "game",
+        "kind": "pointermove",
+        "eventTimeStamp": 18153.79999999702,
+        "at": 18564.90000000596,
+        "timeOrigin": 1794616081315.1,
+        "epochMs": 1794616099880,
+        "isTrusted": true,
+        "pointerId": 2,
+        "pointerType": "touch",
+        "isPrimary": true,
+        "x": 204.9921875,
+        "y": 677.8367309570312,
+        "buttons": 1,
+        "target": "swCard",
+        "path": [
+          "swCard",
+          "swWrap",
+          "swStage",
+          "swipe",
+          "sGame"
+        ],
+        "touches": null,
+        "hidden": false,
+        "visibility": "visible",
+        "focused": true,
+        "url": "http://localhost:8000/kome365/index.html",
+        "cardClass": "season-wi hinting hintSh drag tR",
+        "cardTransform": "translate(5px, 0px) rotate(0.498575deg) scale(1.00089)",
+        "wrapClass": "",
+        "phaseMeaning": "capture listener; product handlers may run later"
+      },
+      {
+        "received": {
+          "epochMs": 1794616100478,
+          "monotonicMs": 127159991.988172
+        },
+        "page": "game",
+        "kind": "pointermove",
+        "eventTimeStamp": 18748.09999999404,
+        "at": 19161.40000000596,
+        "timeOrigin": 1794616081315.1,
+        "epochMs": 1794616100476,
+        "isTrusted": true,
+        "pointerId": 2,
+        "pointerType": "touch",
+        "isPrimary": true,
+        "x": 209.9921875,
+        "y": 677.8367309570312,
+        "buttons": 1,
+        "target": "swCard",
+        "path": [
+          "swCard",
+          "swWrap",
+          "swStage",
+          "swipe",
+          "sGame"
+        ],
+        "touches": null,
+        "hidden": false,
+        "visibility": "visible",
+        "focused": true,
+        "url": "http://localhost:8000/kome365/index.html",
+        "cardClass": "season-wi hinting hintSh drag tR",
+        "cardTransform": "translate(10px, 0px) rotate(0.997151deg) scale(1.00178)",
+        "wrapClass": "",
+        "phaseMeaning": "capture listener; product handlers may run later"
+      },
+      {
+        "received": {
+          "epochMs": 1794616101124,
+          "monotonicMs": 127160637.750064
+        },
+        "page": "game",
+        "kind": "pointermove",
+        "eventTimeStamp": 19343.20000000298,
+        "at": 19803,
+        "timeOrigin": 1794616081315.1,
+        "epochMs": 1794616101118,
+        "isTrusted": true,
+        "pointerId": 2,
+        "pointerType": "touch",
+        "isPrimary": true,
+        "x": 214.9921875,
+        "y": 677.8367309570312,
+        "buttons": 1,
+        "target": "swCard",
+        "path": [
+          "swCard",
+          "swWrap",
+          "swStage",
+          "swipe",
+          "sGame"
+        ],
+        "touches": null,
+        "hidden": false,
+        "visibility": "visible",
+        "focused": true,
+        "url": "http://localhost:8000/kome365/index.html",
+        "cardClass": "season-wi hinting hintSh drag tR",
+        "cardTransform": "translate(15px, 0px) rotate(1.49573deg) scale(1.00267)",
+        "wrapClass": "",
+        "phaseMeaning": "capture listener; product handlers may run later"
+      },
+      {
+        "received": {
+          "epochMs": 1794616101125,
+          "monotonicMs": 127160638.606559
+        },
+        "page": "game",
+        "kind": "touchmove",
+        "eventTimeStamp": 19343.20000000298,
+        "at": 19803.40000000596,
+        "timeOrigin": 1794616081315.1,
+        "epochMs": 1794616101118,
+        "isTrusted": true,
+        "pointerId": null,
+        "pointerType": null,
+        "isPrimary": null,
+        "x": null,
+        "y": null,
+        "buttons": null,
+        "target": "SPAN",
+        "path": [
+          "swIc",
+          "swCard",
+          "swWrap",
+          "swStage",
+          "swipe",
+          "sGame"
+        ],
+        "touches": [
+          {
+            "id": 1,
+            "x": 214.9921875,
+            "y": 677.8367309570312
+          }
+        ],
+        "hidden": false,
+        "visibility": "visible",
+        "focused": true,
+        "url": "http://localhost:8000/kome365/index.html",
+        "cardClass": "season-wi hinting hintSh drag tR",
+        "cardTransform": "translate(15px, 0px) rotate(1.49573deg) scale(1.00267)",
+        "wrapClass": "",
+        "phaseMeaning": "capture listener; product handlers may run later"
+      },
+      {
+        "received": {
+          "epochMs": 1794616104763,
+          "monotonicMs": 127164277.004306
+        },
+        "page": "game",
+        "kind": "pointerup",
+        "eventTimeStamp": 21521.40000000596,
+        "at": 23446.59999999404,
+        "timeOrigin": 1794616081315.1,
+        "epochMs": 1794616104761,
+        "isTrusted": true,
+        "pointerId": 2,
+        "pointerType": "touch",
+        "isPrimary": true,
+        "x": 214.9921875,
+        "y": 677.8367309570312,
+        "buttons": 0,
+        "target": "swCard",
+        "path": [
+          "swCard",
+          "swWrap",
+          "swStage",
+          "swipe",
+          "sGame"
+        ],
+        "touches": null,
+        "hidden": false,
+        "visibility": "visible",
+        "focused": true,
+        "url": "http://localhost:8000/kome365/index.html",
+        "cardClass": "season-wi hinting hintSh drag tR goR",
+        "cardTransform": "translate(20px, 0px) rotate(1.9943deg) scale(1.00356)",
+        "wrapClass": "",
+        "phaseMeaning": "capture listener; product handlers may run later"
+      },
+      {
+        "received": {
+          "epochMs": 1794616104871,
+          "monotonicMs": 127164385.281677
+        },
+        "page": "game",
+        "kind": "lostpointercapture",
+        "eventTimeStamp": 21521.40000000596,
+        "at": 23555.5,
+        "timeOrigin": 1794616081315.1,
+        "epochMs": 1794616104870,
+        "isTrusted": true,
+        "pointerId": 2,
+        "pointerType": "touch",
+        "isPrimary": true,
+        "x": 214.9921875,
+        "y": 677.8367309570312,
+        "buttons": 0,
+        "target": "swCard",
+        "path": [
+          "swCard",
+          "swWrap",
+          "swStage",
+          "swipe",
+          "sGame"
+        ],
+        "touches": null,
+        "hidden": false,
+        "visibility": "visible",
+        "focused": true,
+        "url": "http://localhost:8000/kome365/index.html",
+        "cardClass": "season-wi hinting hintSh",
+        "cardTransform": "",
+        "wrapClass": "demoOn",
+        "phaseMeaning": "capture listener; product handlers may run later"
+      },
+      {
+        "received": {
+          "epochMs": 1794616104873,
+          "monotonicMs": 127164387.091123
+        },
+        "page": "game",
+        "kind": "touchend",
+        "eventTimeStamp": 21521.40000000596,
+        "at": 23555.79999999702,
+        "timeOrigin": 1794616081315.1,
+        "epochMs": 1794616104870,
+        "isTrusted": true,
+        "pointerId": null,
+        "pointerType": null,
+        "isPrimary": null,
+        "x": null,
+        "y": null,
+        "buttons": null,
+        "target": "SPAN",
+        "path": [
+          "swIc",
+          "swCard",
+          "swWrap",
+          "swStage",
+          "swipe",
+          "sGame"
+        ],
+        "touches": [],
+        "hidden": false,
+        "visibility": "visible",
+        "focused": true,
+        "url": "http://localhost:8000/kome365/index.html",
+        "cardClass": "season-wi hinting hintSh",
+        "cardTransform": "",
+        "wrapClass": "demoOn",
+        "phaseMeaning": "capture listener; product handlers may run later"
+      }
+    ],
+    "timing": {
+      "nominalMoveWaitBudgetMs": 700,
+      "touchStartRequestToFourthMoveRequestMs": 2885.84065900743,
+      "touchStartRequestToFourthMoveACKMs": 3355.667360007763,
+      "touchEndACKMs": 1804.0726290047169,
+      "finalReadRequestedAfterReturnACKMs": 3155.1341819912195
+    },
+    "finalDOM": {
+      "cardClass": "season-wi hinting hintSh",
+      "computedTransform": "none",
+      "neutral": true,
+      "demoOn": true,
+      "handVisible": true
+    },
+    "gameStayedVisibleAtRelevantReads": true,
+    "sourceGate": true,
+    "savedSourceBeforeAfterIndependentlyMatch": true,
+    "allFiveHTTP200AndExpectedSHA": true,
+    "frozenPreparationHashesMatch": {
+      "README.md": true,
+      "config.json": true,
+      "criteria.json": true,
+      "preflight-revision.json": true,
+      "preparation.json": true,
+      "run.cjs": true,
+      "syntax-check.json": true,
+      "syntax-initial.json": true
+    },
+    "cleanup": {
+      "pointerCleanupComplete": true,
+      "cpuReset": true,
+      "browserClosed": true,
+      "sourceUnchanged": true
+    },
+    "consoleAndRequestErrors": [
+      {
+        "at": {
+          "epochMs": 1794616081883,
+          "monotonicMs": 127141397.074999
+        },
+        "page": "game",
+        "kind": "console",
+        "message": "Failed to load resource: the server responded with a status of 404 (File not found)"
+      },
+      {
+        "at": {
+          "epochMs": 1794616105092,
+          "monotonicMs": 127164606.335296
+        },
+        "page": "game",
+        "kind": "console",
+        "message": "Failed to load resource: the server responded with a status of 404 (File not found)"
+      }
+    ],
+    "issues": [],
+    "images": {
+      "shaVerified": true,
+      "auditorViewedOriginals": false,
+      "parentReportedViewedOriginals": true,
+      "parentReportedObservation": "Held card before switch; neutral card with guide after return. Does not establish background scenario."
+    },
+    "environmentLimit": {
+      "source": "parent report, not separately executed by this audit",
+      "DISPLAY": "absent",
+      "Xsocket": "absent",
+      "commandV_Xvfb": "no output"
+    },
+    "limits": [
+      "No real hidden/visible transition, blur/focus or pointercancel/touchcancel was recorded. bringToFront acknowledged but did not establish backgrounding.",
+      "Observed normal pointerup delivery and neutral/guide DOM cannot be counted as A2 nonreproduction or improvement when the prerequisite is absent.",
+      "Only one diagnostic attempt; ten-attempt reproduction and speed comparison were not run.",
+      "No product change; real device backgrounding, physical finger/sensor/network behavior and retention remain unconfirmed.",
+      "Two console404 errors remain in raw evidence; the saved error text does not attribute their URL."
+    ],
+    "evidenceSHA256": {
+      "/workspace/scratch/first-minute/round-94/background-diagnostic/execution.json": "a3d675a717e1fa41f3dcb224a9483e83dcd7f851b3c8749b931148430b52007d",
+      "/workspace/scratch/first-minute/round-94/background-diagnostic/runtime/report.json": "4833e69c96fe4f9cf68b18ae64c22671469b41d15a53e3062a5262434de46cc6",
+      "/workspace/scratch/first-minute/round-94/background-diagnostic/run.log": "7cb54f1b4c5646ad318fabeb1d108832e3ce4b2803f13adf6774b943fec273b6",
+      "/workspace/scratch/first-minute/round-94/background-diagnostic/frozen.json": "80987293da0f44debba565bb80a52d50aefe5c9fb0aa76b61f604bf22ffb1996",
+      "/workspace/scratch/first-minute/round-94/background-diagnostic/runtime/before-switch.png": "a8530714fc8593e45683ef86b779973951c85a93ef693542a4266b20a820f9e3",
+      "/workspace/scratch/first-minute/round-94/background-diagnostic/runtime/after-return-3s.png": "fa0023fb324a2ef46eef35bf5298d47e9a98a62b7463cb02b54502909b3e8b81"
+    }
+  },
+  "pytest": {
+    "command": "pytest tests/",
+    "cwd": "/workspace/ricepia-firstminute-round94",
+    "head": "4568c8792f4c804cf354f6f63a12ef568e2b6748",
+    "startedAtUTC": "2026-11-14T00:22:22.271457+00:00",
+    "actualExit": 127,
+    "completedAtUTC": "2026-11-14T00:22:22.279739+00:00",
+    "output": "bash: line 1: pytest: command not found\n"
+  },
+  "screenshots": [
+    {
+      "name": "observe-10s",
+      "phase": "observation",
+      "targetMs": 10000,
+      "requestedAt": 126517193.228646,
+      "requestedEpoch": 1794615457679,
+      "status": "saved",
+      "file": "/workspace/scratch/first-minute/round-94/preparation-4568/strict/observe-10s.png",
+      "requestedElapsedMs": 9999.489592000842,
+      "completedAt": 126523988.848288,
+      "captureMs": 6795.619642004371
+    },
+    {
+      "name": "play-10s",
+      "phase": "play",
+      "targetMs": 10000,
+      "requestedAt": 126534089.251898,
+      "requestedEpoch": 1794615474575,
+      "status": "saved",
+      "file": "/workspace/scratch/first-minute/round-94/preparation-4568/strict/play-10s.png",
+      "requestedElapsedMs": 10000.65291300416,
+      "completedAt": 126534795.190494,
+      "captureMs": 705.938595995307
+    },
+    {
+      "name": "play-30s",
+      "phase": "play",
+      "targetMs": 30000,
+      "requestedAt": 126554092.214661,
+      "requestedEpoch": 1794615494578,
+      "status": "saved",
+      "file": "/workspace/scratch/first-minute/round-94/preparation-4568/strict/play-30s.png",
+      "requestedElapsedMs": 30003.615676000714,
+      "completedAt": 126554668.985461,
+      "captureMs": 576.7707999944687
+    },
+    {
+      "name": "play-60s",
+      "phase": "play",
+      "targetMs": 60000,
+      "requestedAt": 126584090.653278,
+      "requestedEpoch": 1794615524577,
+      "status": "saved",
+      "file": "/workspace/scratch/first-minute/round-94/preparation-4568/strict/play-60s.png",
+      "requestedElapsedMs": 60002.05429299176,
+      "completedAt": 126584764.745025,
+      "captureMs": 674.0917470008135
+    }
+  ],
+  "newRegressionTest": null,
+  "oldNewProductComparison": false,
+  "tenAttemptReproduction": false,
+  "fiveSizeLayoutRun": false,
+  "mergeHeld": true,
+  "rawEvidenceSHA256": {
+    "execution.json": "ccc3bb83d0731df93a31b77faa494e99f3d61fe1ac3f103737fb6c16f65b6209",
+    "primary-audit/summary.json": "d641311907805d6617af90277ca357fcf08120e6e89d6936d6646869c6926787",
+    "primary-audit/frozen.json": "0c5c8d1c09c182eba0ff8ccc082dab5140f48053fb04ba6840561a37988fecfb",
+    "preparation-4568/metadata.json": "7a176dad38509ff68514ebb599f32777994139c94824eb79b3197f7626f73c5b",
+    "preparation-4568/strict/report.json": "1cc0b838c3d4ef0e96f820c051460471447374e933cc2873900378f407588a56",
+    "preparation-4568/strict/driver-timing.json": "6e731c284b6086545f5fdf9934b589487cd5b5610832724bf5b9b7e51af96eff",
+    "preparation-4568/strict/extra.json": "cb6118abc71332db7e6fa7cd6408c9a5bfaccef9614bef79b1479e0843ec18b2",
+    "background-diagnostic/execution.json": "a3d675a717e1fa41f3dcb224a9483e83dcd7f851b3c8749b931148430b52007d",
+    "background-diagnostic/runtime/report.json": "4833e69c96fe4f9cf68b18ae64c22671469b41d15a53e3062a5262434de46cc6",
+    "background-diagnostic/frozen.json": "80987293da0f44debba565bb80a52d50aefe5c9fb0aa76b61f604bf22ffb1996",
+    "background-diagnostic-audit/summary.json": "05d4f83c5d437386dede3d950fe426e1dcf01bcc80188bb89f87aa1e400fcc1f",
+    "background-diagnostic-audit/frozen.json": "902ad7a53b54c742cf9ab671ad9b76bdc35351eebf5c6aab5749b352959a59c4",
+    "pytest-execution.json": "2ed8acb43213463f67f6e9c89f13432a47688e073d5547175196a23e8dc91ddd",
+    "pytest.log": "b6fe94a4971280b69606b3ad6039ae9ed0e48557776ea68f678174b6c8da879a",
+    "multitouch-preparation/frozen.json": "d11c96b56da0593ad678d97f643dc0a566c3e8535715d1f0b9086d5c2780eeb5"
+  },
+  "originalImageSHA256": {
+    "observe-10s.png": "a98722efcb5dcdbc56be9ab1c45242e9b04e61f2b134ec06bafda251c600e999",
+    "play-10s.png": "2cc8bef01a9adfca742a66e5978016761bafc7ccc111ef7a133a4c5041ed1eba",
+    "play-30s.png": "9b2313501308c81102d6fea98515b504ab101d254d43c92b14a378d59cda1cb8",
+    "play-60s.png": "b3253130f9a66c7f8aeb33f2859ad48cc2e53a8a3e377650b1e09024e310f838"
+  }
+}

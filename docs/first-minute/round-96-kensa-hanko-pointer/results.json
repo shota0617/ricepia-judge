@@ -1,0 +1,2385 @@
+{
+  "round": 96,
+  "assembledAtUTC": "2026-11-14T02:01:55.363095+00:00",
+  "status": "Final staged report; reproduction, whole-suite and five-viewport audits completed. Whole-suite failed; merge/publication hold retained.",
+  "game": "検査ゲーム",
+  "route": "/kensa.html",
+  "candidate": {
+    "head": "031bf9a1852384a994694153bc5334f2c9ac5ed3",
+    "root": "/workspace/ricepia-kensa-hanko-pointer",
+    "productSHA256": "d035ab1b787133ad80d3954dcd5cc44a983a6336d14d1db427083bd25d0a24f7",
+    "testSHA256": "19996aa909c31901f8a60a3c6640e9a1c1d42a3903ec8c7aa1f65e3d90d36953",
+    "productLinesAdded": 21,
+    "productLinesDeleted": 0,
+    "newTestFiles": 1
+  },
+  "issue": {
+    "description": "An additional resting finger replaces the origin of a working stamp finger; its continuation fails to stamp.",
+    "localFixedReproductionEstablished": true,
+    "firstMinuteRelevance": "First-bag stamp is reached about15 seconds into active play; completing the bag is interrupted.",
+    "fixLocations": [
+      "kensa.html:2436",
+      "kensa.html:2454",
+      "kensa.html:2484",
+      "kensa.html:2494",
+      "kensa.html:2502",
+      "kensa.html:2541"
+    ],
+    "testLocation": "tests/test_kensa_hanko_pointer_ownership.py:160",
+    "captureReviewFinding": {
+      "resolvedInCandidate": true,
+      "behavior": "Release stale ownership when capture is lost or an uncaptured pointer leaves; preserve captured owner leave, bubbled child loss, foreign pointer and new swipe ownership.",
+      "coveredInFinal36Cases": true
+    },
+    "notClaimed": [
+      "human churn/retention improvement",
+      "permanent inability after the diagnostic stops input",
+      "every multi-touch pattern fixed",
+      "owner lost-up hover outside selected scope"
+    ]
+  },
+  "primaryBefore": {
+    "count": 1,
+    "viewport": {
+      "width": 320,
+      "height": 568
+    },
+    "cpuRate": 1,
+    "observationSeconds": 10,
+    "inputSeconds": 60,
+    "actions": 36,
+    "recordedResponses": 36,
+    "noRecordedResponse": 0,
+    "errors": {
+      "pageOrConsole": 0,
+      "driver": 0
+    },
+    "cdpCommandsAck": 492,
+    "trustedPointerEvents": 503,
+    "firstSendSeconds": 0.009,
+    "firstChangedHintSampleSeconds": 0.2336,
+    "firstChangedHintFromSendMs": 224.6,
+    "firstPostPollSeconds": 0.427,
+    "firstPostPollFromSendMs": 418,
+    "firstPositiveMeasurementSampleSeconds": 3.1041,
+    "firstRemovalPostPollSeconds": 6.032,
+    "firstCleanPostPollSeconds": 8.216,
+    "firstBagNextButtonDOMReadBracketSeconds": [
+      15.294,
+      15.297
+    ],
+    "secondBagHeaderSampleSeconds": 16.3042,
+    "thirdBagHeaderSampleSeconds": 46.5042,
+    "guidedPickActions": 11,
+    "guidedZoomOnlyActions": 5,
+    "photos": [
+      {
+        "target": 10,
+        "requested": 10.001,
+        "file": "/workspace/scratch/first-minute/round-96/preparation-4568/strict/play-10s.png",
+        "completed": 10.052
+      },
+      {
+        "target": 30,
+        "requested": 30.001,
+        "file": "/workspace/scratch/first-minute/round-96/preparation-4568/strict/play-30s.png",
+        "completed": 30.056
+      },
+      {
+        "target": 60,
+        "requested": 60.001,
+        "file": "/workspace/scratch/first-minute/round-96/preparation-4568/strict/play-60s.png",
+        "completed": 60.042
+      }
+    ],
+    "notes": [
+      "通常primaryのはんこは単指。36操作を2指の失敗がなかった36試行とは数えない。",
+      "36反応を36工程進行とは数えない。",
+      "DOM/traceの時刻は物理描画開始や人の理解時刻ではない。"
+    ],
+    "clockDefinition": "Play seconds begin after the initial10-second passive observation and its observation screenshot; not page-navigation seconds."
+  },
+  "singleDiagnosticBefore": {
+    "path": "/workspace/scratch/first-minute/round-96/hanko-diagnostic",
+    "actualExit": 0,
+    "browserClosed": true,
+    "status": "eligible-without-stamp",
+    "attempted": 1,
+    "eligible": 1,
+    "startedAtPlaySeconds": 14.769,
+    "finishedAtPlaySeconds": 16.428,
+    "markOn": false,
+    "nextVisible": false,
+    "prefixWaitSumMs": 150,
+    "remainderWaitSumMs": 450,
+    "browserPointerIDs": {
+      "p1": 11,
+      "p2": 12
+    },
+    "photos": [
+      {
+        "label": "before",
+        "requested": 14.777,
+        "file": "/workspace/scratch/first-minute/round-96/hanko-diagnostic/strict/hanko-before.png",
+        "completed": 14.836
+      },
+      {
+        "label": "after",
+        "requested": 16.357,
+        "file": "/workspace/scratch/first-minute/round-96/hanko-diagnostic/strict/hanko-after.png",
+        "completed": 16.412
+      }
+    ],
+    "recordedErrors": {
+      "driver": [],
+      "pageOrConsole": [],
+      "inputCommands": [],
+      "screenshots": [],
+      "lateNewInputs": [],
+      "unfinishedTouchActions": []
+    }
+  },
+  "fixedBefore": {
+    "groups": {
+      "control": {
+        "fixedDenominator": 2,
+        "recordedSlots": 2,
+        "eligible": 2,
+        "unestablished": 0,
+        "eligibleWithStamp": 2,
+        "eligibleWithoutStamp": 0,
+        "byRequestedWaitSumMs": {
+          "40": {
+            "denominator": 1,
+            "slots": [
+              "control-01"
+            ],
+            "eligibleWithoutStamp": 0,
+            "eligibleWithStamp": 1,
+            "unestablished": 0
+          },
+          "700": {
+            "denominator": 1,
+            "slots": [
+              "control-02"
+            ],
+            "eligibleWithoutStamp": 0,
+            "eligibleWithStamp": 1,
+            "unestablished": 0
+          }
+        }
+      },
+      "treatment": {
+        "fixedDenominator": 10,
+        "recordedSlots": 10,
+        "eligible": 10,
+        "unestablished": 0,
+        "eligibleWithStamp": 0,
+        "eligibleWithoutStamp": 10,
+        "byRequestedWaitSumMs": {
+          "40": {
+            "denominator": 5,
+            "slots": [
+              "treatment-01",
+              "treatment-03",
+              "treatment-05",
+              "treatment-07",
+              "treatment-09"
+            ],
+            "eligibleWithoutStamp": 5,
+            "eligibleWithStamp": 0,
+            "unestablished": 0
+          },
+          "700": {
+            "denominator": 5,
+            "slots": [
+              "treatment-02",
+              "treatment-04",
+              "treatment-06",
+              "treatment-08",
+              "treatment-10"
+            ],
+            "eligibleWithoutStamp": 5,
+            "eligibleWithStamp": 0,
+            "unestablished": 0
+          }
+        }
+      }
+    },
+    "actualExitsAllZero": true,
+    "requiredTreatmentGates": {
+      "perSlot": 19,
+      "slots": 10,
+      "allTrue": true
+    },
+    "requiredControlGates": {
+      "perSlot": 15,
+      "P2NotApplicablePerSlot": 8,
+      "P1AddedPerSlot": 4,
+      "slots": 2,
+      "allTrue": true
+    },
+    "rawChecks": {
+      "total": 382,
+      "passed": 379,
+      "failed": 3,
+      "allPassed": false,
+      "failuresPreserved": [
+        {
+          "slot": "treatment-01",
+          "check": "observation at least ten seconds"
+        },
+        {
+          "slot": "treatment-03",
+          "check": "observation at least ten seconds"
+        },
+        {
+          "slot": "treatment-09",
+          "check": "observation at least ten seconds"
+        }
+      ],
+      "interpretation": "Three observation photograph requests were timestamped 9999ms, 1ms before 10000ms; completions and first inputs followed 10s. These strict timestamp checks remain false. All fixed diagnostic eligibility gates remain established; no denominator was changed."
+    },
+    "allCommands": 1690,
+    "allACK": 1690,
+    "ordinaryActionsWithRecordedResponse": 108,
+    "diagnosticActions": 12,
+    "timingSupplement": {
+      "completedAtUTC": "2026-11-14T01:20:20.061080+00:00",
+      "units": "milliseconds unless named Seconds",
+      "traceMapping": "(trace.timeOrigin + trace.start + event.t - trace.nodePlayStartedAt) / 1000",
+      "rows": [
+        {
+          "slot": "control-01",
+          "requestedRemainderWaitSumMs": 40,
+          "observationStartToPhotoRequestMs": 10001,
+          "observationStartToPhotoCompletedMs": 10060,
+          "observationStartToFirstInputSendMs": 10071.0,
+          "firstInputSendPlaySeconds": 0.011,
+          "diagnosticDownSendPlaySeconds": 14.791,
+          "firstRecordedPositiveHankoTransform": {
+            "playSeconds": 14.947699951171874,
+            "transform": "translateY(6.66667px)",
+            "fromDiagnosticDownSendMs": 156.6999511718734,
+            "meaning": "recorded handler-applied DOM transform, not exact pixel onset"
+          },
+          "downSendToReleaseACKMs": 458.00000000000017,
+          "remainderBoundaryReadEndToLastMoveACKMs": 210.99999999999852,
+          "firstRecordedMarkClassFromDiagnosticDownMs": 358.4999511688931,
+          "firstSavedCSSVisibleMarkSnapshot": {
+            "requested": 15.899,
+            "observedAt": 15.902,
+            "fromDownSendUpperMs": 1110.9999999999989
+          }
+        },
+        {
+          "slot": "control-02",
+          "requestedRemainderWaitSumMs": 700,
+          "observationStartToPhotoRequestMs": 10000,
+          "observationStartToPhotoCompletedMs": 10074,
+          "observationStartToFirstInputSendMs": 10084.0,
+          "firstInputSendPlaySeconds": 0.01,
+          "diagnosticDownSendPlaySeconds": 14.813,
+          "firstRecordedPositiveHankoTransform": {
+            "playSeconds": 14.968799951180817,
+            "transform": "translateY(6.66667px)",
+            "fromDiagnosticDownSendMs": 155.79995118081592,
+            "meaning": "recorded handler-applied DOM transform, not exact pixel onset"
+          },
+          "downSendToReleaseACKMs": 990.0000000000002,
+          "remainderBoundaryReadEndToLastMoveACKMs": 746.0000000000005,
+          "firstRecordedMarkClassFromDiagnosticDownMs": 657.5999511778346,
+          "firstSavedCSSVisibleMarkSnapshot": {
+            "requested": 15.786,
+            "observedAt": 15.789,
+            "fromDownSendUpperMs": 975.9999999999991
+          }
+        },
+        {
+          "slot": "treatment-01",
+          "requestedRemainderWaitSumMs": 40,
+          "observationStartToPhotoRequestMs": 9999,
+          "observationStartToPhotoCompletedMs": 10085,
+          "observationStartToFirstInputSendMs": 10095.0,
+          "firstInputSendPlaySeconds": 0.01,
+          "diagnosticDownSendPlaySeconds": 14.76,
+          "firstRecordedPositiveHankoTransform": {
+            "playSeconds": 14.917399951174854,
+            "transform": "translateY(6.66667px)",
+            "fromDiagnosticDownSendMs": 157.39995117485427,
+            "meaning": "recorded handler-applied DOM transform, not exact pixel onset"
+          },
+          "downSendToReleaseACKMs": 431.0000000000009,
+          "remainderBoundaryReadEndToLastMoveACKMs": 163.99999999999972,
+          "firstRecordedMarkClassFromDiagnosticDownMs": null,
+          "firstSavedCSSVisibleMarkSnapshot": null
+        },
+        {
+          "slot": "treatment-02",
+          "requestedRemainderWaitSumMs": 700,
+          "observationStartToPhotoRequestMs": 10001,
+          "observationStartToPhotoCompletedMs": 10079,
+          "observationStartToFirstInputSendMs": 10090.0,
+          "firstInputSendPlaySeconds": 0.011,
+          "diagnosticDownSendPlaySeconds": 14.701,
+          "firstRecordedPositiveHankoTransform": {
+            "playSeconds": 14.86789990234375,
+            "transform": "translateY(6.66666px)",
+            "fromDiagnosticDownSendMs": 166.89990234374898,
+            "meaning": "recorded handler-applied DOM transform, not exact pixel onset"
+          },
+          "downSendToReleaseACKMs": 984.0,
+          "remainderBoundaryReadEndToLastMoveACKMs": 711.0000000000003,
+          "firstRecordedMarkClassFromDiagnosticDownMs": null,
+          "firstSavedCSSVisibleMarkSnapshot": null
+        },
+        {
+          "slot": "treatment-03",
+          "requestedRemainderWaitSumMs": 40,
+          "observationStartToPhotoRequestMs": 9999,
+          "observationStartToPhotoCompletedMs": 10085,
+          "observationStartToFirstInputSendMs": 10095.0,
+          "firstInputSendPlaySeconds": 0.01,
+          "diagnosticDownSendPlaySeconds": 14.797,
+          "firstRecordedPositiveHankoTransform": {
+            "playSeconds": 14.953699853509665,
+            "transform": "translateY(6.66667px)",
+            "fromDiagnosticDownSendMs": 156.69985350966442,
+            "meaning": "recorded handler-applied DOM transform, not exact pixel onset"
+          },
+          "downSendToReleaseACKMs": 423.9999999999995,
+          "remainderBoundaryReadEndToLastMoveACKMs": 163.00000000000026,
+          "firstRecordedMarkClassFromDiagnosticDownMs": null,
+          "firstSavedCSSVisibleMarkSnapshot": null
+        },
+        {
+          "slot": "treatment-04",
+          "requestedRemainderWaitSumMs": 700,
+          "observationStartToPhotoRequestMs": 10001,
+          "observationStartToPhotoCompletedMs": 10088,
+          "observationStartToFirstInputSendMs": 10099.0,
+          "firstInputSendPlaySeconds": 0.011,
+          "diagnosticDownSendPlaySeconds": 14.75,
+          "firstRecordedPositiveHankoTransform": {
+            "playSeconds": 14.905000048831106,
+            "transform": "translateY(6.66667px)",
+            "fromDiagnosticDownSendMs": 155.00004883110563,
+            "meaning": "recorded handler-applied DOM transform, not exact pixel onset"
+          },
+          "downSendToReleaseACKMs": 973.0000000000008,
+          "remainderBoundaryReadEndToLastMoveACKMs": 713.9999999999986,
+          "firstRecordedMarkClassFromDiagnosticDownMs": null,
+          "firstSavedCSSVisibleMarkSnapshot": null
+        },
+        {
+          "slot": "treatment-05",
+          "requestedRemainderWaitSumMs": 40,
+          "observationStartToPhotoRequestMs": 10000,
+          "observationStartToPhotoCompletedMs": 10073,
+          "observationStartToFirstInputSendMs": 10082.0,
+          "firstInputSendPlaySeconds": 0.009,
+          "diagnosticDownSendPlaySeconds": 14.799,
+          "firstRecordedPositiveHankoTransform": {
+            "playSeconds": 14.951599853515626,
+            "transform": "translateY(6.66667px)",
+            "fromDiagnosticDownSendMs": 152.59985351562653,
+            "meaning": "recorded handler-applied DOM transform, not exact pixel onset"
+          },
+          "downSendToReleaseACKMs": 419.99999999999994,
+          "remainderBoundaryReadEndToLastMoveACKMs": 159.00000000000068,
+          "firstRecordedMarkClassFromDiagnosticDownMs": null,
+          "firstSavedCSSVisibleMarkSnapshot": null
+        },
+        {
+          "slot": "treatment-06",
+          "requestedRemainderWaitSumMs": 700,
+          "observationStartToPhotoRequestMs": 10000,
+          "observationStartToPhotoCompletedMs": 10067,
+          "observationStartToFirstInputSendMs": 10078.0,
+          "firstInputSendPlaySeconds": 0.011,
+          "diagnosticDownSendPlaySeconds": 15.062,
+          "firstRecordedPositiveHankoTransform": {
+            "playSeconds": 15.218399999991059,
+            "transform": "translateY(6.66667px)",
+            "fromDiagnosticDownSendMs": 156.39999999105925,
+            "meaning": "recorded handler-applied DOM transform, not exact pixel onset"
+          },
+          "downSendToReleaseACKMs": 974.0000000000019,
+          "remainderBoundaryReadEndToLastMoveACKMs": 711.0000000000003,
+          "firstRecordedMarkClassFromDiagnosticDownMs": null,
+          "firstSavedCSSVisibleMarkSnapshot": null
+        },
+        {
+          "slot": "treatment-07",
+          "requestedRemainderWaitSumMs": 40,
+          "observationStartToPhotoRequestMs": 10000,
+          "observationStartToPhotoCompletedMs": 10078,
+          "observationStartToFirstInputSendMs": 10087.0,
+          "firstInputSendPlaySeconds": 0.009,
+          "diagnosticDownSendPlaySeconds": 14.901,
+          "firstRecordedPositiveHankoTransform": {
+            "playSeconds": 15.05399990233779,
+            "transform": "translateY(6.66667px)",
+            "fromDiagnosticDownSendMs": 152.9999023377897,
+            "meaning": "recorded handler-applied DOM transform, not exact pixel onset"
+          },
+          "downSendToReleaseACKMs": 419.99999999999994,
+          "remainderBoundaryReadEndToLastMoveACKMs": 163.00000000000026,
+          "firstRecordedMarkClassFromDiagnosticDownMs": null,
+          "firstSavedCSSVisibleMarkSnapshot": null
+        },
+        {
+          "slot": "treatment-08",
+          "requestedRemainderWaitSumMs": 700,
+          "observationStartToPhotoRequestMs": 10001,
+          "observationStartToPhotoCompletedMs": 10094,
+          "observationStartToFirstInputSendMs": 10107.0,
+          "firstInputSendPlaySeconds": 0.013,
+          "diagnosticDownSendPlaySeconds": 14.772,
+          "firstRecordedPositiveHankoTransform": {
+            "playSeconds": 14.93190019531548,
+            "transform": "translateY(6.66667px)",
+            "fromDiagnosticDownSendMs": 159.90019531547972,
+            "meaning": "recorded handler-applied DOM transform, not exact pixel onset"
+          },
+          "downSendToReleaseACKMs": 977.0000000000003,
+          "remainderBoundaryReadEndToLastMoveACKMs": 713.9999999999986,
+          "firstRecordedMarkClassFromDiagnosticDownMs": null,
+          "firstSavedCSSVisibleMarkSnapshot": null
+        },
+        {
+          "slot": "treatment-09",
+          "requestedRemainderWaitSumMs": 40,
+          "observationStartToPhotoRequestMs": 9999,
+          "observationStartToPhotoCompletedMs": 10092,
+          "observationStartToFirstInputSendMs": 10106.0,
+          "firstInputSendPlaySeconds": 0.013,
+          "diagnosticDownSendPlaySeconds": 14.827,
+          "firstRecordedPositiveHankoTransform": {
+            "playSeconds": 14.984599853515626,
+            "transform": "translateY(6.66667px)",
+            "fromDiagnosticDownSendMs": 157.59985351562557,
+            "meaning": "recorded handler-applied DOM transform, not exact pixel onset"
+          },
+          "downSendToReleaseACKMs": 425.0000000000007,
+          "remainderBoundaryReadEndToLastMoveACKMs": 163.00000000000026,
+          "firstRecordedMarkClassFromDiagnosticDownMs": null,
+          "firstSavedCSSVisibleMarkSnapshot": null
+        },
+        {
+          "slot": "treatment-10",
+          "requestedRemainderWaitSumMs": 700,
+          "observationStartToPhotoRequestMs": 10000,
+          "observationStartToPhotoCompletedMs": 10089,
+          "observationStartToFirstInputSendMs": 10099.0,
+          "firstInputSendPlaySeconds": 0.01,
+          "diagnosticDownSendPlaySeconds": 14.713,
+          "firstRecordedPositiveHankoTransform": {
+            "playSeconds": 14.86990009766817,
+            "transform": "translateY(6.66667px)",
+            "fromDiagnosticDownSendMs": 156.9000976681707,
+            "meaning": "recorded handler-applied DOM transform, not exact pixel onset"
+          },
+          "downSendToReleaseACKMs": 1024.000000000001,
+          "remainderBoundaryReadEndToLastMoveACKMs": 766.0,
+          "firstRecordedMarkClassFromDiagnosticDownMs": null,
+          "firstSavedCSSVisibleMarkSnapshot": null
+        }
+      ],
+      "limits": [
+        "40/700ms are requested remainder wait totals after a separate 150ms prefix; actual down-to-release and remainder ACK intervals are reported separately.",
+        "Recorded transform and mark-class events are not exact visual onset. CSS visibility uses saved ancestor-aware DOM snapshots.",
+        "Mark completion is a later reward in the first bag, not the earliest positive feedback of the whole game.",
+        "Root reported own worktree creation at 01:12:30–48 during treatment09; no parallel browser or test. Host speed is uncalibrated, and actual intervals are retained."
+      ]
+    },
+    "sourcePinsPerSlot": 17,
+    "independentOriginalImageAuditReference": "../hanko-reproduction-audit/README.md"
+  },
+  "afterControls": {
+    "status": "completed and independently audited",
+    "planned": 2,
+    "actualExits": [
+      0,
+      0
+    ],
+    "eligible": 2,
+    "withStamp": 2,
+    "unestablished": 0,
+    "auditGroup": {
+      "fixedDenominator": 2,
+      "recordedSlots": 2,
+      "eligible": 2,
+      "unestablished": 0,
+      "eligibleWithStamp": 2,
+      "eligibleWithoutStamp": 0,
+      "byRequestedWaitSumMs": {
+        "40": {
+          "denominator": 1,
+          "slots": [
+            "control-01"
+          ],
+          "eligibleWithoutStamp": 0,
+          "eligibleWithStamp": 1,
+          "unestablished": 0
+        },
+        "700": {
+          "denominator": 1,
+          "slots": [
+            "control-02"
+          ],
+          "eligibleWithoutStamp": 0,
+          "eligibleWithStamp": 1,
+          "unestablished": 0
+        }
+      }
+    }
+  },
+  "afterTreatment": {
+    "status": "completed and independently audited",
+    "planned": 10,
+    "actualExits": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "eligible": 10,
+    "withStamp": 10,
+    "withoutStamp": 0,
+    "unestablished": 0,
+    "byWaitTotalMs": {
+      "40": {
+        "denominator": 5,
+        "slots": [
+          "treatment-01",
+          "treatment-03",
+          "treatment-05",
+          "treatment-07",
+          "treatment-09"
+        ],
+        "eligibleWithoutStamp": 0,
+        "eligibleWithStamp": 5,
+        "unestablished": 0
+      },
+      "700": {
+        "denominator": 5,
+        "slots": [
+          "treatment-02",
+          "treatment-04",
+          "treatment-06",
+          "treatment-08",
+          "treatment-10"
+        ],
+        "eligibleWithoutStamp": 0,
+        "eligibleWithStamp": 5,
+        "unestablished": 0
+      }
+    }
+  },
+  "regressionTest": {
+    "methodCount": 1,
+    "subcases": 36,
+    "sameFinalTestBytesUsed": true,
+    "red": {
+      "receipt": {
+        "startedAtUTC": "2026-11-14T01:21:46.020594+00:00",
+        "command": [
+          "python3",
+          "tests/test_kensa_hanko_pointer_ownership.py",
+          "-v"
+        ],
+        "envOverride": {
+          "KENSA_HTML": "/workspace/ricepia-firstminute-round96/kensa.html"
+        },
+        "sourceSHA256": "d2c682b1f2d8686beab48f6775a529da0e4412f67224ef1999bda19c441776ce",
+        "testSHA256": "19996aa909c31901f8a60a3c6640e9a1c1d42a3903ec8c7aa1f65e3d90d36953",
+        "cases": 36,
+        "actualExit": 1,
+        "finishedAtUTC": "2026-11-14T01:21:46.352516+00:00",
+        "sourceUnchanged": true,
+        "testUnchanged": true
+      },
+      "failedSubcases": 17,
+      "behavioralRED": true,
+      "fixtureError": false
+    },
+    "green": {
+      "receipt": {
+        "startedAtUTC": "2026-11-14T01:21:46.353397+00:00",
+        "command": [
+          "python3",
+          "tests/test_kensa_hanko_pointer_ownership.py",
+          "-v"
+        ],
+        "envOverride": {
+          "KENSA_HTML": "/workspace/ricepia-kensa-hanko-pointer/kensa.html"
+        },
+        "sourceSHA256": "d035ab1b787133ad80d3954dcd5cc44a983a6336d14d1db427083bd25d0a24f7",
+        "testSHA256": "19996aa909c31901f8a60a3c6640e9a1c1d42a3903ec8c7aa1f65e3d90d36953",
+        "cases": 36,
+        "actualExit": 0,
+        "finishedAtUTC": "2026-11-14T01:21:46.594348+00:00",
+        "sourceUnchanged": true,
+        "testUnchanged": true
+      },
+      "passedSubcases": 36
+    },
+    "old28CasesPreserved": true,
+    "additionalCaptureBoundaryCases": 8
+  },
+  "layoutBefore": {
+    "viewports": [
+      [
+        320,
+        568
+      ],
+      [
+        390,
+        844
+      ],
+      [
+        568,
+        320
+      ],
+      [
+        844,
+        390
+      ],
+      [
+        820,
+        1180
+      ]
+    ],
+    "slots": 5,
+    "actualZeroAndClosed": 5,
+    "actions": 175,
+    "recordedResponses": 175,
+    "retainedLayoutRecords": 525,
+    "horizontalDocumentOverflowRecords": 0,
+    "controlCenterRecords": 1708,
+    "controlRectOutsideViewportRecords": 0,
+    "controlCenterClassification": {
+      "owner container/decorative pointer-events:none": 265,
+      "inactive inert scene": 378,
+      "active control center intercepted": 4
+    },
+    "findings": [
+      {
+        "priority": "P2",
+        "scope": "Existing before-side zoom transition; unrelated to proposed hanko ownership fix",
+        "description": "568x320 and844x390 notesLink center intercepted by plateInner.smooth in2 retained records each (A19 response/after); 568 play30 image also shows right-header/notes occlusion. Keep as separate observed baseline limitation. No extra reproduction or fix claimed."
+      },
+      {
+        "priority": "P3",
+        "scope": "Measurement wording",
+        "description": "layout completedAt precedes document/phase field evaluation; report principal-geometry interval as lower bound, not total observer cost."
+      }
+    ],
+    "limitations": [
+      "Only retained action.before/response/after geometry; no full state or full touch area coverage.",
+      "4 fixed parent rectangle pairs have no positive intersection in this sample; they omit transformed plateInner overlap and cannot support zero-overlap claim.",
+      "inert outgoing scenes and pointer-events:none decorations are classified separately, not failed active buttons.",
+      "All five stamp flows reached in raw but no fixed-time original photo shows stamp; stamp geometry/pointer response evidence only.",
+      "First visible response is post-gesture upper bound; response is not proof of progress or retention.",
+      "60second photos completed after deadline; real fingers, sensor and network unverified.",
+      "No after-side result or no-increase claim yet."
+    ]
+  },
+  "layoutAfter": {
+    "status": "completed final independent audit",
+    "viewports": 5,
+    "actualZeroAndClosed": 5,
+    "summary": {
+      "status": "Final after-side raw audit; matched comparison is saved separately in comparison.json",
+      "batch": {
+        "path": "/workspace/scratch/first-minute/round-96/layout-preparation/after/batch-result.json",
+        "sha256": "04b31220d9e201bb6294b400a1781b00424e34895362417b22c5e28e5e86aba0",
+        "completed": true,
+        "startedAtUTC": "2026-11-14T01:51:21.231406+00:00",
+        "completedAtUTC": "2026-11-14T01:57:23.937152+00:00"
+      },
+      "preparationFrozenSHA256": "aef36ace39b548a48bcd472d81ecfe729bffd1e72c4515174c1efbff719c2018",
+      "criteriaSHA256": "f6dd8566845e33f092d245d3c010b4139f88ac974540ca1e1642e8c3544888ae",
+      "slots": 5,
+      "actualZeroAndClosed": 5,
+      "originalPhotosViewed": 20,
+      "actions": 175,
+      "recordedResponses": 175,
+      "commands": 2450,
+      "acks": 2450,
+      "trustedTouchPointerEvents": 2507,
+      "nonTouchPointerEvents": 0,
+      "errors": 0,
+      "retainedLayoutRecords": 525,
+      "horizontalDocumentOverflowRecords": 0,
+      "controlRectOutsideViewportRecords": 0,
+      "controlCenterElementFalse": 644,
+      "controlCenterClassification": {
+        "owner container/decorative pointer-events:none": 268,
+        "inactive inert scene": 372,
+        "active control center intercepted": 4
+      },
+      "findings": [
+        {
+          "priority": "P2",
+          "scope": "Existing zoom transition observed on both versions; count difference retained, causality unestablished",
+          "description": "Active notesLink center interception totals4 before and4 after. Distribution changes from568x320:2,844x390:2 to844x390:4. After844 A18 response/after27.606/27.616s andA20 response/after32.189/32.201s hit plateInner.smooth. Different zoom transitions are not a controlled regression-rate comparison."
+        },
+        {
+          "priority": "P3",
+          "scope": "Measurement wording",
+          "description": "completedAt is before document/phase field evaluation. Principal geometry interval is a lower bound, not total observer cost; no speed inference."
+        }
+      ],
+      "limitations": [
+        "Only retained action.before/response/after geometry; no full state or full touch area coverage.",
+        "4 fixed parent rectangle pairs have no positive intersection in this sample; they omit transformed plateInner overlap and cannot support zero-overlap claim.",
+        "inert outgoing scenes and pointer-events:none decorations are classified separately, not failed active buttons.",
+        "All five stamp flows reached in raw but no fixed-time original photo shows stamp; stamp geometry/pointer response evidence only.",
+        "First visible response is post-gesture upper bound; response is not proof of progress or retention.",
+        "60second photos completed after deadline; real fingers, sensor and network unverified.",
+        "Do not infer speed causality or all-state layout coverage; comparison uses separate final records."
+      ],
+      "perViewport": [
+        {
+          "viewport": "320x568",
+          "actions": 35,
+          "recordedResponses": 35,
+          "layoutRecords": 105,
+          "stampActionIndices": [
+            10,
+            25
+          ],
+          "phaseRecords": {
+            "ぬく": 22,
+            "はかる": 15,
+            "みわける": 48,
+            "きめる": 2,
+            "おす": 18
+          },
+          "horizontalDocumentOverflowRecords": 0,
+          "controlCenterClassification": {
+            "owner container/decorative pointer-events:none": 50,
+            "inactive inert scene": 72
+          },
+          "overlapPairs": {
+            "head/plate": {
+              "positive": 0,
+              "denominator": 105
+            },
+            "head/hint": {
+              "positive": 0,
+              "denominator": 99
+            },
+            "plate/hint": {
+              "positive": 0,
+              "denominator": 99
+            },
+            "notesLink/hint": {
+              "positive": 0,
+              "denominator": 99
+            }
+          }
+        },
+        {
+          "viewport": "390x844",
+          "actions": 35,
+          "recordedResponses": 35,
+          "layoutRecords": 105,
+          "stampActionIndices": [
+            10,
+            23
+          ],
+          "phaseRecords": {
+            "ぬく": 22,
+            "はかる": 15,
+            "みわける": 48,
+            "きめる": 2,
+            "おす": 18
+          },
+          "horizontalDocumentOverflowRecords": 0,
+          "controlCenterClassification": {
+            "owner container/decorative pointer-events:none": 58,
+            "inactive inert scene": 72
+          },
+          "overlapPairs": {
+            "head/plate": {
+              "positive": 0,
+              "denominator": 105
+            },
+            "head/hint": {
+              "positive": 0,
+              "denominator": 99
+            },
+            "plate/hint": {
+              "positive": 0,
+              "denominator": 99
+            },
+            "notesLink/hint": {
+              "positive": 0,
+              "denominator": 99
+            }
+          }
+        },
+        {
+          "viewport": "568x320",
+          "actions": 35,
+          "recordedResponses": 35,
+          "layoutRecords": 105,
+          "stampActionIndices": [
+            10,
+            23
+          ],
+          "phaseRecords": {
+            "ぬく": 22,
+            "はかる": 15,
+            "みわける": 48,
+            "きめる": 2,
+            "おす": 18
+          },
+          "horizontalDocumentOverflowRecords": 0,
+          "controlCenterClassification": {
+            "owner container/decorative pointer-events:none": 50,
+            "inactive inert scene": 84
+          },
+          "overlapPairs": {
+            "head/plate": {
+              "positive": 0,
+              "denominator": 105
+            },
+            "head/hint": {
+              "positive": 0,
+              "denominator": 97
+            },
+            "plate/hint": {
+              "positive": 0,
+              "denominator": 97
+            },
+            "notesLink/hint": {
+              "positive": 0,
+              "denominator": 97
+            }
+          }
+        },
+        {
+          "viewport": "844x390",
+          "actions": 35,
+          "recordedResponses": 35,
+          "layoutRecords": 105,
+          "stampActionIndices": [
+            10,
+            27
+          ],
+          "phaseRecords": {
+            "ぬく": 22,
+            "はかる": 15,
+            "みわける": 48,
+            "きめる": 2,
+            "おす": 18
+          },
+          "horizontalDocumentOverflowRecords": 0,
+          "controlCenterClassification": {
+            "owner container/decorative pointer-events:none": 54,
+            "inactive inert scene": 72,
+            "active control center intercepted": 4
+          },
+          "overlapPairs": {
+            "head/plate": {
+              "positive": 0,
+              "denominator": 105
+            },
+            "head/hint": {
+              "positive": 0,
+              "denominator": 99
+            },
+            "plate/hint": {
+              "positive": 0,
+              "denominator": 99
+            },
+            "notesLink/hint": {
+              "positive": 0,
+              "denominator": 99
+            }
+          }
+        },
+        {
+          "viewport": "820x1180",
+          "actions": 35,
+          "recordedResponses": 35,
+          "layoutRecords": 105,
+          "stampActionIndices": [
+            10,
+            23
+          ],
+          "phaseRecords": {
+            "ぬく": 22,
+            "はかる": 15,
+            "みわける": 48,
+            "きめる": 2,
+            "おす": 18
+          },
+          "horizontalDocumentOverflowRecords": 0,
+          "controlCenterClassification": {
+            "owner container/decorative pointer-events:none": 56,
+            "inactive inert scene": 72
+          },
+          "overlapPairs": {
+            "head/plate": {
+              "positive": 0,
+              "denominator": 105
+            },
+            "head/hint": {
+              "positive": 0,
+              "denominator": 99
+            },
+            "plate/hint": {
+              "positive": 0,
+              "denominator": 99
+            },
+            "notesLink/hint": {
+              "positive": 0,
+              "denominator": 99
+            }
+          }
+        }
+      ],
+      "controlCenterRecords": 1705,
+      "notesLinkCenterRecords": 525
+    },
+    "comparison": {
+      "scope": "Observed retained geometry and all40 original photos across matched viewports; phase groups are not identical animation moments or whole-state coverage",
+      "beforeFrozenSHA256": "8ef00907a9075992a2ed82ff9ff03527be02b8a25bcdf1abc27f901e16990a2b",
+      "beforeSummarySHA256": "1a62c1bb7719bc22a973a0a614dc68e197feb6cdb8211c2268bd5f06ba59c0cc",
+      "afterSummarySHA256": "b4c09cd455eb294cd25a088275fc2cc3c33a349864ff8ee82dcec9ea0d3702fb",
+      "criteriaEqual": true,
+      "before": {
+        "actions": 175,
+        "recordedResponses": 175,
+        "commands": 2450,
+        "acks": 2450,
+        "trustedTouchPointerEvents": 2512,
+        "nonTouchPointerEvents": 0,
+        "errors": 0,
+        "retainedLayoutRecords": 525,
+        "horizontalDocumentOverflowRecords": 0,
+        "controlRectOutsideViewportRecords": 0,
+        "controlCenterRecords": 1708,
+        "controlCenterElementFalse": 647,
+        "controlCenterClassification": {
+          "owner container/decorative pointer-events:none": 265,
+          "inactive inert scene": 378,
+          "active control center intercepted": 4
+        }
+      },
+      "after": {
+        "actions": 175,
+        "recordedResponses": 175,
+        "commands": 2450,
+        "acks": 2450,
+        "trustedTouchPointerEvents": 2507,
+        "nonTouchPointerEvents": 0,
+        "errors": 0,
+        "retainedLayoutRecords": 525,
+        "horizontalDocumentOverflowRecords": 0,
+        "controlRectOutsideViewportRecords": 0,
+        "controlCenterRecords": 1705,
+        "controlCenterElementFalse": 644,
+        "controlCenterClassification": {
+          "owner container/decorative pointer-events:none": 268,
+          "inactive inert scene": 372,
+          "active control center intercepted": 4
+        }
+      },
+      "matchedPhaseControlGroups": 115,
+      "unmatchedPhaseControlGroups": [
+        {
+          "viewport": "568x320",
+          "phase": "ぬく",
+          "control": "bagBig",
+          "availability": "inert",
+          "matchedGroup": false,
+          "before": {},
+          "after": {
+            "records": 2,
+            "elementCenterFalse": 2,
+            "ownerCenterFalse": 2,
+            "partiallyOutsideViewport": 0,
+            "activeIntercepted": 0
+          },
+          "newlyObservedActiveInterceptGroup": false
+        },
+        {
+          "viewport": "568x320",
+          "phase": "ぬく",
+          "control": "gradeBtn-0",
+          "availability": "inert",
+          "matchedGroup": false,
+          "before": {},
+          "after": {
+            "records": 2,
+            "elementCenterFalse": 2,
+            "ownerCenterFalse": 2,
+            "partiallyOutsideViewport": 0,
+            "activeIntercepted": 0
+          },
+          "newlyObservedActiveInterceptGroup": false
+        },
+        {
+          "viewport": "568x320",
+          "phase": "ぬく",
+          "control": "gradeBtn-1",
+          "availability": "inert",
+          "matchedGroup": false,
+          "before": {},
+          "after": {
+            "records": 2,
+            "elementCenterFalse": 2,
+            "ownerCenterFalse": 2,
+            "partiallyOutsideViewport": 0,
+            "activeIntercepted": 0
+          },
+          "newlyObservedActiveInterceptGroup": false
+        },
+        {
+          "viewport": "568x320",
+          "phase": "ぬく",
+          "control": "gradeBtn-2",
+          "availability": "inert",
+          "matchedGroup": false,
+          "before": {},
+          "after": {
+            "records": 2,
+            "elementCenterFalse": 2,
+            "ownerCenterFalse": 2,
+            "partiallyOutsideViewport": 0,
+            "activeIntercepted": 0
+          },
+          "newlyObservedActiveInterceptGroup": false
+        },
+        {
+          "viewport": "568x320",
+          "phase": "ぬく",
+          "control": "gradeBtn-3",
+          "availability": "inert",
+          "matchedGroup": false,
+          "before": {},
+          "after": {
+            "records": 2,
+            "elementCenterFalse": 2,
+            "ownerCenterFalse": 2,
+            "partiallyOutsideViewport": 0,
+            "activeIntercepted": 0
+          },
+          "newlyObservedActiveInterceptGroup": false
+        },
+        {
+          "viewport": "568x320",
+          "phase": "ぬく",
+          "control": "hanko",
+          "availability": "inert",
+          "matchedGroup": false,
+          "before": {},
+          "after": {
+            "records": 2,
+            "elementCenterFalse": 2,
+            "ownerCenterFalse": 2,
+            "partiallyOutsideViewport": 0,
+            "activeIntercepted": 0
+          },
+          "newlyObservedActiveInterceptGroup": false
+        },
+        {
+          "viewport": "820x1180",
+          "phase": "ぬく",
+          "control": "bagBig",
+          "availability": "inert",
+          "matchedGroup": false,
+          "before": {
+            "records": 3,
+            "elementCenterFalse": 3,
+            "ownerCenterFalse": 3,
+            "partiallyOutsideViewport": 0,
+            "activeIntercepted": 0
+          },
+          "after": {},
+          "newlyObservedActiveInterceptGroup": false
+        },
+        {
+          "viewport": "820x1180",
+          "phase": "ぬく",
+          "control": "gradeBtn-0",
+          "availability": "inert",
+          "matchedGroup": false,
+          "before": {
+            "records": 3,
+            "elementCenterFalse": 3,
+            "ownerCenterFalse": 3,
+            "partiallyOutsideViewport": 0,
+            "activeIntercepted": 0
+          },
+          "after": {},
+          "newlyObservedActiveInterceptGroup": false
+        },
+        {
+          "viewport": "820x1180",
+          "phase": "ぬく",
+          "control": "gradeBtn-1",
+          "availability": "inert",
+          "matchedGroup": false,
+          "before": {
+            "records": 3,
+            "elementCenterFalse": 3,
+            "ownerCenterFalse": 3,
+            "partiallyOutsideViewport": 0,
+            "activeIntercepted": 0
+          },
+          "after": {},
+          "newlyObservedActiveInterceptGroup": false
+        },
+        {
+          "viewport": "820x1180",
+          "phase": "ぬく",
+          "control": "gradeBtn-2",
+          "availability": "inert",
+          "matchedGroup": false,
+          "before": {
+            "records": 3,
+            "elementCenterFalse": 3,
+            "ownerCenterFalse": 3,
+            "partiallyOutsideViewport": 0,
+            "activeIntercepted": 0
+          },
+          "after": {},
+          "newlyObservedActiveInterceptGroup": false
+        },
+        {
+          "viewport": "820x1180",
+          "phase": "ぬく",
+          "control": "gradeBtn-3",
+          "availability": "inert",
+          "matchedGroup": false,
+          "before": {
+            "records": 3,
+            "elementCenterFalse": 3,
+            "ownerCenterFalse": 3,
+            "partiallyOutsideViewport": 0,
+            "activeIntercepted": 0
+          },
+          "after": {},
+          "newlyObservedActiveInterceptGroup": false
+        },
+        {
+          "viewport": "820x1180",
+          "phase": "ぬく",
+          "control": "hanko",
+          "availability": "inert",
+          "matchedGroup": false,
+          "before": {
+            "records": 3,
+            "elementCenterFalse": 3,
+            "ownerCenterFalse": 3,
+            "partiallyOutsideViewport": 0,
+            "activeIntercepted": 0
+          },
+          "after": {},
+          "newlyObservedActiveInterceptGroup": false
+        }
+      ],
+      "newlyObservedActiveInterceptGroups": [],
+      "activeInterceptGroups": [
+        {
+          "viewport": "568x320",
+          "phase": "みわける",
+          "control": "notesLink",
+          "availability": "non-inert",
+          "matchedGroup": true,
+          "before": {
+            "records": 48,
+            "elementCenterFalse": 2,
+            "ownerCenterFalse": 2,
+            "partiallyOutsideViewport": 0,
+            "activeIntercepted": 2
+          },
+          "after": {
+            "records": 48,
+            "elementCenterFalse": 0,
+            "ownerCenterFalse": 0,
+            "partiallyOutsideViewport": 0,
+            "activeIntercepted": 0
+          }
+        },
+        {
+          "viewport": "844x390",
+          "phase": "みわける",
+          "control": "notesLink",
+          "availability": "non-inert",
+          "matchedGroup": true,
+          "before": {
+            "records": 48,
+            "elementCenterFalse": 2,
+            "ownerCenterFalse": 2,
+            "partiallyOutsideViewport": 0,
+            "activeIntercepted": 2
+          },
+          "after": {
+            "records": 48,
+            "elementCenterFalse": 4,
+            "ownerCenterFalse": 4,
+            "partiallyOutsideViewport": 0,
+            "activeIntercepted": 4
+          }
+        }
+      ],
+      "phaseCountsBefore": {
+        "320x568": {
+          "ぬく": 22,
+          "はかる": 15,
+          "みわける": 48,
+          "きめる": 2,
+          "おす": 18
+        },
+        "390x844": {
+          "ぬく": 22,
+          "はかる": 15,
+          "みわける": 48,
+          "きめる": 2,
+          "おす": 18
+        },
+        "568x320": {
+          "ぬく": 22,
+          "はかる": 15,
+          "みわける": 48,
+          "きめる": 2,
+          "おす": 18
+        },
+        "844x390": {
+          "ぬく": 22,
+          "はかる": 15,
+          "みわける": 48,
+          "きめる": 2,
+          "おす": 18
+        },
+        "820x1180": {
+          "ぬく": 22,
+          "はかる": 15,
+          "みわける": 48,
+          "きめる": 2,
+          "おす": 18
+        }
+      },
+      "phaseCountsAfter": {
+        "320x568": {
+          "ぬく": 22,
+          "はかる": 15,
+          "みわける": 48,
+          "きめる": 2,
+          "おす": 18
+        },
+        "390x844": {
+          "ぬく": 22,
+          "はかる": 15,
+          "みわける": 48,
+          "きめる": 2,
+          "おす": 18
+        },
+        "568x320": {
+          "ぬく": 22,
+          "はかる": 15,
+          "みわける": 48,
+          "きめる": 2,
+          "おす": 18
+        },
+        "844x390": {
+          "ぬく": 22,
+          "はかる": 15,
+          "みわける": 48,
+          "きめる": 2,
+          "おす": 18
+        },
+        "820x1180": {
+          "ぬく": 22,
+          "はかる": 15,
+          "みわける": 48,
+          "きめる": 2,
+          "おす": 18
+        }
+      },
+      "limitations": [
+        "Counts can differ because reads sample different animation/zoom phases; absence in after is not proof of fixing existing zoom issue.",
+        "Center matches do not prove full control area or physical touch behavior.",
+        "The four fixed parent overlap pairs omit transformed plateInner; do not call their zero counts zero total overlaps.",
+        "Principal geometry elapsed is a lower bound, not total observer cost.",
+        "Natural1minute layout runs do not replace separate controlled pointer-ownership reproduction or measure player abandonment."
+      ]
+    },
+    "frozenSHA256": "6661f4691acbce495c96adf19194180988c6d85ba2adff0aa8f0c16b8939154b",
+    "summarySHA256": "b4c09cd455eb294cd25a088275fc2cc3c33a349864ff8ee82dcec9ea0d3702fb",
+    "comparisonSHA256": "34c825f1c5ca1b8f043673ddf2ea40340695834c4e5b4361fb52b785fb914ebb",
+    "unconditionalNoIncreaseClaim": false,
+    "limitation": "Active notesLink center interceptions total4→4, but844x3902→4 and568x3202→0. Different sampled zoom moments; causal attribution unestablished."
+  },
+  "fullSuiteFinal": {
+    "status": "completed independent audit; failed_merge_hold",
+    "actualExit": 1,
+    "ranEntries": 2578,
+    "counts": {
+      "OK": 2508,
+      "FAIL": 68,
+      "ERROR": 1,
+      "SKIP": 1
+    },
+    "seconds": 446.979,
+    "fullPassClaim": false,
+    "execution": {
+      "startedAtUTC": "2026-11-14T01:27:50.613805+00:00",
+      "command": [
+        "python3",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-v"
+      ],
+      "environment": {
+        "NODE_OPTIONS": "--require=/workspace/scratch/first-minute/offline.cjs",
+        "NODE_PATH": "/workspace/ricepia-judge/node_modules",
+        "CHROMIUM": "/usr/bin/chromium"
+      },
+      "cwd": "/workspace/ricepia-kensa-hanko-pointer",
+      "head": "031bf9a1852384a994694153bc5334f2c9ac5ed3",
+      "originMain": "4568c8792f4c804cf354f6f63a12ef568e2b6748",
+      "sourceSHA256": "d035ab1b787133ad80d3954dcd5cc44a983a6336d14d1db427083bd25d0a24f7",
+      "reason": "Repeat with existing local Playwright/Chromium and unchanged offline route hook to execute browser-dependent tests previously skipped. Source and tests unchanged.",
+      "actualExit": 1,
+      "finishedAtUTC": "2026-11-14T01:35:22.578768+00:00",
+      "sourceUnchanged": true
+    },
+    "failureCategories": {
+      "allowlist": 65,
+      "pixelExportString": 2,
+      "tractorString": 1,
+      "tractorRegexError": 1,
+      "all69SameTestNamesAndCategoriesAsAttempt2": true,
+      "interpretation": "Classified failures remain failures. No same-condition original-base whole-suite run is available to waive them or attribute all to prior behavior."
+    },
+    "kensaFinal": {
+      "existingMethods": 192,
+      "existingOK": 192,
+      "existingFail": 0,
+      "existingError": 0,
+      "existingSkip": 0,
+      "newMethodOK": 1,
+      "newSubcases": 36,
+      "separateSameByteRed": {
+        "startedAtUTC": "2026-11-14T01:21:46.020594+00:00",
+        "command": [
+          "python3",
+          "tests/test_kensa_hanko_pointer_ownership.py",
+          "-v"
+        ],
+        "envOverride": {
+          "KENSA_HTML": "/workspace/ricepia-firstminute-round96/kensa.html"
+        },
+        "sourceSHA256": "d2c682b1f2d8686beab48f6775a529da0e4412f67224ef1999bda19c441776ce",
+        "testSHA256": "19996aa909c31901f8a60a3c6640e9a1c1d42a3903ec8c7aa1f65e3d90d36953",
+        "cases": 36,
+        "actualExit": 1,
+        "finishedAtUTC": "2026-11-14T01:21:46.352516+00:00",
+        "sourceUnchanged": true,
+        "testUnchanged": true
+      },
+      "separateSameByteGreen": {
+        "startedAtUTC": "2026-11-14T01:21:46.353397+00:00",
+        "command": [
+          "python3",
+          "tests/test_kensa_hanko_pointer_ownership.py",
+          "-v"
+        ],
+        "envOverride": {
+          "KENSA_HTML": "/workspace/ricepia-kensa-hanko-pointer/kensa.html"
+        },
+        "sourceSHA256": "d035ab1b787133ad80d3954dcd5cc44a983a6336d14d1db427083bd25d0a24f7",
+        "testSHA256": "19996aa909c31901f8a60a3c6640e9a1c1d42a3903ec8c7aa1f65e3d90d36953",
+        "cases": 36,
+        "actualExit": 0,
+        "finishedAtUTC": "2026-11-14T01:21:46.594348+00:00",
+        "sourceUnchanged": true,
+        "testUnchanged": true
+      }
+    },
+    "preservation": {
+      "existingTestFiles": 305,
+      "changedExistingTests": [],
+      "newTestMatchesFinalGreenReceipt": true,
+      "productMatchesFinalExecution": true,
+      "protectedFiles": [
+        {
+          "path": "kome365/engine.js",
+          "unchangedVersusBase": true
+        },
+        {
+          "path": "kome365/field3d.js",
+          "unchangedVersusBase": true
+        },
+        {
+          "path": "kome365/cards.js",
+          "unchangedVersusBase": true
+        }
+      ]
+    },
+    "sameConditionBaseWholeSuiteControlAvailable": false,
+    "frozenSHA256": "a305ad0f1837b9625c0b2dba5f05da7461b9b38be0d2a701a6f0deb864874de9"
+  },
+  "pytest": {
+    "receipt": {
+      "startedAtUTC": "2026-11-14T01:22:06.414827+00:00",
+      "command": [
+        "bash",
+        "-lc",
+        "pytest tests/"
+      ],
+      "cwd": "/workspace/ricepia-kensa-hanko-pointer",
+      "head": "031bf9a1852384a994694153bc5334f2c9ac5ed3",
+      "sourceSHA256": "d035ab1b787133ad80d3954dcd5cc44a983a6336d14d1db427083bd25d0a24f7",
+      "actualExit": 127,
+      "finishedAtUTC": "2026-11-14T01:22:06.425773+00:00"
+    },
+    "errorExact": "bash: line 1: pytest: command not found",
+    "passCount": null,
+    "successfulPytestClaim": false
+  },
+  "validationHistory": [
+    {
+      "kind": "pytest availability inventory",
+      "path": "../pytest-availability/summary.json",
+      "availablePytestFound": false,
+      "testRun": false
+    },
+    {
+      "kind": "actual pytest tests attempt",
+      "receipt": {
+        "startedAtUTC": "2026-11-14T01:22:06.414827+00:00",
+        "command": [
+          "bash",
+          "-lc",
+          "pytest tests/"
+        ],
+        "cwd": "/workspace/ricepia-kensa-hanko-pointer",
+        "head": "031bf9a1852384a994694153bc5334f2c9ac5ed3",
+        "sourceSHA256": "d035ab1b787133ad80d3954dcd5cc44a983a6336d14d1db427083bd25d0a24f7",
+        "actualExit": 127,
+        "finishedAtUTC": "2026-11-14T01:22:06.425773+00:00"
+      },
+      "errorExact": "bash: line 1: pytest: command not found",
+      "successfulPytestClaim": false
+    },
+    {
+      "kind": "read-only comparison reference restoration",
+      "receipt": {
+        "startedAtUTC": "2026-11-14T01:25:03.391915+00:00",
+        "missingReferenceError": "fatal: 'refs/remotes/origin/main' - not a valid ref\n",
+        "command": [
+          "git",
+          "fetch",
+          "--no-tags",
+          "https://github.com/shota0617/ricepia-judge.git",
+          "refs/heads/main:refs/remotes/origin/main"
+        ],
+        "actualExit": 0,
+        "stdout": "",
+        "stderr": "From https://github.com/shota0617/ricepia-judge\n * [new branch]        main       -> origin/main\n",
+        "finishedAtUTC": "2026-11-14T01:25:04.311835+00:00",
+        "localBranchesUnchanged": true,
+        "fetchedMain": "4568c8792f4c804cf354f6f63a12ef568e2b6748"
+      }
+    },
+    {
+      "kind": "whole-unittest attempt",
+      "stem": "unittest",
+      "execution": {
+        "startedAtUTC": "2026-11-14T01:22:06.426058+00:00",
+        "command": [
+          "python3",
+          "-m",
+          "unittest",
+          "discover",
+          "-s",
+          "tests",
+          "-v"
+        ],
+        "cwd": "/workspace/ricepia-kensa-hanko-pointer",
+        "head": "031bf9a1852384a994694153bc5334f2c9ac5ed3",
+        "sourceSHA256": "d035ab1b787133ad80d3954dcd5cc44a983a6336d14d1db427083bd25d0a24f7",
+        "actualExit": 1,
+        "finishedAtUTC": "2026-11-14T01:23:28.819175+00:00"
+      },
+      "reportedTests": 2416,
+      "seconds": 77.297,
+      "actualMethodCounts": {
+        "ok": 2255,
+        "FAIL": 14,
+        "ERROR": 125,
+        "skipped": 8
+      },
+      "reportedEntryCounts": {
+        "ok": 2255,
+        "FAIL": 14,
+        "ERROR": 139,
+        "skipped": 8
+      },
+      "importFailurePlaceholders": 14,
+      "classSetupCounts": {
+        "skipped": 6
+      },
+      "classificationCounts": {
+        "tractor_regex_None_group": 1,
+        "origin_main_git_diff_exit128": 138,
+        "tractor_source_string": 1,
+        "pixel_export_string": 2,
+        "changed_file_allowlist": 11
+      }
+    },
+    {
+      "kind": "whole-unittest attempt",
+      "stem": "unittest-with-main",
+      "execution": {
+        "startedAtUTC": "2026-11-14T01:25:13.386096+00:00",
+        "command": [
+          "python3",
+          "-m",
+          "unittest",
+          "discover",
+          "-s",
+          "tests",
+          "-v"
+        ],
+        "cwd": "/workspace/ricepia-kensa-hanko-pointer",
+        "head": "031bf9a1852384a994694153bc5334f2c9ac5ed3",
+        "originMain": "4568c8792f4c804cf354f6f63a12ef568e2b6748",
+        "sourceSHA256": "d035ab1b787133ad80d3954dcd5cc44a983a6336d14d1db427083bd25d0a24f7",
+        "reason": "Repeat after restoring the missing read-only comparison reference; source/tests unchanged.",
+        "actualExit": 1,
+        "finishedAtUTC": "2026-11-14T01:26:47.305414+00:00"
+      },
+      "reportedTests": 2553,
+      "seconds": 88.949,
+      "actualMethodCounts": {
+        "ok": 2478,
+        "FAIL": 68,
+        "ERROR": 1,
+        "skipped": 6
+      },
+      "reportedEntryCounts": {
+        "ok": 2478,
+        "FAIL": 68,
+        "ERROR": 1,
+        "skipped": 6
+      },
+      "importFailurePlaceholders": 0,
+      "classSetupCounts": {
+        "skipped": 6
+      },
+      "classificationCounts": {
+        "tractor_regex_None_group": 1,
+        "tractor_source_string": 1,
+        "changed_file_allowlist": 65,
+        "pixel_export_string": 2
+      }
+    },
+    {
+      "kind": "whole-unittest attempt",
+      "stem": "unittest-local-browser",
+      "execution": {
+        "startedAtUTC": "2026-11-14T01:27:50.613805+00:00",
+        "command": [
+          "python3",
+          "-m",
+          "unittest",
+          "discover",
+          "-s",
+          "tests",
+          "-v"
+        ],
+        "environment": {
+          "NODE_OPTIONS": "--require=/workspace/scratch/first-minute/offline.cjs",
+          "NODE_PATH": "/workspace/ricepia-judge/node_modules",
+          "CHROMIUM": "/usr/bin/chromium"
+        },
+        "cwd": "/workspace/ricepia-kensa-hanko-pointer",
+        "head": "031bf9a1852384a994694153bc5334f2c9ac5ed3",
+        "originMain": "4568c8792f4c804cf354f6f63a12ef568e2b6748",
+        "sourceSHA256": "d035ab1b787133ad80d3954dcd5cc44a983a6336d14d1db427083bd25d0a24f7",
+        "reason": "Repeat with existing local Playwright/Chromium and unchanged offline route hook to execute browser-dependent tests previously skipped. Source and tests unchanged.",
+        "actualExit": 1,
+        "finishedAtUTC": "2026-11-14T01:35:22.578768+00:00",
+        "sourceUnchanged": true
+      },
+      "reportedTests": 2578,
+      "seconds": 446.979,
+      "actualMethodCounts": {
+        "ok": 2508,
+        "FAIL": 68,
+        "ERROR": 1,
+        "skipped": 1
+      },
+      "reportedEntryCounts": {
+        "ok": 2508,
+        "FAIL": 68,
+        "ERROR": 1,
+        "skipped": 1
+      },
+      "importFailurePlaceholders": 0,
+      "classSetupCounts": {},
+      "classificationCounts": {
+        "tractor_regex_None_group": 1,
+        "tractor_source_string": 1,
+        "changed_file_allowlist": 65,
+        "pixel_export_string": 2
+      }
+    }
+  ],
+  "photos": [
+    {
+      "path": "images/primary-observe-10s.png",
+      "role": "primary observation after ten seconds; active play not started",
+      "sourceLocalRelativeToRound96": "preparation-4568/strict/observe-10s.png",
+      "sha256": "9b931d138a7b1a34deda4d886f4d9815ec619b806956f9f95625c9a8f83b02d2",
+      "bytes": 36073,
+      "width": 320,
+      "height": 568,
+      "copiedOriginalBytes": true,
+      "edited": false
+    },
+    {
+      "path": "images/primary-play-10s.png",
+      "role": "primary active-play10seconds after observation",
+      "sourceLocalRelativeToRound96": "preparation-4568/strict/play-10s.png",
+      "sha256": "4a43c7ce1f13ab7aa90ea84cfe64a83db52e67be04d4556cc4f6728075da76d6",
+      "bytes": 68048,
+      "width": 320,
+      "height": 568,
+      "copiedOriginalBytes": true,
+      "edited": false
+    },
+    {
+      "path": "images/primary-play-30s.png",
+      "role": "primary active-play30seconds after observation",
+      "sourceLocalRelativeToRound96": "preparation-4568/strict/play-30s.png",
+      "sha256": "6c9f561248391d8163828df2940377abad7bec2c375012e7b344c03e0f4217b4",
+      "bytes": 76008,
+      "width": 320,
+      "height": 568,
+      "copiedOriginalBytes": true,
+      "edited": false
+    },
+    {
+      "path": "images/primary-play-60s.png",
+      "role": "primary active-play60seconds after observation",
+      "sourceLocalRelativeToRound96": "preparation-4568/strict/play-60s.png",
+      "sha256": "2eb6ed102bfa9ef2c586897cc904e8747409c728173084299c808af32696242d",
+      "bytes": 73518,
+      "width": 320,
+      "height": 568,
+      "copiedOriginalBytes": true,
+      "edited": false
+    },
+    {
+      "path": "images/before-hanko-40ms.png",
+      "role": "before40ms fixed treatment01 post-gesture",
+      "sourceLocalRelativeToRound96": "hanko-reproduction/treatment-01/strict/hanko-after.png",
+      "sha256": "6b6d9fa77a6950c6356cb2374c1841d4d5fa269b592a996f6b9a3d2580716653",
+      "bytes": 27167,
+      "width": 320,
+      "height": 568,
+      "copiedOriginalBytes": true,
+      "edited": false
+    },
+    {
+      "path": "images/after-hanko-40ms.png",
+      "role": "after40ms fixed treatment01 post-gesture",
+      "sourceLocalRelativeToRound96": "hanko-after-reproduction/treatment-01/strict/hanko-after.png",
+      "sha256": "b3b3f6a5c4d2a8e02a454ea34d7731f535991b02ebe5a36734db7b4c850cbd56",
+      "bytes": 43792,
+      "width": 320,
+      "height": 568,
+      "copiedOriginalBytes": true,
+      "edited": false
+    },
+    {
+      "path": "images/before-hanko-700ms.png",
+      "role": "before700ms fixed treatment02 post-gesture",
+      "sourceLocalRelativeToRound96": "hanko-reproduction/treatment-02/strict/hanko-after.png",
+      "sha256": "417b68a255c36870275d1ebfd13a4a5cdc4c48771b27680873ce4c3f76cc6cc5",
+      "bytes": 27164,
+      "width": 320,
+      "height": 568,
+      "copiedOriginalBytes": true,
+      "edited": false
+    },
+    {
+      "path": "images/after-hanko-700ms.png",
+      "role": "after700ms fixed treatment02 post-gesture",
+      "sourceLocalRelativeToRound96": "hanko-after-reproduction/treatment-02/strict/hanko-after.png",
+      "sha256": "3c72924271ab9b8bdd6b6fe06b6a18e3563ab0b98c5dc5f3f956cd512205ba97",
+      "bytes": 43881,
+      "width": 320,
+      "height": 568,
+      "copiedOriginalBytes": true,
+      "edited": false
+    }
+  ],
+  "operatorDecisionB": [
+    "first tap no advance",
+    "picking/deciding do not automatically advance",
+    "45-second card",
+    "show-only game form",
+    "known PR1144 face/guide overlap candidate is kept separate"
+  ],
+  "separateExistingLayoutCandidate": {
+    "beforeDescription": "Zoom transition intercepts notesLink center in4 retained active records across568x320/844x390; not caused by this stamp change or newly reproduced10times.",
+    "afterComparison": {
+      "beforeTotal": 4,
+      "afterTotal": 4,
+      "perViewport": {
+        "568x320": {
+          "before": 2,
+          "after": 0,
+          "allPhaseDenominatorEach": 105,
+          "gradePhaseDenominatorEach": 48
+        },
+        "844x390": {
+          "before": 2,
+          "after": 4,
+          "allPhaseDenominatorEach": 105,
+          "gradePhaseDenominatorEach": 48
+        }
+      },
+      "causalityEstablished": false,
+      "fixedByThisChangeClaim": false,
+      "unconditionalNoLayoutRegressionClaim": false
+    }
+  },
+  "physicalLimits": [
+    "real fingers",
+    "tilt sensors",
+    "network speed",
+    "audibility",
+    "host speed not calibrated"
+  ],
+  "retentionRateMeasured": false,
+  "protectedFilesUnchanged": {
+    "kome365/engine.js": "c3d0cef6bb108d5b6d8fe38aaf0c08fe7994bdab08bf92775865a6e0222469a3",
+    "kome365/field3d.js": "a5c1dad91d5c0c326f1394fad9c5d04e7e3b8d13e3a2b8b1757c7aa08d3558ff",
+    "kome365/cards.js": "b15c5b2f56ef9c0c8361fa2fa6a039085919ca516b4a2e6e5a1b3bb691dde744"
+  },
+  "existingKensaTestUnchanged": true,
+  "originalReportPreservation": {
+    "report-draft/snapshot.json": "3e6689a1eb3227ab300c8e48b80f5af0042028de2fdcf005fb2bfc63d723d5ef",
+    "report-draft/results.json": "c34d670700dc9431ff89ca5c1284754bdec2d9aef25ca857bb5278eb628c2797",
+    "report-draft/README.md": "f57bddd5b3546348f7e40c96cbc3a32367d38891894baf37e30bcbb6f3ecc80c",
+    "report-candidate/snapshot.json": "757dedfd4b0a4ad15fc77db6195e69a64e3f44bb5f0e4a0c46e94027beba0627",
+    "report-candidate/title.txt": "fbe25cf40f7c112027aa0299c62c418723b29bb704f090223274b9dd49dcda42",
+    "report-candidate/results.json": "9cad447789dc9af9a337f1a30fa77d035c586551e3044dd71f40152f18e1a3aa",
+    "report-candidate/README.md": "e2aab01fe381f920248dda3b6277a8f06280a0bce1636e25fbf4df369c32223c",
+    "report-candidate/pr-body.md": "f722503114a58ea21895ab8836a6bc1acbf3f8beea73b3302d4b7e15ab84e317",
+    "report-candidate/preservation.json": "6f39f15f6f901aeed8102547f9ce3f2adc5c3f42464e4c0004e3d922b4f39714"
+  },
+  "reportAuthorActions": "Read source and saved records, copy8originalPNG bytes, write final-report-stage only. No repository/Git/PR/test/browser/HTTP actions.",
+  "mustCompleteBeforePublication": [
+    "Parent independent report review and document commit",
+    "Bind __REPORT_COMMIT__ in PR body to the resulting document commit before PR creation; intentional link binding, not pending validation",
+    "Keep draft and merge hold for failed global suite; no unsupported all-pass, all-layout-no-increase or retention claim"
+  ],
+  "evidence": {
+    "report-draft/README.md": "f57bddd5b3546348f7e40c96cbc3a32367d38891894baf37e30bcbb6f3ecc80c",
+    "report-draft/results.json": "c34d670700dc9431ff89ca5c1284754bdec2d9aef25ca857bb5278eb628c2797",
+    "report-draft/snapshot.json": "3e6689a1eb3227ab300c8e48b80f5af0042028de2fdcf005fb2bfc63d723d5ef",
+    "hanko-reproduction-audit/summary.json": "669364febebaffd17dcbd4fce3c8440dfd7b50682b690885eeb180656d2abf91",
+    "hanko-reproduction-audit/timing-supplement.json": "29d7ec27ce2b4313a5b006afb0e7ed8f5e1245ab55f0c742f8cad089538914a6",
+    "layout-audit/before/summary.json": "1a62c1bb7719bc22a973a0a614dc68e197feb6cdb8211c2268bd5f06ba59c0cc",
+    "validation/red-final.log": "14b6b7137d7733597453019bdc202d4ef84675abdd01b8e491fd527e33aefd7a",
+    "validation/red-final-execution.json": "dc66419e1e1dbf903d5b371f5c29a35b8ab5fedcecea3e56a061e07c62312808",
+    "validation/green-final.log": "8d7d8e3094696ed26cdbcbd831ebff25d48d2f1454e417662d8aa2766f89bd37",
+    "validation/green-final-execution.json": "e5db601cd08335f3190b436d6f9354be1c4497f2f549950cc25fe4b7fffce92e",
+    "validation/pytest.log": "b6fe94a4971280b69606b3ad6039ae9ed0e48557776ea68f678174b6c8da879a",
+    "validation/pytest-execution.json": "201ae877f175a5825a10636e42fac687384bf1514f961ec048f1af34e0079a14",
+    "validation/main-reference-repair.json": "04a8b0c70e0d19dd37459eddce986413bcf32c4f5b3436fb19cd0c53945912e2",
+    "validation/unittest-with-main-execution.json": "8da803c1a61a35f1ff8c7830a97c947a04864b24fefbe02baabb3a3339151cb6",
+    "validation-unit-audit/summary.json": "153d9b4feb38c23e9ee3b1234267cb7e9ad3b048c2f5ee276bccb7963e65eab0",
+    "pytest-availability/summary.json": "2bb5ff887baa7d5ddd8a9782a6e690583be9d44b9846d1327fd249fea1716dfb",
+    "hanko-after-reproduction/frozen.json": "87373031d8d954f9cd279f6712db2c4b7a734c46d2a485f0590955f629747a62",
+    "hanko-after-audit/summary.json": "e6101e2ad19ab00caa053b217bb1aa6c27423231210e3dc9cc3f656430eb7baa",
+    "hanko-after-audit/frozen.json": "2700de8dbe84dc05594884b940df6d8a16fc27ed27f69ddebd1fae2525e6b3a1",
+    "hanko-after-audit/matched-comparison.json": "3d8ca1240ad73a0f70f918561d3470f347942013691172193269a619159ec5c1",
+    "validation-unit-final-audit/summary.json": "192fe86cde595cbc144f9179a8554ceb5cd0c9a7d1a792986adb11e1cecebf25",
+    "validation-unit-final-audit/frozen.json": "a305ad0f1837b9625c0b2dba5f05da7461b9b38be0d2a701a6f0deb864874de9",
+    "hanko-after-reproduction/control-batch.json": "385f68aa9aad53d2e495f8d41844d438ea48cf35a74bea0bbfd478a9fd6dcd03",
+    "hanko-after-reproduction/treatment-batch.json": "96a7a3dedc6bad8b20b753d5cc9bc9aabb1df54abae515fe05c7df320bbc41ed",
+    "layout-audit/after/frozen.json": "6661f4691acbce495c96adf19194180988c6d85ba2adff0aa8f0c16b8939154b",
+    "layout-audit/after/summary.json": "b4c09cd455eb294cd25a088275fc2cc3c33a349864ff8ee82dcec9ea0d3702fb",
+    "layout-audit/after/comparison.json": "34c825f1c5ca1b8f043673ddf2ea40340695834c4e5b4361fb52b785fb914ebb"
+  },
+  "targetRepositoryDirectory": "docs/first-minute/round-96-kensa-hanko-pointer",
+  "stagingOnly": true,
+  "repositoryOrPRPublished": false,
+  "afterIndependentAudit": {
+    "completedAtUTC": "2026-11-14T01:53:57.400226+00:00",
+    "status": "completed independent saved-runtime, matched-protocol comparison and original-image audit",
+    "criteriaUnchanged": true,
+    "fixedDenominators": {
+      "control": 2,
+      "treatment": 10
+    },
+    "treatmentFailureToCompleteStamp": {
+      "before": 10,
+      "after": 0,
+      "denominatorPerSide": 10,
+      "unestablishedBefore": 0,
+      "unestablishedAfter": 0,
+      "byRequestedRemainderWaitSumMs": {
+        "40": {
+          "before": 5,
+          "after": 0,
+          "denominatorPerSide": 5
+        },
+        "700": {
+          "before": 5,
+          "after": 0,
+          "denominatorPerSide": 5
+        }
+      }
+    },
+    "initial10pxResponse": {
+      "before": 10,
+      "after": 10,
+      "denominatorPerSide": 10,
+      "meaning": "Both sides responded initially; the repaired failure is completing the stamp while another finger rests on the bag."
+    },
+    "afterFirstP1MoveFollowingP2": "All10 continue to approximately13.499px, rather than the before0px; all10 endpoint snapshots reach41.5px.",
+    "diagnosticRewardDefinition": "The first-bag stamp and next-bag option after this later gesture, not the earliest positive reward from the whole game.",
+    "rewardAndTimingRanges": [
+      {
+        "group": "control",
+        "requestedRemainderWaitSumMs": 40,
+        "phase": "before",
+        "downSendToReleaseACKMs": {
+          "min": 458.00000000000017,
+          "max": 458.00000000000017,
+          "count": 1
+        },
+        "remainderBoundaryToLastMoveACKMs": {
+          "min": 210.99999999999852,
+          "max": 210.99999999999852,
+          "count": 1
+        },
+        "firstRecordedMarkClassFromFirstP1SendMs": {
+          "min": 358.4999511688931,
+          "max": 358.4999511688931,
+          "count": 1
+        },
+        "firstNextCSSVisibleSnapshotFromFirstP1SendUpperMs": {
+          "min": 443.9999999999991,
+          "max": 443.9999999999991,
+          "count": 1
+        },
+        "firstMarkCSSVisibleSnapshotFromFirstP1SendUpperMs": {
+          "min": 1110.9999999999989,
+          "max": 1110.9999999999989,
+          "count": 1
+        }
+      },
+      {
+        "group": "control",
+        "requestedRemainderWaitSumMs": 40,
+        "phase": "after",
+        "downSendToReleaseACKMs": {
+          "min": 458.99999999999966,
+          "max": 458.99999999999966,
+          "count": 1
+        },
+        "remainderBoundaryToLastMoveACKMs": {
+          "min": 212.9999999999992,
+          "max": 212.9999999999992,
+          "count": 1
+        },
+        "firstRecordedMarkClassFromFirstP1SendMs": {
+          "min": 358.3998046815378,
+          "max": 358.3998046815378,
+          "count": 1
+        },
+        "firstNextCSSVisibleSnapshotFromFirstP1SendUpperMs": {
+          "min": 443.9999999999991,
+          "max": 443.9999999999991,
+          "count": 1
+        },
+        "firstMarkCSSVisibleSnapshotFromFirstP1SendUpperMs": {
+          "min": 1112.0,
+          "max": 1112.0,
+          "count": 1
+        }
+      },
+      {
+        "group": "control",
+        "requestedRemainderWaitSumMs": 700,
+        "phase": "before",
+        "downSendToReleaseACKMs": {
+          "min": 990.0000000000002,
+          "max": 990.0000000000002,
+          "count": 1
+        },
+        "remainderBoundaryToLastMoveACKMs": {
+          "min": 746.0000000000005,
+          "max": 746.0000000000005,
+          "count": 1
+        },
+        "firstRecordedMarkClassFromFirstP1SendMs": {
+          "min": 657.5999511778346,
+          "max": 657.5999511778346,
+          "count": 1
+        },
+        "firstNextCSSVisibleSnapshotFromFirstP1SendUpperMs": {
+          "min": 975.9999999999991,
+          "max": 975.9999999999991,
+          "count": 1
+        },
+        "firstMarkCSSVisibleSnapshotFromFirstP1SendUpperMs": {
+          "min": 975.9999999999991,
+          "max": 975.9999999999991,
+          "count": 1
+        }
+      },
+      {
+        "group": "control",
+        "requestedRemainderWaitSumMs": 700,
+        "phase": "after",
+        "downSendToReleaseACKMs": {
+          "min": 997.9999999999993,
+          "max": 997.9999999999993,
+          "count": 1
+        },
+        "remainderBoundaryToLastMoveACKMs": {
+          "min": 744.9999999999992,
+          "max": 744.9999999999992,
+          "count": 1
+        },
+        "firstRecordedMarkClassFromFirstP1SendMs": {
+          "min": 665.5000976622105,
+          "max": 665.5000976622105,
+          "count": 1
+        },
+        "firstNextCSSVisibleSnapshotFromFirstP1SendUpperMs": {
+          "min": 984.9999999999994,
+          "max": 984.9999999999994,
+          "count": 1
+        },
+        "firstMarkCSSVisibleSnapshotFromFirstP1SendUpperMs": {
+          "min": 984.9999999999994,
+          "max": 984.9999999999994,
+          "count": 1
+        }
+      },
+      {
+        "group": "treatment",
+        "requestedRemainderWaitSumMs": 40,
+        "phase": "before",
+        "downSendToReleaseACKMs": {
+          "min": 419.99999999999994,
+          "max": 431.0000000000009,
+          "count": 5
+        },
+        "remainderBoundaryToLastMoveACKMs": {
+          "min": 159.00000000000068,
+          "max": 163.99999999999972,
+          "count": 5
+        },
+        "firstRecordedMarkClassFromFirstP1SendMs": null,
+        "firstNextCSSVisibleSnapshotFromFirstP1SendUpperMs": null,
+        "firstMarkCSSVisibleSnapshotFromFirstP1SendUpperMs": null
+      },
+      {
+        "group": "treatment",
+        "requestedRemainderWaitSumMs": 40,
+        "phase": "after",
+        "downSendToReleaseACKMs": {
+          "min": 455.00000000000006,
+          "max": 458.00000000000017,
+          "count": 5
+        },
+        "remainderBoundaryToLastMoveACKMs": {
+          "min": 196.99999999999918,
+          "max": 198.99999999999983,
+          "count": 5
+        },
+        "firstRecordedMarkClassFromFirstP1SendMs": {
+          "min": 354.09999999404107,
+          "max": 358.600195318461,
+          "count": 5
+        },
+        "firstNextCSSVisibleSnapshotFromFirstP1SendUpperMs": {
+          "min": 441.00000000000074,
+          "max": 444.00000000000085,
+          "count": 5
+        },
+        "firstMarkCSSVisibleSnapshotFromFirstP1SendUpperMs": {
+          "min": 441.00000000000074,
+          "max": 1111.0000000000007,
+          "count": 5
+        }
+      },
+      {
+        "group": "treatment",
+        "requestedRemainderWaitSumMs": 700,
+        "phase": "before",
+        "downSendToReleaseACKMs": {
+          "min": 973.0000000000008,
+          "max": 1024.000000000001,
+          "count": 5
+        },
+        "remainderBoundaryToLastMoveACKMs": {
+          "min": 711.0000000000003,
+          "max": 766.0,
+          "count": 5
+        },
+        "firstRecordedMarkClassFromFirstP1SendMs": null,
+        "firstNextCSSVisibleSnapshotFromFirstP1SendUpperMs": null,
+        "firstMarkCSSVisibleSnapshotFromFirstP1SendUpperMs": null
+      },
+      {
+        "group": "treatment",
+        "requestedRemainderWaitSumMs": 700,
+        "phase": "after",
+        "downSendToReleaseACKMs": {
+          "min": 990.9999999999997,
+          "max": 1016.0,
+          "count": 5
+        },
+        "remainderBoundaryToLastMoveACKMs": {
+          "min": 730.0000000000005,
+          "max": 746.9999999999999,
+          "count": 5
+        },
+        "firstRecordedMarkClassFromFirstP1SendMs": {
+          "min": 654.100097656249,
+          "max": 683.2001953124998,
+          "count": 5
+        },
+        "firstNextCSSVisibleSnapshotFromFirstP1SendUpperMs": {
+          "min": 977.0000000000003,
+          "max": 1003.0000000000001,
+          "count": 5
+        },
+        "firstMarkCSSVisibleSnapshotFromFirstP1SendUpperMs": {
+          "min": 977.0000000000003,
+          "max": 1003.0000000000001,
+          "count": 5
+        }
+      }
+    ],
+    "afterOriginalImagesPersonallyViewed": 72,
+    "earlierBeforeOriginalImagesPersonallyViewed": 72,
+    "afterSourcePinCountPerSlot": 18,
+    "afterAllActualExitsZero": true,
+    "afterFixedOrderAndSerialIntervals": true,
+    "afterTreatment19GatesEstablished": true,
+    "afterControls15ApplicableGatesEstablished": true,
+    "afterCommands": 1690,
+    "afterACK": 1690,
+    "afterActions": 120,
+    "afterOrdinaryActionsWithPostGestureResponse": 108,
+    "afterDiagnosticActionsWithSeparateDOMResponse": 12,
+    "afterErrorsByCategory": {
+      "errors": 0,
+      "driverErrors": 0,
+      "blocked": 0,
+      "forbiddenLateInputs": 0,
+      "unfinishedTouchActions": 0,
+      "cleanupCommands": 0
+    },
+    "afterRawChecks": {
+      "total": 394,
+      "passed": 393,
+      "failed": 1,
+      "allPassed": false,
+      "failedChecksPreserved": [
+        {
+          "slot": "treatment-03",
+          "check": "observation at least ten seconds"
+        }
+      ]
+    },
+    "observationTimingQualification": {
+      "afterTreatment03PhotoRequestAfterStartMs": 9999,
+      "photoCompletedAfterStartMs": 10069,
+      "firstInputAfterStartMs": 10082,
+      "all12FirstInputAfterObservationStartRangeMs": [
+        10082,
+        10114
+      ],
+      "interpretation": "Strict photo-request check remains false. Fixed diagnostic eligibility and denominator are unchanged; no missing/ineligible slot is reclassified."
+    },
+    "allBeforeAfterRuntimeInputsRehashed": 346,
+    "allBeforeAfterRuntimeInputHashesMatch": true,
+    "findings": [
+      {
+        "priority": "P3",
+        "status": "disclosed measurement qualification",
+        "issue": "One after observation photo request was1ms earlier than10000ms. Before had three analogous requests. Strict false flags are retained."
+      }
+    ],
+    "limitations": [
+      "Gesture duration is included in every first-P1-to-result interval; these are not pure response latencies.",
+      "Class flags differ from CSS visibility. Snapshot observations are upper bounds, not exact pixel onset.",
+      "10px intermediate response exists before and after; original failure is failure to complete the stamp, not total nonresponse.",
+      "The requested40/700ms values are nine-move wait sums after a separate150ms prefix; real CDP timing is uncalibrated.",
+      "Original photos need personal viewing separately; this numeric comparison alone does not claim that images were seen.",
+      "No retry after diagnostic: later pictures alone cannot establish permanent usability or recoverability.",
+      "No physical-device occurrence rate, real-finger/sensor/network validation, or human-retention inference.",
+      "This reproduction audit does not replace five-size layout validation, other input combination tests or the complete test suite."
+    ],
+    "frozenSHA256": "2700de8dbe84dc05594884b940df6d8a16fc27ed27f69ddebd1fae2525e6b3a1",
+    "summarySHA256": "e6101e2ad19ab00caa053b217bb1aa6c27423231210e3dc9cc3f656430eb7baa"
+  },
+  "validationCountExplanation": {
+    "attempt1To2": {
+      "reportedIncrease": 137,
+      "newRealMethods": 151,
+      "replacedImportFailurePlaceholders": 14,
+      "addedNames": [
+        "test_maze_loop3_53.Edge.test_before_stroke",
+        "test_maze_loop3_53.Edge.test_color_fallback",
+        "test_maze_loop3_53.Edge.test_four_neighbours",
+        "test_maze_loop3_53.Edge.test_grid",
+        "test_maze_loop3_53.Edge.test_sides",
+        "test_maze_loop3_53.Edge.test_width",
+        "test_maze_loop3_53.Unchanged.test_files_allowed",
+        "test_maze_loop3_53.Unchanged.test_no_state_or_text",
+        "test_maze_loop3_53.Unchanged.test_other_funcs_untouched",
+        "test_maze_loop3_56.Draw.test_after_stations",
+        "test_maze_loop3_56.Draw.test_collect_condition",
+        "test_maze_loop3_56.Draw.test_edge_middle",
+        "test_maze_loop3_56.Draw.test_edges_unchanged",
+        "test_maze_loop3_56.Draw.test_linejoin_reset",
+        "test_maze_loop3_56.Draw.test_now_passed",
+        "test_maze_loop3_56.Draw.test_triangle",
+        "test_maze_loop3_56.Draw.test_white_pulse",
+        "test_maze_loop3_56.Mini.test_mini_abolished_cycle64",
+        "test_maze_loop3_56.Pulse.test_defined_once",
+        "test_maze_loop3_56.Pulse.test_pure",
+        "test_maze_loop3_56.Pulse.test_values",
+        "test_maze_loop3_56.Safety.test_files_allowed",
+        "test_maze_loop3_56.Safety.test_no_state_or_text",
+        "test_maze_loop3_57.Angle.test_defined_once",
+        "test_maze_loop3_57.Angle.test_values",
+        "test_maze_loop3_57.Draw.test_chevron",
+        "test_maze_loop3_57.Draw.test_help_unchanged",
+        "test_maze_loop3_57.Draw.test_outgoing_and_real_end",
+        "test_maze_loop3_57.Safety.test_files_allowed",
+        "test_maze_loop3_57.Safety.test_no_state_or_text",
+        "test_maze_loop3_58.Draw.test_existing_kept",
+        "test_maze_loop3_58.Draw.test_rails_after_cream_dot",
+        "test_maze_loop3_58.Draw.test_ties_before_cream_stroke",
+        "test_maze_loop3_58.Perp.test_defined_once",
+        "test_maze_loop3_58.Perp.test_values",
+        "test_maze_loop3_58.Safety.test_files_allowed",
+        "test_maze_loop3_58.Safety.test_no_state_or_text",
+        "test_maze_loop3_59.Area.test_defined_once",
+        "test_maze_loop3_59.Area.test_values",
+        "test_maze_loop3_59.Draw.test_closing_link",
+        "test_maze_loop3_59.Draw.test_existing_kept",
+        "test_maze_loop3_59.Draw.test_order",
+        "test_maze_loop3_59.Draw.test_pairs_threshold_color",
+        "test_maze_loop3_59.Safety.test_files_allowed",
+        "test_maze_loop3_59.Safety.test_no_state_or_text",
+        "test_maze_loop3_60.Draw.test_interval_and_next_cell",
+        "test_maze_loop3_60.Draw.test_offset_rotate_ellipse",
+        "test_maze_loop3_60.Draw.test_order_and_save_restore",
+        "test_maze_loop3_60.Draw.test_toe_and_adjacency_guard",
+        "test_maze_loop3_60.Pure.test_defaults",
+        "test_maze_loop3_60.Pure.test_defined_once",
+        "test_maze_loop3_60.Pure.test_four_directions",
+        "test_maze_loop3_60.Pure.test_seq_not_finite_is_neutral",
+        "test_maze_loop3_60.Pure.test_side_flips",
+        "test_maze_loop3_60.Safety.test_files_allowed",
+        "test_maze_loop3_60.Safety.test_no_state_or_text",
+        "test_maze_loop3_61.Dir.test_clockwise_then_counter",
+        "test_maze_loop3_61.Dir.test_defined_once",
+        "test_maze_loop3_61.Dir.test_invalid_dir_takes_first",
+        "test_maze_loop3_61.Dir.test_no_candidates",
+        "test_maze_loop3_61.Dir.test_reverse_at_dead_end",
+        "test_maze_loop3_61.Dir.test_straight_first",
+        "test_maze_loop3_61.Draw.test_colors_kept",
+        "test_maze_loop3_61.Draw.test_slide",
+        "test_maze_loop3_61.Safety.test_files_allowed",
+        "test_maze_loop3_61.Safety.test_no_forbidden_words",
+        "test_maze_loop3_61.Tick.test_moves_one_cell_after_moveMs",
+        "test_maze_loop3_61.Tick.test_not_into_player_cell",
+        "test_maze_loop3_61.Tick.test_pickup_beats_move",
+        "test_maze_loop3_61.Tick.test_reset_clears_move_fields",
+        "test_maze_loop3_61.Tick.test_spawn_does_not_move_at_once",
+        "test_maze_loop3_62.Art.test_panorama_unchanged",
+        "test_maze_loop3_62.Art.test_shelf_only_done_joined",
+        "test_maze_loop3_62.Art.test_uses_join_and_joined",
+        "test_maze_loop3_62.Join.test_defined_once",
+        "test_maze_loop3_62.Join.test_horizon_same",
+        "test_maze_loop3_62.Join.test_invalid_null",
+        "test_maze_loop3_62.Join.test_path_connects",
+        "test_maze_loop3_62.Join.test_sun_shared",
+        "test_maze_loop3_62.Maze.test_piece_draws_cut_art",
+        "test_maze_loop3_62.Maze.test_river_same_color_all_pieces",
+        "test_maze_loop3_62.Maze.test_scope_and_words",
+        "test_maze_loop3_63.Draw.test_guards",
+        "test_maze_loop3_63.Draw.test_read_only",
+        "test_maze_loop3_63.Draw.test_save_restore_paired",
+        "test_maze_loop3_63.Scope.test_files_allowed",
+        "test_maze_loop3_63.Scope.test_no_banned_words",
+        "test_maze_loop3_63.Wind.test_ang_and_phase",
+        "test_maze_loop3_63.Wind.test_defined_once",
+        "test_maze_loop3_63.Wind.test_invalid_zero",
+        "test_maze_loop3_63.Wind.test_len_alpha_monotonic_capped",
+        "test_maze_loop3_63.Wind.test_slow_zero",
+        "test_maze_loop3_63.Wind.test_tiers",
+        "test_maze_loop3_63.Wire.test_call_once_after_pulse",
+        "test_maze_loop3_64.Draw.test_guards",
+        "test_maze_loop3_64.Draw.test_read_only",
+        "test_maze_loop3_64.Draw.test_save_restore_and_three_elements",
+        "test_maze_loop3_64.Glow.test_colors",
+        "test_maze_loop3_64.Glow.test_defined_once",
+        "test_maze_loop3_64.Glow.test_invalid_dist_zero",
+        "test_maze_loop3_64.Glow.test_invalid_warm_zero",
+        "test_maze_loop3_64.Glow.test_tiers",
+        "test_maze_loop3_64.Scope.test_files_allowed",
+        "test_maze_loop3_64.Scope.test_no_banned_words",
+        "test_maze_loop3_64.Wire.test_call_once_after_pulse",
+        "test_maze_loop3_65.Draw.test_culling_margin_covers_radius",
+        "test_maze_loop3_65.Draw.test_guards_and_gradient",
+        "test_maze_loop3_65.Draw.test_read_only",
+        "test_maze_loop3_65.Draw.test_save_restore_paired",
+        "test_maze_loop3_65.Scope.test_files_allowed",
+        "test_maze_loop3_65.Scope.test_no_banned_words",
+        "test_maze_loop3_65.Territory.test_cap",
+        "test_maze_loop3_65.Territory.test_defined_once",
+        "test_maze_loop3_65.Territory.test_invalid_zero",
+        "test_maze_loop3_65.Territory.test_positive_decimal_floors",
+        "test_maze_loop3_65.Territory.test_tiers",
+        "test_maze_loop3_65.Wire.test_call_once_before_trail",
+        "test_maze_loop3_66.Draw.test_guards",
+        "test_maze_loop3_66.Draw.test_read_only",
+        "test_maze_loop3_66.Draw.test_save_restore_paired",
+        "test_maze_loop3_66.Draw.test_two_rings_and_calm",
+        "test_maze_loop3_66.Scope.test_files_allowed",
+        "test_maze_loop3_66.Scope.test_no_banned_words",
+        "test_maze_loop3_66.Sonar.test_defined_once",
+        "test_maze_loop3_66.Sonar.test_examples",
+        "test_maze_loop3_66.Sonar.test_invalid_zero",
+        "test_maze_loop3_66.Sonar.test_ranges",
+        "test_maze_loop3_66.Wire.test_call_once_after_dino_before_fog",
+        "test_maze_loop3_67.Draw.test_guards",
+        "test_maze_loop3_67.Draw.test_reads_dist_only",
+        "test_maze_loop3_67.Draw.test_save_restore_paired",
+        "test_maze_loop3_67.Draw.test_three_parts_and_calm",
+        "test_maze_loop3_67.Ring.test_closer_is_tighter",
+        "test_maze_loop3_67.Ring.test_defined_once",
+        "test_maze_loop3_67.Ring.test_invalid_and_far_zero",
+        "test_maze_loop3_67.Ring.test_values",
+        "test_maze_loop3_67.Scope.test_files_allowed",
+        "test_maze_loop3_67.Scope.test_no_banned_words",
+        "test_maze_loop3_67.Wire.test_call_once_between_glide_and_chase",
+        "test_maze_loop3_68.Draw.test_guards",
+        "test_maze_loop3_68.Draw.test_newest_first_max_n",
+        "test_maze_loop3_68.Draw.test_read_only",
+        "test_maze_loop3_68.Draw.test_save_restore_paired",
+        "test_maze_loop3_68.Draw.test_star_and_calm",
+        "test_maze_loop3_68.Scope.test_files_allowed",
+        "test_maze_loop3_68.Scope.test_no_banned_words",
+        "test_maze_loop3_68.Stars.test_defined_once",
+        "test_maze_loop3_68.Stars.test_invalid_and_low_zero",
+        "test_maze_loop3_68.Stars.test_more_charge_more_stars",
+        "test_maze_loop3_68.Stars.test_values",
+        "test_maze_loop3_68.Wire.test_call_once_after_aura"
+      ],
+      "removedNames": [
+        "unittest.loader._FailedTest.test_maze_loop3_53",
+        "unittest.loader._FailedTest.test_maze_loop3_56",
+        "unittest.loader._FailedTest.test_maze_loop3_57",
+        "unittest.loader._FailedTest.test_maze_loop3_58",
+        "unittest.loader._FailedTest.test_maze_loop3_59",
+        "unittest.loader._FailedTest.test_maze_loop3_60",
+        "unittest.loader._FailedTest.test_maze_loop3_61",
+        "unittest.loader._FailedTest.test_maze_loop3_62",
+        "unittest.loader._FailedTest.test_maze_loop3_63",
+        "unittest.loader._FailedTest.test_maze_loop3_64",
+        "unittest.loader._FailedTest.test_maze_loop3_65",
+        "unittest.loader._FailedTest.test_maze_loop3_66",
+        "unittest.loader._FailedTest.test_maze_loop3_67",
+        "unittest.loader._FailedTest.test_maze_loop3_68"
+      ],
+      "equation": "2416 -14 import-failure placeholders +151 real methods =2553"
+    },
+    "attempt2To3": {
+      "reportedIncrease": 25,
+      "addedMethods": 25,
+      "removedMethods": 0,
+      "addedNames": [
+        "test_kome365_firstmin.TestKome365CanvasNoFilter.test_no_filter_on_canvas_ever",
+        "test_kome365_firstmin.TestKome365CanvasNoFilter.test_reduced_motion_keeps_tone_panel_still",
+        "test_kome365_firstmin.TestKome365CanvasNoFilter.test_tone_panel_keeps_season_color_and_tap",
+        "test_kome365_firstmin.TestKome365LeaveThenNewGame.test_new_game_starts_at_day_one",
+        "test_kome365_firstmin.TestKome365PaddyReview.test_idle_card_hides_paddy_then_restores",
+        "test_kome365_firstmin.TestKome365PaddyReview.test_narrow_sun_is_small_and_clear_of_buttons",
+        "test_kome365_firstmin.TestKome365PaddyReview.test_word_comes_back_after_why_bubble",
+        "test_kome365_firstmin.TestKome365Sound.test_broken_storage_still_starts_with_sound",
+        "test_kome365_firstmin.TestKome365Sound.test_hidden_page_stops_sound_and_comes_back",
+        "test_kome365_firstmin.TestKome365Sound.test_mute_button_silences_and_is_saved",
+        "test_kome365_firstmin.TestKome365Sound.test_no_sound_before_touch_then_pon_and_answer",
+        "test_kome365_firstmin.TestKome365Sound.test_plays_without_audio",
+        "test_kome365_firstmin.TestKome365Sound.test_reduced_motion_does_not_mute",
+        "test_kome365_firstmin.TestKome365Sound.test_sound_rules_in_code",
+        "test_kome365_firstmin.TestKome365Sound.test_touch_while_loading_then_first_swipe_unlocks",
+        "test_kome365_firstmin.TestKome365SoundReview.test_late_choice_after_leaving_makes_no_sound",
+        "test_kome365_firstmin.TestKome365SoundReview.test_nature_sounds_and_song_stop_with_page",
+        "test_kome365_firstmin.TestKome365SoundReview.test_old_choice_in_new_game_makes_no_sound",
+        "test_kome365_firstmin.TestKome365SoundReview.test_pause_during_pending_resume_stays_quiet",
+        "test_kome365_firstmin.TestKome365SoundReview.test_scheduled_card_sounds_are_cancelled",
+        "test_kome365_firstmin.TestKome365SoundReview.test_title_and_result_can_mute",
+        "test_kome365_firstmin.TestKome365SoundReview.test_title_and_result_switch_clear_on_five_screens",
+        "test_kome365_firstmin.TestKome365WhyBothSides.test_ng_still_shows_reason_with_mark",
+        "test_kome365_firstmin.TestKome365WhyBothSides.test_ok_shows_reason_with_mark",
+        "test_kome365_firstmin.TestKome365WhyBothSides.test_why_rules_in_code"
+      ],
+      "equation": "2553 +25 methods behind6 previously skipped Kome class setups =2578"
+    },
+    "initialAuditClarification": "The initial frozen audit called2416 entries methods.14 of those entries were unittest.loader._FailedTest placeholders caused by import-time git diff failures. Counts remain correct; this final audit supplies the missing distinction without changing the original log/audit."
+  },
+  "photoManifest": "photo-manifest.json",
+  "oldRelativeImagePlaceholdersReplaced": true,
+  "mergeHold": {
+    "authorizedLoopMerge": true,
+    "held": true,
+    "reason": "Final whole suite has68FAIL and1ERROR; pytest unavailable. Five-viewport audit completed with844x390 existing zoom interception count2→4, causal attribution unestablished.",
+    "policyName": "ricepia-flow",
+    "policyURL": "https://github.com/shota0617/ricepia-judge/blob/4568c8792f4c804cf354f6f63a12ef568e2b6748/.claude/skills/ricepia-flow/SKILL.md#L212",
+    "exactQuote": "Codex の 指摘が のこっている・テストが 落ちている・運営者の 判断が いる 変更は、マージせずに 伝える",
+    "newPermissionQuestion": false
+  },
+  "publicationLinkBinding": {
+    "placeholder": "__REPORT_COMMIT__",
+    "intentional": true,
+    "pendingValidation": false,
+    "branch": "codex/kensa-hanko-pointer",
+    "replaceAfterDocumentCommit": true,
+    "bodyExcludedFromRepositoryCopy": true
+  },
+  "evidencePathConvention": {
+    "localRoot": "/workspace/scratch/first-minute/round-96",
+    "evidenceObjectKeys": "relative to localRoot; diagnostic provenance, not links promised to exist in the published repository",
+    "copiedPhotos": "photos[].path is relative to this published report directory"
+  }
+}

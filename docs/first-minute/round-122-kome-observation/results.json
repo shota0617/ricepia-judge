@@ -1,0 +1,744 @@
+{
+  "round": 122,
+  "game": "米づくり365",
+  "status": "final historical Kome844x390 observation; knownR118wait only; no newselectedcandidate/product/testchange",
+  "source": {
+    "testedHead": "838b7df8da3cefbb98e6cf161d0a45b552a63c84",
+    "filesSHA256": {
+      "AGENTS.md": "822c51deb694c9ccafa2f154294edacce6d91a03c3dc3c789c46b87376344c84",
+      ".claude/skills/ricepia-flow/SKILL.md": "56d075153f561430fee926907a5c97083d9f643e6dd2d3a2f4c5736324a697f0",
+      "kome365/index.html": "d2add0e458da2aebf14dc0c8d4f0a2792497bbe69a0cb40f2d6b3aa7da0f741b",
+      "kome365/engine.js": "c3d0cef6bb108d5b6d8fe38aaf0c08fe7994bdab08bf92775865a6e0222469a3",
+      "kome365/field3d.js": "a5c1dad91d5c0c326f1394fad9c5d04e7e3b8d13e3a2b8b1757c7aa08d3558ff",
+      "kome365/cards.js": "b15c5b2f56ef9c0c8361fa2fa6a039085919ca516b4a2e6e5a1b3bb691dde744",
+      "kome365/vendor/three.min.js": "9274bbcec8d96168626c732b5d31c775aa8cfb7eaa0599bec0c175908a2c1ce2"
+    },
+    "source5BeforeAfterAndHTTPBeforeMatch": true,
+    "rootSource7Match": true,
+    "rootEnvironment8Match": true,
+    "postTestDocsOnlyUpdate": {
+      "atUTC": "2026-11-14T16:39:56.228910+00:00",
+      "testedSource": "838b7df8da3cefbb98e6cf161d0a45b552a63c84",
+      "publicationBase": "2f3fbcc8bee32850e7c51e88113a43a2cf8d9e5f",
+      "changedFiles": [
+        "docs/first-minute/round-121-nishio-observation/README.md",
+        "docs/first-minute/round-121-nishio-observation/observe-10s.png",
+        "docs/first-minute/round-121-nishio-observation/play-10s.png",
+        "docs/first-minute/round-121-nishio-observation/play-30s.png",
+        "docs/first-minute/round-121-nishio-observation/play-60s.png",
+        "docs/first-minute/round-121-nishio-observation/results.json"
+      ],
+      "docsOnly": true,
+      "source7Unchanged": true,
+      "limits": "Post-play docs-only fast-forward; measured source stays838b."
+    },
+    "wholePublicationHEADRetested": false
+  },
+  "method": {
+    "naturalPrimaryRuns": 1,
+    "server": "python3 -m http.server 8000",
+    "page": "/kome365/index.html",
+    "viewport": {
+      "width": 844,
+      "height": 390
+    },
+    "CPU": 1,
+    "isMobile": true,
+    "hasTouch": true,
+    "input": "CDP Input.dispatchTouchEvent",
+    "localThreeRevision": "128",
+    "externalRequestsBlocked": true,
+    "sequence": "10s noinput, originalphoto save,60s visiblecurrent/samecardmemorycuefollowing",
+    "referenceChangesInputProtocol": false
+  },
+  "outcome": {
+    "opportunities": 19,
+    "sentGestures": 8,
+    "unsentCueSkips": 11,
+    "responses": {
+      "drag": 8,
+      "transform": 8,
+      "nextDay": 8,
+      "reasonClassOn": 8,
+      "markClassOn": 8
+    },
+    "reasonOnWithText": 8,
+    "changedReasonText": 8,
+    "noResponseAmongSent": 0,
+    "reasonPrefixes": {
+      "✗": 3,
+      "○": 5
+    },
+    "cueBasis": {
+      "same-card-memory": 5,
+      "current": 3
+    },
+    "directions": {
+      "right": 1,
+      "left": 7
+    },
+    "lastDate": "1月9日",
+    "newConfirmedCandidate": null,
+    "productChanges": 0,
+    "testChanges": 0,
+    "reasonDefinition": "whyOn isonclass andrecordedtext; notcontinuouscomputedvisibility/rect/hit/legibility."
+  },
+  "timing": {
+    "firstInputPlaySeconds": 0.251,
+    "firstInputMoments": {
+      "drag": {
+        "playSeconds": 0.3207,
+        "fromSendMs": 69.699951
+      },
+      "transform": {
+        "playSeconds": 0.3334,
+        "fromSendMs": 82.400146
+      },
+      "nextDay": {
+        "playSeconds": 0.8302,
+        "fromSendMs": 579.199951
+      },
+      "reasonClassOn": {
+        "playSeconds": 0.8364,
+        "fromSendMs": 585.400146
+      },
+      "markClassOn": {
+        "playSeconds": 0.8342,
+        "fromSendMs": 583.199951
+      }
+    },
+    "firstPositiveReason": {
+      "gesture": 3,
+      "playSeconds": 19.3241,
+      "fromThatInputMs": 1121.100098,
+      "fromFirstInputMs": 19073.1,
+      "kind": "First observed○reason class/text; no continuous CSS visibility/physical paint guarantee"
+    },
+    "first3Timelines": [
+      {
+        "gesture": 1,
+        "nextDay": {
+          "playSeconds": 0.8302,
+          "fromSendMs": 579.199951
+        },
+        "markOn": {
+          "playSeconds": 0.8342,
+          "fromSendMs": 583.199951
+        },
+        "markOff": {
+          "playSeconds": 1.4501,
+          "fromSendMs": 1199.100098
+        },
+        "markClassObservedSpanMs": 615.9000000059605,
+        "reasonOn": {
+          "playSeconds": 0.8364,
+          "fromSendMs": 585.400146
+        },
+        "reasonOff": {
+          "playSeconds": 10.4272,
+          "fromSendMs": 10176.199951
+        },
+        "reasonClassObservedSpanMs": 9590.799999982119,
+        "nextGuideClassTrue": {
+          "playSeconds": 10.4089,
+          "fromSendMs": 10157.900146
+        },
+        "nextSameCardQualifiedCue": {
+          "playSeconds": 11.6837,
+          "fromSendMs": 11432.699951
+        },
+        "reasonAndMarkLimit": "Class transitions sampled by observers, not continuous CSS opacity/geometry/legibility or physical paint. Background blocks can delay observers/timers. First3 retention during rapid successive choices was not exercised."
+      },
+      {
+        "gesture": 2,
+        "nextDay": {
+          "playSeconds": 13.812,
+          "fromSendMs": 1067.0
+        },
+        "markOn": {
+          "playSeconds": 13.8251,
+          "fromSendMs": 1080.100098
+        },
+        "markOff": {
+          "playSeconds": 16.4842,
+          "fromSendMs": 3739.199951
+        },
+        "markClassObservedSpanMs": 2659.0999999940395,
+        "reasonOn": {
+          "playSeconds": 13.8258,
+          "fromSendMs": 1080.800049
+        },
+        "reasonOff": {
+          "playSeconds": 16.0574,
+          "fromSendMs": 3312.400146
+        },
+        "reasonClassObservedSpanMs": 2231.5999999940395,
+        "nextGuideClassTrue": {
+          "playSeconds": 16.6935,
+          "fromSendMs": 3948.5
+        },
+        "nextSameCardQualifiedCue": {
+          "playSeconds": 17.78,
+          "fromSendMs": 5035.0
+        },
+        "reasonAndMarkLimit": "Class transitions sampled by observers, not continuous CSS opacity/geometry/legibility or physical paint. Background blocks can delay observers/timers. First3 retention during rapid successive choices was not exercised."
+      },
+      {
+        "gesture": 3,
+        "nextDay": {
+          "playSeconds": 19.3183,
+          "fromSendMs": 1115.300049
+        },
+        "markOn": {
+          "playSeconds": 19.3233,
+          "fromSendMs": 1120.300049
+        },
+        "markOff": {
+          "playSeconds": 22.2563,
+          "fromSendMs": 4053.300049
+        },
+        "markClassObservedSpanMs": 2933.0,
+        "reasonOn": {
+          "playSeconds": 19.3241,
+          "fromSendMs": 1121.100098
+        },
+        "reasonOff": {
+          "playSeconds": 21.7427,
+          "fromSendMs": 3539.699951
+        },
+        "reasonClassObservedSpanMs": 2418.5999999940395,
+        "nextGuideClassTrue": {
+          "playSeconds": 22.79,
+          "fromSendMs": 4587.0
+        },
+        "nextSameCardQualifiedCue": {
+          "playSeconds": 23.713,
+          "fromSendMs": 5510.0
+        },
+        "reasonAndMarkLimit": "Class transitions sampled by observers, not continuous CSS opacity/geometry/legibility or physical paint. Background blocks can delay observers/timers. First3 retention during rapid successive choices was not exercised."
+      }
+    ],
+    "inputTiming": {
+      "requestedSpanMs": 120,
+      "actualSendSpanMs": {
+        "min": 120.30828902125359,
+        "median": 121.05033099651337,
+        "max": 122.08217799663544
+      },
+      "ACKDelayMs": {
+        "min": 53.328850984573364,
+        "median": 591.9416984915733,
+        "max": 943.6759079992771
+      },
+      "eventTimestampToHandlerMs": {
+        "min": 53.400000005960464,
+        "median": 519.5999999940395,
+        "max": 938.5
+      },
+      "pointerdownTimestampToHandlerMs": {
+        "min": 65.90000000596046,
+        "median": 418.15000000596046,
+        "max": 938.5
+      },
+      "downSendToEventTimestampMs": {
+        "min": -0.099853515625,
+        "median": -0.099853515625,
+        "max": 0.0
+      },
+      "sendToTransformMs": {
+        "min": 82.400146,
+        "median": 661.9000245,
+        "max": 944.400146
+      },
+      "lastInputPlaySeconds": 55.097,
+      "lastTouchEndPlaySeconds": 55.219
+    },
+    "clock": {
+      "observationToPlayMs": 10216.526436001062,
+      "initialPhotoCaptureMs": 199.0744690001011,
+      "initialPhotoSavedToPlayMs": 16.04933997988701,
+      "actualPlayStopMs": 60007.68370100856
+    },
+    "limit": "Send/ACK/event/handler/DOMstatusreturn/longtask/RAF/photo spans remain distinct; no exactpaintmeasurement."
+  },
+  "knownWaitingObservation": {
+    "knownRound": 118,
+    "classification": "same already-reproduced first-answer wait; not a new discovery or additional fixed10",
+    "earlyLongTasks": [
+      {
+        "startPlaySeconds": 0.4477,
+        "durationMs": 113
+      },
+      {
+        "startPlaySeconds": 0.7703,
+        "durationMs": 60
+      },
+      {
+        "startPlaySeconds": 1.4601,
+        "durationMs": 1208
+      },
+      {
+        "startPlaySeconds": 2.7105,
+        "durationMs": 7688
+      },
+      {
+        "startPlaySeconds": 10.4274,
+        "durationMs": 366
+      },
+      {
+        "startPlaySeconds": 10.8034,
+        "durationMs": 194
+      },
+      {
+        "startPlaySeconds": 10.9993,
+        "durationMs": 227
+      },
+      {
+        "startPlaySeconds": 11.2299,
+        "durationMs": 245
+      },
+      {
+        "startPlaySeconds": 11.48,
+        "durationMs": 198
+      },
+      {
+        "startPlaySeconds": 11.6836,
+        "durationMs": 208
+      },
+      {
+        "startPlaySeconds": 11.8971,
+        "durationMs": 222
+      }
+    ],
+    "maxEarlyLongTask": {
+      "startPlaySeconds": 2.7105,
+      "durationMs": 7688
+    },
+    "maxEarlyRAFGap": {
+      "playSeconds": 10.4277,
+      "gapMs": 7716.899999976158
+    },
+    "longestStatusRead": {
+      "kind": "status",
+      "sentEpoch": 1794674123034,
+      "receivedEpoch": 1794674130815,
+      "roundTripMs": 7781.0641640126705,
+      "browserStartedAt": 21035.69999998808,
+      "browserEndedAt": 21036.399999976158
+    },
+    "firstNextGuideClass": {
+      "playSeconds": 10.4089,
+      "fromSendMs": 10157.900146
+    },
+    "firstNextQualifiedCue": {
+      "playSeconds": 11.6837,
+      "fromSendMs": 11432.699951
+    },
+    "nodeHeartbeatMaxGapMs": 315.2194720208645,
+    "limit": "No stack attribution in this run. R118 separateprofile and fixed10 remain separate; differentviewport/raw durations are not a fix effect.",
+    "referencePR": "https://github.com/shota0617/ricepia-judge/pull/1177",
+    "thisRoundFixed10Runs": 0,
+    "thisRoundProfileRuns": 0,
+    "dayAdvanceToFirstClearNextCueMs": 10853.5,
+    "sameCodeDifferentViewport": "R118portrait andR122landscape are notbefore/afterfix comparison; no newstackattribution."
+  },
+  "dispatch": {
+    "commands": 64,
+    "ACKs": 64,
+    "trustedPointerEvents": 29,
+    "eventTypes": {
+      "pointerdown": 8,
+      "pointermove": 13,
+      "pointerup": 8
+    },
+    "cueSkipSummary": {
+      "cardVisible": 11,
+      "handVisibleFalse": 7,
+      "handVisibleTrue": 4,
+      "fingerOpacityZero": 9,
+      "horizontalXZero": 10,
+      "bothTrailsZero": 10,
+      "laterSameCardCue": 11,
+      "historyCount": 88,
+      "historyDropped": 0,
+      "limit": "11unsent threshold failures are not11ignored touches. A visible hand/trail withabs(x)<8 can fail the driver threshold; not proof UI is missing."
+    },
+    "finalGuideCensoring": {
+      "lastRecordedMarkOffPlaySeconds": 59.9874001,
+      "finalGuideFlag": false,
+      "meaning": "最後のmark offがplay59.9874秒近辺で観測窓終端に近い。最終guide=falseを長期欠落や新しい無反応の証拠としない。"
+    },
+    "pointerDeliveryRows": [
+      {
+        "gesture": 1,
+        "pointerIds": [
+          2
+        ],
+        "allTrusted": true,
+        "allPrimary": true,
+        "eventTimestampSpanMs": 121.0,
+        "handlerSpanMs": 239.69999998807907
+      },
+      {
+        "gesture": 2,
+        "pointerIds": [
+          3
+        ],
+        "allTrusted": true,
+        "allPrimary": true,
+        "eventTimestampSpanMs": 120.0,
+        "handlerSpanMs": 225.59999999403954
+      },
+      {
+        "gesture": 3,
+        "pointerIds": [
+          4
+        ],
+        "allTrusted": true,
+        "allPrimary": true,
+        "eventTimestampSpanMs": 122.0,
+        "handlerSpanMs": 225
+      },
+      {
+        "gesture": 4,
+        "pointerIds": [
+          5
+        ],
+        "allTrusted": true,
+        "allPrimary": true,
+        "eventTimestampSpanMs": 120.0,
+        "handlerSpanMs": 205.19999998807907
+      },
+      {
+        "gesture": 5,
+        "pointerIds": [
+          6
+        ],
+        "allTrusted": true,
+        "allPrimary": true,
+        "eventTimestampSpanMs": 121.09999999403954,
+        "handlerSpanMs": 223.39999997615814
+      },
+      {
+        "gesture": 6,
+        "pointerIds": [
+          7
+        ],
+        "allTrusted": true,
+        "allPrimary": true,
+        "eventTimestampSpanMs": 120.0,
+        "handlerSpanMs": 254.40000000596046
+      },
+      {
+        "gesture": 7,
+        "pointerIds": [
+          8
+        ],
+        "allTrusted": true,
+        "allPrimary": true,
+        "eventTimestampSpanMs": 121.09999999403954,
+        "handlerSpanMs": 31.200000017881393
+      },
+      {
+        "gesture": 8,
+        "pointerIds": [
+          9
+        ],
+        "allTrusted": true,
+        "allPrimary": true,
+        "eventTimestampSpanMs": 122.0,
+        "handlerSpanMs": 4.0
+      }
+    ],
+    "pointerDeliveryLimit": "Recorded events have no pointerType field; touch input is established by the CDP dispatch protocol, not an unrecorded DOM field. Timestamp and handler spans are distinct from physical finger or paint timing."
+  },
+  "photos": [
+    {
+      "name": "observe-10s",
+      "requestedSeconds": 10.001402627021074,
+      "savedSeconds": 10.200477096021176,
+      "captureMs": 199.0744690001011,
+      "sha256": "76258a6443bc710b0be8232ec701b59f2ca5ddc190be120776e3f999d00793cc",
+      "file": "observe-10s.png",
+      "originalIdentifier": "round-122/preparation-838b7df8/strict/observe-10s.png",
+      "reportAuthorPersonallyViewed": true,
+      "observation": "1月1日・元日の田んぼ、左右の選択肢、左の田と状態語。指は写らない。",
+      "limit": "No○✗/reasonbandin4photos; noposition/2svisibilitypassinferred."
+    },
+    {
+      "name": "play-10s",
+      "requestedSeconds": 10.001390107005834,
+      "savedSeconds": 11.421069038003683,
+      "captureMs": 1419.6789309978485,
+      "sha256": "bcf3f017bd37024327473c2faaeed254cb29fa538eef51c656097e3da5470574",
+      "file": "play-10s.png",
+      "originalIdentifier": "round-122/preparation-838b7df8/strict/play-10s.png",
+      "reportAuthorPersonallyViewed": true,
+      "observation": "1月2日・霜柱の朝、左右の選択肢と手本、左の田おこしまえ・雨。",
+      "limit": "No○✗/reasonbandin4photos; noposition/2svisibilitypassinferred."
+    },
+    {
+      "name": "play-30s",
+      "requestedSeconds": 30.000556214004757,
+      "savedSeconds": 30.741665416002274,
+      "captureMs": 741.1092019975185,
+      "sha256": "cb50be513dae77ac7a3a5579b077ae27d87b46525978e4d30107ac7535779f2b",
+      "file": "play-30s.png",
+      "originalIdentifier": "round-122/preparation-838b7df8/strict/play-30s.png",
+      "reportAuthorPersonallyViewed": true,
+      "observation": "1月5日・小寒、左右の選択肢と田おこしまえ。指は写らない。",
+      "limit": "No○✗/reasonbandin4photos; noposition/2svisibilitypassinferred."
+    },
+    {
+      "name": "play-60s",
+      "requestedSeconds": 60.007871693998574,
+      "savedSeconds": 61.12769514602423,
+      "captureMs": 1119.823452025652,
+      "sha256": "c5a21245533c33105b167e6117aaa1690a035d85436a8771aa3d4122a5014933",
+      "file": "play-60s.png",
+      "originalIdentifier": "round-122/preparation-838b7df8/strict/play-60s.png",
+      "reportAuthorPersonallyViewed": true,
+      "observation": "1月9日・薄氷、左右の選択肢と田おこしまえ。指は写らない。",
+      "limit": "No○✗/reasonbandin4photos; noposition/2svisibilitypassinferred."
+    }
+  ],
+  "execution": {
+    "root": {
+      "session": 19864,
+      "completionChunk": "1e3183",
+      "actualOuterExit": 1,
+      "directNodeCommand": true,
+      "checkedAtUTC": "2026-11-14T16:36:56.254496+00:00",
+      "liveRuntimeProcesses": [],
+      "closureConfirmed": true,
+      "cpuResetAcknowledged": true,
+      "source7Match": true,
+      "environment8Match": true,
+      "headUnchanged": true,
+      "runIssues": [
+        {
+          "stage": "observed-errors",
+          "at": {
+            "nodeEpochMs": 1794674181653,
+            "nodeMonotonicMs": 185241166.467349
+          },
+          "error": "Error: [{\"at\":185169755.664286,\"kind\":\"console\",\"message\":\"Failed to load resource: the server responded with a status of 404 (File not found)\"},{\"at\":185180492.27737,\"kind\":\"console\",\"message\":\"Failed to load resource: the server responded with a status of 404 (File not found)\"}]\n    at /workspace/scratch/first-minute/round-122/preparation-838b7df8/run.cjs:57:62"
+        }
+      ]
+    },
+    "actualOuterExit": 1,
+    "directNodeCommand": true,
+    "requestedProcessExit": 1,
+    "errors": [
+      {
+        "at": 185169755.664286,
+        "kind": "console",
+        "message": "Failed to load resource: the server responded with a status of 404 (File not found)"
+      },
+      {
+        "at": 185180492.27737,
+        "kind": "console",
+        "message": "Failed to load resource: the server responded with a status of 404 (File not found)"
+      }
+    ],
+    "separateResourceTiming404": [
+      {
+        "name": "http://localhost:8000/favicon.ico",
+        "status": 404
+      },
+      {
+        "name": "http://localhost:8000/favicon.ico",
+        "status": 404
+      }
+    ],
+    "errorLimit": "Console404 lacks URL/requestId; two favicon404 ResourceTiming entries independently recorded. Keep actualexit1.",
+    "CPUreset": true,
+    "browserClosed": true,
+    "rootLive0": true,
+    "collection": {
+      "gestureCompletion": "settled",
+      "screenshots": "settled",
+      "inputs": "settled"
+    },
+    "recordingDropped": {
+      "events": 0,
+      "ui": 0,
+      "heartbeats": 0,
+      "rafGaps": 0,
+      "longTasks": 0
+    }
+  },
+  "tests": {
+    "pytest": {
+      "command": "pytest tests/",
+      "cwd": "/workspace/ricepia-firstminute-round122",
+      "actualExit": 127,
+      "chunk": "01f268",
+      "output": "/bin/bash: line 1: pytest: command not found\n",
+      "logProvenance": "Verbatim transcription of exec tool output; suite did not run.",
+      "suiteExecuted": false,
+      "passedCount": null
+    },
+    "fixed10": "not performedthisround; knownR118data notadded",
+    "profile": "not performedthisround",
+    "regressionREDGREEN": "not performed; nofix/test adopted",
+    "afterReproduction": "not performed",
+    "fiveSizeComparison": "not performed",
+    "otherRoundsIncluded": false
+  },
+  "operatorDecisionsPreserved": {
+    "current": "Reason2s/avoiddateandchoices/allviewportsrotations/retainfirst3afteradvance;0.3scue,quickswipe,tapnotselect,initialshadow,audio,charactersunchanged.",
+    "unverified": "First3rapidconsecutiveselection/continuous2slegibility/allviewportsrotationnotvalidated.",
+    "knownJudgment": "Protectedfield3d splitting or2Dmaintenancechoice remainR118judgment; no edits toengine/field3d/cards."
+  },
+  "attachmentCriteria": {
+    "filename": "sakurai_partial_20261114_2319.md",
+    "sha256": "4e206461abe220bb98ee7eba77c5132bfbe80d9ca9b62ac7e447848ae25ff74e",
+    "coverage": "75providedbodysections/35incomplete; videonotplayed",
+    "application": "Separatefirstreaction,firstpositiveDOMreason,nextclearcue,knownwaiting,and UIlegibility. Existingprotocolunchanged; notaproductimprovementclaim.",
+    "URLs": [
+      "https://www.youtube.com/watch?v=EDs5n39sRFc",
+      "https://www.youtube.com/watch?v=1xRDwQqSn6I",
+      "https://www.youtube.com/watch?v=L1Su0aajYFA",
+      "https://www.youtube.com/watch?v=rA_FN6BTGms"
+    ]
+  },
+  "sourceLocations": {
+    "startupScheduling": "kome365/index.html:970",
+    "firstAnswerScheduling": "kome365/index.html:3919",
+    "reasonShow": "kome365/index.html:3827",
+    "existingCardText": "kome365/cards.js:584"
+  },
+  "limits": [
+    "Class/text does not establish continuous readable2s reason, nonoverlap, or physical mark visibility. First3rapid-consecutive-card retention was not tested.",
+    "Current orsame-card-memory rendered cue chooses the swipe direction, not an internal correct answer.○5/✗3 is not a balanced outcome test.",
+    "Daily advancement toJan9 is progress, not harvest/goalcompletion.",
+    "No input was sent for skips; no target-operation response can be measured for them.",
+    "Softwareaudio/3D state is not real-device sound/sensor/network evidence.",
+    "Discovery A checked image hashes without viewing; root/B/design/report author personally viewed all four originals.",
+    "Known first-answer wait retained for operator judgment; no new code or reproduction by this auditor.",
+    "Discovery A/C did not view photos; root/B/design/report author viewed all4 originals.",
+    "No○✗/reasonbandin4originals; no continuous2s/readabilityoroverlaypass.",
+    "Initialwhyclass9590.8ms isnotvisibleorreadabletime.",
+    "Observation->play10.2165s andplay10photocapture1.4197s notaddedtoinputreactionlatency.",
+    "Actualfirst-minutehumanretention/physicalfinger/tilt/network/audio/paintnotmeasured."
+  ],
+  "evidence": [
+    {
+      "identifier": "round-122/source-selected.json",
+      "sha256": "ed37d7e45d5787403136fbac1d7266b482bb9f03c21b137617aa2d00726da7db",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-122/preparation-838b7df8/root-execution.json",
+      "sha256": "91d25e1651845b837deede365de74dc88ed0bd066f1475bb719924b17b06835f",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-122/preparation-838b7df8/metadata.json",
+      "sha256": "650ada663c48729b8a69de6c009ba6c57a4b623609f2b5d0f16a116726aef871",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-122/preparation-838b7df8/strict/report.json",
+      "sha256": "c885ace0f0d78d0c7c6a49913567a9e5128efbbe6be4230c91a226a5dfa869e8",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-122/preparation-838b7df8/strict/driver-timing.json",
+      "sha256": "826e79e91140bb48675e0076f526b0aa5744efdc7ed0c1ca1f346cdca49816ac",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-122/preparation-838b7df8/strict/extra.json",
+      "sha256": "978f61a1eb78e81bf66027969c173df70a18a5f5ce37085a4bf905f462fc32ad",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-122/discovery-a/summary.json",
+      "sha256": "749d3fa641ccdeb3e549234e8478659728db697ffa2adb4cb5249bb33bedd69a",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-122/discovery-c/summary.json",
+      "sha256": "7f24c8dfd2b5fc182896dc03fa19bcd7ee3cdb801eb118b86b0e993c0b9e9c0e",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-122/discovery-c/frozen.json",
+      "sha256": "38ab7a38a254fda417ae0dc3cb688cd6f085ca56165e39cee62e6025c09f3782",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-122/discovery-b/review.json",
+      "sha256": "53ea40b679041ded76c496706791dd7d0d9deb3808da5c54daf40b23bf0a86b5",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-122/discovery-b/frozen.json",
+      "sha256": "ec1b63423aa25c5658cc4b6b5cfd81113a97cd8911a8d7ea4136b01f5fd76382",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-122/root-photo-observations.json",
+      "sha256": "cae1814c5e139199613b05a5b9863bdd78cefd9319bdcb07706fb68256e6b4e8",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-122/pytest-result.json",
+      "sha256": "c4873184dbd4094aa9eda72008c8b763f9cc49cd46929b5824990fae4649b248",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-122/pytest.log",
+      "sha256": "884c356a17af2535f8a7a3bbe8d088034a1e58ef021200c45eff7b237b232aa5",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-122/main-update.json",
+      "sha256": "dcec0b3aafa0be58af9f89410ed902111cf3db50d663159ceed90b3cb4768649",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-122/design-review/demo-intent.md",
+      "sha256": "e955f5d239e062f9619e8d051efa9ce52914c5d7c68d81d4c41ba7a2c334d9d7",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-122/discovery-a/frozen.json",
+      "sha256": "b6a070c5571ebd38969b43acab15086d44ecfd13ae074621817adb323fd296d9",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-122/discovery-a/pointer-delivery.json",
+      "sha256": "4ea55e1ebec217fdd0de8ac095c8e9ae009642b847e3c6439fd7b2bc1f7598bb",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-122/design-review/README.md",
+      "sha256": "0b59b884e5a547ea7fadc2b881498eb173b2b520049bea3c567d814b25c503b4",
+      "publicLink": false
+    }
+  ],
+  "demoIntent": {
+    "firstTwoRecordedChoices": [
+      {
+        "direction": "right",
+        "reasonPrefix": "✗"
+      },
+      {
+        "direction": "left",
+        "reasonPrefix": "✗"
+      }
+    ],
+    "reasonMatch": "Choice andDOMreason correspond; actualreading orunderstanding notmeasured.",
+    "existingDesign": "Common5s left/rightcycle; knownfirstdayinitialleftmotionmatchesinitialcorrectside. Notpurelyunrelatedtomatchingchoice.",
+    "sourceReferences": [
+      "kome365/index.html:539",
+      "kome365/index.html:548",
+      "kome365/README.md:1382"
+    ],
+    "scopeLimit": "After10s observationphase doesnotregressiontesttheinitialfirstmotion. Providedreferenceisnotaninstructiontoalwaysshowcorrectanswer.",
+    "disposition": "Howcueisperceived retainedasoperator/designjudgmentcandidate,nomeasuredhumanmisunderstanding,nocodechange."
+  }
+}

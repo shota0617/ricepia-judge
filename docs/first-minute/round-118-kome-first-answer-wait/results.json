@@ -1,0 +1,1253 @@
+{
+  "round": 118,
+  "game": "米づくり365",
+  "status": "final record: one reproducible post-first-answer wait candidate; no product/test fix adopted; after-fix measurements absent",
+  "source": {
+    "testedHead": "aaf5400feb9a8849567a8d81fcc4ac88b06990db",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "CPU": 1,
+    "sourceSHA256": {
+      "AGENTS.md": "822c51deb694c9ccafa2f154294edacce6d91a03c3dc3c789c46b87376344c84",
+      ".claude/skills/ricepia-flow/SKILL.md": "56d075153f561430fee926907a5c97083d9f643e6dd2d3a2f4c5736324a697f0",
+      "kome365/index.html": "d2add0e458da2aebf14dc0c8d4f0a2792497bbe69a0cb40f2d6b3aa7da0f741b",
+      "kome365/engine.js": "c3d0cef6bb108d5b6d8fe38aaf0c08fe7994bdab08bf92775865a6e0222469a3",
+      "kome365/field3d.js": "a5c1dad91d5c0c326f1394fad9c5d04e7e3b8d13e3a2b8b1757c7aa08d3558ff",
+      "kome365/cards.js": "b15c5b2f56ef9c0c8361fa2fa6a039085919ca516b4a2e6e5a1b3bb691dde744",
+      "kome365/vendor/three.min.js": "9274bbcec8d96168626c732b5d31c775aa8cfb7eaa0599bec0c175908a2c1ce2"
+    },
+    "source5BeforeAfterAndHTTPBeforeMatch": true,
+    "rootSource7Match": true,
+    "scopeLimit": "Selected files only; not a guarantee of every asset or later main.",
+    "productChanges": 0,
+    "testChanges": 0,
+    "postTestPublicationBase": "8e5d32bd263beddc4e39e9c15e1b03445b09d6a7",
+    "postTestDocsOnlyUpdate": {
+      "checkedAtUTC": "2026-11-14T15:37:00.492630+00:00",
+      "testedSource": "aaf5400feb9a8849567a8d81fcc4ac88b06990db",
+      "publicationBase": "8e5d32bd263beddc4e39e9c15e1b03445b09d6a7",
+      "changedFiles": [
+        "docs/first-minute/round-117-nishio-observation/README.md",
+        "docs/first-minute/round-117-nishio-observation/observe-10s.png",
+        "docs/first-minute/round-117-nishio-observation/play-10s.png",
+        "docs/first-minute/round-117-nishio-observation/play-30s.png",
+        "docs/first-minute/round-117-nishio-observation/play-60s.png",
+        "docs/first-minute/round-117-nishio-observation/results.json"
+      ],
+      "docsOnly": true,
+      "source7Unchanged": true
+    },
+    "wholePublicationHEADRetested": false
+  },
+  "method": {
+    "server": "python3 -m http.server 8000",
+    "path": "/kome365/index.html",
+    "naturalPrimaryRuns": 1,
+    "observationSeconds": 10,
+    "playSeconds": 60,
+    "isMobile": true,
+    "hasTouch": true,
+    "input": "CDP Input.dispatchTouchEvent",
+    "externalRequestsBlocked": true,
+    "localThreeRevision": "128",
+    "scheduling": "visible current or same-card-memory cue; requested100px in120ms; right1 thenleft8, not balancedchoice experiment",
+    "fixedReproduction": "completed10/10; separate fresh-process single-swipe diagnostic, not10natural60s plays"
+  },
+  "outcome": {
+    "opportunities": 19,
+    "sentGestures": 9,
+    "unsentCueSkips": 10,
+    "cueBasis": {
+      "same-card-memory": 3,
+      "current": 6
+    },
+    "directions": {
+      "right": 1,
+      "left": 8
+    },
+    "responses": {
+      "drag": 9,
+      "transform": 9,
+      "dayAdvance": 9,
+      "postAdvanceReasonOnClass": 9,
+      "changedReasonText": 8,
+      "markOnClass": 9,
+      "noResponseAmongSent": 0
+    },
+    "reasonPrefixes": {
+      "✗": 3,
+      "○": 6
+    },
+    "lastDate": "1月10日",
+    "reasonDefinition": "whyOn is classList.contains(on) with text, not computed opacity/rect/hit or continuous legibility. Changed text8 versus9on-with-text observations;4th repeats3rd.",
+    "goalLimit": "January10 is daily progress, not harvest or long-term goal completion."
+  },
+  "timing": {
+    "firstInputPlaySeconds": 0.251,
+    "firstResponseMoments": {
+      "drag": {
+        "playSeconds": 0.3126,
+        "fromSendMs": 61.599854
+      },
+      "transform": {
+        "playSeconds": 0.3464,
+        "fromSendMs": 95.399902
+      },
+      "nextDay": {
+        "playSeconds": 0.7778,
+        "fromSendMs": 526.799805
+      },
+      "reasonClassOn": {
+        "playSeconds": 0.7821,
+        "fromSendMs": 531.099854
+      },
+      "markClassOn": {
+        "playSeconds": 0.7809,
+        "fromSendMs": 529.899902
+      }
+    },
+    "firstPositive": {
+      "gesture": 3,
+      "playSeconds": 17.8418,
+      "fromThatInputMs": 880.799805,
+      "fromFirstInputMs": 17590.8,
+      "kind": "First observed○reason class/text; not continuous visibility or physical paint"
+    },
+    "first3Timelines": [
+      {
+        "gesture": 1,
+        "nextDay": {
+          "playSeconds": 0.7778,
+          "fromSendMs": 526.799805
+        },
+        "markOn": {
+          "playSeconds": 0.7809,
+          "fromSendMs": 529.899902
+        },
+        "markOff": {
+          "playSeconds": 1.39,
+          "fromSendMs": 1139.0
+        },
+        "markClassObservedSpanMs": 609.0999999940395,
+        "reasonOn": {
+          "playSeconds": 0.7821,
+          "fromSendMs": 531.099854
+        },
+        "reasonOff": {
+          "playSeconds": 9.6036,
+          "fromSendMs": 9352.599854
+        },
+        "reasonClassObservedSpanMs": 8821.5,
+        "nextGuideClassTrue": {
+          "playSeconds": 9.5911,
+          "fromSendMs": 9340.099854
+        },
+        "nextSameCardQualifiedCue": {
+          "playSeconds": 10.6059,
+          "fromSendMs": 10354.899902
+        },
+        "reasonAndMarkLimit": "Class transitions sampled by observers, not continuous CSS opacity/geometry/legibility or physical paint. Background blocks can delay observers/timers. First3 retention during rapid successive choices was not exercised."
+      },
+      {
+        "gesture": 2,
+        "nextDay": {
+          "playSeconds": 12.9168,
+          "fromSendMs": 1053.799805
+        },
+        "markOn": {
+          "playSeconds": 12.9262,
+          "fromSendMs": 1063.199951
+        },
+        "markOff": {
+          "playSeconds": 15.1079,
+          "fromSendMs": 3244.899902
+        },
+        "markClassObservedSpanMs": 2181.7000000178814,
+        "reasonOn": {
+          "playSeconds": 12.9269,
+          "fromSendMs": 1063.899902
+        },
+        "reasonOff": {
+          "playSeconds": 15.0922,
+          "fromSendMs": 3229.199951
+        },
+        "reasonClassObservedSpanMs": 2165.2999999821186,
+        "nextGuideClassTrue": {
+          "playSeconds": 15.2617,
+          "fromSendMs": 3398.699951
+        },
+        "nextSameCardQualifiedCue": {
+          "playSeconds": 16.3057,
+          "fromSendMs": 4442.699951
+        },
+        "reasonAndMarkLimit": "Class transitions sampled by observers, not continuous CSS opacity/geometry/legibility or physical paint. Background blocks can delay observers/timers. First3 retention during rapid successive choices was not exercised."
+      },
+      {
+        "gesture": 3,
+        "nextDay": {
+          "playSeconds": 17.8345,
+          "fromSendMs": 873.5
+        },
+        "markOn": {
+          "playSeconds": 17.8409,
+          "fromSendMs": 879.899902
+        },
+        "markOff": {
+          "playSeconds": 20.0165,
+          "fromSendMs": 3055.5
+        },
+        "markClassObservedSpanMs": 2175.5999999940395,
+        "reasonOn": {
+          "playSeconds": 17.8418,
+          "fromSendMs": 880.799805
+        },
+        "reasonOff": {
+          "playSeconds": 20.1965,
+          "fromSendMs": 3235.5
+        },
+        "reasonClassObservedSpanMs": 2354.7000000178814,
+        "nextGuideClassTrue": {
+          "playSeconds": 20.3707,
+          "fromSendMs": 3409.699951
+        },
+        "nextSameCardQualifiedCue": {
+          "playSeconds": 21.2552,
+          "fromSendMs": 4294.199951
+        },
+        "reasonAndMarkLimit": "Class transitions sampled by observers, not continuous CSS opacity/geometry/legibility or physical paint. Background blocks can delay observers/timers. First3 retention during rapid successive choices was not exercised."
+      }
+    ],
+    "inputTiming": {
+      "requestedSpanMs": 120,
+      "actualSendSpanMs": {
+        "min": 119.5324609875679,
+        "median": 124.66782999038696,
+        "max": 132.56228402256966
+      },
+      "ACKDelayMs": {
+        "min": 53.41151601076126,
+        "median": 596.0895885229111,
+        "max": 901.2946909964085
+      },
+      "eventTimestampToHandlerMs": {
+        "min": 54.0,
+        "median": 522.7999999821186,
+        "max": 895.3000000119209
+      },
+      "pointerdownTimestampToHandlerMs": {
+        "min": 57.19999998807907,
+        "median": 645.4000000059605,
+        "max": 895.3000000119209
+      },
+      "downSendToEventTimestampMs": {
+        "min": 0.0,
+        "median": 0.0,
+        "max": 0.099853515625
+      },
+      "sendToTransformMs": {
+        "min": 95.399902,
+        "median": 651.899902,
+        "max": 902.699951
+      },
+      "lastInputPlaySeconds": 55.04,
+      "lastTouchEndPlaySeconds": 55.161
+    },
+    "clock": {
+      "observationToPlayMs": 10199.182793021202,
+      "initialPhotoCaptureMs": 185.39593997597694,
+      "initialPhotoSavedToPlayMs": 13.500805020332336,
+      "actualPlayStopMs": 60001.3922739923
+    },
+    "limits": "DOM timestamps, capture waits, requested send intervals, ACK and event delivery are separate; no physical paint/retention measurement."
+  },
+  "candidate": {
+    "priority": 3,
+    "observed": "Initial answer returns, then long browser-thread processing before next clear hand cue",
+    "primaryLongTask": {
+      "startPlaySeconds": 2.6553,
+      "durationMs": 6928
+    },
+    "primaryRAFGap": {
+      "playSeconds": 9.6038,
+      "gapMs": 6947.899999976158
+    },
+    "primaryStatusRoundTrip": {
+      "kind": "status",
+      "sentEpoch": 1794668983784,
+      "receivedEpoch": 1794668990729,
+      "roundTripMs": 6945.364454001188,
+      "browserStartedAt": 20227.399999976158,
+      "browserEndedAt": 20230
+    },
+    "nodeHeartbeatMaxGapMs": 272.7530270218849,
+    "status": "one reproducible waiting candidate; fixed10/10; separate1profile complete; productfix not adopted",
+    "reproducedCount": 10,
+    "reproductionDenominator": 10,
+    "afterReproduction": null,
+    "causeLimit": "Init and laterframe paths sampled; a substantial program portion remains unassigned. Not entirestall attribution, not realdevice/retention estimate.",
+    "productFixAdopted": false,
+    "decision": {
+      "candidate": "初回答後、次の明確な手本まで長く待つ",
+      "priority": "操作を続けるための応答が遅れる",
+      "baseline": {
+        "attempted": 10,
+        "sent": 10,
+        "dayProgress": 10,
+        "postAnswerLongTaskAtLeast1000msTrials": 10,
+        "largestLongTaskPerTrialMsRange": [
+          4968,
+          6871
+        ],
+        "dayAdvanceToNextClearCueMsRange": [
+          7722.8,
+          10095.4
+        ]
+      },
+      "speedCheck": {
+        "requestedMs": [
+          120,
+          600
+        ],
+        "trialsPerGroup": 5,
+        "actualFastMsRange": [
+          120.9,
+          122.1
+        ],
+        "actualSlowMsRange": [
+          599.1,
+          601.0
+        ],
+        "reproducedPerGroup": [
+          5,
+          5
+        ]
+      },
+      "separateProfile": {
+        "attempts": 1,
+        "notAddedToFixed10": true,
+        "longTaskMs": [
+          1289,
+          5166
+        ],
+        "interpretation": "初期化経路と後続frame経路が別に記録された。長い区間には帰属不能の(program)標本が多く、全時間をinit・GPU・shaderへ割り当てない。"
+      },
+      "disposition": "再現した待ちを報告し、製品修正は未採択",
+      "reason": "許可されたindexだけの開始時刻変更で重い処理が減る根拠はない。待ちを別の操作へ移すだけの変更は採らず、処理分割の候補は変更禁止のfield3d.jsに関わるため運営者の判断へ回す。",
+      "operatorJudgmentCandidates": [
+        "初期化と初期描画を分割する範囲・方法（field3d.jsは変更せず報告）",
+        "重い環境で既存2D表示を維持する体験上の選択（未実装・効果未確認）"
+      ],
+      "productChanges": 0,
+      "testChanges": 0,
+      "afterReproduction": null,
+      "redGreen": "not performed; no fix adopted",
+      "fiveViewportBeforeAfter": "not performed; no fix adopted",
+      "limits": [
+        "作業場のChromiumとSwiftShaderでの測定。実機・本物の指・回線・離脱率は未確認。",
+        "待ち中に新しい指は送っていないため、入力消失とは数えない。",
+        "理由classのon継続は物理的な可読時間ではない。"
+      ]
+    }
+  },
+  "dispatch": {
+    "commands": 72,
+    "ACKs": 72,
+    "trustedEvents": 31,
+    "eventTypes": {
+      "pointerdown": 9,
+      "pointermove": 13,
+      "pointerup": 9
+    },
+    "cardEligibility": {
+      "initialValid": true,
+      "initialPathValid": true,
+      "initialCardOwnsPoint": true,
+      "beforeCardWidths": [
+        350.828125
+      ],
+      "all9PathsWithinBeforeRect": true,
+      "limit": "Before-input DOM geometry, not physical painted bounds at every instant."
+    },
+    "cueSkips": {
+      "cardVisibleAll10": true,
+      "handVisibleFalse": 7,
+      "handVisibleTrue": 3,
+      "fingerOpacityZero": 8,
+      "allHorizontalXZero": true,
+      "allTrailsZero": true,
+      "laterSameCardQualifiedCueAll10": true,
+      "historyCount": 115,
+      "historyDropped": 0,
+      "limit": "Instantaneous no-qualified-current-or-same-card-memory cue.7DOM-hidden hand samples do not prove continuous disappearance;3DOM-visible samples still fail animation thresholds. All10 were unsent."
+    }
+  },
+  "photos": [
+    {
+      "name": "observe-10s",
+      "requestedSeconds": 10.000286048024893,
+      "savedSeconds": 10.18568198800087,
+      "captureMs": 185.39593997597694,
+      "sha256": "f950a0151ab113250d7d3497145532a6b3586d7fc3c44001fa067950c1d4386a",
+      "file": "observe-10s.png",
+      "originalIdentifier": "round-118/preparation-aaf5400f/strict/observe-10s.png",
+      "reportAuthorPersonallyViewed": true,
+      "observation": "1月1日・元日の田んぼ・左右の選択肢。手本の指はこの写真には写らない。",
+      "limits": "One capture interval; none of these4photos shows○✗/reason. No continuous2s visibility or avoidance-layout pass inferred."
+    },
+    {
+      "name": "play-10s",
+      "requestedSeconds": 10.000805126994848,
+      "savedSeconds": 10.534720293998719,
+      "captureMs": 533.91516700387,
+      "sha256": "1f74bb362ceb2f70bddf149d982b4a8f24f9e2dab534133326c66404916f6f8d",
+      "file": "play-10s.png",
+      "originalIdentifier": "round-118/preparation-aaf5400f/strict/play-10s.png",
+      "reportAuthorPersonallyViewed": true,
+      "observation": "1月2日・霜柱の朝・左右の選択肢・手本の指。",
+      "limits": "One capture interval; none of these4photos shows○✗/reason. No continuous2s visibility or avoidance-layout pass inferred."
+    },
+    {
+      "name": "play-30s",
+      "requestedSeconds": 30.000560312986373,
+      "savedSeconds": 30.817165964007376,
+      "captureMs": 816.6056510210037,
+      "sha256": "ce52e73872dd8f5c455821811b0e941f0753165c0b7c6874394db2ee28841229",
+      "file": "play-30s.png",
+      "originalIdentifier": "round-118/preparation-aaf5400f/strict/play-30s.png",
+      "reportAuthorPersonallyViewed": true,
+      "observation": "1月5日・小寒・左右の選択肢・手本の指。",
+      "limits": "One capture interval; none of these4photos shows○✗/reason. No continuous2s visibility or avoidance-layout pass inferred."
+    },
+    {
+      "name": "play-60s",
+      "requestedSeconds": 60.001562328994275,
+      "savedSeconds": 60.89434501600265,
+      "captureMs": 892.7826870083809,
+      "sha256": "7eb6fa82c9d577bb9f30858d34b9d64f9d100ec842d954c62353b7a045688036",
+      "file": "play-60s.png",
+      "originalIdentifier": "round-118/preparation-aaf5400f/strict/play-60s.png",
+      "reportAuthorPersonallyViewed": true,
+      "observation": "1月10日・七十二候・左右の選択肢・手本の指。",
+      "limits": "One capture interval; none of these4photos shows○✗/reason. No continuous2s visibility or avoidance-layout pass inferred."
+    }
+  ],
+  "execution": {
+    "primary": {
+      "session": 52421,
+      "completionChunk": "8a0a1e",
+      "actualOuterExit": 1,
+      "recordedChildRequestedExit": 1,
+      "checkedAtUTC": "2026-11-14T15:11:02.459783+00:00",
+      "metadataBrowserClosed": true,
+      "cpuReset": true,
+      "liveRuntimeProcesses": [],
+      "closureConfirmed": true,
+      "source7Match": true,
+      "sourceUnchanged": true
+    },
+    "errors": [
+      {
+        "at": 180030492.639192,
+        "kind": "console",
+        "message": "Failed to load resource: the server responded with a status of 404 (File not found)"
+      },
+      {
+        "at": 180041216.77322,
+        "kind": "console",
+        "message": "Failed to load resource: the server responded with a status of 404 (File not found)"
+      }
+    ],
+    "separateResourceTiming404": [
+      {
+        "name": "http://localhost:8000/favicon.ico",
+        "status": 404
+      },
+      {
+        "name": "http://localhost:8000/favicon.ico",
+        "status": 404
+      }
+    ],
+    "errorLimit": "Two console404messages without URL;two independent ResourceTiming favicon404 entries,no request-id join. Actual exit1 remains.",
+    "collection": {
+      "gestureCompletion": "settled",
+      "screenshots": "settled",
+      "inputs": "settled"
+    },
+    "recordingDropped": {
+      "events": 0,
+      "ui": 0,
+      "heartbeats": 0,
+      "rafGaps": 0,
+      "longTasks": 0
+    }
+  },
+  "tests": {
+    "pytest": {
+      "command": "pytest tests/",
+      "cwd": "/workspace/ricepia-firstminute-round118",
+      "actualExit": 127,
+      "completionChunk": "60ca4d",
+      "output": "/bin/bash: line 1: pytest: command not found\n",
+      "testsRan": false,
+      "suiteExecuted": false,
+      "passedCount": null
+    },
+    "fixed10": "completed10/10; sequenceouter0 means completed/closed, allchildrenexit1 observed-errors retained",
+    "regressionREDGREEN": "not performed; no product/test fix adopted",
+    "afterReproduction": "not measured; no fix adopted, not0/10",
+    "fiveSizeComparison": "not performed; no fix adopted",
+    "otherRoundsIncluded": false
+  },
+  "operatorDecisions": {
+    "currentRules": "Reason2seconds; move clear of date/choices at all sizes/rotations; first3choices retain2seconds after advancing. Other existing input/audio rules preserved.",
+    "unverified": "These sparse class/photo records do not validate rapid consecutive first3choices, continuous visibility, all sizes or rotation.",
+    "reportedCandidates": [
+      "初期化と初期描画を分割する範囲・方法（field3d.jsは変更せず報告）",
+      "重い環境で既存2D表示を維持する体験上の選択（未実装・効果未確認）"
+    ],
+    "protectedFilesUnchanged": [
+      "kome365/engine.js",
+      "kome365/field3d.js",
+      "kome365/cards.js"
+    ],
+    "disposition": "Initialization/frame splitting touches explicit protectedfield3d boundary; report for operator judgment, no permission query or implementation.2D continuation is a separate unimplemented design choice, not an alreadydecided requirement."
+  },
+  "attachmentCriteria": {
+    "sourceFilename": "sakurai_partial_20261114_2319.md",
+    "sha256": "4e206461abe220bb98ee7eba77c5132bfbe80d9ca9b62ac7e447848ae25ff74e",
+    "coverage": "Provided partial text75sections,35incomplete; video not played; missing parts not invented",
+    "application": "Separate immediate response, evaluation/positive feedback, next clear instruction, and product wait from capture/tool waits. Input protocol unchanged.",
+    "episodeURLs": [
+      "https://www.youtube.com/watch?v=EDs5n39sRFc",
+      "https://www.youtube.com/watch?v=1xRDwQqSn6I",
+      "https://www.youtube.com/watch?v=L1Su0aajYFA",
+      "https://www.youtube.com/watch?v=rA_FN6BTGms"
+    ]
+  },
+  "limits": [
+    "First answer returned before the longtask; no extra touch was sent during the wait, so this is not an ignored-touch count.",
+    "Fixed10 establishes reproducible longtask under this workspace setup. The separateprofile supports init/laterframe paths but does not attribute all waittime or establish a safe index-only fix.",
+    "Photos are original unedited copies, not before/after comparisons. A/C hash-only; root/B/report author personally viewed4 originals.",
+    "Previousround product/gesture sequence differs;9sent versus priorcount is not an effect estimate.",
+    "Source candidates and UI card titles cite existing files; no new farming/geographical facts.",
+    "Real finger, sensors,network,audio listening,physical paint,human comprehension and first-minute retention unmeasured."
+  ],
+  "sourceLocations": {
+    "startScheduling": "kome365/index.html:970",
+    "firstAnswerScheduling": "kome365/index.html:3919",
+    "reasonShow": "kome365/index.html:3827",
+    "reasonWatch": "kome365/index.html:3851",
+    "existingCardText": "kome365/cards.js:584",
+    "initEntry": "kome365/index.html:2131",
+    "protectedInit": "kome365/field3d.js:1416",
+    "protectedFrame": "kome365/field3d.js:1273"
+  },
+  "evidence": [
+    {
+      "identifier": "round-118/source-selected.json",
+      "sha256": "ce7b549ac98a07da1e2d973903773adb06abc11cdce3553610e84513771172e7",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-118/preparation-aaf5400f/metadata.json",
+      "sha256": "15aa71288b3b9f553392951dbaa528086730af5725ef0ff729a8fb1e46044471",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-118/preparation-aaf5400f/root-execution.json",
+      "sha256": "3072df97cb4e936ad114184be71ea46e9dc898fa0f9d4b88758da969f4143967",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-118/preparation-aaf5400f/strict/report.json",
+      "sha256": "c094110f2e9b0f042bfe020fc3c53b5bc5da73d7e29c8877b3b300901f618aef",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-118/preparation-aaf5400f/strict/driver-timing.json",
+      "sha256": "81be5d9ddde529260e5f88dbb9c60590bae6c87666c158177c050bd0eb0d7d73",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-118/preparation-aaf5400f/strict/extra.json",
+      "sha256": "e746a4b2a692a9e1825b29b9f3f5dcc7f575f968554945aa9b5785dfd2549213",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-118/discovery-a/summary.json",
+      "sha256": "38b4d952bd85acf30a91acb9c375140e4e5c95d567a97c8dc6fd1a66d19a0243",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-118/discovery-a/frozen.json",
+      "sha256": "c73c0845bb2c9600da1ac7be16f1d36ed93cb705bc4b908b8b9fd7fd0d1eab1a",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-118/discovery-c/summary.json",
+      "sha256": "78f31c7fcc3ff61068c943213840e89e34c70a2757a944ca3450c2053e5341db",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-118/discovery-c/first-answer-pause-plan.md",
+      "sha256": "5500dc059c7389c466b87c2903e30e7d020143b0ec62a1fd87c70f71d6b2b862",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-118/discovery-b/README.md",
+      "sha256": "7d2ee7fa5b69cc3b095d4ed4750305aefbcaec4fa9f8857dda4d044d90c0ca7a",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-118/pytest-result.json",
+      "sha256": "aa266c8b4fd639b1772fd038ea53a2da4efffaf43e0b58ceebb6d1fae2f63d28",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-118/pytest.log",
+      "sha256": "884c356a17af2535f8a7a3bbe8d088034a1e58ef021200c45eff7b237b232aa5",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-118/discovery-c/fixed10-audit/summary.json",
+      "sha256": "0be4428907e3c233c75f08922631301233fa6a5c3ed71c80e054120ee4d912f0",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-118/discovery-c/fixed10-audit/trials.json",
+      "sha256": "7e4efb474cd0cacdc17565a92b6d301eef7b4cbff1c02765cb12781397755faf",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-118/discovery-c/fixed10-audit/frozen.json",
+      "sha256": "5b8ed26161004b1827a704eee54bc06ded4f9e90d8f080f815ef1904d78e63f6",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-118/first-answer-wait-preparation/execution/root-execution.json",
+      "sha256": "84385f43831e325b01f91a2bebfc39e5fe5834abf488b38405dacad4a21ad4c5",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-118/first-answer-wait-preparation/execution/execution.json",
+      "sha256": "71f54a7cf5bb1098abfaed7a63c27752c29cce0bb82096b47129ab2e010344a3",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-118/first-answer-wait-preparation/prepared-files.json",
+      "sha256": "e4dbb3f8ea2108ac4570c5b5ae52c8ebbfdefb0c78f5b9175c4ca2b608c9636b",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-118/first-answer-wait-preparation/config.json",
+      "sha256": "aa0a3b6688732396f10f47fe0e007c56a0c8e01ce9a0ed02ad0775f66dfa5dcf",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-118/decision.json",
+      "sha256": "e332a40c5179665e5c5d063e536cf69bc1cb942e4c3bd9ae17ad3bc7b30672ef",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-118/main-update.json",
+      "sha256": "84f3f425ddc8878f3cf8fc8cd384bea9e8f6e1b75b7a94c7d6a14235975ac3b7",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-118/profile-audit/summary.json",
+      "sha256": "60b8e0c1f92b1a605c5bccae7b8c48d063d5d6167a1ec6a89fb94237bef1a879",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-118/profile-audit/README.md",
+      "sha256": "5ff6d60f75a1b4c2851d3591cfa09e15d7e507bd12bcc82c0d42fdd818d17376",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-118/profile-audit/frozen.json",
+      "sha256": "bb1ee97a6161ffc2ff0db1bce4c4afee12a36826dab0e84ba9626bcae5cc41a5",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-118/discovery-c/profile-small-review.json",
+      "sha256": "610d7844b1e82cc4c5b9acf451793e2b7b5a8a96a644c55bcd2051b7167c5627",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-118/first-answer-profile-preparation-v2/execution/root-execution.json",
+      "sha256": "20ca0a77f1a62dc6216b7a93d1cb48c7ea0f3d118ea28529232e44b6b085aa33",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-118/first-answer-profile-preparation-v2/execution/profile-01/profiler.json",
+      "sha256": "4d3c724a6072522f2016dd56adb72d16387696720f3610fdb1563ea29c28685d",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-118/first-answer-profile-preparation-v2/execution/profile-01/cpu-profile.json",
+      "sha256": "066b8acf12988bd6b83fe69bee850cf6394e9984afcb5ebc6c5ab9b867cd9ccf",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-118/first-answer-profile-preparation-v2/execution/profile-01/strict/report.json",
+      "sha256": "581d0baef7983137627a10742764f1a11ff9342bf1ddc7ca3a97ca55c9a2d7f9",
+      "publicLink": false
+    }
+  ],
+  "fixedReproduction": {
+    "sourceHead": "aaf5400feb9a8849567a8d81fcc4ac88b06990db",
+    "denominators": {
+      "planned": 10,
+      "attempted": 10,
+      "completed": 10,
+      "unattempted": 0,
+      "deliveredSingleSwipe": 10,
+      "firstDay2Observed": 10,
+      "postAnswerTaskAtLeast1000msTrials": 10,
+      "qualifyingTaskEntries": 17,
+      "unissuedOrProtocolIncomplete": 0,
+      "requested120": 5,
+      "requested600": 5,
+      "uniqueFreshProfiles": 10,
+      "CDPAcknowledgements": 80,
+      "trustedPointerEvents": 74,
+      "pointerDown": 10,
+      "pointerMove": 54,
+      "pointerUp": 10,
+      "screenshotsSaved": 20,
+      "personalPNGReviews": 0,
+      "console404": 20
+    },
+    "exitMeaning": {
+      "actualOuterExit": 0,
+      "outerReceipt": "/workspace/scratch/first-minute/round-118/first-answer-wait-preparation/execution/root-execution.json",
+      "executionFieldActualOuterExit": null,
+      "actualChildren": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "meaning": "parent実0は固定系列の完了と閉鎖/source確認。child全1は各console404×2のobserved-errors。favicon404資源は別記録でrequest ID結合なし。全検査合格とは呼ばない。"
+    },
+    "ranges": {
+      "firstDayFromSendMs": {
+        "min": 512.1001,
+        "max": 973.8
+      },
+      "guideAfterDayMs": {
+        "min": 6764.4,
+        "max": 9031.6
+      },
+      "clearCueAfterDayMs": {
+        "min": 7722.8,
+        "max": 10095.4
+      },
+      "whyClassOnToOffMs": {
+        "min": 6768.0,
+        "max": 9039.0
+      },
+      "maxPostAnswerLongTaskMs": {
+        "min": 4968,
+        "max": 6871
+      },
+      "maxRAFGAPMs": {
+        "min": 4983.4000000059605,
+        "max": 6888.5999999940395
+      },
+      "maxPageHeartbeatGapMs": {
+        "min": 6209.100000023842,
+        "max": 8397.40000000596
+      },
+      "maxNodeHeartbeatGapMs": {
+        "min": 257.3751029968262,
+        "max": 301.9038679897785
+      },
+      "actualStopAfterWindowMs": {
+        "min": 0,
+        "max": 12
+      },
+      "collectionAfterWindowMs": {
+        "min": 13.1001,
+        "max": 154.0
+      }
+    },
+    "actualEventSpanByRequested": {
+      "120": {
+        "actualEventSpanMs": {
+          "min": 120.9,
+          "max": 122.1
+        }
+      },
+      "600": {
+        "actualEventSpanMs": {
+          "min": 599.1,
+          "max": 601.0
+        }
+      }
+    },
+    "criteria": "FirstJan2DOM observation, then longtask entries started in scheduledtouchEnd+15000ms window with duration>=1000ms. Boundary-crossing recorded separately. No outcome-based exclusion or speed regrouping.",
+    "speedResults": [
+      {
+        "requestedMs": 120,
+        "trials": 5,
+        "withQualifyingLongTask": 5
+      },
+      {
+        "requestedMs": 600,
+        "trials": 5,
+        "withQualifyingLongTask": 5
+      }
+    ],
+    "trials": [
+      {
+        "trial": "trial-01",
+        "requestedDurationMs": 120,
+        "actualEventSpanMs": 121.1,
+        "direction": "right",
+        "actualDx": 100.0,
+        "cardWidth": 350.828125,
+        "firstDayFromSendMs": 549.5,
+        "guideAfterDayMs": 7121.5,
+        "clearCueAfterDayMs": 8164,
+        "whyClassOnToOffMs": 7134.3,
+        "qualifyingTaskCount": 2,
+        "maxPostAnswerLongTaskMs": 5035,
+        "maxRAFGAPMs": 5062.199999988079,
+        "maxNodeHeartbeatGapMs": 301.9038679897785,
+        "crossingProgressCount": 0,
+        "crossingWindowEndCount": 0,
+        "actualStopAfterWindowMs": 1,
+        "collectionAfterWindowMs": 13.1001,
+        "console404": 2
+      },
+      {
+        "trial": "trial-02",
+        "requestedDurationMs": 600,
+        "actualEventSpanMs": 600.9,
+        "direction": "right",
+        "actualDx": 100.0,
+        "cardWidth": 350.828125,
+        "firstDayFromSendMs": 945.4001,
+        "guideAfterDayMs": 9031.6,
+        "clearCueAfterDayMs": 10095.4,
+        "whyClassOnToOffMs": 9039.0,
+        "qualifyingTaskCount": 2,
+        "maxPostAnswerLongTaskMs": 6871,
+        "maxRAFGAPMs": 6888.5999999940395,
+        "maxNodeHeartbeatGapMs": 263.2847490012646,
+        "crossingProgressCount": 0,
+        "crossingWindowEndCount": 0,
+        "actualStopAfterWindowMs": 1,
+        "collectionAfterWindowMs": 106.6001,
+        "console404": 2
+      },
+      {
+        "trial": "trial-03",
+        "requestedDurationMs": 120,
+        "actualEventSpanMs": 120.9,
+        "direction": "right",
+        "actualDx": 100.0,
+        "cardWidth": 350.828125,
+        "firstDayFromSendMs": 512.1001,
+        "guideAfterDayMs": 7076.9,
+        "clearCueAfterDayMs": 8120.2,
+        "whyClassOnToOffMs": 7081.9,
+        "qualifyingTaskCount": 2,
+        "maxPostAnswerLongTaskMs": 5379,
+        "maxRAFGAPMs": 5397.799999982119,
+        "maxNodeHeartbeatGapMs": 268.19320100545883,
+        "crossingProgressCount": 0,
+        "crossingWindowEndCount": 0,
+        "actualStopAfterWindowMs": 1,
+        "collectionAfterWindowMs": 26.3,
+        "console404": 2
+      },
+      {
+        "trial": "trial-04",
+        "requestedDurationMs": 600,
+        "actualEventSpanMs": 599.1,
+        "direction": "right",
+        "actualDx": 100.0,
+        "cardWidth": 350.828125,
+        "firstDayFromSendMs": 947.3,
+        "guideAfterDayMs": 8740.9,
+        "clearCueAfterDayMs": 9802.9,
+        "whyClassOnToOffMs": 8743.9,
+        "qualifyingTaskCount": 2,
+        "maxPostAnswerLongTaskMs": 6834,
+        "maxRAFGAPMs": 6853.9000000059605,
+        "maxNodeHeartbeatGapMs": 265.83270198106766,
+        "crossingProgressCount": 0,
+        "crossingWindowEndCount": 0,
+        "actualStopAfterWindowMs": 0,
+        "collectionAfterWindowMs": 124.5,
+        "console404": 2
+      },
+      {
+        "trial": "trial-05",
+        "requestedDurationMs": 120,
+        "actualEventSpanMs": 122.1,
+        "direction": "right",
+        "actualDx": 100.0,
+        "cardWidth": 350.828125,
+        "firstDayFromSendMs": 562.3,
+        "guideAfterDayMs": 6794.1,
+        "clearCueAfterDayMs": 7845.3,
+        "whyClassOnToOffMs": 6797.6,
+        "qualifyingTaskCount": 2,
+        "maxPostAnswerLongTaskMs": 4968,
+        "maxRAFGAPMs": 4983.4000000059605,
+        "maxNodeHeartbeatGapMs": 276.96937799453735,
+        "crossingProgressCount": 0,
+        "crossingWindowEndCount": 0,
+        "actualStopAfterWindowMs": 12,
+        "collectionAfterWindowMs": 125.5,
+        "console404": 2
+      },
+      {
+        "trial": "trial-06",
+        "requestedDurationMs": 600,
+        "actualEventSpanMs": 601.0,
+        "direction": "right",
+        "actualDx": 100.0,
+        "cardWidth": 350.828125,
+        "firstDayFromSendMs": 963.6001,
+        "guideAfterDayMs": 7136.0,
+        "clearCueAfterDayMs": 8112.4,
+        "whyClassOnToOffMs": 7142.0,
+        "qualifyingTaskCount": 2,
+        "maxPostAnswerLongTaskMs": 5277,
+        "maxRAFGAPMs": 5293.100000023842,
+        "maxNodeHeartbeatGapMs": 275.2120329737663,
+        "crossingProgressCount": 0,
+        "crossingWindowEndCount": 0,
+        "actualStopAfterWindowMs": 2,
+        "collectionAfterWindowMs": 154.0,
+        "console404": 2
+      },
+      {
+        "trial": "trial-07",
+        "requestedDurationMs": 120,
+        "actualEventSpanMs": 121.0,
+        "direction": "right",
+        "actualDx": 100.0,
+        "cardWidth": 350.828125,
+        "firstDayFromSendMs": 526.2,
+        "guideAfterDayMs": 6973.4,
+        "clearCueAfterDayMs": 8165.8,
+        "whyClassOnToOffMs": 6979.7,
+        "qualifyingTaskCount": 2,
+        "maxPostAnswerLongTaskMs": 5223,
+        "maxRAFGAPMs": 5238.899999976158,
+        "maxNodeHeartbeatGapMs": 265.86486199498177,
+        "crossingProgressCount": 0,
+        "crossingWindowEndCount": 0,
+        "actualStopAfterWindowMs": 1,
+        "collectionAfterWindowMs": 49.7998,
+        "console404": 2
+      },
+      {
+        "trial": "trial-08",
+        "requestedDurationMs": 600,
+        "actualEventSpanMs": 600.0,
+        "direction": "right",
+        "actualDx": 100.0,
+        "cardWidth": 350.828125,
+        "firstDayFromSendMs": 973.8,
+        "guideAfterDayMs": 8346.4,
+        "clearCueAfterDayMs": 9276.8,
+        "whyClassOnToOffMs": 8353.5,
+        "qualifyingTaskCount": 1,
+        "maxPostAnswerLongTaskMs": 6794,
+        "maxRAFGAPMs": 6809.9000000059605,
+        "maxNodeHeartbeatGapMs": 276.46513399481773,
+        "crossingProgressCount": 0,
+        "crossingWindowEndCount": 0,
+        "actualStopAfterWindowMs": 0,
+        "collectionAfterWindowMs": 56.1001,
+        "console404": 2
+      },
+      {
+        "trial": "trial-09",
+        "requestedDurationMs": 120,
+        "actualEventSpanMs": 121.0,
+        "direction": "right",
+        "actualDx": 100.0,
+        "cardWidth": 350.828125,
+        "firstDayFromSendMs": 521.9001,
+        "guideAfterDayMs": 6764.4,
+        "clearCueAfterDayMs": 7722.8,
+        "whyClassOnToOffMs": 6768.0,
+        "qualifyingTaskCount": 1,
+        "maxPostAnswerLongTaskMs": 5193,
+        "maxRAFGAPMs": 5206.300000011921,
+        "maxNodeHeartbeatGapMs": 267.4536420106888,
+        "crossingProgressCount": 0,
+        "crossingWindowEndCount": 0,
+        "actualStopAfterWindowMs": 0,
+        "collectionAfterWindowMs": 101.2,
+        "console404": 2
+      },
+      {
+        "trial": "trial-10",
+        "requestedDurationMs": 600,
+        "actualEventSpanMs": 600.0,
+        "direction": "right",
+        "actualDx": 100.0,
+        "cardWidth": 350.828125,
+        "firstDayFromSendMs": 964.3999,
+        "guideAfterDayMs": 8365.6,
+        "clearCueAfterDayMs": 9370.3,
+        "whyClassOnToOffMs": 8368.4,
+        "qualifyingTaskCount": 1,
+        "maxPostAnswerLongTaskMs": 6814,
+        "maxRAFGAPMs": 6826.899999976158,
+        "maxNodeHeartbeatGapMs": 257.3751029968262,
+        "crossingProgressCount": 0,
+        "crossingWindowEndCount": 0,
+        "actualStopAfterWindowMs": 1,
+        "collectionAfterWindowMs": 153.0,
+        "console404": 2
+      }
+    ],
+    "originalsSHA256": {
+      "round-118/first-answer-wait-preparation/execution/execution.json": "71f54a7cf5bb1098abfaed7a63c27752c29cce0bb82096b47129ab2e010344a3",
+      "round-118/first-answer-wait-preparation/execution/root-execution.json": "84385f43831e325b01f91a2bebfc39e5fe5834abf488b38405dacad4a21ad4c5",
+      "round-118/first-answer-wait-preparation/prepared-files.json": "e4dbb3f8ea2108ac4570c5b5ae52c8ebbfdefb0c78f5b9175c4ca2b608c9636b",
+      "round-118/first-answer-wait-preparation/config.json": "aa0a3b6688732396f10f47fe0e007c56a0c8e01ce9a0ed02ad0775f66dfa5dcf",
+      "round-118/first-answer-wait-preparation/execution/trial-01/metadata.json": "8a499cf08aef113746fadc0663d8b06e2827b16f87ec3b52b6c9eff8707f0fc0",
+      "round-118/first-answer-wait-preparation/execution/trial-01/strict/report.json": "24d36309f28868a5fa8313aa9f5574133d9b243843c5145e6082d0c08ad5cd3f",
+      "round-118/first-answer-wait-preparation/execution/trial-01/strict/driver-timing.json": "6e4badf2218d325f5e34a87d2f16357efcef66e7d5318c0c5fb7fb1387146f1e",
+      "round-118/first-answer-wait-preparation/execution/trial-01/strict/extra.json": "d48220a8b47a706c3f19c080bc5b6ce98a33cef0fdd551835c130058ccee8ede",
+      "round-118/first-answer-wait-preparation/execution/trial-02/metadata.json": "112c9c5ffc49506961d7646d5411f8f4066bb75cfad6f959c9f86cd7742c399a",
+      "round-118/first-answer-wait-preparation/execution/trial-02/strict/report.json": "ef132ed0c2f1400353e953492a7c6b3ae9b472440af10d82a9d3be0da8a79a1d",
+      "round-118/first-answer-wait-preparation/execution/trial-02/strict/driver-timing.json": "013a9d2e2956bace868c7ab11125618104ef272889f1931d8d75484fbc9e7f26",
+      "round-118/first-answer-wait-preparation/execution/trial-02/strict/extra.json": "9234abf07b71ce7e07c31b4a2f1f337d443fc0a6236df17a056877790a501c49",
+      "round-118/first-answer-wait-preparation/execution/trial-03/metadata.json": "67d78867982da5f0110f219ab5e0b10e24913170f177bce92b60509d2dc78f98",
+      "round-118/first-answer-wait-preparation/execution/trial-03/strict/report.json": "c8882ee4e16dbf590fe28f3022bfa9d8e5ab329f4c50dc530d3bb28860c303db",
+      "round-118/first-answer-wait-preparation/execution/trial-03/strict/driver-timing.json": "c6135a4e057c6e6f1c56c2c264eaeb94995a6415c133c834ab43ef4b12417da7",
+      "round-118/first-answer-wait-preparation/execution/trial-03/strict/extra.json": "4e5e1205521a10d077585f027badd823093b66a0174271af45d5243cac9a3fa2",
+      "round-118/first-answer-wait-preparation/execution/trial-04/metadata.json": "d4762fba90223185a358931dbc5de403af5422273ac78a4fdfde4a092ed9c24e",
+      "round-118/first-answer-wait-preparation/execution/trial-04/strict/report.json": "4ee99c5479a5259c0ec53fe263115f44993603be57879993a5ba5e0244ba86f3",
+      "round-118/first-answer-wait-preparation/execution/trial-04/strict/driver-timing.json": "d4cd8477704a19c41be9c489033017de127f2120d0b9f2b5a78d152fdb9fd223",
+      "round-118/first-answer-wait-preparation/execution/trial-04/strict/extra.json": "9bd1f94399f0e67c3c813386ec8eb6b302137c3931f5ab9f795be64c75d6f21e",
+      "round-118/first-answer-wait-preparation/execution/trial-05/metadata.json": "c26f58a6d71b85bc5bd6158c239bb5e314749caf3a23a0d31e285d914a00990c",
+      "round-118/first-answer-wait-preparation/execution/trial-05/strict/report.json": "05448eaf50fc53e170cce36e340a7df59e41e001f22888f15618de42af850c0f",
+      "round-118/first-answer-wait-preparation/execution/trial-05/strict/driver-timing.json": "1321d488c81e9010c50961e52ec14c1a5071339dab7961c34d9738dcb56ebfb8",
+      "round-118/first-answer-wait-preparation/execution/trial-05/strict/extra.json": "3aa37d223d6f8db68cd991eb029e95f022bbd8484c0dd8f8114a34b665ca4dd7",
+      "round-118/first-answer-wait-preparation/execution/trial-06/metadata.json": "44b7030a74e672fdf902aefb989249f84b8b487d315e25ada0af47c3bc2b2935",
+      "round-118/first-answer-wait-preparation/execution/trial-06/strict/report.json": "b76de183b9450b3c04a764b335c34e84baf622cefd86b14952c294c6bba40ef3",
+      "round-118/first-answer-wait-preparation/execution/trial-06/strict/driver-timing.json": "4a694881c367e997ddf9fcc3e2e11016e76dae1c3aa66910ec81e46d61409cde",
+      "round-118/first-answer-wait-preparation/execution/trial-06/strict/extra.json": "6cd7ae7cfdc8b83a88baf6938c1c25dc759fa713a4a64416b52a4e1c7a0dcf67",
+      "round-118/first-answer-wait-preparation/execution/trial-07/metadata.json": "766ecf911c2ea32f6e8751728df17614e7169de03856e5d4b570958f836dd416",
+      "round-118/first-answer-wait-preparation/execution/trial-07/strict/report.json": "374075770f4289a62bd86bd1585f9368f73b39a9994f76565eb1519f4d4403d6",
+      "round-118/first-answer-wait-preparation/execution/trial-07/strict/driver-timing.json": "b6e2cabedf02ed73edabdd2c5440cb13719121a6c90a856af684d7919666ee70",
+      "round-118/first-answer-wait-preparation/execution/trial-07/strict/extra.json": "13afac2a4292e4327cdb1f63f9299cae6f4cfde3a26f716c986fb5d1ca50ca7b",
+      "round-118/first-answer-wait-preparation/execution/trial-08/metadata.json": "94280acb10d79267308df70a835fcf76c0b9e6edcb66050361003ad042b5d40d",
+      "round-118/first-answer-wait-preparation/execution/trial-08/strict/report.json": "8f0c6c61e8da20d5b796edf6104f1cecc659f189e179913027bd466ed89196af",
+      "round-118/first-answer-wait-preparation/execution/trial-08/strict/driver-timing.json": "24b2f3e5d0fe0d90e649529d3ff2b3ee22028f381b9c895b8f45e0cd0610618d",
+      "round-118/first-answer-wait-preparation/execution/trial-08/strict/extra.json": "fc04c05f41c22bf0179a32f676f3cfd61cfcbb17e4af23afd7df2591bda8c441",
+      "round-118/first-answer-wait-preparation/execution/trial-09/metadata.json": "3d471a87805ca48bd47fb82f3f677990e60c177d0665931c2c979b2af2c159ad",
+      "round-118/first-answer-wait-preparation/execution/trial-09/strict/report.json": "d63dd68e714b9176e5edf5ad887915e83ed2cddbbf5e19dc3b31349d50542ca0",
+      "round-118/first-answer-wait-preparation/execution/trial-09/strict/driver-timing.json": "94a4a99d127e3451527c094bd790af8fc0b3583d74ceb1765ad2a39f4ee1e2a9",
+      "round-118/first-answer-wait-preparation/execution/trial-09/strict/extra.json": "4061779d6cb9281eda66891617c8e5f9b0f8f5301cfbad3a8500d8e11e0897d6",
+      "round-118/first-answer-wait-preparation/execution/trial-10/metadata.json": "4a5581fc30c52b2cf6299a78e0d951635ffd29e3116d298f701e62244707bb8d",
+      "round-118/first-answer-wait-preparation/execution/trial-10/strict/report.json": "944286409e3568166ebbfc4314f734bb19ca5769fc34ff282569dce64d4b8b5b",
+      "round-118/first-answer-wait-preparation/execution/trial-10/strict/driver-timing.json": "697a5678ba3249b0d212ffad90732d4c186510c2c52c24e9ec906f577eec1733",
+      "round-118/first-answer-wait-preparation/execution/trial-10/strict/extra.json": "bc7412b3a55b1a7c4ebe4a791a6ee543c0afae8b36cfe00b5cf9c0afc4802906"
+    },
+    "limits": [
+      "全10枠を保持。日送り・taskの有無・実spanに基づく除外や群の入替えはない。",
+      "100pxは実カード幅350.828125pxの22%を超える。600msでも距離条件で成立し、quickの300ms条件を診断成立へ使わない。",
+      "初日送りからguide flagまでと、明確な左cueまでを分ける。class/text/rAF標本は物理的描画完了を保証しない。",
+      "why on/offの長さを物理的可視時間・操作規則違反の確定とは呼ばない。",
+      "長い待ち中の追加入力は0。無視された入力とは報告しない。",
+      "窓は予定touchEndから15000msで固定、実停止0–12ms/収集13.1–154msの遅れを保存。窓外標本を主数へ加えない。",
+      "fresh browser/profileが10個であることは保存起動引数から確認。OS/ディスク/GPUキャッシュまで同一とは主張しない。",
+      "browser.closeとsource/CPU確認、限定された所有process走査は全10で成立。全体の残存0はroot閉鎖receiptの事実であり、こちらが追加走査した結果ではない。"
+    ],
+    "reportAuthorFixedDiagnosticImagesViewed": 0,
+    "fixedDiagnosticImagesSaved": 20,
+    "newProfileRun": "completed separate1profile; not included in fixed10 denominator"
+  },
+  "profileAttribution": {
+    "runs": 1,
+    "includedInFixed10": false,
+    "runtime": {
+      "actualOuterExit": 0,
+      "actualChildExit": 1,
+      "rootSession": 64857,
+      "completionChunk": "200a64",
+      "wrapperEmbeddedActualOuterExit": null,
+      "parentRequestedExitCode": 0,
+      "planned": 1,
+      "completed": 1,
+      "sourceUnchanged": true,
+      "environmentUnchanged": true,
+      "sourceBeforeAfterEntries": 7,
+      "environmentBeforeAfterEntries": 8,
+      "browserClosed": true,
+      "cpuReset": true,
+      "rootClosureConfirmed": true,
+      "rootLiveRuntimeProcesses": [],
+      "profilerDisabled": true,
+      "profilerErrors": [],
+      "rawSHA256": "066b8acf12988bd6b83fe69bee850cf6394e9984afcb5ebc6c5ab9b867cd9ccf",
+      "runIssueStages": [
+        "observed-errors"
+      ],
+      "consoleErrorCount": 2,
+      "consoleErrors": [
+        {
+          "phase": "before-instrumentation",
+          "at": 1794670390409,
+          "kind": "console",
+          "message": "Failed to load resource: the server responded with a status of 404 (File not found)"
+        },
+        {
+          "at": 181460753.587646,
+          "kind": "console",
+          "message": "Failed to load resource: the server responded with a status of 404 (File not found)"
+        }
+      ],
+      "resource404": [
+        {
+          "name": "http://localhost:8000/favicon.ico",
+          "status": 404
+        },
+        {
+          "name": "http://localhost:8000/favicon.ico",
+          "status": 404
+        }
+      ],
+      "faviconConsoleJoin": "two favicon404 resource entries separately recorded; console records lack URL/requestId join",
+      "blocked": []
+    },
+    "inputAndWindow": {
+      "gestures": 1,
+      "requestedMs": 120,
+      "actualDOMEventSpanMs": 120.09999999403954,
+      "actualSendSpanMs": 120.26476100087166,
+      "CDPSends": 8,
+      "CDPACKs": 8,
+      "trustedEvents": 8,
+      "allTrusted": true,
+      "samePointer": true,
+      "noCancel": true,
+      "fixedPostWindowMs": 15000,
+      "playDurationRequestedMs": 15370,
+      "actualPlayStopMs": 15373.137217015028,
+      "firstJan2BrowserMs": 11549.59999999404,
+      "firstNextGuideClassBrowserMs": 18671,
+      "longTasksRecorded": 46,
+      "longtaskRetention": {
+        "limit": 1000,
+        "observed": 46,
+        "retained": 46,
+        "dropped": 0
+      },
+      "dropped": {
+        "events": 0,
+        "ui": 0,
+        "heartbeats": 0,
+        "rafGaps": 0,
+        "longTasks": 0
+      },
+      "soundOn": true,
+      "photoInspection": "auditor hashes only, no visual claim"
+    },
+    "profileDurationMs": 26407.016,
+    "nodes": 697,
+    "samples": 22673,
+    "rawTimeDeltaSumMs": 26405.473,
+    "unassignedTailMs": 1.5429999999978463,
+    "weightsMeaning": "Each raw timeDelta is assigned as approximate sampleweight; inclusive weights overlap and are not additive, exact functionCPU time or walltime. Wholeprofile includes10s observation and post-window collection/photos.",
+    "selectedWholeProfileInclusiveWeights": [
+      {
+        "path": "index.html:2131 try3d → field3d.js:1416 F3.init",
+        "inclusiveSampleWeightMs": 1140.372
+      },
+      {
+        "path": "F3.init → field3d.js:378 buildScenery",
+        "inclusiveSampleWeightMs": 894.98
+      },
+      {
+        "path": "F3.init → field3d.js:125 buildEnv",
+        "inclusiveSampleWeightMs": 110.842
+      },
+      {
+        "path": "field3d.js:1273 frame",
+        "inclusiveSampleWeightMs": 1528.916
+      }
+    ],
+    "majorLongTasks": [
+      {
+        "startBrowserMs": 12186.09999999404,
+        "startFromPlayMs": 1450.5,
+        "durationMs": 1289,
+        "samplePointClassificationLimit": "Sample point membership under bounded-start/constant-rate model, not exact task CPU duration; whole interval weight may straddle a boundary. Negative raw deltas retained."
+      },
+      {
+        "startBrowserMs": 13500.5,
+        "startFromPlayMs": 2764.9000000059605,
+        "durationMs": 5166,
+        "samplePointClassificationLimit": "Sample point membership under bounded-start/constant-rate model, not exact task CPU duration; whole interval weight may straddle a boundary. Negative raw deltas retained."
+      }
+    ],
+    "laterTaskSamplesInsideAllStartBounds": {
+      "frameInclusiveSampleWeightMs": 1416.03,
+      "unassignedProgramSelfSampleWeightMs": 3663.058,
+      "limit": "Samplepoint membership under boundedstart/rate1model, not an exact lower bound on tasktime. Not a complete assignment of5166ms to init/frame/GPU/shader."
+    },
+    "wholeProfileProgramSampleWeightMs": 12704.187,
+    "clock": {
+      "startBrowserMsBounds": [
+        472,
+        555.6999999880791
+      ],
+      "startBoundWidthMs": 83.69999998807907,
+      "model": "profile sample relativeMs = cumulative raw timeDeltas /1000; browserMs interval = startBrowserMsBounds + relativeMs; rate1 assumption, no shared origin assumption",
+      "negativeDeltas": [
+        {
+          "sampleOrdinal": 10634,
+          "deltaUs": -1
+        },
+        {
+          "sampleOrdinal": 10707,
+          "deltaUs": -2
+        },
+        {
+          "sampleOrdinal": 11291,
+          "deltaUs": -1
+        }
+      ],
+      "negativeDeltaAbsoluteTotalUs": 4,
+      "limits": [
+        "The start bracket is 83.7ms wide; boundary membership uses sample timestamps, not exact durations.",
+        "Three negative deltas totaling4us are retained; no sorting/clamping silently changes raw timestamps.",
+        "Constant-rate projection is a model; no physical paint, GPU clock, exact native wait attribution."
+      ]
+    },
+    "conclusion": {
+      "initPathObserved": true,
+      "laterFramePathObserved": true,
+      "entireMaxLongTaskAttributed": false,
+      "nativeGPUDriverCauseEstablished": false,
+      "indexOnlyFixSelected": false,
+      "reason": "Index controls start scheduling. Synchronous init work and later frame/program gaps are separate; delaying900ms or invoking requestIdleCallback alone relocates the work and does not divide it. No evidence establishes a minimal index-only removal of the5.166s stall while preserving protected implementation and 3D content."
+    },
+    "photosSaved": 2,
+    "reportAuthorProfileImagesViewed": 0,
+    "originalCPUProfileIdentifier": "round-118/first-answer-profile-preparation-v2/execution/profile-01/cpu-profile.json",
+    "originalCPUProfileSHA256": "066b8acf12988bd6b83fe69bee850cf6394e9984afcb5ebc6c5ab9b867cd9ccf"
+  }
+}

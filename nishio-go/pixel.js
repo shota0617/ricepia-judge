@@ -8814,6 +8814,49 @@ function drawLinked(code, x, y, X, Y, T, f) {
   if (sh) { ctx.drawImage(MT.shore[sh[0]][sh[1] + f], X, Y, T, T); return true; }
   return false;
 }
+// 地図が未取得の間は、同じ霧を1枚の繰り返し模様で描く。前景と地図の取得はそのまま。
+// 16pxとの整数比だけをまとめる。それ以外は元のループへ戻し、点模様の画素を保つ。
+function createWorldFogPainter() {
+  let cachedT = 0;
+  const frames = [null, null];
+  return function drawFogPattern(ctx, world, source, T, f, ox, oy, w, h) {
+    if (world || !Number.isInteger(T) || T <= 0 || (16 % T !== 0 && T % 16 !== 0) || (f !== 0 && f !== 1)
+      || ![ox, oy, w, h].every(Number.isSafeInteger) || w <= 0 || h <= 0
+      || !source || source.width !== 16 || source.height !== 16
+      || typeof ctx?.createPattern !== 'function' || typeof ctx?.getTransform !== 'function'
+      || ctx.imageSmoothingEnabled !== false || ctx.globalAlpha !== 1
+      || ctx.globalCompositeOperation !== 'source-over' || ctx.filter !== 'none'
+      || ctx.shadowBlur !== 0 || ctx.shadowOffsetX !== 0 || ctx.shadowOffsetY !== 0
+      || ctx.shadowColor !== 'rgba(0, 0, 0, 0)') return false;
+    const m = ctx.getTransform();
+    if (m.a !== 1 || m.b !== 0 || m.c !== 0 || m.d !== 1 || m.e !== 0 || m.f !== 0) return false;
+    if (cachedT !== T) { cachedT = T; frames[0] = frames[1] = null; }
+    let entry = frames[f];
+    if (!entry || entry.source !== source) {
+      // 描画先を変える前に準備し、作れなければ元のループへ戻す。保持するのは現在の大きさの2コマだけ。
+      try {
+        const tile = document.createElement('canvas');
+        tile.width = tile.height = T;
+        const small = tile.getContext('2d');
+        if (!small) return false;
+        small.imageSmoothingEnabled = false;
+        small.drawImage(source, 0, 0, T, T);
+        const pattern = ctx.createPattern(tile, 'repeat');
+        if (!pattern) return false;
+        entry = frames[f] = { source, pattern };
+      } catch (_) { return false; }
+    }
+    const px = ((ox % T) + T) % T, py = ((oy % T) + T) % T;
+    ctx.save();
+    try {
+      ctx.translate(px, py);
+      ctx.fillStyle = entry.pattern;
+      ctx.fillRect(-px, -py, w, h);
+    } finally { ctx.restore(); }
+    return true;
+  };
+}
+const drawWorldFog = createWorldFogPainter();
 function drawWorld(now, w, h, dpr) {
   const T = wT(dpr), f = Math.floor(now / 600) % 2;
   if (!wcam || (wcamOnMe && G.me)) wcam = worldCamStart();
@@ -8825,7 +8868,7 @@ function drawWorld(now, w, h, dpr) {
   if (css <= 6 && worldImg) {   // 引いて見るとき：1マス＝色のブロック
     ctx.fillStyle = WCOL[C.X]; ctx.fillRect(0, 0, w, h);
     ctx.drawImage(worldImg, ox, oy, WW * T, WH * T);
-  } else {
+  } else if (!drawWorldFog(ctx, world, tiles[C.X][0][f], T, f, ox, oy, w, h)) {
     gridAt = worldAt; nbrCur = worldNbr;
     try {
       for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {

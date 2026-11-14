@@ -2193,6 +2193,8 @@ function senseCarried(d) {
 token.addEventListener("pointerdown", (e) => {
   if (senseFly) return;
   capture(token, e);
+  /* 運び始めた指を保つ。6pxを超える前の指の持ち替えは残す。 */
+  if (senseKind !== "nigiru" && senseDrag && senseDrag.moved && senseDrag.id !== e.pointerId) return;
   guideOff();
   if (senseKind === "nigiru") {
     token.classList.add("squeeze");
@@ -2200,10 +2202,10 @@ token.addEventListener("pointerdown", (e) => {
     if (!pageFinger(0, 1, e)) h.timer = setTimeout(() => { if (senseHold === h) { token.classList.remove("squeeze"); senseDone(); } }, NIGIRU_MS); /* 押す長さの しきいは 動きを へらす 設定でも 同じ（READ_MS の きまり・サイクル151） */
     return;
   }
-  senseDrag = { x:e.clientX, y:e.clientY, moved:false };
+  senseDrag = { id:e.pointerId, x:e.clientX, y:e.clientY, moved:false };
 });
 token.addEventListener("pointermove", (e) => {
-  if (!senseDrag) return;
+  if (!senseDrag || senseDrag.id !== e.pointerId) return;
   const dx = e.clientX - senseDrag.x, dy = e.clientY - senseDrag.y;
   if (pageFinger(dx, dy, e)) return; /* ページを動かす指では 🤲 を運ばない */
   if (Math.hypot(dx, dy) > 6) senseDrag.moved = true;
@@ -2224,7 +2226,7 @@ function endToken(e) {
     hint.textContent = "🤲 はなさず にぎる";
     return;
   }
-  if (!senseDrag) return;
+  if (!senseDrag || e && e.pointerId != null && senseDrag.id != null && senseDrag.id !== e.pointerId) return;
   const carry = senseDrag;
   senseDrag = null;
   if (senseFly) return;
@@ -2250,6 +2252,9 @@ document.addEventListener("pointerup", (e) => {
   endToken();
 });
 token.addEventListener("pointercancel", endToken);
+token.addEventListener("lostpointercapture", (e) => {
+  if (senseDrag && senseDrag.id === e.pointerId) endToken({ type:"pointercancel", pointerId:e.pointerId });
+});
 token.addEventListener("click", (e) => { if (e.detail === 0) autoSense(); });
 
 /* きめる: 項目ごとに ● が下の等級の列へ落ちる */

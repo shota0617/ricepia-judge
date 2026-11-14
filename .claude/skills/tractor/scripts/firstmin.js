@@ -1,4 +1,4 @@
-// 最初の1分の確かめ（サイクル259〜280）：node firstmin.js [tractor.html のパス]
+// 最初の1分の確かめ（サイクル259〜282）：node firstmin.js [tractor.html のパス]
 //  1) 知らせの文：吹き出し（speakText）・短い文（shortText）で かっこが合わなくならない（「…見ます）」のような切れ方をしない）
 //  3) 畦の手前で止まった人：「横へ なぞる」見本が出て、見本どおりで向きが変わる。自動で下ろす知らせは 1 回だけ（サイクル260）
 //  2) のんびりの大きな数字：スマホ縦で 1 回なぞって耕したら 0% のままにならない。田んぼアートでは地図の「でき」と同じ数、お題なしでは小数 1 けた
@@ -1285,6 +1285,28 @@ const srv = http.createServer((r, s) => { const u = decodeURIComponent(r.url.spl
         ok('640×360・マウスの 端末（body.touch なし）：1 分 すぎの 吹き出しは 左上の 地図に 重ならない・はみ出さない・はばは 240px まで', m.on && 'artBox' in m.ov && m.ov.artBox === 0 && m.out === 0 && m.box[2] - m.box[0] <= 241, m); }
       const n = r20['320x568'].c;
       ok('320×568：長い 修理の 文は 3 行 以内・案内は 2 行 以内・吹き出しの 下はしは 画面の 上から 35% 以内（直す前 6 行・3 行・下はし 45%。前への 手本の 指には まだ かかる：直す前 3913px² → 約 3000px²）', n.lines[0] <= 3 && n.lines[1] <= 2 && n.box[3] <= 568 * 0.35, n);
+      // サイクル282：吹き出しの 行の 長さを そろえる（text-wrap: balance）。知らせの 文 ぜんぶ（1 の かっこの ある 文＋ toast・say・coach・tell に わたす 文）を 入れて、
+      //       さいごの 行が 1〜2 字 だけの 文の 数と、行の 数（今までの 折り返し＝text-wrap: wrap と くらべる）。直す前（390×844）：47 こ（「ロータリーを下げまし／た」など）
+      const T82 = new Set(); { const re = /'((?:[^'\\\n]|\\.)*)'/g, bal = s => { let d = 0; for (const c of s) { if (c === '（') d++; else if (c === '）' && --d < 0) return false; } return d === 0; }; let m;
+        while ((m = re.exec(src))) { const t = m[1]; if (/[ぁ-ん]/.test(t) && /[（）]/.test(t) && t.length < 500 && bal(t)) T82.add(t); }
+        const re2 = /(?:toast|say|coach|tell|showToast)\(\s*(?:'[a-zA-Z]+',\s*)?'((?:[^'\\\n]|\\.)*)'/g; while ((m = re2.exec(src))) if (/[ぁ-ん]/.test(m[1])) T82.add(m[1]);
+        T82.add('ロータリーを下げました'); }
+      const r82 = {};
+      for (const vp of [[320, 568], [390, 844], [844, 390]]) {
+        const { ctx, p } = await open14('', null, false, vp); await fake14(p);
+        r82[vp.join('x')] = await p.evaluate(texts => { const say = document.getElementById('say'), seen = new Set(), scan = () => { const main = [...say.children].find(c => !c.id && !c.classList.contains('sayCoach')), tn = main && main.firstChild, rg = document.createRange(), tops = [];
+            if (!tn) return null; for (let i = 0; i < tn.length; i++) { if (/\s/.test(tn.data[i])) continue; rg.setStart(tn, i); rg.setEnd(tn, i + 1); const rs = rg.getClientRects(); if (rs.length) tops.push(Math.round(rs[0].top)); }
+            const ls = [...new Set(tops)].sort((a, b) => a - b); return { lines: ls.length, last: tops.filter(t => t === ls[ls.length - 1]).length, w: Math.round(say.getBoundingClientRect().width) }; };
+          let n = 0, short = 0, more = 0, wider = 0, sageta = null; const bad = []; SAY.coach('');
+          for (const raw of texts) { const x = icoWords(speakText(raw)); if (!x || seen.has(x)) continue; seen.add(x); SAY.say(x, 30);
+            say.style.textWrap = 'wrap'; const a = scan(); say.style.textWrap = ''; const c = scan(); if (!a || !c) continue; n++;
+            if (c.lines >= 2 && c.last <= 2) { short++; if (bad.length < 5) bad.push(x); } if (c.lines > a.lines) more++; if (c.w !== a.w) wider++; if (x === 'ロータリーを下げました') sageta = [a.lines, a.last, c.lines, c.last]; }
+          return { n, short, more, wider, sageta, bad, wrap: getComputedStyle(say).textWrap || getComputedStyle(say).textWrapStyle, supports: CSS.supports('text-wrap', 'balance') }; }, [...T82]);
+        await ctx.close();
+      }
+      for (const k in r82) { const r = r82[k];
+        ok(k + '：知らせの 文 ' + r.n + ' こで、さいごの 行が 1〜2 字 だけの 文は 1 こ 以下・行の 数も 吹き出しの はばも 今までの 折り返しと 同じ（直す前 390×844 で 47 こ）', r.supports && r.n > 200 && r.short <= 1 && r.more === 0 && r.wider === 0, r); }
+      ok('390×844：「ロータリーを下げました」は「下げまし／た」に ならない（2 行の まま 6 字・5 字 ほどに わける）', !!r82['390x844'].sageta && r82['390x844'].sageta[2] === r82['390x844'].sageta[0] && r82['390x844'].sageta[3] >= 3, r82['390x844'].sageta);
     }
   }
   ok('エラーなし', errs.length === 0, errs.slice(0, 3));

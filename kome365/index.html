@@ -652,7 +652,7 @@ a{color:var(--acc)}
 #swMark.on{animation:swMarkIn .75s ease-out both}
 @keyframes swMarkIn{0%{opacity:0;transform:scale(.55)}18%{opacity:1;transform:scale(1.08)}30%{transform:scale(1)}72%{opacity:1}100%{opacity:0;transform:scale(1)}}
 @media (prefers-reduced-motion:reduce){#swMark.on{animation:swMarkFade .75s linear both}@keyframes swMarkFade{0%,70%{opacity:1}100%{opacity:0}}}
-#swWhy{position:absolute;left:50%;top:calc(40% + min(29vw,120px) + 10px);transform:translateX(-50%);width:max-content;max-width:88%;z-index:41;pointer-events:none;opacity:0;background:rgba(255,253,247,.94);color:#b4472f;font-size:15px;font-weight:700;line-height:1.4;padding:5px 12px;border-radius:999px;text-align:center;box-shadow:0 2px 8px rgba(60,40,20,.20)}   /* 店主指示 2026-11-08: バツの一言理由。マークの下に浮かせて約2秒で消す。入力はふさがない */
+#swWhy{position:absolute;left:50%;top:calc(40% + min(29vw,120px) + 10px);transform:translateX(-50%);width:max-content;max-width:88%;z-index:41;pointer-events:none;opacity:0;background:rgba(255,253,247,.94);color:#b4472f;font-size:15px;font-weight:700;line-height:1.4;padding:5px 12px;border-radius:999px;text-align:center;text-wrap:balance;box-shadow:0 2px 8px rgba(60,40,20,.20)}   /* 店主指示 2026-11-08: バツの一言理由。マークの下に浮かせて約2秒で消す。入力はふさがない */
 #swWhy.on{animation:swWhyIn 2s ease-out both}
 #swWhy[data-k="ok"]{color:#2e7d32}   /* サイクル177: ○ の わけは 緑(✗ は 今の 赤茶の まま)。場所・2秒・入力を ふさがない のは 同じ */
 @keyframes swWhyIn{0%{opacity:0}10%{opacity:1}76%{opacity:1}100%{opacity:0}}

@@ -1,0 +1,851 @@
+{
+  "round": 74,
+  "status": "final-for-draft-publication",
+  "ready": true,
+  "createdAtUTC": "2026-11-13T09:02:49.112464+00:00",
+  "ownPR": "https://github.com/shota0617/ricepia-judge/pull/1137",
+  "remoteReadOrWritePerformed": false,
+  "intendedTargets": {
+    "pr-body.md": "PR1137本文案。最終数値・公開固定リンクの確定前には反映しない。",
+    "README.append.md": "docs/playtest/kome-why-wrap/README.mdへの追記案。第66周を上書きしない。",
+    "results-round74.json": "第74周用の別結果JSON案。第66周results.jsonを上書きしない。"
+  },
+  "round66Preserved": {
+    "sourceBody": "/workspace/scratch/first-minute/round-66/publication-draft/pr-body.md",
+    "bodySHA256": "c29ca82d16a0dc4d76845acec716ecea20841d500d9e418291fdf47e2bbcc5f2",
+    "priorRemoteDocsCommit": "758dab1e2f28e17a007bcd76568a28b86bf11757",
+    "reconstruction": "Original draft unchanged except four FINAL_DOCS_COMMIT tokens resolved from saved final-readback. Current remote body not fetched.",
+    "oldBodyPresentInNewDraft": true
+  },
+  "baseline": {
+    "head": "f10bb2cf155e5643b41c7e4e3b6a1afca95484ca",
+    "indexSHA256": "c215e5c3b343869f3d7d9605ff90ff444c8261ff077fa899131ca28405aff088"
+  },
+  "primary": {
+    "status": "completed",
+    "actualExit": 1,
+    "viewport": [
+      844,
+      390
+    ],
+    "gestures": 15,
+    "dateAdvancesWithin60": 15,
+    "noRecordedResponse": 0,
+    "sendToDragDOMSeconds": 9.069559424668551,
+    "firstPositiveDOMPlaySeconds": 20.852900097668172,
+    "targetInputPlaySeconds": 55.35207541298866,
+    "targetWhyDOMOnOffPlaySeconds": [
+      56.98330009765923,
+      59.37720009766519
+    ],
+    "targetOriginalProof": false,
+    "consoleFavicon404": 2,
+    "startupWaitDisposition": "operator judgment; no physical display/causal function claim"
+  },
+  "beforeFirst60Reproduction": {
+    "status": "final-audited",
+    "actualExit": 1,
+    "completedAtUTC": "2026-11-13T09:01:38.467455+00:00",
+    "scheduledSlots": 10,
+    "scheduled120ms": 5,
+    "scheduled600ms": 5,
+    "completedAudited": 10,
+    "establishedSlots": [
+      1,
+      4,
+      7
+    ],
+    "unestablishedCompletedSlots": [
+      2,
+      3,
+      5,
+      6,
+      8,
+      9,
+      10
+    ],
+    "finalDenominator": 3,
+    "finalReproduced": 3,
+    "unestablished": 7,
+    "speedGroups": {
+      "120": {
+        "scheduled": 5,
+        "completed": 5,
+        "targetFirst60": 2,
+        "numericallyEligible": 2,
+        "established": 2,
+        "reproduced": 2
+      },
+      "600": {
+        "scheduled": 5,
+        "completed": 5,
+        "targetFirst60": 1,
+        "numericallyEligible": 1,
+        "established": 1,
+        "reproduced": 1
+      }
+    },
+    "totals": {
+      "inputs": 151,
+      "commands": 1208,
+      "ACKs": 1208,
+      "events": 541,
+      "trusted": 541,
+      "dateAdvances": 151,
+      "noRecordedResponse": 0,
+      "initialACKTimeouts": 10,
+      "consoleErrors": 20
+    },
+    "actualChildExits": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "imagesViewed": 43,
+    "replacement": false,
+    "interpretation": "3/3 eligible reproduced among10 fixed attempted slots;7 unestablished are neither non-reproduction nor success."
+  },
+  "red": {
+    "status": "completed",
+    "actualExit": 1,
+    "methods": 1,
+    "derivedSubtests": 425,
+    "failedSubtests": 6,
+    "seconds": 4.295,
+    "testSHA256": "394cca8122981712c9957905eb1157ad3ec36dee55c4ec51b69b32a3a01038b3",
+    "fixtureOnly": true
+  },
+  "layoutBefore": {
+    "status": "completed",
+    "actualExit": 0,
+    "states": 15,
+    "controlMeasurements": 45,
+    "actualSwipes": 5,
+    "centerHitFailures": 0,
+    "numericClipping": 0,
+    "numericViewportOutside": 0,
+    "documentOverflow": 0,
+    "reasonDOMEstablished": 5,
+    "reasonOriginalStrictlyEstablished": 3,
+    "fadedViewport": [
+      844,
+      390
+    ],
+    "absentReasonViewport": [
+      820,
+      1180
+    ],
+    "scope": "General Jan1→Jan2 layout with another reason; not five-size natural reproduction of the target sowing reason."
+  },
+  "unmeasured": {},
+  "limits": [
+    "Round66 supplemental results and round70 after60 originals remain separate from round74 first60.",
+    "Methods/subtests/fixed slots/qualified originals have separate denominators.",
+    "DOM and photo capture brackets do not establish physical display onset or readable duration.",
+    "No actual retention rate or causal performance improvement claim.",
+    "Fullsuite failure is retained;ready means ready to update the draft report, never merge approval.",
+    "Localf8 was tested;remoteafcd has equalcode tree with differenthistory. Documentation-only followup commit was not fullsuite-tested."
+  ],
+  "sourceRecordsAtDraft": {
+    "/workspace/scratch/first-minute/round-66/publication-draft/pr-body.md": {
+      "sha256AtRead": "c29ca82d16a0dc4d76845acec716ecea20841d500d9e418291fdf47e2bbcc5f2",
+      "mutable": false
+    },
+    "/workspace/scratch/first-minute/round-66/publication/final-readback.json": {
+      "sha256AtRead": "ab07a7ecf52e061882f45d12a194e5af33fa9d16fc05a51eecf44e5035a89995",
+      "mutable": false
+    },
+    "/workspace/scratch/first-minute/round-74/review/summary.json": {
+      "sha256AtRead": "964eda6d2e18f7ae13ebd0d90e1a7519f58c6963a450016444ea3659fe1410a9",
+      "mutable": false
+    },
+    "/workspace/scratch/first-minute/round-74/red-audit/summary.json": {
+      "sha256AtRead": "9d2722afadb66259c2e21670eefc21e97221ea2a0298be608c8bdbb5b749f5eb",
+      "mutable": false
+    },
+    "/workspace/scratch/first-minute/round-74/layout-before-audit/summary.json": {
+      "sha256AtRead": "7263180b0466f9e62f8f2235f380ebbf2e72bfed55009a4be72358c111d74ed0",
+      "mutable": false
+    },
+    "/workspace/scratch/first-minute/round-74/first60-before-audit/summary.json": {
+      "sha256AtRead": "4664e0e204d72211ff287f704c5e361fca4960c41c2194f4c11ed92d55501575",
+      "mutable": false
+    },
+    "/workspace/scratch/first-minute/round-74/integration-review/review.json": {
+      "sha256AtRead": "d4c40e9508ec9dcaec10f7d9c27cd0bc365b450ab5b71e996b85e6f0663d3c5a",
+      "mutable": false
+    },
+    "/workspace/scratch/first-minute/round-74/green/execution.json": {
+      "sha256AtRead": "99a24d1f79e7b1f308203a0907c3a6d81510b75dd18c3370e3f903308bca9a45",
+      "mutable": false
+    },
+    "/workspace/scratch/first-minute/round-74/green/test.log": {
+      "sha256AtRead": "7694779c887f2ca429854c4292f68e54f64e2d03f828cdd771cfd4197387f856",
+      "mutable": false
+    },
+    "/workspace/scratch/first-minute/round-74/green/exit-code.txt": {
+      "sha256AtRead": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "mutable": false
+    },
+    "/workspace/ricepia-kome-feedback-wrap/tests/test_kome_why_wrap.py": {
+      "sha256AtRead": "394cca8122981712c9957905eb1157ad3ec36dee55c4ec51b69b32a3a01038b3",
+      "mutable": false
+    },
+    "/workspace/ricepia-kome-feedback-wrap/kome365/index.html": {
+      "sha256AtRead": "27dd3404f6a5afa2382ed7cb23f060fd88bdd2ddba0dd86eb373b35e52e84290",
+      "mutable": false
+    },
+    "/workspace/ricepia-kome-feedback-wrap/kome365/cards.js": {
+      "sha256AtRead": "b15c5b2f56ef9c0c8361fa2fa6a039085919ca516b4a2e6e5a1b3bb691dde744",
+      "mutable": false
+    },
+    "/workspace/scratch/first-minute/round-74/after-primary-review/summary.json": {
+      "sha256AtRead": "7f541ea70aa50b23caa09c3511c8764e3b96b6c07983a31a739032497d0424bc",
+      "mutable": false
+    },
+    "/workspace/scratch/first-minute/round-74/after-primary-execution.json": {
+      "sha256AtRead": "770791f9de1facfcfd7faba2b57c7c18859b5cc51433ce904b080bdc829db51d",
+      "mutable": false
+    },
+    "/workspace/scratch/first-minute/round-74/layout-after-execution.json": {
+      "sha256AtRead": "80bdbbe826bca4416ace991874e30f114ba81757a1cedaec8b0d36bd3daeb7da",
+      "mutable": false
+    },
+    "/workspace/scratch/first-minute/round-74/early-input-audit/audit.json": {
+      "sha256AtRead": "f8565d3be28d448522670654899f38d7b7bca49b9dbf341959c08a623793b511",
+      "mutable": false
+    },
+    "/workspace/scratch/first-minute/round-74/layout-after-audit/summary.json": {
+      "sha256AtRead": "c0d712e34bf6b9250e30781a89cb2c150cc5384af8e8d9ade8e27fe4704110e2",
+      "mutable": false
+    },
+    "/workspace/scratch/first-minute/round-74/first60-after-audit/summary.json": {
+      "sha256AtRead": "669cf8123f695798d7a6871e368d3c2d55484dacab549367a971bfc2136dc9af",
+      "mutable": false
+    },
+    "/workspace/scratch/first-minute/round-74/validation/pytest-execution.json": {
+      "sha256AtRead": "fcb0c3b2e9568bfd5dbf3389fc3a57c8763adaccfa56b9e1cafa6efa923f2a15",
+      "mutable": false
+    },
+    "/workspace/scratch/first-minute/round-74/validation/pytest.log": {
+      "sha256AtRead": "b6fe94a4971280b69606b3ad6039ae9ed0e48557776ea68f678174b6c8da879a",
+      "mutable": false
+    },
+    "/workspace/scratch/first-minute/round-74/validation/independent-unit-summary.json": {
+      "sha256AtRead": "11e8be9862bd74d15d238f0a8d3b0dc0bb54e8ae419bf5d5be9922720a5ca393",
+      "mutable": false
+    },
+    "/workspace/scratch/first-minute/round-74/validation/full-unittest-execution.json": {
+      "sha256AtRead": "5365c1f23e77196c98ad01cc2a156988babb959f6bb1e38c377434a65df47f3f",
+      "mutable": false
+    },
+    "/workspace/scratch/first-minute/round-74/publication/remote-code-objects.json": {
+      "sha256AtRead": "30429e7bc1d5fa367ee03c4c573ecb3462f41f1477eaf3a1689cb47fd18d8f88",
+      "mutable": false
+    }
+  },
+  "updatedAtUTC": "2026-11-13T09:36:51.589593+00:00",
+  "integration": {
+    "head": "f8b958fb12303709f5615e539f517bf367608be0",
+    "tree": "5fb1393ef7e07264b3408704312a593ba8c8f690",
+    "parents": [
+      "57149e59c30ccc5f0861533f5cebc30d068acd63",
+      "f10bb2cf155e5643b41c7e4e3b6a1afca95484ca"
+    ],
+    "findings": [],
+    "onlyProductDeclaration": "kome365/index.html:654 #swWhy text-wrap:balance",
+    "protectedAndOldEvidencePreserved": true
+  },
+  "green": {
+    "status": "completed-and-independently-read",
+    "actualExit": 0,
+    "methods": 1,
+    "passedMethods": 1,
+    "derivedSubtests": 425,
+    "failedSubtests": 0,
+    "seconds": 6.619,
+    "testSHA256": "394cca8122981712c9957905eb1157ad3ec36dee55c4ec51b69b32a3a01038b3",
+    "sameTestAsRED": true,
+    "sourceBefore": {
+      "head": "f8b958fb12303709f5615e539f517bf367608be0",
+      "status": "",
+      "indexSHA256": "27dd3404f6a5afa2382ed7cb23f060fd88bdd2ddba0dd86eb373b35e52e84290"
+    },
+    "sourceAfter": {
+      "head": "f8b958fb12303709f5615e539f517bf367608be0",
+      "status": "",
+      "indexSHA256": "27dd3404f6a5afa2382ed7cb23f060fd88bdd2ddba0dd86eb373b35e52e84290"
+    },
+    "currentSourceReadback": {
+      "head": "f8b958fb12303709f5615e539f517bf367608be0",
+      "tree": "5fb1393ef7e07264b3408704312a593ba8c8f690",
+      "status": "",
+      "indexSHA256": "27dd3404f6a5afa2382ed7cb23f060fd88bdd2ddba0dd86eb373b35e52e84290"
+    },
+    "subtestCountBasis": "84 constant first sentences×5 normal viewports +1 target×5 reduced viewports; inferred from unchanged loop and completed method, not425 separately printed success rows.",
+    "fixtureOnly": true,
+    "noNewTestBrowserOrHTTPForAudit": true
+  },
+  "afterPrimary": {
+    "status": "completed-and-independently-audited",
+    "head": "f8b958fb12303709f5615e539f517bf367608be0",
+    "actualExit": 1,
+    "startedAtUTC": "2026-11-13T09:04:19.121289+00:00",
+    "completedAtUTC": "2026-11-13T09:05:33.002814+00:00",
+    "counts": {
+      "inputs": 14,
+      "commands": 112,
+      "ACKs": 112,
+      "trustedEvents": 42,
+      "eventTypes": {
+        "pointerdown": 14,
+        "pointermove": 14,
+        "pointerup": 14
+      },
+      "dateAdvances": 14,
+      "noRecordedResponse": 0,
+      "positive": 7,
+      "negative": 7,
+      "whyOn": 7,
+      "whyCSSRestoredWithin60": 6,
+      "whyOffNotObservedWithin60": 1,
+      "consoleErrors": 2,
+      "pageErrors": 0,
+      "initialACKTimeouts": 1
+    },
+    "firstFeedback": {
+      "firstSendPlayMs": 249.50404100120068,
+      "firstHandlerPlayMs": 10131.49990233779,
+      "firstDragDOMPlayMs": 10154.79990233481,
+      "sendToDragDOMMs": 9905.295861333609,
+      "firstDateResultMs": 11577.39990234375,
+      "firstDateResultClass": "swipeMode first3 season-wi fxBad",
+      "firstPositiveMs": 27222.39990234375,
+      "firstPositiveDate": "1月6日",
+      "firstTracePaddyPopMs": 27222.39990234375,
+      "sendToFirstPositiveMs": 26972.89586134255,
+      "overlappingLongTasks": [
+        {
+          "startPlayMs": -611.60009765625,
+          "durationMs": 9534,
+          "endPlayMs": 8922.39990234375
+        }
+      ]
+    },
+    "target": {
+      "Jan15CardReached": true,
+      "targetSelected": false,
+      "targetReasonOnObserved": false,
+      "targetPhoto": false
+    },
+    "originalImagesViewed": 4,
+    "photoInterpretation": "play10/play30 are transition empty-card frames, no persistent stop inferred;play60 isJan15 card notselected;capture completesafter60.",
+    "sourceCPUcloseVerified": true,
+    "limits": [
+      "Actualexit1 retained;console404two. Not an all-pass test.",
+      "Single before/after primary timing differs with random choices/host and screenshot delays;no causal speed improvement or regression claim.",
+      "14natural inputs reachedJan15card but did not selectit;no target-wrap regression proof from this primary.",
+      "Lastwhy on58s has no off record inside60;the60sphoto completes afterdeadline and cannot establish earlier restoration timing.",
+      "Two empty-card photos are transition frames;all14actions advanceddate. No persistentfreeze established.",
+      "Initialoperatorstartupwait/protectedengine/3D/whyposition2s unchanged. Physicalfingers/sensors/network/retentionunmeasured.",
+      "Audit onlyreadretainedfiles and4originalimages;no browser/tests/HTTP/product/raw mutations."
+    ]
+  },
+  "afterLayout": {
+    "status": "completed-and-independently-audited",
+    "actualExit": 0,
+    "startedAtUTC": "2026-11-13T09:06:23.919603+00:00",
+    "completedAtUTC": "2026-11-13T09:08:42.961668+00:00",
+    "counts": {
+      "viewports": 5,
+      "layoutStates": 15,
+      "visibleControlMeasurements": 45,
+      "visibleNamedBoxMeasurements": 97,
+      "controlCenterHitFailures": 0,
+      "controlsOutsideViewport": 0,
+      "disabledVisibleControls": 0,
+      "controlRectangularClipping": 0,
+      "visibleNamedBoxRectangularClipping": 0,
+      "documentOverflowStates": 0,
+      "rectangularOverlapRecords": 4,
+      "newOverlapPairs": 0,
+      "removedOverlapPairs": 0,
+      "actualGestures": 5,
+      "dateResponses": 5,
+      "noResponseGestures": 0,
+      "CDPCommands": 40,
+      "acknowledgedCDPCommands": 40,
+      "trustedTouchPointerEvents": 15,
+      "automaticUntrustedClickEventsExcludedFromUserInput": 5,
+      "pointerCancel": 0,
+      "commandsAfterWorkDeadline": 0,
+      "originalPhotosViewedAndHashMatched": 15,
+      "whyDOMMeasurementsEligible": 5,
+      "strictWhyImagesEstablishedExcludingFaded": 4,
+      "strictWhyImagesUnestablished": 1,
+      "consoleErrors": 6,
+      "confirmedFavicon404": 6,
+      "pageErrors": 0,
+      "requestFailures": 0,
+      "externalRequestsBlocked": 0
+    },
+    "originalsViewedByImageAuditor": {
+      "after": 15,
+      "comparisonBeforeWhy": 5
+    },
+    "whyPositionWidthHeightSame": 5,
+    "retainedCSS": {
+      "fontSizePx": 15,
+      "lineHeightPx": 21,
+      "animationSeconds": 2
+    },
+    "strictWhyOriginals": {
+      "before": 3,
+      "after": 4,
+      "scheduledPerPhase": 5,
+      "afterUnestablishedViewport": [
+        820,
+        1180
+      ]
+    },
+    "visibleNamedBoxes": {
+      "before": 96,
+      "after": 97,
+      "meaning": "390why swHand visibility differs at measured phase"
+    },
+    "cardRectMaxDifferencePx": 2.401824951171875,
+    "newFindingsP0toP3": [],
+    "comparisonNotes": [
+      "5つのwhy矩形とfont/lineHeight/padding/pointerEvents/animation名・2秒は前後一致。",
+      "既存swCard×swWhy矩形重なりは320/390/568/844の同じ4組。追加・消失組0。whyはpointer-events:none、card中心hit全true。568原画で理由帯が次カード選択文を覆う事実は前後共通。場所・時間の変更は運営者の判断。",
+      "可視named box96→97は390のwhy時点でswHandが追加可視。390whyのswCard矩形にx−0.7331/y−2.4018/w+1.4662/h+1.4131px差があり、before animations[]、after swIn running150.036ms。測定位相の違いとして残し、CSS回帰や改善を断定しない。",
+      "数値部分は別の確認担当が独立照合。画像15枚と比較用beforewhy5枚はこちらで実見。"
+    ],
+    "limits": [
+      "why DOM成立5/5とwhy写真成立4/5を混ぜない。820×1180は前後とも理由文写真未成立。",
+      "before写真の厳格成立3/5→after4/5は撮影時機・所要時間の差を含む。CSSの可読率向上・表示時間延長の証拠ではない。",
+      "写真取得時間は物理paint時刻ではなく、DOM・写真の同時性や厳密な可視時間を証明しない。",
+      "45 control測定は45実操作ではない。実入力は各サイズ1回、計5回。角丸/マスク等の矩形近似限界あり。",
+      "Jan15理由文の第一分内10反復・全pytest結果・実機の指/センサー/回線・音質はこのレイアウト監査の対象外。実プレイヤー離脱率は未測定。"
+    ]
+  },
+  "primaryTimingComparison": {
+    "beforeSendToDragDOMSeconds": 9.069559424668551,
+    "afterSendToDragDOMSeconds": 9.90529586133361,
+    "beforeFirstPositivePlaySeconds": 20.852900097668172,
+    "afterFirstPositivePlaySeconds": 27.22239990234375,
+    "causalComparison": false,
+    "reason": "One primary per condition with random cards and varying host/capture load; no speed improvement/regression or retention effect established."
+  },
+  "pendingValidation": {},
+  "earlyInputSupplement": {
+    "status": "unestablished",
+    "actualExit": 1,
+    "attempts": 1,
+    "established": 0,
+    "retryOrReplacement": false,
+    "plannedGestures": 2,
+    "actualGestures": 1,
+    "firstGestureCommandsAcknowledged": 8,
+    "secondGestureSent": false,
+    "reason": "Early touchStart deadline passed after visible recheck; no input sent.",
+    "sourceCPUContextBrowserClosedConfirmed": true,
+    "consoleFavicon404": 2,
+    "images": 2,
+    "separateFromJan15First60Reproduction": true,
+    "inference": "No second real gesture means no early-input success/failure or game-no-response judgment."
+  },
+  "plannedPublication": {
+    "existingREADME": "docs/playtest/kome-why-wrap/README.md",
+    "additionalFiles": [
+      "results-round74.json",
+      "before-first60.png",
+      "after-first60.png"
+    ],
+    "photoCandidates": [
+      {
+        "phase": "before",
+        "file": "/workspace/scratch/first-minute/round-74/first60-before-repro/trial-04-600ms/strict/target-why.png",
+        "sha256": "c46fa595145d0d141adce31df0bd4c6ecd16c77eda45ada40863d0f6c6707051",
+        "durationMs": 600,
+        "publicationName": "before-first60.png"
+      },
+      {
+        "phase": "after",
+        "file": "/workspace/scratch/first-minute/round-74/first60-after-repro/trial-02-600ms/strict/target-why.png",
+        "sha256": "4399a32b87857595f188d94980791b976f0122926b6e828d97662bb6df6139a0",
+        "durationMs": 600,
+        "publicationName": "after-first60.png"
+      }
+    ],
+    "candidateAfterPhotoReview": "Final after audit establishes trial2 within first60;root and reproduction auditor viewed full target14+13.",
+    "published": false,
+    "publishedRemoteHeadRequiredInThisJSON": false,
+    "meaning": "Frozen content for root draft-PR update. Remote branch/PR publication is performed separately;this file has no self-referential final documentation commitSHA."
+  },
+  "operatorJudgment": [
+    "Initial long wait associated with startup conditions; protected3D/engine source cause not established or changed.",
+    "Existing568×320 why band covers part of next-card choice text; why position and2s are protected, no move.",
+    "Guide0.3s, fast-swipe/tap rule,30s card, audio, scarecrow/sun andprotected3files remain unchanged."
+  ],
+  "afterFirst60Reproduction": {
+    "status": "final-audited",
+    "actualExit": 1,
+    "completedAtUTC": "2026-11-13T09:22:39.421221+00:00",
+    "scheduledSlots": 10,
+    "scheduled120ms": 5,
+    "scheduled600ms": 5,
+    "completedAudited": 10,
+    "establishedSlots": [
+      2,
+      3,
+      8
+    ],
+    "unestablishedSlots": [
+      1,
+      4,
+      5,
+      6,
+      7,
+      9,
+      10
+    ],
+    "finalDenominator": 3,
+    "finalReproduced": 0,
+    "unestablished": 7,
+    "speedGroups": {
+      "120": {
+        "scheduled": 5,
+        "completed": 5,
+        "targetFirst60": 2,
+        "numericallyEligible": 1,
+        "established": 1,
+        "reproduced": 0
+      },
+      "600": {
+        "scheduled": 5,
+        "completed": 5,
+        "targetFirst60": 3,
+        "numericallyEligible": 2,
+        "established": 2,
+        "reproduced": 0
+      }
+    },
+    "totals": {
+      "inputs": 154,
+      "commands": 1232,
+      "ACKs": 1232,
+      "events": 573,
+      "trusted": 573,
+      "dateAdvances": 154,
+      "noRecordedResponse": 0,
+      "initialACKTimeouts": 10,
+      "consoleErrors": 20
+    },
+    "actualChildExits": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "imagesViewed": 44,
+    "whyEpisodes": 95,
+    "whyCSSRestoredInside60": 91,
+    "whyOffNotObservedInside60": 4,
+    "slotClassifications": [
+      {
+        "slot": 1,
+        "durationMs": 120,
+        "established": false,
+        "reproduced": false,
+        "classification": "1/15右が畦の草を見るで対象を選ばず",
+        "targetSendPlayMs": null,
+        "targetFirstWhyPlayMs": null,
+        "photoBounds": null
+      },
+      {
+        "slot": 2,
+        "durationMs": 600,
+        "established": true,
+        "reproduced": false,
+        "classification": "成立・最終字孤立なし",
+        "targetSendPlayMs": 54486.43990799785,
+        "targetFirstWhyPlayMs": 56113.800048828125,
+        "photoBounds": {
+          "requested": {
+            "mono": 72224012.18264,
+            "epoch": 1794561164498
+          },
+          "completed": {
+            "mono": 72224948.131922,
+            "epoch": 1794561165434
+          },
+          "error": null
+        }
+      },
+      {
+        "slot": 3,
+        "durationMs": 120,
+        "established": true,
+        "reproduced": false,
+        "classification": "成立・最終字孤立なし",
+        "targetSendPlayMs": 51844.519354999065,
+        "targetFirstWhyPlayMs": 53003.2001953125,
+        "photoBounds": {
+          "requested": {
+            "mono": 72293764.824186,
+            "epoch": 1794561234251
+          },
+          "completed": {
+            "mono": 72294734.945571,
+            "epoch": 1794561235221
+          },
+          "error": null
+        }
+      },
+      {
+        "slot": 4,
+        "durationMs": 600,
+        "established": false,
+        "reproduced": false,
+        "classification": "1/15右が畦の草を見るで対象を選ばず",
+        "targetSendPlayMs": null,
+        "targetFirstWhyPlayMs": null,
+        "photoBounds": null
+      },
+      {
+        "slot": 5,
+        "durationMs": 120,
+        "established": false,
+        "reproduced": false,
+        "classification": "1/15右が畦の草を見るで対象を選ばず",
+        "targetSendPlayMs": null,
+        "targetFirstWhyPlayMs": null,
+        "photoBounds": null
+      },
+      {
+        "slot": 6,
+        "durationMs": 600,
+        "established": false,
+        "reproduced": false,
+        "classification": "対象入力・理由DOMあり、撮影/前後Range/可読性の成立条件を満たさず",
+        "targetSendPlayMs": 55448.6599150002,
+        "targetFirstWhyPlayMs": 57557.699951171875,
+        "photoBounds": {
+          "requested": {
+            "mono": 72517280.55549,
+            "epoch": 1794561457767
+          },
+          "completed": {
+            "mono": 72518802.947995,
+            "epoch": 1794561459289
+          },
+          "error": null
+        }
+      },
+      {
+        "slot": 7,
+        "durationMs": 120,
+        "established": false,
+        "reproduced": false,
+        "classification": "1/15カード表示まで・そのカード入力なし",
+        "targetSendPlayMs": null,
+        "targetFirstWhyPlayMs": null,
+        "photoBounds": null
+      },
+      {
+        "slot": 8,
+        "durationMs": 600,
+        "established": true,
+        "reproduced": false,
+        "classification": "成立・最終字孤立なし",
+        "targetSendPlayMs": 55544.14900499582,
+        "targetFirstWhyPlayMs": 57228.800048828125,
+        "photoBounds": {
+          "requested": {
+            "mono": 72663398.653319,
+            "epoch": 1794561603885
+          },
+          "completed": {
+            "mono": 72664610.764166,
+            "epoch": 1794561605097
+          },
+          "error": null
+        }
+      },
+      {
+        "slot": 9,
+        "durationMs": 120,
+        "established": false,
+        "reproduced": false,
+        "classification": "対象入力・理由DOMあり、撮影/前後Range/可読性の成立条件を満たさず",
+        "targetSendPlayMs": 56708.28245198727,
+        "targetFirstWhyPlayMs": 59701.0,
+        "photoBounds": null
+      },
+      {
+        "slot": 10,
+        "durationMs": 600,
+        "established": false,
+        "reproduced": false,
+        "classification": "1/15カード表示まで・そのカード入力なし",
+        "targetSendPlayMs": null,
+        "targetFirstWhyPlayMs": null,
+        "photoBounds": null
+      }
+    ],
+    "replacement": false,
+    "limits": [
+      "Finalization follows parent actual-exit notification; all ten fixed slots completed.",
+      "No target-trial replacement, seed/state changes, browser/tests/HTTP/product/raw writes by audit.",
+      "Unestablished slots are not counted as non-reproduction.",
+      "Endpoints and saved pixels do not prove every intervening physical frame or the actual display duration.",
+      "Initial waiting and protected engine/3D, why position and two-second rule remain operator constraints.",
+      "No real-device fingers, sensor, connection-speed or actual retention measurement."
+    ]
+  },
+  "first60Comparison": {
+    "beforeSummarySHA256": "4664e0e204d72211ff287f704c5e361fca4960c41c2194f4c11ed92d55501575",
+    "before": {
+      "fixedSlots": 10,
+      "established": 3,
+      "reproduced": 3,
+      "unestablished": 7,
+      "speedGroups": {
+        "120": {
+          "scheduled": 5,
+          "completed": 5,
+          "targetFirst60": 2,
+          "numericallyEligible": 2,
+          "established": 2,
+          "reproduced": 2
+        },
+        "600": {
+          "scheduled": 5,
+          "completed": 5,
+          "targetFirst60": 1,
+          "numericallyEligible": 1,
+          "established": 1,
+          "reproduced": 1
+        }
+      }
+    },
+    "after": {
+      "fixedSlots": 10,
+      "established": 3,
+      "reproduced": 0,
+      "unestablished": 7,
+      "speedGroups": {
+        "120": {
+          "scheduled": 5,
+          "completed": 5,
+          "targetFirst60": 2,
+          "numericallyEligible": 1,
+          "established": 1,
+          "reproduced": 0
+        },
+        "600": {
+          "scheduled": 5,
+          "completed": 5,
+          "targetFirst60": 3,
+          "numericallyEligible": 2,
+          "established": 2,
+          "reproduced": 0
+        }
+      }
+    },
+    "interpretation": "Same exact text, viewport, timing definitions, observer and eligibility criteria; only eligible target evidence is compared. Natural random labels, progress and unestablished slot composition differ; both unestablished totals are7. No timing, real-finger speed or retention causal claim.",
+    "wordingCorrection": "The frozen source summary says counts differ, but its numbers show7before/7after. This derived publication wording corrects composition only; source evidence is unchanged."
+  },
+  "pytest": {
+    "status": "unavailable-command-attempt-recorded",
+    "actualExit": 127,
+    "command": [
+      "pytest",
+      "tests/"
+    ],
+    "stderr": "bash: line 1: pytest: command not found",
+    "testBodyExecuted": false,
+    "sourceUnchanged": true,
+    "cloneUnchanged": true,
+    "head": "f8b958fb12303709f5615e539f517bf367608be0",
+    "logSHA256": "b6fe94a4971280b69606b3ad6039ae9ed0e48557776ea68f678174b6c8da879a"
+  },
+  "references": {
+    "CSS": "kome365/index.html:654",
+    "testMethod": "tests/test_kome_why_wrap.py:128",
+    "testFailureAssert": "tests/test_kome_why_wrap.py:182",
+    "existingTargetText": "kome365/cards.js:463 (kou_2), also existing identical reasons",
+    "newAgriculturalExplanationAdded": false
+  },
+  "readyForDraftPublication": true,
+  "readyForMerge": false,
+  "testedLocalHead": "f8b958fb12303709f5615e539f517bf367608be0",
+  "remoteCodeCommit": "afcd4b64af98aa62640b65cd09e266c437d5c95b",
+  "codeTree": "5fb1393ef7e07264b3408704312a593ba8c8f690",
+  "sameCodeTreeDifferentHistory": true,
+  "fullUnittest": {
+    "status": "completed-and-independently-audited",
+    "actualExit": 1,
+    "command": [
+      "python3",
+      "-m",
+      "unittest",
+      "discover",
+      "-s",
+      "tests",
+      "-v"
+    ],
+    "head": "f8b958fb12303709f5615e539f517bf367608be0",
+    "tree": "5fb1393ef7e07264b3408704312a593ba8c8f690",
+    "methods": 2553,
+    "methodClasses": 543,
+    "ok": 2483,
+    "fail": 68,
+    "error": 1,
+    "skip": 1,
+    "seconds": 453.322,
+    "classFixtureEvents": 0,
+    "moduleFixtureEvents": 0,
+    "newWhyExplicitOK": 1,
+    "existingKomeExplicitOK": 83,
+    "existingBrowserObservationAssertionMethods": 23,
+    "includingNewCSSFixtureObservationAssertionMethods": 24,
+    "browserCountingLimit": "Shared fixtures: these are assertion methods, not browser launches or independent scenarios. Existing harness uses no3d/FakeAudioContext; newwhy isCSS-only; neither substitutes for real3D first60 or audible quality.",
+    "failureClassifications": {
+      "tractor progress regex match is None before group access": 1,
+      "literal tractor progress string assertion": 1,
+      "changed-file allowlist assertion": 65,
+      "literal pixel export string assertion": 2
+    },
+    "sameFailureNamesKindsExceptionTypesOrderAs69": true,
+    "matchingFailureNamesDoNotEstablishCauseOrPass": true,
+    "skipReason": "設計書がこの環境に無い",
+    "sourceCloneBeforeAfterCurrentVerified": true,
+    "trackedTestFiles": 304,
+    "sourceAndTestHashesPerTree": 310,
+    "logSHA256": "e9c2e4a775e37188bd5b8650d20239fdeaed1696515e7aefa2841abaad651133",
+    "executionSHA256": "5365c1f23e77196c98ad01cc2a156988babb959f6bb1e38c377434a65df47f3f",
+    "independentAuditSHA256": "11e8be9862bd74d15d238f0a8d3b0dc0bb54e8ae419bf5d5be9922720a5ca393",
+    "testedAfterDocumentationCommit": false
+  },
+  "mergeHold": {
+    "held": true,
+    "reason": "Full unittest exits1 with68failures/1error;pytest executable unavailable.",
+    "skillURL": "https://github.com/shota0617/ricepia-judge/blob/f10bb2cf155e5643b41c7e4e3b6a1afca95484ca/.claude/skills/ricepia-flow/SKILL.md#L212",
+    "quotedInstruction": "Codex の 指摘が のこっている・テストが 落ちている・運営者の 判断が いる 変更は、マージせずに 伝える"
+  }
+}

@@ -1,0 +1,603 @@
+{
+ "schemaVersion": 1,
+ "round": 66,
+ "preparedAtUTC": "2026-11-13T05:14:23.762896+00:00",
+ "status": "All planned runtime verification completed; pytest unavailable and full unittest failed; draft only, no merge",
+ "overallFirstMinuteImprovementEstablished": false,
+ "actualRetentionMeasured": false,
+ "source": {
+  "base": "dc1c9d2ee78fc8edf2e693e44f6117de23aab177",
+  "codeCommit": "a7ef8a11a58e1ca844564b5feba1a0889b2a3a73",
+  "beforeIndexSHA": "e02efe576b185b204e01dd1d6e8af74de59d97e8bccd2c3b38faca219a8d096b",
+  "afterIndexSHA": "afbce9be45868dcb9c918ef4c6066919de7c03b20db2c8cf4dda754b781500f2",
+  "newTestSHA": "394cca8122981712c9957905eb1157ad3ec36dee55c4ec51b69b32a3a01038b3",
+  "protectedAndVendor": {
+   "kome365/engine.js": {
+    "sha256": "c3d0cef6bb108d5b6d8fe38aaf0c08fe7994bdab08bf92775865a6e0222469a3",
+    "byteIdenticalToBase": true
+   },
+   "kome365/field3d.js": {
+    "sha256": "a5c1dad91d5c0c326f1394fad9c5d04e7e3b8d13e3a2b8b1757c7aa08d3558ff",
+    "byteIdenticalToBase": true
+   },
+   "kome365/cards.js": {
+    "sha256": "b15c5b2f56ef9c0c8361fa2fa6a039085919ca516b4a2e6e5a1b3bb691dde744",
+    "byteIdenticalToBase": true
+   },
+   "kome365/vendor/three.min.js": {
+    "sha256": "9274bbcec8d96168626c732b5d31c775aa8cfb7eaa0599bec0c175908a2c1ce2",
+    "byteIdenticalToBase": true
+   }
+  }
+ },
+ "change": {
+  "file": "kome365/index.html:639",
+  "declaration": "text-wrap:balance",
+  "productionScope": "One declaration. Removing it restores baseline index.html byte-for-byte.",
+  "newTest": "tests/test_kome_why_wrap.py:128",
+  "regressionAssertion": "tests/test_kome_why_wrap.py:182",
+  "unchanged": {
+   "otherIndexBytes": true,
+   "protectedFiles": true,
+   "existingTests": true,
+   "positionAndDimensionsDeclarations": true,
+   "normalAndReduced2sAnimations": true,
+   "nextTouchEarlyClear400ms": true
+  }
+ },
+ "conditions": {
+  "primary": {
+   "viewport": [
+    844,
+    390
+   ],
+   "cpu": 1,
+   "isMobile": true,
+   "hasTouch": true,
+   "requestedGestureMs": 120,
+   "observationSeconds": 10,
+   "playSeconds": 60
+  },
+  "supplementaryReproduction": {
+   "viewport": [
+    844,
+    390
+   ],
+   "cpu": 1,
+   "isMobile": true,
+   "hasTouch": true,
+   "freshContexts": 10,
+   "gestureMsAlternating": [
+    120,
+    600
+   ],
+   "trialsPerSpeed": 5,
+   "naturalPath": "14 accepted visible-card swipes from Jan1; on Jan15 七十二候 choose visible 種をまく side; do not force seed/state/date.",
+   "observationSeconds": 10,
+   "firstMinuteClaim": false
+  },
+  "assets": "Existing localThree128/Field3D and audio remain enabled. Localhost-only routing; no external requests allowed."
+ },
+ "primaryBefore": {
+  "actualExitCode": 1,
+  "sourceCommit": "dc1c9d2ee78fc8edf2e693e44f6117de23aab177",
+  "viewport": {
+   "width": 844,
+   "height": 390
+  },
+  "counts": {
+   "gestures": 15,
+   "domResponsesWithin60s": 15,
+   "dateAdvancesWithin60s": 15,
+   "domUnresponsiveWithin60s": 0,
+   "finalDateWithin60s": "1月16日",
+   "finalDateFirstObservedPlayMs": 59765.4,
+   "sentCommands": 120,
+   "trustedEvents": 45,
+   "lateCommands": 0,
+   "lateCleanup": 0,
+   "ackWaitTimeouts": 1,
+   "allEventuallyAcknowledged": true
+  },
+  "firstInput": {
+   "sentPlayMs": 249.904,
+   "domResponsePlayMs": 7690.3,
+   "sendToDomMs": 7440.396,
+   "handlerToDomMs": 4.0,
+   "firstPositiveFootprintPlayMs": 8063.5,
+   "sendToFirstPositiveFootprintMs": 7813.596,
+   "ackWaitTimedOut": true,
+   "eventuallyAcknowledged": true
+  },
+  "subsequentSendToDomMs": {
+   "n": 14,
+   "min": 625.321,
+   "median": 926.591,
+   "max": 1228.721
+  },
+  "photoLimit": "Observation photo requested just before play0 but completed aroundplay7.582s; exact10s no-input pixels are not established.",
+  "errors": {
+   "console404": 2,
+   "observedResource": "http://localhost:8000/favicon.ico",
+   "pageErrors": 0,
+   "blockedExternalRequests": 0
+  },
+  "gates": {
+   "sourceFiveBeforeHTTPAfter": true,
+   "cpuSetupAndReset": true,
+   "browserClose": true,
+   "realThree128AndField3D": true,
+   "audioOn": true
+  },
+  "targetPhoto": "play60 shows last character alone; one observation, not ten-repro numerator"
+ },
+ "primaryAfter": {
+  "status": "complete; independent aggregation verified",
+  "actualExitCode": 1,
+  "sourceCommit": "a7ef8a11a58e1ca844564b5feba1a0889b2a3a73",
+  "counts": {
+   "gestures": 16,
+   "domResponsesWithin60s": 16,
+   "dateAdvancesWithin60s": 15,
+   "domUnresponsiveWithin60s": 0,
+   "finalDateWithin60s": "1月16日",
+   "sentCommands": 128,
+   "trustedEvents": 48,
+   "lateCommands": 0,
+   "lateCleanup": 0,
+   "ackWaitTimeouts": 1,
+   "allEventuallyAcknowledged": true
+  },
+  "firstInput": {
+   "sentPlayMs": 249.137,
+   "sendToDomMs": 7056.963,
+   "handlerToDomMs": 5.7,
+   "firstPositiveFootprintPlayMs": 7796.4,
+   "sendToFirstPositiveFootprintMs": 7547.263
+  },
+  "subsequentSendToDomMedianMs": 858.841,
+  "postTraceObservation": {
+   "traceStoppedPlayMs": 60059.6,
+   "traceFinalDate": "1月16日",
+   "laterExtraDate": "1月17日",
+   "laterDateDiffers": true,
+   "exactLaterAdvanceTimeRecorded": false,
+   "scope": "Date-advance counts use recorded UI rows through trace stop only. The subsequent extra read has no dedicated timestamp and cannot be counted as a within60s or timed trace advance."
+  },
+  "photos": {
+   "actuallyViewed": 4,
+   "targetWhyPresent": false,
+   "play60": "Translucent blank card in this frame; no sustained freeze or regression established",
+   "observationCaptureDelaySeconds": 7.717
+  },
+  "errors": {
+   "console404": 2,
+   "pageErrors": 0,
+   "inputErrors": 0,
+   "blockedExternalRequests": 0
+  },
+  "allSourceFiveCpuCloseReal3dAudioGates": true,
+  "comparisonCausal": false
+ },
+ "supplementaryBefore": {
+  "actualExit": 0,
+  "sourceHead": "dc1c9d2ee78fc8edf2e693e44f6117de23aab177",
+  "trials": 10,
+  "speedResults": {
+   "120": {
+    "planned": 5,
+    "completedReports": 5,
+    "confirmedReproduced": 5,
+    "confirmedNotReproduced": 0,
+    "unestablished": 0,
+    "pendingImageReview": 0
+   },
+   "600": {
+    "planned": 5,
+    "completedReports": 5,
+    "confirmedReproduced": 5,
+    "confirmedNotReproduced": 0,
+    "unestablished": 0,
+    "pendingImageReview": 0
+   }
+  },
+  "confirmedReproduced": 10,
+  "confirmedNotReproduced": 0,
+  "unestablished": 0,
+  "unstarted": 0,
+  "replacements": 0,
+  "input": {
+   "gestures": 150,
+   "CDPCommands": 1200,
+   "trustedDowns": 150,
+   "trustedUps": 150,
+   "pointerMoves": 226,
+   "trustedTotal": 526,
+   "targetDirectionCounts": {
+    "right": 7,
+    "left": 3
+   },
+   "untrustedClickEvents": 10,
+   "untrustedClickNote": "10 startup bStart.click() events from index:4078, excluded from CDP/trusted counts"
+  },
+  "timing": {
+   "targetInputPlayMs": {
+    "min": 65430.29121800512,
+    "max": 75863.4477769956
+   },
+   "targetReadablePlayMs": {
+    "min": 67515.7001953125,
+    "max": 77992.39990234375
+   },
+   "targetWithinSupplementaryFirst60s": 0,
+   "targetCaptureMs": {
+    "min": 997.904918000102,
+    "max": 1178.154627993703
+   },
+   "captureCompletedBeforeFirstNonPositiveSample": 10
+  },
+  "geometry": {
+   "characters": 27,
+   "lineCharacterCounts": [
+    26,
+    1
+   ],
+   "lastLine": "す",
+   "identical10Snapshots": true,
+   "rect": {
+    "x": 210.8046875,
+    "y": 286,
+    "width": 422.390625,
+    "height": 52
+   },
+   "css": {
+    "fontSize": "15px",
+    "lineHeight": "21px",
+    "padding": "5px 12px",
+    "textWrap": "wrap",
+    "pointerEvents": "none",
+    "animationName": "swWhyIn",
+    "animationDuration": "2s"
+   }
+  },
+  "errors": {
+   "console404": 11,
+   "consoleLocation": "http://localhost:8000/favicon.ico",
+   "pageErrors": 0,
+   "blockedExternalRequests": 0,
+   "response404Events": 0
+  }
+ },
+ "supplementaryAfter": {
+  "status": "complete; independently audited",
+  "actualExit": 0,
+  "sourceHead": "a7ef8a11a58e1ca844564b5feba1a0889b2a3a73",
+  "established": 10,
+  "confirmedReproduced": 0,
+  "confirmedNotReproduced": 10,
+  "unestablished": 0,
+  "speedResults": {
+   "120": {
+    "planned": 5,
+    "established": 5,
+    "orphan": 0
+   },
+   "600": {
+    "planned": 5,
+    "established": 5,
+    "orphan": 0
+   }
+  },
+  "geometry": {
+   "characters": 27,
+   "lineCharacterCountsAll10": [
+    14,
+    13
+   ],
+   "rect": {
+    "x": 210.8046875,
+    "y": 286,
+    "width": 422.390625,
+    "height": 52
+   },
+   "sameTextAndRectAll10": true,
+   "computedCSSChangesOnlyWrap": true,
+   "cssDurationSeconds": 2,
+   "animationEndElapsedSeconds": [
+    2
+   ]
+  },
+  "timing": {
+   "targetInputPlayMs": {
+    "min": 67881.84686300159,
+    "max": 78398.88729599863
+   },
+   "targetReadablePlayMs": {
+    "min": 69793.60009765625,
+    "max": 81269
+   },
+   "withinSupplementaryFirst60s": 0,
+   "captureMs": {
+    "min": 1096.097590006888,
+    "max": 1400.7889530062675
+   }
+  },
+  "input": {
+   "gestures": 150,
+   "CDPCommands": 1200,
+   "trustedEvents": 526,
+   "startupUntrustedClicksExcluded": 10,
+   "targetDirections": {
+    "right": 4,
+    "left": 6
+   }
+  },
+  "errors": {
+   "console404": 11,
+   "location": "http://localhost:8000/favicon.ico",
+   "pageErrors": 0,
+   "blockedExternalRequests": 0
+  },
+  "evidence": {
+   "originalTargetPhotosActuallyViewed": 20,
+   "originalPhotoSHAsChecked": 30,
+   "allSourceFiveAndHTTPGates": true,
+   "allCpuResetAndContextClose": true,
+   "browserClosed": true,
+   "invalidTrialsReplaced": false,
+   "independentNumericSummaryCrosscheck": true
+  }
+ },
+ "layoutBefore": {
+  "v1": {
+   "actualExit": 0,
+   "browserCloseAcknowledged": true,
+   "preflightAndPostflightSourceMatch": true,
+   "numericViewportsEstablished": 5,
+   "numericStatesEstablished": 15,
+   "originalsActuallyViewed": 15,
+   "readableVisualStatesEstablished": 14,
+   "readableWhyPhotos": 4,
+   "controlsMeasured": 45,
+   "controlCenterMisses": 0,
+   "controlsOutsideViewport": 0,
+   "disabledControls": 0,
+   "consoleErrors": 6,
+   "pageErrors": 0
+  },
+  "v2_820": {
+   "actualExit": 0,
+   "browserCloseAcknowledged": true,
+   "preflightAndPostflightSourceMatch": true,
+   "numericViewportsEstablished": 1,
+   "numericStatesEstablished": 3,
+   "originalsActuallyViewed": 3,
+   "readableVisualStatesEstablished": 2,
+   "readableWhyPhotos": 0,
+   "controlsMeasured": 9,
+   "controlCenterMisses": 0,
+   "controlsOutsideViewport": 0,
+   "disabledControls": 0,
+   "consoleErrors": 2,
+   "pageErrors": 0
+  },
+  "v1WhyPhotoStatus": {
+   "320x568": "readable",
+   "390x844": "readable",
+   "568x320": "readable",
+   "844x390": "readable",
+   "820x1180": "faded; unestablished"
+  },
+  "v2WhyPhotoStatus": "faded; unestablished; originalv1 retained; no further retakes",
+  "comparisonWarning": "Only before measurements. Numeric15states/45controls do not imply all5 why photos established; v2 is separate3states/9controls."
+ },
+ "layoutAfter": {
+  "status": "complete; paired comparison independently verified",
+  "actualExitBeforeAfter": [
+   0,
+   0
+  ],
+  "numericStatesBeforeAfter": [
+   15,
+   15
+  ],
+  "controlsBeforeAfter": [
+   45,
+   45
+  ],
+  "allWhyRectsEqual": true,
+  "originalsActuallyViewed": 30,
+  "pairedReadablePhases": 14,
+  "unestablishedWhyPair": [
+   820,
+   1180
+  ],
+  "beforeV2NotUsedToReplaceV1": true,
+  "stableInitialNextControlRectChanges": 0,
+  "transientWhyControlRectChanges": 3,
+  "transientMaxPositionDeltaPxApprox": 2.15,
+  "newIssues": {
+   "newCenterMisses": 0,
+   "newDisabled": 0,
+   "newClippedControls": 0,
+   "newOutsideViewport": 0,
+   "newOverlapPairs": 0,
+   "maxScrollOffsetDelta": 0,
+   "newVisualIssuesInEstablishedPairs": 0
+  },
+  "consoleErrorsBeforeAfter": [
+   6,
+   6
+  ],
+  "pageErrorsBeforeAfter": [
+   0,
+   0
+  ],
+  "homeSoundFunctionalActivationTested": false
+ },
+ "tests": {
+  "red": {
+   "actualExit": 1,
+   "methodsRun": 1,
+   "subtestCases": 425,
+   "failedSubtests": 6,
+   "seconds": 4.06,
+   "head": "dc1c9d2ee78fc8edf2e693e44f6117de23aab177",
+   "productSHA": "e02efe576b185b204e01dd1d6e8af74de59d97e8bccd2c3b38faca219a8d096b",
+   "testSHA": "394cca8122981712c9957905eb1157ad3ec36dee55c4ec51b69b32a3a01038b3",
+   "logSHA": "7d3c815568f4f9cb6338869d782b385ee9de6cf9becb82d93ec800f709152277"
+  },
+  "green": {
+   "actualExit": 0,
+   "methodsRun": 1,
+   "subtestCases": 425,
+   "seconds": 4.176,
+   "executionSource": {
+    "head": "dc1c9d2ee78fc8edf2e693e44f6117de23aab177",
+    "changes": [
+     "M kome365/index.html",
+     "?? tests/test_kome_why_wrap.py"
+    ],
+    "indexSHA": "afbce9be45868dcb9c918ef4c6066919de7c03b20db2c8cf4dda754b781500f2",
+    "testSHA": "394cca8122981712c9957905eb1157ad3ec36dee55c4ec51b69b32a3a01038b3"
+   },
+   "laterCommittedIdenticalBytes": "a7ef8a11a58e1ca844564b5feba1a0889b2a3a73",
+   "logSHA": "7c9ebb72f37881c307780fc85ba71702a37493697f68e621b5eba05397a948fd",
+   "sourceAttestation": "Retrospective actualroot command sequence: dc1dirty2 before a7 commit. Original combined proof preserved separately."
+  },
+  "pytest": {
+   "command": "pytest tests/",
+   "actualExit": 127,
+   "stderr": "/bin/bash: line 2: pytest: command not found",
+   "testBodyExecuted": false
+  },
+  "fullUnittest": {
+   "status": "complete; failed",
+   "actualExit": 1,
+   "command": "NODE_OPTIONS=--require=/workspace/scratch/first-minute/offline.cjs NODE_PATH=/workspace/ricepia-judge/node_modules CHROMIUM=/usr/bin/chromium python3 -m unittest discover -s tests -v",
+   "cwd": "/workspace/scratch/first-minute/round-66/validation/committed-checkout",
+   "head": "a7ef8a11a58e1ca844564b5feba1a0889b2a3a73",
+   "testsRun": 2542,
+   "seconds": 346.183,
+   "counts": {
+    "ok": 2472,
+    "FAIL": 68,
+    "ERROR": 1,
+    "skipped": 1
+   },
+   "classFixtureSkips": 0,
+   "unclassified": 0,
+   "newWhyMethodOK": true,
+   "existingKomeBrowserMethodsOK": 16,
+   "failureErrorNamesKindsOrderMatch65And57": true,
+   "causesProvenSame": false,
+   "skip": "ruler design file absent",
+   "methodCountDifference": "Compared with65: currentbase lacks4unmerged Nishio methods and adds1why method. dc1→a7 only modifies index and addswhy test; no existing test deleted.",
+   "logSHA256": "800412c2e0c92a87d6838e699f8e2dbe8dfa7ebb160717f0e2d61e5d5975f86f",
+   "failureHeadingsLocal": "validation/full-unittest-independent-failure-headings.json"
+  },
+  "regressionScope": {
+   "methods": 1,
+   "normalFiveSizeCorpusCases": 420,
+   "reducedMotionTargetCases": 5,
+   "totalSubtests": 425,
+   "constantReasonSentences": 84,
+   "dynamicReasonsExhaustive": false,
+   "fixture": "ActualCSS minimal ancestors; no fullgame/input/3D/audio",
+   "control": "SameCSS normalwrap; otherbytes audited separately",
+   "timingLimit": "Computed2s only; nexttouch earlyclear unchanged"
+  },
+  "implementationReview": {
+   "unresolvedP0toP3": 0,
+   "readOnly": true,
+   "testSourceMatchesReviewedScratch": true
+  },
+  "regressionCommand": "NODE_PATH=/workspace/ricepia-judge/node_modules CHROMIUM=/usr/bin/chromium python3 tests/test_kome_why_wrap.py"
+ },
+ "images": {
+  "before.png": {
+   "relativeFile": "before.png",
+   "sourceLocal": "repro/evidence/trial-01/target-after.png",
+   "sha256": "8e291ebbfa20ec23d0971ac253d0f5b444b64455456a9966a8dd01d025d8e380",
+   "trial": 1,
+   "requestedGestureMs": 120,
+   "sameVisibleTrigger": "Jan15 七十二候 → 種をまく",
+   "afterSeriesFinalized": null,
+   "directlyViewedByDocumentAuthor": true
+  },
+  "after.png": {
+   "relativeFile": "after.png",
+   "sourceLocal": "after-repro/evidence/trial-01/target-after.png",
+   "sha256": "6fbff510d5b141959b7d6085000e5fc4519e619f257b37e3f5074982716fa13e",
+   "trial": 1,
+   "requestedGestureMs": 120,
+   "sameVisibleTrigger": "Jan15 七十二候 → 種をまく",
+   "afterSeriesFinalized": true,
+   "directlyViewedByDocumentAuthor": true
+  }
+ },
+ "imageComparisonLimit": "Both are trial1 after the same visible trigger, not identical seeds or capture instants. The Jan16 following card/title and animation phase differ. These are unmodified originals, not a full-frame pixel-diff proof.",
+ "operatorJudgment": [
+  {
+   "candidate": "Shorten first-input wait by altering3D startup",
+   "locations": [
+    "kome365/README.md:848",
+    "kome365/README.md:851",
+    "kome365/README.md:853"
+   ],
+   "changed": false
+  },
+  {
+   "candidate": "Move/resize/extend wrong-reason bubble or stop next-touch early clear",
+   "locations": [
+    "AGENTS.md:28",
+    "kome365/README.md:757",
+    "kome365/README.md:856",
+    "kome365/index.html:4003"
+   ],
+   "changed": false
+  }
+ ],
+ "limits": [
+  "Physical display,real fingers,tilt sensors,network speed and actual retention are not verified.",
+  "No claim that CSS fixes startup latency or that observed DOM response equals physicalpaint.",
+  "Supplementary target dates arrive after60s; primary and supplementary denominators remain separate.",
+  "Baseline820 why photos remain unestablished in bothv1/v2."
+ ],
+ "publication": {
+  "draftOnly": true,
+  "mergeOrProductionPublication": false,
+  "readiness": "Runtime results complete; full unittest failed, pytest unavailable; draft review only",
+  "rule": ".claude/skills/ricepia-flow/SKILL.md:212",
+  "ruleText": "Codex の 指摘が のこっている・テストが 落ちている・運営者の 判断が いる 変更は、マージせずに 伝える"
+ },
+ "provenance": {
+  "summary.json": "bd723638836ffe8c0c95a69e8adc96f029b82249f19fc79a9b45019bc493f5da",
+  "summary.md": "0dc72ec7dbd4aa3c037e84bb3699cbfb74498e274ccc206d0ef18d508af65ced",
+  "repro/independent-summary.json": "df2569ddc6ab7add67a6db442b3d15cd49443c04449292e4040edd88cff1d220",
+  "repro/image-review-independent.json": "b3811a363dc9375e15aff6c64bf13bd6722e82c137834e0b504c3fce8cf9b939",
+  "repro/final-series-proof.json": "3820d3b324297e7f5e73bc7d05f212ff3b985ac283034debd51da2be5999d2f7",
+  "layout-before-independent-audit.json": "43e8125b8d05b11e3cacf63ea48f618737c8a7c27d227317237ccbeacdab5482",
+  "layout-before-v2-820-independent-audit.json": "ad372d04520919661b23be62a6e7ae9b984f352d7807ce7a1d416ad98bbe945b",
+  "red/run-proof.json": "1dd68874af2ce279688727fbd8b4d80145649c992c0ce7082e345211855ac242",
+  "red/test.log": "7d3c815568f4f9cb6338869d782b385ee9de6cf9becb82d93ec800f709152277",
+  "green/run-proof.json": "47288428161004a7b15b68cacb415dd4cd3fe48503041be196ab894e625c46c5",
+  "green/run-proof.initial.json": "8faaa7f9d106984d3782453f7281f860de066a62350d1330dcd4186639a9540c",
+  "green/test.log": "7c9ebb72f37881c307780fc85ba71702a37493697f68e621b5eba05397a948fd",
+  "validation/pytest.log": "5337114cf728d43e5702a55511849685cefdf51d20353cf214b1fadd02b1767d",
+  "validation/pytest-exit-code.txt": "743c7850cccfba5e53a9002663ec1ddd1079315a98bdbfdde10e6044f56abefe",
+  "implementation-review.json": "5e5ae974ffeafa10368b6ea44274c54a28235267aa82c82c4bc70f8f45931786",
+  "implementation-source-check.json": "8bf565b9b9de1179b7040638827d7533a4ec12274057563e55337f5884d34345",
+  "after-repro/independent-summary.json": "ab2709ad62c9d44c96f25b2578925b62ee6fa8131c25e3c8e7152b649daa62d2",
+  "after-repro/image-review-independent.json": "9be1210ae318e6d16b88a95dc82fbb43565316118e45d8dbb6e2431fa7371c5e",
+  "after-repro/final-series-proof.json": "47e6d2ba88ae15c328cab544f59997bceeca71a22aa0a0b2c83fd9b893c8b3c7",
+  "after-repro/numeric-independent-review.json": "b95bf629b6194818f0d216e960436c249187205931161d3503dd788bd4856dd1",
+  "after-primary/summary.json": "ea841ff940bba5fee5ba958ba06ef93d9f0b809a17a314693d9d09b74b6ad164",
+  "after-primary/independent-aggregation-check.json": "1acca96866480d51180bb8254605613413f2e74329a379437a618caf56a9b93a",
+  "layout-independent-comparison.json": "15a213ee19e638351a4ce40405d92ef38141ff7139be59d28fae8b9a9fa70948",
+  "validation/full-unittest-independent-summary.json": "0da5c9b557b05b3e06d1f4449696502e23f555264bec8758186e4e5b4ad882e5",
+  "validation/full-unittest-independent-failure-headings.json": "76714b3f93915cd1891538197546cd8d118a27cefef433a5bd134c8dd728995c",
+  "validation/full-unittest.log": "800412c2e0c92a87d6838e699f8e2dbe8dfa7ebb160717f0e2d61e5d5975f86f"
+ },
+ "updatedAtUTC": "2026-11-13T05:41:22.672561+00:00"
+}

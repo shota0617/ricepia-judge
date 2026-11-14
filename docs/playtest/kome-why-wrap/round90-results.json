@@ -1,0 +1,439 @@
+{
+  "round": 90,
+  "kind": "record-only playtest; no product fix or before-after repair claim",
+  "source": {
+    "commit": "823a532cf9f237582d7d12d4e0289658e2207b5b",
+    "role": "main at execution",
+    "filesSHA256": {
+      "kome365/index.html": "ed6b5d5566f0e39ee58c5c8e5cbdc99c02c94e4bf9381cb9aa46719108439aa6",
+      "kome365/engine.js": "c3d0cef6bb108d5b6d8fe38aaf0c08fe7994bdab08bf92775865a6e0222469a3",
+      "kome365/field3d.js": "a5c1dad91d5c0c326f1394fad9c5d04e7e3b8d13e3a2b8b1757c7aa08d3558ff",
+      "kome365/cards.js": "b15c5b2f56ef9c0c8361fa2fa6a039085919ca516b4a2e6e5a1b3bb691dde744",
+      "kome365/vendor/three.min.js": "9274bbcec8d96168626c732b5d31c775aa8cfb7eaa0599bec0c175908a2c1ce2"
+    }
+  },
+  "conditions": {
+    "viewport": {
+      "width": 320,
+      "height": 568
+    },
+    "isMobile": true,
+    "hasTouch": true,
+    "cpuRate": 1,
+    "input": "CDP Input.dispatchTouchEvent; fixed right-left alternation",
+    "observationMinimumSeconds": 10,
+    "playSeconds": 60,
+    "playStartsAfterObservationPhotoSaved": true,
+    "real3D": true,
+    "audioEnabled": true,
+    "externalSitesRequested": false
+  },
+  "primary": {
+    "runs": 1,
+    "requestedGestureMs": 120,
+    "actualExitCode": 1,
+    "actualCompletedAtUTC": "2026-11-13T19:18:47.278922Z",
+    "gestures": 21,
+    "dateAdvances": 21,
+    "noRecordedDateResponse": 0,
+    "finalDate": "1月22日",
+    "positiveResults": 7,
+    "negativeResults": 14,
+    "firstConsecutiveNegatives": 5,
+    "firstPositive": {
+      "playSeconds": 14.7095,
+      "navigationStartSeconds": 30.1635,
+      "gesture": 6,
+      "meaning": "First positive reason/date update observed in DOM; not physical paint, audible sound or human understanding time."
+    },
+    "firstInputToTransformDOMSeconds": 0.3888,
+    "firstInputToDateAndReasonDOMSeconds": 0.887,
+    "consoleErrors": 2,
+    "pageErrors": 0,
+    "consoleResource": {
+      "path": "/favicon.ico",
+      "status": 404,
+      "count": 2
+    },
+    "sourceUnchanged": true,
+    "cpuResetAcknowledged": true,
+    "browserClosed": true,
+    "photosSaved": 4,
+    "observationPhotoCaptureMs": 4907.278291001916,
+    "observationToPlayMs": 14969.263265997171,
+    "catReasonPhoto": {
+      "file": "round90-primary-play10.png",
+      "sha256": "fd9fa5a16c686efddf4869322531a857794efca972b7f4e9fc11792974278371",
+      "dimensions": [
+        320,
+        568
+      ],
+      "exactText": "✗ 猫は畦のネズミを見てくれます。",
+      "photoRequestedPlaySeconds": 10.00060900299251,
+      "photoSavedPlaySeconds": 10.409456294998527,
+      "selectedDay": "1月4日",
+      "selectedTitle": "田んぼの猫",
+      "selectedLabel": "追い払う",
+      "displayedDay": "1月5日",
+      "displayedTitle": "小寒",
+      "observedFinalLine": "す。",
+      "observedFinalLineCharacters": 2,
+      "originalActuallyViewed": true,
+      "perCharacterRangeCaptured": false,
+      "catSpecificBoxCaptured": false,
+      "captureEndpointOpacityAndSameEpisodeProof": false,
+      "strictReproductionDenominatorAssigned": false,
+      "note": "Single visual observation. It is not a one-character orphan; no strict reproduction count is assigned. Later hidden swWhy geometry is not used as this photo geometry."
+    }
+  },
+  "supplementaryBefore10": {
+    "fixedSlots": 10,
+    "executedSlots": 10,
+    "actualRootExitCode": 1,
+    "actualRootCompletedAtUTC": "2026-11-13T19:44:11.252691+00:00",
+    "actualChildExitCodes": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "requestedGestureMsBySlot": [
+      120,
+      250,
+      120,
+      250,
+      120,
+      250,
+      120,
+      250,
+      120,
+      250
+    ],
+    "speedGroups": [
+      {
+        "requestedGestureMs": 120,
+        "fixedSlots": 5,
+        "executedSlots": 5,
+        "exactTargetReached": 0,
+        "strictEstablished": 0
+      },
+      {
+        "requestedGestureMs": 250,
+        "fixedSlots": 5,
+        "executedSlots": 5,
+        "exactTargetReached": 0,
+        "strictEstablished": 0
+      }
+    ],
+    "target": {
+      "exactText": "✗ 猫は畦のネズミを見てくれます。",
+      "action": "1月4日・田んぼの猫・左「追い払う」",
+      "expectedFinalLine": "す。",
+      "finalCharacterIndices": [
+        15,
+        16
+      ]
+    },
+    "exactTargetReached": 0,
+    "strictEstablishedDenominator": 0,
+    "reproducedAmongEstablished": 0,
+    "notReproducedAmongEstablished": 0,
+    "reproductionRate": null,
+    "outcome": "unestablished-target-not-reached",
+    "interpretation": "All10 trials ran but none reached the exact target action/reason in the first60s. No eligible denominator exists. This must not be reported as nonreproduction0/10 or proof the issue is fixed.",
+    "strictDefinition": "Exact target input, handler, reason, screenshot request/completion and both before/after full character Range reads must be within[0,60000)ms; both readings must share the same nonnull episode with opacity>=0.5 and text/bubble inside viewport; independent original-image review must read the whole exact text and final line. Reproduction additionally requires both recalculated final lines exactlyす。 with indices[15,16] and original-image confirmation.",
+    "counts": {
+      "inputs": 211,
+      "commands": 1688,
+      "ACKs": 1688,
+      "events": 738,
+      "trusted": 738,
+      "dateAdvances": 211,
+      "noRecordedResponse": 0,
+      "initialACKTimeouts": 0,
+      "consoleErrors": 20,
+      "pageErrors": 0,
+      "lateEventDeliveries": 0
+    },
+    "whyEpisodes": 211,
+    "whyCSSRestoredWithin60": 207,
+    "whyOffNotObservedWithin60": 4,
+    "scheduledOriginalPhotosReviewedByIndependentAuditor": 40,
+    "targetOriginalPhotosSaved": 0,
+    "targetOriginalPhotosReviewed": 0,
+    "sourceFiveFilesConfirmed": true,
+    "cpuResetAndBrowserCloseConfirmedForAll": true,
+    "serialBoundariesConfirmed": 9,
+    "favicon404": {
+      "consoleErrors": 20,
+      "pageErrors": 0,
+      "resourcePath": "/favicon.ico",
+      "actualExitCodesRetained": true,
+      "note": "The frozen criterion allows matching favicon-only console errors to remain condition-eligible, but never changes actual exit1 into a passed command. Target nonarrival independently leaves every trial unestablished."
+    },
+    "slots": [
+      {
+        "slot": 1,
+        "requestedGestureMs": 120,
+        "actualExitCode": 1,
+        "exactTargetReachedFirst60": false,
+        "strictEstablished": false,
+        "outcome": "unestablished-target-not-reached",
+        "targetDayCard": {
+          "playMs": 6306.300048828125,
+          "title": "薄氷",
+          "left": "氷を踏み歩く",
+          "right": "くぼみの氷見る"
+        },
+        "targetNotSelectedReason": "Target day reached but fixedRLRL selected another visible card/label",
+        "inputs": 21,
+        "dateAdvances": 21,
+        "consoleErrors": 2,
+        "pageErrors": 0
+      },
+      {
+        "slot": 2,
+        "requestedGestureMs": 250,
+        "actualExitCode": 1,
+        "exactTargetReachedFirst60": false,
+        "strictEstablished": false,
+        "outcome": "unestablished-target-not-reached",
+        "targetDayCard": {
+          "playMs": 6769.60009765625,
+          "title": "田の静けさ",
+          "left": "土の湿りを見る",
+          "right": "土に薬をまく"
+        },
+        "targetNotSelectedReason": "Target day reached but fixedRLRL selected another visible card/label",
+        "inputs": 21,
+        "dateAdvances": 21,
+        "consoleErrors": 2,
+        "pageErrors": 0
+      },
+      {
+        "slot": 3,
+        "requestedGestureMs": 120,
+        "actualExitCode": 1,
+        "exactTargetReachedFirst60": false,
+        "strictEstablished": false,
+        "outcome": "unestablished-target-not-reached",
+        "targetDayCard": {
+          "playMs": 6589.89990234375,
+          "title": "田んぼの猫",
+          "left": "そっとしておく",
+          "right": "追い払う"
+        },
+        "targetNotSelectedReason": "Target day reached but fixedRLRL selected another visible card/label",
+        "inputs": 21,
+        "dateAdvances": 21,
+        "consoleErrors": 2,
+        "pageErrors": 0
+      },
+      {
+        "slot": 4,
+        "requestedGestureMs": 250,
+        "actualExitCode": 1,
+        "exactTargetReachedFirst60": false,
+        "strictEstablished": false,
+        "outcome": "unestablished-target-not-reached",
+        "targetDayCard": {
+          "playMs": 7452.5,
+          "title": "冬の夕焼け",
+          "left": "夕方の田を見る",
+          "right": "田を見ずに帰る"
+        },
+        "targetNotSelectedReason": "Target day reached but fixedRLRL selected another visible card/label",
+        "inputs": 21,
+        "dateAdvances": 21,
+        "consoleErrors": 2,
+        "pageErrors": 0
+      },
+      {
+        "slot": 5,
+        "requestedGestureMs": 120,
+        "actualExitCode": 1,
+        "exactTargetReachedFirst60": false,
+        "strictEstablished": false,
+        "outcome": "unestablished-target-not-reached",
+        "targetDayCard": {
+          "playMs": 6494.400146484375,
+          "title": "冬の夕焼け",
+          "left": "夕方の田を見る",
+          "right": "田を見ずに帰る"
+        },
+        "targetNotSelectedReason": "Target day reached but fixedRLRL selected another visible card/label",
+        "inputs": 21,
+        "dateAdvances": 21,
+        "consoleErrors": 2,
+        "pageErrors": 0
+      },
+      {
+        "slot": 6,
+        "requestedGestureMs": 250,
+        "actualExitCode": 1,
+        "exactTargetReachedFirst60": false,
+        "strictEstablished": false,
+        "outcome": "unestablished-target-not-reached",
+        "targetDayCard": {
+          "playMs": 7062.5,
+          "title": "みかんの季節",
+          "left": "みかんだけ見る",
+          "right": "田を見て回る"
+        },
+        "targetNotSelectedReason": "Target day reached but fixedRLRL selected another visible card/label",
+        "inputs": 21,
+        "dateAdvances": 21,
+        "consoleErrors": 2,
+        "pageErrors": 0
+      },
+      {
+        "slot": 7,
+        "requestedGestureMs": 120,
+        "actualExitCode": 1,
+        "exactTargetReachedFirst60": false,
+        "strictEstablished": false,
+        "outcome": "unestablished-target-not-reached",
+        "targetDayCard": {
+          "playMs": 6634.0,
+          "title": "みかんの季節",
+          "left": "田を見て回る",
+          "right": "みかんだけ見る"
+        },
+        "targetNotSelectedReason": "Target day reached but fixedRLRL selected another visible card/label",
+        "inputs": 22,
+        "dateAdvances": 22,
+        "consoleErrors": 2,
+        "pageErrors": 0
+      },
+      {
+        "slot": 8,
+        "requestedGestureMs": 250,
+        "actualExitCode": 1,
+        "exactTargetReachedFirst60": false,
+        "strictEstablished": false,
+        "outcome": "unestablished-target-not-reached",
+        "targetDayCard": {
+          "playMs": 6963.699951171875,
+          "title": "冬の夕焼け",
+          "left": "田を見ずに帰る",
+          "right": "夕方の田を見る"
+        },
+        "targetNotSelectedReason": "Target day reached but fixedRLRL selected another visible card/label",
+        "inputs": 21,
+        "dateAdvances": 21,
+        "consoleErrors": 2,
+        "pageErrors": 0
+      },
+      {
+        "slot": 9,
+        "requestedGestureMs": 120,
+        "actualExitCode": 1,
+        "exactTargetReachedFirst60": false,
+        "strictEstablished": false,
+        "outcome": "unestablished-target-not-reached",
+        "targetDayCard": {
+          "playMs": 6436.0,
+          "title": "みかんの季節",
+          "left": "田を見て回る",
+          "right": "みかんだけ見る"
+        },
+        "targetNotSelectedReason": "Target day reached but fixedRLRL selected another visible card/label",
+        "inputs": 21,
+        "dateAdvances": 21,
+        "consoleErrors": 2,
+        "pageErrors": 0
+      },
+      {
+        "slot": 10,
+        "requestedGestureMs": 250,
+        "actualExitCode": 1,
+        "exactTargetReachedFirst60": false,
+        "strictEstablished": false,
+        "outcome": "unestablished-target-not-reached",
+        "targetDayCard": {
+          "playMs": 6868.699951171875,
+          "title": "サギが一羽",
+          "left": "近づいて追う",
+          "right": "そっと見守る"
+        },
+        "targetNotSelectedReason": "Target day reached but fixedRLRL selected another visible card/label",
+        "inputs": 21,
+        "dateAdvances": 21,
+        "consoleErrors": 2,
+        "pageErrors": 0
+      }
+    ]
+  },
+  "designHypotheses": [
+    {
+      "category": "A",
+      "proposal": "Keep the existing reason text, bubble position and2s duration; test adding a short identifier for the day/choice being explained within the same bubble.",
+      "basis": "Primary play10 shows a cat reason above Jan5小寒; play30 shows a water-source reason above Jan12みかん. Human misattribution and improvement are hypotheses, not established defects.",
+      "locations": [
+        "kome365/index.html:3815",
+        "kome365/index.html:3829",
+        "kome365/index.html:3836"
+      ],
+      "status": "Not implemented; no new regression test run."
+    },
+    {
+      "category": "B",
+      "proposal": "Operator judgment on the initial demonstration direction and3D start policy.",
+      "basis": "README639 explicitly reserves starting left because that teaches the answer.3D scheduling is an existing operator decision; photo capture delay or this software-rendering environment does not establish real-device startup performance.",
+      "locations": [
+        "kome365/README.md:639",
+        "kome365/README.md:660",
+        "kome365/README.md:670"
+      ],
+      "status": "Unchanged."
+    },
+    {
+      "category": "C",
+      "proposal": "Explore a near-term winter-preparation objective, meaningful reward and visible next step as a separate larger design.",
+      "basis": "21choices reach Jan22 but visible state remains田おこし まえ; no next milestone or achievement count in the sampled views.",
+      "locations": [
+        "kome365/index.html:441",
+        "kome365/index.html:3110",
+        "kome365/README.md:756",
+        "kome365/README.md:1226"
+      ],
+      "status": "Not implemented. Protected engine/3D/card files and removed displays remain unchanged."
+    }
+  ],
+  "validationScope": {
+    "productCodeChanged": false,
+    "repositoryTestsChanged": false,
+    "newRegressionTestsExecuted": false,
+    "scratchTestDraftAdopted": false,
+    "pytestTestsExecutedThisRound": false,
+    "fiveViewportChecksExecutedThisRound": false,
+    "redGreenExecutedThisRound": false,
+    "beforeAfterFixComparisonExecuted": false,
+    "existingPR1137ValidatedAgainstThisMain": false,
+    "note": "This record does not validate the existing PR1137 proposal on main823a. No product or repository test changes were made. Any scratch regression-test draft remains unadopted and unexecuted."
+  },
+  "evidenceSHA256": {
+    "primaryReport": "a99d63df663e29438e8b46fcbb823743a3b7245135240f3e7df32228e9e06c51",
+    "primaryMetadata": "dc22b69a8292004dc5257fb8925e204d88cd7074ae061c22424f113731eb1e90",
+    "primaryCatPhotoAudit": "4c8e0e1b8fb25fd90768ba131944b3ca1cd47c4b76f66ed59fc2b1b60ce48c93",
+    "designTimingAudit": "7c281f13e750393987263f53a4b2a17ad07012330b0f5a0e61389cd81538dfad",
+    "before10FrozenAudit": "ee42b84b2a83ad743fdac9413e24bd21dd28b0d5545ed56e361fd37cbe9ad32d",
+    "before10Summary": "e23de34fa6b39a9797fa3fdc65e78012d51f55a0e1dcfe253f414e9fe018d610",
+    "before10Definitions": "27199f0f36c9654fe4eb15c92ae416e47e1ea13c2809a794a4c6867f550e0434"
+  },
+  "limitations": [
+    "Screenshot request and save times differ; no exact rasterization time is recorded.",
+    "The primary has no cat-specific Range or capture-endpoint geometry/opacity proof.",
+    "The before10 observer adds passive measurement overhead; no causal speed comparison with primary or round74 is made.",
+    "211 stored inputs and738 stored pointer events are not all physical/coalesced motion events.",
+    "207CSS restorations and4 unobserved off events within60s do not establish continuous physical2s visibility or4 timing failures.",
+    "Internal streak/visits are not counted as visible rewards. FixedRLRL does not measure human learning, difficulty or abandonment.",
+    "Real phone fingers, sensors, GPU, network conditions and audible sound are unverified."
+  ]
+}

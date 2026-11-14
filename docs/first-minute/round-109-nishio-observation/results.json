@@ -1,0 +1,760 @@
+{
+  "round": 109,
+  "game": "にしおさんぽGO",
+  "status": "Completed observation report; full Node suite unsuccessful; no product or test changes",
+  "source": {
+    "head": "86639054a85dff59b0b14f68ab55688d3a0261c6",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "CPU": 1,
+    "local10BeforeAfterCurrentMatch": true,
+    "served5BeforeAfterMatch": true,
+    "documentsCommitAfterMeasurement": true
+  },
+  "method": {
+    "primaryRuns": 1,
+    "isMobile": true,
+    "hasTouch": true,
+    "freshContext": true,
+    "input": "CDP Input.dispatchTouchEvent",
+    "requestedHoldMs": 40,
+    "observationSeconds": 10,
+    "waitObservationPhotoThenPlaySeconds": 60,
+    "Leaflet": "Local1.9.4 substitution; external requests blocked or answered locally"
+  },
+  "outcome": {
+    "actions": 10,
+    "coordinateResponses": 10,
+    "normalHandInputs": 9,
+    "initialHandInputs": 1,
+    "full1100msWindows": 10,
+    "recordedNoResponseFullWindow": 0,
+    "incompleteWindows": 0,
+    "informationOpenings": 0,
+    "worldOpenings": 0,
+    "worldReturnInputs": 0,
+    "productChanges": 0,
+    "testChanges": 0,
+    "newConfirmedFixCandidates": 0,
+    "dropoutMeasured": false,
+    "improvementMeasured": false
+  },
+  "timing": {
+    "firstFeedback": {
+      "kind": "coordinateChanged",
+      "playSeconds": 0.186900146484375,
+      "fromSendMs": 157.900146484375
+    },
+    "firstPositivePoints": {
+      "value": 30,
+      "playSeconds": 0.4397001953125,
+      "fromFirstInputMs": 410.7001953125,
+      "reason": "point-dom-mutation",
+      "visibility": "visible and centerUnobscured DOM, not physical paint or award instant"
+    },
+    "firstStoredGoal": {
+      "value": "1",
+      "firstGuideChangesPlaySeconds": 19.60560009765625,
+      "firstTraceSamplesPlaySeconds": 19.622400146484374,
+      "scope": "Different sampling streams, not two contradictory exact arrival times"
+    },
+    "requestedHoldMs": 40,
+    "actualSendHoldMs": [
+      39,
+      41
+    ],
+    "startACKMs": [
+      40,
+      66
+    ],
+    "endACKMs": [
+      63,
+      142
+    ],
+    "firstInputPlaySeconds": 0.029,
+    "lastInputPlaySeconds": 55.295,
+    "lastTouchEndSeconds": 55.334,
+    "configuredWindowMs": 60000,
+    "deadlineReachedRecordDifferenceMs": -1,
+    "traceStoppedPlaySeconds": 60.1985,
+    "reportFinishedPlaySeconds": 64.53,
+    "limit": "deadlineReachedAt is1ms earlier than configured deadline; do not round it to exact60.000s completion. Trace/photo intervals are recorded separately; reporting finish is not extra play."
+  },
+  "dispatch": {
+    "commands": 20,
+    "ACKs": 20,
+    "trustedDOMEvents": 30,
+    "eventTypes": {
+      "pointerdown": 10,
+      "pointerup": 10,
+      "click": 10
+    }
+  },
+  "photos": [
+    {
+      "file": "observe-10s.png",
+      "sha256": "8959f5d69fc52dfc1373efdebdd75bd1d913bb3a51d54a943be0a7c2b931f979",
+      "bytes": 275106,
+      "dimensions": [
+        390,
+        844
+      ],
+      "originalCopiedUnmodified": true,
+      "reportAuthorPersonallyViewed": true,
+      "phase": "observe",
+      "requestedSeconds": 10.001,
+      "savedSeconds": 10.146
+    },
+    {
+      "file": "play-10s.png",
+      "sha256": "f0cce82c76be132787681a148060927ee99b57c6227e0fc5b6e7f2a5d8713fb4",
+      "bytes": 256735,
+      "dimensions": [
+        390,
+        844
+      ],
+      "originalCopiedUnmodified": true,
+      "reportAuthorPersonallyViewed": true,
+      "phase": "play",
+      "requestedSeconds": 10.001,
+      "savedSeconds": 10.188
+    },
+    {
+      "file": "play-30s.png",
+      "sha256": "c3bcee98be3207fb71e614193cb5093d0c2057ff6c43f66a6a2fc467318f933e",
+      "bytes": 295824,
+      "dimensions": [
+        390,
+        844
+      ],
+      "originalCopiedUnmodified": true,
+      "reportAuthorPersonallyViewed": true,
+      "phase": "play",
+      "requestedSeconds": 29.999,
+      "savedSeconds": 30.137
+    },
+    {
+      "file": "play-60s.png",
+      "sha256": "2b0e93b2abe3ecd0691153a7de941fc716fd739ea2971205d5bc29848824e575",
+      "bytes": 311303,
+      "dimensions": [
+        390,
+        844
+      ],
+      "originalCopiedUnmodified": true,
+      "reportAuthorPersonallyViewed": true,
+      "phase": "play",
+      "requestedSeconds": 60.0,
+      "savedSeconds": 60.193
+    }
+  ],
+  "execution": {
+    "actualChildExit": 0,
+    "actualOuterExit": 0,
+    "errors": [],
+    "cpuReset": true,
+    "browserClosed": true,
+    "rootNoLiveRuntime": true
+  },
+  "tests": {
+    "pytest": {
+      "command": "pytest tests/",
+      "actualExit": 127,
+      "error": "bash: line 1: pytest: command not found",
+      "suiteExecuted": false,
+      "passedCount": null
+    },
+    "fullNode": {
+      "status": "completed unsuccessful",
+      "command": [
+        "node",
+        "tools/playtest.js",
+        "/workspace/scratch/first-minute/round-109/fullplaytest-runtime/artifacts"
+      ],
+      "testedSourceHead": "86639054a85dff59b0b14f68ab55688d3a0261c6",
+      "actualChildExit": 1,
+      "actualOuterExit": 1,
+      "outerExitBasis": "root-browser-closure.json real session completion; wrapper field remains null in original",
+      "counts": {
+        "groups": 251,
+        "explicitSuccess": 220,
+        "objectOkTrue": 177,
+        "bareTrue": 43,
+        "failed": 11,
+        "withoutIndependentBoolean": 20
+      },
+      "overallOk": false,
+      "errors": [],
+      "failureNames": [
+        "swipeHold",
+        "a2hsAutoHide",
+        "tapDemoQuick",
+        "rollNoDemo",
+        "lowGoalDemo",
+        "infoRotate",
+        "lowDemoKept",
+        "restFinger",
+        "tiltDemoShown",
+        "godotRec",
+        "speedLines"
+      ],
+      "failedCheckRawValues": {
+        "swipeHold": {
+          "held": true,
+          "ms": 813,
+          "still": "null",
+          "g1": "[1807,1900]",
+          "g2": "[1807,1900]",
+          "g4": "[1807,1900]",
+          "g3": "[1804,1897]",
+          "want": "[1804,1897]",
+          "far": true,
+          "info": false,
+          "cfg": {
+            "ms": 300,
+            "px": 5,
+            "min": 12
+          },
+          "ok": false
+        },
+        "a2hsAutoHide": {
+          "off": false,
+          "x": null,
+          "elig": false,
+          "again": false,
+          "ok": false
+        },
+        "tapDemoQuick": {
+          "n": 7,
+          "med": 2254,
+          "min": 1976,
+          "ok": false
+        },
+        "rollNoDemo": {
+          "rice": 314,
+          "route": 514,
+          "demo": 514,
+          "first": false,
+          "fresh": true,
+          "bad": 0,
+          "vmax": 0,
+          "ok": false
+        },
+        "lowGoalDemo": {
+          "rows": [
+            {
+              "vp": "568x320",
+              "k": 1,
+              "left": 1,
+              "shown": false,
+              "at": null,
+              "inMap": null,
+              "onRice": null
+            },
+            {
+              "vp": "568x320",
+              "k": 2,
+              "left": 2,
+              "shown": true,
+              "at": 4.15,
+              "inMap": true,
+              "onRice": false
+            },
+            {
+              "vp": "844x390",
+              "k": 1,
+              "left": 1,
+              "shown": true,
+              "at": 3.98,
+              "inMap": true,
+              "onRice": false
+            },
+            {
+              "vp": "844x390",
+              "k": 2,
+              "left": 2,
+              "shown": true,
+              "at": 4.78,
+              "inMap": true,
+              "onRice": false
+            }
+          ],
+          "ok": false
+        },
+        "infoRotate": {
+          "runs": [
+            {
+              "from": "390x844",
+              "steps": [
+                {
+                  "to": "390x560",
+                  "open": false,
+                  "mt": "",
+                  "close": [
+                    0,
+                    0
+                  ],
+                  "pt": [
+                    0,
+                    0
+                  ],
+                  "closeOk": false,
+                  "allIn": true
+                },
+                {
+                  "to": "844x390",
+                  "open": false,
+                  "mt": "",
+                  "close": [
+                    0,
+                    0
+                  ],
+                  "pt": [
+                    0,
+                    0
+                  ],
+                  "closeOk": false,
+                  "allIn": true
+                }
+              ],
+              "opened": {
+                "open": false,
+                "mt": "",
+                "close": [
+                  0,
+                  0
+                ],
+                "pt": [
+                  0,
+                  0
+                ],
+                "closeOk": false,
+                "allIn": true
+              }
+            },
+            {
+              "from": "820x1180",
+              "steps": [
+                {
+                  "to": "1180x820",
+                  "open": false,
+                  "mt": "",
+                  "close": [
+                    0,
+                    0
+                  ],
+                  "pt": [
+                    0,
+                    0
+                  ],
+                  "closeOk": false,
+                  "allIn": true
+                }
+              ],
+              "opened": {
+                "open": false,
+                "mt": "",
+                "close": [
+                  0,
+                  0
+                ],
+                "pt": [
+                  0,
+                  0
+                ],
+                "closeOk": false,
+                "allIn": true
+              }
+            }
+          ],
+          "ok": false
+        },
+        "lowDemoKept": {
+          "ready": true,
+          "walked": true,
+          "a": {
+            "on": false,
+            "x": null,
+            "y": null,
+            "inMap": false,
+            "free": 135,
+            "status": false,
+            "guide": "ibun-parish"
+          },
+          "b": {
+            "on": true,
+            "x": 282,
+            "y": 129,
+            "inMap": true,
+            "free": 135,
+            "status": false,
+            "guide": "ibun-parish"
+          },
+          "ok": false
+        },
+        "restFinger": {
+          "tap": false,
+          "swipe": false,
+          "pinch": false,
+          "touchAction": "pinch-zoom",
+          "info": false,
+          "ok": false
+        },
+        "tiltDemoShown": {
+          "on": false,
+          "phone": false,
+          "force": 0.28,
+          "at": [
+            1801.871306126898,
+            1893.6490073463108
+          ],
+          "moved": 0.928,
+          "ok": false
+        },
+        "godotRec": {
+          "errs": [],
+          "len": 5922,
+          "shade": 0,
+          "ok": false
+        },
+        "speedLines": {
+          "ok": false,
+          "room": 7,
+          "fast": 0,
+          "vmax": 4.07,
+          "far": 0.91
+        }
+      },
+      "withoutIndependentBooleanMeaning": "Diagnostic values, some used by combined need predicates; not twenty passed or twenty unexecuted tests.",
+      "comparisonWithRound105": {
+        "sharedFailed": [
+          "godotRec",
+          "infoRotate",
+          "lowGoalDemo",
+          "restFinger",
+          "rollNoDemo",
+          "speedLines",
+          "swipeHold",
+          "tapDemoQuick",
+          "tiltDemoShown"
+        ],
+        "newlyFailedNames": [
+          "a2hsAutoHide",
+          "lowDemoKept"
+        ],
+        "noLongerFailedNames": [
+          "infoSecondTap"
+        ],
+        "interpretation": "Separate unchanged-code/dependency runs; not causal regression or improvement evidence.",
+        "configuredSource322ByteIdentical": true,
+        "dependencies550ByteIdentical": true,
+        "sameEnvironmentAndSelectorsRemoved": true
+      },
+      "limitedFailureInterpretation": {
+        "a2hsAutoHide": "off false may represent any wait rejection with reason unrecorded; subsequent again false. Does not prove reappearance or permanent visible state.",
+        "lowDemoKept": "ready/walked true, first snapshot demo off, next demo on/inMap. Does not prove permanently missing guidance.",
+        "infoRotate": "opened.open false for both runs; close button/rotation behavior prerequisites unestablished.",
+        "godotRec": "errs empty, shade0; do not infer recorder crash from the broad failure string.",
+        "speedLines": "fast0 is sampled maximum speedK; far0.91 insufficient. No forbidden speed-line appearance established."
+      },
+      "sourceFilesPreserved": 322,
+      "dependencyFilesPreserved": 550,
+      "timedOut": false,
+      "automaticRetries": 0,
+      "wrapperStartedAtUTC": "2026-11-14T11:59:56.684106+00:00",
+      "childStartedAtUTC": "2026-11-14T11:59:58.520154+00:00",
+      "wrapperCompletedAtUTC": "2026-11-14T12:27:36.894223+00:00",
+      "browserClosure": {
+        "session": 67714,
+        "completionChunk": "2c9f52",
+        "actualOuterExit": 1,
+        "actualChildExit": 1,
+        "checkedAtUTC": "2026-11-14T12:28:41Z",
+        "liveRuntimeProcesses": [],
+        "port8899ConnectEx": 111,
+        "confirmedClosed": true
+      },
+      "resultSHA256": "348559da8e1840acff6491e87f15c0be606a82d42584212cdc8a5e0a543b6aef",
+      "independentAudit": "round-109/fullplaytest-audit",
+      "withoutIndependentBooleanTypes": {
+        "int": 7,
+        "dict": 6,
+        "list": 3,
+        "str": 4
+      },
+      "failureSourceAndInterpretation": [
+        {
+          "key": "swipeHold",
+          "source": "tools/playtest.js:252",
+          "interpretation": "g4 remains old goal, unlike want; other slash-separated failure possibilities are not all observed."
+        },
+        {
+          "key": "a2hsAutoHide",
+          "source": "tools/playtest.js:314",
+          "interpretation": "off=false; gone() turns every waitForFunction rejection into false and does not retain rejection cause. Later700ms check has again=false (hidden). This does not prove permanently visible or repeated reappearance. Predicate at338."
+        },
+        {
+          "key": "tapDemoQuick",
+          "source": "tools/playtest.js:466",
+          "interpretation": "7 waits, median2254ms/min1976ms versus1700ms criterion; not a human retention or isolated product-speed measurement."
+        },
+        {
+          "key": "rollNoDemo",
+          "source": "tools/playtest.js:1242",
+          "interpretation": "vmax0/fresh=true; no proof about a physical tilt sensor."
+        },
+        {
+          "key": "lowGoalDemo",
+          "source": "tools/playtest.js:1134",
+          "interpretation": "Only568x320 k1 row has shown=false; other3rows show guide. Aggregate4-row requirement fails."
+        },
+        {
+          "key": "infoRotate",
+          "source": "tools/playtest.js:1026",
+          "interpretation": "Both initial dialogs opened=false; later rotation/close-button accessibility was not established."
+        },
+        {
+          "key": "lowDemoKept",
+          "source": "tools/playtest.js:842",
+          "interpretation": "ready=true/walked=true; after3500ms requested wait a.on/inMap=false, after another5000ms b.on/inMap=true and expected guide. Early sample fails; not permanent missing guidance."
+        },
+        {
+          "key": "restFinger",
+          "source": "tools/playtest.js:723",
+          "interpretation": "tap=false/swipe=false; pinch=false, touchAction=pinch-zoom and info=false. Keep distinct fields."
+        },
+        {
+          "key": "tiltDemoShown",
+          "source": "tools/playtest.js:731",
+          "interpretation": "on=false/phone=false at force0.28, instrumentation only; no real sensor test."
+        },
+        {
+          "key": "godotRec",
+          "source": "tools/playtest.js:2077",
+          "interpretation": "errs[]/shade0/len5922: shade assertion fails, no recorded exception establishes a crash."
+        },
+        {
+          "key": "speedLines",
+          "source": "tools/playtest.js:2614",
+          "interpretation": "fast0 means forbidden speed lines absent; vmax4.07 but far0.91 does not satisfy distance condition. Do not report forbidden lines appearing."
+        }
+      ],
+      "wrapperElapsedSeconds": 1660.210117,
+      "exactChildExitTimestamp": null,
+      "timingLimit": "No distinct child-finish timestamp; child launch to wrapper completion is an upper bound including preservation/final recording."
+    },
+    "fixedReproduction10": "not performed",
+    "redGreen": "not performed",
+    "afterReproduction": "not performed",
+    "fiveSizeComparison": "not performed",
+    "otherRoundsIncluded": false
+  },
+  "knownIssuesExcluded": [
+    1133,
+    1156,
+    1151,
+    1147
+  ],
+  "unobserved": [
+    "info window bottom",
+    "delayed/failed loading",
+    "multiple pointers",
+    "background return",
+    "pen",
+    "corrupted storage"
+  ],
+  "operatorBoundary": {
+    "preserved": [
+      "Tilt permission on first genuine click",
+      "Guide before permission and while stopped",
+      "Tilt controls",
+      "No start screen",
+      "No arrival card"
+    ],
+    "designInterpretationOnly": "Priority of person/place/distance in destination line; not an explicit existing operator decision"
+  },
+  "limits": [
+    "Coordinate change is not guaranteed intended progress.",
+    "Point/goal/coordinate are separate observations; not physical paint or player retention.",
+    "Photo30 was requested29.999s; saved photos cover capture intervals.",
+    "Deadline-reached record is1ms before configured deadline; reporting end64.53s is not extra play.",
+    "Unsent wait count unknown; not ignored touches.",
+    "All real-device finger/sensor/network/audio/human-understanding effects remain unverified.",
+    "Full Node execution completed with actual child/outer1 and11 failed groups; no all-tests-pass claim."
+  ],
+  "references": {
+    "sourceUI": [
+      "nishio-go/game.js:2510",
+      "nishio-go/style.css:517",
+      "nishio-go/pixel.js:13923"
+    ],
+    "newGeographicFactsAdded": false,
+    "videoActuallyViewed": false,
+    "interpretiveSources": [
+      "https://www.famitsu.com/news/201705/17132636.html",
+      "https://github.com/flossbud/sakurai-game-design/blob/main/episodes/transcripts/100-development-secrets-of-the-original-kirby.md"
+    ]
+  },
+  "evidence": [
+    {
+      "identifier": "round-109/source-selected.json",
+      "sha256": "293a66422681cc4016ce1f5d5a64fc497cdff872f08d516080a056a7a5979d96",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-109/preparation-86639054/follow.json",
+      "sha256": "a2cc5e9ba38c401b882b5c75b3ee707f7ec58a764734c6aa693cdfb53d301cd0",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-109/preparation-86639054/run-result.json",
+      "sha256": "74298910765011b29a2203dfbc0bdceff9bd7c6762c9bc7edc5ba432de963e8e",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-109/preparation-86639054/source-verification.json",
+      "sha256": "de5ec9f15fcd3b62d10dd45280ab354e054c08390f348ae6e775a8ea68003ff0",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-109/preparation-86639054/lifecycle.json",
+      "sha256": "fed7a984c4c92509a3bdf3501efe77f914e4dc2d25800584a73e90c6019afb75",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-109/preparation-86639054/root-execution.json",
+      "sha256": "0e884f337510fcbe8bef15fa1e7a3616e62f9312e876b64e2ba026b926d6aee3",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-109/pytest/execution.json",
+      "sha256": "ca1dc156c4e3006735bebf37d4fddadc6956f2d995b32ef9ea921d4d65d3be1f",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-109/pytest/run.log",
+      "sha256": "b6fe94a4971280b69606b3ad6039ae9ed0e48557776ea68f678174b6c8da879a",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-109/discovery-a/summary.json",
+      "sha256": "819703ca6253dfc686840d5fe59147e8a98e72409eff14d5e39ace981c7de080",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-109/discovery-a/frozen.json",
+      "sha256": "1ce2690495194ef4dd88c67a124c1a7acc1b78364d9d5262b334609d448c823a",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-109/discovery-b/review.json",
+      "sha256": "3b97a488a6492115d6ab3dc64193a5f3913896e7e0209875edfdfd070f7e8294",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-109/discovery-b/frozen.json",
+      "sha256": "b51d4ece918adf4193ae551814b4286d65b6321028ba18be3f04f174a06c6930",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-109/discovery-c/summary.json",
+      "sha256": "41767ab38bd6b4bde11912b67a9fae35382848716a24a687535fcdf1d48fab04",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-109/discovery-c/frozen.json",
+      "sha256": "ea050def39d940063942a911f596e5bc9deafd78271b0362d9e25904f4add966",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-109/design-review/README.md",
+      "sha256": "6c24dfbabb022fbef2d046ae89c90f1d24d42b9ea848c5edaba3fe9677bb40ca",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-109/navigation-pixel-comparison.json",
+      "sha256": "5986f51b2aee6f28e0110f12424dd927e048aa53f3eb8be778dcc480271fd7d6",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-109/discovery-c/static-addendum.json",
+      "sha256": "6e9aea6693d96a6884946dcc3204fc2fcb8cc4515acde435117564528dc85db1",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-109/discovery-b/correction-tabs.md",
+      "sha256": "410ecfc1c9083d614c4da2ac49fcd84d12d9d036c128d37ad78b77ade7e8eda5",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-109/discovery-b/correction-tabs-frozen.json",
+      "sha256": "b31635b7f181321fff5122ebf3a404bd347f4ec7a84ed40f6d0c17ad1e667566",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-109/discovery-b/addendum-tabs-identical-pixels.md",
+      "sha256": "25516ad58dba7e5c4f5b7361d6d59fea37ede0aaa2d3874fe866a90e74ed4e3f",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-109/discovery-b/addendum-tabs-identical-pixels-frozen.json",
+      "sha256": "32617614eb6a74715525ccf53c5793f98a4a352b0a45cffec0b2fcdf4516e1e5",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-109/fullplaytest-runtime/execution.json",
+      "sha256": "44a9ad4b95a4e65596b4739ba674a9e19174b87f0424ee5cebf924ea459bb29e",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-109/fullplaytest-runtime/artifacts/playtest.json",
+      "sha256": "348559da8e1840acff6491e87f15c0be606a82d42584212cdc8a5e0a543b6aef",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-109/fullplaytest-runtime/root-result-summary.json",
+      "sha256": "dbba58fea1735065838e7681855384677bab5d8d06e65626abc52bb3fbc87045",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-109/fullplaytest-runtime/root-browser-closure.json",
+      "sha256": "e754130559017c8a71e90a55befa016beca978909227a0a5f01fa5557d83bed4",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-109/fullplaytest-audit/summary.json",
+      "sha256": "f2a67f99a3834ccb6f18f736df631954049b6f9ef6b51278817a5146461ef1bf",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-109/fullplaytest-audit/eleven-failures.json",
+      "sha256": "ef1c7bc5601c3daba3195855ce5b9515fa9648af9392cc870680b456d25e1cfe",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-109/fullplaytest-audit/frozen.json",
+      "sha256": "43d5f5b13e227b3b4652575db55e2369bdc6ca26baa1c18189daf176a0413aa8",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-109/main-update.json",
+      "sha256": "8d779bdf470f88a554ed3550b059acd27ea8c42ce844dbfd9d31e9bab6044648",
+      "publicLink": false
+    }
+  ],
+  "photosNavigationBand": {
+    "region": [
+      0,
+      786,
+      390,
+      844
+    ],
+    "decodedRGBSHA256": "5626d333400d0181e0d03fff6a062c48c88b2445a6d8076ed727d7c2c4bb3064",
+    "identicalAcrossAllFourOriginals": true,
+    "limit": "No frame-to-frame navigation-band change in these saved originals; no hit-test or physical-paint guarantee. Initial preview-reading difference was not a product change.",
+    "latestVisualClarification": "round-109/discovery-b/addendum-tabs-identical-pixels.md"
+  },
+  "publicationSourceSeparation": "Primary and full tests ran on86639054. Root later fast-forwarded only documentation to3cde897ae205ad95b6a54b89ea1d08f1d2d2b584. That later HEAD was not rerun as a full suite."
+}

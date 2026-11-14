@@ -32,7 +32,7 @@ const document = { hidden: false, addEventListener(t, fn, c){ const k = (c === t
 const winL = {};
 const window = { innerWidth: 844, addEventListener(t, fn){ (winL[t] = winL[t] || []).push(fn); } };
 let now = 1000, markAt = -1e9; const performance = { now: () => now };
-let startX = null, startY = 0, dx = 0, dy = 0, samples = [], pid = null, busy = false, card = {}, f = {}, finger = null, use3d = null, dragMoves = 0, dragApplied = 0, tapOnly = 0;
+let whyKeep = false, startX = null, startY = 0, dx = 0, dy = 0, samples = [], pid = null, busy = false, card = {}, f = {}, finger = null, use3d = null, dragMoves = 0, dragApplied = 0, tapOnly = 0;
 const KomeCards = { over: () => false };
 function evT(e){ return (e && typeof e.timeStamp === 'number' && e.timeStamp > 0) ? e.timeStamp : performance.now(); }
 function fingerReady(){ return true; } function idleTouch(){ log.idleTouch++; } function greetClear(){} function ghostPause(){} function ghostBack(){ log.stops++; }
@@ -258,6 +258,7 @@ const fs = require('fs'), path = require('path');
 let chromium; try { ({ chromium } = require('playwright')); } catch (e) { console.log(JSON.stringify({ skip: 'playwright なし' })); process.exit(0); }
 const [htmlPath, root, plansJ] = process.argv.slice(1, 4);
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.json': 'application/json', '.png': 'image/png', '.svg': 'image/svg+xml', '.css': 'text/css' };
+const WHY_HOLD = "(() => { const w = document.getElementById('swWhy'); return { on: w.classList.contains('on'), op: +getComputedStyle(w).opacity, text: w.textContent, date: document.getElementById('swBigDate').textContent }; })()";
 const FAKE = (mode) => {
   window.__fa = { made: 0, osc: 0, src: 0, resume: 0, suspend: 0, allow: mode !== 'lateAllow', srcs: [] };
   // 周回173 の 直し(レビュー P2): 音の つながりを 覚え、まだ 鳴って いない 音が スピーカーまで つながって いる 数を 数える
@@ -285,6 +286,7 @@ const FAKE = (mode) => {
     await ctx.addInitScript(FAKE, pl.mode || 'ok');
     if (pl.store === 'throw') await ctx.addInitScript(() => { const g = Storage.prototype.getItem, s = Storage.prototype.setItem; Storage.prototype.getItem = function(){ throw new Error('blocked'); }; Storage.prototype.setItem = function(){ throw new Error('blocked'); }; });
     if (pl.save) await ctx.addInitScript(s => { try { if (!sessionStorage.getItem('sv')) { sessionStorage.setItem('sv', '1'); localStorage.setItem('kome365_swipe_save', s); } } catch (e) {} }, pl.save);
+    if (pl.slowCanvas) await ctx.addInitScript(() => { const o = HTMLCanvasElement.prototype.toDataURL; HTMLCanvasElement.prototype.toDataURL = function(){ const t = performance.now(); while (performance.now() - t < 1500) {} return o.apply(this, arguments); }; });   // サイクル182: GPU を 待つ toDataURL(3D の したくと 重なった とき)を にせる
     if (pl.store === 'junk') await ctx.addInitScript(() => { try { localStorage.setItem('kome365_sound', '{{oops'); localStorage.setItem('kome365_swipe_save', '{"v":'); } catch (e) {} });
     await p.route('http://kome.test/**', r => { const u = new URL(r.request().url()); let f = u.pathname === '/kome365/index.html' ? htmlPath : path.join(root, decodeURIComponent(u.pathname));
       if ((!f.startsWith(root) && f !== htmlPath) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) return r.fulfill({ status: 404, body: '' });
@@ -308,6 +310,15 @@ const FAKE = (mode) => {
       else if (a === 'mute') { if (await p.locator('#swSnd').count()) await p.tap('#swSnd', { timeout: 5000 }); await p.waitForTimeout(300); }   // ボタンが 無い 版では 押せない(下の 確かめで 落ちる)
       else if (a === 'wait') await p.waitForTimeout(2500);
       else if (a.startsWith('keyjs:')) { await p.keyboard.press('ArrowLeft'); await p.waitForTimeout(250); r.js = r.js || []; r.js.push(await p.evaluate(a.slice(6))); }   // 決めて 0.25秒 あと(決めた 直後の 演出の 間)に はかる
+      else if (a === 'animFast') { await cdp.send('Animation.enable'); await cdp.send('Animation.setPlaybackRate', { playbackRate: 10 }); }   // サイクル180: CSS の アニメの 時計 だけ 10倍 早く(重い 端末で こまが 来ない 間に アニメの 時間が すすむ のを にせる)
+      else if (a === 'holdNext') {   // サイクル181: 決めて 0.35秒 あとに 次の カードへ 指を 置き、1秒 そのまま(決めない)。その 間の わけの 吹き出しを はかる
+        await p.waitForTimeout(350); const bx = await p.locator('#swCard').boundingBox(); const x = bx.x + bx.width / 2, y = bx.y + bx.height / 2;
+        await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] }); await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: x + 8, y }] }); await p.waitForTimeout(700);
+        r.js = r.js || []; r.js.push(await p.evaluate(WHY_HOLD)); await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x, y }] }); await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); }
+      else if (a === 'wait9') await p.waitForTimeout(9500);   // サイクル182: さわらずに 8秒 より 長く
+      else if (a.startsWith('rotate:')) { const [rw, rh] = a.slice(7).split('x').map(Number); await p.setViewportSize({ width: rw, height: rh }); await p.waitForTimeout(250); }   // サイクル183: 吹き出しが 出て いる 間に 回す
+      else if (a === 'holdOn') { await p.waitForTimeout(350); const bx = await p.locator('#swCard').boundingBox(); const x = bx.x + bx.width / 2, y = bx.y + bx.height / 2; r.hold = [x, y]; await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] }); await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: x + 8, y }] }); await p.waitForTimeout(500); }   // 次の カードに 指を 置いた まま(はなさない)
+      else if (a === 'release') { const [x, y] = r.hold; await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x, y }] }); await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); }
       else if (a === 'wait31') await p.waitForTimeout(31500);   // 30秒の カードが 出る まで
       else if (a === 'keyL') { await p.keyboard.press('ArrowLeft'); r.js = r.js || []; r.js.push(await p.evaluate(() => window.__fa.live(window.__tc, window.__ts))); }   // 決めた すぐ あとに 古い 予約が のこって いるか
       else if (a === 'dailyKey') {   // 3回めの レビュー(P2): ← で 決めて すぐ ⌂ → 今日の 田んぼ(bDaily) → 新しい ゲームで すぐ ←
@@ -512,7 +523,7 @@ class TestKome365FirstMinute(unittest.TestCase):
     def test_demo_waits_for_judge_mark(self):
         # Codex 指摘(PR #1085): ○✗ の しるしが 出て いる 間は 手本を 待つ
         # 周回161: 待ちなおしは しるしの 残りの 時間だけ(0.3秒きざみで 待ちなおすと、しるしから 0.9秒 かかる)
-        self.assertIn("var markLeft = 750 - (performance.now() - markAt); if (markLeft > 0) { demoArm(markLeft); return; }", HTML)
+        self.assertIn("var markLeft = 750 - (performance.now() - markAt); if (markLeft > 0 || markRaf) { demoArm(markLeft > 0 ? markLeft : 100); return; }", HTML)   # サイクル180(書きかえ): しるしが こまで 数えて まだ 出て いる 間(重い 端末で 0.75秒より 長い とき)も 待つ
         self.assertNotIn("if (performance.now() - markAt < 750) { demoArm(); return; }", HTML)
         self.assertIn("function demoArm(ms){ demoDisarm();", HTML)
         self.assertIn("}, ms > 0 ? ms : (demoMiss > 0 || demoOk < 3) ? DEMO_STOP_MS : DEMO_STOP_OK_MS); }", HTML)
@@ -601,6 +612,7 @@ class TestKome365FirstMinute(unittest.TestCase):
 
     def test_3d_setup_waits_for_first_swipe(self):
         # 周回164(おそいスマホ): はじめての人は 1枚目を決めた 0.9秒あと か、さわらずに 8秒で 3D のしたくを はじめる
+        # サイクル182: 「さわらずに 8秒」は 1枚目を 答えた あと だけ(答える 前は はじめない。下の TestKome365Finger3D)
         choose = HTML[HTML.index("function choose(side, vel){"):HTML.index("function choose(side, vel){") + 260]
         self.assertIn("window.__k3d.soon(900);", choose)
         # はじめての人の 道(周回164)は そのまま。つづきの人の 道は 周回167 で 同じ 待ち方に した(下の test_returning_player_3d_waits_too)
@@ -772,9 +784,10 @@ class TestKome365FirstMinute(unittest.TestCase):
         # 0.4秒 たった あとで 次の カードに 触ったら、これまで どおり すぐ 片づける(今の きまり)
         r = pointer_run(first + [["land", 2300], ["mark", 2300], ["down", {"id": 2, "x": 200, "y": 660, "t": 2700}]])
         self.assertEqual(r["markOff"], base + 1)
-        self.assertIn("if (!pendRun && evT(e) - markAt >= 400) { var mk0 = $('swMark'); if (mk0) mk0.classList.remove('on'); var wy0 = $('swWhy'); if (wy0) wy0.classList.remove('on'); }", HTML)
+        self.assertIn("if (!pendRun && evT(e) - markAt >= 400) { var mk0 = $('swMark'); if (mk0) mk0.classList.remove('on'); var wy0 = $('swWhy'); if (wy0 && !whyKeep) wy0.classList.remove('on'); }", HTML)   # サイクル181(書きかえ): 最初の 3枚の わけは 次の カードに 触っても 2秒 のこす
         # しるしの 長さ(0.75秒)・✗ の わけの 長さ(2秒)は 変えない
-        self.assertIn("#swMark.on{animation:swMarkIn .75s ease-out both}", HTML)
+        self.assertIn("var MARK_SEEN_MS = 600,", HTML)   # サイクル180(書きかえ): しるしは 描かれた こまで 0.6秒 + 0.15秒で 消える(ふつうの 端末で 前の 0.75秒と 同じ くらい)
+        self.assertIn("#swMark.on{opacity:1;transition:none;animation:swMarkPop .23s ease-out}", HTML)
         self.assertIn("#swWhy.on{animation:swWhyIn 2s ease-out both}", HTML)
 
     def test_quick_flicks_wait_in_short_queue(self):
@@ -1803,6 +1816,158 @@ class TestKome365DemoFirstSide(unittest.TestCase):
         self.assertNotIn("swDemoGhost", mm.group(1))      # 動かさない
         self.assertIn("swGhostIn", mm.group(1))           # ふわっと 出る のは そのまま(周回154)
         self.assertLess(html.index("#swWrap:has(#swCard.enter) #swGhost.on{animation:swDemoGhost"), m.start())   # あとに 書いて 勝つ
+
+
+# サイクル180(運営者の声 2026-11-14「前のように スワイプ すると マルバツが 出る ように」): ○✗ の しるしは 描かれた こまで 数えて 見せる
+MARK_LOG_JS = "js:(() => { window.__fr = []; const m = document.getElementById('swMark'); const loop = () => { window.__fr.push([performance.now(), +getComputedStyle(m).opacity]); if (window.__fr.length < 3000) requestAnimationFrame(loop); }; requestAnimationFrame(loop); return 1; })()"
+MARK_SEEN_JS = "js:(() => { const fr = window.__fr; let ms = 0, n = 0; for (let i = 1; i < fr.length; i++) if (fr[i][1] >= 0.5) { n++; ms += Math.min(50, fr[i][0] - fr[i - 1][0]); } return { ms: Math.round(ms), n: n, on: document.getElementById('swMark').classList.contains('on') }; })()"
+
+
+class TestKome365MarkByFrames(unittest.TestCase):
+    """サイクル180: CSS の アニメの 時間が こまより 先に すすむ 端末でも、しるしは 0.4秒 以上 見える(前は アニメ 1回 0.75秒で 終わって いた)"""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.r = sound_run([
+            {"name": "fast", "acts": ["animFast", MARK_LOG_JS, "L", MARK_SEEN_JS]},
+            {"name": "fastR", "reduce": True, "acts": ["animFast", MARK_LOG_JS, "L", MARK_SEEN_JS]},
+            {"name": "normal", "acts": [MARK_LOG_JS, "L", MARK_SEEN_JS]},
+        ])
+
+    def test_mark_visible_even_if_animation_clock_runs_ahead(self):
+        for name in ("fast", "fastR", "normal"):
+            x = self.r[name]
+            self.assertEqual(x["errs"], [], name)
+            j = x["js"][-1]
+            self.assertGreaterEqual(j["ms"], 400, name + ": しるしが 見えた 時間 %r" % (j,))
+            self.assertFalse(j["on"], name)                      # 1.3秒 あとには 消えて いる
+        self.assertLessEqual(self.r["normal"]["js"][-1]["ms"], 900)   # ふつうの 端末では 前と 同じ くらい(約0.75秒)
+
+
+# サイクル181(運営者 2026-11-14): わけの 吹き出しを 読める ように(最初の 3枚は 次へ 進んでも 2秒 のこす・小さい たて画面と よこ画面では 日づけ・選ぶ 所に かぶらない)
+WHY_PLACE_JS = "js:(() => { const R = e => { const b = e.getBoundingClientRect(); return [b.left, b.top, b.right, b.bottom]; }; const tr = e => { const rr = document.createRange(); rr.selectNodeContents(e); const b = rr.getBoundingClientRect(); return [b.left, b.top, b.right, b.bottom]; }; const vis = e => { for (let n = e; n && n.nodeType === 1; n = n.parentElement) { const c = getComputedStyle(n); if (c.display === 'none' || c.visibility === 'hidden') return false; } return true; }; const w = document.getElementById('swWhy'), A = R(w), o = {}; const C = { date: tr(document.getElementById('swBigDate')), edgeL: tr(document.querySelector('#swEdge .eL .eLb')), edgeR: tr(document.querySelector('#swEdge .eR .eLb')), snd: R(document.getElementById('swSnd')) }; for (const k in C) { const B = C[k]; const ix = Math.min(A[2], B[2]) - Math.max(A[0], B[0]), iy = Math.min(A[3], B[3]) - Math.max(A[1], B[1]); if (ix > 0.5 && iy > 0.5) o[k] = Math.round(ix * iy); } const pw = document.getElementById('swPdWord'); return { on: w.classList.contains('on'), op: +getComputedStyle(w).opacity, top: w.style.top, box: A, inView: A[0] >= 0 && A[1] >= 0 && A[2] <= innerWidth && A[3] <= innerHeight, o: o, pe: getComputedStyle(w).pointerEvents, wordVis: vis(pw) }; })()"
+SAVE_CARD5 = '{"v":"kokoro","y":"recent","so":"high","m":"transplant","c":0,"s":1543068361,"fm":"oneshot","yh":0,"ch":"LLRL"}'
+
+
+class TestKome365WhyReadable(unittest.TestCase):
+    """サイクル181: わけの 吹き出しを 読める ように"""
+
+    @classmethod
+    def setUpClass(cls):
+        plans = [
+            {"name": "keep1", "acts": ["keyjs:" + WHY_JS, "holdNext"]},
+            {"name": "keep5", "save": SAVE_CARD5, "acts": ["keyjs:" + WHY_JS, "holdNext"]},
+        ]
+        for w, h in VPS5:
+            plans.append({"name": "p%dx%d" % (w, h), "w": w, "h": h, "acts": ["L", WHY_PLACE_JS]})
+        cls.r = sound_run(plans)
+
+    def test_first_three_cards_keep_reason_while_touching_next(self):
+        x = self.r["keep1"]
+        self.assertEqual(x["errs"], [])
+        held = x["js"][-1]                        # 1枚目を 決めて 次の カードに 指を 置いた まま 0.7秒(決めて 約1.3秒)
+        self.assertTrue(held["on"], "1枚目の わけが 次の カードに 触ったら 消えた %r" % (held,))
+        self.assertGreaterEqual(held["op"], 0.5)
+        y = self.r["keep5"]                       # 5枚目からは 今の まま(触ったら 消える)
+        self.assertEqual(y["errs"], [])
+        self.assertFalse(y["js"][-1]["on"], "5枚目 %r" % (y["js"][-1],))
+
+    def test_reason_bubble_clear_of_date_and_choices(self):
+        for w, h in VPS5:
+            name = "p%dx%d" % (w, h)
+            x = self.r[name]
+            self.assertEqual(x["errs"], [], name)
+            j = x["js"][-1]
+            self.assertTrue(j["on"], name)
+            self.assertTrue(j["inView"], name + " %r" % (j["box"],))
+            self.assertEqual(j["pe"], "none", name)         # 入力は ふさがない
+            self.assertFalse(j["wordVis"], name)            # 田んぼの ことばは 吹き出しの 間 しまう(重ならない)
+            if (w, h) == (820, 1180):
+                self.assertEqual(j["top"], "", name)        # 日づけに かからない 大きな 画面の 場所は 前の まま(CSS)
+            # サイクル183(PR #1168 の レビューで 書きかえ): 390×844 も 日づけ・選ぶ 文に かからない(前は 390×844 は 場所を かえない ので 見て いなかった)
+            self.assertNotIn("date", j["o"], name + " %r" % (j["o"],))
+            self.assertNotIn("edgeL", j["o"], name + " %r" % (j["o"],))
+            self.assertNotIn("edgeR", j["o"], name + " %r" % (j["o"],))
+            self.assertNotIn("snd", j["o"], name)
+
+
+# サイクル182: 手本の 指が 字に かからない・3D の したくは 1枚目を 答えた あと
+FINGER_JS = "js:(async () => { const vis = e => { const r = e.getBoundingClientRect(), c = getComputedStyle(e); if (r.width < 3 || r.height < 3) return null; if (c.display === 'none' || c.visibility === 'hidden' || +c.opacity < 0.1) return null; for (let a = e.parentElement; a; a = a.parentElement) { const s = getComputedStyle(a); if (s.display === 'none' || s.visibility === 'hidden' || +s.opacity < 0.1) return null; } return r; }; const best = {}; let on = 0; const t0 = performance.now(); while (performance.now() - t0 < 5200) { const fg = document.querySelector('#swHand .hdFinger'), F = fg && vis(fg); if (F && document.getElementById('swWrap').classList.contains('demoOn')) { on++; for (const e of document.querySelectorAll('#swCard *')) { if (e.closest('#swHand')) continue; const own = [...e.childNodes].some(n => n.nodeType === 3 && n.textContent.trim().length > 0); if (!own) continue; const r = vis(e); if (!r) continue; const ow = Math.min(F.right, r.right) - Math.max(F.left, r.left), oh = Math.min(F.bottom, r.bottom) - Math.max(F.top, r.top); if (ow > 2 && oh > 2) { const k = (e.id || e.className) + ':' + e.textContent.slice(0, 8); best[k] = Math.max(best[k] || 0, Math.round(ow * oh)); } } } await new Promise(r => setTimeout(r, 100)); } return { on: on, best: best }; })()"
+
+
+class TestKome365Finger3D(unittest.TestCase):
+    """サイクル182(点数表の H と F)"""
+
+    @classmethod
+    def setUpClass(cls):
+        plans = []
+        for w, h in VPS5:
+            plans.append({"name": "f%dx%d" % (w, h), "w": w, "h": h, "acts": [FINGER_JS]})
+        plans.append({"name": "k3d", "acts": ["wait9", "js:window.__k3d.state()", "L", "js:window.__k3d.state()"]})
+        plans.append({"name": "slowCanvas", "slowCanvas": True, "acts": ["js:(window.__up = 0, window.__mon = 0, document.addEventListener('pointerup', () => { if (!window.__up) window.__up = performance.now(); }, true), new MutationObserver(() => { const m = document.getElementById('swMark'); if (m.classList.contains('on') && window.__up && !window.__mon) window.__mon = performance.now(); }).observe(document.getElementById('swMark'), { attributes: true }), 1)", "L", "js:window.__mon && window.__up ? Math.round(window.__mon - window.__up) : -1"]})
+        cls.r = sound_run(plans)
+
+    def test_demo_finger_clear_of_text(self):
+        for w, h in VPS5:
+            name = "f%dx%d" % (w, h)
+            x = self.r[name]
+            self.assertEqual(x["errs"], [], name)
+            j = x["js"][-1]
+            self.assertGreater(j["on"], 20, name + ": 手本が 出て いない")
+            self.assertEqual(j["best"], {}, name + ": 手本の 指が 字に かかる %r" % (j["best"],))
+
+    def test_first_mark_does_not_wait_for_canvas(self):
+        # 大きな ○✗ の 絵は canvas の toDataURL を 使わない(GPU を 待って 止まらない)。toDataURL が 1.5秒 かかる 端末でも 1秒 以内に 出る
+        x = self.r["slowCanvas"]
+        self.assertEqual(x["errs"], [])
+        ms = x["js"][-1]
+        self.assertGreaterEqual(ms, 0, "しるしが 出ない")
+        self.assertLess(ms, 1000, "しるしが 出る まで %d ms" % ms)
+
+    def test_3d_setup_waits_for_first_answer(self):
+        x = self.r["k3d"]
+        self.assertEqual(x["errs"], [])
+        self.assertEqual(x["js"][0], 1, "さわらずに 9.5秒で 3D の したくが はじまった(最初の スワイプが 固まりに 当たる)")
+        self.assertEqual(x["js"][1], 2, "1枚目を 答えて 1.3秒 たっても 3D の したくが はじまらない")
+
+
+# サイクル183(PR #1168 の レビュー): のこした 吹き出しは 次の カードの 日づけ・選ぶ 文・画面の 外に かからない(指を 置いた まま・回した とき も)
+WHY_FIT_JS = "js:(() => { const w = document.getElementById('swWhy'), A = w.getBoundingClientRect(); const rr = document.createRange(), o = {}; const add = (k, n) => { if (!n || !n.getClientRects().length) return; rr.selectNodeContents(n); const b = rr.getBoundingClientRect(); const ix = Math.min(A.right, b.right) - Math.max(A.left, b.left), iy = Math.min(A.bottom, b.bottom) - Math.max(A.top, b.top); if (ix > 0.5 && iy > 0.5) o[k] = Math.round(ix * iy); }; add('date', document.getElementById('swBigDate')); document.querySelectorAll('#swEdge .eLb').forEach((n, i) => add('edge' + i, n)); return { on: w.classList.contains('on'), op: +getComputedStyle(w).opacity, vw: innerWidth, vh: innerHeight, box: [A.left, A.top, A.right, A.bottom].map(Math.round), inView: A.left >= 0 && A.top >= 0 && A.right <= innerWidth && A.bottom <= innerHeight, o: o, date: document.getElementById('swBigDate').textContent }; })()"
+
+
+class TestKome365WhyFit(unittest.TestCase):
+    """サイクル183: のこした わけの 吹き出しの 置き場所(5つの 大きさ・回す 両向き)"""
+
+    @classmethod
+    def setUpClass(cls):
+        plans = []
+        for w, h in VPS5:
+            plans.append({"name": "hold%dx%d" % (w, h), "w": w, "h": h, "acts": ["keyjs:" + WHY_JS, "holdOn", WHY_FIT_JS, "release"]})
+        for (w, h), (rw, rh) in (((320, 568), (568, 320)), ((568, 320), (320, 568)), ((390, 844), (844, 390)), ((844, 390), (390, 844))):
+            plans.append({"name": "rot%dx%d-%dx%d" % (w, h, rw, rh), "w": w, "h": h, "reduce": True, "acts": ["keyjs:" + WHY_JS, "rotate:%dx%d" % (rw, rh), WHY_FIT_JS]})
+        cls.r = sound_run(plans)
+
+    def check(self, name, j):
+        self.assertTrue(j["on"], name + ": 吹き出しが 出て いない %r" % (j,))
+        self.assertTrue(j["inView"], name + ": 画面の 外 %r" % (j["box"],))
+        self.assertEqual(j["o"], {}, name + ": 日づけ・選ぶ 文に かかる %r" % (j,))
+
+    def test_kept_bubble_clear_while_touching_next_card(self):
+        for w, h in VPS5:
+            name = "hold%dx%d" % (w, h)
+            x = self.r[name]
+            self.assertEqual(x["errs"], [], name)
+            j = x["js"][-1]
+            self.assertEqual(j["date"], "1月2日", name)    # 次の カードの 日づけ
+            self.check(name, j)
+
+    def test_bubble_refits_after_rotation(self):
+        for name in [k for k in self.r if k.startswith("rot")]:
+            x = self.r[name]
+            self.assertEqual(x["errs"], [], name)
+            j = x["js"][-1]
+            self.assertEqual([j["vw"], j["vh"]], [int(v) for v in name.split("-")[1].split("x")], name)
+            self.check(name, j)
 
 
 class TestKome365PaddyReadable(unittest.TestCase):

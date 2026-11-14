@@ -1,0 +1,604 @@
+{
+  "round": 114,
+  "game": "米づくり365",
+  "scope": "One320×568 primary observation; no product/test changes",
+  "source": {
+    "testedHead": "15a9308c0ffeb7e2ad28de91fcc8136888450862",
+    "configuredFiles": {
+      "kome365/index.html": "0946243f4918704c78076bf30cf1080d75f7ade75d8bb916d5ec74c0948fd5a2",
+      "kome365/engine.js": "c3d0cef6bb108d5b6d8fe38aaf0c08fe7994bdab08bf92775865a6e0222469a3",
+      "kome365/field3d.js": "a5c1dad91d5c0c326f1394fad9c5d04e7e3b8d13e3a2b8b1757c7aa08d3558ff",
+      "kome365/cards.js": "b15c5b2f56ef9c0c8361fa2fa6a039085919ca516b4a2e6e5a1b3bb691dde744",
+      "kome365/vendor/three.min.js": "9274bbcec8d96168626c732b5d31c775aa8cfb7eaa0599bec0c175908a2c1ce2"
+    },
+    "sourceVerification": {
+      "expectedHead": "15a9308c0ffeb7e2ad28de91fcc8136888450862",
+      "expectedHtmlSha256": "0946243f4918704c78076bf30cf1080d75f7ade75d8bb916d5ec74c0948fd5a2",
+      "expectedSourceHashes": {
+        "kome365/index.html": "0946243f4918704c78076bf30cf1080d75f7ade75d8bb916d5ec74c0948fd5a2",
+        "kome365/engine.js": "c3d0cef6bb108d5b6d8fe38aaf0c08fe7994bdab08bf92775865a6e0222469a3",
+        "kome365/field3d.js": "a5c1dad91d5c0c326f1394fad9c5d04e7e3b8d13e3a2b8b1757c7aa08d3558ff",
+        "kome365/cards.js": "b15c5b2f56ef9c0c8361fa2fa6a039085919ca516b4a2e6e5a1b3bb691dde744",
+        "kome365/vendor/three.min.js": "9274bbcec8d96168626c732b5d31c775aa8cfb7eaa0599bec0c175908a2c1ce2"
+      },
+      "servedURL": "http://localhost:8000/kome365/index.html",
+      "verified": true,
+      "scope": "Fixed local HEAD and all five configured local/HTTP file hashes, including engine.js/field3d.js/cards.js; all five rechecked locally after run. Other served assets are not hash-gated.",
+      "startedAt": 1794665267475,
+      "localHead": "15a9308c0ffeb7e2ad28de91fcc8136888450862",
+      "localHtmlSha256": "0946243f4918704c78076bf30cf1080d75f7ade75d8bb916d5ec74c0948fd5a2",
+      "served": {
+        "kome365/index.html": {
+          "url": "http://localhost:8000/kome365/index.html",
+          "requested": {
+            "nodeEpochMs": 1794665267475,
+            "nodeMonotonicMs": 176326989.002039
+          },
+          "httpStatus": 200,
+          "sha256": "0946243f4918704c78076bf30cf1080d75f7ade75d8bb916d5ec74c0948fd5a2",
+          "completed": {
+            "nodeEpochMs": 1794665267537,
+            "nodeMonotonicMs": 176327050.831463
+          }
+        },
+        "kome365/engine.js": {
+          "url": "http://localhost:8000/kome365/engine.js",
+          "requested": {
+            "nodeEpochMs": 1794665267537,
+            "nodeMonotonicMs": 176327050.843109
+          },
+          "httpStatus": 200,
+          "sha256": "c3d0cef6bb108d5b6d8fe38aaf0c08fe7994bdab08bf92775865a6e0222469a3",
+          "completed": {
+            "nodeEpochMs": 1794665267542,
+            "nodeMonotonicMs": 176327056.16416
+          }
+        },
+        "kome365/field3d.js": {
+          "url": "http://localhost:8000/kome365/field3d.js",
+          "requested": {
+            "nodeEpochMs": 1794665267542,
+            "nodeMonotonicMs": 176327056.177774
+          },
+          "httpStatus": 200,
+          "sha256": "a5c1dad91d5c0c326f1394fad9c5d04e7e3b8d13e3a2b8b1757c7aa08d3558ff",
+          "completed": {
+            "nodeEpochMs": 1794665267547,
+            "nodeMonotonicMs": 176327060.491074
+          }
+        },
+        "kome365/cards.js": {
+          "url": "http://localhost:8000/kome365/cards.js",
+          "requested": {
+            "nodeEpochMs": 1794665267547,
+            "nodeMonotonicMs": 176327060.501184
+          },
+          "httpStatus": 200,
+          "sha256": "b15c5b2f56ef9c0c8361fa2fa6a039085919ca516b4a2e6e5a1b3bb691dde744",
+          "completed": {
+            "nodeEpochMs": 1794665267551,
+            "nodeMonotonicMs": 176327065.024958
+          }
+        },
+        "kome365/vendor/three.min.js": {
+          "url": "http://localhost:8000/kome365/vendor/three.min.js",
+          "requested": {
+            "nodeEpochMs": 1794665267551,
+            "nodeMonotonicMs": 176327065.033663
+          },
+          "httpStatus": 200,
+          "sha256": "9274bbcec8d96168626c732b5d31c775aa8cfb7eaa0599bec0c175908a2c1ce2",
+          "completed": {
+            "nodeEpochMs": 1794665267561,
+            "nodeMonotonicMs": 176327074.483133
+          }
+        }
+      },
+      "httpStatus": 200,
+      "servedHtmlSha256": "0946243f4918704c78076bf30cf1080d75f7ade75d8bb916d5ec74c0948fd5a2",
+      "completedAt": 1794665267561
+    },
+    "configuredLocal5UnchangedAfter": true,
+    "verificationLimit": "Configured local/HTTP5 before, local5 after; not all assets or post-run HTTP. Includes protected engine/field3d/cards.",
+    "postTestDocsOnlyUpdate": {
+      "testedSource": "15a9308c0ffeb7e2ad28de91fcc8136888450862",
+      "postTestMain": "704157676f89669ed956ff60c7550812358efd39",
+      "docsOnly": true,
+      "changedFiles": [
+        "docs/first-minute/round-113-nishio-observation/README.md",
+        "docs/first-minute/round-113-nishio-observation/observe-10s.png",
+        "docs/first-minute/round-113-nishio-observation/play-10s.png",
+        "docs/first-minute/round-113-nishio-observation/play-30s.png",
+        "docs/first-minute/round-113-nishio-observation/play-60s.png",
+        "docs/first-minute/round-113-nishio-observation/results.json"
+      ],
+      "atUTC": "2026-11-14T14:12:06.000167+00:00"
+    },
+    "documentationCommitPending": true
+  },
+  "method": {
+    "playRuns": 1,
+    "viewport": {
+      "width": 320,
+      "height": 568
+    },
+    "cpuRate": 1,
+    "isMobile": true,
+    "hasTouch": true,
+    "freshContext": true,
+    "input": "CDP Input.dispatchTouchEvent",
+    "observationSeconds": 10,
+    "waitObservationPhotoThenPlaySeconds": 60,
+    "privateStateInjected": false,
+    "choiceBasis": "Current visible cue6, same-card remembered cue9; all15left100px",
+    "externalLibraries": "Locally bundled three revision128; external components unnecessary"
+  },
+  "outcome": {
+    "newConfirmedCandidates": 0,
+    "productChanges": 0,
+    "testChanges": 0,
+    "opportunities": 23,
+    "sentGestures": 15,
+    "unsentCueUncertainSkips": 8,
+    "responses": {
+      "drag": 15,
+      "transform": 15,
+      "dayAdvance": 15,
+      "changedReasonText": 14,
+      "noResponseAmongSent": 0,
+      "postAdvanceReasonOnWithText": 15
+    },
+    "positiveReasons": 7,
+    "negativeReasons": 8,
+    "lastDate": "1月16日",
+    "cueBasisCounts": {
+      "same-card-memory": 9,
+      "current": 6
+    },
+    "directions": {
+      "left": 15
+    },
+    "reasonRepeat": {
+      "sameTextAsPreviousInput": [
+        4
+      ],
+      "meaning": "Gesture4 advanced the date and showed a positive reason equal to the preceding reason. Changed-text criterion yields14, post-advance reason-on class with text yields15; not an ignored input or missing response."
+    },
+    "cueSkipAudit": {
+      "count": 8,
+      "all8CardHandVisibleAndFingerOpacity1": true,
+      "all8Horizontal8pxThresholdNotMet": true,
+      "alsoLeftTrailOpacityBelowHalf": 3,
+      "sameCardLaterQualifiedCueCount": 8,
+      "cueHistoryCount": 192,
+      "cueHistoryDropped": 0,
+      "recordingDropped": {
+        "events": 0,
+        "ui": 0,
+        "heartbeats": 0,
+        "rafGaps": 0,
+        "longTasks": 0
+      },
+      "conclusion": "A1 sustained missing direction-cue hypothesis not established by this primary. Skips are driver threshold/memory outcomes; not8missing hand displays or8ignored inputs. Sparse valid-cue history cannot prove continuous UI availability or absence."
+    },
+    "retentionMeasured": false,
+    "beforeAfterImprovementMeasured": false,
+    "reasonMeasurementDefinition": {
+      "count": 15,
+      "sourceField": "discovery-a/summary.json responses.postAdvanceVisibleReason",
+      "actualMeasurement": "whyOn is classList.contains(\"on\") plus saved reason text; reason element opacity/rect/hit was not recorded. Not15 verified visible/readable/painted reasons.",
+      "source": "helpers.cjs:152",
+      "visibleOriginalPhotoEvidence": "play-10s.png shows a green positive mark and reason; separate from15 class/text records."
+    }
+  },
+  "timing": {
+    "firstInputPlaySeconds": 0.252,
+    "firstResponseMoments": {
+      "drag": {
+        "playSeconds": 0.728599853515625,
+        "fromSendMs": 476.599853515625
+      },
+      "transform": {
+        "playSeconds": 0.842099853515625,
+        "fromSendMs": 590.099853515625
+      },
+      "nextDay": {
+        "playSeconds": 1.174800048828125,
+        "fromSendMs": 922.800048828125
+      },
+      "reason": {
+        "playSeconds": 1.174800048828125,
+        "fromSendMs": 922.800048828125
+      }
+    },
+    "firstPositiveFromFirstInputMs": 922.800048828125,
+    "lastInputPlaySeconds": 57.553,
+    "lastTouchEndPlaySeconds": 57.674,
+    "inputTiming": {
+      "requestedSpanMs": 120,
+      "actualSendSpanMs": {
+        "min": 120.28388500213623,
+        "median": 120.72679999470711,
+        "max": 134.13523399829865
+      },
+      "ACKDelayMs": {
+        "min": 277.04769200086594,
+        "median": 374.6343249976635,
+        "max": 491.3191500008106
+      },
+      "allEventTimeStampToHandlerMs": {
+        "min": 272.59999999403954,
+        "median": 324.2999999821186,
+        "max": 472.59999999403954
+      },
+      "pointerdownEventTimeStampToHandlerMs": {
+        "min": 272.59999999403954,
+        "median": 416.59999999403954,
+        "max": 472.59999999403954
+      },
+      "downSendToEventTimeStampMs": {
+        "min": -0.10009765625,
+        "median": -0.10009765625,
+        "max": 0.0
+      },
+      "sendToTransformMs": {
+        "min": 416.599853515625,
+        "median": 440.599853515625,
+        "max": 590.099853515625
+      },
+      "limit": "Node send spans, CDP acknowledgements, DOM event timestamps and actual handler times are distinct. Long delivery lag is not evidence that the requested finger motion itself lasted that long or a causal diagnosis of rendering/host/product code."
+    },
+    "observationAndPlayClock": {
+      "observationToPlayMs": 15288.276522010565,
+      "observationPhotoCaptureMs": 5200.242180973291,
+      "photoSavedToPlayMs": 86.69794201850891,
+      "actualPlayStopMs": 60000.25262898207,
+      "firstInputAfterObservationStartMs": 15540.508767008781,
+      "limit": "Initial photo save wait occurs before play clock; product clocks continue. Do not attribute it as isolated game response latency."
+    },
+    "CEventClockRanges": {
+      "actualEventSpanMs": {
+        "n": 15,
+        "min": 119.90000000596046,
+        "median": 121.0,
+        "max": 133.90000000596046
+      },
+      "eventToCaptureObservationMs": {
+        "n": 15,
+        "min": 272.59999999403954,
+        "median": 416.59999999403954,
+        "max": 472.59999999403954
+      },
+      "captureObservationToDragMs": {
+        "n": 15,
+        "min": 3.5999999940395355,
+        "median": 4.5,
+        "max": 14.900000005960464
+      },
+      "eventToDragMs": {
+        "n": 15,
+        "min": 276.59999999403954,
+        "median": 424.59999999403954,
+        "max": 476.59999999403954
+      },
+      "eventToFirstInlineTransformMs": {
+        "n": 15,
+        "min": 416.59999999403954,
+        "median": 440.69999998807907,
+        "max": 590.0999999940395
+      },
+      "eventToNextDateMs": {
+        "n": 15,
+        "min": 719.7999999821186,
+        "median": 870.9000000059605,
+        "max": 942.4000000059605
+      }
+    },
+    "clockScope": "A first response latencies use Node send; C ranges use browser event timestamp/capture handler/DOM. Do not conflate the small clock offset or lag with requested gesture duration.",
+    "reasonMeasurementDefinition": "First reason/positive time is first recorded on class and reason text, not element visibility or physical paint."
+  },
+  "dispatch": {
+    "CDPCommands": 120,
+    "ACKs": 120,
+    "trustedEvents": 45,
+    "eventTypes": {
+      "pointerdown": 15,
+      "pointermove": 15,
+      "pointerup": 15
+    }
+  },
+  "cardEligibility": {
+    "initialValid": true,
+    "initialPathValid": true,
+    "initialPointOwnedByCard": true,
+    "beforeCardWidths": [
+      282.234375
+    ],
+    "all15PathsWithinBeforeRect": true,
+    "firstPathStartX": 159.9921875,
+    "firstPathEndX": 59.9921875,
+    "firstRectX": 18.875,
+    "firstRectRight": 301.109375,
+    "limit": "Before-input DOM geometry and actual trusted delivery only; not a proof of every in-between painted pixel."
+  },
+  "photos": [
+    {
+      "file": "observe-10s.png",
+      "sha256": "a85bea1422fb276cdc4dc9aff14e5f6880161247b61d876fc6e8a594c86f01a8",
+      "bytes": 106493,
+      "dimensions": [
+        320,
+        568
+      ],
+      "originalCopiedUnmodified": true,
+      "reportAuthorPersonallyViewed": true,
+      "clock": "observation",
+      "requestedSeconds": 10.001336399018765,
+      "savedSeconds": 15.201578579992056,
+      "captureMs": 5200.242180973291,
+      "visible": "1月1日 元日の田んぼ／二択／田おこし まえ。写真に指は未確認"
+    },
+    {
+      "file": "play-10s.png",
+      "sha256": "397c56a0989efd51c5468115b5acfb189ac23ac16685216a468b9a3e4b5d1575",
+      "bytes": 130740,
+      "dimensions": [
+        320,
+        568
+      ],
+      "originalCopiedUnmodified": true,
+      "reportAuthorPersonallyViewed": true,
+      "clock": "play",
+      "requestedSeconds": 9.99994165199995,
+      "savedSeconds": 10.458265125989914,
+      "captureMs": 458.32347398996353,
+      "visible": "○・ハート・理由／小寒。日付の一部は○と重なる"
+    },
+    {
+      "file": "play-30s.png",
+      "sha256": "6d33d85678c41df55d75018ee947cbe280aa4f4a5d41ca6f00596c7060fb6dbf",
+      "bytes": 133989,
+      "dimensions": [
+        320,
+        568
+      ],
+      "originalCopiedUnmodified": true,
+      "reportAuthorPersonallyViewed": true,
+      "clock": "play",
+      "requestedSeconds": 30.000374985009433,
+      "savedSeconds": 30.40825442099571,
+      "captureMs": 407.87943598628044,
+      "visible": "1月9日 サギが一羽／二択／手本／田おこし まえ・雨"
+    },
+    {
+      "file": "play-60s.png",
+      "sha256": "da5e9d92540afd4bb73e3b18adf3050ff2fa5ee0bd79533a6bcbc29ed270ba34",
+      "bytes": 126133,
+      "dimensions": [
+        320,
+        568
+      ],
+      "originalCopiedUnmodified": true,
+      "reportAuthorPersonallyViewed": true,
+      "clock": "play",
+      "requestedSeconds": 60.00037360498309,
+      "savedSeconds": 60.87362695100904,
+      "captureMs": 873.2533460259438,
+      "visible": "1月16日 田んぼの猫／二択／手本。右札は折返し枠内"
+    }
+  ],
+  "execution": {
+    "primaryRootReceipt": {
+      "command": "node /workspace/scratch/first-minute/round-114/preparation-15a9308c/run.cjs",
+      "session": 71609,
+      "actualExit": 1,
+      "completionChunk": "b8d742",
+      "browserClosed": true,
+      "sourceUnchanged": true,
+      "cpuReset": true,
+      "liveBrowserOrRunner": [],
+      "closureConfirmed": true,
+      "atUTC": "2026-11-14T14:09:19.294256+00:00"
+    },
+    "actualCommandExit": 1,
+    "errors": [
+      {
+        "at": 176328358.58056,
+        "kind": "console",
+        "message": "Failed to load resource: the server responded with a status of 404 (File not found)"
+      },
+      {
+        "at": 176344770.205622,
+        "kind": "console",
+        "message": "Failed to load resource: the server responded with a status of 404 (File not found)"
+      }
+    ],
+    "resources404": [
+      {
+        "name": "http://localhost:8000/favicon.ico",
+        "status": 404
+      },
+      {
+        "name": "http://localhost:8000/favicon.ico",
+        "status": 404
+      }
+    ],
+    "errorLimit": "Console has no URL; independent ResourceTiming records two404favicon requests without request-id join. Exit1 is retained.",
+    "driverErrors": [],
+    "CPUreset": true,
+    "browserClosed": true,
+    "rootNoLiveRuntime": true,
+    "collection": {
+      "gestureCompletion": "settled",
+      "screenshots": "settled",
+      "inputs": "settled"
+    }
+  },
+  "tests": {
+    "pytest": {
+      "command": "pytest tests/",
+      "cwd": "/workspace/ricepia-firstminute-round114",
+      "actualExit": 127,
+      "completionChunk": "bafba9",
+      "suiteExecuted": false,
+      "commandInvoked": true,
+      "output": "/bin/bash: line 1: pytest: command not found\n",
+      "atUTC": "2026-11-14T14:09:48.480987+00:00",
+      "passedCount": null
+    },
+    "fixedReproduction10": "not performed; no selected new defect",
+    "redGreen": "not performed; no patch or new test",
+    "afterReproduction": "not performed",
+    "fiveSizeComparison": "not performed",
+    "otherRoundsIncluded": false
+  },
+  "operatorBoundary": {
+    "explicitDecisionsPreserved": [
+      "0.3s hand cue",
+      "Fast swipe selects; taps do not select/move card",
+      "First-card edge shadow",
+      "Reason position and2s duration",
+      "30s card",
+      "Gentle generated audio and mute control",
+      "Scarecrow and sun",
+      "Removed boxes/points/rice-row displays"
+    ],
+    "reportOnlyDesignCandidates": [
+      "Relation of reason banner and next cue; existingR110 candidate, no new frequency or persistence measurement",
+      "Perception of next larger farming stage; no proven deficiency or adopted change"
+    ],
+    "protectedFilesUnchanged": [
+      "kome365/engine.js",
+      "kome365/field3d.js",
+      "kome365/cards.js"
+    ]
+  },
+  "sourceLocations": {
+    "handCueCycle": "kome365/index.html:546",
+    "stoppedCue": "kome365/index.html:3172",
+    "markWait": "kome365/index.html:3174",
+    "cardDown": "kome365/index.html:4034",
+    "coalescedMoves": "kome365/index.html:4035",
+    "distanceThreshold": "kome365/index.html:4044",
+    "quickThreshold": "kome365/index.html:4055",
+    "verticalGuard": "kome365/index.html:4059",
+    "commitOrReset": "kome365/index.html:4060",
+    "stageEntry": "kome365/index.html:4067"
+  },
+  "limits": [
+    "Unsent8 are current-card cue threshold/memory failures, not ignored touches or proof that no hand cue appeared.",
+    "All15 swipes are left, based on current/same-card cue; not a balanced experiment or comparison of outcomes between rounds.",
+    "Response/reward are first DOM observations, not exact physical paint/award time or human retention.",
+    "Source5 includes protected3; other assets not claimed hash-gated.",
+    "After-play Field3D and audio debug are software state, not acoustic quality or real-phone performance.",
+    "The separate required pytest command returned127 according to root chunkbafba9; no successful suite or skip claim.",
+    "No new reproduction10 or confirmed fix candidate from these counts alone.",
+    "Discovery A/C did not view originals. Root, B, design reviewer and report author viewed all4 originals.",
+    "Post-advance reason on class and text15 versus changed reason text14; repeated same text on gesture4 is not a missing input.",
+    "Photographs are capture intervals. Green success effect partially overlaps date in one10s picture; no duration, unreadability or defect rate inferred.",
+    "State/reason text in saved DOM does not establish visibility in60s photograph.",
+    "PreviousR110 diagnostic trials are not newR114 reproduction or before-after improvement data."
+  ],
+  "references": {
+    "videoActuallyViewed": false,
+    "newAgricultureFactsAdded": false,
+    "existingCardWording": "kome365/cards.js:584",
+    "existingReasons": "kome365/cards.js:453,483",
+    "interpretiveSources": [
+      "https://www.famitsu.com/news/201705/17132636.html",
+      "https://github.com/flossbud/sakurai-game-design/blob/main/episodes/transcripts/100-development-secrets-of-the-original-kirby.md"
+    ]
+  },
+  "evidence": [
+    {
+      "identifier": "round-114/source-selected.json",
+      "sha256": "96760ef853374685bd942ad1a33abbcd355d5a93d090eeff4c6d0bb3fec9db66",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-114/main-update.json",
+      "sha256": "5579e4e21c04341ee97cc9e2f5b30df91f32be080a8264da3fb28ed400dcaeda",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-114/preparation-15a9308c/metadata.json",
+      "sha256": "dae2401b57d84076ccbdc06a934163fac6d6be52e74e504fb13bcfff1a063439",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-114/preparation-15a9308c/root-execution.json",
+      "sha256": "f3a2ff8fea60ca3543feb3c56f5dedcaaf54c800ba116a69db231c06687d5844",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-114/preparation-15a9308c/strict/report.json",
+      "sha256": "02b77cc5c1c967d0f94fc8b9f2ecf943612c128d79efcba5cc210af00043dcf4",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-114/preparation-15a9308c/strict/driver-timing.json",
+      "sha256": "14887eb4f6c34e8fa0a701593b34b95b427d39ce89289ea2c51efe390abc633c",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-114/preparation-15a9308c/strict/extra.json",
+      "sha256": "50d01841fdf7aa55ed7d6f595fc912763df36928ea7cd4fdd97ab99c5025573c",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-114/pytest/execution.json",
+      "sha256": "157ed69656acd29e20c0590365075adfd1bed61380a003f7531f2b75d373644e",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-114/pytest/run.log",
+      "sha256": "884c356a17af2535f8a7a3bbe8d088034a1e58ef021200c45eff7b237b232aa5",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-114/discovery-a/summary.json",
+      "sha256": "54a313de4694b6ac71604034fcd63cd5595f2b0569ea26ada389f167f6a555a8",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-114/discovery-a/frozen.json",
+      "sha256": "b6aac541ad48074f081fc8ab438b4812263b287401f8b15ccdefa26af8ae8c27",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-114/discovery-b/review.json",
+      "sha256": "9b2def7a8749234bbf7cd5851ab5fff5d639f778a294111e652b8246073f8b69",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-114/discovery-b/frozen.json",
+      "sha256": "9c75ccb31500a5913474fcd971fc922e1e4f41475beb955bfab93d811579ebb8",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-114/discovery-c/summary.json",
+      "sha256": "07e0e54b3a444957b4b63ab865ec154e731820e4a4cf4a10174401469c2cb98d",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-114/discovery-c/frozen.json",
+      "sha256": "19e7ac2ec231c07c7c82cea27b8e261e2585d55ffd1d7621b548c28107fb8fcf",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-114/design-review/README.md",
+      "sha256": "5bf8403eacd537163287faa9f8d75b361895a6479cecafad2dad4afb72d72a1c",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-114/discovery-c/reason-count-addendum.json",
+      "sha256": "5c84e3391e39d0caf01c16587581c239836f8308c847163f66cd97034ce3fd4f",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-114/discovery-a/reason-visibility-addendum.json",
+      "sha256": "552b7891e96ddd886cab53a2a8a7b01cb9358178d153724c32371973f9e0fd12",
+      "publicLink": false
+    }
+  ]
+}

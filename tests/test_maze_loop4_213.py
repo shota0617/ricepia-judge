@@ -38,6 +38,7 @@ const planPath = (sx, sy, gx, gy) => [[sx, sy + 1], [gx, gy]];
 const tapS = { path: [], timer: null, goal: null, due: 0 }, tiltG = { x: 0, y: __TY__ }, rp = { x: 10.5, y: 10.5, vx: 0.4, vy: 1.2 };
 const mzSoft = { on: true, x: 0, y: 0, ux: 0, uy: 1, pen: 0.2, dent: 0.3, dv: 0, vin: 2.0, boings: 0 };
 let ticks = 0; const tapWalkTick = () => { ticks++; };
+const MZ_TUBE = 0.45, mzNear = (x, y) => ({ x: 10.5, y: 10.0, d: Math.hypot(x - 10.5, y - 10.0) });   // 道すじの いちばん 近い 点（お米は そこから 0.5マス＝筒の ふちの 0.05マス 外に めりこんで いる）
 """
 
 
@@ -45,7 +46,7 @@ def run(tilt):
     over = re.search(r"const TAP_TILT_OVER = ([\d.]+);", PIX).group(1)
     return node(STUB.replace("__TY__", str(tilt)) % over + fn("tapWalk") + """
 const ok = tapWalk(10, 13);
-console.log(JSON.stringify({ ok, ticks, v: [rp.vx, rp.vy], soft: mzSoft.on, vin: mzSoft.vin, pen: mzSoft.pen, goal: tapS.goal }));""")
+console.log(JSON.stringify({ ok, ticks, v: [rp.vx, rp.vy], at: [rp.x, +rp.y.toFixed(3)], soft: mzSoft.on, vin: mzSoft.vin, pen: mzSoft.pen, goal: tapS.goal }));""")
 
 
 class WalkLeavesHedge213(unittest.TestCase):
@@ -56,6 +57,7 @@ class WalkLeavesHedge213(unittest.TestCase):
         self.assertEqual(o["v"], [0, 0], o)
         self.assertFalse(o["soft"], "歩きだした のに 生け垣に めりこんだ しるしが のこって いる（ばねが 歩きの 間に お米を 押す）: %r" % o)
         self.assertEqual((o["vin"], o["pen"]), (0, 0), o)
+        self.assertEqual(o["at"], [10.5, 10.45], "めりこんだ まま ほどいた（筒の ふちまで もどして いない。1歩で 終わる 歩きの あと 生け垣の 中に 止まる）: %r" % o)
 
     def test_strong_tilt_keeps_everything(self):
         """強い 傾き（力 0.9）：これまでどおり（歩きは 次の こまで やめて 傾きに まかせる。いきおいも めりこみも そのまま）"""
@@ -63,6 +65,7 @@ class WalkLeavesHedge213(unittest.TestCase):
         self.assertEqual(o["v"], [0.4, 1.2], o)
         self.assertTrue(o["soft"], o)
         self.assertEqual((o["vin"], o["pen"]), (2.0, 0.2), o)
+        self.assertEqual(o["at"], [10.5, 10.5], o)
 
     def test_rest_branch_and_rules_kept(self):
         """止まって いる お米を 止める 所（めりこんで いなければ 速さ 0 で おわる）と、傾きの きまりは そのまま"""

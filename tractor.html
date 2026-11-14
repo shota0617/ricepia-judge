@@ -2526,7 +2526,7 @@ const T2 = {
 // 列は田んぼの長い向き（Z）で、間隔は PITCH（作業幅−0.1m＝10cm重ね。ASSIST のガイドと同じ考え方）。
 // 物差し＝目印どおり走ると重なりが減ること（ループ側 scripts/sim_t4_guide.js: 目印どおり 重なり6.9%・残し0%・14列 / 目分量（0.5m重ね） 重なり30.6%・17列）。
 const T4 = {
-  mesh: null, lane: null, t: 0, acc: 1, fm: 0,
+  mesh: null, lane: null, t: 0, acc: 1, fm: 0, amesh: null, band: null, av: 0,
   lanes() {
     const a = [], x0 = -HX + 0.5 + TILL_W / 2, xe = HX - 0.5 - TILL_W / 2;
     for (let x = x0; x <= xe + 1e-6; x += PITCH) a.push(x);
@@ -2558,11 +2558,73 @@ const T4 = {
     this.mesh.rotation.x = -Math.PI / 2; this.mesh.position.y = 0.13; this.mesh.renderOrder = 2; this.mesh.frustumCulled = false; this.mesh.visible = false;
     scene.add(this.mesh);
   },
+  // サイクル279・案1: お題（田んぼアート）のときは 列の帯の代わりに「作業機の幅で、いまの向きの先、白線まで、まだ耕していない所」の帯を出す。
+  // 開いた直後から 目当ての所と遠さが地面に見える（従来は お題では帯を出さず、地図が出る 60 秒まで 目当てが白線 1 本だけだった）。
+  // 耕すと手前から縮み、白線に着くと消え、向きを変えると その向きの帯になる。白線の外には出さない。% ・音とはつなげない。サイクル283：見える 濃さ（白い ふち線＋クリーム色。まん中は うすく）・点めつ なし
+  ray() {
+    if (S.done) return null;                       // おわった あとは 出さない
+    const fx = Math.sin(S.yaw), fz = Math.cos(S.yaw), lx = fz, lz = -fx;   // 前と 横（右手）の向き
+    const ix = S.x + ROTARY_Z * fx, iz = S.z + ROTARY_Z * fz;   // 作業機の中心
+    const B = SHIRO ? 0.6 : 0.4, h = TILL_W * 0.35, ST = 0.25;
+    const todo = (x, z) => { if (Math.abs(x) >= HX - 0.5 || Math.abs(z) >= HZ - 0.5 || ART.sdAt(x, z) > -B) return false; return !tilledMask[Math.floor((x + HX) / CELL) * NZ + Math.floor((z + HZ) / CELL)]; };
+    let a = -1, b = -1, u0 = -1, u1 = -1;
+    for (let d = 0; d <= 32; d += ST) {           // 作業機の所から 前へ 32m まで（田んぼの外の道からは見ない）
+      const x = ix + fx * d, z = iz + fz * d, inside = Math.abs(x) < HX && Math.abs(z) < HZ && ART.sdAt(x, z) < 0;
+      if (!inside) { if (a >= 0) break; continue; }   // 最初に入った白線の内側のひと続きだけ（白線の外には出さない）
+      if (a < 0) a = d; b = d;
+      if (todo(x, z) || todo(x + lx * h, z + lz * h) || todo(x - lx * h, z - lz * h)) { if (u0 < 0) u0 = d; u1 = d; }
+    }
+    if (u0 < 0) return null;                       // 前に まだの所が無い（白線に着いた・外を向いている・耕し終えた）
+    const e = u1 >= b - 0.75 ? b + ST / 2 : u1 + ST / 2;   // 白線の手前 40cm（数えない所）まで まだなら 白線までのばす
+    const s0 = Math.max(0, u0 - ST / 2);
+    return { x: ix + fx * (s0 + e) / 2, z: iz + fz * (s0 + e) / 2, len: e - s0, yaw: S.yaw };
+  },
+  artBand(dt) {
+    if (!this.amesh) {
+      const g = new THREE.PlaneGeometry(1, 1); g.rotateX(-Math.PI / 2);   // 1m 四方。幅・長さは scale で
+      // サイクル283（見える 濃さ）: よこの 断面で 濃さを かえた 絵（はばの 両はしは 白い ふち線・その 内は クリーム色・まん中は うすい）。
+      // まん中を うすく するのは、前への 手本（指と 黄色い 点）が 帯の まん中を 通るので、手本が 帯に とけて 読めなく ならない ように する ため
+      const cv = document.createElement('canvas'); cv.width = 64; cv.height = 2; const cg = cv.getContext('2d');
+      for (let i = 0; i < 64; i++) { const u = Math.abs((i + 0.5) / 64 - 0.5) * 2, edge = u > 0.88, a = edge ? 0.9 : 0.1 + 0.56 * Math.pow(u / 0.88, 1.8);   // u：まん中 0 → はし 1（まん中 0.1・ふち線の 内がわ 0.66）
+        cg.fillStyle = edge ? `rgba(255,255,255,${a})` : `rgba(255,244,200,${a.toFixed(3)})`; cg.fillRect(i, 0, 1, 2); }
+      const tex = new THREE.CanvasTexture(cv); tex.minFilter = THREE.LinearFilter; tex.generateMipmaps = false;
+      const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0, depthWrite: false });
+      // サイクル283b（Codex 指摘 P2）: 帯は 白線の 形で 切り抜く。帯の 長さは まん中の 線で 決めるので、白線に ななめに 向くと はばの 2.2m の 角が 白線の 外へ
+      // 出ていた（四角・x 0・z −8・45° で 先の 右の 角が 約 0.7m 外）。ます目（20cm）ごとに「白線の 内側か」を 1 まいの 絵に して、絵の 外の 所は 描かない（なめらかに 0 へ）
+      const inMask = new Uint8Array(NX * NZ); for (let i = 0; i < NX; i++) for (let j = 0; j < NZ; j++) inMask[i * NZ + j] = ART.sdAt(-HX + (i + 0.5) * CELL, -HZ + (j + 0.5) * CELL) < 0 ? 255 : 0;
+      const inTex = new THREE.DataTexture(inMask, NZ, NX, THREE.LuminanceFormat, THREE.UnsignedByteType); inTex.magFilter = inTex.minFilter = THREE.LinearFilter; inTex.needsUpdate = true;
+      this.inMask = inMask;   // 確かめ（firstmin.js の 19）が 同じ 絵を 読む
+      mat.onBeforeCompile = sh => {
+        sh.uniforms.inTex = { value: inTex };
+        sh.vertexShader = 'varying vec2 vBW;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n vBW = (modelMatrix * vec4(position, 1.0)).xz;');
+        sh.fragmentShader = 'varying vec2 vBW;\nuniform sampler2D inTex;\n' + sh.fragmentShader.replace('#include <map_fragment>', `#include <map_fragment>
+  diffuseColor.a *= texture2D(inTex, vec2((vBW.y + ${HZ.toFixed(1)}) / ${(2 * HZ).toFixed(1)}, (vBW.x + ${HX.toFixed(1)}) / ${(2 * HX).toFixed(1)})).r;
+  if (diffuseColor.a < 0.004) discard;`);
+      };
+      mat.customProgramCacheKey = () => 'artBandClip';
+      this.amesh = new THREE.Mesh(g, mat);
+      this.amesh.position.y = 0.13; this.amesh.renderOrder = 2; this.amesh.frustumCulled = false; this.amesh.visible = false;
+      this.amesh.scale.set(TILL_W, 1, 1);
+      scene.add(this.amesh);
+    }
+    const m = this.amesh, r = this.band, k = Math.min(1, dt * 8);
+    if (r) {
+      if (!(this.av > 0)) { m.position.x = r.x; m.position.z = r.z; m.rotation.y = r.yaw; m.scale.z = r.len; }   // 出はじめは その場に置く
+      else {
+        m.position.x += (r.x - m.position.x) * k; m.position.z += (r.z - m.position.z) * k; m.scale.z += (r.len - m.scale.z) * k;
+        m.rotation.y += Math.atan2(Math.sin(r.yaw - m.rotation.y), Math.cos(r.yaw - m.rotation.y)) * k;
+      }
+    }
+    this.av = Math.max(0, Math.min(1, (this.av || 0) + (r ? dt : -dt) / 0.4));   // 0.4 秒で 出る・消える（急に消さない）
+    m.visible = this.av > 0;
+    m.material.opacity = this.av * (TOD === 'yoru' ? 0.45 : TOD === 'yu' ? 0.85 : 1);   // サイクル283: 息づき（点めつ）は しない。光を 受けない 絵なので、夜・夕方は まぶしく ない ように 少し おとす
+  },
   update(dt) {
     this.t += dt; this.acc += dt;
     const fmTgt = (!DETAIL && FIRSTMIN.on) ? 1 : 0;   // サイクル215・最初の1分: 帯の強さの目標（最初の1分だけ1）
     this.fm += Math.max(-dt / 2, Math.min(dt / 2, fmTgt - this.fm));   // 約2秒かけて滑らかに寄せる（60秒の切り替えで段差を出さない。Codex diffレビュー指摘への対応）
-    if (this.acc >= 0.25) { this.acc = 0; this.lane = ART.on ? null : this.next(); }   // 列の判定は 0.25 秒ごと（毎コマ全ます目は数えない）。田んぼアートには白線の下絵があるので出さない
+    if (this.acc >= 0.25) { this.acc = 0; this.lane = ART.on ? null : this.next(); if (ART.on) this.band = this.ray(); }   // 列の判定は 0.25 秒ごと（毎コマ全ます目は数えない）。田んぼアートには白線の下絵があるので列の帯は出さず、白線までの帯（サイクル279）を出す
+    if (ART.on) this.artBand(dt);
     this.ensure();
     if (this.lane === null || this.lane === undefined) { this.mesh.visible = false; return; }
     this.mesh.visible = true;
@@ -3109,6 +3171,7 @@ const ART = (() => {
     const cam = new THREE.PerspectiveCamera(50, W / H, 1, 600), tn = Math.tan(25 * Math.PI / 180);
     cam.position.set(0, Math.max((HZ + 2.5) / (tn * W / H), (HX + 1.5) / tn), 0); cam.up.set(1, 0, 0); cam.lookAt(0, 0, 0);
     if (guide) guide.visible = false;
+    const bandVis = !!(T4.amesh && T4.amesh.visible); if (T4.amesh) T4.amesh.visible = false;   // サイクル279: 白線までの帯は 写真に 写さない
     flushTilled();
     renderer.setPixelRatio(1); renderer.setSize(W, H, false);
     renderer.render(scene, cam);
@@ -3116,6 +3179,7 @@ const ART = (() => {
     const g = cv.getContext('2d');
     g.drawImage(renderer.domElement, 0, 0);
     if (guide) guide.visible = true;
+    if (T4.amesh) T4.amesh.visible = bandVis;
     renderer.setPixelRatio(pr); resize();
     g.fillStyle = 'rgba(20,18,14,.62)'; g.fillRect(0, H - 84, W, 84);
     g.fillStyle = '#fff'; g.textBaseline = 'middle'; g.textAlign = 'left'; g.font = 'bold 40px sans-serif';
@@ -10507,7 +10571,8 @@ function doneTalk() {
   if (!$('bNext').classList.contains('hidden')) $('doneTalk').after($('bNext'));   // つぎへの ボタンは キャラクターの すぐ 下（スクロール しなくても 見える）
 }
 function finish() {
-  S.done = true; syncAudio(false);   // サイクル278（Codex 指摘）: おわりに した その 操作（📸 完成・Enter）の 中で 音を 止める（さわった ときの 聞き手が 先に もどして いても、次の こままで 鳴らない）
+  S.done = true; syncAudio(false);
+  T4.band = null; T4.av = 0; if (T4.amesh) T4.amesh.visible = false;   // サイクル283b（Codex 指摘 P3）: おわると step() が 止まり 帯の 更新も 止まるので、おわった その 操作の 中で 帯を 消す（終わりの 画面・写真の うしろに のこさない）   // サイクル278（Codex 指摘）: おわりに した その 操作（📸 完成・Enter）の 中で 音を 止める（さわった ときの 聞き手が 先に もどして いても、次の こままで 鳴らない）
   if (ART.on) return finishArt();
   const fieldName = { haru: '春の田んぼ', aki: '秋の稲刈りあとの田んぼ', shirokaki: '代かきの田んぼ' }[season], pctNow = Math.min(100, Math.floor(tilledCount / workCount * 100));
   $('doneText').textContent = PLAY.up ? `5 分 たちました。${fieldName}の ${pctNow}% を 耕しました。お疲れ様です！` : `${fieldName}を ${fmtTime(S.elapsed)} で耕しました。お疲れ様です！`;

@@ -1,0 +1,678 @@
+{
+  "round": 126,
+  "game": "米づくり365",
+  "status": "final audited observation record; no new selected fix, product/test changes0; known wait and narrow-choice wrapping retained; pytest suite unavailable",
+  "source": {
+    "testedHead": "ac1c6ab24fb797b59daaca5989e4d158b2c15d0f",
+    "filesSHA256": {
+      "AGENTS.md": "6511c8e260c695145b8e30b58f2f405b74e63a9fa816a2f515e1e7967378de14",
+      ".claude/skills/ricepia-flow/SKILL.md": "56d075153f561430fee926907a5c97083d9f643e6dd2d3a2f4c5736324a697f0",
+      "kome365/index.html": "d2add0e458da2aebf14dc0c8d4f0a2792497bbe69a0cb40f2d6b3aa7da0f741b",
+      "kome365/README.md": "76e273ddf7557a1b3b2037bd87ef4269d4f43aa0238882ecb9cf3ae906e864c7",
+      "kome365/engine.js": "c3d0cef6bb108d5b6d8fe38aaf0c08fe7994bdab08bf92775865a6e0222469a3",
+      "kome365/field3d.js": "a5c1dad91d5c0c326f1394fad9c5d04e7e3b8d13e3a2b8b1757c7aa08d3558ff",
+      "kome365/cards.js": "b15c5b2f56ef9c0c8361fa2fa6a039085919ca516b4a2e6e5a1b3bb691dde744"
+    },
+    "preservation": {
+      "source5BeforeAfterCurrentAndHTTPMatch": true,
+      "rootSource7Match": true,
+      "rootEnvironment8Match": true
+    },
+    "publicationBaseWholeHEADRetested": false,
+    "postTestDocsOnlyUpdate": {
+      "updatedAtUTC": "2026-11-14T18:09:45.074593+00:00",
+      "testedSourceHead": "ac1c6ab24fb797b59daaca5989e4d158b2c15d0f",
+      "newBaseHead": "3f0a375836cf894bde8084cefb2b2750e4fc0106",
+      "docsOnly": true,
+      "changedFiles": [
+        "docs/first-minute/round-125-nishio-hand-center/README.md",
+        "docs/first-minute/round-125-nishio-hand-center/observe-10s.png",
+        "docs/first-minute/round-125-nishio-hand-center/play-10s.png",
+        "docs/first-minute/round-125-nishio-hand-center/play-30s.png",
+        "docs/first-minute/round-125-nishio-hand-center/play-60s.png",
+        "docs/first-minute/round-125-nishio-hand-center/results.json"
+      ],
+      "source7ByteUnchanged": true,
+      "clean": true,
+      "notes": "Only prior R125 observation files incorporated after R126 runtime closure. Measured source remains ac1c."
+    }
+  },
+  "method": {
+    "naturalPrimaryRuns": 1,
+    "server": "python3 -m http.server 8000",
+    "page": "/kome365/index.html",
+    "viewport": {
+      "width": 320,
+      "height": 568
+    },
+    "CPU": 1,
+    "isMobile": true,
+    "hasTouch": true,
+    "input": "CDP Input.dispatchTouchEvent; scheduled100px/120ms swipes selected by current or same-card-memory visible cue, not internal correct-answer state",
+    "externalAccess": "localhost and bundled3D only; external requests blocked",
+    "backend": "Workspace Chromium/SwiftShader; not real phone GPU",
+    "sequence": "10s no-input observation, original photo save,60s cue-following",
+    "protocolChangedForReference": false
+  },
+  "outcome": {
+    "opportunities": 21,
+    "sentGestures": 11,
+    "unsentCueSkips": 10,
+    "cueBasis": {
+      "same-card-memory": 5,
+      "current": 6
+    },
+    "directions": {
+      "right": 1,
+      "left": 10
+    },
+    "responses": {
+      "drag": 11,
+      "nextDay": 11,
+      "reasonClassOn": 11,
+      "markClassOn": 11,
+      "anyInlineTransformChanged": 11
+    },
+    "changedReasonText": 11,
+    "noResponseAmongSent": 0,
+    "reasonPrefixes": {
+      "✗": 5,
+      "○": 6
+    },
+    "lastDate": "1月12日",
+    "cueSkipSummary": {
+      "cardVisible": 10,
+      "handVisibleFalse": 7,
+      "handVisibleTrue": 3,
+      "fingerOpacityZero": 10,
+      "horizontalXZero": 10,
+      "bothTrailsZero": 10,
+      "laterSameCardCue": 10,
+      "historyCount": 163,
+      "historyDropped": 0,
+      "limit": "10 unsent threshold failures are not 10 ignored touches. A visible hand/trail withabs(x)<8 can fail the driver threshold; not proof UI is missing."
+    },
+    "newConfirmedCandidate": null,
+    "newSelectedFixes": 0,
+    "productChanges": 0,
+    "testChanges": 0,
+    "transformMeasurement": {
+      "originalMetric": "Any nonempty transform differing from that gesture pre-input transform, within its input-to-next-input window. Not restricted to drag class.",
+      "anyChangedTransform": 11,
+      "changedTransformWhileDragClass": 1,
+      "changedTransformFirstObservedWithFlyClass": 10,
+      "interpretation": "11/11 transform changes establish a DOM transformation somewhere after the input, not 11/11 sampled finger-following motion. Later fly/day advancement still establishes response/progress; absent drag-transform samples are not ignored inputs. No change to11day advances/no-response0 or first-input transform78.8ms."
+    },
+    "driverWaits": {
+      "count": 21,
+      "requestedEachMs": 2200,
+      "actualSumMs": 46221.85008203983,
+      "minMs": 2199.5427289903164,
+      "maxMs": 2210.557698994875,
+      "lastCompletedPlayS": 58.59704339802265,
+      "lastBeforeChoice": 22,
+      "meaning": "Final wait reaches the 58-second input-margin guard, so no choice 22 or extra input is created. Wait totals overlap the page timeline; do not add long-task/read durations."
+    }
+  },
+  "timing": {
+    "firstInputPlaySeconds": 0.251,
+    "firstInputMoments": {
+      "drag": {
+        "playSeconds": 0.315,
+        "fromSendMs": 64.0
+      },
+      "transform": {
+        "playSeconds": 0.3298,
+        "fromSendMs": 78.800049
+      },
+      "nextDay": {
+        "playSeconds": 0.7403,
+        "fromSendMs": 489.300049
+      },
+      "reasonClassOn": {
+        "playSeconds": 0.7452,
+        "fromSendMs": 494.199951
+      },
+      "markClassOn": {
+        "playSeconds": 0.7434,
+        "fromSendMs": 492.399902
+      }
+    },
+    "firstPositiveReason": {
+      "gesture": 3,
+      "playSeconds": 15.6237,
+      "fromThatInputMs": 740.699951,
+      "fromFirstInputMs": 15372.7,
+      "kind": "First observed○reason class/text; no continuous CSS visibility/physical paint guarantee"
+    },
+    "first3Timelines": [
+      {
+        "gesture": 1,
+        "nextDay": {
+          "playSeconds": 0.7403,
+          "fromSendMs": 489.300049
+        },
+        "markOn": {
+          "playSeconds": 0.7434,
+          "fromSendMs": 492.399902
+        },
+        "markOff": {
+          "playSeconds": 1.3585,
+          "fromSendMs": 1107.5
+        },
+        "markClassObservedSpanMs": 615.0999999940395,
+        "reasonOn": {
+          "playSeconds": 0.7452,
+          "fromSendMs": 494.199951
+        },
+        "reasonOff": {
+          "playSeconds": 7.469,
+          "fromSendMs": 7218.0
+        },
+        "reasonClassObservedSpanMs": 6723.800000011921,
+        "nextGuideClassTrue": {
+          "playSeconds": 7.4571,
+          "fromSendMs": 7206.099854
+        },
+        "nextSameCardQualifiedCue": {
+          "playSeconds": 8.4076,
+          "fromSendMs": 8156.599854
+        },
+        "reasonAndMarkLimit": "Class transitions sampled by observers, not continuous CSS opacity/geometry/legibility or physical paint. Background blocks can delay observers/timers. First3 retention during rapid successive choices was not exercised."
+      },
+      {
+        "gesture": 2,
+        "nextDay": {
+          "playSeconds": 10.5176,
+          "fromSendMs": 721.599854
+        },
+        "markOn": {
+          "playSeconds": 10.5224,
+          "fromSendMs": 726.399902
+        },
+        "markOff": {
+          "playSeconds": 12.1783,
+          "fromSendMs": 2382.300049
+        },
+        "markClassObservedSpanMs": 1655.9000000059605,
+        "reasonOn": {
+          "playSeconds": 10.5238,
+          "fromSendMs": 727.800049
+        },
+        "reasonOff": {
+          "playSeconds": 12.7297,
+          "fromSendMs": 2933.699951
+        },
+        "reasonClassObservedSpanMs": 2205.899999976158,
+        "nextGuideClassTrue": {
+          "playSeconds": 12.3029,
+          "fromSendMs": 2506.899902
+        },
+        "nextSameCardQualifiedCue": {
+          "playSeconds": 13.1574,
+          "fromSendMs": 3361.399902
+        },
+        "reasonAndMarkLimit": "Class transitions sampled by observers, not continuous CSS opacity/geometry/legibility or physical paint. Background blocks can delay observers/timers. First3 retention during rapid successive choices was not exercised."
+      },
+      {
+        "gesture": 3,
+        "nextDay": {
+          "playSeconds": 15.6045,
+          "fromSendMs": 721.5
+        },
+        "markOn": {
+          "playSeconds": 15.6224,
+          "fromSendMs": 739.399902
+        },
+        "markOff": {
+          "playSeconds": 17.3052,
+          "fromSendMs": 2422.199951
+        },
+        "markClassObservedSpanMs": 1682.7999999821186,
+        "reasonOn": {
+          "playSeconds": 15.6237,
+          "fromSendMs": 740.699951
+        },
+        "reasonOff": {
+          "playSeconds": 17.8487,
+          "fromSendMs": 2965.699951
+        },
+        "reasonClassObservedSpanMs": 2225,
+        "nextGuideClassTrue": {
+          "playSeconds": 17.4427,
+          "fromSendMs": 2559.699951
+        },
+        "nextSameCardQualifiedCue": {
+          "playSeconds": 18.3567,
+          "fromSendMs": 3473.699951
+        },
+        "reasonAndMarkLimit": "Class transitions sampled by observers, not continuous CSS opacity/geometry/legibility or physical paint. Background blocks can delay observers/timers. First3 retention during rapid successive choices was not exercised."
+      }
+    ],
+    "timing": {
+      "requestedSpanMs": 120,
+      "actualSendSpanMs": {
+        "min": 120.1131579875946,
+        "median": 120.70388999581337,
+        "max": 130.4797739982605
+      },
+      "ACKDelayMs": {
+        "min": 54.8359540104866,
+        "median": 352.3281784951687,
+        "max": 453.88009798526764
+      },
+      "eventTimestampToHandlerMs": {
+        "min": 56.900000005960464,
+        "median": 303.25,
+        "max": 448.69999998807907
+      },
+      "pointerdownTimestampToHandlerMs": {
+        "min": 58.900000005960464,
+        "median": 402.19999998807907,
+        "max": 448.69999998807907
+      },
+      "downSendToEventTimestampMs": {
+        "min": -0.10009765625,
+        "median": -0.10009765625,
+        "max": 0.0
+      },
+      "eventTimestampDownUpMs": {
+        "min": 119.90000000596046,
+        "median": 120.90000000596046,
+        "max": 130.90000000596046
+      },
+      "handlerDownUpMs": {
+        "min": 3.5999999940395355,
+        "median": 6.0,
+        "max": 197.2999999821186
+      },
+      "allGesturesSamePointerAndPrimary": true,
+      "pointerTypeRecorded": false,
+      "sendToTransformMs": {
+        "min": 78.800049,
+        "median": 409.699951,
+        "max": 471.0
+      },
+      "lastInputPlaySeconds": 55.98,
+      "lastTouchEndPlaySeconds": 56.101
+    },
+    "clock": {
+      "observationToPlayMs": 10165.691451996565,
+      "initialPhotoCaptureMs": 149.07930800318718,
+      "initialPhotoSavedToPlayMs": 14.835587978363037,
+      "actualPlayStopMs": 60001.47666800022
+    },
+    "captureObserverDefinition": "handledAt records passive document capture, not instrumented product-handler entry.",
+    "captureToDragMutationMs": {
+      "min": 3.0999999940395355,
+      "max": 6.0
+    }
+  },
+  "dispatch": {
+    "CDPCommands": 88,
+    "ACKs": 88,
+    "trustedEvents": 38,
+    "eventTypes": {
+      "pointerdown": 11,
+      "pointermove": 16,
+      "pointerup": 11
+    }
+  },
+  "knownWaitingObservation": {
+    "knownRound": 118,
+    "classification": "same already-reproduced first-answer wait; not a new discovery or additional fixed10",
+    "maxEarlyLongTask": {
+      "startPlaySeconds": 2.4541,
+      "durationMs": 4999
+    },
+    "maxEarlyRAFGap": {
+      "playSeconds": 7.4693,
+      "gapMs": 5014.9000000059605
+    },
+    "longestStatusRead": {
+      "kind": "status",
+      "sentEpoch": 1794679066120,
+      "receivedEpoch": 1794679070961,
+      "roundTripMs": 4840.792142987251,
+      "browserStartedAt": 18087.40000000596,
+      "browserEndedAt": 18087.90000000596
+    },
+    "firstNextGuideClass": {
+      "playSeconds": 7.4571,
+      "fromSendMs": 7206.099854
+    },
+    "firstNextQualifiedCue": {
+      "playSeconds": 8.4076,
+      "fromSendMs": 8156.599854
+    },
+    "nodeHeartbeatMaxGapMs": 265.29641699790955,
+    "limit": "No stack attribution in this run. R118 separateprofile and fixed10 remain separate; differentviewport/raw durations are not a fix effect."
+  },
+  "photos": [
+    {
+      "file": "observe-10s.png",
+      "originalIdentifier": "round-126/preparation-ac1c6ab2/strict/observe-10s.png",
+      "sha256": "b020fdc90c15789d6e5ba3993c58900ef6531bcfd728b333c0f54e2f1d3b87d5",
+      "requestedSeconds": 10.001776556015015,
+      "completedSeconds": 10.150855864018201,
+      "captureMs": 149.07930800318718,
+      "reportAuthorPersonallyViewed": true,
+      "observation": "1月1日「元日の田んぼ」、左右の選択肢・田おこし まえ・雨。手・○✗・理由帯は写らない。"
+    },
+    {
+      "file": "play-10s.png",
+      "originalIdentifier": "round-126/preparation-ac1c6ab2/strict/play-10s.png",
+      "sha256": "c656cb7afd0443d44f32828e1c4934c473e14f8568c159b38f6f2274c30b222a",
+      "requestedSeconds": 10.00089879500866,
+      "completedSeconds": 10.442703947007656,
+      "captureMs": 441.80515199899673,
+      "reportAuthorPersonallyViewed": true,
+      "observation": "1月2日「霜柱の朝」、左右の選択肢・田おこし まえ・雨。○✗・理由帯は写らない。"
+    },
+    {
+      "file": "play-30s.png",
+      "originalIdentifier": "round-126/preparation-ac1c6ab2/strict/play-30s.png",
+      "sha256": "605439d4961e5b09b2bd94668657bd09167a2aa22b96b023aeba5d10133d9b87",
+      "requestedSeconds": 30.002195368021727,
+      "completedSeconds": 30.482068316012622,
+      "captureMs": 479.8729479908943,
+      "reportAuthorPersonallyViewed": true,
+      "observation": "1月6日「七十二候」。右の「田に水を入れる」の末字るが次行だが札内で読める。○✗・理由帯は写らない。"
+    },
+    {
+      "file": "play-60s.png",
+      "originalIdentifier": "round-126/preparation-ac1c6ab2/strict/play-60s.png",
+      "sha256": "2ff0ad84f9d190a9ae83dfb8d37a6823707418e0703d2a1d164055f1b66f213b",
+      "requestedSeconds": 60.001691478013996,
+      "completedSeconds": 60.639380612999204,
+      "captureMs": 637.6891349852085,
+      "reportAuthorPersonallyViewed": true,
+      "observation": "1月12日「去年のお米」。左の「田を見ず過ごす」の末字すが次行だが札内で読める。カードの絵の左側に手。静止画から移動方向を断定しない。○✗・理由帯は写らない。"
+    }
+  ],
+  "execution": {
+    "actualOuterExit": 1,
+    "actualChildExit": null,
+    "requestedProcessExit": 1,
+    "rootSession": 40367,
+    "rootChunk": "5eeeae",
+    "rootClosure": {
+      "checkedAtUTC": "2026-11-14T17:59:18.191787+00:00",
+      "actualOuterExit": 1,
+      "completionChunk": "5eeeae",
+      "session": 40367,
+      "metadataFile": "/workspace/scratch/first-minute/round-126/preparation-ac1c6ab2/metadata.json",
+      "metadataSHA256": "c1d76eede3f3da5e199637af12bd8e216b435a53bd6a3226264c01a9c0b465d1",
+      "browserClosed": true,
+      "sourceUnchanged": true,
+      "cpuReset": true,
+      "sourceFilesVerified": 7,
+      "environmentFilesVerified": 8,
+      "liveBrowserOrPlaytest": [],
+      "gitStatus": "",
+      "startedAt": "2026-11-14T17:57:32.124Z",
+      "completedAt": "2026-11-14T17:58:44.461Z",
+      "runIssueStages": [
+        "observed-errors"
+      ],
+      "closureVerified": true,
+      "initialReadPathCorrection": "run.cjs records lifecycle in metadata.json; attempted lifecycle.json read failed with FileNotFoundError and was corrected without re-running the game."
+    },
+    "consoleErrors": [
+      {
+        "at": 190112890.527607,
+        "kind": "console",
+        "message": "Failed to load resource: the server responded with a status of 404 (File not found)"
+      },
+      {
+        "at": 190123533.244061,
+        "kind": "console",
+        "message": "Failed to load resource: the server responded with a status of 404 (File not found)"
+      }
+    ],
+    "separateResources404": [
+      {
+        "name": "http://localhost:8000/favicon.ico",
+        "status": 404
+      },
+      {
+        "name": "http://localhost:8000/favicon.ico",
+        "status": 404
+      }
+    ],
+    "errorLimit": "Console404 lacks URL/requestId; two favicon404 ResourceTiming entries independently recorded. Keep actualexit1.",
+    "CPUreset": true,
+    "browserClosed": true,
+    "collection": {
+      "gestureCompletion": "settled",
+      "screenshots": "settled",
+      "inputs": "settled"
+    }
+  },
+  "tests": {
+    "pytest": {
+      "command": "pytest tests/",
+      "cwd": "/workspace/ricepia-firstminute-round126",
+      "actualExit": 127,
+      "completionChunk": "4c1b8b",
+      "output": "/bin/bash: line 1: pytest: command not found\n",
+      "suiteExecuted": false
+    },
+    "fixed10": "not performed; known wait and wrapping are not new selected defects",
+    "profile": "not performed in this round; R118 profile remains separate",
+    "REDGREEN": "not performed; no product/test changes",
+    "afterReproduction": "not performed",
+    "fiveSizeComparison": "not performed"
+  },
+  "knownIssuesExcluded": [
+    {
+      "PR": "https://github.com/shota0617/ricepia-judge/pull/1177",
+      "issue": "First-answer long wait in workspace Chromium/SwiftShader",
+      "currentEvidence": "Ordinary primary max early longtask4999ms, separate RAF/status and next-cue records",
+      "limit": "Not a new finding, a new fixed10, cause attribution, or before/after improvement."
+    },
+    {
+      "PR": "https://github.com/shota0617/ricepia-judge/pull/1129",
+      "issue": "One-character orphan wrapping on narrow choice labels",
+      "currentEvidence": "30s right endingる and60s left endingす wrap within visible cards",
+      "limit": "Saved existing candidate/README covers this scope; historical20/20→0/20 not measured again here and not added to this round."
+    }
+  ],
+  "operatorDecisionsPreserved": {
+    "retained": [
+      "0.3s swipe demonstration",
+      "quick-swipe selection",
+      "tap does not choose or move card",
+      "initial card shadow",
+      "reason2s, avoid date/choices at all sizes and rotation, retain first3 reasons after next card",
+      "30s idle card",
+      "sound timing independent of game",
+      "scarecrow and sun",
+      "engine.js/field3d.js/cards.js unchanged"
+    ],
+    "unverified": "Reason/mark absent from4snapshots; CSS continuous readability,2s retention during rapid first3 choices and rotation not measured.",
+    "knownWaitBoundary": "Field3D initialization/frame splitting touches protected file. Existing low-quality API has no established reduction of this winter/DPR1 wait; no index-only change adopted."
+  },
+  "attachmentCriteria": {
+    "filename": "sakurai_partial_20261114_2319.md",
+    "sha256": "4e206461abe220bb98ee7eba77c5132bfbe80d9ca9b62ac7e447848ae25ff74e",
+    "source": "User-provided partial transcript75body/35incomplete; video itself not played",
+    "applied": "Separate input response, positive reason text, next visible cue and current choices; examine readable choice endings without duplicating known fixes. Criteria application is not a product improvement.",
+    "URLs": [
+      "https://www.youtube.com/watch?v=EDs5n39sRFc",
+      "https://www.youtube.com/watch?v=1xRDwQqSn6I",
+      "https://www.youtube.com/watch?v=0Va3ue6Qk-0"
+    ]
+  },
+  "limits": [
+    "Class/text does not establish continuous readable2s reason, nonoverlap, or physical mark visibility. First3rapid-consecutive-card retention was not tested.",
+    "Current orsame-card-memory rendered cue chooses the swipe direction, not an internal correct answer.The observed positive/negative mix is not a balanced outcome test.",
+    "Daily advancement is progress, not harvest/goal completion.",
+    "No input was sent for skips; no target-operation response can be measured for them.",
+    "Pointer eventTimeStamp, browser handler delivery, and Node send/ACK are different measurements. Sub-millisecond negative timestamp-minus-send values are preserved as clock/rounding limits, not negative latency. The observer did not record pointerType.",
+    "Softwareaudio/3D state is not real-device sound/sensor/network evidence.",
+    "Known first-answer wait retained for operator judgment; no new code or reproduction by this auditor.",
+    "Discovery A checked original image hashes without viewing; root, B, design reviewer and report author personally viewed all4 originals; Discovery C did not view them.",
+    "No○✗/reason band is present in the4originals, so no continuous2s visibility/legibility or overlay pass is claimed.",
+    "Saved longtask/RAF/status read use separate timing definitions; known wait is not attributed solely to GPU/init or used as a cross-viewport improvement comparison.",
+    "Physical paint, actual player retention/understanding, real finger/tilt/network/acoustic effects remain unmeasured."
+  ],
+  "evidence": [
+    {
+      "identifier": "round-126/source-selected.json",
+      "sha256": "187ecfbfc94f2b2c2888a0cf62d115809ca477515f31df89684013f6e7e5f2c3",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-126/root-closure.json",
+      "sha256": "346e3550f615767457e18c24779289d85a745debbb0df92d8e02898719386dd7",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-126/root-photo-observations.json",
+      "sha256": "53eb3657373ea2a24042e5237642045637afea3d767833d83d433b632cc819dc",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-126/preparation-ac1c6ab2/metadata.json",
+      "sha256": "c1d76eede3f3da5e199637af12bd8e216b435a53bd6a3226264c01a9c0b465d1",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-126/preparation-ac1c6ab2/strict/report.json",
+      "sha256": "3056242b488dffa139cc92650913d3b09003116070503af4216bb4110c9e415f",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-126/preparation-ac1c6ab2/strict/driver-timing.json",
+      "sha256": "3e20f4845c88844c129eeee89d0aeea255941a108f24c84236c3ae3848957e74",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-126/preparation-ac1c6ab2/strict/extra.json",
+      "sha256": "8b8df8e9bf3cad09cc6423e4d62d93ec085acb5a5c657aa4af60ae77d66cdee7",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-126/discovery-a/summary.json",
+      "sha256": "2e54dc290ad00197f9638891dfa814b807f1cc2bf5777284e28a633e19a03614",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-126/discovery-a/frozen.json",
+      "sha256": "0f8a6fc2f87839825e30c54400cd9a2ccd90e95ae924dc8b33f10632c17aac13",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-126/discovery-a/first3-timelines.json",
+      "sha256": "0a557fb2d3e0920dc6ea78786e1f5c5f8a8f87b5f03ef499c4345d644f5e0f71",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-126/discovery-b/review.json",
+      "sha256": "93622b24a36fd6259768549dc36d7d5a33e5a11b1f625959b55dc6e455e39c72",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-126/discovery-b/frozen.json",
+      "sha256": "c4c42abee130cff6a071825b3c8fc5cc361607fb846b582157d45a00d649ca42",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-126/design-review/field3d-caller-options.md",
+      "sha256": "a4b8a78212d7010ae46cb899bdc41334cc8a26a9589453a8fd37b245291595b5",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-126/design-review/inspection-priorities.md",
+      "sha256": "b8ee9a49a5fbb99081c64443d6a7a692e16e71c32f0869b66a3c1ae2cb950fe1",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-126/pytest-result.json",
+      "sha256": "fea3f88394d817bf469f4e76beb39271eeca6731044d66ffa8bb194d4fca563a",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-126/pytest.log",
+      "sha256": "884c356a17af2535f8a7a3bbe8d088034a1e58ef021200c45eff7b237b232aa5",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-34/pr-1129-body-live-before-supplement.md",
+      "sha256": "622ea506f818af3ff618f17b22f1d1f435fdd9bd9620a4e53ea8db3d388e5dd4",
+      "publicLink": false,
+      "meaning": "Saved historical PR body, not current remote state or new execution."
+    },
+    {
+      "identifier": "round-126/discovery-c/summary.json",
+      "sha256": "4bc0e981fb278bd51d3456a485698a45e635f7dcff7e84f59cb07d7d16846cac",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-126/discovery-c/frozen.json",
+      "sha256": "16aa887b57dabfbf78e5943c5877817aed270946d5a74078a5e671016648f053",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-126/discovery-a-transform-addendum/addendum.json",
+      "sha256": "89012cd79c2761992554844b930c68ec2760ab9e7739db65baa41f5b91a1e99c",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-126/discovery-a-transform-addendum/frozen.json",
+      "sha256": "a7fe9b3b52b1ee004c9f14284275c008c93517b48a37b67bce4394016c05a40d",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-126/design-review/README.md",
+      "sha256": "b78b66dc9eb2530ea403bc90fce68a7e05ef403bdb61956a1ff4eacc5adc8528",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-126/candidate-decision.json",
+      "sha256": "48e5284d6c55e95c56a9a16bab4c79719f3cae9792b0cfae46ef379db9754d43",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-126/main-update.json",
+      "sha256": "0a1df9bfb80c86db9ab082b6ec5282e75f69d811715e45d84a1f73bb5f9facb1",
+      "publicLink": false
+    }
+  ],
+  "sourceLocations": {
+    "input": "kome365/index.html:4069",
+    "move": "kome365/index.html:4070",
+    "release": "kome365/index.html:4074",
+    "reason": "kome365/index.html:3827",
+    "reasonCleanup": "kome365/index.html:3853",
+    "reasonCss": "kome365/index.html:657",
+    "handAnimation": "kome365/index.html:548",
+    "driverWaitDeadline": "strict-play.cjs:28",
+    "cueCriteria": "helpers.cjs:137",
+    "captureObserver": "helpers.cjs:188",
+    "cdpSend": "helpers.cjs:345"
+  },
+  "candidateDecision": {
+    "round": 126,
+    "measuredSource": "ac1c6ab24fb797b59daaca5989e4d158b2c15d0f",
+    "decision": "No new confirmed candidate selected; no product or test changes.",
+    "knownCandidates": [
+      {
+        "issue": "Initial-answer wait",
+        "reference": "R118 / PR1177",
+        "currentEvidence": "Maximum longtask4999ms and delayed next cue; preserved as an additional observation, not a new10-trial reproduction.",
+        "boundary": "Protected engine/field3d/cards unchanged. Static caller-quality review found no evidence the existing low option removes this winter-scene delay. No new profiler run or timing change."
+      },
+      {
+        "issue": "One-character choice wrapping on320px screen",
+        "reference": "PR1129 / codex/kome-readable-choice-lines",
+        "currentEvidence": "Original30s and60s images show finalる/す on the next line, within the choice. Existing small-screen balance proposal already covers this symptom; its old effect is not a new result here."
+      }
+    ],
+    "newFixedTrials": 0,
+    "redGreen": "Not performed; no new fix",
+    "afterFixFiveSizes": "Not performed; no new fix",
+    "limits": "All11sent gestures advanced date;10unsent opportunities are separate. All4original images lack ○✗ reason overlays, so continuous2s/readability/first3-retention and rotation remain unverified. Inline transform11 is not continuous finger-following11."
+  }
+}

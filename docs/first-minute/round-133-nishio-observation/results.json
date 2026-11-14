@@ -1,0 +1,1087 @@
+{
+  "round": 133,
+  "game": "nishio",
+  "status": "complete observation and audited full Node failure; no new product fix selected",
+  "source": {
+    "testedHead": "4eab5db22688eb264948621aa5aac5b4e9fa9dad",
+    "selectedHashes": {
+      "AGENTS.md": "3307716adf32bd25c5a9232821447251789c579f3192b423bad0c86c97814ab4",
+      ".claude/skills/ricepia-flow/SKILL.md": "56d075153f561430fee926907a5c97083d9f643e6dd2d3a2f4c5736324a697f0",
+      "nishio-go.html": "3e7066ab45ab23795fe9f4bd07a8e2ec89f85a9d8c4bd147af4224765077f86e",
+      "nishio-go/game.js": "1ac1eee951f7a8889a622121ba4e1e17bbbf0ee695dcdebbc86ade430c9ca610",
+      "nishio-go/pixel.js": "e03a05cd8fbed4693f481593cc93a68b3a830c99fb9c77aa91cf6114bb72bb52",
+      "nishio-go/style.css": "c00be168073dab5fbc6e9896f43520af098252a49a3bec5bf5ef8f9ac7621f46",
+      "nishio-go/icons.js": "3fed8790bc9eeee79eaeccfa430e68a05447e19007bfe4946993940742faed61",
+      "kome365/engine.js": "c3d0cef6bb108d5b6d8fe38aaf0c08fe7994bdab08bf92775865a6e0222469a3",
+      "kome365/field3d.js": "a5c1dad91d5c0c326f1394fad9c5d04e7e3b8d13e3a2b8b1757c7aa08d3558ff",
+      "kome365/cards.js": "b15c5b2f56ef9c0c8361fa2fa6a039085919ca516b4a2e6e5a1b3bb691dde744"
+    },
+    "postTestBase": "b4d03d4f1ac5307a99c0391e7e9055c1c616d868",
+    "postTestUpdate": {
+      "atUTC": "2026-11-14T20:32:11.364572+00:00",
+      "testedSource": "4eab5db22688eb264948621aa5aac5b4e9fa9dad",
+      "newBase": "b4d03d4f1ac5307a99c0391e7e9055c1c616d868",
+      "docsOnly": false,
+      "changedPaths": [
+        ".claude/skills/nishio-go-dev/SKILL.md",
+        ".claude/skills/nishio-go-dev/scripts/precommit.sh",
+        ".claude/skills/ricepia-flow/SKILL.md",
+        ".claude/skills/ricepia-flow/scripts/commit.sh",
+        ".claude/skills/ricepia-flow/scripts/guard.js",
+        ".claude/skills/ricepia-flow/scripts/playtest.js",
+        "docs/first-minute/round-130-kome-first-answer/README.md",
+        "docs/first-minute/round-130-kome-first-answer/diagnostic-trial01-observe.png",
+        "docs/first-minute/round-130-kome-first-answer/diagnostic-trial01-post-window.png",
+        "docs/first-minute/round-130-kome-first-answer/observe-10s.png",
+        "docs/first-minute/round-130-kome-first-answer/play-10s.png",
+        "docs/first-minute/round-130-kome-first-answer/play-30s.png",
+        "docs/first-minute/round-130-kome-first-answer/play-60s.png",
+        "docs/first-minute/round-130-kome-first-answer/results.json",
+        "docs/first-minute/round-132-kensa-observation/README.md",
+        "docs/first-minute/round-132-kensa-observation/observe-10s.png",
+        "docs/first-minute/round-132-kensa-observation/play-10s.png",
+        "docs/first-minute/round-132-kensa-observation/play-30s.png",
+        "docs/first-minute/round-132-kensa-observation/play-60s.png",
+        "docs/first-minute/round-132-kensa-observation/results.json",
+        "docs/meiro.md",
+        "nishio-go.html",
+        "nishio-go/min/game.js",
+        "nishio-go/min/meiro.js",
+        "nishio-go/min/pixel.js",
+        "nishio-go/min/style.css",
+        "tests/test_course.py",
+        "tests/test_maze_loop3_28.py",
+        "tests/test_maze_loop4_183.py",
+        "tests/test_maze_loop4_19.py",
+        "tests/test_maze_loop4_2.py",
+        "tests/test_maze_loop4_202.py",
+        "tests/test_maze_loop4_206.py",
+        "tests/test_maze_loop4_207.py",
+        "tests/test_maze_loop4_24.py",
+        "tests/test_maze_loop4_65.py",
+        "tests/test_maze_loop4_93.py",
+        "tests/test_nishio_min.py",
+        "tests/test_postcard.py",
+        "tests/test_shogo.py",
+        "tools/playtest.js",
+        "tools/strip-nishio.js"
+      ],
+      "testedPinsChanged": [
+        ".claude/skills/ricepia-flow/SKILL.md",
+        "docs/meiro.md",
+        "nishio-go.html",
+        "tests/test_course.py",
+        "tests/test_maze_loop3_28.py",
+        "tests/test_maze_loop4_183.py",
+        "tests/test_maze_loop4_19.py",
+        "tests/test_maze_loop4_2.py",
+        "tests/test_maze_loop4_202.py",
+        "tests/test_maze_loop4_206.py",
+        "tests/test_maze_loop4_207.py",
+        "tests/test_maze_loop4_24.py",
+        "tests/test_maze_loop4_65.py",
+        "tests/test_maze_loop4_93.py",
+        "tests/test_postcard.py",
+        "tests/test_shogo.py",
+        "tools/playtest.js"
+      ],
+      "wholeNewCommitRetested": false,
+      "rootFullNodeClosedBeforeUpdate": true,
+      "mergeToolChunk": "52cb08",
+      "mergeActualExit": 0,
+      "note": "Existing measurements are for original4eab entry/scripts, not new min distribution HTML/tools/tests on latest main. Only observation documents will be proposed."
+    },
+    "productEdits": 0,
+    "testEdits": 0,
+    "wholeUpdatedHeadRetested": false
+  },
+  "method": {
+    "primaryRuns": 1,
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "cpuRate": 1,
+    "isMobile": true,
+    "hasTouch": true,
+    "input": "CDP Input.dispatchTouchEvent",
+    "serverCommand": "python3 -m http.server 8000",
+    "url": "http://127.0.0.1:8000/nishio-go.html",
+    "offline": "Local Leaflet1.9.4; other external requests intercepted",
+    "observationMinimumSeconds": 10,
+    "observePhotoRequestSeconds": 10.001,
+    "observePhotoCompleteSeconds": 10.267,
+    "observationToPlayMs": 10268,
+    "playSeconds": 60,
+    "inputSelection": "visible hand center only; no injected game state"
+  },
+  "outcome": {
+    "inputs": 8,
+    "initialHandInputs": 1,
+    "normalHandInputs": 7,
+    "coordinateResponses": 8,
+    "pointsChangedWindows": 8,
+    "full1100msWindows": 8,
+    "withoutRecordedResponse": 0,
+    "worldOpenings": 0,
+    "informationOpenings": 0,
+    "worldReturns": 0,
+    "informationCloses": 0,
+    "storedGoalChangedWindows": 1,
+    "smallerRoundedDistanceSameNameWindows": 8,
+    "handReappearedWindows": 7,
+    "unissuedWaitCount": null,
+    "newConfirmedCandidateCount": 0,
+    "definition": "Coordinate change is recorded state feedback, not eight completed goals or successful route choices; hand reappearance is separate UI feedback.",
+    "endCue": {
+      "playSeconds": 59.997800048828125,
+      "storedGoals": "1",
+      "points": 472,
+      "world": false,
+      "handVisible": false,
+      "guideVisible": true,
+      "nameRawDOM": "🏁 伊文神社（氏子のおばあさん）",
+      "nameVisibleDOM": true,
+      "nameContentOverflowsX": false,
+      "nameClientWidth": 235,
+      "nameScrollWidth": 235,
+      "distanceRawDOM": "1.4km",
+      "distanceVisibleDOM": true
+    }
+  },
+  "timing": {
+    "firstInputSeconds": 0.034,
+    "firstCoordinate": {
+      "kind": "coordinateChanged",
+      "playSeconds": 0.194800048828125,
+      "fromInputMs": 160.800048828125
+    },
+    "firstPositivePoints": {
+      "value": 30,
+      "playSeconds": 0.397699951171875,
+      "fromFirstInputMs": 363.699951171875,
+      "definition": "First positive DOM points value with visible element and unobscured center; not physical paint or exact award time"
+    },
+    "guideNameAndStorageTimeline": {
+      "nameTransitions": [
+        {
+          "playSeconds": 0.0275,
+          "storedGoals": null,
+          "points": 0,
+          "world": false,
+          "handVisible": true,
+          "guideVisible": true,
+          "nameRawDOM": "🏁 名鉄 西尾駅",
+          "nameVisibleDOM": true,
+          "nameContentOverflowsX": false,
+          "nameClientWidth": 225,
+          "nameScrollWidth": 225,
+          "distanceRawDOM": "408m",
+          "distanceVisibleDOM": true
+        },
+        {
+          "playSeconds": 19.5855,
+          "storedGoals": null,
+          "points": 107,
+          "world": false,
+          "handVisible": false,
+          "guideVisible": true,
+          "nameRawDOM": "🏁 名鉄 西尾駅（駅前の学生）",
+          "nameVisibleDOM": true,
+          "nameContentOverflowsX": false,
+          "nameClientWidth": 271,
+          "nameScrollWidth": 271,
+          "distanceRawDOM": "0m",
+          "distanceVisibleDOM": true
+        },
+        {
+          "playSeconds": 22.22189990234375,
+          "storedGoals": "1",
+          "points": 262,
+          "world": false,
+          "handVisible": false,
+          "guideVisible": true,
+          "nameRawDOM": "🏁 伊文神社（氏子のおばあさん）",
+          "nameVisibleDOM": true,
+          "nameContentOverflowsX": false,
+          "nameClientWidth": 253,
+          "nameScrollWidth": 253,
+          "distanceRawDOM": "0m",
+          "distanceVisibleDOM": true
+        }
+      ],
+      "storedGoalTransitions": [
+        {
+          "playSeconds": 0.0275,
+          "storedGoals": null,
+          "points": 0,
+          "world": false,
+          "handVisible": true,
+          "guideVisible": true,
+          "nameRawDOM": "🏁 名鉄 西尾駅",
+          "nameVisibleDOM": true,
+          "nameContentOverflowsX": false,
+          "nameClientWidth": 225,
+          "nameScrollWidth": 225,
+          "distanceRawDOM": "408m",
+          "distanceVisibleDOM": true
+        },
+        {
+          "playSeconds": 19.684199951171873,
+          "storedGoals": "1",
+          "points": 247,
+          "world": false,
+          "handVisible": false,
+          "guideVisible": true,
+          "nameRawDOM": "🏁 名鉄 西尾駅（駅前の学生）",
+          "nameVisibleDOM": true,
+          "nameContentOverflowsX": false,
+          "nameClientWidth": 265,
+          "nameScrollWidth": 265,
+          "distanceRawDOM": "72m",
+          "distanceVisibleDOM": true
+        }
+      ],
+      "firstChangedNameComparedWithInitial": {
+        "playSeconds": 19.5855,
+        "storedGoals": null,
+        "points": 107,
+        "world": false,
+        "handVisible": false,
+        "guideVisible": true,
+        "nameRawDOM": "🏁 名鉄 西尾駅（駅前の学生）",
+        "nameVisibleDOM": true,
+        "nameContentOverflowsX": false,
+        "nameClientWidth": 271,
+        "nameScrollWidth": 271,
+        "distanceRawDOM": "0m",
+        "distanceVisibleDOM": true
+      },
+      "firstChangedNameMinusFirstStoredGoalMs": -98.699951,
+      "limit": "Raw DOM-name transitions and storage snapshots are separate observation streams. A name can change before a storage sample. Later distinct name relative to the first stored-goal sample is not the first next name. No internal decision/cause timing inferred."
+    },
+    "goalAndNextCue": {
+      "studentNameBeforeGoal": {
+        "source": "guideChanges",
+        "playSeconds": 19.5855,
+        "epoch": 1794686406630.5,
+        "goals": null,
+        "guideNameRaw": "🏁 名鉄 西尾駅（駅前の学生）",
+        "guideDistanceRaw": "0m",
+        "guideNameVisibleDOM": true,
+        "handVisibleDOM": false,
+        "world": false
+      },
+      "firstSavedGoalMergedColumns": {
+        "source": "guideChanges",
+        "playSeconds": 19.684199951171873,
+        "epoch": 1794686406729.2,
+        "goals": "1",
+        "guideNameRaw": "🏁 名鉄 西尾駅（駅前の学生）",
+        "guideDistanceRaw": "72m",
+        "guideNameVisibleDOM": true,
+        "handVisibleDOM": false,
+        "world": false
+      },
+      "firstSavedGoalPeriodicColumn": {
+        "source": "samples",
+        "playSeconds": 19.69410009765625,
+        "epoch": 1794686406739.1,
+        "goals": "1",
+        "guideNameRaw": "🏁 名鉄 西尾駅（駅前の学生）",
+        "guideDistanceRaw": "72m",
+        "guideNameVisibleDOM": true,
+        "handVisibleDOM": false,
+        "world": false
+      },
+      "firstHandAfterSavedGoal": {
+        "source": "samples",
+        "playSeconds": 20.980199951171876,
+        "epoch": 1794686408025.2,
+        "goals": "1",
+        "guideNameRaw": "🏁 名鉄 西尾駅（駅前の学生）",
+        "guideDistanceRaw": "48m",
+        "guideNameVisibleDOM": true,
+        "handVisibleDOM": true,
+        "world": false
+      },
+      "laterDifferentName": {
+        "source": "guideChanges",
+        "playSeconds": 22.22189990234375,
+        "epoch": 1794686409266.9,
+        "goals": "1",
+        "guideNameRaw": "🏁 伊文神社（氏子のおばあさん）",
+        "guideDistanceRaw": "0m",
+        "guideNameVisibleDOM": true,
+        "handVisibleDOM": false,
+        "world": false
+      },
+      "laterNonzeroDistance": {
+        "source": "guideChanges",
+        "playSeconds": 22.295199951171874,
+        "epoch": 1794686409340.2,
+        "goals": "1",
+        "guideNameRaw": "🏁 伊文神社（氏子のおばあさん）",
+        "guideDistanceRaw": "1.9km",
+        "guideNameVisibleDOM": true,
+        "handVisibleDOM": false,
+        "world": false
+      },
+      "limits": "Student name already precedes saved goal; it is not called stale old goal. Hand after goal does not mean the later different name was visible then. These are DOM names, not original glyph transcriptions."
+    },
+    "inputAndWindowTiming": {
+      "requestedHoldMs": 40,
+      "actualSendHoldMs": [
+        39,
+        41
+      ],
+      "startACKMs": [
+        39,
+        123
+      ],
+      "endACKMs": [
+        59,
+        266
+      ],
+      "eventTimestampHoldMs": [
+        38.900000005960464,
+        41.099999994039536
+      ],
+      "captureHoldMs": [
+        1.599853515625,
+        39.300048828125
+      ],
+      "sendToDownCaptureMs": [
+        60.699951171875,
+        178
+      ],
+      "downEventToCaptureMs": [
+        60.699951171875,
+        178
+      ],
+      "coordinateResponseObservationMs": [
+        98.39990234375,
+        301.5
+      ],
+      "firstInputPlaySeconds": 0.034,
+      "lastInputPlaySeconds": 38.096,
+      "lastTouchEndSeconds": 38.136,
+      "configuredWindowMs": 60000,
+      "deadlineReachedDifferenceMs": 0,
+      "traceStoppedPlaySeconds": 60.27189990234375,
+      "reportFinishedPlaySeconds": 64.894,
+      "observationStartToPlayMs": 10268
+    },
+    "physicalPaintMeasured": false
+  },
+  "dispatch": {
+    "commands": 16,
+    "ACKs": 16,
+    "trustedDOMEvents": 24,
+    "eventTypes": {
+      "pointerdown": 8,
+      "pointerup": 8,
+      "click": 8
+    },
+    "targetsAllCanvas": true
+  },
+  "photos": [
+    {
+      "file": "observe-10s.png",
+      "originalIdentifier": "round-133/preparation-4eab5db2/observe-10s.png",
+      "sha256": "4641f8c3cd76118e47bc187ab9b4a3a1ff46f14710ee99d362da725deead8909",
+      "width": 390,
+      "height": 844,
+      "requestedSeconds": 10.001,
+      "completedSeconds": 10.267,
+      "clock": "observe",
+      "observation": "大きい指と「タップ！」、傾ける案内、名鉄 西尾駅408m。",
+      "reportAuthorPersonallyViewed": true,
+      "edits": 0
+    },
+    {
+      "file": "play-10s.png",
+      "originalIdentifier": "round-133/preparation-4eab5db2/play-10s.png",
+      "sha256": "aca15fda7901e3d362e8e8b632ae7999e27ee295718caa312bdc7f73df557ee3",
+      "width": 390,
+      "height": 844,
+      "requestedSeconds": 10.0,
+      "completedSeconds": 10.164,
+      "clock": "play",
+      "observation": "33点、名鉄 西尾駅432m。大きい手本指は写らない。",
+      "reportAuthorPersonallyViewed": true,
+      "edits": 0,
+      "nameReading": {
+        "confirmedFromOriginalBy": [
+          "root reinspection",
+          "Discovery B",
+          "design reviewer"
+        ],
+        "text": "名鉄 西尾駅",
+        "receiptIdentifier": "round-133/root-photo-readback-addendum.json",
+        "DOMSubstitutedForPixels": false
+      }
+    },
+    {
+      "file": "play-30s.png",
+      "originalIdentifier": "round-133/preparation-4eab5db2/play-30s.png",
+      "sha256": "7502ace1525fc6185975d911c819163401fe4df155f2141e6775dd866fbd6041",
+      "width": 390,
+      "height": 844,
+      "requestedSeconds": 30.0,
+      "completedSeconds": 30.374,
+      "clock": "play",
+      "observation": "381点、伊文神社（氏子のおばあさん）1.9km、黄色いチェック。",
+      "reportAuthorPersonallyViewed": true,
+      "edits": 0
+    },
+    {
+      "file": "play-60s.png",
+      "originalIdentifier": "round-133/preparation-4eab5db2/play-60s.png",
+      "sha256": "87c10174ade3cef9a5a29c829d867f1530a9e7ad1379a29d53183983f848319a",
+      "width": 390,
+      "height": 844,
+      "requestedSeconds": 60.0,
+      "completedSeconds": 60.262,
+      "clock": "play",
+      "observation": "472点、伊文神社（氏子のおばあさん）1.4km、黄色いチェック。",
+      "reportAuthorPersonallyViewed": true,
+      "edits": 0
+    }
+  ],
+  "primaryExecution": {
+    "actualChildExit": 0,
+    "actualOuterExit": 0,
+    "requestedOuterExit": 0,
+    "actualCompletionChunk": "8a1a1d",
+    "rawRootLaunchReceiptActualOuter": null,
+    "rootClosure": {
+      "atUTC": "2026-11-14T20:01:27.325202+00:00",
+      "actualOuterExit": 0,
+      "actualOuterCompletionToolChunk": "8a1a1d",
+      "source10Match": true,
+      "environment26Match": true,
+      "clean": true,
+      "head": "4eab5db22688eb264948621aa5aac5b4e9fa9dad",
+      "liveRuntimeProcesses": [],
+      "lifecycleSHA256": "1825ab25f655ad2aab7f6a1666176d27527d03638d3c5b1e939014babf54745a",
+      "runResultSHA256": "fa7504064104a5be5d45bdd606ae081a304f3c94f8c78a09f1345be428f0be91",
+      "CPUReset": true,
+      "browserClosed": true,
+      "recordedErrors": {
+        "pageOrConsole": [],
+        "inputCommands": [],
+        "screenshots": [],
+        "lateNewInputs": [],
+        "unfinishedTouchActions": []
+      },
+      "runIssues": []
+    },
+    "source10BeforeAfterMatch": true,
+    "environment26Match": true,
+    "served5BeforeAfterMatch": true,
+    "errors": [],
+    "blockedExternalRequests": [
+      "https://fonts.googleapis.com/css2?family=DotGothic16&display=swap",
+      "https://www.jma.go.jp/bosai/forecast/data/forecast/230000.json",
+      "https://www.jma.go.jp/bosai/amedas/data/latest_time.txt",
+      "https://cyberjapandata.gsi.go.jp/xyz/dem_png/14/14429/6497.png"
+    ],
+    "blockedMeaning": "Intercepted offline requests, not successful external connections or errors."
+  },
+  "tests": {
+    "pytest": {
+      "command": "pytest tests/",
+      "toolResult": {
+        "chunk_id": "8dd86f",
+        "wall_time_seconds": 3.1006e-05,
+        "exit_code": 127,
+        "original_token_count": 12,
+        "output": "/bin/bash: line 1: pytest: command not found\n"
+      }
+    },
+    "pytestSuiteExecuted": false,
+    "fullNode": {
+      "command": "node tools/playtest.js",
+      "status": "completed and independently audited; unsuccessful",
+      "session": 68393,
+      "actualChildExit": 1,
+      "actualOuterExit": 1,
+      "actualOuterToolChunk": "7a1dd6",
+      "wrapperEmbeddedOuter": null,
+      "classification": {
+        "groups": 253,
+        "objectOkTrue": 180,
+        "objectOkFalse": 10,
+        "bareTrue": 43,
+        "bareFalse": 0,
+        "withoutOwnBoolean": 20,
+        "explicitSuccess": 223,
+        "falseCount": 10,
+        "noBooleanTypes": {
+          "int": 7,
+          "dict": 6,
+          "list": 3,
+          "str": 4
+        },
+        "errors": [],
+        "overallOk": false,
+        "rawFailureMessages": 10
+      },
+      "countMeaning": "Groups are not test methods or player actions. Entries without their own Boolean verdict are neither automatically successful nor unexecuted; they can supply data to aggregate need() assertions.",
+      "failedGroups": [
+        {
+          "name": "swipeHold",
+          "source": "tools/playtest.js:252",
+          "predicate": "held && still==='null' && g2===g1 && far && g4===want && (g3==='null'||g3===g4) && !info && cfg.ms<=400",
+          "actual": {
+            "held": true,
+            "ms": 791,
+            "still": "null",
+            "g1": "[1807,1900]",
+            "g2": "[1807,1900]",
+            "g4": "[1807,1900]",
+            "g3": "[1804,1897]",
+            "want": "[1804,1897]",
+            "far": true,
+            "info": false,
+            "cfg": {
+              "ms": 300,
+              "px": 5,
+              "min": 12
+            },
+            "ok": false
+          },
+          "interpretation": "The second held target g4 remains [1807,1900]; desired [1804,1897] appears as g3 after release. g4===want and the allowed g3 equality both fail. No captured info window. Aggregate results do not establish whether that held point was inside the canvas or the actual trusted event sequence.",
+          "alsoFalseR129": true
+        },
+        {
+          "name": "a2hsAutoHide",
+          "source": "tools/playtest.js:348",
+          "predicate": "on && off && x===null && elig===false && !again; gone() at line324 maps all rejection reasons to false",
+          "actual": {
+            "off": false,
+            "x": null,
+            "elig": false,
+            "again": false,
+            "ok": false
+          },
+          "interpretation": "off=false fails. The shared gone() maps every waitForFunction rejection to false, so timeout and other exceptions are not distinguished. a2hsShown.on=true; x=null, elig=false and again=false pass. again=false after the later 700 ms wait records the element hidden at that later check; this is not proof that it never hides. The separate historical R101 isolated one-pair diagnosis passed both sides and does not explain this completed full-suite failure.",
+          "alsoFalseR129": false
+        },
+        {
+          "name": "tapDemoQuick",
+          "source": "tools/playtest.js:466",
+          "predicate": "n>=4 && median>0 && median<1700ms",
+          "actual": {
+            "n": 7,
+            "med": 2427,
+            "min": 2310,
+            "ok": false
+          },
+          "interpretation": "Seven waits; median 2427 ms and minimum 2310 ms exceed the median<1700 predicate. Observed delay is not permanent absence or measured abandonment.",
+          "alsoFalseR129": true
+        },
+        {
+          "name": "rollNoDemo",
+          "source": "tools/playtest.js:1242",
+          "predicate": "rice!=null && vmax>=1 && fresh===false && bad===0",
+          "actual": {
+            "rice": 278,
+            "route": 518,
+            "demo": 518,
+            "first": false,
+            "fresh": true,
+            "bad": 0,
+            "vmax": 0,
+            "ok": false
+          },
+          "interpretation": "vmax=0 and fresh=true fail; bad=0. Qualifying rolling was not established. demo=518 is not proof of a prompt while qualified rolling.",
+          "alsoFalseR129": true
+        },
+        {
+          "name": "lowGoalDemo",
+          "source": "tools/playtest.js:1134",
+          "predicate": "rows.length===4 && every(shown && inMap && !onRice)",
+          "actual": {
+            "rows": [
+              {
+                "vp": "568x320",
+                "k": 1,
+                "left": 1,
+                "shown": false,
+                "at": null,
+                "inMap": null,
+                "onRice": null
+              },
+              {
+                "vp": "568x320",
+                "k": 2,
+                "left": 2,
+                "shown": false,
+                "at": null,
+                "inMap": null,
+                "onRice": null
+              },
+              {
+                "vp": "844x390",
+                "k": 1,
+                "left": 1,
+                "shown": true,
+                "at": 2.64,
+                "inMap": true,
+                "onRice": false
+              },
+              {
+                "vp": "844x390",
+                "k": 2,
+                "left": 2,
+                "shown": true,
+                "at": 2.71,
+                "inMap": true,
+                "onRice": false
+              }
+            ],
+            "ok": false
+          },
+          "interpretation": "Both 568x320 rows have shown=false. Both 844x390 rows satisfy shown/inMap/not-onRice. This synthetic-placement test does not establish a natural-primary reproduction.",
+          "alsoFalseR129": true
+        },
+        {
+          "name": "infoRotate",
+          "source": "tools/playtest.js:1026",
+          "predicate": "runs.length===2 && every(initialOpen && nonemptySteps && every(step.open && step.closeOk && step.allIn) && closed===true)",
+          "actual": {
+            "runs": [
+              {
+                "from": "390x844",
+                "steps": [
+                  {
+                    "to": "390x560",
+                    "open": true,
+                    "mt": "58px",
+                    "close": [
+                      374,
+                      406
+                    ],
+                    "pt": [
+                      195,
+                      390
+                    ],
+                    "closeOk": true,
+                    "allIn": true
+                  },
+                  {
+                    "to": "844x390",
+                    "open": true,
+                    "mt": "",
+                    "close": [
+                      277,
+                      309
+                    ],
+                    "pt": [
+                      422,
+                      293
+                    ],
+                    "closeOk": true,
+                    "allIn": true
+                  }
+                ],
+                "opened": {
+                  "open": true,
+                  "mt": "242px",
+                  "close": [
+                    565,
+                    597
+                  ],
+                  "pt": [
+                    195,
+                    581
+                  ],
+                  "closeOk": true,
+                  "allIn": true
+                },
+                "closed": true
+              },
+              {
+                "from": "820x1180",
+                "steps": [
+                  {
+                    "to": "1180x820",
+                    "open": false,
+                    "mt": "",
+                    "close": [
+                      0,
+                      0
+                    ],
+                    "pt": [
+                      0,
+                      0
+                    ],
+                    "closeOk": false,
+                    "allIn": true
+                  }
+                ],
+                "opened": {
+                  "open": false,
+                  "mt": "",
+                  "close": [
+                    0,
+                    0
+                  ],
+                  "pt": [
+                    0,
+                    0
+                  ],
+                  "closeOk": false,
+                  "allIn": true
+                }
+              }
+            ],
+            "ok": false
+          },
+          "interpretation": "390x844 opens, remains open with close control available through 390x560 and 844x390, and closes. The separate 820x1180 initial open=false and 1180x820 remains open=false; this branch did not establish an open-panel rotation. Do not describe all open windows as unclosable.",
+          "alsoFalseR129": true
+        },
+        {
+          "name": "restFinger",
+          "source": "tools/playtest.js:723",
+          "predicate": "tap===true && swipe===true && pinch===false && touchAction==='pinch-zoom' && !info",
+          "actual": {
+            "tap": false,
+            "swipe": false,
+            "pinch": false,
+            "touchAction": "pinch-zoom",
+            "info": false,
+            "ok": false
+          },
+          "interpretation": "tap=false and swipe=false fail. pinch=false, touchAction=pinch-zoom and info=false are separate passing conditions. Existing nonempty touchEnd arrays at tools/playtest.js:693,706,718 conflict with the local protocol declaration; aggregate results lack trusted pointer identity/release traces, so this is a diagnostic limitation, not an established new product cause or grounds to weaken assertions.",
+          "alsoFalseR129": true
+        },
+        {
+          "name": "tiltDemoShown",
+          "source": "tools/playtest.js:731",
+          "predicate": "on && phone && force>0.2",
+          "actual": {
+            "on": false,
+            "phone": false,
+            "force": 0.28,
+            "at": [
+              1801.7458155915374,
+              1893.9118973175455
+            ],
+            "moved": 0.637,
+            "ok": false
+          },
+          "interpretation": "on=false and phone=false fail; force=0.28 passes. Recorded movement is 0.637. Real sensor and continuously stopped eligibility are not established.",
+          "alsoFalseR129": true
+        },
+        {
+          "name": "godotRec",
+          "source": "tools/playtest.js:2129",
+          "predicate": "errs.length===0 && len>50 && shade>0",
+          "actual": {
+            "errs": [],
+            "len": 5950,
+            "shade": 0,
+            "ok": false
+          },
+          "interpretation": "errs=[] and len=5950 pass; shade=0 fails. No recorded exception or complete renderer crash is established.",
+          "alsoFalseR129": true
+        },
+        {
+          "name": "speedLines",
+          "source": "tools/playtest.js:2666",
+          "predicate": "fast===0 && vmax>2 && vmax<=5 && far>1.5",
+          "actual": {
+            "ok": false,
+            "room": 7,
+            "fast": 0,
+            "vmax": 4.16,
+            "far": 0.96
+          },
+          "interpretation": "fast=0 and vmax=4.16 pass; far=0.96 fails >1.5. No forbidden speed lines are recorded.",
+          "alsoFalseR129": true
+        }
+      ],
+      "rawFailureMessages": [
+        "Godot の 記録係で 歩く地図を 描くと とちゅうで 止まる（?godot=1。記録係に ない canvas の 命令）（{\"errs\":[],\"len\":5950,\"shade\":0,\"ok\":false}）",
+        "なぞった 先で 指を おいた まま 待っても、指を はなすまで 歩きださない／歩きだした あと、指を 少し ずらした だけで 行き先が かわる／先へ 進めて 止めた 指に ついて いかない（行きすぎる）／動かさない 長押しで 指を おいた まま 歩く／窓が 開く（{\"held\":true,\"ms\":791,\"still\":\"null\",\"g1\":\"[1807,1900]\",\"g2\":\"[1807,1900]\",\"g4\":\"[1807,1900]\",\"g3\":\"[1804,1897]\",\"want\":\"[1804,1897]\",\"far\":true,\"info\":false,\"cfg\":{\"ms\":300,\"px\":5,\"min\":12},\"ok\":false}）",
+        "指が 1本 のって いると（下の タブ）、地図の タップ・なぞりが 効かない／2本指で つまむ 動きで 歩く／地図の touch-action が もどらない（{\"tap\":false,\"swipe\":false,\"pinch\":false,\"touchAction\":\"pinch-zoom\",\"info\":false,\"ok\":false}）",
+        "スマホが 1.5度 傾いて いる だけで（お米は 止まって いる）、手本（👆・📱）が 出ない（{\"on\":false,\"phone\":false,\"force\":0.28,\"at\":[1801.7458155915374,1893.9118973175455],\"moved\":0.637,\"ok\":false}）",
+        "ホーム画面に追加の 札が ひとりでに 消えない／7日の うちに また 出る（{\"off\":false,\"x\":null,\"elig\":false,\"again\":false,\"ok\":false}）",
+        "タップで 歩いて 着いた あと、次の 手本が 出るまでが 1.7秒 以上（{\"n\":7,\"med\":2427,\"min\":2310,\"ok\":false}）",
+        "低い 横向き（568×320・844×390）で ゴールの 1〜2マス 手前に 止まると、手本の 指が 出ない（N1b）（{\"rows\":[{\"vp\":\"568x320\",\"k\":1,\"left\":1,\"shown\":false,\"at\":null,\"inMap\":null,\"onRice\":null},{\"vp\":\"568x320\",\"k\":2,\"left\":2,\"shown\":false,\"at\":null,\"inMap\":null,\"onRice\":null},{\"vp\":\"844x390\",\"k\":1,\"left\":1,\"shown\":true,\"at\":2.64,\"inMap\":true,\"onRice\":false},{\"vp\":\"844x390\",\"k\":2,\"left\":2,\"shown\":true,\"at\":2.71,\"inMap\":true,\"onRice\":false}],\"ok\":false}）",
+        "開いて すぐ 傾けて（8度）も 転がらない（速さ 1マス/秒 に とどかない）／転がって いる 間に 手本が 出る／転がった あとも「はじめての 手本」の まま（サイクル210）（{\"rice\":278,\"route\":518,\"demo\":518,\"first\":false,\"fresh\":true,\"bad\":0,\"vmax\":0,\"ok\":false}）",
+        "名所の 窓を 開いた まま 画面の 高さ・向きを かえると、「▶ とじる」が 押せない・ボタンが 画面の 外に 出る・タップで 閉じられない（390×844 → 390×560 → 844×390・820×1180 → 1180×820）（{\"runs\":[{\"from\":\"390x844\",\"steps\":[{\"to\":\"390x560\",\"open\":true,\"mt\":\"58px\",\"close\":[374,406],\"pt\":[195,390],\"closeOk\":true,\"allIn\":true},{\"to\":\"844x390\",\"open\":true,\"mt\":\"\",\"close\":[277,309],\"pt\":[422,293],\"closeOk\":true,\"allIn\":true}],\"opened\":{\"open\":true,\"mt\":\"242px\",\"close\":[565,597],\"pt\":[195,581],\"closeOk\":true,\"allIn\":true},\"closed\":true},{\"from\":\"820x1180\",\"steps\":[{\"to\":\"1180x820\",\"open\":false,\"mt\":\"\",\"close\":[0,0],\"pt\":[0,0],\"closeOk\":false,\"allIn\":true}],\"opened\":{\"open\":false,\"mt\":\"\",\"close\":[0,0],\"pt\":[0,0],\"closeOk\":false,\"allIn\":true}}],\"ok\":false}）",
+        "スピード線：速く 転がすと 線が 出る（出さない きまり）／速く 転がらない（{\"ok\":false,\"room\":7,\"fast\":0,\"vmax\":4.16,\"far\":0.96}）"
+      ],
+      "comparisonR129": {
+        "priorGroups": 253,
+        "priorSuccess": 223,
+        "priorFalse": 10,
+        "commonFalse": [
+          "godotRec",
+          "infoRotate",
+          "lowGoalDemo",
+          "restFinger",
+          "rollNoDemo",
+          "speedLines",
+          "swipeHold",
+          "tapDemoQuick",
+          "tiltDemoShown"
+        ],
+        "newFalse": [
+          "a2hsAutoHide"
+        ],
+        "nowExplicitTrue": {
+          "infoSecondTap": {
+            "moved": true,
+            "g": {
+              "x": 195,
+              "y": 286,
+              "len": 5,
+              "goal": "station-student"
+            },
+            "win": {
+              "open": true,
+              "atTap": "pxCanvas"
+            },
+            "second": {
+              "form": false,
+              "clicks": [
+                "pxCanvas",
+                "pxCanvas"
+              ]
+            },
+            "ok": true
+          }
+        },
+        "savedSourceDifferences": [
+          {
+            "path": "AGENTS.md",
+            "R129": "6511c8e260c695145b8e30b58f2f405b74e63a9fa816a2f515e1e7967378de14",
+            "R133": "3307716adf32bd25c5a9232821447251789c579f3192b423bad0c86c97814ab4"
+          }
+        ],
+        "dependencyPinsEqual": true,
+        "toolsPlaytestPinEqual": true,
+        "interpretation": "a2hsAutoHide newly false relative to R129; infoSecondTap now explicit true. This is not a controlled paired experiment or a fix effect. Only AGENTS.md differs among these source pins, which does not mean the entire repositories differ only there. The intermittent auto-hide group was already observed in earlier rounds; its rejection cause remains unknown."
+      },
+      "timing": {
+        "wrapperStartedUTC": "2026-11-14T20:02:38.060790+00:00",
+        "childStartedUTC": "2026-11-14T20:02:39.623261+00:00",
+        "wrapperCompletedUTC": "2026-11-14T20:30:25.177697+00:00",
+        "wrapperStartToCompletionSeconds": 1667.116907,
+        "exactChildFinishUTC": null,
+        "note": "Wrapper completion includes post-child preservation checks; not an exact child-finish timestamp."
+      },
+      "preservation": {
+        "sourceBeforeAfterExact": true,
+        "sourceManifestExact": true,
+        "sourceFileCount": 326,
+        "sourceTestFileCount": 311,
+        "dependenciesBeforeAfterManifestExact": true,
+        "dependencyCount": 550,
+        "toolsSourceMatchesRuntimePin": true,
+        "toolsSourceEvidencePath": "/workspace/scratch/first-minute/round-133/fullplaytest-audit/tested-tools-playtest.js",
+        "rawResultAndLogMatchReceiptSHA": true,
+        "method": "Recomputed core evidence SHA and compared saved full before/after/manifest dictionaries. Root independently rehashed 326 source/550 dependencies at closure; auditor did not repeat all dependency hashes."
+      },
+      "closure": {
+        "atUTC": "2026-11-14T20:30:44.747431+00:00",
+        "actualOuterExitCode": 1,
+        "actualOuterToolChunk": "7a1dd6",
+        "actualChildExitCode": 1,
+        "liveRuntimeProcesses": [],
+        "port8899ConnectEx": 111,
+        "sourceFilesMatched": 326,
+        "dependencyFilesMatched": 550,
+        "executionSHA256": "64bb108b5c8bc7d1c311bfae25dd9ebe5d13c7a0271907771561c3dcbdb4fa39",
+        "resultSHA256": "5235c7ee6ef881dbc96bbe6a7e702a223b827dd0b33becc5fb71242df1919a55",
+        "sourceHead": "4eab5db22688eb264948621aa5aac5b4e9fa9dad",
+        "originalExecutionReceiptPreserved": true
+      },
+      "retryCount": 0,
+      "timedOut": false,
+      "conclusion": "Overall false remains a failed required run; ordinary primary success does not replace it. No cause or patch benefit inferred."
+    },
+    "fixedTenTrials": false,
+    "newRegressionTest": false,
+    "redGreen": false,
+    "afterReproduction": false,
+    "afterFiveViewports": false
+  },
+  "knownCandidateLimits": [
+    "No world/info in eight inputs does not resolve prior hand-center/world/info conditions or remove them permanently from diagnostic scope.",
+    "No return input; PR1156 visible-notice retention was not measured.",
+    "Student name already appears before stored goal1 and before the later hand. Do not call it a stale old goal or use shrine-name time as the first next-goal wait.",
+    "Names and points quoted from UI do not add geographic facts. Original-name readability is separately attributed.",
+    "No slow-loader diagnosis from post-load ordinary play; no cross-round improvement effect measured."
+  ],
+  "operatorDecisionsPreserved": [
+    "tilt behavior and first genuine click permission boundary",
+    "pre-permission/stopped hand demonstration",
+    "no start screen or arrival card"
+  ],
+  "attachmentCriteria": {
+    "identifier": "sakurai_partial_20261114_2319.md",
+    "sha256": "4e206461abe220bb98ee7eba77c5132bfbe80d9ca9b62ac7e447848ae25ff74e",
+    "bodySections": 75,
+    "incompleteSections": 35,
+    "videoPlayed": false,
+    "use": "Criteria for response, early positive feedback, cue and next goal; not a product fix."
+  },
+  "limits": [
+    "Saved coordinates differ from visible-point DOM with center hit test; neither is physical paint or human understanding.",
+    "Different observation columns may repeat a moment; storage/name/hand timing order does not prove internal causal timing.",
+    "Primary trace ends60.2719s and report finishes64.894s; this is not additional play.",
+    "Unsent waiting total is unknown; autonomous walking gaps are not ignored input.",
+    "Discovery A/C numerical audits hashed original images without viewing. Original-image readings were separately checked; play10 station-name evidence is the root reinspection and B/design original-image review.",
+    "Four still frames do not measure persistent hand absence or reward/arrival instants.",
+    "Real fingers, tilt sensors, network, audio, physical paint, comprehension and dropout rate unmeasured.",
+    "Measured source4eab used its original entry/scripts. Post-testb4d03 includes distributed min copies, HTML/tools/tests/flow changes and was not measured; seventeen of the326 tested pins changed after closure."
+  ],
+  "sourceLocations": {
+    "handPlacement": "https://github.com/shota0617/ricepia-judge/blob/4eab5db22688eb264948621aa5aac5b4e9fa9dad/nishio-go/pixel.js#L9677",
+    "nameEllipsis": "https://github.com/shota0617/ricepia-judge/blob/4eab5db22688eb264948621aa5aac5b4e9fa9dad/nishio-go/style.css#L517",
+    "clickHit": "https://github.com/shota0617/ricepia-judge/blob/4eab5db22688eb264948621aa5aac5b4e9fa9dad/nishio-go/pixel.js#L13981"
+  },
+  "evidence": [
+    {
+      "identifier": "round-133/source-selected.json",
+      "sha256": "fdfa76054e8cc72ab212d081f55fe93104f104848d1e3a4aed8ef30c2affb9e9",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-133/root-execution.json",
+      "sha256": "84c3b003854a0c7a8b72572e98ce049e2631612037cd6d73f72dd6204671462f",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-133/root-closure.json",
+      "sha256": "0f1d5952373da988bda7e05dca03abf6adaf498566979f139106515f162e1f88",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-133/actual-completion.json",
+      "sha256": "cdc94e1dd3d120fc72dd8d42700051dbfd49b4b506bd468fa3b8428b72340950",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-133/root-photo-observations.json",
+      "sha256": "17befbe517105fed43a6178227c62341f7f5eeec790a71b8833e8b0a2ee97059",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-133/pytest-result.json",
+      "sha256": "70fa78785ad0c04c4d466f2e03bfcff3240cf35c382d6a1587bd694342cf182e",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-133/preparation-4eab5db2/lifecycle.json",
+      "sha256": "1825ab25f655ad2aab7f6a1666176d27527d03638d3c5b1e939014babf54745a",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-133/preparation-4eab5db2/run-result.json",
+      "sha256": "fa7504064104a5be5d45bdd606ae081a304f3c94f8c78a09f1345be428f0be91",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-133/preparation-4eab5db2/follow.json",
+      "sha256": "1331aa99d7f4b95aeb23733e0170bdabfbba1f9993e37d76f0fab705ddfa5dbf",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-133/discovery-a/summary.json",
+      "sha256": "9b92db581ac9c8f90622f10b87fae2f149c9e04e758fde627bdcb399e6f5eb37",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-133/discovery-a/frozen.json",
+      "sha256": "5744a487197786045edda4b6509eec81ba6033e7bd469623f31a01a16a6a06b9",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-133/discovery-b/review.json",
+      "sha256": "a10fa5537642fec8b3c6c22883f0665b2632f64a7cae6ff178bdc337566a18ea",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-133/discovery-b/frozen.json",
+      "sha256": "7940fd8f3dc6c92a3892b49889f6eca14d2749995f20aa918ebe83ae69346191",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-133/discovery-c/summary.json",
+      "sha256": "9d9170b1511eb8553f594e0db4d22fd8553597c1e442cdcac6b15d3e2313ecf6",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-133/discovery-c/frozen.json",
+      "sha256": "180c407f1dbe03e9d7e38f9e1ab443841b30524827895849f6f51033431e148d",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-133/discovery-c/play10-dom-addendum.json",
+      "sha256": "e4fc9a58252a3f12b167e1d09e39e53c3996ec6c2eca7e185cc587005242d720",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-133/design-review/README.md",
+      "sha256": "a916e2b11a02e25a4ea51859f883e89118c215056f67d450203465c4f1d0e0ef",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-133/design-review/timing-addendum.md",
+      "sha256": "a76b9d644d1c881ee66554b03232b356020d2dbdd831d6b2480055a400bea3de",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-133/root-photo-readback-addendum.json",
+      "sha256": "f63dd0907e2b74d218b1101b8163e5e33b0bfc4c7f5f75bd34bfe37d368d4753",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-133/main-update.json",
+      "sha256": "b6942a89a2e35c715ee4d75cf899a4e0de0f66fc2a840ef7390869f072dcd156",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-133/fullplaytest-root-execution.json",
+      "sha256": "221c3f4c92fed4340adb5e4b7efedc155d214e75c3c3cf056bd0fca2a934a0f8",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-133/fullplaytest-root-closure.json",
+      "sha256": "555c54f51c09b80c0b6b7f82e38c1e89a2fa1a1ece0b20bb4598957412bfcb7f",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-133/fullplaytest-runtime/execution.json",
+      "sha256": "64bb108b5c8bc7d1c311bfae25dd9ebe5d13c7a0271907771561c3dcbdb4fa39",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-133/fullplaytest-runtime/artifacts/playtest.json",
+      "sha256": "5235c7ee6ef881dbc96bbe6a7e702a223b827dd0b33becc5fb71242df1919a55",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-133/fullplaytest-audit/summary.json",
+      "sha256": "ada236489322ee32e4017332a5e1ccf66b65df18b3db47b64c3caeab50dc1fc6",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-133/fullplaytest-audit/ten-failures.json",
+      "sha256": "379b41ec26d8c92e40bab016819770e667a46b319c993f53f6d1e1fdfa9c2db6",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-133/fullplaytest-audit/frozen.json",
+      "sha256": "fb7472c73228515ff53a6939d7c60ed6b920cf0f2f7ccc8777e1f901004152e4",
+      "publicLink": false
+    }
+  ]
+}

@@ -34,4 +34,4 @@
 
 提供部分文字起こし（本文75節・未完了35節）の[反応](https://www.youtube.com/watch?v=EDs5n39sRFc)・[肯定](https://www.youtube.com/watch?v=1xRDwQqSn6I)・[短い手本](https://www.youtube.com/watch?v=L1Su0aajYFA)・[近い目標](https://www.youtube.com/watch?v=rA_FN6BTGms)を評価基準に用いた。動画本体は未再生。実指・傾き・回線・音・物理描画・人の理解と離脱率は未測定。数と原証拠識別子/SHAは[results.json](results.json)。scratch識別子は公開リンクではない。
 
-検査後の公開base `7a17d1c7c458539c1e5d6b6b65c29d1e9f2958b3` への更新はR130資料8ファイルのみで、検査ゲームの指定source10は同byte。測定sourceは `4eab5db22688eb264948621aa5aac5b4e9fa9dad` のまま。資料追加後のHEAD全体を再検査した記録ではない。
+測定sourceは `4eab5db22688eb264948621aa5aac5b4e9fa9dad`。検査後の中間base `7a17d1c7c458539c1e5d6b6b65c29d1e9f2958b3` への更新はR130資料8ファイルのみだった。その後の公開base `91f91d80e869cd4e370988db523b6aa7463b0304` には、にしおの配信用コピー・HTML、tools/tests、作業手順の変更も含まれ、資料だけの更新ではない。検査ゲーム本体・AGENTS・保護対象3ファイルは測定版と同byteだが、作業手順のskillは異なる。新しい公開HEAD全体や取り込んだ変更を再検査した記録ではない。

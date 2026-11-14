@@ -4,24 +4,79 @@
   "status": "complete observation; no new confirmed fix selected",
   "source": {
     "testedHead": "4eab5db22688eb264948621aa5aac5b4e9fa9dad",
-    "postTestBase": "7a17d1c7c458539c1e5d6b6b65c29d1e9f2958b3",
+    "postTestBase": "91f91d80e869cd4e370988db523b6aa7463b0304",
     "update": {
-      "atUTC": "2026-11-14T19:58:18.983744+00:00",
+      "atUTC": "2026-11-14T20:14:44.663655+00:00",
       "testedSource": "4eab5db22688eb264948621aa5aac5b4e9fa9dad",
-      "newBase": "7a17d1c7c458539c1e5d6b6b65c29d1e9f2958b3",
-      "docsOnly": true,
+      "priorPublicationBase": "7a17d1c7c458539c1e5d6b6b65c29d1e9f2958b3",
+      "newBase": "91f91d80e869cd4e370988db523b6aa7463b0304",
+      "mergedLocalHead": "8f03d1339fb9e185ba21c2c844428cbbf36d2a3c",
+      "docsOnly": false,
       "changedPaths": [
-        "docs/first-minute/round-130-kome-first-answer/README.md",
-        "docs/first-minute/round-130-kome-first-answer/diagnostic-trial01-observe.png",
-        "docs/first-minute/round-130-kome-first-answer/diagnostic-trial01-post-window.png",
-        "docs/first-minute/round-130-kome-first-answer/observe-10s.png",
-        "docs/first-minute/round-130-kome-first-answer/play-10s.png",
-        "docs/first-minute/round-130-kome-first-answer/play-30s.png",
-        "docs/first-minute/round-130-kome-first-answer/play-60s.png",
-        "docs/first-minute/round-130-kome-first-answer/results.json"
+        ".claude/skills/nishio-go-dev/SKILL.md",
+        ".claude/skills/nishio-go-dev/scripts/precommit.sh",
+        ".claude/skills/ricepia-flow/SKILL.md",
+        ".claude/skills/ricepia-flow/scripts/commit.sh",
+        ".claude/skills/ricepia-flow/scripts/guard.js",
+        ".claude/skills/ricepia-flow/scripts/playtest.js",
+        "docs/meiro.md",
+        "nishio-go.html",
+        "nishio-go/min/game.js",
+        "nishio-go/min/meiro.js",
+        "nishio-go/min/pixel.js",
+        "nishio-go/min/style.css",
+        "tests/test_course.py",
+        "tests/test_maze_loop3_28.py",
+        "tests/test_maze_loop4_183.py",
+        "tests/test_maze_loop4_19.py",
+        "tests/test_maze_loop4_2.py",
+        "tests/test_maze_loop4_202.py",
+        "tests/test_maze_loop4_206.py",
+        "tests/test_maze_loop4_207.py",
+        "tests/test_maze_loop4_24.py",
+        "tests/test_maze_loop4_65.py",
+        "tests/test_maze_loop4_93.py",
+        "tests/test_nishio_min.py",
+        "tests/test_postcard.py",
+        "tests/test_shogo.py",
+        "tools/playtest.js",
+        "tools/strip-nishio.js"
       ],
-      "source10Same": true,
-      "wholeNewCommitRetested": false
+      "wholeNewCommitRetested": false,
+      "mergeActualExit": 0,
+      "mergeToolChunk": "9073a0",
+      "sourceComparisons": {
+        "AGENTS.md": {
+          "same": true,
+          "testedSHA256": "3307716adf32bd25c5a9232821447251789c579f3192b423bad0c86c97814ab4",
+          "currentSHA256": "3307716adf32bd25c5a9232821447251789c579f3192b423bad0c86c97814ab4"
+        },
+        ".claude/skills/ricepia-flow/SKILL.md": {
+          "same": false,
+          "testedSHA256": "56d075153f561430fee926907a5c97083d9f643e6dd2d3a2f4c5736324a697f0",
+          "currentSHA256": "322f7d5932c8d5fa8eb1778218ce0a4d37f212e63f211629ff7efe9c4ec4720a"
+        },
+        "kensa.html": {
+          "same": true,
+          "testedSHA256": "07343e6fed26956548a72ee883caddf4076ca5d62d3550f486bb30f5d383fdfb",
+          "currentSHA256": "07343e6fed26956548a72ee883caddf4076ca5d62d3550f486bb30f5d383fdfb"
+        },
+        "kome365/engine.js": {
+          "same": true,
+          "testedSHA256": "c3d0cef6bb108d5b6d8fe38aaf0c08fe7994bdab08bf92775865a6e0222469a3",
+          "currentSHA256": "c3d0cef6bb108d5b6d8fe38aaf0c08fe7994bdab08bf92775865a6e0222469a3"
+        },
+        "kome365/field3d.js": {
+          "same": true,
+          "testedSHA256": "a5c1dad91d5c0c326f1394fad9c5d04e7e3b8d13e3a2b8b1757c7aa08d3558ff",
+          "currentSHA256": "a5c1dad91d5c0c326f1394fad9c5d04e7e3b8d13e3a2b8b1757c7aa08d3558ff"
+        },
+        "kome365/cards.js": {
+          "same": true,
+          "testedSHA256": "b15c5b2f56ef9c0c8361fa2fa6a039085919ca516b4a2e6e5a1b3bb691dde744",
+          "currentSHA256": "b15c5b2f56ef9c0c8361fa2fa6a039085919ca516b4a2e6e5a1b3bb691dde744"
+        }
+      }
     },
     "selectedHashes": {
       "AGENTS.md": "3307716adf32bd25c5a9232821447251789c579f3192b423bad0c86c97814ab4",
@@ -30,7 +85,102 @@
     },
     "productEdits": 0,
     "testEdits": 0,
-    "wholePostTestHeadRetested": false
+    "wholePostTestHeadRetested": false,
+    "updateHistory": [
+      {
+        "atUTC": "2026-11-14T19:58:18.983744+00:00",
+        "testedSource": "4eab5db22688eb264948621aa5aac5b4e9fa9dad",
+        "newBase": "7a17d1c7c458539c1e5d6b6b65c29d1e9f2958b3",
+        "docsOnly": true,
+        "changedPaths": [
+          "docs/first-minute/round-130-kome-first-answer/README.md",
+          "docs/first-minute/round-130-kome-first-answer/diagnostic-trial01-observe.png",
+          "docs/first-minute/round-130-kome-first-answer/diagnostic-trial01-post-window.png",
+          "docs/first-minute/round-130-kome-first-answer/observe-10s.png",
+          "docs/first-minute/round-130-kome-first-answer/play-10s.png",
+          "docs/first-minute/round-130-kome-first-answer/play-30s.png",
+          "docs/first-minute/round-130-kome-first-answer/play-60s.png",
+          "docs/first-minute/round-130-kome-first-answer/results.json"
+        ],
+        "source10Same": true,
+        "wholeNewCommitRetested": false
+      },
+      {
+        "atUTC": "2026-11-14T20:14:44.663655+00:00",
+        "testedSource": "4eab5db22688eb264948621aa5aac5b4e9fa9dad",
+        "priorPublicationBase": "7a17d1c7c458539c1e5d6b6b65c29d1e9f2958b3",
+        "newBase": "91f91d80e869cd4e370988db523b6aa7463b0304",
+        "mergedLocalHead": "8f03d1339fb9e185ba21c2c844428cbbf36d2a3c",
+        "docsOnly": false,
+        "changedPaths": [
+          ".claude/skills/nishio-go-dev/SKILL.md",
+          ".claude/skills/nishio-go-dev/scripts/precommit.sh",
+          ".claude/skills/ricepia-flow/SKILL.md",
+          ".claude/skills/ricepia-flow/scripts/commit.sh",
+          ".claude/skills/ricepia-flow/scripts/guard.js",
+          ".claude/skills/ricepia-flow/scripts/playtest.js",
+          "docs/meiro.md",
+          "nishio-go.html",
+          "nishio-go/min/game.js",
+          "nishio-go/min/meiro.js",
+          "nishio-go/min/pixel.js",
+          "nishio-go/min/style.css",
+          "tests/test_course.py",
+          "tests/test_maze_loop3_28.py",
+          "tests/test_maze_loop4_183.py",
+          "tests/test_maze_loop4_19.py",
+          "tests/test_maze_loop4_2.py",
+          "tests/test_maze_loop4_202.py",
+          "tests/test_maze_loop4_206.py",
+          "tests/test_maze_loop4_207.py",
+          "tests/test_maze_loop4_24.py",
+          "tests/test_maze_loop4_65.py",
+          "tests/test_maze_loop4_93.py",
+          "tests/test_nishio_min.py",
+          "tests/test_postcard.py",
+          "tests/test_shogo.py",
+          "tools/playtest.js",
+          "tools/strip-nishio.js"
+        ],
+        "wholeNewCommitRetested": false,
+        "mergeActualExit": 0,
+        "mergeToolChunk": "9073a0",
+        "sourceComparisons": {
+          "AGENTS.md": {
+            "same": true,
+            "testedSHA256": "3307716adf32bd25c5a9232821447251789c579f3192b423bad0c86c97814ab4",
+            "currentSHA256": "3307716adf32bd25c5a9232821447251789c579f3192b423bad0c86c97814ab4"
+          },
+          ".claude/skills/ricepia-flow/SKILL.md": {
+            "same": false,
+            "testedSHA256": "56d075153f561430fee926907a5c97083d9f643e6dd2d3a2f4c5736324a697f0",
+            "currentSHA256": "322f7d5932c8d5fa8eb1778218ce0a4d37f212e63f211629ff7efe9c4ec4720a"
+          },
+          "kensa.html": {
+            "same": true,
+            "testedSHA256": "07343e6fed26956548a72ee883caddf4076ca5d62d3550f486bb30f5d383fdfb",
+            "currentSHA256": "07343e6fed26956548a72ee883caddf4076ca5d62d3550f486bb30f5d383fdfb"
+          },
+          "kome365/engine.js": {
+            "same": true,
+            "testedSHA256": "c3d0cef6bb108d5b6d8fe38aaf0c08fe7994bdab08bf92775865a6e0222469a3",
+            "currentSHA256": "c3d0cef6bb108d5b6d8fe38aaf0c08fe7994bdab08bf92775865a6e0222469a3"
+          },
+          "kome365/field3d.js": {
+            "same": true,
+            "testedSHA256": "a5c1dad91d5c0c326f1394fad9c5d04e7e3b8d13e3a2b8b1757c7aa08d3558ff",
+            "currentSHA256": "a5c1dad91d5c0c326f1394fad9c5d04e7e3b8d13e3a2b8b1757c7aa08d3558ff"
+          },
+          "kome365/cards.js": {
+            "same": true,
+            "testedSHA256": "b15c5b2f56ef9c0c8361fa2fa6a039085919ca516b4a2e6e5a1b3bb691dde744",
+            "currentSHA256": "b15c5b2f56ef9c0c8361fa2fa6a039085919ca516b4a2e6e5a1b3bb691dde744"
+          }
+        }
+      }
+    ],
+    "postTestUpdateDocsOnly": false,
+    "publicationUpdateMeaning": "The intermediate update7a17 was R130 documents only. The final91f91d80 base additionally changes Nishio distributed copies, HTML, tools/tests and workflow skill. Kensa/AGENTS/protected3 are identical; workflow skill differs. No whole new HEAD retest."
   },
   "method": {
     "ordinaryRuns": 1,
@@ -1041,6 +1191,11 @@
     {
       "identifier": "round-132/design-review/README.md",
       "sha256": "66338179a7bb734735849f74e8ee7bb888a6b408149e598ba2137027bc289112",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-132/main-update-91f91d80.json",
+      "sha256": "0c9867e1008ef90ca855a4ed57f2e9b47ec1b8e9cd7786f57cdc1740ec5564f3",
       "publicLink": false
     }
   ]

@@ -2602,6 +2602,7 @@ const token = { hidden:false, classList:{ add() {}, remove() {} }, addEventListe
   animate(frames, opt) { const a = { frames, opt }; anims.push(a); return a; } };
 const face = { getBoundingClientRect() { return { left:12, top:9, width:60, height:60 }; } };
 const $ = () => face, hint = {};
+const senseNudge = () => {}, senseDemoSound = () => {};   // サイクル164 の 空振りの 手ごたえ（test_cycle164_first_sense_miss_... が 見る）
 function placeToken(x, y) { off = { x, y }; }
 function capture() {}
 function guideOff() { guideOffs++; }
@@ -4385,6 +4386,129 @@ assert.deepEqual(guides.map(g => g[1]), ['move']);                   // 1秒 あ
 """) + """
 """)
 
+
+
+    # ---- サイクル164（さがし役が 遊んで 見つけた 3つ）----
+
+    def test_cycle164_ink_misses_do_not_carry_over_to_the_stamp(self):
+        # 朱肉と はんこで 空振りの 数え（hankoTaps）が 同じで、自分で 朱肉を 付けても 数えが のこった。
+        # 再現（1ふくろめ）: 朱肉を 1回 だけ タップ して 外す → 朱肉を 付ける → はんこを 1回 だけ タップ → ひとりでに 押された
+        # （「最初の 1回めの タップで 進まない」に ふれる）。2ふくろめ からも 朱肉の 空振り 2回が のこると はんこの 1回めで 押された
+        hanko = HTML[HTML.index('$("bagBig").addEventListener("pointerdown",'):HTML.index('$("bagBig").addEventListener("click",')]
+        ink = HTML[HTML.index("function inkDone() {"):HTML.index("function stampNow() {")]
+        mock = "const inkDone = () => { inks++; inked = true; inkHold = null; inkDrag = null; ys.push(0); bobHanko(); };"
+        for lot, misses in ((0, 1), (1, 1), (1, 2)):
+            world = self._hanko_world()
+            self.assertIn(mock, world)
+            world = (world.replace("let lotIndex = 1;", "let lotIndex = " + str(lot) + ";")
+                     .replace("const hanko = { animate() { return {}; } };", "const hanko = { animate() { return {}; }, classList:{ add() {} }, style:{} };")
+                     .replace(mock, "const inkSound = () => {}; let inks = 0;\n" + ink.replace("function inkDone() {", "function inkDone() {\n  inks++;", 1))
+                     .replace("let stamps = 0, nudges = 0, drops = 0, inks = 0;", "let stamps = 0, nudges = 0, drops = 0;"))
+            self._node150(world + hanko + """
+const tap = () => { on.pointerdown({ pointerId:1, clientX:100, clientY:100 }); on.pointerup({ pointerId:1, clientX:100, clientY:100 }); };
+for (let i = 0; i < """ + str(misses) + """; i++) tap();              // 朱肉を タップ して 外す
+assert.equal(inked, false); assert.equal(hankoTaps, """ + str(misses) + """);
+on.pointerdown({ pointerId:1, clientX:100, clientY:100 }); on.pointermove({ pointerId:1, clientX:100, clientY:130 }); on.pointerup({ pointerId:1, clientX:100, clientY:130 });   // 自分で 朱肉を 付ける
+assert.equal(inked, true); assert.equal(inks, 1); assert.equal(drops, 0);
+tap();                                                               // はんこを 1回 だけ タップ
+assert.equal(drops, 0, '""" + str(lot + 1) + """ふくろめ: 朱肉の 空振り """ + str(misses) + """回の あと、はんこの 1回めの タップで ひとりでに 押された');
+assert.equal(hankoTaps, 1);
+""" + ("tap(); assert.equal(drops, 1);   // 1ふくろめは 2回めで 押される（サイクル161 の まま）\n" if lot == 0 else
+       "tap(); assert.equal(drops, 0); tap(); assert.equal(drops, 1);   // 2ふくろめ からは 3回め（今の まま）\n"))
+        # ほかの 段で 1つの 数えを 2つの 所作で 使う 所: ぬく（さす → ひきぬく）は ささった 所で 数え直す。
+        # みわける（なでる＝spreadTaps・つまむ＝pickMisses・はこぶ＝senseTaps）は 所作ごとに 別の 数え。流す（swipeTaps）は 押した 所で 数え直す
+        self.assertIn("bagTaps = 0; /* ひきぬく側の空振りは、ここから数え直す", HTML)
+        self.assertIn("swipeTaps = 0;", HTML[HTML.index("function stampNow()"):HTML.index("function dropHanko()")])
+        self.assertIn("senseTaps = 0;", HTML[HTML.index("function toSense()"):HTML.index("function guideSense()")])
+
+    def _sense164(self, kind, body):
+        snd = re.search(r"function senseDemoSound\(\) \{[\s\S]*?\n\}\n", HTML)
+        fn = HTML[HTML.index("function guideSense() {"):HTML.index('token.addEventListener("pointerup", endToken);')]
+        self._node150("""
+const assert = require('node:assert/strict');
+let oscs = 0, ac = null; const anims = [], guides = [];
+const window = { AudioContext: function () { return { state:'running', currentTime:0, destination:{}, resume() {}, createOscillator() { oscs++; const o = { type:'', frequency:{ setValueAtTime() {}, exponentialRampToValueAtTime() {} }, connect: () => g, start() {}, stop() {} }; const g = { gain:{ setValueAtTime() {}, exponentialRampToValueAtTime() {} }, connect: () => ({}) }; return o; }, createGain() { return { gain:{ setValueAtTime() {}, exponentialRampToValueAtTime() {} }, connect: () => ({}) }; } }; } };
+const NUDGE_LIMIT = 3, motion = 1, READ_MS = { faceBig:500, senseRead:1100 }, NIGIRU_MS = 400;
+let lotIndex = 0, senseKind = '""" + kind + """', senseDrag = null, senseHold = null, senseTaps = 0, done = 0;
+const rect = (x, y) => ({ left:x - 40, top:y - 40, width:80, height:80 });
+const token = { hidden:false, style:{}, classList:{ add() {}, remove() {} }, getBoundingClientRect: () => rect(200, 500), animate(k, o) { anims.push([k, o.duration]); return {}; }, contains: () => false, addEventListener() {} };
+const face = { classList:{ add() {}, remove() {} }, getBoundingClientRect: () => rect(60, 100) };
+const $ = id => id === 'face' ? face : { classList:{ add() {}, remove() {} } };
+const guideAt = (...a) => { guides.push(a[0]); }, guideOff = () => {}, placeToken = () => {}, pageSlid = () => false;
+const setTimeout = () => {}, tone = () => {}, setFace = () => {}, tick = () => {}, toKimeru = () => {}, hint = {};
+const itemGrades = () => ({ moisture:1 }), lotPercents = () => ({}), LOT = {};
+""" + (snd.group(0) if snd else "") + fn + """
+senseDone = () => { done++; };   // 進んだ 回数だけ 見る
+""" + body)
+
+    def test_cycle164_first_sense_miss_moves_the_hands_and_sounds(self):
+        # 🤲 はこぶ の 1回めの 空振り（タップ・短い ドラッグ・逆向き・顔や 皿の すみ）は、手本の 指の 出なおし だけで、
+        # 🤲 は 動かず 音も 無かった（390×844実測 12回中12回）。ほかの 段と 同じく 小さな ゆれ（顔の 向きへ 12px・0.26秒）と 小さな 音を 返す
+        self._sense164("niou", """
+senseDrag = { x:0, y:0, moved:false }; endToken({ type:'pointerup' });
+assert.equal(senseTaps, 1); assert.deepEqual(guides, ['move']);
+assert.equal(oscs, 1, '🤲 の 1回めの 空振りに 音が 無い');
+assert.equal(anims.length, 1, '🤲 の 1回めの 空振りで 🤲 が 動かない');
+const mid = anims[0][0][1].transform.match(/-?[\\d.]+/g).map(Number);
+assert.ok(Math.abs(Math.hypot(mid[0], mid[1]) - 12) < 0.01, String(mid)); assert.ok(mid[0] < 0 && mid[1] < 0);   // 顔の 向きへ 12px
+assert.equal(anims[0][1], 260);
+assert.equal(done, 0);                                           // 進まない
+senseDrag = { x:0, y:0, moved:false }; endToken({ type:'pointerup' });   // 1ふくろめは 2回めで 運ばれる（サイクル161 の まま）
+assert.equal(anims.length, 2);   // autoSense の 運び
+""")
+        self._sense164("nigiru", """
+senseHold = {}; endToken({ type:'pointerup' });
+assert.equal(senseTaps, 1); assert.deepEqual(guides, ['press']);
+assert.equal(oscs, 1, 'にぎる の 1回めの 空振りに 音が 無い'); assert.equal(anims.length, 1, 'にぎる の 1回めの 空振りで 🤲 が 動かない');
+assert.equal(done, 0);
+// 取り消された 指は 数えない・音も 動きも 無い
+senseHold = {}; endToken({ type:'pointercancel' }); assert.equal(senseTaps, 1); assert.equal(oscs, 1);
+""")
+        # 「動きを へらす」でも ほかの 段と 同じく 長さに motion を かける（読む 間・押す 長さ では ない）
+        self.assertIn("duration:260 * motion", HTML[HTML.index("function senseNudge()"):HTML.index("function senseDone()")])
+
+    def _wait164(self, body):
+        bag = HTML[HTML.index("function restingTakeover("):HTML.index('$("sceneBag").addEventListener("pointermove",')]
+        meter = HTML[HTML.index('$("sceneMeter").addEventListener("pointerdown",'):HTML.index('$("sceneMeter").addEventListener("pointermove",')]
+        helper = re.search(r"\nfunction waitTap\([\s\S]*?\nfunction zaraTap\(\) \{.*\n", HTML)
+        self._node150("""
+const assert = require('node:assert/strict');
+const motion = 1, on = {}, sounds = [];
+let step = 0, measured = 0, crankAngle = 30, crankDrag = null, probeAttract = null; const LOT = { moisture:[14, 14.2, 14.4] }, P = { done:true, drag:null };
+const mk = name => { const runs = []; return { name, runs, animate(k, o) { const a = { id:'', k, o, playState:'running' }; runs.push(a); return a; }, getAnimations: () => runs.filter(a => a.playState === 'running'), addEventListener(t, f) { on[name + ':' + t] = f; } }; };
+const els = {}; const $ = id => els[id] || (els[id] = mk(id));
+const probeDemoSound = () => { sounds.push('probe'); }, crankSound = () => { sounds.push('crank'); };
+const bagPts = new Map(), meterPts = new Map(), capture = () => {}, guideOff = () => {}, stopPullDemo = () => {}, pageFinger = () => false, crankPointer = () => ({ a:0 });
+const before = JSON.stringify(P);
+""" + (helper.group(0) if helper else "") + bag + meter + """
+const tgt = sel => ({ closest: s => s === sel ? {} : null });
+""" + body)
+
+    def test_cycle164_taps_while_reading_get_a_small_answer(self):
+        # ぬいた あと「ざらざら…」・はかった あと「ちょうどいい」「水分が 高い！」の 読む 間、穀刺し・ふくろ・ハンドル・水分計を 押しても
+        # 何も 返らなかった（390×844実測）。押した 物が 小さく ゆれて、その 段の 小さな 音を 返す。待つ 長さ・段・状態は 変えない
+        self._wait164("""
+on['sceneBag:pointerdown']({ pointerId:1, clientX:10, clientY:10, target:tgt('#bagBtn') });
+assert.deepEqual(sounds, ['probe'], '「ざらざら…」の 間に ふくろを 押しても 音が 無い');
+assert.equal($('bagBtn').runs.length, 1, '「ざらざら…」の 間に ふくろを 押しても ゆれない'); assert.equal($('bagBtn').runs[0].o.duration, 260);
+assert.equal(step, 0); assert.equal(JSON.stringify(P), before); assert.equal(bagPts.size, 0);   // 進めない・指を 追わない
+on['sceneBag:pointerdown']({ pointerId:2, clientX:10, clientY:10, target:tgt('#bagBtn') });
+assert.equal(sounds.length, 2); assert.equal($('bagBtn').runs.length, 1);   // ゆれの 途中は 重ねない（音は 返す）
+// はかり 終えた 後
+step = 1; measured = 3; sounds.length = 0;
+on['sceneMeter:pointerdown']({ pointerId:3, clientX:10, clientY:10, target:tgt('#crank') });
+assert.deepEqual(sounds, ['crank'], '「ちょうどいい」の 間に ハンドルを 押しても 音が 無い');
+assert.equal($('crankArm').runs.length, 1, 'ハンドルが ゆれない'); assert.equal(crankDrag, null); assert.equal(meterPts.size, 0);
+on['sceneMeter:pointerdown']({ pointerId:4, clientX:10, clientY:10, target:tgt('#meterBtn') });
+assert.equal($('meterBtn').runs.length, 1, '水分計が ゆれない'); assert.equal(measured, 3); assert.equal(step, 1);
+// 読む 間 では ない 時は 今までどおり（ふくろ: 指を 追う・ゆれない）
+step = 0; P.done = false; sounds.length = 0;
+on['sceneBag:pointerdown']({ pointerId:5, clientX:10, clientY:10, target:tgt('#bagBtn') });
+assert.deepEqual(sounds, []); assert.ok(P.drag); assert.equal($('bagBtn').runs.length, 1);
+""")
+        # 待つ 長さは 変えない（READ_MS の まま・窓を とばさない）
+        self.assertIn("setTimeout(toHakaru, READ_MS.zarazara);", HTML)
+        self.assertIn("setTimeout(toMiwakeru, high ? READ_MS.averageHigh : READ_MS.average);", HTML)
 
 if __name__ == "__main__":
     unittest.main()

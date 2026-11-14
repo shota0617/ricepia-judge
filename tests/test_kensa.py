@@ -1977,6 +1977,7 @@ const demoDown = new Set(), token = {hidden:true};
 let badLeft = 2, spread = false, senseKind = 'niou', senseDrag = null, senseHold = null;
 let leaving = false, stamped = false, inked = false, inkHold = null, inkDrag = null, hankoDrag = null;
 const knockPlate = () => { calls.push('knock'); }, nudgeSpread = () => { calls.push('spread'); }, knockSound = () => { calls.push('sound'); };
+const pickMiss = () => { calls.push('miss'); };   // つまむ の 空振りの 数え（サイクル163b: 皿の 外も 皿の 中と 同じく 数える）
 const mk = (gone) => ({gone, img:{offsetWidth:0, classList:{remove() {}, add(c) { calls.push('wig'); }}}});
 const grains = [mk(false), mk(true)];
 const endToken = () => { calls.push(['token', !!senseDrag, !!senseHold]); senseDrag = senseHold = null; };
@@ -1997,12 +1998,12 @@ const out = ['#app'];
 // 皿をたたく動き（knockPlate: 粒が動いて1回で広がる）は使わない。皿の中は皿が受ける
 assert.deepEqual(touch(out), ['sound', 'wig', 'spread']);
 assert.deepEqual(touch(['#app', '#plate']), []);
-// つまむ: トンの音と 粒のゆれだけ（粒は取らない・広げる空振りは数えない）。
+// つまむ: トンの音と 粒のゆれ（粒は取らない・広げる空振りは数えない）。空振りとして pickMiss に 数える（サイクル163b: 3回で 手本。ひとりでには つままない）。
 // サイクル150: 皿をたたく動き（knockPlate）は呼ばない（呼ぶと タップのたびに 粒が 7px ずつ外へ逃げた）
-spread = true; assert.deepEqual(touch(out), ['sound', 'wig']);
+spread = true; assert.deepEqual(touch(out), ['sound', 'wig', 'miss']);
 // 8pxより大きく動いた指・📖・終了カード・つぎの袋・資料（#app の外）は数えない
 assert.deepEqual(touch(out, 9), []);
-assert.deepEqual(touch(out, 8), ['sound', 'wig']);
+assert.deepEqual(touch(out, 8), ['sound', 'wig', 'miss']);
 for (const x of ['#notesLink', '#idleCard', '#nextBtn']) assert.deepEqual(touch(['#app', x]), []);
 assert.deepEqual(touch([]), []);
 // ほかの指が まだ画面にある間（ふたゆびのズームなど）は数えない
@@ -2311,6 +2312,7 @@ let step = 4, stamped = true, leaving = false, swipeTaps = 0, leaves = 0, sounds
 const bag = {animate(frames, opt) { anims.push([frames[1].transform, opt.duration]); return {cancel() { cancels++; }}; }};
 const $ = id => ({bagBig: bag})[id];
 const guideAt = (...a) => { guides.push(a); }, swipeDemoSound = () => { sounds++; }, leaveBag = () => { leaves++; };
+const STAMP_LOOK = 1000, performance = { now: () => 5000 }, nextShownAt = 0;   // 押して 1秒より あと（押して すぐの 1秒は test_cycle163b_... が 見る）
 """ + fn + """
 swipeNudge();                                    // 1回目: 手本の指＋小さく滑る
 assert.equal(guides.length, 1);
@@ -4321,6 +4323,67 @@ const TYPES = { '.html': 'text/html; charset=utf-8', '.webp': 'image/webp', '.pn
             self.assertEqual(c["head0"], c["head4"], tag)                  # 頭の 高さは 段で 変わらない
             self.assertEqual(c["glyph"], 0, tag + " で はんこの 丸が 字に かかる")
             self.assertTrue(c["inView"], tag)
+
+
+    # ---- サイクル163b（Codex指摘 PR #1179）----
+
+    def test_cycle163b_taps_off_the_plate_count_as_pick_misses(self):
+        # つまむ で 案内文・顔・見出しを たたく 入力は 音と ゆれ だけで、空振りに 数えて いなかった
+        # （390×844・タッチ: 案内文を 0.7秒おきに 6回 → pickMisses 0・手本 0回）。皿の 中の 空振りと 同じく 3回で 手本
+        off = HTML[HTML.index("function offMiss(d) {"):HTML.index("document.addEventListener(\"pointerdown\", (e) => {\n  offDown = offStage(e)")]
+        m = re.search(r"\nlet pickMisses = 0;\nfunction pickMiss\(\) \{[\s\S]*?\n\}", HTML)
+        self._node150("""
+const assert = require('node:assert/strict');
+let step = 2, spread = true, badLeft = 2, lotIndex = 1, isNear = false, demoAt = 5000, demoHard = 5000, ticks = 0, knocks = 0, nudges = 0, arms = [];
+const token = { hidden:true }, demoDown = new Set(), q = [];
+const setTimeout = f => { q.push(f); }, demoTick = () => { ticks++; }, armHint = ms => { arms.push(ms); };
+const knockSound = () => { knocks++; }, nudgeSpread = () => { nudges++; }, firstBagFace = () => false;
+const mk = kind => ({ kind, gone:false, img:{ offsetWidth:0, classList:{ add() {}, remove() {}, contains: () => false } } });
+const grains = [mk('seiryu'), mk('higai')];
+""" + (m.group(0) if m else "") + "\n" + off + """
+offMiss({ x:10, y:10 }); offMiss({ x:10, y:10 });
+assert.equal(knocks, 2); assert.equal(pickMisses, 2, '広げた あとの 皿の 外の タップが 空振りに 数えられない');
+assert.equal(demoAt, 5000);
+offMiss({ x:10, y:10 }); q.splice(0).forEach(f => f());
+assert.equal(demoAt, 0, '皿の 外で 3回 空振りしても 手本の 待ちが 消えない'); assert.equal(ticks, 1); assert.deepEqual(arms, [0]);
+assert.equal(step, 2); assert.equal(badLeft, 2);                       // ひとりでには つままない
+// 広げる 前は 今までどおり 広げる 合図（数えない）
+spread = false; pickMisses = 0; offMiss({ x:10, y:10 }); assert.equal(nudges, 1); assert.equal(pickMisses, 0);
+// ほかの 指が のって いる 間は 数えない
+spread = true; demoDown.add(7); offMiss({ x:10, y:10 }); assert.equal(pickMisses, 0);
+""")
+
+    def test_cycle163b_early_tap_on_next_keeps_the_one_second_look(self):
+        # はんこが ひとりでに 押された すぐ あとに「つぎの ふくろ」を 押すと、早押しの ガード → swipeNudge → guideAt が じかに 走り、
+        # 押して 1秒（STAMP_LOOK）の 抑えを 通らずに 袋の 上へ 手本の 指が もどった（390×844・タッチ: 押して 0.24秒・0.5秒）。
+        # 1秒の 間は 指を 出さず、音と 袋の 小さな 動きは のこし、1秒 たったら 手本を 出す
+        fn = HTML[HTML.index("function swipeNudge() {"):HTML.index("function leaveBag() {")]
+        m = re.search(r"const STAMP_LOOK = \d+;", HTML)
+        for tap_at, guided in ((240, False), (500, False), (1200, True)):
+            self._node150("""
+const assert = require('node:assert/strict');
+let now = 0, q = [], step = 4, stamped = true, leaving = false, swipeTaps = 0, swipeDemo = null, nextShownAt = 0, demoAt = 9e9, demoHard = 9e9, guides = [], sounds = 0, anims = 0, shows = 0, leaves = 0;
+const performance = { now: () => now }, NUDGE_LIMIT = 3, motion = 1, demoDown = new Set();
+const setTimeout = (f, ms) => { q.push([now + ms, f]); };
+const run = t => { now = t; q.sort((a, b) => a[0] - b[0]); const due = q.filter(x => x[0] <= now); q = q.filter(x => x[0] > now); due.forEach(x => x[1]()); };
+const stopSwipeDemo = () => {}, swipeDemoSound = () => { sounds++; }, leaveBag = () => { leaves++; };
+const $ = () => ({ animate: () => { anims++; return { cancel() {} }; } });
+const guideAt = (...a) => { guides.push([now, a[0]]); };
+""" + (m.group(0) if m else "") + """
+const demoPhase = () => step === 4 && stamped && !leaving ? (now - nextShownAt < STAMP_LOOK ? '' : 'slide') : '';
+const demoTick = sync => { if (sync === true) return; if (demoPhase() === 'slide' && now >= demoAt) { shows++; guides.push([now, 'demo']); } };
+""" + fn + """
+now = """ + str(tap_at) + """; swipeNudge();
+assert.equal(sounds, 1); assert.equal(anims, 1);                     // 押した 手ごたえ（音・袋の 小さな 動き）は のこす
+assert.equal(leaves, 0);
+""" + ("""
+assert.deepEqual(guides.filter(g => g[1] === 'move'), [], '押して 1秒より 前に 袋の 上へ 手本の 指が 出た');
+for (let t = now + 50; t <= 2000; t += 50) run(t);
+assert.equal(shows, 1, '1秒 たっても 手本が 出ない'); assert.ok(guides[0][0] >= 1000 && guides[0][0] <= 1100, String(guides[0][0]));
+""" if not guided else """
+assert.deepEqual(guides.map(g => g[1]), ['move']);                   // 1秒 あとの 早押しは 今までどおり すぐ 手本
+""") + """
+""")
 
 
 if __name__ == "__main__":

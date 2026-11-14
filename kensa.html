@@ -2576,6 +2576,14 @@ function swipeNudge() {
   stopSwipeDemo();
   if (++swipeTaps >= NUDGE_LIMIT) { swipeTaps = 0; leaveBag(); return; }
   swipeDemoSound(); /* 手本の動きにも固有の小さな音を付ける（差42）。流れてはいないので実際に流れる紙の音は使わない */
+  const look = STAMP_LOOK - (performance.now() - nextShownAt);
+  if (swipeTaps === 1 && look > 0) { /* 押して 1秒（STAMP_LOOK）は ここからも 手本の 指を 出さない（サイクル163b・Codex指摘 PR #1179）。旧版は 早押しの ガードから
+       じかに guideAt へ 来て、押した ばかりの 袋の 上に 指が もどった（390×844実測: 押して 0.24秒・0.5秒の タップ）。音と 袋の 小さな 動きは のこし、
+       1秒 たった ところで 手本を 出す（見回りの 0.8秒を 待たせない） */
+    swipeDemo = $("bagBig").animate([{ transform:"none" }, { transform:"translateX(18px) rotate(.6deg)", offset:.55 }, { transform:"none" }], { duration:320 * motion, easing:"ease-in-out" });
+    setTimeout(() => { demoTick(true); if (demoPhase() !== "slide" || demoDown.size) return; demoAt = demoHard = 0; demoTick(); }, look + 20);
+    return;
+  }
   if (swipeTaps === 1) { guideAt("move", $("bagBig"), 90, 0, 0.24); swipeDemo = $("bagBig").animate([{ transform:"none" }, { transform:"translateX(18px) rotate(.6deg)", offset:.55 }, { transform:"none" }], { duration:320 * motion, easing:"ease-in-out" }); return; } /* 手本の指は証印に重ねない上のほう（サイクル138） */
   swipeDemo = $("bagBig").animate([{ transform:"none" }, { transform:"translateX(45px) rotate(1.5deg)", offset:.55 }, { transform:"none" }], { duration:560 * motion, easing:"ease-in-out" });
 }
@@ -2934,7 +2942,8 @@ function offMiss(d) {
        わるい粒が ふちで切れた 6回中6回）。つまむ は ひとりでに進まない決まりなので、案内文をタップする人は ここに長くいる */
     knockSound();
     grains.forEach(g => { if (!g.gone) { g.img.classList.remove("wig"); void g.img.offsetWidth; g.img.classList.add("wig"); } });
-    if (!spread) nudgeSpread();
+    if (!spread) nudgeSpread(); else pickMiss(); /* 広げた あとの 皿の 外（案内文・顔・見出し）も、皿の 中の 空振りと 同じく 数える（サイクル163b・Codex指摘 PR #1179）。
+      旧版は 音と ゆれ だけで 数えず、案内文を 0.7秒おきに たたく 人には 手本が 出なかった（390×844実測） */
   } else if (step === 3) gradeNudge();
   else if (step === 4 && !leaving) {
     if (stamped) { swipeNudge(); return; }

@@ -2404,6 +2404,8 @@ function stampNow() {
   nextAuto = false; /* 自分で 下ろして 押した。ひとりでに 押した 時は dropHanko が すぐ後に true へ（「つぎの ふくろ」の 守り・サイクル151） */
   swipeTaps = 0; /* 流す所作の空振りは、押した時から数え直す（サイクル140・差42） */
   cookedReturns.push(GRADES[lotGrade(LOT)]); updateCooked(); /* 押した袋を覚える。次の袋で炊き上がって返ってくる（サイクル94・類8） */
+  if (cookedReturns.length === 1) armIdle(); /* 1ふくろめの はんこ：ここから 45秒の 時計を 数えなおす（サイクル159・レビューの 指摘）。はんこの 前に 時計が 切れて いると（袋を 押した まま 46秒 → 押印）、
+     カードを 出さずに 時計が 止まった まま に なり、押した あと 何秒 待っても 出なかった。画面が かくれて いれば のこり時間 と して 覚える（idleIn） */
   hankoDrag = null;
   stopBob();
   setHanko(hankoMax);
@@ -2761,13 +2763,36 @@ function sendTap(tap, onFail) {
 function liked() {
   try { return sessionStorage.getItem("kensaLiked") === "1"; } catch (_) { return false; }
 }
+/* 45秒の カードは、この 回で 1ふくろめの はんこを 押す までは 出さない（サイクル159・運営者 2026-11-14「検査の 45秒の カードも 進めて」）。
+   旧版は「はかる」の 段で 止まって いても 44秒で「お疲れ様です／🏠 サイトへ もどる」が 出て、迷って 止まった 人に 先に 帰り道を 見せて いた。
+   止まって いる 間は 今の 手本の 指・案内が そのまま 出つづける。押した 記録は この 回の 中 だけ（cookedReturns。保存は 見ない）。押した あとは 今までどおり 45秒 */
 function showIdleCard() {
+  if (!cookedReturns.length) return;
   if (liked()) { likeBtn.disabled = true; likeBtn.textContent = "ありがとう 🌾"; }
   const wasOn = idleCard.classList.contains("on");
   idleCard.inert = false;
+  placeIdleCard();
   idleCard.classList.add("on");
   if (!wasOn) idleSound(); /* 終了カードが現れる合図は固有の音にする（サイクル108・差14）。すでに現れている時には鳴らさない */
 }
+/* カードは 下の 案内の 文（はんこの あとは「つぎの ふくろ」）の すぐ 上に 置く（サイクル159）。旧版は 枠の 下はしに 置いて、案内の 文を 100% かくして いた
+   （390×844: 6310px²・844×390: 3460px²）。その 置き場所で 袋・はんこ・点線の 丸・手本の 指・押す 物・米の 流れの 絵に かかる 時は、今までどおり 下はし に 置く */
+function placeIdleCard() {
+  idleCard.style.bottom = "";
+  const shown = e => !!e && getComputedStyle(e).display !== "none" && e.offsetHeight > 0;
+  const low = [hint, nextBtn].filter(shown).map(e => e.getBoundingClientRect().top);
+  if (!low.length) return;
+  const stage = (idleCard.offsetParent || document.body).getBoundingClientRect(); /* カードの 位置の もと（#app） */
+  const bottom = Math.max(5, Math.round(stage.bottom - Math.min(...low) + 6)), top = stage.bottom - bottom - idleCard.offsetHeight;
+  const seen = e => { for (let n = e; n && n.nodeType === 1 && n !== document.body; n = n.parentElement) { const cs = getComputedStyle(n); if (n.hidden || cs.display === "none" || cs.visibility === "hidden" || +cs.opacity < 0.5) return false; } return true; };
+  /* かぶっては いけない 物: 袋・はんこ・点線の 丸・手本の 指 と、押す 物（等級の ボタン・水分計・粒・🔍・🤲）、米の 流れの 絵 */
+  const hits = ["#bagBig", "#bagBtn", "#hanko", ".markSpot", "#guide", ".gradeBtn", "#meterBtn", "#crank", ".grain", "#zoomBtn", "#senseToken", "#journey"].some(q => [...document.querySelectorAll(q)].some(e => {
+    if (!seen(e) || e.closest("[inert]")) return false;
+    const r = e.getBoundingClientRect(); return r.width > 0 && r.bottom > top && r.top < stage.bottom - bottom;
+  }));
+  if (!hits) idleCard.style.bottom = bottom + "px";
+}
+window.addEventListener("resize", () => { if (idleCard.classList.contains("on")) placeIdleCard(); });
 function hideIdleCard() {
   idleCard.classList.remove("on");
   idleCard.inert = true;

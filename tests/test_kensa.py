@@ -3590,7 +3590,9 @@ let now = 0, timers = [], seq = 0;
 globalThis.performance = { now: () => now }; Date.now = () => now;
 const setTimeout = (f, ms) => { const id = ++seq; timers.push({ id, at:now + ms, f }); return id; }, clearTimeout = id => { timers = timers.filter(t => t.id !== id); };
 const advance = ms => { const end = now + ms; for (;;) { timers.sort((a, b) => a.at - b.at); const t = timers[0]; if (!t || t.at > end) break; timers.shift(); now = t.at; t.f(); } now = end; };
-const cls = new Set(); const idleCard = { inert:true, classList:{ add: c => cls.add(c), remove: c => cls.delete(c), contains: c => cls.has(c) } };
+const cls = new Set(); const idleCard = { inert:true, style:{}, classList:{ add: c => cls.add(c), remove: c => cls.delete(c), contains: c => cls.has(c) } };
+// 運営者の 決め（2026-11-14）: 45秒の カードは 1ふくろめの はんこの あと だけ。ここは はんこを 押した あとの 時計を 見る（サイクル159 で 条件を 書き直し）
+const cookedReturns = ['1等'], hint = null, nextBtn = null, window = { addEventListener() {} };
 const likeBtn = { addEventListener() {} }, returnLink = { addEventListener() {} };
 const $ = id => ({ idleCard, likeBtn, returnLink })[id];
 const listeners = {}; const document = { hidden:false, addEventListener(t, f) { (listeners[t] = listeners[t] || []).push(f); } };
@@ -3656,7 +3658,9 @@ let now = 0, timers = [], seq = 0;
 globalThis.performance = { now: () => now }; Date.now = () => now;
 const setTimeout = (f, ms) => { const id = ++seq; timers.push({ id, at:now + ms, f }); return id; }, clearTimeout = id => { timers = timers.filter(t => t.id !== id); };
 const advance = ms => { const end = now + ms; for (;;) { timers.sort((a, b) => a.at - b.at); const t = timers[0]; if (!t || t.at > end) break; timers.shift(); now = t.at; t.f(); } now = end; };
-const cls = new Set(); const idleCard = { inert:true, classList:{ add: c => cls.add(c), remove: c => cls.delete(c), contains: c => cls.has(c) } };
+const cls = new Set(); const idleCard = { inert:true, style:{}, classList:{ add: c => cls.add(c), remove: c => cls.delete(c), contains: c => cls.has(c) } };
+// 運営者の 決め（2026-11-14）: 45秒の カードは 1ふくろめの はんこの あと だけ。ここは はんこを 押した あとの 時計を 見る（サイクル159 で 条件を 書き直し）
+const cookedReturns = ['1等'], hint = null, nextBtn = null, window = { addEventListener() {} };
 const likeOn = {}; const likeBtn = { addEventListener(t, f) { likeOn[t] = f; } }, returnLink = { addEventListener() {} };
 const $ = id => ({ idleCard, likeBtn, returnLink })[id];
 const listeners = {}; const document = { hidden:""" + ("true" if hidden_at_load else "false") + """, body:{}, documentElement:{ classList:{ contains: () => false } }, addEventListener(t, f) { (listeners[t] = listeners[t] || []).push(f); } };
@@ -4020,6 +4024,121 @@ assert.equal($('osu').inert, false);
 layer($('decide'), true);                                // 次の 袋の きめる（toKimeru と 同じ 呼び方）
 assert.equal($('decide').inert, false);                  // また 押せる・フォーカスできる
 """)
+
+
+    # ---- サイクル159（運営者 2026-11-14「検査の 45秒の カードも 進めて」）----
+
+    def test_cycle159_idle_card_waits_for_the_first_stamp(self):
+        # 旧版は「はかる」で 止まって いても 44秒で カード（お疲れ様です／🏠 サイトへ もどる）が 出た（390×844・844×390・320×568 で 5画面とも 44秒）。
+        # 1ふくろめの はんこを 押す までは 出さない。押した あとは 今までどおり 45秒
+        idle = HTML[HTML.index("const IDLE_MS = 45000"):HTML.index('returnLink.addEventListener("click",')]
+        self._node150("""
+const assert = require('node:assert/strict');
+let now = 0, timers = [], seq = 0;
+globalThis.performance = { now: () => now }; Date.now = () => now;
+const setTimeout = (f, ms) => { const id = ++seq; timers.push({ id, at:now + ms, f }); return id; }, clearTimeout = id => { timers = timers.filter(t => t.id !== id); };
+const advance = ms => { const end = now + ms; for (;;) { timers.sort((a, b) => a.at - b.at); const t = timers[0]; if (!t || t.at > end) break; timers.shift(); now = t.at; t.f(); } now = end; };
+const cls = new Set(); const idleCard = { inert:true, style:{}, classList:{ add: c => cls.add(c), remove: c => cls.delete(c), contains: c => cls.has(c) } };
+const likeBtn = { addEventListener() {} }, returnLink = { addEventListener() {} };
+const $ = id => ({ idleCard, likeBtn, returnLink })[id];
+const listeners = {}; const document = { hidden:false, body:{}, documentElement:{ classList:{ contains: () => false } }, addEventListener(t, f) { (listeners[t] = listeners[t] || []).push(f); } };
+const sessionStorage = { getItem() { return null; }, setItem() {}, removeItem() {} };
+let keyUser = false; const idleSound = () => {}, idleOutSound = () => {}, likeSound = () => {}, likeOutSound = () => {}, setFace = () => {};
+const cookedReturns = [], hint = null, nextBtn = null, window = { addEventListener() {} };
+const touch = () => (listeners.pointerdown || []).forEach(f => f({ target:{ closest: () => null } }));
+""" + idle + """
+armIdle(); advance(60000);
+assert.equal(cls.has('on'), false, '1ふくろめの はんこの 前に 45秒の カードが 出た');
+showIdleCard(); assert.equal(cls.has('on'), false);       // どの 道から 呼ばれても 出さない
+cookedReturns.push('1等');                                // 1ふくろめの はんこ
+touch(); advance(44900); assert.equal(cls.has('on'), false);
+advance(200); assert.equal(cls.has('on'), true);          // 押した あとは 今までどおり 45秒（IDLE_MS は 同じ）
+""")
+        self.assertIn("const IDLE_MS = 45000", HTML)
+
+    def test_cycle159_first_stamp_restarts_the_idle_clock(self):
+        # レビューの 指摘(P1): 1ふくろめで 袋を 押した まま 46秒 → 時計が 切れる（カードは 出さない）→ その 指で 押印。
+        # 押印は 新しい pointerdown を 通らない ので 時計が 止まった まま で、押した あと 60秒 待っても カードが 出なかった。
+        # 最初の はんこ（stampNow）で 時計を 数えなおす。画面が かくれて いる 間は のこり時間 と して 覚え、もどって から 数える
+        idle = HTML[HTML.index("const IDLE_MS = 45000"):HTML.index('returnLink.addEventListener("click",')]
+        stamp = HTML[HTML.index("function stampNow() {"):HTML.index("  hankoDrag = null;", HTML.index("function stampNow() {"))]
+        self.assertRegex(stamp, r"cookedReturns\.push\(GRADES\[lotGrade\(LOT\)\]\); updateCooked\(\);[^\n]*\n  if \(cookedReturns\.length === 1\) armIdle\(\);")
+        self._node150("""
+const assert = require('node:assert/strict');
+let now = 0, timers = [], seq = 0;
+globalThis.performance = { now: () => now }; Date.now = () => now;
+const setTimeout = (f, ms) => { const id = ++seq; timers.push({ id, at:now + ms, f }); return id; }, clearTimeout = id => { timers = timers.filter(t => t.id !== id); };
+const advance = ms => { const end = now + ms; for (;;) { timers.sort((a, b) => a.at - b.at); const t = timers[0]; if (!t || t.at > end) break; timers.shift(); now = t.at; t.f(); } now = end; };
+const cls = new Set(); const idleCard = { inert:true, style:{}, classList:{ add: c => cls.add(c), remove: c => cls.delete(c), contains: c => cls.has(c) } };
+const likeBtn = { addEventListener() {} }, returnLink = { addEventListener() {} };
+const $ = id => ({ idleCard, likeBtn, returnLink })[id];
+const listeners = {}; const document = { hidden:false, body:{}, documentElement:{ classList:{ contains: () => false } }, addEventListener(t, f) { (listeners[t] = listeners[t] || []).push(f); } };
+const sessionStorage = { getItem() { return null; }, setItem() {}, removeItem() {} };
+let keyUser = false; const idleSound = () => {}, idleOutSound = () => {}, likeSound = () => {}, likeOutSound = () => {}, setFace = () => {};
+const cookedReturns = [], hint = null, nextBtn = null, window = { addEventListener() {} };
+const touch = () => (listeners.pointerdown || []).forEach(f => f({ target:{ closest: () => null } }));
+const GRADES = ['1等'], LOT = 0, lotGrade = () => 0, updateCooked = () => {};
+let stamped = false, step = 4, nextAuto = true, swipeTaps = 0;
+""" + idle + stamp + """
+}
+touch(); advance(46000);                                  // 袋を 押した まま 46秒：時計は 切れる（カードは 出さない）
+assert.equal(cls.has('on'), false);
+stampNow();                                               // その 指で 押印（新しい pointerdown は 無い）
+assert.equal(cookedReturns.length, 1);
+advance(44900); assert.equal(cls.has('on'), false);
+advance(200); assert.equal(cls.has('on'), true, '最初の はんこの あと 45秒 たっても カードが 出ない');
+// かくれて いる 間に 押した（ひとりでに 押す 道）: もどって から 45秒
+cls.clear(); cookedReturns.length = 0; stamped = false; timers = []; idleCard.inert = true;
+touch(); advance(46000); document.hidden = true; (listeners.visibilitychange || []).forEach(f => f());
+stampNow(); advance(60000); assert.equal(cls.has('on'), false);
+document.hidden = false; (listeners.visibilitychange || []).forEach(f => f());
+advance(44900); assert.equal(cls.has('on'), false);
+advance(200); assert.equal(cls.has('on'), true);
+""")
+
+    def test_cycle159_idle_card_leaves_the_hint_readable(self):
+        # 旧版は カードを 枠の 下はしに 置き、下の 案内の 文を 100% かくした（390×844: 6310px²・844×390: 3460px²）。
+        # カードは 案内の 文の すぐ 上に 置く。袋・はんこ・点線の 丸・手本の 指に かかる 画面では 今までどおり。本物の ブラウザで はかる
+        node = shutil.which("node")
+        if not node:
+            self.skipTest("node がないので実行の確認は飛ばす")
+        js = r"""
+const fs = require('fs'), path = require('path');
+let chromium; try { ({ chromium } = require('playwright')); } catch (e) { console.log(JSON.stringify({ skip: 'playwright なし' })); process.exit(0); }
+const [root] = process.argv.slice(1, 2);
+const TYPES = { '.html': 'text/html; charset=utf-8', '.webp': 'image/webp', '.png': 'image/png' };
+(async () => {
+  let b; try { b = await chromium.launch(); } catch (e) { console.log(JSON.stringify({ skip: 'chromium が 起動しない' })); return; }
+  const out = [];
+  for (const [w, h] of [[390, 844], [844, 390], [320, 568]]) {
+    const ctx = await b.newContext({ viewport: { width: w, height: h }, isMobile: true, hasTouch: true }); const p = await ctx.newPage();
+    await p.route('http://kensa.test/**', r => { const f = path.join(root, decodeURIComponent(new URL(r.request().url()).pathname));
+      if (!f.startsWith(root) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) return r.fulfill({ status: 404, body: '' });
+      r.fulfill({ status: 200, contentType: TYPES[path.extname(f)] || 'application/octet-stream', body: fs.readFileSync(f) }); });
+    await p.goto('http://kensa.test/kensa.html'); await p.waitForTimeout(600);
+    await p.evaluate(() => { cookedReturns.push('1等'); showIdleCard(); });
+    await p.waitForTimeout(700);
+    out.push(await p.evaluate(([w, h]) => {
+      const R = q => document.querySelector(q).getBoundingClientRect(), c = R('#idleCard'), t = R('#hint'), bag = R('#bagBtn');
+      const ov = (a, b) => Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left)) * Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
+      return { w, h, on: idleCard.classList.contains('on'), hint: Math.round(ov(c, t)), bag: Math.round(ov(c, bag)), inView: c.top >= 0 && c.bottom <= innerHeight };
+    }, [w, h]));
+    await ctx.close();
+  }
+  await b.close(); console.log(JSON.stringify(out));
+})();
+"""
+        r = subprocess.run([node, "-e", js, ROOT], capture_output=True, text=True, timeout=300)
+        self.assertEqual(r.returncode, 0, r.stderr[-1500:])
+        res = json.loads(r.stdout.strip().splitlines()[-1])
+        if isinstance(res, dict) and res.get("skip"):
+            self.skipTest(res["skip"])
+        for c in res:
+            tag = "%dx%d" % (c["w"], c["h"])
+            self.assertTrue(c["on"], tag)
+            self.assertEqual(c["hint"], 0, tag + " で カードが 案内の 文に %dpx² かかる" % c["hint"])
+            self.assertEqual(c["bag"], 0, tag + " で カードが 袋に かかる")
+            self.assertTrue(c["inView"], tag)
 
 
 if __name__ == "__main__":

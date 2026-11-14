@@ -512,10 +512,10 @@ a{color:var(--acc)}
 #swWrap:has(#swCard.enter) #swGhost.on{animation:swDemoGhost 5s ease-in-out infinite,swGhostIn .24s linear both}
 #swWrap:has(#swCard.enter) #swGhostArrows.on{animation:swGhostArrowsSlide 4.4s ease-in-out infinite,swGhostIn .24s linear both}   /* 周回154(最初の1分・アニメーション): カードが入ってくる0.22秒の間(はじめは透明)、後ろの案内の影(濃い箱)と ◀ ▶ だけが先に見え、開いた瞬間に「空の暗い箱→白いカード」とちらついた。カードが入ってくるときだけ、案内はカードが見えてから出す。押して離したあとの出し直し(周回153)は enter が外れているので、消えずにそのまま動く */
 @keyframes swGhostIn{0%,60%{opacity:0}100%{opacity:1}}
-@keyframes swGhostSlide{0%,100%{transform:translateX(0) rotate(0)}18%,32%{transform:translateX(23%) rotate(1.5deg)}50%{transform:translateX(0) rotate(0)}68%,82%{transform:translateX(-23%) rotate(-1.5deg)}}   /* 周回116: お手本の幅を確定距離(カード幅×0.22)以上にし、お手本どおり動かせば決まるようにする(従来の±22pxは確定距離の約3割しか届かなかった) */
+@keyframes swGhostSlide{0%,100%{transform:translateX(0) rotate(0)}18%,32%{transform:translateX(-23%) rotate(-1.5deg)}50%{transform:translateX(0) rotate(0)}68%,82%{transform:translateX(23%) rotate(1.5deg)}}   /* 周回116: お手本の幅を確定距離(カード幅×0.22)以上にし、お手本どおり動かせば決まるようにする(従来の±22pxは確定距離の約3割しか届かなかった) */
 #swGhostArrows{position:absolute;inset:0;z-index:5;display:none;pointer-events:none}   /* サイクル111: 矢印はカードの下に隠れるゴーストの上ではなく、カードの両端に重ねて出す(実画面で隠れることを確認して分離) */
 #swGhostArrows.on{display:block;animation:swGhostArrowsSlide 4.4s ease-in-out infinite}   /* 周回116: 矢印はゴースト本体(±23%)に付けると端の矢印がカードの外へ出るため、同じタイミングで±22pxだけ動く別キーフレームにする */
-@keyframes swGhostArrowsSlide{0%,100%{transform:translateX(0)}18%,32%{transform:translateX(22px)}50%{transform:translateX(0)}68%,82%{transform:translateX(-22px)}}
+@keyframes swGhostArrowsSlide{0%,100%{transform:translateX(0)}18%,32%{transform:translateX(-22px)}50%{transform:translateX(0)}68%,82%{transform:translateX(22px)}}
 #swGhostArrows .ghA{position:absolute;top:50%;transform:translateY(-50%);font-size:44px;font-weight:900;line-height:1;color:#fff;text-shadow:0 2px 10px rgba(0,0,0,.65),0 0 3px rgba(0,0,0,.5)}
 #swGhostArrows .ghL{left:6px}#swGhostArrows .ghR{right:6px}
 @media (prefers-reduced-motion: reduce){#swGhostArrows,#swGhostArrows.on{display:none;animation:none}}
@@ -542,16 +542,17 @@ a{color:var(--acc)}
 #swHand .hdTrail{position:absolute;top:calc(var(--hy,46%) + 1px);height:10px;width:23%;border-radius:4px;opacity:0}
 #swHand .hdTrailR{left:50%;transform-origin:0 50%;background:linear-gradient(to right,rgba(59,82,99,0),rgba(59,82,99,.78));animation:swDemoTrailR 5s ease-in-out infinite}
 #swHand .hdTrailL{right:50%;transform-origin:100% 50%;background:linear-gradient(to left,rgba(59,82,99,0),rgba(59,82,99,.78));animation:swDemoTrailL 5s ease-in-out infinite}
-@keyframes swDemoGhost{0%,10%{transform:translateX(0) rotate(0)}26%,36%{transform:translateX(23%) rotate(1.5deg)}46%,60%{transform:translateX(0) rotate(0)}76%,86%{transform:translateX(-23%) rotate(-1.5deg)}96%,100%{transform:translateX(0) rotate(0)}}   /* 幅は周回116と同じ ±23%(確定距離以上)。手本どおり引けば決まる */
-@keyframes swDemoMove{0%,10%{transform:translateX(0)}26%,42%{transform:translateX(23%)}42.01%,60%{transform:translateX(0)}76%,92%{transform:translateX(-23%)}92.01%,100%{transform:translateX(0)}}
+@keyframes swDemoGhost{0%,10%{transform:translateX(0) rotate(0)}26%,36%{transform:translateX(-23%) rotate(-1.5deg)}46%,60%{transform:translateX(0) rotate(0)}76%,86%{transform:translateX(23%) rotate(1.5deg)}96%,100%{transform:translateX(0) rotate(0)}}   /* 幅は周回116と同じ ±23%(確定距離以上)。手本どおり引けば決まる */
+@keyframes swDemoMove{0%,10%{transform:translateX(0)}26%,42%{transform:translateX(-23%)}42.01%,60%{transform:translateX(0)}76%,92%{transform:translateX(23%)}92.01%,100%{transform:translateX(0)}}   /* サイクル179: 手本は 先に 左、あとで 右(1枚目 1月1日の 正解は 左に 決めて ある cards.js FIRST3_SIDE。前は 先に 右で、手本の 最初の 動きを まねた 人が 1枚目で ✗ に なった)。影・のこる あと・両はしの 光も 同じ 順 */
 @keyframes swDemoFinger{0%,2%{opacity:0;transform:translateY(10px) scale(1.16)}6%{opacity:1;transform:translateY(10px) scale(1.16)}10%,36%{opacity:1;transform:none}41%,52%{opacity:0;transform:translateY(10px) scale(1.16)}56%{opacity:1;transform:translateY(10px) scale(1.16)}60%,86%{opacity:1;transform:none}91%,100%{opacity:0;transform:translateY(10px) scale(1.16)}}
 @keyframes swDemoRing{0%,8%{opacity:0;transform:scale(.4)}10%{opacity:.9;transform:scale(.6)}18%,58%{opacity:0;transform:scale(1.5)}58.01%{opacity:0;transform:scale(.4)}60%{opacity:.9;transform:scale(.6)}68%,100%{opacity:0;transform:scale(1.5)}}
-@keyframes swDemoTrailR{0%,10%{opacity:0;transform:scaleX(0)}13%{opacity:1}26%,36%{opacity:1;transform:scaleX(1)}41%,100%{opacity:0;transform:scaleX(1)}}
-@keyframes swDemoTrailL{0%,60%{opacity:0;transform:scaleX(0)}63%{opacity:1}76%,86%{opacity:1;transform:scaleX(1)}91%,100%{opacity:0;transform:scaleX(1)}}
-@keyframes swDemoGlowR{0%,14%,44%,100%{background:#e7edf0;scale:1}26%,36%{background:#cbdbe3;scale:1.05}}
-@keyframes swDemoGlowL{0%,64%,94%,100%{background:#e7edf0;scale:1}76%,86%{background:#cbdbe3;scale:1.05}}
+@keyframes swDemoTrailR{0%,60%{opacity:0;transform:scaleX(0)}63%{opacity:1}76%,86%{opacity:1;transform:scaleX(1)}91%,100%{opacity:0;transform:scaleX(1)}}
+@keyframes swDemoTrailL{0%,10%{opacity:0;transform:scaleX(0)}13%{opacity:1}26%,36%{opacity:1;transform:scaleX(1)}41%,100%{opacity:0;transform:scaleX(1)}}
+@keyframes swDemoGlowR{0%,64%,94%,100%{background:#e7edf0;scale:1}76%,86%{background:#cbdbe3;scale:1.05}}
+@keyframes swDemoGlowL{0%,14%,44%,100%{background:#e7edf0;scale:1}26%,36%{background:#cbdbe3;scale:1.05}}
 #swWrap.demoOn #swEdge .eR{animation:swDemoGlowR 5s ease-in-out infinite}
 #swWrap.demoOn #swEdge .eL{animation:swDemoGlowL 5s ease-in-out infinite}
+@media (max-height:440px) and (min-width:564px){#swWrap #swGhost.on,#swWrap.demoOn #swGhost{animation:none}}   /* サイクル179: 横の 低い 画面では うしろの 影を 動かさない(左へ 寄ると カードの 左の 田んぼの 絵と ことばに かかる。前も 左へ 寄る 後半で かかって いた)。向きは 指・のこる あと・両はしの 光で 見せる */
 @media (prefers-reduced-motion: no-preference){#swWrap.demoOn #swGuide{display:none!important}}   /* 手本が出ている間は丸い ◀ ▶ を出さない(2〜3枚目で押すだけの人に手本を出し直したとき) */
 @media (prefers-reduced-motion: no-preference){#swWrap:not(:has(#swCard.drag)) #swGuide{display:none!important}}   /* 周回166: 丸い ◀ ▶ は、指を置いている間だけ出す。決めたあと、○✗ のしるしが出ている約0.7秒だけ ◀ ▶ が出て、手本の指が出ると消えていた(2・3枚目。しるしに重なる)。止まっている間の向きは手本の指が見せる。動きを減らす設定は これまでどおり */
 @media (prefers-reduced-motion: reduce){#swWrap.demoOn #swGhost{display:none;animation:none}#swHand .hdMove,#swHand .hdFinger{animation:none}#swHand .hdFinger{opacity:1}#swHand .hdRing,#swHand .hdTrail{display:none}#swWrap.demoOn #swEdge .eL,#swWrap.demoOn #swEdge .eR{animation:none}}

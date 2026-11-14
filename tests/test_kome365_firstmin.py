@@ -464,8 +464,9 @@ class TestKome365FirstMinute(unittest.TestCase):
         self.assertIn("#swHand{position:absolute;inset:0;z-index:6;display:none;pointer-events:none}", HTML)
         self.assertIn("#swWrap.demoOn #swHand{display:block}", HTML)
         # 指・うしろの影・札の光は同じ5秒の拍子。引く幅は確定距離以上(±23%)
-        self.assertIn("@keyframes swDemoMove{0%,10%{transform:translateX(0)}26%,42%{transform:translateX(23%)}42.01%,60%{transform:translateX(0)}76%,92%{transform:translateX(-23%)}92.01%,100%{transform:translateX(0)}}", HTML)
-        self.assertIn("@keyframes swDemoGhost{0%,10%{transform:translateX(0) rotate(0)}26%,36%{transform:translateX(23%) rotate(1.5deg)}", HTML)
+        # サイクル179(書きかえ): 先に 左(1枚目の 正解の 側)、あとで 右。幅・拍子は 前と 同じ
+        self.assertIn("@keyframes swDemoMove{0%,10%{transform:translateX(0)}26%,42%{transform:translateX(-23%)}42.01%,60%{transform:translateX(0)}76%,92%{transform:translateX(23%)}92.01%,100%{transform:translateX(0)}}", HTML)
+        self.assertIn("@keyframes swDemoGhost{0%,10%{transform:translateX(0) rotate(0)}26%,36%{transform:translateX(-23%) rotate(-1.5deg)}", HTML)
         self.assertIn("#swWrap.demoOn #swEdge .eR{animation:swDemoGlowR 5s ease-in-out infinite}", HTML)
         # 手本が出ている間は ◀ ▶ を重ねない。動きを減らす設定では止まった指 + 丸い ◀ ▶
         self.assertIn("#swWrap.demoOn #swGhostArrows,#swWrap.demoOn #swGhostArrows.on{display:none}", HTML)
@@ -1761,6 +1762,34 @@ class TestKome365LeaveThenNewGame(unittest.TestCase):
         nxt = self.r["swipe"]["js"][1]                    # その あとの 1枚は ふつうに 1日 進む(古い 選択が あとから 足されない)
         self.assertEqual(nxt["date"], "1月2日")
         self.assertEqual(self.r["swipe"]["js"][2]["date"], "1月2日")
+
+
+# サイクル179: スワイプの 手本の 最初の 向き = 1枚目(1月1日)の 正解の 側(左)
+DEMO_DIR_JS = "js:(async () => { const mv = document.querySelector('#swHand .hdMove'), t0 = performance.now(); const ev = []; let last = 0; while (performance.now() - t0 < 5200) { const tx = new DOMMatrixReadOnly(getComputedStyle(mv).transform).m41; const d = tx > 8 ? 1 : tx < -8 ? -1 : 0; if (d && d !== last) ev.push([d > 0 ? 'R' : 'L', Math.round(performance.now() - t0)]); last = d; await new Promise(r => setTimeout(r, 40)); } return { demo: document.getElementById('swWrap').classList.contains('demoOn'), ev: ev, date: document.getElementById('swBigDate').textContent }; })()"
+
+
+class TestKome365DemoFirstSide(unittest.TestCase):
+    """サイクル179: 手本の 指が 最初に 動く 向きへ 素早く スワイプ すると、1枚目は ○"""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.r = sound_run([
+            {"name": "dir", "acts": [DEMO_DIR_JS]},
+            {"name": "follow", "acts": ["L", "js:" + WHY_JS]},
+        ])
+
+    def test_demo_moves_to_first_card_answer_first(self):
+        x = self.r["dir"]
+        self.assertEqual(x["errs"], [])
+        j = x["js"][0]
+        self.assertTrue(j["demo"])
+        self.assertEqual(j["date"], "1月1日")
+        self.assertTrue(j["ev"], "手本の 指が 動かない")
+        self.assertEqual(j["ev"][0][0], "L", "手本の 最初の 向き %r" % (j["ev"],))   # 1枚目の 正解の 側(cards.js FIRST3_SIDE 1 = left)
+        self.assertIn("R", [e[0] for e in j["ev"]])                                     # 左右 両方を 見せる
+        y = self.r["follow"]
+        self.assertEqual(y["errs"], [])
+        self.assertEqual(y["js"][0]["k"], "ok", "手本の 最初の 向きへ はじいて ✗ %r" % (y["js"][0],))
 
 
 class TestKome365PaddyReadable(unittest.TestCase):

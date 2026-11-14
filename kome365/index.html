@@ -654,6 +654,11 @@ a{color:var(--acc)}
 #swMark.on{opacity:1;transition:none;animation:swMarkPop .23s ease-out}   /* サイクル180(運営者の声 2026-11-14「前のように スワイプ すると マルバツが 出る ように」): しるしは 時間で 終わる アニメ 1回 では なく、描かれた こまで 数えて 約0.6秒 見せてから 0.15秒で 消す(markShow・markTick)。重い 端末で 1こまも 描かれずに 終わる ことが ない */
 @keyframes swMarkPop{0%{transform:scale(.55)}78%{transform:scale(1.08)}100%{transform:scale(1)}}
 @media (prefers-reduced-motion:reduce){#swMark.on{animation:none}}
+/* サイクル185: 小さい 画面で 大きな ○✗ が 次の カードの 日づけ・題に かかって いた(320×568・568×320・844×390)。
+   せまい たて画面は カードの 上の 空きへ(⌂🔊 の 列の すぐ 下から。カードは 字の 長さで 上下する ので、高さに 合わせて 少し 小さく)。
+   よこ画面は カードの 左上(いちばん 長い 日づけ「12月31日」の 字より 左・選ぶ 所より 上。とびだす 動きの 1.08倍も 見こむ)へ。大きさは 空きに 合わせ、240px を こえない。わけ の 吹き出しは ○✗ より 上(z-index 41)なので 字は かくれない */
+@media (max-width:360px) and (min-height:441px){#swMark{--mk:min(58vw, 240px, max(140px, 100vh - 408px));width:var(--mk);margin-left:calc(var(--mk) / -2);top:60px;margin-top:0}}
+@media (max-height:440px) and (min-width:564px){#swMark{--mk:min(240px, 48vw - 104px, 100vh - 163px);width:var(--mk);left:calc(50% - 104px - var(--mk) * 1.04);top:58px;margin:0}}
 #swWhy{position:absolute;left:50%;top:calc(40% + min(29vw,120px) + 10px);transform:translateX(-50%);width:max-content;max-width:88%;z-index:41;pointer-events:none;opacity:0;background:rgba(255,253,247,.94);color:#b4472f;font-size:15px;font-weight:700;line-height:1.4;padding:5px 12px;border-radius:999px;text-align:center;box-shadow:0 2px 8px rgba(60,40,20,.20)}   /* 店主指示 2026-11-08: バツの一言理由。マークの下に浮かせて約2秒で消す。入力はふさがない */
 #swWhy.on{animation:swWhyIn 2s ease-out both}
 #swWhy[data-k="ok"]{color:#2e7d32}   /* サイクル177: ○ の わけは 緑(✗ は 今の 赤茶の まま)。場所・2秒・入力を ふさがない のは 同じ */

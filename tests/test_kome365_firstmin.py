@@ -2009,5 +2009,39 @@ class TestKome365PaddyReadable(unittest.TestCase):
         self.assertIn("@media (min-width:361px) and (min-height:741px){#swSun,#swSunLight{top:calc(20% - var(--sunh, 0) * 6%)!important}}", HTML)
 
 
+# サイクル185: 大きな ○✗ が 出て いる 間(こま ごとに 見る)、次の カードの 日づけ・題・選ぶ 文と ⌂🔊 に かからない。
+# わけ の 吹き出しは ○✗ より 上(z-index)に ある ときだけ 重なって よい(字は かくれない)。○✗ は 150px より 小さく しない
+MARK_CLEAR_ON = "js:(() => { window.__mc = { n: 0, o: {}, w: 9999, out: 0, zWhy: 0 }; const m = document.getElementById('swMark'), rr = document.createRange(); const f = () => { if (m.classList.contains('on') && +getComputedStyle(m).opacity > 0.5) { const A = m.getBoundingClientRect(), mc = window.__mc; mc.n++; mc.w = Math.min(mc.w, m.offsetWidth); if (A.left < -0.5 || A.top < -0.5 || A.right > innerWidth + 0.5 || A.bottom > innerHeight + 0.5) mc.out++; const hit = (k, b) => { if (!b || b.width < 1) return; const ix = Math.min(A.right, b.right) - Math.max(A.left, b.left), iy = Math.min(A.bottom, b.bottom) - Math.max(A.top, b.top); if (ix > 0.5 && iy > 0.5) mc.o[k] = Math.max(mc.o[k] || 0, Math.round(ix * iy)); }; const txt = (k, e) => { if (!e || !e.getClientRects().length) return; rr.selectNodeContents(e); hit(k, rr.getBoundingClientRect()); }; txt('date', document.getElementById('swBigDate')); txt('title', document.getElementById('swTitle')); document.querySelectorAll('#swEdge .eLb').forEach((e, i) => txt('edge' + i, e)); ['swSnd', 'swHome'].forEach(id => { const e = document.getElementById(id); if (e && e.getClientRects().length && getComputedStyle(e).visibility !== 'hidden') hit(id, e.getBoundingClientRect()); }); const w = document.getElementById('swWhy'); if (w.classList.contains('on')) { const b = w.getBoundingClientRect(), ix = Math.min(A.right, b.right) - Math.max(A.left, b.left), iy = Math.min(A.bottom, b.bottom) - Math.max(A.top, b.top); if (ix > 0.5 && iy > 0.5 && !(+getComputedStyle(w).zIndex > +getComputedStyle(m).zIndex)) mc.zWhy++; } } requestAnimationFrame(f); }; requestAnimationFrame(f); return 1; })()"
+MARK_CLEAR_GET = "js:window.__mc"
+
+
+class TestKome365MarkClear(unittest.TestCase):
+    """サイクル185"""
+
+    @classmethod
+    def setUpClass(cls):
+        plans = []
+        for w, h in VPS5:
+            # 8枚 つづけて(カードの 字の 長さで カードの 高さ・日づけの 位置が かわる)
+            plans.append({"name": "m%dx%d" % (w, h), "w": w, "h": h, "acts": [MARK_CLEAR_ON] + ["keyjs:1", "wait"] * 8 + [MARK_CLEAR_GET]})
+        cls.r = sound_run(plans)
+
+    def test_mark_clear_of_card_text_and_buttons(self):
+        for w, h in VPS5:
+            name = "m%dx%d" % (w, h)
+            x = self.r[name]
+            self.assertEqual(x["errs"], [], name)
+            mc = x["js"][-1]
+            self.assertGreater(mc["n"], 8, name + ": ○✗ が 見えない %r" % (mc,))
+            self.assertEqual(mc["o"], {}, name + ": ○✗ が 字・ボタンに かかる %r" % (mc,))
+            self.assertEqual(mc["out"], 0, name + ": ○✗ が 画面の 外 %r" % (mc,))
+            self.assertEqual(mc["zWhy"], 0, name + ": ○✗ が わけ の 吹き出しの 上に 重なる %r" % (mc,))
+
+    def test_mark_not_too_small(self):
+        for w, h in VPS5:
+            mc = self.r["m%dx%d" % (w, h)]["js"][-1]
+            self.assertGreaterEqual(mc["w"], 150, "%dx%d: ○✗ が 小さすぎる %r" % (w, h, mc))
+
+
 if __name__ == "__main__":
     unittest.main()

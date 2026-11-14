@@ -1,0 +1,1083 @@
+{
+  "schema": "first-minute-report-v1",
+  "round": 98,
+  "game": "米づくり365",
+  "route": "/kome365/index.html",
+  "assembledAtUTC": "2026-11-14T05:04:08.668716+00:00",
+  "scope": "One landscape first-minute observation and retained decision candidates; no product fix.",
+  "source": {
+    "testedProductHead": "4568c8792f4c804cf354f6f63a12ef568e2b6748",
+    "productSourceHashes": {
+      "kome365/index.html": "ed6b5d5566f0e39ee58c5c8e5cbdc99c02c94e4bf9381cb9aa46719108439aa6",
+      "kome365/engine.js": "c3d0cef6bb108d5b6d8fe38aaf0c08fe7994bdab08bf92775865a6e0222469a3",
+      "kome365/field3d.js": "a5c1dad91d5c0c326f1394fad9c5d04e7e3b8d13e3a2b8b1757c7aa08d3558ff",
+      "kome365/cards.js": "b15c5b2f56ef9c0c8361fa2fa6a039085919ca516b4a2e6e5a1b3bb691dde744",
+      "kome365/vendor/three.min.js": "9274bbcec8d96168626c732b5d31c775aa8cfb7eaa0599bec0c175908a2c1ce2"
+    },
+    "documentationCommitOccursAfterObservation": true,
+    "fullValidationOnLaterDocumentationHead": false
+  },
+  "outcome": {
+    "newEstablishedRepairableDefects": 0,
+    "productChanged": false,
+    "testsChanged": false,
+    "existingTestsRemovedWeakenedOrDisabled": false,
+    "humanDropoutRateMeasured": false,
+    "interpretation": "18 recorded single-finger actions progressed; this does not establish every input mode or human retention."
+  },
+  "configuration": {
+    "viewport": {
+      "width": 844,
+      "height": 390
+    },
+    "cpuRate": 1,
+    "isMobile": true,
+    "hasTouch": true,
+    "freshStorage": true,
+    "observationSeconds": 10,
+    "playSeconds": 60,
+    "gestureTransport": "CDP Input.dispatchTouchEvent",
+    "directionOrder": "RLRL",
+    "requestedDurationMs": 120,
+    "distancePx": 100,
+    "moveCountPerGesture": 6,
+    "interChoiceWaitMs": 2200,
+    "serverCommand": "python3 -m http.server 8000",
+    "origin": "http://localhost:8000",
+    "localComponent": "repository vendor Three r128",
+    "externalPageRequests": "blocked by local-only route"
+  },
+  "execution": {
+    "command": [
+      "node",
+      "/workspace/scratch/first-minute/round-98/preparation-4568/run.cjs"
+    ],
+    "cwd": "/workspace/ricepia-firstminute-round98",
+    "startedAtUTC": "2026-11-14T04:55:35.181355+00:00",
+    "actualChildExit": 1,
+    "requestedWrapperExit": 1,
+    "timedOut": false,
+    "pid": 1145893,
+    "pgid": 1145893,
+    "completedAtUTC": "2026-11-14T04:56:54.528355+00:00",
+    "wallSeconds": 79.34720143099548,
+    "actualOuterExit": 1,
+    "cpuReset": true,
+    "browserClosed": true,
+    "sourceUnchanged": true,
+    "noLiveBrowserOrNodeInRootReceipt": true
+  },
+  "counts": {
+    "inputs": 18,
+    "responses": 18,
+    "dragResponses": 18,
+    "dayAdvances": 18,
+    "reasons": 18,
+    "establishedCompleteResponseWindows": 18,
+    "noResponseInObservedWindows": 0,
+    "sentCDP": 144,
+    "acknowledgedCDP": 144,
+    "actualPointerEvents": 54,
+    "trustedPointerEvents": 54,
+    "eventTypes": {
+      "pointerdown": 18,
+      "pointermove": 18,
+      "pointerup": 18
+    },
+    "positiveReasons": 9,
+    "negativeReasons": 9,
+    "skippedInputs": [],
+    "lateCleanup": [],
+    "driverErrors": [],
+    "observedUITransitions": 106,
+    "reads": 35,
+    "droppedObservations": {
+      "events": 0,
+      "ui": 0,
+      "heartbeats": 0,
+      "rafGaps": 0,
+      "longTasks": 0
+    }
+  },
+  "timing": {
+    "sendToTransformMs": {
+      "minimum": 617.0,
+      "median": 717.4500732421875,
+      "maximum": 1043.7001953125
+    },
+    "sendToNextDayMs": {
+      "minimum": 1072.2001953125,
+      "median": 1300.4500732421875,
+      "maximum": 1554.900146484375
+    },
+    "actualTouchStartToEndSendMs": {
+      "minimum": 120.05639800429344,
+      "median": 120.78949400782585,
+      "maximum": 127.93881499767303
+    },
+    "pointerdownEventToHandlerMs": {
+      "minimum": 431.0,
+      "median": 653.4499999880791,
+      "maximum": 905.9000000059605
+    },
+    "firstPositiveFromFirstSendMs": 11257.900146484375,
+    "observationToPlaySeconds": 15.408849727988244,
+    "lastUITransitionPlaySeconds": 59.085800048828126,
+    "clockInterpretation": "DOM timeOrigin+at minus integer Node play.startedEpoch; send delay subtracts integer sentEpoch. These are approximate recorded clocks, not physical painting or user-understanding timestamps."
+  },
+  "firstAction": {
+    "sendPlaySecondsEpoch": 0.253,
+    "drag": {
+      "playSeconds": 1.168300048828125,
+      "fromSendMs": 915.300048828125,
+      "browserAt": 17108.70000001788
+    },
+    "transform": {
+      "playSeconds": 1.2967001953125,
+      "fromSendMs": 1043.7001953125,
+      "browserAt": 17237.09999999404
+    },
+    "nextDay": {
+      "playSeconds": 1.807900146484375,
+      "fromSendMs": 1554.900146484375,
+      "browserAt": 17748.30000001192
+    },
+    "reason": {
+      "playSeconds": 1.807900146484375,
+      "fromSendMs": 1554.900146484375,
+      "browserAt": 17748.30000001192
+    },
+    "pointerdownHandledPlaySeconds": 1.158800048828125,
+    "pointerdownEventToHandlerMs": 905.9000000059605
+  },
+  "firstPositive": {
+    "id": 4,
+    "dateBefore": "1月4日",
+    "titleBefore": "冬の空",
+    "direction": "left",
+    "selectedVisibleLabel": "土の乾き見る",
+    "reason": {
+      "playSeconds": 11.510900146484374,
+      "fromSendMs": 1302.900146484375,
+      "browserAt": 27451.30000001192
+    },
+    "reasonText": "○ 土の乾きを見ると、春の田起こしの具合が読めます"
+  },
+  "lastAction": {
+    "id": 18,
+    "sendPlaySecondsEpoch": 55.624,
+    "nextDay": {
+      "playSeconds": 56.98330004882813,
+      "fromSendMs": 1359.300048828125,
+      "browserAt": 72923.70000001788
+    },
+    "dateAfter": "1月19日"
+  },
+  "perAction": [
+    {
+      "id": 1,
+      "dateBefore": "1月1日",
+      "titleBefore": "元日の田んぼ",
+      "direction": "right",
+      "selectedVisibleLabel": "田へ行かない",
+      "sendPlaySecondsEpoch": 0.253,
+      "windowEndPlaySeconds": 3.752,
+      "drag": {
+        "playSeconds": 1.168300048828125,
+        "fromSendMs": 915.300048828125,
+        "browserAt": 17108.70000001788
+      },
+      "transform": {
+        "playSeconds": 1.2967001953125,
+        "fromSendMs": 1043.7001953125,
+        "browserAt": 17237.09999999404
+      },
+      "nextDay": {
+        "playSeconds": 1.807900146484375,
+        "fromSendMs": 1554.900146484375,
+        "browserAt": 17748.30000001192
+      },
+      "reason": {
+        "playSeconds": 1.807900146484375,
+        "fromSendMs": 1554.900146484375,
+        "browserAt": 17748.30000001192
+      },
+      "dateAfter": "1月2日",
+      "reasonText": "✗ 田を見ないでいると、畦の傷みや穴に気づけません",
+      "allObservedWithinWindow": true
+    },
+    {
+      "id": 2,
+      "dateBefore": "1月2日",
+      "titleBefore": "霜柱の朝",
+      "direction": "left",
+      "selectedVisibleLabel": "田を踏み歩く",
+      "sendPlaySecondsEpoch": 3.752,
+      "windowEndPlaySeconds": 7.132,
+      "drag": {
+        "playSeconds": 4.266400146484375,
+        "fromSendMs": 514.400146484375,
+        "browserAt": 20206.80000001192
+      },
+      "transform": {
+        "playSeconds": 4.4975,
+        "fromSendMs": 745.5,
+        "browserAt": 20437.90000000596
+      },
+      "nextDay": {
+        "playSeconds": 4.932,
+        "fromSendMs": 1180.0,
+        "browserAt": 20872.40000000596
+      },
+      "reason": {
+        "playSeconds": 4.932,
+        "fromSendMs": 1180.0,
+        "browserAt": 20872.40000000596
+      },
+      "dateAfter": "1月3日",
+      "reasonText": "✗ 霜でほぐれた田の中を踏み歩くと、土が固まってしまいます",
+      "allObservedWithinWindow": true
+    },
+    {
+      "id": 3,
+      "dateBefore": "1月3日",
+      "titleBefore": "乾いた田",
+      "direction": "right",
+      "selectedVisibleLabel": "足で踏んでみる",
+      "sendPlaySecondsEpoch": 7.132,
+      "windowEndPlaySeconds": 10.208,
+      "drag": {
+        "playSeconds": 7.576800048828125,
+        "fromSendMs": 444.800048828125,
+        "browserAt": 23517.20000001788
+      },
+      "transform": {
+        "playSeconds": 7.796300048828125,
+        "fromSendMs": 664.300048828125,
+        "browserAt": 23736.70000001788
+      },
+      "nextDay": {
+        "playSeconds": 8.240800048828126,
+        "fromSendMs": 1108.800048828125,
+        "browserAt": 24181.20000001788
+      },
+      "reason": {
+        "playSeconds": 8.240800048828126,
+        "fromSendMs": 1108.800048828125,
+        "browserAt": 24181.20000001788
+      },
+      "dateAfter": "1月4日",
+      "reasonText": "✗ 乾いた土を足で踏むと締まって、春の田起こしがしにくくなります",
+      "allObservedWithinWindow": true
+    },
+    {
+      "id": 4,
+      "dateBefore": "1月4日",
+      "titleBefore": "冬の空",
+      "direction": "left",
+      "selectedVisibleLabel": "土の乾き見る",
+      "sendPlaySecondsEpoch": 10.208,
+      "windowEndPlaySeconds": 13.512,
+      "drag": {
+        "playSeconds": 10.8717001953125,
+        "fromSendMs": 663.7001953125,
+        "browserAt": 26812.09999999404
+      },
+      "transform": {
+        "playSeconds": 10.873800048828125,
+        "fromSendMs": 665.800048828125,
+        "browserAt": 26814.20000001788
+      },
+      "nextDay": {
+        "playSeconds": 11.510900146484374,
+        "fromSendMs": 1302.900146484375,
+        "browserAt": 27451.30000001192
+      },
+      "reason": {
+        "playSeconds": 11.510900146484374,
+        "fromSendMs": 1302.900146484375,
+        "browserAt": 27451.30000001192
+      },
+      "dateAfter": "1月5日",
+      "reasonText": "○ 土の乾きを見ると、春の田起こしの具合が読めます",
+      "allObservedWithinWindow": true
+    },
+    {
+      "id": 5,
+      "dateBefore": "1月5日",
+      "titleBefore": "小寒",
+      "direction": "right",
+      "selectedVisibleLabel": "厚着で見回る",
+      "sendPlaySecondsEpoch": 13.512,
+      "windowEndPlaySeconds": 16.425,
+      "drag": {
+        "playSeconds": 14.198400146484374,
+        "fromSendMs": 686.400146484375,
+        "browserAt": 30138.80000001192
+      },
+      "transform": {
+        "playSeconds": 14.201400146484374,
+        "fromSendMs": 689.400146484375,
+        "browserAt": 30141.80000001192
+      },
+      "nextDay": {
+        "playSeconds": 14.654,
+        "fromSendMs": 1142.0,
+        "browserAt": 30594.40000000596
+      },
+      "reason": {
+        "playSeconds": 14.654,
+        "fromSendMs": 1142.0,
+        "browserAt": 30594.40000000596
+      },
+      "dateAfter": "1月6日",
+      "reasonText": "○ 寒い日も見回ると、水たまりの氷や畦の様子が分かります",
+      "allObservedWithinWindow": true
+    },
+    {
+      "id": 6,
+      "dateBefore": "1月6日",
+      "titleBefore": "七十二候",
+      "direction": "left",
+      "selectedVisibleLabel": "田に水を入れる",
+      "sendPlaySecondsEpoch": 16.425,
+      "windowEndPlaySeconds": 19.443,
+      "drag": {
+        "playSeconds": 17.0877001953125,
+        "fromSendMs": 662.7001953125,
+        "browserAt": 33028.09999999404
+      },
+      "transform": {
+        "playSeconds": 17.0902001953125,
+        "fromSendMs": 665.2001953125,
+        "browserAt": 33030.59999999404
+      },
+      "nextDay": {
+        "playSeconds": 17.70910009765625,
+        "fromSendMs": 1284.10009765625,
+        "browserAt": 33649.5
+      },
+      "reason": {
+        "playSeconds": 17.70910009765625,
+        "fromSendMs": 1284.10009765625,
+        "browserAt": 33649.5
+      },
+      "dateAfter": "1月7日",
+      "reasonText": "✗ この田は冬のあいだ乾かして休ませます。",
+      "allObservedWithinWindow": true
+    },
+    {
+      "id": 7,
+      "dateBefore": "1月7日",
+      "titleBefore": "種もみの注文",
+      "direction": "right",
+      "selectedVisibleLabel": "春になってから",
+      "sendPlaySecondsEpoch": 19.443,
+      "windowEndPlaySeconds": 22.596,
+      "drag": {
+        "playSeconds": 20.0972001953125,
+        "fromSendMs": 654.2001953125,
+        "browserAt": 36037.59999999404
+      },
+      "transform": {
+        "playSeconds": 20.1002001953125,
+        "fromSendMs": 657.2001953125,
+        "browserAt": 36040.59999999404
+      },
+      "nextDay": {
+        "playSeconds": 20.53860009765625,
+        "fromSendMs": 1095.60009765625,
+        "browserAt": 36479
+      },
+      "reason": {
+        "playSeconds": 20.53860009765625,
+        "fromSendMs": 1095.60009765625,
+        "browserAt": 36479
+      },
+      "dateAfter": "1月8日",
+      "reasonText": "✗ 春の注文は手配がせわしなく、手間がふえます(作業 +0.2時間)",
+      "allObservedWithinWindow": true
+    },
+    {
+      "id": 8,
+      "dateBefore": "1月8日",
+      "titleBefore": "田の静けさ",
+      "direction": "left",
+      "selectedVisibleLabel": "土に薬をまく",
+      "sendPlaySecondsEpoch": 22.596,
+      "windowEndPlaySeconds": 25.874,
+      "drag": {
+        "playSeconds": 23.2297001953125,
+        "fromSendMs": 633.7001953125,
+        "browserAt": 39170.09999999404
+      },
+      "transform": {
+        "playSeconds": 23.2315,
+        "fromSendMs": 635.5,
+        "browserAt": 39171.90000000596
+      },
+      "nextDay": {
+        "playSeconds": 23.6775,
+        "fromSendMs": 1081.5,
+        "browserAt": 39617.90000000596
+      },
+      "reason": {
+        "playSeconds": 23.6775,
+        "fromSendMs": 1081.5,
+        "browserAt": 39617.90000000596
+      },
+      "dateAfter": "1月9日",
+      "reasonText": "✗ 稲のない冬の田に薬は要りません。",
+      "allObservedWithinWindow": true
+    },
+    {
+      "id": 9,
+      "dateBefore": "1月9日",
+      "titleBefore": "サギが一羽",
+      "direction": "right",
+      "selectedVisibleLabel": "そっと見守る",
+      "sendPlaySecondsEpoch": 25.874,
+      "windowEndPlaySeconds": 28.979,
+      "drag": {
+        "playSeconds": 26.527900146484374,
+        "fromSendMs": 653.900146484375,
+        "browserAt": 42468.30000001192
+      },
+      "transform": {
+        "playSeconds": 26.530900146484374,
+        "fromSendMs": 656.900146484375,
+        "browserAt": 42471.30000001192
+      },
+      "nextDay": {
+        "playSeconds": 26.98510009765625,
+        "fromSendMs": 1111.10009765625,
+        "browserAt": 42925.5
+      },
+      "reason": {
+        "playSeconds": 26.98510009765625,
+        "fromSendMs": 1111.10009765625,
+        "browserAt": 42925.5
+      },
+      "dateAfter": "1月10日",
+      "reasonText": "○ そっと見守れば、サギは田の虫や貝を食べてくれます",
+      "allObservedWithinWindow": true
+    },
+    {
+      "id": 10,
+      "dateBefore": "1月10日",
+      "titleBefore": "七十二候",
+      "direction": "left",
+      "selectedVisibleLabel": "土の様子を見る",
+      "sendPlaySecondsEpoch": 28.979,
+      "windowEndPlaySeconds": 32.079,
+      "drag": {
+        "playSeconds": 29.5937001953125,
+        "fromSendMs": 614.7001953125,
+        "browserAt": 45534.09999999404
+      },
+      "transform": {
+        "playSeconds": 29.596,
+        "fromSendMs": 617.0,
+        "browserAt": 45536.40000000596
+      },
+      "nextDay": {
+        "playSeconds": 30.0512001953125,
+        "fromSendMs": 1072.2001953125,
+        "browserAt": 45991.59999999404
+      },
+      "reason": {
+        "playSeconds": 30.0512001953125,
+        "fromSendMs": 1072.2001953125,
+        "browserAt": 45991.59999999404
+      },
+      "dateAfter": "1月11日",
+      "reasonText": "○ 土の様子を見ると、春の田起こしの具合が読めます",
+      "allObservedWithinWindow": true
+    },
+    {
+      "id": 11,
+      "dateBefore": "1月11日",
+      "titleBefore": "山の雪と用水",
+      "direction": "right",
+      "selectedVisibleLabel": "川の水量見る",
+      "sendPlaySecondsEpoch": 32.079,
+      "windowEndPlaySeconds": 35.137,
+      "drag": {
+        "playSeconds": 32.8982001953125,
+        "fromSendMs": 819.2001953125,
+        "browserAt": 48838.59999999404
+      },
+      "transform": {
+        "playSeconds": 32.901,
+        "fromSendMs": 822.0,
+        "browserAt": 48841.40000000596
+      },
+      "nextDay": {
+        "playSeconds": 33.3827001953125,
+        "fromSendMs": 1303.7001953125,
+        "browserAt": 49323.09999999404
+      },
+      "reason": {
+        "playSeconds": 33.3827001953125,
+        "fromSendMs": 1303.7001953125,
+        "browserAt": 49323.09999999404
+      },
+      "dateAfter": "1月12日",
+      "reasonText": "○ 川の水の量を見ると、春の用水の見通しが立ちます",
+      "allObservedWithinWindow": true
+    },
+    {
+      "id": 12,
+      "dateBefore": "1月12日",
+      "titleBefore": "冬の夕焼け",
+      "direction": "left",
+      "selectedVisibleLabel": "夕方の田を見る",
+      "sendPlaySecondsEpoch": 35.137,
+      "windowEndPlaySeconds": 38.362,
+      "drag": {
+        "playSeconds": 35.5727001953125,
+        "fromSendMs": 435.7001953125,
+        "browserAt": 51513.09999999404
+      },
+      "transform": {
+        "playSeconds": 35.79730004882813,
+        "fromSendMs": 660.300048828125,
+        "browserAt": 51737.70000001788
+      },
+      "nextDay": {
+        "playSeconds": 36.435,
+        "fromSendMs": 1298.0,
+        "browserAt": 52375.40000000596
+      },
+      "reason": {
+        "playSeconds": 36.435,
+        "fromSendMs": 1298.0,
+        "browserAt": 52375.40000000596
+      },
+      "dateAfter": "1月13日",
+      "reasonText": "○ 夕方の田を見て回ると、その日の畦の様子が残らず分かります",
+      "allObservedWithinWindow": true
+    },
+    {
+      "id": 13,
+      "dateBefore": "1月13日",
+      "titleBefore": "みかんの季節",
+      "direction": "right",
+      "selectedVisibleLabel": "田を見て回る",
+      "sendPlaySecondsEpoch": 38.362,
+      "windowEndPlaySeconds": 41.759,
+      "drag": {
+        "playSeconds": 39.213800048828126,
+        "fromSendMs": 851.800048828125,
+        "browserAt": 55154.20000001788
+      },
+      "transform": {
+        "playSeconds": 39.21890014648437,
+        "fromSendMs": 856.900146484375,
+        "browserAt": 55159.30000001192
+      },
+      "nextDay": {
+        "playSeconds": 39.77910009765625,
+        "fromSendMs": 1417.10009765625,
+        "browserAt": 55719.5
+      },
+      "reason": {
+        "playSeconds": 39.77910009765625,
+        "fromSendMs": 1417.10009765625,
+        "browserAt": 55719.5
+      },
+      "dateAfter": "1月14日",
+      "reasonText": "○ 田を見て回ると、畦の様子がそのまま分かります",
+      "allObservedWithinWindow": true
+    },
+    {
+      "id": 14,
+      "dateBefore": "1月14日",
+      "titleBefore": "冬の星空",
+      "direction": "left",
+      "selectedVisibleLabel": "夜は行かない",
+      "sendPlaySecondsEpoch": 41.759,
+      "windowEndPlaySeconds": 44.871,
+      "drag": {
+        "playSeconds": 42.6007001953125,
+        "fromSendMs": 841.7001953125,
+        "browserAt": 58541.09999999404
+      },
+      "transform": {
+        "playSeconds": 42.6032001953125,
+        "fromSendMs": 844.2001953125,
+        "browserAt": 58543.59999999404
+      },
+      "nextDay": {
+        "playSeconds": 43.1755,
+        "fromSendMs": 1416.5,
+        "browserAt": 59115.90000000596
+      },
+      "reason": {
+        "playSeconds": 43.1755,
+        "fromSendMs": 1416.5,
+        "browserAt": 59115.90000000596
+      },
+      "dateAfter": "1月15日",
+      "reasonText": "✗ 田を見ない夜が続くと、畦の様子が分からなくなります",
+      "allObservedWithinWindow": true
+    },
+    {
+      "id": 15,
+      "dateBefore": "1月15日",
+      "titleBefore": "七十二候",
+      "direction": "right",
+      "selectedVisibleLabel": "畦の草を見る",
+      "sendPlaySecondsEpoch": 44.871,
+      "windowEndPlaySeconds": 48.479,
+      "drag": {
+        "playSeconds": 45.4117001953125,
+        "fromSendMs": 540.7001953125,
+        "browserAt": 61352.09999999404
+      },
+      "transform": {
+        "playSeconds": 45.70510009765625,
+        "fromSendMs": 834.10009765625,
+        "browserAt": 61645.5
+      },
+      "nextDay": {
+        "playSeconds": 46.253,
+        "fromSendMs": 1382.0,
+        "browserAt": 62193.40000000596
+      },
+      "reason": {
+        "playSeconds": 46.253,
+        "fromSendMs": 1382.0,
+        "browserAt": 62193.40000000596
+      },
+      "dateAfter": "1月16日",
+      "reasonText": "○ 畦の草を見ると、春の芽吹きと田の様子が読めます",
+      "allObservedWithinWindow": true
+    },
+    {
+      "id": 16,
+      "dateBefore": "1月16日",
+      "titleBefore": "放射冷却の朝",
+      "direction": "left",
+      "selectedVisibleLabel": "霜の田に入水",
+      "sendPlaySecondsEpoch": 48.479,
+      "windowEndPlaySeconds": 51.983,
+      "drag": {
+        "playSeconds": 49.3755,
+        "fromSendMs": 896.5,
+        "browserAt": 65315.90000000596
+      },
+      "transform": {
+        "playSeconds": 49.38060009765625,
+        "fromSendMs": 901.60009765625,
+        "browserAt": 65321
+      },
+      "nextDay": {
+        "playSeconds": 49.939800048828126,
+        "fromSendMs": 1460.800048828125,
+        "browserAt": 65880.20000001788
+      },
+      "reason": {
+        "playSeconds": 49.939800048828126,
+        "fromSendMs": 1460.800048828125,
+        "browserAt": 65880.20000001788
+      },
+      "dateAfter": "1月17日",
+      "reasonText": "✗ 霜の田は乾かして休ませる時期です。",
+      "allObservedWithinWindow": true
+    },
+    {
+      "id": 17,
+      "dateBefore": "1月17日",
+      "titleBefore": "薄氷",
+      "direction": "right",
+      "selectedVisibleLabel": "氷を踏み歩く",
+      "sendPlaySecondsEpoch": 51.983,
+      "windowEndPlaySeconds": 55.624,
+      "drag": {
+        "playSeconds": 52.862400146484376,
+        "fromSendMs": 879.400146484375,
+        "browserAt": 68802.80000001192
+      },
+      "transform": {
+        "playSeconds": 52.8647001953125,
+        "fromSendMs": 881.7001953125,
+        "browserAt": 68805.09999999404
+      },
+      "nextDay": {
+        "playSeconds": 53.451400146484374,
+        "fromSendMs": 1468.400146484375,
+        "browserAt": 69391.80000001192
+      },
+      "reason": {
+        "playSeconds": 53.451400146484374,
+        "fromSendMs": 1468.400146484375,
+        "browserAt": 69391.80000001192
+      },
+      "dateAfter": "1月18日",
+      "reasonText": "✗ 田の氷を踏み歩くと、ほぐれた土が固まってしまいます",
+      "allObservedWithinWindow": true
+    },
+    {
+      "id": 18,
+      "dateBefore": "1月18日",
+      "titleBefore": "朝の霜",
+      "direction": "left",
+      "selectedVisibleLabel": "畦を歩く",
+      "sendPlaySecondsEpoch": 55.624,
+      "windowEndPlaySeconds": 60.0,
+      "drag": {
+        "playSeconds": 56.22740014648438,
+        "fromSendMs": 603.400146484375,
+        "browserAt": 72167.80000001192
+      },
+      "transform": {
+        "playSeconds": 56.51160009765625,
+        "fromSendMs": 887.60009765625,
+        "browserAt": 72452
+      },
+      "nextDay": {
+        "playSeconds": 56.98330004882813,
+        "fromSendMs": 1359.300048828125,
+        "browserAt": 72923.70000001788
+      },
+      "reason": {
+        "playSeconds": 56.98330004882813,
+        "fromSendMs": 1359.300048828125,
+        "browserAt": 72923.70000001788
+      },
+      "dateAfter": "1月19日",
+      "reasonText": "○ 畦を歩くと、畦の締まり具合が足で分かります",
+      "allObservedWithinWindow": true
+    }
+  ],
+  "responseWindowDefinition": "Each actual touchStart send to next actual touchStart send; final window ends at play60s. All18 responses/progression/reasons are inside their corresponding window.",
+  "recordedErrors": [
+    {
+      "at": 143196640.153664,
+      "kind": "console",
+      "message": "Failed to load resource: the server responded with a status of 404 (File not found)"
+    },
+    {
+      "at": 143213793.504641,
+      "kind": "console",
+      "message": "Failed to load resource: the server responded with a status of 404 (File not found)"
+    }
+  ],
+  "resources404": [
+    {
+      "name": "http://localhost:8000/favicon.ico",
+      "status": 404
+    },
+    {
+      "name": "http://localhost:8000/favicon.ico",
+      "status": 404
+    }
+  ],
+  "runResultInterpretation": "actual child/outer1 caused by two retained console404 errors; not a pass, and their player impact is unestablished.",
+  "photos": [
+    {
+      "name": "observe-10s",
+      "phase": "observation",
+      "requestedSeconds": 10.00127515000105,
+      "completedSeconds": 15.228073839992284,
+      "captureSeconds": 5.226798689991235,
+      "status": "saved",
+      "sha256": "a5cf3ff151fc51042644454b662e640aef6068d4c922eec2ab581d24a9be51d0",
+      "interpretation": "Request-to-save interval; not an exact physical frame timestamp or proof of continuous state.",
+      "file": "observe-10s.png",
+      "sourceIdentifier": "preparation-4568/strict/observe-10s.png",
+      "sourceHead": "4568c8792f4c804cf354f6f63a12ef568e2b6748",
+      "unchangedOriginalBytes": true,
+      "viewport": {
+        "width": 844,
+        "height": 390
+      }
+    },
+    {
+      "name": "play-10s",
+      "phase": "play",
+      "requestedSeconds": 10.004664106994868,
+      "completedSeconds": 10.814104829013347,
+      "captureSeconds": 0.8094407220184803,
+      "status": "saved",
+      "sha256": "fffa32e9a3cb92fe8636869ef5110195c77c248137f80d98bba9f4498f1115e2",
+      "interpretation": "Request-to-save interval; not an exact physical frame timestamp or proof of continuous state.",
+      "file": "play-10s.png",
+      "sourceIdentifier": "preparation-4568/strict/play-10s.png",
+      "sourceHead": "4568c8792f4c804cf354f6f63a12ef568e2b6748",
+      "unchangedOriginalBytes": true,
+      "viewport": {
+        "width": 844,
+        "height": 390
+      }
+    },
+    {
+      "name": "play-30s",
+      "phase": "play",
+      "requestedSeconds": 30.00135667100549,
+      "completedSeconds": 30.635641660004854,
+      "captureSeconds": 0.6342849889993668,
+      "status": "saved",
+      "sha256": "432727fd9b1392b86aacd3b86e62518a09c3a95b3c5c1e48b4c2669b9d9fe8c1",
+      "interpretation": "Request-to-save interval; not an exact physical frame timestamp or proof of continuous state.",
+      "file": "play-30s.png",
+      "sourceIdentifier": "preparation-4568/strict/play-30s.png",
+      "sourceHead": "4568c8792f4c804cf354f6f63a12ef568e2b6748",
+      "unchangedOriginalBytes": true,
+      "viewport": {
+        "width": 844,
+        "height": 390
+      }
+    },
+    {
+      "name": "play-60s",
+      "phase": "play",
+      "requestedSeconds": 60.001298815995455,
+      "completedSeconds": 61.1050494030118,
+      "captureSeconds": 1.103750587016344,
+      "status": "saved",
+      "sha256": "d970c60fc0c91e62e10de75d5a2e48dabc3b3c9ad2e68f127f9c05db2a33a6f0",
+      "interpretation": "Request-to-save interval; not an exact physical frame timestamp or proof of continuous state.",
+      "file": "play-60s.png",
+      "sourceIdentifier": "preparation-4568/strict/play-60s.png",
+      "sourceHead": "4568c8792f4c804cf354f6f63a12ef568e2b6748",
+      "unchangedOriginalBytes": true,
+      "viewport": {
+        "width": 844,
+        "height": 390
+      }
+    }
+  ],
+  "visualEvidence": {
+    "originalPhotosPersonallyViewedBy": [
+      "root",
+      "visual discovery reviewer",
+      "design reviewer"
+    ],
+    "DOMReportAuthorPersonallyViewedRound98Photos": false,
+    "visualAuditIdentifier": "discovery-b",
+    "visibleFacts": [
+      "Initial, play10 and play60 cards have readable date, title and both choice labels within the frame.",
+      "play10 visibly includes the demo finger.",
+      "play30 visibly includes a green circle, heart and readable one-line reason, over the next card.",
+      "Observation and play60 frames do not show the finger; CSS has intentional transparent phases and DOM guide is true, so no continuous disappearance is established.",
+      "play60 shows January19 and the next choices; paddy stage remains pre-tilling."
+    ],
+    "limits": [
+      "Duration of physical visual absence",
+      "All intermediate frames or all18 reason layouts",
+      "Hit testing beyond inherited initial point check",
+      "Human retention or comprehension latency",
+      "Physical smartphone performance, sound or finger input"
+    ]
+  },
+  "candidates": [
+    {
+      "priority": 1,
+      "topic": "ordinary input failure",
+      "observed": "18/18 ordinary gestures progressed; no established defect",
+      "action": "No fix; A1 scarecrow pointer and A2 background-return are not established by this run.",
+      "codeLocations": [
+        "kome365/index.html:3994",
+        "kome365/index.html:4017",
+        "kome365/index.html:4033",
+        "kome365/index.html:4062"
+      ]
+    },
+    {
+      "priority": 2,
+      "topic": "previous-choice reason overlaps next card",
+      "observed": "30s original shows positive mark/reason with next card; title and left/right labels readable",
+      "action": "Operator judgment: reason position and2s are explicit decisions; immediate next-card progression is current behavior, not asserted as an explicit operator decision. No change.",
+      "codeLocations": [
+        "kome365/index.html:650",
+        "kome365/index.html:654",
+        "kome365/index.html:3815",
+        "kome365/index.html:3836",
+        "kome365/index.html:3850"
+      ]
+    },
+    {
+      "priority": 3,
+      "topic": "first response waiting",
+      "observed": "first transform1043.7ms from send; pointerdown timestamp-to-capture905.9ms; capture-to-drag9.5ms",
+      "action": "No cause or minimum fix established. A ten-run speed comparison separating delivery/processing/paint would be needed.",
+      "codeLocations": [
+        "kome365/index.html:3945",
+        "kome365/index.html:4033",
+        "kome365/index.html:4034"
+      ]
+    },
+    {
+      "priority": 4,
+      "topic": "near-term goal visibility",
+      "observed": "Jan19 and next choices visible at60s; field stage remains 田おこし まえ; no short-term target confirmed",
+      "action": "Operator judgment B: at most one visible near-term goal and one achievement sign, proposal only. Larger introduction C is a separate design; no timeline compression or protected-file change.",
+      "codeLocations": [
+        "kome365/index.html:675",
+        "kome365/index.html:789",
+        "kome365/index.html:3109",
+        "kome365/index.html:3112"
+      ]
+    }
+  ],
+  "notPerformed": [
+    "new ten-trial reproduction",
+    "gesture speed comparison",
+    "product modification",
+    "new regression test and old/new RED GREEN",
+    "post-fix five-size comparison",
+    "mixed input/multitouch/background-return/rotation diagnostics"
+  ],
+  "pytest": {
+    "command": "pytest tests/",
+    "cwd": "/workspace/ricepia-firstminute-round98",
+    "startedAtUTC": "2026-11-14T04:58:16.462735+00:00",
+    "completedAtUTC": "2026-11-14T04:58:16.469857+00:00",
+    "actualChildExit": 127,
+    "stdout": "",
+    "stderr": "bash: line 1: pytest: command not found\n"
+  },
+  "testInterpretation": "Required pytest command attempted but unavailable; passed test count is not established. No new regression because there is no product fix.",
+  "operatorDecisionsPreserved": [
+    "0.3s swipe demo",
+    "fast swipe commits",
+    "tap neither selects nor moves card",
+    "first card edge shadow",
+    "reason position and2s",
+    "30s idle card",
+    "gentle generated sound with toggle and no timing changes",
+    "scarecrow and sun"
+  ],
+  "protectedFilesUnchanged": [
+    "kome365/engine.js",
+    "kome365/field3d.js",
+    "kome365/cards.js"
+  ],
+  "factSources": "Agricultural text quoted from existing kome365/cards.js and rendered by kome365/index.html. No new geographical/agricultural facts or borrowed assets.",
+  "physicalLimits": [
+    "real finger behavior",
+    "tilt sensors",
+    "network speed",
+    "audible sound on device",
+    "background notifications and app changes",
+    "physical paint timestamp",
+    "human comprehension and first-minute dropout rate"
+  ],
+  "mergeHold": {
+    "held": true,
+    "reason": "Required pytest command unavailable; primary run retained console404 errors.",
+    "policyURL": "https://github.com/shota0617/ricepia-judge/blob/4568c8792f4c804cf354f6f63a12ef568e2b6748/.claude/skills/ricepia-flow/SKILL.md#L212",
+    "quote": "Codex の 指摘が のこっている・テストが 落ちている・運営者の 判断が いる 変更は、マージせずに 伝える"
+  },
+  "evidence": {
+    "locationNotice": "The original identifiers below refer to retained local scratch evidence, not public links. This report contains the selected result data and four exact original PNG copies.",
+    "baseDirectory": "/workspace/scratch/first-minute/round-98",
+    "sha256": {
+      "primary-execution.json": "b0bb079ccc1177d42744babf88739815467b27e9763329e5d2a3fe6860ca9d0b",
+      "root-primary-completion.json": "67eaf33a6da852aaafd3aaff61080aaac83af419db0d18749583b3e8fa0930d4",
+      "pytest-execution.json": "96eb3b50fe7de299d75e29c6eb7a39b22099acdd9f4fef1f61427ed68d43366d",
+      "pytest.log": "b6fe94a4971280b69606b3ad6039ae9ed0e48557776ea68f678174b6c8da879a",
+      "preparation-4568/metadata.json": "55745913605b6992ca0fb2643c9f73562c06758287ed01a58e9c7757fa7d0a8c",
+      "preparation-4568/run.log": "717386330eb6b2921258b1e345698bf112ecce793d04197b16e7961380e1b4b7",
+      "preparation-4568/strict/report.json": "8ef257123cda1cd0d4e9b75c4eb5afa8eb47af51db3a9aaf965d4f704ee54caa",
+      "preparation-4568/strict/driver-timing.json": "bc10c16a81b796047e36fb113d0669543d7dfa67430c14fd9231797472444909",
+      "preparation-4568/strict/extra.json": "7cc3a881a1dc822e2b859b002a4f3c4d1289212bcc28da8d53f94d0a85e09694",
+      "discovery-a/frozen.json": "3cb727fd136f9c9728c65b2795fc9c5f8745e09ed312f2a946b00f95e6329a4d",
+      "discovery-a/summary.json": "ef627780b4e730e24baffd22df9a088380f0d3613dde6b18e0a9392af94712b2",
+      "discovery-b/frozen.json": "02ca6263a3bcdb707cfe2662bb44ccf73ef3ce4611563893f7f22a036bb1d4f4",
+      "discovery-b/summary.json": "9940feffa199050dafb9db1b6fe8765b4875a8d467761d0ab5c50eee7fe0bfea",
+      "discovery-b/photo-boundaries.json": "a34a6c78f7c208f35be851c576cb053118a210d4d68c86fea6bbcc7fe6c72862",
+      "discovery-c/frozen.json": "99b979618c0e186992a937522a76b12b67b04ec06fce8f032d30d1f3e47af064",
+      "discovery-c/primary-review.json": "65c8e4a6d3c35dce1b8acf681526b76a029d38b138d0e2ff9b11fe4e37c0ebb5",
+      "design-review/frozen.json": "3258d815c2694730145d42725718656723415580246cc9bf79adf2b71c051b94",
+      "design-review/README.md": "b2bc7f0ae51fe019f57ac2134dd756afedd5b38e07dd334c68e9b15ad9be79a9",
+      "design-review/actual-evidence.json": "203681c97c98fa8e0f9f60f6010e2711204cd90e5df4973a867ac0a69a8d615e",
+      "primary-audit/frozen.json": "99d085d962716276ea3bcb61f89d616e716015b97db83da2c3112d6c4ec7c3fc",
+      "primary-audit/summary.json": "5695d35574ad6885e4a43d9bf6ded9823fae1248b17cc91cb3af03612345b207",
+      "local-pytest-inventory/frozen.json": "e8706d91da11f510d5cef0ddba06a6148124ee576ab66f8be2e1bdb0826d51f8"
+    }
+  },
+  "publicationSnapshot": {
+    "beforePRCreation": true,
+    "PRURL": null,
+    "documentationCommit": null,
+    "intendedState": "draft; no merge or production publication by report author"
+  },
+  "unconfirmedStaticCandidates": [
+    {
+      "id": "C1",
+      "topic": "mixed pointer types may replace an active card owner",
+      "codeLocations": [
+        "kome365/index.html:3981",
+        "kome365/index.html:3994",
+        "kome365/index.html:3995",
+        "kome365/index.html:4033",
+        "kome365/index.html:4034",
+        "kome365/index.html:4042"
+      ],
+      "actualTrials": 0,
+      "reachedInPrimary": false,
+      "establishedDefect": false,
+      "adopted": false,
+      "handling": "Requires real trusted mixed touch/mouse/pen reproduction and preservation of rested-finger handoff and stale-state recovery; not yet categorized as a definite operator decision."
+    },
+    {
+      "id": "C2",
+      "topic": "completed queued gestures may remain across width change",
+      "codeLocations": [
+        "kome365/index.html:3968",
+        "kome365/index.html:4022",
+        "kome365/index.html:4027",
+        "kome365/index.html:4033"
+      ],
+      "actualTrials": 0,
+      "reachedInPrimary": false,
+      "establishedDefect": false,
+      "adopted": false,
+      "handling": "Keeping already completed gestures may be intended. Width-change expectations need clarification before any fix; not part of this one-viewport primary."
+    }
+  ],
+  "pytestEnvironmentInventory": {
+    "existingUsablePytestFound": false,
+    "scope": "Readable PATH, active/system Python and local cache/workspace; permission-denied root caches remain unknown.",
+    "moduleVersionProbeExitCodes": [
+      1,
+      1
+    ],
+    "moduleVersionProbeError": "No module named pytest",
+    "additionalSuiteRuns": 0,
+    "installationOrExternalAccess": false,
+    "sourceIdentifier": "local-pytest-inventory/frozen.json"
+  },
+  "factSourceLocations": [
+    "kome365/cards.js:584",
+    "kome365/cards.js:629",
+    "kome365/cards.js:644",
+    "kome365/cards.js:462",
+    "kome365/cards.js:476"
+  ],
+  "methodPerformance": {
+    "methods": [
+      {
+        "id": "A",
+        "method": "DOM timeline",
+        "newEstablishedRepairableDefects": 0
+      },
+      {
+        "id": "B",
+        "method": "Original photos and nearby recorded states",
+        "newEstablishedRepairableDefects": 0
+      },
+      {
+        "id": "C",
+        "method": "Input-state source tracing",
+        "newEstablishedRepairableDefects": 0
+      }
+    ],
+    "winner": null,
+    "previousMethodsRetainedForNextRound": true,
+    "designProposalsNotAddedToConfirmedDefectCounts": true
+  }
+}

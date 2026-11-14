@@ -1,0 +1,566 @@
+{
+  "round": 106,
+  "game": "米づくり365",
+  "scope": "One 390×844 first-minute observation; no product or test changes",
+  "source": {
+    "head": "4421abdb0e57416565b504fc8b9588f28b02f522",
+    "path": "kome365/index.html",
+    "hashGuardFiles": {
+      "kome365/index.html": "0946243f4918704c78076bf30cf1080d75f7ade75d8bb916d5ec74c0948fd5a2",
+      "kome365/engine.js": "c3d0cef6bb108d5b6d8fe38aaf0c08fe7994bdab08bf92775865a6e0222469a3",
+      "kome365/field3d.js": "a5c1dad91d5c0c326f1394fad9c5d04e7e3b8d13e3a2b8b1757c7aa08d3558ff",
+      "kome365/cards.js": "b15c5b2f56ef9c0c8361fa2fa6a039085919ca516b4a2e6e5a1b3bb691dde744",
+      "kome365/vendor/three.min.js": "9274bbcec8d96168626c732b5d31c775aa8cfb7eaa0599bec0c175908a2c1ce2"
+    },
+    "guardLimit": "Only these five local/served files; no all-asset claim",
+    "sourceUnchanged": true,
+    "documentationCommitAfterExecution": true
+  },
+  "method": {
+    "playRuns": 1,
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "isMobile": true,
+    "hasTouch": true,
+    "cpuRate": 1,
+    "freshContext": true,
+    "input": "CDP Input.dispatchTouchEvent",
+    "observationSeconds": 10,
+    "awaitObservationPhotoBeforePlay": true,
+    "playSeconds": 60,
+    "requestedGestureSpanMs": 120,
+    "direction": {
+      "left": 11
+    },
+    "cueBasis": {
+      "current": 1,
+      "same-card-memory": 10
+    },
+    "externalBlockedRequests": 0,
+    "externalReplacement": "None needed; local bundled assets, including three revision128. External hosts blocked by route/resolver policy."
+  },
+  "outcome": {
+    "newConfirmedFixCandidates": 0,
+    "productEdits": 0,
+    "testEdits": 0,
+    "playerDropoutRateMeasured": false,
+    "beforeAfterImprovementMeasured": false,
+    "opportunities": 21,
+    "sentGestures": 11,
+    "unsentCueUncertainSkips": 10,
+    "unsentIsNotNoResponse": true,
+    "observedResponses": {
+      "drag": 11,
+      "changedTransform": 11,
+      "nextDay": 11,
+      "newReason": 11,
+      "noTransformResponseAmongSent": 0
+    },
+    "positiveReasonCount": 7,
+    "negativeReasonCount": 4,
+    "lastAdvancedDate": "1月12日"
+  },
+  "timing": {
+    "firstInputPlaySeconds": 0.252,
+    "firstDrag": {
+      "fromSendMs": 900.099853515625,
+      "playSeconds": 1.152099853515625,
+      "browserAt": 18034.40000000596
+    },
+    "firstTransform": {
+      "fromSendMs": 977.39990234375,
+      "playSeconds": 1.22939990234375,
+      "browserAt": 18111.70000001788
+    },
+    "firstPositive": {
+      "fromSendMs": 1404.300048828125,
+      "playSeconds": 1.656300048828125,
+      "browserAt": 18538.59999999404
+    },
+    "sendToTransformMs": {
+      "min": 687.800048828125,
+      "median": 724.300048828125,
+      "max": 977.39990234375
+    },
+    "eventTimestampToCaptureListenerMs": {
+      "n": 11,
+      "min": 682.9,
+      "median": 718.5,
+      "max": 894.2
+    },
+    "captureListenerToDragDOMMs": {
+      "n": 11,
+      "min": 3.2,
+      "median": 4.4,
+      "max": 6.8
+    },
+    "firstPositiveFromEventTimestampMs": 1404.2,
+    "clock": {
+      "observationStartToPlayMs": 16511.831975013018,
+      "observationPhotoCaptureMs": 6362.762665003538,
+      "photoSavedToPlayMs": 147.92662501335144,
+      "firstInputAfterObservationStartMs": 16763.393216997385,
+      "playDurationObservedMs": 60001.28194999695,
+      "browserFinalReadPlaySeconds": 60.071099853515626,
+      "epochAlignment": "Browser timeOrigin+performance.now versus integer Node epoch; do not interpret sub-ms digits as physical accuracy"
+    },
+    "limit": "DOM observation; not physical paint. Send/event/handler clocks are separate; no product-cause attribution."
+  },
+  "dispatch": {
+    "sent": 88,
+    "acked": 88,
+    "trustedPointerEvents": 33,
+    "pointerdown": 11,
+    "pointermove": 11,
+    "pointerup": 11,
+    "requestedSpanMs": 120,
+    "actualSendSpanMs": {
+      "min": 120.082897990942,
+      "median": 121.11586201190948,
+      "max": 140.56998300552368
+    },
+    "ackDelayMs": {
+      "min": 567.7080000042915,
+      "median": 669.4091400057077,
+      "max": 901.368194013834
+    },
+    "pointerdownEventToHandlerMs": {
+      "min": 682.9000000059605,
+      "median": 718.5,
+      "max": 894.1999999880791
+    }
+  },
+  "timeline": [
+    {
+      "id": 1,
+      "dateBefore": "1月1日",
+      "dateAfter": "1月2日",
+      "direction": "left",
+      "cueBasis": "current",
+      "startPlaySeconds": 0.252,
+      "dragFromSendMs": 900.099853515625,
+      "transformFromSendMs": 977.39990234375,
+      "nextDayPlaySeconds": 1.656300048828125,
+      "reasonSign": "○",
+      "reasonPlaySeconds": 1.656300048828125
+    },
+    {
+      "id": 2,
+      "dateBefore": "1月2日",
+      "dateAfter": "1月3日",
+      "direction": "left",
+      "cueBasis": "same-card-memory",
+      "startPlaySeconds": 5.945,
+      "dragFromSendMs": 749.800048828125,
+      "transformFromSendMs": 757.39990234375,
+      "nextDayPlaySeconds": 7.172,
+      "reasonSign": "✗",
+      "reasonPlaySeconds": 7.172
+    },
+    {
+      "id": 3,
+      "dateBefore": "1月3日",
+      "dateAfter": "1月4日",
+      "direction": "left",
+      "cueBasis": "same-card-memory",
+      "startPlaySeconds": 11.927,
+      "dragFromSendMs": 843.599853515625,
+      "transformFromSendMs": 847.099853515625,
+      "nextDayPlaySeconds": 13.262,
+      "reasonSign": "○",
+      "reasonPlaySeconds": 13.262
+    },
+    {
+      "id": 4,
+      "dateBefore": "1月4日",
+      "dateAfter": "1月5日",
+      "direction": "left",
+      "cueBasis": "same-card-memory",
+      "startPlaySeconds": 17.465,
+      "dragFromSendMs": 728.300048828125,
+      "transformFromSendMs": 731.0,
+      "nextDayPlaySeconds": 18.669199951171876,
+      "reasonSign": "✗",
+      "reasonPlaySeconds": 18.669199951171876
+    },
+    {
+      "id": 5,
+      "dateBefore": "1月5日",
+      "dateAfter": "1月6日",
+      "direction": "left",
+      "cueBasis": "same-card-memory",
+      "startPlaySeconds": 23.053,
+      "dragFromSendMs": 690.39990234375,
+      "transformFromSendMs": 692.39990234375,
+      "nextDayPlaySeconds": 24.2135,
+      "reasonSign": "○",
+      "reasonPlaySeconds": 24.2135
+    },
+    {
+      "id": 6,
+      "dateBefore": "1月6日",
+      "dateAfter": "1月7日",
+      "direction": "left",
+      "cueBasis": "same-card-memory",
+      "startPlaySeconds": 28.645,
+      "dragFromSendMs": 724.199951171875,
+      "transformFromSendMs": 728.599853515625,
+      "nextDayPlaySeconds": 29.898699951171874,
+      "reasonSign": "○",
+      "reasonPlaySeconds": 29.898699951171874
+    },
+    {
+      "id": 7,
+      "dateBefore": "1月7日",
+      "dateAfter": "1月8日",
+      "direction": "left",
+      "cueBasis": "same-card-memory",
+      "startPlaySeconds": 34.328,
+      "dragFromSendMs": 702.89990234375,
+      "transformFromSendMs": 706.0,
+      "nextDayPlaySeconds": 35.278800048828124,
+      "reasonSign": "✗",
+      "reasonPlaySeconds": 35.278800048828124
+    },
+    {
+      "id": 8,
+      "dateBefore": "1月8日",
+      "dateAfter": "1月9日",
+      "direction": "left",
+      "cueBasis": "same-card-memory",
+      "startPlaySeconds": 39.631,
+      "dragFromSendMs": 718.599853515625,
+      "transformFromSendMs": 721.699951171875,
+      "nextDayPlaySeconds": 40.843099853515625,
+      "reasonSign": "○",
+      "reasonPlaySeconds": 40.843099853515625
+    },
+    {
+      "id": 9,
+      "dateBefore": "1月9日",
+      "dateAfter": "1月10日",
+      "direction": "left",
+      "cueBasis": "same-card-memory",
+      "startPlaySeconds": 44.867,
+      "dragFromSendMs": 702.599853515625,
+      "transformFromSendMs": 719.699951171875,
+      "nextDayPlaySeconds": 46.0295,
+      "reasonSign": "○",
+      "reasonPlaySeconds": 46.0295
+    },
+    {
+      "id": 10,
+      "dateBefore": "1月10日",
+      "dateAfter": "1月11日",
+      "direction": "left",
+      "cueBasis": "same-card-memory",
+      "startPlaySeconds": 50.1,
+      "dragFromSendMs": 722.099853515625,
+      "transformFromSendMs": 724.300048828125,
+      "nextDayPlaySeconds": 51.30889990234375,
+      "reasonSign": "✗",
+      "reasonPlaySeconds": 51.30889990234375
+    },
+    {
+      "id": 11,
+      "dateBefore": "1月11日",
+      "dateAfter": "1月12日",
+      "direction": "left",
+      "cueBasis": "same-card-memory",
+      "startPlaySeconds": 55.509,
+      "dragFromSendMs": 686.300048828125,
+      "transformFromSendMs": 687.800048828125,
+      "nextDayPlaySeconds": 56.64619995117187,
+      "reasonSign": "○",
+      "reasonPlaySeconds": 56.64619995117187
+    }
+  ],
+  "photos": [
+    {
+      "file": "observe-10s.png",
+      "sha256": "a91d18ca78ec87984df6dd9452a3b31467780e5971f38593e98ec330009c23dc",
+      "bytes": 156651,
+      "dimensions": [
+        390,
+        844
+      ],
+      "originalCopiedUnmodified": true,
+      "reportAuthorPersonallyViewed": true,
+      "clock": "observation",
+      "requestedSeconds": 10.001142684996129,
+      "savedSeconds": 16.363905349999666,
+      "captureMs": 6362.762665003538,
+      "visualReading": {
+        "name": "observe-10s",
+        "date": "1月1日",
+        "title": "元日の田んぼ",
+        "paddyWord": "田おこし まえ",
+        "handVisibleInOriginal": true
+      }
+    },
+    {
+      "file": "play-10s.png",
+      "sha256": "0d0b33e37af03e10cdb9e9c6a287ba114f7c995b69b219c90e4a1b9b9cca1e21",
+      "bytes": 175192,
+      "dimensions": [
+        390,
+        844
+      ],
+      "originalCopiedUnmodified": true,
+      "reportAuthorPersonallyViewed": true,
+      "clock": "play",
+      "requestedSeconds": 10.001064661979676,
+      "savedSeconds": 11.146931706994772,
+      "captureMs": 1145.8670450150967,
+      "visualReading": {
+        "name": "play-10s",
+        "date": "1月3日",
+        "title": "乾いた田",
+        "paddyWord": "田おこし まえ",
+        "handVisibleInOriginal": false
+      }
+    },
+    {
+      "file": "play-30s.png",
+      "sha256": "a8e39a0873878fec2915ae9e9b637f1788d210535a49405d10385f32ccdc69f1",
+      "bytes": 198552,
+      "dimensions": [
+        390,
+        844
+      ],
+      "originalCopiedUnmodified": true,
+      "reportAuthorPersonallyViewed": true,
+      "clock": "play",
+      "requestedSeconds": 30.00115636599064,
+      "savedSeconds": 30.785476689994336,
+      "captureMs": 784.3203240036964,
+      "visualReading": {
+        "name": "play-30s",
+        "date": "1月7日",
+        "title": "種もみの注文",
+        "reason": "○ 田を見て回ると、畦の傷みに早く気づけます",
+        "reasonRelatesToPreviousDate": "1月6日",
+        "paddyWordVisibleInOriginal": false,
+        "positiveRingVisibleInOriginal": true
+      }
+    },
+    {
+      "file": "play-60s.png",
+      "sha256": "70fb7d0f756f30b5c1a7caa6b7216953dfd1c6cbb6e1996d29fa76a8f85adc42",
+      "bytes": 186403,
+      "dimensions": [
+        390,
+        844
+      ],
+      "originalCopiedUnmodified": true,
+      "reportAuthorPersonallyViewed": true,
+      "clock": "play",
+      "requestedSeconds": 60.0013563169837,
+      "savedSeconds": 60.85661947998405,
+      "captureMs": 855.2631630003452,
+      "visualReading": {
+        "name": "play-60s",
+        "date": "1月12日",
+        "title": "田んぼの猫",
+        "paddyWord": "田おこし まえ",
+        "handVisibleInOriginal": true
+      }
+    }
+  ],
+  "execution": {
+    "actualChildExit": 1,
+    "actualOuterExit": 1,
+    "consoleErrors": [
+      {
+        "at": 166936187.707326,
+        "kind": "console",
+        "message": "Failed to load resource: the server responded with a status of 404 (File not found)"
+      },
+      {
+        "at": 166954308.610905,
+        "kind": "console",
+        "message": "Failed to load resource: the server responded with a status of 404 (File not found)"
+      }
+    ],
+    "resourceTiming404": [
+      {
+        "name": "http://localhost:8000/favicon.ico",
+        "status": 404
+      },
+      {
+        "name": "http://localhost:8000/favicon.ico",
+        "status": 404
+      }
+    ],
+    "errorLimit": "ResourceTiming independently identifies both recorded404 entries as favicon.ico. Console text lacks a URL and the two streams do not record a request-id join. Actual exit1 remains failure.",
+    "driverErrors": [],
+    "lateCleanup": [],
+    "cpuReset": true,
+    "browserClosed": true,
+    "rootNoLiveRuntime": true,
+    "soundAnd3d": "Only post-play debug state; not listening or physical-device performance evidence."
+  },
+  "tests": {
+    "pytest": {
+      "command": "pytest tests/",
+      "actualExit": 127,
+      "error": "bash: line 1: pytest: command not found",
+      "suiteExecuted": false,
+      "passedCount": null
+    },
+    "fixedReproduction10": "not performed; no selected confirmed product defect",
+    "redGreen": "not performed; no new test or product change",
+    "afterReproduction": "not performed",
+    "fiveSizeComparison": "not performed",
+    "otherRoundsIncluded": false
+  },
+  "candidates": {
+    "latency": {
+      "observed": true,
+      "productCauseConfirmed": false,
+      "fixedReproductionTrials": 0,
+      "source": [
+        "kome365/index.html:4034",
+        "kome365/index.html:4035",
+        "kome365/index.html:4038",
+        "kome365/index.html:3883"
+      ],
+      "change": "none"
+    },
+    "continuation": {
+      "status": "Unverified design hypothesis: whether existing state words communicate the next farming step",
+      "humanUnderstandingMeasured": false,
+      "notAnEstablishedApprovalRule": true
+    },
+    "unobserved": [
+      "short diagonal / outside-card start",
+      "background return",
+      "scarecrow second-finger input"
+    ]
+  },
+  "operatorDecisions": {
+    "preserved": [
+      "0.3s guide",
+      "fast swipe",
+      "tap does not select or move card",
+      "first-card edge shadow",
+      "reason location and2s",
+      "30s card",
+      "gentle generated audio",
+      "scarecrow and sun",
+      "engine.js/field3d.js/cards.js unchanged"
+    ],
+    "explicitSourceBoundary": {
+      "file": "kome365/index.html",
+      "line": 441,
+      "meaning": "Removed small boxes/dots/background rice rows remain hidden."
+    },
+    "notChanged": "Reason placement and2s, including its observed overlap with the next card date."
+  },
+  "limits": [
+    "No real-finger/sensor/network/physical-paint/audio-experience/player-retention validation.",
+    "Ten unsent opportunities do not prove that the guide never appeared or that a person was confused.",
+    "All-left current1/same-card-memory10 is not a balanced choice-quality experiment.",
+    "Four photos do not verify all hit targets or all times; the30s reason partly covers the next date.",
+    "No controlled performance comparison with round102 or any other round.",
+    "Actual primary exit1 and missing pytest remain; no all-tests-pass claim."
+  ],
+  "references": {
+    "sourceUI": [
+      "kome365/index.html:441",
+      "kome365/index.html:3756",
+      "kome365/cards.js:584",
+      "kome365/index.html:2600"
+    ],
+    "newAgriculturalFactsAdded": false,
+    "videoActuallyViewed": false,
+    "interpretiveSources": [
+      "https://www.famitsu.com/news/201705/17132636.html",
+      "https://github.com/flossbud/sakurai-game-design/blob/main/episodes/transcripts/100-development-secrets-of-the-original-kirby.md"
+    ]
+  },
+  "evidence": [
+    {
+      "identifier": "round-106/source-selected.json",
+      "sha256": "6232ff5d7085d952448a03f2eb2be22758e4df5e3915a48385531898aaf523fe",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-106/preparation-4421/metadata.json",
+      "sha256": "73dc0cd99ad1a038c1b7202efa622b6836de03b804a3817f3b1ff30630f5ea8f",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-106/preparation-4421/root-execution.json",
+      "sha256": "081cc9335c08be28f2ebe5ef458928109e2bfa5a38b2cd7814a7a72151371d1f",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-106/preparation-4421/strict/report.json",
+      "sha256": "f22d4c4e1f8e33aead3a97c8a2c2a0703fe003b70d5a9b51e02501376dd61c03",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-106/preparation-4421/strict/driver-timing.json",
+      "sha256": "51b007430235fc07a0a371c5dbef48072e3fc1db2da99003dd9fbb04b096d348",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-106/preparation-4421/strict/extra.json",
+      "sha256": "e0d82c58f5462400cc0734c8f67ec11159f825ab295775e5c69854c3ae9c3cf1",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-106/pytest/execution.json",
+      "sha256": "bf2b3453be380a26e5f7e503b3c4a2a160b40bc92a377e1de8ce76d071ad49f9",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-106/pytest/run.log",
+      "sha256": "b6fe94a4971280b69606b3ad6039ae9ed0e48557776ea68f678174b6c8da879a",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-106/discovery-a/summary.json",
+      "sha256": "c30a9d1ba7338de510d79e757595517f1e0f6b733a3beb3121fa7e2b638c26b6",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-106/discovery-a/frozen.json",
+      "sha256": "c445b32e8ccba0b005d56422d04184701cd35683139ffa83758a5efe13360354",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-106/discovery-c/summary.json",
+      "sha256": "27664c2be1ead3cd5195aa19c5b0882a982d01808485575ca6b6d7735b5460b7",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-106/discovery-c/frozen.json",
+      "sha256": "234a3c7cce3be79a18e1b7f35cbfe7400a509e4f2e6e78e6990438e58654f64b",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-106/discovery-b/review.json",
+      "sha256": "3955ce16cf50cc70e9fd619959d926f89e581ec30b50dab92bd9ce48fceda5b8",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-106/discovery-b/frozen.json",
+      "sha256": "0d67c05ad055de5a996a823f61156a7b92e2176bbb8139c2e3ae375addf35ccb",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-106/design-review/summary.json",
+      "sha256": "e98dcbbc4dfa07a9d16e2669f2109c732f0047cf5319f837711032e6cc3b1de4",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-106/design-review/frozen.json",
+      "sha256": "2c016bf205ec52fdf5da84f18c3263fb5173ae37021b1a24236985fe31435ae4",
+      "publicLink": false
+    }
+  ]
+}

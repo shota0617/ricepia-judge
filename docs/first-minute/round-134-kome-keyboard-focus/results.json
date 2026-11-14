@@ -1,0 +1,5441 @@
+{
+  "round": 134,
+  "game": "kome365",
+  "status": "final product-fix report; fixed reproduction resolved; supplementary full suite failed; five-size strict comparison partially unestablished; draft/merge hold",
+  "source": {
+    "beforeHead": "91f91d80e869cd4e370988db523b6aa7463b0304",
+    "candidateHead": "43af75cce8c6023c650ac5b790f6a712bd64af71",
+    "beforeIndexSHA256": "d2add0e458da2aebf14dc0c8d4f0a2792497bbe69a0cb40f2d6b3aa7da0f741b",
+    "candidateIndexSHA256": "47ee16c4d4544ad0b925d254d7845d7ee43fa629379e26305cae6876dab99b83",
+    "regressionTestSHA256": "b311d92b40c140c8ba1ef775f1e7dbb7deb11a72fd928d136a839a9e0d2ea3cb",
+    "changedFiles": [
+      "kome365/index.html",
+      "tests/test_kome_keyboard_focus.py",
+      "tests/test_kome365_firstmin.py"
+    ],
+    "protected3Hashes": {
+      "kome365/engine.js": "c3d0cef6bb108d5b6d8fe38aaf0c08fe7994bdab08bf92775865a6e0222469a3",
+      "kome365/field3d.js": "a5c1dad91d5c0c326f1394fad9c5d04e7e3b8d13e3a2b8b1757c7aa08d3558ff",
+      "kome365/cards.js": "b15c5b2f56ef9c0c8361fa2fa6a039085919ca516b4a2e6e5a1b3bb691dde744"
+    },
+    "protected3Unchanged": true,
+    "postTestPublicationBase": "ed4c87fd102c701d5aab4bf9b0aa03bbbca57d27",
+    "postTestHead": "0c0b433fca1ccb5c846db65e90bac4f4dcf25a10",
+    "postTestUpdate": {
+      "atUTC": "2026-11-14T21:15:07.375498+00:00",
+      "measuredCandidate": "43af75cce8c6023c650ac5b790f6a712bd64af71",
+      "postTestHead": "0c0b433fca1ccb5c846db65e90bac4f4dcf25a10",
+      "postTestBase": "ed4c87fd102c701d5aab4bf9b0aa03bbbca57d27",
+      "incomingPaths": [
+        "docs/first-minute/round-132-kensa-observation/README.md",
+        "docs/first-minute/round-132-kensa-observation/observe-10s.png",
+        "docs/first-minute/round-132-kensa-observation/play-10s.png",
+        "docs/first-minute/round-132-kensa-observation/play-30s.png",
+        "docs/first-minute/round-132-kensa-observation/play-60s.png",
+        "docs/first-minute/round-132-kensa-observation/results.json",
+        "docs/first-minute/round-133-nishio-observation/README.md",
+        "docs/first-minute/round-133-nishio-observation/observe-10s.png",
+        "docs/first-minute/round-133-nishio-observation/play-10s.png",
+        "docs/first-minute/round-133-nishio-observation/play-30s.png",
+        "docs/first-minute/round-133-nishio-observation/play-60s.png",
+        "docs/first-minute/round-133-nishio-observation/results.json"
+      ],
+      "incomingDocsOnly": true,
+      "measuredSourcePinsUnchanged": 354,
+      "wholeUpdatedHeadRetested": false,
+      "clean": true
+    },
+    "testedScopeNote": "Candidate43af75 was measured. Only12 incoming report files were merged afterward; all354 measured source pins were unchanged, but the whole merged HEAD and later public report commit were not retested."
+  },
+  "issue": {
+    "trigger": "Natural touch focuses and mutes swSnd; a trusted ArrowRight then reaches global answer handler and advances Jan1 to Jan2.",
+    "fix": "Return before preventDefault/choose for key events from a button/link/input/select/textarea/role-button ancestor or content-editable target; body/card answer keys retain the existing path.",
+    "scope": "Focused-control keyboard routing, not a pure-touch-only defect or measured retention effect.",
+    "confirmedIssueCount": 1,
+    "operatorDecisionChange": false
+  },
+  "reproduction": {
+    "before": {
+      "sourceHead": "91f91d80e869cd4e370988db523b6aa7463b0304",
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "CPU": 1,
+      "planned": 10,
+      "attempted": 10,
+      "eligible": 10,
+      "dayAdvance": 10,
+      "focusOrigin": {
+        "touch": 10
+      },
+      "tabAfterTouchEligible": 0,
+      "speedGroups": [
+        {
+          "requestedHoldMs": 40,
+          "trials": 5,
+          "eligible": 5,
+          "dayAdvance": 5,
+          "touchHoldSendMs": {
+            "min": 38.727972000837326,
+            "max": 40.42989099025726
+          },
+          "touchHoldEventMs": {
+            "min": 38.599999994039536,
+            "max": 41.29999998211861
+          },
+          "touchHoldCaptureMs": {
+            "min": 32.5,
+            "max": 50.900000005960464
+          }
+        },
+        {
+          "requestedHoldMs": 200,
+          "trials": 5,
+          "eligible": 5,
+          "dayAdvance": 5,
+          "touchHoldSendMs": {
+            "min": 199.1400350034237,
+            "max": 200.6500439941883
+          },
+          "touchHoldEventMs": {
+            "min": 198.19999998807907,
+            "max": 204.40000000596046
+          },
+          "touchHoldCaptureMs": {
+            "min": 165.59999999403954,
+            "max": 200.0
+          }
+        }
+      ],
+      "commands": 40,
+      "resolvedACKs": 40,
+      "cleanupCommands": 0,
+      "trustedEvents": {
+        "pointerdown": 10,
+        "touchstart": 10,
+        "pointerup": 10,
+        "touchend": 10,
+        "focusin": 10,
+        "click": 10,
+        "keydown": 10,
+        "keyup": 10
+      },
+      "untrustedStartClickPerTrial": 1,
+      "untrustedStartNote": "Existing automatic opener click is not counted as a physical/trusted user action.",
+      "dateFromKeyEventMs": {
+        "min": 194.7999999821186,
+        "max": 217.90000000596046
+      },
+      "arrowHoldEventMs": {
+        "min": 37.20000001788139,
+        "max": 41.599999994039536
+      },
+      "observations": {
+        "after-300": {
+          "requestedFromKeySendMs": {
+            "min": 299.3979069888592,
+            "max": 300.8922649919987
+          },
+          "receivedFromKeySendMs": {
+            "min": 304.31110098958015,
+            "max": 319.4722650051117
+          },
+          "readDurationMs": {
+            "min": 4.913194000720978,
+            "max": 19.90922400355339
+          },
+          "browserSampleFromKeyEventMs": {
+            "min": 299,
+            "max": 306.10000002384186
+          }
+        },
+        "after-1500": {
+          "requestedFromKeySendMs": {
+            "min": 1499.2965439856052,
+            "max": 1504.612675011158
+          },
+          "receivedFromKeySendMs": {
+            "min": 8205.165612012148,
+            "max": 9584.935600996017
+          },
+          "readDurationMs": {
+            "min": 6700.55293700099,
+            "max": 8084.68488997221
+          },
+          "browserSampleFromKeyEventMs": {
+            "min": 8194,
+            "max": 9576.09999999404
+          }
+        }
+      },
+      "maxLongTaskMs": {
+        "min": 6472,
+        "max": 7671
+      },
+      "errors": {
+        "console404": 10,
+        "allChildActualExit": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "seriesActualOuter": 0,
+        "seriesWrapperActualOuter": null,
+        "seriesRequestedExit": 0,
+        "interpretation": "Child1 retains recorded console404; series0 means fixed sequence completed and closed, not product correctness. URL is absent in these console records, so no specific missing resource is asserted."
+      },
+      "closure": {
+        "atUTC": "2026-11-14T20:39:12.919455+00:00",
+        "actualOuterExit": 0,
+        "completionToolChunk": "aa3e5a",
+        "actualChildExits": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "source8Match": true,
+        "environment8Match": true,
+        "prepared10Match": true,
+        "clean": true,
+        "liveRuntimeProcesses": [],
+        "all10CPUResetBrowserClosedInputReleased": true,
+        "executionSHA256": "2efde6605d1b78c7552885e78b7d4d2343125f8a6dff50beb5d2789d17f4b345",
+        "rootPreliminaryCounts": {
+          "planned": 10,
+          "eligible": 10,
+          "dayAdvance": 10,
+          "touchFocus": 10,
+          "tabs": 0,
+          "commands": 40,
+          "cleanup": 0,
+          "errors": 10
+        },
+        "note": "Actual outer0 is sequence completion/closure, not product correctness. Independent numeric audit follows."
+      },
+      "sourcePreservation": {
+        "source8BeforeAfterManifestExact": true,
+        "environment8BeforeAfterManifestExact": true,
+        "prepared10Exact": true,
+        "everyTrialLocal5AfterAndServed5BeforeVerified": true,
+        "allCPUResetContextBrowserClosed": true,
+        "rootLiveRuntimeCount": 0,
+        "currentWorktreeRehashNotRequired": "Historical saved pins/closures used; root may subsequently apply a candidate."
+      },
+      "limits": [
+        "This is a focused tap-then-key diagnostic, separate from ordinary first-minute primary.",
+        "All ten natural touch-focus cases retained swSnd focus and mute before a trusted ArrowRight down/up; each advanced visible DOM date to January2. This establishes the narrow observed control-focus bug, not all keyboard/assistive technology cases.",
+        "The1500ms request returned8.2–9.6s after key send ; long tasks were also recorded, but their causal contribution to each read was not isolated. It is not a1.5s snapshot; exact requested/browser sampled/received clocks are separate.",
+        "DOM first-date notification and why classes are not exact physical paint/onset or readability duration.",
+        "Actual sound button was deliberately muted; browser unmuted launch and real3D enabled are configuration evidence, not proof of physical audible output or all rendered frames.",
+        "No human retention measurement, real device keyboard/assistive technology test or pure-touch-only impact estimate.",
+        "No failure/ineligibility was retried or replaced;10requested/10attempted/10eligible; both speed groups kept."
+      ]
+    },
+    "after": {
+      "sourceHead": "43af75cce8c6023c650ac5b790f6a712bd64af71",
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "CPU": 1,
+      "planned": 10,
+      "attempted": 10,
+      "eligible": 10,
+      "dayAdvance": 0,
+      "focusOrigin": {
+        "touch": 10
+      },
+      "tabAfterTouchEligible": 0,
+      "speedGroups": [
+        {
+          "requestedHoldMs": 40,
+          "trials": 5,
+          "eligible": 5,
+          "dayAdvance": 0,
+          "touchHoldSendMs": {
+            "min": 38.586991995573044,
+            "max": 40.50799399614334
+          },
+          "touchHoldEventMs": {
+            "min": 37.400000005960464,
+            "max": 40.400000005960464
+          },
+          "touchHoldCaptureMs": {
+            "min": 32.80000001192093,
+            "max": 49.70000001788139
+          }
+        },
+        {
+          "requestedHoldMs": 200,
+          "trials": 5,
+          "eligible": 5,
+          "dayAdvance": 0,
+          "touchHoldSendMs": {
+            "min": 198.49130800366402,
+            "max": 201.32408499717712
+          },
+          "touchHoldEventMs": {
+            "min": 196.30000001192093,
+            "max": 201.30000001192093
+          },
+          "touchHoldCaptureMs": {
+            "min": 165.5,
+            "max": 200.0
+          }
+        }
+      ],
+      "commands": 40,
+      "resolvedACKs": 40,
+      "cleanupCommands": 0,
+      "trustedEvents": {
+        "pointerdown": 10,
+        "touchstart": 10,
+        "pointerup": 10,
+        "touchend": 10,
+        "focusin": 10,
+        "click": 10,
+        "keydown": 10,
+        "keyup": 10
+      },
+      "untrustedStartClickPerTrial": 1,
+      "untrustedStartNote": "Existing automatic opener click is not counted as a physical/trusted user action.",
+      "dateFromKeyEventMs": null,
+      "arrowHoldEventMs": {
+        "min": 38.20000001788139,
+        "max": 41.599999994039536
+      },
+      "observations": {
+        "after-300": {
+          "requestedFromKeySendMs": {
+            "min": 299.55509999394417,
+            "max": 301.105024009943
+          },
+          "receivedFromKeySendMs": {
+            "min": 305.9446969926357,
+            "max": 318.803434997797
+          },
+          "readDurationMs": {
+            "min": 6.227802008390427,
+            "max": 17.698410987854004
+          },
+          "browserSampleFromKeyEventMs": {
+            "min": 298.7999999821186,
+            "max": 303.80000001192093
+          }
+        },
+        "after-1500": {
+          "requestedFromKeySendMs": {
+            "min": 1499.0121850073338,
+            "max": 1500.6106490194798
+          },
+          "receivedFromKeySendMs": {
+            "min": 1505.7804569900036,
+            "max": 1512.6280170083046
+          },
+          "readDurationMs": {
+            "min": 6.302848994731903,
+            "max": 12.417937994003296
+          },
+          "browserSampleFromKeyEventMs": {
+            "min": 1498.300000011921,
+            "max": 1501.5
+          }
+        }
+      },
+      "maxLongTaskMs": {
+        "min": 152,
+        "max": 256
+      },
+      "errors": {
+        "console404": 10,
+        "allChildActualExit": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "seriesActualOuter": 0,
+        "seriesWrapperActualOuter": null,
+        "seriesRequestedExit": 0,
+        "interpretation": "Child1 retains recorded console404; series0 means fixed sequence completed and closed, not product correctness. URL is absent in these console records, so no specific missing resource is asserted."
+      },
+      "closure": {
+        "atUTC": "2026-11-14T20:48:28.840072+00:00",
+        "actualOuterExitRecordedSeparately": true,
+        "actualChildExits": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "source10Match": true,
+        "environment8Match": true,
+        "prepared10Match": true,
+        "clean": true,
+        "liveRuntimeProcesses": [],
+        "all10CPUResetBrowserClosedInputReleased": true,
+        "executionSHA256": "5c13124e2240492c875ebadd695502af2b503c94e74e2f0e4e7a7ec27ce1d32c",
+        "rootPreliminaryCounts": {
+          "planned": 10,
+          "eligible": 10,
+          "dayAdvance": 0,
+          "touchFocus": 10,
+          "tabs": 0,
+          "commands": 40,
+          "cleanup": 0,
+          "errors": 10
+        }
+      },
+      "sourcePreservation": {
+        "source10BeforeAfterManifestExact": true,
+        "environment8BeforeAfterManifestExact": true,
+        "prepared10Exact": true,
+        "everyTrialLocal5AfterAndServed5BeforeVerified": true,
+        "allCPUResetContextBrowserClosed": true,
+        "rootLiveRuntimeCount": 0,
+        "currentWorktreeRehashNotRequired": "Historical saved pins/closures used; root may subsequently apply a candidate."
+      },
+      "limits": [
+        "This is a focused tap-then-key diagnostic, separate from ordinary first-minute primary.",
+        "All ten natural touch-focus cases retained swSnd focus and mute before a trusted ArrowRight down/up; none advanced date in the recorded window. This measures the narrow observed control-focus case, not all keyboard/assistive technology cases.",
+        "Exact requested/browser sampled/received clocks are separate. Before1500ms reads returned8.2–9.6s after key send; the after run has a different actual sampling window. No general performance improvement is inferred from correctly avoiding an unintended first answer.",
+        "DOM first-date notification and why classes are not exact physical paint/onset or readability duration.",
+        "Actual sound button was deliberately muted; browser unmuted launch and real3D enabled are configuration evidence, not proof of physical audible output or all rendered frames.",
+        "No human retention measurement, real device keyboard/assistive technology test or pure-touch-only impact estimate.",
+        "No failure/ineligibility was retried or replaced;10requested/10attempted/10eligible; both speed groups kept."
+      ]
+    },
+    "comparison": {
+      "beforeSourceHead": "91f91d80e869cd4e370988db523b6aa7463b0304",
+      "afterSourceHead": "43af75cce8c6023c650ac5b790f6a712bd64af71",
+      "sameScriptsAndCriteria": {
+        "run-ten.cjs": true,
+        "run-trial.cjs": true,
+        "keyboard.cjs": true,
+        "observer.cjs": true,
+        "owned-processes.cjs": true,
+        "criteria.json": true
+      },
+      "beforeEligible": 10,
+      "afterEligible": 10,
+      "beforeDayAdvance": 10,
+      "afterDayAdvance": 0,
+      "beforeSpeedGroups": [
+        {
+          "requestedHoldMs": 40,
+          "trials": 5,
+          "eligible": 5,
+          "dayAdvance": 5,
+          "touchHoldSendMs": {
+            "min": 38.727972000837326,
+            "max": 40.42989099025726
+          },
+          "touchHoldEventMs": {
+            "min": 38.599999994039536,
+            "max": 41.29999998211861
+          },
+          "touchHoldCaptureMs": {
+            "min": 32.5,
+            "max": 50.900000005960464
+          }
+        },
+        {
+          "requestedHoldMs": 200,
+          "trials": 5,
+          "eligible": 5,
+          "dayAdvance": 5,
+          "touchHoldSendMs": {
+            "min": 199.1400350034237,
+            "max": 200.6500439941883
+          },
+          "touchHoldEventMs": {
+            "min": 198.19999998807907,
+            "max": 204.40000000596046
+          },
+          "touchHoldCaptureMs": {
+            "min": 165.59999999403954,
+            "max": 200.0
+          }
+        }
+      ],
+      "afterSpeedGroups": [
+        {
+          "requestedHoldMs": 40,
+          "trials": 5,
+          "eligible": 5,
+          "dayAdvance": 0,
+          "touchHoldSendMs": {
+            "min": 38.586991995573044,
+            "max": 40.50799399614334
+          },
+          "touchHoldEventMs": {
+            "min": 37.400000005960464,
+            "max": 40.400000005960464
+          },
+          "touchHoldCaptureMs": {
+            "min": 32.80000001192093,
+            "max": 49.70000001788139
+          }
+        },
+        {
+          "requestedHoldMs": 200,
+          "trials": 5,
+          "eligible": 5,
+          "dayAdvance": 0,
+          "touchHoldSendMs": {
+            "min": 198.49130800366402,
+            "max": 201.32408499717712
+          },
+          "touchHoldEventMs": {
+            "min": 196.30000001192093,
+            "max": 201.30000001192093
+          },
+          "touchHoldCaptureMs": {
+            "min": 165.5,
+            "max": 200.0
+          }
+        }
+      ],
+      "beforeObservations": {
+        "after-300": {
+          "requestedFromKeySendMs": {
+            "min": 299.3979069888592,
+            "max": 300.8922649919987
+          },
+          "receivedFromKeySendMs": {
+            "min": 304.31110098958015,
+            "max": 319.4722650051117
+          },
+          "readDurationMs": {
+            "min": 4.913194000720978,
+            "max": 19.90922400355339
+          },
+          "browserSampleFromKeyEventMs": {
+            "min": 299,
+            "max": 306.10000002384186
+          }
+        },
+        "after-1500": {
+          "requestedFromKeySendMs": {
+            "min": 1499.2965439856052,
+            "max": 1504.612675011158
+          },
+          "receivedFromKeySendMs": {
+            "min": 8205.165612012148,
+            "max": 9584.935600996017
+          },
+          "readDurationMs": {
+            "min": 6700.55293700099,
+            "max": 8084.68488997221
+          },
+          "browserSampleFromKeyEventMs": {
+            "min": 8194,
+            "max": 9576.09999999404
+          }
+        }
+      },
+      "afterObservations": {
+        "after-300": {
+          "requestedFromKeySendMs": {
+            "min": 299.55509999394417,
+            "max": 301.105024009943
+          },
+          "receivedFromKeySendMs": {
+            "min": 305.9446969926357,
+            "max": 318.803434997797
+          },
+          "readDurationMs": {
+            "min": 6.227802008390427,
+            "max": 17.698410987854004
+          },
+          "browserSampleFromKeyEventMs": {
+            "min": 298.7999999821186,
+            "max": 303.80000001192093
+          }
+        },
+        "after-1500": {
+          "requestedFromKeySendMs": {
+            "min": 1499.0121850073338,
+            "max": 1500.6106490194798
+          },
+          "receivedFromKeySendMs": {
+            "min": 1505.7804569900036,
+            "max": 1512.6280170083046
+          },
+          "readDurationMs": {
+            "min": 6.302848994731903,
+            "max": 12.417937994003296
+          },
+          "browserSampleFromKeyEventMs": {
+            "min": 1498.300000011921,
+            "max": 1501.5
+          }
+        }
+      },
+      "sameConfiguredInputViewportCPUHttpTargets": true,
+      "protectedSource3Unchanged": true,
+      "claim": "In this controlled focused diagnostic, unwanted day advance10/10 ->0/10 with10/10 eligibility both times. Both tap-hold groups5/5 ->0/5. No human-retention or general-latency causal estimate."
+    },
+    "trials": {
+      "before": [
+        {
+          "id": "trial-01",
+          "requestedTouchHoldMs": 40,
+          "eligible": true,
+          "dayAdvance": true,
+          "focusOrigin": "touch",
+          "tabs": 0,
+          "touchHoldSendMs": 39.37268400192261,
+          "touchHoldEventMs": 41.099999994039536,
+          "touchHoldCaptureMs": 49.80000001192093,
+          "arrowHoldEventMs": 38.30000001192093,
+          "dateFirstObserved": {
+            "date": "1月2日",
+            "browserAt": 2256.9000000059605,
+            "nodeEpochRecorded": 1794688606387,
+            "fromKeyEventMs": 217.90000000596046,
+            "fromKeySendEpochMs": 222,
+            "meaning": "DOM observer notification; not physical paint onset or human response time"
+          },
+          "observations": [
+            {
+              "label": "after-300",
+              "plannedMs": 300,
+              "requestedFromKeySendMs": 299.93468099832535,
+              "receivedFromKeySendMs": 308.6353560090065,
+              "readDurationMs": 8.700675010681152,
+              "browserSampleFromKeyEventMs": 299.30000001192093,
+              "date": "1月2日",
+              "dateElementVisible": true,
+              "activeId": "swSnd",
+              "soundPressed": "false"
+            },
+            {
+              "label": "after-1500",
+              "plannedMs": 1500,
+              "requestedFromKeySendMs": 1499.849916011095,
+              "receivedFromKeySendMs": 8892.432081013918,
+              "readDurationMs": 7392.582165002823,
+              "browserSampleFromKeyEventMs": 8865.199999988079,
+              "date": "1月2日",
+              "dateElementVisible": true,
+              "activeId": "swSnd",
+              "soundPressed": "false"
+            }
+          ],
+          "commandCount": 4,
+          "cleanupCount": 0,
+          "actualChildExit": 1,
+          "consoleErrors": 1
+        },
+        {
+          "id": "trial-02",
+          "requestedTouchHoldMs": 200,
+          "eligible": true,
+          "dayAdvance": true,
+          "focusOrigin": "touch",
+          "tabs": 0,
+          "touchHoldSendMs": 199.1400350034237,
+          "touchHoldEventMs": 199.40000000596046,
+          "touchHoldCaptureMs": 199.0,
+          "arrowHoldEventMs": 39.0,
+          "dateFirstObserved": {
+            "date": "1月2日",
+            "browserAt": 2318.2000000178814,
+            "nodeEpochRecorded": 1794688619401,
+            "fromKeyEventMs": 213.90000000596046,
+            "fromKeySendEpochMs": 216,
+            "meaning": "DOM observer notification; not physical paint onset or human response time"
+          },
+          "observations": [
+            {
+              "label": "after-300",
+              "plannedMs": 300,
+              "requestedFromKeySendMs": 300.20174899697304,
+              "receivedFromKeySendMs": 306.00930202007294,
+              "readDurationMs": 5.807553023099899,
+              "browserSampleFromKeyEventMs": 300.30000001192093,
+              "date": "1月2日",
+              "dateElementVisible": true,
+              "activeId": "swSnd",
+              "soundPressed": "false"
+            },
+            {
+              "label": "after-1500",
+              "plannedMs": 1500,
+              "requestedFromKeySendMs": 1500.2507110238075,
+              "receivedFromKeySendMs": 9584.935600996017,
+              "readDurationMs": 8084.68488997221,
+              "browserSampleFromKeyEventMs": 9576.09999999404,
+              "date": "1月2日",
+              "dateElementVisible": true,
+              "activeId": "swSnd",
+              "soundPressed": "false"
+            }
+          ],
+          "commandCount": 4,
+          "cleanupCount": 0,
+          "actualChildExit": 1,
+          "consoleErrors": 1
+        },
+        {
+          "id": "trial-03",
+          "requestedTouchHoldMs": 40,
+          "eligible": true,
+          "dayAdvance": true,
+          "focusOrigin": "touch",
+          "tabs": 0,
+          "touchHoldSendMs": 40.42989099025726,
+          "touchHoldEventMs": 41.29999998211861,
+          "touchHoldCaptureMs": 49.69999998807907,
+          "arrowHoldEventMs": 40.0,
+          "dateFirstObserved": {
+            "date": "1月2日",
+            "browserAt": 2375.699999988079,
+            "nodeEpochRecorded": 1794688633209,
+            "fromKeyEventMs": 197.40000000596046,
+            "fromKeySendEpochMs": 199,
+            "meaning": "DOM observer notification; not physical paint onset or human response time"
+          },
+          "observations": [
+            {
+              "label": "after-300",
+              "plannedMs": 300,
+              "requestedFromKeySendMs": 299.5630410015583,
+              "receivedFromKeySendMs": 319.4722650051117,
+              "readDurationMs": 19.90922400355339,
+              "browserSampleFromKeyEventMs": 306.10000002384186,
+              "date": "1月2日",
+              "dateElementVisible": true,
+              "activeId": "swSnd",
+              "soundPressed": "false"
+            },
+            {
+              "label": "after-1500",
+              "plannedMs": 1500,
+              "requestedFromKeySendMs": 1500.2540960013866,
+              "receivedFromKeySendMs": 8832.381778001785,
+              "readDurationMs": 7332.127682000399,
+              "browserSampleFromKeyEventMs": 8823.100000023842,
+              "date": "1月2日",
+              "dateElementVisible": true,
+              "activeId": "swSnd",
+              "soundPressed": "false"
+            }
+          ],
+          "commandCount": 4,
+          "cleanupCount": 0,
+          "actualChildExit": 1,
+          "consoleErrors": 1
+        },
+        {
+          "id": "trial-04",
+          "requestedTouchHoldMs": 200,
+          "eligible": true,
+          "dayAdvance": true,
+          "focusOrigin": "touch",
+          "tabs": 0,
+          "touchHoldSendMs": 200.6500439941883,
+          "touchHoldEventMs": 198.40000000596046,
+          "touchHoldCaptureMs": 200.0,
+          "arrowHoldEventMs": 37.20000001788139,
+          "dateFirstObserved": {
+            "date": "1月2日",
+            "browserAt": 2217.2000000178814,
+            "nodeEpochRecorded": 1794688645787,
+            "fromKeyEventMs": 201.2000000178814,
+            "fromKeySendEpochMs": 205,
+            "meaning": "DOM observer notification; not physical paint onset or human response time"
+          },
+          "observations": [
+            {
+              "label": "after-300",
+              "plannedMs": 300,
+              "requestedFromKeySendMs": 300.3413360118866,
+              "receivedFromKeySendMs": 311.33160200715065,
+              "readDurationMs": 10.990265995264053,
+              "browserSampleFromKeyEventMs": 299,
+              "date": "1月2日",
+              "dateElementVisible": true,
+              "activeId": "swSnd",
+              "soundPressed": "false"
+            },
+            {
+              "label": "after-1500",
+              "plannedMs": 1500,
+              "requestedFromKeySendMs": 1504.612675011158,
+              "receivedFromKeySendMs": 8205.165612012148,
+              "readDurationMs": 6700.55293700099,
+              "browserSampleFromKeyEventMs": 8194,
+              "date": "1月2日",
+              "dateElementVisible": true,
+              "activeId": "swSnd",
+              "soundPressed": "false"
+            }
+          ],
+          "commandCount": 4,
+          "cleanupCount": 0,
+          "actualChildExit": 1,
+          "consoleErrors": 1
+        },
+        {
+          "id": "trial-05",
+          "requestedTouchHoldMs": 40,
+          "eligible": true,
+          "dayAdvance": true,
+          "focusOrigin": "touch",
+          "tabs": 0,
+          "touchHoldSendMs": 39.91235899925232,
+          "touchHoldEventMs": 39.70000001788139,
+          "touchHoldCaptureMs": 49.39999997615814,
+          "arrowHoldEventMs": 41.599999994039536,
+          "dateFirstObserved": {
+            "date": "1月2日",
+            "browserAt": 2224.5,
+            "nodeEpochRecorded": 1794688657999,
+            "fromKeyEventMs": 198.69999998807907,
+            "fromKeySendEpochMs": 201,
+            "meaning": "DOM observer notification; not physical paint onset or human response time"
+          },
+          "observations": [
+            {
+              "label": "after-300",
+              "plannedMs": 300,
+              "requestedFromKeySendMs": 300.5237649977207,
+              "receivedFromKeySendMs": 307.8942829966545,
+              "readDurationMs": 7.370517998933792,
+              "browserSampleFromKeyEventMs": 301.09999999403954,
+              "date": "1月2日",
+              "dateElementVisible": true,
+              "activeId": "swSnd",
+              "soundPressed": "false"
+            },
+            {
+              "label": "after-1500",
+              "plannedMs": 1500,
+              "requestedFromKeySendMs": 1500.865678012371,
+              "receivedFromKeySendMs": 8343.969815015793,
+              "readDurationMs": 6843.104137003422,
+              "browserSampleFromKeyEventMs": 8332.5,
+              "date": "1月2日",
+              "dateElementVisible": true,
+              "activeId": "swSnd",
+              "soundPressed": "false"
+            }
+          ],
+          "commandCount": 4,
+          "cleanupCount": 0,
+          "actualChildExit": 1,
+          "consoleErrors": 1
+        },
+        {
+          "id": "trial-06",
+          "requestedTouchHoldMs": 200,
+          "eligible": true,
+          "dayAdvance": true,
+          "focusOrigin": "touch",
+          "tabs": 0,
+          "touchHoldSendMs": 199.8949580192566,
+          "touchHoldEventMs": 204.40000000596046,
+          "touchHoldCaptureMs": 199.40000000596046,
+          "arrowHoldEventMs": 39.69999998807907,
+          "dateFirstObserved": {
+            "date": "1月2日",
+            "browserAt": 2325.699999988079,
+            "nodeEpochRecorded": 1794688669784,
+            "fromKeyEventMs": 198.69999998807907,
+            "fromKeySendEpochMs": 201,
+            "meaning": "DOM observer notification; not physical paint onset or human response time"
+          },
+          "observations": [
+            {
+              "label": "after-300",
+              "plannedMs": 300,
+              "requestedFromKeySendMs": 300.8922649919987,
+              "receivedFromKeySendMs": 306.6370809972286,
+              "readDurationMs": 5.74481600522995,
+              "browserSampleFromKeyEventMs": 300.09999999403954,
+              "date": "1月2日",
+              "dateElementVisible": true,
+              "activeId": "swSnd",
+              "soundPressed": "false"
+            },
+            {
+              "label": "after-1500",
+              "plannedMs": 1500,
+              "requestedFromKeySendMs": 1503.3412649929523,
+              "receivedFromKeySendMs": 8517.092815995216,
+              "readDurationMs": 7013.751551002264,
+              "browserSampleFromKeyEventMs": 8504.5,
+              "date": "1月2日",
+              "dateElementVisible": true,
+              "activeId": "swSnd",
+              "soundPressed": "false"
+            }
+          ],
+          "commandCount": 4,
+          "cleanupCount": 0,
+          "actualChildExit": 1,
+          "consoleErrors": 1
+        },
+        {
+          "id": "trial-07",
+          "requestedTouchHoldMs": 40,
+          "eligible": true,
+          "dayAdvance": true,
+          "focusOrigin": "touch",
+          "tabs": 0,
+          "touchHoldSendMs": 38.94679898023605,
+          "touchHoldEventMs": 38.89999997615814,
+          "touchHoldCaptureMs": 50.900000005960464,
+          "arrowHoldEventMs": 39.599999994039536,
+          "dateFirstObserved": {
+            "date": "1月2日",
+            "browserAt": 2146.600000023842,
+            "nodeEpochRecorded": 1794688681912,
+            "fromKeyEventMs": 200.30000001192093,
+            "fromKeySendEpochMs": 201,
+            "meaning": "DOM observer notification; not physical paint onset or human response time"
+          },
+          "observations": [
+            {
+              "label": "after-300",
+              "plannedMs": 300,
+              "requestedFromKeySendMs": 299.3979069888592,
+              "receivedFromKeySendMs": 304.31110098958015,
+              "readDurationMs": 4.913194000720978,
+              "browserSampleFromKeyEventMs": 299.19999998807907,
+              "date": "1月2日",
+              "dateElementVisible": true,
+              "activeId": "swSnd",
+              "soundPressed": "false"
+            },
+            {
+              "label": "after-1500",
+              "plannedMs": 1500,
+              "requestedFromKeySendMs": 1499.2965439856052,
+              "receivedFromKeySendMs": 8342.477634996176,
+              "readDurationMs": 6843.1810910105705,
+              "browserSampleFromKeyEventMs": 8334.199999988079,
+              "date": "1月2日",
+              "dateElementVisible": true,
+              "activeId": "swSnd",
+              "soundPressed": "false"
+            }
+          ],
+          "commandCount": 4,
+          "cleanupCount": 0,
+          "actualChildExit": 1,
+          "consoleErrors": 1
+        },
+        {
+          "id": "trial-08",
+          "requestedTouchHoldMs": 200,
+          "eligible": true,
+          "dayAdvance": true,
+          "focusOrigin": "touch",
+          "tabs": 0,
+          "touchHoldSendMs": 200.140193015337,
+          "touchHoldEventMs": 200.19999998807907,
+          "touchHoldCaptureMs": 165.59999999403954,
+          "arrowHoldEventMs": 39.80000001192093,
+          "dateFirstObserved": {
+            "date": "1月2日",
+            "browserAt": 2260.2999999821186,
+            "nodeEpochRecorded": 1794688693930,
+            "fromKeyEventMs": 200.09999999403954,
+            "fromKeySendEpochMs": 202,
+            "meaning": "DOM observer notification; not physical paint onset or human response time"
+          },
+          "observations": [
+            {
+              "label": "after-300",
+              "plannedMs": 300,
+              "requestedFromKeySendMs": 300.1283020079136,
+              "receivedFromKeySendMs": 308.09773302078247,
+              "readDurationMs": 7.969431012868881,
+              "browserSampleFromKeyEventMs": 299.5,
+              "date": "1月2日",
+              "dateElementVisible": true,
+              "activeId": "swSnd",
+              "soundPressed": "false"
+            },
+            {
+              "label": "after-1500",
+              "plannedMs": 1500,
+              "requestedFromKeySendMs": 1500.5213060081005,
+              "receivedFromKeySendMs": 8640.884427011013,
+              "readDurationMs": 7140.3631210029125,
+              "browserSampleFromKeyEventMs": 8625.199999988079,
+              "date": "1月2日",
+              "dateElementVisible": true,
+              "activeId": "swSnd",
+              "soundPressed": "false"
+            }
+          ],
+          "commandCount": 4,
+          "cleanupCount": 0,
+          "actualChildExit": 1,
+          "consoleErrors": 1
+        },
+        {
+          "id": "trial-09",
+          "requestedTouchHoldMs": 40,
+          "eligible": true,
+          "dayAdvance": true,
+          "focusOrigin": "touch",
+          "tabs": 0,
+          "touchHoldSendMs": 38.727972000837326,
+          "touchHoldEventMs": 38.599999994039536,
+          "touchHoldCaptureMs": 32.5,
+          "arrowHoldEventMs": 39.69999998807907,
+          "dateFirstObserved": {
+            "date": "1月2日",
+            "browserAt": 2072.5,
+            "nodeEpochRecorded": 1794688706144,
+            "fromKeyEventMs": 194.7999999821186,
+            "fromKeySendEpochMs": 197,
+            "meaning": "DOM observer notification; not physical paint onset or human response time"
+          },
+          "observations": [
+            {
+              "label": "after-300",
+              "plannedMs": 300,
+              "requestedFromKeySendMs": 299.97721499204636,
+              "receivedFromKeySendMs": 305.362733989954,
+              "readDurationMs": 5.3855189979076385,
+              "browserSampleFromKeyEventMs": 300.2999999821186,
+              "date": "1月2日",
+              "dateElementVisible": true,
+              "activeId": "swSnd",
+              "soundPressed": "false"
+            },
+            {
+              "label": "after-1500",
+              "plannedMs": 1500,
+              "requestedFromKeySendMs": 1499.585303992033,
+              "receivedFromKeySendMs": 8377.890266001225,
+              "readDurationMs": 6878.3049620091915,
+              "browserSampleFromKeyEventMs": 8370.699999988079,
+              "date": "1月2日",
+              "dateElementVisible": true,
+              "activeId": "swSnd",
+              "soundPressed": "false"
+            }
+          ],
+          "commandCount": 4,
+          "cleanupCount": 0,
+          "actualChildExit": 1,
+          "consoleErrors": 1
+        },
+        {
+          "id": "trial-10",
+          "requestedTouchHoldMs": 200,
+          "eligible": true,
+          "dayAdvance": true,
+          "focusOrigin": "touch",
+          "tabs": 0,
+          "touchHoldSendMs": 199.20036900043488,
+          "touchHoldEventMs": 198.19999998807907,
+          "touchHoldCaptureMs": 195.80000001192093,
+          "arrowHoldEventMs": 38.900000005960464,
+          "dateFirstObserved": {
+            "date": "1月2日",
+            "browserAt": 2218.5,
+            "nodeEpochRecorded": 1794688718100,
+            "fromKeyEventMs": 199.0,
+            "fromKeySendEpochMs": 202,
+            "meaning": "DOM observer notification; not physical paint onset or human response time"
+          },
+          "observations": [
+            {
+              "label": "after-300",
+              "plannedMs": 300,
+              "requestedFromKeySendMs": 300.39413699507713,
+              "receivedFromKeySendMs": 306.8910160064697,
+              "readDurationMs": 6.496879011392593,
+              "browserSampleFromKeyEventMs": 299.2000000178814,
+              "date": "1月2日",
+              "dateElementVisible": true,
+              "activeId": "swSnd",
+              "soundPressed": "false"
+            },
+            {
+              "label": "after-1500",
+              "plannedMs": 1500,
+              "requestedFromKeySendMs": 1500.3909389972687,
+              "receivedFromKeySendMs": 8618.336212992668,
+              "readDurationMs": 7117.9452739953995,
+              "browserSampleFromKeyEventMs": 8609.59999999404,
+              "date": "1月2日",
+              "dateElementVisible": true,
+              "activeId": "swSnd",
+              "soundPressed": "false"
+            }
+          ],
+          "commandCount": 4,
+          "cleanupCount": 0,
+          "actualChildExit": 1,
+          "consoleErrors": 1
+        }
+      ],
+      "after": [
+        {
+          "id": "trial-01",
+          "requestedTouchHoldMs": 40,
+          "eligible": true,
+          "dayAdvance": false,
+          "focusOrigin": "touch",
+          "tabs": 0,
+          "touchHoldSendMs": 39.71952798962593,
+          "touchHoldEventMs": 39.599999994039536,
+          "touchHoldCaptureMs": 39.70000001788139,
+          "arrowHoldEventMs": 40.400000005960464,
+          "dateFirstObserved": null,
+          "observations": [
+            {
+              "label": "after-300",
+              "plannedMs": 300,
+              "requestedFromKeySendMs": 300.8900740146637,
+              "receivedFromKeySendMs": 308.99576500058174,
+              "readDurationMs": 8.105690985918045,
+              "browserSampleFromKeyEventMs": 300.19999998807907,
+              "date": "1月1日",
+              "dateElementVisible": true,
+              "activeId": "swSnd",
+              "soundPressed": "false"
+            },
+            {
+              "label": "after-1500",
+              "plannedMs": 1500,
+              "requestedFromKeySendMs": 1500.1382859945297,
+              "receivedFromKeySendMs": 1506.780268996954,
+              "readDurationMs": 6.64198300242424,
+              "browserSampleFromKeyEventMs": 1500.0,
+              "date": "1月1日",
+              "dateElementVisible": true,
+              "activeId": "swSnd",
+              "soundPressed": "false"
+            }
+          ],
+          "commandCount": 4,
+          "cleanupCount": 0,
+          "actualChildExit": 1,
+          "consoleErrors": 1
+        },
+        {
+          "id": "trial-02",
+          "requestedTouchHoldMs": 200,
+          "eligible": true,
+          "dayAdvance": false,
+          "focusOrigin": "touch",
+          "tabs": 0,
+          "touchHoldSendMs": 198.6492259800434,
+          "touchHoldEventMs": 196.30000001192093,
+          "touchHoldCaptureMs": 181.80000001192093,
+          "arrowHoldEventMs": 39.599999994039536,
+          "dateFirstObserved": null,
+          "observations": [
+            {
+              "label": "after-300",
+              "plannedMs": 300,
+              "requestedFromKeySendMs": 299.9521740078926,
+              "receivedFromKeySendMs": 306.62807700037956,
+              "readDurationMs": 6.675902992486954,
+              "browserSampleFromKeyEventMs": 299.2000000178814,
+              "date": "1月1日",
+              "dateElementVisible": true,
+              "activeId": "swSnd",
+              "soundPressed": "false"
+            },
+            {
+              "label": "after-1500",
+              "plannedMs": 1500,
+              "requestedFromKeySendMs": 1499.5181170105934,
+              "receivedFromKeySendMs": 1508.3177170157433,
+              "readDurationMs": 8.799600005149841,
+              "browserSampleFromKeyEventMs": 1499.2000000178814,
+              "date": "1月1日",
+              "dateElementVisible": true,
+              "activeId": "swSnd",
+              "soundPressed": "false"
+            }
+          ],
+          "commandCount": 4,
+          "cleanupCount": 0,
+          "actualChildExit": 1,
+          "consoleErrors": 1
+        },
+        {
+          "id": "trial-03",
+          "requestedTouchHoldMs": 40,
+          "eligible": true,
+          "dayAdvance": false,
+          "focusOrigin": "touch",
+          "tabs": 0,
+          "touchHoldSendMs": 40.02022099494934,
+          "touchHoldEventMs": 39.69999998807907,
+          "touchHoldCaptureMs": 33.70000001788139,
+          "arrowHoldEventMs": 40.30000001192093,
+          "dateFirstObserved": null,
+          "observations": [
+            {
+              "label": "after-300",
+              "plannedMs": 300,
+              "requestedFromKeySendMs": 299.98463201522827,
+              "receivedFromKeySendMs": 306.21420499682426,
+              "readDurationMs": 6.229572981595993,
+              "browserSampleFromKeyEventMs": 299.0,
+              "date": "1月1日",
+              "dateElementVisible": true,
+              "activeId": "swSnd",
+              "soundPressed": "false"
+            },
+            {
+              "label": "after-1500",
+              "plannedMs": 1500,
+              "requestedFromKeySendMs": 1500.6106490194798,
+              "receivedFromKeySendMs": 1508.3894149959087,
+              "readDurationMs": 7.778765976428986,
+              "browserSampleFromKeyEventMs": 1499.9000000059605,
+              "date": "1月1日",
+              "dateElementVisible": true,
+              "activeId": "swSnd",
+              "soundPressed": "false"
+            }
+          ],
+          "commandCount": 4,
+          "cleanupCount": 0,
+          "actualChildExit": 1,
+          "consoleErrors": 1
+        },
+        {
+          "id": "trial-04",
+          "requestedTouchHoldMs": 200,
+          "eligible": true,
+          "dayAdvance": false,
+          "focusOrigin": "touch",
+          "tabs": 0,
+          "touchHoldSendMs": 198.49130800366402,
+          "touchHoldEventMs": 197.0,
+          "touchHoldCaptureMs": 200.0,
+          "arrowHoldEventMs": 39.29999998211861,
+          "dateFirstObserved": null,
+          "observations": [
+            {
+              "label": "after-300",
+              "plannedMs": 300,
+              "requestedFromKeySendMs": 299.55509999394417,
+              "receivedFromKeySendMs": 307.6814189851284,
+              "readDurationMs": 8.126318991184235,
+              "browserSampleFromKeyEventMs": 300.0,
+              "date": "1月1日",
+              "dateElementVisible": true,
+              "activeId": "swSnd",
+              "soundPressed": "false"
+            },
+            {
+              "label": "after-1500",
+              "plannedMs": 1500,
+              "requestedFromKeySendMs": 1499.9245219826698,
+              "receivedFromKeySendMs": 1507.059434980154,
+              "readDurationMs": 7.134912997484207,
+              "browserSampleFromKeyEventMs": 1499.5999999940395,
+              "date": "1月1日",
+              "dateElementVisible": true,
+              "activeId": "swSnd",
+              "soundPressed": "false"
+            }
+          ],
+          "commandCount": 4,
+          "cleanupCount": 0,
+          "actualChildExit": 1,
+          "consoleErrors": 1
+        },
+        {
+          "id": "trial-05",
+          "requestedTouchHoldMs": 40,
+          "eligible": true,
+          "dayAdvance": false,
+          "focusOrigin": "touch",
+          "tabs": 0,
+          "touchHoldSendMs": 38.586991995573044,
+          "touchHoldEventMs": 39.599999994039536,
+          "touchHoldCaptureMs": 48.70000001788139,
+          "arrowHoldEventMs": 39.70000001788139,
+          "dateFirstObserved": null,
+          "observations": [
+            {
+              "label": "after-300",
+              "plannedMs": 300,
+              "requestedFromKeySendMs": 300.2841329872608,
+              "receivedFromKeySendMs": 307.03165701031685,
+              "readDurationMs": 6.74752402305603,
+              "browserSampleFromKeyEventMs": 299.80000001192093,
+              "date": "1月1日",
+              "dateElementVisible": true,
+              "activeId": "swSnd",
+              "soundPressed": "false"
+            },
+            {
+              "label": "after-1500",
+              "plannedMs": 1500,
+              "requestedFromKeySendMs": 1499.4776079952717,
+              "receivedFromKeySendMs": 1505.7804569900036,
+              "readDurationMs": 6.302848994731903,
+              "browserSampleFromKeyEventMs": 1499.2000000178814,
+              "date": "1月1日",
+              "dateElementVisible": true,
+              "activeId": "swSnd",
+              "soundPressed": "false"
+            }
+          ],
+          "commandCount": 4,
+          "cleanupCount": 0,
+          "actualChildExit": 1,
+          "consoleErrors": 1
+        },
+        {
+          "id": "trial-06",
+          "requestedTouchHoldMs": 200,
+          "eligible": true,
+          "dayAdvance": false,
+          "focusOrigin": "touch",
+          "tabs": 0,
+          "touchHoldSendMs": 200.35388898849487,
+          "touchHoldEventMs": 199.90000000596046,
+          "touchHoldCaptureMs": 165.5,
+          "arrowHoldEventMs": 41.599999994039536,
+          "dateFirstObserved": null,
+          "observations": [
+            {
+              "label": "after-300",
+              "plannedMs": 300,
+              "requestedFromKeySendMs": 299.7168949842453,
+              "receivedFromKeySendMs": 305.9446969926357,
+              "readDurationMs": 6.227802008390427,
+              "browserSampleFromKeyEventMs": 298.7999999821186,
+              "date": "1月1日",
+              "dateElementVisible": true,
+              "activeId": "swSnd",
+              "soundPressed": "false"
+            },
+            {
+              "label": "after-1500",
+              "plannedMs": 1500,
+              "requestedFromKeySendMs": 1499.3173079788685,
+              "receivedFromKeySendMs": 1507.0873239934444,
+              "readDurationMs": 7.770016014575958,
+              "browserSampleFromKeyEventMs": 1498.5999999940395,
+              "date": "1月1日",
+              "dateElementVisible": true,
+              "activeId": "swSnd",
+              "soundPressed": "false"
+            }
+          ],
+          "commandCount": 4,
+          "cleanupCount": 0,
+          "actualChildExit": 1,
+          "consoleErrors": 1
+        },
+        {
+          "id": "trial-07",
+          "requestedTouchHoldMs": 40,
+          "eligible": true,
+          "dayAdvance": false,
+          "focusOrigin": "touch",
+          "tabs": 0,
+          "touchHoldSendMs": 39.0341539978981,
+          "touchHoldEventMs": 37.400000005960464,
+          "touchHoldCaptureMs": 49.70000001788139,
+          "arrowHoldEventMs": 38.20000001788139,
+          "dateFirstObserved": null,
+          "observations": [
+            {
+              "label": "after-300",
+              "plannedMs": 300,
+              "requestedFromKeySendMs": 299.59755501151085,
+              "receivedFromKeySendMs": 312.70943599939346,
+              "readDurationMs": 13.111880987882614,
+              "browserSampleFromKeyEventMs": 303.80000001192093,
+              "date": "1月1日",
+              "dateElementVisible": true,
+              "activeId": "swSnd",
+              "soundPressed": "false"
+            },
+            {
+              "label": "after-1500",
+              "plannedMs": 1500,
+              "requestedFromKeySendMs": 1499.7963420152664,
+              "receivedFromKeySendMs": 1506.975111991167,
+              "readDurationMs": 7.17876997590065,
+              "browserSampleFromKeyEventMs": 1498.300000011921,
+              "date": "1月1日",
+              "dateElementVisible": true,
+              "activeId": "swSnd",
+              "soundPressed": "false"
+            }
+          ],
+          "commandCount": 4,
+          "cleanupCount": 0,
+          "actualChildExit": 1,
+          "consoleErrors": 1
+        },
+        {
+          "id": "trial-08",
+          "requestedTouchHoldMs": 200,
+          "eligible": true,
+          "dayAdvance": false,
+          "focusOrigin": "touch",
+          "tabs": 0,
+          "touchHoldSendMs": 201.32408499717712,
+          "touchHoldEventMs": 200.90000000596046,
+          "touchHoldCaptureMs": 197.90000000596046,
+          "arrowHoldEventMs": 39.400000005960464,
+          "dateFirstObserved": null,
+          "observations": [
+            {
+              "label": "after-300",
+              "plannedMs": 300,
+              "requestedFromKeySendMs": 299.6745859980583,
+              "receivedFromKeySendMs": 307.8672240078449,
+              "readDurationMs": 8.192638009786606,
+              "browserSampleFromKeyEventMs": 300.59999999403954,
+              "date": "1月1日",
+              "dateElementVisible": true,
+              "activeId": "swSnd",
+              "soundPressed": "false"
+            },
+            {
+              "label": "after-1500",
+              "plannedMs": 1500,
+              "requestedFromKeySendMs": 1499.0121850073338,
+              "receivedFromKeySendMs": 1509.158556997776,
+              "readDurationMs": 10.146371990442276,
+              "browserSampleFromKeyEventMs": 1500.0,
+              "date": "1月1日",
+              "dateElementVisible": true,
+              "activeId": "swSnd",
+              "soundPressed": "false"
+            }
+          ],
+          "commandCount": 4,
+          "cleanupCount": 0,
+          "actualChildExit": 1,
+          "consoleErrors": 1
+        },
+        {
+          "id": "trial-09",
+          "requestedTouchHoldMs": 40,
+          "eligible": true,
+          "dayAdvance": false,
+          "focusOrigin": "touch",
+          "tabs": 0,
+          "touchHoldSendMs": 40.50799399614334,
+          "touchHoldEventMs": 40.400000005960464,
+          "touchHoldCaptureMs": 32.80000001192093,
+          "arrowHoldEventMs": 41.099999994039536,
+          "dateFirstObserved": null,
+          "observations": [
+            {
+              "label": "after-300",
+              "plannedMs": 300,
+              "requestedFromKeySendMs": 301.105024009943,
+              "receivedFromKeySendMs": 318.803434997797,
+              "readDurationMs": 17.698410987854004,
+              "browserSampleFromKeyEventMs": 302.90000000596046,
+              "date": "1月1日",
+              "dateElementVisible": true,
+              "activeId": "swSnd",
+              "soundPressed": "false"
+            },
+            {
+              "label": "after-1500",
+              "plannedMs": 1500,
+              "requestedFromKeySendMs": 1500.3390420079231,
+              "receivedFromKeySendMs": 1512.6280170083046,
+              "readDurationMs": 12.28897500038147,
+              "browserSampleFromKeyEventMs": 1500.9000000059605,
+              "date": "1月1日",
+              "dateElementVisible": true,
+              "activeId": "swSnd",
+              "soundPressed": "false"
+            }
+          ],
+          "commandCount": 4,
+          "cleanupCount": 0,
+          "actualChildExit": 1,
+          "consoleErrors": 1
+        },
+        {
+          "id": "trial-10",
+          "requestedTouchHoldMs": 200,
+          "eligible": true,
+          "dayAdvance": false,
+          "focusOrigin": "touch",
+          "tabs": 0,
+          "touchHoldSendMs": 200.09330901503563,
+          "touchHoldEventMs": 201.30000001192093,
+          "touchHoldCaptureMs": 168.59999999403954,
+          "arrowHoldEventMs": 40.599999994039536,
+          "dateFirstObserved": null,
+          "observations": [
+            {
+              "label": "after-300",
+              "plannedMs": 300,
+              "requestedFromKeySendMs": 299.8106039762497,
+              "receivedFromKeySendMs": 306.86016097664833,
+              "readDurationMs": 7.049557000398636,
+              "browserSampleFromKeyEventMs": 298.90000000596046,
+              "date": "1月1日",
+              "dateElementVisible": true,
+              "activeId": "swSnd",
+              "soundPressed": "false"
+            },
+            {
+              "label": "after-1500",
+              "plannedMs": 1500,
+              "requestedFromKeySendMs": 1500.0644649863243,
+              "receivedFromKeySendMs": 1512.4824029803276,
+              "readDurationMs": 12.417937994003296,
+              "browserSampleFromKeyEventMs": 1501.5,
+              "date": "1月1日",
+              "dateElementVisible": true,
+              "activeId": "swSnd",
+              "soundPressed": "false"
+            }
+          ],
+          "commandCount": 4,
+          "cleanupCount": 0,
+          "actualChildExit": 1,
+          "consoleErrors": 1
+        }
+      ]
+    },
+    "protocol": [
+      "Fresh process/context per trial,844x390 mobile/touch CPU1,local actual3D assets,external requests blocked.",
+      "Wait for visible January1 and choices, then real CDP touch on sound control and verify one trusted click/mute/focus/date unchanged.",
+      "No programmatic focus; bounded Tab fallback available but actually used0.",
+      "Send ArrowRight down/up40ms, with actual target/active swSnd and trusted input records.",
+      "Schedule DOM reads300/1500ms from keyDown send; preserve actual request/browser/return times rather than asserting on-time observations.",
+      "Sound touch hold40/200ms alternating,each5,before and after identical script/criteria; no retry or eligibility based on day advance."
+    ],
+    "originalDiagnosticPhotosSaved": 60,
+    "reportAuthorDiagnosticPhotosPersonallyViewed": 4,
+    "originalPhotoManifests": {
+      "before": [
+        {
+          "trial": "trial-01",
+          "name": "before",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-reproduction-before/trial-01/before.png",
+          "requested": {
+            "epoch": 1794688605370,
+            "mono": 199664883.469231
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794688605566,
+            "mono": 199665080.401178
+          },
+          "sha256": "f46b83eb3d438a7d50b0d056df83d857458e3825da982faa114c0c1545f7c3e4"
+        },
+        {
+          "trial": "trial-01",
+          "name": "before-key",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-reproduction-before/trial-01/before-key.png",
+          "requested": {
+            "epoch": 1794688606025,
+            "mono": 199665538.741841
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794688606157,
+            "mono": 199665671.132794
+          },
+          "sha256": "58fa14f39f56cfa403abdcabebded5ec321ee84a127ef8159a5784dbbf24c90d"
+        },
+        {
+          "trial": "trial-01",
+          "name": "after",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-reproduction-before/trial-01/after.png",
+          "requested": {
+            "epoch": 1794688606476,
+            "mono": 199665990.343011
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794688606650,
+            "mono": 199666164.333302
+          },
+          "sha256": "5da44560dbc90fcf01b29f909104d3885482179690703917e88f6b62bd71e5dc"
+        },
+        {
+          "trial": "trial-02",
+          "name": "before",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-reproduction-before/trial-02/before.png",
+          "requested": {
+            "epoch": 1794688618293,
+            "mono": 199677807.35077
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794688618489,
+            "mono": 199678003.051014
+          },
+          "sha256": "2b74fbfd2e180866be7c95a7a4bacd973c4a7f7c0d664f309cfdce1b1f9564a3"
+        },
+        {
+          "trial": "trial-02",
+          "name": "before-key",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-reproduction-before/trial-02/before-key.png",
+          "requested": {
+            "epoch": 1794688619061,
+            "mono": 199678574.963777
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794688619177,
+            "mono": 199678690.623665
+          },
+          "sha256": "bf7b3f3f93d6a9e008d0325028e13850b05206f0f75d75bc7e2f47a2e9f72c93"
+        },
+        {
+          "trial": "trial-02",
+          "name": "after",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-reproduction-before/trial-02/after.png",
+          "requested": {
+            "epoch": 1794688619494,
+            "mono": 199679007.550994
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794688619622,
+            "mono": 199679136.156415
+          },
+          "sha256": "d5bd7cf47171ae2d87ac30ddad6a23cc825c17e1542412848902415a07fb752a"
+        },
+        {
+          "trial": "trial-03",
+          "name": "before",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-reproduction-before/trial-03/before.png",
+          "requested": {
+            "epoch": 1794688632221,
+            "mono": 199691734.654753
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794688632412,
+            "mono": 199691925.921629
+          },
+          "sha256": "8139aa2213017c38bab7736a1e7b9edfc0dd137980eb31060458abb1bbe7f064"
+        },
+        {
+          "trial": "trial-03",
+          "name": "before-key",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-reproduction-before/trial-03/before-key.png",
+          "requested": {
+            "epoch": 1794688632856,
+            "mono": 199692369.896709
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794688633002,
+            "mono": 199692516.149766
+          },
+          "sha256": "a6bb1cb9bc59ee2418589e4b7aac6672f2869dd1cb846d70335f03bd74f5d1e4"
+        },
+        {
+          "trial": "trial-03",
+          "name": "after",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-reproduction-before/trial-03/after.png",
+          "requested": {
+            "epoch": 1794688633335,
+            "mono": 199692848.700747
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794688633481,
+            "mono": 199692994.871491
+          },
+          "sha256": "75650f676137abb9bbbe380644f1e7503fc777c0cece0fc9e86dd9c542d4fc9f"
+        },
+        {
+          "trial": "trial-04",
+          "name": "before",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-reproduction-before/trial-04/before.png",
+          "requested": {
+            "epoch": 1794688644682,
+            "mono": 199704195.70535
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794688644874,
+            "mono": 199704387.632618
+          },
+          "sha256": "aadd5e54e967f34d204e9a996e4e980614677f6196b084ec8e132b152aa4bfff"
+        },
+        {
+          "trial": "trial-04",
+          "name": "before-key",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-reproduction-before/trial-04/before-key.png",
+          "requested": {
+            "epoch": 1794688645448,
+            "mono": 199704962.038269
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794688645574,
+            "mono": 199705088.415747
+          },
+          "sha256": "e00896f08e40e1ce888216856d20be0e37baab262c532e807d61c5fe3341b809"
+        },
+        {
+          "trial": "trial-04",
+          "name": "after",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-reproduction-before/trial-04/after.png",
+          "requested": {
+            "epoch": 1794688645895,
+            "mono": 199705408.740013
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794688646046,
+            "mono": 199705559.80512
+          },
+          "sha256": "e2f303261d5dc161894ce783d10dba3f7c3f96bf92b822d43a6203901697d89b"
+        },
+        {
+          "trial": "trial-05",
+          "name": "before",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-reproduction-before/trial-05/before.png",
+          "requested": {
+            "epoch": 1794688657071,
+            "mono": 199716585.041208
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794688657249,
+            "mono": 199716762.803722
+          },
+          "sha256": "dec7ed44a15c16407dc650f315fccf7e3b3f614d4c6afff28785357cdcd75145"
+        },
+        {
+          "trial": "trial-05",
+          "name": "before-key",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-reproduction-before/trial-05/before-key.png",
+          "requested": {
+            "epoch": 1794688657666,
+            "mono": 199717180.334352
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794688657790,
+            "mono": 199717304.313408
+          },
+          "sha256": "a6bb1cb9bc59ee2418589e4b7aac6672f2869dd1cb846d70335f03bd74f5d1e4"
+        },
+        {
+          "trial": "trial-05",
+          "name": "after",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-reproduction-before/trial-05/after.png",
+          "requested": {
+            "epoch": 1794688658109,
+            "mono": 199717622.599255
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794688658262,
+            "mono": 199717775.98665
+          },
+          "sha256": "332f76667a362fa08ac59155702418b46dc3408cbfeec23e65d53a4f352e777b"
+        },
+        {
+          "trial": "trial-06",
+          "name": "before",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-reproduction-before/trial-06/before.png",
+          "requested": {
+            "epoch": 1794688668677,
+            "mono": 199728190.448583
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794688668851,
+            "mono": 199728365.416788
+          },
+          "sha256": "cecc8fa5ac054b2055dbb73f24ce478455a94c7966ef5f86a896be400a81d799"
+        },
+        {
+          "trial": "trial-06",
+          "name": "before-key",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-reproduction-before/trial-06/before-key.png",
+          "requested": {
+            "epoch": 1794688669456,
+            "mono": 199728970.240756
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794688669574,
+            "mono": 199729088.435698
+          },
+          "sha256": "9f741115a6db319ac55c5981a9373289e69e1b6ec8f28635215c1b5c8b629747"
+        },
+        {
+          "trial": "trial-06",
+          "name": "after",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-reproduction-before/trial-06/after.png",
+          "requested": {
+            "epoch": 1794688669891,
+            "mono": 199729405.191924
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794688670045,
+            "mono": 199729558.721544
+          },
+          "sha256": "c553a76183f8c3469922d0b89876f717dfe41cc46ca9afbf95d86c44b251aa25"
+        },
+        {
+          "trial": "trial-07",
+          "name": "before",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-reproduction-before/trial-07/before.png",
+          "requested": {
+            "epoch": 1794688680995,
+            "mono": 199740509.342848
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794688681163,
+            "mono": 199740676.808786
+          },
+          "sha256": "cecc8fa5ac054b2055dbb73f24ce478455a94c7966ef5f86a896be400a81d799"
+        },
+        {
+          "trial": "trial-07",
+          "name": "before-key",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-reproduction-before/trial-07/before-key.png",
+          "requested": {
+            "epoch": 1794688681577,
+            "mono": 199741090.461912
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794688681704,
+            "mono": 199741217.485201
+          },
+          "sha256": "58fa14f39f56cfa403abdcabebded5ec321ee84a127ef8159a5784dbbf24c90d"
+        },
+        {
+          "trial": "trial-07",
+          "name": "after",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-reproduction-before/trial-07/after.png",
+          "requested": {
+            "epoch": 1794688682017,
+            "mono": 199741531.352595
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794688682173,
+            "mono": 199741686.642279
+          },
+          "sha256": "86d6079e1d402dbb4fcb3e21fd6ee4f840100e8ecf32b57b3ab8cfbcc7ccd84b"
+        },
+        {
+          "trial": "trial-08",
+          "name": "before",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-reproduction-before/trial-08/before.png",
+          "requested": {
+            "epoch": 1794688692842,
+            "mono": 199752355.961774
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794688693044,
+            "mono": 199752557.598274
+          },
+          "sha256": "dec7ed44a15c16407dc650f315fccf7e3b3f614d4c6afff28785357cdcd75145"
+        },
+        {
+          "trial": "trial-08",
+          "name": "before-key",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-reproduction-before/trial-08/before-key.png",
+          "requested": {
+            "epoch": 1794688693580,
+            "mono": 199753093.797914
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794688693719,
+            "mono": 199753233.167755
+          },
+          "sha256": "bf7b3f3f93d6a9e008d0325028e13850b05206f0f75d75bc7e2f47a2e9f72c93"
+        },
+        {
+          "trial": "trial-08",
+          "name": "after",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-reproduction-before/trial-08/after.png",
+          "requested": {
+            "epoch": 1794688694038,
+            "mono": 199753551.575895
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794688694210,
+            "mono": 199753723.863352
+          },
+          "sha256": "c8038b67a251173e9dbbe92d432869b757d925b83f65730dfc6eb8c6a7a6af9b"
+        },
+        {
+          "trial": "trial-09",
+          "name": "before",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-reproduction-before/trial-09/before.png",
+          "requested": {
+            "epoch": 1794688705225,
+            "mono": 199764739.205557
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794688705401,
+            "mono": 199764914.937901
+          },
+          "sha256": "6a8f970f8b64221304412e3eb8a6c4586d8bd7ef1b97295e43a651b35c79c27a"
+        },
+        {
+          "trial": "trial-09",
+          "name": "before-key",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-reproduction-before/trial-09/before-key.png",
+          "requested": {
+            "epoch": 1794688705822,
+            "mono": 199765335.590831
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794688705940,
+            "mono": 199765453.913263
+          },
+          "sha256": "02552500e26163eeb41b18db49806d0a83d2e5bad8b74239041b28e5c9e6f06c"
+        },
+        {
+          "trial": "trial-09",
+          "name": "after",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-reproduction-before/trial-09/after.png",
+          "requested": {
+            "epoch": 1794688706254,
+            "mono": 199765767.877385
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794688706408,
+            "mono": 199765921.532644
+          },
+          "sha256": "dff2623321fbae4eaa988ef9ebcbd94f6568ead3e095ddd293d8e634dc2ceb25"
+        },
+        {
+          "trial": "trial-10",
+          "name": "before",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-reproduction-before/trial-10/before.png",
+          "requested": {
+            "epoch": 1794688716970,
+            "mono": 199776484.430782
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794688717172,
+            "mono": 199776685.519273
+          },
+          "sha256": "05414cd3b43831435085b15089d6a8273143aa20c3afc7ac414e00cfac2543ed"
+        },
+        {
+          "trial": "trial-10",
+          "name": "before-key",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-reproduction-before/trial-10/before-key.png",
+          "requested": {
+            "epoch": 1794688717751,
+            "mono": 199777265.12914
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794688717889,
+            "mono": 199777402.945187
+          },
+          "sha256": "797b6a115ec057b03c6fa0ca4f23c69f55f7ff9b07d58f2fddffd5366008d458"
+        },
+        {
+          "trial": "trial-10",
+          "name": "after",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-reproduction-before/trial-10/after.png",
+          "requested": {
+            "epoch": 1794688718207,
+            "mono": 199777720.97138
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794688718367,
+            "mono": 199777881.123952
+          },
+          "sha256": "7c85506550570950f16f519e9fa13c11ae7d1c7dceef89c09be890de26911fc3"
+        }
+      ],
+      "after": [
+        {
+          "trial": "trial-01",
+          "name": "before",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-reproduction-after/trial-01/before.png",
+          "requested": {
+            "epoch": 1794689237829,
+            "mono": 200297342.448138
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794689238059,
+            "mono": 200297573.084037
+          },
+          "sha256": "2c902c3ccedd2477a5848ddde3d7bed8cd6c781c149035fc05f03666f4f06192"
+        },
+        {
+          "trial": "trial-01",
+          "name": "before-key",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-reproduction-after/trial-01/before-key.png",
+          "requested": {
+            "epoch": 1794689238549,
+            "mono": 200298062.542176
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794689238693,
+            "mono": 200298206.675772
+          },
+          "sha256": "571e41f0e1cb83994af3e07163e1515e63bbb9f39af06882cfc6bf99ab33f67a"
+        },
+        {
+          "trial": "trial-01",
+          "name": "after",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-reproduction-after/trial-01/after.png",
+          "requested": {
+            "epoch": 1794689239015,
+            "mono": 200298529.088031
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794689239143,
+            "mono": 200298657.310631
+          },
+          "sha256": "d20366bfb08db27689a27e7171da0be4274e6b750ee10c5d203b8cfcafdd2b99"
+        },
+        {
+          "trial": "trial-02",
+          "name": "before",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-reproduction-after/trial-02/before.png",
+          "requested": {
+            "epoch": 1794689242505,
+            "mono": 200302018.81874
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794689242674,
+            "mono": 200302188.443183
+          },
+          "sha256": "2b74fbfd2e180866be7c95a7a4bacd973c4a7f7c0d664f309cfdce1b1f9564a3"
+        },
+        {
+          "trial": "trial-02",
+          "name": "before-key",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-reproduction-after/trial-02/before-key.png",
+          "requested": {
+            "epoch": 1794689243239,
+            "mono": 200302753.110912
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794689243378,
+            "mono": 200302892.133642
+          },
+          "sha256": "571e41f0e1cb83994af3e07163e1515e63bbb9f39af06882cfc6bf99ab33f67a"
+        },
+        {
+          "trial": "trial-02",
+          "name": "after",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-reproduction-after/trial-02/after.png",
+          "requested": {
+            "epoch": 1794689243695,
+            "mono": 200303209.350741
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794689243813,
+            "mono": 200303326.706298
+          },
+          "sha256": "d20366bfb08db27689a27e7171da0be4274e6b750ee10c5d203b8cfcafdd2b99"
+        },
+        {
+          "trial": "trial-03",
+          "name": "before",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-reproduction-after/trial-03/before.png",
+          "requested": {
+            "epoch": 1794689247124,
+            "mono": 200306637.949182
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794689247309,
+            "mono": 200306823.188141
+          },
+          "sha256": "dec7ed44a15c16407dc650f315fccf7e3b3f614d4c6afff28785357cdcd75145"
+        },
+        {
+          "trial": "trial-03",
+          "name": "before-key",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-reproduction-after/trial-03/before-key.png",
+          "requested": {
+            "epoch": 1794689247769,
+            "mono": 200307282.631328
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794689247911,
+            "mono": 200307424.871368
+          },
+          "sha256": "5376474bddb10f86e41aff85e58a52c740602f06069e3588b4640d1bd825fdc4"
+        },
+        {
+          "trial": "trial-03",
+          "name": "after",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-reproduction-after/trial-03/after.png",
+          "requested": {
+            "epoch": 1794689248227,
+            "mono": 200307740.97606
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794689248383,
+            "mono": 200307896.981258
+          },
+          "sha256": "e12f1500d35f313c4c0ed252d9eca77c422077f4859d37f7b99f8a8340fcb675"
+        },
+        {
+          "trial": "trial-04",
+          "name": "before",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-reproduction-after/trial-04/before.png",
+          "requested": {
+            "epoch": 1794689251661,
+            "mono": 200311174.606742
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794689251837,
+            "mono": 200311350.472512
+          },
+          "sha256": "cecc8fa5ac054b2055dbb73f24ce478455a94c7966ef5f86a896be400a81d799"
+        },
+        {
+          "trial": "trial-04",
+          "name": "before-key",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-reproduction-after/trial-04/before-key.png",
+          "requested": {
+            "epoch": 1794689252402,
+            "mono": 200311916.431943
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794689252516,
+            "mono": 200312030.172695
+          },
+          "sha256": "571e41f0e1cb83994af3e07163e1515e63bbb9f39af06882cfc6bf99ab33f67a"
+        },
+        {
+          "trial": "trial-04",
+          "name": "after",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-reproduction-after/trial-04/after.png",
+          "requested": {
+            "epoch": 1794689252832,
+            "mono": 200312346.237313
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794689252969,
+            "mono": 200312483.076428
+          },
+          "sha256": "d20366bfb08db27689a27e7171da0be4274e6b750ee10c5d203b8cfcafdd2b99"
+        },
+        {
+          "trial": "trial-05",
+          "name": "before",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-reproduction-after/trial-05/before.png",
+          "requested": {
+            "epoch": 1794689256358,
+            "mono": 200315872.210256
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794689256525,
+            "mono": 200316038.807388
+          },
+          "sha256": "26731c8a41b3bb8256e4c12f7b7439b7b91afdb954c9ee1436c95e1185554dae"
+        },
+        {
+          "trial": "trial-05",
+          "name": "before-key",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-reproduction-after/trial-05/before-key.png",
+          "requested": {
+            "epoch": 1794689256980,
+            "mono": 200316493.944053
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794689257096,
+            "mono": 200316610.100613
+          },
+          "sha256": "88dd4529ee6cd803b553ff0e5c62c27fe5e6f4c929aa9eabf73eb749b0f70cf3"
+        },
+        {
+          "trial": "trial-05",
+          "name": "after",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-reproduction-after/trial-05/after.png",
+          "requested": {
+            "epoch": 1794689257412,
+            "mono": 200316926.205306
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794689257536,
+            "mono": 200317049.631133
+          },
+          "sha256": "71fc854fd9f00ed399c025c3f003def3640ee7ae48b6abd4920df111783b1427"
+        },
+        {
+          "trial": "trial-06",
+          "name": "before",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-reproduction-after/trial-06/before.png",
+          "requested": {
+            "epoch": 1794689260964,
+            "mono": 200320478.355207
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794689261179,
+            "mono": 200320693.020552
+          },
+          "sha256": "5daa093c8570644b77f82f6396c2d600e57a649e6fdf68a6f878470f996099e7"
+        },
+        {
+          "trial": "trial-06",
+          "name": "before-key",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-reproduction-after/trial-06/before-key.png",
+          "requested": {
+            "epoch": 1794689261766,
+            "mono": 200321279.671542
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794689261907,
+            "mono": 200321420.883339
+          },
+          "sha256": "5b60c6448b47add1240b3ac2597156ca7de486eb6ab2772b22216efcd911fbfe"
+        },
+        {
+          "trial": "trial-06",
+          "name": "after",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-reproduction-after/trial-06/after.png",
+          "requested": {
+            "epoch": 1794689262224,
+            "mono": 200321737.97029
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794689262377,
+            "mono": 200321891.063565
+          },
+          "sha256": "f1992ed14bd33bf0b4b1915d29c5123a81099fe39d1fdc8ac0e5452a82be372f"
+        },
+        {
+          "trial": "trial-07",
+          "name": "before",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-reproduction-after/trial-07/before.png",
+          "requested": {
+            "epoch": 1794689265593,
+            "mono": 200325107.279164
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794689265774,
+            "mono": 200325287.855562
+          },
+          "sha256": "26731c8a41b3bb8256e4c12f7b7439b7b91afdb954c9ee1436c95e1185554dae"
+        },
+        {
+          "trial": "trial-07",
+          "name": "before-key",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-reproduction-after/trial-07/before-key.png",
+          "requested": {
+            "epoch": 1794689266203,
+            "mono": 200325717.110335
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794689266342,
+            "mono": 200325855.526467
+          },
+          "sha256": "88dd4529ee6cd803b553ff0e5c62c27fe5e6f4c929aa9eabf73eb749b0f70cf3"
+        },
+        {
+          "trial": "trial-07",
+          "name": "after",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-reproduction-after/trial-07/after.png",
+          "requested": {
+            "epoch": 1794689266667,
+            "mono": 200326180.759381
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794689266795,
+            "mono": 200326308.970144
+          },
+          "sha256": "34bdd20bdb4763f45bea1ca2dfaf9b3c1907baafdfa4833c28fc2dab94a2b4a0"
+        },
+        {
+          "trial": "trial-08",
+          "name": "before",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-reproduction-after/trial-08/before.png",
+          "requested": {
+            "epoch": 1794689270095,
+            "mono": 200329608.960908
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794689270266,
+            "mono": 200329779.858148
+          },
+          "sha256": "26731c8a41b3bb8256e4c12f7b7439b7b91afdb954c9ee1436c95e1185554dae"
+        },
+        {
+          "trial": "trial-08",
+          "name": "before-key",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-reproduction-after/trial-08/before-key.png",
+          "requested": {
+            "epoch": 1794689270851,
+            "mono": 200330365.13738
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794689270964,
+            "mono": 200330478.332909
+          },
+          "sha256": "571e41f0e1cb83994af3e07163e1515e63bbb9f39af06882cfc6bf99ab33f67a"
+        },
+        {
+          "trial": "trial-08",
+          "name": "after",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-reproduction-after/trial-08/after.png",
+          "requested": {
+            "epoch": 1794689271281,
+            "mono": 200330794.926788
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794689271409,
+            "mono": 200330923.42075
+          },
+          "sha256": "b88b88abd8c610c65b02e1c7d9d2752f944ad4c8fc9155172ba15f94430f7685"
+        },
+        {
+          "trial": "trial-09",
+          "name": "before",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-reproduction-after/trial-09/before.png",
+          "requested": {
+            "epoch": 1794689274745,
+            "mono": 200334259.310853
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794689274936,
+            "mono": 200334449.92441
+          },
+          "sha256": "dec7ed44a15c16407dc650f315fccf7e3b3f614d4c6afff28785357cdcd75145"
+        },
+        {
+          "trial": "trial-09",
+          "name": "before-key",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-reproduction-after/trial-09/before-key.png",
+          "requested": {
+            "epoch": 1794689275357,
+            "mono": 200334870.915049
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794689275485,
+            "mono": 200334998.823776
+          },
+          "sha256": "a6bb1cb9bc59ee2418589e4b7aac6672f2869dd1cb846d70335f03bd74f5d1e4"
+        },
+        {
+          "trial": "trial-09",
+          "name": "after",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-reproduction-after/trial-09/after.png",
+          "requested": {
+            "epoch": 1794689275820,
+            "mono": 200335333.545501
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794689275951,
+            "mono": 200335464.772579
+          },
+          "sha256": "e5fee177859785587aa373275e5d6e58b986361f5703232d25c761a705c18f2a"
+        },
+        {
+          "trial": "trial-10",
+          "name": "before",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-reproduction-after/trial-10/before.png",
+          "requested": {
+            "epoch": 1794689279771,
+            "mono": 200339284.486588
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794689279948,
+            "mono": 200339461.593653
+          },
+          "sha256": "3a5e06d95a3921bf2f1c2ca550934b809b1a7c6ecc64a1e02b178afccaba21b1"
+        },
+        {
+          "trial": "trial-10",
+          "name": "before-key",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-reproduction-after/trial-10/before-key.png",
+          "requested": {
+            "epoch": 1794689280610,
+            "mono": 200340124.254285
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794689280782,
+            "mono": 200340295.512051
+          },
+          "sha256": "475bfede911713eb9989a506701b3638d8e7bb012e2269e4821c4c7f6ccf7cb2"
+        },
+        {
+          "trial": "trial-10",
+          "name": "after",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-reproduction-after/trial-10/after.png",
+          "requested": {
+            "epoch": 1794689281099,
+            "mono": 200340613.320163
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794689281256,
+            "mono": 200340770.368618
+          },
+          "sha256": "a8b671c7a89ea27efdede5ce9850eb5185230ae4c36d1e7c347e97e605be3734"
+        }
+      ]
+    }
+  },
+  "ordinaryPrimary": {
+    "sourceHead": "91f91d80e869cd4e370988db523b6aa7463b0304",
+    "runs": 1,
+    "viewport": {
+      "width": 844,
+      "height": 390
+    },
+    "observationSeconds": 10,
+    "playSeconds": 60,
+    "sent": 9,
+    "unissued": 12,
+    "unissuedBreakdown": {
+      "handDOMNotVisible": 7,
+      "handDOMVisibleButNoClearDirectionHistory": 5
+    },
+    "opportunities": 21,
+    "nextDates": 9,
+    "reasonClassAndText": 9,
+    "reasonTextChanges": 9,
+    "positiveReasonTexts": 3,
+    "negativeReasonTexts": 6,
+    "finalDate": "1月10日",
+    "firstInputSeconds": 0.252,
+    "firstDragFromInputMs": 52.8,
+    "firstDifferentTransformFromInputMs": 81.6,
+    "firstPositiveReasonSeconds": 16.6852,
+    "firstPositiveFromInitialInputSeconds": 16.4332,
+    "firstPositiveMeaning": "Third input reason class+positive text, not the generic mark class or visible-paint/reward timestamp.",
+    "commands": 72,
+    "ACKs": 72,
+    "trustedPointerEvents": 32,
+    "transformRecordedDuringDrag": 1,
+    "transformRecordedDuringFly": 8,
+    "knownWait": {
+      "longTaskMs": 5288,
+      "RAFMaxGapMs": 5300.8,
+      "statusRoundTripMs": 5053.626664996147,
+      "meaning": "Different clocks of known first-answer wait; no new attribution or performance effect from this focused-key fix."
+    },
+    "actualOuterExit": 1,
+    "actualChildExit": null,
+    "requestedExit": 1,
+    "console404Count": 2,
+    "faviconResource404Count": 2,
+    "consoleAndResourceRequestsJoined": false,
+    "primaryDidNotReproduceKeyboardPath": true
+  },
+  "photos": [
+    {
+      "file": "observe-10s.png",
+      "kind": "ordinary-before-fix",
+      "originalIdentifier": "round-134/preparation-91f91d80/strict/observe-10s.png",
+      "sha256": "1e43efd6f65224826ced65d3e3a27579755e6dfd2cb7380b4324a07ec17f0e75",
+      "width": 844,
+      "height": 390,
+      "clock": "observation",
+      "requestedSeconds": 10.00000427299738,
+      "completedSeconds": 10.174112635999919,
+      "observation": "1月1日・元日の田んぼ、畦から田見る／田へ行かない。",
+      "reportAuthorPersonallyViewed": true,
+      "edits": 0
+    },
+    {
+      "file": "play-10s.png",
+      "kind": "ordinary-before-fix",
+      "originalIdentifier": "round-134/preparation-91f91d80/strict/play-10s.png",
+      "sha256": "3370010250385df5e44c33a40ce9c52d17db689c66d1d4d642424a96605d3cad",
+      "width": 844,
+      "height": 390,
+      "clock": "play",
+      "requestedSeconds": 10.006817223012447,
+      "completedSeconds": 10.649036936014891,
+      "observation": "1月2日・霜柱の朝、田を踏み歩く／霜の畦を歩く。",
+      "reportAuthorPersonallyViewed": true,
+      "edits": 0
+    },
+    {
+      "file": "play-30s.png",
+      "kind": "ordinary-before-fix",
+      "originalIdentifier": "round-134/preparation-91f91d80/strict/play-30s.png",
+      "sha256": "5df15947c946ad003dbca9cc28e36ac18345253b7488f914754b5a5051f7732f",
+      "width": 844,
+      "height": 390,
+      "clock": "play",
+      "requestedSeconds": 30.00087504902482,
+      "completedSeconds": 31.284521136999132,
+      "observation": "中央に半透明の空カード。日付・題・選択文はこの原画で読めない。",
+      "reportAuthorPersonallyViewed": true,
+      "edits": 0
+    },
+    {
+      "file": "play-60s.png",
+      "kind": "ordinary-before-fix",
+      "originalIdentifier": "round-134/preparation-91f91d80/strict/play-60s.png",
+      "sha256": "a6c4cb527664ef0b14685aeb72545ef1f54cecdcf7331be1a62e80b4559a68b4",
+      "width": 844,
+      "height": 390,
+      "clock": "play",
+      "requestedSeconds": 60.007259474009274,
+      "completedSeconds": 60.84381049200893,
+      "observation": "大きい✗と理由文、七十二候、肥料をまく／土の様子を見る。日付の一部は✗に隠れ、全文は読めない。",
+      "reportAuthorPersonallyViewed": true,
+      "edits": 0
+    },
+    {
+      "file": "before-trial01-before-key.png",
+      "kind": "keyboard-diagnostic",
+      "sourceSide": "before",
+      "trial": "trial-01",
+      "requestedTouchHoldMs": 40,
+      "originalIdentifier": "round-134/keyboard-reproduction-before/trial-01/before-key.png",
+      "sha256": "58fa14f39f56cfa403abdcabebded5ec321ee84a127ef8159a5784dbbf24c90d",
+      "width": 844,
+      "height": 390,
+      "clock": "relative to this trial ArrowRight keyDown send; negative means before key",
+      "requestedFromKeySendMs": -140.48218899965286,
+      "completedFromKeySendMs": -8.091235995292664,
+      "observation": "1月1日・元日の田んぼと消音表示。",
+      "reportAuthorPersonallyViewed": true,
+      "edits": 0
+    },
+    {
+      "file": "before-trial01-after.png",
+      "kind": "keyboard-diagnostic",
+      "sourceSide": "before",
+      "trial": "trial-01",
+      "requestedTouchHoldMs": 40,
+      "originalIdentifier": "round-134/keyboard-reproduction-before/trial-01/after.png",
+      "sha256": "5da44560dbc90fcf01b29f909104d3885482179690703917e88f6b62bd71e5dc",
+      "width": 844,
+      "height": 390,
+      "clock": "relative to this trial ArrowRight keyDown send; negative means before key",
+      "requestedFromKeySendMs": 311.1189810037613,
+      "completedFromKeySendMs": 485.1092720031738,
+      "observation": "✗理由と霜柱の朝。日付の一部は✗に隠れる（別DOM記録は1月2日）。",
+      "reportAuthorPersonallyViewed": true,
+      "edits": 0
+    },
+    {
+      "file": "after-trial01-before-key.png",
+      "kind": "keyboard-diagnostic",
+      "sourceSide": "after",
+      "trial": "trial-01",
+      "requestedTouchHoldMs": 40,
+      "originalIdentifier": "round-134/keyboard-reproduction-after/trial-01/before-key.png",
+      "sha256": "571e41f0e1cb83994af3e07163e1515e63bbb9f39af06882cfc6bf99ab33f67a",
+      "width": 844,
+      "height": 390,
+      "clock": "relative to this trial ArrowRight keyDown send; negative means before key",
+      "requestedFromKeySendMs": -155.82979398965836,
+      "completedFromKeySendMs": -11.696197986602783,
+      "observation": "1月1日・元日の田んぼと消音表示。",
+      "reportAuthorPersonallyViewed": true,
+      "edits": 0
+    },
+    {
+      "file": "after-trial01-after.png",
+      "kind": "keyboard-diagnostic",
+      "sourceSide": "after",
+      "trial": "trial-01",
+      "requestedTouchHoldMs": 40,
+      "originalIdentifier": "round-134/keyboard-reproduction-after/trial-01/after.png",
+      "sha256": "d20366bfb08db27689a27e7171da0be4274e6b750ee10c5d203b8cfcafdd2b99",
+      "width": 844,
+      "height": 390,
+      "clock": "relative to this trial ArrowRight keyDown send; negative means before key",
+      "requestedFromKeySendMs": 310.7160609960556,
+      "completedFromKeySendMs": 438.93866100907326,
+      "observation": "1月1日・元日の田んぼと消音表示。",
+      "reportAuthorPersonallyViewed": true,
+      "edits": 0
+    },
+    {
+      "file": "layout-before-320x568-next-day.png",
+      "kind": "layout-v2-next-day",
+      "originalIdentifier": "round-134/keyboard-layout-comparison-runtime-v2/before-320x568/next-day-stable.png",
+      "sha256": "cf3cb1c615a327d9a1376be23434ffd1fc929ae27629c84f0455419440ce38a2",
+      "width": 320,
+      "height": 568,
+      "requested": {
+        "epoch": 1794690628760,
+        "mono": 201688273.706408
+      },
+      "completed": {
+        "epoch": 1794690629228,
+        "mono": 201688742.175301
+      },
+      "observationSource": "B original image inspection; report author SHA correspondence only",
+      "observation": "1月2日・霜柱の朝、田を踏み歩く／霜の畦を歩く。",
+      "reportAuthorPersonallyViewed": false,
+      "visualReviewerPersonallyViewed": true,
+      "edits": 0,
+      "strictEligible": false,
+      "notes": []
+    },
+    {
+      "file": "layout-after-320x568-next-day.png",
+      "kind": "layout-v2-next-day",
+      "originalIdentifier": "round-134/keyboard-layout-comparison-runtime-v2/after-320x568/next-day-stable.png",
+      "sha256": "255ad8dfa46b4fde51a1e4b12f3aae80d0c8b73fe61ed6bf667ef736321b8560",
+      "width": 320,
+      "height": 568,
+      "requested": {
+        "epoch": 1794690643207,
+        "mono": 201702720.777552
+      },
+      "completed": {
+        "epoch": 1794690643823,
+        "mono": 201703337.122474
+      },
+      "observationSource": "B original image inspection; report author SHA correspondence only",
+      "observation": "1月2日・霜柱の朝、田を踏み歩く／霜の畦を歩く。",
+      "reportAuthorPersonallyViewed": false,
+      "visualReviewerPersonallyViewed": true,
+      "edits": 0,
+      "strictEligible": false,
+      "notes": []
+    },
+    {
+      "file": "layout-before-390x844-next-day.png",
+      "kind": "layout-v2-next-day",
+      "originalIdentifier": "round-134/keyboard-layout-comparison-runtime-v2/before-390x844/next-day-stable.png",
+      "sha256": "be45a3b92c249b920a736eb1f5aeafdd415d234048696017c9448f094a52b392",
+      "width": 390,
+      "height": 844,
+      "requested": {
+        "epoch": 1794690658347,
+        "mono": 201717860.611831
+      },
+      "completed": {
+        "epoch": 1794690659221,
+        "mono": 201718734.576858
+      },
+      "observationSource": "B original image inspection; report author SHA correspondence only",
+      "observation": "1月2日・霜柱の朝、田を踏み歩く／霜の畦を歩く。",
+      "reportAuthorPersonallyViewed": false,
+      "visualReviewerPersonallyViewed": true,
+      "edits": 0,
+      "strictEligible": false,
+      "notes": []
+    },
+    {
+      "file": "layout-after-390x844-next-day.png",
+      "kind": "layout-v2-next-day",
+      "originalIdentifier": "round-134/keyboard-layout-comparison-runtime-v2/after-390x844/next-day-stable.png",
+      "sha256": "4c72e7fb03016e993306dac7c2b7afb90a8dd2672fb6e912c4b5caf761d8757b",
+      "width": 390,
+      "height": 844,
+      "requested": {
+        "epoch": 1794690675757,
+        "mono": 201735271.223775
+      },
+      "completed": {
+        "epoch": 1794690676621,
+        "mono": 201736134.779802
+      },
+      "observationSource": "B original image inspection; report author SHA correspondence only",
+      "observation": "1月2日・霜柱の朝、田を踏み歩く／霜の畦を歩く。",
+      "reportAuthorPersonallyViewed": false,
+      "visualReviewerPersonallyViewed": true,
+      "edits": 0,
+      "strictEligible": false,
+      "notes": []
+    },
+    {
+      "file": "layout-before-568x320-next-day.png",
+      "kind": "layout-v2-next-day",
+      "originalIdentifier": "round-134/keyboard-layout-comparison-runtime-v2/before-568x320/next-day-stable.png",
+      "sha256": "b1b1cafea81caac46d9e0f0619722b1b658ef44554edf418eb1316b5121479b7",
+      "width": 568,
+      "height": 320,
+      "requested": {
+        "epoch": 1794690689717,
+        "mono": 201749231.217032
+      },
+      "completed": {
+        "epoch": 1794690690698,
+        "mono": 201750212.146329
+      },
+      "observationSource": "B original image inspection; report author SHA correspondence only",
+      "observation": "1月2日・霜柱の朝、田を踏み歩く／霜の畦を歩く。",
+      "reportAuthorPersonallyViewed": false,
+      "visualReviewerPersonallyViewed": true,
+      "edits": 0,
+      "strictEligible": false,
+      "notes": []
+    },
+    {
+      "file": "layout-after-568x320-next-day.png",
+      "kind": "layout-v2-next-day",
+      "originalIdentifier": "round-134/keyboard-layout-comparison-runtime-v2/after-568x320/next-day-stable.png",
+      "sha256": "e9cd057c0a09145cde3893effec1a29ff3cfe2fa2dc154ade63c65f67a8e306a",
+      "width": 568,
+      "height": 320,
+      "requested": {
+        "epoch": 1794690702526,
+        "mono": 201762039.842261
+      },
+      "completed": {
+        "epoch": 1794690703132,
+        "mono": 201762645.615298
+      },
+      "observationSource": "B original image inspection; report author SHA correspondence only",
+      "observation": "1月2日・霜柱の朝、田を踏み歩く／霜の畦を歩く。",
+      "reportAuthorPersonallyViewed": false,
+      "visualReviewerPersonallyViewed": true,
+      "edits": 0,
+      "strictEligible": false,
+      "notes": []
+    },
+    {
+      "file": "layout-before-844x390-next-day.png",
+      "kind": "layout-v2-next-day",
+      "originalIdentifier": "round-134/keyboard-layout-comparison-runtime-v2/before-844x390/next-day-stable.png",
+      "sha256": "7a784aa3a010cd2af9aa661ad219bcde7468e72086048eca48f4d765d9d49929",
+      "width": 844,
+      "height": 390,
+      "requested": {
+        "epoch": 1794690715501,
+        "mono": 201775014.595103
+      },
+      "completed": {
+        "epoch": 1794690716742,
+        "mono": 201776255.544692
+      },
+      "observationSource": "B original image inspection; report author SHA correspondence only",
+      "observation": "1月2日・霜柱の朝、田を踏み歩く／霜の畦を歩く。",
+      "reportAuthorPersonallyViewed": false,
+      "visualReviewerPersonallyViewed": true,
+      "edits": 0,
+      "strictEligible": true,
+      "notes": [
+        "指形手本はbeforeでは確認せず、afterでは薄く見える。全面paintは同一ではない。"
+      ]
+    },
+    {
+      "file": "layout-after-844x390-next-day.png",
+      "kind": "layout-v2-next-day",
+      "originalIdentifier": "round-134/keyboard-layout-comparison-runtime-v2/after-844x390/next-day-stable.png",
+      "sha256": "d96361f4bdf0673a3e29ac05872d52540a349fba0a22c93ca080507ee61b8928",
+      "width": 844,
+      "height": 390,
+      "requested": {
+        "epoch": 1794690731613,
+        "mono": 201791126.601417
+      },
+      "completed": {
+        "epoch": 1794690732958,
+        "mono": 201792472.309956
+      },
+      "observationSource": "B original image inspection; report author SHA correspondence only",
+      "observation": "1月2日・霜柱の朝、田を踏み歩く／霜の畦を歩く。",
+      "reportAuthorPersonallyViewed": false,
+      "visualReviewerPersonallyViewed": true,
+      "edits": 0,
+      "strictEligible": true,
+      "notes": [
+        "指形手本はbeforeでは確認せず、afterでは薄く見える。全面paintは同一ではない。"
+      ]
+    },
+    {
+      "file": "layout-before-820x1180-next-day.png",
+      "kind": "layout-v2-next-day",
+      "originalIdentifier": "round-134/keyboard-layout-comparison-runtime-v2/before-820x1180/next-day-stable.png",
+      "sha256": "94980788d9d4a9f142af95e4a349f070c4d7b0e11b6c2e32590565749ab3556f",
+      "width": 820,
+      "height": 1180,
+      "requested": {
+        "epoch": 1794690748757,
+        "mono": 201808270.625208
+      },
+      "completed": {
+        "epoch": 1794690750852,
+        "mono": 201810365.663666
+      },
+      "observationSource": "B original image inspection; report author SHA correspondence only",
+      "observation": "1月2日・霜柱の朝、田を踏み歩く／霜の畦を歩く。",
+      "reportAuthorPersonallyViewed": false,
+      "visualReviewerPersonallyViewed": true,
+      "edits": 0,
+      "strictEligible": true,
+      "notes": [
+        "左端の背景人物が前後とも切れている。日付・選択肢・音/ホームの切取りではない。"
+      ]
+    },
+    {
+      "file": "layout-after-820x1180-next-day.png",
+      "kind": "layout-v2-next-day",
+      "originalIdentifier": "round-134/keyboard-layout-comparison-runtime-v2/after-820x1180/next-day-stable.png",
+      "sha256": "34e7b4f933f0ed765863bce4aeccf5710b5799357fcfff913409b389cf0e05e9",
+      "width": 820,
+      "height": 1180,
+      "requested": {
+        "epoch": 1794690766458,
+        "mono": 201825972.175849
+      },
+      "completed": {
+        "epoch": 1794690768738,
+        "mono": 201828252.035156
+      },
+      "observationSource": "B original image inspection; report author SHA correspondence only",
+      "observation": "1月2日・霜柱の朝、田を踏み歩く／霜の畦を歩く。",
+      "reportAuthorPersonallyViewed": false,
+      "visualReviewerPersonallyViewed": true,
+      "edits": 0,
+      "strictEligible": true,
+      "notes": [
+        "左端の背景人物が前後とも切れている。日付・選択肢・音/ホームの切取りではない。"
+      ]
+    }
+  ],
+  "tests": {
+    "newRegression": {
+      "atUTC": "2026-11-14T20:43:13.599691+00:00",
+      "oldHTMLSHA256": "d2add0e458da2aebf14dc0c8d4f0a2792497bbe69a0cb40f2d6b3aa7da0f741b",
+      "newHTMLSHA256": "47ee16c4d4544ad0b925d254d7845d7ee43fa629379e26305cae6876dab99b83",
+      "testSHA256": "b311d92b40c140c8ba1ef775f1e7dbb7deb11a72fd928d136a839a9e0d2ea3cb",
+      "old": {
+        "actualExit": 1,
+        "chunk": "9aee34",
+        "methods": 1,
+        "subcases": 61,
+        "behaviorFail": 30,
+        "pass": 31,
+        "fixtureErrors": 0,
+        "logSHA256": "67d02bb2487baaabd793a0e8631d8f040e497af56f85d09bc38bb85bb4453563"
+      },
+      "new": {
+        "actualExit": 0,
+        "chunk": "b73165",
+        "methods": 1,
+        "subcases": 61,
+        "behaviorFail": 0,
+        "pass": 61,
+        "fixtureErrors": 0,
+        "logSHA256": "0000ec435f23b4de037c17d9d1974a51b45771dd7f51aa1254d0c2cc12d82227"
+      },
+      "existingFixture": {
+        "patch": "keyboard-fixture-draft/sound-key-fixture.patch",
+        "appliedChunk": "ef7f9e",
+        "existingAssertionsPreserved": true,
+        "browserValidationPendingAtReceipt": true,
+        "receiptTimeMeaning": "Historical RED/GREEN receipt. Final full-suite sound validation is separately recorded below."
+      }
+    },
+    "newRegressionMeaning": "One unittest method with61subcases; extracted real handler and structural DOM fixture verifies routing/default prevention,not browser focus or physical paint.",
+    "reproCommandExample": "python3 tests/test_kome_keyboard_focus.py",
+    "oldSourceCommandExample": "KOME_KEYBOARD_HTML=/path/to/before-index.html python3 tests/test_kome_keyboard_focus.py",
+    "commandExamplesMeaning": "Reader rerun examples; actual executed RED/GREEN outcomes and hashes are separate receipts.",
+    "existingFixtureAdjustment": {
+      "file": "tests/test_kome365_firstmin.py",
+      "keysTargetCard": true,
+      "existingAssertionsPreserved": true,
+      "staticReview": {
+        "sameReviewedDraft": true,
+        "draftSHA256": "99bce95ff5dbc7b98bc0e41260909e7fd1f2e407162f1e233fcaf24bdcbcc768",
+        "oldAssertionLinesPreserved": 593,
+        "oldWaitStatementsPreserved": 21,
+        "oldJsPushStatementsPreserved": 7,
+        "oldStepsPushStatementsPreserved": 3,
+        "keyCallSites": 6,
+        "positivePremises": [
+          "Actual trusted ArrowLeft delivered to focused swCard",
+          "Normal: newly entered fly class",
+          "Reduced motion: synchronous date/save advance or final result opening",
+          "Home/daily: exactly one added public fx.pon count"
+        ],
+        "assertionsEnforced": "Common sound_run validation rejects missing count, missing trusted target or missing start; these are not log-only checks.",
+        "timingPreserved": "No new post-key read/wait before original home mouse-up or navigation. New pre-key focus/arming plus passive synchronous observer can still affect scheduling; root browser test required.",
+        "limits": "keyStarts is page-local and lost on reload; current keyboard plans contain no reload combination. All old assertions remain, and body positive keyboard behavior is covered separately by new test."
+      },
+      "browserFullValidation": "All15 existing sound methods passed in supplementary full unittest; overall suite failed.",
+      "staticReviewAsOf": "Static observations before full suite; final browser sound outcomes are recorded separately."
+    },
+    "pytestBefore": {
+      "command": "pytest tests/",
+      "cwd": "/workspace/ricepia-firstminute-round134",
+      "actualExit": 127,
+      "toolChunk": "a0abe3",
+      "output": "/bin/bash: line 1: pytest: command not found\n",
+      "suiteExecuted": false
+    },
+    "pytestAfter": {
+      "command": "pytest tests/",
+      "sourceHead": "43af75cce8c6023c650ac5b790f6a712bd64af71",
+      "actualExit": 127,
+      "toolChunk": "84eae0",
+      "output": "/bin/bash: line 1: pytest: command not found\n",
+      "suiteExecuted": false
+    },
+    "fullUnittest": {
+      "status": "completed unsuccessful; independently audited",
+      "actualChildExit": 1,
+      "actualOuterExit": 1,
+      "actualOuterToolChunk": "da149f",
+      "embeddedOuter": null,
+      "counts": {
+        "methodsRan": 2642,
+        "success": 2568,
+        "failures": 70,
+        "errors": 1,
+        "skipped": 3,
+        "secondsReportedByUnittest": 586.386,
+        "verbose2642IndependentlyMatched": true,
+        "verdict": "FAILED",
+        "summaryLogLine": 3384
+      },
+      "failureCategories": {
+        "tractor-source-regex-error": 1,
+        "tractor-source-literal": 1,
+        "kensa-runtime-geometry": 1,
+        "kome-runtime-geometry": 1,
+        "changed-file-allowlist": 65,
+        "nishio-public-source-literal": 2
+      },
+      "soundMethodSuccesses": 15,
+      "komeMethods": {
+        "total": 119,
+        "success": 118,
+        "failures": 1
+      },
+      "kensaMethods": {
+        "total": 202,
+        "success": 201,
+        "failures": 1
+      },
+      "newMethodSubcases": 61,
+      "preservation": {
+        "source354BeforeAfterManifestEqual": true,
+        "testPathCount": 313,
+        "htmlPathCount": 27,
+        "dependencies601BeforeAfterManifestEqual": true,
+        "rootPrepared5PinsMatched": 5,
+        "logAndExecutionSHAMatchRoot": true,
+        "rootClosure": {
+          "atUTC": "2026-11-14T21:03:56.682254+00:00",
+          "actualOuterExit": 1,
+          "actualOuterToolChunk": "da149f",
+          "actualChildExit": 1,
+          "sourceHead": "43af75cce8c6023c650ac5b790f6a712bd64af71",
+          "sourcePins": 354,
+          "dependencyPins": 601,
+          "preparedPins": 5,
+          "sourceClean": true,
+          "liveBrowserOrHeavy": [],
+          "browserClosureConfirmed": true,
+          "executionSHA256": "087cf3c3f81ddf4666213ad9f65e72e619bc396cff926aed32a08057b9c624da",
+          "logSHA256": "6fb0a2e665fcae4b9849ab02397fb624483bfdbca1e43eddf45e9fe71b34bc1e",
+          "nextSerialHeavyAllowed": true
+        }
+      },
+      "baselineLimit": "Same-condition baseline fullsuite not run; failure cause and pre-existence not established.",
+      "independentAuditFreezeSHA256": "37bc5aca4cf9314dd10dbe21c0f32034a4a2484e5e47ce0d0fd9f4fbe7e7e331"
+    },
+    "fiveSizes": {
+      "status": "completed with limits; strict full five-size comparison not established",
+      "passed": null,
+      "viewports": [
+        [
+          320,
+          568
+        ],
+        [
+          390,
+          844
+        ],
+        [
+          568,
+          320
+        ],
+        [
+          844,
+          390
+        ],
+        [
+          820,
+          1180
+        ]
+      ],
+      "firstPreparationAttempt": {
+        "version": 1,
+        "actualOuterExit": 1,
+        "actualChildExit": 1,
+        "attempted": 1,
+        "eligible": 0,
+        "unattempted": 9,
+        "reason": "CPU/frame quiet750ms condition was not reached in25s; no qualified comparison",
+        "rootClosureIdentifier": "round-134/layout-v1-root-closure.json",
+        "replacementPreparation": "Separate v2 geometry/state/advancing-frame criterion; completed10 with4 eligible6 unestablished. V1 remains unestablished."
+      },
+      "v2": {
+        "planned": 10,
+        "attempted": 10,
+        "completed": 10,
+        "eligible": 4,
+        "unestablished": 6,
+        "strictComparablePairs": 2,
+        "tapDidNotSelect": 10,
+        "oneSwipeAdvanced": 10,
+        "commands": 100,
+        "ACKs": 100,
+        "cleanup": 0,
+        "trustedEventCounts": {
+          "pointerdown": 20,
+          "touchstart": 20,
+          "pointerup": 20,
+          "touchend": 20,
+          "focusin": 10,
+          "click": 10,
+          "pointermove": 56
+        },
+        "photosSaved": 20,
+        "console404": 20,
+        "actualChildExits": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "actualOuter": 0,
+        "embeddedOuter": null,
+        "variantPolicy": "Only index response was fulfilled with original before/after HTML; all other resources used the same candidate source and gates. Before historical HEAD91f does not mean the whole repository was switched.",
+        "preservation": {
+          "source8BeforeAfterManifestExact": true,
+          "environment8BeforeAfterManifestExact": true,
+          "rootPrepared14Match": true,
+          "allVariantDeliveriesMatchExpectedSHA": true,
+          "allLocalAndHTTP5GatesPreserved": true,
+          "allCPUInputContextBrowserClosed": true,
+          "rootLiveRuntime0": true
+        },
+        "actualInputRangesMs": {
+          "tapNodeSend": [
+            39.38691598176956,
+            40.27512699365616
+          ],
+          "swipeNodeSend": [
+            123.14629998803139,
+            132.7149749994278
+          ],
+          "tapEvent": [
+            30.200000017881393,
+            44.30000001192093
+          ],
+          "swipeEvent": [
+            122.7000000178814,
+            133.0
+          ]
+        }
+      },
+      "criteriaMeaning": "V2 sampled stationary geometry/state and advancing frame callbacks; CPU quiet/FPS recorded separately. Original false photoSceneMatched flags were not relaxed.",
+      "geometry": {
+        "scope": "Read-only geometry audit, four saved checkpoints per ten fresh trials; no runtime or image viewing by reviewer",
+        "actualOuterExitRootReceipt": 0,
+        "actualChildExits": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "planned": 10,
+        "attempted": 10,
+        "completed": 10,
+        "eligible": 4,
+        "unmatchedPhoto": 6,
+        "eligibleSizes": [
+          "844x390",
+          "820x1180"
+        ],
+        "unmatchedSizes": [
+          "320x568",
+          "390x844",
+          "568x320"
+        ],
+        "savedSnapshots": 40,
+        "beforeSnapshots": 20,
+        "afterSnapshots": 20,
+        "activeControlObservations": 120,
+        "activeControlPairs": 60,
+        "activeControlExactRectPairs": 60,
+        "activeOutOfBoundsObservations": 0,
+        "activeCenterMismatchObservations": 0,
+        "activeOverflowObservations": 0,
+        "documentOverflowSnapshots": 0,
+        "specifiedOverlapObservations": 560,
+        "positiveSpecifiedOverlaps": 0,
+        "labelPairs": 80,
+        "labelTextSamePairs": 80,
+        "labelRectDifferentPairs": 13,
+        "maxAbsoluteLabelRectDeltaPx": 2.167449951171875,
+        "normalCommands": 100,
+        "normalACKs": 100,
+        "cleanupCommands": 0,
+        "conclusion": "No new out-of-bounds, center-hit mismatch, internal overflow or specified overlap was recorded in these saved control samples. This does not turn the six unmatched-photo trials into successful matched-scene trials or prove all-state five-size layout success.",
+        "photoMismatchObservedElements": "Right label for before/after320 and390; left label for before/after568. Other stable-key fields remain unchanged in these six comparisons.",
+        "sourceInterpretation": "Unchanged parent .eL/.eR scale animations at index.html:524-527 and :553-556 are consistent with the sampled label-size changes. Parent computed animation/scale was not recorded; cause and exact phase are not established.",
+        "personalImagesViewed": 0,
+        "runtimeExecuted": 0,
+        "limits": [
+          "All controls counted were card/sound/home. Only card received the actual touch input; home/sound center hits are DOM samples.",
+          "Rectangles and labels were sampled, not continuously observed. Physical paint, reading time, sensor behavior and real fingers are not verified.",
+          "The six post-photo mismatches retain original eligibility=false. Initial/snapshot values from them are descriptive observations, not successful full-protocol pairs.",
+          "No performance improvement or performance pass is inferred.",
+          "Root outer0 means sequence/closure completion; child1 console404 debt remains."
+        ]
+      },
+      "visual": {
+        "reviewerOriginalPhotosViewed": 20,
+        "reportAuthorMatrixPhotosPersonallyViewed": 0,
+        "noNewControlClippingOrTextOcclusionIdentifiedIn20Originals": true,
+        "scope": "B personally viewed all20 originals; root viewed five after images. Report author checked their original SHA records without personally viewing matrix images. This is not continuous-paint/all-state proof."
+      },
+      "originalPhotos": [
+        {
+          "id": "before-320x568",
+          "name": "initial",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-layout-comparison-runtime-v2/before-320x568/initial.png",
+          "requested": {
+            "epoch": 1794690618697,
+            "mono": 201678211.110702
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794690618859,
+            "mono": 201678372.70368
+          },
+          "sha256": "af1442f4d5fd435b898f2a9d05e26a3066f76f2c4f6634c0092491cc337b3ca2"
+        },
+        {
+          "id": "before-320x568",
+          "name": "next-day-stable",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-layout-comparison-runtime-v2/before-320x568/next-day-stable.png",
+          "requested": {
+            "epoch": 1794690628760,
+            "mono": 201688273.706408
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794690629228,
+            "mono": 201688742.175301
+          },
+          "sha256": "cf3cb1c615a327d9a1376be23434ffd1fc929ae27629c84f0455419440ce38a2"
+        },
+        {
+          "id": "after-320x568",
+          "name": "initial",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-layout-comparison-runtime-v2/after-320x568/initial.png",
+          "requested": {
+            "epoch": 1794690631918,
+            "mono": 201691431.74572
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794690632083,
+            "mono": 201691596.492671
+          },
+          "sha256": "c328834c75bc8472916b92676b44aa6421b9cafeff406ae07b71933f0ec42c43"
+        },
+        {
+          "id": "after-320x568",
+          "name": "next-day-stable",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-layout-comparison-runtime-v2/after-320x568/next-day-stable.png",
+          "requested": {
+            "epoch": 1794690643207,
+            "mono": 201702720.777552
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794690643823,
+            "mono": 201703337.122474
+          },
+          "sha256": "255ad8dfa46b4fde51a1e4b12f3aae80d0c8b73fe61ed6bf667ef736321b8560"
+        },
+        {
+          "id": "before-390x844",
+          "name": "initial",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-layout-comparison-runtime-v2/before-390x844/initial.png",
+          "requested": {
+            "epoch": 1794690646879,
+            "mono": 201706392.785238
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794690647069,
+            "mono": 201706583.433044
+          },
+          "sha256": "e2f5bd6db45902944d759a11a400b4bd58869f8d0d5f4404d9317e3e204f0b84"
+        },
+        {
+          "id": "before-390x844",
+          "name": "next-day-stable",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-layout-comparison-runtime-v2/before-390x844/next-day-stable.png",
+          "requested": {
+            "epoch": 1794690658347,
+            "mono": 201717860.611831
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794690659221,
+            "mono": 201718734.576858
+          },
+          "sha256": "be45a3b92c249b920a736eb1f5aeafdd415d234048696017c9448f094a52b392"
+        },
+        {
+          "id": "after-390x844",
+          "name": "initial",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-layout-comparison-runtime-v2/after-390x844/initial.png",
+          "requested": {
+            "epoch": 1794690662366,
+            "mono": 201721879.887169
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794690662567,
+            "mono": 201722081.088645
+          },
+          "sha256": "bb91158ccdd073833279f45ced3ca707a4fd62e0903645bdcffcdd0f5e34bd7b"
+        },
+        {
+          "id": "after-390x844",
+          "name": "next-day-stable",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-layout-comparison-runtime-v2/after-390x844/next-day-stable.png",
+          "requested": {
+            "epoch": 1794690675757,
+            "mono": 201735271.223775
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794690676621,
+            "mono": 201736134.779802
+          },
+          "sha256": "4c72e7fb03016e993306dac7c2b7afb90a8dd2672fb6e912c4b5caf761d8757b"
+        },
+        {
+          "id": "before-568x320",
+          "name": "initial",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-layout-comparison-runtime-v2/before-568x320/initial.png",
+          "requested": {
+            "epoch": 1794690679789,
+            "mono": 201739303.040931
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794690679947,
+            "mono": 201739460.977159
+          },
+          "sha256": "b4f5e4d2e74d6ee2afa67a8a3fdb937e2c79bd0d1240dd33b791635299184e84"
+        },
+        {
+          "id": "before-568x320",
+          "name": "next-day-stable",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-layout-comparison-runtime-v2/before-568x320/next-day-stable.png",
+          "requested": {
+            "epoch": 1794690689717,
+            "mono": 201749231.217032
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794690690698,
+            "mono": 201750212.146329
+          },
+          "sha256": "b1b1cafea81caac46d9e0f0619722b1b658ef44554edf418eb1316b5121479b7"
+        },
+        {
+          "id": "after-568x320",
+          "name": "initial",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-layout-comparison-runtime-v2/after-568x320/initial.png",
+          "requested": {
+            "epoch": 1794690693947,
+            "mono": 201753460.66175
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794690694110,
+            "mono": 201753623.459555
+          },
+          "sha256": "94400559fb889cb0a2ca77a972daff93820159dea8eba5cf70e1490c7fba17d1"
+        },
+        {
+          "id": "after-568x320",
+          "name": "next-day-stable",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-layout-comparison-runtime-v2/after-568x320/next-day-stable.png",
+          "requested": {
+            "epoch": 1794690702526,
+            "mono": 201762039.842261
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794690703132,
+            "mono": 201762645.615298
+          },
+          "sha256": "e9cd057c0a09145cde3893effec1a29ff3cfe2fa2dc154ade63c65f67a8e306a"
+        },
+        {
+          "id": "before-844x390",
+          "name": "initial",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-layout-comparison-runtime-v2/before-844x390/initial.png",
+          "requested": {
+            "epoch": 1794690705915,
+            "mono": 201765429.404123
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794690706084,
+            "mono": 201765597.774759
+          },
+          "sha256": "aaa35a9b2e75fb6db17eccb3a84ef04c40201a376db596b75851d9ac798e4480"
+        },
+        {
+          "id": "before-844x390",
+          "name": "next-day-stable",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-layout-comparison-runtime-v2/before-844x390/next-day-stable.png",
+          "requested": {
+            "epoch": 1794690715501,
+            "mono": 201775014.595103
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794690716742,
+            "mono": 201776255.544692
+          },
+          "sha256": "7a784aa3a010cd2af9aa661ad219bcde7468e72086048eca48f4d765d9d49929"
+        },
+        {
+          "id": "after-844x390",
+          "name": "initial",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-layout-comparison-runtime-v2/after-844x390/initial.png",
+          "requested": {
+            "epoch": 1794690720597,
+            "mono": 201780110.759216
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794690720760,
+            "mono": 201780273.524671
+          },
+          "sha256": "4992d414fae74f951092e3a140553bfe40ca60b59c6250183d99356d9f3a716c"
+        },
+        {
+          "id": "after-844x390",
+          "name": "next-day-stable",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-layout-comparison-runtime-v2/after-844x390/next-day-stable.png",
+          "requested": {
+            "epoch": 1794690731613,
+            "mono": 201791126.601417
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794690732958,
+            "mono": 201792472.309956
+          },
+          "sha256": "d96361f4bdf0673a3e29ac05872d52540a349fba0a22c93ca080507ee61b8928"
+        },
+        {
+          "id": "before-820x1180",
+          "name": "initial",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-layout-comparison-runtime-v2/before-820x1180/initial.png",
+          "requested": {
+            "epoch": 1794690736739,
+            "mono": 201796253.174095
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794690737291,
+            "mono": 201796804.472447
+          },
+          "sha256": "306f3533eea68131e53b9fabe3979eb60d6f227f99c4971f38201c333341c965"
+        },
+        {
+          "id": "before-820x1180",
+          "name": "next-day-stable",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-layout-comparison-runtime-v2/before-820x1180/next-day-stable.png",
+          "requested": {
+            "epoch": 1794690748757,
+            "mono": 201808270.625208
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794690750852,
+            "mono": 201810365.663666
+          },
+          "sha256": "94980788d9d4a9f142af95e4a349f070c4d7b0e11b6c2e32590565749ab3556f"
+        },
+        {
+          "id": "after-820x1180",
+          "name": "initial",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-layout-comparison-runtime-v2/after-820x1180/initial.png",
+          "requested": {
+            "epoch": 1794690754855,
+            "mono": 201814369.20799
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794690755176,
+            "mono": 201814690.212844
+          },
+          "sha256": "ea612cbc400e659a7ffee8e715bf7c1b71b8eb7196fc7584d50d0511c70c15fc"
+        },
+        {
+          "id": "after-820x1180",
+          "name": "next-day-stable",
+          "file": "/workspace/scratch/first-minute/round-134/keyboard-layout-comparison-runtime-v2/after-820x1180/next-day-stable.png",
+          "requested": {
+            "epoch": 1794690766458,
+            "mono": 201825972.175849
+          },
+          "status": "saved",
+          "completed": {
+            "epoch": 1794690768738,
+            "mono": 201828252.035156
+          },
+          "sha256": "34e7b4f933f0ed765863bce4aeccf5710b5799357fcfff913409b389cf0e05e9"
+        }
+      ],
+      "perTrialResults": [
+        {
+          "id": "before-320x568",
+          "variant": "before",
+          "viewport": {
+            "width": 320,
+            "height": 568
+          },
+          "eligible": false,
+          "gates": {
+            "tapDidNotSelect": true,
+            "oneSwipeAdvanced": true,
+            "photoSceneMatched": false,
+            "twoTrustedCardCycles": true,
+            "fixedTenCommands": true,
+            "noKeys": true,
+            "photosSaved": true,
+            "traceComplete": true
+          },
+          "photoSceneChanges": [
+            {
+              "key": "right",
+              "changedRectFields": [
+                "left",
+                "top",
+                "right",
+                "bottom",
+                "width",
+                "height"
+              ],
+              "textChanged": false,
+              "stableTransform": "none",
+              "postPhotoTransform": "none",
+              "stableRect": {
+                "left": 168.984375,
+                "top": 511.25,
+                "right": 283.109375,
+                "bottom": 535,
+                "width": 114.125,
+                "height": 23.75
+              },
+              "postPhotoRect": {
+                "left": 166.29266357421875,
+                "top": 511.7747802734375,
+                "right": 285.80108642578125,
+                "bottom": 536.6450805664062,
+                "width": 119.5084228515625,
+                "height": 24.87030029296875
+              }
+            }
+          ],
+          "tapDate": "1月1日",
+          "nextDate": "1月2日",
+          "labels": {
+            "date": "1月2日",
+            "left": "田を踏み歩く",
+            "right": "霜の畦を歩く"
+          },
+          "tapHoldNodeMs": 40.27512699365616,
+          "swipeHoldNodeMs": 128.71434500813484,
+          "pointerCycleEventMs": [
+            40.0,
+            129.5
+          ],
+          "pointerCycleCaptureMs": [
+            48.5,
+            135.10000002384186
+          ],
+          "commands": 10,
+          "ACKs": 10,
+          "cleanup": 0,
+          "trustedMoveCount": 5,
+          "stableInterval": {
+            "firstSampleAt": 10567.40000000596,
+            "lastSampleAt": 11331.300000011921,
+            "sampleClockTimeOrigin": 1794690617364.2,
+            "firstReadReceivedMono": 201687500.964489,
+            "lastReadReceivedMono": 201688273.536225,
+            "firstFrameCount": 171,
+            "lastFrameCount": 177,
+            "performanceThresholdsApplied": false
+          },
+          "initialGeometry": {
+            "activeControlCount": 3,
+            "activeControlKeys": [
+              "card",
+              "sound",
+              "home"
+            ],
+            "activeOut": [],
+            "centerNotOwned": [],
+            "internalOverflow": [],
+            "specifiedOverlaps": [],
+            "documentOverflow": {
+              "x": false,
+              "y": false
+            }
+          },
+          "stableGeometry": {
+            "activeControlCount": 3,
+            "activeControlKeys": [
+              "card",
+              "sound",
+              "home"
+            ],
+            "activeOut": [],
+            "centerNotOwned": [],
+            "internalOverflow": [],
+            "specifiedOverlaps": [],
+            "documentOverflow": {
+              "x": false,
+              "y": false
+            }
+          },
+          "postPhotoGeometry": {
+            "activeControlCount": 3,
+            "activeControlKeys": [
+              "card",
+              "sound",
+              "home"
+            ],
+            "activeOut": [],
+            "centerNotOwned": [],
+            "internalOverflow": [],
+            "specifiedOverlaps": [],
+            "documentOverflow": {
+              "x": false,
+              "y": false
+            }
+          },
+          "routedHTMLSHA256": "d2add0e458da2aebf14dc0c8d4f0a2792497bbe69a0cb40f2d6b3aa7da0f741b",
+          "routeDeliveries": [
+            {
+              "at": {
+                "nodeEpochMs": 1794690617374,
+                "nodeMonotonicMs": 201676887.452559
+              },
+              "url": "http://localhost:8000/kome365/index.html",
+              "variant": "before",
+              "sha256": "d2add0e458da2aebf14dc0c8d4f0a2792497bbe69a0cb40f2d6b3aa7da0f741b"
+            }
+          ],
+          "actualChildExit": 1,
+          "console404": 2
+        },
+        {
+          "id": "after-320x568",
+          "variant": "after",
+          "viewport": {
+            "width": 320,
+            "height": 568
+          },
+          "eligible": false,
+          "gates": {
+            "tapDidNotSelect": true,
+            "oneSwipeAdvanced": true,
+            "photoSceneMatched": false,
+            "twoTrustedCardCycles": true,
+            "fixedTenCommands": true,
+            "noKeys": true,
+            "photosSaved": true,
+            "traceComplete": true
+          },
+          "photoSceneChanges": [
+            {
+              "key": "right",
+              "changedRectFields": [
+                "left",
+                "top",
+                "right",
+                "bottom",
+                "width",
+                "height"
+              ],
+              "textChanged": false,
+              "stableTransform": "none",
+              "postPhotoTransform": "none",
+              "stableRect": {
+                "left": 168.984375,
+                "top": 511.25,
+                "right": 283.109375,
+                "bottom": 535,
+                "width": 114.125,
+                "height": 23.75
+              },
+              "postPhotoRect": {
+                "left": 166.13125610351562,
+                "top": 511.8062438964844,
+                "right": 285.9624938964844,
+                "bottom": 536.7437744140625,
+                "width": 119.83123779296875,
+                "height": 24.937530517578125
+              }
+            }
+          ],
+          "tapDate": "1月1日",
+          "nextDate": "1月2日",
+          "labels": {
+            "date": "1月2日",
+            "left": "田を踏み歩く",
+            "right": "霜の畦を歩く"
+          },
+          "tapHoldNodeMs": 39.58459800481796,
+          "swipeHoldNodeMs": 126.87328600883484,
+          "pointerCycleEventMs": [
+            36.400000005960464,
+            125.7000000178814
+          ],
+          "pointerCycleCaptureMs": [
+            32.19999998807907,
+            119.80000001192093
+          ],
+          "commands": 10,
+          "ACKs": 10,
+          "cleanup": 0,
+          "trustedMoveCount": 6,
+          "stableInterval": {
+            "firstSampleAt": 11758.59999999404,
+            "lastSampleAt": 12555.399999976158,
+            "sampleClockTimeOrigin": 1794690630603.4,
+            "firstReadReceivedMono": 201701928.86748,
+            "lastReadReceivedMono": 201702720.741933,
+            "firstFrameCount": 186,
+            "lastFrameCount": 192,
+            "performanceThresholdsApplied": false
+          },
+          "initialGeometry": {
+            "activeControlCount": 3,
+            "activeControlKeys": [
+              "card",
+              "sound",
+              "home"
+            ],
+            "activeOut": [],
+            "centerNotOwned": [],
+            "internalOverflow": [],
+            "specifiedOverlaps": [],
+            "documentOverflow": {
+              "x": false,
+              "y": false
+            }
+          },
+          "stableGeometry": {
+            "activeControlCount": 3,
+            "activeControlKeys": [
+              "card",
+              "sound",
+              "home"
+            ],
+            "activeOut": [],
+            "centerNotOwned": [],
+            "internalOverflow": [],
+            "specifiedOverlaps": [],
+            "documentOverflow": {
+              "x": false,
+              "y": false
+            }
+          },
+          "postPhotoGeometry": {
+            "activeControlCount": 3,
+            "activeControlKeys": [
+              "card",
+              "sound",
+              "home"
+            ],
+            "activeOut": [],
+            "centerNotOwned": [],
+            "internalOverflow": [],
+            "specifiedOverlaps": [],
+            "documentOverflow": {
+              "x": false,
+              "y": false
+            }
+          },
+          "routedHTMLSHA256": "47ee16c4d4544ad0b925d254d7845d7ee43fa629379e26305cae6876dab99b83",
+          "routeDeliveries": [
+            {
+              "at": {
+                "nodeEpochMs": 1794690630617,
+                "nodeMonotonicMs": 201690130.590404
+              },
+              "url": "http://localhost:8000/kome365/index.html",
+              "variant": "after",
+              "sha256": "47ee16c4d4544ad0b925d254d7845d7ee43fa629379e26305cae6876dab99b83"
+            }
+          ],
+          "actualChildExit": 1,
+          "console404": 2
+        },
+        {
+          "id": "before-390x844",
+          "variant": "before",
+          "viewport": {
+            "width": 390,
+            "height": 844
+          },
+          "eligible": false,
+          "gates": {
+            "tapDidNotSelect": true,
+            "oneSwipeAdvanced": true,
+            "photoSceneMatched": false,
+            "twoTrustedCardCycles": true,
+            "fixedTenCommands": true,
+            "noKeys": true,
+            "photosSaved": true,
+            "traceComplete": true
+          },
+          "photoSceneChanges": [
+            {
+              "key": "right",
+              "changedRectFields": [
+                "left",
+                "top",
+                "right",
+                "bottom",
+                "width",
+                "height"
+              ],
+              "textChanged": false,
+              "stableTransform": "none",
+              "postPhotoTransform": "none",
+              "stableRect": {
+                "left": 203.984375,
+                "top": 787.25,
+                "right": 352.40625,
+                "bottom": 811,
+                "width": 148.421875,
+                "height": 23.75
+              },
+              "postPhotoRect": {
+                "left": 200.27383422851562,
+                "top": 787.8062744140625,
+                "right": 356.1167907714844,
+                "bottom": 812.7437744140625,
+                "width": 155.84295654296875,
+                "height": 24.9375
+              }
+            }
+          ],
+          "tapDate": "1月1日",
+          "nextDate": "1月2日",
+          "labels": {
+            "date": "1月2日",
+            "left": "田を踏み歩く",
+            "right": "霜の畦を歩く"
+          },
+          "tapHoldNodeMs": 39.93086299300194,
+          "swipeHoldNodeMs": 129.19400399923325,
+          "pointerCycleEventMs": [
+            38.79999998211861,
+            133.0
+          ],
+          "pointerCycleCaptureMs": [
+            31.80000001192093,
+            135.69999998807907
+          ],
+          "commands": 10,
+          "ACKs": 10,
+          "cleanup": 0,
+          "trustedMoveCount": 6,
+          "stableInterval": {
+            "firstSampleAt": 11924.59999999404,
+            "lastSampleAt": 12762,
+            "sampleClockTimeOrigin": 1794690645500.5,
+            "firstReadReceivedMono": 201717007.442849,
+            "lastReadReceivedMono": 201717860.563209,
+            "firstFrameCount": 180,
+            "lastFrameCount": 184,
+            "performanceThresholdsApplied": false
+          },
+          "initialGeometry": {
+            "activeControlCount": 3,
+            "activeControlKeys": [
+              "card",
+              "sound",
+              "home"
+            ],
+            "activeOut": [],
+            "centerNotOwned": [],
+            "internalOverflow": [],
+            "specifiedOverlaps": [],
+            "documentOverflow": {
+              "x": false,
+              "y": false
+            }
+          },
+          "stableGeometry": {
+            "activeControlCount": 3,
+            "activeControlKeys": [
+              "card",
+              "sound",
+              "home"
+            ],
+            "activeOut": [],
+            "centerNotOwned": [],
+            "internalOverflow": [],
+            "specifiedOverlaps": [],
+            "documentOverflow": {
+              "x": false,
+              "y": false
+            }
+          },
+          "postPhotoGeometry": {
+            "activeControlCount": 3,
+            "activeControlKeys": [
+              "card",
+              "sound",
+              "home"
+            ],
+            "activeOut": [],
+            "centerNotOwned": [],
+            "internalOverflow": [],
+            "specifiedOverlaps": [],
+            "documentOverflow": {
+              "x": false,
+              "y": false
+            }
+          },
+          "routedHTMLSHA256": "d2add0e458da2aebf14dc0c8d4f0a2792497bbe69a0cb40f2d6b3aa7da0f741b",
+          "routeDeliveries": [
+            {
+              "at": {
+                "nodeEpochMs": 1794690645511,
+                "nodeMonotonicMs": 201705024.843598
+              },
+              "url": "http://localhost:8000/kome365/index.html",
+              "variant": "before",
+              "sha256": "d2add0e458da2aebf14dc0c8d4f0a2792497bbe69a0cb40f2d6b3aa7da0f741b"
+            }
+          ],
+          "actualChildExit": 1,
+          "console404": 2
+        },
+        {
+          "id": "after-390x844",
+          "variant": "after",
+          "viewport": {
+            "width": 390,
+            "height": 844
+          },
+          "eligible": false,
+          "gates": {
+            "tapDidNotSelect": true,
+            "oneSwipeAdvanced": true,
+            "photoSceneMatched": false,
+            "twoTrustedCardCycles": true,
+            "fixedTenCommands": true,
+            "noKeys": true,
+            "photosSaved": true,
+            "traceComplete": true
+          },
+          "photoSceneChanges": [
+            {
+              "key": "right",
+              "changedRectFields": [
+                "left",
+                "right",
+                "bottom",
+                "width",
+                "height"
+              ],
+              "textChanged": false,
+              "stableTransform": "none",
+              "postPhotoTransform": "none",
+              "stableRect": {
+                "left": 203.84153747558594,
+                "top": 787.2714233398438,
+                "right": 352.5491027832031,
+                "bottom": 811.067138671875,
+                "width": 148.7075653076172,
+                "height": 23.79571533203125
+              },
+              "postPhotoRect": {
+                "left": 201.35757446289062,
+                "top": 787.643798828125,
+                "right": 355.0330810546875,
+                "bottom": 812.2344360351562,
+                "width": 153.67550659179688,
+                "height": 24.59063720703125
+              }
+            }
+          ],
+          "tapDate": "1月1日",
+          "nextDate": "1月2日",
+          "labels": {
+            "date": "1月2日",
+            "left": "田を踏み歩く",
+            "right": "霜の畦を歩く"
+          },
+          "tapHoldNodeMs": 39.8337219953537,
+          "swipeHoldNodeMs": 123.93354400992393,
+          "pointerCycleEventMs": [
+            36.5,
+            122.7000000178814
+          ],
+          "pointerCycleCaptureMs": [
+            49.0,
+            120.5
+          ],
+          "commands": 10,
+          "ACKs": 10,
+          "cleanup": 0,
+          "trustedMoveCount": 6,
+          "stableInterval": {
+            "firstSampleAt": 13664,
+            "lastSampleAt": 14637.800000011921,
+            "sampleClockTimeOrigin": 1794690661023.2,
+            "firstReadReceivedMono": 201734296.633102,
+            "lastReadReceivedMono": 201735271.159566,
+            "firstFrameCount": 183,
+            "lastFrameCount": 187,
+            "performanceThresholdsApplied": false
+          },
+          "initialGeometry": {
+            "activeControlCount": 3,
+            "activeControlKeys": [
+              "card",
+              "sound",
+              "home"
+            ],
+            "activeOut": [],
+            "centerNotOwned": [],
+            "internalOverflow": [],
+            "specifiedOverlaps": [],
+            "documentOverflow": {
+              "x": false,
+              "y": false
+            }
+          },
+          "stableGeometry": {
+            "activeControlCount": 3,
+            "activeControlKeys": [
+              "card",
+              "sound",
+              "home"
+            ],
+            "activeOut": [],
+            "centerNotOwned": [],
+            "internalOverflow": [],
+            "specifiedOverlaps": [],
+            "documentOverflow": {
+              "x": false,
+              "y": false
+            }
+          },
+          "postPhotoGeometry": {
+            "activeControlCount": 3,
+            "activeControlKeys": [
+              "card",
+              "sound",
+              "home"
+            ],
+            "activeOut": [],
+            "centerNotOwned": [],
+            "internalOverflow": [],
+            "specifiedOverlaps": [],
+            "documentOverflow": {
+              "x": false,
+              "y": false
+            }
+          },
+          "routedHTMLSHA256": "47ee16c4d4544ad0b925d254d7845d7ee43fa629379e26305cae6876dab99b83",
+          "routeDeliveries": [
+            {
+              "at": {
+                "nodeEpochMs": 1794690661030,
+                "nodeMonotonicMs": 201720543.97573
+              },
+              "url": "http://localhost:8000/kome365/index.html",
+              "variant": "after",
+              "sha256": "47ee16c4d4544ad0b925d254d7845d7ee43fa629379e26305cae6876dab99b83"
+            }
+          ],
+          "actualChildExit": 1,
+          "console404": 2
+        },
+        {
+          "id": "before-568x320",
+          "variant": "before",
+          "viewport": {
+            "width": 568,
+            "height": 320
+          },
+          "eligible": false,
+          "gates": {
+            "tapDidNotSelect": true,
+            "oneSwipeAdvanced": true,
+            "photoSceneMatched": false,
+            "twoTrustedCardCycles": true,
+            "fixedTenCommands": true,
+            "noKeys": true,
+            "photosSaved": true,
+            "traceComplete": true
+          },
+          "photoSceneChanges": [
+            {
+              "key": "left",
+              "changedRectFields": [
+                "left",
+                "top",
+                "right",
+                "bottom",
+                "width",
+                "height"
+              ],
+              "textChanged": false,
+              "stableTransform": "none",
+              "postPhotoTransform": "none",
+              "stableRect": {
+                "left": 125,
+                "top": 270.25,
+                "right": 272,
+                "bottom": 294,
+                "width": 147,
+                "height": 23.75
+              },
+              "postPhotoRect": {
+                "left": 121.32500457763672,
+                "top": 270.8062438964844,
+                "right": 275.6749801635742,
+                "bottom": 295.7437438964844,
+                "width": 154.3499755859375,
+                "height": 24.9375
+              }
+            }
+          ],
+          "tapDate": "1月1日",
+          "nextDate": "1月2日",
+          "labels": {
+            "date": "1月2日",
+            "left": "田を踏み歩く",
+            "right": "霜の畦を歩く"
+          },
+          "tapHoldNodeMs": 39.38691598176956,
+          "swipeHoldNodeMs": 125.41098701953888,
+          "pointerCycleEventMs": [
+            38.099999994039536,
+            122.90000000596046
+          ],
+          "pointerCycleCaptureMs": [
+            32.29999998211861,
+            119.2000000178814
+          ],
+          "commands": 10,
+          "ACKs": 10,
+          "cleanup": 0,
+          "trustedMoveCount": 6,
+          "stableInterval": {
+            "firstSampleAt": 10520,
+            "lastSampleAt": 11216,
+            "sampleClockTimeOrigin": 1794690678450.3,
+            "firstReadReceivedMono": 201748536.35267,
+            "lastReadReceivedMono": 201749231.177583,
+            "firstFrameCount": 169,
+            "lastFrameCount": 173,
+            "performanceThresholdsApplied": false
+          },
+          "initialGeometry": {
+            "activeControlCount": 3,
+            "activeControlKeys": [
+              "card",
+              "sound",
+              "home"
+            ],
+            "activeOut": [],
+            "centerNotOwned": [],
+            "internalOverflow": [],
+            "specifiedOverlaps": [],
+            "documentOverflow": {
+              "x": false,
+              "y": false
+            }
+          },
+          "stableGeometry": {
+            "activeControlCount": 3,
+            "activeControlKeys": [
+              "card",
+              "sound",
+              "home"
+            ],
+            "activeOut": [],
+            "centerNotOwned": [],
+            "internalOverflow": [],
+            "specifiedOverlaps": [],
+            "documentOverflow": {
+              "x": false,
+              "y": false
+            }
+          },
+          "postPhotoGeometry": {
+            "activeControlCount": 3,
+            "activeControlKeys": [
+              "card",
+              "sound",
+              "home"
+            ],
+            "activeOut": [],
+            "centerNotOwned": [],
+            "internalOverflow": [],
+            "specifiedOverlaps": [],
+            "documentOverflow": {
+              "x": false,
+              "y": false
+            }
+          },
+          "routedHTMLSHA256": "d2add0e458da2aebf14dc0c8d4f0a2792497bbe69a0cb40f2d6b3aa7da0f741b",
+          "routeDeliveries": [
+            {
+              "at": {
+                "nodeEpochMs": 1794690678458,
+                "nodeMonotonicMs": 201737972.410513
+              },
+              "url": "http://localhost:8000/kome365/index.html",
+              "variant": "before",
+              "sha256": "d2add0e458da2aebf14dc0c8d4f0a2792497bbe69a0cb40f2d6b3aa7da0f741b"
+            }
+          ],
+          "actualChildExit": 1,
+          "console404": 2
+        },
+        {
+          "id": "after-568x320",
+          "variant": "after",
+          "viewport": {
+            "width": 568,
+            "height": 320
+          },
+          "eligible": false,
+          "gates": {
+            "tapDidNotSelect": true,
+            "oneSwipeAdvanced": true,
+            "photoSceneMatched": false,
+            "twoTrustedCardCycles": true,
+            "fixedTenCommands": true,
+            "noKeys": true,
+            "photosSaved": true,
+            "traceComplete": true
+          },
+          "photoSceneChanges": [
+            {
+              "key": "left",
+              "changedRectFields": [
+                "left",
+                "top",
+                "right",
+                "bottom",
+                "width",
+                "height"
+              ],
+              "textChanged": false,
+              "stableTransform": "none",
+              "postPhotoTransform": "none",
+              "stableRect": {
+                "left": 125,
+                "top": 270.25,
+                "right": 272,
+                "bottom": 294,
+                "width": 147,
+                "height": 23.75
+              },
+              "postPhotoRect": {
+                "left": 121.32500457763672,
+                "top": 270.8062438964844,
+                "right": 275.6749801635742,
+                "bottom": 295.7437438964844,
+                "width": 154.3499755859375,
+                "height": 24.9375
+              }
+            }
+          ],
+          "tapDate": "1月1日",
+          "nextDate": "1月2日",
+          "labels": {
+            "date": "1月2日",
+            "left": "田を踏み歩く",
+            "right": "霜の畦を歩く"
+          },
+          "tapHoldNodeMs": 40.10820999741554,
+          "swipeHoldNodeMs": 132.7149749994278,
+          "pointerCycleEventMs": [
+            30.200000017881393,
+            130.5
+          ],
+          "pointerCycleCaptureMs": [
+            31.5,
+            136.69999998807907
+          ],
+          "commands": 10,
+          "ACKs": 10,
+          "cleanup": 0,
+          "trustedMoveCount": 6,
+          "stableInterval": {
+            "firstSampleAt": 9139.09999999404,
+            "lastSampleAt": 9851.59999999404,
+            "sampleClockTimeOrigin": 1794690692610.5,
+            "firstReadReceivedMono": 201761322.770984,
+            "lastReadReceivedMono": 201762039.735426,
+            "firstFrameCount": 168,
+            "lastFrameCount": 172,
+            "performanceThresholdsApplied": false
+          },
+          "initialGeometry": {
+            "activeControlCount": 3,
+            "activeControlKeys": [
+              "card",
+              "sound",
+              "home"
+            ],
+            "activeOut": [],
+            "centerNotOwned": [],
+            "internalOverflow": [],
+            "specifiedOverlaps": [],
+            "documentOverflow": {
+              "x": false,
+              "y": false
+            }
+          },
+          "stableGeometry": {
+            "activeControlCount": 3,
+            "activeControlKeys": [
+              "card",
+              "sound",
+              "home"
+            ],
+            "activeOut": [],
+            "centerNotOwned": [],
+            "internalOverflow": [],
+            "specifiedOverlaps": [],
+            "documentOverflow": {
+              "x": false,
+              "y": false
+            }
+          },
+          "postPhotoGeometry": {
+            "activeControlCount": 3,
+            "activeControlKeys": [
+              "card",
+              "sound",
+              "home"
+            ],
+            "activeOut": [],
+            "centerNotOwned": [],
+            "internalOverflow": [],
+            "specifiedOverlaps": [],
+            "documentOverflow": {
+              "x": false,
+              "y": false
+            }
+          },
+          "routedHTMLSHA256": "47ee16c4d4544ad0b925d254d7845d7ee43fa629379e26305cae6876dab99b83",
+          "routeDeliveries": [
+            {
+              "at": {
+                "nodeEpochMs": 1794690692619,
+                "nodeMonotonicMs": 201752133.322201
+              },
+              "url": "http://localhost:8000/kome365/index.html",
+              "variant": "after",
+              "sha256": "47ee16c4d4544ad0b925d254d7845d7ee43fa629379e26305cae6876dab99b83"
+            }
+          ],
+          "actualChildExit": 1,
+          "console404": 2
+        },
+        {
+          "id": "before-844x390",
+          "variant": "before",
+          "viewport": {
+            "width": 844,
+            "height": 390
+          },
+          "eligible": true,
+          "gates": {
+            "tapDidNotSelect": true,
+            "oneSwipeAdvanced": true,
+            "photoSceneMatched": true,
+            "twoTrustedCardCycles": true,
+            "fixedTenCommands": true,
+            "noKeys": true,
+            "photosSaved": true,
+            "traceComplete": true
+          },
+          "photoSceneChanges": [],
+          "tapDate": "1月1日",
+          "nextDate": "1月2日",
+          "labels": {
+            "date": "1月2日",
+            "left": "田を踏み歩く",
+            "right": "霜の畦を歩く"
+          },
+          "tapHoldNodeMs": 40.13512700796127,
+          "swipeHoldNodeMs": 123.22536197304726,
+          "pointerCycleEventMs": [
+            40.099999994039536,
+            126.80000001192093
+          ],
+          "pointerCycleCaptureMs": [
+            31.5,
+            133.09999999403954
+          ],
+          "commands": 10,
+          "ACKs": 10,
+          "cleanup": 0,
+          "trustedMoveCount": 6,
+          "stableInterval": {
+            "firstSampleAt": 9716.09999999404,
+            "lastSampleAt": 10811.699999988079,
+            "sampleClockTimeOrigin": 1794690704613.7,
+            "firstReadReceivedMono": 201773895.220423,
+            "lastReadReceivedMono": 201775014.483401,
+            "firstFrameCount": 170,
+            "lastFrameCount": 173,
+            "performanceThresholdsApplied": false
+          },
+          "initialGeometry": {
+            "activeControlCount": 3,
+            "activeControlKeys": [
+              "card",
+              "sound",
+              "home"
+            ],
+            "activeOut": [],
+            "centerNotOwned": [],
+            "internalOverflow": [],
+            "specifiedOverlaps": [],
+            "documentOverflow": {
+              "x": false,
+              "y": false
+            }
+          },
+          "stableGeometry": {
+            "activeControlCount": 3,
+            "activeControlKeys": [
+              "card",
+              "sound",
+              "home"
+            ],
+            "activeOut": [],
+            "centerNotOwned": [],
+            "internalOverflow": [],
+            "specifiedOverlaps": [],
+            "documentOverflow": {
+              "x": false,
+              "y": false
+            }
+          },
+          "postPhotoGeometry": {
+            "activeControlCount": 3,
+            "activeControlKeys": [
+              "card",
+              "sound",
+              "home"
+            ],
+            "activeOut": [],
+            "centerNotOwned": [],
+            "internalOverflow": [],
+            "specifiedOverlaps": [],
+            "documentOverflow": {
+              "x": false,
+              "y": false
+            }
+          },
+          "routedHTMLSHA256": "d2add0e458da2aebf14dc0c8d4f0a2792497bbe69a0cb40f2d6b3aa7da0f741b",
+          "routeDeliveries": [
+            {
+              "at": {
+                "nodeEpochMs": 1794690704624,
+                "nodeMonotonicMs": 201764138.302573
+              },
+              "url": "http://localhost:8000/kome365/index.html",
+              "variant": "before",
+              "sha256": "d2add0e458da2aebf14dc0c8d4f0a2792497bbe69a0cb40f2d6b3aa7da0f741b"
+            }
+          ],
+          "actualChildExit": 1,
+          "console404": 2
+        },
+        {
+          "id": "after-844x390",
+          "variant": "after",
+          "viewport": {
+            "width": 844,
+            "height": 390
+          },
+          "eligible": true,
+          "gates": {
+            "tapDidNotSelect": true,
+            "oneSwipeAdvanced": true,
+            "photoSceneMatched": true,
+            "twoTrustedCardCycles": true,
+            "fixedTenCommands": true,
+            "noKeys": true,
+            "photosSaved": true,
+            "traceComplete": true
+          },
+          "photoSceneChanges": [],
+          "tapDate": "1月1日",
+          "nextDate": "1月2日",
+          "labels": {
+            "date": "1月2日",
+            "left": "田を踏み歩く",
+            "right": "霜の畦を歩く"
+          },
+          "tapHoldNodeMs": 39.74777200818062,
+          "swipeHoldNodeMs": 124.22852197289467,
+          "pointerCycleEventMs": [
+            39.29999998211861,
+            124.19999998807907
+          ],
+          "pointerCycleCaptureMs": [
+            27.80000001192093,
+            134.10000002384186
+          ],
+          "commands": 10,
+          "ACKs": 10,
+          "cleanup": 0,
+          "trustedMoveCount": 6,
+          "stableInterval": {
+            "firstSampleAt": 11484.299999982119,
+            "lastSampleAt": 12326.399999976158,
+            "sampleClockTimeOrigin": 1794690719241.9,
+            "firstReadReceivedMono": 201790293.296902,
+            "lastReadReceivedMono": 201791126.557692,
+            "firstFrameCount": 168,
+            "lastFrameCount": 171,
+            "performanceThresholdsApplied": false
+          },
+          "initialGeometry": {
+            "activeControlCount": 3,
+            "activeControlKeys": [
+              "card",
+              "sound",
+              "home"
+            ],
+            "activeOut": [],
+            "centerNotOwned": [],
+            "internalOverflow": [],
+            "specifiedOverlaps": [],
+            "documentOverflow": {
+              "x": false,
+              "y": false
+            }
+          },
+          "stableGeometry": {
+            "activeControlCount": 3,
+            "activeControlKeys": [
+              "card",
+              "sound",
+              "home"
+            ],
+            "activeOut": [],
+            "centerNotOwned": [],
+            "internalOverflow": [],
+            "specifiedOverlaps": [],
+            "documentOverflow": {
+              "x": false,
+              "y": false
+            }
+          },
+          "postPhotoGeometry": {
+            "activeControlCount": 3,
+            "activeControlKeys": [
+              "card",
+              "sound",
+              "home"
+            ],
+            "activeOut": [],
+            "centerNotOwned": [],
+            "internalOverflow": [],
+            "specifiedOverlaps": [],
+            "documentOverflow": {
+              "x": false,
+              "y": false
+            }
+          },
+          "routedHTMLSHA256": "47ee16c4d4544ad0b925d254d7845d7ee43fa629379e26305cae6876dab99b83",
+          "routeDeliveries": [
+            {
+              "at": {
+                "nodeEpochMs": 1794690719256,
+                "nodeMonotonicMs": 201778769.498979
+              },
+              "url": "http://localhost:8000/kome365/index.html",
+              "variant": "after",
+              "sha256": "47ee16c4d4544ad0b925d254d7845d7ee43fa629379e26305cae6876dab99b83"
+            }
+          ],
+          "actualChildExit": 1,
+          "console404": 2
+        },
+        {
+          "id": "before-820x1180",
+          "variant": "before",
+          "viewport": {
+            "width": 820,
+            "height": 1180
+          },
+          "eligible": true,
+          "gates": {
+            "tapDidNotSelect": true,
+            "oneSwipeAdvanced": true,
+            "photoSceneMatched": true,
+            "twoTrustedCardCycles": true,
+            "fixedTenCommands": true,
+            "noKeys": true,
+            "photosSaved": true,
+            "traceComplete": true
+          },
+          "photoSceneChanges": [],
+          "tapDate": "1月1日",
+          "nextDate": "1月2日",
+          "labels": {
+            "date": "1月2日",
+            "left": "田を踏み歩く",
+            "right": "霜の畦を歩く"
+          },
+          "tapHoldNodeMs": 39.6535159945488,
+          "swipeHoldNodeMs": 127.58920201659203,
+          "pointerCycleEventMs": [
+            36.69999998807907,
+            125.60000002384186
+          ],
+          "pointerCycleCaptureMs": [
+            35.20000001788139,
+            147.69999998807907
+          ],
+          "commands": 10,
+          "ACKs": 10,
+          "cleanup": 0,
+          "trustedMoveCount": 4,
+          "stableInterval": {
+            "firstSampleAt": 12579.699999988079,
+            "lastSampleAt": 13393.899999976158,
+            "sampleClockTimeOrigin": 1794690735293.4,
+            "firstReadReceivedMono": 201807425.227876,
+            "lastReadReceivedMono": 201808270.579786,
+            "firstFrameCount": 76,
+            "lastFrameCount": 78,
+            "performanceThresholdsApplied": false
+          },
+          "initialGeometry": {
+            "activeControlCount": 3,
+            "activeControlKeys": [
+              "card",
+              "sound",
+              "home"
+            ],
+            "activeOut": [],
+            "centerNotOwned": [],
+            "internalOverflow": [],
+            "specifiedOverlaps": [],
+            "documentOverflow": {
+              "x": false,
+              "y": false
+            }
+          },
+          "stableGeometry": {
+            "activeControlCount": 3,
+            "activeControlKeys": [
+              "card",
+              "sound",
+              "home"
+            ],
+            "activeOut": [],
+            "centerNotOwned": [],
+            "internalOverflow": [],
+            "specifiedOverlaps": [],
+            "documentOverflow": {
+              "x": false,
+              "y": false
+            }
+          },
+          "postPhotoGeometry": {
+            "activeControlCount": 3,
+            "activeControlKeys": [
+              "card",
+              "sound",
+              "home"
+            ],
+            "activeOut": [],
+            "centerNotOwned": [],
+            "internalOverflow": [],
+            "specifiedOverlaps": [],
+            "documentOverflow": {
+              "x": false,
+              "y": false
+            }
+          },
+          "routedHTMLSHA256": "d2add0e458da2aebf14dc0c8d4f0a2792497bbe69a0cb40f2d6b3aa7da0f741b",
+          "routeDeliveries": [
+            {
+              "at": {
+                "nodeEpochMs": 1794690735303,
+                "nodeMonotonicMs": 201794817.57003
+              },
+              "url": "http://localhost:8000/kome365/index.html",
+              "variant": "before",
+              "sha256": "d2add0e458da2aebf14dc0c8d4f0a2792497bbe69a0cb40f2d6b3aa7da0f741b"
+            }
+          ],
+          "actualChildExit": 1,
+          "console404": 2
+        },
+        {
+          "id": "after-820x1180",
+          "variant": "after",
+          "viewport": {
+            "width": 820,
+            "height": 1180
+          },
+          "eligible": true,
+          "gates": {
+            "tapDidNotSelect": true,
+            "oneSwipeAdvanced": true,
+            "photoSceneMatched": true,
+            "twoTrustedCardCycles": true,
+            "fixedTenCommands": true,
+            "noKeys": true,
+            "photosSaved": true,
+            "traceComplete": true
+          },
+          "photoSceneChanges": [],
+          "tapDate": "1月1日",
+          "nextDate": "1月2日",
+          "labels": {
+            "date": "1月2日",
+            "left": "田を踏み歩く",
+            "right": "霜の畦を歩く"
+          },
+          "tapHoldNodeMs": 39.723787009716034,
+          "swipeHoldNodeMs": 123.14629998803139,
+          "pointerCycleEventMs": [
+            44.30000001192093,
+            123.2999999821186
+          ],
+          "pointerCycleCaptureMs": [
+            63.80000001192093,
+            136.10000002384186
+          ],
+          "commands": 10,
+          "ACKs": 10,
+          "cleanup": 0,
+          "trustedMoveCount": 5,
+          "stableInterval": {
+            "firstSampleAt": 11948.800000011921,
+            "lastSampleAt": 12908.5,
+            "sampleClockTimeOrigin": 1794690753455.7,
+            "firstReadReceivedMono": 201824988.977712,
+            "lastReadReceivedMono": 201825970.303605,
+            "firstFrameCount": 107,
+            "lastFrameCount": 109,
+            "performanceThresholdsApplied": false
+          },
+          "initialGeometry": {
+            "activeControlCount": 3,
+            "activeControlKeys": [
+              "card",
+              "sound",
+              "home"
+            ],
+            "activeOut": [],
+            "centerNotOwned": [],
+            "internalOverflow": [],
+            "specifiedOverlaps": [],
+            "documentOverflow": {
+              "x": false,
+              "y": false
+            }
+          },
+          "stableGeometry": {
+            "activeControlCount": 3,
+            "activeControlKeys": [
+              "card",
+              "sound",
+              "home"
+            ],
+            "activeOut": [],
+            "centerNotOwned": [],
+            "internalOverflow": [],
+            "specifiedOverlaps": [],
+            "documentOverflow": {
+              "x": false,
+              "y": false
+            }
+          },
+          "postPhotoGeometry": {
+            "activeControlCount": 3,
+            "activeControlKeys": [
+              "card",
+              "sound",
+              "home"
+            ],
+            "activeOut": [],
+            "centerNotOwned": [],
+            "internalOverflow": [],
+            "specifiedOverlaps": [],
+            "documentOverflow": {
+              "x": false,
+              "y": false
+            }
+          },
+          "routedHTMLSHA256": "47ee16c4d4544ad0b925d254d7845d7ee43fa629379e26305cae6876dab99b83",
+          "routeDeliveries": [
+            {
+              "at": {
+                "nodeEpochMs": 1794690753462,
+                "nodeMonotonicMs": 201812976.219468
+              },
+              "url": "http://localhost:8000/kome365/index.html",
+              "variant": "after",
+              "sha256": "47ee16c4d4544ad0b925d254d7845d7ee43fa629379e26305cae6876dab99b83"
+            }
+          ],
+          "actualChildExit": 1,
+          "console404": 2
+        }
+      ],
+      "photoMismatchDetails": [
+        {
+          "trial": "before-320x568",
+          "photoSceneMatched": false,
+          "changedStableKeyElements": [
+            {
+              "key": "right",
+              "beforeText": "霜の畦を歩く",
+              "afterText": "霜の畦を歩く",
+              "beforeRect": {
+                "left": 168.984375,
+                "top": 511.25,
+                "right": 283.109375,
+                "bottom": 535,
+                "width": 114.125,
+                "height": 23.75
+              },
+              "afterRect": {
+                "left": 166.29266357421875,
+                "top": 511.7747802734375,
+                "right": 285.80108642578125,
+                "bottom": 536.6450805664062,
+                "width": 119.5084228515625,
+                "height": 24.87030029296875
+              },
+              "beforeOwnTransform": "none",
+              "afterOwnTransform": "none"
+            }
+          ],
+          "eligibility": {
+            "established": false,
+            "reasons": [
+              "photoSceneMatched"
+            ],
+            "gates": {
+              "tapDidNotSelect": true,
+              "oneSwipeAdvanced": true,
+              "photoSceneMatched": false,
+              "twoTrustedCardCycles": true,
+              "fixedTenCommands": true,
+              "noKeys": true,
+              "photosSaved": true,
+              "traceComplete": true
+            }
+          }
+        },
+        {
+          "trial": "after-320x568",
+          "photoSceneMatched": false,
+          "changedStableKeyElements": [
+            {
+              "key": "right",
+              "beforeText": "霜の畦を歩く",
+              "afterText": "霜の畦を歩く",
+              "beforeRect": {
+                "left": 168.984375,
+                "top": 511.25,
+                "right": 283.109375,
+                "bottom": 535,
+                "width": 114.125,
+                "height": 23.75
+              },
+              "afterRect": {
+                "left": 166.13125610351562,
+                "top": 511.8062438964844,
+                "right": 285.9624938964844,
+                "bottom": 536.7437744140625,
+                "width": 119.83123779296875,
+                "height": 24.937530517578125
+              },
+              "beforeOwnTransform": "none",
+              "afterOwnTransform": "none"
+            }
+          ],
+          "eligibility": {
+            "established": false,
+            "reasons": [
+              "photoSceneMatched"
+            ],
+            "gates": {
+              "tapDidNotSelect": true,
+              "oneSwipeAdvanced": true,
+              "photoSceneMatched": false,
+              "twoTrustedCardCycles": true,
+              "fixedTenCommands": true,
+              "noKeys": true,
+              "photosSaved": true,
+              "traceComplete": true
+            }
+          }
+        },
+        {
+          "trial": "before-390x844",
+          "photoSceneMatched": false,
+          "changedStableKeyElements": [
+            {
+              "key": "right",
+              "beforeText": "霜の畦を歩く",
+              "afterText": "霜の畦を歩く",
+              "beforeRect": {
+                "left": 203.984375,
+                "top": 787.25,
+                "right": 352.40625,
+                "bottom": 811,
+                "width": 148.421875,
+                "height": 23.75
+              },
+              "afterRect": {
+                "left": 200.27383422851562,
+                "top": 787.8062744140625,
+                "right": 356.1167907714844,
+                "bottom": 812.7437744140625,
+                "width": 155.84295654296875,
+                "height": 24.9375
+              },
+              "beforeOwnTransform": "none",
+              "afterOwnTransform": "none"
+            }
+          ],
+          "eligibility": {
+            "established": false,
+            "reasons": [
+              "photoSceneMatched"
+            ],
+            "gates": {
+              "tapDidNotSelect": true,
+              "oneSwipeAdvanced": true,
+              "photoSceneMatched": false,
+              "twoTrustedCardCycles": true,
+              "fixedTenCommands": true,
+              "noKeys": true,
+              "photosSaved": true,
+              "traceComplete": true
+            }
+          }
+        },
+        {
+          "trial": "after-390x844",
+          "photoSceneMatched": false,
+          "changedStableKeyElements": [
+            {
+              "key": "right",
+              "beforeText": "霜の畦を歩く",
+              "afterText": "霜の畦を歩く",
+              "beforeRect": {
+                "left": 203.84153747558594,
+                "top": 787.2714233398438,
+                "right": 352.5491027832031,
+                "bottom": 811.067138671875,
+                "width": 148.7075653076172,
+                "height": 23.79571533203125
+              },
+              "afterRect": {
+                "left": 201.35757446289062,
+                "top": 787.643798828125,
+                "right": 355.0330810546875,
+                "bottom": 812.2344360351562,
+                "width": 153.67550659179688,
+                "height": 24.59063720703125
+              },
+              "beforeOwnTransform": "none",
+              "afterOwnTransform": "none"
+            }
+          ],
+          "eligibility": {
+            "established": false,
+            "reasons": [
+              "photoSceneMatched"
+            ],
+            "gates": {
+              "tapDidNotSelect": true,
+              "oneSwipeAdvanced": true,
+              "photoSceneMatched": false,
+              "twoTrustedCardCycles": true,
+              "fixedTenCommands": true,
+              "noKeys": true,
+              "photosSaved": true,
+              "traceComplete": true
+            }
+          }
+        },
+        {
+          "trial": "before-568x320",
+          "photoSceneMatched": false,
+          "changedStableKeyElements": [
+            {
+              "key": "left",
+              "beforeText": "田を踏み歩く",
+              "afterText": "田を踏み歩く",
+              "beforeRect": {
+                "left": 125,
+                "top": 270.25,
+                "right": 272,
+                "bottom": 294,
+                "width": 147,
+                "height": 23.75
+              },
+              "afterRect": {
+                "left": 121.32500457763672,
+                "top": 270.8062438964844,
+                "right": 275.6749801635742,
+                "bottom": 295.7437438964844,
+                "width": 154.3499755859375,
+                "height": 24.9375
+              },
+              "beforeOwnTransform": "none",
+              "afterOwnTransform": "none"
+            }
+          ],
+          "eligibility": {
+            "established": false,
+            "reasons": [
+              "photoSceneMatched"
+            ],
+            "gates": {
+              "tapDidNotSelect": true,
+              "oneSwipeAdvanced": true,
+              "photoSceneMatched": false,
+              "twoTrustedCardCycles": true,
+              "fixedTenCommands": true,
+              "noKeys": true,
+              "photosSaved": true,
+              "traceComplete": true
+            }
+          }
+        },
+        {
+          "trial": "after-568x320",
+          "photoSceneMatched": false,
+          "changedStableKeyElements": [
+            {
+              "key": "left",
+              "beforeText": "田を踏み歩く",
+              "afterText": "田を踏み歩く",
+              "beforeRect": {
+                "left": 125,
+                "top": 270.25,
+                "right": 272,
+                "bottom": 294,
+                "width": 147,
+                "height": 23.75
+              },
+              "afterRect": {
+                "left": 121.32500457763672,
+                "top": 270.8062438964844,
+                "right": 275.6749801635742,
+                "bottom": 295.7437438964844,
+                "width": 154.3499755859375,
+                "height": 24.9375
+              },
+              "beforeOwnTransform": "none",
+              "afterOwnTransform": "none"
+            }
+          ],
+          "eligibility": {
+            "established": false,
+            "reasons": [
+              "photoSceneMatched"
+            ],
+            "gates": {
+              "tapDidNotSelect": true,
+              "oneSwipeAdvanced": true,
+              "photoSceneMatched": false,
+              "twoTrustedCardCycles": true,
+              "fixedTenCommands": true,
+              "noKeys": true,
+              "photosSaved": true,
+              "traceComplete": true
+            }
+          }
+        },
+        {
+          "trial": "before-844x390",
+          "photoSceneMatched": true,
+          "changedStableKeyElements": [],
+          "eligibility": {
+            "established": true,
+            "reasons": [],
+            "gates": {
+              "tapDidNotSelect": true,
+              "oneSwipeAdvanced": true,
+              "photoSceneMatched": true,
+              "twoTrustedCardCycles": true,
+              "fixedTenCommands": true,
+              "noKeys": true,
+              "photosSaved": true,
+              "traceComplete": true
+            }
+          }
+        },
+        {
+          "trial": "after-844x390",
+          "photoSceneMatched": true,
+          "changedStableKeyElements": [],
+          "eligibility": {
+            "established": true,
+            "reasons": [],
+            "gates": {
+              "tapDidNotSelect": true,
+              "oneSwipeAdvanced": true,
+              "photoSceneMatched": true,
+              "twoTrustedCardCycles": true,
+              "fixedTenCommands": true,
+              "noKeys": true,
+              "photosSaved": true,
+              "traceComplete": true
+            }
+          }
+        },
+        {
+          "trial": "before-820x1180",
+          "photoSceneMatched": true,
+          "changedStableKeyElements": [],
+          "eligibility": {
+            "established": true,
+            "reasons": [],
+            "gates": {
+              "tapDidNotSelect": true,
+              "oneSwipeAdvanced": true,
+              "photoSceneMatched": true,
+              "twoTrustedCardCycles": true,
+              "fixedTenCommands": true,
+              "noKeys": true,
+              "photosSaved": true,
+              "traceComplete": true
+            }
+          }
+        },
+        {
+          "trial": "after-820x1180",
+          "photoSceneMatched": true,
+          "changedStableKeyElements": [],
+          "eligibility": {
+            "established": true,
+            "reasons": [],
+            "gates": {
+              "tapDidNotSelect": true,
+              "oneSwipeAdvanced": true,
+              "photoSceneMatched": true,
+              "twoTrustedCardCycles": true,
+              "fixedTenCommands": true,
+              "noKeys": true,
+              "photosSaved": true,
+              "traceComplete": true
+            }
+          }
+        }
+      ],
+      "rootClosureIdentifier": "round-134/layout-v2-root-closure.json",
+      "limits": [
+        "Four eligible slots form two strict paired sizes844x390 and820x1180. Six scene mismatches are not converted to eligible.",
+        "At320x568 and390x844 the changed rounded rectangle is right; at568x320 it is left, on both before/after. Text did not change.",
+        "Active-control bounds/center ownership/internal overflow, specified overlaps and document overflow are snapshot measurements, not proof of every physical hit or visual readability.",
+        "All10 recorded stable and post-photo samples had no active-control bounds/center-ownership/internal-overflow flags or specified overlap; this descriptive fact does not relax six invalid pair comparisons.",
+        "V1attempted1/unattempted9/eligible0 is retained separately, not replaced or added to v2 successes.",
+        "No performance or human-retention improvement is inferred from changed quiet/frame eligibility in v2.",
+        "Console errors and child1 remain actual recorded results; parent0 means sequence completion/closure.",
+        "560 overlap checks include elements whose visibility was not required and omit continuous hand/text overlap.120 control observations are sampled card/sound/home rectangles/center hits,not120 presses.60 control rectangle pairs match;13/80 label rectangle pairs differ although80/80 text pairs match. Parent animation state was not sampled,so cause of label differences remains unconfirmed."
+      ]
+    }
+  },
+  "operatorJudgment": {
+    "preserved": [
+      "reason position/duration and first-three feedback behavior",
+      "automatic progression and cue timing",
+      "audio controls and unlock path",
+      "protectedengine/field3d/cards"
+    ],
+    "reportOnly": [
+      "Known first-answer main-thread wait remains; broad initialization/frame changes not part of this keyboard fix."
+    ],
+    "noNewOperatorDecisionRequested": true
+  },
+  "attachmentCriteria": {
+    "identifier": "sakurai_partial_20261114_2319.md",
+    "sha256": "4e206461abe220bb98ee7eba77c5132bfbe80d9ca9b62ac7e447848ae25ff74e",
+    "videoPlayed": false,
+    "application": "Interaction intent should match the resulting action: operating a focused control should not choose an unrelated card answer. This criterion is not measured user intention or dropout improvement.",
+    "references": [
+      "https://www.youtube.com/watch?v=EDs5n39sRFc",
+      "https://www.youtube.com/watch?v=L1Su0aajYFA"
+    ]
+  },
+  "limits": [
+    "Both diagnostics are actual touch-focus cases; Tab0 is not a demonstrated Tab success rate.",
+    "Before1500ms-request reads return8.205–9.585s,after1.506–1.513s. These are different actual observation times and not a general response-speed benchmark.300ms-request dates already differ.",
+    "Each child retains oneconsole404 withoutresourceURL; seriesouter0 means completion/closure,not all tests passed.",
+    "The automatic opening click is untrusted and not counted as a human input.",
+    "Control-body routing unit test is not a browser focus/paint test. Repeat/modifiers/composition and shadow retargeting policy are outside this change.",
+    "Sound control is deliberately muted; no physical audio verification.",
+    "No real device keyboard,assistive technology,physical finger/sensor/network/paint,human comprehension or dropout-rate measurement.",
+    "Supplementary full unittest failed. Five-size v2 completed10 but strict matched-scene comparison qualified only4 slots/two sizes;6 unestablished remain. No further runtime was performed to turn them into passes. Actual unresolved suite failures require draft/merge hold."
+  ],
+  "sourceLocations": {
+    "guard": "https://github.com/shota0617/ricepia-judge/blob/43af75cce8c6023c650ac5b790f6a712bd64af71/kome365/index.html#L4115",
+    "regression": "https://github.com/shota0617/ricepia-judge/blob/43af75cce8c6023c650ac5b790f6a712bd64af71/tests/test_kome_keyboard_focus.py#L180",
+    "existingSoundFixture": "https://github.com/shota0617/ricepia-judge/blob/43af75cce8c6023c650ac5b790f6a712bd64af71/tests/test_kome365_firstmin.py#L408"
+  },
+  "evidence": [
+    {
+      "identifier": "round-134/source-selected.json",
+      "sha256": "bece3bed90f39944c296f47c4a6300629137422c457db103cddd5a9c1cca700f",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-134/candidate-decision.json",
+      "sha256": "cf963e8e85ee3d348dcd9b3c51b51f0ecc04a30163ee85c8b0b7e4e1e9e984d8",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-134/root-closure.json",
+      "sha256": "ce3542f664b15da37daa8a17deb0a19c61b84f43008f0bf17b496674bb749439",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-134/root-photo-observations.json",
+      "sha256": "66736d74c6942731655d3fdd98e095cb374a2ae972878cd04540732074205cdc",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-134/pytest-result.json",
+      "sha256": "2152cb3bdd7eee824c634f4ed4a6cb87b9abe21f2e83441784e2edaaa76f0ecb",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-134/pytest-after-fix.json",
+      "sha256": "11a2bff944f373ab04e9b572342aae62f577b1481f118169a2e386de28219bea",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-134/discovery-c/summary.json",
+      "sha256": "86ecc92cb3aaaaf225a50a52bc1348275f1729e3ad2508a9d944286ab265dced",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-134/discovery-c/positive-channel-addendum.json",
+      "sha256": "ec2bb84e4a1ab51c5af9cbd182e3b6ff35ba576f7bffd5840a88ce40eb5321f7",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-134/discovery-c/frozen.json",
+      "sha256": "91adf09ccedc2c1c7c63f8f2164f469fc2a237b94795b20f06c345474e1bdb58",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-134/design-review/primary-design.md",
+      "sha256": "b9610ec97a16c5445a0c33f1ef1a8d23ff99058dcdde5759dda1ac026be23ce1",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-134/design-review/visual-primary/frozen.json",
+      "sha256": "3b2d31eb2a7a8ce5cbc6b379d90da811e034f8147ffe28dff558093601ed6361",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-134/keyboard-before-audit/summary.json",
+      "sha256": "c71d6aa6cf0a131cbe050b856133ed06a676ee0a409c573952ef2311a7da7a9a",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-134/keyboard-before-audit/frozen.json",
+      "sha256": "d13611c932f250e95dff44b4e323c97b4c69c06146ea72004fc560b7dc9d6b27",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-134/keyboard-before-audit/photos.json",
+      "sha256": "02a0db4b2bda02aff902a686718b61d217483d4e70110d3c356464cda7a1e445",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-134/keyboard-after-audit/summary.json",
+      "sha256": "360cb9ab4b3df1c176edbe5574b7fc456ba22a19aad45f7f0e25861107a62702",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-134/keyboard-after-audit/frozen.json",
+      "sha256": "ffed980de2bd2b359010e2bf932aa3a4f1d84b2f9e2659e736d1f28b29b54ede",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-134/keyboard-after-audit/photos.json",
+      "sha256": "147bbc1ad5d1f49524f29d5a3aef212b4f37a60794db28afd27e32da72600706",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-134/keyboard-reproduction-preparation/criteria.json",
+      "sha256": "10181dfbbdfa97fd0c4beaa3f0bc6a1e4225acaf2162c2dec9ca1b73d5753df1",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-134/keyboard-root-closure.json",
+      "sha256": "455fb398a72280e172213563d6e7507b821d89157e4de1aa585b639dc0c7398b",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-134/keyboard-after-root-closure.json",
+      "sha256": "229c8f83e446a32b95d91514f5d56995d6cdc9c5ee9f02b70558be8f06556e3b",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-134/keyboard-after-actual-completion.json",
+      "sha256": "daf24f60100c5adc4af1618aed29a80f9f23197669354cc9e890a773729e2737",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-134/red-green.json",
+      "sha256": "c67481deecaf73b67fedda461cedba5c1077b007d0b5a2d92050c4318dc5f398",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-134/keyboard-test-red.log",
+      "sha256": "67d02bb2487baaabd793a0e8631d8f040e497af56f85d09bc38bb85bb4453563",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-134/keyboard-test-green.log",
+      "sha256": "0000ec435f23b4de037c17d9d1974a51b45771dd7f51aa1254d0c2cc12d82227",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-134/code-review-c/review.json",
+      "sha256": "9f765e4bd34034bb2c8a2e3d73d917422ed6e5ae86159eabdf60ce780cb85b69",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-134/code-review-c/frozen.json",
+      "sha256": "2b829bdddeef5ba7dda398b1eb652c565e876f3c24bffcd77a3c9d3c83d968b8",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-134/full-unittest-audit/summary.json",
+      "sha256": "a1074d0bed0ab65932ee405dc45aafda240d1d6b0146c6b09cbce5cf4cdc1855",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-134/full-unittest-audit/failures.json",
+      "sha256": "50dff9ffde8a01cd93529f89830824a54127767aed7eec98b862458912b99c4e",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-134/full-unittest-audit/frozen.json",
+      "sha256": "37bc5aca4cf9314dd10dbe21c0f32034a4a2484e5e47ce0d0fd9f4fbe7e7e331",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-134/full-unittest-runtime/execution.json",
+      "sha256": "087cf3c3f81ddf4666213ad9f65e72e619bc396cff926aed32a08057b9c624da",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-134/full-unittest-runtime/root-browser-closure.json",
+      "sha256": "1b304f512acfdea557b053cb45e75e4616132b2107c56be7e003563c22c0dc62",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-134/full-unittest-runtime/run.log",
+      "sha256": "6fb0a2e665fcae4b9849ab02397fb624483bfdbca1e43eddf45e9fe71b34bc1e",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-134/layout-v1-root-closure.json",
+      "sha256": "f926d601541aa049611636f9adced4c0c54dab0028c8b07195ba6f89f8ce7101",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-134/layout-v2-audit-a/summary.json",
+      "sha256": "2c5d1ddff4d3dc59147f4666bde91573c9dc1298cf6554d579828bafb8363741",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-134/layout-v2-audit-a/trials.json",
+      "sha256": "0798cf6673f3862592675bef6b731c01f5896e2429befd30f8756a780f6080f0",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-134/layout-v2-audit-a/photos.json",
+      "sha256": "38e8bfe1f951b59c917784bda26b7e4dbabb6081d6631337822699933fd3951b",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-134/layout-v2-audit-a/frozen.json",
+      "sha256": "8c606098f484d80824382db92650be1ffc9ba73343856b436a2980d909504fa8",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-134/design-review/layout-v2-geometry-c/summary.json",
+      "sha256": "2c47bef383f2913a51ec28d979504613fe85c4f6440cb0a63be01bc985ec8987",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-134/design-review/layout-v2-geometry-c/photo-mismatch.json",
+      "sha256": "88361264feaec8c55aed20d174b7b17f9a51a52083c05532a875c2b2f81dcfd6",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-134/design-review/layout-v2-geometry-c/frozen.json",
+      "sha256": "a3823de91916b3f7a1892857ab8e83b6a4e1808c6b7755a5be54ab9f20c709da",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-134/design-review/layout-keyboard-visual-audit-v2/README.md",
+      "sha256": "29987bfe0049fb65b9823fe467fe42314602b4e10e31f843a9aa859a5f9e250b",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-134/design-review/layout-keyboard-visual-audit-v2/photos.json",
+      "sha256": "5120a5fb862e8330b0df1c613e2c9c5f8aa0b3232474c307a81cfbb824ff8d34",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-134/design-review/layout-keyboard-visual-audit-v2/frozen.json",
+      "sha256": "10f54d9b3773bec84c9af2958fd10f40aaf4c074a9c45feea485a8c4f4c66f4f",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-134/layout-v2-root-closure.json",
+      "sha256": "9ef2aaef0bfba2281c7029f85557a2c712764e9a196902a14f81a4fe02fad41a",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-134/root-five-size-photo-observation.json",
+      "sha256": "66f7fad3a9905882d3a5323d953eda2b4fbece1bfe82b931953dfa2c534e56a8",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-134/post-test-main-update.json",
+      "sha256": "5c2d71a040caf2f92a1b1d9a94adf45f6f8d433142d5e7d98c9d48d44d187027",
+      "publicLink": false
+    }
+  ],
+  "publication": {
+    "status": "draft/merge hold",
+    "reason": "Unresolved actual full-suite failures; not pytest absence alone.",
+    "ruleURL": "https://github.com/shota0617/ricepia-judge/blob/43af75cce8c6023c650ac5b790f6a712bd64af71/.claude/skills/ricepia-flow/SKILL.md#L213",
+    "quote": "Codex の 指摘が のこっている・テストが 落ちている・運営者の 判断が いる 変更は、マージせずに 伝える",
+    "postTestHead": "0c0b433fca1ccb5c846db65e90bac4f4dcf25a10",
+    "base": "ed4c87fd102c701d5aab4bf9b0aa03bbbca57d27",
+    "fullMergedHeadRetested": false
+  }
+}

@@ -298,6 +298,38 @@ const FAKE = (mode) => {
       await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); await p.waitForTimeout(1300); };
     const st = () => p.evaluate(() => ({ fa: (({ srcs, live, ac, ...o }) => o)(window.__fa || {}), ctxState: window.__fa && window.__fa.ac ? window.__fa.ac.state : '', screen: ['sTitle', 'sGame', 'sResult'].filter(id => !document.getElementById(id).classList.contains('hidden')).join(),
       tgl: (() => { const e = [...document.querySelectorAll('#swSnd, [data-snd]')].find(x => x.getClientRects().length && getComputedStyle(x).visibility !== 'hidden'); if (!e) return null; const b = e.getBoundingClientRect(); return { id: e.id, text: e.textContent, box: [b.left, b.top, b.right, b.bottom], inView: b.left >= 0 && b.top >= 0 && b.right <= innerWidth && b.bottom <= innerHeight };   })(), ks: window.__ks ? window.__ks.state() : { on: null, dead: false, ctx: '', bgm: false, fx: {}, log: [] }, date: (document.getElementById('swBigDate') || {}).textContent || '', btn: (document.getElementById('swSnd') || {}).textContent || '', store: (() => { try { return localStorage.getItem('kome365_sound'); } catch (e) { return 'x'; } })() }));
+    // 回答を意図する6箇所だけで使う。ボタンに焦点がある負の確認には使わない。
+    const answerKey = async (label) => {
+      await p.evaluate(label => {
+        const card = document.getElementById('swCard');
+        if (!card) throw new Error('Answer-key fixture: card missing');
+        card.focus({ preventScroll: true });
+        const read = () => {
+          let saveLength = null, saveError = null;
+          try { const s = JSON.parse(localStorage.getItem('kome365_swipe_save') || 'null'); if (s && typeof s.ch === 'string') saveLength = s.ch.length; } catch (e) { saveError = String(e); }
+          const fx = window.__ks ? window.__ks.state().fx : {};
+          return { at: performance.now(), cardClass: card.className, fly: card.classList.contains('fly'),
+            date: document.getElementById('swBigDate').textContent, saveLength, saveError,
+            game: !document.getElementById('sGame').classList.contains('hidden'), result: !document.getElementById('sResult').classList.contains('hidden'),
+            pon: fx.pon || 0 };
+        };
+        const row = { label, focusedId: document.activeElement && document.activeElement.id, reduced: matchMedia('(prefers-reduced-motion: reduce)').matches, before: read() };
+        (window.__soundKeyStarts || (window.__soundKeyStarts = [])).push(row);
+        if (document.activeElement !== card) throw new Error('Answer-key fixture: card focus failed');
+        // 製品の既存documentリスナーより後。記録だけで伝播や既定動作を変えない。
+        document.addEventListener('keydown', e => {
+          row.key = e.key; row.targetId = e.target && e.target.id; row.trusted = e.isTrusted; row.repeat = e.repeat;
+          row.eventTimeStamp = e.timeStamp; row.defaultPrevented = e.defaultPrevented; row.after = read();
+          row.newFly = !row.before.fly && row.after.fly;
+          row.dateAdvanced = !!row.before.date && !!row.after.date && row.after.date !== row.before.date;
+          row.saveAdvanced = Number.isInteger(row.before.saveLength) && row.after.saveLength === row.before.saveLength + 1;
+          row.resultOpened = row.before.game && !row.before.result && !row.after.game && row.after.result;
+          row.choiceStarted = row.before.game && !row.before.fly && (row.reduced ? (row.dateAdvanced || row.saveAdvanced || row.resultOpened) : row.newFly);
+          row.ponAdded = row.after.pon - row.before.pon;
+        }, { once: true, passive: true });
+      }, label);
+      await p.keyboard.press('ArrowLeft');
+    };
     const r = { steps: [] };
     if (pl.loadTap) { await p.goto('http://kome.test/kome365/index.html?no3d', { waitUntil: 'domcontentloaded' }); await p.touchscreen.tap(200, 160); r.steps.push(['loadTap', await st()]); }
     else await p.goto('http://kome.test/kome365/index.html?no3d');
@@ -309,7 +341,7 @@ const FAKE = (mode) => {
       else if (a === 'L' || a === 'R') await swipe(a === 'L' ? -1 : 1);
       else if (a === 'mute') { if (await p.locator('#swSnd').count()) await p.tap('#swSnd', { timeout: 5000 }); await p.waitForTimeout(300); }   // ボタンが 無い 版では 押せない(下の 確かめで 落ちる)
       else if (a === 'wait') await p.waitForTimeout(2500);
-      else if (a.startsWith('keyjs:')) { await p.keyboard.press('ArrowLeft'); await p.waitForTimeout(250); r.js = r.js || []; r.js.push(await p.evaluate(a.slice(6))); }   // 決めて 0.25秒 あと(決めた 直後の 演出の 間)に はかる
+      else if (a.startsWith('keyjs:')) { await answerKey('keyjs'); await p.waitForTimeout(250); r.js = r.js || []; r.js.push(await p.evaluate(a.slice(6))); }   // 決めて 0.25秒 あと(決めた 直後の 演出の 間)に はかる
       else if (a === 'animFast') { await cdp.send('Animation.enable'); await cdp.send('Animation.setPlaybackRate', { playbackRate: 10 }); }   // サイクル180: CSS の アニメの 時計 だけ 10倍 早く(重い 端末で こまが 来ない 間に アニメの 時間が すすむ のを にせる)
       else if (a === 'holdNext') {   // サイクル181: 決めて 0.35秒 あとに 次の カードへ 指を 置き、1秒 そのまま(決めない)。その 間の わけの 吹き出しを はかる
         await p.waitForTimeout(350); const bx = await p.locator('#swCard').boundingBox(); const x = bx.x + bx.width / 2, y = bx.y + bx.height / 2;
@@ -320,12 +352,12 @@ const FAKE = (mode) => {
       else if (a === 'holdOn') { await p.waitForTimeout(350); const bx = await p.locator('#swCard').boundingBox(); const x = bx.x + bx.width / 2, y = bx.y + bx.height / 2; r.hold = [x, y]; await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] }); await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: x + 8, y }] }); await p.waitForTimeout(500); }   // 次の カードに 指を 置いた まま(はなさない)
       else if (a === 'release') { const [x, y] = r.hold; await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x, y }] }); await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); }
       else if (a === 'wait31') await p.waitForTimeout(31500);   // 30秒の カードが 出る まで
-      else if (a === 'keyL') { await p.keyboard.press('ArrowLeft'); r.js = r.js || []; r.js.push(await p.evaluate(() => window.__fa.live(window.__tc, window.__ts))); }   // 決めた すぐ あとに 古い 予約が のこって いるか
+      else if (a === 'keyL') { await answerKey('keyL'); r.js = r.js || []; r.js.push(await p.evaluate(() => window.__fa.live(window.__tc, window.__ts))); }   // 決めた すぐ あとに 古い 予約が のこって いるか
       else if (a === 'dailyKey') {   // 3回めの レビュー(P2): ← で 決めて すぐ ⌂ → 今日の 田んぼ(bDaily) → 新しい ゲームで すぐ ←
-        await p.keyboard.press('ArrowLeft'); await p.evaluate(() => { document.getElementById('swHome').click(); document.getElementById('bDaily').click(); });
-        const n = await p.evaluate(() => window.__ks.state().log.length); await p.keyboard.press('ArrowLeft'); r.js = r.js || []; r.js.push(n); }
+        await answerKey('dailyKey-first'); await p.evaluate(() => { document.getElementById('swHome').click(); document.getElementById('bDaily').click(); });
+        const n = await p.evaluate(() => window.__ks.state().log.length); await answerKey('dailyKey-second'); r.js = r.js || []; r.js.push(n); }
       else if (a === 'swipeLeaveNew' || a === 'keyLeaveNew') {   // サイクル178: 決めて すぐ(カードが 飛んで いる 間)に ⌂ → 今日の 田んぼ(新しい ゲーム)
-        if (a === 'keyLeaveNew') await p.keyboard.press('ArrowLeft');
+        if (a === 'keyLeaveNew') await answerKey('keyLeaveNew');
         else { const bx = await p.locator('#swCard').boundingBox(); const x = bx.x + bx.width / 2, y = bx.y + bx.height / 2; await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] }); for (let i = 1; i <= 4; i++) { await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: x - 40 * i, y }] }); await p.waitForTimeout(12); } await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); }
         await p.evaluate(() => { document.getElementById('swHome').click(); document.getElementById('bDaily').click(); }); await p.waitForTimeout(900); }
       else if (a === 'leaveNewTwo') {   // サイクル178 の 直し: 古い ゲームで スワイプ → すぐ ⌂ → 今日の 田んぼ → 新しい ゲームで 2回 つづけて スワイプ(古い 予約が 鳴る 間に)。CDP の 返事を 待たずに ならべて 送る
@@ -335,8 +367,8 @@ const FAKE = (mode) => {
         const B = cdp.send('Runtime.evaluate', { expression: "document.getElementById('swHome').click();document.getElementById('bDaily').click();" });
         const C = sw(), W = cdp.send('Runtime.evaluate', { expression: 'new Promise(r => setTimeout(r, 30))', awaitPromise: true }), D = sw();
         await Promise.all([B].concat(C, [W], D)); await p.waitForTimeout(1500); }
-      else if (a === 'homeKey') {   // 2回めの レビュー(P2): ⌂ を マウスで 押した まま ← で 決め、すぐ はなす(選んで すぐ 題へ)
-        const hb = await p.locator('#swHome').boundingBox(); await p.mouse.move(hb.x + hb.width / 2, hb.y + hb.height / 2); await p.mouse.down(); await p.keyboard.press('ArrowLeft'); await p.mouse.up();
+      else if (a === 'homeKey') {   // 2回めの レビュー(P2): ⌂ を マウスで 押した まま ← で 決め、すぐ はなす(選んで すぐ 題へ)。回答のキーは実カードへ焦点を移して送る
+        const hb = await p.locator('#swHome').boundingBox(); await p.mouse.move(hb.x + hb.width / 2, hb.y + hb.height / 2); await p.mouse.down(); await answerKey('homeKey'); await p.mouse.up();
         r.js = r.js || []; r.js.push(await p.evaluate(() => ({ screen: document.getElementById('sTitle').classList.contains('hidden') ? 'game' : 'title', n: window.__ks.state().log.length }))); }
       else if (a === 'home') { await p.tap('#swHome'); r.js = r.js || []; r.js.push(await p.evaluate(() => window.__fa.live(window.__tc || 1e12, window.__ts || 0))); await p.waitForTimeout(150); }
       else if (a === 'tapTgl') { const h = await p.evaluateHandle(() => [...document.querySelectorAll('#swSnd, [data-snd]')].find(x => x.getClientRects().length)); const e = h.asElement(); if (e) await e.tap(); await p.waitForTimeout(300); }
@@ -352,6 +384,7 @@ const FAKE = (mode) => {
       r.steps.push([a, await st()]);
     }
     if (pl.box) r.box = await p.evaluate(() => { const e = document.getElementById('swSnd'); const b = e && e.getBoundingClientRect(); return b ? [b.left, b.top, b.width, b.height] : null; });
+    r.keyStarts = await p.evaluate(() => window.__soundKeyStarts || []);
     r.errs = errs; out[pl.name] = r; await ctx.close();
   }
   await b.close(); console.log(JSON.stringify(out));
@@ -369,6 +402,19 @@ def sound_run(plans):
     r = json.loads(out.stdout.strip().splitlines()[-1])
     if isinstance(r, dict) and r.get("skip"):
         raise unittest.SkipTest(r["skip"])
+    for plan in plans:
+        expected = sum(2 if a == "dailyKey" else 1 for a in plan.get("acts", [])
+                       if a == "dailyKey" or a in ("keyL", "keyLeaveNew", "homeKey") or a.startswith("keyjs:"))
+        starts = r[plan["name"]].get("keyStarts", [])
+        if len(starts) != expected:
+            raise AssertionError("%s: answer-key starts %d != %d" % (plan["name"], len(starts), expected))
+        for start in starts:
+            if not (start.get("focusedId") == "swCard" and start.get("targetId") == "swCard"
+                    and start.get("trusted") is True and start.get("key") == "ArrowLeft"
+                    and start.get("repeat") is False and start.get("choiceStarted") is True):
+                raise AssertionError("%s: intended answer did not start: %r" % (plan["name"], start))
+            if start["label"] in ("homeKey", "dailyKey-first", "dailyKey-second") and start.get("ponAdded") != 1:
+                raise AssertionError("%s: intended answer did not make exactly one pon: %r" % (plan["name"], start))
     return r
 
 

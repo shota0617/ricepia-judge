@@ -4112,7 +4112,12 @@ renderTitle();
     cardDown(e);
   });
   /* キーボードの左右キーはスワイプの代替ではなく補助(PC用)。判定・結果はスワイプと同じ choose を通る */
-  document.addEventListener('keydown', function(e){ if ($('sGame').classList.contains('hidden') || !$('sheetBg').classList.contains('hidden')) return; if (e.key === 'ArrowLeft') { e.preventDefault(); choose('left'); } else if (e.key === 'ArrowRight') { e.preventDefault(); choose('right'); } });
+  document.addEventListener('keydown', function(e){
+    if ($('sGame').classList.contains('hidden') || !$('sheetBg').classList.contains('hidden')) return;
+    var t = e.target;
+    if (t && ((t.closest && t.closest('button, a, input, select, textarea, [role="button"]')) || t.isContentEditable)) return;
+    if (e.key === 'ArrowLeft') { e.preventDefault(); choose('left'); } else if (e.key === 'ArrowRight') { e.preventDefault(); choose('right'); }
+  });
   $('swHome').onclick = function(){ careClear(); sunHide(); show('sTitle'); renderTitle(); };
   $('swHelp').onclick = function(){ $('sheet').innerHTML = '<h3 id="sheetTitle">あそびかた</h3><p class="sub" style="font-size:14px">毎日1枚のカードが出ます。カードを<b>左か右にスワイプ</b>(←→キーでもOK)して、どうするかを選びます。選んだ結果で田んぼが変わり、次の日へ進みます。田んぼの状態(天気・季節・稲の様子)を読んで正しく選ぶと田んぼが良くなり、まちがえると悪くなります。左と右では、することと結果がちがいます。ドラッグすると変わるステータスの印が予告になります。結果は田んぼとステータスの変化で分かります。1月1日から12月31日までの365日、毎日1枚。冬は準備、春から稲刈りまでが本番、収穫のあとは出荷や冬じたくの日々です。お米の等級と収量は稲刈りで決まり、結果は365日目のあとに出ます。</p><button class="btn sec" data-cancel>とじる</button>'; openBg(); $('sheet').onclick = function(e){ if (e.target.closest('[data-cancel]')) closeSheet(); }; };
   // はじめる: 既存の bStart の処理(Farm生成・設定)のあと、カード生活に入る

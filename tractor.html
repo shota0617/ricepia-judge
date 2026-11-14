@@ -246,9 +246,11 @@
   var cv = document.getElementById('lwSoil'), w = document.getElementById('loadWait'), g = cv && cv.getContext && cv.getContext('2d'), last = {}, dpr = 1;
   if (!g) return;
   function done() { return w.classList.contains('off') || (window.game && game.S && game.S.started); }
-  function fit() { dpr = Math.min(2, window.devicePixelRatio || 1); var W = Math.round(innerWidth * dpr), H = Math.round(innerHeight * dpr); if (cv.width === W && cv.height === H) return;
+  function fit() { var d0 = dpr; dpr = Math.min(2, window.devicePixelRatio || 1); var W = Math.round(innerWidth * dpr), H = Math.round(innerHeight * dpr); if (cv.width === W && cv.height === H) return;
     var old = null; try { if (cv.width && cv.height) { old = document.createElement('canvas'); old.width = cv.width; old.height = cv.height; old.getContext('2d').drawImage(cv, 0, 0); } } catch (e) { old = null; }
-    cv.width = W; cv.height = H; if (old) g.drawImage(old, 0, 0, W, H); }   // 回した・大きさが 変わった：描いた すじは のばして のこす
+    var sx = old ? W / old.width * d0 / dpr : 1, sy = old ? H / old.height * d0 / dpr : 1;   // 画面の 点（CSS px）で 見た 比
+    cv.width = W; cv.height = H; if (old) g.drawImage(old, 0, 0, W, H);   // 回した・大きさが 変わった：描いた すじは のばして のこす
+    for (var id in last) last[id] = [last[id][0] * sx, last[id][1] * sy]; }   // サイクル284b（Codex 指摘）: 置いた まま の 指の 前の 点も 同じ 比で 動かす（古い 点から なぞって いない 所へ 線を 引かない）
   fit(); addEventListener('resize', fit);
   function line(a, b) {
     g.lineCap = 'round'; g.lineJoin = 'round';
@@ -261,7 +263,7 @@
   function up(e) { delete last[e.pointerId]; }
   addEventListener('pointerdown', down, { passive: true, capture: true }); addEventListener('pointermove', move, { passive: true, capture: true });
   addEventListener('pointerup', up, { passive: true, capture: true }); addEventListener('pointercancel', up, { passive: true, capture: true });
-  var iv = setInterval(function () { if (!done()) return; clearInterval(iv); last = {}; removeEventListener('pointerdown', down, true); removeEventListener('pointermove', move, true); removeEventListener('pointerup', up, true); removeEventListener('pointercancel', up, true); }, 500);
+  var iv = setInterval(function () { if (!done()) return; clearInterval(iv); last = {}; removeEventListener('resize', fit); removeEventListener('pointerdown', down, true); removeEventListener('pointermove', move, true); removeEventListener('pointerup', up, true); removeEventListener('pointercancel', up, true); }, 500);
 })();
 </script>
 <script>

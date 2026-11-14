@@ -3825,7 +3825,7 @@ renderTitle();
     markRaf = requestAnimationFrame(function(){ void e.offsetWidth; e.classList.add('on'); markSeen = 0; markLast = performance.now(); markRaf = requestAnimationFrame(markTick); }); markGuard(); }
   /* 店主指示 2026-11-08: 判定文 why の最初の一文をマークの下に小さく浮かせて約2秒出す。サイクル177(運営者の声 2026-11-13「⭕️❌とその理由も出す」)で ○ の ときも 出す(前は ✗ だけ) */
   function whyShow(fb, k){ var e = $('swWhy'); if (!e) return; var t = String(fb || '').replace(/^\S+\s+/, ''); var i = t.indexOf('。'); if (i >= 0) t = t.slice(0, i + 1); if (!t) return; k = k === 'ok' ? 'ok' : 'ng'; e.setAttribute('data-k', k); e.textContent = (k === 'ok' ? '○ ' : '✗ ') + t;   /* サイクル177(運営者の声 2026-11-13「⭕️❌とその理由も出す」): ○ でも わけの 一文を 出す。先頭に ○／✗(色 だけに たよらない) */ e.classList.remove('on'); clearTimeout(whyTimer); whyTimer = null; whyKeep = choices.length <= 3; var go = function(){ void e.offsetWidth; e.classList.add('on'); clearTimeout(whyTimer); whyTimer = setTimeout(whyHide, 2100); };
-    e.style.top = ''; if (whyNeedPlace()) requestAnimationFrame(function(){ whyPlace(e); go(); }); else go(); }   /* サイクル181: 小さい たて画面・よこ画面は 次の カードを 描いた あとの こまで 置き場所を 決めてから 出す(2秒は 出た ときから)。サイクル174 の 直し: 吹き出しの 2秒(アニメ)が 終わったら on を 外す(状態の ことばが もどる)。場所と 2秒は そのまま */
+    e.style.top = ''; requestAnimationFrame(function(){ whyFit(e); go(); whyWatchOn(); }); }   /* サイクル181: 小さい たて画面・よこ画面は 次の カードを 描いた あとの こまで 置き場所を 決めてから 出す(2秒は 出た ときから)。サイクル174 の 直し: 吹き出しの 2秒(アニメ)が 終わったら on を 外す(状態の ことばが もどる)。場所と 2秒は そのまま */
   var whyTimer = null, whyKeep = false;
   /* サイクル181(運営者 2026-11-14): わけの 吹き出しの 置き場所。390×844・820×1180 など ふつうの たて画面は 今の まま(CSS)。
      小さい たて画面(はば 360px 以下 か 高さ 700px 以下)は カードの 絵の 上(日づけに かぶらない)、よこの 低い 画面は カードの 上の はしの 外(選ぶ 所に かぶらない) */
@@ -3833,12 +3833,29 @@ renderTitle();
   function whyPlace(e){ try { var W = window.innerWidth, H = window.innerHeight, land = H <= 440 && W >= 564, sw = $('swipe').getBoundingClientRect(), wr = $('swWrap').getBoundingClientRect(), ic = $('swIc'), h = e.offsetHeight, y;
       if (!land && ic && ic.offsetParent && ic.getBoundingClientRect().height > 20) { var ir = ic.getBoundingClientRect(); y = ir.top; } else y = wr.top - h - 6;
       e.style.top = Math.round(Math.max(4, y - sw.top)) + 'px'; } catch (x) { e.style.top = ''; } }
-  function whyHide(){ clearTimeout(whyTimer); whyTimer = null; whyKeep = false; var e = $('swWhy'); if (e) e.classList.remove('on'); }
+  /* サイクル183(PR #1168 の レビュー): 置き場所は どの 大きさでも 日づけ・選ぶ 文・画面の 外を よける。
+     ふつうの たて画面(390×844・820×1180)は まず 今の 場所(CSS)。日づけ か 選ぶ 文に かかる とき だけ カードの 絵の 上へ(だめなら カードの 上の 外)。
+     出て いる 間に 回したり 大きさが 変わったり したら 置きなおす(のこりの 時間は そのまま) */
+  function whyHits(e){ try { var A = e.getBoundingClientRect(), W = window.innerWidth, H = window.innerHeight; if (A.left < 0 || A.top < 0 || A.right > W || A.bottom > H) return true;
+      var rs = [], rr = document.createRange(), add = function(n){ if (!n || !n.getClientRects().length) return; rr.selectNodeContents(n); var b = rr.getBoundingClientRect(); if (b.width) rs.push(b); };
+      add($('swBigDate')); [].forEach.call(document.querySelectorAll('#swEdge .eLb'), add);
+      return rs.some(function(b){ return Math.min(A.right, b.right) - Math.max(A.left, b.left) > 0.5 && Math.min(A.bottom, b.bottom) - Math.max(A.top, b.top) > 0.5; }); } catch (x) { return false; } }
+  function whyFit(e){ try { e.style.top = ''; if (whyNeedPlace()) whyPlace(e);
+      if (!whyHits(e)) return; var sw = $('swipe').getBoundingClientRect(), ic = $('swIc'), h = e.offsetHeight, wr = $('swWrap').getBoundingClientRect(), dt = $('swBigDate'), ys = [], i;
+      if (ic && ic.offsetParent && ic.getBoundingClientRect().height > 20) ys.push(ic.getBoundingClientRect().top);
+      ys.push(wr.top - h - 6); if (dt && dt.offsetParent) { var db = dt.getBoundingClientRect(); ys.push(db.bottom + 4); ys.push(db.top - h - 4); }
+      for (i = 0; i < ys.length; i++) { e.style.top = Math.round(Math.max(4, ys[i] - sw.top)) + 'px'; if (!whyHits(e)) return; }
+      e.style.top = Math.round(Math.max(4, ys[0] - sw.top)) + 'px'; } catch (x) {} }
+  /* 次の カードは 入って くる 間に 動く ので、出て いる 間は こま ごとに 見て、かかったら その こまで 置きなおす */
+  var whyWatch = null;
+  function whyWatchOn(){ cancelAnimationFrame(whyWatch); var f = function(){ var e = $('swWhy'); if (!e || !e.classList.contains('on')) { whyWatch = null; return; } if (whyHits(e)) whyFit(e); whyWatch = requestAnimationFrame(f); }; whyWatch = requestAnimationFrame(f); }
+  window.addEventListener('resize', function(){ var e = $('swWhy'); if (e && e.classList.contains('on')) requestAnimationFrame(function(){ whyFit(e); }); });
+  function whyHide(){ clearTimeout(whyTimer); whyTimer = null; cancelAnimationFrame(whyWatch); whyWatch = null; whyKeep = false; var e = $('swWhy'); if (e) e.classList.remove('on'); }
   try { $('swWhy').addEventListener('animationend', function(ev){ if (ev.target === this && /^swWhy(In|Fade)$/.test(ev.animationName)) whyHide(); }); } catch (e) {}
   /* 3回めの レビュー(P2): 画面の 世代は 選択 ごとに choose() の 中で つかまえて この 関数へ わたす(共有の 変数だと、新しい ゲームで すぐ 選んだ ときに 古い 選択の 分が 上書き されて いた) */
   function advanceTurn(side, gen){
     var kLive = ksSameScreen(gen);   /* 2回めの レビュー(P2): 選んだ あとに ⌂ などで 画面が かわって いたら、この 選択からは 音を 作らない(ゲームの 進み方は 前と 同じ) */
-    pvClear(); finishFx(); if (!whyKeep) whyHide();   /* 前の判定の光/影が残っていたら消す(素早く次のカードを選んだときの誤認防止。Codex軽微指摘)。バツの理由も前のカードの分はここで片づける */
+    pvClear(); finishFx(); if (!whyKeep) whyHide(); else requestAnimationFrame(function(){ var we = $('swWhy'); if (we && we.classList.contains('on')) whyFit(we); });   /* サイクル183: のこした 吹き出しは 次の カードを 描いた あとに 置きなおす(次の 日づけ・選ぶ 文を よける) */   /* 前の判定の光/影が残っていたら消す(素早く次のカードを選んだときの誤認防止。Codex軽微指摘)。バツの理由も前のカードの分はここで片づける */
     var fb = '', n0 = f.msgs.length, st0 = null;
     rwTake(); var d0 = KomeCards.day(f), ks0 = { base: paddyInfo.base, wet: paddyInfo.wet, stage: stageTintInfo.idx };
     try { st0 = KomeCards.status(f); } catch (e) {}

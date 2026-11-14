@@ -316,6 +316,9 @@ const FAKE = (mode) => {
         await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] }); await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: x + 8, y }] }); await p.waitForTimeout(700);
         r.js = r.js || []; r.js.push(await p.evaluate(WHY_HOLD)); await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x, y }] }); await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); }
       else if (a === 'wait9') await p.waitForTimeout(9500);   // サイクル182: さわらずに 8秒 より 長く
+      else if (a.startsWith('rotate:')) { const [rw, rh] = a.slice(7).split('x').map(Number); await p.setViewportSize({ width: rw, height: rh }); await p.waitForTimeout(250); }   // サイクル183: 吹き出しが 出て いる 間に 回す
+      else if (a === 'holdOn') { await p.waitForTimeout(350); const bx = await p.locator('#swCard').boundingBox(); const x = bx.x + bx.width / 2, y = bx.y + bx.height / 2; r.hold = [x, y]; await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] }); await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: x + 8, y }] }); await p.waitForTimeout(500); }   // 次の カードに 指を 置いた まま(はなさない)
+      else if (a === 'release') { const [x, y] = r.hold; await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x, y }] }); await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); }
       else if (a === 'wait31') await p.waitForTimeout(31500);   // 30秒の カードが 出る まで
       else if (a === 'keyL') { await p.keyboard.press('ArrowLeft'); r.js = r.js || []; r.js.push(await p.evaluate(() => window.__fa.live(window.__tc, window.__ts))); }   // 決めた すぐ あとに 古い 予約が のこって いるか
       else if (a === 'dailyKey') {   // 3回めの レビュー(P2): ← で 決めて すぐ ⌂ → 今日の 田んぼ(bDaily) → 新しい ゲームで すぐ ←
@@ -1879,13 +1882,13 @@ class TestKome365WhyReadable(unittest.TestCase):
             self.assertTrue(j["inView"], name + " %r" % (j["box"],))
             self.assertEqual(j["pe"], "none", name)         # 入力は ふさがない
             self.assertFalse(j["wordVis"], name)            # 田んぼの ことばは 吹き出しの 間 しまう(重ならない)
-            if (w, h) in ((390, 844), (820, 1180)):
-                self.assertEqual(j["top"], "", name)        # ふつうの たて画面の 場所は 前の まま(CSS)
-            else:
-                self.assertNotIn("date", j["o"], name + " %r" % (j["o"],))
-                self.assertNotIn("edgeL", j["o"], name + " %r" % (j["o"],))
-                self.assertNotIn("edgeR", j["o"], name + " %r" % (j["o"],))
-                self.assertNotIn("snd", j["o"], name)
+            if (w, h) == (820, 1180):
+                self.assertEqual(j["top"], "", name)        # 日づけに かからない 大きな 画面の 場所は 前の まま(CSS)
+            # サイクル183(PR #1168 の レビューで 書きかえ): 390×844 も 日づけ・選ぶ 文に かからない(前は 390×844 は 場所を かえない ので 見て いなかった)
+            self.assertNotIn("date", j["o"], name + " %r" % (j["o"],))
+            self.assertNotIn("edgeL", j["o"], name + " %r" % (j["o"],))
+            self.assertNotIn("edgeR", j["o"], name + " %r" % (j["o"],))
+            self.assertNotIn("snd", j["o"], name)
 
 
 # サイクル182: 手本の 指が 字に かからない・3D の したくは 1枚目を 答えた あと
@@ -1926,6 +1929,45 @@ class TestKome365Finger3D(unittest.TestCase):
         self.assertEqual(x["errs"], [])
         self.assertEqual(x["js"][0], 1, "さわらずに 9.5秒で 3D の したくが はじまった(最初の スワイプが 固まりに 当たる)")
         self.assertEqual(x["js"][1], 2, "1枚目を 答えて 1.3秒 たっても 3D の したくが はじまらない")
+
+
+# サイクル183(PR #1168 の レビュー): のこした 吹き出しは 次の カードの 日づけ・選ぶ 文・画面の 外に かからない(指を 置いた まま・回した とき も)
+WHY_FIT_JS = "js:(() => { const w = document.getElementById('swWhy'), A = w.getBoundingClientRect(); const rr = document.createRange(), o = {}; const add = (k, n) => { if (!n || !n.getClientRects().length) return; rr.selectNodeContents(n); const b = rr.getBoundingClientRect(); const ix = Math.min(A.right, b.right) - Math.max(A.left, b.left), iy = Math.min(A.bottom, b.bottom) - Math.max(A.top, b.top); if (ix > 0.5 && iy > 0.5) o[k] = Math.round(ix * iy); }; add('date', document.getElementById('swBigDate')); document.querySelectorAll('#swEdge .eLb').forEach((n, i) => add('edge' + i, n)); return { on: w.classList.contains('on'), op: +getComputedStyle(w).opacity, vw: innerWidth, vh: innerHeight, box: [A.left, A.top, A.right, A.bottom].map(Math.round), inView: A.left >= 0 && A.top >= 0 && A.right <= innerWidth && A.bottom <= innerHeight, o: o, date: document.getElementById('swBigDate').textContent }; })()"
+
+
+class TestKome365WhyFit(unittest.TestCase):
+    """サイクル183: のこした わけの 吹き出しの 置き場所(5つの 大きさ・回す 両向き)"""
+
+    @classmethod
+    def setUpClass(cls):
+        plans = []
+        for w, h in VPS5:
+            plans.append({"name": "hold%dx%d" % (w, h), "w": w, "h": h, "acts": ["keyjs:" + WHY_JS, "holdOn", WHY_FIT_JS, "release"]})
+        for (w, h), (rw, rh) in (((320, 568), (568, 320)), ((568, 320), (320, 568)), ((390, 844), (844, 390)), ((844, 390), (390, 844))):
+            plans.append({"name": "rot%dx%d-%dx%d" % (w, h, rw, rh), "w": w, "h": h, "reduce": True, "acts": ["keyjs:" + WHY_JS, "rotate:%dx%d" % (rw, rh), WHY_FIT_JS]})
+        cls.r = sound_run(plans)
+
+    def check(self, name, j):
+        self.assertTrue(j["on"], name + ": 吹き出しが 出て いない %r" % (j,))
+        self.assertTrue(j["inView"], name + ": 画面の 外 %r" % (j["box"],))
+        self.assertEqual(j["o"], {}, name + ": 日づけ・選ぶ 文に かかる %r" % (j,))
+
+    def test_kept_bubble_clear_while_touching_next_card(self):
+        for w, h in VPS5:
+            name = "hold%dx%d" % (w, h)
+            x = self.r[name]
+            self.assertEqual(x["errs"], [], name)
+            j = x["js"][-1]
+            self.assertEqual(j["date"], "1月2日", name)    # 次の カードの 日づけ
+            self.check(name, j)
+
+    def test_bubble_refits_after_rotation(self):
+        for name in [k for k in self.r if k.startswith("rot")]:
+            x = self.r[name]
+            self.assertEqual(x["errs"], [], name)
+            j = x["js"][-1]
+            self.assertEqual([j["vw"], j["vh"]], [int(v) for v in name.split("-")[1].split("x")], name)
+            self.check(name, j)
 
 
 class TestKome365PaddyReadable(unittest.TestCase):

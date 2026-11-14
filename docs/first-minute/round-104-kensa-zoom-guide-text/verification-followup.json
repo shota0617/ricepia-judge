@@ -1,0 +1,270 @@
+{
+  "recordedAtUTC": "2026-11-14T11:34:15.328762+00:00",
+  "purpose": "Supplement to the original PR1160 as-of report; original results.json, images and measured before/after evidence are unchanged",
+  "originalPublicHead": "63db4202f6468de838db3305a09f3b4c7719b443",
+  "productHead": "caaccbfee6a7bda2b49cc7f6a8b4d5d5a47e4d1a",
+  "supplementaryUnittest": {
+    "testedHead": "63db4202f6468de838db3305a09f3b4c7719b443",
+    "command": [
+      "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+      "-B",
+      "-m",
+      "unittest",
+      "discover",
+      "-s",
+      "tests",
+      "-p",
+      "test*.py",
+      "-v"
+    ],
+    "cwd": "/workspace/ricepia-firstminute-round104",
+    "environmentSet": {
+      "KOME365_HTML": "/workspace/ricepia-firstminute-round104/kome365/index.html",
+      "NODE_PATH": "/workspace/ricepia-judge/node_modules",
+      "NODE_OPTIONS": "--require=/workspace/scratch/first-minute/offline.cjs",
+      "PYTHONDONTWRITEBYTECODE": "1"
+    },
+    "methodCounts": {
+      "total": 2591,
+      "explicitOK": 2521,
+      "FAIL": 68,
+      "ERROR": 1,
+      "SKIP": 1
+    },
+    "actualChildExit": 1,
+    "actualOuterExit": 1,
+    "actualOuterBasis": "root-browser-closure.json; original wrapper actualOuterExit:null retained",
+    "reportedUnittestSeconds": 474.729,
+    "countsFromExplicitMethodStatuses": true,
+    "kensa": {
+      "methods": 196,
+      "passed": 196,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "existingMethods": 195,
+      "newMethods": 1,
+      "newMethodSubcases": 22
+    },
+    "priorTargetedKensaRun": {
+      "methods": 196,
+      "ok": 193,
+      "skips": 3,
+      "exit": 0,
+      "seconds": 6.099
+    },
+    "priorSkipMappingLimit": "Previous compact dots are mapped by the unchanged default unittest method ordering; current verbose names/statuses are explicit. All three contain real Playwright code.",
+    "sourcePinnedFiles": 345,
+    "dependencyPinnedFiles": 601,
+    "sourcePreserved": true,
+    "dependenciesPreserved": true,
+    "browserClosureRootConfirmed": true,
+    "timeout": false,
+    "retries": 0
+  },
+  "mainSelectedComparison": {
+    "head": "4421abdb0e57416565b504fc8b9588f28b02f522",
+    "cwd": "/workspace/ricepia-firstminute-round106",
+    "command": [
+      "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+      "-B",
+      "-m",
+      "unittest",
+      "-v",
+      "test_boot_screen.TestTractorProgress.test_sizes_are_near_the_files",
+      "test_boot_screen.TestTractorProgress.test_bar_moves_without_total",
+      "test_maze_loop3_34.StationLink.test_diff_scope_and_forbidden_words",
+      "test_maze_loop3_36.WallTheme.test_only_pixel_js_changed_and_no_banned_words",
+      "test_maze_loop3_38.IdleReturnNoCard.test_changed_files",
+      "test_maze_loop3_39.Diff.test_only_pixel_changed",
+      "test_maze_loop3_40.Scope.test_files_and_words",
+      "test_maze_loop3_41.Footprints.test_changed_files_and_words",
+      "test_maze_loop3_42.Scope.test_files_and_words",
+      "test_maze_loop3_44.Diff.test_changed_files",
+      "test_maze_loop3_45.Diff.test_changed_files",
+      "test_maze_loop3_46.Diff.test_changed_files",
+      "test_maze_loop3_47.Diff.test_changed_files",
+      "test_maze_loop3_48.Diff.test_changed_files",
+      "test_maze_loop3_49.Diff.test_changed_files",
+      "test_maze_loop3_50.Diff.test_changed_files",
+      "test_maze_loop3_51.Diff.test_changed_files",
+      "test_maze_loop3_52.Diff.test_changed_files",
+      "test_maze_loop3_53.Unchanged.test_files_allowed",
+      "test_maze_loop3_54.Diff.test_changed_files",
+      "test_maze_loop3_55.Diff.test_changed_files",
+      "test_maze_loop3_56.Safety.test_files_allowed",
+      "test_maze_loop3_57.Safety.test_files_allowed",
+      "test_maze_loop3_58.Safety.test_files_allowed",
+      "test_maze_loop3_59.Safety.test_files_allowed",
+      "test_maze_loop3_60.Safety.test_files_allowed",
+      "test_maze_loop3_61.Safety.test_files_allowed",
+      "test_maze_loop3_62.Maze.test_scope_and_words",
+      "test_maze_loop3_63.Scope.test_files_allowed",
+      "test_maze_loop3_64.Scope.test_files_allowed",
+      "test_maze_loop3_65.Scope.test_files_allowed",
+      "test_maze_loop3_66.Scope.test_files_allowed",
+      "test_maze_loop3_67.Scope.test_files_allowed",
+      "test_maze_loop3_68.Scope.test_files_allowed",
+      "test_maze_loop4_100.Glance100.test_exposed",
+      "test_maze_loop4_100.Glance100.test_scope",
+      "test_maze_loop4_101.TestFirstMinuteAmbient.test_scope",
+      "test_maze_loop4_102.TestFirstMinuteMeetings.test_scope",
+      "test_maze_loop4_103.TestFirstMinuteGochiso.test_scope",
+      "test_maze_loop4_104.TestFirstMinuteOtedama.test_scope",
+      "test_maze_loop4_105.TestHappyFace.test_scope",
+      "test_maze_loop4_106.TestMichikusaFirstRoll.test_scope",
+      "test_maze_loop4_167.TestScope.test_files",
+      "test_maze_loop4_168.TestScope.test_files",
+      "test_maze_loop4_169.TestScope.test_files",
+      "test_maze_loop4_170.Cycle170.test_scope_and_words",
+      "test_maze_loop4_171.Cycle171.test_scope_and_words",
+      "test_maze_loop4_172.Cycle172.test_scope_and_words",
+      "test_maze_loop4_173.Cycle173.test_scope_and_words",
+      "test_maze_loop4_174.Cycle174.test_scope_and_words",
+      "test_maze_loop4_175.Cycle175.test_scope_and_words",
+      "test_maze_loop4_176.Cycle176.test_scope_and_words",
+      "test_maze_loop4_177.Cycle177.test_scope_and_words",
+      "test_maze_loop4_178.Cycle178.test_scope_and_words",
+      "test_maze_loop4_179.Cycle179.test_scope_and_words",
+      "test_maze_loop4_180.Cycle180.test_scope_and_words",
+      "test_maze_loop4_181.Cycle181.test_scope_and_words",
+      "test_maze_loop4_182.Cycle182.test_scope_and_words",
+      "test_maze_loop4_183.Lazy183.test_changed_files_limited",
+      "test_maze_loop4_205.GuideDispName205.test_scope",
+      "test_maze_loop4_64.Safety.test_files_allowed",
+      "test_maze_loop4_65.Safety.test_changed_files",
+      "test_maze_loop4_86.HeroRevert.test_scope",
+      "test_maze_loop4_9.Scope.test_diff_words_and_files",
+      "test_maze_loop4_95.DrawNight95.test_scope",
+      "test_maze_loop4_97.NoNumbers97.test_scope",
+      "test_maze_loop4_98.UnreadFog98.test_scope",
+      "test_maze_loop4_99.Blink99.test_eye_saved_and_public",
+      "test_maze_loop4_99.Blink99.test_scope"
+    ],
+    "selection": "Exact69 FAIL/ERROR method IDs from the R104 full run",
+    "counts": {
+      "total": 69,
+      "explicitOK": 53,
+      "FAIL": 14,
+      "ERROR": 2
+    },
+    "actualExit": 1,
+    "reportedUnittestSeconds": 8.504,
+    "outerElapsedSeconds": 10.301934957504272,
+    "notFullMainSuite": true,
+    "classes": {
+      "diff-scope": {
+        "candidate": {
+          "FAIL": 65
+        },
+        "main": {
+          "ok": 53,
+          "ERROR": 1,
+          "FAIL": 11
+        },
+        "count": 65
+      },
+      "tractor": {
+        "candidate": {
+          "ERROR": 1,
+          "FAIL": 1
+        },
+        "main": {
+          "ERROR": 1,
+          "FAIL": 1
+        },
+        "count": 2
+      },
+      "nishio-public-literal": {
+        "candidate": {
+          "FAIL": 2
+        },
+        "main": {
+          "FAIL": 2
+        },
+        "count": 2
+      }
+    },
+    "inputFilesCompared": 73,
+    "sameInputHashes": true,
+    "additionalGitError": {
+      "id": "test_maze_loop3_36.WallTheme.test_only_pixel_js_changed_and_no_banned_words",
+      "command": [
+        "git",
+        "diff",
+        "main...HEAD",
+        "--",
+        "nishio-go/pixel.js"
+      ],
+      "exit": 128,
+      "interpretation": "Original log lacks captured Git stderr. The failure cause is not independently established; do not assert missing main ref."
+    }
+  },
+  "requiredPytest": {
+    "actualExit": 127,
+    "status": "unavailable; this supplementary unittest is not a passing pytest run"
+  },
+  "currentPublicationJudgment": {
+    "decision": "hold R104 merge/game publication and continue next game",
+    "reason": "Unresolved actual FAIL/ERROR in supplementary full suite; 65 scope failures are not all pre-existing main failures",
+    "authorization": "User already authorized appropriate merge/publication; no renewed permission requested",
+    "skillURL": "https://github.com/shota0617/ricepia-judge/blob/4421abdb0e57416565b504fc8b9588f28b02f522/.claude/skills/ricepia-flow/SKILL.md#L212",
+    "skillQuote": "テストが 落ちている・運営者の 判断が いる 変更は、マージせずに 伝える",
+    "interpretation": "Missing pytest executable alone is not treated as an explicit skill merge prohibition; current hold is based on actual supplementary failures."
+  },
+  "limits": [
+    "The four non-scope failures are static source assertions, not four newly observed browser defects",
+    "Main comparison is69 selected methods, not full main suite success",
+    "No existing test/assertion/skip was edited, disabled or relaxed",
+    "Full-test source is published report HEAD63db; later supplement commit HEAD is not claimed retested",
+    "R105 Node or external discovery runs are not part of these counts",
+    "No physical-device/player-retention conclusion"
+  ],
+  "evidence": [
+    {
+      "identifier": "round-104/full-unittest-preparation/manifest.json",
+      "sha256": "4112c7311cfdcf910da177ceef5b2e1adb8fafb8201dcf5778f46e5180f3494d"
+    },
+    {
+      "identifier": "round-104/full-unittest-runtime/execution.json",
+      "sha256": "f6d88d75cc8a261d6e747f41023f9a087539023d5f1bf8c7c1088c4949b5aa05"
+    },
+    {
+      "identifier": "round-104/full-unittest-runtime/run.log",
+      "sha256": "418dcdbd44487446dadfe81d70152daa5709d302a9aa5c229ac78b4e5c29cc0c"
+    },
+    {
+      "identifier": "round-104/full-unittest-runtime/root-browser-closure.json",
+      "sha256": "2f9e25e6e8bd215f2a5d06ab408f56b04f7c0e83aeb74ebdd7afc3f0d6c5b3cc"
+    },
+    {
+      "identifier": "round-104/full-unittest-audit/summary.json",
+      "sha256": "4ca98241ddbda51999ac948f54b2605b3b5032281e4c99451b5c4e846d4c669d"
+    },
+    {
+      "identifier": "round-104/full-unittest-audit/frozen.json",
+      "sha256": "9ea5d8d19a46d6c187afb903f23d462ebaa5c4d5e01aa995cdbacd660f9baadb"
+    },
+    {
+      "identifier": "round-104/main-failure-comparison/execution.json",
+      "sha256": "214e6db573f23977ac384bc484bc0a2828a4fdb640d401f15aded0bea78703c8"
+    },
+    {
+      "identifier": "round-104/main-failure-comparison/run.log",
+      "sha256": "0e56b6975a77cde9bfe7185b9671315a6c1cd3aebc8ba0d9b21ec27362f39616"
+    },
+    {
+      "identifier": "round-104/discovery-c/full-unittest-audit/summary.json",
+      "sha256": "9f9fdd7b8b2c1a4328320fa6be35fb270be1d61a12c3ae38bf779ef2202c0917"
+    },
+    {
+      "identifier": "round-104/discovery-c/full-unittest-audit/failure-classification.json",
+      "sha256": "4dbe647f9af8194fd8d2cb78fd03397c480331b7f5a64771e5f149cb17089220"
+    },
+    {
+      "identifier": "round-104/discovery-c/full-unittest-audit/frozen.json",
+      "sha256": "d0ac0967d77f02382aefd9445dfe194a1eb05552bd9441d59a2f55c23acae950"
+    }
+  ],
+  "evidenceLocationNote": "Scratch identifiers are local originals, not public links. Earlier report is preserved as its original as-of evidence."
+}

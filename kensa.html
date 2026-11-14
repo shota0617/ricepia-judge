@@ -1231,6 +1231,19 @@ function toLocal(cx, cy) {
    旧版は最初の袋だけ（lotIndex !== 0 なら出さない）だったため、2袋目からは はかる の「💧 ぐるぐる まわす」などに手本が1つも出なかった
    （390×664実測: 3袋・30所作のうち21所作で手本なし。店主の画面は2袋目＝緑と白の粒がある袋の はかる）。出し直しの決まりは下の demoTick */
 const guideEl = $("guide");
+/* ズームを指す手本の間だけ、今する操作を文でも示す。別の工程の新しい案内は戻さない。 */
+var zoomGuideHint = null;
+function clearZoomGuideHint() {
+  const saved = zoomGuideHint;
+  zoomGuideHint = null;
+  if (saved && hint.textContent === saved.text) hint.textContent = saved.previous;
+}
+function syncZoomGuideHint() {
+  if (!zoomGuideHint) return;
+  if (hint.textContent !== zoomGuideHint.text) { zoomGuideHint = null; return; }
+  zoomGuideHint.text = zoomBtn.textContent === "➖" ? "➖ で 全体を 見る" : "🔍 で 寄る";
+  hint.textContent = zoomGuideHint.text;
+}
 /* はかるの手本は、指だけでなくハンドルも一緒に回して見せる（サイクル141・最初の1分・店主指示2026-11-10「お手本モーションを出す」）。
    旧版は指👆がハンドルの握りの通り道（半径33px）を回るのに、握りは上で止まったままだった
    （390×844実測: 手本が出ている1.3秒・12枚の連続写真で握りの向きは0°のまま、#crankArm の動き0件）。指が握りを素通りして見え、「この握りを持って回す」が伝わりにくかった。
@@ -1253,6 +1266,7 @@ function crankDemoOn() {
   crankDemo = $("crankArm").animate([{ transform:"rotate(" + crankAngle + "deg)" }, { transform:"rotate(" + (crankAngle + 360) + "deg)" }], { duration:1500, iterations:Infinity });
 }
 function guideOff() {
+  clearZoomGuideHint();
   crankDemoOff();
   guideEl.className = "";
   guideAnchor = null; /* 手本を消したら、覚えていた相手も捨てる（Codex指摘 PR #1076: 消えた朱肉を相手に覚えたまま、次の袋の穀刺しの手本を消し続けた） */
@@ -1288,6 +1302,10 @@ function guideAt(kind, el, gx, gy, at) { /* at: 手本の指を置く高さ（el
   if (kind === "circle" && el === $("crank")) crankDemoOn(); /* 指の回り始めをずらすので、動きを付ける前に決める */
   void guideEl.offsetWidth;
   guideEl.className = "on " + kind;
+  if (kind === "press" && el === zoomBtn) {
+    zoomGuideHint = { previous:hint.textContent, text:hint.textContent };
+    syncZoomGuideHint();
+  }
 }
 
 /* ぬく: 穀刺しを指で押し込み、引き抜くと、引いた分だけ粒が落ちる */
@@ -1682,6 +1700,7 @@ function applyZoom(smooth) {
       zoomOutSound();
     }
   }
+  syncZoomGuideHint();
 }
 /* 滑らかな寄りの途中で指が触れたら、今見えている所で止めて Z に合わせる（Codexレビュー指摘・サイクル92）。
    Z は最終値を持っているため、そのまま smooth を外すと表示が最終値へ跳んでしまう */

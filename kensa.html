@@ -2647,6 +2647,40 @@ function pilePoint() { /* 皿の上の粒のまんなか（画面上の点） */
   const cx = live.reduce((a, g) => a + g.x, 0) / (live.length || 1), cy = live.reduce((a, g) => a + g.y, 0) / (live.length || 1);
   return { x:rect.left + plate.clientLeft + Z.tx + cx * Z.s, y:rect.top + plate.clientTop + Z.ty + cy * Z.s };
 }
+/* 粒全体が皿に収まる候補が無い時だけ、変形していない通常の顔を確認する。
+   grainSprite の18×10の絵で4種の顔が使う画素の外接範囲は[6,13]×[3,7]（右・下は画素の外側）。
+   顔の矩形と中心が見えて、同じ粒を実際の入力判定で選べる場合に限る。 */
+function visibleFaceGuideCandidate(g) {
+  if (g.gone || g.el.hidden || !["shini", "higai", "mijuku", "color"].includes(g.kind) ||
+      grainMood(g) !== "normal" || simOn || inner.classList.contains("smooth")) return false;
+  /* 拡大・ふくらみ・揺れのある画像は今回の補助経路には入れず、従来の全体判定に任せる。 */
+  if (getComputedStyle(g.img).transform !== "none") return false;
+  for (let el = g.img; el; el = el.parentElement) {
+    const css = getComputedStyle(el);
+    if (el.hidden || css.display === "none" || css.visibility !== "visible" || Number(css.opacity) !== 1) return false;
+  }
+  const plateBox = plate.getBoundingClientRect(), box = g.el.getBoundingClientRect();
+  if (!(box.width > 0 && box.height > 0 && GW > 0 && GH > 0)) return false;
+  const left = plateBox.left + plate.clientLeft, top = plateBox.top + plate.clientTop;
+  const right = left + plate.clientWidth, bottom = top + plate.clientHeight;
+  const center = { x:(box.left + box.right) / 2, y:(box.top + box.bottom) / 2 };
+  let m;
+  try { m = new DOMMatrixReadOnly(getComputedStyle(inner).transform); } catch (_) { return false; }
+  if (!m.is2D || ![m.a, m.b, m.c, m.d, g.r].every(Number.isFinite)) return false;
+  const angle = g.r * Math.PI / 180, c = Math.cos(angle), s = Math.sin(angle);
+  const points = [center, ...[[6,3], [13,3], [13,7], [6,7]].map(([x,y]) => {
+    const u = (x / 18 - .5) * GW, v = (y / 10 - .5) * GH;
+    const rx = u * c - v * s, ry = u * s + v * c;
+    return { x:center.x + m.a * rx + m.c * ry, y:center.y + m.b * rx + m.d * ry };
+  })];
+  return points.every(p => {
+    if (!(p.x > left && p.x < right && p.y > top && p.y < bottom &&
+          p.x > 0 && p.x < innerWidth && p.y > 0 && p.y < innerHeight)) return false;
+    const hit = document.elementFromPoint(p.x, p.y);
+    return !!hit && plate.contains(hit) && !hit.closest('button,input,select,textarea,a,[role="button"]') &&
+      grainAt(toLocal(p.x, p.y)) === g;
+  });
+}
 function demoShow(k) {
   if (k === "stab") { stabPoke(); $("poke").style.display = ""; syncPokeToAttract(); }
   else if (k === "pull") { pullPoke(); $("poke").style.display = ""; }
@@ -2656,8 +2690,9 @@ function demoShow(k) {
     /* つまむ手本は、もう見分けがついている わるい粒（最初の袋の顔・寄って見えた顔・ふくらんで知らせた粒）の上でだけ見せる。
        まだ見分けがついていない間は、答えを指ささず、寄り方（🔍・ふたゆび）を見せる */
     const rect = plate.getBoundingClientRect();
-    const shown = grains.filter(g => !g.gone && g.kind !== "seiryu" && (firstBagFace(g) || isNear || g.img.classList.contains("hint")))
-      .find(g => { const b = g.el.getBoundingClientRect(); return b.left > rect.left && b.right < rect.right && b.top > rect.top && b.bottom < rect.bottom; });
+    const candidates = grains.filter(g => !g.gone && g.kind !== "seiryu" && (firstBagFace(g) || isNear || g.img.classList.contains("hint")));
+    const shown = candidates.find(g => { const b = g.el.getBoundingClientRect(); return b.left > rect.left && b.right < rect.right && b.top > rect.top && b.bottom < rect.bottom; }) ||
+      candidates.find(g => visibleFaceGuideCandidate(g));
     if (shown) guideAt("press", shown.el); /* 粒そのものを相手にする（点ではなく）。粒が動いた・消えたら見回りが気づける */
     else if (pickedBare && !everZoomed) return; /* 寄らずに つまめた 人には 寄り方を 見せない。わるい粒が ふくらめば 上の 手本 */
     else if (finePointer || everZoomed) guideAt("press", zoomBtn);

@@ -21,6 +21,8 @@ const SRC = f => `nishio-go/${f}`, OUT = f => `nishio-go/min/${f}`;
 
 const KW_BEFORE_REGEX = new Set(['return', 'typeof', 'instanceof', 'in', 'of', 'new', 'delete', 'void', 'throw', 'case', 'do', 'else', 'yield', 'await']);
 const KW_PAREN = new Set(['if', 'while', 'for', 'with']);
+// 改行が あると そこで 文が 終わる（ASI）ことば：つぎの「/」は、改行の あとなら 正規表現。改行が なければ 決めない（PR #1189 の 指摘：debugger の つぎの 行の /[/*x*/]/ を 割り算と して コメントを ぬいた）
+const KW_STMT_END = new Set(['debugger', 'break', 'continue']);
 const isIdChar = c => /[A-Za-z0-9_$\u0080-￿]/.test(c);
 const keepComment = t => t.startsWith('/*!') || t.startsWith('/*@') || /^\/\/[#@]\s*source(Mapping)?URL=/.test(t);
 
@@ -32,8 +34,10 @@ function jsComments(s) {
   const stack = [];          // '{' の 種類：'b'（ふつうの かっこ）／'t'（テンプレートの ${）
   const parens = [];         // '(' の 前が if/while/for/with か
   let stopAt = -1;
+  let nl = false, nlFor = null;   // nl：直前の 字句（prev）の あとに 行の おわりが あったか
   const regexOk = () => {
     if (!prev) return true;
+    if (prev.t === 'id' && KW_STMT_END.has(prev.v)) return nlFor === prev && nl ? true : null;
     if (prev.t === 'num' || prev.t === 'str' || prev.t === 're' || prev.t === 'tpl') return false;
     if (prev.t === 'id') return KW_BEFORE_REGEX.has(prev.v);
     if (prev.v === ')') return prev.kw === true ? true : prev.kw === false ? false : null;
@@ -54,7 +58,9 @@ function jsComments(s) {
     throw new Error('テンプレートが 閉じない');
   }
   while (i < n) {
+    if (nlFor !== prev) { nlFor = prev; nl = false; }
     const c = s[i];
+    if (c === '\n' || c === '\r' || c === '\u2028' || c === '\u2029') nl = true;
     if (c === ' ' || c === '\t' || c === '\n' || c === '\r' || c === '\f' || c === '\v' || c === ' ' || c === '﻿' || c === ' ' || c === ' ') { i++; continue; }
     if (c === '/' && s[i + 1] === '/') {
       let j = i + 2; while (j < n && s[j] !== '\n' && s[j] !== '\r' && s[j] !== ' ' && s[j] !== ' ') j++;
@@ -62,6 +68,7 @@ function jsComments(s) {
     }
     if (c === '/' && s[i + 1] === '*') {
       const j = s.indexOf('*/', i + 2); if (j < 0) throw new Error('コメントが 閉じない');
+      if (/[\n\r\u2028\u2029]/.test(s.slice(i, j))) nl = true;   // 行を またぐ コメントも 行の おわり
       out.push([i, j + 2]); i = j + 2; continue;
     }
     if (c === '<' && s.startsWith('<!--', i)) { stopAt = i; break; }   // HTML ふうの コメントは 見分けない
@@ -151,7 +158,7 @@ function cssScan(s) {
 // コメントを ぬく。行の 数と 改行の 位置は 保つ。
 // 行末の 空白は、ぬいた コメントの すぐ 前・すぐ あと（行の おわり まで）だけ けずる。そこは かならず コードの 中の 空白で、
 // 文字列・テンプレートの 中では ない（コメントは コードの 中で しか 見つけない ので）
-function strip(s, ranges, stopAt) {
+function strip(s, ranges, stopAt, css) {
   const parts = [];   // 長い 文字列を 毎回 つなぎ直さない（つなぐのは さいごに 1回）
   const trimEnd = () => {   // うしろの 空白・タブを けずる（改行の 手前まで）
     while (parts.length) {
@@ -166,6 +173,8 @@ function strip(s, ranges, stopAt) {
     if (stopAt >= 0 && a >= stopAt) break;
     const t = s.slice(a, b);
     if (keepComment(t)) continue;
+    // CSS：前も あとも 空白で ない 所の コメントは のこす（空白に すると .a/*c*/.b が .a .b＝別の セレクターに なる。改行 だけ に しても 同じ。PR #1189 の 指摘）
+    if (css && a > 0 && !/\s/.test(s[a - 1]) && b < s.length && !/\s/.test(s[b])) continue;
     parts.push(s.slice(last, a));
     last = b;
     const nl = t.match(/\r\n|\n|\r|\u2028|\u2029/g) || [];
@@ -206,7 +215,7 @@ function stripCss(src) {
   // コメントの 範囲を 書きかえた あとの 位置に 直す
   const adj = p => p + 3 * shifts.filter(x => x < p).length;
   const cm = comments.map(([a, b]) => [adj(a), adj(b)]);
-  return { text: strip(s, cm, -1), stopAt: -1, count: comments.length };
+  return { text: strip(s, cm, -1, true), stopAt: -1, count: comments.length };
 }
 
 function build(f, src) { return f.endsWith('.css') ? stripCss(src) : stripJs(src); }

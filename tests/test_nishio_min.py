@@ -144,6 +144,55 @@ console.log(JSON.stringify({ out, amb: amb.text, ambStop: amb.stopAt, css }));
         self.assertEqual(o["amb"], "x = {} \n/a/g.test(s) // c")   # 見分けられない 所から 先は そのまま
         self.assertEqual(o["css"], "a{b:url(../art/x.png);c:url('data:a/*b*/');d:'/* no */'}\n")
 
+    def test_g_css_comment_keeps_selector(self):
+        """PR #1189 の 指摘：CSS の コメントを 空白（や 改行）に すると .a/*c*/.b が .a .b（べつの セレクター）に なる。前後が 空白で ない コメントは のこす"""
+        js = r"""
+const { stripCss } = require(process.argv[1]);
+const norm = t => t.replace(/\/\*[\s\S]*?\*\//g, '');   // のこした コメントを 外して 見る（ブラウザの 読み方と 同じ）
+const a = stripCss('.a/*c*/.b{color:red}').text, b = stripCss('.a/*c\nd*/.b{color:red}').text, c = stripCss('.a /* c */ .b{x:1} /* d */\n').text;
+console.log(JSON.stringify({ a: norm(a), b: norm(b), c }));
+"""
+        import json
+        o = json.loads(subprocess.run(["node", "-e", js, str(TOOL)], capture_output=True, text=True, check=True).stdout)
+        self.assertEqual(o["a"], ".a.b{color:red}", "コメントが 子孫の えらび方に かわった: %r" % o)
+        self.assertEqual(o["b"], ".a.b{color:red}")
+        self.assertEqual(o["c"], ".a  .b{x:1}\n")   # 前後に 空白が ある コメントは これまでどおり ぬく
+
+    def test_h_regex_after_asi_kept(self):
+        """PR #1189 の 指摘：debugger・break・continue の あとの 改行の つぎの「/」は 正規表現（ASI）。中の /* を コメントと して ぬかない"""
+        js = r"""
+const { stripJs } = require(process.argv[1]);
+const a = stripJs('debugger\n/[/*x*/]/.test("x");');
+const b = stripJs('function f(){ for(;;){ break\n/[/*y*/]/.test("y") } }');
+const c = stripJs('debugger /[/*x*/]/;');
+console.log(JSON.stringify({ a: a.text, aRes: eval(a.text), b: b.text, cText: c.text, cStop: c.stopAt }));
+"""
+        import json
+        o = json.loads(subprocess.run(["node", "-e", js, str(TOOL)], capture_output=True, text=True, check=True).stdout)
+        self.assertEqual(o["a"], 'debugger\n/[/*x*/]/.test("x");', "正規表現の 中を コメントと して ぬいた: %r" % o)
+        self.assertTrue(o["aRes"])
+        self.assertIn("/[/*y*/]/", o["b"])
+        self.assertEqual(o["cText"], "debugger /[/*x*/]/;")   # 決められない 所は のこす
+
+    def test_i_precommit_sees_deleted_copy(self):
+        """PR #1189 の 指摘：コピーを 消した だけ（ほかの ファイルと いっしょに ステージ）でも、コミットの 前の 見はりが 一致の 確かめを 起こして 止める"""
+        pc = ROOT / ".claude" / "skills" / "nishio-go-dev" / "scripts" / "precommit.sh"
+        with tempfile.TemporaryDirectory() as d:
+            d = Path(d)
+            (d / "tools").mkdir(); (d / "nishio-go" / "min").mkdir(parents=True); (d / "tests").mkdir()
+            (d / ".claude/skills/nishio-go-dev/scripts").mkdir(parents=True)
+            shutil.copy(TOOL, d / "tools"); shutil.copy(pc, d / ".claude/skills/nishio-go-dev/scripts/precommit.sh")
+            for f in FILES:
+                shutil.copy(ROOT / "nishio-go" / f, d / "nishio-go" / f)
+                shutil.copy(ROOT / "nishio-go" / "min" / f, d / "nishio-go" / "min" / f)
+            g = lambda *a: subprocess.run(["git", "-c", "user.email=t@t", "-c", "user.name=t", *a], cwd=d, capture_output=True, text=True, check=True)
+            g("init", "-q"); g("add", "-A"); g("commit", "-qm", "x")
+            g("rm", "-q", "nishio-go/min/meiro.js")
+            (d / "tests" / "test_zz.py").write_text("# x\n", encoding="utf-8"); g("add", "tests/test_zz.py")
+            r = subprocess.run(["bash", str(d / ".claude/skills/nishio-go-dev/scripts/precommit.sh")], cwd=d, capture_output=True, text=True)
+            self.assertEqual(r.returncode, 1, "コピーを 消しても 見はりが 通った: %r" % (r.stdout + r.stderr))
+            self.assertIn("nishio-go/min", r.stderr)
+
     def test_f_same_tokens_by_acorn(self):
         np = find_acorn()
         if not np:

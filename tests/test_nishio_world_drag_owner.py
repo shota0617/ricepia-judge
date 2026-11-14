@@ -207,7 +207,9 @@ emit('pointerdown', 2, 280, 260); emit('pointermove', 0, 180, 100); expectCamera
 """},
     {"name": "primary mouse does not steal active touch", "run": """
 prefix(); const mouse = {pointerType: 'mouse', isPrimary: true};
-emit('pointerdown', 2, 280, 260, mouse); emit('pointermove', 2, 320, 260, mouse); emit('pointerup', 2, 320, 260, mouse);
+emit('pointerdown', 2, 280, 260, mouse); emit('pointermove', 2, 320, 260, mouse);
+expectCamera(90, 200, 'foreign mouse must not pan before its release');
+emit('pointerup', 2, 320, 260, mouse);
 emit('pointermove', 1, 180, 100); expectCamera(80, 200, 'primary of another device is not the owner');
 """},
     {"name": "blur ends old drag without blocking the next", "run": """

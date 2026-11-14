@@ -173,6 +173,9 @@
      はかった数（390×844）: 12 字より長い吹き出し（「🔰 白線の外は 耕しません、曲がって絵の中へ」など）は 左はしが 82px まで のび、数字（右はし 140px）の下に 58px 入って 4 字が読めなかった。
      数字の大きさ・場所は 変えない。広い画面（スマホ横・パソコン）は 今までどおり 240px */
   body.calm #say { max-width: min(240px, max(120px, calc(100vw - 214px))); }   /* サイクル280: 206px では 左はしが 数字の 右はし（140px）より 2px 左へ 入っていた（390×844 で 79px²）。214px＝数字の 右はし＋6px から 計算 */
+  /* サイクル282: 吹き出しの 行の 長さを そろえる（「ロータリーを下げまし／た」の ように さいごの 行が 1〜2 字 だけに ならない）。行の 数・はば・字の 大きさは 変わらない。
+     はかった 数（知らせの 文 281 こ）：さいごの 行が 1〜2 字の 文 320×568 22→0・360×640 20→0・390×844 47→1・568×320 15→0・844×390 23→0、行の 数は どの 画面も 同じ。使えない ブラウザでは 今までどおり */
+  #say { text-wrap: balance; }
   body.calm #say::before { top: 12px; right: -6px; left: auto; border: 6px solid transparent; border-right: 0; border-top-color: transparent; border-bottom-color: transparent; border-left-color: rgba(251,248,240,.97); }
   /* のんびり（くわしい説明 なし）：計器の 札・知らせ・案内・キーの 一覧・窓の 札は 出さない（キャラクターが 話す） */
   body.calm #hud, body.calm #toast, body.calm #coach, body.calm #keyHint, body.calm #badgeSt { display: none !important; }

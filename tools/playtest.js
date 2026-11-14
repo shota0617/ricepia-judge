@@ -7,6 +7,16 @@ const { chromium } = require('playwright');
 const fs = require('fs'), path = require('path');
 const { startServer } = require('./bake-common');
 
+// サイクル215：ゲームは コメントぬきの コピー（nishio-go/min/）を 読む。元（pixel.js など）を 変えて 作り直して いないと 古い コードを 確かめて しまう ので、
+// あって いなければ ここで 作り直す（元の ファイルは さわらない）
+{
+  const strip = path.join(__dirname, 'strip-nishio.js');
+  if (fs.existsSync(strip)) {
+    const r = require('child_process').spawnSync(process.execPath, [strip, '--check', '--quiet'], { encoding: 'utf8' });
+    if (r.status !== 0) { console.error('nishio-go/min が 元と あって いないので 作り直します（node tools/strip-nishio.js）'); require('child_process').execFileSync(process.execPath, [strip, '--quiet']); }
+  }
+}
+
 const OUT = path.resolve(process.argv[2] || 'playtest-out');
 const PORT = Number(process.env.PLAYTEST_PORT) || 8899, URL = `http://localhost:${PORT}/nishio-go.html`;
 const VIEW = { width: 390, height: 780 };
@@ -611,9 +621,9 @@ async function slowStartChecks(browser, R) {
   try {
     const mp3 = [];
     p.on('request', r => { if (/\/bgm\/.*\.mp3/.test(r.url())) mp3.push(r.url().split('/').pop()); });
-    await p.route('**/nishio-go/pixel.js', async r => { await new Promise(res => setTimeout(res, 1500)); await r.continue(); });
+    await p.route('**/nishio-go/min/pixel.js', async r => { await new Promise(res => setTimeout(res, 1500)); await r.continue(); });
     await p.goto(URL, { waitUntil: 'commit' });
-    await p.waitForSelector('link[href$="nishio-go/style.css"]', { state: 'attached', timeout: 10000 }).catch(() => {});
+    await p.waitForSelector('link[href$="nishio-go/min/style.css"]', { state: 'attached', timeout: 10000 }).catch(() => {});
     const cv = await p.evaluate(() => {
       const c = document.getElementById('bootCover'), i = c && c.querySelector('i'), cs = i && getComputedStyle(i), sheets = [...document.querySelectorAll('link[rel="stylesheet"]')];
       return { cover: !!c, dot: !!i, anim: cs ? cs.animationName : '', pos: c ? getComputedStyle(c).position : '', sheets: sheets.length, inHead: sheets.filter(l => l.parentNode === document.head).length, after: !!c && sheets.every(l => !!(c.compareDocumentPosition(l) & Node.DOCUMENT_POSITION_FOLLOWING)) };
@@ -1250,7 +1260,7 @@ async function cycle212Checks(browser, R) {
   const look = async motion => {
     const v = await newPage(browser, { howto: true, auto: true, hasTouch: true, isMobile: true, reducedMotion: motion, viewport: { width: 390, height: 844 } });
     try {
-      await v.page.route('**/nishio-go/pixel.js', async r => { await new Promise(res => setTimeout(res, 2500)); await r.continue(); });   // 読みこみ中を 作る
+      await v.page.route('**/nishio-go/min/pixel.js', async r => { await new Promise(res => setTimeout(res, 2500)); await r.continue(); });   // 読みこみ中を 作る
       await v.page.goto(URL, { waitUntil: 'commit' });
       await v.page.waitForSelector('#bootCover i', { timeout: 10000 }).catch(() => {});
       const one = () => v.page.evaluate(() => { const i = document.querySelector('#bootCover i'); if (!i) return null; const r = i.getBoundingClientRect(), cs = getComputedStyle(i), a = getComputedStyle(i, '::after');

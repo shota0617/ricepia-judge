@@ -69,6 +69,7 @@ description: にしおさんぽGO（nishio-go/・nishio-go.html）を 改善す�
 5. **docs に 書く**：めいろ＝`docs/meiro.md`、転がり方＝`docs/korokoro.md`、滞在・また来る＝`docs/retention.md`。「運営者の声「…」（日づけ）」で はじめる。
 6. **プレイテスト**：`scripts/playtest.sh <足した チェック名>`（8分くらい。`ok: true`・failures 0・errors 0 に なるまで 直す）。
 7. **コミット**：`git add <ファイル>` → `scripts/precommit.sh` → `git commit`（題は「にしおさんぽGO：〜」、本文は 何を・なぜ）。
+   - `nishio-go/pixel.js`・`game.js`・`meiro.js`・`style.css` を 変えたら `node tools/strip-nishio.js` で 配る 用の コピー（`nishio-go/min/`。コメントを ぬいた もの。ゲームは こちらを 読む）を 作り直して いっしょに `git add nishio-go/min`。忘れると `precommit.sh`・`commit.sh`・`guard.js` が 止める
 8. **push**：`git push -u origin <作業ブランチ>`（ネットの エラーなら 2・4・8・16秒 あけて 4回まで）。
 9. **PR**：GitHub の MCP（`create_pull_request`。ツールが 見えなければ ToolSearch で 読みこむ）。本文は `pr-template.md` の 形。続けて `add_issue_comment` で 「@codex review」、`subscribe_pr_activity` で 見はる。
 10. **ユーザーへの 報告**：何を 作ったか・どう 確かめたかを 日本語で 短く。スクショが あれば 送る。最後に「マージは『マージ』と 言っていただいてから」。

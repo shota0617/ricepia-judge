@@ -225,7 +225,7 @@ class Rules207(unittest.TestCase):
         self.assertIn("if (event.type === 'touchend') return;", PIX)
         self.assertIn("const first = tiltBtnWanted() && !tiltG.asked;", fn(PIX, "tapDemoTick"))
         self.assertIn("const DEMO_IDLE_MS = 2000;", PIX)
-        d = subprocess.run(["git", "diff", "origin/main", "--", "nishio-go", "nishio-go.html"], cwd=ROOT, capture_output=True, text=True).stdout
+        d = subprocess.run(["git", "diff", "origin/main", "--", "nishio-go", "nishio-go.html", ":(exclude)nishio-go/min"], cwd=ROOT, capture_output=True, text=True).stdout   # サイクル215：min/ は 元から 作る コピー（元の 行で 見る）
         added = "\n".join(l for l in d.splitlines() if l.startswith("+") and not l.startswith("+++"))
         for w in ["showReward(", "id=\"intro\"", "gtag(", "fetch(", "sendBeacon", "XMLHttpRequest"]:
             self.assertNotIn(w, added, w)

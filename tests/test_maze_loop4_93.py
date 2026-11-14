@@ -13,7 +13,7 @@ SYNC = ["icons", "analytics", "game", "pixel", "meiro", "share"]
 
 
 def sync_tags():
-    return re.findall(r'<script src="nishio-go/([\w-]+)\.js"></script>', HTML)
+    return re.findall(r'<script src="nishio-go/(?:min/)?([\w-]+)\.js"></script>', HTML)   # サイクル215：game・pixel・meiro は コメントぬきの コピー（min/）を 読む
 
 
 class Lazy93(unittest.TestCase):

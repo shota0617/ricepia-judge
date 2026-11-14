@@ -54,7 +54,7 @@ class Pure(unittest.TestCase):
 class Wiring(unittest.TestCase):
     def test_html_before_pixel(self):
         self.assertIn('nishio-go/biglandmark.js', HTML)
-        self.assertLess(HTML.index('biglandmark.js'), HTML.index('nishio-go/pixel.js'))
+        self.assertLess(HTML.index('biglandmark.js'), HTML.index('nishio-go/min/pixel.js'))
 
     def test_shared_helper_for_draw_and_hit(self):
         self.assertIn('const bigSpotSize = (s, spr, T, giant)', PIXEL)

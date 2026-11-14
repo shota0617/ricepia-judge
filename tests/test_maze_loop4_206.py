@@ -753,7 +753,7 @@ class Small206(unittest.TestCase):
         self.assertIn('<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" media="print" onload="this.media=\'all\'"/>', HTML)
         self.assertEqual(HTML.count('rel="stylesheet"'), 3)
         self.assertLess(HTML.index("leaflet.css"), HTML.index("fonts.googleapis.com/css2"))
-        self.assertLess(HTML.index("fonts.googleapis.com/css2"), HTML.index('href="nishio-go/style.css"'))
+        self.assertLess(HTML.index("fonts.googleapis.com/css2"), HTML.index('href="nishio-go/min/style.css"'))
 
     def test_owner_rules_kept(self):
         """運営者の 決まり：最初の click で すぐ 許可（touchend では 聞かない・同じ タップで 2回 聞かない）・聞く 前は「タップ！」の 手本・止まったら 手本・始まりの 画面や カードを 足さない"""
@@ -766,7 +766,7 @@ class Small206(unittest.TestCase):
         self.assertIn("const first = tiltBtnWanted() && !tiltG.asked;", t)
         self.assertIn("now - tapDemo.at >= (first ? 0 : tapDemo.walked ? DEMO_TAP_MS : DEMO_IDLE_MS)", t)
         self.assertIn("const DEMO_IDLE_MS = 2000;", PIX)
-        d = subprocess.run(["git", "diff", "origin/main", "--", "nishio-go", "nishio-go.html"], cwd=ROOT, capture_output=True, text=True).stdout
+        d = subprocess.run(["git", "diff", "origin/main", "--", "nishio-go", "nishio-go.html", ":(exclude)nishio-go/min"], cwd=ROOT, capture_output=True, text=True).stdout   # サイクル215：min/ は 元から 作る コピー（元の 行で 見る）
         added = "\n".join(l for l in d.splitlines() if l.startswith("+") and not l.startswith("+++"))
         for w in ["showReward(", "id=\"intro\"", "gtag(", "fetch(", "sendBeacon", "XMLHttpRequest"]:
             self.assertNotIn(w, added, w)

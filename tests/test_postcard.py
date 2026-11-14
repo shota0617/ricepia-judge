@@ -56,7 +56,7 @@ console.log(JSON.stringify({ out, keys: Object.keys(ok), len: ok.a.say.length, b
     def test_game_wiring(self):
         src = (GO / 'game.js').read_text(encoding='utf-8')
         html = (ROOT / 'nishio-go.html').read_text(encoding='utf-8')
-        self.assertLess(html.index('nishio-go/postcard.js'), html.index('nishio-go/game.js'))
+        self.assertLess(html.index('nishio-go/postcard.js'), html.index('nishio-go/min/game.js'))
         self.assertIn('id="postcardList"', html)
         # きろくの描画から呼ばれ、チェックインで発行される
         self.assertRegex(src, r"function renderLog\(\) \{\s*renderCourse\(\);\s*renderPostcards\(\);")

@@ -235,6 +235,7 @@ const idleTouch = () => {}, tapWalkStop = () => { tapS.path = []; tapS.goal = nu
 const driving = false, mazeOn = () => false, BLOCK = new Set(), codeAt = () => 0, npcTile = n => n;
 const targetTile = () => ({ x: 10.9, y: 4.5 }), planPath = () => (%s ? [[11, 4], [12, 4], [13, 4]] : []);
 const tiltG = { x: %r, y: 0.69 }, rp = { x: 11.3, y: 4.6, vx: 3.2, vy: 1.4 };
+const mzSoft = { on: false, vin: 0, pen: 0 };   // サイクル213：tapWalk が 歩きだす ときに 生け垣の めりこみも ほどく（その 入れ物。ここの 求めは かえない）
 %s
 const ok = tapWalk(13, 4);
 console.log(JSON.stringify({ ok, v: [rp.vx, rp.vy], goal: tapS.goal }));

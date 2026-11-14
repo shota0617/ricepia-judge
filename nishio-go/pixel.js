@@ -14060,7 +14060,13 @@ function tapWalk(gx, gy) {
   const path = planPath(sx, sy, gx, gy, mazeOn() ? (mzType(Math.floor(gx / MZ_K), Math.floor(gy / MZ_K)) === 1 ? 0 : 2) : BLOCK.has(codeAt(gx, gy)) ? 1 : 0, avoid);   // 建物や水（めいろでは 壁の かたまり）をタップしたら、そのそばまで
   if (!path.length) { if (navigator.vibrate) navigator.vibrate(20); return false; }
   tapS.path = path; tapS.goal = path[path.length - 1]; tapS.due = performance.now();
-  if (Math.hypot(tiltG.x, tiltG.y) < TAP_TILT_OVER) rp.vx = rp.vy = 0;   // サイクル209：転がって いる とちゅうの タップでも、歩きは のこりの いきおいを 持ちこさない（上の TAP_TILT_OVER の 注）
+  if (Math.hypot(tiltG.x, tiltG.y) < TAP_TILT_OVER) {
+    rp.vx = rp.vy = 0;   // サイクル209：転がって いる とちゅうの タップでも、歩きは のこりの いきおいを 持ちこさない（上の TAP_TILT_OVER の 注）
+    // サイクル213：小さな 傾き（4度）で お米が やわらかい 生け垣に 押しつけられた まま タップすると、歩いて いる 間は 傾きを 入れない ので、
+    // 生け垣の ばね だけが のこって お米を 押しもどし（速さ 1〜4マス/秒）、道から はみ出して 歩きが 取り消される ことが あった（通しの 確かめで 12回に 1回）。
+    // 歩きだす ときに めりこみを ほどく（へこみの 絵は ばねで もとへ もどる。歩きが 終われば 傾きは これまでどおり 効く）
+    mzSoft.on = false; mzSoft.vin = 0; mzSoft.pen = 0;
+  }
   tapWalkTick();
   return true;   // 歩きだせた（となりの マスへ 1歩で 着いて、もう 行き先が のこって いない ときも）
 }

@@ -51,3 +51,12 @@ RED/GREENは同じtest SHA `47fb7c8bb5cfc359d809469226db8cdb949fb14473e4d6eb1169
 実機の指・傾き・回線・物理paint・音・人の理解と離脱率は未確認。原primaryの観察写真要求は記録上9999ms、入力は写真保存後。厳密な10秒/60秒瞬間の画素ではなく、要求/保存時刻を残す。原証拠のscratch識別子は公開リンクではない。
 
 前後pytestが実行不可のため、draftを維持しマージ・ゲーム公開を保留する。[SKILL.md:212](https://github.com/shota0617/ricepia-judge/blob/4421abdb0e57416565b504fc8b9588f28b02f522/.claude/skills/ricepia-flow/SKILL.md#L212)の「テストが 落ちている・運営者の 判断が いる 変更は、マージせずに 伝える」を適用し、未実行を成功へ読み替えない。
+
+
+## 検証の追記（2026-11-14）
+
+上の表はPR作成時点の記録。公開HEAD `63db4202f6468de838db3305a09f3b4c7719b443` で、手元のPython/PIL・Playwrightを指定した補完unittestを追加実行した。既存テスト・判定は変更せず、2591method＝2521通過・68FAIL・1ERROR・1SKIP、実child/outer1で不合格。検査ゲーム196methodはすべて通過し、追加1methodの22内部caseも通過した。以前の限定検査193通過＋skip3は別実行として保持する。
+
+候補側のFAIL/ERROR全69項目をmain `4421abdb`で限定比較すると、53通過・14FAIL・2ERROR、実exit1。変更範囲guard65件の内訳はmainで53通過・11FAIL・1ERRORであり、65件すべてを既存失敗とはしない。残るトラクター1FAIL/1ERRORとにしお公開文字列2FAILは、同じ入力ファイルのmainでも同結果だった。これは静的なsource検査で、新しいブラウザ不具合4件ではない。main側の追加ERRORは `git diff main...HEAD -- nishio-go/pixel.js` のexit128まで確認し、stderr理由は未記録。main全suiteの合格を確認したものではない。
+
+現在のマージ・ゲーム公開の保留理由は、補完全suiteに残る実FAIL/ERRORである。[SKILL.md:212](https://github.com/shota0617/ricepia-judge/blob/4421abdb0e57416565b504fc8b9588f28b02f522/.claude/skills/ricepia-flow/SKILL.md#L212)の「テストが 落ちている・運営者の 判断が いる 変更は、マージせずに 伝える」に従い、次周へ進む。pytestのexit127は起動不可の記録として残し、コマンド不在だけを明示的なマージ禁止とする説明は現在の判断に用いない。原の再現結果・写真・テスト記録は変更していない。コマンド/選択69ID・分類・SHAは[補完検証の結果](verification-followup.json)を参照。この追記後のHEAD全体を再検証したという意味ではない。

@@ -1,0 +1,673 @@
+{
+  "round": 136,
+  "game": "kensa",
+  "status": "Final observation-only report; root selected zero new confirmed candidates",
+  "source": {
+    "testedHead": "ed4c87fd102c701d5aab4bf9b0aa03bbbca57d27",
+    "selectedHashes": {
+      "AGENTS.md": "3307716adf32bd25c5a9232821447251789c579f3192b423bad0c86c97814ab4",
+      ".claude/skills/ricepia-flow/SKILL.md": "322f7d5932c8d5fa8eb1778218ce0a4d37f212e63f211629ff7efe9c4ec4720a",
+      "kensa.html": "07343e6fed26956548a72ee883caddf4076ca5d62d3550f486bb30f5d383fdfb",
+      "kome365/engine.js": "c3d0cef6bb108d5b6d8fe38aaf0c08fe7994bdab08bf92775865a6e0222469a3",
+      "kome365/field3d.js": "a5c1dad91d5c0c326f1394fad9c5d04e7e3b8d13e3a2b8b1757c7aa08d3558ff",
+      "kome365/cards.js": "b15c5b2f56ef9c0c8361fa2fa6a039085919ca516b4a2e6e5a1b3bb691dde744"
+    },
+    "productEdits": 0,
+    "testEdits": 0,
+    "publicationBinding": "This report identifies the tested source. The documentation commit is to be bound in the PR body after commit."
+  },
+  "method": {
+    "ordinaryRuns": 1,
+    "serverCommand": "python3 -m http.server 8000",
+    "url": "http://localhost:8000/kensa.html",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "isMobile": true,
+    "hasTouch": true,
+    "cpuRate": 1,
+    "input": "CDP Input.dispatchTouchEvent",
+    "selection": "Visible instructions, element boxes and displayed guide only; no internal state or grain kind.",
+    "observationMinimumMs": 10000,
+    "photoSaveWaitMs": 84,
+    "playSeconds": 60,
+    "postGesturePollBudgetMs": 650,
+    "pollStopsAtFirstRecordedResponse": true
+  },
+  "outcome": {
+    "inputs": 34,
+    "postGestureDOMResponses": 34,
+    "withoutRecordedResponse": 0,
+    "classification": {
+      "workOrPreparationUpdates": 32,
+      "viewChanges": 2,
+      "viewChangeActionIndices": [
+        17,
+        30
+      ],
+      "notCompletedTaskCount": true
+    },
+    "newConfirmedCandidateCount": 0,
+    "completedBagsWithVisibleNextButton": 2,
+    "grainRemovalWithFlyingGrain": 8,
+    "finalBag": "3ふくろめ",
+    "finalPhase": "みわける"
+  },
+  "primaryTiming": {
+    "clock": {
+      "nodePlayStartedAtEpochMs": 1794692108789,
+      "traceToNodeSeconds": "(trace.timeOrigin + trace.start + sample.t - trace.nodePlayStartedAt) / 1000",
+      "firstVisibleResponse": "Upper bound from post-gesture polling; a response may already have happened during the gesture.",
+      "afterObservedAt": "Upper bound when the after snapshot returned; afterRequestedAt brackets the observation.",
+      "traceFirstChange": "First change recorded by the separate nominal 100 ms sampler; cadence and delivery may vary, and actual visual onset can be earlier."
+    },
+    "firstInputSeconds": 0.011,
+    "firstPostGestureDOMPollSeconds": 0.426,
+    "firstInputToPollMs": 415,
+    "firstInputRequestedDurationMs": 400,
+    "firstInput": {
+      "sentSeconds": 0.011,
+      "endedSeconds": 0.422,
+      "firstChangedHintTraceSeconds": 0.1527,
+      "hintBefore": "穀刺しを ふくろへ さす ←",
+      "hintAfter": "ひきぬく →",
+      "traceChangeFromSendUpperBoundMs": 141.7,
+      "visibleResponseUpperBoundSeconds": 0.426,
+      "sendToVisibleResponseUpperBoundMs": 415.0
+    },
+    "firstAffirmative": {
+      "text": "ちょうどいい",
+      "firstDOMTraceSeconds": 3.4036,
+      "visibleResponseObservedBySeconds": 3.559,
+      "traceSecondsAfterInitialObservationStarts": 13.4876,
+      "meaning": "Earliest recorded affirmative cue, not a measured user retention or reward-recognition result."
+    },
+    "firstGrainRemoval": {
+      "actionIndex": 5,
+      "sentSeconds": 6.197,
+      "endedSeconds": 6.269,
+      "visibleResponseObservedBySeconds": 6.281,
+      "firstRenderedGrainCountTraceSeconds": 6.3037,
+      "grainsBefore": 20,
+      "grainsAfter": 19,
+      "meaning": "First count reduction from a displayed picking-guide tap; trace and action snapshot are distinct observations."
+    },
+    "firstSortingCompletion": {
+      "text": "きれいに なった！",
+      "firstDOMTraceSeconds": 8.5211,
+      "visibleResponseObservedBySeconds": 8.515
+    },
+    "stampAndNextBag": [
+      {
+        "stampedBag": 1,
+        "stampActionIndex": 10,
+        "stampInputSeconds": 15.001,
+        "stampEndedSeconds": 15.604,
+        "nextLabelFirstTraceSeconds": 15.4042,
+        "nextVisibleBoxObservedBySeconds": 15.608,
+        "nextVisibleBox": {
+          "x": 71.20171356201172,
+          "y": 778.9926147460938,
+          "width": 247.5809326171875,
+          "height": 56.0147705078125,
+          "right": 318.7826461791992,
+          "bottom": 835.0073852539062
+        },
+        "slideGuideFirstTraceSeconds": 17.3041,
+        "slideGuideKnownVisibleBySeconds": 17.338,
+        "slideGuideEvidence": "before-action visible box and on class, opacity>=.5; first matching 100 ms trace sample if present",
+        "lastTraceWithoutVisibleSlideGuideSeconds": 17.204,
+        "slideActionIndex": 11,
+        "slideInputSeconds": 17.338,
+        "slideEndedSeconds": 17.805,
+        "nextBagHeaderFirstTraceSeconds": 17.9036,
+        "nextBagVisibleSnapshotBySeconds": 17.912,
+        "labelToSlideInputSeconds": 1.9338,
+        "nextCueWaitClassification": "No input sent during the cue wait; not a failed input. STAMP_LOOK=1000 and guide cadence are existing behavior; no change proposed."
+      },
+      {
+        "stampedBag": 2,
+        "stampActionIndex": 23,
+        "stampInputSeconds": 37.888,
+        "stampEndedSeconds": 38.507,
+        "nextLabelFirstTraceSeconds": 38.3037,
+        "nextVisibleBoxObservedBySeconds": 38.512,
+        "nextVisibleBox": {
+          "x": 71.234375,
+          "y": 779,
+          "width": 247.515625,
+          "height": 56,
+          "right": 318.75,
+          "bottom": 835
+        },
+        "slideGuideFirstTraceSeconds": null,
+        "slideGuideKnownVisibleBySeconds": 40.241,
+        "slideGuideEvidence": "before-action visible box and on class, opacity>=.5; first matching 100 ms trace sample if present",
+        "lastTraceWithoutVisibleSlideGuideSeconds": 40.2036,
+        "slideActionIndex": 24,
+        "slideInputSeconds": 40.241,
+        "slideEndedSeconds": 40.705,
+        "nextBagHeaderFirstTraceSeconds": 40.7347,
+        "nextBagVisibleSnapshotBySeconds": 40.812,
+        "labelToSlideInputSeconds": 1.9373,
+        "nextCueWaitClassification": "No input sent during the cue wait; not a failed input. STAMP_LOOK=1000 and guide cadence are existing behavior; no change proposed."
+      }
+    ],
+    "nextBagFirstInputs": [
+      {
+        "bag": 2,
+        "inputSeconds": 17.997
+      },
+      {
+        "bag": 3,
+        "inputSeconds": 40.899
+      }
+    ]
+  },
+  "photos": [
+    {
+      "file": "observe-10s.png",
+      "sha256": "a691b73605e33a33eed255aa78783cd0b8e3c6797e907b2ab89b59f6c11237c1",
+      "bytes": 52568,
+      "sourcePath": "/workspace/scratch/first-minute/round-136/preparation-ed4c87fd/strict/observe-10s.png",
+      "unchangedCopy": true,
+      "reportAuthorViewedOriginal": true
+    },
+    {
+      "file": "play-10s.png",
+      "sha256": "bdd0a14cdd5665839cdc9c55a18e5952da43dc6e10fa15aef9d306148178691f",
+      "bytes": 82134,
+      "sourcePath": "/workspace/scratch/first-minute/round-136/preparation-ed4c87fd/strict/play-10s.png",
+      "unchangedCopy": true,
+      "reportAuthorViewedOriginal": true
+    },
+    {
+      "file": "play-30s.png",
+      "sha256": "8ba9c6ca435eef8bb2b14b9b0f55d79388fe86b4231fba448ba504db91f9bfe8",
+      "bytes": 78552,
+      "sourcePath": "/workspace/scratch/first-minute/round-136/preparation-ed4c87fd/strict/play-30s.png",
+      "unchangedCopy": true,
+      "reportAuthorViewedOriginal": true
+    },
+    {
+      "file": "play-60s.png",
+      "sha256": "c4bfa45ad67464b5c52759028c56906cb7ca2f37ded354577630aafd27db0afa",
+      "bytes": 83915,
+      "sourcePath": "/workspace/scratch/first-minute/round-136/preparation-ed4c87fd/strict/play-60s.png",
+      "unchangedCopy": true,
+      "reportAuthorViewedOriginal": true
+    }
+  ],
+  "rawPhotoTiming": {
+    "observation": {
+      "startedAtEpochMs": 1794692098705,
+      "minimumDurationMs": 10000,
+      "photoRequestedAtEpochMs": 1794692108705,
+      "photo": {
+        "file": "/workspace/scratch/first-minute/round-136/preparation-ed4c87fd/strict/observe-10s.png",
+        "elapsed": 10.357
+      },
+      "photoCompletedAtEpochMs": 1794692108789
+    },
+    "shots": [
+      {
+        "target": 10,
+        "requested": 10,
+        "file": "/workspace/scratch/first-minute/round-136/preparation-ed4c87fd/strict/play-10s.png",
+        "completed": 10.065
+      },
+      {
+        "target": 30,
+        "requested": 29.999,
+        "file": "/workspace/scratch/first-minute/round-136/preparation-ed4c87fd/strict/play-30s.png",
+        "completed": 30.02
+      },
+      {
+        "target": 60,
+        "requested": 59.999,
+        "file": "/workspace/scratch/first-minute/round-136/preparation-ed4c87fd/strict/play-60s.png",
+        "completed": 60.039
+      }
+    ]
+  },
+  "execution": {
+    "actualOuterExit": 0,
+    "actualOuterToolChunk": "4ea4c5",
+    "actualChildExit": "not separately observed; one-shot Node helper is the measured outer command",
+    "requestedExitInLifecycle": 0
+  },
+  "rootClosure": {
+    "atUTC": "2026-11-14T21:36:39.408521+00:00",
+    "sourceHead": "ed4c87fd102c701d5aab4bf9b0aa03bbbca57d27",
+    "actualOuterExit": 0,
+    "actualOuterToolChunk": "4ea4c5",
+    "source10Match": true,
+    "environment8Match": true,
+    "prepared8Match": true,
+    "clean": true,
+    "browserClosed": true,
+    "cpuResetAcknowledged": true,
+    "liveBrowserOrHeavy": [],
+    "lifecycleSHA256": "9d3c49ce2e77363bf2b1c39df384bcca8941740d7d0410f80513c76ce9f2a3c9",
+    "reportSHA256": "d2f6b679371136f27d4dedbdd742e0ec0f62fc3b342f4ff49ef2cd6d0c39ac91",
+    "runIssues": [],
+    "actions": 34,
+    "actionsWithoutRecordedResponse": 0,
+    "errors": 0,
+    "driverErrors": 0,
+    "commands": 488,
+    "cleanupCommands": 0,
+    "playPhotos": 3
+  },
+  "checks": {
+    "pytest": {
+      "command": "pytest tests/",
+      "actualExit": 127,
+      "actualToolChunk": "38f8d2",
+      "error": "/bin/bash: line 1: pytest: command not found\n",
+      "suiteExecuted": false
+    },
+    "fixedTenTrials": false,
+    "newRegressionTest": false,
+    "redGreen": false,
+    "afterReproduction": false,
+    "fiveViewportComparison": false,
+    "reason": "Root selected no new confirmed candidate. No product or test change, ten-trial reproduction or improvement comparison was performed."
+  },
+  "knownObservation": {
+    "reference": "https://github.com/shota0617/ricepia-judge/pull/1160",
+    "actionIndex": 30,
+    "inputSeconds": 48.687,
+    "meaning": "Known particle-picking wording and zoom-target discrepancy; not new discovery or new10-trial reproduction",
+    "postGestureResponseSeconds": 48.775,
+    "inputMatchesGuideButNotPickingText": true,
+    "tenTrialReproductionThisRound": false,
+    "zoomChange": [
+      "🔍",
+      "➖"
+    ],
+    "viewportGrains": [
+      20,
+      20
+    ]
+  },
+  "operatorDecisionsPreserved": {
+    "preserved": true,
+    "notDeliberatelyTested": [
+      "first-bag two-miss rescue",
+      "incomplete first bag at45seconds",
+      "post-stamp1second boundary",
+      "rotation"
+    ]
+  },
+  "limits": [
+    "DOM response is not phase completion, physical presentation, comprehension or retention.",
+    "A17 grainCount20→19 is viewport intersection after zoom, not proof of removal.",
+    "Earlier synthetic progress-dot glyph8 at320x568 is not this natural390x844 play.",
+    "No product improvement before/after measured.",
+    "Videos not played; actual device/fingers/sensors/network/sound/retention unverified.",
+    "Unissued guide-wait or repeat-suppression opportunities were not all logged and cannot be counted as ignored input.",
+    "The second bag-slide guide was captured in the pre-action snapshot but not in the nominal100ms trace."
+  ],
+  "evidence": [
+    {
+      "scratchIdentifier": "/workspace/scratch/first-minute/round-136/source-selected.json",
+      "sha256": "6d40528a54071b84ea56f4aa7c99d951dba272d5c8418cc1cf8aca89b14c4874",
+      "bytes": 1143
+    },
+    {
+      "scratchIdentifier": "/workspace/scratch/first-minute/round-136/root-preflight.json",
+      "sha256": "66c6359d0e609428b5b72e24804d1c67a2fb9ad13539889d9c87cb940809b20a",
+      "bytes": 1808
+    },
+    {
+      "scratchIdentifier": "/workspace/scratch/first-minute/round-136/root-execution.json",
+      "sha256": "f454a5b38453415462dde23263af0c264e03a093df64a52cc566bdeede9fcf93",
+      "bytes": 544
+    },
+    {
+      "scratchIdentifier": "/workspace/scratch/first-minute/round-136/actual-completion.json",
+      "sha256": "458bf906aa63c15d06a1aecd2d417d44ff32df3430cb658cec953054175033c0",
+      "bytes": 196
+    },
+    {
+      "scratchIdentifier": "/workspace/scratch/first-minute/round-136/root-closure.json",
+      "sha256": "4a5706ac16c078ecfc1ae9dc412120f187ff08a1fa289c66df2719f88476fdd5",
+      "bytes": 700
+    },
+    {
+      "scratchIdentifier": "/workspace/scratch/first-minute/round-136/pytest-result.json",
+      "sha256": "e0c06fe2b6c4e47e20e838194150b81db9afbc5dc21d9ac0cb60c348d11eee11",
+      "bytes": 172
+    },
+    {
+      "scratchIdentifier": "/workspace/scratch/first-minute/round-136/root-photo-observations.json",
+      "sha256": "4b657bed179587636015d737196c47e77230996dd61619e9c7e974a726966c64",
+      "bytes": 1159
+    },
+    {
+      "scratchIdentifier": "/workspace/scratch/first-minute/round-136/preparation-ed4c87fd/prepared-files.json",
+      "sha256": "629e9e07d5a96a0b816ee87c65457716eb1d30d824d70faff0c3ccda5a16889f",
+      "bytes": 1085
+    },
+    {
+      "scratchIdentifier": "/workspace/scratch/first-minute/round-136/preparation-ed4c87fd/binding-record.json",
+      "sha256": "9a8ad82a8015369ddbffddbe31db69b3b85eab9b1c80e638a256f38357947094",
+      "bytes": 12203
+    },
+    {
+      "scratchIdentifier": "/workspace/scratch/first-minute/round-136/preparation-ed4c87fd/source-verification.json",
+      "sha256": "6daaf90dc091005f1aec15375f00d63f8e22221f3d47bbc06ddd66b17c6ebda4",
+      "bytes": 974
+    },
+    {
+      "scratchIdentifier": "/workspace/scratch/first-minute/round-136/preparation-ed4c87fd/execution-condition.json",
+      "sha256": "d4405bb2497b6ce672b266b55c3dd78fb88891f0667fa4521605b421e4db7185",
+      "bytes": 2321
+    },
+    {
+      "scratchIdentifier": "/workspace/scratch/first-minute/round-136/preparation-ed4c87fd/strict-play.cjs",
+      "sha256": "50235840e1dc513a1ed16547628b90984ec6ca7d763f45f2ee075e84bd33ba20",
+      "bytes": 22924
+    },
+    {
+      "scratchIdentifier": "/workspace/scratch/first-minute/round-136/preparation-ed4c87fd/driver-once.cjs",
+      "sha256": "fa3eb009d237db31d7ac772870315f165dffb95c500b748ebbc3afd79b47ef82",
+      "bytes": 5763
+    },
+    {
+      "scratchIdentifier": "/workspace/scratch/first-minute/round-136/preparation-ed4c87fd/lifecycle.json",
+      "sha256": "9d3c49ce2e77363bf2b1c39df384bcca8941740d7d0410f80513c76ce9f2a3c9",
+      "bytes": 2915
+    },
+    {
+      "scratchIdentifier": "/workspace/scratch/first-minute/round-136/preparation-ed4c87fd/run.log",
+      "sha256": "8f5e8d3be872a71911b4942872b99d4b84337ad06898893bf58f9f1765d96c84",
+      "bytes": 710
+    },
+    {
+      "scratchIdentifier": "/workspace/scratch/first-minute/round-136/preparation-ed4c87fd/strict/play.json",
+      "sha256": "d2f6b679371136f27d4dedbdd742e0ec0f62fc3b342f4ff49ef2cd6d0c39ac91",
+      "bytes": 4520530
+    },
+    {
+      "scratchIdentifier": "/workspace/scratch/first-minute/round-136/discovery-a/summary.json",
+      "sha256": "0529568f92dcac385e9c1bf4f08b6521c7fe3676b0963c8e63c70dea7e24051b",
+      "bytes": 16717
+    },
+    {
+      "scratchIdentifier": "/workspace/scratch/first-minute/round-136/discovery-a/frozen.json",
+      "sha256": "33e77872c8d07fd9b19ed8d4cd33273a2b122e46865c1a89e51923129831a0d1",
+      "bytes": 1267
+    },
+    {
+      "scratchIdentifier": "/workspace/scratch/first-minute/round-136/discovery-a/cross-check-c.json",
+      "sha256": "17f5befab9d76c0a3f811bb2dce38c85ddf60842425a937bc391040f614866c0",
+      "bytes": 1200
+    },
+    {
+      "scratchIdentifier": "/workspace/scratch/first-minute/round-136/discovery-b/review.json",
+      "sha256": "35343ec7b7c9aa9bff48a1e13b95e87a10a70293ab7d3f550a9b0f192577de94",
+      "bytes": 28485
+    },
+    {
+      "scratchIdentifier": "/workspace/scratch/first-minute/round-136/discovery-b/frozen.json",
+      "sha256": "e87da23ea8fe33ec8448a69c2f06bb9aacf660e1b96496b438070c4135950600",
+      "bytes": 1449
+    },
+    {
+      "scratchIdentifier": "/workspace/scratch/first-minute/round-136/discovery-c/summary.json",
+      "sha256": "7d9d3171cb2766a5a124a24490d9f7604103b6c2a94f2bd3769a69ac98107ba1",
+      "bytes": 9904
+    },
+    {
+      "scratchIdentifier": "/workspace/scratch/first-minute/round-136/discovery-c/frozen.json",
+      "sha256": "dc424dae3815ebb48e251ebc697b625794ab77a851f14cb511f33fe7ab7b9cf5",
+      "bytes": 584
+    },
+    {
+      "scratchIdentifier": "/workspace/scratch/first-minute/round-136/design-review/static-cue-map.md",
+      "sha256": "94c3779a90c122fb47a5a27bde37644743b788ef74556e6bafde99c1445412a2",
+      "bytes": 5626
+    },
+    {
+      "scratchIdentifier": "/workspace/scratch/first-minute/round-136/candidate-decision.json",
+      "sha256": "ef8ceef3cbbb4791ec40ed056d96453e53233e94dedd61d7b7223895fbd3a293",
+      "bytes": 1346
+    }
+  ],
+  "inputAudit": {
+    "commands": 488,
+    "commandACKs": 488,
+    "commandTypes": {
+      "touchStart": 34,
+      "touchMove": 420,
+      "touchEnd": 34
+    },
+    "cleanupCommands": 0,
+    "pointerCounts": {
+      "pointerdown": 35,
+      "pointermove": 431,
+      "pointerup": 35
+    },
+    "allPointersTrusted": true,
+    "allPointersTouch": true,
+    "unreleasedPointerIds": [],
+    "duplicatePointerDowns": [],
+    "orphanPointerUps": [],
+    "errors": [],
+    "driverErrors": [],
+    "blockedRequests": [],
+    "localRequests": 4,
+    "allRequestsAllowedLocal": true,
+    "forbiddenLateInputs": [],
+    "unfinishedTouchActions": [],
+    "unissuedOpportunityCount": null,
+    "unissuedReason": "Driver does not record all skipped guide-wait or repeated-pick opportunities. Those are not sent inputs and cannot be counted as ignored input.",
+    "postGesture650msPollingLagMs": {
+      "min": 3.0,
+      "median": 4.0,
+      "max": 107.0,
+      "meaning": "Time from gesture ended to first recorded post-gesture DOM response; not touch-to-paint latency."
+    }
+  },
+  "independentAudits": {
+    "A": {
+      "newConfirmedCandidates": 0,
+      "imagesPersonallyViewed": 0,
+      "crossCheckedWithCItems": 25
+    },
+    "C": {
+      "newConfirmedCandidates": 0,
+      "imagesPersonallyViewed": 0
+    },
+    "B": {
+      "newConfirmedCandidates": 0,
+      "imagesPersonallyViewed": 4,
+      "runtimeExecutedByReviewer": 0
+    }
+  },
+  "instructedPinch": [
+    {
+      "actionIndex": 17,
+      "intent": "Follow visible two-finger zoom cue",
+      "sentSeconds": 26.378,
+      "endedSeconds": 26.987,
+      "firstZoomLabelTraceSeconds": 26.5049,
+      "postGestureResponseSeconds": 26.99,
+      "viewportGrains": [
+        20,
+        19
+      ],
+      "traceRenderedGrainsBeforeAndAfter": [
+        20,
+        20
+      ],
+      "pointerDowns": 2,
+      "pointerUps": 2,
+      "classification": "Zoom changes viewport intersection count. No removed grain is inferred from 20→19."
+    }
+  ],
+  "visualObservations": {
+    "images": [
+      {
+        "file": "observe-10s.png",
+        "clock": "observation",
+        "requestedSeconds": 10.0,
+        "completedSeconds": 10.084,
+        "visibleText": [
+          "農産物検査",
+          "1ふくろめ",
+          "ぬく",
+          "ふくろを しらべて はんこ",
+          "穀刺しを ふくろへ さす ←"
+        ],
+        "visibleObjects": "米袋、右に出た穀刺し、柄のそばの黄色い指、右上の実物写真、下の白黒の皿。目的文と操作文を遮るものはこの静止画では見られない。",
+        "path": "/workspace/scratch/first-minute/round-136/preparation-ed4c87fd/strict/observe-10s.png",
+        "sha256": "a691b73605e33a33eed255aa78783cd0b8e3c6797e907b2ab89b59f6c11237c1",
+        "inspection": "本人が original 解像度で画像を実見。加工・切り抜きなし。",
+        "headerRing": "上段の丸・段階名・目的文に明白な遮蔽はこの一枚では見られない。ただし自然な「おす」段階の画像ではない。"
+      },
+      {
+        "file": "play-10s.png",
+        "clock": "play",
+        "requestedSeconds": 10.0,
+        "completedSeconds": 10.065,
+        "visibleText": [
+          "農産物検査",
+          "1ふくろめ",
+          "みわける",
+          "ふくろを しらべて はんこ",
+          "🤲 はなへ はこぶ ↖"
+        ],
+        "visibleObjects": "皿に広がった粒、皿の左上付近の手のトークン、左上の顔、小さい皿の粒。動詞と行き先の顔が同じ画面にある。",
+        "path": "/workspace/scratch/first-minute/round-136/preparation-ed4c87fd/strict/play-10s.png",
+        "sha256": "bdd0a14cdd5665839cdc9c55a18e5952da43dc6e10fa15aef9d306148178691f",
+        "inspection": "本人が original 解像度で画像を実見。加工・切り抜きなし。",
+        "headerRing": "上段の丸・段階名・目的文に明白な遮蔽はこの一枚では見られない。ただし自然な「おす」段階の画像ではない。"
+      },
+      {
+        "file": "play-30s.png",
+        "clock": "play",
+        "requestedSeconds": 29.999,
+        "completedSeconds": 30.02,
+        "visibleText": [
+          "農産物検査",
+          "2ふくろめ",
+          "みわける",
+          "ふくろを しらべて はんこ",
+          "わるい粒を つまむ"
+        ],
+        "visibleObjects": "拡大された粒と緑の粒、皿の右下の縮小ボタン、上の小皿の粒。指はこの一枚には見えない。拡大で皿の縁に切れる粒を、ページ全体のはみ出し不具合とは数えない。",
+        "path": "/workspace/scratch/first-minute/round-136/preparation-ed4c87fd/strict/play-30s.png",
+        "sha256": "8ba9c6ca435eef8bb2b14b9b0f55d79388fe86b4231fba448ba504db91f9bfe8",
+        "inspection": "本人が original 解像度で画像を実見。加工・切り抜きなし。",
+        "headerRing": "上段の丸・段階名・目的文に明白な遮蔽はこの一枚では見られない。ただし自然な「おす」段階の画像ではない。"
+      },
+      {
+        "file": "play-60s.png",
+        "clock": "play",
+        "requestedSeconds": 59.999,
+        "completedSeconds": 60.039,
+        "visibleText": [
+          "農産物検査",
+          "3ふくろめ",
+          "みわける",
+          "ふくろを しらべて はんこ",
+          "わるい粒を つまむ"
+        ],
+        "visibleObjects": "中央付近の緑の粒を指す黄色い指、拡大された粒、皿の右下の縮小ボタン、上の小皿の複数の粒。",
+        "path": "/workspace/scratch/first-minute/round-136/preparation-ed4c87fd/strict/play-60s.png",
+        "sha256": "c4bfa45ad67464b5c52759028c56906cb7ca2f37ded354577630aafd27db0afa",
+        "inspection": "本人が original 解像度で画像を実見。加工・切り抜きなし。",
+        "headerRing": "上段の丸・段階名・目的文に明白な遮蔽はこの一枚では見られない。ただし自然な「おす」段階の画像ではない。"
+      }
+    ],
+    "candidateDecisions": [
+      {
+        "id": "A30",
+        "priority": "分からない",
+        "status": "既知・新規選定外",
+        "evidence": "48.687秒入力。48.775秒pollでズームが🔍から➖へ。hint不変、可視粒20→20、fly0→0。",
+        "reproductionThisReview": "新規の10回・速度差再現はしていない。1回の自然経過を10/10へ換算しない。",
+        "action": "既存PR1160に関する観測として報告。重複修正しない。"
+      },
+      {
+        "id": "A17",
+        "status": "除去・誤進行候補として棄却",
+        "evidence": "二本指のズーム案内に沿う入力。可視粒20→19でも皿は358×444から716×888へ、fly0、拾った種類の記録不変。A20前の縮小後には可視粒18へ戻る。",
+        "measurementDefinition": "strict-play.cjs:68-76,95はviewportと交差する粒を数える。DOM全粒数・取り除いた粒数ではない。",
+        "action": "意図した表示変更として扱う。作業進行や誤除去には数えない。"
+      },
+      {
+        "id": "header-fifth-step-ring",
+        "status": "今回の自然な「おす」で未確認",
+        "evidence": "原4枚に明白な丸・段階名・目的文の遮蔽は見られないが、四枚とも「おす」ではない。",
+        "priorBoundary": "R134のsynthetic setStep(4),320×568,glyph8は上段の第五段階dot/ring。袋の証印・日付とは別。通常390×844での再現と扱わない。",
+        "action": "自然経過で根拠を得るまで修正選定しない。"
+      }
+    ],
+    "designAssessment": {
+      "firstAction": "最初の写真に動詞・矢印・穀刺し・黄色い指が揃う。A1は0.011秒開始、0.426秒の操作後pollで引き抜く案内へ変化を記録。415msは400msの指の移動を含む上限であり実描画の遅延ではない。",
+      "earlyAffirmation": "「ちょうどいい」の初回DOMサンプルは3.4036秒。A3の操作後pollは3.559秒。肯定的な反応の記録であり、人が報酬と感じた時刻・離脱率の実測ではない。",
+      "visibleNextGoal": "四枚で短い操作文と共通の目的文が読める。A10の15.610秒after snapshotには画面内のnextBtn矩形があり、次袋への手がかりがDOMで確認できる。この瞬間のPNGはないので文字が人に読めたことまでは主張しない。",
+      "continuation": "play30で2ふくろめ、play60で3ふくろめを原画像から読める。短い袋ループを進めた記録であり、未経験者が自力で理解することの証明ではない。",
+      "primarySupportedQuittingPoint": "A30では「わるい粒を つまむ」の指示に沿うpress guide入力が粒の除去ではなくズーム表示の変化となる。操作した意図と結果のずれが離脱要因の候補。ただし既知PR1160と同じ話で、新規候補として重複修正しない。",
+      "newConfirmedCandidates": 0,
+      "selectedNewFix": null,
+      "additionalProposals": []
+    }
+  },
+  "sourceReferences": {
+    "positiveCue": "kensa.html:473",
+    "sortingPositiveCue": "kensa.html:476",
+    "stampNextButton": "kensa.html:2447",
+    "stampLook": "kensa.html:2666",
+    "pickZoomFallback": "kensa.html:2700",
+    "syntheticSetStepTest": "tests/test_kensa.py:4297"
+  },
+  "evidenceNote": "Scratch identifiers are provenance references, not public links. Original screenshots are included as the four public PNG files.",
+  "rootCandidateDecision": {
+    "round": 136,
+    "sourceHead": "ed4c87fd102c701d5aab4bf9b0aa03bbbca57d27",
+    "primaryViewport": [
+      390,
+      844
+    ],
+    "newConfirmedCandidates": 0,
+    "decision": "No new product fix selected from this completed ordinary play. Publish observation with limits and continue loop.",
+    "evidence": {
+      "auditA": "33e77872c8d07fd9b19ed8d4cd33273a2b122e46865c1a89e51923129831a0d1",
+      "auditB": "e87da23ea8fe33ec8448a69c2f06bb9aacf660e1b96496b438070c4135950600",
+      "auditC": "dc424dae3815ebb48e251ebc697b625794ab77a851f14cb511f33fe7ab7b9cf5",
+      "rootOriginalPhotos": "root-photo-observations.json"
+    },
+    "knownCandidates": [
+      "Action30 instruction-to-zoom mismatch remains known PR1160 scope; not a new discovery or duplicate fix.",
+      "Synthetic 320x568 upper progress-ring glyph failure from earlier full suite remains unconfirmed in natural390x844 play. Four primary photos do not show the natural press phase."
+    ],
+    "rejectedInference": "Action17 viewport-intersecting grainCount20 to19 is a zoom view change, not grain removal.",
+    "fixedTenReproductionExecuted": false,
+    "productChanges": 0,
+    "newTests": 0,
+    "operatorDecisionsPreserved": true,
+    "referenceTiming": "This primary finished before the newly supplied full transcript was read. Expanded principles are being read for subsequent application, not attributed retroactively."
+  },
+  "referenceUse": {
+    "earlierPartialTranscript": "sakurai_partial_20261114_2319.md",
+    "type": "reference material, not instructions",
+    "principles": [
+      "response",
+      "early affirmation",
+      "short demonstration",
+      "nearby goal"
+    ],
+    "videosPlayed": false,
+    "laterFullTranscript": {
+      "chapterCount": 110,
+      "usedForThisRun": false,
+      "reason": "Supplied after this ordinary play completed; broader principles will be considered subsequently."
+    }
+  }
+}

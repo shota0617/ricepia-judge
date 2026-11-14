@@ -1,0 +1,2508 @@
+{
+  "round": 130,
+  "game": "米づくり365",
+  "status": "completed investigation; wait reproduced; no small product fix selected",
+  "source": {
+    "testedHead": "7ddf29d8a6a10fabd595df51bad3e62d5233ffbc",
+    "filesSHA256": {
+      "AGENTS.md": "6511c8e260c695145b8e30b58f2f405b74e63a9fa816a2f515e1e7967378de14",
+      ".claude/skills/ricepia-flow/SKILL.md": "56d075153f561430fee926907a5c97083d9f643e6dd2d3a2f4c5736324a697f0",
+      "kome365/README.md": "76e273ddf7557a1b3b2037bd87ef4269d4f43aa0238882ecb9cf3ae906e864c7",
+      "kome365/index.html": "d2add0e458da2aebf14dc0c8d4f0a2792497bbe69a0cb40f2d6b3aa7da0f741b",
+      "kome365/engine.js": "c3d0cef6bb108d5b6d8fe38aaf0c08fe7994bdab08bf92775865a6e0222469a3",
+      "kome365/field3d.js": "a5c1dad91d5c0c326f1394fad9c5d04e7e3b8d13e3a2b8b1757c7aa08d3558ff",
+      "kome365/cards.js": "b15c5b2f56ef9c0c8361fa2fa6a039085919ca516b4a2e6e5a1b3bb691dde744"
+    },
+    "postTestBase": "4eab5db22688eb264948621aa5aac5b4e9fa9dad",
+    "publicationBaseWholeHEADRetested": false,
+    "postTestUpdate": {
+      "atUTC": "2026-11-14T19:44:50.798097+00:00",
+      "testedSource": "7ddf29d8a6a10fabd595df51bad3e62d5233ffbc",
+      "newBase": "4eab5db22688eb264948621aa5aac5b4e9fa9dad",
+      "changedPaths": [
+        ".claude/skills/tractor/SKILL.md",
+        ".claude/skills/tractor/scripts/firstmin.js",
+        "AGENTS.md",
+        "docs/first-minute/round-129-nishio-observation/README.md",
+        "docs/first-minute/round-129-nishio-observation/observe-10s.png",
+        "docs/first-minute/round-129-nishio-observation/play-10s.png",
+        "docs/first-minute/round-129-nishio-observation/play-30s.png",
+        "docs/first-minute/round-129-nishio-observation/play-60s.png",
+        "docs/first-minute/round-129-nishio-observation/results.json",
+        "tractor.html"
+      ],
+      "sourceChecks": {
+        "AGENTS.md": {
+          "before": "6511c8e260c695145b8e30b58f2f405b74e63a9fa816a2f515e1e7967378de14",
+          "after": "3307716adf32bd25c5a9232821447251789c579f3192b423bad0c86c97814ab4",
+          "same": false
+        },
+        ".claude/skills/ricepia-flow/SKILL.md": {
+          "before": "56d075153f561430fee926907a5c97083d9f643e6dd2d3a2f4c5736324a697f0",
+          "after": "56d075153f561430fee926907a5c97083d9f643e6dd2d3a2f4c5736324a697f0",
+          "same": true
+        },
+        "kome365/index.html": {
+          "before": "d2add0e458da2aebf14dc0c8d4f0a2792497bbe69a0cb40f2d6b3aa7da0f741b",
+          "after": "d2add0e458da2aebf14dc0c8d4f0a2792497bbe69a0cb40f2d6b3aa7da0f741b",
+          "same": true
+        },
+        "kome365/engine.js": {
+          "before": "c3d0cef6bb108d5b6d8fe38aaf0c08fe7994bdab08bf92775865a6e0222469a3",
+          "after": "c3d0cef6bb108d5b6d8fe38aaf0c08fe7994bdab08bf92775865a6e0222469a3",
+          "same": true
+        },
+        "kome365/field3d.js": {
+          "before": "a5c1dad91d5c0c326f1394fad9c5d04e7e3b8d13e3a2b8b1757c7aa08d3558ff",
+          "after": "a5c1dad91d5c0c326f1394fad9c5d04e7e3b8d13e3a2b8b1757c7aa08d3558ff",
+          "same": true
+        },
+        "kome365/cards.js": {
+          "before": "b15c5b2f56ef9c0c8361fa2fa6a039085919ca516b4a2e6e5a1b3bb691dde744",
+          "after": "b15c5b2f56ef9c0c8361fa2fa6a039085919ca516b4a2e6e5a1b3bb691dde744",
+          "same": true
+        },
+        "kome365/vendor/three.min.js": {
+          "before": "9274bbcec8d96168626c732b5d31c775aa8cfb7eaa0599bec0c175908a2c1ce2",
+          "after": "9274bbcec8d96168626c732b5d31c775aa8cfb7eaa0599bec0c175908a2c1ce2",
+          "same": true
+        }
+      },
+      "gameSource5Same": true,
+      "flowSame": true,
+      "AGENTSChanged": true,
+      "AGENTSChangeScope": "Tractor loading soil streaks visual-only operator decision; Kome clause unchanged. Read full origin/main AGENTS at c89b8a.",
+      "docsOnlyUpdate": false,
+      "retestClaim": false
+    }
+  },
+  "method": {
+    "naturalPrimaryRuns": 1,
+    "server": "python3 -m http.server 8000",
+    "page": "http://localhost:8000/kome365/index.html",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "CPU": 1,
+    "backend": "Chromium/SwiftShader",
+    "isMobile": true,
+    "hasTouch": true,
+    "input": "CDP Input.dispatchTouchEvent",
+    "local3D": true,
+    "externalAccess": false,
+    "sequence": "10 seconds observe, original photo,60 seconds visible-cue/current-card-memory swipes",
+    "protocolChangedForReference": false
+  },
+  "primaryOutcome": {
+    "opportunities": 21,
+    "sentGestures": 10,
+    "unsentCueSkips": 11,
+    "cueBasis": {
+      "same-card-memory": 2,
+      "current": 8
+    },
+    "directions": {
+      "right": 1,
+      "left": 9
+    },
+    "responses": {
+      "drag": 10,
+      "transform": 10,
+      "nextDay": 10,
+      "reasonClassOn": 10,
+      "markClassOn": 10
+    },
+    "changedReasonText": 10,
+    "noResponseAmongSent": 0,
+    "reasonPrefixes": {
+      "✗": 7,
+      "○": 3
+    },
+    "lastDate": "1月11日",
+    "cueSkipSummary": {
+      "cardVisible": 11,
+      "handVisibleFalse": 9,
+      "handVisibleTrue": 2,
+      "fingerOpacityZero": 10,
+      "horizontalXZero": 11,
+      "bothTrailsZero": 11,
+      "laterSameCardCue": 11,
+      "historyCount": 159,
+      "historyDropped": 0,
+      "limit": "11 unsent threshold failures are not 11 ignored touches. A visible hand/trail withabs(x)<8 can fail the driver threshold; not proof UI is missing."
+    },
+    "transformMeaning": {
+      "anyChangedTransform": 10,
+      "firstChangedDuringDrag": 1,
+      "firstChangedDuringFly": 9,
+      "anyChangedDuringDrag": 1,
+      "limit": "A changed transform during fly or day change is response, not proof of continuous finger-following. Missing intermediate mutation records do not establish no response."
+    }
+  },
+  "timing": {
+    "firstInputPlaySeconds": 0.251,
+    "firstInputMoments": {
+      "drag": {
+        "playSeconds": 0.316,
+        "fromSendMs": 65.0
+      },
+      "transform": {
+        "playSeconds": 0.3412,
+        "fromSendMs": 90.199951
+      },
+      "nextDay": {
+        "playSeconds": 0.7778,
+        "fromSendMs": 526.800049
+      },
+      "reasonClassOn": {
+        "playSeconds": 0.7825,
+        "fromSendMs": 531.5
+      },
+      "markClassOn": {
+        "playSeconds": 0.7812,
+        "fromSendMs": 530.199951
+      }
+    },
+    "firstPositiveReason": {
+      "gesture": 3,
+      "playSeconds": 15.6299,
+      "fromThatInputMs": 870.900146,
+      "fromFirstInputMs": 15378.9,
+      "kind": "First observed○reason class/text; no continuous CSS visibility/physical paint guarantee"
+    },
+    "first3Timelines": [
+      {
+        "gesture": 1,
+        "nextDay": {
+          "playSeconds": 0.7778,
+          "fromSendMs": 526.800049
+        },
+        "markOn": {
+          "playSeconds": 0.7812,
+          "fromSendMs": 530.199951
+        },
+        "markOff": {
+          "playSeconds": 1.3925,
+          "fromSendMs": 1141.5
+        },
+        "markClassObservedSpanMs": 611.3000000119209,
+        "reasonOn": {
+          "playSeconds": 0.7825,
+          "fromSendMs": 531.5
+        },
+        "reasonOff": {
+          "playSeconds": 7.4603,
+          "fromSendMs": 7209.300049
+        },
+        "reasonClassObservedSpanMs": 6677.800000011921,
+        "nextGuideClassTrue": {
+          "playSeconds": 7.4465,
+          "fromSendMs": 7195.5
+        },
+        "nextSameCardQualifiedCue": {
+          "playSeconds": 8.4379,
+          "fromSendMs": 8186.900146
+        },
+        "reasonAndMarkLimit": "Class transitions sampled by observers, not continuous CSS opacity/geometry/legibility or physical paint. Main-thread blocks can delay observers/timers. First3 retention during rapid successive choices was not exercised."
+      },
+      {
+        "gesture": 2,
+        "nextDay": {
+          "playSeconds": 10.5171,
+          "fromSendMs": 841.100098
+        },
+        "markOn": {
+          "playSeconds": 10.5213,
+          "fromSendMs": 845.300049
+        },
+        "markOff": {
+          "playSeconds": 12.7749,
+          "fromSendMs": 3098.900146
+        },
+        "markClassObservedSpanMs": 2253.5999999940395,
+        "reasonOn": {
+          "playSeconds": 10.5222,
+          "fromSendMs": 846.199951
+        },
+        "reasonOff": {
+          "playSeconds": 12.7608,
+          "fromSendMs": 3084.800049
+        },
+        "reasonClassObservedSpanMs": 2238.600000023842,
+        "nextGuideClassTrue": {
+          "playSeconds": 12.9462,
+          "fromSendMs": 3270.199951
+        },
+        "nextSameCardQualifiedCue": {
+          "playSeconds": 13.9376,
+          "fromSendMs": 4261.600098
+        },
+        "reasonAndMarkLimit": "Class transitions sampled by observers, not continuous CSS opacity/geometry/legibility or physical paint. Main-thread blocks can delay observers/timers. First3 retention during rapid successive choices was not exercised."
+      },
+      {
+        "gesture": 3,
+        "nextDay": {
+          "playSeconds": 15.6244,
+          "fromSendMs": 865.400146
+        },
+        "markOn": {
+          "playSeconds": 15.6288,
+          "fromSendMs": 869.800049
+        },
+        "markOff": {
+          "playSeconds": 17.6661,
+          "fromSendMs": 2907.100098
+        },
+        "markClassObservedSpanMs": 2037.2999999821186,
+        "reasonOn": {
+          "playSeconds": 15.6299,
+          "fromSendMs": 870.900146
+        },
+        "reasonOff": {
+          "playSeconds": 17.9904,
+          "fromSendMs": 3231.400146
+        },
+        "reasonClassObservedSpanMs": 2360.5,
+        "nextGuideClassTrue": {
+          "playSeconds": 17.992,
+          "fromSendMs": 3233.0
+        },
+        "nextSameCardQualifiedCue": {
+          "playSeconds": 19.0042,
+          "fromSendMs": 4245.199951
+        },
+        "reasonAndMarkLimit": "Class transitions sampled by observers, not continuous CSS opacity/geometry/legibility or physical paint. Main-thread blocks can delay observers/timers. First3 retention during rapid successive choices was not exercised."
+      }
+    ],
+    "timing": {
+      "requestedSpanMs": 120,
+      "actualSendSpanMs": {
+        "min": 119.52350801229477,
+        "median": 120.48876748979092,
+        "max": 130.1347430050373
+      },
+      "ACKDelayMs": {
+        "min": 52.56418001651764,
+        "median": 438.2825240045786,
+        "max": 844.2233560085297
+      },
+      "eventTimestampToHandlerMs": {
+        "min": 52.30000001192093,
+        "median": 384.90000000596046,
+        "max": 829.2999999821186
+      },
+      "pointerdownTimestampToHandlerMs": {
+        "min": 60.400000005960464,
+        "median": 410.74999998509884,
+        "max": 829.2999999821186
+      },
+      "documentCaptureDownToFirstDragMutationMs": {
+        "min": 2.9999995156250066,
+        "median": 4.149902171874999,
+        "max": 10.300048828125
+      },
+      "downSendToEventTimestampMs": {
+        "min": -0.099853515625,
+        "median": -0.099853515625,
+        "max": 0.0
+      },
+      "eventTimestampDownUpMs": {
+        "min": 118.90000000596046,
+        "median": 120.95000000298023,
+        "max": 130.0
+      },
+      "handlerDownUpMs": {
+        "min": 3.7999999821186066,
+        "median": 84.55000001192093,
+        "max": 215.39999997615814
+      },
+      "allGesturesSamePointerAndPrimary": true,
+      "pointerTypeRecorded": false,
+      "sendToTransformMs": {
+        "min": 90.199951,
+        "median": 510.200073,
+        "max": 841.699951
+      },
+      "lastInputPlaySeconds": 54.59,
+      "lastTouchEndPlaySeconds": 54.71
+    },
+    "clock": {
+      "observationToPlayMs": 10200.927288979292,
+      "initialPhotoCaptureMs": 182.2351270020008,
+      "initialPhotoSavedToPlayMs": 17.88017499446869,
+      "actualPlayStopMs": 60001.58919900656
+    }
+  },
+  "driverWaits": {
+    "count": 21,
+    "requestedEachMs": 2200,
+    "actualSumMs": 46225.603349000216,
+    "rangeMs": [
+      2199.3173300027847,
+      2214.6909070014954
+    ],
+    "lastCompletedPlaySeconds": 59.519297509014606,
+    "lastBeforeChoice": 22,
+    "doNotSumWithPageStalls": "Driver waits, queued reads and page stalls overlap; no additive causal total is inferred."
+  },
+  "dispatch": {
+    "CDPCommands": 80,
+    "ACKs": 80,
+    "trustedEvents": 33,
+    "eventTypes": {
+      "pointerdown": 10,
+      "pointermove": 13,
+      "pointerup": 10
+    },
+    "pointerTypeRecorded": false
+  },
+  "knownWaitingObservation": {
+    "knownRound": 118,
+    "classification": "First-answer wait observed again; this is one ordinary primary, not an additional fixed10. Prior reproduction does not exclude a distinct caller diagnosis; current trace does not attribute stacks.",
+    "earlyLongTasks": [
+      {
+        "startPlaySeconds": 0.4403,
+        "durationMs": 90
+      },
+      {
+        "startPlaySeconds": 1.4295,
+        "durationMs": 1043
+      },
+      {
+        "startPlaySeconds": 2.4921,
+        "durationMs": 4951
+      },
+      {
+        "startPlaySeconds": 7.4663,
+        "durationMs": 235
+      },
+      {
+        "startPlaySeconds": 7.7086,
+        "durationMs": 391
+      },
+      {
+        "startPlaySeconds": 8.1044,
+        "durationMs": 165
+      },
+      {
+        "startPlaySeconds": 8.2711,
+        "durationMs": 158
+      },
+      {
+        "startPlaySeconds": 8.4377,
+        "durationMs": 155
+      },
+      {
+        "startPlaySeconds": 8.6043,
+        "durationMs": 169
+      },
+      {
+        "startPlaySeconds": 8.788,
+        "durationMs": 156
+      },
+      {
+        "startPlaySeconds": 8.9543,
+        "durationMs": 155
+      },
+      {
+        "startPlaySeconds": 9.1211,
+        "durationMs": 159
+      },
+      {
+        "startPlaySeconds": 9.288,
+        "durationMs": 162
+      },
+      {
+        "startPlaySeconds": 9.4542,
+        "durationMs": 203
+      },
+      {
+        "startPlaySeconds": 9.6734,
+        "durationMs": 145
+      },
+      {
+        "startPlaySeconds": 9.8213,
+        "durationMs": 165
+      },
+      {
+        "startPlaySeconds": 9.9885,
+        "durationMs": 167
+      },
+      {
+        "startPlaySeconds": 10.1734,
+        "durationMs": 165
+      },
+      {
+        "startPlaySeconds": 10.3399,
+        "durationMs": 158
+      },
+      {
+        "startPlaySeconds": 10.5175,
+        "durationMs": 155
+      },
+      {
+        "startPlaySeconds": 10.6876,
+        "durationMs": 202
+      },
+      {
+        "startPlaySeconds": 10.9048,
+        "durationMs": 166
+      },
+      {
+        "startPlaySeconds": 11.0876,
+        "durationMs": 167
+      },
+      {
+        "startPlaySeconds": 11.2709,
+        "durationMs": 158
+      },
+      {
+        "startPlaySeconds": 11.4375,
+        "durationMs": 166
+      },
+      {
+        "startPlaySeconds": 11.6054,
+        "durationMs": 175
+      },
+      {
+        "startPlaySeconds": 11.7875,
+        "durationMs": 180
+      },
+      {
+        "startPlaySeconds": 11.9709,
+        "durationMs": 188
+      }
+    ],
+    "maxEarlyLongTask": {
+      "startPlaySeconds": 2.4921,
+      "durationMs": 4951
+    },
+    "maxEarlyRAFGap": {
+      "playSeconds": 7.4694,
+      "gapMs": 4977.0999999940395
+    },
+    "longestStatusRead": {
+      "kind": "status",
+      "sentEpoch": 1794683672017,
+      "receivedEpoch": 1794683676835,
+      "roundTripMs": 4817.3835970163345,
+      "browserStartedAt": 18080.29999998212,
+      "browserEndedAt": 18080.5
+    },
+    "firstNextGuideClass": {
+      "playSeconds": 7.4465,
+      "fromSendMs": 7195.5
+    },
+    "firstNextQualifiedCue": {
+      "playSeconds": 8.4379,
+      "fromSendMs": 8186.900146
+    },
+    "nodeHeartbeatMaxGapMs": 270.19057899713516,
+    "limit": "No stack attribution in this run. R118 separateprofile and fixed10 remain separate; differentviewport/raw durations are not a fix effect."
+  },
+  "primaryAssessment": {
+    "observedRisk": "After the first answer, the next guide and qualified cue arrive after a multi-second main-thread stall; later answers also have delayed event delivery.",
+    "newCauseEstablished": false,
+    "furtherAttributionExcluded": false,
+    "reason": "Current record has long-task and RAF duration but no calling stacks. Existing R118 profile separated init and later-frame/unattributed work; this run cannot choose a new protected-file or index-only change."
+  },
+  "photos": [
+    {
+      "file": "observe-10s.png",
+      "originalIdentifier": "round-130/preparation-7ddf29d8/strict/observe-10s.png",
+      "sha256": "49925081e42599b64cfa643bdb8c14a6ec84c7ba5a3a616f24d887a0bd72edae",
+      "bytes": 130867,
+      "width": 390,
+      "height": 844,
+      "phase": "observation",
+      "requestedSeconds": 10.000811986982823,
+      "savedSeconds": 10.183047113984824,
+      "captureMs": 182.2351270020008,
+      "observation": "1月1日・元日の田んぼ。畦から田見る／田へ行かない、田おこし まえ・太陽・かかし。",
+      "reportAuthorPersonallyViewed": true,
+      "originalBytesPreserved": true
+    },
+    {
+      "file": "play-10s.png",
+      "originalIdentifier": "round-130/preparation-7ddf29d8/strict/play-10s.png",
+      "sha256": "b5435807032ba2ad3589eb0cf08c13775f818649959e2f61a940f76b5f6254dd",
+      "bytes": 232642,
+      "width": 390,
+      "height": 844,
+      "phase": "play",
+      "requestedSeconds": 10.001158805012704,
+      "savedSeconds": 10.84974247699976,
+      "captureMs": 848.5836719870567,
+      "observation": "半透明のカード面。日付・題・絵・選択肢は読めない。上の田・状態語は見える。",
+      "reportAuthorPersonallyViewed": true,
+      "originalBytesPreserved": true
+    },
+    {
+      "file": "play-30s.png",
+      "originalIdentifier": "round-130/preparation-7ddf29d8/strict/play-30s.png",
+      "sha256": "6147cdd1914301aa6398aff0b617ec4ad1a1d307d9f17b231031ffb052e91ade",
+      "bytes": 189510,
+      "width": 390,
+      "height": 844,
+      "phase": "play",
+      "requestedSeconds": 30.000996394008396,
+      "savedSeconds": 30.583778850018977,
+      "captureMs": 582.7824560105801,
+      "observation": "1月6日・七十二候。田に水を入れる／田を見て回る。絵の左側に指。",
+      "reportAuthorPersonallyViewed": true,
+      "originalBytesPreserved": true
+    },
+    {
+      "file": "play-60s.png",
+      "originalIdentifier": "round-130/preparation-7ddf29d8/strict/play-60s.png",
+      "sha256": "83f6e2fa9d9efa5cf33d0a8e8d0a5d06f4e74ff69ba8a6b256755bc4185574eb",
+      "bytes": 175407,
+      "width": 390,
+      "height": 844,
+      "phase": "play",
+      "requestedSeconds": 60.001717590004205,
+      "savedSeconds": 60.7671443310082,
+      "captureMs": 765.4267410039902,
+      "observation": "1月11日・山の雪と用水。水源を見ない／川の水量見る。明瞭な指は写らない。",
+      "reportAuthorPersonallyViewed": true,
+      "originalBytesPreserved": true
+    }
+  ],
+  "primaryExecution": {
+    "actualOuterExit": 1,
+    "independentChildActualExit": null,
+    "requestedProcessExit": 1,
+    "rootChunk": "0ca743",
+    "rootClosure": {
+      "atUTC": "2026-11-14T19:15:56.690101+00:00",
+      "sourceHead": "7ddf29d8a6a10fabd595df51bad3e62d5233ffbc",
+      "source7Match": true,
+      "environment8Match": true,
+      "liveRuntimeProcesses": [],
+      "actualOuterExitCode": 1,
+      "actualOuterToolChunk": "0ca743",
+      "metadataSHA256": "18599fbb49177ee681e26fc0910d83a37cf3be3977c871fdc089bb04a8d5aff0",
+      "runtimeRerun": false
+    },
+    "CPUreset": true,
+    "browserClosed": true,
+    "consoleErrors": [
+      {
+        "at": 194718765.098967,
+        "kind": "console",
+        "message": "Failed to load resource: the server responded with a status of 404 (File not found)"
+      },
+      {
+        "at": 194729439.26296,
+        "kind": "console",
+        "message": "Failed to load resource: the server responded with a status of 404 (File not found)"
+      }
+    ],
+    "separateResources404": [
+      {
+        "name": "http://localhost:8000/favicon.ico",
+        "status": 404
+      },
+      {
+        "name": "http://localhost:8000/favicon.ico",
+        "status": 404
+      }
+    ],
+    "errorLimit": "Console404 lacks URL/requestId; two favicon404 ResourceTiming entries independently recorded. Keep actualexit1.",
+    "collection": {
+      "gestureCompletion": "settled",
+      "screenshots": "settled",
+      "inputs": "settled"
+    }
+  },
+  "additionalDiagnostic": {
+    "status": "completed; independently audited",
+    "protocol": "Ten fresh-process trials alternating requested120/600ms, three repeated first-cue physical swipes each; not ordinary cue-following after the first card. No retries or replacements.",
+    "counts": {
+      "plannedTrials": 10,
+      "completed": 10,
+      "normalCommands": 240,
+      "normalACK": 240,
+      "cleanupCommands": 0,
+      "trustedCycles": 30,
+      "trustedEventTypes": {
+        "pointerdown": 30,
+        "pointermove": 74,
+        "pointerup": 30
+      },
+      "threeDaysAdvancedTrials": 10,
+      "secondReasonReplacedUnder2000msTrials": 10,
+      "console404": 20
+    },
+    "sourceHead": "7ddf29d8a6a10fabd595df51bad3e62d5233ffbc",
+    "plannedSchedule": {
+      "startOffsetsMs": "250,250+D+1500,250+D+3000; D=requested120 or600",
+      "pixels": 100,
+      "movesPerGesture": 6,
+      "laterGesturesFollowCurrentCue": false,
+      "ACKNotAwaitedForLaterReservations": true,
+      "windowEnd": "planned third end+15000ms; fixed, not actual release+15000ms"
+    },
+    "speedGroups": {
+      "120": {
+        "trials": 5,
+        "normalSubmitted": 120,
+        "ACK": 120,
+        "cleanup": 0,
+        "threeTrustedCycles": 5,
+        "threeDateAdvances": 5,
+        "secondReasonReplacedUnder2000ms": 5,
+        "secondReasonFirstOnToReplacementMs": {
+          "n": 5,
+          "min": 180.80000001192093,
+          "median": 205.09999999403954,
+          "max": 378.80000001192093
+        },
+        "maxLongTaskMs": {
+          "n": 5,
+          "min": 4851,
+          "median": 5141,
+          "max": 6855
+        },
+        "maxRAFGapMs": {
+          "n": 5,
+          "min": 4875,
+          "median": 5161.699999988079,
+          "max": 6790.5
+        },
+        "gestures": {
+          "1": {
+            "actualSendSpanMs": {
+              "n": 5,
+              "min": 117.46717202663422,
+              "median": 119.43674099445343,
+              "max": 120.11171898245811
+            },
+            "actualEventSpanMs": {
+              "n": 5,
+              "min": 117.0,
+              "median": 120.0,
+              "max": 120.0
+            },
+            "actualCaptureSpanMs": {
+              "n": 5,
+              "min": 192.19999998807907,
+              "median": 221.40000000596046,
+              "max": 239.30000001192093
+            },
+            "downEventToCaptureMs": {
+              "n": 5,
+              "min": 39.099999994039536,
+              "median": 55.400000005960464,
+              "max": 73.5
+            },
+            "windowEndMinusUpCaptureMs": {
+              "n": 5,
+              "min": 17937.900146484375,
+              "median": 17961.60009765625,
+              "max": 17990.2001953125
+            }
+          },
+          "2": {
+            "actualSendSpanMs": {
+              "n": 5,
+              "min": 117.84576800465584,
+              "median": 119.9301530122757,
+              "max": 120.18726801872253
+            },
+            "actualEventSpanMs": {
+              "n": 5,
+              "min": 118.09999999403954,
+              "median": 120.0,
+              "max": 120.90000000596046
+            },
+            "actualCaptureSpanMs": {
+              "n": 5,
+              "min": 8.5,
+              "median": 9.899999976158142,
+              "max": 24.099999994039536
+            },
+            "downEventToCaptureMs": {
+              "n": 5,
+              "min": 5902.4000000059605,
+              "median": 6029.4000000059605,
+              "max": 8167.300000011921
+            },
+            "windowEndMinusUpCaptureMs": {
+              "n": 5,
+              "min": 8441.900146484375,
+              "median": 10578.699951171875,
+              "max": 10706.400146484375
+            }
+          },
+          "3": {
+            "actualSendSpanMs": {
+              "n": 5,
+              "min": 119.82868501543999,
+              "median": 120.13217201828957,
+              "max": 123.2063609957695
+            },
+            "actualEventSpanMs": {
+              "n": 5,
+              "min": 119.90000000596046,
+              "median": 120.09999999403954,
+              "max": 123.09999999403954
+            },
+            "actualCaptureSpanMs": {
+              "n": 5,
+              "min": 0.4000000059604645,
+              "median": 0.5999999940395355,
+              "max": 0.7000000178813934
+            },
+            "downEventToCaptureMs": {
+              "n": 5,
+              "min": 4416.799999982119,
+              "median": 4544.299999982119,
+              "max": 6680.0999999940395
+            },
+            "windowEndMinusUpCaptureMs": {
+              "n": 5,
+              "min": 8438.300048828125,
+              "median": 10575.199951171875,
+              "max": 10702.699951171875
+            }
+          }
+        }
+      },
+      "600": {
+        "trials": 5,
+        "normalSubmitted": 120,
+        "ACK": 120,
+        "cleanup": 0,
+        "threeTrustedCycles": 5,
+        "threeDateAdvances": 5,
+        "secondReasonReplacedUnder2000ms": 5,
+        "secondReasonFirstOnToReplacementMs": {
+          "n": 5,
+          "min": 235.0,
+          "median": 380.7999999821186,
+          "max": 403.2000000178814
+        },
+        "maxLongTaskMs": {
+          "n": 5,
+          "min": 4821,
+          "median": 5011,
+          "max": 7010
+        },
+        "maxRAFGapMs": {
+          "n": 5,
+          "min": 4806,
+          "median": 5034.300000011921,
+          "max": 7027.600000023842
+        },
+        "gestures": {
+          "1": {
+            "actualSendSpanMs": {
+              "n": 5,
+              "min": 599.2779639959335,
+              "median": 599.8822039961815,
+              "max": 600.2867780029774
+            },
+            "actualEventSpanMs": {
+              "n": 5,
+              "min": 599.0,
+              "median": 599.9000000059605,
+              "max": 600.0999999940395
+            },
+            "actualCaptureSpanMs": {
+              "n": 5,
+              "min": 633.7000000178814,
+              "median": 669.9000000059605,
+              "max": 771.3999999761581
+            },
+            "downEventToCaptureMs": {
+              "n": 5,
+              "min": 29.80000001192093,
+              "median": 59.19999998807907,
+              "max": 68.59999999403954
+            },
+            "windowEndMinusUpCaptureMs": {
+              "n": 5,
+              "min": 18397.699951171875,
+              "median": 18483.39990234375,
+              "max": 18505.5
+            }
+          },
+          "2": {
+            "actualSendSpanMs": {
+              "n": 5,
+              "min": 597.7405050098896,
+              "median": 599.6976310014725,
+              "max": 600.9397249817848
+            },
+            "actualEventSpanMs": {
+              "n": 5,
+              "min": 598.0999999940395,
+              "median": 600.0,
+              "max": 600.9000000059605
+            },
+            "actualCaptureSpanMs": {
+              "n": 5,
+              "min": 8.199999988079071,
+              "median": 9.300000011920929,
+              "max": 15.900000005960464
+            },
+            "downEventToCaptureMs": {
+              "n": 5,
+              "min": 5880.699999988079,
+              "median": 6063.9000000059605,
+              "max": 7973.699999988079
+            },
+            "windowEndMinusUpCaptureMs": {
+              "n": 5,
+              "min": 9115.10009765625,
+              "median": 11027.89990234375,
+              "max": 11202.39990234375
+            }
+          },
+          "3": {
+            "actualSendSpanMs": {
+              "n": 5,
+              "min": 599.4518580138683,
+              "median": 600.1127029955387,
+              "max": 600.4844070076942
+            },
+            "actualEventSpanMs": {
+              "n": 5,
+              "min": 599.0,
+              "median": 600.0999999940395,
+              "max": 601.0999999940395
+            },
+            "actualCaptureSpanMs": {
+              "n": 5,
+              "min": 0.4000000059604645,
+              "median": 1.300000011920929,
+              "max": 2.800000011920929
+            },
+            "downEventToCaptureMs": {
+              "n": 5,
+              "min": 4399.699999988079,
+              "median": 4574.699999988079,
+              "max": 6489.299999982119
+            },
+            "windowEndMinusUpCaptureMs": {
+              "n": 5,
+              "min": 9108,
+              "median": 11024.099853515625,
+              "max": 11197.89990234375
+            }
+          }
+        }
+      }
+    },
+    "overallCommandLatenessMs": {
+      "n": 240,
+      "min": 0.012424588203430176,
+      "median": 0.7854567170143127,
+      "max": 23.23383155465126
+    },
+    "overallACKDelayMs": {
+      "n": 240,
+      "min": 9.371653020381927,
+      "median": 4475.921316996217,
+      "max": 8172.2198940217495
+    },
+    "downEventEpochMinusSendEpochMs": {
+      "n": 30,
+      "min": -0.10009765625,
+      "median": 0.0,
+      "max": 0.10009765625
+    },
+    "laterDownContexts": {
+      "2": {
+        "dates": {
+          "1月2日": 10
+        },
+        "cardClasses": {
+          "season-wi enter hinting": 10
+        },
+        "targetWithinCardTrue": 10
+      },
+      "3": {
+        "dates": {
+          "1月2日": 10
+        },
+        "cardClasses": {
+          "season-wi hinting fly": 10
+        },
+        "targetWithinCardTrue": 10
+      }
+    },
+    "exit": {
+      "actualOuter": 0,
+      "actualOuterChunk": "382006",
+      "parentEmbeddedOuter": null,
+      "requestedParent": 0,
+      "actualChildren": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "meaning": "Sequence completed and closed; child1 console404 outcomes retained, not a test pass."
+    },
+    "closure": {
+      "atUTC": "2026-11-14T19:40:04.268794+00:00",
+      "actualOuterExit": 0,
+      "actualOuterCompletionToolChunk": "382006",
+      "requestedOuterExit": 0,
+      "planned": 10,
+      "attempted": 10,
+      "completed": 10,
+      "unattempted": 0,
+      "actualChildren": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "source7Match": true,
+      "environment8Match": true,
+      "frozen9Match": true,
+      "head": "7ddf29d8a6a10fabd595df51bad3e62d5233ffbc",
+      "clean": true,
+      "CPUReset10": true,
+      "browserClosed10": true,
+      "liveRuntimeProcesses": [],
+      "executionSHA256": "f10c4e6f9295d3fa6901e09b4869a66838975b2497259a39f43f2a95b8f5c6f9",
+      "preparedSHA256": "7ca2a928afcf44b086c734c370eb9497019a56a4de5ff005426a944960ebb92f",
+      "meaning": "Outer0 confirms sequence completion and closure, not error-free trials or tests passing."
+    },
+    "limits": [
+      "Reason duration is DOM class/same-text lifetime, not continuous rendered readability or physical paint.",
+      "Document capture precedes the product handler; targetWithinCard can result from pointer capture and is not hit-testing or proof input ought to be accepted.",
+      "Cycle matching uses order, coordinates and event-generation epochs, not equality of CDP id1 and DOM pointer IDs. Raw mismatches and timing domains remain explicit.",
+      "The third gesture is generated before queued input is delivered. Its capture observes the same Jan2 card in fly state; later three date changes do not prove a particular private callback path.",
+      "Planned post-input window is fixed; it is not extended to15s after actual release. Actual release-to-boundary time is reported separately.",
+      "Long-task/RAF/delivery timing does not identify a function, driver, shader or GPU cause.",
+      "Favicon resource404 records and console404 records lack a common request identifier; no causal ID join is asserted.",
+      "Outer0 means series completion and verified closure, not no console errors or all tests passed.",
+      "These3 same-direction gestures are deliberate repeated input; later current hand cue and correct answer do not select input.",
+      "Event-to-capture delays are not product-handler timing. targetWithinCard may reflect pointer capture and does not alone prove a current geometric hit.",
+      "Second reason short class/text interval is a replacement at the next new judgment; next-card retention and the observed implementation replacing text at a new judgment are separate. It is not automatically a protected2s-rule violation.",
+      "No queue-each-reason-for2s change is proposed. Physical readability/paint/real fingers were not measured.",
+      "Delayed event delivery, longtask timing, RAF and clustered next days do not identify the responsible function/3D/audio or establish causation.",
+      "All source/protected files remain unchanged; no fix or effect measurement.",
+      "A and C hashed all20 diagnostic originals; report author and root viewed only trial01 initial/final images. Primary4 originals were separately viewed.",
+      "Second reason replacement is an observed existing implementation behavior, not a new operator rule or automatically a2sec retention violation."
+    ],
+    "perTrial": [
+      {
+        "trial": 1,
+        "requestedDurationMs": 120,
+        "actualChildExit": 1,
+        "normalPlanned": 24,
+        "normalSubmitted": 24,
+        "normalACK": 24,
+        "cleanupCount": 0,
+        "trustedCycles": 3,
+        "trustedEventCounts": {
+          "pointerdown": 3,
+          "pointermove": 5,
+          "pointerup": 3
+        },
+        "cycles": [
+          {
+            "scheduledGestureOrdinal": 1,
+            "pointerId": 2,
+            "actualSendSpanMs": 117.46717202663422,
+            "actualEventSpanMs": 117.0,
+            "actualCaptureSpanMs": 192.19999998807907,
+            "downEventEpochMinusSendEpochMs": -0.099853515625,
+            "downEventToCaptureMs": 55.400000005960464,
+            "windowEndMinusUpCaptureMs": 17989.5,
+            "windowEndMinusUpEventMs": 18120.099853515625
+          },
+          {
+            "scheduledGestureOrdinal": 2,
+            "pointerId": 3,
+            "actualSendSpanMs": 119.51472300291061,
+            "actualEventSpanMs": 118.90000000596046,
+            "actualCaptureSpanMs": 24.099999994039536,
+            "downEventEpochMinusSendEpochMs": 0.0,
+            "downEventToCaptureMs": 7931.300000011921,
+            "windowEndMinusUpCaptureMs": 8663.599853515625,
+            "windowEndMinusUpEventMs": 16500.099853515625
+          },
+          {
+            "scheduledGestureOrdinal": 3,
+            "pointerId": 4,
+            "actualSendSpanMs": 119.82868501543999,
+            "actualEventSpanMs": 120.09999999403954,
+            "actualCaptureSpanMs": 0.4000000059604645,
+            "downEventEpochMinusSendEpochMs": -0.099853515625,
+            "downEventToCaptureMs": 6459.5999999940395,
+            "windowEndMinusUpCaptureMs": 8660.099853515625,
+            "windowEndMinusUpEventMs": 15000.0
+          }
+        ],
+        "dateTransitions": [
+          {
+            "date": "1月1日",
+            "browserAt": 434.89999997615814,
+            "playSeconds": -10.147800048828126
+          },
+          {
+            "date": "1月2日",
+            "browserAt": 11340.59999999404,
+            "playSeconds": 0.757900146484375
+          },
+          {
+            "date": "1月3日",
+            "browserAt": 20785.5,
+            "playSeconds": 10.202800048828125
+          },
+          {
+            "date": "1月4日",
+            "browserAt": 20972,
+            "playSeconds": 10.389300048828124
+          }
+        ],
+        "reasons": [
+          {
+            "ordinal": 1,
+            "firstOnPlaySeconds": 0.761699951171875,
+            "classOnSameTextObservedSpanMs": 8627.40000000596,
+            "firstReplacementPlaySeconds": 10.202800048828125,
+            "sameTextFirstOnToReplacementMs": 9441.100000023842
+          },
+          {
+            "ordinal": 2,
+            "firstOnPlaySeconds": 10.2085,
+            "classOnSameTextObservedSpanMs": 180.80000001192093,
+            "firstReplacementPlaySeconds": 10.389300048828124,
+            "sameTextFirstOnToReplacementMs": 180.80000001192093
+          },
+          {
+            "ordinal": 3,
+            "firstOnPlaySeconds": 10.395199951171875,
+            "classOnSameTextObservedSpanMs": 2315.7000000178814,
+            "firstReplacementPlaySeconds": null,
+            "sameTextFirstOnToReplacementMs": null
+          }
+        ],
+        "maxLongTask": {
+          "startBrowserAt": 13100.799999982119,
+          "startPlaySeconds": 2.51810009765625,
+          "durationMs": 6855
+        },
+        "maxRAFGap": {
+          "playSeconds": 9.389300048828124,
+          "gapMs": 6790.5
+        },
+        "plannedWholeWindowMs": 18490,
+        "actualStopElapsedMs": 18490.01935699582,
+        "consoleErrorCount": 2,
+        "sourceCPUClosed": true,
+        "originalPhotos": [
+          {
+            "identifier": "round-130/repeated-swipe-preparation/execution/trial-01/strict/observe-10s.png",
+            "sha256": "49925081e42599b64cfa643bdb8c14a6ec84c7ba5a3a616f24d887a0bd72edae"
+          },
+          {
+            "identifier": "round-130/repeated-swipe-preparation/execution/trial-01/strict/post-window.png",
+            "sha256": "dc75fe3d8895a4d894d7052366f69c13a82f5f6d6b13f0e915ddbd03b3ea49ba"
+          }
+        ]
+      },
+      {
+        "trial": 2,
+        "requestedDurationMs": 600,
+        "actualChildExit": 1,
+        "normalPlanned": 24,
+        "normalSubmitted": 24,
+        "normalACK": 24,
+        "cleanupCount": 0,
+        "trustedCycles": 3,
+        "trustedEventCounts": {
+          "pointerdown": 3,
+          "pointermove": 8,
+          "pointerup": 3
+        },
+        "cycles": [
+          {
+            "scheduledGestureOrdinal": 1,
+            "pointerId": 2,
+            "actualSendSpanMs": 600.2867780029774,
+            "actualEventSpanMs": 600.0999999940395,
+            "actualCaptureSpanMs": 648.2000000178814,
+            "downEventEpochMinusSendEpochMs": -0.099853515625,
+            "downEventToCaptureMs": 59.19999998807907,
+            "windowEndMinusUpCaptureMs": 18491.699951171875,
+            "windowEndMinusUpEventMs": 18599.0
+          },
+          {
+            "scheduledGestureOrdinal": 2,
+            "pointerId": 3,
+            "actualSendSpanMs": 600.9397249817848,
+            "actualEventSpanMs": 600.9000000059605,
+            "actualCaptureSpanMs": 8.199999988079071,
+            "downEventEpochMinusSendEpochMs": 0.0,
+            "downEventToCaptureMs": 6063.9000000059605,
+            "windowEndMinusUpCaptureMs": 11027.89990234375,
+            "windowEndMinusUpEventMs": 16499.099853515625
+          },
+          {
+            "scheduledGestureOrdinal": 3,
+            "pointerId": 4,
+            "actualSendSpanMs": 600.4844070076942,
+            "actualEventSpanMs": 601.0999999940395,
+            "actualCaptureSpanMs": 1.300000011920929,
+            "downEventEpochMinusSendEpochMs": -0.099853515625,
+            "downEventToCaptureMs": 4574.699999988079,
+            "windowEndMinusUpCaptureMs": 11024.099853515625,
+            "windowEndMinusUpEventMs": 14999.0
+          }
+        ],
+        "dateTransitions": [
+          {
+            "date": "1月1日",
+            "browserAt": 376.7999999821186,
+            "playSeconds": -10.14389990234375
+          },
+          {
+            "date": "1月2日",
+            "browserAt": 11719.5,
+            "playSeconds": 1.198800048828125
+          },
+          {
+            "date": "1月3日",
+            "browserAt": 19317.59999999404,
+            "playSeconds": 8.796900146484376
+          },
+          {
+            "date": "1月4日",
+            "browserAt": 19729,
+            "playSeconds": 9.208300048828125
+          }
+        ],
+        "reasons": [
+          {
+            "ordinal": 1,
+            "firstOnPlaySeconds": 1.202800048828125,
+            "classOnSameTextObservedSpanMs": 6714.5,
+            "firstReplacementPlaySeconds": 8.796900146484376,
+            "sameTextFirstOnToReplacementMs": 7594.0999999940395
+          },
+          {
+            "ordinal": 2,
+            "firstOnPlaySeconds": 8.80510009765625,
+            "classOnSameTextObservedSpanMs": 403.2000000178814,
+            "firstReplacementPlaySeconds": 9.208300048828125,
+            "sameTextFirstOnToReplacementMs": 403.2000000178814
+          },
+          {
+            "ordinal": 3,
+            "firstOnPlaySeconds": 9.216,
+            "classOnSameTextObservedSpanMs": 2372.5,
+            "firstReplacementPlaySeconds": null,
+            "sameTextFirstOnToReplacementMs": null
+          }
+        ],
+        "maxLongTask": {
+          "startBrowserAt": 13403.899999976158,
+          "startPlaySeconds": 2.883199951171875,
+          "durationMs": 5011
+        },
+        "maxRAFGap": {
+          "playSeconds": 7.917800048828125,
+          "gapMs": 5034.300000011921
+        },
+        "plannedWholeWindowMs": 19450,
+        "actualStopElapsedMs": 19452.49899300933,
+        "consoleErrorCount": 2,
+        "sourceCPUClosed": true,
+        "originalPhotos": [
+          {
+            "identifier": "round-130/repeated-swipe-preparation/execution/trial-02/strict/observe-10s.png",
+            "sha256": "f950a0151ab113250d7d3497145532a6b3586d7fc3c44001fa067950c1d4386a"
+          },
+          {
+            "identifier": "round-130/repeated-swipe-preparation/execution/trial-02/strict/post-window.png",
+            "sha256": "e8ca402d89f7b44907e12a10f5acb96ee96c1627096f1ad319aae9fb2e65950f"
+          }
+        ]
+      },
+      {
+        "trial": 3,
+        "requestedDurationMs": 120,
+        "actualChildExit": 1,
+        "normalPlanned": 24,
+        "normalSubmitted": 24,
+        "normalACK": 24,
+        "cleanupCount": 0,
+        "trustedCycles": 3,
+        "trustedEventCounts": {
+          "pointerdown": 3,
+          "pointermove": 7,
+          "pointerup": 3
+        },
+        "cycles": [
+          {
+            "scheduledGestureOrdinal": 1,
+            "pointerId": 2,
+            "actualSendSpanMs": 120.11171898245811,
+            "actualEventSpanMs": 120.0,
+            "actualCaptureSpanMs": 239.30000001192093,
+            "downEventEpochMinusSendEpochMs": 0.0,
+            "downEventToCaptureMs": 39.099999994039536,
+            "windowEndMinusUpCaptureMs": 17961.60009765625,
+            "windowEndMinusUpEventMs": 18120.0
+          },
+          {
+            "scheduledGestureOrdinal": 2,
+            "pointerId": 3,
+            "actualSendSpanMs": 117.84576800465584,
+            "actualEventSpanMs": 118.09999999403954,
+            "actualCaptureSpanMs": 9.899999976158142,
+            "downEventEpochMinusSendEpochMs": 0.0,
+            "downEventToCaptureMs": 6029.4000000059605,
+            "windowEndMinusUpCaptureMs": 10578.699951171875,
+            "windowEndMinusUpEventMs": 16499.900146484375
+          },
+          {
+            "scheduledGestureOrdinal": 3,
+            "pointerId": 4,
+            "actualSendSpanMs": 123.2063609957695,
+            "actualEventSpanMs": 123.09999999403954,
+            "actualCaptureSpanMs": 0.5,
+            "downEventEpochMinusSendEpochMs": 0.0,
+            "downEventToCaptureMs": 4544.299999982119,
+            "windowEndMinusUpCaptureMs": 10575.199951171875,
+            "windowEndMinusUpEventMs": 14996.900146484375
+          }
+        ],
+        "dateTransitions": [
+          {
+            "date": "1月1日",
+            "browserAt": 365.7000000178814,
+            "playSeconds": -10.14110009765625
+          },
+          {
+            "date": "1月2日",
+            "browserAt": 11275.200000017881,
+            "playSeconds": 0.76839990234375
+          },
+          {
+            "date": "1月3日",
+            "browserAt": 18796.5,
+            "playSeconds": 8.289699951171874
+          },
+          {
+            "date": "1月4日",
+            "browserAt": 18993,
+            "playSeconds": 8.486199951171875
+          }
+        ],
+        "reasons": [
+          {
+            "ordinal": 1,
+            "firstOnPlaySeconds": 0.772,
+            "classOnSameTextObservedSpanMs": 6631.9000000059605,
+            "firstReplacementPlaySeconds": 8.289699951171874,
+            "sameTextFirstOnToReplacementMs": 7517.699999988079
+          },
+          {
+            "ordinal": 2,
+            "firstOnPlaySeconds": 8.296,
+            "classOnSameTextObservedSpanMs": 190.19999998807907,
+            "firstReplacementPlaySeconds": 8.486199951171875,
+            "sameTextFirstOnToReplacementMs": 190.19999998807907
+          },
+          {
+            "ordinal": 3,
+            "firstOnPlaySeconds": 8.492,
+            "classOnSameTextObservedSpanMs": 2391.699999988079,
+            "firstReplacementPlaySeconds": null,
+            "sameTextFirstOnToReplacementMs": null
+          }
+        ],
+        "maxLongTask": {
+          "startBrowserAt": 13045.700000017881,
+          "startPlaySeconds": 2.53889990234375,
+          "durationMs": 4851
+        },
+        "maxRAFGap": {
+          "playSeconds": 7.414199951171875,
+          "gapMs": 4875
+        },
+        "plannedWholeWindowMs": 18490,
+        "actualStopElapsedMs": 18490.58619299531,
+        "consoleErrorCount": 2,
+        "sourceCPUClosed": true,
+        "originalPhotos": [
+          {
+            "identifier": "round-130/repeated-swipe-preparation/execution/trial-03/strict/observe-10s.png",
+            "sha256": "1aa9155d5bf3b5960b8419fa59742427e3ba769f6b92ce1f2b284c7fe477b64e"
+          },
+          {
+            "identifier": "round-130/repeated-swipe-preparation/execution/trial-03/strict/post-window.png",
+            "sha256": "b1a419c8172c2587c129ea8b310b0ef90dbad6130f36e658a0488965d1217962"
+          }
+        ]
+      },
+      {
+        "trial": 4,
+        "requestedDurationMs": 600,
+        "actualChildExit": 1,
+        "normalPlanned": 24,
+        "normalSubmitted": 24,
+        "normalACK": 24,
+        "cleanupCount": 0,
+        "trustedCycles": 3,
+        "trustedEventCounts": {
+          "pointerdown": 3,
+          "pointermove": 8,
+          "pointerup": 3
+        },
+        "cycles": [
+          {
+            "scheduledGestureOrdinal": 1,
+            "pointerId": 2,
+            "actualSendSpanMs": 599.8822039961815,
+            "actualEventSpanMs": 600.0,
+            "actualCaptureSpanMs": 771.3999999761581,
+            "downEventEpochMinusSendEpochMs": 0.10009765625,
+            "downEventToCaptureMs": 29.80000001192093,
+            "windowEndMinusUpCaptureMs": 18397.699951171875,
+            "windowEndMinusUpEventMs": 18598.89990234375
+          },
+          {
+            "scheduledGestureOrdinal": 2,
+            "pointerId": 3,
+            "actualSendSpanMs": 599.6559819877148,
+            "actualEventSpanMs": 600,
+            "actualCaptureSpanMs": 15.900000005960464,
+            "downEventEpochMinusSendEpochMs": 0,
+            "downEventToCaptureMs": 5880.699999988079,
+            "windowEndMinusUpCaptureMs": 11202.39990234375,
+            "windowEndMinusUpEventMs": 16499
+          },
+          {
+            "scheduledGestureOrdinal": 3,
+            "pointerId": 4,
+            "actualSendSpanMs": 600.006835013628,
+            "actualEventSpanMs": 600,
+            "actualCaptureSpanMs": 1.4000000059604645,
+            "downEventEpochMinusSendEpochMs": 0,
+            "downEventToCaptureMs": 4399.699999988079,
+            "windowEndMinusUpCaptureMs": 11197.89990234375,
+            "windowEndMinusUpEventMs": 14999
+          }
+        ],
+        "dateTransitions": [
+          {
+            "date": "1月1日",
+            "browserAt": 445.5,
+            "playSeconds": -10.0885
+          },
+          {
+            "date": "1月2日",
+            "browserAt": 11846,
+            "playSeconds": 1.312
+          },
+          {
+            "date": "1月3日",
+            "browserAt": 19153.19999998808,
+            "playSeconds": 8.619199951171876
+          },
+          {
+            "date": "1月4日",
+            "browserAt": 19542.79999998212,
+            "playSeconds": 9.008800048828125
+          }
+        ],
+        "reasons": [
+          {
+            "ordinal": 1,
+            "firstOnPlaySeconds": 1.31710009765625,
+            "classOnSameTextObservedSpanMs": 6530.9000000059605,
+            "firstReplacementPlaySeconds": 8.619199951171876,
+            "sameTextFirstOnToReplacementMs": 7302.0999999940395
+          },
+          {
+            "ordinal": 2,
+            "firstOnPlaySeconds": 8.628,
+            "classOnSameTextObservedSpanMs": 380.7999999821186,
+            "firstReplacementPlaySeconds": 9.008800048828125,
+            "sameTextFirstOnToReplacementMs": 380.7999999821186
+          },
+          {
+            "ordinal": 3,
+            "firstOnPlaySeconds": 9.01860009765625,
+            "classOnSameTextObservedSpanMs": 2344.9000000059605,
+            "firstReplacementPlaySeconds": null,
+            "sameTextFirstOnToReplacementMs": null
+          }
+        ],
+        "maxLongTask": {
+          "startBrowserAt": 13541.299999982119,
+          "startPlaySeconds": 3.007300048828125,
+          "durationMs": 4821
+        },
+        "maxRAFGap": {
+          "playSeconds": 7.848,
+          "gapMs": 4806
+        },
+        "plannedWholeWindowMs": 19450,
+        "actualStopElapsedMs": 19451.004427999258,
+        "consoleErrorCount": 2,
+        "sourceCPUClosed": true,
+        "originalPhotos": [
+          {
+            "identifier": "round-130/repeated-swipe-preparation/execution/trial-04/strict/observe-10s.png",
+            "sha256": "49925081e42599b64cfa643bdb8c14a6ec84c7ba5a3a616f24d887a0bd72edae"
+          },
+          {
+            "identifier": "round-130/repeated-swipe-preparation/execution/trial-04/strict/post-window.png",
+            "sha256": "da94fb9928d0415006d709069cef3dadefcbdf0de2a384a6a41925c1fe630659"
+          }
+        ]
+      },
+      {
+        "trial": 5,
+        "requestedDurationMs": 120,
+        "actualChildExit": 1,
+        "normalPlanned": 24,
+        "normalSubmitted": 24,
+        "normalACK": 24,
+        "cleanupCount": 0,
+        "trustedCycles": 3,
+        "trustedEventCounts": {
+          "pointerdown": 3,
+          "pointermove": 7,
+          "pointerup": 3
+        },
+        "cycles": [
+          {
+            "scheduledGestureOrdinal": 1,
+            "pointerId": 2,
+            "actualSendSpanMs": 119.48457100987434,
+            "actualEventSpanMs": 120.0,
+            "actualCaptureSpanMs": 221.40000000596046,
+            "downEventEpochMinusSendEpochMs": 0.0,
+            "downEventToCaptureMs": 73.5,
+            "windowEndMinusUpCaptureMs": 17945.10009765625,
+            "windowEndMinusUpEventMs": 18120.0
+          },
+          {
+            "scheduledGestureOrdinal": 2,
+            "pointerId": 3,
+            "actualSendSpanMs": 120.11629900336266,
+            "actualEventSpanMs": 120.0,
+            "actualCaptureSpanMs": 10.299999982118607,
+            "downEventEpochMinusSendEpochMs": -0.10009765625,
+            "downEventToCaptureMs": 5902.4000000059605,
+            "windowEndMinusUpCaptureMs": 10706.400146484375,
+            "windowEndMinusUpEventMs": 16499.10009765625
+          },
+          {
+            "scheduledGestureOrdinal": 3,
+            "pointerId": 4,
+            "actualSendSpanMs": 120.17183300852776,
+            "actualEventSpanMs": 120.09999999403954,
+            "actualCaptureSpanMs": 0.6000000238418579,
+            "downEventEpochMinusSendEpochMs": -0.10009765625,
+            "downEventToCaptureMs": 4416.799999982119,
+            "windowEndMinusUpCaptureMs": 10702.699951171875,
+            "windowEndMinusUpEventMs": 15000.0
+          }
+        ],
+        "dateTransitions": [
+          {
+            "date": "1月1日",
+            "browserAt": 397.10000002384186,
+            "playSeconds": -10.154199951171876
+          },
+          {
+            "date": "1月2日",
+            "browserAt": 11351.200000017881,
+            "playSeconds": 0.79989990234375
+          },
+          {
+            "date": "1月3日",
+            "browserAt": 18692.30000001192,
+            "playSeconds": 8.141
+          },
+          {
+            "date": "1月4日",
+            "browserAt": 19072.600000023842,
+            "playSeconds": 8.521300048828126
+          }
+        ],
+        "reasons": [
+          {
+            "ordinal": 1,
+            "firstOnPlaySeconds": 0.804800048828125,
+            "classOnSameTextObservedSpanMs": 6559.0,
+            "firstReplacementPlaySeconds": 8.141,
+            "sameTextFirstOnToReplacementMs": 7336.199999988079
+          },
+          {
+            "ordinal": 2,
+            "firstOnPlaySeconds": 8.147699951171875,
+            "classOnSameTextObservedSpanMs": 373.60000002384186,
+            "firstReplacementPlaySeconds": 8.521300048828126,
+            "sameTextFirstOnToReplacementMs": 373.60000002384186
+          },
+          {
+            "ordinal": 3,
+            "firstOnPlaySeconds": 8.5285,
+            "classOnSameTextObservedSpanMs": 2401.699999988079,
+            "firstReplacementPlaySeconds": null,
+            "sameTextFirstOnToReplacementMs": null
+          }
+        ],
+        "maxLongTask": {
+          "startBrowserAt": 13013.300000011921,
+          "startPlaySeconds": 2.462,
+          "durationMs": 4882
+        },
+        "maxRAFGap": {
+          "playSeconds": 7.364199951171875,
+          "gapMs": 4902
+        },
+        "plannedWholeWindowMs": 18490,
+        "actualStopElapsedMs": 18491.011303007603,
+        "consoleErrorCount": 2,
+        "sourceCPUClosed": true,
+        "originalPhotos": [
+          {
+            "identifier": "round-130/repeated-swipe-preparation/execution/trial-05/strict/observe-10s.png",
+            "sha256": "2520226592b2e53e1d00b2be0a88f858a47a191d6e1825b6b95e35d758d1427a"
+          },
+          {
+            "identifier": "round-130/repeated-swipe-preparation/execution/trial-05/strict/post-window.png",
+            "sha256": "b533533c463bbc7df0e9f25caa5bf13edc7ed607c33254a0e83485259bdb7444"
+          }
+        ]
+      },
+      {
+        "trial": 6,
+        "requestedDurationMs": 600,
+        "actualChildExit": 1,
+        "normalPlanned": 24,
+        "normalSubmitted": 24,
+        "normalACK": 24,
+        "cleanupCount": 0,
+        "trustedCycles": 3,
+        "trustedEventCounts": {
+          "pointerdown": 3,
+          "pointermove": 8,
+          "pointerup": 3
+        },
+        "cycles": [
+          {
+            "scheduledGestureOrdinal": 1,
+            "pointerId": 2,
+            "actualSendSpanMs": 599.4546810090542,
+            "actualEventSpanMs": 599.9000000059605,
+            "actualCaptureSpanMs": 669.9000000059605,
+            "downEventEpochMinusSendEpochMs": 0.0,
+            "downEventToCaptureMs": 45.69999998807907,
+            "windowEndMinusUpCaptureMs": 18483.39990234375,
+            "windowEndMinusUpEventMs": 18599.099853515625
+          },
+          {
+            "scheduledGestureOrdinal": 2,
+            "pointerId": 3,
+            "actualSendSpanMs": 599.6976310014725,
+            "actualEventSpanMs": 600.0,
+            "actualCaptureSpanMs": 8.299999982118607,
+            "downEventEpochMinusSendEpochMs": 0.0,
+            "downEventToCaptureMs": 7913.800000011921,
+            "windowEndMinusUpCaptureMs": 9176.89990234375,
+            "windowEndMinusUpEventMs": 16499.0
+          },
+          {
+            "scheduledGestureOrdinal": 3,
+            "pointerId": 4,
+            "actualSendSpanMs": 599.4518580138683,
+            "actualEventSpanMs": 599.0,
+            "actualCaptureSpanMs": 0.800000011920929,
+            "downEventEpochMinusSendEpochMs": 0.0,
+            "downEventToCaptureMs": 6425.199999988079,
+            "windowEndMinusUpCaptureMs": 9172.0,
+            "windowEndMinusUpEventMs": 14999.0
+          }
+        ],
+        "dateTransitions": [
+          {
+            "date": "1月1日",
+            "browserAt": 411,
+            "playSeconds": -10.139699951171876
+          },
+          {
+            "date": "1月2日",
+            "browserAt": 11756.799999982119,
+            "playSeconds": 1.20610009765625
+          },
+          {
+            "date": "1月3日",
+            "browserAt": 21182.79999998212,
+            "playSeconds": 10.63210009765625
+          },
+          {
+            "date": "1月4日",
+            "browserAt": 21581.29999998212,
+            "playSeconds": 11.03060009765625
+          }
+        ],
+        "reasons": [
+          {
+            "ordinal": 1,
+            "firstOnPlaySeconds": 1.21,
+            "classOnSameTextObservedSpanMs": 8640.300000011921,
+            "firstReplacementPlaySeconds": 10.63210009765625,
+            "sameTextFirstOnToReplacementMs": 9422.09999999404
+          },
+          {
+            "ordinal": 2,
+            "firstOnPlaySeconds": 10.641,
+            "classOnSameTextObservedSpanMs": 389.59999999403954,
+            "firstReplacementPlaySeconds": 11.03060009765625,
+            "sameTextFirstOnToReplacementMs": 389.59999999403954
+          },
+          {
+            "ordinal": 3,
+            "firstOnPlaySeconds": 11.037699951171875,
+            "classOnSameTextObservedSpanMs": 2380.2000000178814,
+            "firstReplacementPlaySeconds": null,
+            "sameTextFirstOnToReplacementMs": null
+          }
+        ],
+        "maxLongTask": {
+          "startBrowserAt": 13373.5,
+          "startPlaySeconds": 2.822800048828125,
+          "durationMs": 7008
+        },
+        "maxRAFGap": {
+          "playSeconds": 9.850800048828125,
+          "gapMs": 7027.600000023842
+        },
+        "plannedWholeWindowMs": 19450,
+        "actualStopElapsedMs": 19450.903324991465,
+        "consoleErrorCount": 2,
+        "sourceCPUClosed": true,
+        "originalPhotos": [
+          {
+            "identifier": "round-130/repeated-swipe-preparation/execution/trial-06/strict/observe-10s.png",
+            "sha256": "89b8c5bc2c04f87d52ee6994b3c65a0dc537b9641b197e578db92739edee645d"
+          },
+          {
+            "identifier": "round-130/repeated-swipe-preparation/execution/trial-06/strict/post-window.png",
+            "sha256": "380af765248bc1df147b6a2e62a99e153d9b9949aa791fea6644da5b55581a36"
+          }
+        ]
+      },
+      {
+        "trial": 7,
+        "requestedDurationMs": 120,
+        "actualChildExit": 1,
+        "normalPlanned": 24,
+        "normalSubmitted": 24,
+        "normalACK": 24,
+        "cleanupCount": 0,
+        "trustedCycles": 3,
+        "trustedEventCounts": {
+          "pointerdown": 3,
+          "pointermove": 8,
+          "pointerup": 3
+        },
+        "cycles": [
+          {
+            "scheduledGestureOrdinal": 1,
+            "pointerId": 2,
+            "actualSendSpanMs": 119.43674099445343,
+            "actualEventSpanMs": 120.0,
+            "actualCaptureSpanMs": 206.39999997615814,
+            "downEventEpochMinusSendEpochMs": 0.0,
+            "downEventToCaptureMs": 42.400000005960464,
+            "windowEndMinusUpCaptureMs": 17990.2001953125,
+            "windowEndMinusUpEventMs": 18119.0
+          },
+          {
+            "scheduledGestureOrdinal": 2,
+            "pointerId": 3,
+            "actualSendSpanMs": 120.18726801872253,
+            "actualEventSpanMs": 120.90000000596046,
+            "actualCaptureSpanMs": 8.5,
+            "downEventEpochMinusSendEpochMs": 0.099853515625,
+            "downEventToCaptureMs": 5988.5999999940395,
+            "windowEndMinusUpCaptureMs": 10621.800048828125,
+            "windowEndMinusUpEventMs": 16498.0
+          },
+          {
+            "scheduledGestureOrdinal": 3,
+            "pointerId": 4,
+            "actualSendSpanMs": 120.13217201828957,
+            "actualEventSpanMs": 120.0,
+            "actualCaptureSpanMs": 0.7000000178813934,
+            "downEventEpochMinusSendEpochMs": 0.0,
+            "downEventToCaptureMs": 4500.199999988079,
+            "windowEndMinusUpCaptureMs": 10618.10009765625,
+            "windowEndMinusUpEventMs": 14999.0
+          }
+        ],
+        "dateTransitions": [
+          {
+            "date": "1月1日",
+            "browserAt": 392.2999999821186,
+            "playSeconds": -10.132300048828125
+          },
+          {
+            "date": "1月2日",
+            "browserAt": 11279.899999976158,
+            "playSeconds": 0.7552998046875
+          },
+          {
+            "date": "1月3日",
+            "browserAt": 18758.5,
+            "playSeconds": 8.23389990234375
+          },
+          {
+            "date": "1月4日",
+            "browserAt": 18970.899999976158,
+            "playSeconds": 8.4462998046875
+          }
+        ],
+        "reasons": [
+          {
+            "ordinal": 1,
+            "firstOnPlaySeconds": 0.76289990234375,
+            "classOnSameTextObservedSpanMs": 6696.899999976158,
+            "firstReplacementPlaySeconds": 8.23389990234375,
+            "sameTextFirstOnToReplacementMs": 7471.0
+          },
+          {
+            "ordinal": 2,
+            "firstOnPlaySeconds": 8.241199951171875,
+            "classOnSameTextObservedSpanMs": 205.09999999403954,
+            "firstReplacementPlaySeconds": 8.4462998046875,
+            "sameTextFirstOnToReplacementMs": 205.09999999403954
+          },
+          {
+            "ordinal": 3,
+            "firstOnPlaySeconds": 8.452599853515625,
+            "classOnSameTextObservedSpanMs": 2304.5999999940395,
+            "firstReplacementPlaySeconds": null,
+            "sameTextFirstOnToReplacementMs": null
+          }
+        ],
+        "maxLongTask": {
+          "startBrowserAt": 12822.799999982119,
+          "startPlaySeconds": 2.298199951171875,
+          "durationMs": 5141
+        },
+        "maxRAFGap": {
+          "playSeconds": 7.460099853515625,
+          "gapMs": 5161.699999988079
+        },
+        "plannedWholeWindowMs": 18490,
+        "actualStopElapsedMs": 18490.934922009706,
+        "consoleErrorCount": 2,
+        "sourceCPUClosed": true,
+        "originalPhotos": [
+          {
+            "identifier": "round-130/repeated-swipe-preparation/execution/trial-07/strict/observe-10s.png",
+            "sha256": "873fc2edc0b0d3ef2a891f7794cda2e9608c91dac8c5fb1c8cacf250af9824fd"
+          },
+          {
+            "identifier": "round-130/repeated-swipe-preparation/execution/trial-07/strict/post-window.png",
+            "sha256": "1f851e5942d0c504c81a9b531d7ac4b170e3638def7c892323daccc939794ad8"
+          }
+        ]
+      },
+      {
+        "trial": 8,
+        "requestedDurationMs": 600,
+        "actualChildExit": 1,
+        "normalPlanned": 24,
+        "normalSubmitted": 24,
+        "normalACK": 24,
+        "cleanupCount": 0,
+        "trustedCycles": 3,
+        "trustedEventCounts": {
+          "pointerdown": 3,
+          "pointermove": 8,
+          "pointerup": 3
+        },
+        "cycles": [
+          {
+            "scheduledGestureOrdinal": 1,
+            "pointerId": 2,
+            "actualSendSpanMs": 600.0765210092068,
+            "actualEventSpanMs": 599.9000000059605,
+            "actualCaptureSpanMs": 686.0,
+            "downEventEpochMinusSendEpochMs": 0,
+            "downEventToCaptureMs": 68.59999999403954,
+            "windowEndMinusUpCaptureMs": 18444.39990234375,
+            "windowEndMinusUpEventMs": 18599.10009765625
+          },
+          {
+            "scheduledGestureOrdinal": 2,
+            "pointerId": 3,
+            "actualSendSpanMs": 597.7405050098896,
+            "actualEventSpanMs": 598.0999999940395,
+            "actualCaptureSpanMs": 9.300000011920929,
+            "downEventEpochMinusSendEpochMs": -0.10009765625,
+            "downEventToCaptureMs": 7973.699999988079,
+            "windowEndMinusUpCaptureMs": 9115.10009765625,
+            "windowEndMinusUpEventMs": 16500
+          },
+          {
+            "scheduledGestureOrdinal": 3,
+            "pointerId": 4,
+            "actualSendSpanMs": 600.3927859961987,
+            "actualEventSpanMs": 601.0,
+            "actualCaptureSpanMs": 2.800000011920929,
+            "downEventEpochMinusSendEpochMs": -0.10009765625,
+            "downEventToCaptureMs": 6489.299999982119,
+            "windowEndMinusUpCaptureMs": 9108,
+            "windowEndMinusUpEventMs": 14999.10009765625
+          }
+        ],
+        "dateTransitions": [
+          {
+            "date": "1月1日",
+            "browserAt": 433.69999998807907,
+            "playSeconds": -10.152300048828126
+          },
+          {
+            "date": "1月2日",
+            "browserAt": 11838.5,
+            "playSeconds": 1.2525
+          },
+          {
+            "date": "1月3日",
+            "browserAt": 21299.5,
+            "playSeconds": 10.7135
+          },
+          {
+            "date": "1月4日",
+            "browserAt": 21648.69999998808,
+            "playSeconds": 11.062699951171876
+          }
+        ],
+        "reasons": [
+          {
+            "ordinal": 1,
+            "firstOnPlaySeconds": 1.257300048828125,
+            "classOnSameTextObservedSpanMs": 8633.199999988079,
+            "firstReplacementPlaySeconds": 10.7135,
+            "sameTextFirstOnToReplacementMs": 9456.199999988079
+          },
+          {
+            "ordinal": 2,
+            "firstOnPlaySeconds": 10.767,
+            "classOnSameTextObservedSpanMs": 295.69999998807907,
+            "firstReplacementPlaySeconds": 11.062699951171876,
+            "sameTextFirstOnToReplacementMs": 295.69999998807907
+          },
+          {
+            "ordinal": 3,
+            "firstOnPlaySeconds": 11.069199951171875,
+            "classOnSameTextObservedSpanMs": 2285.5,
+            "firstReplacementPlaySeconds": null,
+            "sameTextFirstOnToReplacementMs": null
+          }
+        ],
+        "maxLongTask": {
+          "startBrowserAt": 13446.09999999404,
+          "startPlaySeconds": 2.86010009765625,
+          "durationMs": 7010
+        },
+        "maxRAFGap": {
+          "playSeconds": 9.890800048828124,
+          "gapMs": 7009.5
+        },
+        "plannedWholeWindowMs": 19450,
+        "actualStopElapsedMs": 19449.966978013515,
+        "consoleErrorCount": 2,
+        "sourceCPUClosed": true,
+        "originalPhotos": [
+          {
+            "identifier": "round-130/repeated-swipe-preparation/execution/trial-08/strict/observe-10s.png",
+            "sha256": "1aa9155d5bf3b5960b8419fa59742427e3ba769f6b92ce1f2b284c7fe477b64e"
+          },
+          {
+            "identifier": "round-130/repeated-swipe-preparation/execution/trial-08/strict/post-window.png",
+            "sha256": "59096fa802c52abf76d3dddf665f1ae0e11b9a68efc2639bfbdd6ab77497fb1e"
+          }
+        ]
+      },
+      {
+        "trial": 9,
+        "requestedDurationMs": 120,
+        "actualChildExit": 1,
+        "normalPlanned": 24,
+        "normalSubmitted": 24,
+        "normalACK": 24,
+        "cleanupCount": 0,
+        "trustedCycles": 3,
+        "trustedEventCounts": {
+          "pointerdown": 3,
+          "pointermove": 7,
+          "pointerup": 3
+        },
+        "cycles": [
+          {
+            "scheduledGestureOrdinal": 1,
+            "pointerId": 2,
+            "actualSendSpanMs": 118.65918999910355,
+            "actualEventSpanMs": 118.0,
+            "actualCaptureSpanMs": 230.90000000596046,
+            "downEventEpochMinusSendEpochMs": -0.10009765625,
+            "downEventToCaptureMs": 69.2999999821186,
+            "windowEndMinusUpCaptureMs": 17937.900146484375,
+            "windowEndMinusUpEventMs": 18120.10009765625
+          },
+          {
+            "scheduledGestureOrdinal": 2,
+            "pointerId": 3,
+            "actualSendSpanMs": 119.9301530122757,
+            "actualEventSpanMs": 120.0,
+            "actualCaptureSpanMs": 9.799999982118607,
+            "downEventEpochMinusSendEpochMs": 0.0,
+            "downEventToCaptureMs": 8167.300000011921,
+            "windowEndMinusUpCaptureMs": 8441.900146484375,
+            "windowEndMinusUpEventMs": 16499.0
+          },
+          {
+            "scheduledGestureOrdinal": 3,
+            "pointerId": 4,
+            "actualSendSpanMs": 119.95551499724388,
+            "actualEventSpanMs": 119.90000000596046,
+            "actualCaptureSpanMs": 0.5999999940395355,
+            "downEventEpochMinusSendEpochMs": 0.0,
+            "downEventToCaptureMs": 6680.0999999940395,
+            "windowEndMinusUpCaptureMs": 8438.300048828125,
+            "windowEndMinusUpEventMs": 14999.10009765625
+          }
+        ],
+        "dateTransitions": [
+          {
+            "date": "1月1日",
+            "browserAt": 382.40000000596046,
+            "playSeconds": -10.1372001953125
+          },
+          {
+            "date": "1月2日",
+            "browserAt": 11372.40000000596,
+            "playSeconds": 0.8527998046875
+          },
+          {
+            "date": "1月3日",
+            "browserAt": 20932.29999998212,
+            "playSeconds": 10.412699951171875
+          },
+          {
+            "date": "1月4日",
+            "browserAt": 21317.90000000596,
+            "playSeconds": 10.7982998046875
+          }
+        ],
+        "reasons": [
+          {
+            "ordinal": 1,
+            "firstOnPlaySeconds": 0.859099853515625,
+            "classOnSameTextObservedSpanMs": 8789.90000000596,
+            "firstReplacementPlaySeconds": 10.412699951171875,
+            "sameTextFirstOnToReplacementMs": 9553.59999999404
+          },
+          {
+            "ordinal": 2,
+            "firstOnPlaySeconds": 10.4195,
+            "classOnSameTextObservedSpanMs": 378.80000001192093,
+            "firstReplacementPlaySeconds": 10.7982998046875,
+            "sameTextFirstOnToReplacementMs": 378.80000001192093
+          },
+          {
+            "ordinal": 3,
+            "firstOnPlaySeconds": 10.8062998046875,
+            "classOnSameTextObservedSpanMs": 2362.699999988079,
+            "firstReplacementPlaySeconds": null,
+            "sameTextFirstOnToReplacementMs": null
+          }
+        ],
+        "maxLongTask": {
+          "startBrowserAt": 13399.90000000596,
+          "startPlaySeconds": 2.8802998046875,
+          "durationMs": 6752
+        },
+        "maxRAFGap": {
+          "playSeconds": 9.65389990234375,
+          "gapMs": 6773.4000000059605
+        },
+        "plannedWholeWindowMs": 18490,
+        "actualStopElapsedMs": 18491.37935900688,
+        "consoleErrorCount": 2,
+        "sourceCPUClosed": true,
+        "originalPhotos": [
+          {
+            "identifier": "round-130/repeated-swipe-preparation/execution/trial-09/strict/observe-10s.png",
+            "sha256": "f950a0151ab113250d7d3497145532a6b3586d7fc3c44001fa067950c1d4386a"
+          },
+          {
+            "identifier": "round-130/repeated-swipe-preparation/execution/trial-09/strict/post-window.png",
+            "sha256": "e5108cc6eb5bdd6a7643837909b2b6eb07c5d5505cefa98c2af53d9948f53da5"
+          }
+        ]
+      },
+      {
+        "trial": 10,
+        "requestedDurationMs": 600,
+        "actualChildExit": 1,
+        "normalPlanned": 24,
+        "normalSubmitted": 24,
+        "normalACK": 24,
+        "cleanupCount": 0,
+        "trustedCycles": 3,
+        "trustedEventCounts": {
+          "pointerdown": 3,
+          "pointermove": 8,
+          "pointerup": 3
+        },
+        "cycles": [
+          {
+            "scheduledGestureOrdinal": 1,
+            "pointerId": 2,
+            "actualSendSpanMs": 599.2779639959335,
+            "actualEventSpanMs": 599.0,
+            "actualCaptureSpanMs": 633.7000000178814,
+            "downEventEpochMinusSendEpochMs": 0.0,
+            "downEventToCaptureMs": 59.79999998211861,
+            "windowEndMinusUpCaptureMs": 18505.5,
+            "windowEndMinusUpEventMs": 18600.0
+          },
+          {
+            "scheduledGestureOrdinal": 2,
+            "pointerId": 3,
+            "actualSendSpanMs": 600.2172410190105,
+            "actualEventSpanMs": 600.0,
+            "actualCaptureSpanMs": 11.300000011920929,
+            "downEventEpochMinusSendEpochMs": 0.0,
+            "downEventToCaptureMs": 6012.799999982119,
+            "windowEndMinusUpCaptureMs": 11075.900146484375,
+            "windowEndMinusUpEventMs": 16500.0
+          },
+          {
+            "scheduledGestureOrdinal": 3,
+            "pointerId": 4,
+            "actualSendSpanMs": 600.1127029955387,
+            "actualEventSpanMs": 600.0999999940395,
+            "actualCaptureSpanMs": 0.4000000059604645,
+            "downEventEpochMinusSendEpochMs": 0.0,
+            "downEventToCaptureMs": 4526.199999988079,
+            "windowEndMinusUpCaptureMs": 11072.400146484375,
+            "windowEndMinusUpEventMs": 14998.900146484375
+          }
+        ],
+        "dateTransitions": [
+          {
+            "date": "1月1日",
+            "browserAt": 371.59999999403954,
+            "playSeconds": -10.128
+          },
+          {
+            "date": "1月2日",
+            "browserAt": 11708,
+            "playSeconds": 1.20839990234375
+          },
+          {
+            "date": "1月3日",
+            "browserAt": 19232,
+            "playSeconds": 8.73239990234375
+          },
+          {
+            "date": "1月4日",
+            "browserAt": 19487.19999998808,
+            "playSeconds": 8.987599853515626
+          }
+        ],
+        "reasons": [
+          {
+            "ordinal": 1,
+            "firstOnPlaySeconds": 1.236099853515625,
+            "classOnSameTextObservedSpanMs": 6702.4000000059605,
+            "firstReplacementPlaySeconds": 8.73239990234375,
+            "sameTextFirstOnToReplacementMs": 7496.300000011921
+          },
+          {
+            "ordinal": 2,
+            "firstOnPlaySeconds": 8.752599853515624,
+            "classOnSameTextObservedSpanMs": 235.0,
+            "firstReplacementPlaySeconds": 8.987599853515626,
+            "sameTextFirstOnToReplacementMs": 235.0
+          },
+          {
+            "ordinal": 3,
+            "firstOnPlaySeconds": 8.994,
+            "classOnSameTextObservedSpanMs": 2342.699999988079,
+            "firstReplacementPlaySeconds": null,
+            "sameTextFirstOnToReplacementMs": null
+          }
+        ],
+        "maxLongTask": {
+          "startBrowserAt": 13422.299999982119,
+          "startPlaySeconds": 2.922699951171875,
+          "durationMs": 4987
+        },
+        "maxRAFGap": {
+          "playSeconds": 7.9385,
+          "gapMs": 5015.300000011921
+        },
+        "plannedWholeWindowMs": 19450,
+        "actualStopElapsedMs": 19450.287171006203,
+        "consoleErrorCount": 2,
+        "sourceCPUClosed": true,
+        "originalPhotos": [
+          {
+            "identifier": "round-130/repeated-swipe-preparation/execution/trial-10/strict/observe-10s.png",
+            "sha256": "f950a0151ab113250d7d3497145532a6b3586d7fc3c44001fa067950c1d4386a"
+          },
+          {
+            "identifier": "round-130/repeated-swipe-preparation/execution/trial-10/strict/post-window.png",
+            "sha256": "d1309453fb7de91c85b5063dd3d90d041838fca777de4d658196e558aec6b5c2"
+          }
+        ]
+      }
+    ],
+    "allOriginalPhotosSaved": 20,
+    "reportAuthorOriginalsPersonallyViewed": 2,
+    "reproductionBeforeAfter": {
+      "beforeLongTaskAtLeast1000ms": {
+        "occurred": 10,
+        "trials": 10
+      },
+      "beforeSecondDownDeliveryAbove1000ms": {
+        "occurred": 10,
+        "trials": 10
+      },
+      "afterPerformed": false,
+      "after": null,
+      "effect": null
+    }
+  },
+  "finalDecision": {
+    "atUTC": "2026-11-14T19:40:58.955626+00:00",
+    "source": "7ddf29d8a6a10fabd595df51bad3e62d5233ffbc",
+    "selectedCandidate": "First-answer wait and subsequent input response",
+    "reproduction": {
+      "plannedTrials": 10,
+      "completed": 10,
+      "longTaskAtLeast1000msTrials": 10,
+      "secondDownEventToDocumentCaptureAbove1000msTrials": 10,
+      "requestedSpeedGroups": {
+        "120ms": 5,
+        "600ms": 5
+      },
+      "normalScheduledCommands": 240,
+      "normalSentCommands": 240,
+      "normalResolvedACKs": 240,
+      "cleanupCommands": 0,
+      "trustedCompleteDownUpCycles": 30,
+      "finalDateJan4Trials": 10,
+      "actualOuterExit": 0,
+      "actualChildExit1Trials": 10
+    },
+    "interpretation": "Inputs are delivered late and then followed by date progression. No permanent input-loss claim, physical-paint timing claim, or causal assignment of the whole long task. Later two swipes deliberately reuse the first coordinates/cue, not current-card guidance.",
+    "decision": "No product change selected in this round. Preserve the reproduced wait as unresolved and retain a bounded next investigation.",
+    "reason": "Current index-only ideas either do not reduce winter DPR1 work or move the same blocking work to later input. No demonstrated small change improves the response sequence without regressions.",
+    "protectedBoundary": "engine.js, field3d.js and cards.js remain unchanged. Internal rendering-work restructuring would cross the explicitly protected file boundary and is a report-only option.",
+    "operatorDecisions": "Do not alter 0.3s cue, quick-swipe selection, tap non-selection, first-three reason retention, audio/time behavior or other operator-fixed presentation to mask the wait.",
+    "testsAdded": 0,
+    "redGreenExecuted": false,
+    "postFixTenTrialsExecuted": false,
+    "postFixFiveViewportsExecuted": false,
+    "newProductFixClaim": false,
+    "retentionRateImprovementClaim": false,
+    "numbersStatus": "Root count independently confirmed by A and C frozen raw audits",
+    "rootRawCountToolChunk": "b4a95c",
+    "rootClosure": "repeated-swipe-root-closure.json",
+    "existingReplacementContract": "Current implementation replaces the reason text when a new result arrives. A direct existing test asserting replacement after rapid new results has not been established; no extra operator rule or test contract is inferred.",
+    "independentAuditFreezes": {
+      "A": "d199233f9e8e40b09eb4c46fa5e85cc9841339bfa091650e4d24de615ca7ff1d",
+      "C": "e71f06ff38254cd781529f774cd67b014a4d81f07647afe6c305c7f57c3f959b"
+    },
+    "reviewCorrection": {
+      "atUTC": "2026-11-14T19:49:30.534247+00:00",
+      "priorSHA256": "ea0dd2a1779cb65372ad15c27f8e172227d4926415635de7c8d9fd274e7ec994",
+      "reason": "Independent report review found no directly identified regression assertion for rapid new-result replacement; removed the unsupported test-contract characterization."
+    }
+  },
+  "tests": {
+    "pytest": {
+      "command": "pytest tests/",
+      "workdir": "/workspace/ricepia-firstminute-round130",
+      "toolResult": {
+        "chunk_id": "315401",
+        "wall_time_seconds": 2.2054e-05,
+        "exit_code": 127,
+        "original_token_count": 12,
+        "output": "/bin/bash: line 1: pytest: command not found\n"
+      },
+      "suiteExecuted": false
+    },
+    "REDGREEN": {
+      "performed": false
+    },
+    "afterReproduction": {
+      "performed": false
+    },
+    "fiveSizeComparison": {
+      "performed": false
+    },
+    "additionalRegressionTest": {
+      "performed": false
+    },
+    "postFixTen": {
+      "performed": false
+    }
+  },
+  "operatorDecisionsPreserved": [
+    "Protected engine.js/field3d.js/cards.js unchanged.",
+    "0.3sec guide, fast swipe, tap nonselection, initial shadow, reason2sec/nonoverlap/first3 retention,30sec card, sound, scarecrow and sun retained."
+  ],
+  "attachmentCriteria": {
+    "filename": "sakurai_partial_20261114_2319.md",
+    "sha256": "4e206461abe220bb98ee7eba77c5132bfbe80d9ca9b62ac7e447848ae25ff74e",
+    "bodySections": 75,
+    "incompleteSections": 35,
+    "applied": "Evaluation criteria only; response, affirmative feedback, readable cue.",
+    "videoPlayed": false
+  },
+  "limits": [
+    "Class/text does not establish continuous readable2s reason, nonoverlap, or physical mark visibility. First3rapid-consecutive-card retention was not tested.",
+    "Current orsame-card-memory rendered cue chooses the swipe direction, not an internal correct answer.The observed positive/negative mix is not a balanced outcome test.",
+    "Daily advancement is progress, not harvest/goal completion.",
+    "No input was sent for skips; no target-operation response can be measured for them.",
+    "Pointer eventTimeStamp, browser handler delivery, and Node send/ACK are different measurements. Sub-millisecond negative timestamp-minus-send values are preserved as clock/rounding limits, not negative latency. The observer did not record pointerType.",
+    "Softwareaudio/3D state is not real-device sound/sensor/network evidence.",
+    "First-answer waiting remains a concrete quit-risk observation. No stack attribution or minimal index-only fix is established by this audit; it is not permanently excluded merely because earlier rounds observed it. Protected files and operator choices remain unchanged.",
+    "Discovery A and C hashed original images without viewing. Root, B, design reviewer and report author personally viewed all four originals.",
+    "Root photo prose initially transcribed play30 right label as畦を見て回る; report author original-pixel reading and B both read田を見て回る. Original source receipt is preserved.",
+    "One primary10 gestures and additional10fresh trials remain separate denominators; no product fix or after-effect measurement.",
+    "Source7 was unchanged during execution. After tests Kome5+flow remain equal but AGENTS changed for Tractor, so neither docs-only update nor all7 current bytes equal is claimed."
+  ],
+  "sourceLocations": {
+    "input": "kome365/index.html:4069",
+    "preview": "kome365/index.html:3940",
+    "choose": "kome365/index.html:3918",
+    "try3d": "kome365/index.html:2131",
+    "reason": "kome365/index.html:3827",
+    "reasonCSS": "kome365/index.html:657",
+    "driverWaits": "strict-play.cjs:28",
+    "cueThresholds": "helpers.cjs:137",
+    "capture": "helpers.cjs:188"
+  },
+  "evidence": [
+    {
+      "identifier": "round-130/source-selected.json",
+      "sha256": "53b80ff4282302262e0bcbf09d1765b3b5e4a66bae18e07894661ef7fb2e5693",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-130/root-closure.json",
+      "sha256": "8dd2b9ba2596402f181443f126cb4f38e402ad05f17ea0bd80a2d20f574a4111",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-130/root-photo-observations.json",
+      "sha256": "3fb80b9d11cee3474e59e7320ff96b2b7d47330b875174f4bdcf8422795d805e",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-130/pytest-result.json",
+      "sha256": "80e6d37523d5e8fe7e4772ba12fd5ba9f0476fba398dc305be140798b8597bd3",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-130/root-photo-transcription-addendum.json",
+      "sha256": "f54098e817e693a93090916a1018c5232a4e3e67baf3499bf6a7676a4f003b03",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-130/preparation-7ddf29d8/metadata.json",
+      "sha256": "18599fbb49177ee681e26fc0910d83a37cf3be3977c871fdc089bb04a8d5aff0",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-130/preparation-7ddf29d8/strict/report.json",
+      "sha256": "f8eaca57c39bc0f99fa7bedb7a4509fa21441849b9c279663ea936c0a9f267e6",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-130/preparation-7ddf29d8/strict/driver-timing.json",
+      "sha256": "8fc5c24ca9ef49dbd35721bb0b0cea969daa86362e8777566818e633a3140ccd",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-130/preparation-7ddf29d8/strict/extra.json",
+      "sha256": "c12f766770a08c6b718732c29a77e9bd4c3ef2ff7303edf5cf5270df76c17435",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-130/discovery-a/summary.json",
+      "sha256": "2148d0d00f7393efedfdc3da73dc0f1f434b6f31a2c27a4dedf235b7f868b465",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-130/discovery-a/frozen.json",
+      "sha256": "c3d22ddc2c4e75acafe9a778ace4ec32b0524fbe6fe6b2f5b5df3775ffc6157b",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-130/discovery-a/first3-timelines.json",
+      "sha256": "bf65454f0a8d87f3966b0f9e7448286e096c9cb8ca6b4d1496249cb66203bb9e",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-130/discovery-b/review.json",
+      "sha256": "f7901a02410f253c9ff2926654f3f8d04f19018e0028dbd08b374dc598590a98",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-130/discovery-b/frozen.json",
+      "sha256": "fef37e0576f7466a93dd668c45384953c8e5a2778b056b77580dc7b66ee6a146",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-130/discovery-c/summary.json",
+      "sha256": "095ed9f81b67212b3ae7050b09e1e94bd8944aaf96e0d57f69a8ea973d212c5b",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-130/discovery-c/frozen.json",
+      "sha256": "b895366aaa7679448cea37a702ff9c5bef0e3935bd6dfe8ffb2e2cb831b810a2",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-130/design-review/README.md",
+      "sha256": "3d2d4769b7a03bce91c1c09d3e4ebe0e43939c9064dd29d13868db71fe340706",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-130/design-review/minimal-change-selection.md",
+      "sha256": "d3a50cebf026055c9bc53ba2bf89de62075cb13befcfd93f323aedba409e18c2",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-130/candidate-selection.json",
+      "sha256": "4897e3b648692d30714eb20edc931d6faedd7cd27509cfa2364b4d54ff684d2b",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-130/repeated-swipe-parent-summary-limit.json",
+      "sha256": "66740b0841e138ea6e75b9bebbbd486e878d4fba98d61b4e8eeb95b3f9b71388",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-130/repeated-swipe-root-closure.json",
+      "sha256": "a66088f936f39e913205af0e416cfdf0d6a6b2e8696851187dea790790de3ca6",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-130/repeated-swipe-root-photo-observations.json",
+      "sha256": "9381c84e39c544278fd592c683e78560d68f940964a9bbe0f31ba1bdd0619ef5",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-130/repeated-swipe-preparation/execution/execution.json",
+      "sha256": "f10c4e6f9295d3fa6901e09b4869a66838975b2497259a39f43f2a95b8f5c6f9",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-130/repeated-swipe-audit/summary.json",
+      "sha256": "9048c0f5f6c962b03d47c00a97aee03af15c518595c6f69c43ca47a4a615ce1a",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-130/repeated-swipe-audit/frozen.json",
+      "sha256": "d199233f9e8e40b09eb4c46fa5e85cc9841339bfa091650e4d24de615ca7ff1d",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-130/repeated-swipe-audit/trial-rows.json",
+      "sha256": "13199c3b2a475ae757781c9d39575dc65eeacd2fbe43f39e2a3a2579e4415412",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-130/repeated-swipe-audit/input-sha256.json",
+      "sha256": "4c68ccefab2481266fb63b60983e3a38b63b138c54a10a2b02a3f4bdd3b456da",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-130/repeated-swipe-audit-c/summary.json",
+      "sha256": "11d918c2d2caa775a896ff113d70e9777170f1a6bc4fcc9236352bc2d54f4879",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-130/repeated-swipe-audit-c/frozen.json",
+      "sha256": "e71f06ff38254cd781529f774cd67b014a4d81f07647afe6c305c7f57c3f959b",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-130/final-candidate-decision.json",
+      "sha256": "0b18d43bb4593fe75f8478dfcddd85eba9a95a67414ec5e3d183c3adabd0316c",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-130/main-update.json",
+      "sha256": "6981eabd127278195a041d9e1794b1bdebb9aa4b34fce1fe0e80cf5e6d9ace17",
+      "publicLink": false
+    }
+  ],
+  "diagnosticPhotos": [
+    {
+      "file": "diagnostic-trial01-observe.png",
+      "originalIdentifier": "round-130/repeated-swipe-preparation/execution/trial-01/strict/observe-10s.png",
+      "sha256": "49925081e42599b64cfa643bdb8c14a6ec84c7ba5a3a616f24d887a0bd72edae",
+      "bytes": 130867,
+      "width": 390,
+      "height": 844,
+      "phase": "observation",
+      "requestedElapsedMs": 10000.82258400321,
+      "captureMs": 184.98270699381828,
+      "completedElapsedMs": 10185.805290997028,
+      "observation": "1月1日・元日の田んぼ。畦から田見る／田へ行かない。○✗/理由は写らない。",
+      "reportAuthorPersonallyViewed": true,
+      "originalBytesPreserved": true,
+      "meaning": "Same-source diagnostic initial/final image; not before/after a fix."
+    },
+    {
+      "file": "diagnostic-trial01-post-window.png",
+      "originalIdentifier": "round-130/repeated-swipe-preparation/execution/trial-01/strict/post-window.png",
+      "sha256": "dc75fe3d8895a4d894d7052366f69c13a82f5f6d6b13f0e915ddbd03b3ea49ba",
+      "bytes": 176027,
+      "width": 390,
+      "height": 844,
+      "phase": "play",
+      "requestedElapsedMs": 18490.3753759861,
+      "captureMs": 635.2561810016632,
+      "completedElapsedMs": 19125.631556987762,
+      "observation": "1月4日・みかんの季節。田を見て回る／みかんだけ見る。指が見え、○✗/理由は写らない。",
+      "reportAuthorPersonallyViewed": true,
+      "originalBytesPreserved": true,
+      "meaning": "Same-source diagnostic initial/final image; not before/after a fix."
+    }
+  ]
+}

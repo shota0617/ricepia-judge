@@ -97,20 +97,29 @@
   c.innerHTML = '<img src="nishio-go/logo.svg" alt="" width="272" height="40"/><i></i>';
   document.body.appendChild(c);
   // サイクル218（おそい 回線）：最初の 絵まで 約 6秒、題字と 行き来する 米つぶ だけ で、読みこみが 進んで いるか 分からなかった。
-  // 下の 同期の スクリプト（BOOT_N 本）が 1本 届く たびに 線を のばす（届いた 数 だけ。にせの 進みは 出さない。届かなければ その まま 止まって 見える）。
+  // 下の 同期の スクリプト（BOOT_N 本）が 1本 読めた たびに 線を のばす（読めた 数 だけ。にせの 進みは 出さない。届かなければ その まま 止まって 見える）。
   // 0.7秒 たっても 題字が 出て いる とき だけ 見せる（速い 回線では 出ない）。読めない・来ない ときの やりなおしの 文（下の 12秒）は かえない
+  // サイクル218b（外の 読み手の 指摘 PR #1183）：前は PerformanceObserver の resource を ぜんぶ 数えて いて、(1) 解析が 足す 非同期の スクリプト も 数え（同期 31本で 33・線 100%）、
+  // (2) 通信に しっぱいした スクリプト も 数え（成功 30本で 31）、(3) 題字を 消した あとも 数え続けて いた（あとから 読む 60本ほどで 80・81。消した 線を 持ち続ける）。
+  // 直し：document の capture で script の load／error を 聞き、body に 書かれた 同期の スクリプト（async でも defer でも ない・src あり）が load した とき だけ 数える
+  // （error は 数えない。キャッシュ・304 でも load は 来る）。数えるのは BOOT_N まで。題字を 消す とき（DOMContentLoaded）に 聞くのを やめる
   var BOOT_N = 32, got = {}, n = 0, bb = document.createElement('b'), bar = document.createElement('s');
   bb.appendChild(bar); c.appendChild(bb);
-  window.__bootBar = { n: 0, total: BOOT_N, shownAt: null };
-  try {
-    new PerformanceObserver(function (l) {
-      l.getEntries().forEach(function (e) { if (e.initiatorType === 'script' && !got[e.name]) { got[e.name] = 1; n++; } });
-      window.__bootBar.n = n;
-      bar.style.transform = 'scaleX(' + Math.min(1, n / BOOT_N) + ')';
-    }).observe({ type: 'resource', buffered: true });
-  } catch (e) { /* 数えられない ブラウザ：線は 出さない */ bar = null; }
+  window.__bootBar = { n: 0, total: BOOT_N, shownAt: null, err: 0 };
+  function bootSeen(e) {
+    var t = e.target;
+    if (!t || t.tagName !== 'SCRIPT' || !t.src || t.async || t.defer || t.parentNode !== document.body || got[t.src]) return;
+    got[t.src] = 1;
+    if (e.type === 'error') { window.__bootBar.err++; return; }   // 読めなかった：数えない（やりなおしの 知らせは これまでの 流れ）
+    n = Math.min(BOOT_N, n + 1);
+    window.__bootBar.n = n;
+    bar.style.transform = 'scaleX(' + n / BOOT_N + ')';
+  }
+  document.addEventListener('load', bootSeen, true);
+  document.addEventListener('error', bootSeen, true);
   setTimeout(function () { if (bar && !c.classList.contains('off')) { c.classList.add('slow'); window.__bootBar.shownAt = performance.now(); } }, 700);
   document.addEventListener('DOMContentLoaded', function () {
+    if (document.removeEventListener) { document.removeEventListener('load', bootSeen, true); document.removeEventListener('error', bootSeen, true); }   // サイクル218b：題字を 消す ときに 数えるのを やめる
     setTimeout(function () { c.classList.add('off'); setTimeout(function () { c.remove(); }, 350); }, 50);
   });
 })();

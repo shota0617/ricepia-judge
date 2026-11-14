@@ -25,17 +25,29 @@ def node(code):
 
 
 STUB = """
-const timers = [], listeners = {}; let obs = null;
+const timers = [], L = {}; let obs = null;
 const setTimeout = (f, ms) => { timers.push([ms, f]); return timers.length; };
 const mk = tag => { const e = { tag, cls: new Set(), style: {}, attrs: {}, kids: [] }; e.classList = { add: c => e.cls.add(c), contains: c => e.cls.has(c), remove: c => e.cls.delete(c) };
   e.setAttribute = (k, v) => { e.attrs[k] = v; }; e.removeAttribute = k => { delete e.attrs[k]; }; e.remove = () => {}; e.appendChild = k => e.kids.push(k); return e; };
 let cover = null; const made = [];
-const document = { createElement: tag => { const e = mk(tag); made.push(e); if (!cover) cover = e; return e; }, body: { appendChild() {} }, addEventListener: (t, f) => { listeners[t] = f; } };
+const body = { appendChild() {} }, head = {};
+const document = { body, head, createElement: tag => { const e = mk(tag); made.push(e); if (!cover) cover = e; return e; },
+  addEventListener: (t, f, cap) => { (L[t] = L[t] || []).push(f); }, removeEventListener: (t, f) => { L[t] = (L[t] || []).filter(g => g !== f); } };
+const listeners = new Proxy({}, { get: (o, t) => (L[t] || [])[0] });   // listeners['DOMContentLoaded']() など
 const performance = { now: () => 700 };
-class PerformanceObserver { constructor(cb) { obs = this; this.cb = cb; } observe(o) { this.o = o; } }
+class PerformanceObserver { constructor(cb) { obs = this; this.cb = cb; this.dead = false; } observe(o) { this.o = o; } disconnect() { this.dead = true; } }
 const window = {};
-const feed = list => obs && obs.cb({ getEntries: () => list.map(([t, n]) => ({ initiatorType: t, name: n })) });
+// 本当の 読みこみ：resource の 項目は 成功でも しっぱいでも できる。スクリプトの 要素には load か error が 来る（capture で document に とどく）
+const arrive = (src, o = {}) => {
+  const kind = o.kind || 'script', ok = o.ok !== false;
+  if (obs && !obs.dead) obs.cb({ getEntries: () => [{ initiatorType: kind, name: src }] });
+  if (kind !== 'script') return;
+  const t = { tagName: 'SCRIPT', src, async: !!o.async, defer: false, parentNode: o.async ? head : body };
+  for (const f of (L[ok ? 'load' : 'error'] || []).slice()) f({ type: ok ? 'load' : 'error', target: t });
+};
+const feed = list => list.forEach(([t, n]) => arrive(n, { kind: t }));
 const width = () => { const bb = cover && cover.kids.find(k => k.tag === 'b'), s = bb && bb.kids.find(k => k.tag === 's'); return s && s.style.transform ? +s.style.transform.replace(/[^\\d.]/g, '') : 0; };
+const N = () => window.__bootBar && window.__bootBar.n;
 """
 
 
@@ -44,6 +56,28 @@ def run(tail):
 
 
 class BootBar218(unittest.TestCase):
+    def test_async_scripts_not_counted(self):
+        """サイクル218b（指摘 P2）：解析が あとから 足す 非同期の スクリプトは 数えない（同期 31本 届いて 2本 足されても 31・線は 31/32）"""
+        o = run("""for (let k = 0; k < 31; k++) arrive('nishio-go/s' + k + '.js'); arrive('https://www.googletagmanager.com/gtag/js?id=x', { async: true }); arrive('https://tag.flvcdn.net/lytag.js', { async: true });
+console.log(JSON.stringify({ n: N(), w: width(), total: window.__bootBar.total }));""")
+        self.assertEqual(o["n"], 31, "非同期の スクリプトも 数えた: %r" % o)
+        self.assertAlmostEqual(o["w"], 31 / o["total"], places=3)
+
+    def test_failed_scripts_not_counted(self):
+        """サイクル218b（指摘 P2）：通信に しっぱいした スクリプトは 数えない（30本 成功・1本 しっぱい で 30）"""
+        o = run("""for (let k = 0; k < 30; k++) arrive('nishio-go/s' + k + '.js'); arrive('https://unpkg.com/leaflet@1.9.4/dist/leaflet.js', { ok: false });
+console.log(JSON.stringify({ n: N() }));""")
+        self.assertEqual(o["n"], 30, "しっぱいした スクリプトも 数えた: %r" % o)
+
+    def test_stops_after_cover_closes(self):
+        """サイクル218b（指摘 P3）：題字を 閉じる（DOMContentLoaded）と 数えるのを やめる（あとから 読む スクリプトで ふえない）"""
+        o = run("""for (let k = 0; k < 32; k++) arrive('nishio-go/s' + k + '.js'); const n0 = N(); listeners['DOMContentLoaded']();
+for (let k = 0; k < 50; k++) arrive('nishio-go/lazy' + k + '.js');
+console.log(JSON.stringify({ n0, n1: N(), live: (L.load || []).length + (L.error || []).length + (obs && !obs.dead ? 1 : 0) }));""")
+        self.assertEqual(o["n0"], 32)
+        self.assertEqual(o["n1"], 32, "題字を 閉じた あとも 数え続けた: %r" % o)
+        self.assertEqual(o["live"], 0)
+
     def test_bar_grows_with_arrived_scripts(self):
         """届いた スクリプトの 数 だけ のびる（同じ ものは 1回・スクリプト で ない もの（画像・fetch）は 数えない）"""
         o = run("""feed([['script', 'a.js'], ['img', 'x.png'], ['script', 'a.js']]); const w1 = width();

@@ -146,7 +146,7 @@
      下の スクリプトは スタイルシートを 待って から 動くので、題字が 消える（DOMContentLoaded）ときには そろって いる -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" media="print" onload="this.media='all'"/><!-- サイクル206：字の スタイルシートは 待たずに 読む（この 相手の 返事が おそいと、下の スクリプトが その 間 ずっと 始まらなかった。字は 同じ・とどいたら 切りかわる） -->
-<link rel="stylesheet" href="nishio-go/style.css"/>
+<link rel="stylesheet" href="nishio-go/min/style.css"/>
 <script>/* 文字を少なく（ふだん）。せってい の「文字を多めに出す」をオンにすると外す */try{if(localStorage.getItem('nsg_text_more')!=='1')document.body.classList.add('simple')}catch(e){document.body.classList.add('simple')}</script>
 
 <header class="bar">
@@ -558,11 +558,11 @@
 <script src="nishio-go/biglandmark.js"></script>
 <script src="nishio-go/postcard.js"></script>
 <script src="nishio-go/shogo.js"></script>
-<script src="nishio-go/game.js"></script>
+<script src="nishio-go/min/game.js"></script>
 <script src="nishio-go/landmark-gen.js"></script>
 <script src="nishio-go/korostyle.js"></script>
-<script src="nishio-go/pixel.js"></script>
-<script src="nishio-go/meiro.js"></script>
+<script src="nishio-go/min/pixel.js"></script>
+<script src="nishio-go/min/meiro.js"></script>
 <script src="nishio-go/share.js"></script>
 <script>
 /* スタートの1分：転がるのに要らない任意機能（お米つぶの ひとこと・出会い・イベント・ミニゲーム・ムービー・ドット絵帳・Godot 描画）は、load のあとに 1本ずつ順に読む。

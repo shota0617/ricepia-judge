@@ -82,6 +82,14 @@ for (const ent of log) {
   if (!lines.some(x => /^Co-Authored-By:/i.test(x)) || !lines.some(x => /^Claude-Session:/.test(x))) warn.push(`${sha.slice(0, 8)}：Co-Authored-By・Claude-Session の 行が ない（commit.sh を 使う）`);
 }
 
+// にしおさんぽGO の 配る 用の コピー（nishio-go/min/。サイクル215）：push する コミットの 中で、元の 4つ と コピーが あって いるか
+if (has('HEAD', 'tools/strip-nishio.js')) {
+  const { spawnSync } = require('child_process'), path = require('path');
+  const top = git('rev-parse', '--show-toplevel');
+  const r = spawnSync('node', [path.join(top, 'tools/strip-nishio.js'), '--check', '--rev=HEAD', '--quiet'], { cwd: top, encoding: 'utf8' });
+  if (r.status !== 0) bad.push('nishio-go/min の コピーが 元（nishio-go/pixel.js・game.js・meiro.js・style.css）と あって いない：node tools/strip-nishio.js && git add nishio-go/min して コミットする');
+}
+
 for (const b of [...new Set(bad)]) console.log(`✖ ${b}`);
 for (const w of [...new Set(warn)]) console.log(`⚠ ${w}`);
 if (!bad.length && !warn.length) console.log(`ok（${cur}・${log.length} コミット）`);

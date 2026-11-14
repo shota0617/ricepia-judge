@@ -65,7 +65,7 @@ class Static(unittest.TestCase):
 
     def test_html_script_order(self):
         self.assertIn('<script src="nishio-go/rollsync.js"></script>', HTML)
-        self.assertLess(HTML.index('nishio-go/rollsync.js'), HTML.index('nishio-go/pixel.js'))
+        self.assertLess(HTML.index('nishio-go/rollsync.js'), HTML.index('nishio-go/min/pixel.js'))
 
     def test_radius_matches(self):
         self.assertEqual(re.search(r'const RICE_R = ([\d.]+);', PIXEL).group(1), '0.42')

@@ -23,5 +23,9 @@ done <<< "$files"
 if git diff --cached -U0 | grep -E '^\+' | grep -v '^+++' | grep -Eiq 'claude-(opus|sonnet|haiku|fable)-[0-9]'; then
   echo "✗ 差分に モデル名が ある（コミット・PR・コードに 書かない）" >&2; bad=1
 fi
+# 配る 用の コピー（nishio-go/min/。サイクル215）：元の 4つ か コピーを ステージして いたら、ステージした 中身どうしで あって いるか
+if [ -f tools/strip-nishio.js ] && echo "$files" | grep -Eq '^nishio-go/(min/)?(pixel\.js|game\.js|meiro\.js|style\.css)$'; then
+  node tools/strip-nishio.js --check --index --quiet || { echo "✗ nishio-go/min の コピーが 元と あって いない：node tools/strip-nishio.js && git add nishio-go/min" >&2; bad=1; }
+fi
 [ "$bad" = 0 ] && echo "ok：$(echo "$files" | wc -l) ファイル"
 exit $bad

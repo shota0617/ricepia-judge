@@ -34,7 +34,7 @@ def lazy_files():
 
 class Lazy183(unittest.TestCase):
     def test_sync_list_fixed(self):
-        names = [re.sub(r"^nishio-go/|\.js$", "", s) for s in sync_scripts()]
+        names = [re.sub(r"^nishio-go/(?:min/)?|\.js$", "", s) for s in sync_scripts()]
         self.assertTrue(names[0].startswith("https://unpkg.com/leaflet"))
         self.assertEqual(names[1:], SYNC)
         self.assertEqual(len(names), 32)   # leaflet + 31（変更前は 71 = leaflet + 70）
@@ -42,7 +42,7 @@ class Lazy183(unittest.TestCase):
         self.assertGreater(moved, 150_000)   # 変更前の同期合計 2,174,795 バイトから、これだけ起動の道から外れた
 
     def test_moved_not_sync_and_lazy_in_order(self):
-        sync = set(re.sub(r"^nishio-go/|\.js$", "", s) for s in sync_scripts())
+        sync = set(re.sub(r"^nishio-go/(?:min/)?|\.js$", "", s) for s in sync_scripts())
         for m in LAZY_MOVED:
             self.assertNotIn(m, sync, m)
             self.assertTrue((ROOT / "nishio-go" / (m + ".js")).exists(), m)
@@ -54,7 +54,7 @@ class Lazy183(unittest.TestCase):
             self.assertIn(s, HTML)
 
     def test_core_still_sync(self):
-        names = [re.sub(r"^nishio-go/|\.js$", "", s) for s in sync_scripts()]
+        names = [re.sub(r"^nishio-go/(?:min/)?|\.js$", "", s) for s in sync_scripts()]
         for c in CORE:
             self.assertTrue(any(n == c or n.startswith("https://unpkg.com/" + c) for n in names), c)
 

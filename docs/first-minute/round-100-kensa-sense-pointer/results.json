@@ -1,0 +1,1801 @@
+{
+  "round": 100,
+  "status": "final report for draft PR; required verification blocked or failing",
+  "asOfUTC": "2026-11-14T06:44:24.975301+00:00",
+  "scope": "moving sense pointer ownership only",
+  "humanRetentionMeasured": false,
+  "source": {
+    "beforeHead": "4568c8792f4c804cf354f6f63a12ef568e2b6748",
+    "beforeHTMLSHA256": "d2c682b1f2d8686beab48f6775a529da0e4412f67224ef1999bda19c441776ce",
+    "candidateHead": "0db33b79106e220f49b06dd9099784d43a9029b8",
+    "candidateHashes": {
+      "AGENTS.md": "81c9231e00cec58b8eaf06ab06ea96bd26ce8bd04151c1f7c1017f1dfa4dcbeb",
+      ".claude/skills/ricepia-flow/SKILL.md": "56d075153f561430fee926907a5c97083d9f643e6dd2d3a2f4c5736324a697f0",
+      "kensa.html": "7b299b5128276e52402e8deb10458e7beb25f1dfd7e6e0a86d81efe37743f6bf",
+      "tests/test_kensa.py": "81e746c7110c625ebfd1c91549e6fd09c7e02728d432918885ce61eceeef7e38",
+      "kensa/face_dot.webp": "17f217304fd283455dd6597414fd04455d45d8d90c162dc3ef94068eae8b4325",
+      "kensa/kokusashi.webp": "d68d35dae2ad2bd371c8382b951abffae8acaa9fa55ca72b72fb1fa0c4929faf",
+      "kensa/ittomai.webp": "f04ecab32dfb5b4e8b20207341c790f58ae4b22eba4d744cbac4227a42faaa92",
+      "kome365/engine.js": "c3d0cef6bb108d5b6d8fe38aaf0c08fe7994bdab08bf92775865a6e0222469a3",
+      "kome365/field3d.js": "a5c1dad91d5c0c326f1394fad9c5d04e7e3b8d13e3a2b8b1757c7aa08d3558ff",
+      "kome365/cards.js": "b15c5b2f56ef9c0c8361fa2fa6a039085919ca516b4a2e6e5a1b3bb691dde744",
+      "tests/test_kensa_sense_drag_owner.py": "a9b926c96546ef70a4b872c77e8e6f6e6b12aa2ef6a5dadb9d3cdb16aae43f30"
+    },
+    "docsCommit": null,
+    "docsCommitHeadNotClaimedAsTested": true
+  },
+  "primary": {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "cpuRate": 1,
+    "counts": {
+      "actions": 35,
+      "withRecordedResponse": 35,
+      "withoutRecordedResponse": 0,
+      "full650msResponseWindowAvailable": 35,
+      "deadlineTruncatedResponseWindows": 0,
+      "commands": 490,
+      "acks": 490,
+      "commandTypes": {
+        "touchStart": 35,
+        "touchMove": 420,
+        "touchEnd": 35
+      },
+      "events": 501,
+      "trustedEvents": 501,
+      "eventTypes": {
+        "pointerdown": 36,
+        "pointermove": 429,
+        "pointerup": 36
+      },
+      "traceSamples": 602,
+      "traceSamplesWithin60Seconds": 599,
+      "excludedAfter60Seconds": 3,
+      "pressGuideTaps": 10,
+      "grainRemovalTaps": 9,
+      "zoomOnlyTaps": 1,
+      "zoomOnlyActionIndices": [
+        30
+      ]
+    },
+    "firstResponse": {
+      "touchStartSeconds": 0.01,
+      "hintTraceSeconds": 0.171,
+      "hintTraceFromTouchSeconds": 0.161,
+      "postGestureUpperBoundSeconds": 0.419,
+      "postGestureFromTouchSeconds": 0.409
+    },
+    "firstPositiveResult": {
+      "text": "ちょうどいい",
+      "hintTraceSeconds": 3.4048,
+      "visiblePostGestureUpperBoundSeconds": 3.551,
+      "note": "Positive result text, not measured subjective reward or retention."
+    },
+    "firstCleanResult": {
+      "visiblePostGestureUpperBoundSeconds": 8.428,
+      "hintTraceSeconds": 8.5049
+    },
+    "completedBags": [
+      {
+        "bag": 1,
+        "action": 10,
+        "visibleNextButtonSnapshotBracketSeconds": [
+          15.536,
+          15.539
+        ],
+        "nextBagHeaderTraceSeconds": 16.5237
+      },
+      {
+        "bag": 2,
+        "action": 23,
+        "visibleNextButtonSnapshotBracketSeconds": [
+          37.099,
+          37.102
+        ],
+        "nextBagHeaderTraceSeconds": 38.1048
+      }
+    ],
+    "responseFromTouchStartSeconds": {
+      "min": 0.054,
+      "median": 0.419,
+      "max": 1.522
+    },
+    "responseFromTouchEndSentSeconds": {
+      "min": 0.006,
+      "median": 0.016,
+      "max": 0.125
+    },
+    "errors": {
+      "consoleAndPage": 0,
+      "driver": 0,
+      "forbiddenLateInputs": 0
+    }
+  },
+  "before": {
+    "executed": 12,
+    "eligible": 12,
+    "treatmentCount": 10,
+    "treatmentReproduced": 10,
+    "controlsCount": 2,
+    "controlsReproduced": 0,
+    "actualOuterExit": 0,
+    "groups": {
+      "control-fast": {
+        "executed": 1,
+        "eligible": 1,
+        "jump": 0,
+        "unestablished": 0,
+        "segmentActualMs": {
+          "min": 84.36072400212288,
+          "median": 100.90588450431824,
+          "max": 117.4510450065136
+        },
+        "deliveredP1MoveCounts": [
+          8
+        ]
+      },
+      "control-slow": {
+        "executed": 1,
+        "eligible": 1,
+        "jump": 0,
+        "unestablished": 0,
+        "segmentActualMs": {
+          "min": 813.9722930192947,
+          "median": 816.2554145157337,
+          "max": 818.5385360121727
+        },
+        "deliveredP1MoveCounts": [
+          8
+        ]
+      },
+      "treatment-fast": {
+        "executed": 5,
+        "eligible": 5,
+        "jump": 5,
+        "unestablished": 0,
+        "segmentActualMs": {
+          "min": 66.85918599367142,
+          "median": 100.17768500745296,
+          "max": 115.32999101281166
+        },
+        "deliveredP1MoveCounts": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      },
+      "treatment-slow": {
+        "executed": 5,
+        "eligible": 5,
+        "jump": 5,
+        "unestablished": 0,
+        "segmentActualMs": {
+          "min": 732.5796220004559,
+          "median": 767.0349345058203,
+          "max": 835.0476570129395
+        },
+        "deliveredP1MoveCounts": [
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      }
+    },
+    "rows": [
+      {
+        "name": "control-fast",
+        "condition": "control",
+        "speed": "fast",
+        "requestedSegmentWaitMs": 40,
+        "actualChildExit": 0,
+        "eligible": true,
+        "observationPhotoRequestMs": 10000,
+        "observationPhotoCompletedMs": 10091,
+        "firstInputAfterObservationStartMs": 10100.0,
+        "jump": false,
+        "beforeP2Delta": {
+          "x": -24.0,
+          "y": -24.0
+        },
+        "afterP2Delta": {
+          "x": -24.0,
+          "y": -24.0
+        },
+        "heldFinalDelta": {
+          "x": -48.0,
+          "y": -48.0
+        },
+        "residual": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "P1DeliveredMoves": 8,
+        "P2MaximumMovementCSSPx": 0,
+        "segmentActualMs": [
+          117.4510450065136,
+          84.36072400212288
+        ],
+        "deliveryWaitMs": {
+          "first P1 endpoint": 17.00678899884224,
+          "continuation P1 endpoint": 15.679531008005142
+        },
+        "measurementPlaySeconds": 10.065
+      },
+      {
+        "name": "control-slow",
+        "condition": "control",
+        "speed": "slow",
+        "requestedSegmentWaitMs": 700,
+        "actualChildExit": 0,
+        "eligible": true,
+        "observationPhotoRequestMs": 10000,
+        "observationPhotoCompletedMs": 10094,
+        "firstInputAfterObservationStartMs": 10105.0,
+        "jump": false,
+        "beforeP2Delta": {
+          "x": -24.0,
+          "y": -24.0
+        },
+        "afterP2Delta": {
+          "x": -24.0,
+          "y": -24.0
+        },
+        "heldFinalDelta": {
+          "x": -48.0,
+          "y": -48.0
+        },
+        "residual": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "P1DeliveredMoves": 8,
+        "P2MaximumMovementCSSPx": 0,
+        "segmentActualMs": [
+          818.5385360121727,
+          813.9722930192947
+        ],
+        "deliveryWaitMs": {
+          "first P1 endpoint": 17.071227997541428,
+          "continuation P1 endpoint": 15.280896008014679
+        },
+        "measurementPlaySeconds": 11.617
+      },
+      {
+        "name": "treatment-fast-1",
+        "condition": "treatment",
+        "speed": "fast",
+        "requestedSegmentWaitMs": 40,
+        "actualChildExit": 0,
+        "eligible": true,
+        "observationPhotoRequestMs": 10001,
+        "observationPhotoCompletedMs": 10097,
+        "firstInputAfterObservationStartMs": 10109.0,
+        "jump": true,
+        "beforeP2Delta": {
+          "x": -24.0,
+          "y": -24.0
+        },
+        "afterP2Delta": {
+          "x": -24.0,
+          "y": -24.0
+        },
+        "heldFinalDelta": {
+          "x": 6.0,
+          "y": 6.0
+        },
+        "residual": {
+          "x": 54.0,
+          "y": 54.0
+        },
+        "P1DeliveredMoves": 8,
+        "P2MaximumMovementCSSPx": 0.0,
+        "segmentActualMs": [
+          114.52393499016762,
+          80.36974200606346
+        ],
+        "deliveryWaitMs": {
+          "first P1 endpoint": 15.572074979543686,
+          "P2 stationary down": 4.240262001752853,
+          "continuation P1 endpoint": 17.18895798921585
+        },
+        "measurementPlaySeconds": 10.05
+      },
+      {
+        "name": "treatment-slow-1",
+        "condition": "treatment",
+        "speed": "slow",
+        "requestedSegmentWaitMs": 700,
+        "actualChildExit": 0,
+        "eligible": true,
+        "observationPhotoRequestMs": 10001,
+        "observationPhotoCompletedMs": 10081,
+        "firstInputAfterObservationStartMs": 10093.0,
+        "jump": true,
+        "beforeP2Delta": {
+          "x": -24.0,
+          "y": -24.0
+        },
+        "afterP2Delta": {
+          "x": -24.0,
+          "y": -24.0
+        },
+        "heldFinalDelta": {
+          "x": 6.0,
+          "y": 6.0
+        },
+        "residual": {
+          "x": 54.0,
+          "y": 54.0
+        },
+        "P1DeliveredMoves": 8,
+        "P2MaximumMovementCSSPx": 0.0,
+        "segmentActualMs": [
+          781.3526859879494,
+          743.1096419990063
+        ],
+        "deliveryWaitMs": {
+          "first P1 endpoint": 15.930261999368668,
+          "P2 stationary down": 2.732182025909424,
+          "continuation P1 endpoint": 16.242048025131226
+        },
+        "measurementPlaySeconds": 11.378
+      },
+      {
+        "name": "treatment-fast-2",
+        "condition": "treatment",
+        "speed": "fast",
+        "requestedSegmentWaitMs": 40,
+        "actualChildExit": 0,
+        "eligible": true,
+        "observationPhotoRequestMs": 9999,
+        "observationPhotoCompletedMs": 10086,
+        "firstInputAfterObservationStartMs": 10106.0,
+        "jump": true,
+        "beforeP2Delta": {
+          "x": -24.0,
+          "y": -24.0
+        },
+        "afterP2Delta": {
+          "x": -24.0,
+          "y": -24.0
+        },
+        "heldFinalDelta": {
+          "x": 6.0,
+          "y": 6.0
+        },
+        "residual": {
+          "x": 54.0,
+          "y": 54.0
+        },
+        "P1DeliveredMoves": 8,
+        "P2MaximumMovementCSSPx": 0.0,
+        "segmentActualMs": [
+          100.40851801633835,
+          99.05562499165535
+        ],
+        "deliveryWaitMs": {
+          "first P1 endpoint": 15.224380999803543,
+          "P2 stationary down": 3.117204010486603,
+          "continuation P1 endpoint": 16.575991988182068
+        },
+        "measurementPlaySeconds": 10.202
+      },
+      {
+        "name": "treatment-slow-2",
+        "condition": "treatment",
+        "speed": "slow",
+        "requestedSegmentWaitMs": 700,
+        "actualChildExit": 0,
+        "eligible": true,
+        "observationPhotoRequestMs": 9999,
+        "observationPhotoCompletedMs": 10087,
+        "firstInputAfterObservationStartMs": 10098.0,
+        "jump": true,
+        "beforeP2Delta": {
+          "x": -24.0,
+          "y": -24.0
+        },
+        "afterP2Delta": {
+          "x": -24.0,
+          "y": -24.0
+        },
+        "heldFinalDelta": {
+          "x": 6.0,
+          "y": 6.0
+        },
+        "residual": {
+          "x": 54.0,
+          "y": 54.0
+        },
+        "P1DeliveredMoves": 8,
+        "P2MaximumMovementCSSPx": 0.0,
+        "segmentActualMs": [
+          835.0476570129395,
+          797.3055189847946
+        ],
+        "deliveryWaitMs": {
+          "first P1 endpoint": 15.494759976863861,
+          "P2 stationary down": 2.391414999961853,
+          "continuation P1 endpoint": 26.905086994171143
+        },
+        "measurementPlaySeconds": 11.73
+      },
+      {
+        "name": "treatment-fast-3",
+        "condition": "treatment",
+        "speed": "fast",
+        "requestedSegmentWaitMs": 40,
+        "actualChildExit": 0,
+        "eligible": true,
+        "observationPhotoRequestMs": 10000,
+        "observationPhotoCompletedMs": 10103,
+        "firstInputAfterObservationStartMs": 10118.0,
+        "jump": true,
+        "beforeP2Delta": {
+          "x": -24.0,
+          "y": -24.0
+        },
+        "afterP2Delta": {
+          "x": -24.0,
+          "y": -24.0
+        },
+        "heldFinalDelta": {
+          "x": 6.0,
+          "y": 6.0
+        },
+        "residual": {
+          "x": 54.0,
+          "y": 54.0
+        },
+        "P1DeliveredMoves": 8,
+        "P2MaximumMovementCSSPx": 0.0,
+        "segmentActualMs": [
+          99.94685199856758,
+          111.84517499804497
+        ],
+        "deliveryWaitMs": {
+          "first P1 endpoint": 15.389757007360458,
+          "P2 stationary down": 4.891007989645004,
+          "continuation P1 endpoint": 15.887836009263992
+        },
+        "measurementPlaySeconds": 10.245
+      },
+      {
+        "name": "treatment-slow-3",
+        "condition": "treatment",
+        "speed": "slow",
+        "requestedSegmentWaitMs": 700,
+        "actualChildExit": 0,
+        "eligible": true,
+        "observationPhotoRequestMs": 10000,
+        "observationPhotoCompletedMs": 10108,
+        "firstInputAfterObservationStartMs": 10120.0,
+        "jump": true,
+        "beforeP2Delta": {
+          "x": -24.0,
+          "y": -24.0
+        },
+        "afterP2Delta": {
+          "x": -24.0,
+          "y": -24.0
+        },
+        "heldFinalDelta": {
+          "x": 6.0,
+          "y": 6.0
+        },
+        "residual": {
+          "x": 54.0,
+          "y": 54.0
+        },
+        "P1DeliveredMoves": 8,
+        "P2MaximumMovementCSSPx": 0.0,
+        "segmentActualMs": [
+          766.7510749995708,
+          744.9582849740982
+        ],
+        "deliveryWaitMs": {
+          "first P1 endpoint": 15.665174007415771,
+          "P2 stationary down": 2.460411012172699,
+          "continuation P1 endpoint": 15.847178995609283
+        },
+        "measurementPlaySeconds": 11.394
+      },
+      {
+        "name": "treatment-fast-4",
+        "condition": "treatment",
+        "speed": "fast",
+        "requestedSegmentWaitMs": 40,
+        "actualChildExit": 0,
+        "eligible": true,
+        "observationPhotoRequestMs": 10001,
+        "observationPhotoCompletedMs": 10103,
+        "firstInputAfterObservationStartMs": 10114.0,
+        "jump": true,
+        "beforeP2Delta": {
+          "x": -24.0,
+          "y": -24.0
+        },
+        "afterP2Delta": {
+          "x": -24.0,
+          "y": -24.0
+        },
+        "heldFinalDelta": {
+          "x": 6.0,
+          "y": 6.0
+        },
+        "residual": {
+          "x": 54.0,
+          "y": 54.0
+        },
+        "P1DeliveredMoves": 8,
+        "P2MaximumMovementCSSPx": 0.0,
+        "segmentActualMs": [
+          112.57756999135017,
+          66.85918599367142
+        ],
+        "deliveryWaitMs": {
+          "first P1 endpoint": 16.228943020105362,
+          "P2 stationary down": 3.771714001893997,
+          "continuation P1 endpoint": 16.1367349922657
+        },
+        "measurementPlaySeconds": 10.035
+      },
+      {
+        "name": "treatment-slow-4",
+        "condition": "treatment",
+        "speed": "slow",
+        "requestedSegmentWaitMs": 700,
+        "actualChildExit": 0,
+        "eligible": true,
+        "observationPhotoRequestMs": 10000,
+        "observationPhotoCompletedMs": 10109,
+        "firstInputAfterObservationStartMs": 10122.0,
+        "jump": true,
+        "beforeP2Delta": {
+          "x": -24.0,
+          "y": -24.0
+        },
+        "afterP2Delta": {
+          "x": -24.0,
+          "y": -24.0
+        },
+        "heldFinalDelta": {
+          "x": 6.0,
+          "y": 6.0
+        },
+        "residual": {
+          "x": 54.0,
+          "y": 54.0
+        },
+        "P1DeliveredMoves": 8,
+        "P2MaximumMovementCSSPx": 0.0,
+        "segmentActualMs": [
+          782.3274660110474,
+          733.3427999913692
+        ],
+        "deliveryWaitMs": {
+          "first P1 endpoint": 14.773129016160965,
+          "P2 stationary down": 2.5163410007953644,
+          "continuation P1 endpoint": 17.703025996685028
+        },
+        "measurementPlaySeconds": 11.359
+      },
+      {
+        "name": "treatment-fast-5",
+        "condition": "treatment",
+        "speed": "fast",
+        "requestedSegmentWaitMs": 40,
+        "actualChildExit": 0,
+        "eligible": true,
+        "observationPhotoRequestMs": 10000,
+        "observationPhotoCompletedMs": 10088,
+        "firstInputAfterObservationStartMs": 10099.0,
+        "jump": true,
+        "beforeP2Delta": {
+          "x": -24.0,
+          "y": -24.0
+        },
+        "afterP2Delta": {
+          "x": -24.0,
+          "y": -24.0
+        },
+        "heldFinalDelta": {
+          "x": 6.0,
+          "y": 6.0
+        },
+        "residual": {
+          "x": 54.0,
+          "y": 54.0
+        },
+        "P1DeliveredMoves": 8,
+        "P2MaximumMovementCSSPx": 0.0,
+        "segmentActualMs": [
+          115.32999101281166,
+          67.463613986969
+        ],
+        "deliveryWaitMs": {
+          "first P1 endpoint": 16.028414011001587,
+          "P2 stationary down": 2.4210879802703857,
+          "continuation P1 endpoint": 16.19404900074005
+        },
+        "measurementPlaySeconds": 10.039
+      },
+      {
+        "name": "treatment-slow-5",
+        "condition": "treatment",
+        "speed": "slow",
+        "requestedSegmentWaitMs": 700,
+        "actualChildExit": 0,
+        "eligible": true,
+        "observationPhotoRequestMs": 9999,
+        "observationPhotoCompletedMs": 10099,
+        "firstInputAfterObservationStartMs": 10114.0,
+        "jump": true,
+        "beforeP2Delta": {
+          "x": -24.0,
+          "y": -24.0
+        },
+        "afterP2Delta": {
+          "x": -24.0,
+          "y": -24.0
+        },
+        "heldFinalDelta": {
+          "x": 6.0,
+          "y": 6.0
+        },
+        "residual": {
+          "x": 54.0,
+          "y": 54.0
+        },
+        "P1DeliveredMoves": 8,
+        "P2MaximumMovementCSSPx": 0.0,
+        "segmentActualMs": [
+          767.3187940120697,
+          732.5796220004559
+        ],
+        "deliveryWaitMs": {
+          "first P1 endpoint": 16.205969005823135,
+          "P2 stationary down": 18.484236001968384,
+          "continuation P1 endpoint": 16.564167976379395
+        },
+        "measurementPlaySeconds": 11.397
+      }
+    ],
+    "audit": {
+      "checksPassed": 841,
+      "checksTotal": 844,
+      "findings": [
+        {
+          "priority": "P3",
+          "scope": "photo request timestamp reporting only",
+          "description": "Three observation-photo requests are recorded at9999ms. Their capture brackets cross10000ms and every first input occurs after10000ms. Preserve these exact values; do not claim all photo requests were at least10000ms. This does not alter fixed symptom eligibility or count as a product failure."
+        }
+      ]
+    },
+    "earlierPilotsExcluded": {
+      "v1Control": {
+        "executed": 1,
+        "eligible": 0,
+        "actualExit": 2
+      },
+      "v1Treatment": {
+        "executed": 0
+      },
+      "v2Pilot": {
+        "control": 1,
+        "treatment": 1,
+        "includedHere": false
+      }
+    }
+  },
+  "after": {
+    "status": "completed; independent comparison audit saved",
+    "executed": 12,
+    "eligible": 12,
+    "treatmentCount": 10,
+    "treatmentReproduced": 0,
+    "controlsCount": 2,
+    "controlsReproduced": 0,
+    "actualOuterExit": 0,
+    "actualChildExits": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "rows": [
+      {
+        "name": "control-fast",
+        "condition": "control",
+        "speed": "fast",
+        "eligible": true,
+        "jump": false,
+        "residual": {
+          "x": 0,
+          "y": 0
+        },
+        "requestedSegmentWaitMs": 40,
+        "actualSegmentElapsedMs": [
+          98.80410698056221,
+          78.86202800273895
+        ]
+      },
+      {
+        "name": "control-slow",
+        "condition": "control",
+        "speed": "slow",
+        "eligible": true,
+        "jump": false,
+        "residual": {
+          "x": 0,
+          "y": 0
+        },
+        "requestedSegmentWaitMs": 700,
+        "actualSegmentElapsedMs": [
+          783.8507900238037,
+          744.693256020546
+        ]
+      },
+      {
+        "name": "treatment-fast-1",
+        "condition": "treatment",
+        "speed": "fast",
+        "eligible": true,
+        "jump": false,
+        "residual": {
+          "x": 0,
+          "y": 0
+        },
+        "requestedSegmentWaitMs": 40,
+        "actualSegmentElapsedMs": [
+          100.73174801468849,
+          66.64135399460793
+        ]
+      },
+      {
+        "name": "treatment-slow-1",
+        "condition": "treatment",
+        "speed": "slow",
+        "eligible": true,
+        "jump": false,
+        "residual": {
+          "x": 0,
+          "y": 0
+        },
+        "requestedSegmentWaitMs": 700,
+        "actualSegmentElapsedMs": [
+          818.0796909928322,
+          730.993951022625
+        ]
+      },
+      {
+        "name": "treatment-fast-2",
+        "condition": "treatment",
+        "speed": "fast",
+        "eligible": true,
+        "jump": false,
+        "residual": {
+          "x": 0,
+          "y": 0
+        },
+        "requestedSegmentWaitMs": 40,
+        "actualSegmentElapsedMs": [
+          119.75479501485825,
+          95.64617800712585
+        ]
+      },
+      {
+        "name": "treatment-slow-2",
+        "condition": "treatment",
+        "speed": "slow",
+        "eligible": true,
+        "jump": false,
+        "residual": {
+          "x": 0,
+          "y": 0
+        },
+        "requestedSegmentWaitMs": 700,
+        "actualSegmentElapsedMs": [
+          767.8087400197983,
+          731.9780019819736
+        ]
+      },
+      {
+        "name": "treatment-fast-3",
+        "condition": "treatment",
+        "speed": "fast",
+        "eligible": true,
+        "jump": false,
+        "residual": {
+          "x": 0,
+          "y": 0
+        },
+        "requestedSegmentWaitMs": 40,
+        "actualSegmentElapsedMs": [
+          301.1125269830227,
+          132.16634100675583
+        ]
+      },
+      {
+        "name": "treatment-slow-3",
+        "condition": "treatment",
+        "speed": "slow",
+        "eligible": true,
+        "jump": false,
+        "residual": {
+          "x": 0,
+          "y": 0
+        },
+        "requestedSegmentWaitMs": 700,
+        "actualSegmentElapsedMs": [
+          852.8240499794483,
+          930.0995829999447
+        ]
+      },
+      {
+        "name": "treatment-fast-4",
+        "condition": "treatment",
+        "speed": "fast",
+        "eligible": true,
+        "jump": false,
+        "residual": {
+          "x": 0,
+          "y": 0
+        },
+        "requestedSegmentWaitMs": 40,
+        "actualSegmentElapsedMs": [
+          101.69882398843765,
+          66.81181299686432
+        ]
+      },
+      {
+        "name": "treatment-slow-4",
+        "condition": "treatment",
+        "speed": "slow",
+        "eligible": true,
+        "jump": false,
+        "residual": {
+          "x": 0,
+          "y": 0
+        },
+        "requestedSegmentWaitMs": 700,
+        "actualSegmentElapsedMs": [
+          765.7748819887638,
+          734.8729189932346
+        ]
+      },
+      {
+        "name": "treatment-fast-5",
+        "condition": "treatment",
+        "speed": "fast",
+        "eligible": true,
+        "jump": false,
+        "residual": {
+          "x": 0,
+          "y": 0
+        },
+        "requestedSegmentWaitMs": 40,
+        "actualSegmentElapsedMs": [
+          101.61741599440575,
+          66.96734499931335
+        ]
+      },
+      {
+        "name": "treatment-slow-5",
+        "condition": "treatment",
+        "speed": "slow",
+        "eligible": true,
+        "jump": false,
+        "residual": {
+          "x": 0,
+          "y": 0
+        },
+        "requestedSegmentWaitMs": 700,
+        "actualSegmentElapsedMs": [
+          785.431028008461,
+          746.9372360110283
+        ]
+      }
+    ],
+    "sourceUnchanged": true,
+    "allBrowsersClosed": true,
+    "allCPUReset": true,
+    "allReleased": true,
+    "observationPhotoRequestBoundaryNote": {
+      "requestedAt9999ms": [
+        "treatment-fast-3"
+      ],
+      "allCaptureCompletionsAndFirstInputsAtOrAfter10000ms": true,
+      "denominatorsUnchanged": true,
+      "source": "sense-reproduction-after-audit/summary.json"
+    },
+    "independentAuditSummary": {
+      "round": 100,
+      "phase": "after fixed12",
+      "auditedAtUTC": "2026-11-14T06:29:51.536649+00:00",
+      "checksPassed": 1083,
+      "checksTotal": 1084,
+      "findings": [
+        {
+          "priority": "P3",
+          "scope": "photo request reporting boundary",
+          "cases": [
+            {
+              "name": "treatment-fast-3",
+              "requestMs": 9999,
+              "completedMs": 10106,
+              "firstInputMs": 10116.0
+            }
+          ],
+          "description": "Observation-photo request timestamp is before10000ms; retain exact bracket separately from no-input duration and symptom eligibility."
+        }
+      ],
+      "actualOuterExit": 0,
+      "startedAtUTC": "2026-11-14T06:21:49.805096+00:00",
+      "completedAtUTC": "2026-11-14T06:26:19.552590+00:00",
+      "groups": {
+        "control-fast": {
+          "executed": 1,
+          "eligible": 1,
+          "jump": 0,
+          "unestablished": 0,
+          "segmentActualMs": {
+            "min": 78.86202800273895,
+            "median": 88.83306749165058,
+            "max": 98.80410698056221
+          },
+          "deliveredP1MoveCounts": [
+            8
+          ]
+        },
+        "control-slow": {
+          "executed": 1,
+          "eligible": 1,
+          "jump": 0,
+          "unestablished": 0,
+          "segmentActualMs": {
+            "min": 744.693256020546,
+            "median": 764.2720230221748,
+            "max": 783.8507900238037
+          },
+          "deliveredP1MoveCounts": [
+            8
+          ]
+        },
+        "treatment-fast": {
+          "executed": 5,
+          "eligible": 5,
+          "jump": 0,
+          "unestablished": 0,
+          "segmentActualMs": {
+            "min": 66.64135399460793,
+            "median": 101.17458200454712,
+            "max": 301.1125269830227
+          },
+          "deliveredP1MoveCounts": [
+            8,
+            8,
+            8,
+            8,
+            8
+          ]
+        },
+        "treatment-slow": {
+          "executed": 5,
+          "eligible": 5,
+          "jump": 0,
+          "unestablished": 0,
+          "segmentActualMs": {
+            "min": 730.993951022625,
+            "median": 766.791811004281,
+            "max": 930.0995829999447
+          },
+          "deliveredP1MoveCounts": [
+            8,
+            8,
+            8,
+            8,
+            8
+          ]
+        }
+      },
+      "originalPhotosPersonallyViewed": 60,
+      "originalFilesUnchanged": 207,
+      "excluded": {
+        "v1Control": {
+          "executed": 1,
+          "eligible": 0,
+          "actualExit": 2
+        },
+        "v1Treatment": {
+          "executed": 0
+        },
+        "v2Pilot": {
+          "control": 1,
+          "treatment": 1,
+          "includedHere": false
+        }
+      },
+      "conclusion": "The held-token jump occurred in0/10 eligible after treatment trials,0/5 at each requested speed; controls0/2. All after residuals0,0 and final displacements-48,-48 are independently supported by originals.",
+      "limits": [
+        "Requested40/700ms are wait budgets, not actual gesture duration or device latency.",
+        "Real DOM move count is not fixed; endpoint delivery and target ownership are verified even if events coalesce.",
+        "This is a scripted browser reproduction, not real fingers or a measured player-retention effect.",
+        "Source identity is the saved before/after proof for this batch. Later root-authorized candidate edits must not invalidate historical observations; no current source bytes are used as a post-batch success gate here.",
+        "Photos bracket stable held positions, not exact visual onset or continuous-motion trace.",
+        "No browser, HTTP, game, tests or Git mutations by reviewer; only saved evidence processing and original-image viewing."
+      ],
+      "comparison": {
+        "control-fast": {
+          "before": {
+            "executed": 1,
+            "eligible": 1,
+            "jump": 0,
+            "unestablished": 0,
+            "segmentActualMs": {
+              "min": 84.36072400212288,
+              "median": 100.90588450431824,
+              "max": 117.4510450065136
+            },
+            "deliveredP1MoveCounts": [
+              8
+            ]
+          },
+          "after": {
+            "executed": 1,
+            "eligible": 1,
+            "jump": 0,
+            "unestablished": 0,
+            "segmentActualMs": {
+              "min": 78.86202800273895,
+              "median": 88.83306749165058,
+              "max": 98.80410698056221
+            },
+            "deliveredP1MoveCounts": [
+              8
+            ]
+          }
+        },
+        "control-slow": {
+          "before": {
+            "executed": 1,
+            "eligible": 1,
+            "jump": 0,
+            "unestablished": 0,
+            "segmentActualMs": {
+              "min": 813.9722930192947,
+              "median": 816.2554145157337,
+              "max": 818.5385360121727
+            },
+            "deliveredP1MoveCounts": [
+              8
+            ]
+          },
+          "after": {
+            "executed": 1,
+            "eligible": 1,
+            "jump": 0,
+            "unestablished": 0,
+            "segmentActualMs": {
+              "min": 744.693256020546,
+              "median": 764.2720230221748,
+              "max": 783.8507900238037
+            },
+            "deliveredP1MoveCounts": [
+              8
+            ]
+          }
+        },
+        "treatment-fast": {
+          "before": {
+            "executed": 5,
+            "eligible": 5,
+            "jump": 5,
+            "unestablished": 0,
+            "segmentActualMs": {
+              "min": 66.85918599367142,
+              "median": 100.17768500745296,
+              "max": 115.32999101281166
+            },
+            "deliveredP1MoveCounts": [
+              8,
+              8,
+              8,
+              8,
+              8
+            ]
+          },
+          "after": {
+            "executed": 5,
+            "eligible": 5,
+            "jump": 0,
+            "unestablished": 0,
+            "segmentActualMs": {
+              "min": 66.64135399460793,
+              "median": 101.17458200454712,
+              "max": 301.1125269830227
+            },
+            "deliveredP1MoveCounts": [
+              8,
+              8,
+              8,
+              8,
+              8
+            ]
+          }
+        },
+        "treatment-slow": {
+          "before": {
+            "executed": 5,
+            "eligible": 5,
+            "jump": 5,
+            "unestablished": 0,
+            "segmentActualMs": {
+              "min": 732.5796220004559,
+              "median": 767.0349345058203,
+              "max": 835.0476570129395
+            },
+            "deliveredP1MoveCounts": [
+              8,
+              8,
+              8,
+              8,
+              8
+            ]
+          },
+          "after": {
+            "executed": 5,
+            "eligible": 5,
+            "jump": 0,
+            "unestablished": 0,
+            "segmentActualMs": {
+              "min": 730.993951022625,
+              "median": 766.791811004281,
+              "max": 930.0995829999447
+            },
+            "deliveredP1MoveCounts": [
+              8,
+              8,
+              8,
+              8,
+              8
+            ]
+          }
+        }
+      },
+      "beforeIndependentAuditFreezeSHA256": "5d37f6be66ea3ce1660119a0d86ba12c0cf058e6542e1f07a932c27920633f54",
+      "beforePhotoRequestBoundaryNotes": [
+        {
+          "priority": "P3",
+          "scope": "photo request timestamp reporting only",
+          "description": "Three observation-photo requests are recorded at9999ms. Their capture brackets cross10000ms and every first input occurs after10000ms. Preserve these exact values; do not claim all photo requests were at least10000ms. This does not alter fixed symptom eligibility or count as a product failure."
+        }
+      ],
+      "combinedOriginalPhotosPersonallyViewed": 120
+    }
+  },
+  "protocol": {
+    "viewport": [
+      390,
+      844
+    ],
+    "cpuRate": 1,
+    "freshProcessAndContext": true,
+    "firstNaturalUntransportedNiou": true,
+    "internalGameStateInjection": false,
+    "p1Deltas": [
+      [
+        -24,
+        -24
+      ],
+      [
+        -24,
+        -24
+      ]
+    ],
+    "p2OffsetFromMovedTokenCenter": [
+      -30,
+      -30
+    ],
+    "p2Motion": [
+      0,
+      0
+    ],
+    "stepsPerSegment": 4,
+    "requestedWaitMsPerSegment": {
+      "fast": 40,
+      "slow": 700
+    },
+    "expectedFinalDelta": [
+      -48,
+      -48
+    ],
+    "residualThresholdCSSPx": 8,
+    "heldMeasurementBeforeAllContactRelease": true,
+    "noRetry": true,
+    "deliveryGate": "trusted input observer endpoints only; no token outcome wait",
+    "noDriftThresholdCSSPx": 0.5,
+    "actualDeliveredMoveCountNotFixed": true,
+    "durationOutliersExcluded": false
+  },
+  "tests": {
+    "red": {
+      "startedAtUTC": "2026-11-14T06:07:13.814807+00:00",
+      "command": [
+        "python3",
+        "/workspace/scratch/first-minute/round-100/sense-test-draft/test_kensa_sense_drag_owner.py"
+      ],
+      "htmlInput": "/workspace/ricepia-firstminute-round100/kensa.html",
+      "testSHA256": "a9b926c96546ef70a4b872c77e8e6f6e6b12aa2ef6a5dadb9d3cdb16aae43f30",
+      "sourceBeforeSHA256": "d2c682b1f2d8686beab48f6775a529da0e4412f67224ef1999bda19c441776ce",
+      "actualChildExit": 1,
+      "completedAtUTC": "2026-11-14T06:07:14.210389+00:00",
+      "wallSeconds": 0.3951453840127215,
+      "counts": {
+        "PASS": 32,
+        "BEHAVIOR_FAIL": 24,
+        "FIXTURE_ERROR": 0
+      },
+      "sourceAfterSHA256": "d2c682b1f2d8686beab48f6775a529da0e4412f67224ef1999bda19c441776ce",
+      "testAfterSHA256": "a9b926c96546ef70a4b872c77e8e6f6e6b12aa2ef6a5dadb9d3cdb16aae43f30",
+      "actualOuterExit": 1,
+      "completionChunk": "3e21c4"
+    },
+    "green": {
+      "startedAtUTC": "2026-11-14T06:08:14.370371+00:00",
+      "command": [
+        "python3",
+        "/workspace/ricepia-firstminute-round100/tests/test_kensa_sense_drag_owner.py"
+      ],
+      "htmlInput": "/workspace/ricepia-firstminute-round100/kensa.html",
+      "testSHA256": "a9b926c96546ef70a4b872c77e8e6f6e6b12aa2ef6a5dadb9d3cdb16aae43f30",
+      "sourceBeforeSHA256": "7b299b5128276e52402e8deb10458e7beb25f1dfd7e6e0a86d81efe37743f6bf",
+      "actualChildExit": 0,
+      "completedAtUTC": "2026-11-14T06:08:14.777689+00:00",
+      "wallSeconds": 0.40695815699291416,
+      "counts": {
+        "PASS": 56,
+        "BEHAVIOR_FAIL": 0,
+        "FIXTURE_ERROR": 0
+      },
+      "sourceAfterSHA256": "7b299b5128276e52402e8deb10458e7beb25f1dfd7e6e0a86d81efe37743f6bf",
+      "testAfterSHA256": "a9b926c96546ef70a4b872c77e8e6f6e6b12aa2ef6a5dadb9d3cdb16aae43f30",
+      "actualOuterExit": 0,
+      "completionChunk": "78197e"
+    },
+    "existingKensaInitial": {
+      "command": [
+        "python3",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_kensa.py",
+        "-v"
+      ],
+      "startedAtUTC": "2026-11-14T06:08:56.408502+00:00",
+      "completedAtUTC": "2026-11-14T06:09:01.785037+00:00",
+      "actualChildExit": 0,
+      "wallSeconds": 5.376558403979288,
+      "actualOuterExit": 0,
+      "session": 34459,
+      "completionChunk": "b634b2",
+      "testsRun": 192,
+      "OK": true,
+      "passed": 190,
+      "skipped": 2,
+      "skipReason": "chromium が 起動しない"
+    },
+    "existingKensaLocalChromium": {
+      "command": [
+        "python3",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_kensa.py",
+        "-v"
+      ],
+      "environmentOverride": {
+        "NODE_OPTIONS": "--require=/workspace/scratch/first-minute/offline.cjs"
+      },
+      "offlineHookSHA256": "a24e5394144ed5d721c29e4db487baeeb0205110c8efb48e1cdaddb5732f0265",
+      "startedAtUTC": "2026-11-14T06:10:47.640134+00:00",
+      "completedAtUTC": "2026-11-14T06:11:04.929613+00:00",
+      "actualChildExit": 0,
+      "wallSeconds": 17.28949702900718,
+      "reasonForRepeat": "Two existing browser tests skipped because the default bundled Chromium executable is absent; use installed /usr/bin/chromium with the existing offline hook, assertions unchanged",
+      "actualOuterExit": 0,
+      "session": 35612,
+      "completionChunk": "1f566e",
+      "testsRun": 192,
+      "passed": 192,
+      "skipped": 0,
+      "playwrightVersion": "1.62.1",
+      "playwrightModule": "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.js"
+    },
+    "requiredPytest": {
+      "command": "pytest tests/",
+      "launcher": [
+        "bash",
+        "-c",
+        "pytest tests/"
+      ],
+      "startedAtUTC": "2026-11-14T06:08:46.078831+00:00",
+      "completedAtUTC": "2026-11-14T06:08:46.081720+00:00",
+      "actualChildExit": 127,
+      "wallSeconds": 0.00290309899719432,
+      "stdout": "",
+      "stderr": "bash: line 1: pytest: command not found\n",
+      "actualOuterExit": 127,
+      "completionChunk": "b05efa"
+    }
+  },
+  "fullUnittest": {
+    "status": "completed unsuccessful; independent per-method audit saved",
+    "command": [
+      "python3",
+      "-m",
+      "unittest",
+      "discover",
+      "-s",
+      "tests",
+      "-v"
+    ],
+    "startedAtUTC": "2026-11-14T06:13:21.767225+00:00",
+    "actualChildExit": 1,
+    "actualOuterExit": 1,
+    "runnerSummary": {
+      "testsRun": 2578,
+      "failures": 68,
+      "errors": 1,
+      "skipped": 1
+    },
+    "passed": 2508,
+    "sameConditionBeforeBaselineAvailable": false,
+    "allFailuresKnownPreexisting": false,
+    "sourceFilesUnchanged": 315,
+    "passedCountingMethod": "direct 2508 explicit ok method outcomes; not subtraction",
+    "unittestReportedSeconds": 470.189,
+    "processWallSeconds": 475.69552940200083,
+    "subTestDuplicateFailures": 0,
+    "failureAndErrorCategories": {
+      "tractor_progress_source_expectation": 2,
+      "changed_file_scope_expectation": 65,
+      "nishio_export_literal_expectation": 2
+    },
+    "explicitOkFormats": {
+      "same_header_line": 2391,
+      "description_following_header": 102,
+      "standalone_result": 15
+    },
+    "newRegressionCasesCountAsOneMethod": true,
+    "skipDetails": [
+      {
+        "id": "test_maze_loop4_149.TestFirstMinuteRuler.test_ruler_defined_in_design",
+        "headerLine": 1162,
+        "resultLine": 1162,
+        "status": "skipped",
+        "format": "same_header_line"
+      }
+    ],
+    "reportEvidence": "full-unittest-audit/report.json"
+  },
+  "fiveSizes": {
+    "status": "runs and independent saved-scope comparison completed",
+    "sizes": [
+      [
+        320,
+        568
+      ],
+      [
+        390,
+        844
+      ],
+      [
+        568,
+        320
+      ],
+      [
+        844,
+        390
+      ],
+      [
+        820,
+        1180
+      ]
+    ],
+    "passed": null,
+    "actualChildExits": [
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "actualOuterExit": 0,
+    "actions": 175,
+    "recordedResponses": 175,
+    "layoutRecords": 525,
+    "originalPhotos": 20,
+    "consoleAndDriverErrors": 0,
+    "lateAndUnfinishedInputs": 0,
+    "source11Unchanged": true,
+    "noLiveBrowserOrNodeConfirmedByRoot": true,
+    "noIncreasedLayoutProblems": "No worsening in matched hit/offscreen classifications; not a blanket claim for all states",
+    "horizontalOverflowRecords": 0,
+    "visibleControlOrGestureOutsideViewport": 0,
+    "positiveOverlapPairs": 0,
+    "overlapPairsScope": [
+      [
+        "head",
+        "plate"
+      ],
+      [
+        "head",
+        "hint"
+      ],
+      [
+        "plate",
+        "hint"
+      ],
+      [
+        "notesLink",
+        "hint"
+      ]
+    ],
+    "transformedPlateInnerExcludedFromFourPairs": true,
+    "sampledActiveCenterHitIntercepted": {
+      "before": 4,
+      "beforeDenominator": 1708,
+      "after": 0,
+      "afterDenominator": 1700,
+      "notActualPressCount": true,
+      "notClaimedAsImprovement": true,
+      "denominatorScope": "all saved visible control records, including inert records; not only active controls and not actual presses"
+    },
+    "fullyStateMatchedAfterRecords": 449,
+    "allAfterRecords": 525,
+    "unmatchedAfterRecords": 76,
+    "matchedHitClassificationOrOffscreenWorsening": 0,
+    "allRecordsComparable": false,
+    "individualAnimationCoordinateDifferencesVerified": false,
+    "historicalBeforeRound": 96,
+    "historicalBeforeNewlyExecutedThisRound": false,
+    "historicalBeforeHead": "4568c8792f4c804cf354f6f63a12ef568e2b6748",
+    "matchedItemComparisons": 4856,
+    "matchedItemsWithRectDifferenceOverHalfPx": 194,
+    "geometryIdentityForThose194Verified": false,
+    "newP0ThroughP3RegressionsWithinSavedScope": 0
+  },
+  "photos": [
+    {
+      "file": "primary-observe-10s.png",
+      "sourceId": "preparation-4568/strict/observe-10s.png",
+      "sha256": "3595b6a3b7ed48debfe2bd89efc8fdba4fa7f4b6d5504b4c2f63fcdfd1c45cdc",
+      "scope": "baseline primary",
+      "unmodifiedOriginalBytes": true,
+      "reportAuthorPersonallyViewed": true,
+      "width": 390,
+      "height": 844,
+      "timing": {
+        "observationRequestedSeconds": 10.0,
+        "observationCompletedSeconds": 10.1
+      }
+    },
+    {
+      "file": "primary-play-10s.png",
+      "sourceId": "preparation-4568/strict/play-10s.png",
+      "sha256": "ad0671ae7a6fce74f982b80edd2da0abad691265e35d06ffbbd0681438c90399",
+      "scope": "baseline primary",
+      "unmodifiedOriginalBytes": true,
+      "reportAuthorPersonallyViewed": true,
+      "width": 390,
+      "height": 844,
+      "timing": {
+        "playRequestedSeconds": 10,
+        "playCompletedSeconds": 10.081
+      }
+    },
+    {
+      "file": "primary-play-30s.png",
+      "sourceId": "preparation-4568/strict/play-30s.png",
+      "sha256": "7f8dfffacf0ab5de8af0b6fc74f47aff924ff43a6462f56692893c6c3260eed1",
+      "scope": "baseline primary",
+      "unmodifiedOriginalBytes": true,
+      "reportAuthorPersonallyViewed": true,
+      "width": 390,
+      "height": 844,
+      "timing": {
+        "playRequestedSeconds": 30,
+        "playCompletedSeconds": 30.073
+      }
+    },
+    {
+      "file": "primary-play-60s.png",
+      "sourceId": "preparation-4568/strict/play-60s.png",
+      "sha256": "e19e8b909c33dd2b3f99f955510cb794b78af83e361af292862590828ae18ffd",
+      "scope": "baseline primary",
+      "unmodifiedOriginalBytes": true,
+      "reportAuthorPersonallyViewed": true,
+      "width": 390,
+      "height": 844,
+      "timing": {
+        "playRequestedSeconds": 59.999,
+        "playCompletedSeconds": 60.064
+      }
+    },
+    {
+      "file": "before-fast-1-first-segment.png",
+      "sourceId": "sense-reproduction-before/treatment-fast-1/strict/before-second-contact.png",
+      "sha256": "15b4b3055a03bf12b26ec0930501ea1260dd2b6e56e5b48d629efd2b7c76c977",
+      "scope": "before fixed treatment-fast-1",
+      "unmodifiedOriginalBytes": true,
+      "reportAuthorPersonallyViewed": true,
+      "width": 390,
+      "height": 844,
+      "timing": {
+        "name": "before-second-contact",
+        "requestedAt": 1794636111839,
+        "requestedPlaySeconds": 9.727,
+        "completedAt": 1794636111902,
+        "completedPlaySeconds": 9.79
+      }
+    },
+    {
+      "file": "before-fast-1-held.png",
+      "sourceId": "sense-reproduction-before/treatment-fast-1/strict/after-continuation-held.png",
+      "sha256": "c10f5779f5091eae6d527e94b2726b8d6c9e810c40b82f162b6f6ffa263e5ed2",
+      "scope": "before fixed treatment-fast-1",
+      "unmodifiedOriginalBytes": true,
+      "reportAuthorPersonallyViewed": true,
+      "width": 390,
+      "height": 844,
+      "timing": {
+        "name": "after-continuation-held",
+        "requestedAt": 1794636112090,
+        "requestedPlaySeconds": 9.978,
+        "completedAt": 1794636112156,
+        "completedPlaySeconds": 10.044
+      }
+    },
+    {
+      "file": "after-fast-1-first-segment.png",
+      "sourceId": "sense-reproduction-after/treatment-fast-1/strict/before-second-contact.png",
+      "sha256": "ea0b2c1f3434d523845e394b90f1114e3ff2c2ba26b1b8dc2be145c6fca9c371",
+      "scope": "after fixed treatment-fast-1",
+      "unmodifiedOriginalBytes": true,
+      "reportAuthorPersonallyViewed": true,
+      "width": 390,
+      "height": 844,
+      "timing": {
+        "name": "before-second-contact",
+        "requestedAt": 1794637375538,
+        "requestedPlaySeconds": 9.703,
+        "completedAt": 1794637375605,
+        "completedPlaySeconds": 9.77
+      }
+    },
+    {
+      "file": "after-fast-1-held.png",
+      "sourceId": "sense-reproduction-after/treatment-fast-1/strict/after-continuation-held.png",
+      "sha256": "9272d34379a4e12146533ac1709bd34c8a2559b002cb1ad0f55eca7da0c4b521",
+      "scope": "after fixed treatment-fast-1",
+      "unmodifiedOriginalBytes": true,
+      "reportAuthorPersonallyViewed": true,
+      "width": 390,
+      "height": 844,
+      "timing": {
+        "name": "after-continuation-held",
+        "requestedAt": 1794637375771,
+        "requestedPlaySeconds": 9.936,
+        "completedAt": 1794637375837,
+        "completedPlaySeconds": 10.002
+      }
+    }
+  ],
+  "operatorDecision": [
+    "first tap progression",
+    "automatic picking or grading",
+    "45-second card",
+    "presentation game form",
+    "new goals or rewards"
+  ],
+  "unselectedUnreproduced": [
+    "grade multiple-pointer origin",
+    "next-button foreign pointerup"
+  ],
+  "methodResults": {
+    "A_DOM": 0,
+    "B_originalImages": 0,
+    "C_inputHypothesisPlusActualReproduction": 1,
+    "selected": "C"
+  },
+  "limits": [
+    "Physical fingers, sensors and network speed unverified",
+    "Human dropout and subjective reward not measured",
+    "DOM snapshots are not physical display latency",
+    "Held checkpoint images are not a continuous onset trace",
+    "Scope does not guarantee all capture-failure/loss then foreign outside-up, same-owner buttons=0 hover, or multi-pointer nigiru behavior",
+    "Required pytest unavailable and full unittest unsuccessful; successful scoped tests do not satisfy all required verification",
+    "Five-size matched hit/offscreen comparisons cover449/525 records and4856 items;194 item coordinate differences are not geometrically verified;76 records are unmatched"
+  ],
+  "publication": {
+    "draftRequired": true,
+    "mergeHold": true,
+    "reason": "required pytest unavailable; full unittest unsuccessful",
+    "skillPath": ".claude/skills/ricepia-flow/SKILL.md",
+    "skillLine": 212
+  },
+  "evidence": {
+    "archiveRootIdentifier": "scratch/first-minute/round-100 (local evidence, not a public URL)",
+    "files": [
+      {
+        "id": "primary-execution.json",
+        "sha256": "0871099a9bfca3253d193d7340719fb7ead048a90937e602f851b9eaf01c785e"
+      },
+      {
+        "id": "root-primary-completion.json",
+        "sha256": "c246ccdc57854ae6263fe3eea9e5c71a177027701d9f59bf299054d1f23c90fc"
+      },
+      {
+        "id": "primary-audit/frozen.json",
+        "sha256": "eb332beb727ad0d6bacf21d865a40df86eab4909cbd568c7e1e95bf265807c65"
+      },
+      {
+        "id": "discovery-a/summary.json",
+        "sha256": "a99224c8833b528ee7eef8c7ce225d59d803538434921a980ce23b8c967e9bb4"
+      },
+      {
+        "id": "discovery-b/summary.json",
+        "sha256": "fbe63a2502e4704da12cdf2e5320bc4fd6e2856faf39f36429cd3f8d64e0508c"
+      },
+      {
+        "id": "design-review/summary.json",
+        "sha256": "64c4101ca32e18204fa1fc55edeb42dfd37a6373352bb02e62dda62abddac91e"
+      },
+      {
+        "id": "sense-diagnostic-audit-v2/frozen.json",
+        "sha256": "8b6a4392a12dac54852ef96a58d3064d5667dd6ac26eea21cf811bd34088d35b"
+      },
+      {
+        "id": "sense-reproduction-before-audit/frozen.json",
+        "sha256": "5d37f6be66ea3ce1660119a0d86ba12c0cf058e6542e1f07a932c27920633f54"
+      },
+      {
+        "id": "sense-reproduction-before-audit/summary.json",
+        "sha256": "3f18e6c587055f5452c633cd538e070cbbcb63e5ab17648d94c37f9a84df8494"
+      },
+      {
+        "id": "sense-regression/red-execution.json",
+        "sha256": "444d1fadeb6a68420ffd622dcb293a62b6a5d536f3a311436513597846022ebe"
+      },
+      {
+        "id": "sense-regression/green-execution.json",
+        "sha256": "09eab27f61312d7b391e54adfd5625e9f2726f3f6c48d5b51b965ed6f06d25dc"
+      },
+      {
+        "id": "sense-regression/red-cases.json",
+        "sha256": "51648e3a5f2591236f629b14152daf7f5f10667b632f38a34b02aaf7f29ea81d"
+      },
+      {
+        "id": "sense-regression/green-cases.json",
+        "sha256": "b352744836964c82a4d67b84b257051abc472d7cbdbe243ccb8fe2b7de34ca41"
+      },
+      {
+        "id": "sense-regression/existing-kensa-execution.json",
+        "sha256": "47abd152a4b8204e036154230102101f0284728984c80ab7726e957ec9d8faec"
+      },
+      {
+        "id": "sense-regression/existing-kensa-local-chromium-execution.json",
+        "sha256": "39bb36916aac229bbbeb64eb52cc2ea1d44de8855e5db45ded6d977013966e29"
+      },
+      {
+        "id": "sense-regression/pytest-execution.json",
+        "sha256": "687fe53629fab139cb6a3b02d3a5041a675f0382d4d3ef7366f0d75a1c602212"
+      },
+      {
+        "id": "sense-candidate-pins.json",
+        "sha256": "a7fa63f13e8daa1e592e6c52b88059291b6ec14e7b3c016f65a1cbce479565b0"
+      },
+      {
+        "id": "sense-reproduction-after/frozen.json",
+        "sha256": "add812830033b28fd10fa3a38dd2914d67ada045ccab10296e1dea8c714db63b"
+      },
+      {
+        "id": "design-review/sense-owner-source-review.json",
+        "sha256": "8b8c4d70cd1f9fc30a489c4443fbae2a69e6dffe2cf7820d1720cc5919906336"
+      },
+      {
+        "id": "full-unittest/execution.json",
+        "sha256": "80b173a75e2a17f07e845432165b9e394186e6af6284ecd8f660684d02587a54"
+      },
+      {
+        "id": "full-unittest/run.log",
+        "sha256": "1c9b3574749dc89b7e74a63daef7e048dc30b94a6b7891531711dca4b6d6404d"
+      },
+      {
+        "id": "full-unittest-audit/report.json",
+        "sha256": "4e8387d9405f65cba49ca01a289aacccdc8cdbfbfc21e79267c8e83559fc7693"
+      },
+      {
+        "id": "full-unittest-audit/frozen.json",
+        "sha256": "bdb499945d53f207f6e259c358028167a8b5682fae83abc1fe071cd2e77deae9"
+      },
+      {
+        "id": "sense-reproduction-after-completion.json",
+        "sha256": "739c5f8276ae9e34ed0f41e28c69c17994ab40ffaed7e745b145bc43786f5954"
+      },
+      {
+        "id": "sense-reproduction-after-execution.json",
+        "sha256": "152bbb362e2752b2d2234764142b2c0d005d64f4c02483391d6486af3149d038"
+      },
+      {
+        "id": "sense-reproduction-after-audit/summary.json",
+        "sha256": "a63ec4e1bf98b301561ab57f09f4cd08848884b026f8907945ca57b23bc9f6c5"
+      },
+      {
+        "id": "sense-reproduction-after-audit/frozen.json",
+        "sha256": "287a615ce6288fa683147c42429c12c403eb3336ceb3f42542ebad4b1d040226"
+      },
+      {
+        "id": "after5-completion.json",
+        "sha256": "53cad9e0ea5043c3330b2e3876e3bfce5f6f08dca905d2cc4896a2e04e04a634"
+      },
+      {
+        "id": "discovery-b/after5-comparison/README.md",
+        "sha256": "1d908d1e28a34d0f5819b419b1e1d5cdeea37f6f495f6f02cae7b209cdb3ca04"
+      },
+      {
+        "id": "discovery-b/after5-comparison/summary.json",
+        "sha256": "c964de0b2a0af875adc3ac770290ab3651baa8dccc8ab86594455dd08f529ba6"
+      },
+      {
+        "id": "discovery-b/after5-comparison/matched.json",
+        "sha256": "902b881894b9578a5673fdcc7491146727035586be3559d3063de31359016495"
+      },
+      {
+        "id": "discovery-b/after5-comparison/unmatched.json",
+        "sha256": "a8527e07f40b28c8d72235b8521065e8dc406217481878a72dfc7dd61d6f025f"
+      },
+      {
+        "id": "discovery-b/after5-comparison/matched-differences.json",
+        "sha256": "835f0a375093a709ac94c2e87b79d328949dc925f322c6b9bfc044bb62759ea3"
+      },
+      {
+        "id": "discovery-b/after5-comparison/active-center-interceptions.json",
+        "sha256": "ba085219ec514244ac7b71e371c0c141e2152a574b34bcc0109158c6b00bde68"
+      },
+      {
+        "id": "discovery-b/after5-comparison/verification.json",
+        "sha256": "f8f0b6c4a5a4b5e47096758b51c5c56745a546c3561e9976a6d5644cca07d0b8"
+      },
+      {
+        "id": "discovery-b/after5-comparison/raw-digests.json",
+        "sha256": "61ac20e2d26d25305f5ac8e4a0897172772929969cc314f6da45c7b9ab5a3c18"
+      },
+      {
+        "id": "discovery-b/after5-comparison/frozen.json",
+        "sha256": "be5050b0784ed80174dc25be86cb2cb282ac1f4e77009999cc978fdd1b945d52"
+      }
+    ]
+  }
+}

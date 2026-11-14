@@ -297,7 +297,7 @@ async function firstMinuteChecks(browser, R) {
         const otherBtn = !b.hidden && document.getElementById('spinName').textContent === other.name && !G.state.visits[other.id];
         return { goal: g.name, shown, h0, hMax, checked, other: other.name, otherBtn, pop, ok: shown === 0 && checked && otherBtn };
       });
-      return { firstGoalNear: fg, lazySprites: lz, playAskQuick: pa, worldBack: wb, tiltDeniedMsg: tm, swipeWalk: sw, swipeHold: { ...(sw.hold || { why: 'no-route' }), ok: !!sw.holdOk }, tapStepPace: { ...(sw.pace || { why: 'no-route' }), ok: !!sw.paceOk }, arriveNoSpin: an, ptsPop: { ...(an.pop || { why: an.why || 'no-goal' }), ok: !!an.pop && an.pop.gained >= 5 && an.pop.seen && (an.pop.scale >= 1.05 || an.pop.gold) && !an.pop.left && an.pop.shown && /^[\d,]+(pt)?$/.test(an.pop.text) }, ...(await startSteadyChecks(browser, R)), ...(await a2hsChecks(browser, R)), ...(await tapDemoChecks(browser, R)), ...(await cycle210Checks(browser, R)), ...(await cycle209Checks(browser, R)), ...(await cycle208Checks(browser, R)), ...(await cycle207Checks(browser, R)), ...(await cycle206Checks(browser, R)), ...(await slowStartChecks(browser, R)) };
+      return { firstGoalNear: fg, lazySprites: lz, playAskQuick: pa, worldBack: wb, tiltDeniedMsg: tm, swipeWalk: sw, swipeHold: { ...(sw.hold || { why: 'no-route' }), ok: !!sw.holdOk }, tapStepPace: { ...(sw.pace || { why: 'no-route' }), ok: !!sw.paceOk }, arriveNoSpin: an, ptsPop: { ...(an.pop || { why: an.why || 'no-goal' }), ok: !!an.pop && an.pop.gained >= 5 && an.pop.seen && (an.pop.scale >= 1.05 || an.pop.gold) && !an.pop.left && an.pop.shown && /^[\d,]+(pt)?$/.test(an.pop.text) }, ...(await startSteadyChecks(browser, R)), ...(await a2hsChecks(browser, R)), ...(await tapDemoChecks(browser, R)), ...(await cycle212Checks(browser, R)), ...(await cycle210Checks(browser, R)), ...(await cycle209Checks(browser, R)), ...(await cycle208Checks(browser, R)), ...(await cycle207Checks(browser, R)), ...(await cycle206Checks(browser, R)), ...(await slowStartChecks(browser, R)) };
     } finally { R.errors.push(...v.errors); await v.ctx.close(); }
 }
 // サイクル193（運営者の声 2026-11-10「さんぽGOホーム画面に追加を控えめに促す」）：ホーム画面に追加の おすすめは 小さな 1行の 札。
@@ -1244,6 +1244,31 @@ async function cycle210Checks(browser, R) {
   }
   return out;
 }
+// サイクル212：「動きを へらす」設定の 人の 読みこみ中。米つぶの 場所は 動かず、明るさ だけ ゆっくり かわる（止まった 絵に 見えない）。ふつうの 設定は これまでどおり 転がる
+async function cycle212Checks(browser, R) {
+  const out = {};
+  const look = async motion => {
+    const v = await newPage(browser, { howto: true, auto: true, hasTouch: true, isMobile: true, reducedMotion: motion, viewport: { width: 390, height: 844 } });
+    try {
+      await v.page.route('**/nishio-go/pixel.js', async r => { await new Promise(res => setTimeout(res, 2500)); await r.continue(); });   // 読みこみ中を 作る
+      await v.page.goto(URL, { waitUntil: 'commit' });
+      await v.page.waitForSelector('#bootCover i', { timeout: 10000 }).catch(() => {});
+      const one = () => v.page.evaluate(() => { const i = document.querySelector('#bootCover i'); if (!i) return null; const r = i.getBoundingClientRect(), cs = getComputedStyle(i), a = getComputedStyle(i, '::after');
+        return { x: +r.left.toFixed(1), y: +r.top.toFixed(1), anim: cs.animationName, tf: cs.transform, after: a.content, aAnim: a.animationName, aDur: parseFloat(a.animationDuration) || 0, aOp: +(+a.opacity).toFixed(3), aTf: a.transform }; }).catch(() => null);
+      const s = [];
+      for (let k = 0; k < 4; k++) { s.push(await one()); await v.page.waitForTimeout(400); }
+      return s.filter(Boolean);
+    } finally { R.errors.push(...v.errors); await v.ctx.close(); }
+  };
+  try {
+    const rd = await look('reduce'), nm = await look('no-preference');
+    const still = rd.length >= 3 && rd.every(q => q.x === rd[0].x && q.y === rd[0].y && q.anim === 'none' && q.tf === 'none' && q.aTf === 'none');
+    const ops = rd.map(q => q.aOp), glow = rd.length >= 3 && rd.every(q => q.aAnim !== 'none' && q.aDur >= 1.2) && Math.max(...ops) - Math.min(...ops) >= 0.1 && Math.max(...ops) <= 0.7;
+    const normal = nm.length >= 3 && nm.every(q => q.anim === 'bootRoll' && q.after === 'none');
+    out.slowCoverCalm = { still, glow, normal, ops, rd0: rd[0], nm0: nm[0], ok: still && glow && normal };
+  } catch (e) { out.slowCoverCalm = { ok: false, crashed: String(e && e.message || e).split('\n')[0].slice(0, 200) }; }
+  return out;
+}
 const FIRST_MINUTE_NEED = {
   slowCover: '読みこみ中の 題字が スタイルシートを 待つ（head に ある）／題字の 下に 動く しるし（米つぶ）が ない',
   bgmAfterMap: '地図が 動きだす 前の タップで 曲（mp3）を 読みはじめる／動きだした あとの タップで 曲が 鳴らない',
@@ -1294,6 +1319,7 @@ const FIRST_MINUTE_NEED = {
   firstDemoFast: '開いて まだ 何も して いない 人（傾きの 許可を 聞かない 端末・390×844）の 最初の 手本が、お米が 出て 1.5秒・道すじが できて 0.6秒 の うちに 出ない（前は お米が 出て 2秒 待った。サイクル210）',
   demoTouchWait: '最初の 手本の あと さわると、手本が すぐ 消えない／次の 手本が 2秒 待たずに 出る（さわった あとの 手本は これまでどおり 2秒。サイクル210）',
   rollNoDemo: '開いて すぐ 傾けて（8度）も 転がらない（速さ 1マス/秒 に とどかない）／転がって いる 間に 手本が 出る／転がった あとも「はじめての 手本」の まま（サイクル210）',
+  slowCoverCalm: '「動きを へらす」設定の 読みこみ中、米つぶが 止まった まま（明るさも かわらない）／場所・形が 動く／ふつうの 設定の 転がる 米つぶが かわった（サイクル212）',
   bootLoaded: '地図の 部品が ふつうに 読めた のに「時間が かかっています」の ボタン・「もう 1回 読みこむ」が 出る／始まらない',
   bootFailed: '地図の 部品が 読めなかった（エラー）とき、押せる「もう 1回 読みこむ」の ボタンが 4秒 までに 出ない／押しても 読みこみ なおさない',
   bootSlow: '地図の 部品が 8秒 おくれて 届く 人に「時間が かかっています」が 出る／20秒 おくれの 人が 始まらない・始まった あとも 残る',

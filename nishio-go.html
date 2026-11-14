@@ -77,6 +77,10 @@
 #bootCover i{display:block;width:11px;height:14px;margin-top:18px;border-radius:50%;background:#fffdf5;border:2px solid #6b5a3a;animation:bootRoll .9s ease-in-out infinite alternate}
 @keyframes bootRoll{from{transform:translateX(-24px) rotate(-200deg)}to{transform:translateX(24px) rotate(200deg)}}
 @media (prefers-reduced-motion:reduce){#bootCover i{animation:none}}
+/* サイクル212：「動きを へらす」設定では 米つぶが 止まった まま で、おそい 回線（約 6秒）の 間 止まった 絵に 見えた。その 設定 だけ、米つぶに 地の 色を うすく かさねて、
+   明るさを ゆっくり かえる（1.6秒で うすく・1.6秒で もとへ。場所・大きさは 動かさない。米つぶは 見えた まま）。ふつうの 設定の 見た目・動きは かえない */
+@media (prefers-reduced-motion:reduce){#bootCover i{position:relative}#bootCover i::after{content:"";position:absolute;inset:-3px;border-radius:50%;background:#f6f4ec;opacity:0;animation:bootGlow 1.6s ease-in-out infinite alternate}}
+@keyframes bootGlow{from{opacity:0}to{opacity:.55}}
 </style>
 </head>
 <body>

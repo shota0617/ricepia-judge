@@ -1,0 +1,1654 @@
+{
+  "schema": "first-minute-report-v1",
+  "round": 97,
+  "game": "にしおさんぽGO",
+  "route": "/nishio-go.html",
+  "assembledAtUTC": "2026-11-14T04:40:55.220592+00:00",
+  "status": "EVIDENCE_COMPLETE_READY_FOR_ROOT_INDEPENDENT_REVIEW",
+  "problem": "First-minute goal inspection can lose its position when a second contact replaces the moving finger’s world-map drag anchor.",
+  "change": "Bind the world-map drag to its accepted pointer; keep stationary takeover, ignore foreign movement/end while owned, and clear the owner on cancel/capture loss/blur/hidden/mode exit.",
+  "humanRetentionMeasured": false,
+  "claimedRetentionReduction": null,
+  "source": {
+    "baselineHead": "4568c8792f4c804cf354f6f63a12ef568e2b6748",
+    "fixedReproductionAfterHead": "4c7ce72c5d53ce3ade918117ca3ec4912c2e11db",
+    "fixedReproductionAfterTestSHA256": "1fa32d1a0c66655431f4a6c9ab1679b556d8ef2fc7aed5000afc636a9ce78e6a",
+    "finalTestedHead": "eceaff9f60d872049b49f033857ec4e26cfb63e2",
+    "productSHA256": "f56a976dff80e4a6eeeef7081f48eddb89b7723eb911312db7728aa82b776426",
+    "finalTestSHA256": "60821c3dce996f552542545aab4e6716057db50364b4a8dffb3e1a6a9d012a56",
+    "sameProductBytesBetweenAfterReproductionAndFinalHead": true,
+    "testOnlyFollowup": "Added an intermediate camera assertion to one mixed-device case; all other32 cases unchanged. After-five-size and full validation ran at finalTestedHead; the fixed12 after reproduction ran at the earlier head.",
+    "publicationCommitScope": "Product and final test were validated at eceaff9f60d872049b49f033857ec4e26cfb63e2. A later documentation commit will add this report; the full suite was not rerun on that documentation HEAD. Identical product/test bytes do not establish validation of the entire later HEAD, especially for tests that inspect Git changed-file names."
+  },
+  "scope": {
+    "productFiles": [
+      "nishio-go/pixel.js"
+    ],
+    "newTest": "tests/test_nishio_world_drag_owner.py",
+    "existing305TestsUnchanged": true,
+    "protectedFilesUnchanged": [
+      "kome365/engine.js",
+      "kome365/field3d.js",
+      "kome365/cards.js"
+    ],
+    "externalServiceSettingsChanged": false,
+    "newGeographicFactsOrBorrowedAssets": false
+  },
+  "sourceLocations": {
+    "before": [
+      "nishio-go/pixel.js:9289",
+      "nishio-go/pixel.js:9290",
+      "nishio-go/pixel.js:9293",
+      "nishio-go/pixel.js:9297",
+      "nishio-go/pixel.js:9299"
+    ],
+    "after": [
+      "nishio-go/pixel.js:9253",
+      "nishio-go/pixel.js:9292",
+      "nishio-go/pixel.js:9297",
+      "nishio-go/pixel.js:9302",
+      "nishio-go/pixel.js:9311",
+      "nishio-go/pixel.js:9358"
+    ],
+    "newTest": "tests/test_nishio_world_drag_owner.py:307"
+  },
+  "primaryBefore": {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "cpuRate": 1,
+    "requestedTapHoldMs": 40,
+    "actions": 8,
+    "recordedCoordinateResponses": 8,
+    "fullResponseWindows": 8,
+    "noRecordedResponse": 0,
+    "cdpACK": 16,
+    "trustedDownUpClickEvents": 24,
+    "worldOpenings": 0,
+    "infoOpenings": 0,
+    "errors": 0,
+    "firstResponseFromInputMs": 97.9,
+    "firstVisiblePositivePoints": 30,
+    "firstVisiblePositivePlaySeconds": 0.337,
+    "firstVisiblePositiveFromInputMs": 329,
+    "firstStationZeroDistanceSamplePlaySeconds": 19.1432,
+    "firstStoredGoals1SamplePlaySeconds": 19.4695,
+    "firstBadgeTextSamplePlaySeconds": 19.7418,
+    "sourceOfGoalTimes": "design-review saved-raw analysis; samples, not direct arrival/reward events",
+    "images": [
+      "observe-10s",
+      "play-10s",
+      "play-30s",
+      "play-60s"
+    ],
+    "photo60RequestCompletionSeconds": [
+      59.999,
+      60.13
+    ],
+    "coordinatesAreNotProvenRouteProgress": true,
+    "sourceHead": "4568c8792f4c804cf354f6f63a12ef568e2b6748",
+    "measurementScope": "Ordinary first-minute baseline play before the product fix; separate from after-five-size play and fixed two-finger reproduction."
+  },
+  "discovery": {
+    "A": "Same station target distance240→744→72m is observed, but path/rescue-gate cause unestablished. Possible known moving-hand overlap; deferred.",
+    "B": "No new established visual candidate from4 primary images; places readable, no world/info openings.",
+    "C": "Shared world drag origin can be replaced by another pointer. Pen hover and malformed save remain unobserved hypotheses.",
+    "design": "Quick feedback/reward present in this primary. Remaining-distance interpretation and a later long goal are B/C design questions, not adopted changes."
+  },
+  "fixedReproduction": {
+    "criteriaSHA256": "bcc04312127437c90c1fe5c5e02489130a1f1febfc995dc2e63e0ac1b687fde5",
+    "confirmedTreatmentJumpCount": {
+      "before": 10,
+      "after": 0,
+      "denominatorPerSide": 10
+    },
+    "confirmedControlJumpCount": {
+      "before": 0,
+      "after": 0,
+      "denominatorPerSide": 2
+    },
+    "perSpeed": {
+      "40ms": {
+        "before": 5,
+        "after": 0,
+        "denominatorPerSide": 5
+      },
+      "700ms": {
+        "before": 5,
+        "after": 0,
+        "denominatorPerSide": 5
+      }
+    },
+    "goalDeltaCSS": {
+      "beforeTreatment": [
+        187,
+        162
+      ],
+      "afterTreatment": [
+        40,
+        0
+      ],
+      "controlsBothSides": [
+        40,
+        0
+      ],
+      "expectedP1Continuation": [
+        40,
+        0
+      ]
+    },
+    "allOriginalImagesReviewedByIndependentAuditor": {
+      "before": 120,
+      "after": 120
+    },
+    "partialReleaseExcluded": true,
+    "thirdSegmentExcluded": true,
+    "noRetries": true,
+    "notNaturalRetentionMeasurement": true,
+    "before": {
+      "sourceHead": "4568c8792f4c804cf354f6f63a12ef568e2b6748",
+      "controls": {
+        "fixedSlots": 2,
+        "executed": 2,
+        "eligible": 2,
+        "jumpConfirmed": 0,
+        "noJump": 2,
+        "unestablished": 0,
+        "requestedWaitMs": [
+          40,
+          700
+        ],
+        "actualContinuationPhaseMs": [
+          136,
+          758
+        ],
+        "actualPrefixPhaseMs": [
+          223,
+          225
+        ]
+      },
+      "treatments": {
+        "fixedSlots": 10,
+        "executed": 10,
+        "eligible": 10,
+        "jumpConfirmed": 10,
+        "noJump": 0,
+        "unestablished": 0,
+        "requestedWaitMs": [
+          40,
+          700
+        ],
+        "actualContinuationPhaseMs": [
+          166,
+          735,
+          129,
+          721,
+          136,
+          732,
+          136,
+          732,
+          169,
+          732
+        ],
+        "actualPrefixPhaseMs": [
+          220,
+          233,
+          222,
+          222,
+          225,
+          231,
+          222,
+          223,
+          224,
+          223
+        ]
+      },
+      "treatmentsByRequestedWaitMs": {
+        "40": {
+          "fixedSlots": 5,
+          "executed": 5,
+          "eligible": 5,
+          "jumpConfirmed": 5,
+          "noJump": 0,
+          "unestablished": 0,
+          "requestedWaitMs": [
+            40
+          ],
+          "actualContinuationPhaseMs": [
+            166,
+            129,
+            136,
+            136,
+            169
+          ],
+          "actualPrefixPhaseMs": [
+            220,
+            222,
+            225,
+            222,
+            224
+          ]
+        },
+        "700": {
+          "fixedSlots": 5,
+          "executed": 5,
+          "eligible": 5,
+          "jumpConfirmed": 5,
+          "noJump": 0,
+          "unestablished": 0,
+          "requestedWaitMs": [
+            700
+          ],
+          "actualContinuationPhaseMs": [
+            735,
+            721,
+            732,
+            732,
+            732
+          ],
+          "actualPrefixPhaseMs": [
+            233,
+            222,
+            231,
+            223,
+            223
+          ]
+        }
+      },
+      "allCommandsACK": 178,
+      "errors": {
+        "pageOrConsole": 0,
+        "inputCommands": 0,
+        "screenshots": 0,
+        "diagnosticCommandErrors": 0,
+        "lateDiagnosticInputs": 0,
+        "diagnosticCleanup": 0,
+        "diagnosticProtocolError": 0,
+        "lateNewInputs": 0,
+        "unfinishedTouchActions": 0
+      },
+      "originalImagesActuallyViewed": 120,
+      "diagnosticFinishedPlaySecondsRange": [
+        4.793,
+        5.633
+      ],
+      "play60PhotoCompletionSecondsRange": [
+        60.071,
+        60.104
+      ],
+      "allEntryAndDiagnosticInputsWithinPlay60": true,
+      "serialNonOverlap": true,
+      "batch": {
+        "startedAtUTC": "2026-11-14T02:50:10.086Z",
+        "completedAtUTC": "2026-11-14T03:05:52.890Z",
+        "attempts": 12,
+        "childActualExit0": 12,
+        "wrapperActualExit0": 12,
+        "browserClosed": 12,
+        "retries": 0
+      }
+    },
+    "after": {
+      "sourceHead": "4c7ce72c5d53ce3ade918117ca3ec4912c2e11db",
+      "controls": {
+        "fixedSlots": 2,
+        "executed": 2,
+        "eligible": 2,
+        "jumpConfirmed": 0,
+        "noJump": 2,
+        "unestablished": 0,
+        "requestedWaitMs": [
+          40,
+          700
+        ],
+        "actualContinuationPhaseMs": [
+          138,
+          722
+        ],
+        "actualPrefixPhaseMs": [
+          224,
+          236
+        ]
+      },
+      "treatments": {
+        "fixedSlots": 10,
+        "executed": 10,
+        "eligible": 10,
+        "jumpConfirmed": 0,
+        "noJump": 10,
+        "unestablished": 0,
+        "requestedWaitMs": [
+          40,
+          700
+        ],
+        "actualContinuationPhaseMs": [
+          131,
+          730,
+          138,
+          719,
+          137,
+          740,
+          133,
+          736,
+          138,
+          733
+        ],
+        "actualPrefixPhaseMs": [
+          223,
+          222,
+          222,
+          223,
+          220,
+          227,
+          223,
+          223,
+          227,
+          224
+        ]
+      },
+      "treatmentsByRequestedWaitMs": {
+        "40": {
+          "fixedSlots": 5,
+          "executed": 5,
+          "eligible": 5,
+          "jumpConfirmed": 0,
+          "noJump": 5,
+          "unestablished": 0,
+          "requestedWaitMs": [
+            40
+          ],
+          "actualContinuationPhaseMs": [
+            131,
+            138,
+            137,
+            133,
+            138
+          ],
+          "actualPrefixPhaseMs": [
+            223,
+            222,
+            220,
+            223,
+            227
+          ]
+        },
+        "700": {
+          "fixedSlots": 5,
+          "executed": 5,
+          "eligible": 5,
+          "jumpConfirmed": 0,
+          "noJump": 5,
+          "unestablished": 0,
+          "requestedWaitMs": [
+            700
+          ],
+          "actualContinuationPhaseMs": [
+            730,
+            719,
+            740,
+            736,
+            733
+          ],
+          "actualPrefixPhaseMs": [
+            222,
+            223,
+            227,
+            223,
+            224
+          ]
+        }
+      },
+      "allCommandsACK": 178,
+      "errors": {
+        "pageOrConsole": 0,
+        "inputCommands": 0,
+        "screenshots": 0,
+        "diagnosticCommandErrors": 0,
+        "lateDiagnosticInputs": 0,
+        "diagnosticCleanup": 0,
+        "diagnosticProtocolError": 0,
+        "lateNewInputs": 0,
+        "unfinishedTouchActions": 0
+      },
+      "originalImagesActuallyViewed": 120,
+      "diagnosticFinishedPlaySecondsRange": [
+        4.732,
+        5.759
+      ],
+      "play60PhotoCompletionSecondsRange": [
+        60.079,
+        60.122
+      ],
+      "allEntryAndDiagnosticInputsWithinPlay60": true,
+      "serialNonOverlap": true,
+      "batch": {
+        "startedAtUTC": "2026-11-14T03:22:44.865Z",
+        "completedAtUTC": "2026-11-14T03:38:27.759Z",
+        "attempts": 12,
+        "childActualExit0": 12,
+        "wrapperActualExit0": 12,
+        "browserClosed": 12,
+        "retries": 0
+      }
+    }
+  },
+  "initialDiagnostic": {
+    "wholeTreatmentEligible": false,
+    "partialReleaseObserved": false,
+    "narrowedExploratoryPreRelease": {
+      "treatmentEligible": 1,
+      "treatmentJumpObserved": 1,
+      "controlEligible": 1,
+      "controlJumpObserved": 0,
+      "p1MovementCSS": {
+        "dx": 40,
+        "dy": 0
+      },
+      "treatmentDrawnGoalDelta": {
+        "dx": 187,
+        "dy": 162
+      },
+      "controlDrawnGoalDelta": {
+        "dx": 40,
+        "dy": 0
+      }
+    },
+    "stopAfterPartialReleaseEstablished": false,
+    "notAddedToFixedTen": true,
+    "worldStateGetterRecorded": false,
+    "auditFrozenSHA256": "74e8884cd980a1b2e71fb079fb9ffb8d817796472837a5c22628106bd6a22f1b"
+  },
+  "newUnit": {
+    "methodCount": 1,
+    "subcaseCount": 33,
+    "oldProduct": {
+      "actualExit": 1,
+      "methodCount": 1,
+      "passedSubcases": 13,
+      "failedSubcases": 20,
+      "errorsReported": 0,
+      "productSHA256": "16f66be87f609879ec338eb31a58b4125ef38f0e2ea1577adc4380e76fe4fdf6",
+      "testSHA256": "60821c3dce996f552542545aab4e6716057db50364b4a8dffb3e1a6a9d012a56"
+    },
+    "fixedProduct": {
+      "actualExit": 0,
+      "methodCount": 1,
+      "passedSubcases": 33,
+      "failedSubcases": 0,
+      "errorsReported": 0,
+      "productSHA256": "f56a976dff80e4a6eeeef7081f48eddb89b7723eb911312db7728aa82b776426",
+      "testSHA256": "60821c3dce996f552542545aab4e6716057db50364b4a8dffb3e1a6a9d012a56"
+    },
+    "finalCandidateUnit": {
+      "actualChildExit": 0,
+      "requestedWrapperExit": 0,
+      "actualOuterExit": 0,
+      "methods": 1,
+      "passedSubcases": 33,
+      "elapsedReportedSeconds": 0.226,
+      "sourceHead": "eceaff9f60d872049b49f033857ec4e26cfb63e2"
+    },
+    "subcaseCounting": "33 cases inside one unittest method; the method checks returned names against all cases. Do not add33 to whole-suite method counts."
+  },
+  "fiveSizes": {
+    "viewports": [
+      "320x568",
+      "390x844",
+      "568x320",
+      "844x390",
+      "820x1180"
+    ],
+    "sourceHead": "eceaff9f60d872049b49f033857ec4e26cfb63e2",
+    "before": {
+      "actions": 98,
+      "responses": 98,
+      "completeWindows": 95,
+      "incompleteRespondingWindows": 3,
+      "completeNoResponse": 0,
+      "incompleteNoResponse": 0,
+      "ACKs": 196,
+      "trustedDownUpClick": 294,
+      "worldOpened": 7,
+      "worldReturned": 7,
+      "infoOpened": 6,
+      "infoClosed": 6,
+      "lateNewInputs": 0,
+      "lateRelease": 0,
+      "lateCompletion": 0,
+      "savedClassificationMismatches": 0
+    },
+    "after": {
+      "actions": 89,
+      "responses": 89,
+      "completeWindows": 87,
+      "incompleteRespondingWindows": 2,
+      "completeNoResponse": 0,
+      "incompleteNoResponse": 0,
+      "ACKs": 178,
+      "trustedDownUpClick": 267,
+      "worldOpened": 3,
+      "worldReturned": 3,
+      "infoOpened": 5,
+      "infoClosed": 5,
+      "lateNewInputs": 0,
+      "lateRelease": 0,
+      "lateCompletion": 0,
+      "savedClassificationMismatches": 0
+    },
+    "beforeLayout": {
+      "snapshots": 8100,
+      "horizontalOverflowSnapshots": 0,
+      "horizontalOverflowPxTotal": 0,
+      "controlOccurrences": 68383,
+      "active-semantic-control": 51176,
+      "centerInViewport": 68383,
+      "outsideViewport": 0,
+      "fullyOutsideViewport": 0,
+      "inertOccurrences": 0,
+      "disabledOccurrences": 0,
+      "surface-or-guidance": 17207,
+      "centerFalse": 1600,
+      "centerFalse:surface-or-guidance": 1304,
+      "centerFalse:active-semantic-control": 296
+    },
+    "afterLayout": {
+      "snapshots": 8227,
+      "horizontalOverflowSnapshots": 0,
+      "horizontalOverflowPxTotal": 0,
+      "controlOccurrences": 69179,
+      "active-semantic-control": 51576,
+      "centerInViewport": 69179,
+      "outsideViewport": 0,
+      "fullyOutsideViewport": 0,
+      "inertOccurrences": 0,
+      "disabledOccurrences": 0,
+      "surface-or-guidance": 17603,
+      "centerFalse": 1262,
+      "centerFalse:surface-or-guidance": 1206,
+      "centerFalse:active-semantic-control": 56
+    },
+    "perViewport": [
+      {
+        "size": "320x568",
+        "counts": {
+          "actions": 12,
+          "responses": 12,
+          "completeWindows": 12,
+          "incompleteRespondingWindows": 0,
+          "completeNoResponse": 0,
+          "incompleteNoResponse": 0,
+          "ACKs": 24,
+          "trustedDownUpClick": 36,
+          "worldOpened": 1,
+          "worldReturned": 1,
+          "infoOpened": 0,
+          "infoClosed": 0,
+          "lateNewInputs": 0,
+          "lateRelease": 0,
+          "lateCompletion": 0,
+          "savedClassificationMismatches": 0
+        },
+        "snapshotCount": 1701,
+        "periodicSnapshotCount": 1297,
+        "activeControlOccurrences": 10486,
+        "activeCenterFalse": 0,
+        "horizontalOverflowSnapshots": 0,
+        "outsideOccurrences": 0,
+        "guideIntersectionCount": 0,
+        "firstFeedback": {
+          "action": 1,
+          "kind": "coordinateChanged",
+          "observedPlaySeconds": 0.146199951171875,
+          "sendToObservedMs": 122.199951171875
+        },
+        "firstPositivePoints": {
+          "observedAt": 1794627936316.0999,
+          "playSeconds": 0.351099853515625,
+          "phase": "play",
+          "text": "30",
+          "value": 30,
+          "visible": true,
+          "centerUnobscured": true
+        },
+        "inputToPositivePointsMs": 327.099853515625,
+        "play60RequestSeconds": 60,
+        "play60CompleteSeconds": 60.119
+      },
+      {
+        "size": "390x844",
+        "counts": {
+          "actions": 8,
+          "responses": 8,
+          "completeWindows": 8,
+          "incompleteRespondingWindows": 0,
+          "completeNoResponse": 0,
+          "incompleteNoResponse": 0,
+          "ACKs": 16,
+          "trustedDownUpClick": 24,
+          "worldOpened": 0,
+          "worldReturned": 0,
+          "infoOpened": 0,
+          "infoClosed": 0,
+          "lateNewInputs": 0,
+          "lateRelease": 0,
+          "lateCompletion": 0,
+          "savedClassificationMismatches": 0
+        },
+        "snapshotCount": 1534,
+        "periodicSnapshotCount": 1142,
+        "activeControlOccurrences": 9488,
+        "activeCenterFalse": 0,
+        "horizontalOverflowSnapshots": 0,
+        "outsideOccurrences": 0,
+        "guideIntersectionCount": 0,
+        "firstFeedback": {
+          "action": 1,
+          "kind": "coordinateChanged",
+          "observedPlaySeconds": 0.1247998046875,
+          "sendToObservedMs": 108.7998046875
+        },
+        "firstPositivePoints": {
+          "observedAt": 1794628020873.7,
+          "playSeconds": 0.367699951171875,
+          "phase": "play",
+          "text": "30",
+          "value": 30,
+          "visible": true,
+          "centerUnobscured": true
+        },
+        "inputToPositivePointsMs": 351.699951171875,
+        "play60RequestSeconds": 60.001,
+        "play60CompleteSeconds": 60.18
+      },
+      {
+        "size": "568x320",
+        "counts": {
+          "actions": 20,
+          "responses": 20,
+          "completeWindows": 20,
+          "incompleteRespondingWindows": 0,
+          "completeNoResponse": 0,
+          "incompleteNoResponse": 0,
+          "ACKs": 40,
+          "trustedDownUpClick": 60,
+          "worldOpened": 0,
+          "worldReturned": 0,
+          "infoOpened": 0,
+          "infoClosed": 0,
+          "lateNewInputs": 0,
+          "lateRelease": 0,
+          "lateCompletion": 0,
+          "savedClassificationMismatches": 0
+        },
+        "snapshotCount": 1740,
+        "periodicSnapshotCount": 1358,
+        "activeControlOccurrences": 10681,
+        "activeCenterFalse": 0,
+        "horizontalOverflowSnapshots": 0,
+        "outsideOccurrences": 0,
+        "guideIntersectionCount": 0,
+        "firstFeedback": {
+          "action": 1,
+          "kind": "coordinateChanged",
+          "observedPlaySeconds": 0.106699951171875,
+          "sendToObservedMs": 92.699951171875
+        },
+        "firstPositivePoints": {
+          "observedAt": 1794628104494.8,
+          "playSeconds": 0.301800048828125,
+          "phase": "play",
+          "text": "30",
+          "value": 30,
+          "visible": true,
+          "centerUnobscured": true
+        },
+        "inputToPositivePointsMs": 287.800048828125,
+        "play60RequestSeconds": 59.999,
+        "play60CompleteSeconds": 60.079
+      },
+      {
+        "size": "844x390",
+        "counts": {
+          "actions": 23,
+          "responses": 23,
+          "completeWindows": 22,
+          "incompleteRespondingWindows": 1,
+          "completeNoResponse": 0,
+          "incompleteNoResponse": 0,
+          "ACKs": 46,
+          "trustedDownUpClick": 69,
+          "worldOpened": 2,
+          "worldReturned": 2,
+          "infoOpened": 1,
+          "infoClosed": 1,
+          "lateNewInputs": 0,
+          "lateRelease": 0,
+          "lateCompletion": 0,
+          "savedClassificationMismatches": 0
+        },
+        "snapshotCount": 1601,
+        "periodicSnapshotCount": 1233,
+        "activeControlOccurrences": 10062,
+        "activeCenterFalse": 56,
+        "horizontalOverflowSnapshots": 0,
+        "outsideOccurrences": 0,
+        "guideIntersectionCount": 0,
+        "firstFeedback": {
+          "action": 1,
+          "kind": "coordinateChanged",
+          "observedPlaySeconds": 0.12689990234375,
+          "sendToObservedMs": 104.89990234375
+        },
+        "firstPositivePoints": {
+          "observedAt": 1794628191521.2998,
+          "playSeconds": 0.3262998046875,
+          "phase": "play",
+          "text": "30",
+          "value": 30,
+          "visible": true,
+          "centerUnobscured": true
+        },
+        "inputToPositivePointsMs": 304.2998046875,
+        "play60RequestSeconds": 60,
+        "play60CompleteSeconds": 60.133
+      },
+      {
+        "size": "820x1180",
+        "counts": {
+          "actions": 26,
+          "responses": 26,
+          "completeWindows": 25,
+          "incompleteRespondingWindows": 1,
+          "completeNoResponse": 0,
+          "incompleteNoResponse": 0,
+          "ACKs": 52,
+          "trustedDownUpClick": 78,
+          "worldOpened": 0,
+          "worldReturned": 0,
+          "infoOpened": 4,
+          "infoClosed": 4,
+          "lateNewInputs": 0,
+          "lateRelease": 0,
+          "lateCompletion": 0,
+          "savedClassificationMismatches": 0
+        },
+        "snapshotCount": 1651,
+        "periodicSnapshotCount": 1294,
+        "activeControlOccurrences": 10859,
+        "activeCenterFalse": 0,
+        "horizontalOverflowSnapshots": 0,
+        "outsideOccurrences": 0,
+        "guideIntersectionCount": 0,
+        "firstFeedback": {
+          "action": 1,
+          "kind": "coordinateChanged",
+          "observedPlaySeconds": 0.15439990234375,
+          "sendToObservedMs": 118.39990234375
+        },
+        "firstPositivePoints": {
+          "observedAt": 1794628275054.7,
+          "playSeconds": 0.384699951171875,
+          "phase": "play",
+          "text": "30",
+          "value": 30,
+          "visible": true,
+          "centerUnobscured": true
+        },
+        "inputToPositivePointsMs": 348.699951171875,
+        "play60RequestSeconds": 60,
+        "play60CompleteSeconds": 60.234
+      }
+    ],
+    "afterAllSourceCPUClosureGates": true,
+    "afterActualOuterExit": 0,
+    "afterActualChildExitCodes": [
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "originalImagesReviewed": {
+      "before": 20,
+      "after": 20
+    },
+    "matchedPeriodicControlGroups": 168,
+    "newRegressionFoundInObservedComparableScope": false,
+    "allStateNoRegressionEstablished": false,
+    "knownFooter": {
+      "beforeOccurrences": 296,
+      "afterOccurrences": 56,
+      "beforePeriodicPerControl": {
+        "BUTTON:btn mini:この名所をシェア": 117,
+        "BUTTON:btn mini voice-btn:この名所のことを教える": 117
+      },
+      "afterPeriodicPerControl": {
+        "BUTTON:btn mini:この名所をシェア": 22,
+        "BUTTON:btn mini voice-btn:この名所のことを教える": 22
+      },
+      "beforeEpisodes": 5,
+      "afterEpisodes": 1,
+      "sameUniqueGeometryBeforeAfter": true,
+      "afterPanelInOriginalPhotos": false,
+      "interpretation": "Same recorded footer geometry/hit pattern persists. Count reduction reflects fewer information episodes; it is not a layout improvement. No after fixed photo captured this panel; scrolling and direct footer taps untested."
+    },
+    "limits": [
+      "No real finger, tilt sensor, network, physical-paint or retention-rate measurement.",
+      "Normal single-finger guidance layout does not prove the selected two-finger worlddrag fix; separate reproduction evidence owns that claim.",
+      "Do not claim every input works from89 observed actions, nor interpret response as destination progress.",
+      "World opens before7/after3 and info opens6/5 have different natural routes/exposure; no causal reduction claim.",
+      "Some cohorts or controls exist only on one side; absence is unestablished, not improvement. Same guide/info identity is not identical animation or route.",
+      "20 after photos all show ordinary view; info/world layout conclusions use saved raw only.",
+      "Center tests are limited to saved CSS-visible selector controls, not every possible control or full touch area.",
+      "Added layout function read duration is0.3-35ms here; not total observer cost. No direct speed comparison to uninstrumented primary."
+    ]
+  },
+  "validation": {
+    "pytest": {
+      "actualChildExit": 127,
+      "requestedWrapperExit": 127,
+      "actualOuterExit": 127,
+      "command": [
+        "pytest",
+        "tests/"
+      ],
+      "completedAtUTC": "2026-11-14T03:44:20.523321+00:00",
+      "missingCommandRaw": "bash: line 1: pytest: command not found\n",
+      "missingCommandConfirmed": true,
+      "classification": "required command attempted but unavailable; not a skip or a pass",
+      "testCounts": null,
+      "sourceHead": "eceaff9f60d872049b49f033857ec4e26cfb63e2"
+    },
+    "unittest": {
+      "command": [
+        "python3",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-v"
+      ],
+      "sourceHead": "eceaff9f60d872049b49f033857ec4e26cfb63e2",
+      "methods": 2578,
+      "methodOutcomeCounts": {
+        "ok": 2553,
+        "FAIL": 22,
+        "ERROR": 2,
+        "skipped": 1,
+        "expected failure": 0,
+        "unexpected success": 0
+      },
+      "elapsedSeconds": 451.327,
+      "actualChildExit": 1,
+      "requestedWrapperExit": 1,
+      "actualOuterExit": 1,
+      "serialClosureConfirmed": true,
+      "sourceFilesUnchanged": 320,
+      "dependencyFilesUnchanged": 548,
+      "referenceEvidenceFilesUnchanged": 4,
+      "failureCategoryCounts": {
+        "git main...HEAD unresolved": 1,
+        "pixel public-export literal": 2,
+        "scope restriction": 19,
+        "tractor progress display literal": 1,
+        "tractor progress regex returned None": 1
+      },
+      "failureDetails": [
+        {
+          "outcome": "ERROR",
+          "method": "test_sizes_are_near_the_files (test_boot_screen.TestTractorProgress.test_sizes_are_near_the_files)",
+          "category": "tractor progress regex returned None",
+          "rawLogLine": 2715,
+          "sourceLocations": [
+            "File \"/workspace/ricepia-nishio-world-drag-pointer/tests/test_boot_screen.py\", line 20, in test_sizes_are_near_the_files"
+          ]
+        },
+        {
+          "outcome": "ERROR",
+          "method": "test_only_pixel_js_changed_and_no_banned_words (test_maze_loop3_36.WallTheme.test_only_pixel_js_changed_and_no_banned_words)",
+          "category": "git main...HEAD unresolved",
+          "rawLogLine": 2724,
+          "sourceLocations": [
+            "File \"/workspace/ricepia-nishio-world-drag-pointer/tests/test_maze_loop3_36.py\", line 75, in test_only_pixel_js_changed_and_no_banned_words"
+          ]
+        },
+        {
+          "outcome": "FAIL",
+          "method": "test_bar_moves_without_total (test_boot_screen.TestTractorProgress.test_bar_moves_without_total)",
+          "category": "tractor progress display literal",
+          "rawLogLine": 2735,
+          "sourceLocations": [
+            "File \"/workspace/ricepia-nishio-world-drag-pointer/tests/test_boot_screen.py\", line 15, in test_bar_moves_without_total"
+          ]
+        },
+        {
+          "outcome": "FAIL",
+          "method": "test_files_and_words (test_maze_loop3_40.Scope.test_files_and_words)",
+          "category": "scope restriction",
+          "rawLogLine": 2743,
+          "sourceLocations": [
+            "File \"/workspace/ricepia-nishio-world-drag-pointer/tests/test_maze_loop3_40.py\", line 68, in test_files_and_words"
+          ]
+        },
+        {
+          "outcome": "FAIL",
+          "method": "test_changed_files_and_words (test_maze_loop3_41.Footprints.test_changed_files_and_words)",
+          "category": "scope restriction",
+          "rawLogLine": 2751,
+          "sourceLocations": [
+            "File \"/workspace/ricepia-nishio-world-drag-pointer/tests/test_maze_loop3_41.py\", line 64, in test_changed_files_and_words"
+          ]
+        },
+        {
+          "outcome": "FAIL",
+          "method": "test_exposed (test_maze_loop4_100.Glance100.test_exposed)",
+          "category": "pixel public-export literal",
+          "rawLogLine": 2759,
+          "sourceLocations": [
+            "File \"/workspace/ricepia-nishio-world-drag-pointer/tests/test_maze_loop4_100.py\", line 47, in test_exposed"
+          ]
+        },
+        {
+          "outcome": "FAIL",
+          "method": "test_scope (test_maze_loop4_100.Glance100.test_scope)",
+          "category": "scope restriction",
+          "rawLogLine": 2767,
+          "sourceLocations": [
+            "File \"/workspace/ricepia-nishio-world-drag-pointer/tests/test_maze_loop4_100.py\", line 65, in test_scope"
+          ]
+        },
+        {
+          "outcome": "FAIL",
+          "method": "test_scope (test_maze_loop4_101.TestFirstMinuteAmbient.test_scope)",
+          "category": "scope restriction",
+          "rawLogLine": 2775,
+          "sourceLocations": [
+            "File \"/workspace/ricepia-nishio-world-drag-pointer/tests/test_maze_loop4_101.py\", line 60, in test_scope"
+          ]
+        },
+        {
+          "outcome": "FAIL",
+          "method": "test_scope (test_maze_loop4_102.TestFirstMinuteMeetings.test_scope)",
+          "category": "scope restriction",
+          "rawLogLine": 2783,
+          "sourceLocations": [
+            "File \"/workspace/ricepia-nishio-world-drag-pointer/tests/test_maze_loop4_102.py\", line 45, in test_scope"
+          ]
+        },
+        {
+          "outcome": "FAIL",
+          "method": "test_scope (test_maze_loop4_103.TestFirstMinuteGochiso.test_scope)",
+          "category": "scope restriction",
+          "rawLogLine": 2791,
+          "sourceLocations": [
+            "File \"/workspace/ricepia-nishio-world-drag-pointer/tests/test_maze_loop4_103.py\", line 40, in test_scope"
+          ]
+        },
+        {
+          "outcome": "FAIL",
+          "method": "test_scope (test_maze_loop4_104.TestFirstMinuteOtedama.test_scope)",
+          "category": "scope restriction",
+          "rawLogLine": 2799,
+          "sourceLocations": [
+            "File \"/workspace/ricepia-nishio-world-drag-pointer/tests/test_maze_loop4_104.py\", line 40, in test_scope"
+          ]
+        },
+        {
+          "outcome": "FAIL",
+          "method": "test_scope (test_maze_loop4_105.TestHappyFace.test_scope)",
+          "category": "scope restriction",
+          "rawLogLine": 2807,
+          "sourceLocations": [
+            "File \"/workspace/ricepia-nishio-world-drag-pointer/tests/test_maze_loop4_105.py\", line 63, in test_scope"
+          ]
+        },
+        {
+          "outcome": "FAIL",
+          "method": "test_scope (test_maze_loop4_106.TestMichikusaFirstRoll.test_scope)",
+          "category": "scope restriction",
+          "rawLogLine": 2815,
+          "sourceLocations": [
+            "File \"/workspace/ricepia-nishio-world-drag-pointer/tests/test_maze_loop4_106.py\", line 52, in test_scope"
+          ]
+        },
+        {
+          "outcome": "FAIL",
+          "method": "test_files (test_maze_loop4_167.TestScope.test_files)",
+          "category": "scope restriction",
+          "rawLogLine": 2823,
+          "sourceLocations": [
+            "File \"/workspace/ricepia-nishio-world-drag-pointer/tests/test_maze_loop4_167.py\", line 75, in test_files"
+          ]
+        },
+        {
+          "outcome": "FAIL",
+          "method": "test_files (test_maze_loop4_168.TestScope.test_files)",
+          "category": "scope restriction",
+          "rawLogLine": 2831,
+          "sourceLocations": [
+            "File \"/workspace/ricepia-nishio-world-drag-pointer/tests/test_maze_loop4_168.py\", line 67, in test_files"
+          ]
+        },
+        {
+          "outcome": "FAIL",
+          "method": "test_files (test_maze_loop4_169.TestScope.test_files)",
+          "category": "scope restriction",
+          "rawLogLine": 2839,
+          "sourceLocations": [
+            "File \"/workspace/ricepia-nishio-world-drag-pointer/tests/test_maze_loop4_169.py\", line 51, in test_files"
+          ]
+        },
+        {
+          "outcome": "FAIL",
+          "method": "test_changed_files_limited (test_maze_loop4_183.Lazy183.test_changed_files_limited)",
+          "category": "scope restriction",
+          "rawLogLine": 2847,
+          "sourceLocations": [
+            "File \"/workspace/ricepia-nishio-world-drag-pointer/tests/test_maze_loop4_183.py\", line 85, in test_changed_files_limited"
+          ]
+        },
+        {
+          "outcome": "FAIL",
+          "method": "test_scope (test_maze_loop4_205.GuideDispName205.test_scope)",
+          "category": "scope restriction",
+          "rawLogLine": 2855,
+          "sourceLocations": [
+            "File \"/workspace/ricepia-nishio-world-drag-pointer/tests/test_maze_loop4_205.py\", line 72, in test_scope"
+          ]
+        },
+        {
+          "outcome": "FAIL",
+          "method": "test_scope (test_maze_loop4_86.HeroRevert.test_scope)",
+          "category": "scope restriction",
+          "rawLogLine": 2863,
+          "sourceLocations": [
+            "File \"/workspace/ricepia-nishio-world-drag-pointer/tests/test_maze_loop4_86.py\", line 105, in test_scope"
+          ]
+        },
+        {
+          "outcome": "FAIL",
+          "method": "test_scope (test_maze_loop4_95.DrawNight95.test_scope)",
+          "category": "scope restriction",
+          "rawLogLine": 2871,
+          "sourceLocations": [
+            "File \"/workspace/ricepia-nishio-world-drag-pointer/tests/test_maze_loop4_95.py\", line 65, in test_scope"
+          ]
+        },
+        {
+          "outcome": "FAIL",
+          "method": "test_scope (test_maze_loop4_97.NoNumbers97.test_scope)",
+          "category": "scope restriction",
+          "rawLogLine": 2879,
+          "sourceLocations": [
+            "File \"/workspace/ricepia-nishio-world-drag-pointer/tests/test_maze_loop4_97.py\", line 53, in test_scope"
+          ]
+        },
+        {
+          "outcome": "FAIL",
+          "method": "test_scope (test_maze_loop4_98.UnreadFog98.test_scope)",
+          "category": "scope restriction",
+          "rawLogLine": 2887,
+          "sourceLocations": [
+            "File \"/workspace/ricepia-nishio-world-drag-pointer/tests/test_maze_loop4_98.py\", line 50, in test_scope"
+          ]
+        },
+        {
+          "outcome": "FAIL",
+          "method": "test_eye_saved_and_public (test_maze_loop4_99.Blink99.test_eye_saved_and_public)",
+          "category": "pixel public-export literal",
+          "rawLogLine": 2895,
+          "sourceLocations": [
+            "File \"/workspace/ricepia-nishio-world-drag-pointer/tests/test_maze_loop4_99.py\", line 42, in test_eye_saved_and_public"
+          ]
+        },
+        {
+          "outcome": "FAIL",
+          "method": "test_scope (test_maze_loop4_99.Blink99.test_scope)",
+          "category": "scope restriction",
+          "rawLogLine": 2903,
+          "sourceLocations": [
+            "File \"/workspace/ricepia-nishio-world-drag-pointer/tests/test_maze_loop4_99.py\", line 60, in test_scope"
+          ]
+        }
+      ],
+      "errorMessages": [
+        "AttributeError: 'NoneType' object has no attribute 'group'",
+        "subprocess.CalledProcessError: Command '['git', 'diff', 'main...HEAD', '--', 'nishio-go/pixel.js']' returned non-zero exit status 128."
+      ],
+      "skip": {
+        "method": "test_ruler_defined_in_design (test_maze_loop4_149.TestFirstMinuteRuler.test_ruler_defined_in_design)",
+        "reason": "設計書がこの環境に無い",
+        "rawLogLine": 1161
+      },
+      "sameConditionBaselineComparison": false,
+      "preexistingFailureWaiver": false
+    },
+    "node": {
+      "command": [
+        "node",
+        "tools/playtest.js",
+        "/workspace/scratch/first-minute/round-97/postfix-validation-v2/node-playtest"
+      ],
+      "sourceHead": "eceaff9f60d872049b49f033857ec4e26cfb63e2",
+      "startedAtUTC": "2026-11-14T04:00:57.522740+00:00",
+      "completedAtUTC": "2026-11-14T04:28:51.380077+00:00",
+      "actualChildExit": 1,
+      "requestedWrapperExit": 1,
+      "actualOuterExit": null,
+      "actualOuterExitUnavailableReason": "Original wait handle was lost; child and wrapper requested exits are not substituted for the tool outer exit. The same original process continued, with no retry.",
+      "retryCount": 0,
+      "timedOut": false,
+      "forcedCleanup": false,
+      "groupCount": 250,
+      "rawWrapperPropertyOkOnlySummary": {
+        "explicitPropertyOkTrue": 178,
+        "explicitPropertyOkFalse": 9,
+        "withoutOkProperty": 63
+      },
+      "canonicalBooleanAwareSummary": {
+        "explicitSuccess": 221,
+        "explicitFailure": 9,
+        "withoutExplicitBooleanVerdict": 20
+      },
+      "classification": "Dict.ok boolean values and bare booleans are explicit verdicts. The other 20 observations have no independent boolean verdict: 17 feed compound final conditions, and 3 are auxiliary diagnostic records. They are neither blanket passes nor unexecuted tests.",
+      "classificationDifference": "The original wrapper counts only .ok properties. Its63 includes43 bare true entries; the independent boolean-aware count reports those43 as success. Original output is preserved.",
+      "independentAuditConfirmed": true,
+      "failedGroupNames": [
+        "swipeHold",
+        "tapDemoQuick",
+        "rollNoDemo",
+        "lowGoalDemo",
+        "infoSecondTap",
+        "restFinger",
+        "tiltDemoShown",
+        "godotRec",
+        "speedLines"
+      ],
+      "browserErrors": [],
+      "overallResultOK": false,
+      "serialClosureConfirmed": true,
+      "closureScan": "comm and argv0, across PGIDs; no live Node/Chromium, original3 processes gone, only previously recorded4 HTTP servers remain.",
+      "sourceFilesUnchanged": 320,
+      "dependencyFilesUnchanged": 548,
+      "referenceEvidenceFilesUnchanged": 4,
+      "independentAuditFrozenSHA256": "f2880ba56bb1ef6753e80ffd11a3192d659f7ced4f9e42aef313732388bcf926",
+      "explicitSuccessComponents": {
+        "dictionaryOkTrue": 178,
+        "bareBooleanTrue": 43,
+        "bareBooleanFalse": 0
+      },
+      "withoutIndependentBooleanVerdictComponents": {
+        "compoundConditionInputs": 17,
+        "auxiliaryDiagnosticRecords": 3,
+        "rawTypes": {
+          "dict": 6,
+          "int": 7,
+          "str": 4,
+          "list": 3
+        }
+      },
+      "timing": {
+        "launchRequestedAtUTC": "2026-11-14T04:00:57.520424+00:00",
+        "childStartedAtUTC": "2026-11-14T04:00:57.522740+00:00",
+        "childCompletedAtUTC": "2026-11-14T04:28:51.380077+00:00",
+        "wrapperReceiptCompletedAtUTC": "2026-11-14T04:28:51.632578+00:00",
+        "launchRequestToChildCompletionSeconds": 1673.859653,
+        "childStartToCompletionSeconds": 1673.857337,
+        "wrapperStartToReceiptCompletionSeconds": 1674.211857
+      },
+      "scriptStoppedPresent": false,
+      "failureDetails": [
+        {
+          "key": "swipeHold",
+          "raw": {
+            "held": true,
+            "ms": 828,
+            "still": "null",
+            "g1": "[1807,1900]",
+            "g2": "[1807,1900]",
+            "g4": "[1807,1900]",
+            "g3": "[1804,1897]",
+            "want": "[1804,1897]",
+            "far": true,
+            "info": false,
+            "cfg": {
+              "ms": 300,
+              "px": 5,
+              "min": 12
+            },
+            "ok": false
+          },
+          "observedFailedCondition": "held=true, still=null, small-move g2=g1, but before-release g4=[1807,1900] differs from want=[1804,1897]; released g3 equals want and differs from g4. The 828ms observed wait is recorded, but this predicate does not itself threshold ms.",
+          "codeFile": "tools/playtest.js",
+          "predicateLine": 252,
+          "relationshipToChange": "No direct pointer-owner/camera-jump trace or endWorldDrag exception in this failed group. Rest-finger/swipe/return paths remain adjacent regression concerns; same-condition baseline is not available, so causation is unestablished."
+        },
+        {
+          "key": "tapDemoQuick",
+          "raw": {
+            "n": 7,
+            "med": 2456,
+            "min": 2213,
+            "ok": false
+          },
+          "observedFailedCondition": "n=7 is sufficient; median wait2456ms is not below1700ms (minimum2213ms).",
+          "codeFile": "tools/playtest.js",
+          "predicateLine": 466,
+          "relationshipToChange": "No direct pointer-owner/camera-jump trace or endWorldDrag exception in this failed group. Rest-finger/swipe/return paths remain adjacent regression concerns; same-condition baseline is not available, so causation is unestablished."
+        },
+        {
+          "key": "rollNoDemo",
+          "raw": {
+            "rice": 231,
+            "route": 521,
+            "demo": 521,
+            "first": false,
+            "fresh": true,
+            "bad": 0,
+            "vmax": 0,
+            "ok": false
+          },
+          "observedFailedCondition": "vmax=0 is below1 and fresh=true rather than false. bad=0 passes; the result does not show rolling with an unwanted demo.",
+          "codeFile": "tools/playtest.js",
+          "predicateLine": 1242,
+          "relationshipToChange": "No direct pointer-owner/camera-jump trace or endWorldDrag exception in this failed group. Rest-finger/swipe/return paths remain adjacent regression concerns; same-condition baseline is not available, so causation is unestablished."
+        },
+        {
+          "key": "lowGoalDemo",
+          "raw": {
+            "rows": [
+              {
+                "vp": "568x320",
+                "k": 1,
+                "left": 1,
+                "shown": false,
+                "at": null,
+                "inMap": null,
+                "onRice": null
+              },
+              {
+                "vp": "568x320",
+                "k": 2,
+                "left": 2,
+                "shown": true,
+                "at": 3.48,
+                "inMap": true,
+                "onRice": false
+              },
+              {
+                "vp": "844x390",
+                "k": 1,
+                "left": 1,
+                "shown": true,
+                "at": 2.74,
+                "inMap": true,
+                "onRice": false
+              },
+              {
+                "vp": "844x390",
+                "k": 2,
+                "left": 2,
+                "shown": true,
+                "at": 2.74,
+                "inMap": true,
+                "onRice": false
+              }
+            ],
+            "ok": false
+          },
+          "observedFailedCondition": "568x320, k=1 row shown=false; other3 rows show in-map demos off rice. Four valid rows are required.",
+          "codeFile": "tools/playtest.js",
+          "predicateLine": 1134,
+          "relationshipToChange": "No direct pointer-owner/camera-jump trace or endWorldDrag exception in this failed group. Rest-finger/swipe/return paths remain adjacent regression concerns; same-condition baseline is not available, so causation is unestablished."
+        },
+        {
+          "key": "infoSecondTap",
+          "raw": {
+            "moved": true,
+            "g": {
+              "x": 195,
+              "y": 270,
+              "len": 5,
+              "goal": "station-student"
+            },
+            "win": {
+              "open": false,
+              "atTap": "pxCanvas"
+            },
+            "second": {
+              "form": false,
+              "clicks": [
+                "pxCanvas",
+                "pxCanvas"
+              ]
+            },
+            "ok": false
+          },
+          "observedFailedCondition": "win.open=false. No info button click or send form was recorded, so the failing predicate is that the expected window did not open.",
+          "codeFile": "tools/playtest.js",
+          "predicateLine": 997,
+          "relationshipToChange": "No direct pointer-owner/camera-jump trace or endWorldDrag exception in this failed group. Rest-finger/swipe/return paths remain adjacent regression concerns; same-condition baseline is not available, so causation is unestablished."
+        },
+        {
+          "key": "restFinger",
+          "raw": {
+            "tap": false,
+            "swipe": false,
+            "pinch": false,
+            "touchAction": "pinch-zoom",
+            "info": false,
+            "ok": false
+          },
+          "observedFailedCondition": "tap=false and swipe=false; pinch=false, touchAction=pinch-zoom and info=false satisfy their individual conditions.",
+          "codeFile": "tools/playtest.js",
+          "predicateLine": 723,
+          "relationshipToChange": "No direct pointer-owner/camera-jump trace or endWorldDrag exception in this failed group. Rest-finger/swipe/return paths remain adjacent regression concerns; same-condition baseline is not available, so causation is unestablished."
+        },
+        {
+          "key": "tiltDemoShown",
+          "raw": {
+            "on": false,
+            "phone": false,
+            "force": 0.28,
+            "at": [
+              1801.8666414448435,
+              1893.700017784637
+            ],
+            "moved": 0.88,
+            "ok": false
+          },
+          "observedFailedCondition": "on=false and phone=false; force0.28 satisfies >0.2. moved0.88 is retained as an observation.",
+          "codeFile": "tools/playtest.js",
+          "predicateLine": 731,
+          "relationshipToChange": "No direct pointer-owner/camera-jump trace or endWorldDrag exception in this failed group. Rest-finger/swipe/return paths remain adjacent regression concerns; same-condition baseline is not available, so causation is unestablished."
+        },
+        {
+          "key": "godotRec",
+          "raw": {
+            "errs": [],
+            "len": 5952,
+            "shade": 0,
+            "ok": false
+          },
+          "observedFailedCondition": "shade=0 fails shade>0; errs=[] and len5952>50 pass. The broad failure label is not evidence of a runtime canvas exception.",
+          "codeFile": "tools/playtest.js",
+          "predicateLine": 2051,
+          "relationshipToChange": "No direct pointer-owner/camera-jump trace or endWorldDrag exception in this failed group. Rest-finger/swipe/return paths remain adjacent regression concerns; same-condition baseline is not available, so causation is unestablished."
+        },
+        {
+          "key": "speedLines",
+          "raw": {
+            "ok": false,
+            "room": 7,
+            "fast": 0,
+            "vmax": 4.16,
+            "far": 0.91
+          },
+          "observedFailedCondition": "far0.91 fails distance>1.5; fast0 satisfies no speed-lines, vmax4.16 satisfies >2 and <=5. The result does not establish forbidden speed-lines.",
+          "codeFile": "tools/playtest.js",
+          "predicateLine": 2588,
+          "relationshipToChange": "No direct pointer-owner/camera-jump trace or endWorldDrag exception in this failed group. Rest-finger/swipe/return paths remain adjacent regression concerns; same-condition baseline is not available, so causation is unestablished."
+        }
+      ],
+      "sameConditionBaselineAvailable": false
+    },
+    "overallPassed": false,
+    "testsRemovedWeakenedOrDisabled": false,
+    "preservationScope": {
+      "phases": [
+        "pytest",
+        "additional single-method unit",
+        "full unittest discover",
+        "node tools/playtest.js"
+      ],
+      "sourceHead": "eceaff9f60d872049b49f033857ec4e26cfb63e2",
+      "unchangedTargetFilesPerPhase": 320,
+      "unchangedDependencyFilesPerPhase": 548,
+      "unchangedRedGreenEvidenceFilesPerPhase": 4,
+      "note": "These preservation counts apply to the four final-candidate checks only, not the earlier reproduction or isolated RED/GREEN fixtures."
+    }
+  },
+  "operatorJudgment": [
+    "Keep first trustedclick tilt permission, initial tap hand and idle guidance, no start/arrival cards, and goal-arrow world entry.",
+    "Visual explanation of nonmonotonic distance is B operator judgment; no display clamping or rescue-gate change.",
+    "Shorter intermediate progress after a long next goal is C broader design; not part of current input fix."
+  ],
+  "knownSeparateCandidates": [
+    "PR1147 long current-target name",
+    "PR1133 moving-hand interaction",
+    "844x390 info footer center occlusion; scroll unresolved"
+  ],
+  "physicalLimits": [
+    "real fingers and palm contact",
+    "tilt sensor and permission behavior on actualdevice",
+    "network speed",
+    "sound audibility",
+    "calibrated hardware speed",
+    "physicalpaint timing"
+  ],
+  "photos": {
+    "unmodifiedOriginalPNGs": 8,
+    "comparability": "Same fixed gesture and viewport; screenshots are from separate fresh runs at the same checkpoint, not identical wall-clock or RNG state. Exact geometry comes from raw read-only draw coordinates; originals corroborate direction/magnitude.",
+    "photos": [
+      {
+        "file": "primary-observe-10s.png",
+        "kind": "ordinary primary before",
+        "sourceRelativeToRound97": "preparation-4568/observe-10s.png",
+        "sourceSHA256": "706b1e8d71859542857ae85018c7766d335e7d991544ffd3db5771a373f29383",
+        "bytes": 242672,
+        "sourceHead": "4568c8792f4c804cf354f6f63a12ef568e2b6748",
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "cpuRate": 1,
+        "clock": "observe",
+        "requestedSeconds": 10,
+        "completedSeconds": 10.153,
+        "unchangedOriginalBytes": true,
+        "inFixedReproductionDenominator": false
+      },
+      {
+        "file": "primary-play-10s.png",
+        "kind": "ordinary primary before",
+        "sourceRelativeToRound97": "preparation-4568/play-10s.png",
+        "sourceSHA256": "fb691a7ba5a0a6f0655dbe5e71fae03eacc6a183a715948a99e9d695bd8a637a",
+        "bytes": 243470,
+        "sourceHead": "4568c8792f4c804cf354f6f63a12ef568e2b6748",
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "cpuRate": 1,
+        "clock": "play",
+        "requestedSeconds": 10,
+        "completedSeconds": 10.15,
+        "unchangedOriginalBytes": true,
+        "inFixedReproductionDenominator": false
+      },
+      {
+        "file": "primary-play-30s.png",
+        "kind": "ordinary primary before",
+        "sourceRelativeToRound97": "preparation-4568/play-30s.png",
+        "sourceSHA256": "47938ac51172d5ae6df4ff0868ba4b2638ab3542cbbcc69f2f2e87436975b5f3",
+        "bytes": 253014,
+        "sourceHead": "4568c8792f4c804cf354f6f63a12ef568e2b6748",
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "cpuRate": 1,
+        "clock": "play",
+        "requestedSeconds": 30,
+        "completedSeconds": 30.142,
+        "unchangedOriginalBytes": true,
+        "inFixedReproductionDenominator": false
+      },
+      {
+        "file": "primary-play-60s.png",
+        "kind": "ordinary primary before",
+        "sourceRelativeToRound97": "preparation-4568/play-60s.png",
+        "sourceSHA256": "14cc730e5e91031b59e93ac0b0bfb4583bfc21b3e3ddaf6ae2e8abb1a6922e80",
+        "bytes": 292231,
+        "sourceHead": "4568c8792f4c804cf354f6f63a12ef568e2b6748",
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "cpuRate": 1,
+        "clock": "play",
+        "requestedSeconds": 59.999,
+        "completedSeconds": 60.13,
+        "unchangedOriginalBytes": true,
+        "inFixedReproductionDenominator": false
+      },
+      {
+        "file": "before-fast-world-pan.png",
+        "kind": "fixed two-finger reproduction",
+        "sourceRelativeToRound97": "world-drag-reproduction-v2/treatment-01/world-p1-with-second-or-control.png",
+        "sourceSHA256": "2d5bcdbdafbb3d03507e4576d171d8fac10f6fe745622241f78e13912311f3c8",
+        "bytes": 87232,
+        "sourceHead": "4568c8792f4c804cf354f6f63a12ef568e2b6748",
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "cpuRate": 1,
+        "clock": "play after 10s observation",
+        "requestedSeconds": 4.652,
+        "completedSeconds": 4.741,
+        "unchangedOriginalBytes": true
+      },
+      {
+        "file": "before-slow-world-pan.png",
+        "kind": "fixed two-finger reproduction",
+        "sourceRelativeToRound97": "world-drag-reproduction-v2/treatment-02/world-p1-with-second-or-control.png",
+        "sourceSHA256": "0eeecf4e22913ffe186887dca4bdfc3360d483537ee1bffe29cd3c69c31c4f17",
+        "bytes": 87360,
+        "sourceHead": "4568c8792f4c804cf354f6f63a12ef568e2b6748",
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "cpuRate": 1,
+        "clock": "play after 10s observation",
+        "requestedSeconds": 5.091,
+        "completedSeconds": 5.17,
+        "unchangedOriginalBytes": true
+      },
+      {
+        "file": "after-fast-world-pan.png",
+        "kind": "fixed two-finger reproduction",
+        "sourceRelativeToRound97": "world-drag-after-reproduction/treatment-01/world-p1-with-second-or-control.png",
+        "sourceSHA256": "12313a63dddc7953b180afa2d5c2b44c15f598a6daf9e8cafd71f3d633de70f9",
+        "bytes": 94848,
+        "sourceHead": "4c7ce72c5d53ce3ade918117ca3ec4912c2e11db",
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "cpuRate": 1,
+        "clock": "play after 10s observation",
+        "requestedSeconds": 4.475,
+        "completedSeconds": 4.566,
+        "unchangedOriginalBytes": true
+      },
+      {
+        "file": "after-slow-world-pan.png",
+        "kind": "fixed two-finger reproduction",
+        "sourceRelativeToRound97": "world-drag-after-reproduction/treatment-02/world-p1-with-second-or-control.png",
+        "sourceSHA256": "ea1a197f794744ee742df3b2cedde1ee9cf6f0f942a6ee4005f35a3d98c23287",
+        "bytes": 95126,
+        "sourceHead": "4c7ce72c5d53ce3ade918117ca3ec4912c2e11db",
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "cpuRate": 1,
+        "clock": "play after 10s observation",
+        "requestedSeconds": 5.075,
+        "completedSeconds": 5.183,
+        "unchangedOriginalBytes": true
+      }
+    ]
+  },
+  "mergeHold": {
+    "held": true,
+    "reason": "Required pytest command unavailable; full unittest and Node checks failed.",
+    "policyURL": "https://github.com/shota0617/ricepia-judge/blob/4568c8792f4c804cf354f6f63a12ef568e2b6748/.claude/skills/ricepia-flow/SKILL.md#L212",
+    "quote": "Codex の 指摘が のこっている・テストが 落ちている・運営者の 判断が いる 変更は、マージせずに 伝える"
+  },
+  "publicationSnapshot": {
+    "intendedState": "draft PR; not merged",
+    "snapshotBeforeDraftPRCreation": true,
+    "repositoryFilesWrittenByReportAuthor": false,
+    "pullRequestURL": null,
+    "docsCommit": null,
+    "documentationCommitOccursAfterValidation": true,
+    "fullValidationOnDocumentationCommit": false
+  },
+  "evidence": {
+    "locationNotice": "Identifiers below refer to retained local evidence under /workspace/scratch/first-minute/round-97. Those raw files are not bundled or presented as publicly reachable links. Included PNGs and this results.json are the public report data.",
+    "baseDirectory": "/workspace/scratch/first-minute/round-97",
+    "sha256": {
+      "preparation-4568/follow.json": "c5d77312fb048103cee225f93087adad7bf0ba6f12d05ff1f6de8289a2f7f701",
+      "preparation-4568/run-result.json": "3fd5fb3b3cc9c8b6d47703b7b2e008e3ed30dd715f209c0d8870a1bd2dcb6758",
+      "discovery-a/summary.json": "7d670ff427799fc896aa36fafe565b24fcaa6d93e6aa45e082c13a80f463e83c",
+      "discovery-b/summary.json": "45f924b0c0cf7c47c19f86fda1e6988bdc11ecce6345c6d9b3064b4ca8336be9",
+      "discovery-c/summary.json": "93683bef303ecf72b12ba1b8fc9b114835f7a5d4e5988c5ac8f92238b9069a7b",
+      "design-review/summary.json": "f2482e31cf40481299e25ebe2305a2cbeb19e852b65a47c343d7b4702435d84a",
+      "world-drag-diagnostic-audit/summary.json": "ca1451e36ee3e4b1a357377d7e385c97da6d3547b30a416efd71b40bb2f411e2",
+      "world-drag-diagnostic-audit/frozen.json": "74e8884cd980a1b2e71fb079fb9ffb8d817796472837a5c22628106bd6a22f1b",
+      "world-drag-before-audit/summary.json": "c21a883f2ac1db3054a51e8637539af4522b066911642b0e0438278c4f53bebb",
+      "world-drag-before-audit/frozen.json": "57b556cadb1435095b0977e2a5224b4e98491c4e8899e8c3ca19a724d59e578b",
+      "world-drag-after-audit/summary.json": "0dd261322a644f29fb61d48ca509a4aa9aeb168c74f169647e57dc29b108a975",
+      "world-drag-after-audit/frozen.json": "9b5e1f28bff3aa51dee8fba27ff3ce10e675437bb64dcb22a5deb8c239fecbcc",
+      "world-drag-reproduction-v2/criteria.json": "bcc04312127437c90c1fe5c5e02489130a1f1febfc995dc2e63e0ac1b687fde5",
+      "code-review/review.json": "6d874ffa1f174d840b9892da3783be27b7fc3d267068969f9bc9bd110eba0467",
+      "code-review/frozen.json": "6878385409226a515497eb3388c3b26ccc05067610206b4aa8238c04b0863a0e",
+      "validation-v3/red-execution.json": "178e00913794a70b036cf53d235240601d12218abda99617503f73eeff44de23",
+      "validation-v3/green-execution.json": "d8eef8440055187b84d994a643c60932571c4e5e305af796f6ca224f9c4243f8",
+      "validation-v3/red.log": "31cd4c9ac58ec28c0b02513e5178709e1484de0381c589f6527ab3f2bb0a0488",
+      "validation-v3/green.log": "1ff7cb016e2adf48fed8ff21cdd73279010b6c699efb1433a70e28644c79f3f8",
+      "validation-v3-execution-review/review.json": "ef31261d4869c60bbce86ce730f0de6fd8ea63c940f620a2994f794f97332270",
+      "validation-v3-execution-review/frozen.json": "a90f699ec908a34357e29f1d2daa3bce302213918aca2b7b71daa49b3570ae8e",
+      "layout-audit/before/summary.json": "2051c3949ac72701b81ded7e4deedacd10b907f01ebb93e349c500dbde371da2",
+      "layout-audit/before/frozen.json": "de840742808baaf0d917c3b92076b2d57d76a6e3c4604fa6746434ac8616ef86",
+      "layout-audit/after-v2/summary.json": "d7c6d85c198b238cc62c86cf4ea5e4e4fec4e4bc666dcced94e3ffe0d8e1ed0e",
+      "layout-audit/after-v2/frozen.json": "1665ddcc521e8c394bd24d8e9dfd9dfe9ac4c7ecd4f718a83eb1a1bb82a96db6",
+      "postfix-validation-v2/pytest/execution.json": "8a9404257dc27caecf0b6b3e19e8ab407f99dca8b52940c8063464d19a6c0780",
+      "postfix-validation-v2/pytest/run.log": "b6fe94a4971280b69606b3ad6039ae9ed0e48557776ea68f678174b6c8da879a",
+      "postfix-validation-v2/pytest/root-outer-exit.json": "c362a7a795055cf12d03df33eb9218bb1f53c304afdde6b6199632f462ea6c93",
+      "postfix-validation-v2/unit/execution.json": "7d4400bef515d1c37f9b2d44095e515b3a2149461dd7270ad184a0b0db4db0df",
+      "postfix-validation-v2/unit/run.log": "0e19a0ae84d65e6fe4bc924d062f1ebe7c55d5eac04fdb836ba17469d19bda54",
+      "postfix-validation-v2/unit/root-outer-exit.json": "801f3068479ba2af6d2b15fca1a72befb189d6ea85089655f24890ccc2401681",
+      "validation-result-audit/completed-pytest-unit/summary.json": "5649f0ca06d529fdf67814a5072c7ff85875a4d6a581c925a33065d56d5d051a",
+      "validation-result-audit/completed-pytest-unit/frozen.json": "47a888d37539822138a167d3c246863044d97dd13f59d73c0914e3df49ddfc5f",
+      "postfix-validation-v2/unittest/execution.json": "2c125c94289f1320d553cc33b3eee32dba883c809e154ef79d57c80996b2b652",
+      "postfix-validation-v2/unittest/run.log": "e886b17271f067a4712b167c194a9311cef43628d5ab35591286934c9103940d",
+      "postfix-validation-v2/unittest/root-outer-exit.json": "391e8a871ad292103690c53248540d0da609a86f84090e5b64c2b3994e9eec12",
+      "postfix-validation-v2/unittest/root-browser-closure.json": "8b84d914eebae680b8eb4e366bdb8f1e113f839d5493767201642943cba0848b",
+      "postfix-validation-v2/unittest/main-reference-probe.json": "9c6fd322ae698c0358f5087d476c12f4f64ed6b6c5f363a091b84f12a38188f6",
+      "validation-result-audit/completed-unittest/summary.json": "3a87a7271dc2ff4d4d441ed3ffbc5f31704622d86e1ddf19b2d795a04651be09",
+      "validation-result-audit/completed-unittest/frozen.json": "814ecf4dbb41cd7c6e3284c04c80ebc5d7c2f8cef6f78ed0f221db6ac8cb491b",
+      "validation-result-audit/unittest-findings/findings.json": "15c30764422ec0d45b7cbd655a51050ebfce992e844d57ccc8b92b69ff944305",
+      "validation-result-audit/unittest-findings/frozen.json": "d61e6b827d06d0e3ef845864962b7a9c0225820ec74c00064ab148b2e0cd562a",
+      "postfix-validation-v2/node/execution.json": "75b385d6f22c665f76e5bc23597f8f65e4b1d60aa80e3e8b9e8323fec0fe0d34",
+      "postfix-validation-v2/node/run.log": "8e4303abb0e02f5991bdbb04d73007e91239155dd7062a0e428403c55d19c43c",
+      "postfix-validation-v2/node/root-outer-exit.json": "954247505631131697772a0e343f5d7739c68b98801563cd5b684776a7bca032",
+      "postfix-validation-v2/node/root-browser-closure.json": "3711dc196b3a128137539da5354933d674d170dfee410f8b9dbffd6e27ce409c",
+      "postfix-validation-v2/node/session-loss.json": "be11dbca40bd70bad159217ddd6103c9580322cf50ced0ad3f9b29d827286067",
+      "postfix-validation-v2/node-playtest/playtest.json": "c9252cfd30de355d46193d9e5e9d95a7f171efd519f3e34a7e6674d5ff737f69",
+      "validation-result-audit/completed-node/frozen.json": "f2880ba56bb1ef6753e80ffd11a3192d659f7ced4f9e42aef313732388bcf926",
+      "validation-result-audit/completed-node/summary.json": "6bac6406f2056d124db7af8b15698537f7899e56e1c427226f6846feca27c58c",
+      "validation-result-audit/completed-node/group-classification.json": "8db26f886b7f16cc8fcf8398429e63da50c78301a6d7f22011397730b2c05bed",
+      "validation-result-audit/completed-node/nine-failures.json": "46f6087a544cf0fc830fa521ce702d8d005551a0e0765c57e134ca69acff1b12",
+      "validation-result-audit/completed-node/timing-and-closure.json": "af5993ae5e119f570dab9e73b5127d372ed47b36ecc47fcff0e20d5ffecd9b55",
+      "validation-result-audit/completed-node/source-relation.json": "d8b75436d9f86ff51b527ff8cb44f4407f592708223af17a7b3a10102e4f7699",
+      "validation-result-audit/completed-node/original-artifact-preservation.json": "b0e8dfd2eb60f1a49b19972a55003c903d77fc387a6bc234410cb02dfb4877b8"
+    }
+  },
+  "independentFinalReportReview": null
+}

@@ -297,7 +297,7 @@ async function firstMinuteChecks(browser, R) {
         const otherBtn = !b.hidden && document.getElementById('spinName').textContent === other.name && !G.state.visits[other.id];
         return { goal: g.name, shown, h0, hMax, checked, other: other.name, otherBtn, pop, ok: shown === 0 && checked && otherBtn };
       });
-      return { firstGoalNear: fg, lazySprites: lz, playAskQuick: pa, worldBack: wb, tiltDeniedMsg: tm, swipeWalk: sw, swipeHold: { ...(sw.hold || { why: 'no-route' }), ok: !!sw.holdOk }, tapStepPace: { ...(sw.pace || { why: 'no-route' }), ok: !!sw.paceOk }, arriveNoSpin: an, ptsPop: { ...(an.pop || { why: an.why || 'no-goal' }), ok: !!an.pop && an.pop.gained >= 5 && an.pop.seen && (an.pop.scale >= 1.05 || an.pop.gold) && !an.pop.left && an.pop.shown && /^[\d,]+(pt)?$/.test(an.pop.text) }, ...(await startSteadyChecks(browser, R)), ...(await a2hsChecks(browser, R)), ...(await tapDemoChecks(browser, R)), ...(await cycle212Checks(browser, R)), ...(await cycle210Checks(browser, R)), ...(await cycle209Checks(browser, R)), ...(await cycle208Checks(browser, R)), ...(await cycle207Checks(browser, R)), ...(await cycle206Checks(browser, R)), ...(await slowStartChecks(browser, R)) };
+      return { firstGoalNear: fg, lazySprites: lz, playAskQuick: pa, worldBack: wb, tiltDeniedMsg: tm, swipeWalk: sw, swipeHold: { ...(sw.hold || { why: 'no-route' }), ok: !!sw.holdOk }, tapStepPace: { ...(sw.pace || { why: 'no-route' }), ok: !!sw.paceOk }, arriveNoSpin: an, ptsPop: { ...(an.pop || { why: an.why || 'no-goal' }), ok: !!an.pop && an.pop.gained >= 5 && an.pop.seen && (an.pop.scale >= 1.05 || an.pop.gold) && !an.pop.left && an.pop.shown && /^[\d,]+(pt)?$/.test(an.pop.text) }, ...(await startSteadyChecks(browser, R)), ...(await a2hsChecks(browser, R)), ...(await tapDemoChecks(browser, R)), ...(await cycle214Checks(browser, R)), ...(await cycle212Checks(browser, R)), ...(await cycle210Checks(browser, R)), ...(await cycle209Checks(browser, R)), ...(await cycle208Checks(browser, R)), ...(await cycle207Checks(browser, R)), ...(await cycle206Checks(browser, R)), ...(await slowStartChecks(browser, R)) };
     } finally { R.errors.push(...v.errors); await v.ctx.close(); }
 }
 // サイクル193（運営者の声 2026-11-10「さんぽGOホーム画面に追加を控えめに促す」）：ホーム画面に追加の おすすめは 小さな 1行の 札。
@@ -1269,6 +1269,51 @@ async function cycle212Checks(browser, R) {
   } catch (e) { out.slowCoverCalm = { ok: false, crashed: String(e && e.message || e).split('\n')[0].slice(0, 200) }; }
   return out;
 }
+// サイクル214：歩けなかった タップ（道の ない 所）の あと、次の 手本は 歩いた あとと 同じ 待ち（0.9秒）。窓が 開く タップ・傾きの 許可を 聞く タップは これまでどおり
+async function cycle214Checks(browser, R) {
+  const out = {};
+  const open = async perm => {
+    const v = await newPage(browser, { howto: true, auto: true, hasTouch: true, isMobile: true, locale: 'ja-JP', timezoneId: 'Asia/Tokyo', viewport: { width: 390, height: 844 } });
+    await v.page.addInitScript(perm => {
+      if (!sessionStorage.getItem('__c214')) { sessionStorage.setItem('__c214', '1'); for (const k of ['nsg_auto', 'nsg_roll', 'nsg_roll_v2', 'nsg_view', 'nsg_world_on', 'nsg_koro', 'nsg_kome_talk']) localStorage.removeItem(k); }
+      window.__asks = 0; window.__pd = [];
+      document.addEventListener('pointerdown', () => window.__pd.push(performance.now()), true);
+      if (perm && window.DeviceOrientationEvent) DeviceOrientationEvent.requestPermission = () => { window.__asks++; return new Promise(() => {}); };
+    }, !!perm);
+    await v.page.goto(URL);
+    await v.page.waitForFunction(() => window.nishioPixel && nishioPixel.tapDemo.on && !nishioPixel.tapDemo.world, null, { timeout: 20000 }).catch(() => {});
+    const cdp = await v.ctx.newCDPSession(v.page);
+    const tap = async (x, y) => { await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] }); await v.page.waitForTimeout(70); await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); };
+    return { ...v, tap };
+  };
+  // お米の 上の 点（タップすると つんつん：歩かない・窓も 開かない。つんつんが 出せない ときも 自分の マスで 歩かない）
+  const ricePt = p => p.evaluate(() => { const P = nishioPixel, r = P.roll, c = P.tileToClient(r.x - 0.5, r.y - 0.5), c2 = P.tileToClient(r.x + 0.5, r.y - 0.5), T = Math.abs(c2.x - c.x); return { x: Math.round(c.x), y: Math.round(c.y - T * 0.2) }; });
+  const after = p => p.evaluate(async () => { const P = nishioPixel, d = window.__pd[window.__pd.length - 1]; let on = null; while (performance.now() - d < 3000) { if (P.tapDemo.on) { on = Math.round(performance.now() - d); break; } await new Promise(r => setTimeout(r, 30)); }
+    return { on, walked: P.tapDemo.walked, miss: P.tapDemo.missT >= d, walking: !!P.tapGoal, win: !document.getElementById('pxInfo').hidden }; });
+  {   // ① 許可を 聞かない 端末：開いて 止まって いる お米を タップ（歩けない）→ 手本は 1.5秒 以内（手本の 待ちが 歩いた あとと 同じ 0.9秒 に なった こと＝walked を 見る。前は 止まって 2秒）
+    let v = null;
+    try {
+      v = await open(false);
+      await v.page.waitForTimeout(300);
+      const q = await ricePt(v.page);
+      await v.tap(q.x, q.y);
+      const a = await after(v.page);
+      out.missTapDemo = { q, ...a, ok: !a.walking && !a.win && a.miss && a.walked === true && a.on != null && a.on <= 1500 };
+    } catch (e) { out.missTapDemo = { ok: false, crashed: String(e && e.message || e).split('\n')[0].slice(0, 200) }; } finally { if (v) { R.errors.push(...v.errors); await v.ctx.close(); } }
+  }
+  {   // ② 許可を 聞く 端末の 最初の タップ が お米（歩けない）：許可は 1回 だけ 聞き、手本の 待ちは 早めない
+    let v = null;
+    try {
+      v = await open(true);
+      const q = await ricePt(v.page);
+      await v.tap(q.x, q.y);
+      await v.page.waitForTimeout(400);
+      const a = await v.page.evaluate(() => ({ asks: window.__asks, miss: nishioPixel.tapDemo.missT || 0, walking: !!nishioPixel.tapGoal }));
+      out.missTapPerm = { q, ...a, ok: a.asks === 1 && a.miss === 0 && !a.walking };
+    } catch (e) { out.missTapPerm = { ok: false, crashed: String(e && e.message || e).split('\n')[0].slice(0, 200) }; } finally { if (v) { R.errors.push(...v.errors); await v.ctx.close(); } }
+  }
+  return out;
+}
 const FIRST_MINUTE_NEED = {
   slowCover: '読みこみ中の 題字が スタイルシートを 待つ（head に ある）／題字の 下に 動く しるし（米つぶ）が ない',
   bgmAfterMap: '地図が 動きだす 前の タップで 曲（mp3）を 読みはじめる／動きだした あとの タップで 曲が 鳴らない',
@@ -1320,6 +1365,8 @@ const FIRST_MINUTE_NEED = {
   demoTouchWait: '最初の 手本の あと さわると、手本が すぐ 消えない／次の 手本が 2秒 待たずに 出る（さわった あとの 手本は これまでどおり 2秒。サイクル210）',
   rollNoDemo: '開いて すぐ 傾けて（8度）も 転がらない（速さ 1マス/秒 に とどかない）／転がって いる 間に 手本が 出る／転がった あとも「はじめての 手本」の まま（サイクル210）',
   slowCoverCalm: '「動きを へらす」設定の 読みこみ中、米つぶが 止まった まま（明るさも かわらない）／場所・形が 動く／ふつうの 設定の 転がる 米つぶが かわった（サイクル212）',
+  missTapDemo: '止まって いる お米を タップ して 歩けなかった あと、次の「タップ！」の 手本が 1.5秒 以内に 出ない（歩いた あとと 同じ 0.9秒の 待ちに なって いない。サイクル214）',
+  missTapPerm: '許可を 聞く 端末の 最初の タップが お米（歩けない）の とき、許可を 1回 だけ 聞かない／手本の 待ちを 早めて しまう（サイクル214）',
   bootLoaded: '地図の 部品が ふつうに 読めた のに「時間が かかっています」の ボタン・「もう 1回 読みこむ」が 出る／始まらない',
   bootFailed: '地図の 部品が 読めなかった（エラー）とき、押せる「もう 1回 読みこむ」の ボタンが 4秒 までに 出ない／押しても 読みこみ なおさない',
   bootSlow: '地図の 部品が 8秒 おくれて 届く 人に「時間が かかっています」が 出る／20秒 おくれの 人が 始まらない・始まった あとも 残る',

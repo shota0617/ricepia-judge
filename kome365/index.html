@@ -542,6 +542,8 @@ a{color:var(--acc)}
 #swHand .hdTrail{position:absolute;top:calc(var(--hy,46%) + 1px);height:10px;width:23%;border-radius:4px;opacity:0}
 #swHand .hdTrailR{left:50%;transform-origin:0 50%;background:linear-gradient(to right,rgba(59,82,99,0),rgba(59,82,99,.78));animation:swDemoTrailR 5s ease-in-out infinite}
 #swHand .hdTrailL{right:50%;transform-origin:100% 50%;background:linear-gradient(to left,rgba(59,82,99,0),rgba(59,82,99,.78));animation:swDemoTrailL 5s ease-in-out infinite}
+@media (max-width:360px) and (min-height:441px),(max-height:700px) and (min-height:441px){#swHand .hdFinger{width:34px;height:45px;left:calc(50% - 13px);background-size:34px 45px;transform-origin:13px 3px}}   /* サイクル182: 小さい たて画面は 手本の 指を 少し 小さく(絵の 段から 下の 題の 字へ はみ出して いた。320×568 で 191px²) */
+@media (max-height:440px){#swHand{--hy:calc(46% + 4px)}#swHand .hdFinger{width:28px;height:37px;left:calc(50% - 11px);background-size:28px 37px;transform-origin:11px 3px}}   /* サイクル182: 横の 低い 画面(絵の 段 なし)は 指を 小さく して 題と 選ぶ 札の 字の 間へ(題・札の 字に かかって いた) */
 @keyframes swDemoGhost{0%,10%{transform:translateX(0) rotate(0)}26%,36%{transform:translateX(-23%) rotate(-1.5deg)}46%,60%{transform:translateX(0) rotate(0)}76%,86%{transform:translateX(23%) rotate(1.5deg)}96%,100%{transform:translateX(0) rotate(0)}}   /* 幅は周回116と同じ ±23%(確定距離以上)。手本どおり引けば決まる */
 @keyframes swDemoMove{0%,10%{transform:translateX(0)}26%,42%{transform:translateX(-23%)}42.01%,60%{transform:translateX(0)}76%,92%{transform:translateX(23%)}92.01%,100%{transform:translateX(0)}}   /* サイクル179: 手本は 先に 左、あとで 右(1枚目 1月1日の 正解は 左に 決めて ある cards.js FIRST3_SIDE。前は 先に 右で、手本の 最初の 動きを まねた 人が 1枚目で ✗ に なった)。影・のこる あと・両はしの 光も 同じ 順 */
 @keyframes swDemoFinger{0%,2%{opacity:0;transform:translateY(10px) scale(1.16)}6%{opacity:1;transform:translateY(10px) scale(1.16)}10%,36%{opacity:1;transform:none}41%,52%{opacity:0;transform:translateY(10px) scale(1.16)}56%{opacity:1;transform:translateY(10px) scale(1.16)}60%,86%{opacity:1;transform:none}91%,100%{opacity:0;transform:translateY(10px) scale(1.16)}}
@@ -648,10 +650,10 @@ a{color:var(--acc)}
 .zSil{filter:grayscale(1) brightness(0);opacity:.45;line-height:1.25}
 #swDetailBtn{pointer-events:auto;display:block;width:min(92%,380px);min-height:52px;margin:8px auto 0;padding:10px 14px;border:0;border-radius:14px;background:#fffdf7;color:#2b2a24;font:inherit;font-size:19px;font-weight:700;box-shadow:0 3px 10px rgba(0,0,0,.22);cursor:pointer;flex:none}
 #swRewind:disabled{opacity:.35;box-shadow:none;cursor:default}
-#swMark{position:absolute;left:50%;top:40%;width:min(58vw,240px);aspect-ratio:1;margin-left:calc(min(58vw,240px) / -2);margin-top:calc(min(58vw,240px) / -2);z-index:40;pointer-events:none;opacity:0;background-size:100% 100%;image-rendering:pixelated}
-#swMark.on{animation:swMarkIn .75s ease-out both}
-@keyframes swMarkIn{0%{opacity:0;transform:scale(.55)}18%{opacity:1;transform:scale(1.08)}30%{transform:scale(1)}72%{opacity:1}100%{opacity:0;transform:scale(1)}}
-@media (prefers-reduced-motion:reduce){#swMark.on{animation:swMarkFade .75s linear both}@keyframes swMarkFade{0%,70%{opacity:1}100%{opacity:0}}}
+#swMark{position:absolute;left:50%;top:40%;width:min(58vw,240px);aspect-ratio:1;margin-left:calc(min(58vw,240px) / -2);margin-top:calc(min(58vw,240px) / -2);z-index:40;pointer-events:none;opacity:0;background-size:100% 100%;image-rendering:pixelated;transition:opacity .15s linear}
+#swMark.on{opacity:1;transition:none;animation:swMarkPop .23s ease-out}   /* サイクル180(運営者の声 2026-11-14「前のように スワイプ すると マルバツが 出る ように」): しるしは 時間で 終わる アニメ 1回 では なく、描かれた こまで 数えて 約0.6秒 見せてから 0.15秒で 消す(markShow・markTick)。重い 端末で 1こまも 描かれずに 終わる ことが ない */
+@keyframes swMarkPop{0%{transform:scale(.55)}78%{transform:scale(1.08)}100%{transform:scale(1)}}
+@media (prefers-reduced-motion:reduce){#swMark.on{animation:none}}
 #swWhy{position:absolute;left:50%;top:calc(40% + min(29vw,120px) + 10px);transform:translateX(-50%);width:max-content;max-width:88%;z-index:41;pointer-events:none;opacity:0;background:rgba(255,253,247,.94);color:#b4472f;font-size:15px;font-weight:700;line-height:1.4;padding:5px 12px;border-radius:999px;text-align:center;box-shadow:0 2px 8px rgba(60,40,20,.20)}   /* 店主指示 2026-11-08: バツの一言理由。マークの下に浮かせて約2秒で消す。入力はふさがない */
 #swWhy.on{animation:swWhyIn 2s ease-out both}
 #swWhy[data-k="ok"]{color:#2e7d32}   /* サイクル177: ○ の わけは 緑(✗ は 今の 赤茶の まま)。場所・2秒・入力を ふさがない のは 同じ */
@@ -954,7 +956,7 @@ html:has(#sGame.swipeMode:not(.hidden)),body:has(#sGame.swipeMode:not(.hidden)){
 window.__k3d = (function(){
   var no3d = /[?&]no3d\b/.test(location.search), http = /^https?:$/.test(location.protocol);
   var SRI = 'sha512-dLxUelApnYxpLt6K2iomGngnHO83iUvZytA3YjDUCjT0HDOHKXnVYdf3hU4JjM8uEhxf9nD1/ey98U3t2vZ0qQ==';
-  var st = 0, down = 0, timer = null, idleMs = 0, idleT = null, tries = 0;
+  var st = 0, down = 0, timer = null, idleMs = 0, idleT = null, tries = 0, answered = false;
   function pre(){
     if (st) return; st = 1; if (!http) return;
     (no3d ? ['field3d.js'] : ['field3d.js', 'vendor/three.min.js']).forEach(function(src){ var l = document.createElement('link'); l.rel = 'preload'; l.as = 'script'; l.href = src; if (/three/.test(src)) l.integrity = SRI; document.head.appendChild(l); });
@@ -966,10 +968,11 @@ window.__k3d = (function(){
     if (!no3d) add('vendor/three.min.js', SRI, function(){ window.dispatchEvent(new Event('three-ready')); });
   }
   function soon(ms){
+    answered = true;
     if (st === 2 || timer) return;   /* いちど予約したら、つづけて決めても のばさない(0.9秒より速く決めつづけると 3D が いつまでも来なかった) */
     timer = setTimeout(function tick(){ if (down && tries++ < 12) { timer = setTimeout(tick, 400); return; } go(); }, ms);
   }
-  function idleArm(){ clearTimeout(idleT); idleT = null; if (st !== 2 && idleMs) idleT = setTimeout(function(){ if (down) idleArm(); else go(); }, idleMs); }
+  function idleArm(){ clearTimeout(idleT); idleT = null; if (st !== 2 && idleMs && answered) idleT = setTimeout(function(){ if (down) idleArm(); else go(); }, idleMs); }   /* サイクル182: さわらずに 8秒 でも、1枚目を 答える 前は はじめない(ソフトの 3D の 機械で したくに 4〜7秒 画面が 止まり、その 間の 最初の スワイプが 数秒 おくれた)。したくは 1枚目を 決めた 0.9秒 あと(soon) */
   function idle(ms){ idleMs = ms; idleArm(); }
   /* 周回167: 指は 数で 数える(前は 1つの しるし だったので、2本目の 指を 離すと、1本目が カードを つかんだ ままでも したくが はじまった)。
      はじめの 指(isPrimary)が 来たら 1 から 数えなおす・隠れたら 0(離したのが 届かなかった 指で、いつまでも 待たない) */
@@ -3171,7 +3174,7 @@ renderTitle();
   /* 周回160(運営者の声 2026-11-10「スワイプのお手本をすぐにだす」): 待ちを 2秒・6秒 から 0.3秒 に。カードが 出たら・決めずに 離したら すぐ 手本を 出す(何回 決めた 人でも 同じ)。触れて いる 間は 消える */
   var DEMO_STOP_MS = 300, DEMO_STOP_OK_MS = 300, demoT = null, demoMiss = 0, demoOk = 0;
   function demoDisarm(){ if (demoT) { clearTimeout(demoT); demoT = null; } }
-  function demoArm(ms){ demoDisarm(); demoT = setTimeout(function(){ demoT = null; var markLeft = 750 - (performance.now() - markAt); if (markLeft > 0) { demoArm(markLeft); return; }   /* Codex 指摘(PR #1085): ○✗ の しるし(0.75秒)が 出て いる 間は 待つ。消えたら すぐ 出す */   /* 周回161: 待ちなおしは しるしの 残りの 時間だけ(前は 0.3秒きざみで 待ちなおし、しるしから 0.9秒・指を 離してから 約1.13秒 かかって いた → しるしから 0.75秒) */ if (startX == null && !busy && !$('sGame').classList.contains('hidden')) demoSet(true); }, ms > 0 ? ms : (demoMiss > 0 || demoOk < 3) ? DEMO_STOP_MS : DEMO_STOP_OK_MS); }
+  function demoArm(ms){ demoDisarm(); demoT = setTimeout(function(){ demoT = null; var markLeft = 750 - (performance.now() - markAt); if (markLeft > 0 || markRaf) { demoArm(markLeft > 0 ? markLeft : 100); return; }   /* Codex 指摘(PR #1085): ○✗ の しるし(0.75秒)が 出て いる 間は 待つ。消えたら すぐ 出す */   /* 周回161: 待ちなおしは しるしの 残りの 時間だけ(前は 0.3秒きざみで 待ちなおし、しるしから 0.9秒・指を 離してから 約1.13秒 かかって いた → しるしから 0.75秒) */ if (startX == null && !busy && !$('sGame').classList.contains('hidden')) demoSet(true); }, ms > 0 ? ms : (demoMiss > 0 || demoOk < 3) ? DEMO_STOP_MS : DEMO_STOP_OK_MS); }
   var demoHeld = false;   /* Codex指摘(PR #1082): 別のタブに いる間は 数えない。待ちの とちゅうで 隠れたら 止めて、戻ったら はじめから 数え直す */
   document.addEventListener('visibilitychange', function(){ if (document.hidden) { demoHeld = !!demoT; demoDisarm(); } else if (demoHeld) { demoHeld = false; demoArm(); } });
   window.addEventListener('resize', function(){ if ($('swWrap').classList.contains('demoOn')) demoSet(true); });   /* Codex指摘(PR #1071): 手本が出ている間に画面を回す・大きさが変わると、指の高さ(--hy)が前の画面のままだった。出ている間は測り直す(絵が無い横向きではカードの46%へ戻る) */
@@ -3804,23 +3807,55 @@ renderTitle();
     ok: ['.....#####......','...##ooooo##....','..#ooooooooo#...','.#ooo#####ooo#..','.#oo#.....#oo#..','#oo#.......#oo#.','#oo#.......#oo#.','#oo#.......#oo#.','#oo#.......#oo#.','#oo#.......#oo#.','.#oo#.....#oo#..','.#ooo#####ooo#..','..#ooooooooo#...','...##ooooo##....','.....#####......','................'],
     ng: ['.###.......###..','#ooo#.....#ooo#.','#oooo#...#oooo#.','.#oooo#.#oooo#..','..#oooo#oooo#...','...#ooooooo#....','....#ooooo#.....','....#ooooo#.....','...#ooooooo#....','..#oooo#oooo#...','.#oooo#.#oooo#..','#oooo#...#oooo#.','#ooo#.....#ooo#.','.###.......###..','................','................']
   }, markURLs = {};
-  function markURL(k){
+  function markURL(k){   /* サイクル182: canvas の toDataURL を やめ、SVG の 文字で 作る(3D の したく(シェーダーの 用意)と 重なると toDataURL が GPU を 待って 4.8秒 止まり、最初の ○✗ が おくれた)。絵は 前と 同じ 16×16 */
     if (markURLs[k]) return markURLs[k];
-    var c = document.createElement('canvas'); c.width = c.height = 16; var x = c.getContext('2d'), pal = k === 'ok' ? { '#': '#fff', o: '#2f9a3a' } : { '#': '#fff', o: '#cf4326' };
-    MARK_ROWS[k].forEach(function(r, y){ for (var i = 0; i < r.length; i++) { var col = pal[r.charAt(i)]; if (col) { x.fillStyle = col; x.fillRect(i, y, 1, 1); } } });
-    return markURLs[k] = c.toDataURL();
+    var pal = k === 'ok' ? { '#': '#fff', o: '#2f9a3a' } : { '#': '#fff', o: '#cf4326' }, svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" shape-rendering="crispEdges">';
+    MARK_ROWS[k].forEach(function(r, y){ for (var i = 0; i < r.length; i++) { var col = pal[r.charAt(i)]; if (col) svg += '<rect x="' + i + '" y="' + y + '" width="1" height="1" fill="' + col + '"/>'; } });
+    return markURLs[k] = 'data:image/svg+xml;utf8,' + encodeURIComponent(svg + '</svg>');
   }
   var markAt = -1e9;   /* ○✗ の しるしを 出した 時刻(手本は しるしが 消えてから) */
-  function markShow(k){ var e = $('swMark'); if (!e) return; markAt = performance.now(); e.classList.remove('on'); e.style.backgroundImage = 'url("' + markURL(k) + '")'; void e.offsetWidth; e.classList.add('on'); }
+  /* サイクル180: しるしは 次の こまで 出し(重い 仕事の あとの 最初の こまから 見える)、こまごとに「見えて いた 時間」を 数えて(1こま 最大 50ms)0.6秒で 外す。
+     画面が かくれて こまが 来ない ときは 1秒ごとの 見はりで 外す。次の スワイプで 出す ときは 前の しるしを すぐ 外して 出しなおす(今と 同じ) */
+  var MARK_SEEN_MS = 600, markRaf = 0, markWatch = null, markSeen = 0, markLast = 0;
+  function markStop(){ if (markRaf) cancelAnimationFrame(markRaf); markRaf = 0; clearTimeout(markWatch); markWatch = null; }
+  function markOff(){ markStop(); var e = $('swMark'); if (e) e.classList.remove('on'); }
+  function markTick(){ var now = performance.now(); markSeen += Math.min(50, now - markLast); markLast = now; if (markSeen >= MARK_SEEN_MS) { markOff(); return; } markRaf = requestAnimationFrame(markTick); }
+  function markGuard(){ markWatch = setTimeout(function(){ if (document.hidden) markOff(); else markGuard(); }, 1000); }
+  function markShow(k){ var e = $('swMark'); if (!e) return; markAt = performance.now(); markStop(); e.classList.remove('on'); e.style.backgroundImage = 'url("' + markURL(k) + '")';
+    markRaf = requestAnimationFrame(function(){ void e.offsetWidth; e.classList.add('on'); markSeen = 0; markLast = performance.now(); markRaf = requestAnimationFrame(markTick); }); markGuard(); }
   /* 店主指示 2026-11-08: 判定文 why の最初の一文をマークの下に小さく浮かせて約2秒出す。サイクル177(運営者の声 2026-11-13「⭕️❌とその理由も出す」)で ○ の ときも 出す(前は ✗ だけ) */
-  function whyShow(fb, k){ var e = $('swWhy'); if (!e) return; var t = String(fb || '').replace(/^\S+\s+/, ''); var i = t.indexOf('。'); if (i >= 0) t = t.slice(0, i + 1); if (!t) return; k = k === 'ok' ? 'ok' : 'ng'; e.setAttribute('data-k', k); e.textContent = (k === 'ok' ? '○ ' : '✗ ') + t;   /* サイクル177(運営者の声 2026-11-13「⭕️❌とその理由も出す」): ○ でも わけの 一文を 出す。先頭に ○／✗(色 だけに たよらない) */ e.classList.remove('on'); void e.offsetWidth; e.classList.add('on'); clearTimeout(whyTimer); whyTimer = setTimeout(whyHide, 2100); }   /* サイクル174 の 直し: 吹き出しの 2秒(アニメ)が 終わったら on を 外す(状態の ことばが もどる)。場所と 2秒は そのまま */
-  var whyTimer = null;
-  function whyHide(){ clearTimeout(whyTimer); whyTimer = null; var e = $('swWhy'); if (e) e.classList.remove('on'); }
+  function whyShow(fb, k){ var e = $('swWhy'); if (!e) return; var t = String(fb || '').replace(/^\S+\s+/, ''); var i = t.indexOf('。'); if (i >= 0) t = t.slice(0, i + 1); if (!t) return; k = k === 'ok' ? 'ok' : 'ng'; e.setAttribute('data-k', k); e.textContent = (k === 'ok' ? '○ ' : '✗ ') + t;   /* サイクル177(運営者の声 2026-11-13「⭕️❌とその理由も出す」): ○ でも わけの 一文を 出す。先頭に ○／✗(色 だけに たよらない) */ e.classList.remove('on'); clearTimeout(whyTimer); whyTimer = null; whyKeep = choices.length <= 3; var go = function(){ void e.offsetWidth; e.classList.add('on'); clearTimeout(whyTimer); whyTimer = setTimeout(whyHide, 2100); };
+    e.style.top = ''; requestAnimationFrame(function(){ whyFit(e); go(); whyWatchOn(); }); }   /* サイクル181: 小さい たて画面・よこ画面は 次の カードを 描いた あとの こまで 置き場所を 決めてから 出す(2秒は 出た ときから)。サイクル174 の 直し: 吹き出しの 2秒(アニメ)が 終わったら on を 外す(状態の ことばが もどる)。場所と 2秒は そのまま */
+  var whyTimer = null, whyKeep = false;
+  /* サイクル181(運営者 2026-11-14): わけの 吹き出しの 置き場所。390×844・820×1180 など ふつうの たて画面は 今の まま(CSS)。
+     小さい たて画面(はば 360px 以下 か 高さ 700px 以下)は カードの 絵の 上(日づけに かぶらない)、よこの 低い 画面は カードの 上の はしの 外(選ぶ 所に かぶらない) */
+  function whyNeedPlace(){ var W = window.innerWidth, H = window.innerHeight; return (H <= 440 && W >= 564) || (H > 440 && (W <= 360 || H <= 700)); }
+  function whyPlace(e){ try { var W = window.innerWidth, H = window.innerHeight, land = H <= 440 && W >= 564, sw = $('swipe').getBoundingClientRect(), wr = $('swWrap').getBoundingClientRect(), ic = $('swIc'), h = e.offsetHeight, y;
+      if (!land && ic && ic.offsetParent && ic.getBoundingClientRect().height > 20) { var ir = ic.getBoundingClientRect(); y = ir.top; } else y = wr.top - h - 6;
+      e.style.top = Math.round(Math.max(4, y - sw.top)) + 'px'; } catch (x) { e.style.top = ''; } }
+  /* サイクル183(PR #1168 の レビュー): 置き場所は どの 大きさでも 日づけ・選ぶ 文・画面の 外を よける。
+     ふつうの たて画面(390×844・820×1180)は まず 今の 場所(CSS)。日づけ か 選ぶ 文に かかる とき だけ カードの 絵の 上へ(だめなら カードの 上の 外)。
+     出て いる 間に 回したり 大きさが 変わったり したら 置きなおす(のこりの 時間は そのまま) */
+  function whyHits(e){ try { var A = e.getBoundingClientRect(), W = window.innerWidth, H = window.innerHeight; if (A.left < 0 || A.top < 0 || A.right > W || A.bottom > H) return true;
+      var rs = [], rr = document.createRange(), add = function(n){ if (!n || !n.getClientRects().length) return; rr.selectNodeContents(n); var b = rr.getBoundingClientRect(); if (b.width) rs.push(b); };
+      add($('swBigDate')); [].forEach.call(document.querySelectorAll('#swEdge .eLb'), add);
+      return rs.some(function(b){ return Math.min(A.right, b.right) - Math.max(A.left, b.left) > 0.5 && Math.min(A.bottom, b.bottom) - Math.max(A.top, b.top) > 0.5; }); } catch (x) { return false; } }
+  function whyFit(e){ try { e.style.top = ''; if (whyNeedPlace()) whyPlace(e);
+      if (!whyHits(e)) return; var sw = $('swipe').getBoundingClientRect(), ic = $('swIc'), h = e.offsetHeight, wr = $('swWrap').getBoundingClientRect(), dt = $('swBigDate'), ys = [], i;
+      if (ic && ic.offsetParent && ic.getBoundingClientRect().height > 20) ys.push(ic.getBoundingClientRect().top);
+      ys.push(wr.top - h - 6); if (dt && dt.offsetParent) { var db = dt.getBoundingClientRect(); ys.push(db.bottom + 4); ys.push(db.top - h - 4); }
+      for (i = 0; i < ys.length; i++) { e.style.top = Math.round(Math.max(4, ys[i] - sw.top)) + 'px'; if (!whyHits(e)) return; }
+      e.style.top = Math.round(Math.max(4, ys[0] - sw.top)) + 'px'; } catch (x) {} }
+  /* 次の カードは 入って くる 間に 動く ので、出て いる 間は こま ごとに 見て、かかったら その こまで 置きなおす */
+  var whyWatch = null;
+  function whyWatchOn(){ cancelAnimationFrame(whyWatch); var f = function(){ var e = $('swWhy'); if (!e || !e.classList.contains('on')) { whyWatch = null; return; } if (whyHits(e)) whyFit(e); whyWatch = requestAnimationFrame(f); }; whyWatch = requestAnimationFrame(f); }
+  window.addEventListener('resize', function(){ var e = $('swWhy'); if (e && e.classList.contains('on')) requestAnimationFrame(function(){ whyFit(e); }); });
+  function whyHide(){ clearTimeout(whyTimer); whyTimer = null; cancelAnimationFrame(whyWatch); whyWatch = null; whyKeep = false; var e = $('swWhy'); if (e) e.classList.remove('on'); }
   try { $('swWhy').addEventListener('animationend', function(ev){ if (ev.target === this && /^swWhy(In|Fade)$/.test(ev.animationName)) whyHide(); }); } catch (e) {}
   /* 3回めの レビュー(P2): 画面の 世代は 選択 ごとに choose() の 中で つかまえて この 関数へ わたす(共有の 変数だと、新しい ゲームで すぐ 選んだ ときに 古い 選択の 分が 上書き されて いた) */
   function advanceTurn(side, gen){
     var kLive = ksSameScreen(gen);   /* 2回めの レビュー(P2): 選んだ あとに ⌂ などで 画面が かわって いたら、この 選択からは 音を 作らない(ゲームの 進み方は 前と 同じ) */
-    pvClear(); finishFx(); whyHide();   /* 前の判定の光/影が残っていたら消す(素早く次のカードを選んだときの誤認防止。Codex軽微指摘)。バツの理由も前のカードの分はここで片づける */
+    pvClear(); finishFx(); if (!whyKeep) whyHide(); else requestAnimationFrame(function(){ var we = $('swWhy'); if (we && we.classList.contains('on')) whyFit(we); });   /* サイクル183: のこした 吹き出しは 次の カードを 描いた あとに 置きなおす(次の 日づけ・選ぶ 文を よける) */   /* 前の判定の光/影が残っていたら消す(素早く次のカードを選んだときの誤認防止。Codex軽微指摘)。バツの理由も前のカードの分はここで片づける */
     var fb = '', n0 = f.msgs.length, st0 = null;
     rwTake(); var d0 = KomeCards.day(f), ks0 = { base: paddyInfo.base, wet: paddyInfo.wet, stage: stageTintInfo.idx };
     try { st0 = KomeCards.status(f); } catch (e) {}
@@ -4031,7 +4066,7 @@ renderTitle();
       pendRun = true; try { cardDown(q[0]); for (var qi = 1; qi < q.length; qi++) { if (q[qi].type === 'pointermove') cardMove(q[qi]); else { up(q[qi]); break; } } } finally { pendRun = false; }
     }
   }
-  el.card.addEventListener('pointerdown', cardDown = function(e){ var solo = pendRun || fingerIn(e);   /* 周回167: 流しなおし・休めて いた 指(pendRun)は、置いた ときに もう 数えて ある */ if (busy) { if (!solo) return; if (pend && pend[pend.length - 1].type !== 'pointerdown' && pend[pend.length - 1].type !== 'pointermove' && pendQ.length < 3) pendQ.push(pend);   /* 周回167: 2本の 指が 動いて いる ときは おぼえない(fingerIn が おぼえを 消す)。休んで いる 指の ほかに 来た 指は おぼえる */ pend = e.button > 0 ? null : [pendCopy(e)]; if (pend) { try { el.card.setPointerCapture(e.pointerId); } catch (x) {} }   /* Codex 指摘(PR #1087): おぼえはじめた ときも 指(マウス)を つかまえる。カードの 外で 動かして 離しても、動き・離しが 届く */ return; } if (!pendRun) { pend = null; pendQ.length = 0; } if (e.button > 0 || !solo) return; /* 動かしている最中の2本目の指は混ぜない */ if (!pendRun && evT(e) - markAt >= 400) { var mk0 = $('swMark'); if (mk0) mk0.classList.remove('on'); var wy0 = $('swWhy'); if (wy0) wy0.classList.remove('on'); } /* 次のカードに触ったら、前の○×とバツの理由は片づける */   /* 周回167: 前の カードが 飛んで いる 間に 置いた 指(流しなおし)と、しるしを 出して 0.4秒 たたない うちに 置いた 指(指を 置いた 時刻で 見る。画面が 止まって いて おくれて 届いた 指も 同じ)では 片づけない(しるしは 自分の 0.75秒で 消える)。流しなおしは しるしを 出したのと 同じ ときに 走るので、○✗ と ✗ の わけが 1コマも 出なかった(16/16) */ ghostPause(); cancelDragFrame(); dragMoves = 0; dragApplied = 0; startX = e.clientX; startY = e.clientY; lastY = e.clientY; maxDy = 0; samples = [[evT(e), e.clientX]]; pid = e.pointerId; tapT0 = evT(e); tapMax = 0; maxAx = 0; dx = 0; dy = 0; dragW = el.card.offsetWidth || 0; el.card.style.transitionDuration = ''; lastP = null; lastShadowKey = ''; try { pvCompute(); } catch (x) {} el.card.classList.add('drag'); el.card.classList.remove('enter', 'wig'); try { el.card.setPointerCapture(pid); } catch (x) {} });   /* つかんだら出現演出も解除し、指のtransformと競合させない。影響プレビューはつかんだ時点で先に計算する */
+  el.card.addEventListener('pointerdown', cardDown = function(e){ var solo = pendRun || fingerIn(e);   /* 周回167: 流しなおし・休めて いた 指(pendRun)は、置いた ときに もう 数えて ある */ if (busy) { if (!solo) return; if (pend && pend[pend.length - 1].type !== 'pointerdown' && pend[pend.length - 1].type !== 'pointermove' && pendQ.length < 3) pendQ.push(pend);   /* 周回167: 2本の 指が 動いて いる ときは おぼえない(fingerIn が おぼえを 消す)。休んで いる 指の ほかに 来た 指は おぼえる */ pend = e.button > 0 ? null : [pendCopy(e)]; if (pend) { try { el.card.setPointerCapture(e.pointerId); } catch (x) {} }   /* Codex 指摘(PR #1087): おぼえはじめた ときも 指(マウス)を つかまえる。カードの 外で 動かして 離しても、動き・離しが 届く */ return; } if (!pendRun) { pend = null; pendQ.length = 0; } if (e.button > 0 || !solo) return; /* 動かしている最中の2本目の指は混ぜない */ if (!pendRun && evT(e) - markAt >= 400) { var mk0 = $('swMark'); if (mk0) mk0.classList.remove('on'); var wy0 = $('swWhy'); if (wy0 && !whyKeep) wy0.classList.remove('on'); } /* 次のカードに触ったら、前の○×とバツの理由は片づける */   /* 周回167: 前の カードが 飛んで いる 間に 置いた 指(流しなおし)と、しるしを 出して 0.4秒 たたない うちに 置いた 指(指を 置いた 時刻で 見る。画面が 止まって いて おくれて 届いた 指も 同じ)では 片づけない(しるしは 自分の 0.75秒で 消える)。流しなおしは しるしを 出したのと 同じ ときに 走るので、○✗ と ✗ の わけが 1コマも 出なかった(16/16) */ ghostPause(); cancelDragFrame(); dragMoves = 0; dragApplied = 0; startX = e.clientX; startY = e.clientY; lastY = e.clientY; maxDy = 0; samples = [[evT(e), e.clientX]]; pid = e.pointerId; tapT0 = evT(e); tapMax = 0; maxAx = 0; dx = 0; dy = 0; dragW = el.card.offsetWidth || 0; el.card.style.transitionDuration = ''; lastP = null; lastShadowKey = ''; try { pvCompute(); } catch (x) {} el.card.classList.add('drag'); el.card.classList.remove('enter', 'wig'); try { el.card.setPointerCapture(pid); } catch (x) {} });   /* つかんだら出現演出も解除し、指のtransformと競合させない。影響プレビューはつかんだ時点で先に計算する */
   el.card.addEventListener('pointermove', cardMove = function(e){ if (pend && !pendRun && e.pointerId === pend[0].pointerId) { var pl = null; try { pl = e.getCoalescedEvents ? e.getCoalescedEvents() : null; } catch (x) {} if (pl && pl.length) { for (var pi = 0; pi < pl.length && pend.length < 240; pi++) { var pc = pendCopy(pl[pi]); pc.pointerId = e.pointerId; pc.type = 'pointermove'; pend.push(pc); } } else if (pend.length < 240) pend.push(pendCopy(e)); return; }   /* Codex 指摘(PR #1087): まとめられた とちゅうの 点(getCoalescedEvents)も おぼえる。捨てると 引き戻しの 山(maxAx)が 小さく なり、のぞいて 戻した だけの 動きが 決まって しまう */ if (startX == null || e.pointerId !== pid) return; var n = evT(e), list = null; lastY = e.clientY; maxAx = Math.max(maxAx, Math.abs(e.clientX - startX)); tapMax = Math.max(tapMax, Math.hypot(e.clientX - startX, e.clientY - startY)); if (Math.abs(e.clientY - startY) > maxDy) maxDy = Math.abs(e.clientY - startY); try { list = e.getCoalescedEvents ? e.getCoalescedEvents() : null; } catch (x) {} if (list && list.length) { for (var ci = 0; ci < list.length; ci++) { var ct = evT(list[ci]); if (samples.length && ct < samples[samples.length - 1][0]) ct = samples[samples.length - 1][0]; samples.push([ct, list[ci].clientX]); maxAx = Math.max(maxAx, Math.abs(list[ci].clientX - startX)); tapMax = Math.max(tapMax, Math.hypot(list[ci].clientX - startX, list[ci].clientY - startY)); if (Math.abs(list[ci].clientY - startY) > maxDy) maxDy = Math.abs(list[ci].clientY - startY); } } else { if (samples.length && n < samples[samples.length - 1][0]) n = samples[samples.length - 1][0]; samples.push([n, e.clientX]); } var nT = samples.length ? Math.max(n, samples[samples.length - 1][0]) : n; while (samples.length > 2 && nT - samples[0][0] > 150) samples.shift(); queueDrag(e.clientX - startX, e.clientY - startY); });   /* getCoalescedEventsで間引かれた中間点も取り込む(速いフリックほどmoveが合体されて落ちるため)。時刻は単調になるようクランプし、時刻源の混在で順序が崩れても速度計算が壊れないようにする */
   var lastFlick = null, lastY = null, maxDy = 0, tapT0 = 0, tapMax = 0, maxAx = 0;   /* maxAx(周回159): この 指の 動きで 横に いちばん 遠くまで 行った 量(引き戻しを 見分ける) */   /* カードのタップ判定(くわしい話の開閉): 開始時刻と最大移動量。新しいpointerリスナーは足さず既存ハンドラで追う */
   var dragW = 0, lastP = null, lastShadowKey = '';   /* スワイプの滑らかさ用: カード幅はつかんだ時点で固定し(毎moveのレイアウト読みをなくす)、影と--pは値が変わったときだけ書き直す(毎moveの再描画・スタイル再計算が引っかかりの主因) */

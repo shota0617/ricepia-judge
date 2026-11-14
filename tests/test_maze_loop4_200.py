@@ -99,7 +99,7 @@ class FirstMinute200(unittest.TestCase):
     def test_full_run_time_limit(self):
         """通しの 時間切れは 20分。時間切れで 止めた ときは そうと 分かる（「browser has been closed」を ゲームの 落ちと まちがえない）"""
         w = (ROOT / ".claude" / "skills" / "ricepia-flow" / "scripts" / "playtest.js").read_text(encoding="utf-8")
-        self.assertIn("const LIMIT_MIN = 20, t0 = Date.now();", w)
+        self.assertIn("const LIMIT_MIN = 26, t0 = Date.now();", w)   # サイクル214：20分 → 26分（確かめが 253項目に ふえて 通しが 19.7〜19.9分。20分 ちょうどで 止められた）
         self.assertIn("timeout: LIMIT_MIN * 60 * 1000 });", w)
         self.assertIn("r.error.code === 'ETIMEDOUT'", w)
         self.assertNotIn("timeout: 15 * 60 * 1000", w)

@@ -9723,7 +9723,7 @@ function tapDemoTouch() {
 // 早めない：傾きの 許可を 聞いた その タップ（tiltAsk の すぐ あと）。窓が 開く タップ（その 前で return）。転がって いる 間（動けば 見回りが walked を 決めなおす）
 function demoMissTap() {
   const now = performance.now();
-  if (typeof tiltAsk.at === 'number' && now - tiltAsk.at < 300) return;   // 許可を 聞いた タップ：これまでどおり
+  if (typeof tiltAsk.at === 'number' && now - tiltAsk.at < 300) { if (tapDemo.missT) { tapDemo.walked = false; tapDemo.missT = 0; } return; }   // 許可を 聞いた タップ：これまでどおり（前の 歩けなかった タップ・なぞりの 短い 待ちも 持ちこさない。レビューの 指摘）
   tapDemo.walked = true; tapDemo.missT = now;
 }
 function tapDemoHide() { tapDemo.sp = null; if (tapDemo.el && !tapDemo.el.hidden) tapDemo.el.hidden = true; if (tapDemo.ph && !tapDemo.ph.hidden) tapDemo.ph.hidden = true; }

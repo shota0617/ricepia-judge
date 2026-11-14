@@ -103,6 +103,11 @@ class MissTapDemo214(unittest.TestCase):
         o = self.run_case("tiltAsk.at = T; tapWalk(50, 50);")
         self.assertGreaterEqual(o["at"], 2000)
 
+    def test_permission_tap_after_a_miss_unchanged(self):
+        """レビューの 指摘: 先に 歩けなかった なぞり（許可は 聞かない）→ その あと 許可を 聞く タップ。短い 待ちを 持ちこさず、これまでどおり 2秒"""
+        o = self.run_case("tapWalk(50, 50); tiltAsk.at = T; tapWalk(50, 50);")
+        self.assertGreaterEqual(o["at"], 2000, "許可を 聞いた タップの あと 手本が 早く 出た: %r" % o)
+
     def test_rolling_after_miss_unchanged(self):
         """歩けなかった あと 傾きで 転がった：止まって から 2秒（これまでどおり）"""
         o = self.run_case("tapWalk(50, 50);", "if (t <= 10750) { rp.x += 0.3; }")

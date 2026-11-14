@@ -1,0 +1,593 @@
+{
+  "round": 112,
+  "game": "検査ゲーム",
+  "scope": "One390×844 observation; product/test changes0",
+  "source": {
+    "testedHead": "a69573f12b2d7929d52d394664d8c87000c69a8a",
+    "verification": {
+      "preOpenLocalHeadHTMLTestAndHTTPHTMLVerified": true,
+      "localPostSource10MatchBindingAndCurrent": true,
+      "postHeadCleanAuthority": "Root saved postcheck; reviewer did not invoke Git",
+      "preHTTPscope": "Local HEAD, kensa.html and existing tests/test_kensa.py bytes, plus the pre-open local HTTP kensa.html response. Other assets and subsequent server changes are not verified.",
+      "htmlSHA256": "80c88c625f2ba325caef5fe59d1510c25ab9b4f00c37724f58f2f020ab785da6",
+      "existingTestSHA256": "7299004bbc35980456eaa8f28a83fcd4e7d89b38a7851ebd73b11236f55dd9f0"
+    },
+    "postcheck": {
+      "head": "a69573f12b2d7929d52d394664d8c87000c69a8a",
+      "clean": true,
+      "sourceHashes": {
+        "AGENTS.md": "8d1938a8628b3a5f89b18067007119d8bef32effb1f4e9a08fee8e89a556d448",
+        ".claude/skills/ricepia-flow/SKILL.md": "56d075153f561430fee926907a5c97083d9f643e6dd2d3a2f4c5736324a697f0",
+        "kensa.html": "80c88c625f2ba325caef5fe59d1510c25ab9b4f00c37724f58f2f020ab785da6",
+        "tests/test_kensa.py": "7299004bbc35980456eaa8f28a83fcd4e7d89b38a7851ebd73b11236f55dd9f0",
+        "kensa/face_dot.webp": "17f217304fd283455dd6597414fd04455d45d8d90c162dc3ef94068eae8b4325",
+        "kensa/kokusashi.webp": "d68d35dae2ad2bd371c8382b951abffae8acaa9fa55ca72b72fb1fa0c4929faf",
+        "kensa/ittomai.webp": "f04ecab32dfb5b4e8b20207341c790f58ae4b22eba4d744cbac4227a42faaa92",
+        "kome365/engine.js": "c3d0cef6bb108d5b6d8fe38aaf0c08fe7994bdab08bf92775865a6e0222469a3",
+        "kome365/field3d.js": "a5c1dad91d5c0c326f1394fad9c5d04e7e3b8d13e3a2b8b1757c7aa08d3558ff",
+        "kome365/cards.js": "b15c5b2f56ef9c0c8361fa2fa6a039085919ca516b4a2e6e5a1b3bb691dde744"
+      },
+      "unchanged": true
+    },
+    "postcheckLimit": "Ten configured files plus clean status, not every asset.",
+    "postTestDocsOnlyUpdate": {
+      "atUTC": "2026-11-14T13:16:53.627246+00:00",
+      "testedSource": "a69573f12b2d7929d52d394664d8c87000c69a8a",
+      "afterTestsFastForwardHead": "3844ff5998e04507f6d9aadbc66fcc06cd89cb4f",
+      "files": [
+        "docs/first-minute/round-110-kome365-observation/README.md",
+        "docs/first-minute/round-110-kome365-observation/diagnostic-fast-after.png",
+        "docs/first-minute/round-110-kome365-observation/diagnostic-slow-after.png",
+        "docs/first-minute/round-110-kome365-observation/observe-10s.png",
+        "docs/first-minute/round-110-kome365-observation/play-10s.png",
+        "docs/first-minute/round-110-kome365-observation/play-30s.png",
+        "docs/first-minute/round-110-kome365-observation/play-60s.png",
+        "docs/first-minute/round-110-kome365-observation/results.json"
+      ],
+      "productChanges": 0,
+      "testsRerunAfterDocsOnlyUpdate": false
+    },
+    "documentsCommittedAfterObservation": true
+  },
+  "method": {
+    "playRuns": 1,
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "cpuRate": 1,
+    "isMobile": true,
+    "hasTouch": true,
+    "freshContext": true,
+    "input": "CDP Input.dispatchTouchEvent",
+    "observationSeconds": 10,
+    "waitObservationPhotoThenPlaySeconds": 60,
+    "privateStateInjected": false,
+    "choiceBasis": "Visible instructions, element boxes and displayed guide; no internal stage or grain kind",
+    "externalRequestsBlocked": 0
+  },
+  "outcome": {
+    "newConfirmedCandidates": 0,
+    "productChanges": 0,
+    "testChanges": 0,
+    "recordedResponses": 35,
+    "noRecordedResponse": 0,
+    "responseDefinition": "First post-gesture poll with hint, visible grain count/flying grains, LCD, tray size or zoom label changed. Not a completed-stage or total-grains count.",
+    "completedBags": 2,
+    "thirdBagReached": true,
+    "dropoutRateMeasured": false,
+    "beforeAfterImprovementMeasured": false,
+    "guidePresses": {
+      "total": 10,
+      "trayWithVisibleGrainCountDecreaseAndFlyingGrain": 7,
+      "zoomOnly": 3
+    },
+    "knownZoomMismatch": [
+      {
+        "index": 19,
+        "action": "tap displayed press guide",
+        "startSeconds": 30.085,
+        "endSeconds": 30.125,
+        "requestedDurationMs": 40,
+        "actualSendSpanMs": 40.0,
+        "firstResponsePollSeconds": 30.153,
+        "inputToResponsePollSeconds": 0.068,
+        "endToResponsePollSeconds": 0.028,
+        "responseReasons": [
+          "zoomLabel"
+        ],
+        "hintBefore": "わるい粒を つまむ",
+        "hintResponse": "わるい粒を つまむ",
+        "visibleGrainBefore": 18,
+        "visibleGrainResponse": 18,
+        "zoomBefore": "➖",
+        "zoomResponse": "🔍",
+        "pressRemovedGrain": false,
+        "pressSuccessfulZoomOnly": true,
+        "guideHitBefore": {
+          "id": "zoomBtn",
+          "tag": "BUTTON",
+          "classes": ""
+        },
+        "nextButtonVisibleAfter": false,
+        "afterSnapshotInterval": [
+          30.153,
+          30.157
+        ],
+        "bagAfter": "2ふくろめ",
+        "full650msWindowAvailable": true
+      },
+      {
+        "index": 20,
+        "action": "tap displayed press guide",
+        "startSeconds": 32.286,
+        "endSeconds": 32.326,
+        "requestedDurationMs": 40,
+        "actualSendSpanMs": 40.0,
+        "firstResponsePollSeconds": 32.348,
+        "inputToResponsePollSeconds": 0.062,
+        "endToResponsePollSeconds": 0.022,
+        "responseReasons": [
+          "zoomLabel"
+        ],
+        "hintBefore": "わるい粒を つまむ",
+        "hintResponse": "わるい粒を つまむ",
+        "visibleGrainBefore": 19,
+        "visibleGrainResponse": 19,
+        "zoomBefore": "🔍",
+        "zoomResponse": "➖",
+        "pressRemovedGrain": false,
+        "pressSuccessfulZoomOnly": true,
+        "guideHitBefore": {
+          "id": "zoomBtn",
+          "tag": "BUTTON",
+          "classes": ""
+        },
+        "nextButtonVisibleAfter": false,
+        "afterSnapshotInterval": [
+          32.348,
+          32.351
+        ],
+        "bagAfter": "2ふくろめ",
+        "full650msWindowAvailable": true
+      },
+      {
+        "index": 32,
+        "action": "tap displayed press guide",
+        "startSeconds": 50.512,
+        "endSeconds": 50.552,
+        "requestedDurationMs": 40,
+        "actualSendSpanMs": 40.0,
+        "firstResponsePollSeconds": 50.564,
+        "inputToResponsePollSeconds": 0.052,
+        "endToResponsePollSeconds": 0.012,
+        "responseReasons": [
+          "zoomLabel"
+        ],
+        "hintBefore": "わるい粒を つまむ",
+        "hintResponse": "わるい粒を つまむ",
+        "visibleGrainBefore": 20,
+        "visibleGrainResponse": 20,
+        "zoomBefore": "🔍",
+        "zoomResponse": "➖",
+        "pressRemovedGrain": false,
+        "pressSuccessfulZoomOnly": true,
+        "guideHitBefore": {
+          "id": "zoomBtn",
+          "tag": "BUTTON",
+          "classes": ""
+        },
+        "nextButtonVisibleAfter": false,
+        "afterSnapshotInterval": [
+          50.564,
+          50.566
+        ],
+        "bagAfter": "3ふくろめ",
+        "full650msWindowAvailable": true
+      }
+    ],
+    "pinch": {
+      "index": 17,
+      "action": "open two fingers as displayed",
+      "startSeconds": 25.131,
+      "endSeconds": 25.731,
+      "requestedDurationMs": 600,
+      "actualSendSpanMs": 600.0,
+      "firstResponsePollSeconds": 25.745,
+      "inputToResponsePollSeconds": 0.614,
+      "endToResponsePollSeconds": 0.014,
+      "responseReasons": [
+        "hint",
+        "visibleGrainCount",
+        "plateSize",
+        "zoomLabel"
+      ],
+      "hintBefore": "🔍 ふたゆびで ズーム",
+      "hintResponse": "わるい粒を つまむ",
+      "visibleGrainBefore": 20,
+      "visibleGrainResponse": 19,
+      "zoomBefore": "🔍",
+      "zoomResponse": "➖",
+      "pressRemovedGrain": false,
+      "pressSuccessfulZoomOnly": false,
+      "guideHitBefore": {
+        "id": "plateInner",
+        "tag": "DIV",
+        "classes": ""
+      },
+      "nextButtonVisibleAfter": false,
+      "afterSnapshotInterval": [
+        25.745,
+        25.75
+      ],
+      "bagAfter": "2ふくろめ",
+      "full650msWindowAvailable": true
+    },
+    "pinchVisibleCountCaveat": "Visible viewport-filtered DOM count20→19 is not evidence of one removed grain.",
+    "unsentWaitCount": null
+  },
+  "timing": {
+    "firstInputSeconds": 0.011,
+    "firstHintTrace": {
+      "playSeconds": 0.1415,
+      "hint": "ひきぬく →",
+      "visibilityVerified": false
+    },
+    "firstHintTraceAfterFirstInputSeconds": 0.13049999999999998,
+    "firstResponsePollSeconds": 0.429,
+    "firstResponsePollFromFirstInputSeconds": 0.418,
+    "firstPositiveHintTrace": {
+      "playSeconds": 3.404,
+      "hint": "ちょうどいい",
+      "visibilityVerified": false
+    },
+    "firstPositiveVisiblePollSeconds": 3.563,
+    "firstPositivePollFromFirstInputSeconds": 3.552,
+    "firstVisibleGrainRemovalPollSeconds": 6.268,
+    "firstCleanHintVisiblePollSeconds": 8.454,
+    "bagCompletionAfterSnapshotIntervals": [
+      [
+        15.586,
+        15.592
+      ],
+      [
+        41.646,
+        41.649
+      ]
+    ],
+    "inputToResponsePollSeconds": {
+      "min": 0.052,
+      "median": 0.422,
+      "max": 1.517
+    },
+    "endToResponsePollSeconds": {
+      "min": 0.006,
+      "median": 0.017,
+      "max": 0.123
+    },
+    "clock": {
+      "observationToPlayMs": 10103,
+      "traceFormula": "(trace.timeOrigin + trace.start + sample.t - trace.nodePlayStartedAt) / 1000",
+      "nominalTraceIntervalMs": 100,
+      "lastInputStartSeconds": 57.055,
+      "lastTouchEndSeconds": 57.094,
+      "lastCommandSentSeconds": 57.094,
+      "full650msWindowAvailableActions": 35
+    }
+  },
+  "dispatch": {
+    "commands": 490,
+    "ACKs": 490,
+    "commandTypes": {
+      "touchStart": 35,
+      "touchMove": 420,
+      "touchEnd": 35
+    },
+    "trustedTouchPointerEvents": 502,
+    "pointerKinds": {
+      "pointerdown": 36,
+      "pointermove": 430,
+      "pointerup": 36
+    },
+    "actualSendDurationMsByRequestedMs": {
+      "400": {
+        "count": 8,
+        "min": 400.0,
+        "median": 400.0,
+        "max": 401.0
+      },
+      "1500": {
+        "count": 5,
+        "min": 1499.0,
+        "median": 1500.0,
+        "max": 1501.0
+      },
+      "800": {
+        "count": 3,
+        "min": 799.0,
+        "median": 800.0,
+        "max": 801.0
+      },
+      "40": {
+        "count": 10,
+        "min": 39.0,
+        "median": 40.0,
+        "max": 41.0
+      },
+      "900": {
+        "count": 2,
+        "min": 900.0,
+        "median": 900.5,
+        "max": 901.0
+      },
+      "450": {
+        "count": 4,
+        "min": 449.0,
+        "median": 449.5,
+        "max": 450.0
+      },
+      "600": {
+        "count": 3,
+        "min": 599.0,
+        "median": 600.0,
+        "max": 601.0
+      }
+    },
+    "ACKDelayMs": {
+      "min": 1.0,
+      "median": 12.0,
+      "max": 97.0
+    },
+    "eventTimestampToListenerMs": {
+      "min": 1.8,
+      "median": 23.5,
+      "max": 88.2
+    }
+  },
+  "actionTypes": {
+    "insert left": 3,
+    "pull right": 3,
+    "rotate visible knob one circle": 5,
+    "spread across visible tray": 3,
+    "tap displayed press guide": 10,
+    "carry visible token to visible face": 2,
+    "lift guided visible grade 1等": 1,
+    "press visible ink pad downward": 2,
+    "lower stamp along observed guide motion": 2,
+    "slide guided bag right": 2,
+    "open two fingers as displayed": 1,
+    "lift guided visible grade 規格外": 1
+  },
+  "photos": [
+    {
+      "file": "observe-10s.png",
+      "sha256": "8038a0c5e083c28036a9824b3d0642482ffc9a747713093892333d328361a9d6",
+      "bytes": 52305,
+      "dimensions": [
+        390,
+        844
+      ],
+      "originalCopiedUnmodified": true,
+      "reportAuthorPersonallyViewed": true,
+      "clock": "observation",
+      "requestedSeconds": 10.0,
+      "completedSeconds": 10.103,
+      "visible": "1ふくろめ ぬく／穀刺しを ふくろへ さす ←"
+    },
+    {
+      "file": "play-10s.png",
+      "sha256": "67773014fa5fac68911bc93110c8d3298274d484a95170f5dd78d6a62bfc5dd5",
+      "bytes": 79912,
+      "dimensions": [
+        390,
+        844
+      ],
+      "originalCopiedUnmodified": true,
+      "reportAuthorPersonallyViewed": true,
+      "clock": "play",
+      "requestedSeconds": 10.001,
+      "completedSeconds": 10.064,
+      "visible": "1ふくろめ みわける／🤲 はなへ はこぶ"
+    },
+    {
+      "file": "play-30s.png",
+      "sha256": "cf77b0f876b3be2fcb730fae8d0f8e405ac0ed72c41bbbec3a2a413c3c46df5a",
+      "bytes": 78154,
+      "dimensions": [
+        390,
+        844
+      ],
+      "originalCopiedUnmodified": true,
+      "reportAuthorPersonallyViewed": true,
+      "clock": "play",
+      "requestedSeconds": 30.001,
+      "completedSeconds": 30.07,
+      "visible": "2ふくろめ みわける／➖上の手本／わるい粒を つまむ"
+    },
+    {
+      "file": "play-60s.png",
+      "sha256": "e4778e7621f5b296c2cd5d3deaf0c9be7d0a2d05aae06d03d6b2c1f2c45b6956",
+      "bytes": 84137,
+      "dimensions": [
+        390,
+        844
+      ],
+      "originalCopiedUnmodified": true,
+      "reportAuthorPersonallyViewed": true,
+      "clock": "play",
+      "requestedSeconds": 60.001,
+      "completedSeconds": 60.078,
+      "visible": "3ふくろめ みわける／緑粒上の手本／わるい粒を つまむ"
+    }
+  ],
+  "execution": {
+    "actualChildExit": 0,
+    "actualOuterExit": 0,
+    "rootSession": 79580,
+    "rootChunk": "57a5e6",
+    "errors": [],
+    "driverErrors": [],
+    "unfinishedTouchActions": [],
+    "forbiddenLateInputs": [],
+    "cpuReset": true,
+    "browserClosed": true,
+    "rootNoLiveRuntime": true,
+    "lifecycleRecordedErrors": {
+      "driver": [],
+      "pageOrConsole": [],
+      "inputCommands": [],
+      "screenshots": [],
+      "lateNewInputs": [],
+      "unfinishedTouchActions": []
+    }
+  },
+  "tests": {
+    "pytest": {
+      "command": "pytest tests/",
+      "cwd": "/workspace/ricepia-firstminute-round112",
+      "commandInvoked": true,
+      "suiteExecuted": false,
+      "actualExit": 127,
+      "completionChunk": "5f5588",
+      "output": "/bin/bash: line 1: pytest: command not found\n",
+      "recordedAtUTC": "2026-11-14T13:14:17.183913+00:00",
+      "passedCount": null
+    },
+    "fixedReproduction10": "not performed; no new selected defect",
+    "redGreen": "not performed; no new regression test or patch",
+    "afterReproduction": "not performed",
+    "fiveSizeComparison": "not performed",
+    "otherRoundsIncluded": false
+  },
+  "knownIssuesExcluded": [
+    "PR1160 pick hint versus zoom press fallback caption, observed actions19/20/32",
+    "temporary plate occlusion of book control while zoom shrinks",
+    "sense token pointer ownership PR1153",
+    "hanko pointer ownership and existing face guide proposals"
+  ],
+  "operatorBoundary": {
+    "unsettledPreserved": [
+      "First tap does not advance",
+      "Picking/grading do not advance automatically",
+      "45s card",
+      "Demonstrative play form"
+    ],
+    "explicitDecisionPreserved": "Do not show45s card until first bag completion",
+    "firstBagIncompleteAt45sTested": false
+  },
+  "sourceLocations": {
+    "pickGuideSelection": "kensa.html:2655",
+    "zoomButtonPressFallback": "kensa.html:2663",
+    "twoFingerPinchFallback": "kensa.html:2664",
+    "visibleGoal": "kensa.html:295",
+    "existingFactSources": "kensa.html:399"
+  },
+  "limits": [
+    "Post-gesture polling gives observation upper bounds, not physical paint onset. Input-to-poll includes gesture time; it is not pure rendering latency.",
+    "Nominal100ms trace hint samples do not independently verify hint visibility. Positive reward uses visible DOM hint poll, not hidden document prose.",
+    "grainCount counts visible DOM grain elements; zoom/clipping and animations can change it. Pinch20→19 alone does not prove a grain removed; 7 guide taps additionally recorded a flying grain.",
+    "Unsent waits / previousPick suppressions are not counted by this harness; unknown, not zero or ignored touches.",
+    "First bag completed before45s; this run does not challenge the operator rule hiding the45s card while the first bag remains unfinished.",
+    "No human retention, actual finger/sensor/network/acoustic measurement. Discovery A and C did not view images; root, B, design reviewer and report author viewed all four originals.",
+    "Four original scenes do not prove all hit targets are usable; no fresh multi-pointer ownership diagnostic.",
+    "No source or speed-controlled comparison to earlier rounds; no physical paint or player-retention improvement claim."
+  ],
+  "references": {
+    "visibleUI": "kensa.html:295",
+    "existingFactSources": "kensa.html:399",
+    "newInspectionFactsAdded": false,
+    "knownIssuePR": "https://github.com/shota0617/ricepia-judge/pull/1160",
+    "videoActuallyViewed": false,
+    "interpretiveSources": [
+      "https://www.famitsu.com/news/201705/17132636.html",
+      "https://github.com/flossbud/sakurai-game-design/blob/main/episodes/transcripts/100-development-secrets-of-the-original-kirby.md"
+    ]
+  },
+  "evidence": [
+    {
+      "identifier": "round-112/source-selected.json",
+      "sha256": "ec11dc316cc81d9f9c5611b32016ea05699114509b7473fe4d057d3ed1a07c45",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-112/main-update.json",
+      "sha256": "85072dc90ae422d2a1dd9d040d91c9237e647ccc45ae7a958120138e98d4f881",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-112/preparation-a69573f1/source-verification.json",
+      "sha256": "b19baf38242dcda0a48354a0cb5b11c8cd3c62559d91f05bf149cebb3b55f331",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-112/preparation-a69573f1/execution-condition.json",
+      "sha256": "1208addea97e72dbf1bd1d7e41e9188d6ca4acbf3ca1e99addeaa643e38b6e36",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-112/preparation-a69573f1/lifecycle.json",
+      "sha256": "f4db9ee714b9d669b42722e66f81bd22d92a173a1fab2f2c3262aeb90c046a1f",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-112/preparation-a69573f1/root-execution.json",
+      "sha256": "a0cbfd7ab39bc856f2b401885f0fa716d6267c2859ac8dc44390e23c9863eab0",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-112/preparation-a69573f1/root-source-postcheck.json",
+      "sha256": "21b8be839aa45d3d31e272076132fa09375e9b003fc457bce0d9314faeaddbea",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-112/preparation-a69573f1/strict/play.json",
+      "sha256": "ae08ba89b0cc253fc010c4ebff9e4223c760fa58a30c038868e0346526577279",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-112/pytest/execution.json",
+      "sha256": "38abe6fa0e13a67a9c41216584e7c0118793d1e6db28815e4d96c11ec898af80",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-112/pytest/run.log",
+      "sha256": "884c356a17af2535f8a7a3bbe8d088034a1e58ef021200c45eff7b237b232aa5",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-112/discovery-a/summary.json",
+      "sha256": "fa43777c6a60127bedc2e408d97768a027a2e1956be0efbcee7194086767e522",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-112/discovery-a/frozen.json",
+      "sha256": "47b992ee993b0578228c0749cecf27e9bf5eb75b47e38322653d07cc9ed70265",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-112/discovery-b/review.json",
+      "sha256": "dbb3f5938745b2b3a53c9096323b954af3b7181b97fffd4668fe587e36e93540",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-112/discovery-b/frozen.json",
+      "sha256": "db67b25b89d39f2bf8795e32b5b7bdc494f4eb802bbb7c0e5700c99e631a8941",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-112/discovery-c/summary.json",
+      "sha256": "58385b6d888cbf91312e6274cacc22d1690f30125e83295ca31860b66f1e9a71",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-112/discovery-c/frozen.json",
+      "sha256": "948f70dd249b9f827fcd8c33666a53be85fe542b8e1a4b7b36fae40a10d9829a",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-112/design-review/README.md",
+      "sha256": "ae0eb761cece355f986bbae906a9a1cbf35badd9050b54c59096cddc743778ef",
+      "publicLink": false
+    }
+  ]
+}

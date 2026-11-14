@@ -1952,6 +1952,10 @@ function crashFailures(R, fail) {   // 安全網（guardEvaluate）に かかっ
   // 転がり方の みがき：はなすと 3.5秒のうちに ぴたっと止まる（いつまでも じわじわ動かない）。かべに押しつけても がたがたしない（さいごの1秒は その場から動かない）
   R.checks.rollFeel = await (async () => {
     await page.evaluate(() => nishioPixel.setRoll(true)); await page.waitForTimeout(400);
+    // サイクル217（確かめを そろえる）：バネの わざ（とってから 12秒・MZ_SPRING_MS）の 間は、やわらかい 生け垣に 当たると 外へ 押しだされる（当たった 速さの 1.3倍）。
+    // 前の 確かめの 歩き・転がりで 道に わいた バネを とって いると、かべ（生け垣）に 押しつけた さいごの 1秒も はね続けて 落ちた（通し 3回め：ゆれ 0.43マス・速さ 2.4）。
+    // はかった（この 確かめ だけ・同じ 所・各 5回）：バネ あり 2/5 落ちる（ゆれ 0.05〜0.07・速さ 0.57〜0.83）・バネ なし 0/5。押す 前に バネを 切り、終わりに もとの のこりを もどす
+    const springLeft = await page.evaluate(() => { const M = nishioPixel.maze, left = M.spring().left; M.springOn(0); return left; });
     const look = () => page.evaluate(() => { const r = nishioPixel.roll, out = []; for (const [k, dx, dy] of [['ArrowLeft', -1, 0], ['ArrowRight', 1, 0], ['ArrowUp', 0, -1], ['ArrowDown', 0, 1]]) { let d = 1; while (d < 9 && !nishioPixel.rollBlockedFrom(r.x + dx * (d - 1), r.y + dy * (d - 1), r.x + dx * d, r.y + dy * d)) d++; out.push([k, d, dx, dy]); } return out.sort((p, q) => q[1] - p[1]); });
     const [open] = await look();
     await page.keyboard.down(open[0]); await page.waitForTimeout(900); await page.keyboard.up(open[0]);
@@ -1974,6 +1978,7 @@ function crashFailures(R, fail) {   // 安全網（guardEvaluate）に かかっ
       still = pressed === true && smp.length === 10 && dbg.spread < 0.02 && dbg.vmax < 0.2;   // さいごの1秒で 0.02マス（約16cm）も動かない。速さも はね返りほどには ない。押す 4.5秒・10回の 採取が 時間切れ（こまが 来ない）なら 確かめられて いないので 落とす
     }
     await page.evaluate(() => nishioPixel.setRoll(false));
+    await page.evaluate(left => { if (left > 0) nishioPixel.maze.springOn(left); }, springLeft);   // サイクル217：バネの のこりを もどす
     const rr = await page.evaluate(() => { const r = nishioPixel.roll; return { round: r.round, flat: r.flat, f0: r.flat }; });
     await page.waitForTimeout(500);
     const flatGrew = (await page.evaluate(() => nishioPixel.roll.flat)) - rr.f0;   // 丸いお米が描けるのに、古い絵（平らな お米）を重ねて描いていないか

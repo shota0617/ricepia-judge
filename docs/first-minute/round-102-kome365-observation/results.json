@@ -1,0 +1,777 @@
+{
+  "round": 102,
+  "status": "completed observation report; no product fix selected",
+  "game": "米づくり365",
+  "path": "/kome365/index.html",
+  "source": {
+    "sourceRoot": "/workspace/ricepia-firstminute-round102",
+    "head": "4a38d1e15f8919dd8345f95df935c0a8c0246ddd",
+    "branch": "codex/firstminute-round102-observation",
+    "sourceHashes": {
+      "AGENTS.md": "81c9231e00cec58b8eaf06ab06ea96bd26ce8bd04151c1f7c1017f1dfa4dcbeb",
+      ".claude/skills/ricepia-flow/SKILL.md": "56d075153f561430fee926907a5c97083d9f643e6dd2d3a2f4c5736324a697f0",
+      "kome365/index.html": "0946243f4918704c78076bf30cf1080d75f7ade75d8bb916d5ec74c0948fd5a2",
+      "kome365/engine.js": "c3d0cef6bb108d5b6d8fe38aaf0c08fe7994bdab08bf92775865a6e0222469a3",
+      "kome365/field3d.js": "a5c1dad91d5c0c326f1394fad9c5d04e7e3b8d13e3a2b8b1757c7aa08d3558ff",
+      "kome365/cards.js": "b15c5b2f56ef9c0c8361fa2fa6a039085919ca516b4a2e6e5a1b3bb691dde744",
+      "kome365/vendor/three.min.js": "9274bbcec8d96168626c732b5d31c775aa8cfb7eaa0599bec0c175908a2c1ce2"
+    }
+  },
+  "docsAddedAfterObservation": true,
+  "docsHeadNotClaimedAsTested": true,
+  "productChanged": false,
+  "testsChanged": false,
+  "protectedFilesUnchanged": [
+    "kome365/engine.js",
+    "kome365/field3d.js",
+    "kome365/cards.js"
+  ],
+  "conditions": {
+    "viewport": {
+      "width": 320,
+      "height": 568
+    },
+    "isMobile": true,
+    "hasTouch": true,
+    "CPU": 1,
+    "input": "CDP Input.dispatchTouchEvent",
+    "requestedGestureDurationMs": 120,
+    "inputPolicy": "Current clearly visible hand cue or last clearly visible side on the same card; no answer data or other-card fallback. Ambiguous choice produces no input.",
+    "observationRequestedSeconds": 10,
+    "playClockSeconds": 60,
+    "noProductClockPause": true,
+    "audioUnmuted": true,
+    "real3D": true,
+    "externalPageRequestsRecorded": 0,
+    "extraInstallOrDownload": false
+  },
+  "primary": {
+    "actualChildExit": 1,
+    "actualToolOuterExit": 1,
+    "outerExitBasis": "root report: session22485 chunk38ece6; root-execution.json directly records Node child exit1",
+    "sentGestures": 13,
+    "opportunities": 22,
+    "skipsWithoutInput": 9,
+    "skipReason": "no-visible-cue-on-current-card",
+    "changedTransform": 13,
+    "dragDOMResponses": 13,
+    "dayAdvances": 13,
+    "newReasons": 13,
+    "noResponseAmongSent": 0,
+    "directions": {
+      "left": 13
+    },
+    "cueBasis": {
+      "same-card-memory": 9,
+      "current": 4
+    },
+    "CDPSent": 104,
+    "CDPAcknowledged": 104,
+    "trustedPointerEvents": 40,
+    "eventCounts": {
+      "pointerdown": 13,
+      "pointermove": 14,
+      "pointerup": 13
+    },
+    "positiveReasons": 9,
+    "negativeReasons": 4,
+    "firstInputPlaySeconds": 0.252,
+    "firstTransformPlaySeconds": 0.6025,
+    "firstTransformFromSendMs": 350.5,
+    "firstPositivePlaySeconds": 1.2835,
+    "firstPositiveFromInputMs": 1031.5,
+    "firstPositiveAfterObservationStartMs": 16956.5,
+    "firstPositiveAfterNavigationStartedMs": 17416.5,
+    "sendToTransformMs": {
+      "minimum": 350.5,
+      "median": 450.800048828125,
+      "maximum": 496.199951171875
+    },
+    "sendToNextDayMs": {
+      "minimum": 723.5,
+      "median": 877.699951171875,
+      "maximum": 1031.5
+    },
+    "actualGestureSendSpanMs": {
+      "minimum": 119.49262398481369,
+      "median": 120.4308620095253,
+      "maximum": 127.11351498961449
+    },
+    "clockPhases": {
+      "observationStartToPlayStartMs": 15672.9028840065,
+      "observationToPhotoRequestMs": 10001.960927009583,
+      "observationPhotoRequestToSavedMs": 5573.934592008591,
+      "photoSavedToPlayStartMs": 97.00736498832703,
+      "postPhotoFirstCardReadRoundTripMs": 94.8089770078659,
+      "firstInputAfterPlayMs": 251.7714349925518,
+      "firstInputAfterObservationStartMs": 15924.674318999052,
+      "actualPlayStopMs": 60009.31991699338,
+      "browserTimeOrigin": 1794647257881.3,
+      "playNodeEpoch": 1794647274009,
+      "interpretation": "Node monotonic intervals measure orchestration and dispatch. Browser timeOrigin+at is aligned approximately with integer Node sentEpoch. DOM mutation is not measured physical painting. Photo wait is outside the60s play clock; product clocks continued."
+    },
+    "gestureRows": [
+      {
+        "id": 1,
+        "dateBefore": "1月1日",
+        "direction": "left",
+        "sendPlaySecondsEpoch": 0.252,
+        "requestedDurationMs": 120,
+        "actualTouchStartToEndSendMs": 121.4134870171547,
+        "pointerdownEventToHandlerMs": 331.90000000596046,
+        "drag": {
+          "playSeconds": 0.589400146484375,
+          "fromSendMs": 337.400146484375,
+          "browserAt": 16717.100000023842
+        },
+        "transform": {
+          "playSeconds": 0.6025,
+          "fromSendMs": 350.5,
+          "browserAt": 16730.20000001788
+        },
+        "nextDay": {
+          "playSeconds": 1.2835,
+          "fromSendMs": 1031.5,
+          "browserAt": 17411.20000001788
+        },
+        "reason": {
+          "playSeconds": 1.2835,
+          "fromSendMs": 1031.5,
+          "browserAt": 17411.20000001788
+        },
+        "dateAfter": "1月2日",
+        "positive": true,
+        "cueBasis": "same-card-memory",
+        "allObservedWithinWindow": true
+      },
+      {
+        "id": 2,
+        "dateBefore": "1月2日",
+        "direction": "left",
+        "sendPlaySecondsEpoch": 5.392,
+        "requestedDurationMs": 120,
+        "actualTouchStartToEndSendMs": 120.37083399295807,
+        "pointerdownEventToHandlerMs": 434.5,
+        "drag": {
+          "playSeconds": 5.835199951171875,
+          "fromSendMs": 443.199951171875,
+          "browserAt": 21962.90000000596
+        },
+        "transform": {
+          "playSeconds": 5.852699951171875,
+          "fromSendMs": 460.699951171875,
+          "browserAt": 21980.40000000596
+        },
+        "nextDay": {
+          "playSeconds": 6.29610009765625,
+          "fromSendMs": 904.10009765625,
+          "browserAt": 22423.80000001192
+        },
+        "reason": {
+          "playSeconds": 6.29610009765625,
+          "fromSendMs": 904.10009765625,
+          "browserAt": 22423.80000001192
+        },
+        "dateAfter": "1月3日",
+        "positive": false,
+        "cueBasis": "same-card-memory",
+        "allObservedWithinWindow": true
+      },
+      {
+        "id": 3,
+        "dateBefore": "1月3日",
+        "direction": "left",
+        "sendPlaySecondsEpoch": 10.656,
+        "requestedDurationMs": 120,
+        "actualTouchStartToEndSendMs": 120.35913199186325,
+        "pointerdownEventToHandlerMs": 296.69999998807907,
+        "drag": {
+          "playSeconds": 10.957900146484375,
+          "fromSendMs": 301.900146484375,
+          "browserAt": 27085.600000023842
+        },
+        "transform": {
+          "playSeconds": 11.104,
+          "fromSendMs": 448.0,
+          "browserAt": 27231.70000001788
+        },
+        "nextDay": {
+          "playSeconds": 11.473900146484375,
+          "fromSendMs": 817.900146484375,
+          "browserAt": 27601.600000023842
+        },
+        "reason": {
+          "playSeconds": 11.473900146484375,
+          "fromSendMs": 817.900146484375,
+          "browserAt": 27601.600000023842
+        },
+        "dateAfter": "1月4日",
+        "positive": true,
+        "cueBasis": "same-card-memory",
+        "allObservedWithinWindow": true
+      },
+      {
+        "id": 4,
+        "dateBefore": "1月4日",
+        "direction": "left",
+        "sendPlaySecondsEpoch": 13.66,
+        "requestedDurationMs": 120,
+        "actualTouchStartToEndSendMs": 121.03297799825668,
+        "pointerdownEventToHandlerMs": 462.09999999403954,
+        "drag": {
+          "playSeconds": 14.126400146484375,
+          "fromSendMs": 466.400146484375,
+          "browserAt": 30254.100000023842
+        },
+        "transform": {
+          "playSeconds": 14.13010009765625,
+          "fromSendMs": 470.10009765625,
+          "browserAt": 30257.80000001192
+        },
+        "nextDay": {
+          "playSeconds": 14.499800048828124,
+          "fromSendMs": 839.800048828125,
+          "browserAt": 30627.5
+        },
+        "reason": {
+          "playSeconds": 14.499800048828124,
+          "fromSendMs": 839.800048828125,
+          "browserAt": 30627.5
+        },
+        "dateAfter": "1月5日",
+        "positive": false,
+        "cueBasis": "current",
+        "allObservedWithinWindow": true
+      },
+      {
+        "id": 5,
+        "dateBefore": "1月5日",
+        "direction": "left",
+        "sendPlaySecondsEpoch": 16.407,
+        "requestedDurationMs": 120,
+        "actualTouchStartToEndSendMs": 121.03977397084236,
+        "pointerdownEventToHandlerMs": 462.19999998807907,
+        "drag": {
+          "playSeconds": 16.874800048828124,
+          "fromSendMs": 467.800048828125,
+          "browserAt": 33002.5
+        },
+        "transform": {
+          "playSeconds": 16.877900146484375,
+          "fromSendMs": 470.900146484375,
+          "browserAt": 33005.60000002384
+        },
+        "nextDay": {
+          "playSeconds": 17.306199951171877,
+          "fromSendMs": 899.199951171875,
+          "browserAt": 33433.90000000596
+        },
+        "reason": {
+          "playSeconds": 17.306199951171877,
+          "fromSendMs": 899.199951171875,
+          "browserAt": 33433.90000000596
+        },
+        "dateAfter": "1月6日",
+        "positive": true,
+        "cueBasis": "current",
+        "allObservedWithinWindow": true
+      },
+      {
+        "id": 6,
+        "dateBefore": "1月6日",
+        "direction": "left",
+        "sendPlaySecondsEpoch": 19.347,
+        "requestedDurationMs": 120,
+        "actualTouchStartToEndSendMs": 122.62467300891876,
+        "pointerdownEventToHandlerMs": 430.5,
+        "drag": {
+          "playSeconds": 19.79510009765625,
+          "fromSendMs": 448.10009765625,
+          "browserAt": 35922.80000001192
+        },
+        "transform": {
+          "playSeconds": 19.797800048828126,
+          "fromSendMs": 450.800048828125,
+          "browserAt": 35925.5
+        },
+        "nextDay": {
+          "playSeconds": 20.17410009765625,
+          "fromSendMs": 827.10009765625,
+          "browserAt": 36301.80000001192
+        },
+        "reason": {
+          "playSeconds": 20.17410009765625,
+          "fromSendMs": 827.10009765625,
+          "browserAt": 36301.80000001192
+        },
+        "dateAfter": "1月7日",
+        "positive": false,
+        "cueBasis": "current",
+        "allObservedWithinWindow": true
+      },
+      {
+        "id": 7,
+        "dateBefore": "1月7日",
+        "direction": "left",
+        "sendPlaySecondsEpoch": 24.637,
+        "requestedDurationMs": 120,
+        "actualTouchStartToEndSendMs": 120.3492920100689,
+        "pointerdownEventToHandlerMs": 296.59999999403954,
+        "drag": {
+          "playSeconds": 24.93960009765625,
+          "fromSendMs": 302.60009765625,
+          "browserAt": 41067.30000001192
+        },
+        "transform": {
+          "playSeconds": 25.082800048828126,
+          "fromSendMs": 445.800048828125,
+          "browserAt": 41210.5
+        },
+        "nextDay": {
+          "playSeconds": 25.561300048828127,
+          "fromSendMs": 924.300048828125,
+          "browserAt": 41689
+        },
+        "reason": {
+          "playSeconds": 25.561300048828127,
+          "fromSendMs": 924.300048828125,
+          "browserAt": 41689
+        },
+        "dateAfter": "1月8日",
+        "positive": true,
+        "cueBasis": "same-card-memory",
+        "allObservedWithinWindow": true
+      },
+      {
+        "id": 8,
+        "dateBefore": "1月8日",
+        "direction": "left",
+        "sendPlaySecondsEpoch": 29.788,
+        "requestedDurationMs": 120,
+        "actualTouchStartToEndSendMs": 119.80446499586105,
+        "pointerdownEventToHandlerMs": 294.40000000596046,
+        "drag": {
+          "playSeconds": 30.087300048828126,
+          "fromSendMs": 299.300048828125,
+          "browserAt": 46215
+        },
+        "transform": {
+          "playSeconds": 30.248699951171876,
+          "fromSendMs": 460.699951171875,
+          "browserAt": 46376.40000000596
+        },
+        "nextDay": {
+          "playSeconds": 30.675800048828126,
+          "fromSendMs": 887.800048828125,
+          "browserAt": 46803.5
+        },
+        "reason": {
+          "playSeconds": 30.675800048828126,
+          "fromSendMs": 887.800048828125,
+          "browserAt": 46803.5
+        },
+        "dateAfter": "1月9日",
+        "positive": true,
+        "cueBasis": "same-card-memory",
+        "allObservedWithinWindow": true
+      },
+      {
+        "id": 9,
+        "dateBefore": "1月9日",
+        "direction": "left",
+        "sendPlaySecondsEpoch": 34.887,
+        "requestedDurationMs": 120,
+        "actualTouchStartToEndSendMs": 127.11351498961449,
+        "pointerdownEventToHandlerMs": 289.09999999403954,
+        "drag": {
+          "playSeconds": 35.18060009765625,
+          "fromSendMs": 293.60009765625,
+          "browserAt": 51308.30000001192
+        },
+        "transform": {
+          "playSeconds": 35.34710009765625,
+          "fromSendMs": 460.10009765625,
+          "browserAt": 51474.80000001192
+        },
+        "nextDay": {
+          "playSeconds": 35.76469995117188,
+          "fromSendMs": 877.699951171875,
+          "browserAt": 51892.40000000596
+        },
+        "reason": {
+          "playSeconds": 35.76469995117188,
+          "fromSendMs": 877.699951171875,
+          "browserAt": 51892.40000000596
+        },
+        "dateAfter": "1月10日",
+        "positive": true,
+        "cueBasis": "same-card-memory",
+        "allObservedWithinWindow": true
+      },
+      {
+        "id": 10,
+        "dateBefore": "1月10日",
+        "direction": "left",
+        "sendPlaySecondsEpoch": 37.812,
+        "requestedDurationMs": 120,
+        "actualTouchStartToEndSendMs": 120.09639200568199,
+        "pointerdownEventToHandlerMs": 273.09999999403954,
+        "drag": {
+          "playSeconds": 38.089800048828124,
+          "fromSendMs": 277.800048828125,
+          "browserAt": 54217.5
+        },
+        "transform": {
+          "playSeconds": 38.24660009765625,
+          "fromSendMs": 434.60009765625,
+          "browserAt": 54374.30000001192
+        },
+        "nextDay": {
+          "playSeconds": 38.675,
+          "fromSendMs": 863.0,
+          "browserAt": 54802.70000001788
+        },
+        "reason": {
+          "playSeconds": 38.675,
+          "fromSendMs": 863.0,
+          "browserAt": 54802.70000001788
+        },
+        "dateAfter": "1月11日",
+        "positive": true,
+        "cueBasis": "current",
+        "allObservedWithinWindow": true
+      },
+      {
+        "id": 11,
+        "dateBefore": "1月11日",
+        "direction": "left",
+        "sendPlaySecondsEpoch": 43.07,
+        "requestedDurationMs": 120,
+        "actualTouchStartToEndSendMs": 119.49262398481369,
+        "pointerdownEventToHandlerMs": 314.40000000596046,
+        "drag": {
+          "playSeconds": 43.40069995117187,
+          "fromSendMs": 330.699951171875,
+          "browserAt": 59528.40000000596
+        },
+        "transform": {
+          "playSeconds": 43.566199951171875,
+          "fromSendMs": 496.199951171875,
+          "browserAt": 59693.90000000596
+        },
+        "nextDay": {
+          "playSeconds": 44.03010009765625,
+          "fromSendMs": 960.10009765625,
+          "browserAt": 60157.80000001192
+        },
+        "reason": {
+          "playSeconds": 44.03010009765625,
+          "fromSendMs": 960.10009765625,
+          "browserAt": 60157.80000001192
+        },
+        "dateAfter": "1月12日",
+        "positive": false,
+        "cueBasis": "same-card-memory",
+        "allObservedWithinWindow": true
+      },
+      {
+        "id": 12,
+        "dateBefore": "1月12日",
+        "direction": "left",
+        "sendPlaySecondsEpoch": 48.331,
+        "requestedDurationMs": 120,
+        "actualTouchStartToEndSendMs": 120.4308620095253,
+        "pointerdownEventToHandlerMs": 412.0,
+        "drag": {
+          "playSeconds": 48.74680004882813,
+          "fromSendMs": 415.800048828125,
+          "browserAt": 64874.5
+        },
+        "transform": {
+          "playSeconds": 48.74880004882812,
+          "fromSendMs": 417.800048828125,
+          "browserAt": 64876.5
+        },
+        "nextDay": {
+          "playSeconds": 49.0545,
+          "fromSendMs": 723.5,
+          "browserAt": 65182.20000001788
+        },
+        "reason": {
+          "playSeconds": 49.0545,
+          "fromSendMs": 723.5,
+          "browserAt": 65182.20000001788
+        },
+        "dateAfter": "1月13日",
+        "positive": true,
+        "cueBasis": "same-card-memory",
+        "allObservedWithinWindow": true
+      },
+      {
+        "id": 13,
+        "dateBefore": "1月13日",
+        "direction": "left",
+        "sendPlaySecondsEpoch": 53.41,
+        "requestedDurationMs": 120,
+        "actualTouchStartToEndSendMs": 120.64011800289154,
+        "pointerdownEventToHandlerMs": 431.5,
+        "drag": {
+          "playSeconds": 53.845,
+          "fromSendMs": 435.0,
+          "browserAt": 69972.70000001788
+        },
+        "transform": {
+          "playSeconds": 53.84819995117188,
+          "fromSendMs": 438.199951171875,
+          "browserAt": 69975.90000000596
+        },
+        "nextDay": {
+          "playSeconds": 54.2105,
+          "fromSendMs": 800.5,
+          "browserAt": 70338.20000001788
+        },
+        "reason": {
+          "playSeconds": 54.2105,
+          "fromSendMs": 800.5,
+          "browserAt": 70338.20000001788
+        },
+        "dateAfter": "1月14日",
+        "positive": true,
+        "cueBasis": "same-card-memory",
+        "allObservedWithinWindow": true
+      }
+    ],
+    "sourceUnchanged": true,
+    "browserClosed": true,
+    "cpuReset": true,
+    "consoleErrors": [
+      {
+        "at": 158317956.515369,
+        "kind": "console",
+        "message": "Failed to load resource: the server responded with a status of 404 (File not found)"
+      },
+      {
+        "at": 158334757.019011,
+        "kind": "console",
+        "message": "Failed to load resource: the server responded with a status of 404 (File not found)"
+      }
+    ],
+    "resources404": [
+      {
+        "name": "http://localhost:8000/favicon.ico",
+        "status": 404
+      },
+      {
+        "name": "http://localhost:8000/favicon.ico",
+        "status": 404
+      }
+    ],
+    "driverErrors": [],
+    "skippedInputTasks": [],
+    "lateCleanup": [],
+    "AauditChecks": [
+      72,
+      72
+    ]
+  },
+  "delayInterpretation": {
+    "eventTimestampToCaptureHandlerMs": {
+      "minimum": 273.09999999403954,
+      "median": 331.90000000596046,
+      "maximum": 462.19999998807907
+    },
+    "handlerToDragDOMMs": {
+      "minimum": 3.5,
+      "median": 5.1,
+      "maximum": 17.6
+    },
+    "previewCauseEstablished": false,
+    "limits": "Dispatch, page workload, drawing and instrumentation are not causally separated. DOM timestamps are not physical paint; host delay is not measured finger response."
+  },
+  "photos": [
+    {
+      "file": "observe-10s.png",
+      "sourceId": "preparation-4a38/strict/observe-10s.png",
+      "sha256": "4e72d897a1da88411eeeebe661d1d62945a83ffeeb835eb6ac91eaca8181efc2",
+      "width": 320,
+      "height": 568,
+      "originalBytesCopied": true,
+      "reportAuthorPersonallyViewed": true,
+      "requestedSeconds": 10.001960927009582,
+      "completedSeconds": 15.575895519018173,
+      "captureMs": 5573.934592008591,
+      "clockPhase": "observation"
+    },
+    {
+      "file": "play-10s.png",
+      "sourceId": "preparation-4a38/strict/play-10s.png",
+      "sha256": "1be5d0d70d5f32d3b0d1eddb0562a5f538e79836f5298653286a23eb4e9cd220",
+      "width": 320,
+      "height": 568,
+      "originalBytesCopied": true,
+      "reportAuthorPersonallyViewed": true,
+      "requestedSeconds": 10.008854445010424,
+      "completedSeconds": 10.57367222198844,
+      "captureMs": 564.8177769780159,
+      "clockPhase": "play"
+    },
+    {
+      "file": "play-30s.png",
+      "sourceId": "preparation-4a38/strict/play-30s.png",
+      "sha256": "3d83fcee9c248142f06e49666cba18b5a46b7258317f2d90d413dce956339178",
+      "width": 320,
+      "height": 568,
+      "originalBytesCopied": true,
+      "reportAuthorPersonallyViewed": true,
+      "requestedSeconds": 30.00051735499501,
+      "completedSeconds": 30.491648272007705,
+      "captureMs": 491.1309170126915,
+      "clockPhase": "play"
+    },
+    {
+      "file": "play-60s.png",
+      "sourceId": "preparation-4a38/strict/play-60s.png",
+      "sha256": "f4c2ee014c5abadec9e68589d858c9838ef1ad11cef96061c727b02afffa1370",
+      "width": 320,
+      "height": 568,
+      "originalBytesCopied": true,
+      "reportAuthorPersonallyViewed": true,
+      "requestedSeconds": 60.00952892398834,
+      "completedSeconds": 60.72593468400836,
+      "captureMs": 716.4057600200176,
+      "clockPhase": "play"
+    }
+  ],
+  "methods": {
+    "A_newConfirmedFixableDefects": 0,
+    "B_newConfirmedFixableDefects": 0,
+    "C_newConfirmedFixableDefects": 0,
+    "winner": null,
+    "continueAllMethodsNextRound": true
+  },
+  "operatorDecision": {
+    "explicitExistingBoundary": {
+      "source": "kome365/index.html:441",
+      "text": "The trace boxes, growth dots and rice rows were deliberately hidden; growth is shown by the large field image and state phrase.",
+      "restorationWouldChangeExplicitDecision": true
+    },
+    "deferredDesignHypothesis": "Whether the existing state phrase can convey the next farming stage is an unvalidated proposal from this review, not an established rule requiring new user permission.",
+    "otherPreservedDecisions": [
+      "0.3s swipe guide",
+      "fast swipe confirmation; no choice or card motion from tap",
+      "first-card edge shadow",
+      "reason location and2seconds",
+      "30second card",
+      "sound with mute toggle",
+      "scarecrow and sun"
+    ]
+  },
+  "unreproducedHypotheses": [
+    "preview computation as cause of latency",
+    "short diagonal or outside-card input",
+    "background/capture ownership transitions"
+  ],
+  "notPerformed": [
+    "ten-repeat reproduction of a selected new defect",
+    "product modification",
+    "additional regression RED/GREEN",
+    "before/after improvement comparison",
+    "five-size layout comparison",
+    "physical-device and human dropout-rate measurements"
+  ],
+  "tests": {
+    "pytest": {
+      "commandText": "pytest tests/",
+      "actualToolExit": 127,
+      "errorText": "/bin/bash: line 1: pytest: command not found",
+      "toolChunk": "5397ef",
+      "basis": "Root-reported actual tool result; report author did not execute it.",
+      "suiteExecuted": false
+    }
+  },
+  "publication": {
+    "draft": true,
+    "mergeHold": true,
+    "reason": "required pytest unavailable; no product fix selected",
+    "skillLine": 212
+  },
+  "videoReference": {
+    "videoPlayed": false,
+    "officialCaptionsDirectlyObtained": false,
+    "textSources": [
+      "https://www.famitsu.com/news/201705/17132636.html",
+      "https://github.com/flossbud/sakurai-game-design/blob/main/episodes/transcripts/100-development-secrets-of-the-original-kirby.md"
+    ],
+    "use": "Reference for judging response and visible progress only; not a cause or proof of the observations. OCR accuracy and original Japanese timing not independently verified."
+  },
+  "limitations": [
+    "One320x568 primary only; no multi-size validation.",
+    "Four sparse original images contain no reason bubble;13 DOM reason activations9positive4negative do not mean all13 were personally seen in pixels.",
+    "Photo initial wait5573.934592ms is measurement overhead outside the60second play clock; product clocks continued.",
+    "Hand present in3 photos and two labels fit in4 does not prove a new player understands swipe direction.",
+    "R98 alternating directions and R102 visible-cue policy/viewport differ, so counts and timings are not a controlled performance comparison.",
+    "Stage phrase quotes are observations of existing UI, not newly asserted farming facts.",
+    "No actual finger, sensor, network, audio quality, comprehension or retention measurement."
+  ],
+  "evidence": {
+    "archiveRootIdentifier": "scratch/first-minute/round-102 (not a public URL)",
+    "files": [
+      {
+        "id": "source-pins.json",
+        "sha256": "faa8c4c23db0d6c9fa4c204fb2e8ce3865a7b2e20dd51adc955edb82a42daf55"
+      },
+      {
+        "id": "preparation-4a38/metadata.json",
+        "sha256": "4631e269de1d6771eff321f09d2b6980bcac5e5610fbc6712f9a6479ef34b8dd"
+      },
+      {
+        "id": "preparation-4a38/root-execution.json",
+        "sha256": "c6662f383bdaa11ed2718bc99a2fec2cfb1e1c5871c871de9ba79e1163410c3b"
+      },
+      {
+        "id": "preparation-4a38/strict/report.json",
+        "sha256": "1593f439feed37fe2639c7a35d4d5b900bf65479de00ff51c1ec510cc5b22244"
+      },
+      {
+        "id": "preparation-4a38/strict/driver-timing.json",
+        "sha256": "ea001ea7f5dffd173ef380a8603ddfd72f34e942564864a38799b3892d7db030"
+      },
+      {
+        "id": "preparation-4a38/strict/extra.json",
+        "sha256": "302f95412a90205c5754aa7061fab1a1dca9408496be2713400e458d0cdbd7fd"
+      },
+      {
+        "id": "discovery-a/frozen.json",
+        "sha256": "55063a1ec17e0a5542917dd06bf3f4d195503ee981ec085050ffbaeb4f77c1b9"
+      },
+      {
+        "id": "discovery-a/summary.json",
+        "sha256": "99963ebde2c2634953fa4b97b0b88ccc36ae96a5d26f8e494a33278c2b2c2d41"
+      },
+      {
+        "id": "discovery-a/gesture-rows.json",
+        "sha256": "83feff1e11ecba28c5477f736a0bcf39d53812230a2fdb9519c495cfaf40c44e"
+      },
+      {
+        "id": "discovery-a/skip-rows.json",
+        "sha256": "f66a93d18f75d5d963796dcad91d55d8e2bc5292113691d01157c9e5c31db733"
+      },
+      {
+        "id": "discovery-b/frozen.json",
+        "sha256": "cfc7556b306f021255c2d24f0df0215477bc5c8f9df1ad4f675ee25c788d57cf"
+      },
+      {
+        "id": "discovery-b/review.json",
+        "sha256": "b0ae6626529efe5a4adcc6fc6ee4d02b2a65ec38ae950fd9c9b01d944a1f0d5b"
+      },
+      {
+        "id": "discovery-c/primary-readback/frozen.json",
+        "sha256": "2f62ecb682f833b463148f1f60e3aa39d129e5d6c6535c319e3d7e8f53fafe1f"
+      },
+      {
+        "id": "discovery-c/primary-readback/summary.json",
+        "sha256": "ce6bb9c7edee9281d3a7b88c6faf4efe08b3ecfb809a5306063d23c6c2d0d5de"
+      }
+    ]
+  }
+}

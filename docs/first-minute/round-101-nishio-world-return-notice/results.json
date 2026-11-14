@@ -1,0 +1,1804 @@
+{
+  "round": 101,
+  "status": "completed report for draft review; mandatory pytest unavailable and full Node unsuccessful",
+  "asOfUTC": "2026-11-14T08:49:29.109160+00:00",
+  "game": "nishio-go",
+  "reportOnlyPlanned": false,
+  "productChanged": true,
+  "testsChanged": true,
+  "humanRetentionMeasured": false,
+  "source": {
+    "sourceHashes": {
+      "AGENTS.md": "81c9231e00cec58b8eaf06ab06ea96bd26ce8bd04151c1f7c1017f1dfa4dcbeb",
+      ".claude/skills/ricepia-flow/SKILL.md": "56d075153f561430fee926907a5c97083d9f643e6dd2d3a2f4c5736324a697f0",
+      "nishio-go.html": "8e2749d8ffe0f5b1461cf3e347972df05e6d63fd8fb143a2e2ca5ab0b933e6e0",
+      "nishio-go/pixel.js": "5e2fe6022963f7b51b9bae218fb52dd6b02f73481f48e64fd59b3bac7a5cf7c5",
+      "nishio-go/style.css": "c00be168073dab5fbc6e9896f43520af098252a49a3bec5bf5ef8f9ac7621f46",
+      "nishio-go/game.js": "1ac1eee951f7a8889a622121ba4e1e17bbbf0ee695dcdebbc86ade430c9ca610",
+      "nishio-go/icons.js": "3fed8790bc9eeee79eaeccfa430e68a05447e19007bfe4946993940742faed61",
+      "kome365/engine.js": "c3d0cef6bb108d5b6d8fe38aaf0c08fe7994bdab08bf92775865a6e0222469a3",
+      "kome365/field3d.js": "a5c1dad91d5c0c326f1394fad9c5d04e7e3b8d13e3a2b8b1757c7aa08d3558ff",
+      "kome365/cards.js": "b15c5b2f56ef9c0c8361fa2fa6a039085919ca516b4a2e6e5a1b3bb691dde744"
+    },
+    "docsCommit": null,
+    "docsAddedLaterHeadNotClaimedAsTested": true,
+    "baselineHead": "298648f7d5e725310bb43b368935ebbb81056fac",
+    "candidate": {
+      "sourceRoot": "/workspace/ricepia-firstminute-round101",
+      "sourceHead": "c5800228aab08d32afb23cfc4bdfd2800802ba9a",
+      "sourceBranch": "codex/firstminute-round101-observation",
+      "sourceHashes": {
+        "AGENTS.md": "81c9231e00cec58b8eaf06ab06ea96bd26ce8bd04151c1f7c1017f1dfa4dcbeb",
+        ".claude/skills/ricepia-flow/SKILL.md": "56d075153f561430fee926907a5c97083d9f643e6dd2d3a2f4c5736324a697f0",
+        "nishio-go.html": "8e2749d8ffe0f5b1461cf3e347972df05e6d63fd8fb143a2e2ca5ab0b933e6e0",
+        "nishio-go/pixel.js": "6a27e92aebb6b301bbb8f14e15aa603f7a8bf137ddcf0c4ad4cb4a3d78d037d4",
+        "nishio-go/style.css": "c00be168073dab5fbc6e9896f43520af098252a49a3bec5bf5ef8f9ac7621f46",
+        "nishio-go/game.js": "4114dcb6f0cfc211f9dbd35476859fe90ececa90e4ed6165d20367e3fc492e94",
+        "nishio-go/icons.js": "3fed8790bc9eeee79eaeccfa430e68a05447e19007bfe4946993940742faed61",
+        "kome365/engine.js": "c3d0cef6bb108d5b6d8fe38aaf0c08fe7994bdab08bf92775865a6e0222469a3",
+        "kome365/field3d.js": "a5c1dad91d5c0c326f1394fad9c5d04e7e3b8d13e3a2b8b1757c7aa08d3558ff",
+        "kome365/cards.js": "b15c5b2f56ef9c0c8361fa2fa6a039085919ca516b4a2e6e5a1b3bb691dde744",
+        "tests/test_nishio_world_notice_lifetime.py": "b10b437c34ef67121f7514bd006f3f8d7effaf4e4612820361d8e73a40a94209",
+        "docs/meiro.md": "fd985102ddd878ef03d13e4ef5da5244bd99b781f9f514e2d76bae428774cb82"
+      },
+      "atUTC": "2026-11-14T07:55:39.884228+00:00"
+    }
+  },
+  "conditions": {
+    "viewport": {
+      "width": 844,
+      "height": 390
+    },
+    "isMobile": true,
+    "hasTouch": true,
+    "CPU": 1,
+    "requestedHoldMs": 40,
+    "requestedResponseWaitMs": 1100,
+    "observeSeconds": 10,
+    "playSeconds": 60,
+    "freshContext": true,
+    "input": "CDP Input.dispatchTouchEvent",
+    "localLeaflet": "1.9.4",
+    "externalPageURLsBlocked": [
+      "https://fonts.googleapis.com/css2?family=DotGothic16&display=swap",
+      "https://www.jma.go.jp/bosai/forecast/data/forecast/230000.json",
+      "https://www.jma.go.jp/bosai/amedas/data/latest_time.txt",
+      "https://cyberjapandata.gsi.go.jp/xyz/dem_png/14/14429/6497.png"
+    ]
+  },
+  "primary": {
+    "actualChildExit": 0,
+    "actualOuterExit": 0,
+    "summary": {
+      "measured": true,
+      "actions": 30,
+      "visibleHandInputs": 23,
+      "normalHandInputs": 22,
+      "handWorldOpenings": 8,
+      "normalHandWorldOpenings": 8,
+      "informationPanelInstrumentation": true,
+      "informationPanelOpeningsAfterInputs": 0,
+      "informationPanelOpeningsAfterHandInputs": 0,
+      "visibleInfoCloseInputs": 0,
+      "visibleInfoCloseResponses": 0,
+      "visibleReturnInputs": 7,
+      "visibleReturnResponses": 7,
+      "recordedNoResponseWithFullWindow": 0,
+      "handNoResponseWithFullWindow": 0,
+      "incompleteObservationWindows": 1,
+      "incompleteNoResponseWindows": 0,
+      "firstRecordedFeedback": {
+        "action": 1,
+        "kind": "coordinateChanged",
+        "observedPlaySeconds": 0.1285,
+        "sendToObservedMs": 110.5
+      },
+      "firstVisibleInfo": null,
+      "reward": {
+        "kind": "first observed positive visible unobscured displayed points",
+        "pointEvidence": {
+          "selector": "#ptsNum",
+          "displayContainer": ".pts",
+          "firstObservedPositive": {
+            "observedAt": 1794639638073.6,
+            "playSeconds": 0.35360009765625,
+            "phase": "play",
+            "text": "30",
+            "value": 30,
+            "visible": true,
+            "centerUnobscured": true
+          },
+          "firstObservedPositiveWithinPlay": {
+            "observedAt": 1794639638073.6,
+            "playSeconds": 0.35360009765625,
+            "phase": "play",
+            "text": "30",
+            "value": 30,
+            "visible": true,
+            "centerUnobscured": true
+          },
+          "note": "These are first observed positive DOM text/visibility timestamps, not point-award or physical-paint timestamps. Polling is requested every50ms, with a separate number/badge MutationObserver; renderer stalls may delay both. Observations before play or after its deadline are kept separate. Center hit testing is additional evidence, not proof of every pixel being unobscured."
+        },
+        "firstInputToPositivePointsMs": 335.60009765625,
+        "baselineAlreadyPositive": false
+      },
+      "samplesWithinPlay": 1401,
+      "definitions": [
+        "All moments are first observed DOM/scalar timestamps, not physical paint or exact game-award times.",
+        "Information open/close is feedback, counted separately from coordinate changes and reward; info opening is never a pure no-op.",
+        "Coordinate change alone does not establish forward route progress. Stored-goal changes and toast text are recorded-state evidence.",
+        "A no-recorded-response classification requires both input ACKs and an observed sample >=1100ms after action completion before next input/deadline. Hand disappearance and guide changes alone are excluded.",
+        "50ms sampling and mutation callbacks may be delayed. First positive visible point text is a reward proxy, separate from stored goals and information panels.",
+        "Action windows contain temporal associations, not proof that an input caused every observed change. Raw after-deadline observations remain retained.",
+        "No physical finger, tilt sensor, network speed or player-retention effect is established."
+      ]
+    },
+    "actionRows": [
+      {
+        "action": 1,
+        "kind": "visible-hand-center",
+        "sentPlaySeconds": 0.018,
+        "actualNodeHoldMs": 40,
+        "touchStartAckMs": 51,
+        "touchEndAckMs": 71,
+        "full1100msWindowObserved": true,
+        "result": "coordinateChanged",
+        "firstRecordedResponse": {
+          "kind": "coordinateChanged",
+          "observedPlaySeconds": 0.1285,
+          "sendToObservedMs": 110.5
+        }
+      },
+      {
+        "action": 2,
+        "kind": "visible-hand-center",
+        "sentPlaySeconds": 3.223,
+        "actualNodeHoldMs": 39,
+        "touchStartAckMs": 36,
+        "touchEndAckMs": 59,
+        "full1100msWindowObserved": true,
+        "result": "coordinateChanged",
+        "firstRecordedResponse": {
+          "kind": "coordinateChanged",
+          "observedPlaySeconds": 3.320199951171875,
+          "sendToObservedMs": 97.199951171875
+        }
+      },
+      {
+        "action": 3,
+        "kind": "visible-hand-center",
+        "sentPlaySeconds": 5.499,
+        "actualNodeHoldMs": 40,
+        "touchStartAckMs": 34,
+        "touchEndAckMs": 75,
+        "full1100msWindowObserved": true,
+        "result": "worldOpened",
+        "firstRecordedResponse": {
+          "kind": "worldOpened",
+          "observedPlaySeconds": 5.610800048828125,
+          "sendToObservedMs": 111.800048828125
+        }
+      },
+      {
+        "action": 4,
+        "kind": "visible-world-return",
+        "sentPlaySeconds": 6.771,
+        "actualNodeHoldMs": 41,
+        "touchStartAckMs": 44,
+        "touchEndAckMs": 41,
+        "full1100msWindowObserved": true,
+        "result": "worldReturned",
+        "firstRecordedResponse": {
+          "kind": "worldReturned",
+          "observedPlaySeconds": 6.851300048828125,
+          "sendToObservedMs": 80.300048828125
+        }
+      },
+      {
+        "action": 5,
+        "kind": "visible-hand-center",
+        "sentPlaySeconds": 7.973,
+        "actualNodeHoldMs": 41,
+        "touchStartAckMs": 35,
+        "touchEndAckMs": 75,
+        "full1100msWindowObserved": true,
+        "result": "worldOpened",
+        "firstRecordedResponse": {
+          "kind": "worldOpened",
+          "observedPlaySeconds": 8.08560009765625,
+          "sendToObservedMs": 112.60009765625
+        }
+      },
+      {
+        "action": 6,
+        "kind": "visible-world-return",
+        "sentPlaySeconds": 9.223,
+        "actualNodeHoldMs": 41,
+        "touchStartAckMs": 42,
+        "touchEndAckMs": 40,
+        "full1100msWindowObserved": true,
+        "result": "worldReturned",
+        "firstRecordedResponse": {
+          "kind": "worldReturned",
+          "observedPlaySeconds": 9.30260009765625,
+          "sendToObservedMs": 79.60009765625
+        }
+      },
+      {
+        "action": 7,
+        "kind": "visible-hand-center",
+        "sentPlaySeconds": 10.444,
+        "actualNodeHoldMs": 41,
+        "touchStartAckMs": 48,
+        "touchEndAckMs": 78,
+        "full1100msWindowObserved": true,
+        "result": "coordinateChanged",
+        "firstRecordedResponse": {
+          "kind": "coordinateChanged",
+          "observedPlaySeconds": 10.555199951171875,
+          "sendToObservedMs": 111.199951171875
+        }
+      },
+      {
+        "action": 8,
+        "kind": "visible-hand-center",
+        "sentPlaySeconds": 12.515,
+        "actualNodeHoldMs": 45,
+        "touchStartAckMs": 35,
+        "touchEndAckMs": 112,
+        "full1100msWindowObserved": true,
+        "result": "coordinateChanged",
+        "firstRecordedResponse": {
+          "kind": "coordinateChanged",
+          "observedPlaySeconds": 12.670699951171875,
+          "sendToObservedMs": 155.699951171875
+        }
+      },
+      {
+        "action": 9,
+        "kind": "visible-hand-center",
+        "sentPlaySeconds": 14.961,
+        "actualNodeHoldMs": 40,
+        "touchStartAckMs": 35,
+        "touchEndAckMs": 81,
+        "full1100msWindowObserved": true,
+        "result": "coordinateChanged",
+        "firstRecordedResponse": {
+          "kind": "coordinateChanged",
+          "observedPlaySeconds": 15.0815,
+          "sendToObservedMs": 120.5
+        }
+      },
+      {
+        "action": 10,
+        "kind": "visible-hand-center",
+        "sentPlaySeconds": 17.707,
+        "actualNodeHoldMs": 40,
+        "touchStartAckMs": 33,
+        "touchEndAckMs": 73,
+        "full1100msWindowObserved": true,
+        "result": "coordinateChanged",
+        "firstRecordedResponse": {
+          "kind": "coordinateChanged",
+          "observedPlaySeconds": 17.81960009765625,
+          "sendToObservedMs": 112.60009765625
+        }
+      },
+      {
+        "action": 11,
+        "kind": "visible-hand-center",
+        "sentPlaySeconds": 19.967,
+        "actualNodeHoldMs": 40,
+        "touchStartAckMs": 36,
+        "touchEndAckMs": 84,
+        "full1100msWindowObserved": true,
+        "result": "coordinateChanged",
+        "firstRecordedResponse": {
+          "kind": "coordinateChanged",
+          "observedPlaySeconds": 20.090699951171874,
+          "sendToObservedMs": 123.699951171875
+        }
+      },
+      {
+        "action": 12,
+        "kind": "visible-hand-center",
+        "sentPlaySeconds": 22.204,
+        "actualNodeHoldMs": 40,
+        "touchStartAckMs": 40,
+        "touchEndAckMs": 78,
+        "full1100msWindowObserved": true,
+        "result": "coordinateChanged",
+        "firstRecordedResponse": {
+          "kind": "coordinateChanged",
+          "observedPlaySeconds": 22.320900146484377,
+          "sendToObservedMs": 116.900146484375
+        }
+      },
+      {
+        "action": 13,
+        "kind": "visible-hand-center",
+        "sentPlaySeconds": 24.503,
+        "actualNodeHoldMs": 40,
+        "touchStartAckMs": 42,
+        "touchEndAckMs": 92,
+        "full1100msWindowObserved": true,
+        "result": "coordinateChanged",
+        "firstRecordedResponse": {
+          "kind": "coordinateChanged",
+          "observedPlaySeconds": 24.634800048828126,
+          "sendToObservedMs": 131.800048828125
+        }
+      },
+      {
+        "action": 14,
+        "kind": "visible-hand-center",
+        "sentPlaySeconds": 33.199,
+        "actualNodeHoldMs": 40,
+        "touchStartAckMs": 43,
+        "touchEndAckMs": 59,
+        "full1100msWindowObserved": true,
+        "result": "coordinateChanged",
+        "firstRecordedResponse": {
+          "kind": "coordinateChanged",
+          "observedPlaySeconds": 33.2975,
+          "sendToObservedMs": 98.5
+        }
+      },
+      {
+        "action": 15,
+        "kind": "visible-hand-center",
+        "sentPlaySeconds": 35.706,
+        "actualNodeHoldMs": 40,
+        "touchStartAckMs": 41,
+        "touchEndAckMs": 88,
+        "full1100msWindowObserved": true,
+        "result": "coordinateChanged",
+        "firstRecordedResponse": {
+          "kind": "coordinateChanged",
+          "observedPlaySeconds": 35.83369995117187,
+          "sendToObservedMs": 127.699951171875
+        }
+      },
+      {
+        "action": 16,
+        "kind": "visible-hand-center",
+        "sentPlaySeconds": 37.709,
+        "actualNodeHoldMs": 40,
+        "touchStartAckMs": 38,
+        "touchEndAckMs": 80,
+        "full1100msWindowObserved": true,
+        "result": "worldOpened",
+        "firstRecordedResponse": {
+          "kind": "worldOpened",
+          "observedPlaySeconds": 37.82760009765625,
+          "sendToObservedMs": 118.60009765625
+        }
+      },
+      {
+        "action": 17,
+        "kind": "visible-world-return",
+        "sentPlaySeconds": 38.968,
+        "actualNodeHoldMs": 40,
+        "touchStartAckMs": 32,
+        "touchEndAckMs": 45,
+        "full1100msWindowObserved": true,
+        "result": "worldReturned",
+        "firstRecordedResponse": {
+          "kind": "worldReturned",
+          "observedPlaySeconds": 39.05240014648437,
+          "sendToObservedMs": 84.400146484375
+        }
+      },
+      {
+        "action": 18,
+        "kind": "visible-hand-center",
+        "sentPlaySeconds": 40.178,
+        "actualNodeHoldMs": 40,
+        "touchStartAckMs": 48,
+        "touchEndAckMs": 64,
+        "full1100msWindowObserved": true,
+        "result": "coordinateChanged",
+        "firstRecordedResponse": {
+          "kind": "coordinateChanged",
+          "observedPlaySeconds": 40.2815,
+          "sendToObservedMs": 103.5
+        }
+      },
+      {
+        "action": 19,
+        "kind": "visible-hand-center",
+        "sentPlaySeconds": 42.452,
+        "actualNodeHoldMs": 40,
+        "touchStartAckMs": 36,
+        "touchEndAckMs": 84,
+        "full1100msWindowObserved": true,
+        "result": "worldOpened",
+        "firstRecordedResponse": {
+          "kind": "worldOpened",
+          "observedPlaySeconds": 42.57390014648438,
+          "sendToObservedMs": 121.900146484375
+        }
+      },
+      {
+        "action": 20,
+        "kind": "visible-world-return",
+        "sentPlaySeconds": 43.737,
+        "actualNodeHoldMs": 41,
+        "touchStartAckMs": 32,
+        "touchEndAckMs": 46,
+        "full1100msWindowObserved": true,
+        "result": "worldReturned",
+        "firstRecordedResponse": {
+          "kind": "worldReturned",
+          "observedPlaySeconds": 43.82290014648437,
+          "sendToObservedMs": 85.900146484375
+        }
+      },
+      {
+        "action": 21,
+        "kind": "visible-hand-center",
+        "sentPlaySeconds": 44.958,
+        "actualNodeHoldMs": 40,
+        "touchStartAckMs": 45,
+        "touchEndAckMs": 46,
+        "full1100msWindowObserved": true,
+        "result": "worldOpened",
+        "firstRecordedResponse": {
+          "kind": "worldOpened",
+          "observedPlaySeconds": 45.04330004882812,
+          "sendToObservedMs": 85.300048828125
+        }
+      },
+      {
+        "action": 22,
+        "kind": "visible-world-return",
+        "sentPlaySeconds": 46.17,
+        "actualNodeHoldMs": 40,
+        "touchStartAckMs": 45,
+        "touchEndAckMs": 41,
+        "full1100msWindowObserved": true,
+        "result": "worldReturned",
+        "firstRecordedResponse": {
+          "kind": "worldReturned",
+          "observedPlaySeconds": 46.25010009765625,
+          "sendToObservedMs": 80.10009765625
+        }
+      },
+      {
+        "action": 23,
+        "kind": "visible-hand-center",
+        "sentPlaySeconds": 47.364,
+        "actualNodeHoldMs": 40,
+        "touchStartAckMs": 38,
+        "touchEndAckMs": 84,
+        "full1100msWindowObserved": true,
+        "result": "coordinateChanged",
+        "firstRecordedResponse": {
+          "kind": "coordinateChanged",
+          "observedPlaySeconds": 47.48690014648437,
+          "sendToObservedMs": 122.900146484375
+        }
+      },
+      {
+        "action": 24,
+        "kind": "visible-hand-center",
+        "sentPlaySeconds": 49.464,
+        "actualNodeHoldMs": 40,
+        "touchStartAckMs": 35,
+        "touchEndAckMs": 60,
+        "full1100msWindowObserved": true,
+        "result": "coordinateChanged",
+        "firstRecordedResponse": {
+          "kind": "coordinateChanged",
+          "observedPlaySeconds": 49.56369995117188,
+          "sendToObservedMs": 99.699951171875
+        }
+      },
+      {
+        "action": 25,
+        "kind": "visible-hand-center",
+        "sentPlaySeconds": 51.738,
+        "actualNodeHoldMs": 41,
+        "touchStartAckMs": 49,
+        "touchEndAckMs": 55,
+        "full1100msWindowObserved": true,
+        "result": "worldOpened",
+        "firstRecordedResponse": {
+          "kind": "worldOpened",
+          "observedPlaySeconds": 51.8325,
+          "sendToObservedMs": 94.5
+        }
+      },
+      {
+        "action": 26,
+        "kind": "visible-world-return",
+        "sentPlaySeconds": 52.967,
+        "actualNodeHoldMs": 40,
+        "touchStartAckMs": 37,
+        "touchEndAckMs": 50,
+        "full1100msWindowObserved": true,
+        "result": "worldReturned",
+        "firstRecordedResponse": {
+          "kind": "worldReturned",
+          "observedPlaySeconds": 53.05380004882812,
+          "sendToObservedMs": 86.800048828125
+        }
+      },
+      {
+        "action": 27,
+        "kind": "visible-hand-center",
+        "sentPlaySeconds": 54.204,
+        "actualNodeHoldMs": 39,
+        "touchStartAckMs": 38,
+        "touchEndAckMs": 114,
+        "full1100msWindowObserved": true,
+        "result": "coordinateChanged",
+        "firstRecordedResponse": {
+          "kind": "coordinateChanged",
+          "observedPlaySeconds": 54.35680004882813,
+          "sendToObservedMs": 152.800048828125
+        }
+      },
+      {
+        "action": 28,
+        "kind": "visible-hand-center",
+        "sentPlaySeconds": 56.982,
+        "actualNodeHoldMs": 40,
+        "touchStartAckMs": 43,
+        "touchEndAckMs": 116,
+        "full1100msWindowObserved": true,
+        "result": "worldOpened",
+        "firstRecordedResponse": {
+          "kind": "worldOpened",
+          "observedPlaySeconds": 57.13610009765625,
+          "sendToObservedMs": 154.10009765625
+        }
+      },
+      {
+        "action": 29,
+        "kind": "visible-world-return",
+        "sentPlaySeconds": 58.267,
+        "actualNodeHoldMs": 40,
+        "touchStartAckMs": 33,
+        "touchEndAckMs": 43,
+        "full1100msWindowObserved": true,
+        "result": "worldReturned",
+        "firstRecordedResponse": {
+          "kind": "worldReturned",
+          "observedPlaySeconds": 58.349199951171876,
+          "sendToObservedMs": 82.199951171875
+        }
+      },
+      {
+        "action": 30,
+        "kind": "visible-hand-center",
+        "sentPlaySeconds": 59.472,
+        "actualNodeHoldMs": 41,
+        "touchStartAckMs": 44,
+        "touchEndAckMs": 53,
+        "full1100msWindowObserved": false,
+        "result": "worldOpened",
+        "firstRecordedResponse": {
+          "kind": "worldOpened",
+          "observedPlaySeconds": 59.564800048828126,
+          "sendToObservedMs": 92.800048828125
+        }
+      }
+    ],
+    "errors": [],
+    "sourceBeforeAfterVerified": true,
+    "browserClosed": true,
+    "CPUReset": true,
+    "goalFirstObservedPeriodicSampleSeconds": {
+      "1": 18.99560009765625,
+      "2": 25.209400146484374
+    },
+    "goalFirstAllStreamSeconds": {
+      "1": 18.956699951171874,
+      "2": 25.153
+    }
+  },
+  "photos": [
+    {
+      "file": "observe-10s.png",
+      "sourceId": "preparation-2986/observe-10s.png",
+      "sha256": "da6b67f93f979fbccf63a81b0b437a19cf4394bf84078ec8f9253e132840fa89",
+      "timing": {
+        "name": "observe-10s",
+        "phase": "observe",
+        "scheduledSeconds": 10,
+        "requestedAt": 1794639637535,
+        "requestedSeconds": 10.001,
+        "completedAt": 1794639637720,
+        "completedSeconds": 10.186
+      },
+      "originalBytesCopied": true,
+      "reportAuthorPersonallyViewed": true
+    },
+    {
+      "file": "play-10s.png",
+      "sourceId": "preparation-2986/play-10s.png",
+      "sha256": "c1f55ac97f410088257c7951f68d0dda8ded121677b56e3c13a067c7bd316fca",
+      "timing": {
+        "name": "play-10s",
+        "phase": "play",
+        "scheduledSeconds": 10,
+        "requestedAt": 1794639647721,
+        "requestedSeconds": 10.001,
+        "completedAt": 1794639647844,
+        "completedSeconds": 10.124
+      },
+      "originalBytesCopied": true,
+      "reportAuthorPersonallyViewed": true
+    },
+    {
+      "file": "play-30s.png",
+      "sourceId": "preparation-2986/play-30s.png",
+      "sha256": "c063583406521970b50b6e1938642427d6c8e133733af7ce0beb4a6e56d60769",
+      "timing": {
+        "name": "play-30s",
+        "phase": "play",
+        "scheduledSeconds": 30,
+        "requestedAt": 1794639667720,
+        "requestedSeconds": 30,
+        "completedAt": 1794639667912,
+        "completedSeconds": 30.192
+      },
+      "originalBytesCopied": true,
+      "reportAuthorPersonallyViewed": true
+    },
+    {
+      "file": "play-60s.png",
+      "sourceId": "preparation-2986/play-60s.png",
+      "sha256": "e6ec706472b8e772e81c48935ea9a57b245b29e67cd67b4607c615b6f7d20853",
+      "timing": {
+        "name": "play-60s",
+        "phase": "play",
+        "scheduledSeconds": 60,
+        "requestedAt": 1794639697720,
+        "requestedSeconds": 60,
+        "completedAt": 1794639697799,
+        "completedSeconds": 60.079
+      },
+      "originalBytesCopied": true,
+      "reportAuthorPersonallyViewed": true
+    },
+    {
+      "file": "before-fast-return-plus-1000.png",
+      "sourceId": "world-return-toast-reproduction-before/treatment-fast-1/factor-plus-1000.png",
+      "sha256": "968bf59f0fbe399cb3b6341042e2adf71fab7ef99e8c568ccee3339b4a799999",
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "condition": "treatment",
+      "speed": "fast",
+      "phase": "before",
+      "requestedHoldMs": 40,
+      "originalBytesCopied": true,
+      "reportAuthorPersonallyViewed": true,
+      "photoRequestedAfterAnchorMs": 1030,
+      "photoCompletedAfterAnchorMs": 1239,
+      "mainDOMObservedAfterAnchorMs": 1028.300048828125,
+      "mainDOMToastVisible": true,
+      "mainDOMWorld": false,
+      "mainDOMReturnControlVisible": false
+    },
+    {
+      "file": "after-fast-return-plus-1000.png",
+      "sourceId": "world-return-toast-reproduction-after/treatment-fast-1/factor-plus-1000.png",
+      "sha256": "aee6d07618d7a572f53be16feacdfea7a59b64f123079e649923b7841188d792",
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "condition": "treatment",
+      "speed": "fast",
+      "phase": "after",
+      "requestedHoldMs": 40,
+      "originalBytesCopied": true,
+      "reportAuthorPersonallyViewed": true,
+      "photoRequestedAfterAnchorMs": 1020,
+      "photoCompletedAfterAnchorMs": 1199,
+      "mainDOMObservedAfterAnchorMs": 1017.199951171875,
+      "mainDOMToastVisible": false,
+      "mainDOMWorld": false,
+      "mainDOMReturnControlVisible": false
+    },
+    {
+      "file": "before-568x320-return-plus-1000.png",
+      "sourceId": "layout-before-v2/568x320/factor-plus-1000.png",
+      "sha256": "822cc009feb3e86838c2e4a18bef8005d4bd2dab61f6c57283c2ce49c7790ff3",
+      "viewport": {
+        "width": 568,
+        "height": 320
+      },
+      "phase": "before",
+      "scope": "five-size layout; excluded from fixed ten denominator",
+      "requestedHoldMs": 40,
+      "originalBytesCopied": true,
+      "reportAuthorPersonallyViewed": true,
+      "photoRequestedAfterAnchorMs": 1081,
+      "photoCompletedAfterAnchorMs": 1169,
+      "mainDOMObservedAfterAnchorMs": 1002.2001953125,
+      "mainDOMToastVisible": true
+    },
+    {
+      "file": "after-568x320-return-plus-1000.png",
+      "sourceId": "layout-after-v2/568x320/factor-plus-1000.png",
+      "sha256": "9b6dc58129603f1ff155b0b914529306299a2977044e26f78e7b7f0bfc79ae2e",
+      "viewport": {
+        "width": 568,
+        "height": 320
+      },
+      "phase": "after",
+      "scope": "five-size layout; excluded from fixed ten denominator",
+      "requestedHoldMs": 40,
+      "originalBytesCopied": true,
+      "reportAuthorPersonallyViewed": true,
+      "photoRequestedAfterAnchorMs": 1074,
+      "photoCompletedAfterAnchorMs": 1216,
+      "mainDOMObservedAfterAnchorMs": 1003.599853515625,
+      "mainDOMToastVisible": false
+    }
+  ],
+  "methods": {
+    "A_newConfirmed": 0,
+    "B_newConfirmed": 1,
+    "C_newConfirmed": 0,
+    "designFinalPending": false,
+    "winner": "B: original-image candidate, confirmed by fixed before/after reproduction",
+    "B_candidateCount": 1
+  },
+  "knownIssueNotNew": {
+    "handWorldOpenings": 8,
+    "visibleReturnInputs": 7,
+    "previousProposalsNotCountedAsNew": true,
+    "informationPanelOpenings": 0
+  },
+  "notPerformed": [
+    "pytest suite before and after: command missing, actual exit127",
+    "physical-device sensor/finger/network tests",
+    "human first-minute dropout-rate measurement"
+  ],
+  "tests": {
+    "pytestBaseline": {
+      "command": [
+        "bash",
+        "-c",
+        "pytest tests/"
+      ],
+      "cwd": "/workspace/ricepia-firstminute-round101",
+      "sourceHead": "298648f7d5e725310bb43b368935ebbb81056fac",
+      "phase": "baseline before primary and any fix",
+      "startedAtUTC": "2026-11-14T06:58:22.256022+00:00",
+      "actualChildExit": 127,
+      "wallSeconds": 0.004953662981279194,
+      "completedAtUTC": "2026-11-14T06:58:22.260969+00:00"
+    },
+    "pytestOuterExitRootReported": 127,
+    "pytestErrorText": "bash: line 1: pytest: command not found",
+    "pytestSuiteExecuted": false,
+    "nodeFull": {
+      "status": "completed unsuccessful baseline; not after-fix",
+      "command": [
+        "node",
+        "tools/playtest.js",
+        "/workspace/scratch/first-minute/round-101/fullplaytest-runtime/artifacts"
+      ],
+      "sourceHead": "298648f7d5e725310bb43b368935ebbb81056fac",
+      "startedAtUTC": "2026-11-14T07:03:35.896+00:00",
+      "actualChildExit": 1,
+      "actualOuterExit": 1,
+      "resultCounts": {
+        "groups": 251,
+        "explicitSuccess": 220,
+        "successDictOK": 177,
+        "successBareTrue": 43,
+        "explicitFailure": 11,
+        "noIndependentBoolean": 20,
+        "compoundConditionInputsWithoutOwnBoolean": 17,
+        "auxiliaryRecordsWithoutOwnBoolean": 3
+      },
+      "fullSuiteDistinctFromNaturalPrimary": true,
+      "phase": "before any R101 candidate fix",
+      "rawExecutionActualOuterExit": null,
+      "outerExitBasis": "baseline-node-completion.json; original session 47829 chunk 6c94a7",
+      "pageErrors": 0,
+      "scriptStoppedPresent": false,
+      "resultOK": false,
+      "automaticRetries": 0,
+      "timedOut": false,
+      "closureConfirmedBySeparateRootReceipt": true,
+      "sourceFilesPreserved": 321,
+      "dependencyFilesPreserved": 550,
+      "rawRuntimeFilesPreserved": 37,
+      "failureGroups": [
+        "godotRec",
+        "swipeHold",
+        "restFinger",
+        "tiltDemoShown",
+        "tapDemoQuick",
+        "lowGoalDemo",
+        "rollNoDemo",
+        "infoSecondTap",
+        "infoRotate",
+        "roll",
+        "speedLines"
+      ],
+      "attribution": "baseline before any candidate fix; no candidate-specific causal attribution",
+      "childLaunchToWrapperSaveSeconds": 1676.909684,
+      "durationIsNotSeparatelyMeasuredChildExit": true
+    },
+    "additionalRegressionRed": {
+      "command": [
+        "python3",
+        "/workspace/scratch/first-minute/round-101/toast-regression-draft/test_nishio_world_notice_lifetime.py"
+      ],
+      "environment": {
+        "NISHIO_NOTICE_TEST_ROOT": "/workspace/ricepia-firstminute-round101"
+      },
+      "startedAtUTC": "2026-11-14T07:49:59.003385+00:00",
+      "completedAtUTC": "2026-11-14T07:49:59.365355+00:00",
+      "actualExit": 1,
+      "testSHA256": "b10b437c34ef67121f7514bd006f3f8d7effaf4e4612820361d8e73a40a94209",
+      "sourceHashes": {
+        "nishio-go/game.js": "1ac1eee951f7a8889a622121ba4e1e17bbbf0ee695dcdebbc86ade430c9ca610",
+        "nishio-go/pixel.js": "5e2fe6022963f7b51b9bae218fb52dd6b02f73481f48e64fd59b3bac7a5cf7c5"
+      },
+      "counts": {
+        "PASS": 8,
+        "BEHAVIOR_FAIL": 10,
+        "FIXTURE_ERROR": 0
+      },
+      "behavioralRed": true
+    },
+    "additionalRegressionGreen": {
+      "atUTC": "2026-11-14T07:54:28.060717+00:00",
+      "actualExit": 0,
+      "counts": {
+        "PASS": 18,
+        "BEHAVIOR_FAIL": 0,
+        "FIXTURE_ERROR": 0
+      },
+      "testSHA256": "b10b437c34ef67121f7514bd006f3f8d7effaf4e4612820361d8e73a40a94209"
+    },
+    "additionalRegressionMethodCount": 1,
+    "relatedExistingUnittest": {
+      "atUTC": "2026-11-14T07:54:53.808272+00:00",
+      "command": [
+        "python3",
+        "-m",
+        "unittest",
+        "-v",
+        "tests.test_maze_loop4_191",
+        "tests.test_maze_loop4_2",
+        "tests.test_maze_loop3_19",
+        "tests.test_maze_loop4_206",
+        "tests.test_maze_loop4_200",
+        "tests.test_maze_loop4_208",
+        "tests.test_maze_loop4_69",
+        "tests.test_maze_loop4_70",
+        "tests.test_maze_loop4_9"
+      ],
+      "actualExit": 0,
+      "modules": 9,
+      "methodsRun": 107,
+      "passed": 107,
+      "stderrFooter": "Ran 107 tests in 3.316s; OK"
+    },
+    "pytestAfter": {
+      "command": [
+        "bash",
+        "-c",
+        "pytest tests/"
+      ],
+      "actualExit": 127,
+      "atUTC": "2026-11-14T07:54:53.811801+00:00",
+      "suiteExecuted": false,
+      "errorText": "bash: line 1: pytest: command not found"
+    },
+    "nodeFullAfter": {
+      "status": "completed unsuccessful; independent audit confirmed",
+      "sourceHead": "c5800228aab08d32afb23cfc4bdfd2800802ba9a",
+      "actualChildExit": 1,
+      "actualOuterExit": 1,
+      "resultCounts": {
+        "groups": 251,
+        "explicitSuccess": 220,
+        "successDictOK": 177,
+        "successBareTrue": 43,
+        "explicitFailure": 11,
+        "noIndependentBoolean": 20,
+        "compoundConditionInputsWithoutOwnBoolean": 17,
+        "auxiliaryRecordsWithoutOwnBoolean": 3
+      },
+      "startedAtUTC": "2026-11-14T08:05:32.963573+00:00",
+      "rootToolSession": 51771,
+      "automaticRetries": 0,
+      "rawExecutionActualOuterExit": null,
+      "outerExitBasis": "after-node-completion.json; original session51771 chunk a61952",
+      "completedAtUTC": "2026-11-14T08:35:16.803002+00:00",
+      "pageErrors": 0,
+      "scriptStoppedPresent": false,
+      "resultOK": false,
+      "timedOut": false,
+      "closureConfirmedBySeparateRootReceipt": true,
+      "sourceFilesPreserved": 323,
+      "dependencyFilesPreserved": 550,
+      "rawRuntimeFilesPreserved": 37,
+      "childLaunchToWrapperSaveSeconds": 1783.839429,
+      "durationIsNotSeparatelyMeasuredChildExit": true,
+      "failureGroups": [
+        "godotRec",
+        "swipeHold",
+        "restFinger",
+        "tiltDemoShown",
+        "a2hsAutoHide",
+        "tapDemoQuick",
+        "lowGoalDemo",
+        "rollNoDemo",
+        "infoSecondTap",
+        "infoRotate",
+        "speedLines"
+      ]
+    },
+    "nodeBeforeAfterComparison": {
+      "sameGroupCount": 251,
+      "sameAggregateCounts": true,
+      "sameFailedGroupSet": false,
+      "noLongerFailing": [
+        "roll"
+      ],
+      "newlyFailing": [
+        "a2hsAutoHide"
+      ],
+      "commonFailedGroupCount": 10,
+      "newA2hsObservation": {
+        "beforeOff": true,
+        "afterOff": false,
+        "afterAgain": false,
+        "predicateFile": "tools/playtest.js",
+        "predicateLine": 338,
+        "interpretation": "gone(p,6000) false; later again false does not establish repeat appearance.",
+        "candidateCausation": "unresolved",
+        "rejectionReasonRecordedByFullSuite": false,
+        "causalContact": "setWorld(false) calls toastDismiss; a2hsCalm reads toast.show. Separate timers and unchanged A2HS code do not prove independence."
+      },
+      "otherDifferentFailedDetails": [
+        "lowGoalDemo: before both568 rows fail, after568 k1 only",
+        "infoRotate: before390 branch initially unopened, after820 branch initially unopened"
+      ],
+      "noAutomaticBaselineFailureExemption": true
+    },
+    "a2hsIsolatedDiagnosis": {
+      "status": "completed; full-suite failure not reproduced in isolated one-pair diagnostic",
+      "pairCount": 1,
+      "runsPerSource": 1,
+      "retries": 0,
+      "separateFromFullSuite": true,
+      "doesNotOverrideFullSuiteFailure": true,
+      "existingA2hsChecksBodyUnchanged": true,
+      "passiveMeasurementAdded": true,
+      "rows": [
+        {
+          "slot": "before",
+          "sourceHead": "298648f7d5e725310bb43b368935ebbb81056fac",
+          "sourcePinCount": 12,
+          "dependencyPinCount": 550,
+          "checksPassed": 7,
+          "checksTotal": 7,
+          "a2hsAutoHide": {
+            "off": true,
+            "x": null,
+            "elig": false,
+            "again": false,
+            "ok": true
+          },
+          "actualChildExit": 0,
+          "actualToolOuterExit": 0,
+          "requestedWrapperExit": 0,
+          "rawExecutionActualOuterExit": null,
+          "rootToolSession": 58816,
+          "rootToolChunk": "6ca70e",
+          "waitForFunctionCount": 9,
+          "resolved": 9,
+          "rejected": 0,
+          "goneNodeMonotonicWaitMs": 4380.875191000001,
+          "goneNodeEpochInterval": [
+            1794645832905,
+            1794645837286
+          ],
+          "shownToHiddenBrowserTestClockMs": 2850,
+          "browserClockTimeOrigin": 1792112400000,
+          "browserShownPerformanceNow": 4008,
+          "browserHiddenPerformanceNow": 6858,
+          "clockWarning": "Browser performance/timeOrigin is the page.clock test domain; its2850ms must not be presented as physical elapsed time or subtracted from Node epoch.",
+          "wrapperStartedAtUTC": "2026-11-14T08:43:41.053056+00:00",
+          "wrapperCompletedAtUTC": "2026-11-14T08:44:11.380555+00:00",
+          "rootClosureAtUTC": "2026-11-14T08:44:58.163510+00:00"
+        },
+        {
+          "slot": "after",
+          "sourceHead": "c5800228aab08d32afb23cfc4bdfd2800802ba9a",
+          "sourcePinCount": 323,
+          "dependencyPinCount": 550,
+          "checksPassed": 7,
+          "checksTotal": 7,
+          "a2hsAutoHide": {
+            "off": true,
+            "x": null,
+            "elig": false,
+            "again": false,
+            "ok": true
+          },
+          "actualChildExit": 0,
+          "actualToolOuterExit": 0,
+          "requestedWrapperExit": 0,
+          "rawExecutionActualOuterExit": null,
+          "rootToolSession": 97566,
+          "rootToolChunk": "44efba",
+          "waitForFunctionCount": 9,
+          "resolved": 9,
+          "rejected": 0,
+          "goneNodeMonotonicWaitMs": 5037.488656000001,
+          "goneNodeEpochInterval": [
+            1794645925564,
+            1794645930602
+          ],
+          "shownToHiddenBrowserTestClockMs": 2850,
+          "browserClockTimeOrigin": 1792112400000,
+          "browserShownPerformanceNow": 3982,
+          "browserHiddenPerformanceNow": 6832,
+          "clockWarning": "Browser performance/timeOrigin is the page.clock test domain; its2850ms must not be presented as physical elapsed time or subtracted from Node epoch.",
+          "wrapperStartedAtUTC": "2026-11-14T08:45:13.486362+00:00",
+          "wrapperCompletedAtUTC": "2026-11-14T08:45:44.036741+00:00",
+          "rootClosureAtUTC": "2026-11-14T08:46:14.652832+00:00"
+        }
+      ],
+      "conclusion": "The isolated, instrumented one-pair diagnostic passed7/7 before and7/7 after. The full-suite after a2hsAutoHide failure did not reproduce in this limited pair; its cause remains undetermined and the full-suite failure is retained.",
+      "limits": [
+        "Same original a2hsChecks predicates/waits, but isolated lifecycle and passive instrumentation differ from the full suite.",
+        "No timeout rejection occurred in this pair; therefore it cannot identify which rejection caused the full-suite off:false.",
+        "Before combined root gate exited1; root launched once despite that failed gate. Original internal one-shot/source/dependency gates passed. The failure is preserved, not counted as a successful root gate.",
+        "This is not natural first-minute touch play; no retention or real-device conclusion."
+      ],
+      "auditChecksPassed": 32,
+      "auditChecksTotal": 32
+    },
+    "a2hsDiagnosticRootGate": {
+      "preflightChunk": "7c0eb7",
+      "preflightExit": 1,
+      "error": "AssertionError in combined root gate; execution call was not conditioned on its exit and still launched once.",
+      "existingParent": "a2hs-isolated-runtime",
+      "parentBirthUTC": "2026-11-14 08:41:26.873300257 +0000",
+      "launchUTC": "2026-11-14T08:43:41Z",
+      "validation": "Readback confirms final preparation SHA and all9 members; inherited runner independently checked one-shot slot, source and550 dependencies before launching. Empty parent existence is allowed; slot runtime must be absent.",
+      "retry": false,
+      "limitation": "The failed combined root gate is not recorded as a successful launch gate.",
+      "countsAsGameError": false,
+      "countsAsSuccessfulRootGate": false
+    }
+  },
+  "operatorDecision": {
+    "candidatesReferredByCurrentDesignInterpretation": [
+      "name-versus-distance priority",
+      "background-progress design"
+    ],
+    "explicitExistingAGENTSDecisions": [
+      "first-tap tilt permission",
+      "idle and pre-permission guidance",
+      "no start screen or arrival card"
+    ],
+    "allUnchanged": true
+  },
+  "unreproducedCandidates": [
+    "information-panel footer controls",
+    "pending chunk loading",
+    "background movement",
+    "malformed saved field types",
+    "pen hover state"
+  ],
+  "limits": [
+    "One844x390 CPU1 40ms primary. R97 used390x844 and different HTML/pixel; no causal timing or retention comparison.",
+    "10seconds observation, awaited photo, then60seconds visible-guide input. Photo request/completion intervals remain distinct.",
+    "Input selection,40ms release,1100ms wait,60s deadline and existing cleanup are unchanged from executed R97. No diagnostic actions or state reset beyond fresh context.",
+    "Passive DOM and existing me/world scalar reads are unchanged. Full DOM names do not prove readable glyphs. R97 external name ellipsis remains operator judgment; no distance/name priority change.",
+    "Known PR1151 moving-owner and PR1133 hand-to-world are historical context, not an assumption of their current presence, absence or fix validation. No duplicate proposal.",
+    "Information open/close is feedback, coordinate change is not route progress, and first visible center-unobscured positive points is a reward proxy only.",
+    "Local Leaflet1.9.4 is fulfilled from existing bytes; other external page requests return empty204. Existing helper launches unmuted headless Chromium; audible quality is unverified.",
+    "HEAD,clean,10local sourceSHA including protected Kome3 and5served NishioSHA gate before/after child. Environment snapshot is retained; not every dynamic asset is runtime-pinned.",
+    "No retry. Exclusive result/log/exit creation and child exit collection retained. Timeout or uncertain closure blocks next browser task pending root resolution.",
+    "Inherited internal round69 identifiers remain; actual paths/manifests identify R101. CPUsetup/report/gate/reset stay1.",
+    "Observed callback/ACK/photo times are not physical paint. Real finger, tilt sensor, network speed, audio and player retention are unconfirmed."
+  ],
+  "publication": {
+    "draftRequired": true,
+    "mergeHold": true,
+    "reason": "required pytest unavailable before and after; full Node before and after unsuccessful; isolated a2hs pair did not reproduce the changed outcome and cause remains unresolved",
+    "skillLine": 212
+  },
+  "evidence": {
+    "archiveRootIdentifier": "scratch/first-minute/round-101 (not a public URL)",
+    "files": [
+      {
+        "id": "preparation-2986/follow.json",
+        "sha256": "bc02cbbff751576a76b33465f65fd6be9b7ceed491ad21392bad49fbde9d8087"
+      },
+      {
+        "id": "preparation-2986/run-result.json",
+        "sha256": "6eb96a7c8f7615648568332a440cc7ca22469f41e831336cd8b3f82b65c990ec"
+      },
+      {
+        "id": "preparation-2986/lifecycle.json",
+        "sha256": "5692930daa62052cc21d7f0fe0646cd5627ee0cfadc072328cd6bdee9534e666"
+      },
+      {
+        "id": "preparation-2986/execution-condition.json",
+        "sha256": "932cdfc768898bce2f80170f39a30806b05db05f2c29940a211bca0222d3d7bd"
+      },
+      {
+        "id": "preparation-2986/source-manifest.json",
+        "sha256": "7dbaf5581d758b28053304bbc54d111708a3507efa92a7ab6949ae03ebe5db71"
+      },
+      {
+        "id": "preparation-2986/environment-manifest.json",
+        "sha256": "59f67eae1d7266bcee6ba12033c600c438dbaba2603576619f82bfe04222d781"
+      },
+      {
+        "id": "root-primary-completion.json",
+        "sha256": "ad06500f136040a5b958f3e5991d2ddf53551b2ca93352ce28fc59ce40b49beb"
+      },
+      {
+        "id": "primary-evidence-frozen.json",
+        "sha256": "dc535cc737f90f2a4d5d8e823d0ec0a62203f631835ea3603e662598990d95eb"
+      },
+      {
+        "id": "pytest-baseline/execution.json",
+        "sha256": "0bea754f7bf9d89592613e282063e9dc7c658228ab1e81b3b20cddc8c79cdfdc"
+      },
+      {
+        "id": "pytest-prerequisites/frozen.json",
+        "sha256": "98f94876dbcc411850c982abc27d8eb20b565de46fb851c71268db239394742b"
+      },
+      {
+        "id": "fullplaytest-runtime/artifacts/playtest.json",
+        "sha256": "46fa1cb652d82a46b720c29dcfa7ca2bc63f11575f39f3938e07063613c42c01"
+      },
+      {
+        "id": "fullplaytest-runtime/execution.json",
+        "sha256": "fdc2dc62f797102181bf2351ecc20ae0eb4b04268d7d013110be8e6c2ea04e7b"
+      },
+      {
+        "id": "baseline-node-completion.json",
+        "sha256": "71fbd55402dac9ddb97a5cbaeb49dd74434b618f38d897315aec05fb45736228"
+      },
+      {
+        "id": "fullplaytest-audit-v2/frozen.json",
+        "sha256": "22dc760704cedffb06902314b9be60dfe3cfe05b073f8a77170c233e20241a74"
+      },
+      {
+        "id": "fullplaytest-audit-v2/summary.json",
+        "sha256": "a404e191c64882fb1e5b8bf8e7daf9f2baecb1679bd8792457aa1876a579308f"
+      },
+      {
+        "id": "fullplaytest-audit-v2/eleven-failures.json",
+        "sha256": "139dd56faae86818b1c6201150aec70ac83994c9e62b59ea18ccc3044c56f999"
+      },
+      {
+        "id": "fixed-before-controls-root-completion.json",
+        "sha256": "b4c03a0d3b7b5791e7e1fd1ceb726ba098648772801a87763235317b183898ba"
+      },
+      {
+        "id": "fixed-before-treatments-root-completion.json",
+        "sha256": "a65b147be5e32073b2085027f8b33864e47af364d37ae8e6561e9b73e5435444"
+      },
+      {
+        "id": "toast-regression-red/execution.json",
+        "sha256": "d44af3e8e39fa1c93dfbb3c60dca014456cf2693687d239edef2e76437b171fe"
+      },
+      {
+        "id": "toast-regression-red/cases.json",
+        "sha256": "da6dd0fafc088fb9aa30bbe083d84a66c131b36fe272abe33ce66acd470678dd"
+      },
+      {
+        "id": "world-return-toast-reproduction-before-preparation/manifest.json",
+        "sha256": "b5f2aa7e1de63879a19f2f6c8246dd03522b0d260903200ca8b46a1d28b841e4"
+      },
+      {
+        "id": "candidate-pins.json",
+        "sha256": "1007958a7022a6d11064f4e8d156022ab1c9e2acef8d188e54985d92bb9d1130"
+      },
+      {
+        "id": "toast-regression-green/execution.json",
+        "sha256": "401fa335e7a10405c3929b7f126948e4b665815842dbf61796bf9ac247df5072"
+      },
+      {
+        "id": "toast-regression-green/cases.json",
+        "sha256": "4c3fdb700be0357c26a40146c36280a740b4a8049cd097a99a352724c1b63a21"
+      },
+      {
+        "id": "toast-regression-green/source-after-green-attestation.json",
+        "sha256": "eb35bd57313c8eab22d6da19f1acf877d51a7c70b3099e7fc7df4aace659cc09"
+      },
+      {
+        "id": "related-unit-tests/execution.json",
+        "sha256": "511cc799538d7aaeb4734ec1a480ad86f7fdeba815529b377f478a0db3c8494e"
+      },
+      {
+        "id": "related-unit-tests/stderr.log",
+        "sha256": "5805d23d9a2c85169f93d22e0b4304206001d301f3f3753be9b111ea509344c7"
+      },
+      {
+        "id": "pytest-after/execution.json",
+        "sha256": "63d85e0c2da337e82e663cb6cbee6c17c9132b577b2f68ad0d6258c99db1ef77"
+      },
+      {
+        "id": "pytest-after/run.log",
+        "sha256": "b6fe94a4971280b69606b3ad6039ae9ed0e48557776ea68f678174b6c8da879a"
+      },
+      {
+        "id": "fullplaytest-after-preparation/frozen.json",
+        "sha256": "d6624c81defe67e6a7c7a5224ed775a6450a5b16c8907c46fe78027d28b09099"
+      },
+      {
+        "id": "fixed-after-treatments-root-completion.json",
+        "sha256": "41e0f055fb5c7397d574a05335902ba1b7fde65c96bcac785a092c103ebcdce2"
+      },
+      {
+        "id": "fixed-after-controls-root-completion.json",
+        "sha256": "004b0a03feb22b365a977a79adfe450295ce2abbaaeacaf4c01908ce5f22c1a1"
+      },
+      {
+        "id": "world-return-toast-before-audit/frozen.json",
+        "sha256": "d435e33ef7b30925a3d6a9d7bc402ac71580533026aac4f912a6c7d45051312d"
+      },
+      {
+        "id": "world-return-toast-before-audit/summary.json",
+        "sha256": "85f270a7ca717d9722382d09057af1c51cf3586731acf3a90e6645729177e541"
+      },
+      {
+        "id": "design-review/actual-evidence.json",
+        "sha256": "915f8a3dee5f9af3eb7460a2af354e20daca6ab341576926d3b5002a6c018ad6"
+      },
+      {
+        "id": "world-return-toast-after-audit/frozen.json",
+        "sha256": "c081105e17f7e027ac7f2e13e425a0b4fc7a7853d8f1e4612dc5145dd0b847a8"
+      },
+      {
+        "id": "world-return-toast-after-audit/summary.json",
+        "sha256": "9111d71cc24f75f31131c8792b32163d93acc8d5c3e76b2dce69a796e179ac3b"
+      },
+      {
+        "id": "layout-arrow-root-readback.json",
+        "sha256": "820f685593767a4ee9ef2309d96e3169f3e2b24aa83e9d8aa69434cf2ab99e90"
+      },
+      {
+        "id": "design-review/visual/layout-v2-comparison/frozen.json",
+        "sha256": "cb9123de14592c5993f59529f7d5b61366059e2923c110096ff1e77e7ed5d152"
+      },
+      {
+        "id": "design-review/visual/layout-v2-comparison/comparison.json",
+        "sha256": "09d2dbb55d453dfdb3f0cbcea6c8a585c63c2a723c720ddd08718704d9ca711c"
+      },
+      {
+        "id": "discovery-c/layout-v2-geometry-review/frozen.json",
+        "sha256": "ff53c6fced0d99fd91d715ffec30b5d7b1013bdcba73d26e5dc91b4059fc113c"
+      },
+      {
+        "id": "layout-before-rest-execution.json",
+        "sha256": "422758a4c19b969110e7282278565fa9399fdb05b3412d59fbe11d4df12c2835"
+      },
+      {
+        "id": "layout-before/390x844/diagnostic.json",
+        "sha256": "15d3d45f08175fca80b66bdd918c294f536f5497f3c34f2c6bcaff5ec4c30e37"
+      },
+      {
+        "id": "layout-before-v1-runtime-frozen.json",
+        "sha256": "6e783a6838b94f036a172e197d54403d795dbafe69814c1ee073c536b8ebea61"
+      },
+      {
+        "id": "fullplaytest-after-runtime/artifacts/playtest.json",
+        "sha256": "fb821bfd62019cd6cd3888cd97a2457410693e6e2b1813adf5185e6f6bea135b"
+      },
+      {
+        "id": "fullplaytest-after-runtime/execution.json",
+        "sha256": "cce10be58b6c7537f7eb45052ea12a31640747cd7256ca9ca30aa5e19a029e62"
+      },
+      {
+        "id": "fullplaytest-after-runtime/run.log",
+        "sha256": "c10e38b790516a692cfbd1b2a98f1a79dfe890dfb1ad7836042389ebd6f54af2"
+      },
+      {
+        "id": "after-node-completion.json",
+        "sha256": "095d7877e52bda78a9fca34d1d94f312ccf33741c4ffe7d2f003f14febc6c642"
+      },
+      {
+        "id": "fullplaytest-after-audit/frozen.json",
+        "sha256": "8bbc61de1cf3d0922bb4e3d0d5b553a0bf00b97d6b95941d9737312bdd94445d"
+      },
+      {
+        "id": "fullplaytest-after-audit/summary.json",
+        "sha256": "2604b273382ea17828fe8f2f876397b73c0a1297c956ab63141c433e06f6efc0"
+      },
+      {
+        "id": "fullplaytest-after-audit/baseline-comparison.json",
+        "sha256": "e3d0aa500b24e6f30519529bc4853598baadee7d5763425350a9dac9429db372"
+      },
+      {
+        "id": "fullplaytest-after-audit/eleven-failures.json",
+        "sha256": "75b0b44d0c8ce3040ef3adda3ecb773553676bb91c04ec8dd7a0fc120fd13b36"
+      },
+      {
+        "id": "discovery-c/fullplaytest-after-review/frozen.json",
+        "sha256": "e656217c9642bec4f430d193b7510ddb42ecf54c7e7156c8a5369c383fdc3063"
+      },
+      {
+        "id": "a2hs-isolated-audit/frozen.json",
+        "sha256": "8014e8c5310727fdf3d94bc95bc4e14a77352781818986b118e9d7f96fe10260"
+      },
+      {
+        "id": "a2hs-isolated-audit/summary.json",
+        "sha256": "4a7d47effb6e15fd5b77ce42f7a7fe28345fdc4434ad514dcacb45a97041cf6a"
+      },
+      {
+        "id": "a2hs-root-gate-note.json",
+        "sha256": "c09b1bb43e091e2f5c0339af0694e85f969e11dcba1ac8612271c5625e4d4da3"
+      },
+      {
+        "id": "a2hs-isolated-runtime/before/root-closure.json",
+        "sha256": "80fe03c701d25f402ec3819fa07af9621fa60fc1a05a0f7b33ca9a565245defe"
+      },
+      {
+        "id": "a2hs-isolated-runtime/after/root-closure.json",
+        "sha256": "1927715876db477a3f0cb11ea8d818dfd0e1cda30166be3c08c2be11a6bebaf8"
+      },
+      {
+        "id": "a2hs-isolated-runtime/before/artifacts/playtest.json",
+        "sha256": "615c193ed5d879fc7df420490e020397b519347aa559f585f188b7700dc2780a"
+      },
+      {
+        "id": "a2hs-isolated-runtime/after/artifacts/playtest.json",
+        "sha256": "615c193ed5d879fc7df420490e020397b519347aa559f585f188b7700dc2780a"
+      },
+      {
+        "id": "a2hs-isolated-runtime/before/artifacts/diagnostic-telemetry.json",
+        "sha256": "f3a5b389e7eb35d93c10e201dca97b27c1c77c0a193de2b3eea32771f70b8008"
+      },
+      {
+        "id": "a2hs-isolated-runtime/after/artifacts/diagnostic-telemetry.json",
+        "sha256": "7cded6dadfd175de0bc390c40b25f6677ddea613c8a9396c4edd7ae8aba3c091"
+      }
+    ]
+  },
+  "newCandidate": {
+    "phenomenon": "world return instruction remains after return while return control is hidden",
+    "evidence": "play10 original; action6 return send at9.223 seconds, first worldReturned observation at9.30260009765625 seconds",
+    "confirmed": true,
+    "tenTrialReproductionPerformed": true,
+    "distinctFromKnownHandToWorldOpening": true,
+    "fixedBeforeReproductionConfirmed": true,
+    "confirmationBasis": "independent before audit323/323; fixed10, pilot excluded",
+    "primaryReturnSendSeconds": 9.223,
+    "primaryReturnFirstObservedSeconds": 9.30260009765625
+  },
+  "beforeReproduction": {
+    "status": "completed and independently audited",
+    "sourceHead": "298648f7d5e725310bb43b368935ebbb81056fac",
+    "obsoleteInstructionVisible": {
+      "numerator": 10,
+      "denominator": 10
+    },
+    "fast": {
+      "requestedHoldMs": 40,
+      "numerator": 5,
+      "denominator": 5
+    },
+    "slow": {
+      "requestedHoldMs": 250,
+      "numerator": 5,
+      "denominator": 5
+    },
+    "controlValidWorldInstruction": {
+      "numerator": 2,
+      "denominator": 2
+    },
+    "slotChildExit0": 10,
+    "slotWrapperExit0": 10,
+    "actualTreatmentBatchOuterExit": null,
+    "unknownOuterReason": "Unified execution handle was not retained across context compaction; not inferred from requestedWrapperExit. No rerun.",
+    "actualControlBatchOuterExit": 0,
+    "pilotExcluded": true,
+    "afterReproduction": "completed; see afterReproduction",
+    "eligibleSlots": 12,
+    "unestablishedSlots": 0,
+    "auditChecksPassed": 323,
+    "auditChecksTotal": 323,
+    "mainDOMObservedOffsetMs": {
+      "min": 1002.699951171875,
+      "median": 1010.949951171875,
+      "max": 1028.300048828125
+    },
+    "actualReturnNodeHoldMs": {
+      "fast": {
+        "min": 39,
+        "median": 40,
+        "max": 41
+      },
+      "slow": {
+        "min": 249,
+        "median": 250,
+        "max": 251
+      }
+    },
+    "actualReturnDOMTimestampHoldMs": {
+      "fast": {
+        "min": 39.0,
+        "median": 40.099999994039536,
+        "max": 41.099999994039536
+      },
+      "slow": {
+        "min": 249.09999999403954,
+        "median": 250.0,
+        "max": 251.0
+      }
+    },
+    "originalPNGSaved": 84,
+    "originalPNGPersonallyViewedByIndependentAuditor": 24
+  },
+  "existingTestsChanged": false,
+  "designReference": {
+    "video": "https://www.youtube.com/watch?v=PfOqBTV32_0",
+    "videoPlayed": false,
+    "framesViewed": 0,
+    "audioPlayed": false,
+    "officialCaptionsDirectlyObtained": false,
+    "textualSources": [
+      "https://www.famitsu.com/news/201705/17132636.html",
+      "https://github.com/flossbud/sakurai-game-design/blob/main/episodes/transcripts/100-development-secrets-of-the-original-kirby.md"
+    ],
+    "use": "Judgment axes only; bug discovery came from primary original image and fixed reproduction, not video playback.",
+    "memoIsHistoricalCandidateStageSnapshot": true,
+    "originalJapaneseTimingAndOCRAccuracyUnverified": true,
+    "localEvidence": {
+      "video-PfOqBTV32_0/design-reading.md": "58cd3dd66b110fe52892be47cecb2b731b03218992717ff4632e388ee06a7667",
+      "video-PfOqBTV32_0/design-reading-receipt.json": "56c57bfb9d29dc8e56af5df17cf5bac01f1cada80dbb4672932fa0ed8a66b56a",
+      "video-PfOqBTV32_0/design-reading-frozen.json": "2f429f81fd08d70086066f56ba861b652413f1d4b8bc9f505170483322d3c60c"
+    }
+  },
+  "afterReproduction": {
+    "status": "completed and independently audited",
+    "sourceHead": "c5800228aab08d32afb23cfc4bdfd2800802ba9a",
+    "obsoleteInstructionVisible": {
+      "numerator": 0,
+      "denominator": 10
+    },
+    "fast": {
+      "numerator": 0,
+      "denominator": 5
+    },
+    "slow": {
+      "numerator": 0,
+      "denominator": 5
+    },
+    "controlValidWorldInstruction": {
+      "numerator": 2,
+      "denominator": 2
+    },
+    "actualTreatmentBatchOuterExit": 0,
+    "treatmentCompletionChunk": "e6bcd9",
+    "pilotExcluded": true,
+    "eligibleSlots": 12,
+    "unestablishedSlots": 0,
+    "actualControlBatchOuterExit": 0,
+    "auditChecksPassed": 329,
+    "auditChecksTotal": 329,
+    "mainDOMObservedOffsetMs": {
+      "min": 1001.199951171875,
+      "median": 1006.1500244140625,
+      "max": 1017.199951171875
+    },
+    "actualReturnNodeHoldMs": {
+      "fast": {
+        "min": 39,
+        "median": 39,
+        "max": 41
+      },
+      "slow": {
+        "min": 250,
+        "median": 250,
+        "max": 251
+      }
+    },
+    "actualReturnDOMTimestampHoldMs": {
+      "fast": {
+        "min": 38.900000005960464,
+        "median": 39.0,
+        "max": 41.0
+      },
+      "slow": {
+        "min": 250.0,
+        "median": 250.0,
+        "max": 251.0
+      }
+    },
+    "originalPNGSaved": 84,
+    "originalPNGPersonallyViewedByIndependentAuditor": 24,
+    "fixedMethodCompared": "Same body, fixed40/250 hold groups,1000ms window and source-bound separate fresh runs. No retention claim."
+  },
+  "layoutFiveSizes": {
+    "status": "completed with independent saved-geometry and original-image comparison",
+    "beforeSourceHead": "298648f7d5e725310bb43b368935ebbb81056fac",
+    "afterSourceHead": "c5800228aab08d32afb23cfc4bdfd2800802ba9a",
+    "viewports": [
+      "320x568",
+      "390x844",
+      "568x320",
+      "844x390",
+      "820x1180"
+    ],
+    "beforeAfterRuntimeActualOuterExit": [
+      0,
+      0
+    ],
+    "sameBodyCollectorRunner": true,
+    "scenePairs": 35,
+    "elementPairs": 1715,
+    "totals": {
+      "before": {
+        "snapshots": 35,
+        "elementSamples": 1715,
+        "activeControlSamples": 236,
+        "inputCanvasSamples": 35,
+        "activeControlCenterMiss": 0,
+        "activeControlOutOfViewport": 0,
+        "activeControlInternalOverflow": 0,
+        "canvasCenterMiss": 0,
+        "unrelatedActiveControlIntersectionSamples": 0,
+        "documentOverflowSnapshots": 0
+      },
+      "after": {
+        "snapshots": 35,
+        "elementSamples": 1715,
+        "activeControlSamples": 236,
+        "inputCanvasSamples": 35,
+        "activeControlCenterMiss": 0,
+        "activeControlOutOfViewport": 0,
+        "activeControlInternalOverflow": 0,
+        "canvasCenterMiss": 0,
+        "unrelatedActiveControlIntersectionSamples": 0,
+        "documentOverflowSnapshots": 0
+      }
+    },
+    "mainObsoleteInstructionVisible": {
+      "before": [
+        5,
+        5
+      ],
+      "after": [
+        0,
+        5
+      ]
+    },
+    "worldInstructionRetained": {
+      "before": [
+        5,
+        5
+      ],
+      "after": [
+        5,
+        5
+      ]
+    },
+    "rectDifferenceCounts": {
+      "#tapDemo": 10,
+      "#toast": 20
+    },
+    "originalsPersonallyViewedByIndependentImageReviewer": {
+      "before": 35,
+      "after": 35
+    },
+    "storedRuntimeFileSHAsMatched": 150,
+    "storedPreparationFileSHAsMatched": 64,
+    "rows": [
+      {
+        "size": "320x568",
+        "beforeActions": [
+          "visible-goal-arrow",
+          "visible-world-return"
+        ],
+        "afterActions": [
+          "visible-goal-arrow",
+          "visible-world-return"
+        ],
+        "beforeMain": {
+          "sameInstruction": true,
+          "cssVisible": true,
+          "showClass": true,
+          "opacity": 1,
+          "effectiveOpacity": 1,
+          "world": false,
+          "buttonVisible": false,
+          "observedOffsetMs": 1013.099853515625
+        },
+        "afterMain": {
+          "sameInstruction": true,
+          "cssVisible": false,
+          "showClass": false,
+          "opacity": 0,
+          "effectiveOpacity": 0,
+          "world": false,
+          "buttonVisible": false,
+          "observedOffsetMs": 1001.900146484375
+        },
+        "afterEligible": true,
+        "afterErrors": []
+      },
+      {
+        "size": "390x844",
+        "beforeActions": [
+          "visible-hand-center",
+          "visible-goal-arrow",
+          "visible-world-return"
+        ],
+        "afterActions": [
+          "visible-hand-center",
+          "visible-goal-arrow",
+          "visible-world-return"
+        ],
+        "beforeMain": {
+          "sameInstruction": true,
+          "cssVisible": true,
+          "showClass": true,
+          "opacity": 1,
+          "effectiveOpacity": 1,
+          "world": false,
+          "buttonVisible": false,
+          "observedOffsetMs": 1012.5
+        },
+        "afterMain": {
+          "sameInstruction": true,
+          "cssVisible": false,
+          "showClass": false,
+          "opacity": 0,
+          "effectiveOpacity": 0,
+          "world": false,
+          "buttonVisible": false,
+          "observedOffsetMs": 1008.39990234375
+        },
+        "afterEligible": true,
+        "afterErrors": []
+      },
+      {
+        "size": "568x320",
+        "beforeActions": [
+          "visible-goal-arrow",
+          "visible-world-return"
+        ],
+        "afterActions": [
+          "visible-goal-arrow",
+          "visible-world-return"
+        ],
+        "beforeMain": {
+          "sameInstruction": true,
+          "cssVisible": true,
+          "showClass": true,
+          "opacity": 1,
+          "effectiveOpacity": 1,
+          "world": false,
+          "buttonVisible": false,
+          "observedOffsetMs": 1002.2001953125
+        },
+        "afterMain": {
+          "sameInstruction": true,
+          "cssVisible": false,
+          "showClass": false,
+          "opacity": 0,
+          "effectiveOpacity": 0,
+          "world": false,
+          "buttonVisible": false,
+          "observedOffsetMs": 1003.599853515625
+        },
+        "afterEligible": true,
+        "afterErrors": []
+      },
+      {
+        "size": "844x390",
+        "beforeActions": [
+          "visible-goal-arrow",
+          "visible-world-return"
+        ],
+        "afterActions": [
+          "visible-goal-arrow",
+          "visible-world-return"
+        ],
+        "beforeMain": {
+          "sameInstruction": true,
+          "cssVisible": true,
+          "showClass": true,
+          "opacity": 1,
+          "effectiveOpacity": 1,
+          "world": false,
+          "buttonVisible": false,
+          "observedOffsetMs": 1003.2998046875
+        },
+        "afterMain": {
+          "sameInstruction": true,
+          "cssVisible": false,
+          "showClass": false,
+          "opacity": 0,
+          "effectiveOpacity": 0,
+          "world": false,
+          "buttonVisible": false,
+          "observedOffsetMs": 1009.60009765625
+        },
+        "afterEligible": true,
+        "afterErrors": []
+      },
+      {
+        "size": "820x1180",
+        "beforeActions": [
+          "visible-goal-arrow",
+          "visible-world-return"
+        ],
+        "afterActions": [
+          "visible-goal-arrow",
+          "visible-world-return"
+        ],
+        "beforeMain": {
+          "sameInstruction": true,
+          "cssVisible": true,
+          "showClass": true,
+          "opacity": 1,
+          "effectiveOpacity": 1,
+          "world": false,
+          "buttonVisible": false,
+          "observedOffsetMs": 1011.89990234375
+        },
+        "afterMain": {
+          "sameInstruction": true,
+          "cssVisible": false,
+          "showClass": false,
+          "opacity": 0,
+          "effectiveOpacity": 0,
+          "world": false,
+          "buttonVisible": false,
+          "observedOffsetMs": 1014.39990234375
+        },
+        "afterEligible": true,
+        "afterErrors": []
+      }
+    ],
+    "limits": [
+      "35 pairs are saved snapshots, not continuous coverage or whole-area pressability.",
+      "Counters count repeated time/element samples, not distinct people or unique controls.236 control plus35 input-canvas samples per phase.",
+      "No new full60 primary here; short layout trial is separate from primary/pilot/fixed10.",
+      "Same actions and body do not fix canvas actor positions or animation phase.",
+      "Inherited diagnostic.limits text is narrower than actual390 natural-hand entry; actualactions/entryPolicy are preserved.",
+      "Root execution and physical device/retention claims remain separate."
+    ],
+    "conclusion": "Within the recorded same-v2 scenes, stale instruction5/5→0/5 at main, with valid world notice preserved5/5. No increase observed in scoped active-control out-of-bounds, center-hit failures, overflow or unrelated active-control rectangle intersections. Existing canvas label occlusion and unmeasured paint/device/human-understanding limits remain.",
+    "knownVisualOcclusionRetained": "320x568 world instruction partially covers the canvas tally label in both phases.",
+    "arrowReadback": "Large-arrow absence was not corroborated by two independent original-image readers; small-flag identification differed. Whole canvas pixel equivalence is not asserted."
+  },
+  "layoutInitialVersionExcluded": {
+    "attempted": 2,
+    "eligible": 1,
+    "unestablished": 1,
+    "remainingUnstarted": 3,
+    "unestablishedViewport": "390x844",
+    "command": [
+      "python3",
+      "/workspace/scratch/first-minute/round-101/layout-before-preparation/run_slot.py",
+      "390x844"
+    ],
+    "actualChildExit": 2,
+    "actualSlotWrapperExit": 2,
+    "failedEligibilityGate": "drawnArrowAvailable: false",
+    "pageErrors": 0,
+    "interpretation": "Initial arrow-only entry did not establish the required visible-arrow state. Not a gameplay defect or a negative symptom observation.",
+    "replacementProtocol": "v2 follows the visible hand when needed before using a drawn goal arrow, then uses the same v2 body in before and after. No internal state injection.",
+    "originalsRetained": true,
+    "includedInFixedTenOrV2FiveDenominators": false
+  }
+}

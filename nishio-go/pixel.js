@@ -9251,6 +9251,7 @@ function drawWorldLabels(ox, oy, T, w, h, dpr, css) {
   }
 }
 function setWorld(on) {
+  endWorldDrag();
   worldMode = on;
   document.body.classList.toggle('pxw', on);
   $('pxWorld').innerHTML = on ? ICO('feet', '👣', '歩く地図') : ICO('globe', '🌏', 'せかいちず');
@@ -9287,16 +9288,31 @@ function worldCamFitGoal() {
 function centerOnMe() { if (worldMode) wcam = worldCamStart(); }
 // せかいちずはドラッグで動かす
 let drag = null, dragMoved = false;
-cv.addEventListener('pointerdown', e => { if (!worldMode) return; drag = { x: e.clientX, y: e.clientY }; dragMoved = false; cv.setPointerCapture(e.pointerId); });
+// 最初の1分：動かして いる 指の 基準を、別の 接触で 取り替えない。まだ 動かして いない 指からは 引き継げる。
+function endWorldDrag(e) {
+  if (!drag || (e && e.pointerId !== drag.id)) return;
+  const id = drag.id; drag = null;
+  try { if (cv.hasPointerCapture(id)) cv.releasePointerCapture(id); } catch (err) { /* 終わった 指の 記録は のこさない */ }
+}
+cv.addEventListener('pointerdown', e => {
+  if (!worldMode || (drag && dragMoved && e.pointerId !== drag.id)) return;
+  try { cv.setPointerCapture(e.pointerId); } catch (err) { return; }
+  drag = { id: e.pointerId, x: e.clientX, y: e.clientY }; dragMoved = false;
+});
 cv.addEventListener('pointermove', e => {
-  if (!worldMode || !drag) return;
+  if (!worldMode || !drag || e.pointerId !== drag.id) return;
+  if ((e.pointerType === 'mouse' || e.pointerType === 'pen') && !e.buttons) { endWorldDrag(e); return; }
   const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
   if (Math.abs(dx) + Math.abs(dy) > 4) { dragMoved = true; wcamOnMe = false; }
   if (!dragMoved) return;
   const T = WSIZES[wscale];
-  wcam.x -= dx / T; wcam.y -= dy / T; drag = { x: e.clientX, y: e.clientY };
+  wcam.x -= dx / T; wcam.y -= dy / T; drag.x = e.clientX; drag.y = e.clientY;
 });
-cv.addEventListener('pointerup', () => { drag = null; });
+cv.addEventListener('pointerup', endWorldDrag);
+cv.addEventListener('pointercancel', endWorldDrag);
+cv.addEventListener('lostpointercapture', endWorldDrag);
+window.addEventListener('blur', () => endWorldDrag());
+document.addEventListener('visibilitychange', () => { if (document.hidden) endWorldDrag(); });
 
 // お米の そばを 2回 さわると、ちょこん。歩く 操作には 手を 加えない。
 const riceTouch = { down: null, tap: null, shakeAt: -Infinity };
@@ -9340,6 +9356,7 @@ document.addEventListener('visibilitychange', riceTouchReset);
 
 /* ---------- 操作 ---------- */
 function setActive(on) {
+  if (!on) endWorldDrag();
   active = on;
   if (!on && driving) setDriving(false);   // ふつうの地図では車に乗れない
   document.body.classList.toggle('px', on);

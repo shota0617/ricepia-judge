@@ -1,0 +1,1435 @@
+{
+  "status": "completed measurements with limited reached-state coverage; required pytest unavailable; draft and merge/publication hold",
+  "issue": "Visible zoom-button press guide while instruction still says to pick bad grains; successful zoom is not an input failure",
+  "beforeSource": {
+    "source": "/workspace/ricepia-firstminute-round104",
+    "head": "4421abdb0e57416565b504fc8b9588f28b02f522",
+    "branch": "codex/firstminute-round104-observation",
+    "files": {
+      "AGENTS.md": "8d1938a8628b3a5f89b18067007119d8bef32effb1f4e9a08fee8e89a556d448",
+      ".claude/skills/ricepia-flow/SKILL.md": "56d075153f561430fee926907a5c97083d9f643e6dd2d3a2f4c5736324a697f0",
+      "kensa.html": "80c88c625f2ba325caef5fe59d1510c25ab9b4f00c37724f58f2f020ab785da6"
+    }
+  },
+  "candidate": {
+    "kind": "committed product and added test only",
+    "head": "caaccbfee6a7bda2b49cc7f6a8b4d5d5a47e4d1a",
+    "htmlSha256": "e6aa63bdd2a6b8fc13be98cd1ad31ad66dd55c4ccd58feea95a2419248f15d8e",
+    "testSha256": "47fb7c8bb5cfc359d809469226db8cdb949fb14473e4d6eb11696cf13af722ca",
+    "change": "19 added lines: guide owns temporary zoom instruction, restores only its own text, synchronizes with actual zoom label; no input or progression change",
+    "locations": {
+      "ownership": "kensa.html:1234",
+      "clearOnHide": "kensa.html:1269",
+      "setOnActualGuide": "kensa.html:1305",
+      "syncAfterZoom": "kensa.html:1703"
+    },
+    "testsRunBeforeCommitWithSameBytes": true
+  },
+  "primary": {
+    "viewport": {
+      "width": 844,
+      "height": 390
+    },
+    "CPU": 1,
+    "actualChildExit": 0,
+    "actualRootWrapperExit": 0,
+    "actions": 35,
+    "recordedDOMResponses": 35,
+    "withoutRecordedDOMResponse": 0,
+    "guidePressTaps": 10,
+    "guideTapsWithGrainRemoval": 9,
+    "guideTapZoomWithoutGrainRemoval": [
+      {
+        "index": 30,
+        "inputStartSeconds": 45.633,
+        "action": "tap displayed press guide",
+        "durationRequestedMs": 40,
+        "actualStartToEndSendSeconds": 0.03899999999999437,
+        "postGestureResponseSeconds": 45.686,
+        "startToPostGestureResponseSeconds": 0.05299999999999727,
+        "endToPostGestureResponseSeconds": 0.014000000000002899,
+        "recordedDOMResponse": true,
+        "effectClassification": "successful guide-directed zoom; no grain removal",
+        "hintBefore": "わるい粒を つまむ",
+        "hintResponse": "わるい粒を つまむ",
+        "headerBefore": [
+          "3ふくろめ",
+          "みわける"
+        ],
+        "headerAfter": [
+          "3ふくろめ",
+          "みわける"
+        ],
+        "grainBefore": 20,
+        "grainResponse": 20,
+        "flyingBefore": 0,
+        "flyingResponse": 0,
+        "lcdBefore": "13.9\n%",
+        "lcdResponse": "13.9\n%",
+        "zoomBefore": "🔍",
+        "zoomResponse": "➖",
+        "guideTarget": {
+          "id": "zoomBtn",
+          "tag": "BUTTON",
+          "classes": ""
+        },
+        "actualEventTargets": {
+          "zoomBtn": 2
+        },
+        "nextButtonVisible": false,
+        "afterReadIntervalSeconds": [
+          45.686,
+          45.69
+        ],
+        "full650msWindowAvailableBeforeDeadline": true,
+        "commandCount": 2,
+        "ACKCount": 2
+      }
+    ],
+    "commandCount": 490,
+    "ACKCount": 490,
+    "pointerEventCount": 502,
+    "trustedPointerEvents": 502,
+    "firstAction": {
+      "index": 1,
+      "inputStartSeconds": 0.011,
+      "durationRequestedMs": 400,
+      "postGestureResponseSeconds": 0.434,
+      "startToPostGestureResponseSeconds": 0.423,
+      "hintBefore": "穀刺しを ふくろへ さす ←",
+      "hintResponse": "ひきぬく →",
+      "grainBefore": 0,
+      "grainResponse": 0,
+      "afterReadIntervalSeconds": [
+        0.434,
+        0.438
+      ]
+    },
+    "firstHintTrace": {
+      "playSeconds": 0.17489990234375,
+      "hintText": "ひきぬく →",
+      "visibilityVerifiedInSampler": false
+    },
+    "firstHintTraceFromFirstSendSeconds": 0.16389990234375,
+    "firstPositiveHintTrace": {
+      "playSeconds": 3.204599853515625,
+      "hintText": "ちょうどいい",
+      "visibilityVerifiedInSampler": false
+    },
+    "firstPositiveVisiblePostGesturePoll": 3.382,
+    "firstPositivePollFromFirstInputSeconds": 3.371,
+    "firstGrainRemoval": {
+      "index": 5,
+      "inputStartSeconds": 6.019,
+      "durationRequestedMs": 40,
+      "postGestureResponseSeconds": 6.086,
+      "startToPostGestureResponseSeconds": 0.06700000000000017,
+      "hintBefore": "わるい粒を つまむ",
+      "hintResponse": "わるい粒を つまむ",
+      "grainBefore": 20,
+      "grainResponse": 19,
+      "afterReadIntervalSeconds": [
+        6.086,
+        6.09
+      ]
+    },
+    "firstCleanHintPostGesturePoll": 8.288,
+    "completedBagsWithVisibleNextButton": 2,
+    "bagCompletionActions": [
+      {
+        "index": 10,
+        "headerAfter": [
+          "1ふくろめ",
+          "おす"
+        ],
+        "nextButtonVisible": true,
+        "afterReadIntervalSeconds": [
+          15.482,
+          15.485
+        ]
+      },
+      {
+        "index": 23,
+        "headerAfter": [
+          "2ふくろめ",
+          "おす"
+        ],
+        "nextButtonVisible": true,
+        "afterReadIntervalSeconds": [
+          36.933,
+          36.936
+        ]
+      }
+    ],
+    "photoIntervals": [
+      {
+        "name": "observe-10s",
+        "requestedAfterObservationSeconds": 9.999,
+        "completedAfterObservationSeconds": 10.095,
+        "sha256": "6659076b80d161926659b8c69ce96a1d1408ac2d09bde177a418e1e445831d1b",
+        "personallyViewedByA": false
+      },
+      {
+        "name": "play-10s.png",
+        "requestedPlaySeconds": 10,
+        "completedPlaySeconds": 10.074,
+        "sha256": "a64ebf651b01be0aa13330815606c2ce65cb7e0553732f2f3f97dcc752e85e3d",
+        "personallyViewedByA": false
+      },
+      {
+        "name": "play-30s.png",
+        "requestedPlaySeconds": 30,
+        "completedPlaySeconds": 30.074,
+        "sha256": "ada62035959c6942b0334dc6765f9d550dd2971213ff97d30823f8f35f99ba91",
+        "personallyViewedByA": false
+      },
+      {
+        "name": "play-60s.png",
+        "requestedPlaySeconds": 59.999,
+        "completedPlaySeconds": 60.074,
+        "sha256": "a0c943b7170fa41fffe64f6d20959966ef374df05731c3ada9dda71cf4d189e9",
+        "personallyViewedByA": false
+      }
+    ],
+    "limitations": [
+      "The primary records a visible press guide whose tip and trusted input target are zoomBtn, followed by successful zoom without grain removal. Source permits a fallback to a zoom guide, but primary did not record the private guide anchor or chosen branch; do not claim direct branch observation.",
+      "Trace hint/text has no hint visibility check, while post-gesture hint/boxes do; hidden body documentation/reward text is excluded from reward timing.",
+      "FirstVisibleResponse is a post-gesture poll upper bound, including the requested gesture duration; the original poll stops on the first matching response and is limited to650ms.",
+      "Unsent waits and previousPick suppression counts are not recorded and are unknown, not no-response inputs.",
+      "No independently viewed images by this A auditor, no human retention/physical finger/sensor/network claim."
+    ]
+  },
+  "beforeFixedReproduction": {
+    "actualOuterExit": 0,
+    "actualChildExits": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "fixedSlots": 10,
+    "eligible": 10,
+    "unestablished": 0,
+    "cueTextMismatch": 10,
+    "zoomSucceeded": 10,
+    "targetNoResponse": 0,
+    "byRequestedMs": {
+      "40": {
+        "slots": 5,
+        "eligible": 5,
+        "mismatch": 5,
+        "zoomSucceeded": 5,
+        "actualSendHoldMs": [
+          38.99999999999437,
+          40.99999999999682
+        ]
+      },
+      "160": {
+        "slots": 5,
+        "eligible": 5,
+        "mismatch": 5,
+        "zoomSucceeded": 5,
+        "actualSendHoldMs": [
+          160.00000000000014,
+          161.00000000000136
+        ]
+      }
+    },
+    "byPreInputLabel": {
+      "🔍": {
+        "count": 4,
+        "mismatch": 4,
+        "zoomSucceeded": 4
+      },
+      "➖": {
+        "count": 6,
+        "mismatch": 6,
+        "zoomSucceeded": 6
+      }
+    },
+    "allCommandCount": 4902,
+    "targetCommandCount": 20,
+    "targetTrustedDownUpCount": 20,
+    "sourcePinnedHead": "4421abdb0e57416565b504fc8b9588f28b02f522",
+    "sourcePinnedHtml": "80c88c625f2ba325caef5fe59d1510c25ab9b4f00c37724f58f2f020ab785da6",
+    "photoCountHashed": 60,
+    "limitations": [
+      "No internal guideAnchor accessor observed: DOM target/alignment and real events do not prove private branch identity.",
+      "Post-gesture poll bounds include hold/dispatch/sampling time; they are not exact feedback onset.",
+      "At the target there is zoom feedback and zero grain delta; this is not an unresponsive action, progression, reward, or measured human retention.",
+      "Source guard covers HEAD, kensa.html, existing test, pre-navigation served HTML; it does not hash every asset or guarantee all later server responses.",
+      "Original runtime preserved; this auditor does not claim original-photo visual inspection."
+    ]
+  },
+  "pilot": {
+    "separateFromFixed10": true,
+    "actualExit": 0,
+    "source": "zoom-cue-repro/pilot-root-execution.json"
+  },
+  "afterFixedReproduction": {
+    "status": "completed; independent audit final",
+    "actualOuterExit": 0,
+    "attempts": 10,
+    "eligible": 10,
+    "cueTextMismatch": 0,
+    "zoomSucceeded": 10,
+    "targetNoResponse": 0,
+    "grainCountChanged": 0,
+    "labelCounts": {
+      "🔍": 4,
+      "➖": 6
+    },
+    "rows": [
+      {
+        "slot": 1,
+        "requestedMs": 40,
+        "preLabel": "➖",
+        "encounterHint": "➖ で 全体を 見る",
+        "preInputHint": "➖ で 全体を 見る",
+        "encounteredAt": 29.634,
+        "status": "target-tap-recorded",
+        "observedMismatch": false,
+        "sameVisibleButtonAfterPhoto": true,
+        "zoomSucceeded": true,
+        "grainCountDelta": 0,
+        "actualSendHoldMs": 41.00000000000037
+      },
+      {
+        "slot": 2,
+        "requestedMs": 160,
+        "preLabel": "🔍",
+        "encounterHint": "🔍 で 寄る",
+        "preInputHint": "🔍 で 寄る",
+        "encounteredAt": 45.414,
+        "status": "target-tap-recorded",
+        "observedMismatch": false,
+        "sameVisibleButtonAfterPhoto": true,
+        "zoomSucceeded": true,
+        "grainCountDelta": 0,
+        "actualSendHoldMs": 159.9999999999966
+      },
+      {
+        "slot": 3,
+        "requestedMs": 40,
+        "preLabel": "🔍",
+        "encounterHint": "🔍 で 寄る",
+        "preInputHint": "🔍 で 寄る",
+        "encounteredAt": 45.456,
+        "status": "target-tap-recorded",
+        "observedMismatch": false,
+        "sameVisibleButtonAfterPhoto": true,
+        "zoomSucceeded": true,
+        "grainCountDelta": 0,
+        "actualSendHoldMs": 39.99999999999915
+      },
+      {
+        "slot": 4,
+        "requestedMs": 160,
+        "preLabel": "🔍",
+        "encounterHint": "🔍 で 寄る",
+        "preInputHint": "🔍 で 寄る",
+        "encounteredAt": 45.519,
+        "status": "target-tap-recorded",
+        "observedMismatch": false,
+        "sameVisibleButtonAfterPhoto": true,
+        "zoomSucceeded": true,
+        "grainCountDelta": 0,
+        "actualSendHoldMs": 161.00000000000136
+      },
+      {
+        "slot": 5,
+        "requestedMs": 40,
+        "preLabel": "➖",
+        "encounterHint": "➖ で 全体を 見る",
+        "preInputHint": "➖ で 全体を 見る",
+        "encounteredAt": 27.42,
+        "status": "target-tap-recorded",
+        "observedMismatch": false,
+        "sameVisibleButtonAfterPhoto": true,
+        "zoomSucceeded": true,
+        "grainCountDelta": 0,
+        "actualSendHoldMs": 40.99999999999682
+      },
+      {
+        "slot": 6,
+        "requestedMs": 160,
+        "preLabel": "🔍",
+        "encounterHint": "🔍 で 寄る",
+        "preInputHint": "🔍 で 寄る",
+        "encounteredAt": 45.461,
+        "status": "target-tap-recorded",
+        "observedMismatch": false,
+        "sameVisibleButtonAfterPhoto": true,
+        "zoomSucceeded": true,
+        "grainCountDelta": 0,
+        "actualSendHoldMs": 158.99999999999892
+      },
+      {
+        "slot": 7,
+        "requestedMs": 40,
+        "preLabel": "➖",
+        "encounterHint": "➖ で 全体を 見る",
+        "preInputHint": "➖ で 全体を 見る",
+        "encounteredAt": 27.369,
+        "status": "target-tap-recorded",
+        "observedMismatch": false,
+        "sameVisibleButtonAfterPhoto": true,
+        "zoomSucceeded": true,
+        "grainCountDelta": 0,
+        "actualSendHoldMs": 41.00000000000037
+      },
+      {
+        "slot": 8,
+        "requestedMs": 160,
+        "preLabel": "➖",
+        "encounterHint": "➖ で 全体を 見る",
+        "preInputHint": "➖ で 全体を 見る",
+        "encounteredAt": 27.402,
+        "status": "target-tap-recorded",
+        "observedMismatch": false,
+        "sameVisibleButtonAfterPhoto": true,
+        "zoomSucceeded": true,
+        "grainCountDelta": 0,
+        "actualSendHoldMs": 161.00000000000136
+      },
+      {
+        "slot": 9,
+        "requestedMs": 40,
+        "preLabel": "➖",
+        "encounterHint": "➖ で 全体を 見る",
+        "preInputHint": "➖ で 全体を 見る",
+        "encounteredAt": 29.681,
+        "status": "target-tap-recorded",
+        "observedMismatch": false,
+        "sameVisibleButtonAfterPhoto": true,
+        "zoomSucceeded": true,
+        "grainCountDelta": 0,
+        "actualSendHoldMs": 39.99999999999915
+      },
+      {
+        "slot": 10,
+        "requestedMs": 160,
+        "preLabel": "➖",
+        "encounterHint": "➖ で 全体を 見る",
+        "preInputHint": "➖ で 全体を 見る",
+        "encounteredAt": 29.598,
+        "status": "target-tap-recorded",
+        "observedMismatch": false,
+        "sameVisibleButtonAfterPhoto": true,
+        "zoomSucceeded": true,
+        "grainCountDelta": 0,
+        "actualSendHoldMs": 160.9999999999978
+      }
+    ],
+    "eligibilityBasis": "independent zoom-cue-after-audit, 275/275 checks",
+    "independentAuditSummary": {
+      "scope": "Independent read-only raw audit of completed after fixed10; original before10 compared separately. Pilot/primary excluded. No browser/test execution by this auditor.",
+      "actualOuterExit": 0,
+      "actualChildExits": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "fixedSlots": 10,
+      "eligible": 10,
+      "unestablished": 0,
+      "cueTextMismatch": 0,
+      "directionTextMatches": 10,
+      "zoomSucceeded": 10,
+      "targetNoResponse": 0,
+      "byRequestedMs": {
+        "40": {
+          "slots": 5,
+          "eligible": 5,
+          "mismatch": 0,
+          "directionTextMatches": 5,
+          "zoomSucceeded": 5,
+          "actualSendHoldMs": [
+            39.99999999999915,
+            41.00000000000037
+          ]
+        },
+        "160": {
+          "slots": 5,
+          "eligible": 5,
+          "mismatch": 0,
+          "directionTextMatches": 5,
+          "zoomSucceeded": 5,
+          "actualSendHoldMs": [
+            158.99999999999892,
+            161.00000000000136
+          ]
+        }
+      },
+      "byPreInputLabel": {
+        "🔍": {
+          "count": 4,
+          "mismatch": 0,
+          "directionTextMatches": 4,
+          "zoomSucceeded": 4
+        },
+        "➖": {
+          "count": 6,
+          "mismatch": 0,
+          "directionTextMatches": 6,
+          "zoomSucceeded": 6
+        }
+      },
+      "allCommandCount": 4486,
+      "targetCommandCount": 20,
+      "targetTrustedDownUpCount": 20,
+      "sourcePinnedHead": "caaccbfee6a7bda2b49cc7f6a8b4d5d5a47e4d1a",
+      "sourcePinnedHtml": "e6aa63bdd2a6b8fc13be98cd1ad31ad66dd55c4ccd58feea95a2419248f15d8e",
+      "sourcePinnedExistingTest": "7299004bbc35980456eaa8f28a83fcd4e7d89b38a7851ebd73b11236f55dd9f0",
+      "photoCountHashed": 60,
+      "photosPersonallyViewed": 0,
+      "checksPassed": 275,
+      "checksTotal": 275,
+      "comparison": {
+        "before": {
+          "eligible": 10,
+          "mismatch": 10,
+          "zoomSucceeded": 10,
+          "bySpeed": {
+            "40": {
+              "slots": 5,
+              "eligible": 5,
+              "mismatch": 5,
+              "zoomSucceeded": 5,
+              "actualSendHoldMs": [
+                38.99999999999437,
+                40.99999999999682
+              ]
+            },
+            "160": {
+              "slots": 5,
+              "eligible": 5,
+              "mismatch": 5,
+              "zoomSucceeded": 5,
+              "actualSendHoldMs": [
+                160.00000000000014,
+                161.00000000000136
+              ]
+            }
+          },
+          "byLabel": {
+            "🔍": {
+              "count": 4,
+              "mismatch": 4,
+              "zoomSucceeded": 4
+            },
+            "➖": {
+              "count": 6,
+              "mismatch": 6,
+              "zoomSucceeded": 6
+            }
+          }
+        },
+        "after": {
+          "eligible": 10,
+          "mismatch": 0,
+          "zoomSucceeded": 10,
+          "directionTextMatches": 10
+        }
+      },
+      "limitations": [
+        "Private guideAnchor/branch identity is not measured.",
+        "Direction consistency uses visible DOM fields; this auditor hashes photographs but does not claim visual inspection. B owns original image audit.",
+        "Target selection uses visible press guide hit, not caption contents. Different encountered button-label proportions remain in the counts.",
+        "Post-gesture polling gives a bound including gesture/delivery time, not exact onset.",
+        "Zoom success and grain delta0 do not imply stage progression/reward/human retention.",
+        "Source guard covers HEAD, HTML, existing test and pre-open HTTP HTML; not every asset or subsequent response."
+      ],
+      "responseTiming": {
+        "definition": "(action.firstVisibleResponse - action.touchStartSent); firstVisibleResponse is a numeric play-relative timestamp of post-gesture DOM polling. Includes touch hold/delivery/polling, not physical paint or isolated latency.",
+        "fieldAgreement": "inputCommands[0].t equals action.touchStartSent; both use play-relative Node seconds",
+        "byPhase": {
+          "before": {
+            "40": {
+              "n": 5,
+              "startToObservedResponseSeconds": {
+                "min": 0.05099999999999483,
+                "max": 0.06699999999999307,
+                "median": 0.06400000000000006
+              },
+              "endSendToObservedResponseSeconds": {
+                "min": 0.012000000000000455,
+                "max": 0.02599999999999625,
+                "median": 0.02400000000000091
+              }
+            },
+            "160": {
+              "n": 5,
+              "startToObservedResponseSeconds": {
+                "min": 0.17600000000000193,
+                "max": 0.18499999999999872,
+                "median": 0.18199999999999505
+              },
+              "endSendToObservedResponseSeconds": {
+                "min": 0.01600000000000179,
+                "max": 0.023999999999997357,
+                "median": 0.02099999999999369
+              }
+            }
+          },
+          "after": {
+            "40": {
+              "n": 5,
+              "startToObservedResponseSeconds": {
+                "min": 0.05099999999999838,
+                "max": 0.06700000000000017,
+                "median": 0.06099999999999994
+              },
+              "endSendToObservedResponseSeconds": {
+                "min": 0.00999999999999801,
+                "max": 0.0259999999999998,
+                "median": 0.021000000000000796
+              }
+            },
+            "160": {
+              "n": 5,
+              "startToObservedResponseSeconds": {
+                "min": 0.17799999999999727,
+                "max": 0.19700000000000273,
+                "median": 0.18400000000000105
+              },
+              "endSendToObservedResponseSeconds": {
+                "min": 0.018000000000000682,
+                "max": 0.03800000000000381,
+                "median": 0.022999999999999687
+              }
+            }
+          }
+        },
+        "caution": "The predicate accepts hint/grain/fly/lcd/plate/zoom-label changes; the saved responseChanges object only records plate and zoom-label flags. Independently compared snapshots show hint changes as well after guideOff. These values do not measure zoom paint speed or pure latency."
+      }
+    }
+  },
+  "layout": {
+    "sizes": [
+      [
+        320,
+        568
+      ],
+      [
+        390,
+        844
+      ],
+      [
+        568,
+        320
+      ],
+      [
+        844,
+        390
+      ],
+      [
+        820,
+        1180
+      ]
+    ],
+    "before": {
+      "status": "completed",
+      "actualOuterExit": 0,
+      "actualChildExits": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "events": [
+        {
+          "viewport": {
+            "width": 320,
+            "height": 568
+          },
+          "outcomes": [
+            {
+              "key": "first-zoom-cue",
+              "status": "reached-and-stable",
+              "encounteredAt": 29.515,
+              "sufficientInputTimeAtRead": true
+            },
+            {
+              "key": "first-tray-press-cue-after-zoom",
+              "status": "reached-and-stable",
+              "encounteredAt": 34.183,
+              "sufficientInputTimeAtRead": true
+            }
+          ]
+        },
+        {
+          "viewport": {
+            "width": 390,
+            "height": 844
+          },
+          "outcomes": [
+            {
+              "key": "first-zoom-cue",
+              "status": "reached-and-stable",
+              "encounteredAt": 30.172,
+              "sufficientInputTimeAtRead": true
+            },
+            {
+              "key": "first-tray-press-cue-after-zoom",
+              "status": "reached-and-stable",
+              "encounteredAt": 34.843,
+              "sufficientInputTimeAtRead": true
+            }
+          ]
+        },
+        {
+          "viewport": {
+            "width": 568,
+            "height": 320
+          },
+          "outcomes": [
+            {
+              "key": "first-zoom-cue",
+              "status": "reached-and-stable",
+              "encounteredAt": 29.833,
+              "sufficientInputTimeAtRead": true
+            },
+            {
+              "key": "first-tray-press-cue-after-zoom",
+              "status": "reached-and-stable",
+              "encounteredAt": 34.556,
+              "sufficientInputTimeAtRead": true
+            }
+          ]
+        },
+        {
+          "viewport": {
+            "width": 844,
+            "height": 390
+          },
+          "outcomes": [
+            {
+              "key": "first-zoom-cue",
+              "status": "reached-and-stable",
+              "encounteredAt": 27.616,
+              "sufficientInputTimeAtRead": true
+            },
+            {
+              "key": "first-tray-press-cue-after-zoom",
+              "status": "reached-and-stable",
+              "encounteredAt": 32.294,
+              "sufficientInputTimeAtRead": true
+            }
+          ]
+        },
+        {
+          "viewport": {
+            "width": 820,
+            "height": 1180
+          },
+          "outcomes": [
+            {
+              "key": "first-zoom-cue",
+              "status": "reached-and-stable",
+              "encounteredAt": 46.709,
+              "sufficientInputTimeAtRead": true
+            },
+            {
+              "key": "first-tray-press-cue-after-zoom",
+              "status": "reached-and-stable",
+              "encounteredAt": 49.075,
+              "sufficientInputTimeAtRead": true
+            }
+          ]
+        }
+      ]
+    },
+    "after": {
+      "status": "completed",
+      "actualOuterExit": 0,
+      "actualOuterBasis": "root report chunkca457b; independent saved-run comparison"
+    },
+    "comparison": {
+      "status": "completed geometry and original-image review, with unmatched states explicitly retained",
+      "source": "round-104/discovery-c/layout-v2-comparison/summary.json",
+      "beforeActionTotals": {
+        "actions": 175,
+        "actionSnapshots": 525,
+        "itemObservations": 11958,
+        "activeControlGestureObservations": 1305,
+        "outsideCount": 0,
+        "centerMissCount": 6,
+        "hintOutsideSnapshots": 0,
+        "positiveSelectedOverlapSnapshots": 0,
+        "documentHorizontalOverflowSnapshots": 0,
+        "clippedContentOutsideSnapshots": 100
+      },
+      "afterActionTotals": {
+        "actions": 175,
+        "actionSnapshots": 525,
+        "itemObservations": 11950,
+        "activeControlGestureObservations": 1305,
+        "outsideCount": 0,
+        "centerMissCount": 6,
+        "hintOutsideSnapshots": 0,
+        "positiveSelectedOverlapSnapshots": 0,
+        "documentHorizontalOverflowSnapshots": 0,
+        "clippedContentOutsideSnapshots": 103
+      },
+      "beforeEventTotals": {
+        "snapshots": 20,
+        "itemObservations": 440,
+        "activeControlGestureObservations": 40,
+        "outsideCount": 0,
+        "centerMissCount": 0,
+        "hintOutsideSnapshots": 0,
+        "positiveSelectedOverlapSnapshots": 0,
+        "documentHorizontalOverflowSnapshots": 0
+      },
+      "afterEventTotals": {
+        "snapshots": 20,
+        "itemObservations": 440,
+        "activeControlGestureObservations": 40,
+        "outsideCount": 0,
+        "centerMissCount": 0,
+        "hintOutsideSnapshots": 0,
+        "positiveSelectedOverlapSnapshots": 0,
+        "documentHorizontalOverflowSnapshots": 0
+      },
+      "eventPairs": 20,
+      "phaseBagTransformMatched": 6,
+      "differentSceneOrTransform": 14,
+      "activeControlPairs": 40,
+      "activeControlRectChanges": 0,
+      "captionCoverage": [
+        {
+          "slot": 1,
+          "viewport": {
+            "width": 320,
+            "height": 568
+          },
+          "visibleGeometryCaptionObservations": {
+            "🔍 で 寄る": 3
+          },
+          "traceTextOnlyCaptionObservations": {
+            "🔍 で 寄る": 2
+          },
+          "actualCaptionRects": {
+            "🔍 で 寄る": [
+              [
+                105.921875,
+                514,
+                108.140625,
+                34
+              ]
+            ]
+          },
+          "minusCaptionMeasuredInNaturalRun": false,
+          "scope": "Geometry counts combine action snapshots and event-before/after reads. Trace counts are text-only and do not alone prove visibility."
+        },
+        {
+          "slot": 2,
+          "viewport": {
+            "width": 390,
+            "height": 844
+          },
+          "visibleGeometryCaptionObservations": {
+            "🔍 で 寄る": 3
+          },
+          "traceTextOnlyCaptionObservations": {
+            "🔍 で 寄る": 3
+          },
+          "actualCaptionRects": {
+            "🔍 で 寄る": [
+              [
+                140.921875,
+                790,
+                108.140625,
+                34
+              ]
+            ]
+          },
+          "minusCaptionMeasuredInNaturalRun": false,
+          "scope": "Geometry counts combine action snapshots and event-before/after reads. Trace counts are text-only and do not alone prove visibility."
+        },
+        {
+          "slot": 3,
+          "viewport": {
+            "width": 568,
+            "height": 320
+          },
+          "visibleGeometryCaptionObservations": {
+            "➖ で 全体を 見る": 4,
+            "🔍 で 寄る": 3
+          },
+          "traceTextOnlyCaptionObservations": {
+            "➖ で 全体を 見る": 5,
+            "🔍 で 寄る": 6
+          },
+          "actualCaptionRects": {
+            "➖ で 全体を 見る": [
+              [
+                216.59375,
+                284.5,
+                134.796875,
+                25
+              ]
+            ],
+            "🔍 で 寄る": [
+              [
+                244.03125,
+                284.5,
+                79.9375,
+                25
+              ]
+            ]
+          },
+          "minusCaptionMeasuredInNaturalRun": true,
+          "scope": "Geometry counts combine action snapshots and event-before/after reads. Trace counts are text-only and do not alone prove visibility."
+        },
+        {
+          "slot": 4,
+          "viewport": {
+            "width": 844,
+            "height": 390
+          },
+          "visibleGeometryCaptionObservations": {
+            "➖ で 全体を 見る": 3,
+            "🔍 で 寄る": 2
+          },
+          "traceTextOnlyCaptionObservations": {
+            "➖ で 全体を 見る": 3,
+            "🔍 で 寄る": 3
+          },
+          "actualCaptionRects": {
+            "➖ で 全体を 見る": [
+              [
+                354.59375,
+                354.5,
+                134.796875,
+                25
+              ]
+            ],
+            "🔍 で 寄る": [
+              [
+                382.03125,
+                354.5,
+                79.9375,
+                25
+              ]
+            ]
+          },
+          "minusCaptionMeasuredInNaturalRun": true,
+          "scope": "Geometry counts combine action snapshots and event-before/after reads. Trace counts are text-only and do not alone prove visibility."
+        },
+        {
+          "slot": 5,
+          "viewport": {
+            "width": 820,
+            "height": 1180
+          },
+          "visibleGeometryCaptionObservations": {
+            "🔍 で 寄る": 3
+          },
+          "traceTextOnlyCaptionObservations": {
+            "🔍 で 寄る": 3
+          },
+          "actualCaptionRects": {
+            "🔍 で 寄る": [
+              [
+                355.921875,
+                1126,
+                108.140625,
+                34
+              ]
+            ]
+          },
+          "minusCaptionMeasuredInNaturalRun": false,
+          "scope": "Geometry counts combine action snapshots and event-before/after reads. Trace counts are text-only and do not alone prove visibility."
+        }
+      ],
+      "finding": "No concrete new control/hint overflow or selected-pair overlap was observed in these samples. This is not an exhaustive no-regression guarantee.",
+      "existingTransientHitException": "Before notesLink center misses6 (568:2,844:4), after6 (568:4,844:2). All hit plateInner.smooth during zoom-out. Different action paths and sampled animation phases prevent attributing per-size count differences to this change.",
+      "limits": [
+        "Only6/20 event snapshot pairs share phase/bag and actual plate transform. The other14 pairs are not matched full layout states.",
+        "Even matching phase/bag/transform does not fix random grain positions or animation paint.",
+        "320x568,390x844,820x1180 never recorded the minus caption naturally; supplemental rendering remains separate.",
+        "Only four selected overlap pairs were checked. Center hits do not prove full-area touch reachability.",
+        "Clipped content extending beyond viewport is not counted as document overflow or active-control overflow.",
+        "B personally reviewed images; this reviewer did not. Ordinary screenshot paint is not assumed identical to nearest action snapshot.",
+        "CSS remained unchanged per the independently reviewed19-insertion product diff, but unchanged CSS alone is not layout proof.",
+        "A prior message used倍率一致 for844 based only on minus label. Corrected here: later tray scale is1.89871 before and2.4 after."
+      ]
+    },
+    "interpretation": "Same collector and wording-independent zoom-guide navigation before/after. Unreached or capture-changed states are not passes. DOM center hits are not actual finger presses.",
+    "imageReview": {
+      "source": "round-104/discovery-b/layout-after-v2-image-review/README.md",
+      "personallyViewedByImageReviewer": {
+        "before": 30,
+        "after": 30
+      },
+      "firstZoomImageCueConsistency": {
+        "beforeMismatch": 5,
+        "afterMismatch": 0,
+        "totalPerSide": 5
+      },
+      "afterTrayCueImages": 5,
+      "matchedPhotoPairsPhaseBagTransform": 3,
+      "totalPhotoPairs": 10,
+      "unmatchedPhotoPairs": 7,
+      "scope": "3/10 photo pairs corresponds to 6/20 pre/post-read DOM samples. All30 after captions readable. One844x390 play30 enlarged transitioning tray covers part of bag label/book/frame; comparable transition exists before. Do not infer improvement or new regression from timing/scene differences."
+    }
+  },
+  "tests": {
+    "red": {
+      "actualExit": 1,
+      "methods": 1,
+      "cases": 22,
+      "passedCases": 15,
+      "assertionFailures": 7,
+      "fixtureErrors": 0,
+      "htmlSHA256": "80c88c625f2ba325caef5fe59d1510c25ab9b4f00c37724f58f2f020ab785da6",
+      "testSHA256": "47fb7c8bb5cfc359d809469226db8cdb949fb14473e4d6eb11696cf13af722ca",
+      "command": [
+        "python3",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_kensa_zoom_guide_text.py",
+        "-v"
+      ],
+      "cwd": "/workspace/scratch/first-minute/round-104/zoom-guide-red-fixture"
+    },
+    "green": {
+      "actualExit": 0,
+      "methods": 1,
+      "cases": 22,
+      "passedCases": 22,
+      "htmlSHA256": "e6aa63bdd2a6b8fc13be98cd1ad31ad66dd55c4ccd58feea95a2419248f15d8e",
+      "testSHA256": "47fb7c8bb5cfc359d809469226db8cdb949fb14473e4d6eb11696cf13af722ca",
+      "command": [
+        "python3",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_kensa_zoom_guide_text.py",
+        "-v"
+      ],
+      "cwd": "/workspace/scratch/first-minute/round-104/zoom-guide-candidate",
+      "scope": "isolated scratch candidate; same HTML/test bytes later committed, and included in repository Kensa suite"
+    },
+    "pytest": {
+      "baseline": {
+        "command": "pytest tests/",
+        "actualExit": 127,
+        "chunkId": "c39a8c",
+        "basis": "root actual execution report; local raw path not yet supplied",
+        "errorText": null,
+        "status": "failed to run; not passed"
+      },
+      "after": {
+        "command": [
+          "bash",
+          "-c",
+          "pytest tests/"
+        ],
+        "actualExit": 127,
+        "errorText": "bash: line 1: pytest: command not found",
+        "evidence": "round-104/after-tests/execution.json",
+        "status": "failed to start; not passed"
+      }
+    },
+    "existingTests": {
+      "baseline": {
+        "methods": 195,
+        "passed": 192,
+        "skipped": 3,
+        "actualExit": 0,
+        "chunkId": "e9ff62",
+        "basis": "root actual execution report; local raw path not yet supplied"
+      },
+      "after": {
+        "command": [
+          "python3",
+          "-m",
+          "unittest",
+          "discover",
+          "-s",
+          "tests",
+          "-p",
+          "test_kensa*.py"
+        ],
+        "methods": 196,
+        "passed": 193,
+        "skipped": 3,
+        "actualExit": 0,
+        "includesAddedMethodWith22Cases": true,
+        "basis": "Direct log progress characters and final summary match root report; three existing skips retained",
+        "durationSecondsReportedByUnittest": 6.099
+      }
+    }
+  },
+  "photos": {
+    "status": "8 originals copied unchanged: primary4 and fixed-reproduction before/after2 each",
+    "publicFiles": [
+      {
+        "file": "primary-observe-10s.png",
+        "sourceIdentifier": "round-104/preparation-4421/strict/observe-10s.png",
+        "sha256": "6659076b80d161926659b8c69ce96a1d1408ac2d09bde177a418e1e445831d1b",
+        "bytes": 41299,
+        "width": 844,
+        "height": 390,
+        "copiedWithoutModification": true,
+        "reportAuthorPersonallyViewed": true,
+        "viewBasis": "view_image original on exact source path"
+      },
+      {
+        "file": "primary-play-10s.png",
+        "sourceIdentifier": "round-104/preparation-4421/strict/play-10s.png",
+        "sha256": "a64ebf651b01be0aa13330815606c2ce65cb7e0553732f2f3f97dcc752e85e3d",
+        "bytes": 69263,
+        "width": 844,
+        "height": 390,
+        "copiedWithoutModification": true,
+        "reportAuthorPersonallyViewed": true,
+        "viewBasis": "view_image original on exact source path"
+      },
+      {
+        "file": "primary-play-30s.png",
+        "sourceIdentifier": "round-104/preparation-4421/strict/play-30s.png",
+        "sha256": "ada62035959c6942b0334dc6765f9d550dd2971213ff97d30823f8f35f99ba91",
+        "bytes": 68087,
+        "width": 844,
+        "height": 390,
+        "copiedWithoutModification": true,
+        "reportAuthorPersonallyViewed": true,
+        "viewBasis": "view_image original on exact source path"
+      },
+      {
+        "file": "primary-play-60s.png",
+        "sourceIdentifier": "round-104/preparation-4421/strict/play-60s.png",
+        "sha256": "a0c943b7170fa41fffe64f6d20959966ef374df05731c3ada9dda71cf4d189e9",
+        "bytes": 74988,
+        "width": 844,
+        "height": 390,
+        "copiedWithoutModification": true,
+        "reportAuthorPersonallyViewed": true,
+        "viewBasis": "view_image original on exact source path"
+      },
+      {
+        "file": "before-zoom-out.png",
+        "sourceIdentifier": "round-104/zoom-cue-repro/runs-before/fixed/slot-01/strict/target-before.png",
+        "sha256": "bbb119eefa337f928c476c3b99a8365b64b6b15eb6ce94a843f4080f762b95b9",
+        "bytes": 73409,
+        "width": 844,
+        "height": 390,
+        "copiedWithoutModification": true,
+        "reportAuthorPersonallyViewed": true,
+        "viewBasis": "view_image original on exact source path"
+      },
+      {
+        "file": "before-zoom-in.png",
+        "sourceIdentifier": "round-104/zoom-cue-repro/runs-before/fixed/slot-03/strict/target-before.png",
+        "sha256": "0cd90c67fafc162576eb01ec20153326207f68a8ac435ea442aaf753b2104cc0",
+        "bytes": 75281,
+        "width": 844,
+        "height": 390,
+        "copiedWithoutModification": true,
+        "reportAuthorPersonallyViewed": true,
+        "viewBasis": "view_image original on exact source path"
+      },
+      {
+        "file": "after-zoom-out.png",
+        "sourceIdentifier": "round-104/zoom-cue-repro/runs-after/fixed/slot-01/strict/target-before.png",
+        "sha256": "a69dbf6f695204fd2a4231c919349acc281d33869014ddb2b5d104891bfe97fa",
+        "bytes": 70128,
+        "width": 844,
+        "height": 390,
+        "copiedWithoutModification": true,
+        "reportAuthorPersonallyViewed": true,
+        "viewBasis": "view_image original on exact source path"
+      },
+      {
+        "file": "after-zoom-in.png",
+        "sourceIdentifier": "round-104/zoom-cue-repro/runs-after/fixed/slot-03/strict/target-before.png",
+        "sha256": "17204aad334c79c0fa890d66546388416bc24096074564a3fb89a57944b931bc",
+        "bytes": 70801,
+        "width": 844,
+        "height": 390,
+        "copiedWithoutModification": true,
+        "reportAuthorPersonallyViewed": true,
+        "viewBasis": "view_image original on exact source path"
+      }
+    ]
+  },
+  "operatorBoundary": {
+    "explicitCurrentDecision": "45-second card not before completing first bag; unchanged",
+    "otherUnsettled": "first-tap behavior, automatic pick/decide progression, remaining 45-second behavior and presentation-only form untouched",
+    "未確認": "This primary completed first bag before45s; does not test still-unfinished-at45s condition"
+  },
+  "limits": [
+    "Human retention/understanding not measured",
+    "Real finger/sensor/network and physical paint not verified",
+    "Visible press target is successful zoom, not no response",
+    "Candidate product/test bytes fixed at caaccbfee6a7bda2b49cc7f6a8b4d5d5a47e4d1a. Fixed reproduction and limited five-size comparison completed. Required pytest failed to start. Later documentation HEAD as a whole is not tested."
+  ],
+  "evidence": [
+    {
+      "identifier": "round-104/source-selection.json",
+      "sha256": "11f542879555beeb7f06a78a54fc2060e4d9ac95b057cc82f124372b27730679"
+    },
+    {
+      "identifier": "round-104/discovery-a/summary.json",
+      "sha256": "231939bd4c97c0c88cbb5c9b97a2a736ce0d2ccd7489311e08cc7e6240373fe3"
+    },
+    {
+      "identifier": "round-104/discovery-a/frozen.json",
+      "sha256": "d4a7adbdf6f3bca38c95f7ae2b834ea70cd0c8e27b0c75c5938442430b6dbb30"
+    },
+    {
+      "identifier": "round-104/discovery-b/review.json",
+      "sha256": "1bcd044ca8e392b279abfa2072dc3b5b712669d88bda32b4d220bb64f4af89da"
+    },
+    {
+      "identifier": "round-104/zoom-cue-before-audit/summary.json",
+      "sha256": "d253c7dbd51adbfbcf951c3e48e8938589d13d3569f4de65d76872fc9bddf308"
+    },
+    {
+      "identifier": "round-104/zoom-cue-before-audit/frozen.json",
+      "sha256": "93ca0ae2a459fe943d0ea4cdbac8bee5416d04daa89273b189e9dce475d4ce88"
+    },
+    {
+      "identifier": "round-104/zoom-cue-before-audit/red-review.json",
+      "sha256": "d8d2bacf92bae727166440e21d45a754b1c099e47936aa4d11a4ae80b8b47e1d"
+    },
+    {
+      "identifier": "round-104/zoom-cue-repro/before-fixed-root-execution.json",
+      "sha256": "e9e2f4feb67725489629e75095bed5fe31321756727637e25648e940653e93ec"
+    },
+    {
+      "identifier": "round-104/zoom-cue-repro/pilot-root-execution.json",
+      "sha256": "66ef0d52ff2251a173792988052c5719bb70d827dcf00631f554923c06a4e911"
+    },
+    {
+      "identifier": "round-104/zoom-guide-red-fixture/execution.json",
+      "sha256": "20684bc47febcd0a4f4e3200234852b6b3ea7ae23c98adc9afa531fe392e02eb"
+    },
+    {
+      "identifier": "round-104/zoom-guide-red-fixture/test-red.log",
+      "sha256": "eb27db794d096effa2fad05ccd86c7ca59d658f11bfab0d947bf1176131723ff"
+    },
+    {
+      "identifier": "round-104/zoom-guide-candidate/execution.json",
+      "sha256": "04dec3fce48421b1110e7a92002e8a1ed0dfc0e0a0a70dcd5d4a0962dbf4bf77"
+    },
+    {
+      "identifier": "round-104/zoom-guide-candidate/test-green.log",
+      "sha256": "e2c0b25b0ddd714e092c608b3b58cf8b5d79166233d0374bcebe74d0a10d6a46"
+    },
+    {
+      "identifier": "round-104/discovery-c/candidate-static-review.json",
+      "sha256": "cbe822571d47c7dc9089150cf8254a98c2825bd77320003ad4f7021ea151f302"
+    },
+    {
+      "identifier": "round-104/candidate-commit.json",
+      "sha256": "e4318d5564249dd84c0a63802dad2b523e98075e8336b29c208d1c06040b2ecb"
+    },
+    {
+      "identifier": "round-104/after-tests/execution.json",
+      "sha256": "4f088da92321db20fc6a36b785f2876e430357139aa52fa34e0178cbdf46fa3b"
+    },
+    {
+      "identifier": "round-104/after-tests/required-pytest.log",
+      "sha256": "b6fe94a4971280b69606b3ad6039ae9ed0e48557776ea68f678174b6c8da879a"
+    },
+    {
+      "identifier": "round-104/after-tests/kensa-unittest.log",
+      "sha256": "4f924fe4a674d817d80367f62b4c30582f77028e62e066305b3166b1b1d66366"
+    },
+    {
+      "identifier": "round-104/layout-before-preparation-v2/root-execution.json",
+      "sha256": "363029f6f538bd82baf69de4cb0f7f978a76409b6cddc1d8974e066ee90dd2c6"
+    },
+    {
+      "identifier": "round-104/layout-before-runs-v2/series.json",
+      "sha256": "938c9fe08c13dcbf823e4b1f342bff72a82d3ec0e050a7ed38ac6c7ab9d6cb29"
+    },
+    {
+      "identifier": "round-104/zoom-cue-repro/after-fixed-root-execution.json",
+      "sha256": "900f7fdbb9d7abd70a626f94c4e0f21eed5e16477d9073cf802d1c93a5f8768a"
+    },
+    {
+      "identifier": "round-104/zoom-cue-repro/runs-after/fixed/series.json",
+      "sha256": "0f1b175568738b5975d5fbbc6788af5829b3c9461a6e188f1a11fbed11f3feb2"
+    },
+    {
+      "identifier": "round-104/caption-layout-stable/check.cjs",
+      "sha256": "e46e9eec3372e77d463943f130c55682943f6777ec98e60901d20a24f7f0141c"
+    },
+    {
+      "identifier": "round-104/caption-layout-stable/result.json",
+      "sha256": "713a5b0c30450b40a15035d64d999d3a3a8ccf35e82c80850b3b1d4565843c07"
+    },
+    {
+      "identifier": "round-104/caption-layout-stable/execution.json",
+      "sha256": "9ef2a872aaf63d9664f8619716d3629c4488cf9510c816248852339430dc884a"
+    },
+    {
+      "identifier": "round-104/caption-layout-stable/run.log",
+      "sha256": "6af43c5ff489df3d07a3c724f853681012e91215ef7dd4013c441cac0d1b0e1f"
+    },
+    {
+      "identifier": "round-104/zoom-cue-after-audit/summary.json",
+      "sha256": "f02b63aadf7b8824da5ad0e9669f4e737135d5e281e2b12816adb702778689fa"
+    },
+    {
+      "identifier": "round-104/zoom-cue-after-audit/frozen.json",
+      "sha256": "0b011c9d93a1743ea7b752a5c1423d4c86710dece02cee615391ca03aadb253a"
+    },
+    {
+      "identifier": "round-104/zoom-cue-after-audit/source-and-tests.json",
+      "sha256": "96b4e66554335c09742073e90102981e1eb83646a5a8f984f19ef311277dd821"
+    },
+    {
+      "identifier": "round-104/discovery-c/layout-v2-comparison/summary.json",
+      "sha256": "c985effbcf4a2a1d120af228a98d801f5c2fefb989574915f4d08c0e99b6f4b3"
+    },
+    {
+      "identifier": "round-104/discovery-c/layout-v2-comparison/frozen.json",
+      "sha256": "f6b66508d962725113722e5735395dccc37db9b7053bb6594bbe054968d5c2d8"
+    },
+    {
+      "identifier": "round-104/discovery-b/layout-after-v2-image-review/README.md",
+      "sha256": "0a77487f247a2e13855331a7d4fe2e48b0a6be069b4ae30af06233e01f48324a"
+    },
+    {
+      "identifier": "round-104/discovery-b/layout-after-v2-image-review/review.json",
+      "sha256": "3d1ce31a960e01aaa7784a1ac18bec70609c78fa33a0142f1431ff3704eb6dac"
+    },
+    {
+      "identifier": "round-104/discovery-b/layout-after-v2-image-review/frozen.json",
+      "sha256": "19f2e1d7de02ecd56e88995c2c039e8ace165ce5c331a67837033b390f82257f"
+    },
+    {
+      "identifier": "round-104/discovery-b/repro-after-image-review/frozen.json",
+      "sha256": "881b3dc1f3e2607a01c913e9f5b9fe7772ab5873118b722f6997f920d034edc2"
+    }
+  ],
+  "publication": {
+    "draftPRCreated": false,
+    "merge": "hold: required pytest unavailable (actual127); independent final review/publication performed by root after this evidence snapshot",
+    "skillLine": "https://github.com/shota0617/ricepia-judge/blob/4421abdb0e57416565b504fc8b9588f28b02f522/.claude/skills/ricepia-flow/SKILL.md#L212"
+  },
+  "supplementalCaptionRendering": {
+    "kind": "after finite hint animations finished+2raf, temporary DOM text substitution and synchronous measurement/restoration on candidate; no input or playthrough",
+    "actualExit": 0,
+    "measurements": 15,
+    "rows": [
+      {
+        "viewport": {
+          "width": 320,
+          "height": 568
+        },
+        "settled": {
+          "waited": 1,
+          "active": 0,
+          "transform": "none"
+        },
+        "count": 3,
+        "allTextWithinViewport": true,
+        "allTextWithinHint": true,
+        "noHintScrollOverflow": true,
+        "sameHeightAsOldCaption": true,
+        "temporaryTextRestored": true
+      },
+      {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "settled": {
+          "waited": 1,
+          "active": 0,
+          "transform": "none"
+        },
+        "count": 3,
+        "allTextWithinViewport": true,
+        "allTextWithinHint": true,
+        "noHintScrollOverflow": true,
+        "sameHeightAsOldCaption": true,
+        "temporaryTextRestored": true
+      },
+      {
+        "viewport": {
+          "width": 568,
+          "height": 320
+        },
+        "settled": {
+          "waited": 1,
+          "active": 0,
+          "transform": "none"
+        },
+        "count": 3,
+        "allTextWithinViewport": true,
+        "allTextWithinHint": true,
+        "noHintScrollOverflow": true,
+        "sameHeightAsOldCaption": true,
+        "temporaryTextRestored": true
+      },
+      {
+        "viewport": {
+          "width": 844,
+          "height": 390
+        },
+        "settled": {
+          "waited": 1,
+          "active": 0,
+          "transform": "none"
+        },
+        "count": 3,
+        "allTextWithinViewport": true,
+        "allTextWithinHint": true,
+        "noHintScrollOverflow": true,
+        "sameHeightAsOldCaption": true,
+        "temporaryTextRestored": true
+      },
+      {
+        "viewport": {
+          "width": 820,
+          "height": 1180
+        },
+        "settled": {
+          "waited": 1,
+          "active": 0,
+          "transform": "none"
+        },
+        "count": 3,
+        "allTextWithinViewport": true,
+        "allTextWithinHint": true,
+        "noHintScrollOverflow": true,
+        "sameHeightAsOldCaption": true,
+        "temporaryTextRestored": true
+      }
+    ],
+    "naturalUnreachedStatesRemainUnobserved": true,
+    "notPartOfFixedReproductionOrNaturalPlayDenominator": true,
+    "source": "round-104/caption-layout-stable/result.json"
+  },
+  "evidenceLocations": "round-104/... identifiers refer to retained scratch originals, not public links; SHA256 permits local evidence identification. Public summary and original8 images are packaged here."
+}

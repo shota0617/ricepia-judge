@@ -1791,6 +1791,19 @@ class TestKome365DemoFirstSide(unittest.TestCase):
         self.assertEqual(y["errs"], [])
         self.assertEqual(y["js"][0]["k"], "ok", "手本の 最初の 向きへ はじいて ✗ %r" % (y["js"][0],))
 
+    def test_landscape_ghost_does_not_slide_on_first_card(self):
+        """レビューの 指摘: 横の 低い 画面では、入ってきた カード(#swCard.enter が のこる)の うしろの 影も 動かさない。
+        くわしい ほうの きまり(#swWrap:has(#swCard.enter) #swGhost.on)が 勝って 影が 左へ 寄り、田んぼの 絵に かぶって いた(568×320 で 約 2775px²)"""
+        html = open(os.path.join(ROOT, "kome365", "index.html"), encoding="utf-8").read()
+        m = re.search(r"@media \(max-height:440px\) and \(min-width:564px\)\{(#swWrap #swGhost\.on,[^\n]*?\}\})", html)
+        self.assertTrue(m, "横の 低い 画面の 影の きまりが 無い")
+        block = m.group(1)
+        mm = re.search(r"#swWrap:has\(#swCard\.enter\) #swGhost\.on\{animation:([^}]*)\}", block)
+        self.assertTrue(mm, "入ってきた カードの ときの 影を 止めて いない: %r" % block)
+        self.assertNotIn("swDemoGhost", mm.group(1))      # 動かさない
+        self.assertIn("swGhostIn", mm.group(1))           # ふわっと 出る のは そのまま(周回154)
+        self.assertLess(html.index("#swWrap:has(#swCard.enter) #swGhost.on{animation:swDemoGhost"), m.start())   # あとに 書いて 勝つ
+
 
 class TestKome365PaddyReadable(unittest.TestCase):
     """サイクル174(運営者の声 2026-11-13・3月22日 雨の 日の 画面写真「田んぼの状況がわかりにくい」): 絵を 大きく・ことばで 1行・かざりを へらす"""

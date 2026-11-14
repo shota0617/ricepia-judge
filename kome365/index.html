@@ -552,7 +552,7 @@ a{color:var(--acc)}
 @keyframes swDemoGlowL{0%,14%,44%,100%{background:#e7edf0;scale:1}26%,36%{background:#cbdbe3;scale:1.05}}
 #swWrap.demoOn #swEdge .eR{animation:swDemoGlowR 5s ease-in-out infinite}
 #swWrap.demoOn #swEdge .eL{animation:swDemoGlowL 5s ease-in-out infinite}
-@media (max-height:440px) and (min-width:564px){#swWrap #swGhost.on,#swWrap.demoOn #swGhost{animation:none}}   /* サイクル179: 横の 低い 画面では うしろの 影を 動かさない(左へ 寄ると カードの 左の 田んぼの 絵と ことばに かかる。前も 左へ 寄る 後半で かかって いた)。向きは 指・のこる あと・両はしの 光で 見せる */
+@media (max-height:440px) and (min-width:564px){#swWrap #swGhost.on,#swWrap.demoOn #swGhost{animation:none}#swWrap:has(#swCard.enter) #swGhost.on{animation:swGhostIn .24s linear both}}   /* サイクル179: 横の 低い 画面では うしろの 影を 動かさない(左へ 寄ると カードの 左の 田んぼの 絵と ことばに かかる。前も 左へ 寄る 後半で かかって いた)。向きは 指・のこる あと・両はしの 光で 見せる */
 @media (prefers-reduced-motion: no-preference){#swWrap.demoOn #swGuide{display:none!important}}   /* 手本が出ている間は丸い ◀ ▶ を出さない(2〜3枚目で押すだけの人に手本を出し直したとき) */
 @media (prefers-reduced-motion: no-preference){#swWrap:not(:has(#swCard.drag)) #swGuide{display:none!important}}   /* 周回166: 丸い ◀ ▶ は、指を置いている間だけ出す。決めたあと、○✗ のしるしが出ている約0.7秒だけ ◀ ▶ が出て、手本の指が出ると消えていた(2・3枚目。しるしに重なる)。止まっている間の向きは手本の指が見せる。動きを減らす設定は これまでどおり */
 @media (prefers-reduced-motion: reduce){#swWrap.demoOn #swGhost{display:none;animation:none}#swHand .hdMove,#swHand .hdFinger{animation:none}#swHand .hdFinger{opacity:1}#swHand .hdRing,#swHand .hdTrail{display:none}#swWrap.demoOn #swEdge .eL,#swWrap.demoOn #swEdge .eR{animation:none}}

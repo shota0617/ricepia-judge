@@ -114,7 +114,7 @@ console.log(JSON.stringify({ skip, normal, n: S.course.n, lines, tracks: tracks.
 
     def test_wiring_and_forbidden_words(self):
         html = (ROOT / 'nishio-go.html').read_text(encoding='utf-8')
-        self.assertLess(html.index('nishio-go/course.js'), html.index('nishio-go/game.js'))
+        self.assertLess(html.index('nishio-go/course.js'), html.index('nishio-go/min/game.js'))
         c = (GO / 'course.js').read_text(encoding='utf-8')
         for w in ['ぼ' + 'く', 'だ' + 'に', '20' + '%']:   # 差分に 禁止語を 書かない ため つないでおく
             self.assertNotIn(w, c)

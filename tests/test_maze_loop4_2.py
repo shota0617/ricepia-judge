@@ -96,8 +96,8 @@ class Static(unittest.TestCase):
         self.assertIn("toastAfter", b)
 
     def test_no_forbidden_in_diff(self):
-        d = subprocess.run(["git", "diff", "origin/main", "--", "nishio-go", "nishio-go.html"],
-                           cwd=ROOT, capture_output=True, text=True, check=True).stdout
+        d = subprocess.run(["git", "diff", "origin/main", "--", "nishio-go", "nishio-go.html", ":(exclude)nishio-go/min"],
+                           cwd=ROOT, capture_output=True, text=True, check=True).stdout   # サイクル215：min/ は 元から 作る コピー（元の 行で 見る）
         added = [l for l in d.splitlines() if l.startswith("+") and not l.startswith("+++")]
         for l in added:
             for b in BAD:

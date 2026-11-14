@@ -59,6 +59,8 @@ function withOldFiles(ref, files, fn) {   // いまの 作業ファイルは 書
       if (fs.existsSync(src)) { fs.mkdirSync(path.dirname(dst), { recursive: true }); fs.copyFileSync(src, dst); } else fs.rmSync(dst, { force: true });
     }
     for (const f of files) fs.writeFileSync(path.join(wt, f), execFileSync('git', ['show', `${ref}:${f}`], { cwd: ROOT, maxBuffer: 1 << 28 }));
+    // サイクル215：ゲームは コメントぬきの コピー（nishio-go/min/）を 読む。もどした 元の ファイルから 作り直さないと 新しい コードの まま 動く
+    if (fs.existsSync(path.join(wt, 'tools/strip-nishio.js'))) execFileSync(process.execPath, [path.join(wt, 'tools/strip-nishio.js'), '--quiet'], { cwd: wt });
     return fn(wt);
   } finally { try { git('worktree', 'remove', '--force', wt); } catch (e) { fs.rmSync(wt, { recursive: true, force: true }); } }
 }

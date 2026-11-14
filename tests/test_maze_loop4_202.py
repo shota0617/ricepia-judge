@@ -24,12 +24,12 @@ class SlowStart202(unittest.TestCase):
         self.assertIn("#bootCover{position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#f6f4ec;transition:opacity .3s}", head)
         self.assertIn("#bootCover.off{opacity:0;pointer-events:none}", head)
         cover = body.index("c.id = 'bootCover'")
-        for href in ["https://unpkg.com/leaflet@1.9.4/dist/leaflet.css", "https://fonts.googleapis.com/css2?family=DotGothic16&display=swap", "nishio-go/style.css"]:
+        for href in ["https://unpkg.com/leaflet@1.9.4/dist/leaflet.css", "https://fonts.googleapis.com/css2?family=DotGothic16&display=swap", "nishio-go/min/style.css"]:
             self.assertEqual(HTML.count('<link rel="stylesheet" href="%s"' % href), 1, href)
             self.assertGreater(body.index('<link rel="stylesheet" href="%s"' % href), cover, href)
             self.assertLess(body.index('<link rel="stylesheet" href="%s"' % href), body.index('<header class="bar">'), href)
         # 順番は これまでどおり（Leaflet → 字 → style.css）。Leaflet の 改ざん検知は そのまま
-        self.assertLess(body.index("leaflet.css"), body.index("nishio-go/style.css"))
+        self.assertLess(body.index("leaflet.css"), body.index("nishio-go/min/style.css"))
         self.assertIn('leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>', body)
 
     def test_cover_has_rolling_grain_not_a_button(self):

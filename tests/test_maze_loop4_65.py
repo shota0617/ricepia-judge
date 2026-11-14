@@ -70,7 +70,7 @@ class Wiring(unittest.TestCase):
 
     def test_html_css(self):
         self.assertIn('"shomai"', HTML)
-        self.assertGreater(HTML.index('"shomai"'), HTML.index("nishio-go/pixel.js"))   # サイクル183：後読みへ
+        self.assertGreater(HTML.index('"shomai"'), HTML.index("nishio-go/min/pixel.js"))   # サイクル183：後読みへ
         self.assertIn(".shomai-art{display:block;margin:8px auto;height:132px;width:auto;image-rendering:pixelated}", CSS)
 
 

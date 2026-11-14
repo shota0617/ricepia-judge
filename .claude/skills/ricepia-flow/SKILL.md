@@ -59,6 +59,7 @@ description: にしおさんぽGO（ricepia-judge）で 作業する ときの �
      - いま 知っている ものは `waterWatch`・`critterSure`・`cornerAssist`・`npcBump`（相手に「本好きの高校生」が 選ばれると 落ちる）
      - PR が ゲームの コード（`nishio-go/`・`nishio-go.html`・`tools/playtest.js`）に ふれない ときは、その ことと main での 結果を 運営者に 伝えて マージして よい
 3. **コミット**：`git add …` → `$F/commit.sh "題" "本文"`（決まりの 2行 Co-Authored-By・Claude-Session を つける）
+   - にしおさんぽGO の `nishio-go/pixel.js`・`game.js`・`meiro.js`・`style.css` を 変えたら、先に `node tools/strip-nishio.js` → `git add nishio-go/min`（ゲームが 読む コメントぬきの コピー。あって いないと commit.sh・guard.js が 止める）
 4. **push**：`$F/push.sh`（見張りを 通してから push。ネットの つまずきは 2・4・8・16秒で やりなおす）
 5. **PR**：GitHub の MCP ツールで 作る（gh は ない）
    - 本文の 最後は 下の「PR の 本文の おわり」

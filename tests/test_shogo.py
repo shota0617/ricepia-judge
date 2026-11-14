@@ -45,7 +45,7 @@ console.log(JSON.stringify([t('nishio', 5, 5), t('nishio', 5, 4), t('nishio', 0,
     def test_wiring(self):
         src = (GO / 'game.js').read_text(encoding='utf-8')
         html = (ROOT / 'nishio-go.html').read_text(encoding='utf-8')
-        self.assertLess(html.index('nishio-go/shogo.js'), html.index('nishio-go/game.js'))
+        self.assertLess(html.index('nishio-go/shogo.js'), html.index('nishio-go/min/game.js'))
         # きろくの地区一覧に称号、きょうのさんぽに 段階のひとこと（既存のひとこと 1か所に寄せる）
         self.assertIn('<b>${esc(a.name)}</b>${shogoHtml(a.id, p)}', src)
         self.assertEqual(src.count('shogoSayHtml()'), 2)   # 定義 + きょうのさんぽ の1か所

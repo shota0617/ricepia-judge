@@ -2432,6 +2432,9 @@ function dropHanko() {
 }
 $("bagBig").addEventListener("pointerdown", (e) => {
   if (step !== 4 || leaving) return;
+  /* 動かしているはんこの指は、あとから置いた指で取り替えない。静止中の持ち替えはそのまま受ける。 */
+  if (hankoDrag && hankoDrag.moved && otherHankoPointer(e)) return;
+  hankoPointer = e.pointerId;
   capture($("bagBig"), e);
   guideOff();
   if (stamped) { stopSwipeDemo(); bagSwipe = { x:e.clientX, y:e.clientY }; return; } /* 指が触れたら流す手本の動きは止める（サイクル140・差42。ひきぬく手本と同じ） */
@@ -2448,6 +2451,7 @@ $("bagBig").addEventListener("pointerdown", (e) => {
   hankoDrag = { cy:e.clientY, moved:false };
 });
 $("bagBig").addEventListener("pointermove", (e) => {
+  if (otherHankoPointer(e)) return;
   if (bagSwipe) {
     const dx = e.clientX - bagSwipe.x;
     if (pageFinger(dx, e.clientY - bagSwipe.y, e)) return; /* ページを動かす指では流さない（サイクル150） */
@@ -2476,18 +2480,28 @@ $("bagBig").addEventListener("pointermove", (e) => {
    指の残りは捨てられた（390×844実測: はんこの上から 下へ 116px を1本で × 3回とも 押せない。指を離して もう1回が要った）。
    朱肉が付いた所を始まりにして、同じ指で はんこを下ろせる。付けた所で離した指・とちゅうで離した指は、はんこの空振りには数えない（朱肉は付けられたので） */
 var bagPage = false;
+var hankoPointer = null;
+function otherHankoPointer(e) {
+  /* 朱肉からはんこへは同じ指を引き継ぐ。所作が終われば古いIDは次の指を止めない。
+     引数なしの終了・取消しは、画面を離れた時の後片づけや場面外タップからも呼ばれる。 */
+  return !!e && !!(inkHold || inkDrag || hankoDrag || bagSwipe) && e.pointerId !== hankoPointer;
+}
 function inkToHanko(y) {
   stopBob();
   hankoDrag = { cy:y, moved:false, fromInk:true };
 }
 /* 取り消された指（pointercancel）は、元へ戻すだけで 空振りに数えない（サイクル150。旧版は タップと同じに数え、3回で ひとりでに 朱肉が付く・押される・流れる ことがあった） */
 function cancelHanko() {
+  if (otherHankoPointer(arguments[0])) return;
+  hankoPointer = null; bagPage = false;
   if (bagSwipe) { bagSwipe = null; $("bagBig").style.transform = ""; return; }
   const held = inkHold || inkDrag || hankoDrag;
   inkHold = null; inkDrag = null; hankoDrag = null;
   if (held && !stamped) { setHanko(0); if (!hankoBob) bobHanko(); }
 }
 function endHanko() {
+  if (otherHankoPointer(arguments[0])) { bagPage = false; return; } /* 別の指のcaptureで付いたページ移動の印も残さない */
+  hankoPointer = null;
   if (bagPage) { bagPage = false; cancelHanko(); return; } /* ページを動かした指は、取り消しと同じ（数えない） */
   if (bagSwipe) { bagSwipe = null; $("bagBig").style.transform = ""; swipeNudge(); return; } /* 流れなかったタップ・短いなでは、流す所作の空振りとして数える（サイクル140・差42）。朱肉・はんこの空振りと同じ共有の数え方 */
   if (inkHold) {
@@ -2524,6 +2538,13 @@ function endHanko() {
 $("bagBig").addEventListener("pointerup", endHanko);
 $("bagBig").addEventListener("pointerup", (e) => { bagPage = pageSlid(e); }, true); /* endHanko より先に見る（capture） */
 $("bagBig").addEventListener("pointercancel", cancelHanko);
+function cancelUncapturedHanko(e) {
+  const bag = $("bagBig");
+  /* 袋が指を追えている間は続ける。子の追跡終了が伝わっただけでも取り消さない。 */
+  if (!bag.hasPointerCapture || !bag.hasPointerCapture(e.pointerId)) cancelHanko(e);
+}
+$("bagBig").addEventListener("lostpointercapture", cancelUncapturedHanko);
+$("bagBig").addEventListener("pointerleave", cancelUncapturedHanko);
 $("bagBig").addEventListener("click", (e) => { if (e.detail === 0 && step === 4 && !stamped) dropHanko(); });
 function goNext() {
   guideOff();

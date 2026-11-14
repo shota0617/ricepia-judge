@@ -193,6 +193,60 @@ console.log(JSON.stringify({ a: a.text, aRes: eval(a.text), b: b.text, cText: c.
             self.assertEqual(r.returncode, 1, "コピーを 消しても 見はりが 通った: %r" % (r.stdout + r.stderr))
             self.assertIn("nishio-go/min", r.stderr)
 
+    def test_j_regex_or_division_never_changes_result(self):
+        """PR #1189 の 2回めの 指摘：for await ( … ) の あとの 正規表現を 割り算と まちがえた。あいまいな 所（) の あと・} の あと・++ -- の あと・${} の 中・
+        return typeof of in yield await の あと）は どれも「結果が かわらない（eval で 同じ）」か「止まる（stopAt・網）」の どちらか"""
+        js = r"""
+const { stripJs } = require(process.argv[1]);
+const cases = [
+  '(async () => { let n=0; for await (const x of [1]) /[/*x*/]/.test("x") && n++; return n; })()',
+  '(() => { const f = v => v; return f(8)/2/*c*/ + f(6)/3; })()',
+  '(() => { let n = 0; if (true) {}\n/[/*z*/]/.test("z") && n++; return n; })()',
+  '(() => { let a = 6, b = 2; a++\n/b/2; return a; })()',
+  '(() => { let a = 6, b = 2; a--\n/[/*q*/]/g; return a; })()',
+  '(() => `${ /[/*t*/]/.test("t") /* c */ }`)()',
+  '(() => { return /[/*r*/]/.test("r"); })()',
+  '(() => typeof /[/*y*/]/)()',
+  '(() => { let n = 0; for (const x of /[/*o*/]/.exec("o")) n++; return n; })()',
+  '(() => "a" in /[/*i*/]/)()',
+  '(() => { const g = function* () { yield /[/*g*/]/.test("g"); }; return g().next().value; })()',
+  '(async () => await /[/*w*/]/.test("w"))()',
+  '(() => { var of = 8, yield_ = 2; return of / 2 /* c */ / 2; })()',
+];
+const out = [];
+(async () => {
+  for (const src of cases) {
+    let r, how;
+    try { r = stripJs(src); how = r.stopAt >= 0 ? 'stop' : 'stripped'; } catch (e) { how = 'net'; }
+    let same = null;
+    if (how === 'stripped') { const a = await eval(src), b = await eval(r.text); same = JSON.stringify(a) === JSON.stringify(b); }
+    out.push({ src: src.slice(0, 40), how, same });
+  }
+  console.log(JSON.stringify(out));
+})();
+"""
+        import json
+        r = subprocess.run(["node", "-e", js, str(TOOL)], capture_output=True, text=True, check=True)
+        out = json.loads(r.stdout)
+        bad = [o for o in out if not (o["how"] in ("stop", "net") or o["same"] is True)]
+        self.assertEqual(bad, [], "ぬいた あとで 結果が かわった: %r" % bad)
+        self.assertEqual(len(out), 13)
+
+    def test_k_net_catches_changed_tokens(self):
+        """安全の 網：もとと ぬいた あとの 字句が ちがえば（見分けの もれ）、その ファイルは 作らずに 止める（手元に acorn が ある とき）"""
+        if not find_acorn():
+            self.skipTest("acorn が 無い")
+        js = r"""
+const S = require(process.argv[1]);
+const a = S.sameTokens('x = /[/*a*/]/.test("a");', 'x = /[ ]/.test("a");'), b = S.sameTokens('x = 1; // c', 'x = 1;');
+console.log(JSON.stringify({ a, b }));
+"""
+        import json
+        env = dict(os.environ, NODE_PATH=find_acorn())
+        o = json.loads(subprocess.run(["node", "-e", js, str(TOOL)], capture_output=True, text=True, check=True, env=env).stdout)
+        self.assertEqual(o["a"]["same"], False)
+        self.assertEqual(o["b"]["same"], True)
+
     def test_f_same_tokens_by_acorn(self):
         np = find_acorn()
         if not np:

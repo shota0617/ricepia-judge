@@ -23,6 +23,8 @@ const KW_BEFORE_REGEX = new Set(['return', 'typeof', 'instanceof', 'in', 'of', '
 const KW_PAREN = new Set(['if', 'while', 'for', 'with']);
 // 改行が あると そこで 文が 終わる（ASI）ことば：つぎの「/」は、改行の あとなら 正規表現。改行が なければ 決めない（PR #1189 の 指摘：debugger の つぎの 行の /[/*x*/]/ を 割り算と して コメントを ぬいた）
 const KW_STMT_END = new Set(['debugger', 'break', 'continue']);
+// ことばとしても 名前としても 使える（yield・await・of）：つぎの「/」は 正規表現か 割り算か 決めない（止まる。PR #1189 の 2回めの 指摘を うけて、確かな とき だけ ぬく）
+const KW_CTX = new Set(['yield', 'await', 'of']);
 const isIdChar = c => /[A-Za-z0-9_$\u0080-￿]/.test(c);
 const keepComment = t => t.startsWith('/*!') || t.startsWith('/*@') || /^\/\/[#@]\s*source(Mapping)?URL=/.test(t);
 
@@ -39,6 +41,7 @@ function jsComments(s) {
     if (!prev) return true;
     if (prev.t === 'id' && KW_STMT_END.has(prev.v)) return nlFor === prev && nl ? true : null;
     if (prev.t === 'num' || prev.t === 'str' || prev.t === 're' || prev.t === 'tpl') return false;
+    if (prev.t === 'id' && KW_CTX.has(prev.v)) return null;
     if (prev.t === 'id') return KW_BEFORE_REGEX.has(prev.v);
     if (prev.v === ')') return prev.kw === true ? true : prev.kw === false ? false : null;
     if (prev.v === ']') return false;
@@ -106,7 +109,8 @@ function jsComments(s) {
       const v = s.slice(i, j);
       // a.return / a?.of などの プロパティ名は キーワードと しない
       const dot = prev && prev.t === 'p' && (prev.v === '.' || prev.v === '?.');
-      prev = { t: 'id', v: dot ? '' : v }; i = j; continue;
+      const forAwait = !dot && v === 'await' && !!prev && prev.t === 'id' && prev.v === 'for';   // for await ( … ) も 制御文の かっこ（PR #1189 の 2回めの 指摘）
+      prev = { t: 'id', v: dot ? '' : v, forAwait }; i = j; continue;
     }
     // 記号
     if (c === '{') { stack.push('b'); prev = { t: 'p', v: '{' }; i++; continue; }
@@ -116,7 +120,7 @@ function jsComments(s) {
       if (k === undefined) throw new Error('} が 多い ' + i);
       prev = { t: 'p', v: '}' }; i++; continue;
     }
-    if (c === '(') { parens.push(!!(prev && prev.t === 'id' && KW_PAREN.has(prev.v))); prev = { t: 'p', v: '(' }; i++; continue; }
+    if (c === '(') { parens.push(!!(prev && prev.t === 'id' && (KW_PAREN.has(prev.v) || prev.forAwait))); prev = { t: 'p', v: '(' }; i++; continue; }
     if (c === ')') { const kw = parens.pop(); prev = { t: 'p', v: ')', kw }; i++; continue; }
     if ((c === '+' || c === '-') && s[i + 1] === c) { prev = { t: 'p', v: c + c }; i += 2; continue; }
     if (c === '?' && s[i + 1] === '.' && !/[0-9]/.test(s[i + 2] || '')) { prev = { t: 'p', v: '?.' }; i += 2; continue; }
@@ -195,9 +199,37 @@ function strip(s, ranges, stopAt, css) {
   return parts.join('');
 }
 
-function stripJs(src) {
+// 安全の 網（PR #1189 の 2回めの 指摘：見分けの もれを もぐらたたき に しない）：手元に 本物の パーサー（acorn）が あれば、もとと ぬいた あとを
+// コメントを 無視した 字句の 列で くらべ、ちがえば その ファイルは 作らずに 止める（終了コード 1）。acorn が 無い 所では 網は はらない（できる コピーは 同じ）
+function findAcorn() {
+  const dirs = [path.join(ROOT, 'node_modules'), ...(process.env.NODE_PATH || '').split(path.delimiter).filter(Boolean), '/opt/node-tools/node_modules'];
+  for (const d of dirs) { try { return require(require.resolve('acorn', { paths: [d] })); } catch (e) { /* つぎ */ } }
+  return null;
+}
+// 正規表現の 字句は 中身が もの（pattern・flags）で 来る。String() だと どれも 同じに なるので 中身で くらべる
+function tokVal(v) { return v === undefined ? '' : (v && typeof v === 'object' && 'pattern' in v) ? '/' + v.pattern + '/' + v.flags : String(v); }
+function jsTokens(acorn, src) {
+  const out = [];
+  for (const t of acorn.tokenizer(src, { ecmaVersion: 'latest', allowHashBang: true, allowReturnOutsideFunction: true, allowAwaitOutsideFunction: true })) out.push(t.type.label + '\u0000' + tokVal(t.value));
+  return out;
+}
+function sameTokens(a, b) {
+  const acorn = findAcorn();
+  if (!acorn) return { checked: false };
+  let ta;
+  try { ta = jsTokens(acorn, a); } catch (e) { return { checked: false, why: 'もとを 字句に 分けられない' }; }
+  let tb;
+  try { tb = jsTokens(acorn, b); } catch (e) { return { checked: true, same: false, why: 'ぬいた あとを 字句に 分けられない：' + e.message }; }
+  if (ta.length !== tb.length) return { checked: true, same: false, why: `字句の 数が ちがう（${ta.length} → ${tb.length}）` };
+  for (let k = 0; k < ta.length; k++) if (ta[k] !== tb[k]) return { checked: true, same: false, why: `${k}番めの 字句が ちがう（${ta[k].replace('\u0000', ' ')} → ${tb[k].replace('\u0000', ' ')}）` };
+  return { checked: true, same: true };
+}
+function stripJs(src, opt = {}) {
   const { comments, stopAt } = jsComments(src);
-  return { text: strip(src, comments, stopAt), stopAt, count: comments.length };
+  const text = strip(src, comments, stopAt);
+  const net = opt.net === false ? { checked: false } : sameTokens(src, text);
+  if (net.checked && !net.same) { const e = new Error('ぬいた あとの 字句が もとと ちがう：' + net.why); e.net = net; throw e; }
+  return { text, stopAt, count: comments.length, net: net.checked };
 }
 
 function stripCss(src) {
@@ -236,7 +268,8 @@ function main() {
   for (const f of FILES) {
     let src, want;
     try { src = readSrc(SRC(f), mode); } catch (e) { bad.push(`${SRC(f)} が 読めない`); continue; }
-    const r = build(f, src);
+    let r;
+    try { r = build(f, src); } catch (e) { bad.push(`${SRC(f)}：${e.message}（コピーは 作らない）`); continue; }
     want = r.text;
     if (r.stopAt >= 0 && !quiet) {
       const line = src.slice(0, r.stopAt).split('\n').length;
@@ -261,4 +294,4 @@ function main() {
 }
 
 if (require.main === module) main();
-module.exports = { jsComments, cssScan, stripJs, stripCss, FILES };
+module.exports = { jsComments, cssScan, stripJs, stripCss, sameTokens, FILES };

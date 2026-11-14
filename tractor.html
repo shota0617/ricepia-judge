@@ -31,6 +31,7 @@
   /* サイクル277: 始まったら おおいは すぐ 消す（0.3 秒の うすれは やめる）。うすれは こまで すすむので、1 秒に 1.4 こまの スマホでは 始まって から 2〜3 こま（1.4〜2.1 秒）
      おおいが 画面いっぱいに のこり、始まった 田んぼが 見えなかった（ふつうの こまでは 0.3〜0.6 秒）。消えるのは 次の 1 こま */
   #loadWait.off { opacity: 0; visibility: hidden; transition: none; }
+  #lwSoil { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }   /* サイクル284: なぞった 所の 土の すじ（見た目 だけ） */
   #loadWait .lwF { position: absolute; left: 50%; top: 66%; font-size: 56px; line-height: 1; margin: -48px 0 0 -12px; filter: drop-shadow(0 3px 5px rgba(0,0,0,.45)); animation: lwUp 2.6s linear infinite; }
   #loadWait .lwT { position: absolute; left: 0; right: 0; top: 76%; text-align: center; color: #fff; font-size: 17px; font-weight: 800; text-shadow: 0 1px 4px rgba(0,0,0,.5); }
   /* サイクル271: 読みこみの 進みぐあいの 線（押す物では ない）。届いた分だけ 右へ のびる。おそい回線では 車体と田んぼが届くまで 15〜60 秒 かかり、その間 指の見本が くり返すだけで 進んでいるのか 止まっているのか 分からなかった */
@@ -234,7 +235,37 @@
 <body>
 <canvas id="view"></canvas>
 <div id="vignette"></div>
-<div id="loadWait"><div class="lwF">👆</div><div class="lwT">指で なぞると 進みます</div><div class="lwB"><i id="lwBar"></i></div></div>
+<div id="loadWait"><canvas id="lwSoil"></canvas><div class="lwF">👆</div><div class="lwT">指で なぞると 進みます</div><div class="lwB"><i id="lwBar"></i></div></div>
+<script>
+// サイクル284・最初の1分（設計役の 案 T-a）: 読みこみを 待つ おおいの 上で なぞった 所に、土の すじ（茶色の 線）を その場で 描く。
+// おおいは「指で なぞると 進みます」と 言う のに、three の 3 本を 読んでいる間（ゲームの スクリプトが まだ 動いていない）は なぞっても 画面が 何も 変わらなかった
+// （はかった数：なぞる 前と あとの 画素の 差 0。ゲームの ファイルを 読む間は 黄色い 点が 0.6 秒 出るが、離すと 何も のこらない）。
+// 見た目 だけ：先へは 進まない・% は 動かさない・音も はじけも 出さない・押す 物では ない（おおいも 絵も pointer-events: none。指の 知らせは ふさがない・とめない）。
+// ゲームが 始まると おおいと いっしょに 消える（つぎの なぞりは 本物の 田んぼで）。three の 3 本より 前に 置く（3D の 用意の じゃまを しない：絵は 2D の 小さな 線だけ）
+(function () {
+  var cv = document.getElementById('lwSoil'), w = document.getElementById('loadWait'), g = cv && cv.getContext && cv.getContext('2d'), last = {}, dpr = 1;
+  if (!g) return;
+  function done() { return w.classList.contains('off') || (window.game && game.S && game.S.started); }
+  function fit() { var d0 = dpr; dpr = Math.min(2, window.devicePixelRatio || 1); var W = Math.round(innerWidth * dpr), H = Math.round(innerHeight * dpr); if (cv.width === W && cv.height === H) return;
+    var old = null; try { if (cv.width && cv.height) { old = document.createElement('canvas'); old.width = cv.width; old.height = cv.height; old.getContext('2d').drawImage(cv, 0, 0); } } catch (e) { old = null; }
+    var sx = old ? W / old.width * d0 / dpr : 1, sy = old ? H / old.height * d0 / dpr : 1;   // 画面の 点（CSS px）で 見た 比
+    cv.width = W; cv.height = H; if (old) g.drawImage(old, 0, 0, W, H);   // 回した・大きさが 変わった：描いた すじは のばして のこす
+    for (var id in last) last[id] = [last[id][0] * sx, last[id][1] * sy]; }   // サイクル284b（Codex 指摘）: 置いた まま の 指の 前の 点も 同じ 比で 動かす（古い 点から なぞって いない 所へ 線を 引かない）
+  fit(); addEventListener('resize', fit);
+  function line(a, b) {
+    g.lineCap = 'round'; g.lineJoin = 'round';
+    g.strokeStyle = 'rgba(70,48,30,.55)'; g.lineWidth = 22 * dpr; g.beginPath(); g.moveTo(a[0] * dpr, a[1] * dpr); g.lineTo(b[0] * dpr, b[1] * dpr); g.stroke();   // 耕した 土の こい 茶色
+    g.strokeStyle = 'rgba(120,88,58,.5)'; g.lineWidth = 9 * dpr; g.beginPath(); g.moveTo(a[0] * dpr, a[1] * dpr); g.lineTo(b[0] * dpr, b[1] * dpr); g.stroke();   // まん中の 少し 明るい すじ（土の もりあがり）
+  }
+  function down(e) { if (done() || e.pointerType === 'mouse' && !(e.buttons & 1)) return; var p = [e.clientX, e.clientY]; last[e.pointerId] = p; line(p, [p[0] + 0.1, p[1]]); }
+  function move(e) { var a = last[e.pointerId]; if (!a || done()) return; if (e.pointerType !== 'touch' && !e.buttons) { delete last[e.pointerId]; return; }   // ペンや マウスを 浮かせた 動きでは 描かない
+    var b = [e.clientX, e.clientY]; if (Math.abs(b[0] - a[0]) + Math.abs(b[1] - a[1]) < 2) return; line(a, b); last[e.pointerId] = b; }
+  function up(e) { delete last[e.pointerId]; }
+  addEventListener('pointerdown', down, { passive: true, capture: true }); addEventListener('pointermove', move, { passive: true, capture: true });
+  addEventListener('pointerup', up, { passive: true, capture: true }); addEventListener('pointercancel', up, { passive: true, capture: true });
+  var iv = setInterval(function () { if (!done()) return; clearInterval(iv); last = {}; removeEventListener('resize', fit); removeEventListener('pointerdown', down, true); removeEventListener('pointermove', move, true); removeEventListener('pointerup', up, true); removeEventListener('pointercancel', up, true); }, 500);
+})();
+</script>
 <script>
 // サイクル275・最初の1分: 読みこみが とちゅうで 止まった（エラーに ならず、返事が 来ない）ときの 見はり。three の 3 本より 前に置く（three が 来ないと、あとの スクリプトは 1 つも 動かない）。
 // それまでは 車体・田んぼ・作業機・復号器・three の どれかが 返事を しないと、おおいは「指で なぞると 進みます」と 止まった線の まま ずっと 出ていた。さわっても 黄色い点が 出るだけで 始まらない

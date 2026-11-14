@@ -1,4 +1,4 @@
-// 最初の1分の確かめ（サイクル259〜283）：node firstmin.js [tractor.html のパス]
+// 最初の1分の確かめ（サイクル259〜284）：node firstmin.js [tractor.html のパス]
 //  1) 知らせの文：吹き出し（speakText）・短い文（shortText）で かっこが合わなくならない（「…見ます）」のような切れ方をしない）
 //  3) 畦の手前で止まった人：「横へ なぞる」見本が出て、見本どおりで向きが変わる。自動で下ろす知らせは 1 回だけ（サイクル260）
 //  2) のんびりの大きな数字：スマホ縦で 1 回なぞって耕したら 0% のままにならない。田んぼアートでは地図の「でき」と同じ数、お題なしでは小数 1 けた
@@ -1392,6 +1392,49 @@ const srv = http.createServer((r, s) => { const u = decodeURIComponent(r.url.spl
       { const { ctx, p } = await open14('?art=none'); await fake14(p); await p.evaluate(x => window.__adv(x), 1.5);
         const g1 = await p.evaluate(() => ({ lane: game.T4.lane, vis: game.T4.mesh && game.T4.mesh.visible, amesh: !!(game.T4.amesh && game.T4.amesh.visible) }));
         ok('お題なし：今までどおり 列の 帯だけ（白線までの 帯は 出ない）', typeof g1.lane === 'number' && g1.vis && !g1.amesh, g1); await ctx.close(); }
+    }
+    // ---- 21) サイクル284（設計役の 案 T-a）：読みこみを 待つ おおいの 上で なぞった 所に 土の すじ（見た目 だけ）----
+    //       直す前：three の 3 本を 読んでいる間は、なぞっても 画面が 何も 変わらない（ゲームの スクリプトが まだ 動いていない）
+    {
+      let go; const gate = new Promise(r => { go = r; });
+      const { ctx, p, cdp } = await open14('', async q => { await q.unroute('https://cdn.jsdelivr.net/**'); await q.route('https://cdn.jsdelivr.net/**', async r => { await gate; r.fulfill({ path: TN + r.request().url().split('/three@0.128.0')[1], contentType: 'text/javascript' }); }); }, false, [390, 844], 'commit');
+      await p.waitForFunction(() => document.getElementById('loadWait'), null, { polling: 100 }); await p.waitForTimeout(800);
+      const T = (type, pts) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: pts });
+      const ink = (x, y, r = 6) => p.evaluate(([x, y, r]) => { const c = document.getElementById('lwSoil'); if (!c || !c.width) return -1; const k = c.width / innerWidth, d = c.getContext('2d').getImageData(Math.max(0, Math.round((x - r) * k)), Math.max(0, Math.round((y - r) * k)), Math.round(2 * r * k), Math.round(2 * r * k)).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 20) n++; return n; }, [x, y, r]);
+      const st = () => p.evaluate(() => ({ game: !!window.game, three: typeof THREE !== 'undefined', off: document.getElementById('loadWait').classList.contains('off') }));
+      const s0 = await st(), i0 = await ink(100, 560, 40);
+      await T('touchStart', [{ x: 100, y: 600, id: 1 }]); for (let i = 1; i <= 10; i++) { await T('touchMove', [{ x: 100, y: 600 - 12 * i, id: 1 }]); await p.waitForTimeout(20); }
+      await p.waitForTimeout(80); const i1 = await ink(100, 540), i1b = await ink(100, 500); await T('touchEnd', []); await p.waitForTimeout(1500); const i2 = await ink(100, 540);
+      // 2 本の 指：どちらも すじ。pointercancel の あとは つながない（つづきの 線を 引かない）
+      await T('touchStart', [{ x: 250, y: 600, id: 1 }, { x: 320, y: 600, id: 2 }]); for (let i = 1; i <= 6; i++) { await T('touchMove', [{ x: 250, y: 600 - 15 * i, id: 1 }, { x: 320, y: 600 - 15 * i, id: 2 }]); await p.waitForTimeout(20); }
+      await T('touchCancel', []); await p.waitForTimeout(50); const i3 = [await ink(250, 540), await ink(320, 540)];
+      await T('touchStart', [{ x: 250, y: 760, id: 3 }]); await T('touchMove', [{ x: 252, y: 762, id: 3 }]); await T('touchEnd', []); await p.waitForTimeout(50); const i4 = await ink(250, 680, 4);   // 前の すじの はし（510）と 新しい 指（760）を むすぶ 線の 上（680。前の すじは 600 から 上）は 白いまま
+      // マウス：ボタンを 押さない 動きでは 描かない・押して うごかすと 描く
+      await p.mouse.move(60, 300); await p.mouse.move(60, 200, { steps: 6 }); await p.waitForTimeout(50); const m0 = await ink(60, 250);
+      await p.mouse.move(150, 300); await p.mouse.down(); await p.mouse.move(150, 200, { steps: 6 }); await p.mouse.up(); await p.waitForTimeout(50); const m1 = await ink(150, 250);
+      // 回した・大きさが 変わった：すじは のこる
+      await p.setViewportSize({ width: 844, height: 390 }); await p.waitForTimeout(300); const rs = await p.evaluate(() => { const c = document.getElementById('lwSoil'); if (!c) return { w: 0, n: 0 }; const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 3; i < d.length; i += 4 * 7) if (d[i] > 20) n++; return { w: c.width, n }; });
+      await p.setViewportSize({ width: 390, height: 844 }); await p.waitForTimeout(300);
+      // サイクル284b（Codex 指摘 1）：指を 置いた まま 回す（390×844 → 844×390）。前の 点も 同じ 比で 動くので、つぎの 動きで なぞって いない 所へ 長い 線を 引かない
+      //   (100,560) → (100,500) まで 描き、回して (216,231)（＝(100,500) の 回した あとの 所）→ (216,215) へ。直す前：古い (100,500) から (216,231) へ 線が 引かれ、まん中 (158,366) が ぬられる
+      await T('touchStart', [{ x: 100, y: 560, id: 5 }]); for (let i = 1; i <= 5; i++) { await T('touchMove', [{ x: 100, y: 560 - 12 * i, id: 5 }]); await p.waitForTimeout(20); }
+      await p.setViewportSize({ width: 844, height: 390 }); await p.waitForTimeout(300);
+      await T('touchMove', [{ x: 216, y: 231, id: 5 }]); await p.waitForTimeout(20); for (let i = 1; i <= 4; i++) { await T('touchMove', [{ x: 216, y: 231 - 4 * i, id: 5 }]); await p.waitForTimeout(20); }
+      await T('touchEnd', []); await p.waitForTimeout(50); const rot = { stray: await ink(158, 366, 5), cont: await ink(216, 222, 4) };
+      await p.setViewportSize({ width: 390, height: 844 }); await p.waitForTimeout(300);
+      const s1 = await st();
+      go(); await p.waitForFunction(() => window.game && game.S && game.S.started, null, { polling: 200, timeout: 170000 }).catch(() => {}); await p.waitForTimeout(800);
+      // サイクル284b（Codex 指摘 2）：始まった あとは 大きさの 聞き手も 外す（見えない すじの 絵を 回す たびに 全画面で 写し直さない）
+      const cw0 = await p.evaluate(() => document.getElementById('lwSoil').width); await p.setViewportSize({ width: 844, height: 390 }); await p.waitForTimeout(400);
+      const cw1 = await p.evaluate(() => document.getElementById('lwSoil').width); await p.setViewportSize({ width: 390, height: 844 }); await p.waitForTimeout(400);
+      const s2 = await p.evaluate(() => { const w = document.getElementById('loadWait'); return { started: !!(window.game && game.S.started), off: w.classList.contains('off'), vis: getComputedStyle(w).visibility, pct: document.getElementById('bigPct').textContent, pe: document.getElementById('lwSoil') ? getComputedStyle(document.getElementById('lwSoil')).pointerEvents : '' }; });
+      const r21 = { s0, i0, i1, i1b, i2, i3, i4, m0, m1, rs, s1, s2 };
+      ok('指を 置いた まま 回すと、つぎの 動きは 回した あとの 指の 所から 描く（なぞって いない 所に 線を 引かない。直す前：古い 点から 線）', rot.stray === 0 && rot.cont > 10, rot);
+      ok('始まった あとは 回しても すじの 絵を 作り直さない（大きさの 聞き手も 外す。直す前：844×390 に 合わせて 作り直す）', s2.started && cw0 > 0 && cw1 === cw0, [cw0, cw1]);
+      ok('three を 待つ間（ゲームは まだ 動いていない）に なぞると、指の 下に 土の すじが 出て、離して 1.5 秒 あとも のこる（直す前：画面は 何も 変わらない）', !s0.game && !s0.three && i0 <= 0 && i1 > 30 && i1b > 30 && i2 > 30 && !s1.game, r21);
+      ok('2 本の 指は どちらも すじ・pointercancel の あとの 指とは つながない・マウスは 押した ときだけ・回しても のこる・押す 物では ない', i3[0] > 30 && i3[1] > 30 && i4 === 0 && m0 === 0 && m1 > 30 && rs.n > 50 && s2.pe === 'none', r21);
+      ok('始まると おおいと いっしょに すじも 消える・耕し率は 0 の まま（すじで 進まない）', s2.started && s2.off && s2.vis === 'hidden' && /^0(\.0)?%$/.test(s2.pct), s2);
+      await ctx.close();
     }
   }
   ok('エラーなし', errs.length === 0, errs.slice(0, 3));

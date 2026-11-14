@@ -47,6 +47,12 @@
   #pips i { width:18px; height:5px; border-radius:3px; background:#cfc6b1; }
   #pips i.done { background:var(--gold); }
   #pips i.now { background:var(--green); }
+  /* 5つめ（おす）の 点は、はんこの 赤い 丸（サイクル163・最初の1分）。旧版は 5つの 点が どれも 同じ 形で、さいごに はんこを 押す ための 作業だと
+     絵で 分かるのは はんこまで 行った 約29秒 後 だった（袋の はんこの 場所の 点線の わくは サイクル156 から ある）。字は 足さない。
+     点の 箱の 大きさ（18×5px）は 変えず、丸は その 上に かさねて 描く ので、頭の 高さは 変わらない。「動きを へらす」でも 同じ 絵 */
+  #pips i:last-child { position:relative; background:transparent; }
+  #pips i:last-child::after { content:""; position:absolute; left:3px; top:-3px; width:11px; height:11px; box-sizing:border-box; border:2px solid var(--stamp); border-radius:50%; transform:rotate(-8deg); }
+  #pips i.now:last-child::after { background:rgba(179,38,30,.25); }
   /* 何の ために やって いるか・いま 何ふくろめ か（サイクル155・最初の1分）。旧版は 開いた 画面に 目的も 袋の 数も 無く、1ふくろを しらべて
      さいごに はんこ、と 分かるのは はんこまで 行った 約22秒 後 だった。段の 名前・進みの 棒の 下に 1行。手本の 指と 案内文（23px）より 弱く、読める 大きさ・こさ で */
   /* 字は 13px・こい 茶（地との コントラスト 7.75:1）。段の 名前（28px・黒）より 弱く、題字（12px・うすい 茶 4.66:1）より はっきり。
@@ -245,6 +251,7 @@
     #pips { margin-top:1px; }
     #goal, #lotTag { font-size:12px; }
     #goal { margin-top:0; line-height:1.15; }
+    #pips i:last-child::after { top:-4px; width:9px; height:9px; left:4px; } /* 横向きの 低い 画面は 行の あいだが せまい ので、はんこの 丸を 小さく（下の 目的の 字に かからない） */
     #stepName { grid-column:1; grid-row:1; }
     #stage { flex-direction:row; }
     #top { flex:0 0 34%; }
@@ -1150,6 +1157,10 @@ function pageSlid(e) {
 }
 /* 指の動きはどれも止まらないように、3回タップされたら自動でやってみせる */
 const NUDGE_LIMIT = 3;
+/* 1ふくろめ だけは 空振り 2回で ひとりでに 進む（サイクル161・運営者 2026-11-14「運営者の 判断が いる 案は 判断不要で 進めて」）。
+   1回めは 今までどおり 手本 だけ（最初の 1回めの タップでは 進まない）、2回めで やって みせて 進む。半分 見せる 段は 1ふくろめでは とばす。
+   旧版は どの 身ぶりも 3回 要り、読まずに たたく 人は 最初の はんこまで 約55秒 かかって いた。2ふくろめ からは 今の 3回。
+   つまむ・きめるは ひとりでに 進まない（ここでは 数えない）。はんこの あとの 流す 所作は、押した 証印を すぐ 流さない ための 守り（サイクル150・151）なので 3回の まま。各所で (lotIndex === 0 ? 2 : NUDGE_LIMIT) と 書く */
 function startLot() {
   LOT = LOTS[lotIndex % LOTS.length];
   $("lotNo").textContent = lotIndex + 1; /* いま 何ふくろめ か（サイクル155）。袋は 6しゅるいを くり返し、終わりは 無い */
@@ -1159,7 +1170,7 @@ function startLot() {
   hint.style.display = "";
   showTop("sceneBag");
   $("dish").textContent = "";
-  measured = 0; meterTaps = 0; crankTurned = 0; bagTaps = 0; spreadTaps = 0; hankoTaps = 0; swipeTaps = 0; spread = false; pickedBare = false; stamped = false; inked = false; twistDone = false;
+  measured = 0; meterTaps = 0; crankTurned = 0; bagTaps = 0; spreadTaps = 0; hankoTaps = 0; swipeTaps = 0; spread = false; pickedBare = false; stamped = false; inked = false; twistDone = false; pickMisses = 0; /* つまむの 空振りは 袋ごとに 数え直す（サイクル160） */
   token.hidden = true;
   $("lcd").textContent = "--.-";
   $("meterBtn").classList.remove("high");
@@ -1491,7 +1502,7 @@ function endBagDrag(e) {
   P.drag = null;
   if (P.inserted && !P.done && still) { pullNudge(); return; }
   if (P.done || P.inserted) return; /* さす前に指を離したら、タップでも違う向きの引きでも1回と数える */
-  if (++bagTaps >= NUDGE_LIMIT) { autoProbe(); return; }
+  if (++bagTaps >= (lotIndex === 0 ? 2 : NUDGE_LIMIT)) { autoProbe(); return; }
   if (bagTaps === 1) { stabPoke(); $("poke").style.display = ""; } /* 手本の指は、穀刺しの いまの握りの所から（サイクル143） */ /* 空振り1回目: 手本の指👆をもう一度出す。触って消えた指は戻らず、動かし方が分からなくなっていた（390×844実測・サイクル81、設計の空振り統一） */
   /* 空振り2回目: 道具が半分やって見せる（設計の空振り統一・サイクル84）。さす所までの半分まで穀刺しが進んで戻る。状態は進めない */
   if (bagTaps === 2) { probeDemoSound(); /* 半分デモにも手本の音を付ける（サイクル120・差26） */ const halfX = P.x - (P.x - P.inAt) / 2; $("probe").animate([{ transform:"translate(" + P.x + "px," + P.y + "px)" }, { transform:"translate(" + halfX + "px," + P.y + "px)", offset:.55 }, { transform:"translate(" + P.x + "px," + P.y + "px)" }], { duration:640 * motion, easing:"ease-in-out" }); return; }
@@ -1534,7 +1545,7 @@ function stopPullDemo() {
 function pullNudge() {
   if (step !== 0 || P.done || !P.inserted) return;
   stopPullDemo();
-  if (++bagTaps >= NUDGE_LIMIT) { autoProbe(); return; }
+  if (++bagTaps >= (lotIndex === 0 ? 2 : NUDGE_LIMIT)) { autoProbe(); return; }
   pullPoke(); $("poke").style.display = "";
   probeDemoSound();
   const to = bagTaps === 2 ? P.x + (P.rest - P.x) / 2 : P.x + 18;
@@ -1606,7 +1617,7 @@ function endCrank(e) {
   if (measured >= LOT.moisture.length) return;
   $("lcd").textContent = measured ? LOT.moisture[measured - 1].toFixed(1) : "--.-";
   if (!tapped) return;
-  if (++meterTaps >= NUDGE_LIMIT) { meterTaps = NUDGE_LIMIT - 1; takeReading(); return; } /* タップ3回で1回はかれた後は、同じ袋の残りはタップ1回ごとにはかれる（サイクル137・最初の1分）。旧版は1回はかるたびに数え直していたため、タップだけの人は3回×3＝9〜10回のタップ・約12秒かかり、他の所作（3回・約4秒）の3倍だった（390×844実測）。回す動きは手本で3回見せ終えている */
+  if (++meterTaps >= (lotIndex === 0 ? 2 : NUDGE_LIMIT)) { meterTaps = (lotIndex === 0 ? 2 : NUDGE_LIMIT) - 1; takeReading(); return; } /* タップ3回で1回はかれた後は、同じ袋の残りはタップ1回ごとにはかれる（サイクル137・最初の1分）。旧版は1回はかるたびに数え直していたため、タップだけの人は3回×3＝9〜10回のタップ・約12秒かかり、他の所作（3回・約4秒）の3倍だった（390×844実測）。回す動きは手本で3回見せ終えている */
   if (meterTaps === 1) guideAt("circle", $("crank")); /* 空振り1回目: 手本の指をもう一度出す（サイクル81） */
   crankSound(); /* 空振りの手本の揺れ（60°）も、実際に回す時と同じカチッで知らせる（サイクル119・差分テーマ差25）。本物の回転は45°ごとに crankSound が鳴るのに、60°揺れる手本だけが無音だった（390×844実測で同期音0件）。揺れ1回につき1回だけ鳴らす */
   if (crankDemo) return; /* 手本の指と一緒に握りが回っている間は、揺れを重ねない（サイクル141。重ねると握りが指から離れて、とんで戻る） */
@@ -1931,7 +1942,7 @@ function endPlatePointer(e, cancelled) {
       } else if (g) {
         if (g.kind === "seiryu") { lastGoodTap = tapNow; lastGoodX = e.clientX; lastGoodY = e.clientY; }
         tapGrain(g);
-      } else knockPlate();
+      } else { knockPlate(); pickMiss(); }
       if (!spread && (!g || g.kind === "seiryu")) nudgeSpread();
     } else if (d.moved && !cancelled && step === 2 && Z.s <= 1.001 && d.startG && performance.now() - d.t0 < 400 && Math.hypot(e.clientX - d.x, e.clientY - d.y) > 24) { /* はじく判定: 400msまで受ける。260msでは約300〜400msのゆっくりした払いが届かず無反応だった（390×844実測・サイクル79）。ゆっくりなでて広げる払い（550ms以上）は従来どおりはじきとしない */
       flickGrain(d.startG, e.clientX - d.x, e.clientY - d.y);
@@ -1976,6 +1987,20 @@ function nudgeSpread() {
   guideAt("sweep", plate);
 }
 /* トントン: 粒のない所をたたくと、粒が小さくはねて少し広がる */
+/* つまむ で 空振り（粒の 無い 所・良い 粒）が 3回 つづいたら、待たずに わるい粒を 指す 手本を 出す（サイクル160・最初の1分）。
+   旧版は 手本が 指を 離して 0.8秒（まだ 見せて いない 時）か 2秒 たたないと 出ず、0.8秒おきに たたき続ける 人には 一度も 出なかった
+   （390×844実測: 皿の まんなかを 0.8秒おきに 12回 → 手本 0回）。見分けが まだ ついて いない 袋では、前から ある「ふくらんで 知らせる」を 先に する。
+   ひとりでには 進まない（つまむ のは 遊ぶ 人）。わるい粒を つまめば 0 に もどる。手が 止まった 人の 2秒（自分の 目で さがす 間）は 今までどおり */
+let pickMisses = 0;
+function pickMiss() {
+  if (step !== 2 || !spread || badLeft === 0 || !token.hidden) return;
+  if (++pickMisses < 3) return;
+  pickMisses = 0;
+  const bad = grains.filter(g => !g.gone && g.kind !== "seiryu");
+  if (!bad.some(g => firstBagFace(g) || isNear || g.img.classList.contains("hint"))) armHint(0); /* 前から ある ふくらみ（音も 同じ）を いま 出す */
+  demoAt = demoHard = 0;
+  setTimeout(demoTick, 0); /* ふくらみの あとに 見回る（同じ 0秒の 予約は 先に 入った ほうが 先） */
+}
 /* たたいて外へ押すのは、皿のまんなかの近く（皿の短い辺の3割まで）にいる粒だけ（サイクル150）。旧版は たたくたびに 全部の粒を 7px ずつ外へ押し、止まらなかった。
    つまむ の間に 何もない所を くり返したたくと、粒は皿の ふちまで行って切れた（390×844実測: 20回で まんなかからの平均 68 → 190px）。
    遠くの粒は その場で はねるだけにする。広げる前の山（皿の短い辺の2割の中）は 今までどおり ほどける */
@@ -2043,13 +2068,14 @@ zoomBtn.addEventListener("click", (e) => { if (e.detail === 0) toggleZoom(); });
 function tapGrain(g) {
   if (step !== 2 || g.gone) return;
   if (g.kind === "seiryu") {
+    pickMiss();
     tick();
     if (isNear) g.img.src = grainSprite("seiryu", "happy");
     g.img.classList.remove("wig"); void g.img.offsetWidth; g.img.classList.add("wig");
     setTimeout(() => { g.img.classList.remove("wig"); if (!g.gone) g.img.src = grainSprite("seiryu", isNear ? "normal" : "far"); }, 520);
     return;
   }
-  g.gone = true; badLeft--;
+  g.gone = true; badLeft--; pickMisses = 0;
   /* 取った粒を指していた手本は消し、手が止まれば 残りの粒を選び直して出す（Codex指摘 PR #1076: キーボードで取ると pointerdown を通らず、手本が消えた粒の場所を指し続けた） */
   demoHide(); demoAt = demoHard = performance.now() + DEMO_LOOK; /* つまむの手本は わるい粒を指すので、探す間を残す（サイクル142でも2秒のまま） */
   pickedKinds[g.kind]++; updateGrainRecord(); /* みわけた粒の種類を静かなきろくへ残す（サイクル93・類7） */
@@ -2218,7 +2244,7 @@ function endToken(e) {
     senseHold = null;
     token.classList.remove("squeeze");
     if (cancelled) return;
-    if (++senseTaps >= NUDGE_LIMIT) { senseDone(); return; }
+    if (++senseTaps >= (lotIndex === 0 ? 2 : NUDGE_LIMIT)) { senseDone(); return; }
     if (senseTaps === 1) guideSense(); /* 空振り1回目: 手本の指をもう一度出す（サイクル81） */
     if (senseTaps === 2) { token.classList.add("squeeze"); setTimeout(() => token.classList.remove("squeeze"), 300 * motion); } /* 空振り2回目: 道具が半分やって見せる（サイクル84）。にぎる形を短く見せるだけ。状態は進めない */
     hint.textContent = "🤲 はなさず にぎる";
@@ -2231,7 +2257,7 @@ function endToken(e) {
   if (!cancelled && senseCarried(carry)) { senseFly = true; guideOff(); autoSense(carry.dx, carry.dy); return; }
   placeToken(0, 0);
   if (cancelled) return;
-  if (++senseTaps >= NUDGE_LIMIT) autoSense(); /* 顔に届かなかった運びもタップも数える */
+  if (++senseTaps >= (lotIndex === 0 ? 2 : NUDGE_LIMIT)) autoSense(); /* 顔に届かなかった運びもタップも数える */
   else if (senseTaps === 1) guideSense(); /* 空振り1回目: 手本の指をもう一度出す（サイクル81） */
   else if (senseTaps === 2) { /* 空振り2回目: 道具が半分やって見せる（サイクル84）。トークンが顔までの半分を運んで戻る。状態は進めない */
     const t = token.getBoundingClientRect(), f = $("face").getBoundingClientRect();
@@ -2423,7 +2449,9 @@ function stampNow() {
   nextBtn.classList.add("on");
   nextBtn.animate([{ opacity:0, transform:"scale(.92)" }, { opacity:1, transform:"scale(1.03)", offset:.7 }, { opacity:1, transform:"scale(1)" }], { duration:260 * motion, easing:"ease-out" }); /* つぎの袋ボタンも、他の現れるもの（終了カード・場面・チップ）と同じくふわりと現れる形にそろえる（サイクル125・差分テーマ差31）。旧版は display の切り替えだけで完成形が即座に出ていた（390×844実測で出現時のアニメーション0件） */
   focusIfKeys(nextBtn);
-  guideAt("move", $("bagBig"), 90, 0, 0.24); /* 袋を横へ流す手本の指は、袋の上のほう（帯のあたり）に出す（サイクル138・最初の1分／アニメーションの重なり）。袋の真ん中（高さ50%）に出していた旧版は、押したばかりの証印の輪の上を指が行き来していた（390×844・360×640の実測: 2.8秒のうち約半分の間、証印に最大30pxかぶる） */
+  demoHide(); /* はんこが 出た しゅんかんは 手本の 指を 出さない（サイクル162・最初の1分）。旧版は 押した その場で 流す 手本の 指を 袋の 上に 出し、
+     押した ばかりの 袋の 絵に 約2000px² かかって いた（390×844）。押した あと 1秒（STAMP_LOOK）は 待ちの 間と して 手本を 出さず、その あと 見回りが 0.8秒で 出す（demoShow の slide。場所は 下の 決まりの まま）。
+     もとの 決まり: 袋を横へ流す手本の指は、袋の上のほう（帯のあたり）に出す（サイクル138・最初の1分／アニメーションの重なり）。袋の真ん中（高さ50%）に出していた旧版は、押したばかりの証印の輪の上を指が行き来していた（390×844・360×640の実測: 2.8秒のうち約半分の間、証印に最大30pxかぶる） */
 }
 function dropHanko() {
   stopBob();
@@ -2495,7 +2523,7 @@ function endHanko() {
   if (inkHold) {
     inkHold = null; inkDrag = null;
     setHanko(0);
-    if (++hankoTaps >= NUDGE_LIMIT) { hankoTaps = 0; inkDone(); return; }
+    if (++hankoTaps >= (lotIndex === 0 ? 2 : NUDGE_LIMIT)) { hankoTaps = 0; inkDone(); return; }
     if (hankoTaps === 1) guideAt("move", $("pad"), 0, 24); /* 空振り1回目: 手本の指をもう一度出す（サイクル81）。朱肉は押し下げの動きで出す（サイクル87） */
     if (hankoTaps === 2) { /* 空振り2回目: 道具が半分やって見せる（設計の空振り統一・サイクル84）。朱肉側だけ半分デモがなかったため、手本の指の押し下げ（24px）の半分（12px）だけ はんこが朱肉へ押し下がって戻る形で足す（サイクル123・差29）。状態は進めない（朱肉は付かない）。揺れ（bob）は半分デモが終わってから戻す */
       inkDemoSound(); /* 半分デモにも手本の音を付ける（サイクル123・差29） */
@@ -2512,7 +2540,7 @@ function endHanko() {
   hankoDrag = null;
   if (stamped) return;
   if (fromInk) { setHanko(0); bobHanko(); return; }
-  if (++hankoTaps >= NUDGE_LIMIT) { dropHanko(); return; } /* 届かなかったおろしもタップも数える */
+  if (++hankoTaps >= (lotIndex === 0 ? 2 : NUDGE_LIMIT)) { dropHanko(); return; } /* 届かなかったおろしもタップも数える */
   if (hankoTaps === 1) guideAt("move", $("hanko"), 0, hankoMax); /* 空振り1回目: 手本の指をもう一度出す（サイクル81） */
   if (hankoTaps === 2) { /* 空振り2回目: 道具が半分やって見せる（サイクル84）。はんこが押せる所までの半分をおろして戻る。状態は進めない。揺れ（bob）は半分デモが終わってから戻す */
     stampDemoSound(); /* 半分デモにも手本の音を付ける（サイクル121・差27） */
@@ -2627,12 +2655,13 @@ function demoWait() { /* 指を離してから手本を出すまで: [早けれ�
   return [DEMO_BACK, DEMO_HOLD];
 }
 const demoDone = {};
+const STAMP_LOOK = 1000; /* はんこの あと この 間は 流す 手本を 出さない（サイクル162）。押した 証印・袋を まず 見せる。指を 離して 0.3秒で もどる 決まり（サイクル142）より 前に 来る */
 function demoPhase() { /* いま手本を出す所作。待ちの間（粒が落ちている・平均を出している・袋が流れている）は "" */
   if (step === 0) return P.done || P.auto ? "" : P.inserted ? "pull" : "stab";
   if (step === 1) return measured < LOT.moisture.length ? "crank" : "";
   if (step === 2) return !token.hidden ? "sense" : badLeft === 0 ? "" : !spread ? "sweep" : "pick";
   if (step === 3) return "grade";
-  if (step === 4) return leaving ? "" : stamped ? "slide" : inked ? "stamp" : "ink";
+  if (step === 4) return leaving ? "" : stamped ? (performance.now() - nextShownAt < STAMP_LOOK ? "" : "slide") : inked ? "stamp" : "ink";
   return "";
 }
 function demoVisible(k) {

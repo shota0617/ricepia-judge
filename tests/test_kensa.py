@@ -240,9 +240,9 @@ class FlowTests(unittest.TestCase):
     def test_failed_tries_also_count_toward_auto(self):
         # タップだけでなく「進まなかった試し」（違う向きの引き・届かない運び・短い引き上げ・短いおろし）も3回で自動
         self.assertIn("if (P.done || P.inserted) return; /* さす前に指を離したら", HTML)
-        self.assertIn("if (++senseTaps >= NUDGE_LIMIT) autoSense();", HTML)
+        self.assertIn("if (++senseTaps >= (lotIndex === 0 ? 2 : NUDGE_LIMIT)) autoSense();", HTML)
         self.assertIn("if (++taps >= 2) { taps = 0; pickGrade(btn); }", HTML)
-        self.assertIn("if (++hankoTaps >= NUDGE_LIMIT) { dropHanko(); return; }", HTML)
+        self.assertIn("if (++hankoTaps >= (lotIndex === 0 ? 2 : NUDGE_LIMIT)) { dropHanko(); return; }", HTML)
 
     def test_crank_turning_carries_over_between_strokes(self):
         # まっすぐなでるだけ（真ん中を外す）でも、角度が持ち越されていずれはかれる。袋ごと・1回はかるごとに戻す
@@ -254,7 +254,7 @@ class FlowTests(unittest.TestCase):
     def test_first_bag_crank_is_short(self):
         self.assertIn("crankTurned >= (lotIndex === 0 ? 80 : 160)", HTML)
         # タップだけで進めない: 代替は3回のまま
-        self.assertIn("if (++bagTaps >= NUDGE_LIMIT) { autoProbe(); return; }", HTML)
+        self.assertIn("if (++bagTaps >= (lotIndex === 0 ? 2 : NUDGE_LIMIT)) { autoProbe(); return; }", HTML)
 
     def test_crank_keeps_reading_until_next_measurement(self):
         node = shutil.which("node")
@@ -1756,7 +1756,7 @@ assert.equal(sims, 1);
         # 3回×3＝9〜10回・約12秒かかった（390×844実測。ほかの所作は3回・約4秒）。
         # 同じ袋の残りはタップ1回ごとにはかれる。袋が替われば数え直す。
         crank = HTML[HTML.index("function endCrank(e)"):HTML.index('$("sceneMeter").addEventListener("pointerup", endCrank);')]
-        self.assertIn("if (++meterTaps >= NUDGE_LIMIT) { meterTaps = NUDGE_LIMIT - 1; takeReading(); return; }", crank)
+        self.assertIn("if (++meterTaps >= (lotIndex === 0 ? 2 : NUDGE_LIMIT)) { meterTaps = (lotIndex === 0 ? 2 : NUDGE_LIMIT) - 1; takeReading(); return; }", crank)
         self.assertNotIn("{ meterTaps = 0; takeReading(); return; }", HTML)
         self.assertIn("meterTaps = 0; crankTurned = 0;", HTML[HTML.index("function startLot()"):HTML.index("/* 皿の粒:")])
 
@@ -1765,7 +1765,9 @@ assert.equal(sims, 1);
         # 押したばかりの証印の輪の上を行き来していた（390×844・360×640実測: 約半分の間、最大30pxかぶる）。
         # 証印は袋の高さ53〜85%にあるので、指は上のほう（24%）に出す。
         stamp = HTML[HTML.index("function stampNow()"):HTML.index("function dropHanko()")]
-        self.assertIn('guideAt("move", $("bagBig"), 90, 0, 0.24);', stamp)
+        # サイクル162 で 変えた: はんこの しゅんかんは 指を 出さない（demoHide）。流す 手本は 見回り（demoShow の slide）が 同じ 場所（上のほう 24%）に 出す
+        self.assertIn("demoHide();", stamp)
+        self.assertIn('else if (k === "slide") guideAt("move", $("bagBig"), 90, 0, 0.24);', HTML)
         self.assertNotIn('guideAt("move", $("bagBig"), 90, 0);', HTML)
         node = shutil.which("node")
         if not node:
@@ -2093,7 +2095,7 @@ step = 4; gradeNudge(); assert.equal(sounds, 1);   // きめる の外では何�
         script = """
 const assert = require('node:assert/strict');
 const NUDGE_LIMIT = 3, motion = 1;
-let step = 0, lotIndex = 0, bagTaps = 0, autos = 0, sounds = 0, cancels = 0; const anims = [];
+let step = 0, lotIndex = 1, bagTaps = 0, autos = 0, sounds = 0, cancels = 0; const anims = [];
 const P = {x:100, y:50, rest:200, L:100, inserted:true, done:false};
 const poke = {style:{display:'none', left:'', setProperty(k, v) { this[k] = v; }}, dataset:{}};
 const probe = {animate(frames, opt) { anims.push([frames[1].transform, opt.duration]); return {cancel() { cancels++; }}; }};
@@ -2192,6 +2194,7 @@ P.drag = {id:1, cx:50, cy:50, far:3, x0:100, moved:false};   endBagDrag({pointer
         script = """
 const assert = require('node:assert/strict');
 let T = 0; const performance = {now: () => T};
+const nextShownAt = -1e9;   // サイクル162: はんこを 押したのは ずっと 前（押した あと 1秒は 流す 手本を 出さない）
 let simOn = false; const setTimeout = () => {}; // 動いているものは無い場面（サイクル142の確かめは別のテスト）
 let step = 1, measured = 0, badLeft = 2, spread = false, leaving = false, stamped = false, inked = false, lotIndex = 4, everZoomed = false, pickedBare = false, isNear = false, hankoMax = 80;   // pickedBare: サイクル153（寄らずに つまめた 人）
 const finePointer = false, LOT = {moisture:[1, 2, 3]}, P = {done:false, auto:false, inserted:false}, token = {hidden:true}, grains = [], zoomBtn = {}, Z = {s:1, tx:0, ty:0};
@@ -2434,6 +2437,7 @@ assert.deepEqual(restRect(hanko), { left:40, top:300, width:60, height:80 }); //
         script = """
 const assert = require('node:assert/strict');
 let T = 0; const performance = {now: () => T};
+const nextShownAt = -1e9;   // サイクル162: はんこを 押したのは ずっと 前（押した あと 1秒は 流す 手本を 出さない）
 let simOn = false; const timers = []; const setTimeout = (f, ms) => { timers.push([f, ms]); };
 let step = 1, measured = 0, badLeft = 2, spread = false, leaving = false, stamped = false, inked = false, lotIndex = 0, everZoomed = false, pickedBare = false, isNear = false, hankoMax = 80;   // pickedBare: サイクル153（寄らずに つまめた 人）
 const finePointer = false, LOT = {moisture:[1, 2, 3]}, P = {done:false, auto:false, inserted:false}, token = {hidden:true}, grains = [], zoomBtn = {}, Z = {s:1, tx:0, ty:0};
@@ -2586,6 +2590,7 @@ assert.equal(w.hanko.style.top, '');
         script = """
 const assert = require('node:assert/strict');
 const NUDGE_LIMIT = 3, NIGIRU_MS = 350, motion = 1;
+let lotIndex = 1;   // サイクル161: 2ふくろめ からの 3回を 見る（1ふくろめは 2回。test_cycle161_* で 見る）
 let pageScrolled = false; const pageFinger = (dx, dy) => pageScrolled && Math.abs(dy) >= Math.abs(dx); const slid = new Set(), pageSlid = (e) => !!e && slid.has(e.pointerId);
 let senseKind = 'niou', senseDrag = null, senseHold = null, senseTaps = 0;
 let off = { x:0, y:0 }, anims = [], guides = 0, guideOffs = 0, done = 0;
@@ -2844,6 +2849,7 @@ on.pointerdown({ pointerId:1, clientX:100, clientY:100 }); on.pointermove({ poin
         return """
 const assert = require('node:assert/strict');
 const NUDGE_LIMIT = 3, INK_MS = 250, motion = 1;
+let lotIndex = 1;   // サイクル161: 2ふくろめ からの 3回を 見る（1ふくろめは 2回。test_cycle161_* で 見る）
 let step = 4, leaving = false, stamped = false, inked = false, hankoTaps = 0, swipeTaps = 0, hankoDrag = null, inkDrag = null, inkHold = null, bagSwipe = null, hankoBob = null, hankoMax = 96, hankoLand = 50;
 const ys = []; let stamps = 0, nudges = 0, drops = 0, inks = 0;
 const on = {}, cap = {}; const bag = { style:{}, addEventListener(t, f, c) { (c ? cap : on)[t] = f; } };
@@ -2892,6 +2898,7 @@ down(100); move(120); on.pointercancel({ pointerId:1 }); assert.equal(stamps, 0)
         self._node150("""
 const assert = require('node:assert/strict');
 const NUDGE_LIMIT = 3, motion = 1;
+let lotIndex = 1;   // サイクル161: 2ふくろめ からの 3回を 見る（1ふくろめは 2回。test_cycle161_* で 見る）
 let step = 0, bagTaps = 0, probeAttract = null, autos = 0, nudges = 0; let moves = [];
 const P = { x:205, rest:205, inAt:166, inX:74, y:50, inserted:false, done:false, drag:null, auto:false };
 const on = {}; const scene = { addEventListener(t, f) { on[t] = f; } };
@@ -3098,6 +3105,7 @@ let pageScrolled = false; const pageFinger = (dx, dy) => pageScrolled && Math.ab
 const brush = () => { calls.push('brush'); return hitPile; };
 const toLocal = (x, y) => ({ x, y }), grainAt = () => null;
 const stopSmoothZoom = () => {}, capture = () => {}, guideOff = () => {}, applyZoom = () => { calls.push('pan'); }, twistPlate = () => {}, resetZoom = () => {}, zoomTo = () => {};
+const pickMiss = () => {};   // サイクル160: つまむの 空振りを 数える（ここでは 見ない）
 const tapGrain = () => {}, flickGrain = () => { calls.push('flick'); }, knockPlate = () => { calls.push('knock'); }, nudgeSpread = () => { calls.push('spread'); }, knockSound = () => { calls.push('sound'); };
 const grains = [{ gone:false, img:{ offsetWidth:0, classList:{ remove() {}, add() { calls.push('wig'); } } } }, { gone:true, img:{ classList:{ remove() {}, add() { calls.push('wig'); } } } }];
 """ + fn + """
@@ -3150,6 +3158,7 @@ sweep(); assert.ok(calls.includes('brush'));
         self._node150("""
 const assert = require('node:assert/strict');
 const NUDGE_LIMIT = 3, motion = 1;
+let lotIndex = 1;   // サイクル161: 2ふくろめ からの 3回を 見る（1ふくろめは 2回。test_cycle161_* で 見る）
 let step = 0, bagTaps = 0, probeAttract = null, autos = 0, nudges = 0;
 const P = { x:167, rest:205, inAt:166, inX:74, y:50, inserted:false, done:false, drag:null, auto:false };
 const doc = {}, win = {}, on = {};
@@ -4138,6 +4147,179 @@ const TYPES = { '.html': 'text/html; charset=utf-8', '.webp': 'image/webp', '.pn
             self.assertTrue(c["on"], tag)
             self.assertEqual(c["hint"], 0, tag + " で カードが 案内の 文に %dpx² かかる" % c["hint"])
             self.assertEqual(c["bag"], 0, tag + " で カードが 袋に かかる")
+            self.assertTrue(c["inView"], tag)
+
+
+    # ---- サイクル160（つまむ で たたき続ける 人にも 手本）----
+
+    def _pick160(self, body):
+        tap = HTML[HTML.index("function tapGrain(g) {"):HTML.index("function resetZoomForSmiles()")]
+        m = re.search(r"\nlet pickMisses = 0;\nfunction pickMiss\(\) \{[\s\S]*?\n\}", HTML)
+        self._node150("""
+const assert = require('node:assert/strict');
+let now = 0, q = [], demoAt = 5000, demoHard = 5000, ticks = 0, arms = [];
+const setTimeout = (f, ms) => { q.push([now + ms, f]); return q.length; }, clearTimeout = () => {};
+const run = () => { q.sort((a, b) => a[0] - b[0]); const due = q.filter(x => x[0] <= now); q = q.filter(x => x[0] > now); due.forEach(x => x[1]()); };
+const performance = { now: () => now };
+let step = 2, lotIndex = 0, badLeft = 2, spread = true, everZoomed = false, pickedBare = false, isNear = false, hintTimer = null, sortDrag = null, pinch = null, faces = true;
+const firstBagFace = g => faces && g.kind !== 'seiryu';
+const finePointer = false, motion = 1, GW = 30, GH = 18, DEMO_LOOK = 2000, Z = { s:1, tx:0, ty:0 }, READ_MS = { cleanSmile:300, clean:1050 };
+const hint = { textContent:'' }, zoomBtn = {}, pts = new Map(), pickedKinds = { higai:0, shini:0 }, token = { hidden:true };
+const demoTick = () => { ticks++; }, armHint = ms => { arms.push([ms, ticks]); }, demoHide = () => {};
+const rect = { left:0, top:0, right:300, bottom:300, width:20, height:20 };
+const elm = () => ({ style:{}, getBoundingClientRect: () => rect, animate: () => ({}), appendChild() {}, remove() {} });
+const $ = id => elm(); const document = { createElement: elm, body:{ appendChild() {} } };
+const tick = () => {}, grainSprite = () => '', updateGrainRecord = () => {}, grainDrop = () => {}, setFace = () => {}, toSense = () => {}, updateSortHint = () => {}, guideOff = () => {};
+const mk = kind => { const c = new Set(); return { kind, gone:false, r:0, el:{ getBoundingClientRect: () => rect, hidden:false, disabled:false }, img:{ offsetWidth:0, src:'', classList:{ add: x => c.add(x), remove: x => c.delete(x), contains: x => c.has(x) } } }; };
+const good = mk('seiryu'), bad1 = mk('higai'), bad2 = mk('shini'), grains = [good, bad1, bad2];
+""" + (m.group(0) if m else "") + "\n" + tap + body)
+
+    def test_cycle160_three_misses_bring_the_pick_demo_at_once(self):
+        # つまむ で 0.8秒おきに たたき続ける 人には、手本（指を 離して 0.8〜2秒）が 一度も 出なかった（390×844実測: 良い粒を 12回 → 手本 0回）。
+        # 空振りが 3回 つづいたら 待たずに 手本を 出す（見分けが ついて いない 袋では 先に ふくらませる）。わるい粒を つまめば 数え直し
+        self._pick160("""
+for (let i = 1; i <= 2; i++) { now += 800; tapGrain(good); run(); }
+assert.equal(ticks, 0); assert.equal(demoAt, 5000);          // 2回までは 今までどおり
+now += 800; tapGrain(good); run();
+assert.equal(demoAt, 0, '空振り 3回で 手本の 待ちが 消えない'); assert.equal(ticks, 1, '空振り 3回で 手本の 見回りが すぐ 来ない');
+assert.deepEqual(arms.filter(a => a[0] === 0), []);           // 1袋目は 顔が 出て いるので ふくらませない
+// わるい粒を つまむと 数え直し
+demoAt = demoHard = 5000; ticks = 0; now += 800; tapGrain(good); now += 800; tapGrain(good); tapGrain(bad1); now += 800; tapGrain(good); run();
+assert.equal(ticks, 0); assert.notEqual(demoAt, 0);       // つまんだ 後の 2秒（自分の 目で さがす 間）は 今までどおり
+// 2袋目（顔なし・寄って いない）: 先に ふくらませて から 手本
+faces = false; lotIndex = 1; bad1.gone = false; badLeft = 2; demoAt = demoHard = 5000; ticks = 0; arms = [];
+for (let i = 0; i < 3; i++) { now += 800; tapGrain(good); } run();
+assert.deepEqual(arms, [[0, 0]]); assert.equal(ticks, 1);   // ふくらみ（0秒）が 見回りより 先
+""")
+
+    def test_cycle160_misses_never_pick_by_themselves(self):
+        # 「つまむ は ひとりでに 進まない」の 守り: 空振りを 30回 しても つまむ の 段の まま、わるい粒は 1つも 取られない
+        self._pick160("""
+for (let i = 0; i < 30; i++) { now += 800; tapGrain(good); run(); }
+assert.equal(step, 2); assert.equal(badLeft, 2); assert.equal(bad1.gone, false); assert.equal(bad2.gone, false);
+assert.equal(good.gone, false);
+""")
+
+
+    # ---- サイクル161（運営者 2026-11-14: 1ふくろめは 空振り 2回で 進む）----
+
+    def test_cycle161_first_bag_needs_two_tries_later_bags_three(self):
+        # 読まずに たたく 人は、どの 身ぶりも 空振り 3回で やっと 進み、最初の はんこまで 約55秒 かかって いた。
+        # 1ふくろめ だけ 2回（1回めは 手本 だけ・最初の 1回めの タップでは 進まない）、2ふくろめ からは 今の 3回
+        crank = HTML[HTML.index("function endCrank(e) {"):HTML.index('$("sceneMeter").addEventListener("pointerup", endCrank);')]
+        hanko = HTML[HTML.index('$("bagBig").addEventListener("pointerdown",'):HTML.index('$("bagBig").addEventListener("click",')]
+        for lot, need in ((0, 2), (1, 3), (5, 3)):
+            self._node150("""
+const assert = require('node:assert/strict');
+const NUDGE_LIMIT = 3, motion = 1, meterPts = new Map(); let lotIndex = """ + str(lot) + """, crankDrag = null, measured = 0, meterTaps = 0, crankDemo = null, reads = 0, guides = 0;
+const LOT = { moisture:[14.1, 14.2, 14.3] }; const els = { lcd:{}, crankArm:{ animate() {} } }; const $ = id => els[id];
+const guideAt = () => { guides++; }, crankSound = () => {}, takeReading = () => { reads++; measured++; };
+let crankAngle = 0;
+""" + crank + """
+const tap = () => { crankDrag = { id:1, moved:false }; endCrank({ pointerId:1 }); };
+tap(); assert.equal(reads, 0, '1回めの タップで はかれた'); assert.equal(guides, 1);   // 1回めは 手本 だけ
+for (let i = 2; i < """ + str(need) + """; i++) { tap(); assert.equal(reads, 0); }
+tap(); assert.equal(reads, 1, '""" + str(lot + 1) + """ふくろめ: """ + str(need) + """回めで はかれない');
+""")
+            self._node150(self._hanko_world().replace("const NUDGE_LIMIT = 3, INK_MS = 250, motion = 1;", "const NUDGE_LIMIT = 3, INK_MS = 250, motion = 1; const LOTI = " + str(lot) + ";").replace("let lotIndex = 1;", "let lotIndex = LOTI;") + hanko + """
+const tap = () => { on.pointerdown({ pointerId:1, clientX:100, clientY:100 }); on.pointerup({ pointerId:1, clientX:100, clientY:100 }); };
+tap(); assert.equal(inks, 0, '1回めの タップで 朱肉が 付いた');
+for (let i = 2; i < """ + str(need) + """; i++) { tap(); assert.equal(inks, 0); }
+tap(); assert.equal(inks, 1, '朱肉: """ + str(need) + """回めで 付かない');
+hankoTaps = 0; for (let i = 1; i < """ + str(need) + """; i++) { tap(); assert.equal(drops, 0); }
+tap(); assert.equal(drops, 1, 'はんこ: """ + str(need) + """回めで おりない');
+""")
+        # 4つの 身ぶり（さす・ひきぬく・回す・🤲・朱肉・はんこ）は どれも 同じ 決まり。つまむ・きめるは ひとりでに 進まない（数えない）・流すは 3回の まま
+        self.assertEqual(HTML.count("Taps >= (lotIndex === 0 ? 2 : NUDGE_LIMIT)"), 7)
+        self.assertIn("if (++swipeTaps >= NUDGE_LIMIT) {", HTML)
+
+
+    # ---- サイクル162（はんこの しゅんかんに 手本の 指を かけない）----
+
+    def test_cycle162_no_guide_finger_on_the_bag_at_the_stamp(self):
+        # はんこを 押した その場で、流す 手本の 指を 袋の 上に 出して いて、押した ばかりの 袋の 絵に 約2000px² かかった（390×844・点数表）。
+        # はんこの しゅんかんは 指を ひっこめ、流す 手本は 見回りが 0.8秒 あとに 出す
+        fn = HTML[HTML.index("function stampNow() {"):HTML.index("function dropHanko()")]
+        self._node150("""
+const assert = require('node:assert/strict');
+let stamped = false, step = 4, nextAuto = false, swipeTaps = 0, hankoDrag = null, nextShownAt = 0, guides = [], hides = 0;
+const cookedReturns = [], GRADES = ['1等', '2等', '3等', '規格外'], LOT = {}, lotGrade = () => 0, hankoMax = 80, motion = 1;
+const updateCooked = () => {}, armIdle = () => {}, stopBob = () => {}, setHanko = () => {}, thump = () => {}, setFace = () => {}, focusIfKeys = () => {};
+const mk = () => ({ hidden:true, style:{}, classList:{ add() {}, remove() {} }, animate() { return {}; } });
+const els = {}; const $ = id => els[id] || (els[id] = mk()); const hint = mk(), nextBtn = mk();
+const setTimeout = () => {}, performance = { now: () => 0 };
+const guideAt = (...a) => { guides.push(a[0]); }, demoHide = () => { hides++; };
+""" + fn + """
+stampNow();
+assert.equal(stamped, true);
+assert.deepEqual(guides, [], 'はんこの しゅんかんに 手本の 指を 出した');
+assert.ok(hides >= 1);
+""")
+        # 指を 離した あと（0.3秒で 手本が もどる 決まり）でも、押して 1秒は 流す 手本を 出さない
+        ph = HTML[HTML.index("function demoPhase() {"):HTML.index("function demoVisible(k)")]
+        m = re.search(r"const STAMP_LOOK = \d+;", HTML)
+        self._node150("""
+const assert = require('node:assert/strict');
+let now = 0; const performance = { now: () => now };
+let step = 4, leaving = false, stamped = true, inked = true, nextShownAt = 0;
+""" + (m.group(0) if m else "") + "\n" + ph + """
+now = 300; assert.equal(demoPhase(), '', 'はんこの 0.3秒 あとに 流す 手本の 所作に なった');
+now = 900; assert.equal(demoPhase(), '');
+now = 1100; assert.equal(demoPhase(), 'slide');                 // 1秒 たてば 今までどおり
+stamped = false; assert.equal(demoPhase(), 'stamp');
+""")
+
+
+    # ---- サイクル163（さいごに はんこ、が 最初から 絵で 分かる）----
+
+    def test_cycle163_last_step_dot_is_a_stamp_ring(self):
+        # 段の 点は 5つ とも 同じ 形で、さいごに はんこを 押す 作業だと 絵で 分かるのは はんこまで 行った 約29秒 後 だった。
+        # 5つめの 点を はんこの 赤い 丸に する（字なし・頭の 高さは 変えない）。本物の ブラウザで、5つの 画面と 動きを へらす 設定で はかる
+        node = shutil.which("node")
+        if not node:
+            self.skipTest("node がないので実行の確認は飛ばす")
+        js = r"""
+const fs = require('fs'), path = require('path');
+let chromium; try { ({ chromium } = require('playwright')); } catch (e) { console.log(JSON.stringify({ skip: 'playwright なし' })); process.exit(0); }
+const [root] = process.argv.slice(1, 2);
+const TYPES = { '.html': 'text/html; charset=utf-8', '.webp': 'image/webp', '.png': 'image/png' };
+(async () => {
+  let b; try { b = await chromium.launch(); } catch (e) { console.log(JSON.stringify({ skip: 'chromium が 起動しない' })); return; }
+  const out = [];
+  for (const [w, h] of [[320, 568], [390, 844], [568, 320], [844, 390], [820, 1180]]) for (const rm of ['no-preference', 'reduce']) {
+    const ctx = await b.newContext({ viewport: { width: w, height: h }, isMobile: true, hasTouch: true, reducedMotion: rm }); const p = await ctx.newPage();
+    await p.route('http://kensa.test/**', r => { const f = path.join(root, decodeURIComponent(new URL(r.request().url()).pathname));
+      if (!f.startsWith(root) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) return r.fulfill({ status: 404, body: '' });
+      r.fulfill({ status: 200, contentType: TYPES[path.extname(f)] || 'application/octet-stream', body: fs.readFileSync(f) }); });
+    await p.goto('http://kensa.test/kensa.html'); await p.waitForTimeout(500);
+    out.push(await p.evaluate(([w, h, rm]) => {
+      const pips = [...document.querySelectorAll('#pips i')], last = pips[4], cs = getComputedStyle(last, '::after');
+      const head0 = document.getElementById('head').offsetHeight; setStep(4, ''); const head4 = document.getElementById('head').offsetHeight;
+      const glyph = id => { const r = document.createRange(); r.selectNodeContents(document.getElementById(id)); const q = r.getBoundingClientRect(); return { l: q.left, r: q.right, t: q.top + 2, b: q.bottom - 2 }; };
+      const pr = last.getBoundingClientRect(), ring = { l: pr.left + parseFloat(cs.left), t: pr.top + parseFloat(cs.top), r: pr.left + parseFloat(cs.left) + parseFloat(cs.width), b: pr.top + parseFloat(cs.top) + parseFloat(cs.height) };
+      const ov = (a, c) => Math.max(0, Math.min(a.r, c.r) - Math.max(a.l, c.l)) * Math.max(0, Math.min(a.b, c.b) - Math.max(a.t, c.t));
+      return { w, h, rm, content: cs.content, color: cs.borderTopColor, radius: cs.borderTopLeftRadius, others: getComputedStyle(pips[0], '::after').content,
+        boxW: last.offsetWidth, boxH: last.offsetHeight, head0, head4, glyph: Math.round(ov(ring, glyph('goal')) + ov(ring, glyph('stepName'))), inView: ring.t >= 0 && ring.r <= innerWidth };
+    }, [w, h, rm]));
+    await ctx.close();
+  }
+  await b.close(); console.log(JSON.stringify(out));
+})();
+"""
+        r = subprocess.run([node, "-e", js, ROOT], capture_output=True, text=True, timeout=300)
+        self.assertEqual(r.returncode, 0, r.stderr[-1500:])
+        res = json.loads(r.stdout.strip().splitlines()[-1])
+        if isinstance(res, dict) and res.get("skip"):
+            self.skipTest(res["skip"])
+        for c in res:
+            tag = "%dx%d %s" % (c["w"], c["h"], c["rm"])
+            self.assertNotIn(c["content"], ("none", "normal"), tag + " で 5つめの 点が はんこの 丸に なって いない")
+            self.assertEqual(c["color"], "rgb(179, 38, 30)", tag)          # はんこの 朱（--stamp）
+            self.assertEqual(c["radius"], "50%", tag)
+            self.assertIn(c["others"], ("none", "normal"), tag)            # ほかの 4つは 今までの 棒
+            self.assertEqual((c["boxW"], c["boxH"]), (18, 5), tag)         # 点の 箱は 同じ 大きさ
+            self.assertEqual(c["head0"], c["head4"], tag)                  # 頭の 高さは 段で 変わらない
+            self.assertEqual(c["glyph"], 0, tag + " で はんこの 丸が 字に かかる")
             self.assertTrue(c["inView"], tag)
 
 

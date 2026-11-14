@@ -2404,6 +2404,8 @@ function stampNow() {
   nextAuto = false; /* 自分で 下ろして 押した。ひとりでに 押した 時は dropHanko が すぐ後に true へ（「つぎの ふくろ」の 守り・サイクル151） */
   swipeTaps = 0; /* 流す所作の空振りは、押した時から数え直す（サイクル140・差42） */
   cookedReturns.push(GRADES[lotGrade(LOT)]); updateCooked(); /* 押した袋を覚える。次の袋で炊き上がって返ってくる（サイクル94・類8） */
+  if (cookedReturns.length === 1) armIdle(); /* 1ふくろめの はんこ：ここから 45秒の 時計を 数えなおす（サイクル159・レビューの 指摘）。はんこの 前に 時計が 切れて いると（袋を 押した まま 46秒 → 押印）、
+     カードを 出さずに 時計が 止まった まま に なり、押した あと 何秒 待っても 出なかった。画面が かくれて いれば のこり時間 と して 覚える（idleIn） */
   hankoDrag = null;
   stopBob();
   setHanko(hankoMax);

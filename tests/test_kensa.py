@@ -4056,6 +4056,46 @@ advance(200); assert.equal(cls.has('on'), true);          // 押した あとは
 """)
         self.assertIn("const IDLE_MS = 45000", HTML)
 
+    def test_cycle159_first_stamp_restarts_the_idle_clock(self):
+        # レビューの 指摘(P1): 1ふくろめで 袋を 押した まま 46秒 → 時計が 切れる（カードは 出さない）→ その 指で 押印。
+        # 押印は 新しい pointerdown を 通らない ので 時計が 止まった まま で、押した あと 60秒 待っても カードが 出なかった。
+        # 最初の はんこ（stampNow）で 時計を 数えなおす。画面が かくれて いる 間は のこり時間 と して 覚え、もどって から 数える
+        idle = HTML[HTML.index("const IDLE_MS = 45000"):HTML.index('returnLink.addEventListener("click",')]
+        stamp = HTML[HTML.index("function stampNow() {"):HTML.index("  hankoDrag = null;", HTML.index("function stampNow() {"))]
+        self.assertRegex(stamp, r"cookedReturns\.push\(GRADES\[lotGrade\(LOT\)\]\); updateCooked\(\);[^\n]*\n  if \(cookedReturns\.length === 1\) armIdle\(\);")
+        self._node150("""
+const assert = require('node:assert/strict');
+let now = 0, timers = [], seq = 0;
+globalThis.performance = { now: () => now }; Date.now = () => now;
+const setTimeout = (f, ms) => { const id = ++seq; timers.push({ id, at:now + ms, f }); return id; }, clearTimeout = id => { timers = timers.filter(t => t.id !== id); };
+const advance = ms => { const end = now + ms; for (;;) { timers.sort((a, b) => a.at - b.at); const t = timers[0]; if (!t || t.at > end) break; timers.shift(); now = t.at; t.f(); } now = end; };
+const cls = new Set(); const idleCard = { inert:true, style:{}, classList:{ add: c => cls.add(c), remove: c => cls.delete(c), contains: c => cls.has(c) } };
+const likeBtn = { addEventListener() {} }, returnLink = { addEventListener() {} };
+const $ = id => ({ idleCard, likeBtn, returnLink })[id];
+const listeners = {}; const document = { hidden:false, body:{}, documentElement:{ classList:{ contains: () => false } }, addEventListener(t, f) { (listeners[t] = listeners[t] || []).push(f); } };
+const sessionStorage = { getItem() { return null; }, setItem() {}, removeItem() {} };
+let keyUser = false; const idleSound = () => {}, idleOutSound = () => {}, likeSound = () => {}, likeOutSound = () => {}, setFace = () => {};
+const cookedReturns = [], hint = null, nextBtn = null, window = { addEventListener() {} };
+const touch = () => (listeners.pointerdown || []).forEach(f => f({ target:{ closest: () => null } }));
+const GRADES = ['1等'], LOT = 0, lotGrade = () => 0, updateCooked = () => {};
+let stamped = false, step = 4, nextAuto = true, swipeTaps = 0;
+""" + idle + stamp + """
+}
+touch(); advance(46000);                                  // 袋を 押した まま 46秒：時計は 切れる（カードは 出さない）
+assert.equal(cls.has('on'), false);
+stampNow();                                               // その 指で 押印（新しい pointerdown は 無い）
+assert.equal(cookedReturns.length, 1);
+advance(44900); assert.equal(cls.has('on'), false);
+advance(200); assert.equal(cls.has('on'), true, '最初の はんこの あと 45秒 たっても カードが 出ない');
+// かくれて いる 間に 押した（ひとりでに 押す 道）: もどって から 45秒
+cls.clear(); cookedReturns.length = 0; stamped = false; timers = []; idleCard.inert = true;
+touch(); advance(46000); document.hidden = true; (listeners.visibilitychange || []).forEach(f => f());
+stampNow(); advance(60000); assert.equal(cls.has('on'), false);
+document.hidden = false; (listeners.visibilitychange || []).forEach(f => f());
+advance(44900); assert.equal(cls.has('on'), false);
+advance(200); assert.equal(cls.has('on'), true);
+""")
+
     def test_cycle159_idle_card_leaves_the_hint_readable(self):
         # 旧版は カードを 枠の 下はしに 置き、下の 案内の 文を 100% かくした（390×844: 6310px²・844×390: 3460px²）。
         # カードは 案内の 文の すぐ 上に 置く。袋・はんこ・点線の 丸・手本の 指に かかる 画面では 今までどおり。本物の ブラウザで はかる

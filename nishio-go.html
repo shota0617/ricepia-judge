@@ -81,6 +81,11 @@
    明るさを ゆっくり かえる（1.6秒で うすく・1.6秒で もとへ。場所・大きさは 動かさない。米つぶは 見えた まま）。ふつうの 設定の 見た目・動きは かえない */
 @media (prefers-reduced-motion:reduce){#bootCover i{position:relative}#bootCover i::after{content:"";position:absolute;inset:-3px;border-radius:50%;background:#f6f4ec;opacity:0;animation:bootGlow 1.6s ease-in-out infinite alternate}}
 @keyframes bootGlow{from{opacity:0}to{opacity:.55}}
+/* サイクル218：題字の 米つぶの 下に、届いた スクリプトの 数 だけ のびる 細い 線（下の 題字の スクリプト）。速い 回線では 出ない（0.7秒 たっても 題字が ある とき だけ）。押す 物では ない */
+#bootCover b{display:block;width:120px;height:4px;margin-top:14px;border-radius:2px;background:#e4dccb;overflow:hidden;visibility:hidden}
+#bootCover.slow b{visibility:visible}
+#bootCover b s{display:block;height:100%;background:#6b5a3a;transform:scaleX(0);transform-origin:0 50%;transition:transform .25s ease-out}
+@media (prefers-reduced-motion:reduce){#bootCover b s{transition:none}}
 </style>
 </head>
 <body>
@@ -91,6 +96,20 @@
   c.setAttribute('aria-hidden', 'true');
   c.innerHTML = '<img src="nishio-go/logo.svg" alt="" width="272" height="40"/><i></i>';
   document.body.appendChild(c);
+  // サイクル218（おそい 回線）：最初の 絵まで 約 6秒、題字と 行き来する 米つぶ だけ で、読みこみが 進んで いるか 分からなかった。
+  // 下の 同期の スクリプト（BOOT_N 本）が 1本 届く たびに 線を のばす（届いた 数 だけ。にせの 進みは 出さない。届かなければ その まま 止まって 見える）。
+  // 0.7秒 たっても 題字が 出て いる とき だけ 見せる（速い 回線では 出ない）。読めない・来ない ときの やりなおしの 文（下の 12秒）は かえない
+  var BOOT_N = 32, got = {}, n = 0, bb = document.createElement('b'), bar = document.createElement('s');
+  bb.appendChild(bar); c.appendChild(bb);
+  window.__bootBar = { n: 0, total: BOOT_N, shownAt: null };
+  try {
+    new PerformanceObserver(function (l) {
+      l.getEntries().forEach(function (e) { if (e.initiatorType === 'script' && !got[e.name]) { got[e.name] = 1; n++; } });
+      window.__bootBar.n = n;
+      bar.style.transform = 'scaleX(' + Math.min(1, n / BOOT_N) + ')';
+    }).observe({ type: 'resource', buffered: true });
+  } catch (e) { /* 数えられない ブラウザ：線は 出さない */ bar = null; }
+  setTimeout(function () { if (bar && !c.classList.contains('off')) { c.classList.add('slow'); window.__bootBar.shownAt = performance.now(); } }, 700);
   document.addEventListener('DOMContentLoaded', function () {
     setTimeout(function () { c.classList.add('off'); setTimeout(function () { c.remove(); }, 350); }, 50);
   });

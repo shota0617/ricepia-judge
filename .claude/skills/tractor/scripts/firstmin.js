@@ -1372,6 +1372,22 @@ const srv = http.createServer((r, s) => { const u = decodeURIComponent(r.url.spl
         const f1 = await over();
         ok('帯は 大きな 数字・2 だんの 吹き出しと 重ならない・前への 手本は 帯より 上の だんで かくれない（スマホ縦。手本の 指と 帯は 同じ 前の すじ）', f1.vis && f1.n > 20 && f1.ids.includes('bigPct') && f1.ids.includes('say') && f1.ids.includes('hintFinger') && !f1.hits.bigPct && !f1.hits.say && f1.fingerTop && f1.zHint > 0, f1);
         await ctx.close(); }
+      // 19-8) サイクル283b（Codex 指摘 P2）：白線に ななめに 向いても、帯の 見える 所は 白線の 内側だけ（はばの 角も）。四角・x 0・z −8・45°・まだ 耕して いない
+      //        帯の 長方形を こまかく 見て、描く 濃さ（白線の 形の 絵＝T4.inMask を GPU と 同じ 線形で 読む。絵が ない 形は 1）が 0 で ない 所の 白線からの 距離の 最大。直す前：約 0.72m 外
+      // 19-9) サイクル283b（Codex 指摘 P3）：帯が 見えて いる 間に Enter で 終わると、終わりの 画面の うしろに 帯を のこさない（2 秒 こまを 進めても 見えない）
+      { const { ctx, p } = await open14(''); await fake14(p); const adv = s => p.evaluate(x => window.__adv(x), s);
+        await adv(1); await p.evaluate(() => Object.assign(game.S, { x: 0, z: -8, yaw: Math.PI / 4, v: 0, steer: 0 })); await adv(1.5);
+        const d1 = await p.evaluate(() => { const T4 = game.T4, m = T4.amesh; if (!m || !m.visible) return { vis: false };
+          const k = (x, z) => { const M = T4.inMask; if (!M) return 1; const fi = (x + HX) / CELL - 0.5, fj = (z + HZ) / CELL - 0.5, i0 = Math.floor(fi), j0 = Math.floor(fj), ti = fi - i0, tj = fj - j0;
+            const at = (i, j) => M[Math.max(0, Math.min(NX - 1, i)) * NZ + Math.max(0, Math.min(NZ - 1, j))] / 255; return (at(i0, j0) * (1 - tj) + at(i0, j0 + 1) * tj) * (1 - ti) + (at(i0 + 1, j0) * (1 - tj) + at(i0 + 1, j0 + 1) * tj) * ti; };
+          const ry = m.rotation.y, bx = Math.sin(ry), bz = Math.cos(ry), L = m.scale.z, W = m.scale.x; let worst = -9, rawWorst = -9;
+          for (let a = -1; a <= 1; a += 0.1) for (let t = -0.5; t <= 0.5001; t += 0.01) { const x = m.position.x + bx * L * t + bz * W / 2 * a, z = m.position.z + bz * L * t - bx * W / 2 * a, sd = ART.sdAt(x, z); rawWorst = Math.max(rawWorst, sd); if (k(x, z) > 0.004) worst = Math.max(worst, sd); }
+          return { vis: true, len: +L.toFixed(2), rawOut: +rawWorst.toFixed(2), drawnOut: +worst.toFixed(2), clip: !!T4.inMask && typeof m.material.onBeforeCompile === 'function' }; });
+        ok('白線に ななめ（45°）に 向いても、帯の 描く 所は 白線から 0.15m より 外に 出ない（はばの 角も。直す前：約 0.72m 外）', d1.vis && d1.clip && d1.drawnOut <= 0.15, d1);
+        await p.keyboard.press('Enter'); await adv(2);
+        const d2 = await p.evaluate(() => { const m = game.T4.amesh; return { done: !!game.S.done, vis: !!(m && m.visible), op: m ? +m.material.opacity.toFixed(3) : null }; });
+        ok('帯が 見えて いる 間に Enter で 終わると、終わって 2 秒 こまを 進めても 帯は 見えない（直す前：のこる・濃さ 1）', d2.done && !d2.vis, d2);
+        await ctx.close(); }
       // 19-7) お題なし：今まで どおり 列の 帯（白線までの 帯は 出ない）
       { const { ctx, p } = await open14('?art=none'); await fake14(p); await p.evaluate(x => window.__adv(x), 1.5);
         const g1 = await p.evaluate(() => ({ lane: game.T4.lane, vis: game.T4.mesh && game.T4.mesh.visible, amesh: !!(game.T4.amesh && game.T4.amesh.visible) }));

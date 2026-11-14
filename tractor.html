@@ -2588,7 +2588,21 @@ const T4 = {
       for (let i = 0; i < 64; i++) { const u = Math.abs((i + 0.5) / 64 - 0.5) * 2, edge = u > 0.88, a = edge ? 0.9 : 0.1 + 0.56 * Math.pow(u / 0.88, 1.8);   // u：まん中 0 → はし 1（まん中 0.1・ふち線の 内がわ 0.66）
         cg.fillStyle = edge ? `rgba(255,255,255,${a})` : `rgba(255,244,200,${a.toFixed(3)})`; cg.fillRect(i, 0, 1, 2); }
       const tex = new THREE.CanvasTexture(cv); tex.minFilter = THREE.LinearFilter; tex.generateMipmaps = false;
-      this.amesh = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0, depthWrite: false }));
+      const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0, depthWrite: false });
+      // サイクル283b（Codex 指摘 P2）: 帯は 白線の 形で 切り抜く。帯の 長さは まん中の 線で 決めるので、白線に ななめに 向くと はばの 2.2m の 角が 白線の 外へ
+      // 出ていた（四角・x 0・z −8・45° で 先の 右の 角が 約 0.7m 外）。ます目（20cm）ごとに「白線の 内側か」を 1 まいの 絵に して、絵の 外の 所は 描かない（なめらかに 0 へ）
+      const inMask = new Uint8Array(NX * NZ); for (let i = 0; i < NX; i++) for (let j = 0; j < NZ; j++) inMask[i * NZ + j] = ART.sdAt(-HX + (i + 0.5) * CELL, -HZ + (j + 0.5) * CELL) < 0 ? 255 : 0;
+      const inTex = new THREE.DataTexture(inMask, NZ, NX, THREE.LuminanceFormat, THREE.UnsignedByteType); inTex.magFilter = inTex.minFilter = THREE.LinearFilter; inTex.needsUpdate = true;
+      this.inMask = inMask;   // 確かめ（firstmin.js の 19）が 同じ 絵を 読む
+      mat.onBeforeCompile = sh => {
+        sh.uniforms.inTex = { value: inTex };
+        sh.vertexShader = 'varying vec2 vBW;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n vBW = (modelMatrix * vec4(position, 1.0)).xz;');
+        sh.fragmentShader = 'varying vec2 vBW;\nuniform sampler2D inTex;\n' + sh.fragmentShader.replace('#include <map_fragment>', `#include <map_fragment>
+  diffuseColor.a *= texture2D(inTex, vec2((vBW.y + ${HZ.toFixed(1)}) / ${(2 * HZ).toFixed(1)}, (vBW.x + ${HX.toFixed(1)}) / ${(2 * HX).toFixed(1)})).r;
+  if (diffuseColor.a < 0.004) discard;`);
+      };
+      mat.customProgramCacheKey = () => 'artBandClip';
+      this.amesh = new THREE.Mesh(g, mat);
       this.amesh.position.y = 0.13; this.amesh.renderOrder = 2; this.amesh.frustumCulled = false; this.amesh.visible = false;
       this.amesh.scale.set(TILL_W, 1, 1);
       scene.add(this.amesh);
@@ -10557,7 +10571,8 @@ function doneTalk() {
   if (!$('bNext').classList.contains('hidden')) $('doneTalk').after($('bNext'));   // つぎへの ボタンは キャラクターの すぐ 下（スクロール しなくても 見える）
 }
 function finish() {
-  S.done = true; syncAudio(false);   // サイクル278（Codex 指摘）: おわりに した その 操作（📸 完成・Enter）の 中で 音を 止める（さわった ときの 聞き手が 先に もどして いても、次の こままで 鳴らない）
+  S.done = true; syncAudio(false);
+  T4.band = null; T4.av = 0; if (T4.amesh) T4.amesh.visible = false;   // サイクル283b（Codex 指摘 P3）: おわると step() が 止まり 帯の 更新も 止まるので、おわった その 操作の 中で 帯を 消す（終わりの 画面・写真の うしろに のこさない）   // サイクル278（Codex 指摘）: おわりに した その 操作（📸 完成・Enter）の 中で 音を 止める（さわった ときの 聞き手が 先に もどして いても、次の こままで 鳴らない）
   if (ART.on) return finishArt();
   const fieldName = { haru: '春の田んぼ', aki: '秋の稲刈りあとの田んぼ', shirokaki: '代かきの田んぼ' }[season], pctNow = Math.min(100, Math.floor(tilledCount / workCount * 100));
   $('doneText').textContent = PLAY.up ? `5 分 たちました。${fieldName}の ${pctNow}% を 耕しました。お疲れ様です！` : `${fieldName}を ${fmtTime(S.elapsed)} で耕しました。お疲れ様です！`;

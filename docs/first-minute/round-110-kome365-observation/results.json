@@ -1,0 +1,1648 @@
+{
+  "round": 110,
+  "game": "米づくり365",
+  "status": "Completed primary and fixed short-diagonal diagnostic; no symptom reproduced in fixed10; no product or test changes",
+  "source": {
+    "head": "3cde897ae205ad95b6a54b89ea1d08f1d2d2b584",
+    "hashGuardFiles": {
+      "kome365/index.html": "0946243f4918704c78076bf30cf1080d75f7ade75d8bb916d5ec74c0948fd5a2",
+      "kome365/engine.js": "c3d0cef6bb108d5b6d8fe38aaf0c08fe7994bdab08bf92775865a6e0222469a3",
+      "kome365/field3d.js": "a5c1dad91d5c0c326f1394fad9c5d04e7e3b8d13e3a2b8b1757c7aa08d3558ff",
+      "kome365/cards.js": "b15c5b2f56ef9c0c8361fa2fa6a039085919ca516b4a2e6e5a1b3bb691dde744",
+      "kome365/vendor/three.min.js": "9274bbcec8d96168626c732b5d31c775aa8cfb7eaa0599bec0c175908a2c1ce2"
+    },
+    "guardLimit": "Configured five local/served files including protected three only",
+    "sourceUnchanged": true
+  },
+  "method": {
+    "primaryRuns": 1,
+    "viewport": {
+      "width": 844,
+      "height": 390
+    },
+    "cpuRate": 1,
+    "isMobile": true,
+    "hasTouch": true,
+    "freshContext": true,
+    "input": "CDP Input.dispatchTouchEvent",
+    "observationSeconds": 10,
+    "waitObservationPhotoThenPlaySeconds": 60,
+    "requestedSwipeMs": 120,
+    "primaryDelta": [
+      -100,
+      0
+    ],
+    "cueBasis": {
+      "current": 1,
+      "same-card-memory": 9
+    },
+    "directions": {
+      "left": 10
+    }
+  },
+  "primary": {
+    "opportunities": 20,
+    "sentGestures": 10,
+    "unsentCueUncertainSkips": 10,
+    "unsentAreNotNoResponse": true,
+    "responses": {
+      "drag": 10,
+      "transform": 10,
+      "dayAdvance": 10,
+      "newReason": 10,
+      "noResponseAmongSent": 0
+    },
+    "positiveReasons": 7,
+    "negativeReasons": 3,
+    "lastDate": "1月11日",
+    "firstInputPlaySeconds": 0.252,
+    "firstResponseMoments": {
+      "drag": {
+        "playSeconds": 0.908800048828125,
+        "fromSendMs": 656.800048828125
+      },
+      "transform": {
+        "playSeconds": 0.91810009765625,
+        "fromSendMs": 666.10009765625
+      },
+      "nextDay": {
+        "playSeconds": 1.813699951171875,
+        "fromSendMs": 1561.699951171875
+      },
+      "reason": {
+        "playSeconds": 1.813699951171875,
+        "fromSendMs": 1561.699951171875
+      }
+    },
+    "firstPositiveFromFirstInputMs": 1561.699951171875,
+    "inputTiming": {
+      "requestedSpanMs": 120,
+      "actualSendSpanMs": {
+        "min": 120.2220270037651,
+        "median": 121.62341849505901,
+        "max": 140.61356100440025
+      },
+      "ACKDelayMs": {
+        "min": 540.4296980202198,
+        "median": 824.7043834924698,
+        "max": 1052.1314029991627
+      },
+      "allEventTimeStampToHandlerMs": {
+        "min": 605.4000000059605,
+        "median": 810.7000000029802,
+        "max": 1045.5999999940395
+      },
+      "pointerdownEventTimeStampToHandlerMs": {
+        "min": 623.0,
+        "median": 875.75,
+        "max": 1045.5999999940395
+      },
+      "downSendToEventTimeStampMs": {
+        "min": -0.099853515625,
+        "median": -0.099853515625,
+        "max": 0.0
+      },
+      "sendToTransformMs": {
+        "min": 632.300048828125,
+        "median": 890.1500244140625,
+        "max": 1055.10009765625
+      },
+      "limit": "Node send spans, CDP acknowledgements, DOM event timestamps and actual handler times are distinct. Long delivery lag is not evidence that the requested finger motion itself lasted that long or a causal diagnosis of rendering/host/product code."
+    },
+    "cardEligibility": {
+      "initialValid": true,
+      "initialPathValid": true,
+      "initialPointOwnedByCard": true,
+      "beforeCardWidths": [
+        360
+      ],
+      "all10PathsWithinBeforeRect": true,
+      "firstPathStartX": 422,
+      "firstPathEndX": 322,
+      "firstRectX": 242,
+      "firstRectRight": 602,
+      "limit": "Before-input DOM geometry and actual trusted delivery only; not a proof of every in-between painted pixel."
+    },
+    "clock": {
+      "observationToPlayMs": 17115.24548497796,
+      "observationPhotoCaptureMs": 6983.341262996197,
+      "photoSavedToPlayMs": 130.90591499209404,
+      "actualPlayStopMs": 60000.16866502166,
+      "firstInputAfterObservationStartMs": 17366.447672992945,
+      "limit": "Initial photo save wait occurs before play clock; product clocks continue. Do not attribute it as isolated game response latency."
+    },
+    "CDPCommands": 80,
+    "ACKs": 80,
+    "trustedEvents": 32,
+    "eventTypes": {
+      "pointerdown": 10,
+      "pointermove": 12,
+      "pointerup": 10
+    }
+  },
+  "photos": [
+    {
+      "file": "observe-10s.png",
+      "sha256": "1d0b6f595dae0c5a4ca9cf77a04c052ba65ce54ff2af08532b85a9209318d80a",
+      "bytes": 219977,
+      "dimensions": [
+        844,
+        390
+      ],
+      "originalCopiedUnmodified": true,
+      "reportAuthorPersonallyViewed": true,
+      "clock": "observation",
+      "requestedSeconds": 10.00099830698967,
+      "savedSeconds": 16.984339569985867,
+      "captureMs": 6983.341262996197
+    },
+    {
+      "file": "play-10s.png",
+      "sha256": "965987da5fe55db2d43d331e4607287f546d3bd8d4e5d7aa64e1c4ebb47f7cdb",
+      "bytes": 249984,
+      "dimensions": [
+        844,
+        390
+      ],
+      "originalCopiedUnmodified": true,
+      "reportAuthorPersonallyViewed": true,
+      "clock": "play",
+      "requestedSeconds": 10.00028688800335,
+      "savedSeconds": 11.056490822017192,
+      "captureMs": 1056.2039340138435
+    },
+    {
+      "file": "play-30s.png",
+      "sha256": "1d5b897ed4faa37d69883bbcb98cd424a08d10ac4bd3ba2936d4743d70a3f392",
+      "bytes": 325232,
+      "dimensions": [
+        844,
+        390
+      ],
+      "originalCopiedUnmodified": true,
+      "reportAuthorPersonallyViewed": true,
+      "clock": "play",
+      "requestedSeconds": 30.000419115006924,
+      "savedSeconds": 31.26029771500826,
+      "captureMs": 1259.8786000013351
+    },
+    {
+      "file": "play-60s.png",
+      "sha256": "b12d41eb2e396c9f2c05786b0c01ff940a4eb8e9836df19b35bcf9b0da88eda4",
+      "bytes": 283489,
+      "dimensions": [
+        844,
+        390
+      ],
+      "originalCopiedUnmodified": true,
+      "reportAuthorPersonallyViewed": true,
+      "clock": "play",
+      "requestedSeconds": 60.00027299800515,
+      "savedSeconds": 61.216904260993005,
+      "captureMs": 1216.631262987852
+    }
+  ],
+  "photo30Limit": {
+    "nodePlayClock": {
+      "flySeconds": 30.1988,
+      "nextDateEnterAndPositiveReasonSeconds": 30.7842,
+      "heartbeatCardVisibleSeconds": 31.5772
+    },
+    "nearbyIdle": false,
+    "meaning": "A translucent card with unreadable contents in one original capture. Not proof of persistent blank or the operator30s card; capture duration is not blank duration.",
+    "clockConversion": "(browser performance.timeOrigin + at - Node play.startedEpoch) /1000"
+  },
+  "execution": {
+    "actualChildExit": 1,
+    "actualOuterExit": 1,
+    "consoleErrors": [
+      {
+        "at": 170987561.696164,
+        "kind": "console",
+        "message": "Failed to load resource: the server responded with a status of 404 (File not found)"
+      },
+      {
+        "at": 171006837.627014,
+        "kind": "console",
+        "message": "Failed to load resource: the server responded with a status of 404 (File not found)"
+      }
+    ],
+    "resourceTiming404": [
+      {
+        "name": "http://localhost:8000/favicon.ico",
+        "status": 404
+      },
+      {
+        "name": "http://localhost:8000/favicon.ico",
+        "status": 404
+      }
+    ],
+    "errorLimit": "Console has no URL; independent ResourceTiming records two404favicon requests without request-id join. Exit1 is retained.",
+    "driverErrors": [],
+    "cpuReset": true,
+    "browserClosed": true,
+    "rootNoLiveRuntime": true,
+    "audioAnd3d": "Post-play debug only; not listening or physical-device performance"
+  },
+  "diagnostic": {
+    "candidate": "Short diagonal from visible initial card",
+    "status": "completed; no selected no-date-progress symptom reproduced",
+    "sourceHead": "3cde897ae205ad95b6a54b89ea1d08f1d2d2b584",
+    "viewport": {
+      "width": 844,
+      "height": 390
+    },
+    "cpuRate": 1,
+    "requestedDelta": [
+      -60,
+      50
+    ],
+    "stepFractions": [
+      0.25,
+      0.5,
+      0.75
+    ],
+    "releaseFraction": 1,
+    "perTrialFreshBrowserContext": true,
+    "observeSeconds": 10,
+    "pilotNotInFixedDenominator": true,
+    "counts": {
+      "pilot": {
+        "planned": 2,
+        "recorded": 2,
+        "valid": 2,
+        "invalid": 0,
+        "validNoDateProgress": 0,
+        "validDateProgress": 2
+      },
+      "fixed": {
+        "planned": 10,
+        "recorded": 10,
+        "valid": 10,
+        "invalid": 0,
+        "validNoDateProgress": 0,
+        "validDateProgress": 10
+      }
+    },
+    "fixedByRequestedSpeed": {
+      "60ms": {
+        "trials": 5,
+        "eligible": 5,
+        "dateProgress": 5,
+        "noDateProgress": 0
+      },
+      "160ms": {
+        "trials": 5,
+        "eligible": 5,
+        "dateProgress": 5,
+        "noDateProgress": 0
+      }
+    },
+    "actualFixedEffectiveSpanMs": {
+      "60ms": [
+        59,
+        66
+      ],
+      "160ms": [
+        159.9,
+        161
+      ]
+    },
+    "effectiveSpanMethod": "Monotonic move/coalesced times, max(up,lastEffectiveMove)-down; independent of lastFlick outcome",
+    "eligibilityUsesQuickResult": false,
+    "fixedListenerSpanMs": [
+      5.3,
+      318.2
+    ],
+    "inputWaitsForACK": false,
+    "automaticRetry": 0,
+    "invalidReplacement": 0,
+    "externalSelfReportedTrialsIncluded": false,
+    "productDefectConfirmed": false,
+    "actualChildExit": 0,
+    "actualOuterExit": 0,
+    "exitMeaning": "Diagnostic sequence completed; not all-suite success or zero-console-error claim.",
+    "consoleErrorsTotal": 24,
+    "consoleErrorURLAssociation": "Console404 only; no request-id URL join. Do not infer every diagnostic error URL from primary ResourceTiming.",
+    "sourceLocalFiles": 7,
+    "sourceHTTPFiles": 5,
+    "selectedDependencies": 8,
+    "all12Closed": true,
+    "rootNoLiveRuntime": true,
+    "rows": [
+      {
+        "id": "pilot-01",
+        "group": "pilot",
+        "requestedDurationMs": 60,
+        "eligible": true,
+        "invalidReasons": [],
+        "effectiveEventSpanMs": 59,
+        "listenerSpanMs": 10.099999994039536,
+        "nodeSendSpanMs": 59.7681950032711,
+        "geometry": {
+          "dx": -60,
+          "dy": 50,
+          "maxAx": 60,
+          "maxDy": 50,
+          "monotonic": true,
+          "onPath": true,
+          "actualStartMatches": true,
+          "endpointMatches": true,
+          "coordinateTolerancePx": 1
+        },
+        "coverageAllThreePoints": true,
+        "eventCounts": {
+          "down": 1,
+          "moveDOM": 1,
+          "up": 1,
+          "cancel": 0,
+          "coalesced": 3,
+          "CDPCommands": 5
+        },
+        "ACKs": 5,
+        "dragObserved": true,
+        "expectedNextDate": "1月2日",
+        "dateProgress": true,
+        "dateBefore": "1月1日",
+        "dateAfter": "1月2日",
+        "lastFlick": {
+          "dx": -60,
+          "v": -1.429,
+          "flick": true,
+          "quick": true,
+          "ms": 59,
+          "cancelled": false,
+          "viaCancel": false
+        },
+        "console404Count": 2,
+        "cpuResetAcknowledged": true,
+        "contextClosed": true,
+        "browserClosed": true,
+        "trialIdentifier": "round-110/short-diagonal-preparation/execution/pilot-01/trial.json",
+        "trialSHA256": "e15b15762136103da80ac260d31f378618d53e6da07c6670358c6d75fcb3f6c2",
+        "afterRead": {
+          "targetEpochMs": 1794660850449,
+          "basis": "Actual normal touchEnd send plus2200ms; delayed ACK/read recorded without moving the target.",
+          "requested": {
+            "epochMs": 1794660850450,
+            "monotonicMs": 171909963.636639
+          },
+          "completed": {
+            "epochMs": 1794660850660,
+            "monotonicMs": 171910173.901546
+          }
+        },
+        "sourceBeforeLocalAndHTTPVerified": true,
+        "sourceAfterLocalVerified": true
+      },
+      {
+        "id": "pilot-02",
+        "group": "pilot",
+        "requestedDurationMs": 160,
+        "eligible": true,
+        "invalidReasons": [],
+        "effectiveEventSpanMs": 160,
+        "listenerSpanMs": 350.5,
+        "nodeSendSpanMs": 159.78110700845718,
+        "geometry": {
+          "dx": -60,
+          "dy": 50,
+          "maxAx": 60,
+          "maxDy": 50,
+          "monotonic": true,
+          "onPath": true,
+          "actualStartMatches": true,
+          "endpointMatches": true,
+          "coordinateTolerancePx": 1
+        },
+        "coverageAllThreePoints": true,
+        "eventCounts": {
+          "down": 1,
+          "moveDOM": 1,
+          "up": 1,
+          "cancel": 0,
+          "coalesced": 3,
+          "CDPCommands": 5
+        },
+        "ACKs": 5,
+        "dragObserved": true,
+        "expectedNextDate": "1月2日",
+        "dateProgress": true,
+        "dateBefore": "1月1日",
+        "dateAfter": "1月2日",
+        "lastFlick": {
+          "dx": -60,
+          "v": -0.512,
+          "flick": true,
+          "quick": true,
+          "ms": 160,
+          "cancelled": false,
+          "viaCancel": false
+        },
+        "console404Count": 2,
+        "cpuResetAcknowledged": true,
+        "contextClosed": true,
+        "browserClosed": true,
+        "trialIdentifier": "round-110/short-diagonal-preparation/execution/pilot-02/trial.json",
+        "trialSHA256": "15811a22edeb5cd20915e3441b1eae9176c6694595a308111aaf991852951178",
+        "afterRead": {
+          "targetEpochMs": 1794660874218,
+          "basis": "Actual normal touchEnd send plus2200ms; delayed ACK/read recorded without moving the target.",
+          "requested": {
+            "epochMs": 1794660874223,
+            "monotonicMs": 171933736.522862
+          },
+          "completed": {
+            "epochMs": 1794660874575,
+            "monotonicMs": 171934088.507722
+          }
+        },
+        "sourceBeforeLocalAndHTTPVerified": true,
+        "sourceAfterLocalVerified": true
+      },
+      {
+        "id": "fixed-01",
+        "group": "fixed",
+        "requestedDurationMs": 60,
+        "eligible": true,
+        "invalidReasons": [],
+        "effectiveEventSpanMs": 66,
+        "listenerSpanMs": 17.900000005960464,
+        "nodeSendSpanMs": 65.7455960214138,
+        "geometry": {
+          "dx": -60,
+          "dy": 50,
+          "maxAx": 60,
+          "maxDy": 50,
+          "monotonic": true,
+          "onPath": true,
+          "actualStartMatches": true,
+          "endpointMatches": true,
+          "coordinateTolerancePx": 1
+        },
+        "coverageAllThreePoints": true,
+        "eventCounts": {
+          "down": 1,
+          "moveDOM": 1,
+          "up": 1,
+          "cancel": 0,
+          "coalesced": 3,
+          "CDPCommands": 5
+        },
+        "ACKs": 5,
+        "dragObserved": true,
+        "expectedNextDate": "1月2日",
+        "dateProgress": true,
+        "dateBefore": "1月1日",
+        "dateAfter": "1月2日",
+        "lastFlick": {
+          "dx": -60,
+          "v": -1.439,
+          "flick": true,
+          "quick": true,
+          "ms": 66,
+          "cancelled": false,
+          "viaCancel": false
+        },
+        "console404Count": 2,
+        "cpuResetAcknowledged": true,
+        "contextClosed": true,
+        "browserClosed": true,
+        "trialIdentifier": "round-110/short-diagonal-preparation/execution/fixed-01/trial.json",
+        "trialSHA256": "d173699f548643f36ef21f27b8d3dad797b31907ba499cd24cb17c88bcddad3c",
+        "afterRead": {
+          "targetEpochMs": 1794660899618,
+          "basis": "Actual normal touchEnd send plus2200ms; delayed ACK/read recorded without moving the target.",
+          "requested": {
+            "epochMs": 1794660899618,
+            "monotonicMs": 171959131.922498
+          },
+          "completed": {
+            "epochMs": 1794660899759,
+            "monotonicMs": 171959272.800526
+          }
+        },
+        "sourceBeforeLocalAndHTTPVerified": true,
+        "sourceAfterLocalVerified": true
+      },
+      {
+        "id": "fixed-02",
+        "group": "fixed",
+        "requestedDurationMs": 160,
+        "eligible": true,
+        "invalidReasons": [],
+        "effectiveEventSpanMs": 161,
+        "listenerSpanMs": 21.30000001192093,
+        "nodeSendSpanMs": 160.894032984972,
+        "geometry": {
+          "dx": -60,
+          "dy": 50,
+          "maxAx": 60,
+          "maxDy": 50,
+          "monotonic": true,
+          "onPath": true,
+          "actualStartMatches": true,
+          "endpointMatches": true,
+          "coordinateTolerancePx": 1
+        },
+        "coverageAllThreePoints": true,
+        "eventCounts": {
+          "down": 1,
+          "moveDOM": 1,
+          "up": 1,
+          "cancel": 0,
+          "coalesced": 3,
+          "CDPCommands": 5
+        },
+        "ACKs": 5,
+        "dragObserved": true,
+        "expectedNextDate": "1月2日",
+        "dateProgress": true,
+        "dateBefore": "1月1日",
+        "dateAfter": "1月2日",
+        "lastFlick": {
+          "dx": -60,
+          "v": -0.512,
+          "flick": true,
+          "quick": true,
+          "ms": 161,
+          "cancelled": false,
+          "viaCancel": false
+        },
+        "console404Count": 2,
+        "cpuResetAcknowledged": true,
+        "contextClosed": true,
+        "browserClosed": true,
+        "trialIdentifier": "round-110/short-diagonal-preparation/execution/fixed-02/trial.json",
+        "trialSHA256": "610174c5c2e476651259b0423e248479a0c42639caa2dc95526f67437fa98fab",
+        "afterRead": {
+          "targetEpochMs": 1794660922357,
+          "basis": "Actual normal touchEnd send plus2200ms; delayed ACK/read recorded without moving the target.",
+          "requested": {
+            "epochMs": 1794660922357,
+            "monotonicMs": 171981871.095205
+          },
+          "completed": {
+            "epochMs": 1794660922487,
+            "monotonicMs": 171982001.406737
+          }
+        },
+        "sourceBeforeLocalAndHTTPVerified": true,
+        "sourceAfterLocalVerified": true
+      },
+      {
+        "id": "fixed-03",
+        "group": "fixed",
+        "requestedDurationMs": 60,
+        "eligible": true,
+        "invalidReasons": [],
+        "effectiveEventSpanMs": 59,
+        "listenerSpanMs": 6.800000011920929,
+        "nodeSendSpanMs": 58.97988799214363,
+        "geometry": {
+          "dx": -60,
+          "dy": 50,
+          "maxAx": 60,
+          "maxDy": 50,
+          "monotonic": true,
+          "onPath": true,
+          "actualStartMatches": true,
+          "endpointMatches": true,
+          "coordinateTolerancePx": 1
+        },
+        "coverageAllThreePoints": true,
+        "eventCounts": {
+          "down": 1,
+          "moveDOM": 1,
+          "up": 1,
+          "cancel": 0,
+          "coalesced": 3,
+          "CDPCommands": 5
+        },
+        "ACKs": 5,
+        "dragObserved": true,
+        "expectedNextDate": "1月2日",
+        "dateProgress": true,
+        "dateBefore": "1月1日",
+        "dateAfter": "1月2日",
+        "lastFlick": {
+          "dx": -60,
+          "v": -1.429,
+          "flick": true,
+          "quick": true,
+          "ms": 59,
+          "cancelled": false,
+          "viaCancel": false
+        },
+        "console404Count": 2,
+        "cpuResetAcknowledged": true,
+        "contextClosed": true,
+        "browserClosed": true,
+        "trialIdentifier": "round-110/short-diagonal-preparation/execution/fixed-03/trial.json",
+        "trialSHA256": "1ba20062bdc03dd21ea31601546486611f97ede531ecdd54b5162025faf82f5d",
+        "afterRead": {
+          "targetEpochMs": 1794660944635,
+          "basis": "Actual normal touchEnd send plus2200ms; delayed ACK/read recorded without moving the target.",
+          "requested": {
+            "epochMs": 1794660944635,
+            "monotonicMs": 172004148.768035
+          },
+          "completed": {
+            "epochMs": 1794660944784,
+            "monotonicMs": 172004297.646301
+          }
+        },
+        "sourceBeforeLocalAndHTTPVerified": true,
+        "sourceAfterLocalVerified": true
+      },
+      {
+        "id": "fixed-04",
+        "group": "fixed",
+        "requestedDurationMs": 160,
+        "eligible": true,
+        "invalidReasons": [],
+        "effectiveEventSpanMs": 160,
+        "listenerSpanMs": 7.300000011920929,
+        "nodeSendSpanMs": 159.9720230102539,
+        "geometry": {
+          "dx": -60,
+          "dy": 50,
+          "maxAx": 60,
+          "maxDy": 50,
+          "monotonic": true,
+          "onPath": true,
+          "actualStartMatches": true,
+          "endpointMatches": true,
+          "coordinateTolerancePx": 1
+        },
+        "coverageAllThreePoints": true,
+        "eventCounts": {
+          "down": 1,
+          "moveDOM": 1,
+          "up": 1,
+          "cancel": 0,
+          "coalesced": 3,
+          "CDPCommands": 5
+        },
+        "ACKs": 5,
+        "dragObserved": true,
+        "expectedNextDate": "1月2日",
+        "dateProgress": true,
+        "dateBefore": "1月1日",
+        "dateAfter": "1月2日",
+        "lastFlick": {
+          "dx": -60,
+          "v": -0.501,
+          "flick": true,
+          "quick": true,
+          "ms": 160,
+          "cancelled": false,
+          "viaCancel": false
+        },
+        "console404Count": 2,
+        "cpuResetAcknowledged": true,
+        "contextClosed": true,
+        "browserClosed": true,
+        "trialIdentifier": "round-110/short-diagonal-preparation/execution/fixed-04/trial.json",
+        "trialSHA256": "6a6794bfbd3993e954d1a8f429e3c32781e2761ee13578d9279f31c65dcb2c61",
+        "afterRead": {
+          "targetEpochMs": 1794660966240,
+          "basis": "Actual normal touchEnd send plus2200ms; delayed ACK/read recorded without moving the target.",
+          "requested": {
+            "epochMs": 1794660966240,
+            "monotonicMs": 172025754.276276
+          },
+          "completed": {
+            "epochMs": 1794660966332,
+            "monotonicMs": 172025845.723753
+          }
+        },
+        "sourceBeforeLocalAndHTTPVerified": true,
+        "sourceAfterLocalVerified": true
+      },
+      {
+        "id": "fixed-05",
+        "group": "fixed",
+        "requestedDurationMs": 60,
+        "eligible": true,
+        "invalidReasons": [],
+        "effectiveEventSpanMs": 59.099999994039536,
+        "listenerSpanMs": 11.799999982118607,
+        "nodeSendSpanMs": 59.38833501935005,
+        "geometry": {
+          "dx": -60,
+          "dy": 50,
+          "maxAx": 60,
+          "maxDy": 50,
+          "monotonic": true,
+          "onPath": true,
+          "actualStartMatches": true,
+          "endpointMatches": true,
+          "coordinateTolerancePx": 1
+        },
+        "coverageAllThreePoints": true,
+        "eventCounts": {
+          "down": 1,
+          "moveDOM": 1,
+          "up": 1,
+          "cancel": 0,
+          "coalesced": 3,
+          "CDPCommands": 5
+        },
+        "ACKs": 5,
+        "dragObserved": true,
+        "expectedNextDate": "1月2日",
+        "dateProgress": true,
+        "dateBefore": "1月1日",
+        "dateAfter": "1月2日",
+        "lastFlick": {
+          "dx": -60,
+          "v": -1.429,
+          "flick": true,
+          "quick": true,
+          "ms": 59,
+          "cancelled": false,
+          "viaCancel": false
+        },
+        "console404Count": 2,
+        "cpuResetAcknowledged": true,
+        "contextClosed": true,
+        "browserClosed": true,
+        "trialIdentifier": "round-110/short-diagonal-preparation/execution/fixed-05/trial.json",
+        "trialSHA256": "97c39df3e09d9198dcc457e136a98b9465a52e7b0dd832a63d53e4706e5e40a3",
+        "afterRead": {
+          "targetEpochMs": 1794660992622,
+          "basis": "Actual normal touchEnd send plus2200ms; delayed ACK/read recorded without moving the target.",
+          "requested": {
+            "epochMs": 1794660992624,
+            "monotonicMs": 172052137.604017
+          },
+          "completed": {
+            "epochMs": 1794660992766,
+            "monotonicMs": 172052279.811159
+          }
+        },
+        "sourceBeforeLocalAndHTTPVerified": true,
+        "sourceAfterLocalVerified": true
+      },
+      {
+        "id": "fixed-06",
+        "group": "fixed",
+        "requestedDurationMs": 160,
+        "eligible": true,
+        "invalidReasons": [],
+        "effectiveEventSpanMs": 160,
+        "listenerSpanMs": 6.5,
+        "nodeSendSpanMs": 160.2590530216694,
+        "geometry": {
+          "dx": -60,
+          "dy": 50,
+          "maxAx": 60,
+          "maxDy": 50,
+          "monotonic": true,
+          "onPath": true,
+          "actualStartMatches": true,
+          "endpointMatches": true,
+          "coordinateTolerancePx": 1
+        },
+        "coverageAllThreePoints": true,
+        "eventCounts": {
+          "down": 1,
+          "moveDOM": 1,
+          "up": 1,
+          "cancel": 0,
+          "coalesced": 3,
+          "CDPCommands": 5
+        },
+        "ACKs": 5,
+        "dragObserved": true,
+        "expectedNextDate": "1月2日",
+        "dateProgress": true,
+        "dateBefore": "1月1日",
+        "dateAfter": "1月2日",
+        "lastFlick": {
+          "dx": -60,
+          "v": -0.556,
+          "flick": true,
+          "quick": true,
+          "ms": 160,
+          "cancelled": false,
+          "viaCancel": false
+        },
+        "console404Count": 2,
+        "cpuResetAcknowledged": true,
+        "contextClosed": true,
+        "browserClosed": true,
+        "trialIdentifier": "round-110/short-diagonal-preparation/execution/fixed-06/trial.json",
+        "trialSHA256": "a29c924c51979129b8b71d86079a38bb8574e297b879cdaf70582050cecf5dd3",
+        "afterRead": {
+          "targetEpochMs": 1794661014934,
+          "basis": "Actual normal touchEnd send plus2200ms; delayed ACK/read recorded without moving the target.",
+          "requested": {
+            "epochMs": 1794661014935,
+            "monotonicMs": 172074448.463726
+          },
+          "completed": {
+            "epochMs": 1794661015067,
+            "monotonicMs": 172074580.840522
+          }
+        },
+        "sourceBeforeLocalAndHTTPVerified": true,
+        "sourceAfterLocalVerified": true
+      },
+      {
+        "id": "fixed-07",
+        "group": "fixed",
+        "requestedDurationMs": 60,
+        "eligible": true,
+        "invalidReasons": [],
+        "effectiveEventSpanMs": 60,
+        "listenerSpanMs": 6.300000011920929,
+        "nodeSendSpanMs": 59.14373999834061,
+        "geometry": {
+          "dx": -60,
+          "dy": 50,
+          "maxAx": 60,
+          "maxDy": 50,
+          "monotonic": true,
+          "onPath": true,
+          "actualStartMatches": true,
+          "endpointMatches": true,
+          "coordinateTolerancePx": 1
+        },
+        "coverageAllThreePoints": true,
+        "eventCounts": {
+          "down": 1,
+          "moveDOM": 1,
+          "up": 1,
+          "cancel": 0,
+          "coalesced": 3,
+          "CDPCommands": 5
+        },
+        "ACKs": 5,
+        "dragObserved": true,
+        "expectedNextDate": "1月2日",
+        "dateProgress": true,
+        "dateBefore": "1月1日",
+        "dateAfter": "1月2日",
+        "lastFlick": {
+          "dx": -60,
+          "v": -1.667,
+          "flick": true,
+          "quick": true,
+          "ms": 60,
+          "cancelled": false,
+          "viaCancel": false
+        },
+        "console404Count": 2,
+        "cpuResetAcknowledged": true,
+        "contextClosed": true,
+        "browserClosed": true,
+        "trialIdentifier": "round-110/short-diagonal-preparation/execution/fixed-07/trial.json",
+        "trialSHA256": "c3dee532f1167abe38f0a602b6c0358b5a641181d0a57cc16327949002235f27",
+        "afterRead": {
+          "targetEpochMs": 1794661038553,
+          "basis": "Actual normal touchEnd send plus2200ms; delayed ACK/read recorded without moving the target.",
+          "requested": {
+            "epochMs": 1794661038553,
+            "monotonicMs": 172098067.189848
+          },
+          "completed": {
+            "epochMs": 1794661038832,
+            "monotonicMs": 172098346.248068
+          }
+        },
+        "sourceBeforeLocalAndHTTPVerified": true,
+        "sourceAfterLocalVerified": true
+      },
+      {
+        "id": "fixed-08",
+        "group": "fixed",
+        "requestedDurationMs": 160,
+        "eligible": true,
+        "invalidReasons": [],
+        "effectiveEventSpanMs": 160.09999999403954,
+        "listenerSpanMs": 8.600000023841858,
+        "nodeSendSpanMs": 159.84959200024605,
+        "geometry": {
+          "dx": -60,
+          "dy": 50,
+          "maxAx": 60,
+          "maxDy": 50,
+          "monotonic": true,
+          "onPath": true,
+          "actualStartMatches": true,
+          "endpointMatches": true,
+          "coordinateTolerancePx": 1
+        },
+        "coverageAllThreePoints": true,
+        "eventCounts": {
+          "down": 1,
+          "moveDOM": 1,
+          "up": 1,
+          "cancel": 0,
+          "coalesced": 3,
+          "CDPCommands": 5
+        },
+        "ACKs": 5,
+        "dragObserved": true,
+        "expectedNextDate": "1月2日",
+        "dateProgress": true,
+        "dateBefore": "1月1日",
+        "dateAfter": "1月2日",
+        "lastFlick": {
+          "dx": -60,
+          "v": -0.501,
+          "flick": true,
+          "quick": true,
+          "ms": 160,
+          "cancelled": false,
+          "viaCancel": false
+        },
+        "console404Count": 2,
+        "cpuResetAcknowledged": true,
+        "contextClosed": true,
+        "browserClosed": true,
+        "trialIdentifier": "round-110/short-diagonal-preparation/execution/fixed-08/trial.json",
+        "trialSHA256": "60c20f3d6c641dda69da3dd5a4212e9bb240aa08988373221f425c417f475700",
+        "afterRead": {
+          "targetEpochMs": 1794661062522,
+          "basis": "Actual normal touchEnd send plus2200ms; delayed ACK/read recorded without moving the target.",
+          "requested": {
+            "epochMs": 1794661062522,
+            "monotonicMs": 172122035.79082
+          },
+          "completed": {
+            "epochMs": 1794661062556,
+            "monotonicMs": 172122070.316181
+          }
+        },
+        "sourceBeforeLocalAndHTTPVerified": true,
+        "sourceAfterLocalVerified": true
+      },
+      {
+        "id": "fixed-09",
+        "group": "fixed",
+        "requestedDurationMs": 60,
+        "eligible": true,
+        "invalidReasons": [],
+        "effectiveEventSpanMs": 60,
+        "listenerSpanMs": 5.300000011920929,
+        "nodeSendSpanMs": 59.678032010793686,
+        "geometry": {
+          "dx": -60,
+          "dy": 50,
+          "maxAx": 60,
+          "maxDy": 50,
+          "monotonic": true,
+          "onPath": true,
+          "actualStartMatches": true,
+          "endpointMatches": true,
+          "coordinateTolerancePx": 1
+        },
+        "coverageAllThreePoints": true,
+        "eventCounts": {
+          "down": 1,
+          "moveDOM": 1,
+          "up": 1,
+          "cancel": 0,
+          "coalesced": 3,
+          "CDPCommands": 5
+        },
+        "ACKs": 5,
+        "dragObserved": true,
+        "expectedNextDate": "1月2日",
+        "dateProgress": true,
+        "dateBefore": "1月1日",
+        "dateAfter": "1月2日",
+        "lastFlick": {
+          "dx": -60,
+          "v": -1.538,
+          "flick": true,
+          "quick": true,
+          "ms": 60,
+          "cancelled": false,
+          "viaCancel": false
+        },
+        "console404Count": 2,
+        "cpuResetAcknowledged": true,
+        "contextClosed": true,
+        "browserClosed": true,
+        "trialIdentifier": "round-110/short-diagonal-preparation/execution/fixed-09/trial.json",
+        "trialSHA256": "39c2c9aaec7e2d9b145a9c085223ed7bc70108dd198c3dfc64a0cdefe041ea34",
+        "afterRead": {
+          "targetEpochMs": 1794661083661,
+          "basis": "Actual normal touchEnd send plus2200ms; delayed ACK/read recorded without moving the target.",
+          "requested": {
+            "epochMs": 1794661083662,
+            "monotonicMs": 172143175.870148
+          },
+          "completed": {
+            "epochMs": 1794661083687,
+            "monotonicMs": 172143201.328695
+          }
+        },
+        "sourceBeforeLocalAndHTTPVerified": true,
+        "sourceAfterLocalVerified": true
+      },
+      {
+        "id": "fixed-10",
+        "group": "fixed",
+        "requestedDurationMs": 160,
+        "eligible": true,
+        "invalidReasons": [],
+        "effectiveEventSpanMs": 159.90000000596046,
+        "listenerSpanMs": 318.2000000178814,
+        "nodeSendSpanMs": 159.90060502290726,
+        "geometry": {
+          "dx": -60,
+          "dy": 50,
+          "maxAx": 60,
+          "maxDy": 50,
+          "monotonic": true,
+          "onPath": true,
+          "actualStartMatches": true,
+          "endpointMatches": true,
+          "coordinateTolerancePx": 1
+        },
+        "coverageAllThreePoints": true,
+        "eventCounts": {
+          "down": 1,
+          "moveDOM": 1,
+          "up": 1,
+          "cancel": 0,
+          "coalesced": 3,
+          "CDPCommands": 5
+        },
+        "ACKs": 5,
+        "dragObserved": true,
+        "expectedNextDate": "1月2日",
+        "dateProgress": true,
+        "dateBefore": "1月1日",
+        "dateAfter": "1月2日",
+        "lastFlick": {
+          "dx": -60,
+          "v": -0.542,
+          "flick": true,
+          "quick": true,
+          "ms": 160,
+          "cancelled": false,
+          "viaCancel": false
+        },
+        "console404Count": 2,
+        "cpuResetAcknowledged": true,
+        "contextClosed": true,
+        "browserClosed": true,
+        "trialIdentifier": "round-110/short-diagonal-preparation/execution/fixed-10/trial.json",
+        "trialSHA256": "9664f12d407f815056bb732a11106c41316d5ed3e8c8fa18c5adede64134bda9",
+        "afterRead": {
+          "targetEpochMs": 1794661105203,
+          "basis": "Actual normal touchEnd send plus2200ms; delayed ACK/read recorded without moving the target.",
+          "requested": {
+            "epochMs": 1794661105217,
+            "monotonicMs": 172164731.433876
+          },
+          "completed": {
+            "epochMs": 1794661105331,
+            "monotonicMs": 172164845.421711
+          }
+        },
+        "sourceBeforeLocalAndHTTPVerified": true,
+        "sourceAfterLocalVerified": true
+      }
+    ],
+    "originalPhotos": [
+      {
+        "identifier": "round-110/short-diagonal-preparation/execution/pilot-01/before.png",
+        "sha256": "5e285e843b2a98198d59ead7c5ad307898c21b55c51e2695f515a1617d4e00bf",
+        "dimensions": [
+          844,
+          390
+        ],
+        "reportAuthorPersonallyViewed": false,
+        "phase": "before",
+        "trial": "pilot-01",
+        "publicLink": false
+      },
+      {
+        "identifier": "round-110/short-diagonal-preparation/execution/pilot-01/after.png",
+        "sha256": "e14c9fcaaea2068796cf885fec9c6bf0fdd741f8da6d61b2f4562b8786a97a8f",
+        "dimensions": [
+          844,
+          390
+        ],
+        "reportAuthorPersonallyViewed": false,
+        "phase": "after",
+        "trial": "pilot-01",
+        "publicLink": false
+      },
+      {
+        "identifier": "round-110/short-diagonal-preparation/execution/pilot-02/before.png",
+        "sha256": "96d8983e4f325266d9617cc5cea04e32c04e01e059c6c470340888639d8112f6",
+        "dimensions": [
+          844,
+          390
+        ],
+        "reportAuthorPersonallyViewed": false,
+        "phase": "before",
+        "trial": "pilot-02",
+        "publicLink": false
+      },
+      {
+        "identifier": "round-110/short-diagonal-preparation/execution/pilot-02/after.png",
+        "sha256": "b36c02e99f02e55c2ebabe55064458c3959a26e8b9d4f06be7b5f3541310a601",
+        "dimensions": [
+          844,
+          390
+        ],
+        "reportAuthorPersonallyViewed": false,
+        "phase": "after",
+        "trial": "pilot-02",
+        "publicLink": false
+      },
+      {
+        "identifier": "round-110/short-diagonal-preparation/execution/fixed-01/before.png",
+        "sha256": "886722f340ef18d95f81af1776987a1bfd8eb7376d030041e3f593b2021b4719",
+        "dimensions": [
+          844,
+          390
+        ],
+        "reportAuthorPersonallyViewed": true,
+        "phase": "before",
+        "trial": "fixed-01",
+        "publicLink": false
+      },
+      {
+        "identifier": "round-110/short-diagonal-preparation/execution/fixed-01/after.png",
+        "sha256": "2cd2758bc31bfb2efca637f45bdcc134a38315e6b45f59940d71955d296c4895",
+        "dimensions": [
+          844,
+          390
+        ],
+        "reportAuthorPersonallyViewed": true,
+        "phase": "after",
+        "trial": "fixed-01",
+        "publicLink": false
+      },
+      {
+        "identifier": "round-110/short-diagonal-preparation/execution/fixed-02/before.png",
+        "sha256": "bf02ae038972084f7daf96a7f34213a23418fa432f7a64a54c08846d1a282bfb",
+        "dimensions": [
+          844,
+          390
+        ],
+        "reportAuthorPersonallyViewed": true,
+        "phase": "before",
+        "trial": "fixed-02",
+        "publicLink": false
+      },
+      {
+        "identifier": "round-110/short-diagonal-preparation/execution/fixed-02/after.png",
+        "sha256": "a16e0fded3090236fed9133a345080a0af55f10a16d25fc940a3dd1ae1345031",
+        "dimensions": [
+          844,
+          390
+        ],
+        "reportAuthorPersonallyViewed": true,
+        "phase": "after",
+        "trial": "fixed-02",
+        "publicLink": false
+      },
+      {
+        "identifier": "round-110/short-diagonal-preparation/execution/fixed-03/before.png",
+        "sha256": "474b08969f3e505419bc8e0a8df1e2496aae7b5e1bdd94d99d9588d85ab85943",
+        "dimensions": [
+          844,
+          390
+        ],
+        "reportAuthorPersonallyViewed": false,
+        "phase": "before",
+        "trial": "fixed-03",
+        "publicLink": false
+      },
+      {
+        "identifier": "round-110/short-diagonal-preparation/execution/fixed-03/after.png",
+        "sha256": "90e53fc511ffbba4fdc66fb8ecebf587d16afc9b30efbe7ea2bf318c1551f557",
+        "dimensions": [
+          844,
+          390
+        ],
+        "reportAuthorPersonallyViewed": false,
+        "phase": "after",
+        "trial": "fixed-03",
+        "publicLink": false
+      },
+      {
+        "identifier": "round-110/short-diagonal-preparation/execution/fixed-04/before.png",
+        "sha256": "771516602ccb1ef71f6be0f4244e44f6b633e2684e8c5c564fdbc01eae8cd11d",
+        "dimensions": [
+          844,
+          390
+        ],
+        "reportAuthorPersonallyViewed": false,
+        "phase": "before",
+        "trial": "fixed-04",
+        "publicLink": false
+      },
+      {
+        "identifier": "round-110/short-diagonal-preparation/execution/fixed-04/after.png",
+        "sha256": "3e18d34b88dbc0618cbed65fd58ef68dc93b45ddda0cd74dbbb5c2661bf2e0bf",
+        "dimensions": [
+          844,
+          390
+        ],
+        "reportAuthorPersonallyViewed": false,
+        "phase": "after",
+        "trial": "fixed-04",
+        "publicLink": false
+      },
+      {
+        "identifier": "round-110/short-diagonal-preparation/execution/fixed-05/before.png",
+        "sha256": "c8f3d5392aebbcec3552409cfd84e776d5e2e70e41d81d641069247d31448ece",
+        "dimensions": [
+          844,
+          390
+        ],
+        "reportAuthorPersonallyViewed": false,
+        "phase": "before",
+        "trial": "fixed-05",
+        "publicLink": false
+      },
+      {
+        "identifier": "round-110/short-diagonal-preparation/execution/fixed-05/after.png",
+        "sha256": "ae6c65e4406f05c564c4578c3365a540162c704e39f250577326447133e46e1c",
+        "dimensions": [
+          844,
+          390
+        ],
+        "reportAuthorPersonallyViewed": false,
+        "phase": "after",
+        "trial": "fixed-05",
+        "publicLink": false
+      },
+      {
+        "identifier": "round-110/short-diagonal-preparation/execution/fixed-06/before.png",
+        "sha256": "cc6c23c47b214a498c14ae583768e7460b2d92ba1b17dbfb851cc5d22532acac",
+        "dimensions": [
+          844,
+          390
+        ],
+        "reportAuthorPersonallyViewed": false,
+        "phase": "before",
+        "trial": "fixed-06",
+        "publicLink": false
+      },
+      {
+        "identifier": "round-110/short-diagonal-preparation/execution/fixed-06/after.png",
+        "sha256": "c8ac32ae6150b09ce4b8cf14b13513e7d6d1b00167ee9ac539d98846a0003453",
+        "dimensions": [
+          844,
+          390
+        ],
+        "reportAuthorPersonallyViewed": false,
+        "phase": "after",
+        "trial": "fixed-06",
+        "publicLink": false
+      },
+      {
+        "identifier": "round-110/short-diagonal-preparation/execution/fixed-07/before.png",
+        "sha256": "f85b509453f524445f4976de585f7ddf184a79d803915dda2662607668388acb",
+        "dimensions": [
+          844,
+          390
+        ],
+        "reportAuthorPersonallyViewed": false,
+        "phase": "before",
+        "trial": "fixed-07",
+        "publicLink": false
+      },
+      {
+        "identifier": "round-110/short-diagonal-preparation/execution/fixed-07/after.png",
+        "sha256": "c20d5df379b7ac5e6662ce7b55bd403195887eb8e0ab336839d3b1273b5532b3",
+        "dimensions": [
+          844,
+          390
+        ],
+        "reportAuthorPersonallyViewed": false,
+        "phase": "after",
+        "trial": "fixed-07",
+        "publicLink": false
+      },
+      {
+        "identifier": "round-110/short-diagonal-preparation/execution/fixed-08/before.png",
+        "sha256": "d48621e771973004596d30fd5494798e05f5880f9eb5626dd7d02e62ae9a9f36",
+        "dimensions": [
+          844,
+          390
+        ],
+        "reportAuthorPersonallyViewed": false,
+        "phase": "before",
+        "trial": "fixed-08",
+        "publicLink": false
+      },
+      {
+        "identifier": "round-110/short-diagonal-preparation/execution/fixed-08/after.png",
+        "sha256": "1d6fab61156ad2c733037f2df69cf5631913d6e86e19c567a84d1f76cab64bc3",
+        "dimensions": [
+          844,
+          390
+        ],
+        "reportAuthorPersonallyViewed": false,
+        "phase": "after",
+        "trial": "fixed-08",
+        "publicLink": false
+      },
+      {
+        "identifier": "round-110/short-diagonal-preparation/execution/fixed-09/before.png",
+        "sha256": "407f4933a6d37aaac1bb17006d55254ab0240191d512bdae324c244b78228923",
+        "dimensions": [
+          844,
+          390
+        ],
+        "reportAuthorPersonallyViewed": false,
+        "phase": "before",
+        "trial": "fixed-09",
+        "publicLink": false
+      },
+      {
+        "identifier": "round-110/short-diagonal-preparation/execution/fixed-09/after.png",
+        "sha256": "a1314bba76777fdbd584d56955606ea79d7e84b4b93a98680d8663e68394f927",
+        "dimensions": [
+          844,
+          390
+        ],
+        "reportAuthorPersonallyViewed": false,
+        "phase": "after",
+        "trial": "fixed-09",
+        "publicLink": false
+      },
+      {
+        "identifier": "round-110/short-diagonal-preparation/execution/fixed-10/before.png",
+        "sha256": "4c0fd93ddd4b2645404a95fc57d4172b8c0a3964f42a96dbb2eae82b0fe1de29",
+        "dimensions": [
+          844,
+          390
+        ],
+        "reportAuthorPersonallyViewed": false,
+        "phase": "before",
+        "trial": "fixed-10",
+        "publicLink": false
+      },
+      {
+        "identifier": "round-110/short-diagonal-preparation/execution/fixed-10/after.png",
+        "sha256": "bd6062004bdd1af2fef1322d4c4e5a78ae2151eef2a578562ebb6c01783fb236",
+        "dimensions": [
+          844,
+          390
+        ],
+        "reportAuthorPersonallyViewed": false,
+        "phase": "after",
+        "trial": "fixed-10",
+        "publicLink": false
+      }
+    ],
+    "representativePublicPhotos": [
+      {
+        "file": "diagnostic-fast-after.png",
+        "trial": "fixed-01",
+        "phase": "after",
+        "sha256": "2cd2758bc31bfb2efca637f45bdcc134a38315e6b45f59940d71955d296c4895",
+        "dimensions": [
+          844,
+          390
+        ],
+        "originalCopiedUnmodified": true,
+        "reportAuthorPersonallyViewed": true,
+        "meaning": "After the fixed diagnostic input on unchanged product; not after a product fix."
+      },
+      {
+        "file": "diagnostic-slow-after.png",
+        "trial": "fixed-02",
+        "phase": "after",
+        "sha256": "a16e0fded3090236fed9133a345080a0af55f10a16d25fc940a3dd1ae1345031",
+        "dimensions": [
+          844,
+          390
+        ],
+        "originalCopiedUnmodified": true,
+        "reportAuthorPersonallyViewed": true,
+        "meaning": "After the fixed diagnostic input on unchanged product; not after a product fix."
+      }
+    ],
+    "limitation": "A one-condition unchanged-product non-reproduction; not proof all short swipes or all devices work and not an external9-to0 improvement.",
+    "sourceVerificationScope": {
+      "local": "seven files before and after every trial",
+      "HTTP": "five files before input only; after served list empty",
+      "dependencies": "eight selected local files before and after sequence"
+    },
+    "representativeTimingCaveat": {
+      "trial": "fixed-02",
+      "finalDOMwhyVisible": false,
+      "laterOriginalAfterPhotoShowsReasonBand": true,
+      "observationsAreNotSimultaneous": true,
+      "flickerNotEstablished": true
+    },
+    "independentAudit": "round-110/short-diagonal-audit",
+    "reportAuthorViewedOriginalDiagnosticPhotos": 4,
+    "originalDiagnosticPhotoCount": 24,
+    "publicDiagnosticPhotoCount": 2
+  },
+  "tests": {
+    "pytest": {
+      "command": "pytest tests/",
+      "actualExit": 127,
+      "completionChunk": "c337ff",
+      "error": "/bin/bash: line 1: pytest: command not found",
+      "suiteExecuted": false
+    },
+    "newRegression": "not performed",
+    "redGreen": "not performed",
+    "afterReproduction": "not performed",
+    "fiveSizeComparison": "not performed",
+    "otherRoundsIncluded": false
+  },
+  "productChanges": 0,
+  "testChanges": 0,
+  "newConfirmedFixCandidatesFromPrimary": 0,
+  "operatorBoundary": {
+    "preserved": [
+      "guide0.3s",
+      "fast swipe",
+      "tap nonselection",
+      "first-card shadow",
+      "reason location/2s",
+      "30s card",
+      "audio",
+      "scarecrow/sun",
+      "protected engine/field3d/cards unchanged"
+    ],
+    "explicitRemovedDecorations": "index.html:441 small boxes/dots/background rice rows remain hidden",
+    "unconfirmedDesignHypothesis": "Whether existing soil marks are noticed; no explanation/countdown additions selected",
+    "newReportOnlyCandidate": "Diagnostic representative after photos show the reason band and next finger in the same region. Some of both remains readable; impact/frequency/duration/complete occlusion not measured. Preserve operator reason position/2s and guide."
+  },
+  "limits": [
+    "All ten swipes were left from visible current/same-card cues, not a balanced choice experiment.",
+    "Initial photo wait before play is not isolated product response latency.",
+    "DOM/event/capture/Node clocks are separate; not physical paint or human retention.",
+    "A translucent photo does not establish a persistent blank or exact frame duration.",
+    "No physical finger/sensor/network/audio/retention validation.",
+    "Diagnostic exit0 means sequence completion, not no-console-errors or full-suite success.",
+    "External40-case self-report is not this runtime; no9-to0 causal comparison."
+  ],
+  "references": {
+    "sourceUI": [
+      "kome365/index.html:441",
+      "kome365/cards.js:584"
+    ],
+    "diagnosticInput": [
+      "kome365/index.html:3963",
+      "kome365/index.html:4034",
+      "kome365/index.html:4035",
+      "kome365/index.html:4055"
+    ],
+    "newAgriculturalFactsAdded": false,
+    "videoActuallyViewed": false,
+    "interpretiveSources": [
+      "https://www.famitsu.com/news/201705/17132636.html",
+      "https://github.com/flossbud/sakurai-game-design/blob/main/episodes/transcripts/100-development-secrets-of-the-original-kirby.md"
+    ]
+  },
+  "evidence": [
+    {
+      "identifier": "round-110/source-selected.json",
+      "sha256": "225840fec6c08824fdd808b838b70b28719ced66bc4007a70fca0b51485864a2",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-110/preparation-3cde897a/metadata.json",
+      "sha256": "3b4e4d675dd81ecd2948241e18d2a84fc5761e68b67f8bed1ead44ceb1c78caf",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-110/preparation-3cde897a/root-execution.json",
+      "sha256": "c46a7266b85a84807f48f00332cfd97d4c150a24bfc3c9afdc663b44565b52bf",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-110/preparation-3cde897a/strict/report.json",
+      "sha256": "f98aefbe03cd7179ca7e564eba6b6afb48e6631c708e4d111cc41917a56a5421",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-110/preparation-3cde897a/strict/driver-timing.json",
+      "sha256": "78108ed1e950082c72ba19b8d83f3eac690db851788df52444c1ec63d1d535e8",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-110/preparation-3cde897a/strict/extra.json",
+      "sha256": "2c0aea19c0b185504c1af4354814ada6fb62cdce359d0fb88a4c99374f66545e",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-110/pytest/execution.json",
+      "sha256": "fef22fb40d403f28edf9fce0585249ef64e9a63e0b7a71160577ec9333c3a626",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-110/pytest/run.log",
+      "sha256": "884c356a17af2535f8a7a3bbe8d088034a1e58ef021200c45eff7b237b232aa5",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-110/discovery-a/summary.json",
+      "sha256": "b6b09f5051c0f3c91ff907a754b5ce6c1668e9103a8cb2a74423ec9a75bfe552",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-110/discovery-a/frozen.json",
+      "sha256": "d4eba1512bb2b54e8420d3919b544aa72f12c37b80d232e14bce7d2f54d3d8cc",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-110/discovery-c/primary-candidate-selection.json",
+      "sha256": "9bbbb2d170623f6f9573e5af9bf291688054300d8ecd2e2632f98cd9ab4fc30c",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-110/design-review/README.md",
+      "sha256": "bd453cca2beab330eb8271791c38bfbbcdbb83f2d155427cf2a47c681d8bcbeb",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-110/discovery-b/review.json",
+      "sha256": "c4cc29f1a355704031990830cc1acff0bb19783391178e17390389bf2ca30919",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-110/discovery-b/frozen.json",
+      "sha256": "27b7902eb5c27502d4f715723488d35540c15fee2c03a5b0ae2141b8af64cd24",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-110/short-diagonal-preparation/config.json",
+      "sha256": "87b9ec1499c10049750050d1646da3f0d3cb355e3f4a1286b0dd4d911c937c4a",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-110/short-diagonal-preparation/root-execution.json",
+      "sha256": "2b07bb5a12cd4c0b4c792c89a300ad10745884acd7f7b6d72ea9f089cd9477e8",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-110/short-diagonal-preparation/execution/summary.json",
+      "sha256": "e3abcab79d1b8c1169bd2008473da246e296d52ccc52d3e09ffa6b8e578a728a",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-110/discovery-c/short-diagonal-audit.json",
+      "sha256": "01286e62d198addeabb1d15e52c6a5256cb0986fc60451e43bca340fbb65bcad",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-110/design-review/diagnostic-reason-hand-observation.md",
+      "sha256": "06336b70a9939cdb2e8859aa5d73073a4615e289a03fafb5fe3d38c9095929de",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-110/main-update.json",
+      "sha256": "275d20afee75a692d165086b99e529bd941f3e5eb638dc3ae7b80443d5a43af5",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-110/short-diagonal-audit/summary.json",
+      "sha256": "c3bb3f60b027202171458b684791b44ab3f84b5084f2ea598474675c7bbe3d8f",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-110/short-diagonal-audit/trial-rows.json",
+      "sha256": "f073084e9d2e55acb6ed66cdedc5c126ca93e4fdfe0457d43cd231f28f6feea1",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-110/short-diagonal-audit/frozen.json",
+      "sha256": "23df2e0b772cec676e40430cc4dda614071c70397789a4df1a5575774a0ae15c",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-110/discovery-b/short-diagonal-image-review/review.json",
+      "sha256": "df3683a760633665439ee46b4011b829422e5b2ce64761cf7e0a3da319de5709",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-110/discovery-b/short-diagonal-image-review/frozen.json",
+      "sha256": "dfc74db8a78981b4b8390bae803910f3bc01e58ed8d2602cfe00cf94cddfe946",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-110/discovery-b/clock-addendum.md",
+      "sha256": "17ad7b5ef53df5e0f16694ac7c3e692634cf7864a2c1a08daca172db4b995180",
+      "publicLink": false
+    },
+    {
+      "identifier": "round-110/discovery-b/clock-addendum-frozen.json",
+      "sha256": "32946f42930acaf5f4689e2e11b2aaa796e115034fdc6709c7ca5fa3573ec90d",
+      "publicLink": false
+    }
+  ],
+  "publicationSourceSeparation": "Measured source3cde897ae205ad95b6a54b89ea1d08f1d2d2b584; root subsequently fast-forwarded documentation-only to a69573f12b2d7929d52d394664d8c87000c69a8a after all tests. That later HEAD was not rerun as a full suite."
+}

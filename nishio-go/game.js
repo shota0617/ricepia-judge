@@ -3014,6 +3014,16 @@ function toastHold() {
   // 窓より 手前に ある ので、0.3秒 かけて うすれる 間 窓の 題名に かぶって 見えた（自分で 遊んで 分かった：窓の 題が かくれた）。窓が 開く ときは すっと 消す
   t.style.transition = 'none'; t.classList.remove('show'); void t.offsetWidth; t.style.transition = ''; clearTimeout(toastTimer);
 }
+// 操作を 終えて いらなくなった 案内だけを 消す。待っている 同じ案内も、あとで 出し直さない。
+function toastDismiss(msg) {
+  for (const q of [toastQ, toastAfter.q || []]) {
+    for (let i = q.length - 1; i >= 0; i--) if (q[i] === msg) q.splice(i, 1);
+  }
+  const t = $('toast');
+  if (t.textContent !== msg) return;   // ほかの 知らせの 読む時間は 変えない
+  clearTimeout(toastTimer);
+  t.style.transition = 'none'; t.classList.remove('show'); void t.offsetWidth; t.style.transition = '';
+}
 // 人の話の窓が開いている間、知らせは 窓の下（下の札の すぐ上）に出るが、小さい画面（320×568）では 窓が そこまで のびていて「▶ とじる」に重なった（自分で 遊んで 分かった）。
 // 重なるときは 下の札の上に 重ねて出す（low）。ゴールの人に 着いたときは 知らせが 先に出て あとから 窓が開くので、窓の 大きさが かわった ときにも 見る
 function toastDodge() {
@@ -4792,6 +4802,7 @@ window.nishioGo = {
   },
   spotTip, dist, cooldownLeft, inReach, reachOf, guideRadius, renderGuide, checkin, checkinSpot, popupHtml, toast, toastAfter, renderLog, ymd, refreshNearby, reactLine, get npcs() { return placeNpcs(); }, weekTheme, giveBag, talkNpc, callNpc(id) { calledBy = id || null; }, meetCritter, critterLeft, critterFirst: () => !Object.keys(S.critters || {}).length, watchOpen, watchWater, alleyFind, mzGrain, mzFruit, mzPiece, mzView, mzCache, mzQuest, mzDino, mzChase, mzEnergy, mzShoo, mzTorch, mzBrigade, mzPurify, mzRescueJoin, mzRescue, mzCube, mzGrainHas: key => mzGrainGot().includes(key), get mzGrains() { return mzGrainGot().length; }, alleyOpen: (x, y) => (dayState().alleys || 0) < ALLEY.daily && !(S.alleys || []).includes(`${x},${y}`), sealCands, sealPickCheck, clearInfo: () => ({ cleared: !!S.cleared, got: SEAL_MAIN.filter(id => (S.seals || []).includes(id)).length, need: SEAL_MAIN.length }), get rival() { return rivalWhere(); }, rivalSay, RIVAL, areaArt, npcMet, chestOpened: id => dayState().chests.includes(id), liveChests, get welcomeChest() { return welcomeDue(); },
   moveTo(lat, lng, kind) { if (!demo) return; follow = false; stepMove = kind === 'step'; try { onFix(lat, lng, 5, Date.now()); } finally { stepMove = false; } },
+  toastDismiss,
   get driving() { return driving; },
   get guide() { return guideTarget(); }, guideDispName, decideGuide, setGuide, guideNoPath, guideKept: () => !!(S.guide && (S.guide.mine || S.guide.refer || S.guide.byId)),   // guideKept：自分で 選んだ・人の すすめの 行き先か（かってに かえない）
   autoInterval, autoLearn, idleCheck, buyUp, IDLE,

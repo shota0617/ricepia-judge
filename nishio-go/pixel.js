@@ -9252,6 +9252,7 @@ function drawWorldLabels(ox, oy, T, w, h, dpr, css) {
 }
 function setWorld(on) {
   worldMode = on;
+  if (!on && G.toastDismiss) G.toastDismiss('🌏 ゴールは 🏁 の 所（👣 で めいろに もどる）');
   document.body.classList.toggle('pxw', on);
   $('pxWorld').innerHTML = on ? ICO('feet', '👣', '歩く地図') : ICO('globe', '🌏', 'せかいちず');
   $('pxWorld').title = on ? '歩く地図にもどる' : '西尾市ぜんたいの地図';

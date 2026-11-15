@@ -2363,7 +2363,14 @@ modeListeners.push(() => { if (KT) KT.clear(); });   // あるいて／操作し
 const guideTarget = () => {
   const g = S.guide;
   if (!g) return null;
-  if (g.kind === 'npc') { const n = placeNpcs().find(x => x.id === g.id); return n ? { ...g, ...npcSpot(n) } : null; }
+  if (g.kind === 'npc') {
+    const n = placeNpcs().find(x => x.id === g.id);
+    // 表示用の名前は、案内をコピーして保存する時には含めない。
+    return n ? Object.defineProperties({ ...g, ...npcSpot(n) }, {
+      guidePersonName: { value: n.name, enumerable: false },
+      guidePlaceName: { value: n.spotName, enumerable: false }
+    }) : null;
+  }
   // 名所は、いま読み込んでいるスポットの位置で（スポットを読み直すと、OpenStreetMap で位置が補正されることがある）
   const s = spots.find(x => x.id === g.id);
   return s ? { ...g, lat: s.lat, lng: s.lng } : g;
@@ -2504,6 +2511,10 @@ function spotThumb(sp) {
 function guideDispName(g) {
   if (!g || !g.name) return '';
   if (g.kind !== 'npc') return g.name;
+  // 現在の案内は、同じ人の名前と場所で元の名前を確認できる時だけ並べ替える。保存名は変えない。
+  const person = g.guidePersonName, place = g.guidePlaceName;
+  if (typeof person === 'string' && person && typeof place === 'string' && place &&
+      g.name === `${person}（${place}）`) return `${place}（${person}）`;
   const m = /^([^（）]+)（([^（）]+)）$/.exec(g.name);
   return m ? `${m[2]}（${m[1]}）` : g.name;
 }

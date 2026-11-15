@@ -9446,7 +9446,7 @@ if ($('tiltSens')) { $('tiltSens').value = String(tiltG.deg); $('tiltSens').addE
 let mzHitStop = 0;
 const MZ_HIT_STOP = 5, MZ_HIT_STOP_MS = 45;
 const MZ_GOAL_STOP_MS = 100;
-const mzGoalStop = { at: 0, until: 0, shift: 0 };
+const mzGoalStop = { at: 0, until: 0 };
 const ROLL_ACC = 7, ROLL_MAX = 4.2, ROLL_BOUNCE = 0.25, ROLL_STICK = 0.6;
 
 const ROLL_CRR = 0.9, ROLL_LIN = 0.28, ROLL_AIR = 0.12;
@@ -9736,7 +9736,6 @@ function tapDemoTick() {
   const moved = rp.x === null || tapDemo.x === null ? rp.x !== tapDemo.x : Math.hypot(rp.x - tapDemo.x, rp.y - tapDemo.y) > DEMO_MOVE;
   tapDemo.x = rp.x; tapDemo.y = rp.y;
   if (moved) { tapDemo.at = now; tapDemo.walked = now - tapDemo.walkT < 700; }
-  if (moved && typeof mzGoalCredit === 'function') tapDemo.at -= mzGoalCredit(now, tapDemo.at);
   if (moved) demoLead.tx = demoLead.ty = 0;
   const path = mzRt.path;
 
@@ -12757,25 +12756,22 @@ function mzHelpToastTick() {
 
 
 
+
 function mzGoalHold(now) {
-  if (calmMotion || mapCovered()) return 0;
+  if (calmMotion || mapCovered()) { mzGoalStop.at = mzGoalStop.until = 0; return 0; }
   mzHitStop = Math.max(mzHitStop, now + MZ_GOAL_STOP_MS);
   mzGoalStop.at = now; mzGoalStop.until = now + MZ_GOAL_STOP_MS;
-  mzGoalStop.shift = rp.x !== null && Math.hypot(rp.vx, rp.vy) > 0.05 ? MZ_GOAL_STOP_MS : 0;
   return MZ_GOAL_STOP_MS;
-}
-function mzGoalCredit(now, at) {
-  return mzGoalStop.at && at > mzGoalStop.at && at - mzGoalStop.until < 3000 ? mzGoalStop.shift : 0;
 }
 function mzGoalFx(text) {
   mzSpringShot();
 
-  const now0 = performance.now(), now = now0 + mzGoalHold(now0), kinds = ['rice', 'rice', 'leaf', 'rice', 'gold', 'leaf'], cols = { rice: '#fffdf3', leaf: ['#6f9f2c', '#9ccc4f'], gold: '#ffd84a' };
+  const now = performance.now(), fxT = now + mzGoalHold(now), kinds = ['rice', 'rice', 'leaf', 'rice', 'gold', 'leaf'], cols = { rice: '#fffdf3', leaf: ['#6f9f2c', '#9ccc4f'], gold: '#ffd84a' };
   for (let i = 0; i < MZ_GOAL_FX.n; i++) {
     const a = Math.random() * Math.PI * 2, v = MZ_GOAL_FX.vMin + Math.random() * MZ_GOAL_FX.vVar, k = kinds[i % kinds.length];
-    mzFx.push({ t0: now, vx: Math.cos(a) * v, vy: Math.sin(a) * v - MZ_GOAL_FX.up, k, c: k === 'leaf' ? cols.leaf[i % 2] : cols[k], spin: 4 + Math.random() * 8, ph: Math.random() * 6.3, life: MZ_GOAL_FX.lifeMin + Math.random() * MZ_GOAL_FX.lifeVar });
+    mzFx.push({ t0: fxT, vx: Math.cos(a) * v, vy: Math.sin(a) * v - MZ_GOAL_FX.up, k, c: k === 'leaf' ? cols.leaf[i % 2] : cols[k], spin: 4 + Math.random() * 8, ph: Math.random() * 6.3, life: MZ_GOAL_FX.lifeMin + Math.random() * MZ_GOAL_FX.lifeVar });
   }
-  mzBanner.t0 = now; mzBanner.text = text || ''; mzBanner.said = false;
+  mzBanner.t0 = fxT; mzBanner.text = text || ''; mzBanner.said = false;
   mzBanner.gid = mzGoalAsk.id && now - mzGoalAsk.at < 100 && (G.spots || []).some(s => s.id === mzGoalAsk.id) ? mzGoalAsk.id : ''; mzGoalAsk.id = '';
   mzHelpGoal();
 }
@@ -14069,8 +14065,8 @@ const TAP_STEP_MS = 180, TAP_STEP_MIN = 60;
 function tapWalkTick() {
   tapS.timer = null;
   tapDemo.walkT = performance.now();
-  const hs = typeof mzHitStop === 'number' && typeof mzGoalStop === 'object' ? mzHitStop - tapDemo.walkT : 0;
-  if (hs > 0 && tapS.path.length) { if (mzGoalStop.until === mzHitStop) mzGoalStop.shift = Math.max(mzGoalStop.shift, mzHitStop - (tapS.due || tapDemo.walkT)); tapS.due = mzHitStop; tapS.timer = setTimeout(tapWalkTick, hs); return; }
+  const hs = typeof mzHitStop === 'number' && typeof mzGoalStop === 'object' && mzGoalStop.until === mzHitStop ? mzHitStop - tapDemo.walkT : 0;
+  if (hs > 0 && tapS.path.length) { tapS.due = mzHitStop; tapS.timer = setTimeout(tapWalkTick, hs); return; }
   const nx = tapS.path.shift(), t = targetTile(), sx = Math.floor(t.x), sy = Math.floor(t.y);
   if (!nx || !G.demo || !active || worldMode || driving || mapCovered(false, true) || Math.abs(nx[0] - sx) + Math.abs(nx[1] - sy) !== 1) return tapWalkStop();
   if (!step(nx[0] > sx ? 'right' : nx[0] < sx ? 'left' : nx[1] > sy ? 'down' : 'up') || !tapS.path.length) return tapWalkStop();

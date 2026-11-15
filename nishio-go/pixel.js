@@ -9446,7 +9446,7 @@ if ($('tiltSens')) { $('tiltSens').value = String(tiltG.deg); $('tiltSens').addE
 let mzHitStop = 0;   // ヒットストップ：強く 当たった 瞬間、お米を ほんの少し 止める（手ごたえ。画面と ★の 時計は 止めない）
 const MZ_HIT_STOP = 5, MZ_HIT_STOP_MS = 45;   // これより 速く 当たったら（マス/秒）・止める 長さ
 const MZ_GOAL_STOP_MS = 100;   // サイクル220（N-e）：ゴールの 止め（かべ 45ms より 長い。下の mzGoalFx の 注）
-const mzGoalStop = { at: 0, until: 0, shift: 0 };   // いちばん 新しい ゴールの 止め（at〜until）と、止めで 動きが おくれた ぶん（shift）
+const mzGoalStop = { at: 0, until: 0 };   // いちばん 新しい ゴールの 止め（at〜until）
 const ROLL_ACC = 7, ROLL_MAX = 4.2, ROLL_BOUNCE = 0.25, ROLL_STICK = 0.6;   // サイクル68・のんびり転がる：ACC 13→7・MAX 8→4.2・BOUNCE 0.42→0.25。 マス/秒²・いちばん速い速さ（下り坂でも これまで）・はね返り・これより おそく当たったら はねずに ぴたっと止まる
 // へり方：ころがり抵抗（いつも同じだけ へる。止まる所で ぴたっと止まる）＋ 速さに比べて へる分 ＋ 空気（速いほど強い。サイクル68以降はいちばん速い速さは ROLL_MAX=4.2 で決まる）
 const ROLL_CRR = 0.9, ROLL_LIN = 0.28, ROLL_AIR = 0.12;   // サイクル68・のんびり転がる：惰性は 長く、そっと 止まる（0.35→0.28・0.2→0.12）
@@ -9736,7 +9736,6 @@ function tapDemoTick() {
   const moved = rp.x === null || tapDemo.x === null ? rp.x !== tapDemo.x : Math.hypot(rp.x - tapDemo.x, rp.y - tapDemo.y) > DEMO_MOVE;
   tapDemo.x = rp.x; tapDemo.y = rp.y;
   if (moved) { tapDemo.at = now; tapDemo.walked = now - tapDemo.walkT < 700; }   // 転がって いる・歩いて いる（walked：さいごに 動いたのは タップ・なぞりの 歩き。歩きの 1歩は 0.18秒おき）
-  if (moved && typeof mzGoalCredit === 'function') tapDemo.at -= mzGoalCredit(now, tapDemo.at);   // サイクル220：ゴールの 止めで 動きが おくれた ぶん、止まった 時刻を 前へ（止めの ぶん 手本が おそく ならない）
   if (moved) demoLead.tx = demoLead.ty = 0;   // サイクル207：動いたら 道すじの 先を 見る 分は もどす   // 転がって いる・歩いて いる（walked：さいごに 動いたのは タップ・なぞりの 歩き。歩きの 1歩は 0.18秒おき）
   const path = mzRt.path;
   // サイクル197（運営者の声 2026-11-10「最初の 1 タップを促す表示」「１タップを促すお手本」）：iPhone は 1回 タップしないと 傾きの 許可を 聞けない。
@@ -12756,26 +12755,23 @@ function mzHelpToastTick() {   // 道しるべ終了の 知らせ：ゴールの
 // サイクル220（設計の 案 N-e）：ゴールに 着いた しゅんかんに お米が 止まらず、紙ふぶきが 同じ こまに 出て、お米は そのまま つぎの 1歩へ 進んで いた（「いつの まにか 着いた」）。
 // 直し：かべと 同じ 止め（mzHitStop）を ゴールでは 少し 長く（MZ_GOAL_STOP_MS）入れ、紙ふぶき・★・「ついた〜！」は 止めの あとに 出す（長さは そのまま）。
 // 画面と ★の 時計は 止めない。止めの 間の 入力は 落とさない（傾き・キーは 止めの あとの 転がりに そのまま 入る。タップの 歩きは 止めの あとに ふむ）。
-// 止めの 間は 手本を 出さない。止めで おくれた ぶん（shift）は、つぎの 手本の 待ちから 引く（止めの ぶん 手本が おそく ならない）。「動きを へらす」の 人は 止めない（かべと 同じ）
+// 止めの 間は 手本を 出さない。つぎの 手本の 待ち（歩いた あと 0.9秒・止まって 2秒）は かえない（サイクル220b：待ちから 引く しくみは、0.25秒 おきの 見回りでは
+// 手本の 出る 時刻を 1度も 変えなかった ので 取った）。「動きを へらす」の 人は 止めない（かべと 同じ）
 function mzGoalHold(now) {
-  if (calmMotion || mapCovered()) return 0;   // 窓が 開いて いる 間は 紙ふぶきも 窓を とじて から（下の drawMzFx）なので 止めない
+  if (calmMotion || mapCovered()) { mzGoalStop.at = mzGoalStop.until = 0; return 0; }   // 窓が 開いて いる 間は 紙ふぶきも 窓を とじて から（下の drawMzFx）なので 止めない。前の 止めの 値は のこさない（サイクル220b・見直し P3）
   mzHitStop = Math.max(mzHitStop, now + MZ_GOAL_STOP_MS);
   mzGoalStop.at = now; mzGoalStop.until = now + MZ_GOAL_STOP_MS;
-  mzGoalStop.shift = rp.x !== null && Math.hypot(rp.vx, rp.vy) > 0.05 ? MZ_GOAL_STOP_MS : 0;   // 転がって いる：止めた ぶん 転がり おわりが おそく なる（歩きの おくれは tapWalkTick が 足す）
   return MZ_GOAL_STOP_MS;
-}
-function mzGoalCredit(now, at) {   // つぎの 手本の 待ちから 引く ぶん（止めの あとも 動いて いた ときだけ。止めから 3秒 より あとの 動きには 引かない）
-  return mzGoalStop.at && at > mzGoalStop.at && at - mzGoalStop.until < 3000 ? mzGoalStop.shift : 0;
 }
 function mzGoalFx(text) {
   mzSpringShot();   // ばねで はね返って ゴールに 飛びこんだ
   // 紙ふぶきは 西尾らしく（運営者の声「西尾らしく」）：お米つぶ（白い たて長が くるくる）・抹茶の 葉（緑）・金の つぶ（お米屋さんの ゲーム、抹茶の まち）
-  const now0 = performance.now(), now = now0 + mzGoalHold(now0), kinds = ['rice', 'rice', 'leaf', 'rice', 'gold', 'leaf'], cols = { rice: '#fffdf3', leaf: ['#6f9f2c', '#9ccc4f'], gold: '#ffd84a' };
+  const now = performance.now(), fxT = now + mzGoalHold(now), kinds = ['rice', 'rice', 'leaf', 'rice', 'gold', 'leaf'], cols = { rice: '#fffdf3', leaf: ['#6f9f2c', '#9ccc4f'], gold: '#ffd84a' };
   for (let i = 0; i < MZ_GOAL_FX.n; i++) {
     const a = Math.random() * Math.PI * 2, v = MZ_GOAL_FX.vMin + Math.random() * MZ_GOAL_FX.vVar, k = kinds[i % kinds.length];
-    mzFx.push({ t0: now, vx: Math.cos(a) * v, vy: Math.sin(a) * v - MZ_GOAL_FX.up, k, c: k === 'leaf' ? cols.leaf[i % 2] : cols[k], spin: 4 + Math.random() * 8, ph: Math.random() * 6.3, life: MZ_GOAL_FX.lifeMin + Math.random() * MZ_GOAL_FX.lifeVar });
+    mzFx.push({ t0: fxT, vx: Math.cos(a) * v, vy: Math.sin(a) * v - MZ_GOAL_FX.up, k, c: k === 'leaf' ? cols.leaf[i % 2] : cols[k], spin: 4 + Math.random() * 8, ph: Math.random() * 6.3, life: MZ_GOAL_FX.lifeMin + Math.random() * MZ_GOAL_FX.lifeVar });
   }
-  mzBanner.t0 = now; mzBanner.text = text || ''; mzBanner.said = false;
+  mzBanner.t0 = fxT; mzBanner.text = text || ''; mzBanner.said = false;   // サイクル220b（見直し P1）：紙ふぶき・★は 止めの あと（fxT）。下の 着いた名所の くらべは 着いた 時刻（now）の まま
   mzBanner.gid = mzGoalAsk.id && now - mzGoalAsk.at < 100 && (G.spots || []).some(s => s.id === mzGoalAsk.id) ? mzGoalAsk.id : ''; mzGoalAsk.id = '';   // 着いた名所（goal(id) で 確かめた 直後だけ。分からなければ 絵は 出さない）
   mzHelpGoal();   // ゴールの 数え上げ（バナーの 文字は 出さない。サイクル146）
 }
@@ -14069,8 +14065,8 @@ const TAP_STEP_MS = 180, TAP_STEP_MIN = 60;
 function tapWalkTick() {
   tapS.timer = null;
   tapDemo.walkT = performance.now();   // サイクル198：タップ・なぞりで 歩いて いる（着いた あとの 手本を 早く 出す）
-  const hs = typeof mzHitStop === 'number' && typeof mzGoalStop === 'object' ? mzHitStop - tapDemo.walkT : 0;   // サイクル220：ゴールの 止めの 間は ふまない。道は のこして 止めの あとに ふむ（入力を 落とさない）。おくれた ぶんは 手本の 待ちから 引く
-  if (hs > 0 && tapS.path.length) { if (mzGoalStop.until === mzHitStop) mzGoalStop.shift = Math.max(mzGoalStop.shift, mzHitStop - (tapS.due || tapDemo.walkT)); tapS.due = mzHitStop; tapS.timer = setTimeout(tapWalkTick, hs); return; }
+  const hs = typeof mzHitStop === 'number' && typeof mzGoalStop === 'object' && mzGoalStop.until === mzHitStop ? mzHitStop - tapDemo.walkT : 0;   // サイクル220b（見直し P3）：ゴールの 止めの とき だけ（かべの 止め 45ms では 待たせない）   // サイクル220：ゴールの 止めの 間は ふまない。道は のこして 止めの あとに ふむ（入力を 落とさない）
+  if (hs > 0 && tapS.path.length) { tapS.due = mzHitStop; tapS.timer = setTimeout(tapWalkTick, hs); return; }
   const nx = tapS.path.shift(), t = targetTile(), sx = Math.floor(t.x), sy = Math.floor(t.y);
   if (!nx || !G.demo || !active || worldMode || driving || mapCovered(false, true) || Math.abs(nx[0] - sx) + Math.abs(nx[1] - sy) !== 1) return tapWalkStop();
   if (!step(nx[0] > sx ? 'right' : nx[0] < sx ? 'left' : nx[1] > sy ? 'down' : 'up') || !tapS.path.length) return tapWalkStop();

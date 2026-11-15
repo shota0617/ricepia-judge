@@ -1990,7 +1990,7 @@ function endPlatePointer(e, cancelled) {
   if (!pts.has(e.pointerId)) return;
   if (pageSlid(e)) cancelled = true; /* ページを動かした指は、取り消しと同じ（タップ・はじき・空振りに数えない） */
   pts.delete(e.pointerId);
-  if (pts.size < 2) pinch = null;
+  if (pts.size < 2 && pinch) { const p = pinch; pinch = null; if (!cancelled && step === 2 && Math.abs(Z.s - p.s0) < 0.01 && Math.abs(p.twist) < 2) stillPinch(); }
   if (pts.size === 1 && !sortDrag) { /* ズームのあと片方を離しても、残った指で見る場所を動かせる */
     const [p] = pts.values();
     sortDrag = { x:p.x, y:p.y, lx:p.x, ly:p.y, moved:true, t0:0, startG:null, noTap:true }; /* 見る場所を動かすための残り指は、離した時にタップとしない */
@@ -2020,8 +2020,23 @@ function endPlatePointer(e, cancelled) {
       knockSound();
       grains.forEach(g => { if (!g.gone) { g.img.classList.remove("wig"); void g.img.offsetWidth; g.img.classList.add("wig"); } });
       nudgeSpread();
+    } else if (d.moved && !d.hit && !d.noTap && !cancelled && step === 2 && spread && badLeft > 0 && Z.s <= 1.001) {
+      /* 広げた あと（つまむ）の 粒に 当たらなかった なでも、粒の 無い 所の タップと 同じに 返す（サイクル167・最初の1分）。
+         旧版は 広げる 前の なで しか 見て おらず、つまむ の 間に 皿の あいた 所を なでて 離すと 音も 動きも 0 だった（390×844・844×390・1〜3ふくろめ 9回中7回）。
+         トンの 音・粒の ゆれ・つまむ の 空振り（pickMiss: 3回で わるい粒を 指す 手本。粒は 取らない）。寄って いる 間の なでは 見る場所が 動くので ここへは 来ない */
+      knockSound();
+      grains.forEach(g => { if (!g.gone) { g.img.classList.remove("wig"); void g.img.offsetWidth; g.img.classList.add("wig"); } });
+      pickMiss();
     }
   }
+}
+/* 2本指を ほぼ 動かさず 置いて 離した（寄りも ひねりも 0）ときの 返し（サイクル167・最初の1分）。旧版は 音も 動きも 0 だった
+   （なでて ひろげる 9回中9回・つまむ 9回中8回）。粒の 無い 所の タップと 同じ 皿を たたいた 音を 1つ・粒が 小さく ゆれる（🔍 の 動きは 出る ときの 1つ だけに しておく）。
+   空振りには 数えない（段は 進まない）。
+   1回の 2本指で 1回 だけ（はじめに 離した 指で 返し、残りの 指は タップに しない）。取り消された 指では 返さない */
+function stillPinch() {
+  knockSound();
+  grains.forEach(g => { if (!g.gone) { g.img.classList.remove("wig"); void g.img.offsetWidth; g.img.classList.add("wig"); } });
 }
 /* 振る: 許可の画面を出さない端末だけ、スマホを振ると粒がはねて広がる */
 let lastGoodTap = 0, lastGoodX = 0, lastGoodY = 0, shakeAt = 0;

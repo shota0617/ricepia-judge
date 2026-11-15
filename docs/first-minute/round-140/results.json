@@ -1,0 +1,531 @@
+{
+  "status": "REVIEW_READY_DRAFT_HOLD",
+  "game": "kensa",
+  "issue": "Zoom-out transition lets opaque inner board cover UI outside tray",
+  "intendedDocsRoot": "docs/first-minute/round-140",
+  "createdAtUTC": "2026-11-15T14:18:50.332246+00:00",
+  "source": {
+    "baselineHead": "22c91e2cfa16ca901d2c079aba3888d971b6bdff",
+    "productCommitReportedByRoot": "cd5f14d8049e991acc75b4cdabd19a268e944639",
+    "remoteMainReportedByRootAt1407UTC": "22c91e2cfa16ca901d2c079aba3888d971b6bdff",
+    "beforeHTMLSHA256": "4f5f049307d327cab68ac9aabf81749b5dae2c41b54bdce7e6a13b60fcb04741",
+    "afterHTMLSHA256": "c9a67e7d7eb697dbceec4f95d5898bfe8462bb1368bf688d523a4c4e6750e7d6",
+    "newRegressionTestSHA256": "ea3769f64599753a0a6eeb7033568c60b4598379340fa5e3cc822105aa7ed331",
+    "unchangedExistingTestSHA256": "af6916ae41464ca8f6bd95cf027ac0835cb86af7281756925800668597a4790d",
+    "CSSAddedLines": 1,
+    "newTestLines": 186,
+    "CSSLineAfter": 128,
+    "CSSRule": "#plate:has(#plateInner.smooth) { overflow:hidden; }",
+    "preservedSmoothTransitionMs": 450,
+    "causeLocationsInBaseline": [
+      127,
+      130,
+      1703,
+      1716,
+      1739
+    ],
+    "otherSourceFilesUnchanged": [
+      "AGENTS.md",
+      ".claude/skills/ricepia-flow/SKILL.md",
+      "tests/test_kensa.py",
+      "kensa/face_dot.webp",
+      "kensa/kokusashi.webp",
+      "kensa/ittomai.webp",
+      "kome365/engine.js",
+      "kome365/field3d.js",
+      "kome365/cards.js"
+    ],
+    "operatorRulesAndProtectedFilesUnchanged": true
+  },
+  "primary": {
+    "viewport": [
+      844,
+      390
+    ],
+    "observationSeconds": 10,
+    "playSeconds": 60,
+    "actions": 34,
+    "commands": 488,
+    "traceSamples": 602,
+    "pointerEvents": 498,
+    "actionsWithoutRecordedResponse": 0,
+    "recordedErrors": 0,
+    "actualOuterExit": 0,
+    "firstInputSeconds": 0.014,
+    "timeline": {
+      "firstSemanticResponse": {
+        "priorSampleSeconds": null,
+        "firstMatchingSampleSeconds": 0.1762998,
+        "definition": "First recorded hint change from before action1 穀刺しをふくろへさす to ひきぬく; no pre-action trace sample."
+      },
+      "firstExplicitPositiveText": {
+        "priorSampleSeconds": 3.0056998,
+        "firstMatchingSampleSeconds": 3.1055998,
+        "definition": "First sampled evaluation wording ちょうどいい. Earlier sensory/progress changes or sound are not excluded."
+      },
+      "firstStampCompletionProxy": {
+        "priorSampleSeconds": 15.1055998,
+        "firstMatchingSampleSeconds": 15.2055998,
+        "definition": "journey text ぜんぶ つかう and next-bag text become present; stampNow adds these, but stamp graphic onset/hold/render completion is not sampled directly."
+      },
+      "secondBagNumber": {
+        "priorSampleSeconds": 17.5076998,
+        "firstMatchingSampleSeconds": 17.6287998,
+        "definition": "Body prefix changes from 1ふくろめ to 2ふくろめ, with stab hint; not bag-animation completion."
+      },
+      "thirdBagNumber": {
+        "priorSampleSeconds": 44.7056998,
+        "firstMatchingSampleSeconds": 44.8055998,
+        "definition": "Body prefix changes from 2ふくろめ to 3ふくろめ, with stab hint."
+      }
+    },
+    "scope": "DOM sample boundaries; not exact first rendering, stamp-hold duration, completed animation or human recognition."
+  },
+  "separateExploration": {
+    "pilotOperations": 1,
+    "exploratoryAttempts": 10,
+    "exploratoryActualTargetOperations": 6,
+    "adequateCoverage": 6,
+    "outsideObserved": 6,
+    "headerObserved": 6,
+    "targetsAbsent": 3,
+    "lateTargetWithoutInput": 1,
+    "exploratoryActualOuterExit": 1,
+    "exploratoryPNGs": 59,
+    "countedAsPairedOperations": false,
+    "freshExploratoryAfterPlanned": false
+  },
+  "pairedOperations": {
+    "protocolSHA256": "99c9ad767d2e60083568d69b1273a1fd4c85d83ddeb20dc8198b3e99a82af4f5",
+    "sessionsPerPhase": 1,
+    "zoomOutsPerPhase": 10,
+    "requestedZoomOutDurationsMs": [
+      120,
+      600,
+      120,
+      600,
+      120,
+      600,
+      120,
+      600,
+      120,
+      600
+    ],
+    "setupZoomInsPerPhase": 9,
+    "setupZoomInDurationMs": 120,
+    "before": {
+      "actualOuterExit": 0,
+      "exitTool": "60f5e3",
+      "reportSHA256": "63dcac34223c7810c67a6c5ca5dd6f0f8485f6aaf66595ac789ac8b648e3ac6b",
+      "actualOuts": 10,
+      "actualSetupIns": 9,
+      "coverageCount": 10,
+      "outsideCount": 10,
+      "headerCount": 10,
+      "setupAt": 26.707,
+      "finishedAtPlaySeconds": 53.304,
+      "allErrorListsEmpty": true,
+      "noLateNewInputs": true,
+      "noUnfinishedTouches": true,
+      "allClosedAndGates": true,
+      "PNGs": 31,
+      "naturalPreparationActions": 17,
+      "trustedRepetitionContacts": 19,
+      "postReleaseFrames": 370,
+      "outsideFrames": 128,
+      "headerFrames": 98,
+      "initialScale": 2,
+      "laterScales": [
+        2.4
+      ]
+    },
+    "after": {
+      "actualOuterExit": 0,
+      "exitTool": "961afe",
+      "reportSHA256": "167b68be0a4504a9170761829a85a7978949283530e96fc49ba5acde2cbf6d1f",
+      "actualOuts": 10,
+      "actualSetupIns": 9,
+      "coverageCount": 10,
+      "outsideCount": 0,
+      "headerCount": 0,
+      "setupAt": 26.699,
+      "finishedAtPlaySeconds": 53.961,
+      "allErrorListsEmpty": true,
+      "noLateNewInputs": true,
+      "noUnfinishedTouches": true,
+      "allClosedAndGates": true,
+      "PNGs": 31,
+      "naturalPreparationActions": 17,
+      "trustedRepetitionContacts": 19,
+      "postReleaseFrames": 370,
+      "outsideFrames": 0,
+      "headerFrames": 0,
+      "initialScale": 2,
+      "laterScales": [
+        2.4
+      ]
+    },
+    "randomSeedMatched": false,
+    "independentFirstTimeUsers": false,
+    "independentAuditBlockingIssues": 0,
+    "photoPair": {
+      "operation": 2,
+      "requestedHoldMs": 600,
+      "beforePath": "images/zoom-out-before.png",
+      "afterPath": "images/zoom-out-after.png",
+      "releaseToPhotoRequestMs": [
+        3.9,
+        3.6
+      ],
+      "releaseToPhotoCompleteMs": [
+        72.9,
+        92.6
+      ],
+      "sameRenderedFrame": false
+    }
+  },
+  "additionalRegression": {
+    "testMethod": "test_zoom_out_keeps_rendered_content_clipped",
+    "fixture": true,
+    "old": {
+      "actualExit": 1,
+      "methodsRun": 1,
+      "modes": 3,
+      "failedSubtests": 2,
+      "passedMethod": false,
+      "modeResults": [
+        {
+          "mode": "normal",
+          "eligibleFrames": 15,
+          "escapedFrames": 15,
+          "pageerrorCount": 0
+        },
+        {
+          "mode": "interrupted",
+          "eligibleFrames": 3,
+          "escapedFrames": 3,
+          "pageerrorCount": 0
+        },
+        {
+          "mode": "reduce",
+          "eligibleFrames": 0,
+          "escapedFrames": 0,
+          "pageerrorCount": 0
+        }
+      ],
+      "consoleObserved": false
+    },
+    "new": {
+      "actualExit": 0,
+      "methodsRun": 1,
+      "modes": 3,
+      "failedSubtests": 0,
+      "passedMethod": true,
+      "modeResults": [
+        {
+          "mode": "normal",
+          "eligibleFrames": 14,
+          "escapedFrames": 0,
+          "pageerrorCount": 0
+        },
+        {
+          "mode": "interrupted",
+          "eligibleFrames": 2,
+          "escapedFrames": 0,
+          "pageerrorCount": 0
+        },
+        {
+          "mode": "reduce",
+          "eligibleFrames": 0,
+          "escapedFrames": 0,
+          "pageerrorCount": 0
+        }
+      ],
+      "consoleObserved": false
+    },
+    "independentFromNaturalOperationCount": true
+  },
+  "matrix": {
+    "fixture": true,
+    "stage": 2,
+    "grainsHidden": true,
+    "actualExitBefore": 0,
+    "actualExitAfter": 0,
+    "comparisonActualExit": 0,
+    "issues": [],
+    "geometryTolerancePx": 0.75,
+    "stableStates": [
+      "initial",
+      "zoomed",
+      "settled"
+    ],
+    "stableStatePairs": 15,
+    "independentElementsAndTextsExactMatches": 15,
+    "afterOriginalImagesIndependentlyViewed": 20,
+    "beforeOriginalImagesIndependentlyViewed": 20,
+    "earlyImagesIntermediateBracketed": [
+      false,
+      false,
+      false,
+      false,
+      false
+    ],
+    "sizes": [
+      {
+        "viewport": [
+          320,
+          568
+        ],
+        "beforeEligibleFrames": 11,
+        "afterEligibleFrames": 11,
+        "beforeEscapedFrames": 11,
+        "afterEscapedFrames": 0,
+        "sufficientBefore": true,
+        "sufficientAfter": true
+      },
+      {
+        "viewport": [
+          390,
+          844
+        ],
+        "beforeEligibleFrames": 14,
+        "afterEligibleFrames": 14,
+        "beforeEscapedFrames": 14,
+        "afterEscapedFrames": 0,
+        "sufficientBefore": true,
+        "sufficientAfter": true
+      },
+      {
+        "viewport": [
+          568,
+          320
+        ],
+        "beforeEligibleFrames": 13,
+        "afterEligibleFrames": 13,
+        "beforeEscapedFrames": 13,
+        "afterEscapedFrames": 0,
+        "sufficientBefore": true,
+        "sufficientAfter": true
+      },
+      {
+        "viewport": [
+          844,
+          390
+        ],
+        "beforeEligibleFrames": 14,
+        "afterEligibleFrames": 14,
+        "beforeEscapedFrames": 14,
+        "afterEscapedFrames": 0,
+        "sufficientBefore": true,
+        "sufficientAfter": true
+      },
+      {
+        "viewport": [
+          820,
+          1180
+        ],
+        "beforeEligibleFrames": 16,
+        "afterEligibleFrames": 15,
+        "beforeEscapedFrames": 16,
+        "afterEscapedFrames": 0,
+        "sufficientBefore": true,
+        "sufficientAfter": true
+      }
+    ],
+    "existingRangeNotes": "Goal raw Range partial clipping and horizontal h1 display:none are identical before/after; not newly introduced or asserted missing glyph ink.",
+    "scope": "Each size once in explicit fixture; not natural play at every size or all-stage/device coverage."
+  },
+  "existingTests": {
+    "baselineInitial": {
+      "ran": 206,
+      "passed": 202,
+      "skipped": 4,
+      "exit": 0
+    },
+    "baselineBrowserRerun": {
+      "ran": 4,
+      "passed": 3,
+      "failed": 1,
+      "skipped": 0,
+      "exit": 1,
+      "failure": "test_cycle163_last_step_dot_is_a_stamp_ring: 320x568 no-preference glyph8 !=0 (tests/test_kensa.py:4326)"
+    },
+    "distinctBefore": {
+      "ran": 206,
+      "passed": 205,
+      "failed": 1,
+      "skipped": 0
+    },
+    "after": {
+      "ran": 206,
+      "passed": 205,
+      "failed": 1,
+      "skipped": 0,
+      "actualExit": 1,
+      "seconds": 36.319
+    },
+    "sameFailureBeforeAfter": true,
+    "failureName": "test_cycle163_last_step_dot_is_a_stamp_ring",
+    "failureLocation": "tests/test_kensa.py:4326",
+    "failureDetail": "320x568 no-preference glyph8 !=0",
+    "existingTestUnchanged": true,
+    "newRegressionCountKeptSeparate": true
+  },
+  "requiredPytest": {
+    "command": "pytest tests/",
+    "actualExit": 127,
+    "testsExecuted": 0,
+    "available": false,
+    "wholeSuitePassed": false
+  },
+  "hold": {
+    "productionMerge": false,
+    "productionRelease": false,
+    "draftOnly": true,
+    "reasons": [
+      "Existing stamp-ring baseline failure remains",
+      "Required pytest whole suite unavailable"
+    ],
+    "ruleLocation": ".claude/skills/ricepia-flow/SKILL.md:213",
+    "approvalQuestionRequired": false
+  },
+  "preserved": [
+    "First tap does not advance",
+    "Pinch/select and grading are not made automatic",
+    "First-bag rescue bounds",
+    "Rest-card conditions",
+    "Stamp hold250ms",
+    "Existing input, audio, judgment and progression",
+    "Smooth450ms and direct pinch/pan behavior"
+  ],
+  "deferred": [
+    "Zoom caption changes",
+    "Mute/audio UI alternatives"
+  ],
+  "limitations": [
+    "Human retention/comprehension improvement not measured",
+    "One session per phase and unmatched random seeds",
+    "No physical finger/sensor/network/audio validation",
+    "This Chromium supports :has; unsupported/older real browsers not validated",
+    "Photo and geometry observations are not the same frame",
+    "Fixture, primary, pilot, exploration and paired-operation counts are separate"
+  ],
+  "providedTranscriptReference": {
+    "chapter": 134,
+    "title": "Improving Games for Those with Cognitive Disabilities",
+    "providedSource": "/workspace/attachments/e4f8b64f-2f88-4555-a465-5ac8c7193933/ゲーム開発動画_文字起こし_GMTK_20261115.md",
+    "sourceSHA256": "1db50be2482094c159f4fd276ab0e11443f8532e6dfe0ccecc8dddda834ff70a",
+    "chapterStartChar": 1493458,
+    "chapterEndChar": 1502787,
+    "chapterLines": [
+      1246,
+      1251
+    ],
+    "chapterSHA256": "e6048e073d5a502ebc54b2075d4f2d7e0af5ef23d97fc7654e9effe2a27933f4",
+    "quotes": [
+      {
+        "quote": "Try to use smooth transitions instead of quick snaps and fast zooms.",
+        "startChar": 1495242,
+        "endChar": 1495310,
+        "sourceLine": 1249
+      },
+      {
+        "quote": "make sure your text is on a solid background so there's nothing interfering with the letter shapes.",
+        "startChar": 1496971,
+        "endChar": 1497070,
+        "sourceLine": 1249
+      }
+    ],
+    "sourceURLForIdentificationOnly": "https://www.youtube.com/watch?v=ObhvacfIOg0",
+    "videoViewed": false
+  },
+  "evidence": {
+    "primaryRaw": {
+      "path": "/workspace/scratch/first-minute/round-140/preparation/strict/play.json",
+      "sha256": "20b027b499e8a11dd9abb3054ea5f04613355b984c20ae7591ab0ffcfef2d6f7"
+    },
+    "primaryClosure": {
+      "path": "/workspace/scratch/first-minute/round-140/preparation/root-after-gate.json",
+      "sha256": "c650db5616bf0d5ada4ba77b7284e63b22eea3e59fee009298fd94ae9aa003a2"
+    },
+    "primaryTimingAudit": {
+      "path": "/workspace/scratch/first-minute/round-140/discovery-a/audit.json",
+      "sha256": "b94d684526069f8cccd7b189014c1edde178ab9f8788b93d7e05c5dcfd25054b"
+    },
+    "primaryVisualAudit": {
+      "path": "/workspace/scratch/first-minute/round-140/discovery-c/findings.json",
+      "sha256": "61a7b22a9a4a4990c6a97fefa965173bc63c6bf3a948208ae371c7eeb544cc76"
+    },
+    "pilotClosure": {
+      "path": "/workspace/scratch/first-minute/round-140/zoom-guide-pilot/root-after-closure.json",
+      "sha256": "1160e65ad17722b86ece45404f71f5218c88cd776d9a4e759b712b8d32ac153f"
+    },
+    "pilotVisualAudit": {
+      "path": "/workspace/scratch/first-minute/round-140/zoom-clip-image-review/finding.json",
+      "sha256": "f2484054c9d56e966c8f6c36ef6253c818f1b75cee9440d9ee21b8566f6bcc16"
+    },
+    "exploratoryClosure": {
+      "path": "/workspace/scratch/first-minute/round-140/zoom-clip-ten/root-before-closure.json",
+      "sha256": "989fedfdeb312c9c7bd0a9d27a87f1aea927e21dde51da7c91cb80f45f8b4a04"
+    },
+    "pairedResults": {
+      "path": "/workspace/scratch/first-minute/round-140/zoom-clip-repeat10/paired-results.json",
+      "sha256": "f3724333fcaf77ea1cc3b28cd448cd651d7592d84454e4178233c2528340658d"
+    },
+    "pairedIndependentAudit": {
+      "path": "/workspace/scratch/first-minute/round-140/paired-result-audit/audit.json",
+      "sha256": "5401b30a25ae9f6830b06d65e1d107199edd0c838bf41b84829e1ad3d9cc2fca"
+    },
+    "pairedIndependentNotes": {
+      "path": "/workspace/scratch/first-minute/round-140/paired-result-audit/notes.md",
+      "sha256": "a9b7feb3103e3f4d10098f47da7dbacd9b8e6a61ddd3fa2ac7d03ad220c65fc5"
+    },
+    "appliedSourceReview": {
+      "path": "/workspace/scratch/first-minute/round-140/zoom-clip-repeat10/root-applied-review.json",
+      "sha256": "2830f4148ba4af0d655058e2cb164e1f222c60c8acb3098407a0b883fe0c3814"
+    },
+    "oldRED": {
+      "path": "/workspace/scratch/first-minute/round-140/regression-final/old-red.json",
+      "sha256": "400040c4f66e99b29aac506575c15e7c9407b97901b2d10c51579d25585f6a2f"
+    },
+    "newGREEN": {
+      "path": "/workspace/scratch/first-minute/round-140/regression-final/new-green.json",
+      "sha256": "16592a03c8c3ae7ac6528a64b4f39067903c802bf5d983957c15aadb26970c1a"
+    },
+    "matrixComparison": {
+      "path": "/workspace/scratch/first-minute/round-140/zoom-clip-matrix/paired-result.json",
+      "sha256": "b9938633635ca7afd4b279859e5ed6fc122622f01426afd6d83ee17317c89bd2"
+    },
+    "matrixIndependentImageNotes": {
+      "path": "/workspace/scratch/first-minute/round-140/zoom-clip-matrix/after-image-audit/notes.md",
+      "sha256": "7e9e1c4c007bf629e0c857ab4e27132e8620cf3c963b1bc73fcfd77acb7668db"
+    },
+    "matrixIndependentImageManifest": {
+      "path": "/workspace/scratch/first-minute/round-140/zoom-clip-matrix/after-image-audit/manifest.json",
+      "sha256": "7b0f90191f35f12a10fc3309d65821658d552f299d13ec1191109ce5a33336d5"
+    },
+    "existingBaseline": {
+      "path": "/workspace/scratch/first-minute/round-140/baseline-existing-test-summary.json",
+      "sha256": "09cf7c63d947206711097364bab1638195280258fd0da0b7b84fb8a9356b874f"
+    },
+    "existingAfterExecution": {
+      "path": "/workspace/scratch/first-minute/round-140/after-kensa-unittest.json",
+      "sha256": "ea472a113e01738e084a8882df019920aa6ddeb4edfd2e833a09cc2f2523dfa9"
+    },
+    "existingAfterLog": {
+      "path": "/workspace/scratch/first-minute/round-140/after-kensa-unittest.log",
+      "sha256": "2a0d3b1f7a6bb6cf1f92ee59db5d19aef7040ecf05f6929531f93c56b948c1ba"
+    },
+    "pytestAfter": {
+      "path": "/workspace/scratch/first-minute/round-140/pytest-after.json",
+      "sha256": "daa1c001cec985fb2abdd8c84da69d64750bc08f92f910f6d369ca6f491eb93a"
+    }
+  },
+  "includedOriginalPNGs": 11,
+  "rawLogsCopied": false,
+  "fullTranscriptsCopied": false,
+  "reportAuthorNewRuntimeRuns": 0,
+  "reportAuthorProductEdits": 0,
+  "reportAuthorPRCreated": 0,
+  "humanRetentionImprovementMeasured": false
+}

@@ -1520,6 +1520,9 @@ const COVER = (() => {
 // グリース：ロータリーを上げ下げする 3 点リンクなどの 動く所・すべる所には グリースを入れておく。切れていると 上げ下げで ギーギー鳴る
 // （田圃に遊ぶ・・・「農機具雑談」：3 点リンクを始め、ロータリーを上下させる 全ての可動部・摺動部に グリースを塗る。上げ下げで ギーギー鳴るようでは ユーザー失格）。
 // ゲームでは、春に はじめの点検をしないと 冬のあいだに切れている。止まって上げると グリースを入れる（+2 分）
+// サイクル285・最初の1分（白線の外で 迷わない）: 作業機が お題の 白線の 外（0.4m より外）に いるか。外に いる 間は 手入れの できごと（止まって 15 秒 ほど）を 始めない・
+// なぞり始めで 作業機を 下げない・止まって いる 間は「白線の外は 耕しません、曲がって絵の中へ」を 出した まま に する
+function artOutside() { return typeof ART !== 'undefined' && ART.on && ART.sdAt(S.x + ROTARY_Z * Math.sin(S.yaw), S.z + ROTARY_Z * Math.cos(S.yaw)) > 0.4; }
 const GREASE = (() => {
   let dry = false, last = 1, moving = false, moves = 0, t = 0, told = false, fixT = 0, fixed = false;
   function start(checked) { dry = season === 'haru' && !checked; }
@@ -1540,8 +1543,8 @@ const GREASE = (() => {
     moving = m;
     if (m && (t -= dt) <= 0) { t = 0.42; if (audio && soundOn) squeak(audio.ac, audio.out, (0.6 + 0.4 * Math.random()) * (startNoticeMuted() ? 0.5 : 1)); }   // 動いているあいだ ギーッ、ギーッ。サイクル234・最初の1分: 知らせ（moves>=3）はガード済みでも音は無ガードだった。dryは既定の春・未点検で成立し、最初の降下（約0.28秒）で1回・以後の上げ下げ（約0.83秒）で2回ずつ鳴り、通常の最初の列→上げ→隣で下げる流れでは最初の1分で少なくとも5回出る。squeakのゲインピークはのんびりでも0.09〜0.15で土の音（0.035）の約2.6〜4.3倍のため、最初の1分だけ音量を半分にして弱める（鳴る間隔・dry自体は不変更）
     if (!m) t = 0;
-    if (moves >= 3 && !m && !told && !startNoticeMuted()) { told = true; toast('ギーギー いってるね。とまって 上げたら みるよ（ロータリーを上げ下げすると ギーギー鳴る。3 点リンクの 動く所の グリースが 切れているのかも。止まって 上げると 見ます）', 7); }
-    if (told && Math.abs(S.v) < 0.05 && !S.rotDown && S.rotPos > 0.9 && (S.rotorW || 0) < 1 && (!S.stalled || offFree()) && !(S.crank > 0)) {   // 爪が止まってから
+    if (moves >= 3 && !m && !told && !startNoticeMuted() && !artOutside()) { told = true; toast('ギーギー いってるね。とまって 上げたら みるよ（ロータリーを上げ下げすると ギーギー鳴る。3 点リンクの 動く所の グリースが 切れているのかも。止まって 上げると 見ます）', 7); }
+    if (told && Math.abs(S.v) < 0.05 && !S.rotDown && S.rotPos > 0.9 && (S.rotorW || 0) < 1 && (!S.stalled || offFree()) && !(S.crank > 0) && !artOutside()) {   // 爪が止まってから。サイクル285: 白線の外では 始めない（中に もどってから）
       S.stalled = true; S.parked = true; S.v = 0; S.autoUp = false;
       for (const k of ['fwd', 'back', 'left', 'right']) key[k] = 0;
       fixT = 5; S.elapsed += 120;
@@ -1575,14 +1578,14 @@ const CLAW = (() => {
     }
     if (!gone) return;
     if (working && S.v > 0.05) run += S.v * dt;
-    if (run > 12 && !told && !chk && tries < 3 && toastT <= 0 && !startNoticeMuted()) { chk = true; toast(MSG, 7); }   // ほかの知らせが 消えてから。サイクル179・最初の1分は のんびりでは 出さない
+    if (run > 12 && !told && !chk && tries < 3 && toastT <= 0 && !startNoticeMuted() && !artOutside()) { chk = true; toast(MSG, 7); }   // ほかの知らせが 消えてから。サイクル179・最初の1分は のんびりでは 出さない
     if (chk) {                                      // 1.2 秒 見えていたら 気づいたことにする（上書きされたら 出しなおす）
       if ($('toast').dataset.raw !== MSG) { chk = false; tries++; }
       else if (toastT <= 7 - 1.2) { chk = false; told = true; }
     }
     // 気づいたかどうかに かかわらず、すじが 12m のびたら 止まって上げると 見る（画面下の案内でも 知らせつづける）。
     // エンジンが止まっているとき（ほかの手入れが終わって 止まったまま・エンストしたまま）も、エンジンを かけなおさずに そのまま見る
-    if (run > 12 && Math.abs(S.v) < 0.05 && !S.rotDown && S.rotPos > 0.9 && (S.rotorW || 0) < 1 && (!S.stalled || offFree()) && !(S.crank > 0)) {   // 爪が止まってから
+    if (run > 12 && Math.abs(S.v) < 0.05 && !S.rotDown && S.rotPos > 0.9 && (S.rotorW || 0) < 1 && (!S.stalled || offFree()) && !(S.crank > 0) && !artOutside()) {   // 爪が止まってから
       S.stalled = true; S.parked = true; S.v = 0; S.autoUp = false;
       for (const k of ['fwd', 'back', 'left', 'right']) key[k] = 0;
       fixT = 6; S.elapsed += 180;
@@ -1614,12 +1617,12 @@ const HERI = (() => {
     if (fixed && !S.parked) fixed = false;          // エンジンをかけなおした
     if (!worn) return;
     if (working && S.v > 0.05) run += S.v * dt;
-    if (run > 12 && !told && !chk && tries < 3 && toastT <= 0 && !startNoticeMuted()) { chk = true; toast(MSG, 7); }   // ほかの知らせが 消えてから。サイクル174・最初の1分: のんびりでは春の開始直後（既定の季節・未点検では12m耕すと出る）に右はし爪の長文知らせで最初のなぞりを止めない。chkは立てないので1分を過ぎて知らせが空いていれば従来どおり出す（遅れて出す形）。くわしい説明では従来どおり開始直後から出す
+    if (run > 12 && !told && !chk && tries < 3 && toastT <= 0 && !startNoticeMuted() && !artOutside()) { chk = true; toast(MSG, 7); }   // ほかの知らせが 消えてから。サイクル174・最初の1分: のんびりでは春の開始直後（既定の季節・未点検では12m耕すと出る）に右はし爪の長文知らせで最初のなぞりを止めない。chkは立てないので1分を過ぎて知らせが空いていれば従来どおり出す（遅れて出す形）。くわしい説明では従来どおり開始直後から出す
     if (chk) {                                      // 1.2 秒 見えていたら 気づいたことにする（上書きされたら 出しなおす）
       if ($('toast').dataset.raw !== MSG) { chk = false; tries++; }
       else if (toastT <= 7 - 1.2) { chk = false; told = true; }
     }
-    if (run > 12 && Math.abs(S.v) < 0.05 && !S.rotDown && S.rotPos > 0.9 && (S.rotorW || 0) < 1 && (!S.stalled || offFree()) && !(S.crank > 0) && !startNoticeMuted()) {   // 爪が止まってから。サイクル212・最初の1分: のんびりでは最初の1分は入口知らせ（174でガード済み）だけでなく修理も始めない（止めて上げると知らせなしに駐車・修理へ入ってしまう漏れ）。runは数え続け worn もそのままなので、1分を過ぎて止めて上げれば従来どおり直す（遅れて直す形）。くわしい説明では従来どおり最初の止めて上げるで直す
+    if (run > 12 && Math.abs(S.v) < 0.05 && !S.rotDown && S.rotPos > 0.9 && (S.rotorW || 0) < 1 && (!S.stalled || offFree()) && !(S.crank > 0) && !startNoticeMuted() && !artOutside()) {   // 爪が止まってから。サイクル212・最初の1分: のんびりでは最初の1分は入口知らせ（174でガード済み）だけでなく修理も始めない（止めて上げると知らせなしに駐車・修理へ入ってしまう漏れ）。runは数え続け worn もそのままなので、1分を過ぎて止めて上げれば従来どおり直す（遅れて直す形）。くわしい説明では従来どおり最初の止めて上げるで直す
       S.stalled = true; S.parked = true; S.v = 0; S.autoUp = false;
       for (const k of ['fwd', 'back', 'left', 'right']) key[k] = 0;
       fixT = 6; S.elapsed += 300;
@@ -8126,7 +8129,8 @@ const TRACE = {
     if (camMode !== 0) { camMode = 0; look.yaw = look.pitch = 0; $('bCam').textContent = '👁 ' + CAMS[0]; this.rebase = true; }   // サイクル118: 運転席視点に戻す（ユーザー実機指示 2026-11-05）。なぞりは運転席から前方の田んぼをなぞる形にする。最初の点は旧視点の座標なので、次の add で引き直す（従来の rebase）
     // サイクル260・最初の1分: なぞりはじめに自動で下ろす知らせ「…を下げました」は、のんびりでは はじめの 1 回だけ。
     // 🔰 が白線・旋回で上げるたびに 次のなぞりで下りて同じ吹き出しが出ていた（実測 スマホ横・見本どおりに向きを変える人の はじめの 60 秒: 吹き出し 9 回のうち 7 回がこれ）。ボタン・キーで下げたときと、くわしい説明では従来どおり毎回出す
-    if (!S.rotDown && !S.stalled) { toggleRotary(!DETAIL && this.lowerTold); if (S.rotDown) this.lowerTold = true; }       // 下りていなければ 自動で下ろす（降下止めの判定は toggleRotary 側）。エンスト中は下げない（なぞりでの再始動が できなくなるため。Codex指摘）
+    if (artOutside() && EASY.on) { if (!S.rotDown) EASY.autoUp = true; }   // サイクル285: 🔰 の とき、白線の外で なぞり始めても 下げない（絵の中に もどったら 🔰 が 下げる。🔰 を 切った 人は 今までどおり 下げる）。それまでは 外で なぞる たびに 下がり、畦で 止まった あとも 下げた まま 外に いた
+    else if (!S.rotDown && !S.stalled) { toggleRotary(!DETAIL && this.lowerTold); if (S.rotDown) this.lowerTold = true; }       // 下りていなければ 自動で下ろす（降下止めの判定は toggleRotary 側）。エンスト中は下げない（なぞりでの再始動が できなくなるため。Codex指摘）
     this.draw();
     return true;
   },
@@ -8301,7 +8305,9 @@ const HINT = {
     // 曲がり方を覚えた人（sideOK 3 以上）には出さない。曲がりはじめた・絵の中へ もどった・前に耕す所が来た ら消す。なぞりで ない指（まわりを見る・ボタン）・キー・自動運転の間も消す。
     // 指を離して止まるまでの間は 出したままにし、止まって 0.4 秒で 今までどおり「止まった人への見本」に かわる（その間 見本が とぎれない）。
     // 向きは 耕す所が多く残っている側（なければ 田んぼのまん中の側）
-    const outNow = live && this.done && ART.on && this.sideOK < 3 && ART.sdAt(S.x, S.z) > 0.4 && !this.workAhead(1), outDy = this.outYaw === null ? 9 : Math.abs(Math.atan2(Math.sin(S.yaw - this.outYaw), Math.cos(S.yaw - this.outYaw)));
+    // サイクル285: 白線に 近づいたら（車体が 白線の 3.5m 内側・まっすぐ前 3〜14m に 耕す所が ない＝白線が ボンネットに かくれる ころ）から 出す。それまでは 車体が 白線を 0.4m こえてから で、
+    // 白線は 8.5〜13.3 秒 ボンネットの 下に かくれて 見えない まま 外へ 出ていた
+    const outNow = live && this.done && ART.on && this.sideOK < 3 && ART.sdAt(S.x, S.z) > -3.5 && !this.workAhead(1), outDy = this.outYaw === null ? 9 : Math.abs(Math.atan2(Math.sin(S.yaw - this.outYaw), Math.cos(S.yaw - this.outYaw)));
     if (outNow && TRACE.on && S.v > 0.3 && outDy < 0.26) this.outT = HINT.from(this.outT, dt); else { this.outT = 0; this.outYaw = S.yaw; }
     if (!this.turn && this.outT > 0.5) this.turn = { out: true, yaw: this.outYaw, x: S.x, z: S.z, side: this.pick(true) };
     if (this.turn && this.turn.out && (!outNow || (!TRACE.on && (drag || viewPts.size > 0 || touchIds.size > 0 || key.fwd || key.back || key.left || key.right || AUTO.on)) || Math.abs(Math.atan2(Math.sin(S.yaw - this.turn.yaw), Math.cos(S.yaw - this.turn.yaw))) >= 0.26)) this.turn = null;
@@ -10710,6 +10716,7 @@ const COACH = (() => {
     if (S.stuck && S.stuckSink <= 0.07 && !HAMARU.rescuing) return ['!', K('はまった：沈みきる前なら <kbd>↑</kbd><kbd>↓</kbd> をはなし、まっすぐにして <kbd>J</kbd>（デフロック）を押してから ゆっくり <kbd>↑</kbd> か <kbd>↓</kbd>。だめなら' + IMPL + 'を上げて 手をはなして待つ', 'はまった：沈みきる前なら ▲▼ をはなし、まっすぐにして「デフロック」を押してから ゆっくり ▲ か ▼。だめなら' + IMPL + 'を上げて 手をはなして待つ')];
     if (S.stuck && S.rotDown) return ['!', K('はまった：まず <kbd>スペース</kbd>で' + IMPL + 'を上げる（上げてから 応援を呼ぶ）', 'はまった：まず ' + IMPL + 'を上げる（上げてから 応援を呼ぶ）')];
     if (S.stuck) return ['!', K('はまった：<kbd>↑</kbd><kbd>↓</kbd>・ハンドル・<kbd>J</kbd> から手をはなして待つと 応援を呼ぶ（空回りは もっと沈む）', 'はまった：▲▼・ハンドル・「デフロック」から手をはなして待つと 応援を呼ぶ（空回りは もっと沈む）')];
+    if (ART.on && artOutside() && Math.abs(S.v) < 0.3 && !S.done) return ['🔰', '白線の外は 耕しません、曲がって絵の中へ', true];   // サイクル285: 白線の外で 止まって いる 間は 出した まま（はじめの 1 分も。絵の 中に もどれば 消える。手入れの 案内（爪の すり減り など）より 先：外では 手入れを 始めないので、中に もどって から 出す）
     if (S.parked && COVER.fixing) return ['…', 'エンジンを切って、リヤカバーのワイヤーとアームの根元に オイルスプレーを吹いています'];
     if (S.parked && GREASE.fixing) return ['…', 'エンジンを切って、3 点リンクの 動く所・すべる所に グリースを入れています'];
     if (S.parked && CLAW.fixing) return ['…', 'エンジンを切って、予備の爪とボルトを 17mm のスパナで 付けています'];
@@ -10797,7 +10804,7 @@ const COACH = (() => {
   function update(running) {                      // 表示は計器と同じ間隔で
     const m = running ? msg() : null, h = m ? '<b>' + m[0] + '</b>' + m[1] : '';
     const muted = startNoticeMuted();   // サイクル216・最初の1分: のんびりでは最初の1分は COACH の案内文を吹き出し・読み上げに出さず、指アイコンのヒントに一本化する（案内文は消さず、1分後に従来どおり戻る。くわしい説明では従来どおり）
-    if (h !== shown || muted !== fmMuted) { el.innerHTML = h; el.classList.toggle('hidden', !h); shown = h; SAY.coach(muted ? '' : (m ? icoWords(m[1].replace(/<[^>]+>/g, '')) : '')); }   // ふだんは キャラクターが 話す。ガードが外れた回は、文が同じでも再送して吹き出しに戻す
+    if (h !== shown || muted !== fmMuted) { el.innerHTML = h; el.classList.toggle('hidden', !h); shown = h; SAY.coach(muted && !(m && m[2]) ? '' : (m ? icoWords(m[1].replace(/<[^>]+>/g, '')) : '')); }   // ふだんは キャラクターが 話す。ガードが外れた回は、文が同じでも再送して吹き出しに戻す
     fmMuted = muted;
     $('bDoro').classList.toggle('hidden', !(running && SCRAPE.can()));   // スマホ：泥がついて 田んぼの中で止まって上げているときだけ
   }

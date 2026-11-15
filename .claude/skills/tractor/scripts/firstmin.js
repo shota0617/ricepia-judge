@@ -1,4 +1,4 @@
-// 最初の1分の確かめ（サイクル259〜284）：node firstmin.js [tractor.html のパス]
+// 最初の1分の確かめ（サイクル259〜285）：node firstmin.js [tractor.html のパス]
 //  1) 知らせの文：吹き出し（speakText）・短い文（shortText）で かっこが合わなくならない（「…見ます）」のような切れ方をしない）
 //  3) 畦の手前で止まった人：「横へ なぞる」見本が出て、見本どおりで向きが変わる。自動で下ろす知らせは 1 回だけ（サイクル260）
 //  2) のんびりの大きな数字：スマホ縦で 1 回なぞって耕したら 0% のままにならない。田んぼアートでは地図の「でき」と同じ数、お題なしでは小数 1 けた
@@ -557,7 +557,7 @@ const srv = http.createServer((r, s) => { const u = decodeURIComponent(r.url.spl
     await adv(2); let s = await st(), tOut = null, tSide = null, sS = null, t = 0, moved = true;
     for (let n = 0; n < 8 && tSide === null && !s.blk; n++) {
       await fwdDown(); t += 0.5;
-      for (let i = 0; i < 40 && tSide === null && !s.blk; i++) { await adv(0.1); t += 0.1; s = await st(); if (tOut === null && s.out) tOut = t; if (s.side && s.trace) { tSide = t; sS = s; } }
+      for (let i = 0; i < 40 && tSide === null && !s.blk; i++) { await adv(0.1); t += 0.1; s = await st(); if (tOut === null && s.out) tOut = t; if (s.side && s.trace && tOut !== null) { tSide = t; sS = s; } }   // サイクル285: 見本は 白線に 近づいた ときから 出る ので、白線を 出た あとに 見えて いる 最初の 時を とる
       if (tSide === null) { await T('touchEnd'); await adv(1); t += 1; }
     }
     ok('白線の外へ出たら、指を置いたままでも 2.5 秒以内に「横へ なぞる」見本が出る（直す前は 畦で止められるまで 出ない）', tOut !== null && tSide !== null && tSide - tOut <= 2.5 && sS.pe === 'none', [tOut && +tOut.toFixed(1), tSide && +tSide.toFixed(1), sS && sS.pe]);
@@ -1434,6 +1434,40 @@ const srv = http.createServer((r, s) => { const u = decodeURIComponent(r.url.spl
       ok('three を 待つ間（ゲームは まだ 動いていない）に なぞると、指の 下に 土の すじが 出て、離して 1.5 秒 あとも のこる（直す前：画面は 何も 変わらない）', !s0.game && !s0.three && i0 <= 0 && i1 > 30 && i1b > 30 && i2 > 30 && !s1.game, r21);
       ok('2 本の 指は どちらも すじ・pointercancel の あとの 指とは つながない・マウスは 押した ときだけ・回しても のこる・押す 物では ない', i3[0] > 30 && i3[1] > 30 && i4 === 0 && m0 === 0 && m1 > 30 && rs.n > 50 && s2.pe === 'none', r21);
       ok('始まると おおいと いっしょに すじも 消える・耕し率は 0 の まま（すじで 進まない）', s2.started && s2.off && s2.vis === 'hidden' && /^0(\.0)?%$/.test(s2.pct), s2);
+      await ctx.close();
+    }
+    // ---- 22) サイクル285（はじめの 1 分で やめる人を へらす）：白線の 外で 迷わない ----
+    //       直す前（はかった数・前へ なぞる 人）：13 秒で 四角の 白線を 出て、畦で 止められ、そのあと 文字は 0。外で なぞる たびに 作業機が 下がり、
+    //       60 秒ごろ 外に いる まま 手入れ（ギーギー・爪）で 15 秒 止まる。手本は 白線を 出てから
+    {
+      let down22 = false;   // 指が ふれて いるか（離れて いる 指を もう 1 回 離さない）
+      const { ctx, p, cdp } = await open14(''); await fake14(p); const adv = s => p.evaluate(x => window.__adv(x), s), T = async (type, pts) => { if (type === 'touchEnd' && !down22) return; down22 = type !== 'touchEnd'; await cdp.send('Input.dispatchTouchEvent', { type, touchPoints: pts }); };
+      const fwd = async () => { await T('touchStart', [{ x: 195, y: 481, id: 1 }]); for (let i = 1; i <= 10; i++) { await T('touchMove', [{ x: 195, y: 481 - 8.4 * i, id: 1 }]); await p.waitForTimeout(12); await adv(0.05); } };
+      const st = () => p.evaluate(() => { const S = game.S, hs = document.getElementById('hintSwipe'); return { z: +S.z.toFixed(2), v: +S.v.toFixed(2), sd: +ART.sdAt(S.x, S.z).toFixed(2), out: !!(HINT.turn && HINT.turn.out) && !hs.classList.contains('hidden'), rot: S.rotDown, coach: SAY.text[1], fm: FIRSTMIN.on }; });
+      // 22-1) A：白線に 近づくと（車体が まだ 白線の 内側の うちに）「横へ」の 手本（直す前：車体が 白線を 0.4m こえてから）
+      await adv(1); await p.evaluate(() => Object.assign(game.S, { x: -0.1, z: 6, yaw: 0, v: 0, steer: 0 })); await adv(0.5);
+      let first = null;
+      for (let n = 0; n < 6 && !first; n++) { await fwd(); for (let i = 0; i < 35 && !first; i++) { await adv(0.1); const s1 = await st(); if (s1.out) first = s1; } await T('touchEnd', []); await adv(0.6); if (!first) { const s1 = await st(); if (s1.out) first = s1; } }
+      ok('前へ なぞって 白線に 近づくと、車体が まだ 白線の 内側の うちに「横へ」の 手本が 出る（直す前：白線を 0.4m こえてから）', !!first && first.sd < 0, first);
+      // 22-2) B：白線の 外で 止まって いる 間は「白線の外は 耕しません、曲がって絵の中へ」を 出した まま（はじめの 1 分も）。絵の 中に もどったら 消す
+      const MSG = '白線の外は 耕しません、曲がって絵の中へ';
+      await T('touchEnd', []); await p.evaluate(() => { if (game.S.rotDown) game.toggleRotary(); Object.assign(game.S, { x: -0.1, z: 17.5, yaw: 0, v: 0, steer: 0 }); }); await adv(1.5); const b1 = await st(); await adv(10); const b2 = await st();
+      await p.evaluate(() => Object.assign(game.S, { x: -0.1, z: 0, yaw: 0, v: 0, steer: 0 })); await adv(1.5); const b3 = await st();
+      ok('白線の 外で 止まって いる 間は 知らせを 出した まま（10 秒 たっても）・中に もどると 消える（はじめの 1 分。直す前：文字 0）', b1.fm && b1.coach === MSG && b2.coach === MSG && b3.coach !== MSG, [b1.coach, b2.coach, b3.coach, b1.fm]);
+      // 22-3) C：白線の 外で なぞり 始めても 作業機を 下げない（直す前：なぞる たびに 下がる）
+      await p.evaluate(() => { if (game.S.rotDown) game.toggleRotary(); Object.assign(game.S, { x: -0.1, z: 17.5, yaw: 0, v: 0, steer: 0 }); }); await adv(1);
+      await p.evaluate(() => { window.__c22 = false; window.__each = () => { if (game.S.rotDown) window.__c22 = true; }; });
+      await fwd(); await adv(0.5); const c1 = await p.evaluate(() => ({ everDown: window.__c22, rot: game.S.rotDown, auto: EASY.autoUp, sd: +ART.sdAt(game.S.x + ROTARY_Z * Math.sin(game.S.yaw), game.S.z + ROTARY_Z * Math.cos(game.S.yaw)).toFixed(2) })); await T('touchEnd', []); await p.evaluate(() => { window.__each = null; }); await adv(1.5);
+      ok('白線の 外で なぞり 始めても 作業機は 一度も 下がらない（絵の 中に もどれば 🔰 が 下げる。直す前：なぞり 始めで 下がる）', c1.sd > 0.4 && !c1.everDown && !c1.rot && c1.auto, c1);
+      // 22-4) D3：白線の 外に いる 間は 手入れ（右はしの 爪の 交換など）を 始めない・中に もどって 止まれば 始める
+      await p.evaluate(() => { FIRSTMIN.finish(); Object.assign(game.S, { x: -4.4, z: -12, yaw: 0, v: 0, steer: 0 }); if (!game.S.rotDown) game.toggleRotary(); game.key.fwd = 1; }); await adv(19);
+      await p.evaluate(() => { game.key.fwd = 0; }); await adv(1.5);
+      const d0 = await p.evaluate(() => ({ need: game.HERI.need, fixing: game.HERI.fixing }));
+      await p.evaluate(() => { Object.assign(game.S, { x: -0.1, z: 17.5, yaw: 0, v: 0, steer: 0 }); if (game.S.rotDown) game.toggleRotary(); }); await adv(5);
+      const d1 = await p.evaluate(() => ({ need: game.HERI.need, fixing: game.HERI.fixing || game.GREASE.fixing, parked: !!game.S.parked }));
+      await p.evaluate(() => { Object.assign(game.S, { x: -0.1, z: 0, yaw: 0, v: 0, steer: 0 }); if (game.S.stalled && !game.S.parked) game.S.stalled = false; }); await adv(5);   // 車体を 動かした ときの エンスト（手入れでは ない）は もどして、エンジンが かかった 所から 見る
+      const d2 = await p.evaluate(() => ({ fixing: game.HERI.fixing || game.HERI.fixed || game.GREASE.fixing || game.GREASE.fixed, need: game.HERI.need, rot: game.S.rotDown, rotPos: +game.S.rotPos.toFixed(2), rotorW: +(game.S.rotorW || 0).toFixed(2), stalled: !!game.S.stalled, crank: game.S.crank || 0 }));
+      ok('白線の 外で 止まって いる 間は 手入れ（爪の 交換・グリース）を 始めない・中に もどって 止まると 始める（直す前：外でも 始まる）', d0.need && !d1.fixing && !d1.parked && d2.fixing, [d0, d1, d2]);
       await ctx.close();
     }
   }

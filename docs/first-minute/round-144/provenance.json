@@ -1,0 +1,97 @@
+{
+  "assembledUTC": "2026-11-15T18:38:15.688628+00:00",
+  "preparedManifestSHA256": "ccfd1ca3cfced4ab636e66409d6734304950d32c6e60136ded09968cd0cb8a95",
+  "imageCount": 20,
+  "originalImageBytesVerified": true,
+  "rootEdits": "Add exact server/CDP/coordinate/error steps and clarify fixture versus natural play; remove reporter-specific prose. No numeric or image changes.",
+  "files": [
+    {
+      "path": "README.md",
+      "sha256": "b836d1a9043bcbe9a799d6a6a990849398d39d94b0aefc45a0df4126ee837b8d"
+    },
+    {
+      "path": "images/after-primary-observe-10s.png",
+      "sha256": "09ee5206396a07a5c79932efe8c039c1e4fe36609df826c12af2d4c177b7d3c2"
+    },
+    {
+      "path": "images/after-primary-play-10s.png",
+      "sha256": "04176fdcb0a51ea0dea551dc0951ce38580efafbb596b711e205a9f43d41481b"
+    },
+    {
+      "path": "images/after-primary-play-30s.png",
+      "sha256": "148c37c8d9c832a06007012cc81495ffa13b3a4e888a5993d8854e9b89a98a35"
+    },
+    {
+      "path": "images/after-primary-play-60s.png",
+      "sha256": "671e9da5522682d74469fbfa31563ad2a590a6c95a84c522b4f21d164079328d"
+    },
+    {
+      "path": "images/grade-held-after.png",
+      "sha256": "0bd390faabdcb9596ae6436f1760e5f228e92aa0d4f31208f5fab4290d841715"
+    },
+    {
+      "path": "images/grade-held-before.png",
+      "sha256": "22e049078a830d9dded115b4270cbd4dc254e4265dc6e5252c0a52c49f610f92"
+    },
+    {
+      "path": "images/layout-after-320x568.png",
+      "sha256": "ac4aa29ff0024a82ac8266fa0f7d85a8925dabcb3913e8643893910498752175"
+    },
+    {
+      "path": "images/layout-after-390x844.png",
+      "sha256": "4a12f7bb5271f12afca61dfb347db3fa93b2059c2aeec40f028482013bf40c2f"
+    },
+    {
+      "path": "images/layout-after-568x320.png",
+      "sha256": "785183988e9cbb57e7b8617de84e11a487bfed5c714a48903055c34e0642f342"
+    },
+    {
+      "path": "images/layout-after-820x1180.png",
+      "sha256": "70cfbe465953fc28df0f9e670f4e72276ddd1e18a39ecd36695a29080afe739b"
+    },
+    {
+      "path": "images/layout-after-844x390.png",
+      "sha256": "408c96c265e2245dee17bea40708948e0e902696030e8a57596ed7aefeba3248"
+    },
+    {
+      "path": "images/layout-before-320x568.png",
+      "sha256": "d5087b968214cb7f0853888a0338aeff382321ff0da1abd1dfcbed72f204c25f"
+    },
+    {
+      "path": "images/layout-before-390x844.png",
+      "sha256": "57c058f0a80200f725ada2c9aa913ddf4776608186857bc44fef62487c6256c6"
+    },
+    {
+      "path": "images/layout-before-568x320.png",
+      "sha256": "7774c01c7104287c94733a4996dc04cb2c7e1a5c6b686cc8052448143392a856"
+    },
+    {
+      "path": "images/layout-before-820x1180.png",
+      "sha256": "2a633278855a26c383012ac30d2621a3b09ac14b75c9d01ebf8004fb46c8fe39"
+    },
+    {
+      "path": "images/layout-before-844x390.png",
+      "sha256": "85f302441d061b3dc9cb9fdb2dc2b0ffdd77ab408c98000283b9b29bb84afb30"
+    },
+    {
+      "path": "images/primary-observe-10s.png",
+      "sha256": "a48e0564e1b7c0099b335f7d4bd86ca514a81db77941a260697fc9f37d75781b"
+    },
+    {
+      "path": "images/primary-play-10s.png",
+      "sha256": "91a6c63d4da438c096dabfa23356a0b6fc550f07e2264fb6aeaf474d25a7869c"
+    },
+    {
+      "path": "images/primary-play-30s.png",
+      "sha256": "8d05c4ecb44308c3164c533077e05f58fb648955a826a33da08d3202ac09a8c9"
+    },
+    {
+      "path": "images/primary-play-60s.png",
+      "sha256": "3e87cee92d965919bfcf9780ea908988877948bf69c6c673a39c2464e9cec6b7"
+    },
+    {
+      "path": "results.json",
+      "sha256": "f23b5d13cd8c33bb65cd0a9e5ba4e34651e21c97ff7c1191331cc9b24349ffd4"
+    }
+  ]
+}

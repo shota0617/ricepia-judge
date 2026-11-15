@@ -3241,7 +3241,7 @@ pageScrolled = false; assert.equal(pageFinger(0, 60, e2), false);
         self.assertEqual(HTML.count("pageScrolled"), 3)   # 決める所（var）・pageFinger・syncScrolled
         self.assertIn('return !!e && e.pointerType === "touch";', HTML)
         self.assertNotIn("pageTouch", HTML)   # 最後に 押された 機械を 1つの 旗に 覚えない（Codex指摘）
-        self.assertIn("if (!drag || pageFinger(0, e.clientY - drag.y, e)) return;", HTML)
+        self.assertIn("if (!drag || e.pointerId !== drag.id || pageFinger(0, e.clientY - drag.y, e)) return;", HTML)
         self.assertEqual(HTML.count("if (!pageFinger(0, 1, e)) h.timer = setTimeout("), 2)   # 朱肉・にぎる
         # pageFinger は どこでも その 指の できごと e と いっしょに 呼ぶ
         calls = re.findall(r"pageFinger\(((?:[^()]|\([^()]*\))*)\)", HTML[HTML.index("var pageScrolled = false;"):])

@@ -2384,24 +2384,24 @@ document.querySelectorAll(".gradeBtn").forEach(btn => {
     if (step !== 3) return;
     capture(btn, e);
     guideOff();
-    drag = { y:e.clientY, moved:false };
+    drag = { id:e.pointerId, y:e.clientY, moved:false };
   });
   btn.addEventListener("pointermove", (e) => {
-    if (!drag || pageFinger(0, e.clientY - drag.y, e)) return; /* 説明を読んでいる間の たての指は ページを動かす（サイクル150。触れた指だけ・サイクル151）。タップは数える */
+    if (!drag || e.pointerId !== drag.id || pageFinger(0, e.clientY - drag.y, e)) return; /* 説明を読んでいる間の たての指は ページを動かす（サイクル150。触れた指だけ・サイクル151）。タップは数える */
     const dy = Math.min(0, e.clientY - drag.y);
     if (dy < -6) drag.moved = true;
     btn.style.transform = "translateY(" + dy + "px)";
     if (dy <= -24) { drag = null; btn.style.transform = ""; pickGrade(btn); } /* 上へ引く判定: -24px。-34pxでは-30pxの自然な短い引き上げが届かず戻ってしまった（390×844実測・サイクル70）。手本の-48pxはそのまま目安として残す */
   });
   btn.addEventListener("pointerup", (e) => {
-    if (!drag) return;
+    if (!drag || e.pointerId !== drag.id) return;
     drag = null;
     btn.style.transform = "";
     if (pageSlid(e)) return; /* ページを動かした指は タップに数えない */
     if (++taps >= 2) { taps = 0; pickGrade(btn); } /* 届かなかった引き上げもタップも数える */
     else { if (taps === 1) { gradeDemoSound(); /* 空振り1回目の手本の動きにも音を付ける（サイクル122・差28） */ guideAt("move", document.querySelectorAll(".gradeBtn")[lotGrade(LOT)], 0, -48); /* 空振り1回目: 正解ボタンの手本の指をもう一度出す（サイクル81） */ btn.animate([{ transform:"none" }, { transform:"translateY(-12px)" }, { transform:"none" }], { duration:260 * motion, easing:"ease-out" }); } }
   });
-  btn.addEventListener("pointercancel", () => { drag = null; btn.style.transform = ""; });
+  btn.addEventListener("pointercancel", (e) => { if (!drag || e.pointerId !== drag.id) return; drag = null; btn.style.transform = ""; });
   btn.addEventListener("click", (e) => { if (e.detail === 0) pickGrade(btn); });
 });
 

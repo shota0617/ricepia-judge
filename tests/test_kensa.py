@@ -3941,7 +3941,7 @@ const reduced = """ + ("true" if reduced else "false") + """, motion = 1, STEPS 
 const calls = []; const mk = k => ({ className:'', animate(frames, o) { calls.push([k, frames, o]); return {}; } });
 const pips = { children:[0, 1, 2, 3, 4].map(k => mk('pip' + k)) }, stepName = mk('name'), hint = mk('hint');
 const els = { pips, stepName }; const $ = id => els[id]; const document = { documentElement:{ dataset:{} } };
-stepName.classList = { add() {}, remove() {} }; let stepCheckTimer = 0; const STEP_CHECK_MS = 800, hideStepCheck = () => {};   // サイクル166 の 大きい ✓（test_cycle166_... が 見る）
+stepName.classList = { add() {}, remove() {}, contains: () => false }; let stepCheckTimer = 0; const STEP_CHECK_MS = 800, hideStepCheck = () => {}, showStepName = () => {};   // サイクル166 の 大きい ✓（test_cycle166_... が 見る）
 """ + fn + """
 for (let i = 1; i <= 4; i++) {
   calls.length = 0; setStep(i, '');
@@ -4652,19 +4652,19 @@ const TYPES = { '.html': 'text/html; charset=utf-8', '.webp': 'image/webp', '.pn
       const ov = (a, c) => Math.max(0, Math.min(a.r, c.r) - Math.max(a.l, c.l)) * Math.max(0, Math.min(a.b, c.b) - Math.max(a.t, c.t));
       const res = { w, h, rm, at0, steps: [] };
       for (const s of [1, 2, 3, 4]) {
-        setStep(s, ''); await wait(220);
+        setStep(s, ''); await wait(220); const nameNow = sn.textContent;
         const cs = getComputedStyle(sn, '::after'), q = sn.getBoundingClientRect(), bw = parseFloat(cs.borderRightWidth);
         const cw = parseFloat(cs.width) + bw, ch = parseFloat(cs.height) + bw, cx = q.left + parseFloat(cs.left) + cw / 2, cy = q.top + parseFloat(cs.top) + ch / 2, half = (cw + ch) / (2 * Math.SQRT2);
         const box = { l: cx - half, r: cx + half, t: cy - half, b: cy + half };
         const hit = ['stepName', 'goal', 'lotTag'].map(id => ov(box, glyph(document.getElementById(id)))).concat([ov(box, glyph(document.querySelector('#head h1')))],
           ['notesLink', 'face', 'pips'].map(id => ov(box, rect(document.getElementById(id)))));
         res.steps.push({ s, on: on(), color: cs.borderRightColor, size: Math.round(half * 2), font: parseFloat(getComputedStyle(sn).fontSize), hit: Math.round(hit.reduce((a, x) => a + x, 0)),
-          inView: box.l >= 0 && box.r <= innerWidth && box.t >= 0, head: head(), opacity: +cs.opacity });
-        await wait(700);
+          inView: box.l >= 0 && box.r <= innerWidth && box.t >= 0, head: head(), opacity: +cs.opacity, nameNow });
+        await wait(700); res.steps[res.steps.length - 1].nameAfter = sn.textContent;
       }
       setStep(1, ''); const t0 = performance.now(); let off = null; while (performance.now() - t0 < 1500) { await wait(20); if (!on()) { off = Math.round(performance.now() - t0); break; } }
       res.shownMs = off;
-      setStep(2, ''); await wait(400); setStep(3, ''); await wait(600); res.chainStill = on(); await wait(350); res.chainOff = !on();
+      setStep(2, ''); await wait(400); setStep(3, ''); res.chainName = sn.textContent; res.chainOn = on(); await wait(950); res.chainOff = !on() && sn.textContent === 'きめる';
       setStep(1, ''); setStep(0, ''); res.newBagOff = !on();
       setStep(2, ''); Object.defineProperty(document, 'hidden', { configurable: true, get: () => true }); document.dispatchEvent(new Event('visibilitychange')); res.hiddenOff = !on();
       res.head0 = head0; return res;
@@ -4691,11 +4691,55 @@ const TYPES = { '.html': 'text/html; charset=utf-8', '.webp': 'image/webp', '.pn
                 self.assertEqual(st["hit"], 0, t2 + " で ✓ が 字・📖・顔・棒に かかる")
                 self.assertTrue(st["inView"], t2)
                 self.assertEqual(st["head"], c["head0"], t2 + " で 頭の 高さが 変わった")
+                steps = ["ぬく", "はかる", "みわける", "きめる", "おす"]
+                self.assertEqual(st["nameNow"], steps[st["s"] - 1], t2 + " で ✓ が 終えた 段の 名前に 付いて いない（これから の 段の 名前に 付いた）")
+                self.assertEqual(st["nameAfter"], steps[st["s"]], t2 + " で ✓ が 消えた あと いまの 段の 名前に ならない")
             self.assertIsNotNone(c["shownMs"], tag + " で ✓ が 消えない")
             self.assertTrue(760 <= c["shownMs"] <= 1000, tag + " で 見えて いる 長さが 0.8秒で ない: %s" % c["shownMs"])   # 動きを へらしても 同じ
-            self.assertTrue(c["chainStill"] and c["chainOff"], tag + " で 続けて 進んだ 時の ✓ が おかしい")
+            # 0.8秒の うちに 続けて 進んだ ときは、✓ を 重ねず すぐ 最新の 名前（サイクル166b・Codex指摘 PR #1207）
+            self.assertEqual(c["chainName"], "きめる", tag + " で 続けて 進んだ ときに 最新の 名前に ならない")
+            self.assertFalse(c["chainOn"], tag + " で 続けて 進んだ ときに ✓ が 重なった")
+            self.assertTrue(c["chainOff"], tag + " で 続けて 進んだ あと ✓ が のこる")
             self.assertTrue(c["newBagOff"], tag + " で 次の 袋の はじめに ✓ が のこる")
             self.assertTrue(c["hiddenOff"], tag + " で 画面が かくれても ✓ が のこる")
+
+    def test_cycle166b_check_is_on_the_finished_step_not_the_next(self):
+        # Codex指摘 PR #1207: ぬく を 終えると、まだ はかって いない のに「はかる ✓」が 0.8秒 出て、棒（ぬく=完了・はかる=進行中）と 食いちがった。
+        # ✓ が 出て いる 間は 段の 名前を 終えた 段（「ぬく ✓」）の まま、消える ときに 新しい 名前へ。案内文・棒は すぐ かわる。
+        # 読み上げは 名前が かわる 1回 だけ。続けて 進んだ・次の 袋・画面が かくれた ときは すぐ いまの 名前（✓ を のこさない）
+        fn = HTML[HTML.index("function hideStepCheck() {"):HTML.index("function showTop(id) {")]
+        self._node150("""
+const assert = require('node:assert/strict');
+const STEPS = ["ぬく", "はかる", "みわける", "きめる", "おす"], reduced = false, motion = 1, STEP_CHECK_MS = 800;
+let now = 0, q = [], step = 0, stepCheckTimer = 0, writes = [], hidden = false; const vis = [];
+const setTimeout = (f, ms) => { const id = q.length + 1; q.push({ id, at: now + ms, f }); return id; }, clearTimeout = id => { q = q.filter(x => x.id !== id); };
+const run = t => { now = t; const due = q.filter(x => x.at <= now); q = q.filter(x => x.at > now); due.forEach(x => x.f()); };
+const cls = new Set(); let text = 'ぬく';
+const stepName = { classList:{ add: c => cls.add(c), remove: c => cls.delete(c), contains: c => cls.has(c) }, offsetWidth:0, animate() { return {}; },
+  get textContent() { return text; }, set textContent(v) { writes.push(v); text = v; } };
+const mk = () => ({ className:'', animate() { return {}; } });
+const pips = { children:[0, 1, 2, 3, 4].map(mk) }, hint = { textContent:'', animate() { return {}; } };
+const $ = id => ({ stepName, pips })[id];
+const document = { documentElement:{ dataset:{} }, get hidden() { return hidden; }, addEventListener: (t, f) => { if (t === 'visibilitychange') vis.push(f); } };
+""" + fn + """
+setStep(1, '💧 ぐるぐる まわす');
+assert.equal(stepName.textContent, 'ぬく', '✓ が これから の 段の 名前（' + stepName.textContent + '）に 付いた');
+assert.ok(cls.has('chk'));
+assert.equal(hint.textContent, '💧 ぐるぐる まわす');                    // 案内文は すぐ
+assert.equal(pips.children[0].className, 'done'); assert.equal(pips.children[1].className, 'now');   // 棒も すぐ
+assert.deepEqual(writes, []);                                            // 同じ 字は 入れかえない（読み上げ 2回 しない）
+run(799); assert.equal(stepName.textContent, 'ぬく');
+run(800); assert.equal(stepName.textContent, 'はかる'); assert.ok(!cls.has('chk')); assert.deepEqual(writes, ['はかる']);
+// 続けて 進む: 0.3秒後に 次の 段 → すぐ 最新の 名前・✓ なし・あとから 名前が もどらない
+setStep(2, ''); run(1100); setStep(3, '');
+assert.equal(stepName.textContent, 'きめる'); assert.ok(!cls.has('chk'));
+run(3000); assert.equal(stepName.textContent, 'きめる'); assert.ok(!cls.has('chk'));
+// 次の 袋の はじめ
+setStep(4, ''); assert.equal(stepName.textContent, 'きめる'); setStep(0, ''); assert.equal(stepName.textContent, 'ぬく'); assert.ok(!cls.has('chk'));
+// 画面が かくれた
+setStep(1, ''); hidden = true; vis.forEach(f => f()); assert.equal(stepName.textContent, 'はかる'); assert.ok(!cls.has('chk'));
+assert.equal(q.length, 0);                                               // タイマーは のこらない
+""")
 
 if __name__ == "__main__":
     unittest.main()

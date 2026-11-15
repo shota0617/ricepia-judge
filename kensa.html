@@ -476,7 +476,8 @@ const READ_MS = Object.freeze({
   clean:1050,       /* 「きれいに なった！」→ 感覚 */
   faceBig:900,      /* 顔が 大きく なって 答える 間 */
   senseRead:1100,   /* 「くんくん… いい におい」など → きめる */
-  chip:320          /* 次の 袋が 着いて から 炊き上がりの チップ・音 */
+  chip:320,         /* 次の 袋が 着いて から 炊き上がりの チップ・音 */
+  stampHold:250     /* はんこを 押した しゅんかん、紙に のせた まま 見せる 間（ほめる 間・サイクル165）→ はんこが 上がる */
 });
 const STEPS = ["ぬく", "はかる", "みわける", "きめる", "おす"];
 
@@ -2489,8 +2490,13 @@ function stampNow() {
   $("bagBig").classList.add("squash");
   setTimeout(() => $("bagBig").classList.remove("squash"), 240);
   setFace("happy", 1800);
+  /* 押した しゅんかんを 止めて 見せる（サイクル165・最初の1分の いちばんの 見せ場）。旧版は 上がる 前の 止めが 0.15秒 × motion で、
+     「動きを へらす」人は 0.02秒 だった。だれにでも 同じ READ_MS.stampHold（0.25秒）、はんこを 紙に のせた まま（上がる 動きの 始まりを おくらせる だけ）。
+     その 間 受けた 袋が 左右に 4px → 2px → 0 と ぶれて おさまる（はんこは ぶれない）。「動きを へらす」人は ぶれ なし・止め だけ。
+     ぶれは 流す 手本と 同じ 入れ物（swipeDemo）に 入れるので、袋に 指が ふれる・流す・空振りの 手本 が 来たら すぐ 止まる（あとから 動かす しくみは ふやさない） */
+  if (!reduced) swipeDemo = $("bagBig").animate([{ transform:"none" }, { transform:"translateX(4px)", offset:.2 }, { transform:"translateX(-2px)", offset:.55 }, { transform:"none" }], { duration:READ_MS.stampHold, easing:"ease-out" });
   $("hanko").animate([{ transform:"translateY(" + hankoMax + "px)" }, { transform:"translateY(-90px)", opacity:0 }],
-    { duration:320 * motion, delay:150 * motion, easing:"ease-out", fill:"forwards" });
+    { duration:320 * motion, delay:READ_MS.stampHold, easing:"ease-out", fill:"forwards" });
   hint.style.display = "none";
   nextShownAt = performance.now();
   nextBtn.classList.add("on");

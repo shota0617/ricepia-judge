@@ -3819,39 +3819,60 @@ renderTitle();
      画面が かくれて こまが 来ない ときは 1秒ごとの 見はりで 外す。次の スワイプで 出す ときは 前の しるしを すぐ 外して 出しなおす(今と 同じ) */
   var MARK_SEEN_MS = 600, markRaf = 0, markWatch = null, markSeen = 0, markLast = 0;
   function markStop(){ if (markRaf) cancelAnimationFrame(markRaf); markRaf = 0; clearTimeout(markWatch); markWatch = null; }
-  function markOff(){ markStop(); var e = $('swMark'); if (e) e.classList.remove('on'); }
-  function markTick(){ var now = performance.now(); markSeen += Math.min(50, now - markLast); markLast = now; if (markSeen >= MARK_SEEN_MS) { markOff(); return; } var me = $('swMark'); if (me && markSigOf() !== markSig) markFit(me); markRaf = requestAnimationFrame(markTick); }
+  function markOff(){ markStop(); var e = $('swMark'); if (e) e.classList.remove('on'); clearTimeout(markRe); markRe = null; if (markBox) { markBox = null; markVer++; var we = $('swWhy'); if (we && we.classList.contains('on')) whyFit(we); } }
+  function markTick(){ var now = performance.now(); markSeen += Math.min(50, now - markLast); markLast = now; if (markSeen >= MARK_SEEN_MS) { markOff(); return; } markRaf = requestAnimationFrame(markTick); }
   function markGuard(){ markWatch = setTimeout(function(){ if (document.hidden) markOff(); else markGuard(); }, 1000); }
   function markShow(k){ var e = $('swMark'); if (!e) return; markAt = performance.now(); markStop(); e.classList.remove('on'); e.style.backgroundImage = 'url("' + markURL(k) + '")';
-    markRaf = requestAnimationFrame(function(){ markFit(e); void e.offsetWidth; e.classList.add('on'); markSeen = 0; markLast = performance.now(); markRaf = requestAnimationFrame(markTick); }); markGuard(); }
-  /* サイクル185b(PR #1196 の レビュー): 大きな ○✗ は、出す たびに 日づけ・題・カードの 字・選ぶ 文・⌂🔊 の 箱を はかり、
-     かからない 所の うち いちばん 大きく(240px と 画面の はば 58% まで)、もとの 場所(まん中・高さ 40%)に いちばん 近い 所へ 置く。とびだす 動きの 1.08倍も 見こむ。
-     ゆずる 順: ① 字・ボタン・わけ の 吹き出し を ぜんぶ よけて 150px 以上 → ② 吹き出し だけ ゆずる(吹き出しが 上に 重なる。字は 読める) → ③ 題・日づけ も ゆずる(選ぶ 文・⌂🔊・画面の 外は 守る) → ④ もとの 場所(CSS)。
-     出て いる 間に 次の カードが 入る・回す・大きさが 変わる ときは こま ごとに 見なおす(markTick)。0.6秒・こまで 数える しくみ(180)は そのまま */
-  var MARK_MIN = 150, markBox = null, markSig = '', markVer = 0;
-  function markObs(){ var rr = document.createRange(), txt = [], btn = [], vis = function(n){ return n && n.getClientRects().length && getComputedStyle(n).visibility !== 'hidden'; };
-    var t = function(n){ if (!vis(n)) return; rr.selectNodeContents(n); var b = rr.getBoundingClientRect(); if (b.width > 1 && b.height > 1) txt.push(b); };
-    t($('swBigDate')); t($('swTitle')); t($('swText')); var ed = [];
-    [].forEach.call(document.querySelectorAll('#swEdge .eLb'), function(n){ if (!vis(n)) return; rr.selectNodeContents(n); var b = rr.getBoundingClientRect(); if (b.width > 1) ed.push(b); });
-    ['swHome', 'swSnd', 'swVib'].forEach(function(id){ var n = $(id); if (vis(n)) { var b = n.getBoundingClientRect(); if (b.width > 1) btn.push(b); } });
-    return { soft: txt, hard: ed.concat(btn) }; }
-  function markSigOf(){ var d = $('swBigDate'), b = d ? d.getBoundingClientRect() : { top: 0, left: 0, width: 0 }; return window.innerWidth + 'x' + window.innerHeight + ':' + Math.round(b.top) + ',' + Math.round(b.left) + ',' + Math.round(b.width) + ':' + (d ? d.textContent : ''); }
+    markRaf = requestAnimationFrame(function(){ markFit(e); void e.offsetWidth; e.classList.add('on'); markSeen = 0; markLast = performance.now(); markRaf = requestAnimationFrame(markTick);
+      clearTimeout(markRe); markRe = setTimeout(function(){ markRe = null; if (e.classList.contains('on') && markHitsNow()) markFit(e); }, 250); }); markGuard(); }
+  /* サイクル185c(PR #1196 の 2回めの レビュー): 大きな ○✗ の 置き場所は 出す ときに 1回 だけ 決め、0.6秒の 間 動かさない(こま ごとの 見なおしで 数百px とんで いた)。
+     はかるのは、日づけ・題・カードの 字・選ぶ 文・⌂🔊 の 今の 箱と、入って くる 動きを 外した 落ち着いた あとの 箱(transform を 逆に もどす)を 合わせた 範囲。
+     かからない 所の うち いちばん 大きく(240px と 画面の はば 58% まで)、もとの 場所(まん中・高さ 40%)に いちばん 近い 所。とびだす 動きの 1.08倍も 見こむ。
+     ゆずる 順(data-fit): 1 ぜんぶ よけて 150px 以上 → 2 わけ の 吹き出し だけ ゆずる(150px 以上) → 3 150px を 割って 120px まで 小さく して 字・ボタンを よける
+       → 4 それでも 入らない とき だけ 題・日づけ を ゆずる(選ぶ 文・⌂🔊・画面の 外は かならず 守る) → 5 もとの 場所(CSS)。
+     見なおすのは 画面の 大きさ・向きが 変わった とき と、出して 0.25秒 あとに 1回 だけ(その とき 字に かかって いる とき だけ 動かす)。0.6秒・こまで 数える しくみ(180)は そのまま */
+  var MARK_MIN = 150, MARK_MIN2 = 120, markBox = null, markVer = 0, markRe = null, markMemo = {};
+  function markSettle(b, card){ try {   /* カードの transform(入って くる 動き)を 逆に もどした 箱 */
+      var m = getComputedStyle(card).transform; if (!m || m === 'none') return b; var v = m.match(/-?[\d.e]+/g).map(Number); if (v.length !== 6) return b;
+      var a = v[0], bb = v[1], c = v[2], d = v[3], tx = v[4], ty = v[5], det = a * d - bb * c; if (Math.abs(det) < 1e-6) return b;
+      var pr = card.offsetParent ? card.offsetParent.getBoundingClientRect() : { left: 0, top: 0 }, ox = pr.left + card.offsetLeft + card.offsetWidth / 2, oy = pr.top + card.offsetTop + card.offsetHeight / 2;
+      var xs = [], ys = []; [[b.left, b.top], [b.right, b.top], [b.left, b.bottom], [b.right, b.bottom]].forEach(function(p){ var X = p[0] - ox - tx, Y = p[1] - oy - ty; xs.push(ox + (d * X - c * Y) / det); ys.push(oy + (-bb * X + a * Y) / det); });
+      return { left: Math.min.apply(null, xs), top: Math.min.apply(null, ys), right: Math.max.apply(null, xs), bottom: Math.max.apply(null, ys) }; } catch (x) { return b; } }
+  function markObs(){ var rr = document.createRange(), card = $('swCard'), txt = [], hard = [], vis = function(n){ return n && n.getClientRects().length && getComputedStyle(n).visibility !== 'hidden'; };
+    var both = function(list, b, inCard){ if (!(b.width > 1 && b.height > 1)) return; var u = { left: b.left, top: b.top, right: b.right, bottom: b.bottom }; if (inCard && card) { var t = markSettle(b, card); u = { left: Math.min(b.left, t.left) - 8, top: Math.min(b.top, t.top) - 8, right: Math.max(b.right, t.right) + 8, bottom: Math.max(b.bottom, t.bottom) + 8 }; }   /* 8px: 入って くる 動きの 行きすぎ(80% で -1.4px・1.005倍)と はかり の ずれ の ぶん(4px では 320×460 で 1px かかった) */ list.push(u); };
+    var tx = function(list, n){ if (!vis(n)) return; rr.selectNodeContents(n); both(list, rr.getBoundingClientRect(), true); };
+    tx(txt, $('swBigDate')); tx(txt, $('swTitle')); tx(txt, $('swText'));
+    [].forEach.call(document.querySelectorAll('#swEdge .eLb'), function(n){ tx(hard, n); });
+    ['swHome', 'swSnd', 'swVib'].forEach(function(id){ var n = $(id); if (vis(n)) both(hard, n.getBoundingClientRect(), false); });
+    return { soft: txt, hard: hard }; }
+  function markHitsNow(){ if (!markBox) return false; var b = markBox, rr = document.createRange(), hit = false;   /* 0.25秒 あとの 見なおし: 今 ほんとうに 字・ボタンに かかって いる とき だけ(落ち着いた あとの 見こみ や すきまでは 動かさない) */
+    var on = function(r){ if (r.width > 1 && b.left < r.right - 0.5 && b.right > r.left + 0.5 && b.top < r.bottom - 0.5 && b.bottom > r.top + 0.5) hit = true; };
+    ['swBigDate', 'swTitle', 'swText'].forEach(function(id){ var n = $(id); if (n && n.getClientRects().length) { rr.selectNodeContents(n); on(rr.getBoundingClientRect()); } });
+    [].forEach.call(document.querySelectorAll('#swEdge .eLb'), function(n){ if (n.getClientRects().length) { rr.selectNodeContents(n); on(rr.getBoundingClientRect()); } });
+    ['swHome', 'swSnd', 'swVib'].forEach(function(id){ var n = $(id); if (n && n.getClientRects().length) on(n.getBoundingClientRect()); });
+    return hit; }
   function markFit(e){ try {
-    e.style.width = e.style.left = e.style.top = e.style.margin = ''; e.removeAttribute('data-fit'); markBox = null; markSig = markSigOf(); markVer++;
+    e.style.width = e.style.left = e.style.top = e.style.margin = ''; e.removeAttribute('data-fit'); markBox = null; markVer++;
     var W = window.innerWidth, H = window.innerHeight, par = (e.offsetParent || $('swipe')).getBoundingClientRect(), sw = $('swipe').getBoundingClientRect();
     var px = sw.left + sw.width / 2, py = sw.top + Math.min(sw.height, H) * 0.4, s0 = Math.min(240, Math.round(W * 0.58)), ob = markObs();
-    var free = function(cx, cy, s, list){ var q = s * 0.54 + 2; if (cx - q < 2 || cy - q < 2 || cx + q > W - 2 || cy + q > H - 2) return false;
-      for (var i = 0; i < list.length; i++) { var b = list[i]; if (cx - q < b.right && cx + q > b.left && cy - q < b.bottom && cy + q > b.top) return false; } return true; };
-    var find = function(list){ for (var s = s0; s >= MARK_MIN; s -= 6) { if (free(px, py, s, list)) return [px, py, s]; var best = null, bd = 1e12;
-        for (var y = 2 + s * 0.54; y <= H - 2 - s * 0.54; y += 6) for (var x = 2 + s * 0.54; x <= W - 2 - s * 0.54; x += 6) { var d = (x - px) * (x - px) + (y - py) * (y - py); if (d < bd && free(x, y, s, list)) { bd = d; best = [x, y, s]; } }
-        if (best) return best; } return null; };
-    var wy = $('swWhy'), wb = null; if (wy && (whyPend || wy.classList.contains('on'))) { whyFit(wy); var b0 = wy.getBoundingClientRect(); if (b0.width > 1) wb = { left: b0.left - 2, top: b0.top - 2, right: b0.right + 2, bottom: b0.bottom + 2 }; }   /* 吹き出しを 先に 字だけ よけて 置き、○✗ は その 吹き出しも よける(輪が 欠けない) */
-    var r = null, ph = 0, tries = [wb ? ob.hard.concat(ob.soft, [wb]) : null, ob.hard.concat(ob.soft), ob.hard];
-    for (var ti = 0; ti < 3 && !r; ti++) if (tries[ti]) { r = find(tries[ti]); ph = ti + 1; }
-    e.setAttribute('data-fit', r ? ph : 4); if (!r) return;   /* data-fit: どの ゆずり方で 置いたか(1〜3。4 は もとの 場所) */
+    var wy = $('swWhy'), wb = null; if (wy && (whyPend || wy.classList.contains('on'))) { whyFit(wy); var b0 = wy.getBoundingClientRect(); if (b0.width > 1) wb = { left: b0.left - 2, top: b0.top - 2, right: b0.right + 2, bottom: b0.bottom + 2 }; }   /* 吹き出しを 先に 字だけ よけて 置き、○✗ は その 吹き出しも よける */
+    var key = [W, H, Math.round(px), Math.round(py)].concat(ob.hard.concat(ob.soft, wb ? [wb] : []).map(function(b){ return [b.left, b.top, b.right, b.bottom].map(Math.round).join(','); })).join('|');
+    var r = markMemo[key];
+    if (!r) {
+      var free = function(cx, cy, sz, list){ var q = sz * 0.54 + 2; if (cx - q < 2 || cy - q < 2 || cx + q > W - 2 || cy + q > H - 2) return false;
+        for (var i = 0; i < list.length; i++) { var b = list[i]; if (cx - q < b.right && cx + q > b.left && cy - q < b.bottom && cy + q > b.top) return false; } return true; };
+      var find = function(list, hi, lo){ for (var sz = hi; sz >= lo; sz -= 6) { if (free(px, py, sz, list)) return [px, py, sz]; var best = null, bd = 1e12, q = sz * 0.54 + 2;
+          for (var y = q; y <= H - q; y += 12) for (var x = q; x <= W - q; x += 12) { var dd = (x - px) * (x - px) + (y - py) * (y - py); if (dd < bd && free(x, y, sz, list)) { bd = dd; best = [x, y, sz]; } }
+          if (best) return best; } return null; };
+      var all = ob.hard.concat(ob.soft), lo2 = Math.min(MARK_MIN, s0) - 6, steps = [[wb ? all.concat([wb]) : null, s0, MARK_MIN, 1], [all, s0, MARK_MIN, 2], [wb ? all.concat([wb]) : null, lo2, MARK_MIN2, 3], [all, lo2, MARK_MIN2, 3], [ob.hard, s0, MARK_MIN2, 4]];
+      for (var k = 0; k < steps.length && !r; k++) if (steps[k][0]) { var f0 = find(steps[k][0], steps[k][1], steps[k][2]); if (f0) r = f0.concat([steps[k][3]]); }
+      r = r || [0, 0, 0, 5]; markMemo[key] = r;
+    }
+    e.setAttribute('data-fit', r[3]); if (r[3] === 5) return;
     e.style.width = r[2] + 'px'; e.style.margin = '0'; e.style.left = Math.round(r[0] - r[2] / 2 - par.left) + 'px'; e.style.top = Math.round(r[1] - r[2] / 2 - par.top) + 'px';
     var q = r[2] * 0.54; markBox = { left: r[0] - q, top: r[1] - q, right: r[0] + q, bottom: r[1] + q };   /* とびだす 1.08倍 の 箱 */
   } catch (x) { e.style.width = e.style.left = e.style.top = e.style.margin = ''; markBox = null; } }
+  window.addEventListener('resize', function(){ var e = $('swMark'); if (e && e.classList.contains('on')) markFit(e); });   /* 回す・大きさが 変わる ときは 置きなおす */
   /* 店主指示 2026-11-08: 判定文 why の最初の一文をマークの下に小さく浮かせて約2秒出す。サイクル177(運営者の声 2026-11-13「⭕️❌とその理由も出す」)で ○ の ときも 出す(前は ✗ だけ) */
   function whyShow(fb, k){ var e = $('swWhy'); if (!e) return; var t = String(fb || '').replace(/^\S+\s+/, ''); var i = t.indexOf('。'); if (i >= 0) t = t.slice(0, i + 1); if (!t) return; k = k === 'ok' ? 'ok' : 'ng'; e.setAttribute('data-k', k); e.textContent = (k === 'ok' ? '○ ' : '✗ ') + t;   /* サイクル177(運営者の声 2026-11-13「⭕️❌とその理由も出す」): ○ でも わけの 一文を 出す。先頭に ○／✗(色 だけに たよらない) */ e.classList.remove('on'); clearTimeout(whyTimer); whyTimer = null; whyKeep = choices.length <= 3; var go = function(){ void e.offsetWidth; e.classList.add('on'); clearTimeout(whyTimer); whyTimer = setTimeout(whyHide, 2100); };
     e.style.top = ''; whyPend = true; requestAnimationFrame(function(){ whyPend = false; whyFit(e); go(); whyWatchOn(); }); }   /* サイクル181: 小さい たて画面・よこ画面は 次の カードを 描いた あとの こまで 置き場所を 決めてから 出す(2秒は 出た ときから)。サイクル174 の 直し: 吹き出しの 2秒(アニメ)が 終わったら on を 外す(状態の ことばが もどる)。場所と 2秒は そのまま */

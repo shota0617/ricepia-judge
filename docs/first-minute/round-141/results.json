@@ -1,0 +1,1346 @@
+{
+  "status": "DRAFT_HOLD_FULL_NODE_FAILED_PYTEST_UNAVAILABLE",
+  "atUTC": "2026-11-15T15:56:06.308553+00:00",
+  "game": "nishio",
+  "issue": "World map return button AX name now follows its action",
+  "intendedDocsRoot": "docs/first-minute/round-141",
+  "source": {
+    "recordedHead": "22c91e2cfa16ca901d2c079aba3888d971b6bdff",
+    "HTMLSHA256": "a8ec3dcfb00ae72dcc86ab89c64342f49f2459ce8a7509be6c1fdc5531fe671e",
+    "recordedSourceRoot": "/workspace/ricepia-firstminute-round141",
+    "causeLocations": [
+      "nishio-go.html:172",
+      "nishio-go/pixel.js:9253-9265"
+    ],
+    "initialHiddenPolicy": "pixel.js:9267-9272",
+    "productCommit": "cd677447877edb19b36841eec33ea136899c5497",
+    "productCommitBasis": "root report; report preparer did not run Git",
+    "afterPixelSHA256": "af6a93e9801a023f196327a1bbd31393ee0b28abc14dbfb917d4ca1494eb9d2e",
+    "afterMinPixelSHA256": "5de91e526cd01a9cb18cc7046364ca3d51e9e2251a2eb4fd6e33e4c2e8013fcf",
+    "addedSourceLine": 9258,
+    "addedSourceLines": 1,
+    "minSameLine": true,
+    "newTestSHA256": "0127570220939afc67a6c68d4c33751fc47fa8b23d726f63760f19815266a72a",
+    "newTestLines": 159,
+    "otherBaselineFilesUnchanged": 333,
+    "existingTestFilesUnchanged": 314,
+    "beforePixelSHA256": "62f64061783708e172d5eb0e882fd232ad2aebf181e69aa4a52919183751dade",
+    "beforeMinPixelSHA256": "ba9653773683528b18c6db28a18f953b7df579468af16a91c7be10dd3b9c5bf0"
+  },
+  "implementation": {
+    "localChanges": 1,
+    "productionMerged": false,
+    "releaseCount": 0,
+    "newOperatorDecisionCandidates": 0,
+    "knownProtectedRulesChanged": 0,
+    "newGeographicFactsAdded": 0
+  },
+  "primary": {
+    "observationSeconds": 10,
+    "playSeconds": 60,
+    "viewport": [
+      320,
+      568
+    ],
+    "actions": 16,
+    "worldOpenings": 3,
+    "worldReturns": 3,
+    "fullObservationWindows": 16,
+    "noRecordedResponse": 0,
+    "pageConsoleErrors": 0,
+    "actualOuterExit": 0,
+    "AXObserved": false,
+    "firstInputSeconds": 0.016,
+    "firstPositivePoints": {
+      "rawPath": "trace.pointChanges[0]",
+      "epoch": 1794752987552.1,
+      "playSeconds": 0.12010009765625,
+      "fromFirstInputMs": 104.10009765625,
+      "text": "30",
+      "value": 30,
+      "observedAt": 11299.5
+    },
+    "firstCoordinateChange": {
+      "rawPath": "trace.guideChanges[4]",
+      "epoch": 1794752987552.5,
+      "observedPlaySeconds": 0.1205,
+      "sendToObservedMs": 104.5
+    },
+    "firstResponseLatencyMs": {
+      "count": 16,
+      "min": 72,
+      "median": 106.550048828125,
+      "max": 154.300048828125
+    },
+    "firstStoredGoalObservedSeconds": 23.7292001953125,
+    "finalPoints": 478,
+    "rawPNGs": 4,
+    "scope": "First observed DOM/scalar changes; not exact paint, forward route progress, human recognition, or audio.",
+    "networkConditions": {
+      "leafletVersion": "1.9.4",
+      "CDNRequestsRoutedTo": "/workspace/ricepia-judge/node_modules/leaflet/dist",
+      "otherExternalURLsReturnedEmpty204": [
+        "https://fonts.googleapis.com/css2?family=DotGothic16&display=swap",
+        "https://www.jma.go.jp/bosai/forecast/data/forecast/230000.json",
+        "https://www.jma.go.jp/bosai/amedas/data/latest_time.txt",
+        "https://cyberjapandata.gsi.go.jp/xyz/dem_png/14/14429/6497.png"
+      ],
+      "uniqueExternalURLsReturnedEmpty204": 4,
+      "consoleErrors": 0,
+      "pageErrors": 0,
+      "realExternalServicesValidated": false
+    },
+    "timelineSummary": [
+      {
+        "event": "first observed visible points30",
+        "playSeconds": 0.12010009765625
+      },
+      {
+        "event": "first observed stored goal=1",
+        "playSeconds": 23.7292001953125
+      },
+      {
+        "event": "world openings and returns",
+        "roundtrips": 3
+      },
+      {
+        "event": "final observation within60s",
+        "points": 478
+      }
+    ]
+  },
+  "pairedRepeat": {
+    "definition": "One natural visible-arrow entry and visible return per trial; each phase has one context and ten roundtrips, not ten first-time users",
+    "viewport": [
+      320,
+      568
+    ],
+    "entryRequestedHoldMs": 40,
+    "returnRequestedHoldsMs": [
+      120,
+      600,
+      120,
+      600,
+      120,
+      600,
+      120,
+      600,
+      120,
+      600
+    ],
+    "returnSpeedCountsEach": {
+      "120ms": 5,
+      "600ms": 5
+    },
+    "before": {
+      "actualOuterExit": 0,
+      "entries": 10,
+      "returns": 10,
+      "inputActions": 20,
+      "trustedDownUpClickEach": 20,
+      "validAXObservations": 10,
+      "AXNameMismatches": 10,
+      "completeWindows": 20,
+      "errors": [],
+      "playDurationMs": 35865,
+      "trials": [
+        {
+          "trial": 1,
+          "entryAction": 1,
+          "returnAction": 2,
+          "requestedHoldMs": 120,
+          "nodeSendIntervalMs": 120,
+          "nativeIntervalMs": 120.0,
+          "nativeListenerIntervalMs": 117.199951,
+          "entryNativeIntervalMs": 40.0,
+          "allEntryReturnEventsTrusted": true,
+          "axName": "せかいちず（西尾市と となりの市町）",
+          "title": "歩く地図にもどる",
+          "returnedWorld": false,
+          "returnedHidden": true,
+          "returnedTitle": "西尾市ぜんたいの地図",
+          "returnedAriaLabel": "せかいちず（西尾市と となりの市町）",
+          "returnedStoredWorld": "0",
+          "completeWindow": {
+            "entry": true,
+            "return": true
+          },
+          "errors": []
+        },
+        {
+          "trial": 2,
+          "entryAction": 3,
+          "returnAction": 4,
+          "requestedHoldMs": 600,
+          "nodeSendIntervalMs": 600,
+          "nativeIntervalMs": 600.0,
+          "nativeListenerIntervalMs": 600.300049,
+          "entryNativeIntervalMs": 41.0,
+          "allEntryReturnEventsTrusted": true,
+          "axName": "せかいちず（西尾市と となりの市町）",
+          "title": "歩く地図にもどる",
+          "returnedWorld": false,
+          "returnedHidden": true,
+          "returnedTitle": "西尾市ぜんたいの地図",
+          "returnedAriaLabel": "せかいちず（西尾市と となりの市町）",
+          "returnedStoredWorld": "0",
+          "completeWindow": {
+            "entry": true,
+            "return": true
+          },
+          "errors": []
+        },
+        {
+          "trial": 3,
+          "entryAction": 5,
+          "returnAction": 6,
+          "requestedHoldMs": 120,
+          "nodeSendIntervalMs": 121,
+          "nativeIntervalMs": 121.0,
+          "nativeListenerIntervalMs": 134.300049,
+          "entryNativeIntervalMs": 40.0,
+          "allEntryReturnEventsTrusted": true,
+          "axName": "せかいちず（西尾市と となりの市町）",
+          "title": "歩く地図にもどる",
+          "returnedWorld": false,
+          "returnedHidden": true,
+          "returnedTitle": "西尾市ぜんたいの地図",
+          "returnedAriaLabel": "せかいちず（西尾市と となりの市町）",
+          "returnedStoredWorld": "0",
+          "completeWindow": {
+            "entry": true,
+            "return": true
+          },
+          "errors": []
+        },
+        {
+          "trial": 4,
+          "entryAction": 7,
+          "returnAction": 8,
+          "requestedHoldMs": 600,
+          "nodeSendIntervalMs": 601,
+          "nativeIntervalMs": 601.0,
+          "nativeListenerIntervalMs": 617.100098,
+          "entryNativeIntervalMs": 40.0,
+          "allEntryReturnEventsTrusted": true,
+          "axName": "せかいちず（西尾市と となりの市町）",
+          "title": "歩く地図にもどる",
+          "returnedWorld": false,
+          "returnedHidden": true,
+          "returnedTitle": "西尾市ぜんたいの地図",
+          "returnedAriaLabel": "せかいちず（西尾市と となりの市町）",
+          "returnedStoredWorld": "0",
+          "completeWindow": {
+            "entry": true,
+            "return": true
+          },
+          "errors": []
+        },
+        {
+          "trial": 5,
+          "entryAction": 9,
+          "returnAction": 10,
+          "requestedHoldMs": 120,
+          "nodeSendIntervalMs": 120,
+          "nativeIntervalMs": 120.0,
+          "nativeListenerIntervalMs": 121.5,
+          "entryNativeIntervalMs": 40.0,
+          "allEntryReturnEventsTrusted": true,
+          "axName": "せかいちず（西尾市と となりの市町）",
+          "title": "歩く地図にもどる",
+          "returnedWorld": false,
+          "returnedHidden": true,
+          "returnedTitle": "西尾市ぜんたいの地図",
+          "returnedAriaLabel": "せかいちず（西尾市と となりの市町）",
+          "returnedStoredWorld": "0",
+          "completeWindow": {
+            "entry": true,
+            "return": true
+          },
+          "errors": []
+        },
+        {
+          "trial": 6,
+          "entryAction": 11,
+          "returnAction": 12,
+          "requestedHoldMs": 600,
+          "nodeSendIntervalMs": 600,
+          "nativeIntervalMs": 600.0,
+          "nativeListenerIntervalMs": 619.199951,
+          "entryNativeIntervalMs": 40.1,
+          "allEntryReturnEventsTrusted": true,
+          "axName": "せかいちず（西尾市と となりの市町）",
+          "title": "歩く地図にもどる",
+          "returnedWorld": false,
+          "returnedHidden": true,
+          "returnedTitle": "西尾市ぜんたいの地図",
+          "returnedAriaLabel": "せかいちず（西尾市と となりの市町）",
+          "returnedStoredWorld": "0",
+          "completeWindow": {
+            "entry": true,
+            "return": true
+          },
+          "errors": []
+        },
+        {
+          "trial": 7,
+          "entryAction": 13,
+          "returnAction": 14,
+          "requestedHoldMs": 120,
+          "nodeSendIntervalMs": 121,
+          "nativeIntervalMs": 121.0,
+          "nativeListenerIntervalMs": 128.5,
+          "entryNativeIntervalMs": 39.9,
+          "allEntryReturnEventsTrusted": true,
+          "axName": "せかいちず（西尾市と となりの市町）",
+          "title": "歩く地図にもどる",
+          "returnedWorld": false,
+          "returnedHidden": true,
+          "returnedTitle": "西尾市ぜんたいの地図",
+          "returnedAriaLabel": "せかいちず（西尾市と となりの市町）",
+          "returnedStoredWorld": "0",
+          "completeWindow": {
+            "entry": true,
+            "return": true
+          },
+          "errors": []
+        },
+        {
+          "trial": 8,
+          "entryAction": 15,
+          "returnAction": 16,
+          "requestedHoldMs": 600,
+          "nodeSendIntervalMs": 600,
+          "nativeIntervalMs": 599.9,
+          "nativeListenerIntervalMs": 611.800049,
+          "entryNativeIntervalMs": 40.0,
+          "allEntryReturnEventsTrusted": true,
+          "axName": "せかいちず（西尾市と となりの市町）",
+          "title": "歩く地図にもどる",
+          "returnedWorld": false,
+          "returnedHidden": true,
+          "returnedTitle": "西尾市ぜんたいの地図",
+          "returnedAriaLabel": "せかいちず（西尾市と となりの市町）",
+          "returnedStoredWorld": "0",
+          "completeWindow": {
+            "entry": true,
+            "return": true
+          },
+          "errors": []
+        },
+        {
+          "trial": 9,
+          "entryAction": 17,
+          "returnAction": 18,
+          "requestedHoldMs": 120,
+          "nodeSendIntervalMs": 121,
+          "nativeIntervalMs": 121.0,
+          "nativeListenerIntervalMs": 128.399902,
+          "entryNativeIntervalMs": 40.0,
+          "allEntryReturnEventsTrusted": true,
+          "axName": "せかいちず（西尾市と となりの市町）",
+          "title": "歩く地図にもどる",
+          "returnedWorld": false,
+          "returnedHidden": true,
+          "returnedTitle": "西尾市ぜんたいの地図",
+          "returnedAriaLabel": "せかいちず（西尾市と となりの市町）",
+          "returnedStoredWorld": "0",
+          "completeWindow": {
+            "entry": true,
+            "return": true
+          },
+          "errors": []
+        },
+        {
+          "trial": 10,
+          "entryAction": 19,
+          "returnAction": 20,
+          "requestedHoldMs": 600,
+          "nodeSendIntervalMs": 600,
+          "nativeIntervalMs": 600.0,
+          "nativeListenerIntervalMs": 598.900146,
+          "entryNativeIntervalMs": 40.0,
+          "allEntryReturnEventsTrusted": true,
+          "axName": "せかいちず（西尾市と となりの市町）",
+          "title": "歩く地図にもどる",
+          "returnedWorld": false,
+          "returnedHidden": true,
+          "returnedTitle": "西尾市ぜんたいの地図",
+          "returnedAriaLabel": "せかいちず（西尾市と となりの市町）",
+          "returnedStoredWorld": "0",
+          "completeWindow": {
+            "entry": true,
+            "return": true
+          },
+          "errors": []
+        }
+      ]
+    },
+    "after": {
+      "actualOuterExit": 0,
+      "entries": 10,
+      "returns": 10,
+      "inputActions": 20,
+      "trustedDownUpClickEach": 20,
+      "validAXObservations": 10,
+      "AXNameMismatches": 0,
+      "completeWindows": 20,
+      "errors": [],
+      "playDurationMs": 33821,
+      "trials": [
+        {
+          "trial": 1,
+          "entryAction": 1,
+          "returnAction": 2,
+          "requestedHoldMs": 120,
+          "nodeSendIntervalMs": 120,
+          "nativeIntervalMs": 120.0,
+          "nativeListenerIntervalMs": 116.0,
+          "entryNativeIntervalMs": 40.1,
+          "allEntryReturnEventsTrusted": true,
+          "axName": "歩く地図にもどる",
+          "title": "歩く地図にもどる",
+          "returnedWorld": false,
+          "returnedHidden": true,
+          "returnedTitle": "西尾市ぜんたいの地図",
+          "returnedAriaLabel": "せかいちず（西尾市と となりの市町）",
+          "returnedStoredWorld": "0",
+          "completeWindow": {
+            "entry": true,
+            "return": true
+          },
+          "errors": []
+        },
+        {
+          "trial": 2,
+          "entryAction": 3,
+          "returnAction": 4,
+          "requestedHoldMs": 600,
+          "nodeSendIntervalMs": 600,
+          "nativeIntervalMs": 600.0,
+          "nativeListenerIntervalMs": 601.5,
+          "entryNativeIntervalMs": 40.0,
+          "allEntryReturnEventsTrusted": true,
+          "axName": "歩く地図にもどる",
+          "title": "歩く地図にもどる",
+          "returnedWorld": false,
+          "returnedHidden": true,
+          "returnedTitle": "西尾市ぜんたいの地図",
+          "returnedAriaLabel": "せかいちず（西尾市と となりの市町）",
+          "returnedStoredWorld": "0",
+          "completeWindow": {
+            "entry": true,
+            "return": true
+          },
+          "errors": []
+        },
+        {
+          "trial": 3,
+          "entryAction": 5,
+          "returnAction": 6,
+          "requestedHoldMs": 120,
+          "nodeSendIntervalMs": 120,
+          "nativeIntervalMs": 120.0,
+          "nativeListenerIntervalMs": 114.899902,
+          "entryNativeIntervalMs": 39.9,
+          "allEntryReturnEventsTrusted": true,
+          "axName": "歩く地図にもどる",
+          "title": "歩く地図にもどる",
+          "returnedWorld": false,
+          "returnedHidden": true,
+          "returnedTitle": "西尾市ぜんたいの地図",
+          "returnedAriaLabel": "せかいちず（西尾市と となりの市町）",
+          "returnedStoredWorld": "0",
+          "completeWindow": {
+            "entry": true,
+            "return": true
+          },
+          "errors": []
+        },
+        {
+          "trial": 4,
+          "entryAction": 7,
+          "returnAction": 8,
+          "requestedHoldMs": 600,
+          "nodeSendIntervalMs": 600,
+          "nativeIntervalMs": 600.0,
+          "nativeListenerIntervalMs": 586.5,
+          "entryNativeIntervalMs": 40.0,
+          "allEntryReturnEventsTrusted": true,
+          "axName": "歩く地図にもどる",
+          "title": "歩く地図にもどる",
+          "returnedWorld": false,
+          "returnedHidden": true,
+          "returnedTitle": "西尾市ぜんたいの地図",
+          "returnedAriaLabel": "せかいちず（西尾市と となりの市町）",
+          "returnedStoredWorld": "0",
+          "completeWindow": {
+            "entry": true,
+            "return": true
+          },
+          "errors": []
+        },
+        {
+          "trial": 5,
+          "entryAction": 9,
+          "returnAction": 10,
+          "requestedHoldMs": 120,
+          "nodeSendIntervalMs": 120,
+          "nativeIntervalMs": 120.0,
+          "nativeListenerIntervalMs": 117.300049,
+          "entryNativeIntervalMs": 40.0,
+          "allEntryReturnEventsTrusted": true,
+          "axName": "歩く地図にもどる",
+          "title": "歩く地図にもどる",
+          "returnedWorld": false,
+          "returnedHidden": true,
+          "returnedTitle": "西尾市ぜんたいの地図",
+          "returnedAriaLabel": "せかいちず（西尾市と となりの市町）",
+          "returnedStoredWorld": "0",
+          "completeWindow": {
+            "entry": true,
+            "return": true
+          },
+          "errors": []
+        },
+        {
+          "trial": 6,
+          "entryAction": 11,
+          "returnAction": 12,
+          "requestedHoldMs": 600,
+          "nodeSendIntervalMs": 601,
+          "nativeIntervalMs": 601.0,
+          "nativeListenerIntervalMs": 599.5,
+          "entryNativeIntervalMs": 40.0,
+          "allEntryReturnEventsTrusted": true,
+          "axName": "歩く地図にもどる",
+          "title": "歩く地図にもどる",
+          "returnedWorld": false,
+          "returnedHidden": true,
+          "returnedTitle": "西尾市ぜんたいの地図",
+          "returnedAriaLabel": "せかいちず（西尾市と となりの市町）",
+          "returnedStoredWorld": "0",
+          "completeWindow": {
+            "entry": true,
+            "return": true
+          },
+          "errors": []
+        },
+        {
+          "trial": 7,
+          "entryAction": 13,
+          "returnAction": 14,
+          "requestedHoldMs": 120,
+          "nodeSendIntervalMs": 120,
+          "nativeIntervalMs": 120.0,
+          "nativeListenerIntervalMs": 119.600098,
+          "entryNativeIntervalMs": 40.1,
+          "allEntryReturnEventsTrusted": true,
+          "axName": "歩く地図にもどる",
+          "title": "歩く地図にもどる",
+          "returnedWorld": false,
+          "returnedHidden": true,
+          "returnedTitle": "西尾市ぜんたいの地図",
+          "returnedAriaLabel": "せかいちず（西尾市と となりの市町）",
+          "returnedStoredWorld": "0",
+          "completeWindow": {
+            "entry": true,
+            "return": true
+          },
+          "errors": []
+        },
+        {
+          "trial": 8,
+          "entryAction": 15,
+          "returnAction": 16,
+          "requestedHoldMs": 600,
+          "nodeSendIntervalMs": 600,
+          "nativeIntervalMs": 600.0,
+          "nativeListenerIntervalMs": 600.299805,
+          "entryNativeIntervalMs": 40.0,
+          "allEntryReturnEventsTrusted": true,
+          "axName": "歩く地図にもどる",
+          "title": "歩く地図にもどる",
+          "returnedWorld": false,
+          "returnedHidden": true,
+          "returnedTitle": "西尾市ぜんたいの地図",
+          "returnedAriaLabel": "せかいちず（西尾市と となりの市町）",
+          "returnedStoredWorld": "0",
+          "completeWindow": {
+            "entry": true,
+            "return": true
+          },
+          "errors": []
+        },
+        {
+          "trial": 9,
+          "entryAction": 17,
+          "returnAction": 18,
+          "requestedHoldMs": 120,
+          "nodeSendIntervalMs": 120,
+          "nativeIntervalMs": 120.1,
+          "nativeListenerIntervalMs": 133.199951,
+          "entryNativeIntervalMs": 40.1,
+          "allEntryReturnEventsTrusted": true,
+          "axName": "歩く地図にもどる",
+          "title": "歩く地図にもどる",
+          "returnedWorld": false,
+          "returnedHidden": true,
+          "returnedTitle": "西尾市ぜんたいの地図",
+          "returnedAriaLabel": "せかいちず（西尾市と となりの市町）",
+          "returnedStoredWorld": "0",
+          "completeWindow": {
+            "entry": true,
+            "return": true
+          },
+          "errors": []
+        },
+        {
+          "trial": 10,
+          "entryAction": 19,
+          "returnAction": 20,
+          "requestedHoldMs": 600,
+          "nodeSendIntervalMs": 600,
+          "nativeIntervalMs": 600.1,
+          "nativeListenerIntervalMs": 599.199951,
+          "entryNativeIntervalMs": 40.0,
+          "allEntryReturnEventsTrusted": true,
+          "axName": "歩く地図にもどる",
+          "title": "歩く地図にもどる",
+          "returnedWorld": false,
+          "returnedHidden": true,
+          "returnedTitle": "西尾市ぜんたいの地図",
+          "returnedAriaLabel": "せかいちず（西尾市と となりの市町）",
+          "returnedStoredWorld": "0",
+          "completeWindow": {
+            "entry": true,
+            "return": true
+          },
+          "errors": []
+        }
+      ]
+    },
+    "randomSeedMatched": false,
+    "sameImageFrame": false,
+    "measurementClockScope": "nativeIntervalMs uses browser native eventTimeStamp generated from CDP timestamps; nativeListenerIntervalMs uses listener epoch; neither proves physical finger hold",
+    "windowDefinition": "after sample epoch >= input completion ACK epoch+1100ms and before next input/deadline; independently cross-checked against saved classifier full1100msWindowObserved",
+    "imageTrial": 2
+  },
+  "regression": {
+    "old": {
+      "testMethods": 1,
+      "failures": 1,
+      "actualExit": 1,
+      "intendedAXAssertionRED": true,
+      "pageErrors": 0,
+      "consoleObserved": false
+    },
+    "new": {
+      "testMethods": 1,
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "actualChildExit": 0,
+      "actualOuterExit": 0,
+      "actualExitTool": "5feb8d",
+      "pageErrors": 0,
+      "consoleObserved": false,
+      "observedWorldAXName": "歩く地図にもどる",
+      "observedReturnedAXName": "せかいちず（西尾市と となりの市町）"
+    },
+    "sameTestSHA256": "0127570220939afc67a6c68d4c33751fc47fa8b23d726f63760f19815266a72a",
+    "fixtureNotNatural": true,
+    "separateAttempts": {
+      "initialOldFixtureFailure": {
+        "actualExit": 1,
+        "intendedAXRED": false,
+        "cause": "extra noauto setup enabled intro and covered button"
+      },
+      "firstNewCollectionError": {
+        "wrapperExit": 1,
+        "exitTool": "a7b2ed",
+        "childExit": null,
+        "reason": "Result collector json.loads saw unittest stderr suffix after complete JSON; child exit was not persisted before this exception. Preserve original log, do not count this attempt as verified GREEN."
+      },
+      "firstNewCountedAsVerifiedGREEN": false
+    }
+  },
+  "incompleteExploration": {
+    "requestedTrials": 10,
+    "reachedWorld": 1,
+    "returnInputs": 1,
+    "confirmedReturns": 1,
+    "validAXObservations": 1,
+    "AXNameMismatches": 1,
+    "notReached": 9,
+    "actualExit": 1,
+    "acquisitionComplete": false,
+    "pairedComparisonEstablished": false
+  },
+  "layout": {
+    "sameFrozenProtocol": true,
+    "sizes": 5,
+    "statesEach": 15,
+    "originalPNGsEach": 15,
+    "worldAXMismatchesBefore": 5,
+    "worldAXMismatchesAfter": 0,
+    "normalWalkingHiddenStatesEach": 10,
+    "controlsPaired": 115,
+    "regionsPaired": 90,
+    "fixedControlGeometryFontTextTitleHiddenHitExact": true,
+    "otherAXDifferences": 0,
+    "visibleControlObservationsEach": 105,
+    "visibleControlCenterMissesEach": 0,
+    "nativeReturnsEach": 5,
+    "pairComparisonIssues": [],
+    "actualOuterExitBefore": 0,
+    "actualOuterExitAfter": 0,
+    "independentAfterImagesViewed": 15,
+    "newVisualControlIssues": 0,
+    "pixelIdenticalClaim": false,
+    "scope": "Explicit API entry then real CDP return fixture; photos/DOM differ in timing; canvas/hand/toast/animals may differ."
+  },
+  "relatedTests": {
+    "before": {
+      "discovered": 32,
+      "passed": 30,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 2,
+      "actualExit": 0
+    },
+    "after": {
+      "discovered": 32,
+      "passed": 30,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 2,
+      "actualExit": 0
+    },
+    "sameFourTestHashes": {
+      "tests/test_nishio_min.py": "4c7dadfa47d6ba70284782895cbb06337b7803a7a1ac6b9b06b9eed8367f9d42",
+      "tests/test_maze_loop4_191.py": "96ce1845f4365d21ef625f2014a9481cdd624d45892862b9b241667c9345e542",
+      "tests/test_maze_loop4_200.py": "3bd474517dbec2c6d4ca3ce4828bd3c4831fc5b1e43fedcf1f47cd295392524f",
+      "tests/test_maze_loop4_147.py": "e3c9acfbe195fbdf765b17db8ea85a0c36f358fe9a88750f6f48c965be3f89dd"
+    },
+    "skipReason": "Two existing optional acorn checks unavailable, not passed",
+    "newRegressionCountedSeparately": true
+  },
+  "requiredChecks": {
+    "pytestBaseline": {
+      "actualExit": 127,
+      "testsExecuted": 0
+    },
+    "pytestAfter": {
+      "actualExit": 127,
+      "testsExecuted": 0,
+      "exitToolReportedByRoot": "25aa6f"
+    },
+    "fullNodeResult": {
+      "actualChildExit": 1,
+      "actualOuterExit": 1,
+      "actualOuterExitSource": "root-closure.json / exitTool 076c00",
+      "executionJsonOuterExit": null,
+      "timedOut": false,
+      "fullMode": true,
+      "naturalPrimaryRun": false,
+      "scriptStoppedPresent": false,
+      "crashRecorded": false,
+      "errors": [],
+      "failureReasons": 10,
+      "terminalPredicates": {
+        "countingEligible": true,
+        "directNeed": 170,
+        "firstMinuteLoopNeed": 61,
+        "total": 231,
+        "passed": 221,
+        "failed": 10,
+        "includesSkipPermittedTrue": true,
+        "wholeCheckSkipPermittedPassed": 2,
+        "label": "終端判定条件231件中221通過・10失敗（既存skip許容2件を含む）",
+        "method": "Normal terminal path, no synthetic crash or scriptStopped; 170 direct need + 61 FIRST_MINUTE_NEED, then 231 - 10 failure reasons. All10 failure reasons uniquely matched to their false group values.",
+        "notATestMethodCount": true,
+        "notANaturalUserOperationCount": true
+      },
+      "groups": {
+        "total": 253,
+        "counts": {
+          "ownOkTrue": 180,
+          "ownOkFalse": 10,
+          "bareTrue": 43,
+          "bareFalse": 0,
+          "other": 20
+        },
+        "notTestPassCount": true
+      },
+      "skips": [
+        {
+          "key": "yuruMeiro",
+          "field": "skipped",
+          "value": "no-route",
+          "ok": true,
+          "sourceLines": [
+            2529,
+            2546
+          ],
+          "terminalLine": 4932
+        },
+        {
+          "key": "mzSameCellGoal",
+          "field": "skip",
+          "value": "no pair",
+          "ok": true,
+          "sourceLines": [
+            4335
+          ],
+          "terminalLine": 4837
+        }
+      ],
+      "failures": [
+        {
+          "failureIndex": 0,
+          "key": "godotRec",
+          "rawPath": "checks.godotRec",
+          "predicateSourceLine": 2152,
+          "terminalSourceLine": 4878,
+          "terminalViaFirstMinuteKey": null,
+          "predicate": "!errs.length && len > 50 && shade > 0",
+          "recordedFailingTerms": [
+            "shade=0 does not satisfy shade>0"
+          ],
+          "scope": "errs=[] and len=5957 pass; this record does not show a thrown drawing exception.",
+          "observed": {
+            "errs": [],
+            "len": 5957,
+            "shade": 0,
+            "ok": false
+          },
+          "failureValueMatch": true,
+          "summaryJapanese": "影の記録 shade=0（errs=[]、描画命令 len=5957）。例外停止の記録ではない。"
+        },
+        {
+          "failureIndex": 1,
+          "key": "swipeHold",
+          "rawPath": "checks.swipeHold",
+          "predicateSourceLine": 262,
+          "terminalSourceLine": 4890,
+          "terminalViaFirstMinuteKey": "swipeHold",
+          "predicate": "held && still === 'null' && g2 === g1 && far && g4 === want && (g3 === 'null' || g3 === g4) && !info && cfg && cfg.ms <= 400",
+          "recordedFailingTerms": [
+            "g4=[1807,1900] differs from want=[1804,1897]",
+            "g3=[1804,1897] is neither null nor g4"
+          ],
+          "scope": "held=true, still=null string, g2=g1, far=true, info=false, cfg.ms=300 pass; measured ms=449 is not a direct threshold in this predicate.",
+          "observed": {
+            "held": true,
+            "ms": 449,
+            "still": "null",
+            "g1": "[1807,1900]",
+            "g2": "[1807,1900]",
+            "g4": "[1807,1900]",
+            "g3": "[1804,1897]",
+            "want": "[1804,1897]",
+            "far": true,
+            "info": false,
+            "cfg": {
+              "ms": 300,
+              "px": 5,
+              "min": 12
+            },
+            "ok": false
+          },
+          "failureValueMatch": true,
+          "summaryJapanese": "保持中の g4 が指定先 want と異なり、離した後の g3 も g4 と異なる。"
+        },
+        {
+          "failureIndex": 2,
+          "key": "restFinger",
+          "rawPath": "checks.restFinger",
+          "predicateSourceLine": 733,
+          "terminalSourceLine": 4890,
+          "terminalViaFirstMinuteKey": "restFinger",
+          "predicate": "tap === true && swipe === true && pinch === false && touchAction === 'pinch-zoom' && !info",
+          "recordedFailingTerms": [
+            "tap=false",
+            "swipe=false"
+          ],
+          "scope": "pinch=false, touchAction=pinch-zoom and info=false pass.",
+          "observed": {
+            "tap": false,
+            "swipe": false,
+            "pinch": false,
+            "touchAction": "pinch-zoom",
+            "info": false,
+            "ok": false
+          },
+          "failureValueMatch": true,
+          "summaryJapanese": "別の指を置いた条件で tap=false / swipe=false。pinch・touch-action 条件は通過。"
+        },
+        {
+          "failureIndex": 3,
+          "key": "tiltDemoShown",
+          "rawPath": "checks.tiltDemoShown",
+          "predicateSourceLine": 741,
+          "terminalSourceLine": 4890,
+          "terminalViaFirstMinuteKey": "tiltDemoShown",
+          "predicate": "on && phone && force > 0.2",
+          "recordedFailingTerms": [
+            "on=false",
+            "phone=false"
+          ],
+          "scope": "force=0.28 passes. moved=0.737 is recorded but not itself a predicate; physical sensor behavior is unmeasured.",
+          "observed": {
+            "on": false,
+            "phone": false,
+            "force": 0.28,
+            "at": [
+              1801.7969590977318,
+              1893.8259331163044
+            ],
+            "moved": 0.737,
+            "ok": false
+          },
+          "failureValueMatch": true,
+          "summaryJapanese": "1.5度の模擬入力後 on=false / phone=false。force=0.28 は閾値を満たす。"
+        },
+        {
+          "failureIndex": 4,
+          "key": "tapDemoQuick",
+          "rawPath": "checks.tapDemoQuick",
+          "predicateSourceLine": 476,
+          "terminalSourceLine": 4890,
+          "terminalViaFirstMinuteKey": "tapDemoQuick",
+          "predicate": "n >= 4 && med > 0 && med < 1700",
+          "recordedFailingTerms": [
+            "med=3201 is not <1700"
+          ],
+          "scope": "n=7 and med>0 pass; min=2691 is descriptive, not the deciding threshold.",
+          "observed": {
+            "n": 7,
+            "med": 3201,
+            "min": 2691,
+            "ok": false
+          },
+          "failureValueMatch": true,
+          "summaryJapanese": "手本待ち中央値3201ms（7観測）が1700ms未満の条件を満たさない。"
+        },
+        {
+          "failureIndex": 5,
+          "key": "lowGoalDemo",
+          "rawPath": "checks.lowGoalDemo",
+          "predicateSourceLine": 1144,
+          "terminalSourceLine": 4890,
+          "terminalViaFirstMinuteKey": "lowGoalDemo",
+          "predicate": "rows.length === 4 && rows.every(r => r.shown && r.inMap && !r.onRice)",
+          "recordedFailingTerms": [
+            "568x320 k=1: shown=false, inMap=null"
+          ],
+          "scope": "The other three rows pass; at=5.05 is recorded in one passing row and is not a separate threshold in this predicate.",
+          "observed": {
+            "rows": [
+              {
+                "vp": "568x320",
+                "k": 1,
+                "left": 1,
+                "shown": false,
+                "at": null,
+                "inMap": null,
+                "onRice": null
+              },
+              {
+                "vp": "568x320",
+                "k": 2,
+                "left": 2,
+                "shown": true,
+                "at": 5.05,
+                "inMap": true,
+                "onRice": false
+              },
+              {
+                "vp": "844x390",
+                "k": 1,
+                "left": 1,
+                "shown": true,
+                "at": 2.94,
+                "inMap": true,
+                "onRice": false
+              },
+              {
+                "vp": "844x390",
+                "k": 2,
+                "left": 2,
+                "shown": true,
+                "at": 3.73,
+                "inMap": true,
+                "onRice": false
+              }
+            ],
+            "ok": false
+          },
+          "failureValueMatch": true,
+          "summaryJapanese": "4条件のうち568×320・残り1マスで手本未表示。他3条件は通過。"
+        },
+        {
+          "failureIndex": 6,
+          "key": "rollNoDemo",
+          "rawPath": "checks.rollNoDemo",
+          "predicateSourceLine": 1252,
+          "terminalSourceLine": 4890,
+          "terminalViaFirstMinuteKey": "rollNoDemo",
+          "predicate": "rice != null && vmax >= 1 && fresh === false && bad === 0",
+          "recordedFailingTerms": [
+            "vmax=0",
+            "fresh=true"
+          ],
+          "scope": "rice=214 and bad=0 pass. No observed moving-frame guide overlap is established by bad=0.",
+          "observed": {
+            "rice": 214,
+            "route": 514,
+            "demo": 514,
+            "first": false,
+            "fresh": true,
+            "bad": 0,
+            "vmax": 0,
+            "ok": false
+          },
+          "failureValueMatch": true,
+          "summaryJapanese": "模擬8度入力後 vmax=0、fresh=true。走行中の手本重なりを示す記録ではない。"
+        },
+        {
+          "failureIndex": 7,
+          "key": "infoSecondTap",
+          "rawPath": "checks.infoSecondTap",
+          "predicateSourceLine": 1007,
+          "terminalSourceLine": 4890,
+          "terminalViaFirstMinuteKey": "infoSecondTap",
+          "predicate": "win && win.open && win.atTap !== 'info-btn' && !second.form && !second.clicks.includes('info-btn')",
+          "recordedFailingTerms": [
+            "win.open=false"
+          ],
+          "scope": "atTap=pxCanvas, second.form=false, clicks=[pxCanvas,pxCanvas]; this is failure to open the prerequisite window, not evidence of a dangerous second tap.",
+          "observed": {
+            "moved": true,
+            "g": {
+              "x": 195,
+              "y": 270,
+              "len": 5,
+              "goal": "station-student"
+            },
+            "win": {
+              "open": false,
+              "atTap": "pxCanvas"
+            },
+            "second": {
+              "form": false,
+              "clicks": [
+                "pxCanvas",
+                "pxCanvas"
+              ]
+            },
+            "ok": false
+          },
+          "failureValueMatch": true,
+          "summaryJapanese": "前提の名所窓が開かない（win.open=false）。窓内の二度押し誤作動は未確認。"
+        },
+        {
+          "failureIndex": 8,
+          "key": "infoRotate",
+          "rawPath": "checks.infoRotate",
+          "predicateSourceLine": 1036,
+          "terminalSourceLine": 4890,
+          "terminalViaFirstMinuteKey": "infoRotate",
+          "predicate": "runs.length === 2 && every(opened.open && steps.length && every(step.open && step.closeOk && step.allIn) && closed === true)",
+          "recordedFailingTerms": [
+            "820x1180 run: opened.open=false; 1180x820 step.open=false/closeOk=false; closed absent"
+          ],
+          "scope": "390x844 ->390x560 ->844x390 opens and closes successfully. In the tablet run no closing tap is dispatched because last.open=false (line1030); do not call this an opened window that cannot close.",
+          "observed": {
+            "runs": [
+              {
+                "from": "390x844",
+                "steps": [
+                  {
+                    "to": "390x560",
+                    "open": true,
+                    "mt": "58px",
+                    "close": [
+                      374,
+                      406
+                    ],
+                    "pt": [
+                      195,
+                      390
+                    ],
+                    "closeOk": true,
+                    "allIn": true
+                  },
+                  {
+                    "to": "844x390",
+                    "open": true,
+                    "mt": "",
+                    "close": [
+                      277,
+                      309
+                    ],
+                    "pt": [
+                      422,
+                      293
+                    ],
+                    "closeOk": true,
+                    "allIn": true
+                  }
+                ],
+                "opened": {
+                  "open": true,
+                  "mt": "226px",
+                  "close": [
+                    549,
+                    581
+                  ],
+                  "pt": [
+                    195,
+                    565
+                  ],
+                  "closeOk": true,
+                  "allIn": true
+                },
+                "closed": true
+              },
+              {
+                "from": "820x1180",
+                "steps": [
+                  {
+                    "to": "1180x820",
+                    "open": false,
+                    "mt": "",
+                    "close": [
+                      0,
+                      0
+                    ],
+                    "pt": [
+                      0,
+                      0
+                    ],
+                    "closeOk": false,
+                    "allIn": true
+                  }
+                ],
+                "opened": {
+                  "open": false,
+                  "mt": "",
+                  "close": [
+                    0,
+                    0
+                  ],
+                  "pt": [
+                    0,
+                    0
+                  ],
+                  "closeOk": false,
+                  "allIn": true
+                }
+              }
+            ],
+            "ok": false
+          },
+          "failureValueMatch": true,
+          "summaryJapanese": "tablet条件で前提の窓が開かず、閉じるタッチも未発行。phone条件は復帰まで通過。"
+        },
+        {
+          "failureIndex": 9,
+          "key": "speedLines",
+          "rawPath": "checks.speedLines",
+          "predicateSourceLine": 2689,
+          "terminalSourceLine": 4937,
+          "terminalViaFirstMinuteKey": null,
+          "predicate": "fast === 0 && vmax > 2 && vmax <= 5 && far > 1.5",
+          "recordedFailingTerms": [
+            "far=0.96 is not >1.5"
+          ],
+          "scope": "fast=0 and vmax=4.16 pass; no appearance of forbidden speed lines is shown.",
+          "observed": {
+            "ok": false,
+            "room": 7,
+            "fast": 0,
+            "vmax": 4.16,
+            "far": 0.96
+          },
+          "failureValueMatch": true,
+          "summaryJapanese": "移動距離 far=0.96 が1.5超に届かない。線は0、最大速度4.16の条件は通過。"
+        }
+      ],
+      "causedByThisChange": null,
+      "matchedBeforeFullNodeRunAvailable": false,
+      "failureScope": "Unsatisfied test predicates; not ten confirmed product defects. Prerequisite-window failures do not prove the later window interaction failed.",
+      "rawArtifact": "node-playtest.json",
+      "rawSHA256": "e8fd0af142bcca939b06d9c9df9ea5cd17f89215c771d4ec00de47f9db5ee86b",
+      "startedAtUTC": "2026-11-15T15:20:52.161126+00:00",
+      "childStartedAtUTC": "2026-11-15T15:20:54.339054+00:00",
+      "wrapperCompletedAtUTC": "2026-11-15T15:50:23.004016+00:00",
+      "childExactEndTimestampRecorded": false,
+      "sourceFilesBeforeAfter": 336,
+      "sourceUnchanged": true,
+      "dependencyFilesBeforeAfter": 550,
+      "dependenciesUnchanged": true,
+      "head": "cd677447877edb19b36841eec33ea136899c5497",
+      "clean": true,
+      "closure": {
+        "liveBrowserPIDs": [],
+        "port8899ConnectErrno": 111,
+        "port8899ReuseBindSucceeded": true,
+        "initialExclusiveBindErrno": 98,
+        "initialBindNote": "Initial no-REUSE bind failed; ss showed no listening socket, connection was refused, subsequent SO_REUSEADDR bind succeeded. No process was killed."
+      }
+    },
+    "fullNodeStatus": "completed; normal terminal path; 10 failed terminal predicates; draft hold",
+    "fullNodeCommand": "node tools/playtest.js",
+    "wholeSuitePassed": false
+  },
+  "holdReasons": [
+    "Required pytest unavailable (exit127; zero tests executed)",
+    "Required full Node playtest has 10 failed terminal predicates; cause relative to this change not established"
+  ],
+  "providedTranscriptReferences": [
+    {
+      "chapter": 78,
+      "title": "How Accessible Were 2021's Games?",
+      "URL": "https://www.youtube.com/watch?v=-IhQl1CBj9U",
+      "chapterChars": [
+        909440,
+        919298
+      ],
+      "chapterLines": [
+        831,
+        836
+      ],
+      "chapterSHA256": "6009d6037b5391a312071b653e3bf699e1f2b962dfe4d267c4704fd8cab4d263",
+      "quote": "Also worth noting is just how many games provide a screen reader for menu narration.",
+      "quoteChars": [
+        914283,
+        914367
+      ],
+      "quoteLine": 834,
+      "providedSource": "/workspace/attachments/e4f8b64f-2f88-4555-a465-5ac8c7193933/ゲーム開発動画_文字起こし_GMTK_20261115.md",
+      "sourceSHA256": "1db50be2482094c159f4fd276ab0e11443f8532e6dfe0ccecc8dddda834ff70a",
+      "originalVideoViewed": false,
+      "providedCompleteness": "末尾切断",
+      "recheckedForThisReport": true,
+      "newCoverageCount": 0
+    },
+    {
+      "chapter": 87,
+      "title": "Can we Improve Tutorials for Complex Games?",
+      "URL": "https://www.youtube.com/watch?v=-GV814cWiAw",
+      "chapterChars": [
+        1000815,
+        1012277
+      ],
+      "chapterLines": [
+        896,
+        903
+      ],
+      "chapterSHA256": "e36b19558f31b7fee3e6815461fc0e4ee40ec81df90a1f32ad115bcce866d0b8",
+      "quote": "And the third benefit is that by delaying these tutorials, they can deliver messages when it's actually relevant.",
+      "quoteChars": [
+        1003322,
+        1003435
+      ],
+      "quoteLine": 899,
+      "providedSource": "/workspace/attachments/e4f8b64f-2f88-4555-a465-5ac8c7193933/ゲーム開発動画_文字起こし_GMTK_20261115.md",
+      "sourceSHA256": "1db50be2482094c159f4fd276ab0e11443f8532e6dfe0ccecc8dddda834ff70a",
+      "originalVideoViewed": false,
+      "providedCompleteness": "本文中切断",
+      "recheckedForThisReport": true,
+      "newCoverageCount": 0
+    }
+  ],
+  "protected": {
+    "rulesUnchanged": true,
+    "items": [
+      "tilt use",
+      "first real click requests permission including prior denial, no duplicate request",
+      "tap cue before request",
+      "cue while stopped",
+      "no start screen",
+      "no arrival card",
+      "kome365/engine.js",
+      "kome365/field3d.js",
+      "kome365/cards.js"
+    ]
+  },
+  "limitations": [
+    "AX name is not actual screen-reader speech or human understanding",
+    "Primary response104ms is observed DOM/scalar timing, not physical paint or retention",
+    "One context per phase, not ten first-time users",
+    "Real sensor permission/tilt/fingers/audio/network and human dropout unverified",
+    "Natural primary, repeat10, layout fixture and unit results remain separate",
+    "Existing place names and neighboring-municipality wording were retained; no new geographic claim"
+  ],
+  "humanRetentionImprovementMeasured": false,
+  "newlyReadChapters": 0,
+  "reportPreparerRuntimeRuns": 0,
+  "reportPreparerWorkingTreeEdits": 0,
+  "reportPreparerGitCalls": 0,
+  "executionCommands": {
+    "cwd": "/workspace/ricepia-firstminute-round141",
+    "additionalRegression": {
+      "command": [
+        "python3",
+        "tests/test_nishio_world_ax.py",
+        "-v"
+      ],
+      "environment": {
+        "NISHIO_ROOT": "/workspace/ricepia-firstminute-round141",
+        "NODE_PATH": "/workspace/ricepia-judge/node_modules",
+        "LEAFLET_DIR": "/workspace/ricepia-judge/node_modules/leaflet/dist",
+        "CHROMIUM_EXECUTABLE": "/usr/bin/chromium"
+      }
+    },
+    "relatedExisting": [
+      "python3",
+      "-m",
+      "unittest",
+      "tests/test_nishio_min.py",
+      "tests/test_maze_loop4_191.py",
+      "tests/test_maze_loop4_200.py",
+      "tests/test_maze_loop4_147.py",
+      "-v"
+    ],
+    "pytest": {
+      "command": "pytest tests/",
+      "actualError": "bash: line 1: pytest: command not found",
+      "actualExit": 127,
+      "testsExecuted": 0
+    },
+    "requiredNodeChild": [
+      "node",
+      "tools/playtest.js",
+      "/workspace/scratch/first-minute/round-141/full-node-runtime/artifacts"
+    ],
+    "requiredNodeResult": {
+      "actualChildExit": 1,
+      "actualOuterExit": 1,
+      "timedOut": false,
+      "failureReasons": 10,
+      "errors": 0,
+      "resultRef": "requiredChecks.fullNodeResult"
+    },
+    "relatedExistingEnvironment": {
+      "NODE_PATH": "/workspace/ricepia-judge/node_modules",
+      "PYTHONDONTWRITEBYTECODE": "1"
+    },
+    "requiredNodeEnvironment": {
+      "NODE_OPTIONS": "--require=/workspace/scratch/first-minute/offline.cjs",
+      "NODE_PATH": "/workspace/ricepia-judge/node_modules",
+      "CHROMIUM": "/usr/bin/chromium",
+      "LEAFLET_DIR": "/workspace/ricepia-judge/node_modules/leaflet/dist",
+      "PLAYTEST_PORT": "8899",
+      "PYTHONDONTWRITEBYTECODE": "1"
+    },
+    "requiredNodeWrapper": [
+      "python3",
+      "/workspace/scratch/first-minute/round-141/required-checks-prep/run_node.py"
+    ],
+    "requiredNodeEnvironmentScope": "Wrapper/preload are scratch assets in this environment; other environments need equivalent external-request blocking and local Leaflet fulfillment."
+  }
+}

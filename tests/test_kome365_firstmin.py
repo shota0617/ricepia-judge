@@ -1754,7 +1754,7 @@ class TestKome365WhyBothSides(unittest.TestCase):
             self.assertEqual(j["color"], "rgb(180, 71, 47)", name)    # ✗ は 今の 色の まま
 
     def test_why_rules_in_code(self):
-        self.assertIn("whyShow(fb, cls === 'vOK' ? 'ok' : 'ng');", HTML)
+        self.assertIn("whyShow(fb, cls === 'vOK' ? 'ok' : 'ng', d0);", HTML)
         self.assertNotIn("if (cls === 'vNG') whyShow(fb);", HTML)      # 前の「✗ の とき だけ」
         self.assertIn("#swWhy.on{animation:swWhyIn 2s ease-out both}", HTML)   # 場所と 2秒(運営者の 決めごと)は そのまま
 

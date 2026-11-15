@@ -655,7 +655,8 @@ a{color:var(--acc)}
 @keyframes swMarkPop{0%{transform:scale(.55)}78%{transform:scale(1.08)}100%{transform:scale(1)}}
 @media (prefers-reduced-motion:reduce){#swMark.on{animation:none}}
 /* サイクル185b: 大きな ○✗ の 置き場所と 大きさは markFit(JS)が 出す たびに 決める(この CSS は JS が 動かない ときの もと) */
-#swWhy{position:absolute;left:50%;top:calc(40% + min(29vw,120px) + 10px);transform:translateX(-50%);width:max-content;max-width:88%;z-index:41;pointer-events:none;opacity:0;background:rgba(255,253,247,.94);color:#b4472f;font-size:15px;font-weight:700;line-height:1.4;padding:5px 12px;border-radius:999px;text-align:center;box-shadow:0 2px 8px rgba(60,40,20,.20)}   /* 店主指示 2026-11-08: バツの一言理由。マークの下に浮かせて約2秒で消す。入力はふさがない */
+#swWhy{position:absolute;left:50%;top:calc(40% + min(29vw,120px) + 10px);transform:translateX(-50%);width:max-content;max-width:88%;z-index:41;pointer-events:none;opacity:0;background:rgba(255,253,247,.94);color:#b4472f;font-size:15px;font-weight:700;line-height:1.4;padding:5px 12px;border-radius:999px;text-align:center;text-wrap:balance;box-shadow:0 2px 8px rgba(60,40,20,.20)}   /* 店主指示 2026-11-08: バツの一言理由。マークの下に浮かせて約2秒で消す。入力はふさがない */
+@media(max-height:440px){#swWhy{max-width:calc(100% - 8px)}}
 #swWhy.on{animation:swWhyIn 2s ease-out both}
 #swWhy[data-k="ok"]{color:#2e7d32}   /* サイクル177: ○ の わけは 緑(✗ は 今の 赤茶の まま)。場所・2秒・入力を ふさがない のは 同じ */
 @keyframes swWhyIn{0%{opacity:0}10%{opacity:1}76%{opacity:1}100%{opacity:0}}
@@ -3867,7 +3868,7 @@ renderTitle();
   } catch (x) { e.style.width = e.style.left = e.style.top = e.style.margin = ''; markBox = null; } }
   window.addEventListener('resize', function(){ var e = $('swMark'); if (e && e.classList.contains('on')) markFit(e); });   /* 回す・大きさが 変わる ときは 置きなおす */
   /* 店主指示 2026-11-08: 判定文 why の最初の一文をマークの下に小さく浮かせて約2秒出す。サイクル177(運営者の声 2026-11-13「⭕️❌とその理由も出す」)で ○ の ときも 出す(前は ✗ だけ) */
-  function whyShow(fb, k){ var e = $('swWhy'); if (!e) return; var t = String(fb || '').replace(/^\S+\s+/, ''); var i = t.indexOf('。'); if (i >= 0) t = t.slice(0, i + 1); if (!t) return; k = k === 'ok' ? 'ok' : 'ng'; e.setAttribute('data-k', k); e.textContent = (k === 'ok' ? '○ ' : '✗ ') + t;   /* サイクル177(運営者の声 2026-11-13「⭕️❌とその理由も出す」): ○ でも わけの 一文を 出す。先頭に ○／✗(色 だけに たよらない) */ e.classList.remove('on'); clearTimeout(whyTimer); whyTimer = null; whyKeep = choices.length <= 3; var go = function(){ void e.offsetWidth; e.classList.add('on'); clearTimeout(whyTimer); whyTimer = setTimeout(whyHide, 2100); };
+  function whyShow(fb, k, d0){ var e = $('swWhy'); if (!e) return; var t = String(fb || '').replace(/^\S+\s+/, ''); var i = t.indexOf('。'); if (i >= 0) t = t.slice(0, i + 1); if (!t) return; k = k === 'ok' ? 'ok' : 'ng'; e.setAttribute('data-k', k); var answered = K.dateOf(d0); e.textContent = (k === 'ok' ? '○ ' : '✗ ') + answered.m + '/' + answered.d + '：' + t;   /* サイクル177(運営者の声 2026-11-13「⭕️❌とその理由も出す」): ○ でも わけの 一文を 出す。先頭に ○／✗(色 だけに たよらない) */ e.classList.remove('on'); clearTimeout(whyTimer); whyTimer = null; whyKeep = choices.length <= 3; var go = function(){ void e.offsetWidth; e.classList.add('on'); clearTimeout(whyTimer); whyTimer = setTimeout(whyHide, 2100); };
     e.style.top = ''; whyPend = true; requestAnimationFrame(function(){ whyPend = false; whyFit(e); e.__mkV = markVer; go(); whyWatchOn(); }); }   /* サイクル181: 小さい たて画面・よこ画面は 次の カードを 描いた あとの こまで 置き場所を 決めてから 出す(2秒は 出た ときから)。サイクル174 の 直し: 吹き出しの 2秒(アニメ)が 終わったら on を 外す(状態の ことばが もどる)。場所と 2秒は そのまま */
   var whyTimer = null, whyKeep = false, whyPend = false;
   /* サイクル181(運営者 2026-11-14): わけの 吹き出しの 置き場所。390×844・820×1180 など ふつうの たて画面は 今の まま(CSS)。
@@ -3915,7 +3916,7 @@ renderTitle();
     try { var st1 = KomeCards.status(f), nm = { water: '💧水', weed: '🌿雑草', bug: '🐛虫', fert: '🧺肥料', vigor: '🌾稲' };
       if (st0 && !st0.error && !st1.error) for (var k in nm) { var dv = st1[k].v - st0[k].v; if (Math.abs(dv) >= 0.05) chg[k] = [st0[k].v, dv]; if (Math.abs(dv) >= 0.05) dl += '<span class="dl ' + (dv > 0 ? 'up' : 'dn') + '">' + nm[k] + (dv > 0 ? '▲' : '▼') + '</span>'; } } catch (e) {}
     var over = KomeCards.over(f), judged = !!cls && !over, newLife = over ? null : lifeNew(), rec = 0;
-    if (judged) { markShow(cls === 'vOK' ? 'ok' : 'ng'); whyShow(fb, cls === 'vOK' ? 'ok' : 'ng'); traceAdd(cls === 'vOK'); }   /* 周回118(F2): 答えが田んぼに物として残る。周回132: ○のときだけ世話の色も数える(branchAdd 参照)。周回133(差2): この行のコメントは元々行内で閉じておらず、後続の streak・tallyAdd・save 等がコメントアウトされていた(サイクル132で特定)。終端を足して復旧済み */
+    if (judged) { markShow(cls === 'vOK' ? 'ok' : 'ng'); whyShow(fb, cls === 'vOK' ? 'ok' : 'ng', d0); traceAdd(cls === 'vOK'); }   /* 周回118(F2): 答えが田んぼに物として残る。周回132: ○のときだけ世話の色も数える(branchAdd 参照)。周回133(差2): この行のコメントは元々行内で閉じておらず、後続の streak・tallyAdd・save 等がコメントアウトされていた(サイクル132で特定)。終端を足して復旧済み */
     if (cls === 'vOK') { streak++; if (streak > streakBest) { streakBest = streak; store.set('kome365_streak_best', String(streak)); if (streak >= 5 && !recDone) { rec = streak; recDone = true; } } store.set('kome365_streak', String(streak)); } else if (cls === 'vNG') { streak = 0; recDone = false; store.set('kome365_streak', '0'); }
     $('swLog').innerHTML = (fb && !judged ? '<b' + (cls ? ' class="' + cls + '"' : '') + '>' + esc(fb) + '</b>' : '') + (dl ? '<br>' + dl : '') + (news.length ? (fb || dl ? '<br>' : '') + news.map(esc).join('<br>') : '');
     tallyAdd(d0, fb, over ? 0 : lifeCnt, { t: card.title, s: side === 'left' ? card.left.label : card.right.label, im: impactCalc(st0, stM) });

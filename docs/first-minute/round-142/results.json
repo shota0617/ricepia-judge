@@ -1,0 +1,908 @@
+{
+  "status": "DRAFT_REPORT_FIXED_HOLD_REQUIRED_PYTEST_UNAVAILABLE",
+  "updatedUTC": "2026-11-15T17:46:26.826252+00:00",
+  "intendedDocsPath": "docs/first-minute/round-142",
+  "game": "米づくり365",
+  "issue": "回答理由と回答日を結び付ける表示",
+  "source": {
+    "baselineHEAD": "71bd05c991ba0e2715f687393081b997e3259648",
+    "oldHTMLSHA256": "1131aca205f44acd47243b6769d2c68acf0526128eb4bf7ab0e7a242b50f5f62",
+    "candidateHTMLSHA256": "0b918e87c4635aa87c7072d690e3ab3ec8fd64dd819cf20c3a1b7db2f0ee9790",
+    "newTestSHA256": "6bd608f1d718c90603f680bda19a7f0fa63492e16a6d0890125d9884d0d8730f",
+    "newTestLines": 266,
+    "existingTestSHA256": "4fe6fe62beadfcaf78a7f5dc7e38983ef4d0bcbe7d73bd66cd51d7ea6901c7e1",
+    "protectedSHA256": {
+      "kome365/engine.js": "c3d0cef6bb108d5b6d8fe38aaf0c08fe7994bdab08bf92775865a6e0222469a3",
+      "kome365/field3d.js": "a5c1dad91d5c0c326f1394fad9c5d04e7e3b8d13e3a2b8b1757c7aa08d3558ff",
+      "kome365/cards.js": "b15c5b2f56ef9c0c8361fa2fa6a039085919ca516b4a2e6e5a1b3bb691dde744"
+    },
+    "locations": {
+      "CSS": [
+        658,
+        659
+      ],
+      "whyShow": 3871,
+      "preAdvanceDate": 3907,
+      "call": 3919
+    },
+    "finalTestSHA256": "6bd608f1d718c90603f680bda19a7f0fa63492e16a6d0890125d9884d0d8730f"
+  },
+  "publication": {
+    "mode": "draft",
+    "productionMerged": false,
+    "releases": 0,
+    "holdReason": "required pytest command unavailable; full test suite not executed",
+    "playRunExitsRemainNonzero": {
+      "repeat10": 1,
+      "layout5": 1
+    }
+  },
+  "change": {
+    "dateSource": "pre-advance d0 via K.dateOf",
+    "format": "○/✗ M/D：original first sentence",
+    "fontPx": 15,
+    "animationSeconds": 2,
+    "fallbackTimerMs": 2100,
+    "textWrap": "balance",
+    "defaultMaxWidth": "88%",
+    "lowHeightMaxWidth": "calc(100% - 8px)",
+    "lowHeightThresholdPx": 440,
+    "placementLogicChanged": false
+  },
+  "primaryBefore": {
+    "observeSeconds": 10,
+    "playSeconds": 60,
+    "viewport": [
+      390,
+      844
+    ],
+    "inputGestures": 9,
+    "outcomes": {
+      "ok": 4,
+      "ng": 5
+    },
+    "datesAdvanced": 9,
+    "recordedNoResponse": 0,
+    "reasonHasAnsweredDate": 0,
+    "reasonLacksAnsweredDate": 9,
+    "actualOuterExit": 1,
+    "actualChildExit": null,
+    "consoleErrors": 2,
+    "pageErrors": 0,
+    "browserClosed": true,
+    "DOMTiming": {
+      "firstResponseAfterInputMs": 67.0,
+      "firstPositiveVisibleWhyFromPlayEpochMs": 16674.599853515625,
+      "firstPositiveVisibleWhyFromBrowserPlayMarkerMs": 16669.20000000298,
+      "basis": "Computed DOM/style visibility proxy, not physical display or human understanding",
+      "clockOffsetMs": 5.39990234375,
+      "firstTouchFromPlayEpochMs": 252,
+      "firstVisibleWhyAfterFirstInputMs": 851.3,
+      "firstPositiveVisibleWhyAfterThirdInputMs": 1513.6,
+      "reportedPlayTimeBasis": "Node epoch conversion; Browser playMarker value separately retained",
+      "proxyOnly": true,
+      "comparedWithRepeat10Latency": false
+    },
+    "raw": {
+      "path": "/workspace/scratch/first-minute/round-142/preparation/strict/report.json",
+      "SHA256": "0f610fada65071a31ffb51d9d9e52168c44501a450fc9fe6fb59fdb0a8fbe641"
+    },
+    "photoCount": 4,
+    "separatePerformanceObservation": {
+      "maxLongTaskMs": 5218,
+      "firstInputAlreadyResponded": true,
+      "causeEstablished": false,
+      "addressedByThisChange": false,
+      "protectedFileNotChanged": "kome365/field3d.js"
+    },
+    "issuePhotos": [
+      {
+        "file": "images/primary-play-30s.png",
+        "answerDate": "1月5日",
+        "currentCardDate": "1月6日"
+      },
+      {
+        "file": "images/primary-play-60s.png",
+        "answerDate": "1月9日",
+        "currentCardDate": "1月10日"
+      }
+    ]
+  },
+  "regression": {
+    "sameTestBytes": true,
+    "methods": 3,
+    "before": {
+      "actualExit": 1,
+      "timeout": false,
+      "failedMethods": 3,
+      "failureEntries": 17,
+      "failureBreakdown": {
+        "dateSubcases": 12,
+        "landscapeSubcases": 4,
+        "lastLineMethod": 1
+      },
+      "seconds": 6.707,
+      "liveBrowsersAfter": []
+    },
+    "after": {
+      "actualExit": 0,
+      "timeout": false,
+      "passedMethods": 3,
+      "failedMethods": 0,
+      "skipped": 0,
+      "seconds": 6.732,
+      "errors": 0,
+      "liveBrowsersAfter": []
+    },
+    "scope": [
+      "Real source advance/whyShow with synthetic VM dependencies; fixed 6 calendar dates times ok/ng exact full text",
+      "390x844 injected observed sentence, DOM Range line text: entire text/15px/2 lines/minimum4characters",
+      "568x320 and 844x390 injected first3 sentences, product resize path and restarted animation/visible wait; DOM Range entire text/15px/one line/inside viewport"
+    ],
+    "doesNotMeasure": [
+      "natural selections",
+      "real continuous2seconds",
+      "human reading",
+      "all mark overlap"
+    ],
+    "signatureAssertionStrengthenedToD0": true,
+    "testSHA256": "6bd608f1d718c90603f680bda19a7f0fa63492e16a6d0890125d9884d0d8730f",
+    "scopeOfResults": "final same test bytes against original1131 and current0b918"
+  },
+  "repeat10": {
+    "status": "measurement and independent numeric/image audit complete",
+    "oldRaw": {
+      "path": "/workspace/scratch/first-minute/round-142/why-date-prep/old-repeat10/report.json",
+      "SHA256": "2be3ec1c676bbce88f51ac316c24d46953b9d3204afb6cb354e658a18f89c5ba"
+    },
+    "candidateRawExpected": "/workspace/scratch/first-minute/round-142/why-date-prep-compact/inset-repeat10/report.json",
+    "candidate": {
+      "actualExit": 1,
+      "timeout": false,
+      "answers": 10,
+      "dateReferences": 10,
+      "observableResponses": 10,
+      "reportedGeometryViolations": 0,
+      "reportedUnknown": 0,
+      "responseMissing": 0,
+      "consoleErrors": 2,
+      "console404TargetIdentified": false,
+      "pageErrors": 0,
+      "reportErrors": 0,
+      "allContextsClosed": true,
+      "browserClosed": true,
+      "photos": 11
+    },
+    "paired": {
+      "dateReferenceBefore": 0,
+      "dateReferenceAfter": 10,
+      "denominatorEach": 10,
+      "trustedTouchEach": 10,
+      "progressedEach": 10,
+      "visibleDOMReasonEach": 10,
+      "sameBodyInputs": [
+        1,
+        2,
+        3,
+        5,
+        6,
+        7
+      ],
+      "excludedDifferentBodyInputs": [
+        4,
+        8,
+        9,
+        10
+      ],
+      "sameBodyLineCountChanges": 0,
+      "candidateNativeIntervalMs": {
+        "requested120": [
+          121,
+          120,
+          121,
+          121,
+          125
+        ],
+        "requested600": [
+          601,
+          607,
+          601.1,
+          600,
+          603
+        ]
+      },
+      "candidateMaxTickGapMs": 7080.4,
+      "postPhotoDOMVisibleBefore": 4,
+      "postPhotoDOMVisibleAfter": 4,
+      "notContinuousVisibilityProof": true
+    },
+    "protocol": {
+      "viewport": [
+        390,
+        844
+      ],
+      "answers": 10,
+      "directions": "left/right alternating",
+      "requestedHoldMs": [
+        120,
+        600
+      ],
+      "eachHoldCount": 5,
+      "moves": 6,
+      "distancePx": 100,
+      "observationMs": 10000,
+      "noFixture": true
+    },
+    "randomSeedsMatched": false,
+    "humanParticipantCount": null,
+    "raw": {
+      "path": "/workspace/scratch/first-minute/round-142/why-date-prep-compact/inset-repeat10/report.json",
+      "SHA256": "0168884f74645499b098923d70ce539afcc7d403ef0ae8ced5261f331e6d3067"
+    }
+  },
+  "layout5": {
+    "status": "measurement and independent numeric/image audit complete",
+    "candidate": {
+      "actualExit": 1,
+      "timeout": false,
+      "answers": 15,
+      "dateReferences": 15,
+      "observableResponses": 15,
+      "reportedGeometryViolations": 0,
+      "reportedUnknown": 0,
+      "consoleErrors": 6,
+      "console404TargetIdentified": false,
+      "pageErrors": 0,
+      "reportErrors": 0,
+      "allContextsClosed": true,
+      "browserClosed": true,
+      "photos": 20,
+      "cases": [
+        {
+          "viewport": [
+            320,
+            568
+          ],
+          "answers": 3,
+          "consoleErrors": 2
+        },
+        {
+          "viewport": [
+            390,
+            844
+          ],
+          "answers": 3,
+          "consoleErrors": 1
+        },
+        {
+          "viewport": [
+            568,
+            320
+          ],
+          "answers": 3,
+          "consoleErrors": 1
+        },
+        {
+          "viewport": [
+            844,
+            390
+          ],
+          "answers": 3,
+          "consoleErrors": 1
+        },
+        {
+          "viewport": [
+            820,
+            1180
+          ],
+          "answers": 3,
+          "consoleErrors": 1
+        }
+      ]
+    },
+    "paired": {
+      "dateReferenceBefore": 0,
+      "dateReferenceAfter": 15,
+      "denominatorEach": 15,
+      "trustedTouchEach": 15,
+      "progressedEach": 15,
+      "visibleDOMReasonEach": 15,
+      "sameBodyPairs": 15,
+      "lineCounts": [
+        {
+          "viewport": [
+            320,
+            568
+          ],
+          "before": [
+            2,
+            2,
+            2
+          ],
+          "after": [
+            2,
+            2,
+            2
+          ]
+        },
+        {
+          "viewport": [
+            390,
+            844
+          ],
+          "before": [
+            2,
+            2,
+            2
+          ],
+          "after": [
+            2,
+            2,
+            2
+          ]
+        },
+        {
+          "viewport": [
+            568,
+            320
+          ],
+          "before": [
+            1,
+            1,
+            1
+          ],
+          "after": [
+            1,
+            1,
+            1
+          ]
+        },
+        {
+          "viewport": [
+            844,
+            390
+          ],
+          "before": [
+            1,
+            1,
+            1
+          ],
+          "after": [
+            1,
+            1,
+            1
+          ]
+        },
+        {
+          "viewport": [
+            820,
+            1180
+          ],
+          "before": [
+            1,
+            1,
+            1
+          ],
+          "after": [
+            2,
+            2,
+            1
+          ]
+        }
+      ],
+      "candidateMaxTickGapMs": 9548.9,
+      "postPhotoDOMVisibleBefore": 8,
+      "postPhotoDOMVisibleAfter": 7,
+      "notContinuousVisibilityProof": true
+    },
+    "imageAudit": {
+      "candidateOriginalPNGsViewed": 31,
+      "repeatPNGs": 11,
+      "layoutPNGs": 20,
+      "unread": 0,
+      "SHAConflicts": 0,
+      "repeatReasonReadability": {
+        "clear": 6,
+        "faintReadable": 1,
+        "veryFaint": 2,
+        "absent": 1
+      },
+      "layoutReasonReadability": {
+        "clear": 8,
+        "faintReadable": 1,
+        "veryFaint": 1,
+        "absent": 5
+      },
+      "findings": [
+        "568answer01: one line and same vertical band as old; no newly increased large-circle cover observed in this photo",
+        "existing choice-icon/title/large-circle and field-state-label overlaps remain",
+        "820first2: line and height increase1to2 and31to52px",
+        "Canvas/weather/mark phase differs; not identical screenshot frames"
+      ],
+      "wholeUIOverlapZeroClaim": false
+    },
+    "protocol": {
+      "directions": "left/right alternating",
+      "holdsMs": [
+        120,
+        600
+      ],
+      "distancePx": 100,
+      "moves": 6,
+      "observationMs": 10000,
+      "sessionPlayLimitMs": 180000,
+      "noFixture": true
+    },
+    "runnerSHA256": "26d7ea187a974262abb98b941d6c1dbefe1a448cf62994734688aaf981ff401f",
+    "frozenSHA256": "c79e56624ec4f2ccead0b102b48fa812e40418141adfb42eeb5423055731da06",
+    "raw": {
+      "path": "/workspace/scratch/first-minute/round-142/why-date-prep-compact/inset-layout-run/report.json",
+      "SHA256": "f0a0a4d01ecc8b94384f16e85445652f371c99814fafc453355bff2ffdf464b6"
+    },
+    "rawGeometryScope": "date and answer-label regions; excludes large outcome mark",
+    "setupIsStorageOrTextFixture": false
+  },
+  "existingRelated": {
+    "before": {
+      "whyMethods": 7,
+      "markMethods": 10,
+      "totalMethods": 17,
+      "passed": 17,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "actualExitBothRuns": 0
+    },
+    "candidateAfter": {
+      "totalMethods": 17,
+      "passed": 17,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 591.811,
+      "actualExit": 0,
+      "timeout": false,
+      "sourceUnchanged": true,
+      "liveBrowsersAfter": []
+    },
+    "candidateAfterStatus": "complete on current0b918; predecessor results excluded",
+    "classes": [
+      "TestKome365WhyBothSides",
+      "TestKome365WhyReadable",
+      "TestKome365WhyFit",
+      "TestKome365MarkClear"
+    ],
+    "scope": "existing fake-audio browser fixtures; one MarkClear3D plan, others no3d"
+  },
+  "requiredPytest": {
+    "command": "pytest tests/",
+    "before": {
+      "actualExit": 127,
+      "testsExecuted": 0
+    },
+    "candidateAfter": {
+      "actualExit": 127,
+      "testsExecuted": 0,
+      "timeout": false,
+      "HTMLSHA256": "0b918e87c4635aa87c7072d690e3ab3ec8fd64dd819cf20c3a1b7db2f0ee9790",
+      "error": "bash: line 1: pytest: command not found"
+    },
+    "wholeSuitePassed": false
+  },
+  "images": {
+    "primary": [
+      {
+        "file": "images/primary-observe-10s.png",
+        "source": "/workspace/scratch/first-minute/round-142/preparation/strict/observe-10s.png",
+        "SHA256": "cfda6503c2b6848e4211ad7fd26e74ca5177d86f39438845afdd79448638a5dd",
+        "scope": "old primary, not candidate after",
+        "strictDeadlineFrame": false
+      },
+      {
+        "file": "images/primary-play-10s.png",
+        "source": "/workspace/scratch/first-minute/round-142/preparation/strict/play-10s.png",
+        "SHA256": "81a54f972be0c78f315f654b343dc25482fca05104c97bdbda90372f66191703",
+        "scope": "old primary, not candidate after",
+        "strictDeadlineFrame": false
+      },
+      {
+        "file": "images/primary-play-30s.png",
+        "source": "/workspace/scratch/first-minute/round-142/preparation/strict/play-30s.png",
+        "SHA256": "dbefbb9049fb6fff48af5886d82c39b846f0a13d9c6e8540d45c12e754226b27",
+        "scope": "old primary, not candidate after",
+        "strictDeadlineFrame": false
+      },
+      {
+        "file": "images/primary-play-60s.png",
+        "source": "/workspace/scratch/first-minute/round-142/preparation/strict/play-60s.png",
+        "SHA256": "268460e34da4dc0119319240d79a82b4b3e65bf64d6a5d59a775685d32348f69",
+        "scope": "old primary, not candidate after",
+        "strictDeadlineFrame": false
+      }
+    ],
+    "mainBefore": {
+      "file": "images/before-answer-01.png",
+      "source": "/workspace/scratch/first-minute/round-142/why-date-prep/old-repeat10/case-01/answer-01.png",
+      "SHA256": "3d3b0cab2c2a68e6d58b45845a48cf98b4a0f87607b8f1734141c7ea452a2978"
+    },
+    "mainAfter": {
+      "file": "images/after-answer-01.png",
+      "source": "/workspace/scratch/first-minute/round-142/why-date-prep-compact/inset-repeat10/case-01/answer-01.png",
+      "SHA256": "267c08900b4ca2d71f28020798541e9ec86d14ea7a8b4a7963b058b9e8b8a74f"
+    },
+    "candidateSelectionStatus": "independent audit recommended exact originals copied to scratch; not publication approval",
+    "rawCopyCount": 16,
+    "layoutFirstAnswerPairs": [
+      {
+        "viewport": [
+          320,
+          568
+        ],
+        "answerIndex": 1,
+        "sameBody": true,
+        "beforeLineCount": 2,
+        "afterLineCount": 2,
+        "scope": "Separate original captures; animation phase and opacity not matched; line counts from visible DOM measurement, not from PNG visibility",
+        "before": {
+          "file": "images/layout-before-320x568.png",
+          "source": "/workspace/scratch/first-minute/round-142/why-date-prep/old-layout/case-01/answer-01.png",
+          "SHA256": "7dd3c47bc860ed52fe7fd3661d3d57f08b6a8caf0e790018794b329a7aa287c1"
+        },
+        "after": {
+          "file": "images/layout-after-320x568.png",
+          "source": "/workspace/scratch/first-minute/round-142/why-date-prep-compact/inset-layout-run/case-01/answer-01.png",
+          "SHA256": "38729738d23a78e99fa1cb0ae3571973139d09cf0f0a62da6fe84b21255f6914"
+        }
+      },
+      {
+        "viewport": [
+          390,
+          844
+        ],
+        "answerIndex": 1,
+        "sameBody": true,
+        "beforeLineCount": 2,
+        "afterLineCount": 2,
+        "scope": "Separate original captures; animation phase and opacity not matched; line counts from visible DOM measurement, not from PNG visibility",
+        "before": {
+          "file": "images/layout-before-390x844.png",
+          "source": "/workspace/scratch/first-minute/round-142/why-date-prep/old-layout/case-02/answer-01.png",
+          "SHA256": "a098407ed25639fe4a6dec4db09451f060f2927bbd19c538f70d7bf34eab5045"
+        },
+        "after": {
+          "file": "images/layout-after-390x844.png",
+          "source": "/workspace/scratch/first-minute/round-142/why-date-prep-compact/inset-layout-run/case-02/answer-01.png",
+          "SHA256": "16f643989dbce8c414f2bfd3ad2bf1d6e1cdf820a355294b1a78052f8a9a3793"
+        }
+      },
+      {
+        "viewport": [
+          568,
+          320
+        ],
+        "answerIndex": 1,
+        "sameBody": true,
+        "beforeLineCount": 1,
+        "afterLineCount": 1,
+        "scope": "Separate original captures; animation phase and opacity not matched; line counts from visible DOM measurement, not from PNG visibility",
+        "before": {
+          "file": "images/layout-before-568x320.png",
+          "source": "/workspace/scratch/first-minute/round-142/why-date-prep/old-layout/case-03/answer-01.png",
+          "SHA256": "1fc774054b64a3077804285a620b70d25f76b14595056dfd65fef456aa1102a0"
+        },
+        "after": {
+          "file": "images/layout-after-568x320.png",
+          "source": "/workspace/scratch/first-minute/round-142/why-date-prep-compact/inset-layout-run/case-03/answer-01.png",
+          "SHA256": "f8d3b44fd806db912ac60dc60f027981ae2290ca3c638e85122d0e6c6219bea6"
+        }
+      },
+      {
+        "viewport": [
+          844,
+          390
+        ],
+        "answerIndex": 1,
+        "sameBody": true,
+        "beforeLineCount": 1,
+        "afterLineCount": 1,
+        "scope": "Separate original captures; animation phase and opacity not matched; line counts from visible DOM measurement, not from PNG visibility",
+        "before": {
+          "file": "images/layout-before-844x390.png",
+          "source": "/workspace/scratch/first-minute/round-142/why-date-prep/old-layout/case-04/answer-01.png",
+          "SHA256": "b518fff10c9bda5cc366e54044a8170cc93e2baed659a48e68e0257ad4cedeed"
+        },
+        "after": {
+          "file": "images/layout-after-844x390.png",
+          "source": "/workspace/scratch/first-minute/round-142/why-date-prep-compact/inset-layout-run/case-04/answer-01.png",
+          "SHA256": "805ab254e95a9a9123d43bcf203769cd433e15b2b33c7d603c9676e40a7caf99"
+        }
+      },
+      {
+        "viewport": [
+          820,
+          1180
+        ],
+        "answerIndex": 1,
+        "sameBody": true,
+        "beforeLineCount": 1,
+        "afterLineCount": 2,
+        "scope": "Separate original captures; animation phase and opacity not matched; line counts from visible DOM measurement, not from PNG visibility",
+        "before": {
+          "file": "images/layout-before-820x1180.png",
+          "source": "/workspace/scratch/first-minute/round-142/why-date-prep/old-layout/case-05/answer-01.png",
+          "SHA256": "5c53d45464753b58471ac3c7b3290b8d7a82add241197d6deed2657ab0b8362c"
+        },
+        "after": {
+          "file": "images/layout-after-820x1180.png",
+          "source": "/workspace/scratch/first-minute/round-142/why-date-prep-compact/inset-layout-run/case-05/answer-01.png",
+          "SHA256": "c3abe6b161b7b87a7785bbf24e9052acb30f4924da1649ba227281579c532495"
+        }
+      }
+    ]
+  },
+  "providedTranscripts": {
+    "references": [
+      {
+        "id": 82,
+        "title": "How I learned Unity without following tutorials (Developing 1)",
+        "url": "https://www.youtube.com/watch?v=vFjXKOXdgGo",
+        "startChar": 949318,
+        "endChar": 958822,
+        "startLine": 855,
+        "endLine": 860,
+        "sectionSHA256": "b35f7ceb08ee62a1b0c0ba61b9c116bc5cce7f8d7e3b9eebda8438b72ae85d09",
+        "abstractPrinciple": "手順をなぞるだけでは自力行動へ移せない。最小基礎を学び、反復して馴染み、その後に小さく実験する順序が知識転移を促す。",
+        "notesFile": "/workspace/scratch/first-minute/gmtk-20261115/batch-3/notes.md",
+        "notesStartLine": 155,
+        "coverageFile": "/workspace/scratch/first-minute/gmtk-20261115/batch-3/coverage.json"
+      },
+      {
+        "id": 104,
+        "title": "Commanding Shepard",
+        "url": "https://www.youtube.com/watch?v=bm0S4cn_rfw",
+        "startChar": 1168296,
+        "endChar": 1197952,
+        "startLine": 1005,
+        "endLine": 1016,
+        "sectionSHA256": "9d1723bf11efd37745d4f160c082d2a9eda525796e6e90d8a24bbec25be8a9f3",
+        "abstractPrinciple": "プレイヤーとキャラクターの主導権の約束が重要。選択UIの予測可能性、文言から想像する結果との一致、選びたい選択、行為への正当な結果が主体性を支える。強制した行為の責任をユーザーへ帰さない。",
+        "notesFile": "/workspace/scratch/first-minute/gmtk-20261115/batch-3/notes.md",
+        "notesStartLine": 375,
+        "coverageFile": "/workspace/scratch/first-minute/gmtk-20261115/batch-3/coverage.json"
+      }
+    ],
+    "basis": "Previously read provided transcripts and chapter notes; concrete date cue is a product-observation hypothesis",
+    "sourceSHA256": "1db50be2482094c159f4fd276ab0e11443f8532e6dfe0ccecc8dddda834ff70a",
+    "originalVideosViewed": 0,
+    "newlyReadChapters": 0,
+    "coverageChanged": false,
+    "missingTextCompleted": false,
+    "fullTranscriptCopied": false
+  },
+  "agriculturalTextProvenance": {
+    "quotedExistingSentence": "肥料は稲に合わせて春から入れます。",
+    "textSource": {
+      "path": "/workspace/ricepia-firstminute-round142/kome365/cards.js",
+      "line": 462,
+      "key": "kou_1",
+      "SHA256": "b15c5b2f56ef9c0c8361fa2fa6a039085919ca516b4a2e6e5a1b3bb691dde744"
+    },
+    "existingGameSourceList": {
+      "path": "/workspace/ricepia-firstminute-round142/kome365/index.html",
+      "line": 2604,
+      "function": "showSources",
+      "SHA256": "0b918e87c4635aa87c7072d690e3ab3ec8fd64dd819cf20c3a1b7db2f0ee9790"
+    },
+    "newAgriculturalFactsAdded": 0,
+    "primaryPublicationsNewlyVerified": false,
+    "scope": "Existing in-game text and source-list location; not a new verification that a particular external publication supports this exact sentence."
+  },
+  "protection": {
+    "knownOperatorRulesChanged": 0,
+    "newOperatorDecisionRequests": 0,
+    "preserve": [
+      "why mark and original first sentence",
+      "two-second animation and first-three carryover",
+      "existing overlap relocation",
+      "300ms guide",
+      "fast swipe / no tap choice",
+      "30-second card",
+      "sound behavior and mute",
+      "scarecrow and sun",
+      "engine.js / field3d.js / cards.js"
+    ],
+    "consideredAndExcluded": [
+      {
+        "proposal": "shorten/remove two-second reason or first-three carryover",
+        "reason": "protected operator decisions; use answered-date identification within retained behavior"
+      },
+      {
+        "proposal": "change field3d.js in response to the primary longtask",
+        "reason": "cause unestablished and file protected; outside this issue"
+      }
+    ]
+  },
+  "humanMeasures": {
+    "confusionCount": null,
+    "retentionRate": null,
+    "effectMeasured": false
+  },
+  "limitations": [
+    "Separate primary/repeat/layout/fixture populations; do not add totals",
+    "DOM/native clocks are not physical display or human response",
+    "Long sampling gaps prevent continuous2second visibility proof; photo audit does not establish all-time or all-UI overlap absence",
+    "Physical sensors/real fingers/audio/network and other-browser text-wrap compatibility untested",
+    "Historical candidate results are not current-candidate results"
+  ],
+  "evidence": {
+    "primaryClosure": {
+      "path": "/workspace/scratch/first-minute/round-142/preparation/root-after-gate.json",
+      "SHA256": "f382a1d37cf4c3092a8e81b80a43f662bda935d7ec711b715f476a4344c738cc"
+    },
+    "primaryAudit": {
+      "path": "/workspace/scratch/first-minute/round-142/discovery-a/summary.json",
+      "SHA256": "da347624c4bacfc7e975dfb382a470adc53c8c573d9a4e35020fcfd2e890e1f2"
+    },
+    "oldRepeatRaw": {
+      "path": "/workspace/scratch/first-minute/round-142/why-date-prep/old-repeat10/report.json",
+      "SHA256": "2be3ec1c676bbce88f51ac316c24d46953b9d3204afb6cb354e658a18f89c5ba"
+    },
+    "oldLayoutRaw": {
+      "path": "/workspace/scratch/first-minute/round-142/why-date-prep/old-layout/report.json",
+      "SHA256": "0a8aec6fd3c162c184e012420526d7f5a88dfb5cdea25d980b2a148d569c97c7"
+    },
+    "existingWhyBefore": {
+      "path": "/workspace/scratch/first-minute/round-142/existing-why-before/execution.json",
+      "SHA256": "22671600e66ed04650efd200ce7bf6f31c6fb4b38868b6ca41d6cc9cf73868f7"
+    },
+    "existingMarkBefore": {
+      "path": "/workspace/scratch/first-minute/round-142/existing-mark-before/execution.json",
+      "SHA256": "8b1e47412903c53c2034be8b2c48e299136304af19ddcdacc73f6a1b8f2ce663"
+    },
+    "regressionOldExecution": {
+      "path": "/workspace/scratch/first-minute/round-142/regression-final-before/execution.json",
+      "SHA256": "6e739bf114a4a3a74cda470b5546581e92fb57bb79abb0fbc98f7ee4a47260de"
+    },
+    "regressionOldLog": {
+      "path": "/workspace/scratch/first-minute/round-142/regression-final-before/stderr.log",
+      "SHA256": "6ccace5a3f10c5c3fed8bcf5b9be1fe58a99c8c4574a4553261a6975d1a72b49"
+    },
+    "regressionOldOutput": {
+      "path": "/workspace/scratch/first-minute/round-142/regression-final-before/stdout.log",
+      "SHA256": "6710966568f8d516c5cb74d851c12f1ccdc4f822735ca92e344856858c7a4a2f"
+    },
+    "regressionNewExecution": {
+      "path": "/workspace/scratch/first-minute/round-142/regression-final-after/execution.json",
+      "SHA256": "352855ba32087ae3140b44d62413beb7e27de336d289b2ffe6bc047f65790eea"
+    },
+    "regressionNewLog": {
+      "path": "/workspace/scratch/first-minute/round-142/regression-final-after/stderr.log",
+      "SHA256": "3cce7937b8771bd656607d35907baf85eefaa3918cfea1108a34603ec4125b67"
+    },
+    "regressionNewOutput": {
+      "path": "/workspace/scratch/first-minute/round-142/regression-final-after/stdout.log",
+      "SHA256": "1a353507ac838f0a1ac7966661a77307441533fcec13f47ce6787b7d9d46ff94"
+    },
+    "layoutExecution": {
+      "path": "/workspace/scratch/first-minute/round-142/inset-layout-run/execution.json",
+      "SHA256": "3186ea0877f2b6953c46a8c1ba164b8697e3da9471676062dd0a398506373492"
+    },
+    "layoutRaw": {
+      "path": "/workspace/scratch/first-minute/round-142/why-date-prep-compact/inset-layout-run/report.json",
+      "SHA256": "f0a0a4d01ecc8b94384f16e85445652f371c99814fafc453355bff2ffdf464b6"
+    },
+    "pytestCandidateExecution": {
+      "path": "/workspace/scratch/first-minute/round-142/pytest-inset-after/execution.json",
+      "SHA256": "64572ab3ca334ece9ec4b2f89e70a3e3b01009413d06460a2d8a49b36041cf09"
+    },
+    "pytestCandidateLog": {
+      "path": "/workspace/scratch/first-minute/round-142/pytest-inset-after/stderr.log",
+      "SHA256": "b6fe94a4971280b69606b3ad6039ae9ed0e48557776ea68f678174b6c8da879a"
+    },
+    "repeatExecution": {
+      "path": "/workspace/scratch/first-minute/round-142/inset-repeat10/execution.json",
+      "SHA256": "7036b2f34658be46258351c04ee203fb181236d9dcf445330b4bb814b678f4d2"
+    },
+    "repeatRaw": {
+      "path": "/workspace/scratch/first-minute/round-142/why-date-prep-compact/inset-repeat10/report.json",
+      "SHA256": "0168884f74645499b098923d70ce539afcc7d403ef0ae8ced5261f331e6d3067"
+    },
+    "independentNumericNotes": {
+      "path": "/workspace/scratch/first-minute/round-142/inset-numeric-audit/notes.md",
+      "SHA256": "ae03251673b3f5b90dcd585d927b1e8df0efa8d4dc6b91fb35c6cac3f1ec5cfb"
+    },
+    "independentNumericRaw": {
+      "path": "/workspace/scratch/first-minute/round-142/inset-numeric-audit/final-paired.json",
+      "SHA256": "fbff4dfb50d67b47675eba0b13cdb936309a4a42294f7ade0e0168423deceb87"
+    },
+    "independentNumericReceipt": {
+      "path": "/workspace/scratch/first-minute/round-142/inset-numeric-audit/receipt.json",
+      "SHA256": "2ee56d288c1bdf64372517f801580f9919bd237112757f29c6f3fc5d261e5e88"
+    },
+    "independentImageNotes": {
+      "path": "/workspace/scratch/first-minute/round-142/why-date-image-audit/inset/notes.md",
+      "SHA256": "a31186a67b428dafd6de04165e4a8387c3da047fd544edd0944e9dc459cab5e5"
+    },
+    "independentImageAudit": {
+      "path": "/workspace/scratch/first-minute/round-142/why-date-image-audit/inset/audit.json",
+      "SHA256": "ef37e47054972b43ba4ffbb45bfced5e3e122b217a10640b6d025197cda9624c"
+    },
+    "independentImageSelection": {
+      "path": "/workspace/scratch/first-minute/round-142/why-date-image-audit/inset/photo-selection.json",
+      "SHA256": "a08008501d139a098a788041b997ba1abfca8a3190c10445e502758f839a781f"
+    },
+    "independentImageFrozen": {
+      "path": "/workspace/scratch/first-minute/round-142/why-date-image-audit/inset/frozen.json",
+      "SHA256": "0d836855c2bc98e47d51d704ecc58f28b0eb45e06ef5275d9866d5d38acacced"
+    },
+    "candidate404ServerCorrelation": {
+      "path": "/workspace/scratch/first-minute/round-142/server-inset-correlation.json",
+      "SHA256": "90d9c2993039b89891e823359fbaa97b1f9d8277f7e3c14813234262ebc504d4"
+    },
+    "candidate404ServerLog": {
+      "path": "/workspace/scratch/first-minute/round-142/server-inset-1728-1733.txt",
+      "SHA256": "46b4e21d3ca4ef876d0380d2d4807e2f51e2c78cf821db4508968606f0be36f4"
+    },
+    "existingRelatedAfterExecution": {
+      "path": "/workspace/scratch/first-minute/round-142/existing-inset-after/execution.json",
+      "SHA256": "859e71e89bfa6c207d3912711321c9eaeebcee5c7f2725bdf03e4aa9a5e55976"
+    },
+    "existingRelatedAfterLog": {
+      "path": "/workspace/scratch/first-minute/round-142/existing-inset-after/stderr.log",
+      "SHA256": "0df81328c33b1609593caa7dd1ffd3d9382124eeb3c9fdfbf1f6287bbfce0678"
+    },
+    "finalDocstringReview": {
+      "path": "/workspace/scratch/first-minute/round-142/final-static-review/docstring-resolution.json",
+      "SHA256": "39dbb6f581a4e2c17fd16e6d1615cb1e7a7548df492f881847814d2bda50c097"
+    }
+  },
+  "reportPreparation": {
+    "workingTreeEdits": 0,
+    "productEdits": 0,
+    "Git": 0,
+    "browser": 0,
+    "runtimeTests": 0,
+    "fullRawCopied": false
+  },
+  "console404Correlation": {
+    "consoleURLRecorded": false,
+    "sameUTCSecondMatches": 8,
+    "candidateConsole404Count": 8,
+    "serverPath": "/favicon.ico",
+    "browserRequestIDAttribution": false,
+    "actualExitsRemain": {
+      "repeat": 1,
+      "layout": 1
+    },
+    "scope": "Temporal correlation only; raw console does not contain target URL"
+  },
+  "relatedTestTotalsAfter": {
+    "methods": 20,
+    "passed": 20,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "sumOfSeparateUnittestRuns": [
+      17,
+      3
+    ],
+    "wholePytestSuitePassed": false
+  },
+  "measurementFileVersions": {
+    "finalRegressionTest": "6bd608f1d718c90603f680bda19a7f0fa63492e16a6d0890125d9884d0d8730f",
+    "existingRelatedRunNewTestFile": "327f8193310fceb9d007b1453e269557a8463a63f3b2410471fec3d42546a405",
+    "scope": "Existing17 did not execute the new test module; final docstring-only change was verified by separate final3 old/new runs. Product0b918 unchanged."
+  },
+  "finalStaticReview": {
+    "openFindingCounts": {
+      "P0": 0,
+      "P1": 0,
+      "P2": 0,
+      "P3": 0,
+      "blocking": 0
+    },
+    "docstringIssueResolved": true,
+    "bytesAfterFirstNewlineIdentical": true,
+    "ASTExceptModuleDocstringIdentical": true
+  }
+}

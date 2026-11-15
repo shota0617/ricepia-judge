@@ -1,0 +1,40 @@
+{
+  "source": {
+    "head": "71bd05c991ba0e2715f687393081b997e3259648",
+    "branch": "codex/firstminute-round142",
+    "files": {
+      "kome365/index.html": "0b918e87c4635aa87c7072d690e3ab3ec8fd64dd819cf20c3a1b7db2f0ee9790",
+      "kome365/engine.js": "c3d0cef6bb108d5b6d8fe38aaf0c08fe7994bdab08bf92775865a6e0222469a3",
+      "kome365/field3d.js": "a5c1dad91d5c0c326f1394fad9c5d04e7e3b8d13e3a2b8b1757c7aa08d3558ff",
+      "kome365/cards.js": "b15c5b2f56ef9c0c8361fa2fa6a039085919ca516b4a2e6e5a1b3bb691dde744",
+      "tests/test_kome365_firstmin.py": "4fe6fe62beadfcaf78a7f5dc7e38983ef4d0bcbe7d73bd66cd51d7ea6901c7e1",
+      "tests/test_kome365_why_date.py": "6bd608f1d718c90603f680bda19a7f0fa63492e16a6d0890125d9884d0d8730f"
+    },
+    "testOnlyDocstringChangedSinceRelated17": true
+  },
+  "reportPreparationManifestSHA256": "921bdcc9b59cd0c8f96af2ca843d36981a68ca199fd85c07a9941076f3ba41aa",
+  "documents": {
+    "README.md": "87fbbd48db80062ee16aafab5d4b75e2461d5dbf8d1fbc593c3a7107a6ca4535",
+    "images/after-answer-01.png": "267c08900b4ca2d71f28020798541e9ec86d14ea7a8b4a7963b058b9e8b8a74f",
+    "images/before-answer-01.png": "3d3b0cab2c2a68e6d58b45845a48cf98b4a0f87607b8f1734141c7ea452a2978",
+    "images/layout-after-320x568.png": "38729738d23a78e99fa1cb0ae3571973139d09cf0f0a62da6fe84b21255f6914",
+    "images/layout-after-390x844.png": "16f643989dbce8c414f2bfd3ad2bf1d6e1cdf820a355294b1a78052f8a9a3793",
+    "images/layout-after-568x320.png": "f8d3b44fd806db912ac60dc60f027981ae2290ca3c638e85122d0e6c6219bea6",
+    "images/layout-after-820x1180.png": "c3abe6b161b7b87a7785bbf24e9052acb30f4924da1649ba227281579c532495",
+    "images/layout-after-844x390.png": "805ab254e95a9a9123d43bcf203769cd433e15b2b33c7d603c9676e40a7caf99",
+    "images/layout-before-320x568.png": "7dd3c47bc860ed52fe7fd3661d3d57f08b6a8caf0e790018794b329a7aa287c1",
+    "images/layout-before-390x844.png": "a098407ed25639fe4a6dec4db09451f060f2927bbd19c538f70d7bf34eab5045",
+    "images/layout-before-568x320.png": "1fc774054b64a3077804285a620b70d25f76b14595056dfd65fef456aa1102a0",
+    "images/layout-before-820x1180.png": "5c53d45464753b58471ac3c7b3290b8d7a82add241197d6deed2657ab0b8362c",
+    "images/layout-before-844x390.png": "b518fff10c9bda5cc366e54044a8170cc93e2baed659a48e68e0257ad4cedeed",
+    "images/primary-observe-10s.png": "cfda6503c2b6848e4211ad7fd26e74ca5177d86f39438845afdd79448638a5dd",
+    "images/primary-play-10s.png": "81a54f972be0c78f315f654b343dc25482fca05104c97bdbda90372f66191703",
+    "images/primary-play-30s.png": "dbefbb9049fb6fff48af5886d82c39b846f0a13d9c6e8540d45c12e754226b27",
+    "images/primary-play-60s.png": "268460e34da4dc0119319240d79a82b4b3e65bf64d6a5d59a775685d32348f69",
+    "results.json": "368191efb1170d7e76f68b63f56e67b2f38b60425f2ae1ef0ee3f5885eea7838"
+  },
+  "imagesAreUneditedOriginalBytes": true,
+  "relatedTestsPassed": 20,
+  "requiredPytestActualExit": 127,
+  "mergeStatus": "HOLD; required full suite unavailable"
+}

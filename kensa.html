@@ -1991,6 +1991,7 @@ function endPlatePointer(e, cancelled) {
   if (!pts.has(e.pointerId)) return;
   if (pageSlid(e)) cancelled = true; /* ページを動かした指は、取り消しと同じ（タップ・はじき・空振りに数えない） */
   pts.delete(e.pointerId);
+  if (cancelled && pinch) pinch.moved = true; /* 3本指の とちゅうで 取り消された 指が あった ピンチは、のこりを ふつうに はなしても 鳴らさない */
   if (pts.size < 2 && pinch) { const p = pinch; pinch = null; if (!cancelled && step === 2 && !p.moved && Math.abs(Z.s - p.s0) < 0.01 && Math.abs(p.twist) < 2) stillPinch(); }
   if (pts.size === 1 && !sortDrag) { /* ズームのあと片方を離しても、残った指で見る場所を動かせる */
     const [p] = pts.values();

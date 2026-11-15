@@ -1,0 +1,105 @@
+{
+  "review": "R146 final independent static code review",
+  "at": "2026-11-15T22:05:18.420565+00:00",
+  "scope": "Applied one-line Kome CSS change and new 183-line regression test; no production changes by this review.",
+  "reviewerDistinctFromTestAuthorAndCSSProposer": true,
+  "ownActions": {
+    "staticReadsAndHashes": true,
+    "scratchReviewWrites": true,
+    "browserRuns": 0,
+    "nodeOrJSParse": 0,
+    "testRuns": 0,
+    "gitCommands": 0,
+    "networkCalls": 0,
+    "productEdits": 0
+  },
+  "sourceHashes": {
+    "AGENTS.md": "06d6baa54cbcfd5135264dd174aaf4caaf0d278e3e09efc841b2c04b42a916ec",
+    ".claude/skills/ricepia-flow/SKILL.md": "322f7d5932c8d5fa8eb1778218ce0a4d37f212e63f211629ff7efe9c4ec4720a",
+    "kome365/index.html": "0186cfdb92297e810ef66cf93890b98816ce30ff35751eb234926167e88648e7",
+    "kome365/engine.js": "c3d0cef6bb108d5b6d8fe38aaf0c08fe7994bdab08bf92775865a6e0222469a3",
+    "kome365/field3d.js": "a5c1dad91d5c0c326f1394fad9c5d04e7e3b8d13e3a2b8b1757c7aa08d3558ff",
+    "kome365/cards.js": "b15c5b2f56ef9c0c8361fa2fa6a039085919ca516b4a2e6e5a1b3bb691dde744",
+    "tests/test_kome365_firstmin.py": "f32b5c8d215782efe69ef301b720d9aac00dd47cc7dcfe51f730f69145057b7b",
+    "tests/test_kome365_reduce_cue.py": "fa024a6010771a1fdc3d6b9e560aa40216895eb6ce6e1b1017e274f17acdd259"
+  },
+  "evidenceHashes": {
+    "reduce-cue-fix-prep/v2-top/candidate.patch": "79a6bdad8799d481087a3fff00fba00f53be0b6666e1fb2e3d9ee7320900156a",
+    "reduce-cue-fix-prep/v2-top/binding.json": "e7eb9c90d753b5e506c20b9ff5a95c0822d2368c1e2bc35449423aba154391b6",
+    "regression-before-v2/execution.json": "c88d58fd5e25a0198796b5e33c4f47296a2c0e68ec7c7869608b1088315fe70a",
+    "regression-before-v2/stderr.log": "789d59281f27ea67e8ba991d82f0ee44acc628373f49aa6c62bad1b77d6b23a5",
+    "regression-before-v2/root-closure.json": "a7ab3a196f8a036ff8979736997f6cafb6322df316f5c8cc2d141a4f6a313b4f",
+    "regression-after/execution.json": "3c17ed175010ea6b7c5f6cb4312533e6b5e110ba3a96e07395856c160906c0ba",
+    "regression-after/stderr.log": "26dd3dd92d2142bf403dd20d1da42c713a9c259fa4ba2ad7fe127cc6a9c3a24e",
+    "regression-after/root-closure.json": "70b1d291a91f4631705b26e94a3dae1574a8322174330b202ec55210c2a67cba",
+    "existing-before/root-closure.json": "6273e3b617783dd646258f59e0dc069e0e4e513a375e0490db7ec83428f597b6",
+    "long-date-fixture-audit/geometry-audit.json": "48e3b0e353b7c224b07e4da27aee3ca47622379a4ae94277245fe49cbc076388",
+    "long-date-fixture-audit/metadata-audit.json": "b8e9c39e5580640ed0855793e120d5b879a1538fb524aae161caa85a934523e3",
+    "reduce-cue-after-audit/comparison.json": "9119d4196d0e9420dc05c6caeaa9ca3e0264e6f48f2a829ad904f99500a48cd5"
+  },
+  "findings": [],
+  "severityCounts": {
+    "P0": 0,
+    "P1": 0,
+    "P2": 0,
+    "P3": 0
+  },
+  "blocking": false,
+  "checks": {
+    "htmlOnlyOneAddedCSSLine": {
+      "line": 799,
+      "removedOnceSHA256": "1131aca205f44acd47243b6769d2c68acf0526128eb4bf7ab0e7a242b50f5f62",
+      "currentSHA256": "0186cfdb92297e810ef66cf93890b98816ce30ff35751eb234926167e88648e7"
+    },
+    "mediaBoundary": "Only prefers-reduced-motion:reduce AND viewport height<=440 AND width>=564. Inclusive boundaries; normal preference and other dimensions retain original rules.",
+    "cascade": "Same #swGuide .gd specificity and later source order override top:140px at line793. Original top:158px, margin-top:-27px, font40, 70x54 dimensions and left/right6 remain; effective top moves 107px upward. Width<=300 rule is disjoint.",
+    "displayAndInteraction": "Existing reduced .demoOn display!important wins existing short-height display:none!important by specificity. No visibility, pointer-events, script, audio, cue/mark/why/idle timing, first3 carry, card or button layout change.",
+    "operatorAndProtected": "AGENTS/flow and engine.js/field3d.js/cards.js hashes unchanged from bound source. One-line reverse hash proves every other HTML byte unchanged.",
+    "testDetectsIssue": "Uses actual HTML/assets and native reducedMotion preference with fresh normal/reduce contexts. Checks text, visible glyph Ranges, size/font, viewport containment, normal card/layout equivalence and arrow/text intersections. No assertion of top33 and no game-state/CSS/time fixture injection.",
+    "testSameBeforeAfter": {
+      "preparedV2EqualsApplied": true,
+      "beforeAndAfterRootTestSHA256": "fa024a6010771a1fdc3d6b9e560aa40216895eb6ce6e1b1017e274f17acdd259",
+      "rootOld": "actual1; 1 method reaches line178 and fails on 6 intersections",
+      "rootNew": "actual0; same 1 method passes",
+      "ownTestRuns": 0
+    },
+    "existingAssertionsUnchanged": "tests/test_kome365_firstmin.py SHA f32b5c8d215782efe69ef301b720d9aac00dd47cc7dcfe51f730f69145057b7b matches existing-before receipt. No previous test assertion was deleted or relaxed.",
+    "otherGames": "Reviewed product delta is only kome365/index.html CSS; new test resolves Kome paths. Root post-regression recorded status contains this HTML and the new test only. No own whole-tree Git check.",
+    "feedbackCoexistence": {
+      "codeLines": [
+        3171,
+        3179,
+        3183,
+        3185,
+        3446,
+        3841,
+        3847,
+        3871,
+        3877,
+        3879,
+        3883,
+        3895,
+        4142
+      ],
+      "normalPath": "ghostOff resets tapOnly and sets demoDone; demoArm waits while markLeft>0 or markRaf. Low-landscape whyPlace first position ends at swWrap.top-6; new arrow starts swWrap.top+6, nominal 12px vertical separation. markFit places why first and avoids its box when possible.",
+      "limitations": "whyHits and markObs do not include arrows. whyFit fallback, fast first3 carry, and immediate ghostBack after two short taps are not measured by the initial-display regression or the existing WhyReadable normal-only five-size plans. No concrete new collision established; no additional runtime required solely by this static review."
+    }
+  },
+  "evidenceLimits": [
+    "New regression covers initial 844x390 normal/reduce, not every viewport or feedback interval.",
+    "Long-date auxiliary fixture audit reports 4464 valid rows, zero date/other intersections and minimum date gap1.078125px in its pinned environment. It manipulates date/class display and is not natural gameplay; reviewed audit metadata, not a new execution.",
+    "Repeat after audit supports 10 initial overlap observations to0 and10/10 subsequent date advances. It does not prove all feedback frames, physical-device performance, retention or universal font availability.",
+    "Test retains console diagnostics and allows only exact fixture favicon HTTP404; GREEN is not a console0 statement.",
+    "Existing-before107 remains106pass/1knownfailure. Existing-after closure absent at this review read; do not infer all existing tests pass from new-test GREEN."
+  ],
+  "toolReadEvidence": [
+    "0d3102(full183line test)",
+    "cb025f(CSS/operator/root RED+GREEN)",
+    "a5dc28(reverse hash/current pins)",
+    "bcd59b(mark CSS/fit full)",
+    "6a2a59(why fit/carry full)",
+    "22a5a3(existing WhyReadable cases)",
+    "1ff7d5(ghost paths/longdate scalars)",
+    "70e084(root closures)"
+  ]
+}

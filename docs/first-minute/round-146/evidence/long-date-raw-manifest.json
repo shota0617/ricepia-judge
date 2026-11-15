@@ -1,0 +1,441 @@
+{
+  "name": "long-date-raw.tar.gz",
+  "createdUTC": "2026-11-15T22:04:22.890695+00:00",
+  "archive": {
+    "path": "/workspace/scratch/first-minute/round-146/report-prep/stage-final-prep/evidence/long-date-raw.tar.gz",
+    "bytes": 513678,
+    "sha256": "699e3d391b2e9a0b4cd3fa9ff2282ca04fbad880b1bad40c60177cbc9f6f97b9"
+  },
+  "members": [
+    {
+      "member": "long-date-fixture-audit/README.md",
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-audit/README.md",
+      "bytes": 6197,
+      "sha256": "0e3ac6881201decb3e7532ca813b80015cae7371e972e0e7ac1dfb21f294b65c"
+    },
+    {
+      "member": "long-date-fixture-audit/geometry-audit.json",
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-audit/geometry-audit.json",
+      "bytes": 28887,
+      "sha256": "48e3b0e353b7c224b07e4da27aee3ca47622379a4ae94277245fe49cbc076388"
+    },
+    {
+      "member": "long-date-fixture-audit/manifest.json",
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-audit/manifest.json",
+      "bytes": 635,
+      "sha256": "60401945a3622ecf9b77dc55867c8a4f4049139d5178d28ff6b573ec86583ef9"
+    },
+    {
+      "member": "long-date-fixture-audit/metadata-audit.json",
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-audit/metadata-audit.json",
+      "bytes": 34827,
+      "sha256": "b8e9c39e5580640ed0855793e120d5b879a1538fb524aae161caa85a934523e3"
+    },
+    {
+      "member": "long-date-fixture-audit/metadata.py",
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-audit/metadata.py",
+      "bytes": 5345,
+      "sha256": "524274909563812eb46a2679cf2873562d7060f245716d771ee32345470bc6c9"
+    },
+    {
+      "member": "long-date-fixture-audit/recount.py",
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-audit/recount.py",
+      "bytes": 7817,
+      "sha256": "8879b2f596e8cfd67930398469d2ede58701c1bca34f4581d39757a0e6a9c29f"
+    },
+    {
+      "member": "long-date-fixture-prep/README.md",
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-prep/README.md",
+      "bytes": 5250,
+      "sha256": "c7342583b21ccb6dcb7133d7b4eae025ba4a9951348c377a992cc90f9283f350"
+    },
+    {
+      "member": "long-date-fixture-prep/binding-new.json",
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-prep/binding-new.json",
+      "bytes": 575,
+      "sha256": "72c78a32fcfce64769d00ea6be2f320a793101f8d04cded06cb2a75fbfdff674"
+    },
+    {
+      "member": "long-date-fixture-prep/binding-template.json",
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-prep/binding-template.json",
+      "bytes": 426,
+      "sha256": "99788bfdcb512e0a004a71f9219d630db135f26c0899e881fb6bbb7c9e67241f"
+    },
+    {
+      "member": "long-date-fixture-prep/diagnose.cjs",
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-prep/diagnose.cjs",
+      "bytes": 4191,
+      "sha256": "cd4475007e6aa88dcebbca87a4fc1d1ec50aa8337de00e20883fa5c36d677a25"
+    },
+    {
+      "member": "long-date-fixture-prep/environment-manifest.json",
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-prep/environment-manifest.json",
+      "bytes": 1251,
+      "sha256": "257c2cc6401c0d13fefa4e955a26be9fbea1f89cf2580aff759e7b3c094cdc44"
+    },
+    {
+      "member": "long-date-fixture-prep/frozen.json",
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-prep/frozen.json",
+      "bytes": 4962,
+      "sha256": "38ee2ef5872b2edd7a7014696740f610f348b2e1f9122bedec48b1fe7c6099b1"
+    },
+    {
+      "member": "long-date-fixture-prep/measure.cjs",
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-prep/measure.cjs",
+      "bytes": 5811,
+      "sha256": "3938502be717c1dbdb56ec448c8ee0cb5b9f6e3f85392ebadcd8a46935c47804"
+    },
+    {
+      "member": "long-date-fixture-prep/root-execution-gate.json",
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-prep/root-execution-gate.json",
+      "bytes": 2988,
+      "sha256": "515ebb325e55f30038c740111ba17fadb4208e6a6053186668d655a1316880b2"
+    },
+    {
+      "member": "long-date-fixture-prep/root-new-execution.json",
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-prep/root-new-execution.json",
+      "bytes": 454,
+      "sha256": "54add446c9630f24c0fd4e64d36a732bd21fc9a321d20283b9dbe1654cb971f3"
+    },
+    {
+      "member": "long-date-fixture-prep/root-new-stderr.log",
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-prep/root-new-stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "member": "long-date-fixture-prep/root-new-stdout.log",
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-prep/root-new-stdout.log",
+      "bytes": 166,
+      "sha256": "4bb98f930019ab525e96364c20a7ed68113a8149b0a3b374e4ff44881f85db76"
+    },
+    {
+      "member": "long-date-fixture-prep/root-parse.json",
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-prep/root-parse.json",
+      "bytes": 241,
+      "sha256": "70c9aa759b6ed973c5bf6ad504bc3fb1d8284091d6fd8cf4868fa7b386426252"
+    },
+    {
+      "member": "long-date-fixture-prep/run-new-01/564x440-fest-rows.json",
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-prep/run-new-01/564x440-fest-rows.json",
+      "bytes": 2106203,
+      "sha256": "b83b54d16a3de0d49bb04eff4a7e570ec80e7a83ce4743e289965102e1de54d9"
+    },
+    {
+      "member": "long-date-fixture-prep/run-new-01/564x440-gold-rows.json",
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-prep/run-new-01/564x440-gold-rows.json",
+      "bytes": 2107198,
+      "sha256": "71d71fe8595f226b8e904f6146f0fc9050867c8ec5e43d931b47f25eaa7c3ff2"
+    },
+    {
+      "member": "long-date-fixture-prep/run-new-01/564x440-goldfest-rows.json",
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-prep/run-new-01/564x440-goldfest-rows.json",
+      "bytes": 2108836,
+      "sha256": "05d8754226a71b8785b50bf3b645147f6223c040150842c0613deaf67a86838d"
+    },
+    {
+      "member": "long-date-fixture-prep/run-new-01/564x440-normal-rows.json",
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-prep/run-new-01/564x440-normal-rows.json",
+      "bytes": 2107218,
+      "sha256": "d768d3ce4fa9b96b3155e379e6ffefcabcc3dcf28d7be7f9b5af299b7c79e1fb"
+    },
+    {
+      "member": "long-date-fixture-prep/run-new-01/568x320-fest-rows.json",
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-prep/run-new-01/568x320-fest-rows.json",
+      "bytes": 2106368,
+      "sha256": "c83a95937b6ca73089da9d4e81d67a1da6904d7e6942d08aeab10cbdc4709e7a"
+    },
+    {
+      "member": "long-date-fixture-prep/run-new-01/568x320-gold-rows.json",
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-prep/run-new-01/568x320-gold-rows.json",
+      "bytes": 2106726,
+      "sha256": "2fd50fc48ad7d81312674a56a25efd9d085c31b500680cb5e39d08941542d81e"
+    },
+    {
+      "member": "long-date-fixture-prep/run-new-01/568x320-goldfest-rows.json",
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-prep/run-new-01/568x320-goldfest-rows.json",
+      "bytes": 2108672,
+      "sha256": "aa1ce972f9e73f932303e52e6504d05da45a474d633a25068e2821a70485f55e"
+    },
+    {
+      "member": "long-date-fixture-prep/run-new-01/568x320-normal-rows.json",
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-prep/run-new-01/568x320-normal-rows.json",
+      "bytes": 2107012,
+      "sha256": "05e5394c8d526628d8ffe947b6f7bc41ab132f7f519785583ef6d9b22a7ab518"
+    },
+    {
+      "member": "long-date-fixture-prep/run-new-01/844x390-fest-rows.json",
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-prep/run-new-01/844x390-fest-rows.json",
+      "bytes": 2118587,
+      "sha256": "4cbc941f699d7d06d0c71572e139220ac3906ac7ec0f98b52808d5875b340893"
+    },
+    {
+      "member": "long-date-fixture-prep/run-new-01/844x390-gold-rows.json",
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-prep/run-new-01/844x390-gold-rows.json",
+      "bytes": 2118476,
+      "sha256": "2dd3588786e7a15a47ceff9560c24e6b06e9bea1c8510fdb2285b5216294a6b8"
+    },
+    {
+      "member": "long-date-fixture-prep/run-new-01/844x390-goldfest-rows.json",
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-prep/run-new-01/844x390-goldfest-rows.json",
+      "bytes": 2120438,
+      "sha256": "a054947fa62c75b7ec2d33e45b6f895fcee582032885b18a7d885942560cf05e"
+    },
+    {
+      "member": "long-date-fixture-prep/run-new-01/844x390-normal-rows.json",
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-prep/run-new-01/844x390-normal-rows.json",
+      "bytes": 2119368,
+      "sha256": "60a6f46fb506916b7357f1c3b68034cbe01e47edf6224a69f0c7b2e2cee9c302"
+    },
+    {
+      "member": "long-date-fixture-prep/run-new-01/report.json",
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-prep/run-new-01/report.json",
+      "bytes": 7021280,
+      "sha256": "d68adc02619ae576bf2316a8745190b7928550da4182c2e80b0bb370e65c4ea5"
+    },
+    {
+      "member": "long-date-fixture-prep/run-new-01/root-closure-clarification.json",
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-prep/run-new-01/root-closure-clarification.json",
+      "bytes": 1645,
+      "sha256": "f62fec02e2b9edb92650be84c4b62224029ebd22c646eb0e87169bc4f7c1d517"
+    },
+    {
+      "member": "long-date-fixture-prep/run-new-01/root-closure.json",
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-prep/run-new-01/root-closure.json",
+      "bytes": 3074,
+      "sha256": "041dec173cc4ed6b10bc463531d2e9b5fda21db1a04b58601a68a0b0a1a44678"
+    },
+    {
+      "member": "long-date-fixture-prep/run.cjs",
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-prep/run.cjs",
+      "bytes": 15992,
+      "sha256": "46143bf9517b840d2ad970e361ae381754834344491c18804d285b4c10a6866b"
+    },
+    {
+      "member": "long-date-fixture-prep/source-manifest.json",
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-prep/source-manifest.json",
+      "bytes": 1552,
+      "sha256": "1bdf44f4ebcafc8a136dcd19c476ff8f5b4984141a209c560f3d19930fb04a54"
+    }
+  ],
+  "memberCount": 35,
+  "uncompressedMemberBytes": 32488668,
+  "rawPNGMembers": 0,
+  "deterministicContainerMetadata": true,
+  "losslessOriginalBytes": true,
+  "separateExtractionDirectory": "/workspace/scratch/first-minute/round-146/report-prep/stage-final-prep-extract-verification/long-date-raw",
+  "extractedMembers": 35,
+  "allByteAndSHAEqual": true,
+  "checks": [
+    {
+      "member": "long-date-fixture-audit/README.md",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "long-date-fixture-audit/geometry-audit.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "long-date-fixture-audit/manifest.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "long-date-fixture-audit/metadata-audit.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "long-date-fixture-audit/metadata.py",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "long-date-fixture-audit/recount.py",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "long-date-fixture-prep/README.md",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "long-date-fixture-prep/binding-new.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "long-date-fixture-prep/binding-template.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "long-date-fixture-prep/diagnose.cjs",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "long-date-fixture-prep/environment-manifest.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "long-date-fixture-prep/frozen.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "long-date-fixture-prep/measure.cjs",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "long-date-fixture-prep/root-execution-gate.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "long-date-fixture-prep/root-new-execution.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "long-date-fixture-prep/root-new-stderr.log",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "long-date-fixture-prep/root-new-stdout.log",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "long-date-fixture-prep/root-parse.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "long-date-fixture-prep/run-new-01/564x440-fest-rows.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "long-date-fixture-prep/run-new-01/564x440-gold-rows.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "long-date-fixture-prep/run-new-01/564x440-goldfest-rows.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "long-date-fixture-prep/run-new-01/564x440-normal-rows.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "long-date-fixture-prep/run-new-01/568x320-fest-rows.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "long-date-fixture-prep/run-new-01/568x320-gold-rows.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "long-date-fixture-prep/run-new-01/568x320-goldfest-rows.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "long-date-fixture-prep/run-new-01/568x320-normal-rows.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "long-date-fixture-prep/run-new-01/844x390-fest-rows.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "long-date-fixture-prep/run-new-01/844x390-gold-rows.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "long-date-fixture-prep/run-new-01/844x390-goldfest-rows.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "long-date-fixture-prep/run-new-01/844x390-normal-rows.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "long-date-fixture-prep/run-new-01/report.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "long-date-fixture-prep/run-new-01/root-closure-clarification.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "long-date-fixture-prep/run-new-01/root-closure.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "long-date-fixture-prep/run.cjs",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "long-date-fixture-prep/source-manifest.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    }
+  ]
+}

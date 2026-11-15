@@ -1,0 +1,727 @@
+{
+  "createdUTC": "2026-11-15T22:04:22.890695+00:00",
+  "status": "fixed evidence package preparation, publication receipt not yet available",
+  "previousPreparation6Files": {
+    "manifest.json": {
+      "path": "/workspace/scratch/first-minute/round-146/report-prep/manifest.json",
+      "bytes": 7796,
+      "sha256": "877f2555a623b12df7d4377f4501af3b5e92e49edd66c238e4b86a0786533210"
+    },
+    "longfixture-root-closure-clarification.json": {
+      "path": "/workspace/scratch/first-minute/round-146/report-prep/longfixture-root-closure-clarification.json",
+      "bytes": 1645,
+      "sha256": "f62fec02e2b9edb92650be84c4b62224029ebd22c646eb0e87169bc4f7c1d517"
+    },
+    "results.json": {
+      "path": "/workspace/scratch/first-minute/round-146/report-prep/results.json",
+      "bytes": 22594,
+      "sha256": "5dc3b3ecef68941f0642bc39a2a7e3ff0005c13d3590c17583243804858776c0"
+    },
+    "README.md": {
+      "path": "/workspace/scratch/first-minute/round-146/report-prep/README.md",
+      "bytes": 7365,
+      "sha256": "f439c2043cecd35f59087f8d238f5c152a967d64b242166d80323f293d063415"
+    },
+    "PR-body.md": {
+      "path": "/workspace/scratch/first-minute/round-146/report-prep/PR-body.md",
+      "bytes": 1846,
+      "sha256": "3028ac8c80c656f129b987e67201c0e232ee2538daea89c940b0601edaf0b70e"
+    },
+    "evidence-plan.md": {
+      "path": "/workspace/scratch/first-minute/round-146/report-prep/evidence-plan.md",
+      "bytes": 1811,
+      "sha256": "bd250e127bec4b2ff52ff579a5be59f6ea273f544c6f653e5d863a206bf73ba4"
+    }
+  },
+  "copies": [
+    {
+      "source": "/workspace/scratch/first-minute/round-146/preparation-bound146/strict/observe-10s.png",
+      "destination": "images/primary-observe-10s.png",
+      "role": "normal primary raw PNG",
+      "bytes": 145795,
+      "sha256": "d1508476fc413baf7e719ae78ea70b0c1d5847e5dbba26202c0e5dae06db6762"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/preparation-bound146/strict/play-10s.png",
+      "destination": "images/primary-play-10s.png",
+      "role": "normal primary raw PNG",
+      "bytes": 260598,
+      "sha256": "c0a01d69b47992d2abfdc4c803f1b132af005c4ade9b96f282f683aea0a45aee"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/preparation-bound146/strict/play-30s.png",
+      "destination": "images/primary-play-30s.png",
+      "role": "normal primary raw PNG",
+      "bytes": 252744,
+      "sha256": "1eb41f0692841cd5611c8c3ee1a9a0c697a42b72d8de750b23d8903392cd63eb"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/preparation-bound146/strict/play-60s.png",
+      "destination": "images/primary-play-60s.png",
+      "role": "normal primary raw PNG",
+      "bytes": 284330,
+      "sha256": "976f2bb986635d165bdca03c9b6349283f9b6c382af9c416586d646a3eea89dd"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/run-01/case-01/observe-10s.png",
+      "destination": "images/repeat-before-case01.png",
+      "role": "repeat representative raw PNG; not new measurement",
+      "bytes": 178364,
+      "sha256": "2f5fd63cd51bf6a908eb1581aeaad214d2ae7cc78fc1d38317d9550414e33a18"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-01/case-01/observe-10s.png",
+      "destination": "images/layout-before-case01.png",
+      "role": "five sizes × two motion raw PNG",
+      "bytes": 103886,
+      "sha256": "d280fabc718d74c1b36182f7413f6fdd8574e62a241ecd5950b9ab2c6440e8a2"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-01/case-02/observe-10s.png",
+      "destination": "images/layout-before-case02.png",
+      "role": "five sizes × two motion raw PNG",
+      "bytes": 116250,
+      "sha256": "e834e2793637a4927b5d8e5a73326f35a18aedc6325968fddaef3cc644188255"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-01/case-03/observe-10s.png",
+      "destination": "images/layout-before-case03.png",
+      "role": "five sizes × two motion raw PNG",
+      "bytes": 134642,
+      "sha256": "8a2d17258e82ff03316851e31d52ae4ebee64ee302e22e52d9e60da0d2c25f10"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-01/case-04/observe-10s.png",
+      "destination": "images/layout-before-case04.png",
+      "role": "five sizes × two motion raw PNG",
+      "bytes": 166535,
+      "sha256": "9d2c341d36f6e44fde0efe59eda40849b36eec6616fb22ad00ee85f55fd28265"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-01/case-05/observe-10s.png",
+      "destination": "images/layout-before-case05.png",
+      "role": "five sizes × two motion raw PNG",
+      "bytes": 95746,
+      "sha256": "b832d770b029f777b2183338d6c8cf9767de9e63bee553a55a50129a62224d5a"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-01/case-06/observe-10s.png",
+      "destination": "images/layout-before-case06.png",
+      "role": "five sizes × two motion raw PNG",
+      "bytes": 107369,
+      "sha256": "5ed06e3f5152f889f3414a5153700ede26d80d400f1570cdd864d923866cb5f3"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-01/case-07/observe-10s.png",
+      "destination": "images/layout-before-case07.png",
+      "role": "five sizes × two motion raw PNG",
+      "bytes": 147303,
+      "sha256": "19cc9e383c1e09b3ee7c200b2022db6eeafabff0d656b34fb37dc204ea4d9987"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-01/case-08/observe-10s.png",
+      "destination": "images/layout-before-case08.png",
+      "role": "five sizes × two motion raw PNG",
+      "bytes": 183190,
+      "sha256": "0ccccbdd3beb57621673d7f58c3e3391ac942ad416f83a3664cc8bbdf07b2c99"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-01/case-09/observe-10s.png",
+      "destination": "images/layout-before-case09.png",
+      "role": "five sizes × two motion raw PNG",
+      "bytes": 297296,
+      "sha256": "1c67fdbf2b25c31bfdcc4f670b67aad43e3cb8314b321559df4c5fdf2a931653"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-01/case-10/observe-10s.png",
+      "destination": "images/layout-before-case10.png",
+      "role": "five sizes × two motion raw PNG",
+      "bytes": 430128,
+      "sha256": "f86566155a801a93c5e0c196ac4018dfbc27dd2b4af50dc8053192e37a962bc6"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/run-02/case-01/observe-10s.png",
+      "destination": "images/repeat-after-case01.png",
+      "role": "repeat representative raw PNG; not new measurement",
+      "bytes": 177110,
+      "sha256": "339175cda7b38bbeb924ee51c2feb907700e79b62a11f67429f9a17d2421c5e2"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-02/case-01/observe-10s.png",
+      "destination": "images/layout-after-case01.png",
+      "role": "five sizes × two motion raw PNG",
+      "bytes": 104292,
+      "sha256": "2c37ad45babf23019f673c7414f07b848cee57f03ceee8fd4dd75d3baed182d6"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-02/case-02/observe-10s.png",
+      "destination": "images/layout-after-case02.png",
+      "role": "five sizes × two motion raw PNG",
+      "bytes": 116250,
+      "sha256": "e834e2793637a4927b5d8e5a73326f35a18aedc6325968fddaef3cc644188255"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-02/case-03/observe-10s.png",
+      "destination": "images/layout-after-case03.png",
+      "role": "five sizes × two motion raw PNG",
+      "bytes": 137474,
+      "sha256": "8b8b5fa2b6385be5952c759e202d820bf2770dff850b7023f7370aa1844bef6f"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-02/case-04/observe-10s.png",
+      "destination": "images/layout-after-case04.png",
+      "role": "five sizes × two motion raw PNG",
+      "bytes": 167807,
+      "sha256": "7dca7f767b0d89b6351a2d7a193fa901cdd075f101114c153f891d7baec79751"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-02/case-05/observe-10s.png",
+      "destination": "images/layout-after-case05.png",
+      "role": "five sizes × two motion raw PNG",
+      "bytes": 95834,
+      "sha256": "ecb531db89c6f63258913b90c6f5b574c2000f4cccc95684e4b43f27e41775fd"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-02/case-06/observe-10s.png",
+      "destination": "images/layout-after-case06.png",
+      "role": "five sizes × two motion raw PNG",
+      "bytes": 106754,
+      "sha256": "167915bd7c20101826a1913e8a8ba5bd9b5425e9e56b057c17f438b164544c3a"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-02/case-07/observe-10s.png",
+      "destination": "images/layout-after-case07.png",
+      "role": "five sizes × two motion raw PNG",
+      "bytes": 154099,
+      "sha256": "6e2288242d84d434d7a6bd8a04a68a5d84b5133724fecaac338d7dc371777c8c"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-02/case-08/observe-10s.png",
+      "destination": "images/layout-after-case08.png",
+      "role": "five sizes × two motion raw PNG",
+      "bytes": 182501,
+      "sha256": "d8e04b93d8cdcc5b732783c310d40d951c9b1207ac8213f299515abd44bb6e4d"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-02/case-09/observe-10s.png",
+      "destination": "images/layout-after-case09.png",
+      "role": "five sizes × two motion raw PNG",
+      "bytes": 294743,
+      "sha256": "6ef4a1b5f3a95ffc967ce0dcffca4f701c9b7a56d43d7e7c26da6c1c3577c19c"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-02/case-10/observe-10s.png",
+      "destination": "images/layout-after-case10.png",
+      "role": "five sizes × two motion raw PNG",
+      "bytes": 430128,
+      "sha256": "f86566155a801a93c5e0c196ac4018dfbc27dd2b4af50dc8053192e37a962bc6"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-prep/run-new-01/564x440-fest-max.png",
+      "destination": "images/long-date-564x440-fest-max.png",
+      "role": "long-date fixture raw PNG",
+      "bytes": 145059,
+      "sha256": "c3b61e130047f33ab8350e25865ba29c8ff33222cec8afe0ed11a6848c14a939"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-prep/run-new-01/564x440-gold-max.png",
+      "destination": "images/long-date-564x440-gold-max.png",
+      "role": "long-date fixture raw PNG",
+      "bytes": 145073,
+      "sha256": "d3cdee05d21f4e77b875040fccad265ac5e0a7313e52069ed26ace9faa649311"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-prep/run-new-01/564x440-goldfest-max.png",
+      "destination": "images/long-date-564x440-goldfest-max.png",
+      "role": "long-date fixture raw PNG",
+      "bytes": 144422,
+      "sha256": "246ab9462b0b375d0856b4d81147406555c4a15089d8e7ecb427c99782cf50fe"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-prep/run-new-01/564x440-initial.png",
+      "destination": "images/long-date-564x440-initial.png",
+      "role": "long-date fixture raw PNG",
+      "bytes": 144293,
+      "sha256": "40c06d095d8409754a89320946ef4fa5ddc68e559897ec048bd416e896436522"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-prep/run-new-01/564x440-normal-max.png",
+      "destination": "images/long-date-564x440-normal-max.png",
+      "role": "long-date fixture raw PNG",
+      "bytes": 145579,
+      "sha256": "77b527c0bd657924a20ae180aac0d2882526a50df45280677fb2bfefaf23324f"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-prep/run-new-01/568x320-fest-max.png",
+      "destination": "images/long-date-568x320-fest-max.png",
+      "role": "long-date fixture raw PNG",
+      "bytes": 107478,
+      "sha256": "c20ec3d2b24dd848279a95951c41fdff6ef4e287c50fbcda9bb259397669ee9f"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-prep/run-new-01/568x320-gold-max.png",
+      "destination": "images/long-date-568x320-gold-max.png",
+      "role": "long-date fixture raw PNG",
+      "bytes": 107376,
+      "sha256": "80c671ef7913c9bb07db837b99a7685d026c906f2de246c1ce986f12ce15b9e4"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-prep/run-new-01/568x320-goldfest-max.png",
+      "destination": "images/long-date-568x320-goldfest-max.png",
+      "role": "long-date fixture raw PNG",
+      "bytes": 106588,
+      "sha256": "9439f41e9e319b9456392bac8d45b3d916206d4584b90587d5f4438c8e5dcded"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-prep/run-new-01/568x320-initial.png",
+      "destination": "images/long-date-568x320-initial.png",
+      "role": "long-date fixture raw PNG",
+      "bytes": 106754,
+      "sha256": "167915bd7c20101826a1913e8a8ba5bd9b5425e9e56b057c17f438b164544c3a"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-prep/run-new-01/568x320-normal-max.png",
+      "destination": "images/long-date-568x320-normal-max.png",
+      "role": "long-date fixture raw PNG",
+      "bytes": 108085,
+      "sha256": "cc3d3d71c3261ec69c225df70b6703ee554e95bc863682864f2ce18a15ed3ed1"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-prep/run-new-01/844x390-fest-max.png",
+      "destination": "images/long-date-844x390-fest-max.png",
+      "role": "long-date fixture raw PNG",
+      "bytes": 177451,
+      "sha256": "85f59242da7fabbcb48db7eaa368c6f98b43b0094e0d8aafda17d27e6f304874"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-prep/run-new-01/844x390-gold-max.png",
+      "destination": "images/long-date-844x390-gold-max.png",
+      "role": "long-date fixture raw PNG",
+      "bytes": 179247,
+      "sha256": "c07a9610331b3db3142b8fb562c3630578e033290ca8ae840639d96d23e41f3a"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-prep/run-new-01/844x390-goldfest-max.png",
+      "destination": "images/long-date-844x390-goldfest-max.png",
+      "role": "long-date fixture raw PNG",
+      "bytes": 177903,
+      "sha256": "f64ef54a357623160ed7d0e8fa661f5a164195cb6b134d11f42b6c6d15061b13"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-prep/run-new-01/844x390-initial.png",
+      "destination": "images/long-date-844x390-initial.png",
+      "role": "long-date fixture raw PNG",
+      "bytes": 177110,
+      "sha256": "339175cda7b38bbeb924ee51c2feb907700e79b62a11f67429f9a17d2421c5e2"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-prep/run-new-01/844x390-normal-max.png",
+      "destination": "images/long-date-844x390-normal-max.png",
+      "role": "long-date fixture raw PNG",
+      "bytes": 178480,
+      "sha256": "c1a658393f6642e0927680c1297a0f406978475ec5c9912d2eb5fa3315c78df4"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/discovery-a/primary-audit.md",
+      "destination": "audits/primary-audit.md",
+      "role": "fixed independent summary; original wording retained",
+      "bytes": 3107,
+      "sha256": "90fcd4d8a5fa7de013bf869ddccf8077fbd9a7581e169fad3e2c9739fac0ed65"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/discovery-a/primary-timing-audit.md",
+      "destination": "audits/primary-timing-audit.md",
+      "role": "fixed independent summary; original wording retained",
+      "bytes": 4576,
+      "sha256": "ec4fb3ba5efad3d55f8001b9ebf285b36af6d19aa5b9fdb98f12a4051ffc3c2c"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/discovery-a/reduce-pilot-audit.md",
+      "destination": "audits/reduce-pilot-audit.md",
+      "role": "fixed independent summary; original wording retained",
+      "bytes": 1556,
+      "sha256": "ffe42a507275ccce80a1752de85c4d9b14911dc8363cd384957cacfd1b868f11"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/design-review/primary-reading.md",
+      "destination": "audits/primary-image-reading.md",
+      "role": "fixed independent summary; original wording retained",
+      "bytes": 6438,
+      "sha256": "1405e3df0f0e6fc0da234ff490d93ed9052483f4001a30759bd813e350f7639c"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-before-audit/notes.md",
+      "destination": "audits/repeat-before-notes.md",
+      "role": "fixed independent summary; original wording retained",
+      "bytes": 3371,
+      "sha256": "3cf3693c978e582f5a0235c8758fc9b8647593103f4b19604e2eabd5d6d19ac5"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-after-audit/notes.md",
+      "destination": "audits/repeat-after-notes.md",
+      "role": "fixed independent summary; original wording retained",
+      "bytes": 3483,
+      "sha256": "6ba822e14af1b702e9c26d3698d85cedc427846ea1ed9bd5840877b33147d644"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-after-audit/manifest.json",
+      "destination": "audits/repeat-after-manifest.json",
+      "role": "fixed independent summary; original wording retained",
+      "bytes": 648,
+      "sha256": "c16255ba1c366049709448be118d2618c036111d48b9f44712935d98454c7782"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-audit/before/notes.md",
+      "destination": "audits/layout-before-notes.md",
+      "role": "fixed independent summary; original wording retained",
+      "bytes": 4491,
+      "sha256": "bcee42c6494d23bde1a533c3b6586d5749b67cc5f97947ab43d2d502a83a1a30"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-audit/before/manifest.json",
+      "destination": "audits/layout-before-manifest.json",
+      "role": "fixed independent summary; original wording retained",
+      "bytes": 827,
+      "sha256": "f5856daa0c0b11faac7109f5edda114300862360b56b3a644cd49fcb2aceb224"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-audit/after/notes.md",
+      "destination": "audits/layout-after-notes.md",
+      "role": "fixed independent summary; original wording retained",
+      "bytes": 5092,
+      "sha256": "7371891299c41a9cf4997b3da6f4083f6eb171ab2f290915829832594df56a89"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-audit/after/manifest.json",
+      "destination": "audits/layout-after-manifest.json",
+      "role": "fixed independent summary; original wording retained",
+      "bytes": 952,
+      "sha256": "f80bc4f0cc8d5023498397a1744f2bcdf2f38a7c8cbcc5d3882045a1407270e9"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-audit/README.md",
+      "destination": "audits/long-date-audit.md",
+      "role": "fixed independent summary; original wording retained",
+      "bytes": 6197,
+      "sha256": "0e3ac6881201decb3e7532ca813b80015cae7371e972e0e7ac1dfb21f294b65c"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-audit/manifest.json",
+      "destination": "audits/long-date-audit-manifest.json",
+      "role": "fixed independent summary; original wording retained",
+      "bytes": 635,
+      "sha256": "60401945a3622ecf9b77dc55867c8a4f4049139d5178d28ff6b573ec86583ef9"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-prep/run-new-01/root-closure-clarification.json",
+      "destination": "longfixture-root-closure-clarification.json",
+      "role": "fixed closure clarification",
+      "bytes": 1645,
+      "sha256": "f62fec02e2b9edb92650be84c4b62224029ebd22c646eb0e87169bc4f7c1d517"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/regression-before/execution.json",
+      "destination": "tests/regression-before/execution.json",
+      "role": "completed fixed test evidence; not new execution",
+      "bytes": 492,
+      "sha256": "48b88ed2b3ebcf2d50e5a62d96dcd1888b182fd2715dec1e0f7050dc918f91b3"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/regression-before/root-closure.json",
+      "destination": "tests/regression-before/root-closure.json",
+      "role": "completed fixed test evidence; not new execution",
+      "bytes": 3015,
+      "sha256": "99ad39f0e9e66298def2399534a8acbbd7bfc4ae5e0a2738d82bf8e20e30b167"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/regression-before/stderr.log",
+      "destination": "tests/regression-before/stderr.log",
+      "role": "completed fixed test evidence; not new execution",
+      "bytes": 808,
+      "sha256": "1f73a8fdd3257091f3a49033fba6b7fbc5fd84f76636612cc1571e7cf5efffb2"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/regression-before/stdout.log",
+      "destination": "tests/regression-before/stdout.log",
+      "role": "completed fixed test evidence; not new execution",
+      "bytes": 562,
+      "sha256": "ee925de0a68a3de44679acbf2a7a9fd387208565a2398a78c21a81f62a238e28"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/regression-before-v2/execution.json",
+      "destination": "tests/regression-before-v2/execution.json",
+      "role": "completed fixed test evidence; not new execution",
+      "bytes": 492,
+      "sha256": "c88d58fd5e25a0198796b5e33c4f47296a2c0e68ec7c7869608b1088315fe70a"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/regression-before-v2/root-closure.json",
+      "destination": "tests/regression-before-v2/root-closure.json",
+      "role": "completed fixed test evidence; not new execution",
+      "bytes": 2697,
+      "sha256": "a7ab3a196f8a036ff8979736997f6cafb6322df316f5c8cc2d141a4f6a313b4f"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/regression-before-v2/stderr.log",
+      "destination": "tests/regression-before-v2/stderr.log",
+      "role": "completed fixed test evidence; not new execution",
+      "bytes": 1191,
+      "sha256": "789d59281f27ea67e8ba991d82f0ee44acc628373f49aa6c62bad1b77d6b23a5"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/regression-before-v2/stdout.log",
+      "destination": "tests/regression-before-v2/stdout.log",
+      "role": "completed fixed test evidence; not new execution",
+      "bytes": 562,
+      "sha256": "ee925de0a68a3de44679acbf2a7a9fd387208565a2398a78c21a81f62a238e28"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/regression-after/execution.json",
+      "destination": "tests/regression-after/execution.json",
+      "role": "completed fixed test evidence; not new execution",
+      "bytes": 492,
+      "sha256": "3c17ed175010ea6b7c5f6cb4312533e6b5e110ba3a96e07395856c160906c0ba"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/regression-after/root-closure.json",
+      "destination": "tests/regression-after/root-closure.json",
+      "role": "completed fixed test evidence; not new execution",
+      "bytes": 2637,
+      "sha256": "70b1d291a91f4631705b26e94a3dae1574a8322174330b202ec55210c2a67cba"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/regression-after/stderr.log",
+      "destination": "tests/regression-after/stderr.log",
+      "role": "completed fixed test evidence; not new execution",
+      "bytes": 240,
+      "sha256": "26dd3dd92d2142bf403dd20d1da42c713a9c259fa4ba2ad7fe127cc6a9c3a24e"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/regression-after/stdout.log",
+      "destination": "tests/regression-after/stdout.log",
+      "role": "completed fixed test evidence; not new execution",
+      "bytes": 562,
+      "sha256": "ee925de0a68a3de44679acbf2a7a9fd387208565a2398a78c21a81f62a238e28"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/existing-before/execution.json",
+      "destination": "tests/existing-before/execution.json",
+      "role": "completed fixed test evidence; not new execution",
+      "bytes": 622,
+      "sha256": "5be3928c3614fd84e8be3852d69388ec8c1ca8e66e01707a9638467fd5c4c9f0"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/existing-before/root-closure.json",
+      "destination": "tests/existing-before/root-closure.json",
+      "role": "completed fixed test evidence; not new execution",
+      "bytes": 2636,
+      "sha256": "6273e3b617783dd646258f59e0dc069e0e4e513a375e0490db7ec83428f597b6"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/existing-before/stderr.log",
+      "destination": "tests/existing-before/stderr.log",
+      "role": "completed fixed test evidence; not new execution",
+      "bytes": 14016,
+      "sha256": "9442ae345353dc8075d2cfa7d307bd094d44eff164f56cdbcc6afde636947a6a"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/existing-before/stdout.log",
+      "destination": "tests/existing-before/stdout.log",
+      "role": "completed fixed test evidence; not new execution",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/pytest-after/execution.json",
+      "destination": "tests/pytest-after/execution.json",
+      "role": "completed fixed test evidence; not new execution",
+      "bytes": 472,
+      "sha256": "f2f0a809ff515d3678240e4ca956533eca4bd9791e9661ab598f8d3c4e76955d"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/pytest-after/stderr.log",
+      "destination": "tests/pytest-after/stderr.log",
+      "role": "completed fixed test evidence; not new execution",
+      "bytes": 40,
+      "sha256": "b6fe94a4971280b69606b3ad6039ae9ed0e48557776ea68f678174b6c8da879a"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/pytest-after/stdout.log",
+      "destination": "tests/pytest-after/stdout.log",
+      "role": "completed fixed test evidence; not new execution",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/pytest-before.json",
+      "destination": "tests/pytest-before.json",
+      "role": "completed pytest unavailable evidence",
+      "bytes": 255,
+      "sha256": "bfcaf1578f06391fe23bf957d3c694273dc5f03452705a8e95af35ec732db16f"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/pytest-before.stderr.log",
+      "destination": "tests/pytest-before.stderr.log",
+      "role": "completed pytest unavailable evidence",
+      "bytes": 45,
+      "sha256": "884c356a17af2535f8a7a3bbe8d088034a1e58ef021200c45eff7b237b232aa5"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/pytest-before.stdout.log",
+      "destination": "tests/pytest-before.stdout.log",
+      "role": "completed pytest unavailable evidence",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/existing-after/execution.json",
+      "destination": "tests/existing-after/execution.json",
+      "role": "fixed completed test or static review; original byte copy",
+      "bytes": 490,
+      "sha256": "7280b83de2eae33111279283b966a6b9ba476633767a3a20347dfeac8682a4db"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/existing-after/root-closure.json",
+      "destination": "tests/existing-after/root-closure.json",
+      "role": "fixed completed test or static review; original byte copy",
+      "bytes": 2949,
+      "sha256": "922666341364241df086daaa3e92803f884838e013e95fb414b04a964b8d27f1"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/existing-after/stderr.log",
+      "destination": "tests/existing-after/stderr.log",
+      "role": "fixed completed test or static review; original byte copy",
+      "bytes": 14015,
+      "sha256": "37e8bebd59df84d4059716e07396985d487700986504258ad9b9cbc28d1e674f"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/existing-after/stdout.log",
+      "destination": "tests/existing-after/stdout.log",
+      "role": "fixed completed test or static review; original byte copy",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/code-review/manifest.json",
+      "destination": "audits/code-review/manifest.json",
+      "role": "fixed completed test or static review; original byte copy",
+      "bytes": 209,
+      "sha256": "e898d15dc0b9bd964bbf137a771527262683e1d4ecf0b8bf2fb875d7d67a9d7f"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/code-review/notes.md",
+      "destination": "audits/code-review/notes.md",
+      "role": "fixed completed test or static review; original byte copy",
+      "bytes": 2936,
+      "sha256": "6ab2bde9460c6972a9e41fbbef9f4b048c422e39bdef5e0af604220ed61668fa"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/code-review/review.json",
+      "destination": "audits/code-review/review.json",
+      "role": "fixed completed test or static review; original byte copy",
+      "bytes": 7134,
+      "sha256": "b38768157c22b5a26c297b9a2e4aea61fc3b79a279b8e56166351aee564e2207"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/code-commit.json",
+      "destination": "code-commit.json",
+      "role": "root code commit and same-byte test execution receipt",
+      "bytes": 1202,
+      "sha256": "af6c2cee6b743ebfe6632b8ea753541291bdd466d2094215440f4ef3247b95c8"
+    }
+  ],
+  "archives": [
+    {
+      "name": "long-date-raw.tar.gz",
+      "archive": {
+        "path": "/workspace/scratch/first-minute/round-146/report-prep/stage-final-prep/evidence/long-date-raw.tar.gz",
+        "bytes": 513678,
+        "sha256": "699e3d391b2e9a0b4cd3fa9ff2282ca04fbad880b1bad40c60177cbc9f6f97b9"
+      },
+      "memberCount": 35,
+      "uncompressedMemberBytes": 32488668,
+      "rawPNGMembers": 0,
+      "extractedMembers": 35,
+      "allByteAndSHAEqual": true,
+      "separateExtractionDirectory": "/workspace/scratch/first-minute/round-146/report-prep/stage-final-prep-extract-verification/long-date-raw"
+    },
+    {
+      "name": "natural-evidence.tar.gz",
+      "archive": {
+        "path": "/workspace/scratch/first-minute/round-146/report-prep/stage-final-prep/evidence/natural-evidence.tar.gz",
+        "bytes": 9672703,
+        "sha256": "2752ae4f410333c573bcae7c76941671f2f80fcc598ae4b9633a11af310c1578"
+      },
+      "memberCount": 194,
+      "uncompressedMemberBytes": 37629092,
+      "rawPNGMembers": 45,
+      "extractedMembers": 194,
+      "allByteAndSHAEqual": true,
+      "separateExtractionDirectory": "/workspace/scratch/first-minute/round-146/report-prep/stage-final-prep-extract-verification/natural-evidence"
+    }
+  ],
+  "source": {
+    "root": "/workspace/ricepia-firstminute-round146",
+    "baselineHEAD": "6334d3103bbfa20f8b92e744b369be2183af1abe",
+    "baselineHTMLSHA256": "1131aca205f44acd47243b6769d2c68acf0526128eb4bf7ab0e7a242b50f5f62",
+    "appliedHTMLSHA256": "0186cfdb92297e810ef66cf93890b98816ce30ff35751eb234926167e88648e7",
+    "candidateCommit": "c3598c76b03b37aeab47d9b260cea952fa00fdb1",
+    "existingFirstminTestCurrentSHA256": "f32b5c8d215782efe69ef301b720d9aac00dd47cc7dcfe51f730f69145057b7b",
+    "newTestSHA256": "fa024a6010771a1fdc3d6b9e560aa40216895eb6ce6e1b1017e274f17acdd259",
+    "protectedThree": {
+      "kome365/engine.js": "c3d0cef6bb108d5b6d8fe38aaf0c08fe7994bdab08bf92775865a6e0222469a3",
+      "kome365/field3d.js": "a5c1dad91d5c0c326f1394fad9c5d04e7e3b8d13e3a2b8b1757c7aa08d3558ff",
+      "kome365/cards.js": "b15c5b2f56ef9c0c8361fa2fa6a039085919ca516b4a2e6e5a1b3bb691dde744"
+    },
+    "noGitCommandByAuthor": true,
+    "candidateCommitEvidence": {
+      "path": "/workspace/scratch/first-minute/round-146/code-commit.json",
+      "bytes": 1202,
+      "sha256": "af6c2cee6b743ebfe6632b8ea753541291bdd466d2094215440f4ef3247b95c8"
+    },
+    "testExecutionPreCommitHEAD": "6334d3103bbfa20f8b92e744b369be2183af1abe",
+    "commitChangedFilesExactly": [
+      "kome365/index.html",
+      "tests/test_kome365_reduce_cue.py"
+    ],
+    "runtimeCompleteBeforeCommitWithSameProductAndTestBytes": true
+  },
+  "sourceAttachmentsAndFullIndexBeforeIncluded": false,
+  "copyDoesNotMeanFullTextReRead": true,
+  "原記録への変更": false,
+  "runtime": {
+    "browser": 0,
+    "Node": 0,
+    "tests": 0,
+    "network": 0,
+    "Git": 0
+  },
+  "gameOrExistingTestEdits": 0,
+  "updatedUTC": "2026-11-15T22:10:06.863059+00:00",
+  "priorStageSnapshot": {
+    "directory": "/workspace/scratch/first-minute/round-146/report-prep/stage-final-prep-snapshot-01",
+    "manifest": {
+      "path": "/workspace/scratch/first-minute/round-146/report-prep/stage-final-prep-snapshot-01/manifest.json",
+      "bytes": 13812,
+      "sha256": "e386b7635f82b5f5c5498d7bc0c74436e7f6bda9fe954e4e4b02b103abc06c89"
+    },
+    "receipt": {
+      "path": "/workspace/scratch/first-minute/round-146/report-prep/stage-final-prep-snapshot-01/receipt.json",
+      "bytes": 3408,
+      "sha256": "81d97e2ac54ea2ff0277c38ae7daae60f66fb2acb7d3e3d7eafaf1b0d3cb1709"
+    }
+  },
+  "intermediateFinalEvidenceSnapshot": {
+    "directory": "/workspace/scratch/first-minute/round-146/report-prep/stage-final-prep-snapshot-02",
+    "manifest": {
+      "path": "/workspace/scratch/first-minute/round-146/report-prep/stage-final-prep-snapshot-02/manifest.json",
+      "bytes": 15159,
+      "sha256": "13906a15551178eb39f75901f942be634b76fc48edef2a799bcd5eae60c7d3f4"
+    },
+    "receipt": {
+      "path": "/workspace/scratch/first-minute/round-146/report-prep/stage-final-prep-snapshot-02/receipt.json",
+      "bytes": 4090,
+      "sha256": "93cc311ecaba008c1f7440f1c3c13efc001c635466d22906abb8d2bb37249776"
+    }
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "at": "2026-11-15T21:21:53.633983+00:00",
+  "actualToolExit": 1,
+  "actualChildExit": 1,
+  "totalTests": 107,
+  "failures": 1,
+  "passed": 106,
+  "gateAfter": {
+    "at": "2026-11-15T21:21:51.906882+00:00",
+    "phase": "before",
+    "bindingSHA256": "3119a3b56a31447aa554637ff65f88e35c95e1c3bdb17f067af467827c202e94",
+    "checks": {
+      "AGENTS.md": "06d6baa54cbcfd5135264dd174aaf4caaf0d278e3e09efc841b2c04b42a916ec",
+      ".claude/skills/ricepia-flow/SKILL.md": "322f7d5932c8d5fa8eb1778218ce0a4d37f212e63f211629ff7efe9c4ec4720a",
+      "kome365/index.html": "1131aca205f44acd47243b6769d2c68acf0526128eb4bf7ab0e7a242b50f5f62",
+      "kome365/engine.js": "c3d0cef6bb108d5b6d8fe38aaf0c08fe7994bdab08bf92775865a6e0222469a3",
+      "kome365/field3d.js": "a5c1dad91d5c0c326f1394fad9c5d04e7e3b8d13e3a2b8b1757c7aa08d3558ff",
+      "kome365/cards.js": "b15c5b2f56ef9c0c8361fa2fa6a039085919ca516b4a2e6e5a1b3bb691dde744",
+      "kome365/vendor/three.min.js": "9274bbcec8d96168626c732b5d31c775aa8cfb7eaa0599bec0c175908a2c1ce2"
+    },
+    "environment8": true,
+    "prepared8": true,
+    "head": "6334d3103bbfa20f8b92e744b369be2183af1abe",
+    "status": "",
+    "http": {
+      "kome365/index.html": {
+        "status": 200,
+        "sha256": "1131aca205f44acd47243b6769d2c68acf0526128eb4bf7ab0e7a242b50f5f62"
+      },
+      "kome365/engine.js": {
+        "status": 200,
+        "sha256": "c3d0cef6bb108d5b6d8fe38aaf0c08fe7994bdab08bf92775865a6e0222469a3"
+      },
+      "kome365/field3d.js": {
+        "status": 200,
+        "sha256": "a5c1dad91d5c0c326f1394fad9c5d04e7e3b8d13e3a2b8b1757c7aa08d3558ff"
+      },
+      "kome365/cards.js": {
+        "status": 200,
+        "sha256": "b15c5b2f56ef9c0c8361fa2fa6a039085919ca516b4a2e6e5a1b3bb691dde744"
+      },
+      "kome365/vendor/three.min.js": {
+        "status": 200,
+        "sha256": "9274bbcec8d96168626c732b5d31c775aa8cfb7eaa0599bec0c175908a2c1ce2"
+      }
+    },
+    "serverIdentity": {
+      "pid": 227012,
+      "startTicks": "5468082",
+      "argv": "python3 -m http.server 8000"
+    },
+    "liveBrowsers": [],
+    "parse": {
+      "actualExit": 0,
+      "stdout": "Parsed 3 files without invocation\n",
+      "stderr": "",
+      "preparedFiles": 8
+    },
+    "independentReviewSHA256": "c69e630780fa63a57420f9bdf3baff404174c9f737f7d647ccae19b4f080a9b1",
+    "rootRead": [
+      "run.cjs full",
+      "case.cjs full",
+      "README.md full",
+      "diagnose.cjs prior full read, unchanged"
+    ]
+  },
+  "stderrSHA256": "9442ae345353dc8075d2cfa7d307bd094d44eff164f56cdbcc6afde636947a6a",
+  "existingTestSHA256": "f32b5c8d215782efe69ef301b720d9aac00dd47cc7dcfe51f730f69145057b7b"
+}

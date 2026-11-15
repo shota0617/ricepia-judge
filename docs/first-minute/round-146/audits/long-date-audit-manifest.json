@@ -1,0 +1,14 @@
+{
+  "files": {
+    "README.md": "0e3ac6881201decb3e7532ca813b80015cae7371e972e0e7ac1dfb21f294b65c",
+    "geometry-audit.json": "48e3b0e353b7c224b07e4da27aee3ca47622379a4ae94277245fe49cbc076388",
+    "metadata-audit.json": "b8e9c39e5580640ed0855793e120d5b879a1538fb524aae161caa85a934523e3",
+    "metadata.py": "524274909563812eb46a2679cf2873562d7060f245716d771ee32345470bc6c9",
+    "recount.py": "8879b2f596e8cfd67930398469d2ede58701c1bca34f4581d39757a0e6a9c29f"
+  },
+  "gameRuntime": 0,
+  "browserRuntime": 0,
+  "nodeParseRuntime": 0,
+  "productEdits": 0,
+  "auditType": "saved artifact geometry recount and original PNG inspection"
+}

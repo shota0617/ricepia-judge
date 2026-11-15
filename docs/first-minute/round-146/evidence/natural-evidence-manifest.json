@@ -1,0 +1,2349 @@
+{
+  "name": "natural-evidence.tar.gz",
+  "createdUTC": "2026-11-15T22:04:22.890695+00:00",
+  "archive": {
+    "path": "/workspace/scratch/first-minute/round-146/report-prep/stage-final-prep/evidence/natural-evidence.tar.gz",
+    "bytes": 9672703,
+    "sha256": "2752ae4f410333c573bcae7c76941671f2f80fcc598ae4b9633a11af310c1578"
+  },
+  "members": [
+    {
+      "member": "design-review/candidates.md",
+      "source": "/workspace/scratch/first-minute/round-146/design-review/candidates.md",
+      "bytes": 7508,
+      "sha256": "fe3c0a50da39a83bb2e08388b05987442939e1bc6cea81121035221cbe0dec2d"
+    },
+    {
+      "member": "design-review/evidence.json",
+      "source": "/workspace/scratch/first-minute/round-146/design-review/evidence.json",
+      "bytes": 6355,
+      "sha256": "46bc1fe1cb72cd74e661ae65f0d17fa0efb981e37ff84faf05d6a763bd6c0622"
+    },
+    {
+      "member": "design-review/primary-evidence.json",
+      "source": "/workspace/scratch/first-minute/round-146/design-review/primary-evidence.json",
+      "bytes": 13601,
+      "sha256": "26cb647df7e7cc4e959346ecb0b00931fc1f0b81e70c3573a374dc534b7d8d61"
+    },
+    {
+      "member": "design-review/primary-reading.md",
+      "source": "/workspace/scratch/first-minute/round-146/design-review/primary-reading.md",
+      "bytes": 6438,
+      "sha256": "1405e3df0f0e6fc0da234ff490d93ed9052483f4001a30759bd813e350f7639c"
+    },
+    {
+      "member": "discovery-a/candidates.json",
+      "source": "/workspace/scratch/first-minute/round-146/discovery-a/candidates.json",
+      "bytes": 8673,
+      "sha256": "334cc81cb7ecfa05d666bc362f84d60b943b4cf06f714a58d8afcdf28d440655"
+    },
+    {
+      "member": "discovery-a/notes.md",
+      "source": "/workspace/scratch/first-minute/round-146/discovery-a/notes.md",
+      "bytes": 5276,
+      "sha256": "e72d55dad81aacc5c413ddba130bd33ef366541a2be172378631d54f674c6c19"
+    },
+    {
+      "member": "discovery-a/primary-audit.json",
+      "source": "/workspace/scratch/first-minute/round-146/discovery-a/primary-audit.json",
+      "bytes": 10371,
+      "sha256": "98ab3bfc407f88835f67d967c382637c7f592ba0c76dc177d8592076c42b063f"
+    },
+    {
+      "member": "discovery-a/primary-audit.md",
+      "source": "/workspace/scratch/first-minute/round-146/discovery-a/primary-audit.md",
+      "bytes": 3107,
+      "sha256": "90fcd4d8a5fa7de013bf869ddccf8077fbd9a7581e169fad3e2c9739fac0ed65"
+    },
+    {
+      "member": "discovery-a/primary-timing-audit.json",
+      "source": "/workspace/scratch/first-minute/round-146/discovery-a/primary-timing-audit.json",
+      "bytes": 18432,
+      "sha256": "32aa133330fb878606a7ec9910913ada23228d12812e1911bcc3520df7872b0a"
+    },
+    {
+      "member": "discovery-a/primary-timing-audit.md",
+      "source": "/workspace/scratch/first-minute/round-146/discovery-a/primary-timing-audit.md",
+      "bytes": 4576,
+      "sha256": "ec4fb3ba5efad3d55f8001b9ebf285b36af6d19aa5b9fdb98f12a4051ffc3c2c"
+    },
+    {
+      "member": "discovery-a/reduce-pilot-audit.json",
+      "source": "/workspace/scratch/first-minute/round-146/discovery-a/reduce-pilot-audit.json",
+      "bytes": 5462,
+      "sha256": "efd46b374a7f7d85766ace481bba21d1564bb5260a04f70626d52e672a615e7c"
+    },
+    {
+      "member": "discovery-a/reduce-pilot-audit.md",
+      "source": "/workspace/scratch/first-minute/round-146/discovery-a/reduce-pilot-audit.md",
+      "bytes": 1556,
+      "sha256": "ffe42a507275ccce80a1752de85c4d9b14911dc8363cd384957cacfd1b868f11"
+    },
+    {
+      "member": "discovery-b/candidates.json",
+      "source": "/workspace/scratch/first-minute/round-146/discovery-b/candidates.json",
+      "bytes": 8613,
+      "sha256": "3a30954ac2c43a623b17e43dc1474079a81893ab0356299a3a58008f7fc681c7"
+    },
+    {
+      "member": "discovery-b/notes.md",
+      "source": "/workspace/scratch/first-minute/round-146/discovery-b/notes.md",
+      "bytes": 2569,
+      "sha256": "0e1b056c5a6ad87fe2c9116e344ad009cedce806478f266f510700f2bf509f42"
+    },
+    {
+      "member": "preparation-bound146/README.md",
+      "source": "/workspace/scratch/first-minute/round-146/preparation-bound146/README.md",
+      "bytes": 5675,
+      "sha256": "9c1a75a109f1619b581b2ddb6c64d7069d7b2cf73925846864ff5c9fdbd5f854"
+    },
+    {
+      "member": "preparation-bound146/binding-diff.patch",
+      "source": "/workspace/scratch/first-minute/round-146/preparation-bound146/binding-diff.patch",
+      "bytes": 13439,
+      "sha256": "6ac18f563c2928e639b684a86588ec35318aefcd820a7517d9ed959f03945b57"
+    },
+    {
+      "member": "preparation-bound146/binding-record.json",
+      "source": "/workspace/scratch/first-minute/round-146/preparation-bound146/binding-record.json",
+      "bytes": 4229,
+      "sha256": "d7e454d688861abdbb4f66b3a516197c33eb2e7a13a905fcee417442a2386155"
+    },
+    {
+      "member": "preparation-bound146/environment-manifest.json",
+      "source": "/workspace/scratch/first-minute/round-146/preparation-bound146/environment-manifest.json",
+      "bytes": 1251,
+      "sha256": "257c2cc6401c0d13fefa4e955a26be9fbea1f89cf2580aff759e7b3c094cdc44"
+    },
+    {
+      "member": "preparation-bound146/frozen.json",
+      "source": "/workspace/scratch/first-minute/round-146/preparation-bound146/frozen.json",
+      "bytes": 4161,
+      "sha256": "5a9bc2e4a4aac288bbc41dc3741273ce019d31a9a4229e48184318863dcf9d43"
+    },
+    {
+      "member": "preparation-bound146/helpers.cjs",
+      "source": "/workspace/scratch/first-minute/round-146/preparation-bound146/helpers.cjs",
+      "bytes": 32126,
+      "sha256": "30c780a2baf410826fdc4e261b9889742232316f0abb8ac12ee0df086eeac104"
+    },
+    {
+      "member": "preparation-bound146/input-manifest.json",
+      "source": "/workspace/scratch/first-minute/round-146/preparation-bound146/input-manifest.json",
+      "bytes": 1025,
+      "sha256": "8ce802d5d02a063b9f5390c38dcc18e8f4bc34c32c5e4f84affa8cfb8f6ce9cb"
+    },
+    {
+      "member": "preparation-bound146/metadata.json",
+      "source": "/workspace/scratch/first-minute/round-146/preparation-bound146/metadata.json",
+      "bytes": 27187,
+      "sha256": "c205653d5da2c3fef5b55dc05cc79f47d3dd161c1599612c997364dc103f03de"
+    },
+    {
+      "member": "preparation-bound146/parse-plan.json",
+      "source": "/workspace/scratch/first-minute/round-146/preparation-bound146/parse-plan.json",
+      "bytes": 1078,
+      "sha256": "bb78426be38b6d11234725aed220792f51db31b61ad7b75a77670becc0d85d60"
+    },
+    {
+      "member": "preparation-bound146/preparation-manifest.json",
+      "source": "/workspace/scratch/first-minute/round-146/preparation-bound146/preparation-manifest.json",
+      "bytes": 1451,
+      "sha256": "75c7b5c2a8543f41ffadaeb9df89b27ecc6b3db24ccc1be6684d3ff73a9e1337"
+    },
+    {
+      "member": "preparation-bound146/run.cjs",
+      "source": "/workspace/scratch/first-minute/round-146/preparation-bound146/run.cjs",
+      "bytes": 13718,
+      "sha256": "47c4123c58d2a24c628e0761b7b2854572c1883bd066afa64269f41ddce9bf2b"
+    },
+    {
+      "member": "preparation-bound146/source-manifest.json",
+      "source": "/workspace/scratch/first-minute/round-146/preparation-bound146/source-manifest.json",
+      "bytes": 1552,
+      "sha256": "1bdf44f4ebcafc8a136dcd19c476ff8f5b4984141a209c560f3d19930fb04a54"
+    },
+    {
+      "member": "preparation-bound146/strict/driver-timing.json",
+      "source": "/workspace/scratch/first-minute/round-146/preparation-bound146/strict/driver-timing.json",
+      "bytes": 65201,
+      "sha256": "ce4ba9641cf4bc2f75f02e48e00d3a3e13195a0eabee7e8bd2338548d7a0da22"
+    },
+    {
+      "member": "preparation-bound146/strict/extra.json",
+      "source": "/workspace/scratch/first-minute/round-146/preparation-bound146/strict/extra.json",
+      "bytes": 1772,
+      "sha256": "4fc4827b5d74343bfb709371681b872e08af147dcd4b91cb9076c67822d45456"
+    },
+    {
+      "member": "preparation-bound146/strict/observe-10s.png",
+      "source": "/workspace/scratch/first-minute/round-146/preparation-bound146/strict/observe-10s.png",
+      "bytes": 145795,
+      "sha256": "d1508476fc413baf7e719ae78ea70b0c1d5847e5dbba26202c0e5dae06db6762"
+    },
+    {
+      "member": "preparation-bound146/strict/play-10s.png",
+      "source": "/workspace/scratch/first-minute/round-146/preparation-bound146/strict/play-10s.png",
+      "bytes": 260598,
+      "sha256": "c0a01d69b47992d2abfdc4c803f1b132af005c4ade9b96f282f683aea0a45aee"
+    },
+    {
+      "member": "preparation-bound146/strict/play-30s.png",
+      "source": "/workspace/scratch/first-minute/round-146/preparation-bound146/strict/play-30s.png",
+      "bytes": 252744,
+      "sha256": "1eb41f0692841cd5611c8c3ee1a9a0c697a42b72d8de750b23d8903392cd63eb"
+    },
+    {
+      "member": "preparation-bound146/strict/play-60s.png",
+      "source": "/workspace/scratch/first-minute/round-146/preparation-bound146/strict/play-60s.png",
+      "bytes": 284330,
+      "sha256": "976f2bb986635d165bdca03c9b6349283f9b6c382af9c416586d646a3eea89dd"
+    },
+    {
+      "member": "preparation-bound146/strict/report.json",
+      "source": "/workspace/scratch/first-minute/round-146/preparation-bound146/strict/report.json",
+      "bytes": 1299603,
+      "sha256": "06a4980943a886fad463be776c49b2993d2a824f14c84d955aa9a376ba3db177"
+    },
+    {
+      "member": "preparation-bound146/strict-play.cjs",
+      "source": "/workspace/scratch/first-minute/round-146/preparation-bound146/strict-play.cjs",
+      "bytes": 3158,
+      "sha256": "7ef009e2065b9d565ece69034ccf57f290d20678c494ad32039231786a8688a0"
+    },
+    {
+      "member": "primary-run.log",
+      "source": "/workspace/scratch/first-minute/round-146/primary-run.log",
+      "bytes": 33757,
+      "sha256": "120b0d8cfa0b0b93d01e00a956fb1b990f7f6f0d6a74b19870e150832a2b989a"
+    },
+    {
+      "member": "primary-server-copy.json",
+      "source": "/workspace/scratch/first-minute/round-146/primary-server-copy.json",
+      "bytes": 310,
+      "sha256": "e7ef2efc1eca3b7db139dcab97c833ff99ec4097da384bd355cfeaa541296b66"
+    },
+    {
+      "member": "primary-server.log",
+      "source": "/workspace/scratch/first-minute/round-146/primary-server.log",
+      "bytes": 1935,
+      "sha256": "9717c499b9f4df1755a33669cb3053a3c224acbbee3dc95d127340a658a2206d"
+    },
+    {
+      "member": "reduce-cue-after-audit/audit.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-after-audit/audit.json",
+      "bytes": 49228,
+      "sha256": "a2c47616556f7e6109d41bf5e414b5c7c1871da6ea65898f1e98aac91bdcbe8e"
+    },
+    {
+      "member": "reduce-cue-after-audit/comparison.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-after-audit/comparison.json",
+      "bytes": 41473,
+      "sha256": "9119d4196d0e9420dc05c6caeaa9ca3e0264e6f48f2a829ad904f99500a48cd5"
+    },
+    {
+      "member": "reduce-cue-after-audit/manifest.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-after-audit/manifest.json",
+      "bytes": 648,
+      "sha256": "c16255ba1c366049709448be118d2618c036111d48b9f44712935d98454c7782"
+    },
+    {
+      "member": "reduce-cue-after-audit/notes.md",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-after-audit/notes.md",
+      "bytes": 3483,
+      "sha256": "6ba822e14af1b702e9c26d3698d85cedc427846ea1ed9bd5840877b33147d644"
+    },
+    {
+      "member": "reduce-cue-before-audit/audit.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-before-audit/audit.json",
+      "bytes": 80687,
+      "sha256": "4e024c189f06a6598218bd2963aa5993256b7edee741c0162e3c94cf5fac5336"
+    },
+    {
+      "member": "reduce-cue-before-audit/notes.md",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-before-audit/notes.md",
+      "bytes": 3371,
+      "sha256": "3cf3693c978e582f5a0235c8758fc9b8647593103f4b19604e2eabd5d6d19ac5"
+    },
+    {
+      "member": "reduce-cue-layout-audit/after/audit.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-audit/after/audit.json",
+      "bytes": 65140,
+      "sha256": "ce97cce2b206c247088f37ea21e5ce875fa8e10fd41bd94c7b3cc4fc0aa10d35"
+    },
+    {
+      "member": "reduce-cue-layout-audit/after/manifest.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-audit/after/manifest.json",
+      "bytes": 952,
+      "sha256": "f80bc4f0cc8d5023498397a1744f2bcdf2f38a7c8cbcc5d3882045a1407270e9"
+    },
+    {
+      "member": "reduce-cue-layout-audit/after/notes.md",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-audit/after/notes.md",
+      "bytes": 5092,
+      "sha256": "7371891299c41a9cf4997b3da6f4083f6eb171ab2f290915829832594df56a89"
+    },
+    {
+      "member": "reduce-cue-layout-audit/after-independent-geometry/comparison.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-audit/after-independent-geometry/comparison.json",
+      "bytes": 105649,
+      "sha256": "f9563ba386a7f609c4fcb4b51a2ca6caee95481db5eb4de43832922507c036e5"
+    },
+    {
+      "member": "reduce-cue-layout-audit/after-independent-geometry/summary.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-audit/after-independent-geometry/summary.json",
+      "bytes": 7848,
+      "sha256": "a674f223b0a2b8d6962a53788e2df2a83b218d94402bb5c3f0f0ac27feaef9a5"
+    },
+    {
+      "member": "reduce-cue-layout-audit/before/baseline.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-audit/before/baseline.json",
+      "bytes": 1150205,
+      "sha256": "e843cf8e845040bdffca56e71cbeeae96c8d2f9c9fbda86e9a7188e51081bfc0"
+    },
+    {
+      "member": "reduce-cue-layout-audit/before/geometry-check.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-audit/before/geometry-check.json",
+      "bytes": 461372,
+      "sha256": "1b971c2a722ed5ba4cf6955069bae6a15aa8ff88d0a98f72517bf2dc00fe3ad7"
+    },
+    {
+      "member": "reduce-cue-layout-audit/before/manifest.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-audit/before/manifest.json",
+      "bytes": 827,
+      "sha256": "f5856daa0c0b11faac7109f5edda114300862360b56b3a644cd49fcb2aceb224"
+    },
+    {
+      "member": "reduce-cue-layout-audit/before/notes.md",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-audit/before/notes.md",
+      "bytes": 4491,
+      "sha256": "bcee42c6494d23bde1a533c3b6586d5749b67cc5f97947ab43d2d502a83a1a30"
+    },
+    {
+      "member": "reduce-cue-layout-prep/README.md",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/README.md",
+      "bytes": 3778,
+      "sha256": "466db3c1db4ccd0529d3a22e245c9d897418beff5d189b70eb9292b422f36323"
+    },
+    {
+      "member": "reduce-cue-layout-prep/after-binding.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/after-binding.json",
+      "bytes": 871,
+      "sha256": "191446c16a17b02c88b247e6172c431846207e07c9a90176258e13ad037df3a8"
+    },
+    {
+      "member": "reduce-cue-layout-prep/before-binding.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/before-binding.json",
+      "bytes": 873,
+      "sha256": "3119a3b56a31447aa554637ff65f88e35c95e1c3bdb17f067af467827c202e94"
+    },
+    {
+      "member": "reduce-cue-layout-prep/diagnose-diff.patch",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/diagnose-diff.patch",
+      "bytes": 4396,
+      "sha256": "9eb3f70ae26c1c0931483e300489230653955c65b9f7ae9f638a6c8d5113cf9a"
+    },
+    {
+      "member": "reduce-cue-layout-prep/diagnose.cjs",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/diagnose.cjs",
+      "bytes": 4222,
+      "sha256": "983823860cf82072afbda3eae7a3d8b60f66b621865f65843843cf2243a2f6ba"
+    },
+    {
+      "member": "reduce-cue-layout-prep/environment-manifest.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/environment-manifest.json",
+      "bytes": 1251,
+      "sha256": "257c2cc6401c0d13fefa4e955a26be9fbea1f89cf2580aff759e7b3c094cdc44"
+    },
+    {
+      "member": "reduce-cue-layout-prep/frozen.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/frozen.json",
+      "bytes": 1252,
+      "sha256": "4c33121fc2ee747f040b0b5d8c1633c296003d582c997c6b45a0a34a3108c984"
+    },
+    {
+      "member": "reduce-cue-layout-prep/preparation-manifest.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/preparation-manifest.json",
+      "bytes": 2825,
+      "sha256": "fa595e8ddcf4f96d88980ef3a8b3aaef9deba3fa0f3abec06f8b5fa54ff6d72b"
+    },
+    {
+      "member": "reduce-cue-layout-prep/root-after-execution.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/root-after-execution.json",
+      "bytes": 526,
+      "sha256": "45fcad345e1cc933f333b4ed5f3c0293223f33185e19e49bcf6932f80df35537"
+    },
+    {
+      "member": "reduce-cue-layout-prep/root-after-gate.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/root-after-gate.json",
+      "bytes": 2349,
+      "sha256": "040c98768c83e46c36441df56657d290b6781fe361f3a91301f8b5e1334c0d36"
+    },
+    {
+      "member": "reduce-cue-layout-prep/root-after-stderr.log",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/root-after-stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "member": "reduce-cue-layout-prep/root-after-stdout.log",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/root-after-stdout.log",
+      "bytes": 77,
+      "sha256": "a6b8356d1fae3bae5cd17cf926a1fdd28d30c85312572263144c8dd26a9f8726"
+    },
+    {
+      "member": "reduce-cue-layout-prep/root-before-execution.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/root-before-execution.json",
+      "bytes": 527,
+      "sha256": "ecb0135d3cebe3e36438f4095bb1b87cdf0326a73b7e8eed70449e2ec8751cf6"
+    },
+    {
+      "member": "reduce-cue-layout-prep/root-before-gate.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/root-before-gate.json",
+      "bytes": 2327,
+      "sha256": "d4ac5b0d788f11dba29c9f5b374a503d546bc0283bde1911ec90ac49c757a226"
+    },
+    {
+      "member": "reduce-cue-layout-prep/root-before-stderr.log",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/root-before-stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "member": "reduce-cue-layout-prep/root-before-stdout.log",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/root-before-stdout.log",
+      "bytes": 77,
+      "sha256": "a6b8356d1fae3bae5cd17cf926a1fdd28d30c85312572263144c8dd26a9f8726"
+    },
+    {
+      "member": "reduce-cue-layout-prep/root-parse.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/root-parse.json",
+      "bytes": 235,
+      "sha256": "5a4bebf23d1adc8d7d111b6e1625e46acf4762a0748bebfb6a0130c47699eb75"
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-01/case-01/case.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-01/case-01/case.json",
+      "bytes": 523594,
+      "sha256": "48eedfa610f91b8cba50f6fcd2758ea8cd3cfd2c7f51534dbaa3835e724a982c"
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-01/case-01/observe-10s.png",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-01/case-01/observe-10s.png",
+      "bytes": 103886,
+      "sha256": "d280fabc718d74c1b36182f7413f6fdd8574e62a241ecd5950b9ab2c6440e8a2"
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-01/case-02/case.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-01/case-02/case.json",
+      "bytes": 527600,
+      "sha256": "4d261df4bdbc6dd0352167f4d23599697797f78ffadfbb51cf6086e885661759"
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-01/case-02/observe-10s.png",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-01/case-02/observe-10s.png",
+      "bytes": 116250,
+      "sha256": "e834e2793637a4927b5d8e5a73326f35a18aedc6325968fddaef3cc644188255"
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-01/case-03/case.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-01/case-03/case.json",
+      "bytes": 523602,
+      "sha256": "50feb7a40f4708d4076d15104bf3b7e02a72a8dabc4e60bc2fc046ce9e1837d6"
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-01/case-03/observe-10s.png",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-01/case-03/observe-10s.png",
+      "bytes": 134642,
+      "sha256": "8a2d17258e82ff03316851e31d52ae4ebee64ee302e22e52d9e60da0d2c25f10"
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-01/case-04/case.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-01/case-04/case.json",
+      "bytes": 529024,
+      "sha256": "07ba3f05646c872cc8ed3510bca5774a798f66b506de019e6b9aef13cf65902d"
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-01/case-04/observe-10s.png",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-01/case-04/observe-10s.png",
+      "bytes": 166535,
+      "sha256": "9d2c341d36f6e44fde0efe59eda40849b36eec6616fb22ad00ee85f55fd28265"
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-01/case-05/case.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-01/case-05/case.json",
+      "bytes": 519567,
+      "sha256": "04e8e61164f4b21610326344dc0bc561b553fc0c83fd3e35d02ef8b0fa77aae5"
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-01/case-05/observe-10s.png",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-01/case-05/observe-10s.png",
+      "bytes": 95746,
+      "sha256": "b832d770b029f777b2183338d6c8cf9767de9e63bee553a55a50129a62224d5a"
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-01/case-06/case.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-01/case-06/case.json",
+      "bytes": 528827,
+      "sha256": "dce8d645473acd5a2d29cb54aa40eedf48fd0fbc92053203dd5166c9deb47743"
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-01/case-06/observe-10s.png",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-01/case-06/observe-10s.png",
+      "bytes": 107369,
+      "sha256": "5ed06e3f5152f889f3414a5153700ede26d80d400f1570cdd864d923866cb5f3"
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-01/case-07/case.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-01/case-07/case.json",
+      "bytes": 517114,
+      "sha256": "829a7915dc0050bea550d88e7ccf5d59d28589631d370635d42f5a4243b32282"
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-01/case-07/observe-10s.png",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-01/case-07/observe-10s.png",
+      "bytes": 147303,
+      "sha256": "19cc9e383c1e09b3ee7c200b2022db6eeafabff0d656b34fb37dc204ea4d9987"
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-01/case-08/case.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-01/case-08/case.json",
+      "bytes": 532247,
+      "sha256": "c25491e57c716aa62149a26eac8415e795c7e6df22bb99db88b95f3447f36355"
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-01/case-08/observe-10s.png",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-01/case-08/observe-10s.png",
+      "bytes": 183190,
+      "sha256": "0ccccbdd3beb57621673d7f58c3e3391ac942ad416f83a3664cc8bbdf07b2c99"
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-01/case-09/case.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-01/case-09/case.json",
+      "bytes": 521276,
+      "sha256": "8b310b9844d8e3d84211c582fd8c62e1de4072368d1ccd6448443833e80c22c9"
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-01/case-09/observe-10s.png",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-01/case-09/observe-10s.png",
+      "bytes": 297296,
+      "sha256": "1c67fdbf2b25c31bfdcc4f670b67aad43e3cb8314b321559df4c5fdf2a931653"
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-01/case-10/case.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-01/case-10/case.json",
+      "bytes": 525156,
+      "sha256": "94287cb0ee5b05681cefa1f8bd828b9132486a19fd146e706773a297545f1586"
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-01/case-10/observe-10s.png",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-01/case-10/observe-10s.png",
+      "bytes": 430128,
+      "sha256": "f86566155a801a93c5e0c196ac4018dfbc27dd2b4af50dc8053192e37a962bc6"
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-01/report.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-01/report.json",
+      "bytes": 13758,
+      "sha256": "97fe7abb26231d2e84765d224f50992559581909651ad0e643fac2ba1b738adf"
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-01/root-closure.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-01/root-closure.json",
+      "bytes": 7640,
+      "sha256": "fd2c777c241c920a795bc3e485ebc33943d2f3324b02d14779ca20e3965619d6"
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-02/case-01/case.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-02/case-01/case.json",
+      "bytes": 524036,
+      "sha256": "e6bf73d09de5d28fc5cdca13c9f6f5de37ecd46f2cfaaeae479768c17d88853f"
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-02/case-01/observe-10s.png",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-02/case-01/observe-10s.png",
+      "bytes": 104292,
+      "sha256": "2c37ad45babf23019f673c7414f07b848cee57f03ceee8fd4dd75d3baed182d6"
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-02/case-02/case.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-02/case-02/case.json",
+      "bytes": 527607,
+      "sha256": "183ec2b28e6e35b9700b8789b517def07448cb641e628852384609c13409efc6"
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-02/case-02/observe-10s.png",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-02/case-02/observe-10s.png",
+      "bytes": 116250,
+      "sha256": "e834e2793637a4927b5d8e5a73326f35a18aedc6325968fddaef3cc644188255"
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-02/case-03/case.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-02/case-03/case.json",
+      "bytes": 528814,
+      "sha256": "5e892923b5338f92b16eeb72c956164a7987eec68983a2f6eee1b8181c2a877e"
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-02/case-03/observe-10s.png",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-02/case-03/observe-10s.png",
+      "bytes": 137474,
+      "sha256": "8b8b5fa2b6385be5952c759e202d820bf2770dff850b7023f7370aa1844bef6f"
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-02/case-04/case.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-02/case-04/case.json",
+      "bytes": 529035,
+      "sha256": "079ed9bfd259992f916b619ebec02ecc3d45759a316eaeeca7c4f2f236a48570"
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-02/case-04/observe-10s.png",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-02/case-04/observe-10s.png",
+      "bytes": 167807,
+      "sha256": "7dca7f767b0d89b6351a2d7a193fa901cdd075f101114c153f891d7baec79751"
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-02/case-05/case.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-02/case-05/case.json",
+      "bytes": 519287,
+      "sha256": "6e6ed1074a84fea9fd2aef61af59119412dcad25ded01c72f1c8981068542c62"
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-02/case-05/observe-10s.png",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-02/case-05/observe-10s.png",
+      "bytes": 95834,
+      "sha256": "ecb531db89c6f63258913b90c6f5b574c2000f4cccc95684e4b43f27e41775fd"
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-02/case-06/case.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-02/case-06/case.json",
+      "bytes": 520950,
+      "sha256": "08b16fc659f92f61c966f845c5f3af237587ee23aa5c59051dcc6a793ffd5001"
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-02/case-06/observe-10s.png",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-02/case-06/observe-10s.png",
+      "bytes": 106754,
+      "sha256": "167915bd7c20101826a1913e8a8ba5bd9b5425e9e56b057c17f438b164544c3a"
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-02/case-07/case.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-02/case-07/case.json",
+      "bytes": 521945,
+      "sha256": "6c0d8d1e12e33d3ceb7dfe82627b0b86a5dcdac46a22f803fb1232a71104a37e"
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-02/case-07/observe-10s.png",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-02/case-07/observe-10s.png",
+      "bytes": 154099,
+      "sha256": "6e2288242d84d434d7a6bd8a04a68a5d84b5133724fecaac338d7dc371777c8c"
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-02/case-08/case.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-02/case-08/case.json",
+      "bytes": 524355,
+      "sha256": "e745fc1b24fcb3552f3bebf0307b113ea0e0535983a54e5ac2ec697107a119b0"
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-02/case-08/observe-10s.png",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-02/case-08/observe-10s.png",
+      "bytes": 182501,
+      "sha256": "d8e04b93d8cdcc5b732783c310d40d951c9b1207ac8213f299515abd44bb6e4d"
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-02/case-09/case.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-02/case-09/case.json",
+      "bytes": 521330,
+      "sha256": "3d4cd64dd98374e5b21ed48ee90e3e474d7c4487cd8fb072d21eb7e82f5f8092"
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-02/case-09/observe-10s.png",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-02/case-09/observe-10s.png",
+      "bytes": 294743,
+      "sha256": "6ef4a1b5f3a95ffc967ce0dcffca4f701c9b7a56d43d7e7c26da6c1c3577c19c"
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-02/case-10/case.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-02/case-10/case.json",
+      "bytes": 525165,
+      "sha256": "d735fd9fac328b59cbcdf854b0e7648ba7e6624a111326a97522c7c83ba490aa"
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-02/case-10/observe-10s.png",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-02/case-10/observe-10s.png",
+      "bytes": 430128,
+      "sha256": "f86566155a801a93c5e0c196ac4018dfbc27dd2b4af50dc8053192e37a962bc6"
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-02/report.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-02/report.json",
+      "bytes": 13754,
+      "sha256": "b94ee28531dd6537e47357f4ad6144b142a673e059eae1b51979ea2f3aae171b"
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-02/root-closure.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-02/root-closure.json",
+      "bytes": 7662,
+      "sha256": "78c463873709f4823a306b223e8cc4b89f561a63a80cfddc35588144df91734d"
+    },
+    {
+      "member": "reduce-cue-layout-prep/run.cjs",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run.cjs",
+      "bytes": 12858,
+      "sha256": "4b485be4f69ee72104859dcc9765a275ee42933c2a7f3c094b5461392b993e17"
+    },
+    {
+      "member": "reduce-cue-layout-prep/source-manifest.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/source-manifest.json",
+      "bytes": 1552,
+      "sha256": "1bdf44f4ebcafc8a136dcd19c476ff8f5b4984141a209c560f3d19930fb04a54"
+    },
+    {
+      "member": "reduce-cue-pilot-prep/README.md",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-pilot-prep/README.md",
+      "bytes": 3690,
+      "sha256": "9fae3c9d169774eadfb7e8e6ccb49b6453ee6875277ff3eb8538a65a481b49b9"
+    },
+    {
+      "member": "reduce-cue-pilot-prep/diagnose.cjs",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-pilot-prep/diagnose.cjs",
+      "bytes": 4168,
+      "sha256": "3339fc9fbbe68de0b51ce1a6651182ccca93b651884e8b69e37b428aee38b14e"
+    },
+    {
+      "member": "reduce-cue-pilot-prep/environment-manifest.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-pilot-prep/environment-manifest.json",
+      "bytes": 1251,
+      "sha256": "257c2cc6401c0d13fefa4e955a26be9fbea1f89cf2580aff759e7b3c094cdc44"
+    },
+    {
+      "member": "reduce-cue-pilot-prep/frozen.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-pilot-prep/frozen.json",
+      "bytes": 1039,
+      "sha256": "9ce2f743c0718e3eeec4d9d1062a0f8a67758290a2fe9669632ff3ed861c0f08"
+    },
+    {
+      "member": "reduce-cue-pilot-prep/preparation-manifest.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-pilot-prep/preparation-manifest.json",
+      "bytes": 1294,
+      "sha256": "313d357065f03ffabfc2185ed3c0a7627e4439f9a5bfa648e7190093befb6e8b"
+    },
+    {
+      "member": "reduce-cue-pilot-prep/root-execution-gate.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-pilot-prep/root-execution-gate.json",
+      "bytes": 1548,
+      "sha256": "0fec033cfa2f26c456bdc9fb1398a961f0f96282f93e6f325294315572a9a8e0"
+    },
+    {
+      "member": "reduce-cue-pilot-prep/run-01/observe-10s.png",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-pilot-prep/run-01/observe-10s.png",
+      "bytes": 178364,
+      "sha256": "2f5fd63cd51bf6a908eb1581aeaad214d2ae7cc78fc1d38317d9550414e33a18"
+    },
+    {
+      "member": "reduce-cue-pilot-prep/run-01/report.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-pilot-prep/run-01/report.json",
+      "bytes": 512434,
+      "sha256": "cb25e21c102ecfac1699c0d2115cbb7401f7f643f2f4f56a0eb702748d0386ef"
+    },
+    {
+      "member": "reduce-cue-pilot-prep/run-01/root-execution-receipt.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-pilot-prep/run-01/root-execution-receipt.json",
+      "bytes": 957,
+      "sha256": "19d17c4af1917d82a24ec0cd9881116030f672c9ce4b421e427079bb31bb11d1"
+    },
+    {
+      "member": "reduce-cue-pilot-prep/run.cjs",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-pilot-prep/run.cjs",
+      "bytes": 11095,
+      "sha256": "d3951d73ec8a1da96309357349664d6972672cac4b03c54d159b7f0d416709df"
+    },
+    {
+      "member": "reduce-cue-pilot-prep/source-manifest.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-pilot-prep/source-manifest.json",
+      "bytes": 1552,
+      "sha256": "1bdf44f4ebcafc8a136dcd19c476ff8f5b4984141a209c560f3d19930fb04a54"
+    },
+    {
+      "member": "reduce-cue-repeat-prep/README.md",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/README.md",
+      "bytes": 4854,
+      "sha256": "d43648869a2346f51fef0e276f7bad3ec05f85ad829260dd43a006f9552769a9"
+    },
+    {
+      "member": "reduce-cue-repeat-prep/after-binding.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/after-binding.json",
+      "bytes": 871,
+      "sha256": "191446c16a17b02c88b247e6172c431846207e07c9a90176258e13ad037df3a8"
+    },
+    {
+      "member": "reduce-cue-repeat-prep/before-binding.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/before-binding.json",
+      "bytes": 873,
+      "sha256": "3119a3b56a31447aa554637ff65f88e35c95e1c3bdb17f067af467827c202e94"
+    },
+    {
+      "member": "reduce-cue-repeat-prep/case.cjs",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/case.cjs",
+      "bytes": 11366,
+      "sha256": "7e42b4000d58f3e7f67dc2d4c9ba29c39a3b01d09a8cda0425e320ac9db7ce88"
+    },
+    {
+      "member": "reduce-cue-repeat-prep/diagnose.cjs",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/diagnose.cjs",
+      "bytes": 4168,
+      "sha256": "3339fc9fbbe68de0b51ce1a6651182ccca93b651884e8b69e37b428aee38b14e"
+    },
+    {
+      "member": "reduce-cue-repeat-prep/environment-manifest.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/environment-manifest.json",
+      "bytes": 1251,
+      "sha256": "257c2cc6401c0d13fefa4e955a26be9fbea1f89cf2580aff759e7b3c094cdc44"
+    },
+    {
+      "member": "reduce-cue-repeat-prep/frozen.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/frozen.json",
+      "bytes": 1241,
+      "sha256": "56196f297966706edbd328e3aa91563fee77accecd38a7b07934a8b460c5776c"
+    },
+    {
+      "member": "reduce-cue-repeat-prep/preparation-manifest.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/preparation-manifest.json",
+      "bytes": 2127,
+      "sha256": "985d274179b4f15602c9c0e44e40011dfbf1f2b08cf339474ed8db8e2c21010c"
+    },
+    {
+      "member": "reduce-cue-repeat-prep/root-after-execution.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/root-after-execution.json",
+      "bytes": 526,
+      "sha256": "8c9019ba8f493113a9d5f2e982001d4ef4ff453b21285ac9f9c62f050d7c13a7"
+    },
+    {
+      "member": "reduce-cue-repeat-prep/root-after-gate.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/root-after-gate.json",
+      "bytes": 2236,
+      "sha256": "99254c0e2504b4ae18abce0893402a51f8715e2b5e8a0b7375eb64f996eb987b"
+    },
+    {
+      "member": "reduce-cue-repeat-prep/root-after-stderr.log",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/root-after-stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "member": "reduce-cue-repeat-prep/root-after-stdout.log",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/root-after-stdout.log",
+      "bytes": 78,
+      "sha256": "4077818af100d962c96de06296d91cb570846f083d74ec4e57758cb2e8e83692"
+    },
+    {
+      "member": "reduce-cue-repeat-prep/root-before-execution.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/root-before-execution.json",
+      "bytes": 527,
+      "sha256": "cc1a90785b5fa221cbb404bfa26c35166ca06623b978da6477cf4332a1afcaec"
+    },
+    {
+      "member": "reduce-cue-repeat-prep/root-before-gate.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/root-before-gate.json",
+      "bytes": 2214,
+      "sha256": "73a40d6880d70ac3b6442ffa529f66c3c9ca3d2d45aefe12899009655fd4bb49"
+    },
+    {
+      "member": "reduce-cue-repeat-prep/root-before-stderr.log",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/root-before-stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "member": "reduce-cue-repeat-prep/root-before-stdout.log",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/root-before-stdout.log",
+      "bytes": 78,
+      "sha256": "4077818af100d962c96de06296d91cb570846f083d74ec4e57758cb2e8e83692"
+    },
+    {
+      "member": "reduce-cue-repeat-prep/root-parse.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/root-parse.json",
+      "bytes": 111,
+      "sha256": "4fa03ea9ae52883e1a856e03a15bfc7e6bcf6993719c31bd9e6edb25f411bbb5"
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-01/case-01/case.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/run-01/case-01/case.json",
+      "bytes": 731107,
+      "sha256": "8372a3fa28c616e191133e1aa50b92a45004d4d102a384b3a6c2e3d352dce54b"
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-01/case-01/observe-10s.png",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/run-01/case-01/observe-10s.png",
+      "bytes": 178364,
+      "sha256": "2f5fd63cd51bf6a908eb1581aeaad214d2ae7cc78fc1d38317d9550414e33a18"
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-01/case-02/case.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/run-01/case-02/case.json",
+      "bytes": 731964,
+      "sha256": "ec9457db3ed591f4a5262994e2f716fd7c7a477f27566d825fabe3a2e4e3094d"
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-01/case-02/observe-10s.png",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/run-01/case-02/observe-10s.png",
+      "bytes": 178364,
+      "sha256": "2f5fd63cd51bf6a908eb1581aeaad214d2ae7cc78fc1d38317d9550414e33a18"
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-01/case-03/case.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/run-01/case-03/case.json",
+      "bytes": 729379,
+      "sha256": "c2db7f53e3a5fffae71f9ea18130279bc243a4e9ac91959753bb359421a83ad8"
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-01/case-03/observe-10s.png",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/run-01/case-03/observe-10s.png",
+      "bytes": 178364,
+      "sha256": "2f5fd63cd51bf6a908eb1581aeaad214d2ae7cc78fc1d38317d9550414e33a18"
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-01/case-04/case.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/run-01/case-04/case.json",
+      "bytes": 732568,
+      "sha256": "8c587be4d620f3cf435769e9873e144f043409df2268f9864e15983663d700ce"
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-01/case-04/observe-10s.png",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/run-01/case-04/observe-10s.png",
+      "bytes": 178364,
+      "sha256": "2f5fd63cd51bf6a908eb1581aeaad214d2ae7cc78fc1d38317d9550414e33a18"
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-01/case-05/case.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/run-01/case-05/case.json",
+      "bytes": 731069,
+      "sha256": "5c6ff981096c3e467f27f1b085c5660390cf81d9ed59017844d7fc0ace80d8f9"
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-01/case-05/observe-10s.png",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/run-01/case-05/observe-10s.png",
+      "bytes": 184749,
+      "sha256": "e0728c08901b7a0edc9fa015031db29917c7b545192515672dd31ce5efceae9c"
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-01/case-06/case.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/run-01/case-06/case.json",
+      "bytes": 732545,
+      "sha256": "810084b1038f0c1f57a219829e87f7a24b1a37367ea92520faa70517996aa42a"
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-01/case-06/observe-10s.png",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/run-01/case-06/observe-10s.png",
+      "bytes": 178364,
+      "sha256": "2f5fd63cd51bf6a908eb1581aeaad214d2ae7cc78fc1d38317d9550414e33a18"
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-01/case-07/case.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/run-01/case-07/case.json",
+      "bytes": 730463,
+      "sha256": "3f7d041842114908ce86536df0e9f7e7c132c2796a7f207e9c5182637a0d6c1e"
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-01/case-07/observe-10s.png",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/run-01/case-07/observe-10s.png",
+      "bytes": 181020,
+      "sha256": "e75597088af2e4a288e9f7bd3db813ed5a0bc8d2a0754d00e5023c635bd10eb7"
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-01/case-08/case.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/run-01/case-08/case.json",
+      "bytes": 732462,
+      "sha256": "f4f03048796971651322962514bf9de93b88ff60f632209a72d93d110d8f893e"
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-01/case-08/observe-10s.png",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/run-01/case-08/observe-10s.png",
+      "bytes": 178364,
+      "sha256": "2f5fd63cd51bf6a908eb1581aeaad214d2ae7cc78fc1d38317d9550414e33a18"
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-01/case-09/case.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/run-01/case-09/case.json",
+      "bytes": 729168,
+      "sha256": "1836d904c6abdd07f31fe12538bf3f75195a7bb76f4b85691f8fd719c0acdfe5"
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-01/case-09/observe-10s.png",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/run-01/case-09/observe-10s.png",
+      "bytes": 178364,
+      "sha256": "2f5fd63cd51bf6a908eb1581aeaad214d2ae7cc78fc1d38317d9550414e33a18"
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-01/case-10/case.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/run-01/case-10/case.json",
+      "bytes": 731868,
+      "sha256": "0323d873890e696e0eaec97792871033ec351cc0befc1513611fa263f6b41c8c"
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-01/case-10/observe-10s.png",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/run-01/case-10/observe-10s.png",
+      "bytes": 181020,
+      "sha256": "e75597088af2e4a288e9f7bd3db813ed5a0bc8d2a0754d00e5023c635bd10eb7"
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-01/report.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/run-01/report.json",
+      "bytes": 30869,
+      "sha256": "ea71421bc646cc26caf2ee9f508b116e43cca1942b5ee34d5ce544e267b62de2"
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-01/root-closure.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/run-01/root-closure.json",
+      "bytes": 12347,
+      "sha256": "9a63567e6cd305385bb826550a0799fb5074e771edb2a67c0100ab4c4ce04854"
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-02/case-01/case.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/run-02/case-01/case.json",
+      "bytes": 720347,
+      "sha256": "5385a3cdcea02afe27b20eb3cf5d9bc3e34da43b72d1cdd068856600e4ca86bd"
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-02/case-01/observe-10s.png",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/run-02/case-01/observe-10s.png",
+      "bytes": 177110,
+      "sha256": "339175cda7b38bbeb924ee51c2feb907700e79b62a11f67429f9a17d2421c5e2"
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-02/case-02/case.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/run-02/case-02/case.json",
+      "bytes": 721390,
+      "sha256": "e783daa758a17834f8bb7bc673740e7b93a8e0fc049017a869c3b89fcc39db19"
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-02/case-02/observe-10s.png",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/run-02/case-02/observe-10s.png",
+      "bytes": 177110,
+      "sha256": "339175cda7b38bbeb924ee51c2feb907700e79b62a11f67429f9a17d2421c5e2"
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-02/case-03/case.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/run-02/case-03/case.json",
+      "bytes": 718803,
+      "sha256": "106dc7151d5ccd6e25573466602e1dc324cbb5ad0243c44ef6b231bf5e7cf6b4"
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-02/case-03/observe-10s.png",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/run-02/case-03/observe-10s.png",
+      "bytes": 179709,
+      "sha256": "7518c546d18633b08e859869fb43cc47cd183ad17b13ab5cd766add3d7662744"
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-02/case-04/case.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/run-02/case-04/case.json",
+      "bytes": 722045,
+      "sha256": "cb797c67ef9ab9f7b16c5ca2b6967945f186179ba02a231517194f9f93310d36"
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-02/case-04/observe-10s.png",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/run-02/case-04/observe-10s.png",
+      "bytes": 177110,
+      "sha256": "339175cda7b38bbeb924ee51c2feb907700e79b62a11f67429f9a17d2421c5e2"
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-02/case-05/case.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/run-02/case-05/case.json",
+      "bytes": 718885,
+      "sha256": "09fb16568e7a2a7d4e9ea6a1dc01faead13ce5a9509009fb5e085dde0b0a3c47"
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-02/case-05/observe-10s.png",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/run-02/case-05/observe-10s.png",
+      "bytes": 177110,
+      "sha256": "339175cda7b38bbeb924ee51c2feb907700e79b62a11f67429f9a17d2421c5e2"
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-02/case-06/case.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/run-02/case-06/case.json",
+      "bytes": 721419,
+      "sha256": "c93ae632eaf67acabea018460eca98e55db3a84ffcd10c0f0181c1b2a84c3272"
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-02/case-06/observe-10s.png",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/run-02/case-06/observe-10s.png",
+      "bytes": 177110,
+      "sha256": "339175cda7b38bbeb924ee51c2feb907700e79b62a11f67429f9a17d2421c5e2"
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-02/case-07/case.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/run-02/case-07/case.json",
+      "bytes": 718033,
+      "sha256": "1e5dceecf2fac7c4fd8cba04cfb4b7e08182d65887aa51af20a2ed6fdb14eaaa"
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-02/case-07/observe-10s.png",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/run-02/case-07/observe-10s.png",
+      "bytes": 177110,
+      "sha256": "339175cda7b38bbeb924ee51c2feb907700e79b62a11f67429f9a17d2421c5e2"
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-02/case-08/case.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/run-02/case-08/case.json",
+      "bytes": 721828,
+      "sha256": "e409ef25a877543042433b251d8972ffa9f1233afdce8813e1a6ad97285bfc0a"
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-02/case-08/observe-10s.png",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/run-02/case-08/observe-10s.png",
+      "bytes": 177110,
+      "sha256": "339175cda7b38bbeb924ee51c2feb907700e79b62a11f67429f9a17d2421c5e2"
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-02/case-09/case.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/run-02/case-09/case.json",
+      "bytes": 720340,
+      "sha256": "574f103bc3ebb6d720f135e4496e88fd71573c3424db01440db59b5b232530d2"
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-02/case-09/observe-10s.png",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/run-02/case-09/observe-10s.png",
+      "bytes": 177110,
+      "sha256": "339175cda7b38bbeb924ee51c2feb907700e79b62a11f67429f9a17d2421c5e2"
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-02/case-10/case.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/run-02/case-10/case.json",
+      "bytes": 721516,
+      "sha256": "07bb26507df4c847dd82214d941b9296ba083b5fe29a52276f2a1c2656409a37"
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-02/case-10/observe-10s.png",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/run-02/case-10/observe-10s.png",
+      "bytes": 177110,
+      "sha256": "339175cda7b38bbeb924ee51c2feb907700e79b62a11f67429f9a17d2421c5e2"
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-02/report.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/run-02/report.json",
+      "bytes": 30936,
+      "sha256": "b6cbe000489498315abc9f69c33b2b19634c6de5262fa04668848ea8b027f2fb"
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-02/root-closure.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/run-02/root-closure.json",
+      "bytes": 12389,
+      "sha256": "7084cefe3f209e304b0f77831a5aecac406c140c77ec5d8bf813f1ff9228647b"
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run.cjs",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/run.cjs",
+      "bytes": 6419,
+      "sha256": "7a95c2782bfb9a5e6eccadca13d5c754c04a37dc788bc056404d83c8b3fffaea"
+    },
+    {
+      "member": "reduce-cue-repeat-prep/source-manifest.json",
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/source-manifest.json",
+      "bytes": 1552,
+      "sha256": "1bdf44f4ebcafc8a136dcd19c476ff8f5b4984141a209c560f3d19930fb04a54"
+    },
+    {
+      "member": "root-activation-original-frozen.json",
+      "source": "/workspace/scratch/first-minute/round-146/root-activation-original-frozen.json",
+      "bytes": 4159,
+      "sha256": "02e2ee7efdc33a8b58cc7dc0005642695a53e983ecba3419594bbff584f3131f"
+    },
+    {
+      "member": "root-execution-gate.json",
+      "source": "/workspace/scratch/first-minute/round-146/root-execution-gate.json",
+      "bytes": 2021,
+      "sha256": "36bfb3cbf30544dd4c51c37cda7f1ae5bcec53759e2d326eb25d881343a3be81"
+    },
+    {
+      "member": "root-layout-gate.py",
+      "source": "/workspace/scratch/first-minute/round-146/root-layout-gate.py",
+      "bytes": 2965,
+      "sha256": "beeca76632b72e44377d4172664134d687bed93ef304a8686b12e6cd141eee81"
+    },
+    {
+      "member": "root-primary-execution.json",
+      "source": "/workspace/scratch/first-minute/round-146/root-primary-execution.json",
+      "bytes": 1639,
+      "sha256": "114dd563cd3abac39308cea18f9d5c56feb4e64f33797538fc5f6d1279743c03"
+    },
+    {
+      "member": "root-repeat-gate.py",
+      "source": "/workspace/scratch/first-minute/round-146/root-repeat-gate.py",
+      "bytes": 2982,
+      "sha256": "4eab632f57c0f95d89db310de7e92f818ce8d3a20a6dfe398aca6bcc855ca811"
+    }
+  ],
+  "memberCount": 194,
+  "uncompressedMemberBytes": 37629092,
+  "rawPNGMembers": 45,
+  "deterministicContainerMetadata": true,
+  "losslessOriginalBytes": true,
+  "separateExtractionDirectory": "/workspace/scratch/first-minute/round-146/report-prep/stage-final-prep-extract-verification/natural-evidence",
+  "extractedMembers": 194,
+  "allByteAndSHAEqual": true,
+  "checks": [
+    {
+      "member": "design-review/candidates.md",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "design-review/evidence.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "design-review/primary-evidence.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "design-review/primary-reading.md",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "discovery-a/candidates.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "discovery-a/notes.md",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "discovery-a/primary-audit.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "discovery-a/primary-audit.md",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "discovery-a/primary-timing-audit.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "discovery-a/primary-timing-audit.md",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "discovery-a/reduce-pilot-audit.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "discovery-a/reduce-pilot-audit.md",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "discovery-b/candidates.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "discovery-b/notes.md",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "preparation-bound146/README.md",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "preparation-bound146/binding-diff.patch",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "preparation-bound146/binding-record.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "preparation-bound146/environment-manifest.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "preparation-bound146/frozen.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "preparation-bound146/helpers.cjs",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "preparation-bound146/input-manifest.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "preparation-bound146/metadata.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "preparation-bound146/parse-plan.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "preparation-bound146/preparation-manifest.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "preparation-bound146/run.cjs",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "preparation-bound146/source-manifest.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "preparation-bound146/strict/driver-timing.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "preparation-bound146/strict/extra.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "preparation-bound146/strict/observe-10s.png",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "preparation-bound146/strict/play-10s.png",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "preparation-bound146/strict/play-30s.png",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "preparation-bound146/strict/play-60s.png",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "preparation-bound146/strict/report.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "preparation-bound146/strict-play.cjs",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "primary-run.log",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "primary-server-copy.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "primary-server.log",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-after-audit/audit.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-after-audit/comparison.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-after-audit/manifest.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-after-audit/notes.md",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-before-audit/audit.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-before-audit/notes.md",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-audit/after/audit.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-audit/after/manifest.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-audit/after/notes.md",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-audit/after-independent-geometry/comparison.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-audit/after-independent-geometry/summary.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-audit/before/baseline.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-audit/before/geometry-check.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-audit/before/manifest.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-audit/before/notes.md",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-prep/README.md",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-prep/after-binding.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-prep/before-binding.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-prep/diagnose-diff.patch",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-prep/diagnose.cjs",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-prep/environment-manifest.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-prep/frozen.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-prep/preparation-manifest.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-prep/root-after-execution.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-prep/root-after-gate.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-prep/root-after-stderr.log",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-prep/root-after-stdout.log",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-prep/root-before-execution.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-prep/root-before-gate.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-prep/root-before-stderr.log",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-prep/root-before-stdout.log",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-prep/root-parse.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-01/case-01/case.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-01/case-01/observe-10s.png",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-01/case-02/case.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-01/case-02/observe-10s.png",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-01/case-03/case.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-01/case-03/observe-10s.png",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-01/case-04/case.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-01/case-04/observe-10s.png",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-01/case-05/case.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-01/case-05/observe-10s.png",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-01/case-06/case.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-01/case-06/observe-10s.png",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-01/case-07/case.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-01/case-07/observe-10s.png",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-01/case-08/case.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-01/case-08/observe-10s.png",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-01/case-09/case.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-01/case-09/observe-10s.png",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-01/case-10/case.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-01/case-10/observe-10s.png",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-01/report.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-01/root-closure.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-02/case-01/case.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-02/case-01/observe-10s.png",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-02/case-02/case.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-02/case-02/observe-10s.png",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-02/case-03/case.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-02/case-03/observe-10s.png",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-02/case-04/case.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-02/case-04/observe-10s.png",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-02/case-05/case.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-02/case-05/observe-10s.png",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-02/case-06/case.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-02/case-06/observe-10s.png",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-02/case-07/case.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-02/case-07/observe-10s.png",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-02/case-08/case.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-02/case-08/observe-10s.png",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-02/case-09/case.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-02/case-09/observe-10s.png",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-02/case-10/case.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-02/case-10/observe-10s.png",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-02/report.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-prep/run-02/root-closure.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-prep/run.cjs",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-layout-prep/source-manifest.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-pilot-prep/README.md",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-pilot-prep/diagnose.cjs",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-pilot-prep/environment-manifest.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-pilot-prep/frozen.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-pilot-prep/preparation-manifest.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-pilot-prep/root-execution-gate.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-pilot-prep/run-01/observe-10s.png",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-pilot-prep/run-01/report.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-pilot-prep/run-01/root-execution-receipt.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-pilot-prep/run.cjs",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-pilot-prep/source-manifest.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-repeat-prep/README.md",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-repeat-prep/after-binding.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-repeat-prep/before-binding.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-repeat-prep/case.cjs",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-repeat-prep/diagnose.cjs",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-repeat-prep/environment-manifest.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-repeat-prep/frozen.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-repeat-prep/preparation-manifest.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-repeat-prep/root-after-execution.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-repeat-prep/root-after-gate.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-repeat-prep/root-after-stderr.log",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-repeat-prep/root-after-stdout.log",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-repeat-prep/root-before-execution.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-repeat-prep/root-before-gate.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-repeat-prep/root-before-stderr.log",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-repeat-prep/root-before-stdout.log",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-repeat-prep/root-parse.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-01/case-01/case.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-01/case-01/observe-10s.png",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-01/case-02/case.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-01/case-02/observe-10s.png",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-01/case-03/case.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-01/case-03/observe-10s.png",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-01/case-04/case.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-01/case-04/observe-10s.png",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-01/case-05/case.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-01/case-05/observe-10s.png",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-01/case-06/case.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-01/case-06/observe-10s.png",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-01/case-07/case.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-01/case-07/observe-10s.png",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-01/case-08/case.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-01/case-08/observe-10s.png",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-01/case-09/case.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-01/case-09/observe-10s.png",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-01/case-10/case.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-01/case-10/observe-10s.png",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-01/report.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-01/root-closure.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-02/case-01/case.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-02/case-01/observe-10s.png",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-02/case-02/case.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-02/case-02/observe-10s.png",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-02/case-03/case.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-02/case-03/observe-10s.png",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-02/case-04/case.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-02/case-04/observe-10s.png",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-02/case-05/case.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-02/case-05/observe-10s.png",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-02/case-06/case.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-02/case-06/observe-10s.png",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-02/case-07/case.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-02/case-07/observe-10s.png",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-02/case-08/case.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-02/case-08/observe-10s.png",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-02/case-09/case.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-02/case-09/observe-10s.png",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-02/case-10/case.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-02/case-10/observe-10s.png",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-02/report.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run-02/root-closure.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-repeat-prep/run.cjs",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "reduce-cue-repeat-prep/source-manifest.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "root-activation-original-frozen.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "root-execution-gate.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "root-layout-gate.py",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "root-primary-execution.json",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    },
+    {
+      "member": "root-repeat-gate.py",
+      "byteEqual": true,
+      "sha256Equal": true,
+      "originalUnchanged": true
+    }
+  ]
+}

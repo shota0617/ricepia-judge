@@ -1,0 +1,127 @@
+test_no_filter_on_canvas_ever (__main__.TestKome365CanvasNoFilter.test_no_filter_on_canvas_ever) ... ok
+test_reduced_motion_keeps_tone_panel_still (__main__.TestKome365CanvasNoFilter.test_reduced_motion_keeps_tone_panel_still)
+Codex 指摘: 「動きを へらす」では、板の 色の うつりかわり も 決めた 直後の 明るさ も 動かさない(前は canvas の アニメを 止めて いた) ... ok
+test_tone_panel_keeps_season_color_and_tap (__main__.TestKome365CanvasNoFilter.test_tone_panel_keeps_season_color_and_tap) ... ok
+test_demo_moves_to_first_card_answer_first (__main__.TestKome365DemoFirstSide.test_demo_moves_to_first_card_answer_first) ... ok
+test_landscape_ghost_does_not_slide_on_first_card (__main__.TestKome365DemoFirstSide.test_landscape_ghost_does_not_slide_on_first_card)
+レビューの 指摘: 横の 低い 画面では、入ってきた カード(#swCard.enter が のこる)の うしろの 影も 動かさない。 ... /workspace/ricepia-firstminute-round146/tests/test_kome365_firstmin.py:1821: ResourceWarning: unclosed file <_io.TextIOWrapper name='/workspace/ricepia-firstminute-round146/kome365/index.html' mode='r' encoding='utf-8'>
+  html = open(os.path.join(ROOT, "kome365", "index.html"), encoding="utf-8").read()
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_3d_setup_waits_for_first_answer (__main__.TestKome365Finger3D.test_3d_setup_waits_for_first_answer) ... ok
+test_demo_finger_clear_of_text (__main__.TestKome365Finger3D.test_demo_finger_clear_of_text) ... FAIL
+test_first_mark_does_not_wait_for_canvas (__main__.TestKome365Finger3D.test_first_mark_does_not_wait_for_canvas) ... ok
+test_2d_field_uses_todays_weather (__main__.TestKome365FirstMinute.test_2d_field_uses_todays_weather) ... ok
+test_3d_files_wait_for_first_card (__main__.TestKome365FirstMinute.test_3d_files_wait_for_first_card) ... ok
+test_3d_loader_counts_fingers (__main__.TestKome365FirstMinute.test_3d_loader_counts_fingers) ... ok
+test_3d_setup_waits_for_first_swipe (__main__.TestKome365FirstMinute.test_3d_setup_waits_for_first_swipe) ... ok
+test_boot_retry_visible_with_reduced_motion (__main__.TestKome365FirstMinute.test_boot_retry_visible_with_reduced_motion) ... ok
+test_boot_title_has_moving_dot (__main__.TestKome365FirstMinute.test_boot_title_has_moving_dot) ... ok
+test_cancel_without_place_does_not_decide (__main__.TestKome365FirstMinute.test_cancel_without_place_does_not_decide) ... ok
+test_cards_behind_sink_while_finger_down (__main__.TestKome365FirstMinute.test_cards_behind_sink_while_finger_down) ... ok
+test_day_guest_stays_out_of_weather_column (__main__.TestKome365FirstMinute.test_day_guest_stays_out_of_weather_column) ... ok
+test_demo_shows_whenever_player_stops (__main__.TestKome365FirstMinute.test_demo_shows_whenever_player_stops) ... ok
+test_demo_timer_does_not_count_hidden_tab (__main__.TestKome365FirstMinute.test_demo_timer_does_not_count_hidden_tab) ... ok
+test_demo_waits_for_judge_mark (__main__.TestKome365FirstMinute.test_demo_waits_for_judge_mark) ... ok
+test_failed_game_script_shows_retry_at_once (__main__.TestKome365FirstMinute.test_failed_game_script_shows_retry_at_once) ... ok
+test_fast_swipe_is_taken (__main__.TestKome365FirstMinute.test_fast_swipe_is_taken) ... ok
+test_growth_dots_end_with_goal_picture (__main__.TestKome365FirstMinute.test_growth_dots_end_with_goal_picture) ... ok
+test_guide_waits_for_entering_card (__main__.TestKome365FirstMinute.test_guide_waits_for_entering_card) ... ok
+test_idle_card_buttons_do_not_trap_finger (__main__.TestKome365FirstMinute.test_idle_card_buttons_do_not_trap_finger) ... ok
+test_judge_mark_survives_finger_returning_during_fly (__main__.TestKome365FirstMinute.test_judge_mark_survives_finger_returning_during_fly) ... ok
+test_landscape_and_short_screens_keep_paddy_clear (__main__.TestKome365FirstMinute.test_landscape_and_short_screens_keep_paddy_clear) ... ok
+test_landscape_small_phone_keeps_card_clear (__main__.TestKome365FirstMinute.test_landscape_small_phone_keeps_card_clear) ... ok
+test_normal_and_slow_loads_show_nothing (__main__.TestKome365FirstMinute.test_normal_and_slow_loads_show_nothing) ... ok
+test_owner_rules_kept (__main__.TestKome365FirstMinute.test_owner_rules_kept) ... ok
+test_paddy_drawn_in_pixels_only (__main__.TestKome365FirstMinute.test_paddy_drawn_in_pixels_only) ... ok
+test_paddy_fits_six_screens_in_browser (__main__.TestKome365FirstMinute.test_paddy_fits_six_screens_in_browser) ... ok
+test_paddy_follows_farm_state (__main__.TestKome365FirstMinute.test_paddy_follows_farm_state) ... ok
+test_paddy_ground_table_every_stage (__main__.TestKome365FirstMinute.test_paddy_ground_table_every_stage) ... ok
+test_paddy_is_anchored_above_card (__main__.TestKome365FirstMinute.test_paddy_is_anchored_above_card) ... ok
+test_paddy_lives_inside_card_wrap (__main__.TestKome365FirstMinute.test_paddy_lives_inside_card_wrap) ... ok
+test_paddy_machine_shows_before_and_after (__main__.TestKome365FirstMinute.test_paddy_machine_shows_before_and_after) ... ok
+test_paddy_pop_rules_follow_cycle170 (__main__.TestKome365FirstMinute.test_paddy_pop_rules_follow_cycle170) ... ok
+test_paddy_reads_as_rice_field (__main__.TestKome365FirstMinute.test_paddy_reads_as_rice_field) ... ok
+test_paddy_shows_water_and_field_state (__main__.TestKome365FirstMinute.test_paddy_shows_water_and_field_state) ... ok
+test_paddy_soil_changes_every_ok (__main__.TestKome365FirstMinute.test_paddy_soil_changes_every_ok) ... ok
+test_pending_swipe_review_fixes (__main__.TestKome365FirstMinute.test_pending_swipe_review_fixes) ... ok
+test_quick_flicks_wait_in_short_queue (__main__.TestKome365FirstMinute.test_quick_flicks_wait_in_short_queue) ... ok
+test_reduced_motion_demo_shows_direction (__main__.TestKome365FirstMinute.test_reduced_motion_demo_shows_direction) ... ok
+test_resting_finger_does_not_block_swipe (__main__.TestKome365FirstMinute.test_resting_finger_does_not_block_swipe) ... ok
+test_returning_player_3d_waits_too (__main__.TestKome365FirstMinute.test_returning_player_3d_waits_too) ... ok
+test_rotation_mid_drag_does_not_decide (__main__.TestKome365FirstMinute.test_rotation_mid_drag_does_not_decide) ... ok
+test_round_arrows_do_not_pop_under_judge_mark (__main__.TestKome365FirstMinute.test_round_arrows_do_not_pop_under_judge_mark) ... ok
+test_round_icons_removed_dots_kept_above_paddy (__main__.TestKome365FirstMinute.test_round_icons_removed_dots_kept_above_paddy) ... ok
+test_short_portrait_weather_clears_card_date (__main__.TestKome365FirstMinute.test_short_portrait_weather_clears_card_date) ... ok
+test_side_picture_reaches_card_in_2d (__main__.TestKome365FirstMinute.test_side_picture_reaches_card_in_2d) ... ok
+test_single_finger_rules_kept (__main__.TestKome365FirstMinute.test_single_finger_rules_kept) ... ok
+test_stalled_game_script_shows_retry (__main__.TestKome365FirstMinute.test_stalled_game_script_shows_retry) ... ok
+test_swipe_demo_finger (__main__.TestKome365FirstMinute.test_swipe_demo_finger) ... ok
+test_swipe_demo_lifecycle (__main__.TestKome365FirstMinute.test_swipe_demo_lifecycle) ... ok
+test_swipe_demo_review_fixes (__main__.TestKome365FirstMinute.test_swipe_demo_review_fixes) ... ok
+test_swipe_during_fly_is_kept (__main__.TestKome365FirstMinute.test_swipe_during_fly_is_kept) ... ok
+test_swipe_from_field_reaches_card (__main__.TestKome365FirstMinute.test_swipe_from_field_reaches_card) ... ok
+test_swipe_from_idle_buttons_reaches_card (__main__.TestKome365FirstMinute.test_swipe_from_idle_buttons_reaches_card) ... ok
+test_takeover_keeps_start_point_and_history (__main__.TestKome365FirstMinute.test_takeover_keeps_start_point_and_history) ... ok
+test_tap_does_not_kill_first_card_guide (__main__.TestKome365FirstMinute.test_tap_does_not_kill_first_card_guide) ... ok
+test_trace_row_fits_between_side_columns_on_low_screens (__main__.TestKome365FirstMinute.test_trace_row_fits_between_side_columns_on_low_screens) ... ok
+test_trickling_game_script_is_not_called_stopped (__main__.TestKome365FirstMinute.test_trickling_game_script_is_not_called_stopped) ... ok
+test_two_finger_pinch_does_not_decide (__main__.TestKome365FirstMinute.test_two_finger_pinch_does_not_decide) ... ok
+test_two_moved_fingers_stay_out_until_lifted (__main__.TestKome365FirstMinute.test_two_moved_fingers_stay_out_until_lifted) ... ok
+test_unknown_save_keys_start_fresh (__main__.TestKome365FirstMinute.test_unknown_save_keys_start_fresh) ... ok
+test_unrelated_error_does_not_cover_booted_game (__main__.TestKome365FirstMinute.test_unrelated_error_does_not_cover_booted_game) ... ok
+test_new_game_starts_at_day_one (__main__.TestKome365LeaveThenNewGame.test_new_game_starts_at_day_one) ... ok
+test_mark_visible_even_if_animation_clock_runs_ahead (__main__.TestKome365MarkByFrames.test_mark_visible_even_if_animation_clock_runs_ahead) ... ok
+test_bubble_still_when_mark_ends (__main__.TestKome365MarkClear.test_bubble_still_when_mark_ends) ... ok
+test_date_yield_only_on_listed_sizes (__main__.TestKome365MarkClear.test_date_yield_only_on_listed_sizes) ... ok
+test_mark_clear_of_card_text_and_buttons (__main__.TestKome365MarkClear.test_mark_clear_of_card_text_and_buttons) ... ok
+test_mark_does_not_jump (__main__.TestKome365MarkClear.test_mark_does_not_jump) ... ok
+test_mark_not_too_small (__main__.TestKome365MarkClear.test_mark_not_too_small) ... ok
+test_mark_refits_after_rotation (__main__.TestKome365MarkClear.test_mark_refits_after_rotation) ... ok
+test_mark_still_while_next_card_dragged (__main__.TestKome365MarkClear.test_mark_still_while_next_card_dragged) ... ok
+test_mark_with_3d_keeps_choices (__main__.TestKome365MarkClear.test_mark_with_3d_keeps_choices) ... ok
+test_mark_yields_in_order_on_any_size (__main__.TestKome365MarkClear.test_mark_yields_in_order_on_any_size) ... ok
+test_reason_bubble_off_mark_ring (__main__.TestKome365MarkClear.test_reason_bubble_off_mark_ring) ... ok
+test_paddy_is_big_and_decorations_hidden (__main__.TestKome365PaddyReadable.test_paddy_is_big_and_decorations_hidden) ... ok
+test_readable_paddy_rules_in_code (__main__.TestKome365PaddyReadable.test_readable_paddy_rules_in_code) ... ok
+test_words_tell_the_paddy_state (__main__.TestKome365PaddyReadable.test_words_tell_the_paddy_state) ... ok
+test_idle_card_hides_paddy_then_restores (__main__.TestKome365PaddyReview.test_idle_card_hides_paddy_then_restores) ... ok
+test_narrow_sun_is_small_and_clear_of_buttons (__main__.TestKome365PaddyReview.test_narrow_sun_is_small_and_clear_of_buttons) ... ok
+test_word_comes_back_after_why_bubble (__main__.TestKome365PaddyReview.test_word_comes_back_after_why_bubble) ... ok
+test_broken_storage_still_starts_with_sound (__main__.TestKome365Sound.test_broken_storage_still_starts_with_sound) ... ok
+test_hidden_page_stops_sound_and_comes_back (__main__.TestKome365Sound.test_hidden_page_stops_sound_and_comes_back) ... ok
+test_mute_button_silences_and_is_saved (__main__.TestKome365Sound.test_mute_button_silences_and_is_saved) ... ok
+test_no_sound_before_touch_then_pon_and_answer (__main__.TestKome365Sound.test_no_sound_before_touch_then_pon_and_answer) ... ok
+test_plays_without_audio (__main__.TestKome365Sound.test_plays_without_audio) ... ok
+test_reduced_motion_does_not_mute (__main__.TestKome365Sound.test_reduced_motion_does_not_mute) ... ok
+test_sound_rules_in_code (__main__.TestKome365Sound.test_sound_rules_in_code) ... ok
+test_touch_while_loading_then_first_swipe_unlocks (__main__.TestKome365Sound.test_touch_while_loading_then_first_swipe_unlocks) ... ok
+test_late_choice_after_leaving_makes_no_sound (__main__.TestKome365SoundReview.test_late_choice_after_leaving_makes_no_sound) ... ok
+test_nature_sounds_and_song_stop_with_page (__main__.TestKome365SoundReview.test_nature_sounds_and_song_stop_with_page) ... ok
+test_old_choice_in_new_game_makes_no_sound (__main__.TestKome365SoundReview.test_old_choice_in_new_game_makes_no_sound) ... ok
+test_pause_during_pending_resume_stays_quiet (__main__.TestKome365SoundReview.test_pause_during_pending_resume_stays_quiet) ... ok
+test_scheduled_card_sounds_are_cancelled (__main__.TestKome365SoundReview.test_scheduled_card_sounds_are_cancelled) ... ok
+test_title_and_result_can_mute (__main__.TestKome365SoundReview.test_title_and_result_can_mute) ... ok
+test_title_and_result_switch_clear_on_five_screens (__main__.TestKome365SoundReview.test_title_and_result_switch_clear_on_five_screens) ... ok
+test_ng_still_shows_reason_with_mark (__main__.TestKome365WhyBothSides.test_ng_still_shows_reason_with_mark) ... ok
+test_ok_shows_reason_with_mark (__main__.TestKome365WhyBothSides.test_ok_shows_reason_with_mark) ... ok
+test_why_rules_in_code (__main__.TestKome365WhyBothSides.test_why_rules_in_code) ... ok
+test_bubble_refits_after_rotation (__main__.TestKome365WhyFit.test_bubble_refits_after_rotation) ... ok
+test_kept_bubble_clear_while_touching_next_card (__main__.TestKome365WhyFit.test_kept_bubble_clear_while_touching_next_card) ... ok
+test_first_three_cards_keep_reason_while_touching_next (__main__.TestKome365WhyReadable.test_first_three_cards_keep_reason_while_touching_next) ... ok
+test_reason_bubble_clear_of_date_and_choices (__main__.TestKome365WhyReadable.test_reason_bubble_clear_of_date_and_choices) ... ok
+
+======================================================================
+FAIL: test_demo_finger_clear_of_text (__main__.TestKome365Finger3D.test_demo_finger_clear_of_text)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/ricepia-firstminute-round146/tests/test_kome365_firstmin.py", line 1928, in test_demo_finger_clear_of_text
+    self.assertEqual(j["best"], {}, name + ": 手本の 指が 字に かかる %r" % (j["best"],))
+AssertionError: {'swTitle:元日の田んぼ': 73} != {}
+- {'swTitle:元日の田んぼ': 73}
++ {} : f568x320: 手本の 指が 字に かかる {'swTitle:元日の田んぼ': 73}
+
+----------------------------------------------------------------------
+Ran 107 tests in 999.906s
+
+FAILED (failures=1)

@@ -1,0 +1,17 @@
+{
+  "startedAt": "2026-11-15T21:45:20.777624+00:00",
+  "command": [
+    "bash",
+    "-c",
+    "pytest tests/"
+  ],
+  "cwd": "/workspace/ricepia-firstminute-round146",
+  "environmentOverrides": {
+    "NODE_PATH": "/workspace/ricepia-judge/node_modules",
+    "NODE_OPTIONS": "--require=/workspace/scratch/first-minute/offline.cjs",
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "childPid": 254279,
+  "completedAt": "2026-11-15T21:45:20.781083+00:00",
+  "actualChildExit": 127
+}

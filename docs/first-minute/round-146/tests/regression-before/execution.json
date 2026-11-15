@@ -1,0 +1,17 @@
+{
+  "startedAt": "2026-11-15T21:26:32.812610+00:00",
+  "command": [
+    "python3",
+    "tests/test_kome365_reduce_cue.py",
+    "-v"
+  ],
+  "cwd": "/workspace/ricepia-firstminute-round146",
+  "environmentOverrides": {
+    "NODE_PATH": "/workspace/ricepia-judge/node_modules",
+    "NODE_OPTIONS": "--require=/workspace/scratch/first-minute/offline.cjs",
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "childPid": 247678,
+  "completedAt": "2026-11-15T21:26:37.369041+00:00",
+  "actualChildExit": 1
+}

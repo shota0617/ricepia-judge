@@ -9445,6 +9445,8 @@ tiltG.deg = (() => { try { const v = +localStorage.getItem('nsg_tilt'); let m; i
 if ($('tiltSens')) { $('tiltSens').value = String(tiltG.deg); $('tiltSens').addEventListener('change', e => { const v = +e.target.value; if (!TILT_DEGS.includes(v)) return; tiltG.deg = v; try { localStorage.setItem('nsg_tilt', String(v)); localStorage.setItem('nsg_tilt_v', '2'); } catch (er) {  } }); }
 let mzHitStop = 0;
 const MZ_HIT_STOP = 5, MZ_HIT_STOP_MS = 45;
+const MZ_GOAL_STOP_MS = 100;
+const mzGoalStop = { at: 0, until: 0, shift: 0 };
 const ROLL_ACC = 7, ROLL_MAX = 4.2, ROLL_BOUNCE = 0.25, ROLL_STICK = 0.6;
 
 const ROLL_CRR = 0.9, ROLL_LIN = 0.28, ROLL_AIR = 0.12;
@@ -9734,13 +9736,14 @@ function tapDemoTick() {
   const moved = rp.x === null || tapDemo.x === null ? rp.x !== tapDemo.x : Math.hypot(rp.x - tapDemo.x, rp.y - tapDemo.y) > DEMO_MOVE;
   tapDemo.x = rp.x; tapDemo.y = rp.y;
   if (moved) { tapDemo.at = now; tapDemo.walked = now - tapDemo.walkT < 700; }
+  if (moved && typeof mzGoalCredit === 'function') tapDemo.at -= mzGoalCredit(now, tapDemo.at);
   if (moved) demoLead.tx = demoLead.ty = 0;
   const path = mzRt.path;
 
 
   const first = tiltBtnWanted() && !tiltG.asked;
   const fresh = tapDemoFresh();
-  const ok = active && !meiroPause && !document.hidden && rp.x !== null && mazeOn() && howtoEl.hidden && !mapCovered() && !tapS.goal && !!path && path.length > 1 && (fresh || now - tapDemo.at >= (first ? 0 : tapDemo.walked ? DEMO_TAP_MS : DEMO_IDLE_MS));
+  const ok = active && !meiroPause && !document.hidden && rp.x !== null && mazeOn() && howtoEl.hidden && !mapCovered() && !tapS.goal && !!path && path.length > 1 && (typeof mzGoalStop === 'undefined' || now >= mzGoalStop.until) && (fresh || now - tapDemo.at >= (first ? 0 : tapDemo.walked ? DEMO_TAP_MS : DEMO_IDLE_MS));
   if (!ok && !moved) { demoLead.tx = demoLead.x; demoLead.ty = demoLead.y; }
   const mkEls = () => {
     if (tapDemo.el) return;
@@ -12750,10 +12753,24 @@ function mzHelpToastTick() {
   mzHelp.helpToast = false;
   if (G.toast && !mzHelpOn()) G.toast('🧭 道しるべと ✕ を けしたよ（せっていで また 出せる）');
 }
+
+
+
+
+function mzGoalHold(now) {
+  if (calmMotion || mapCovered()) return 0;
+  mzHitStop = Math.max(mzHitStop, now + MZ_GOAL_STOP_MS);
+  mzGoalStop.at = now; mzGoalStop.until = now + MZ_GOAL_STOP_MS;
+  mzGoalStop.shift = rp.x !== null && Math.hypot(rp.vx, rp.vy) > 0.05 ? MZ_GOAL_STOP_MS : 0;
+  return MZ_GOAL_STOP_MS;
+}
+function mzGoalCredit(now, at) {
+  return mzGoalStop.at && at > mzGoalStop.at && at - mzGoalStop.until < 3000 ? mzGoalStop.shift : 0;
+}
 function mzGoalFx(text) {
   mzSpringShot();
 
-  const now = performance.now(), kinds = ['rice', 'rice', 'leaf', 'rice', 'gold', 'leaf'], cols = { rice: '#fffdf3', leaf: ['#6f9f2c', '#9ccc4f'], gold: '#ffd84a' };
+  const now0 = performance.now(), now = now0 + mzGoalHold(now0), kinds = ['rice', 'rice', 'leaf', 'rice', 'gold', 'leaf'], cols = { rice: '#fffdf3', leaf: ['#6f9f2c', '#9ccc4f'], gold: '#ffd84a' };
   for (let i = 0; i < MZ_GOAL_FX.n; i++) {
     const a = Math.random() * Math.PI * 2, v = MZ_GOAL_FX.vMin + Math.random() * MZ_GOAL_FX.vVar, k = kinds[i % kinds.length];
     mzFx.push({ t0: now, vx: Math.cos(a) * v, vy: Math.sin(a) * v - MZ_GOAL_FX.up, k, c: k === 'leaf' ? cols.leaf[i % 2] : cols[k], spin: 4 + Math.random() * 8, ph: Math.random() * 6.3, life: MZ_GOAL_FX.lifeMin + Math.random() * MZ_GOAL_FX.lifeVar });
@@ -12765,7 +12782,7 @@ function mzGoalFx(text) {
 function drawMzFx(w, cy, T, now, S) {
   if (mapCovered()) { if (mzBanner.t0) mzBanner.t0 = now; for (const p of mzFx) p.t0 = now; return; }
   const ba = (now - mzBanner.t0) / 1000;
-  if (mzBanner.t0 && ba < MZ_GOAL_FX.bannerSec) {
+  if (mzBanner.t0 && ba < 0) {  } else if (mzBanner.t0 && ba < MZ_GOAL_FX.bannerSec) {
     ctx.globalAlpha = Math.min(1, (MZ_GOAL_FX.bannerSec - ba) / MZ_GOAL_FX.fadeSec);
     const big = Math.round(S * 1.6), y = Math.max(big, cy - S * 3.2) - Math.max(0, 0.3 - ba) * S * 6;
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
@@ -12778,6 +12795,7 @@ function drawMzFx(w, cy, T, now, S) {
   } else if (mzBanner.t0) { mzBanner.t0 = 0; mzBanner.gid = ''; }
   for (let i = mzFx.length - 1; i >= 0; i--) {
     const p = mzFx[i], a = (now - p.t0) / 1000;
+    if (a < 0) continue;
     if (a > p.life) { mzFx.splice(i, 1); continue; }
     const x = w / 2 + (p.vx * a) * T, y = cy + (p.vy * a + 4.5 * a * a) * T, q = Math.max(2, Math.round(T / 5));
     ctx.globalAlpha = Math.max(0, 1 - a / p.life);
@@ -14051,6 +14069,8 @@ const TAP_STEP_MS = 180, TAP_STEP_MIN = 60;
 function tapWalkTick() {
   tapS.timer = null;
   tapDemo.walkT = performance.now();
+  const hs = typeof mzHitStop === 'number' && typeof mzGoalStop === 'object' ? mzHitStop - tapDemo.walkT : 0;
+  if (hs > 0 && tapS.path.length) { if (mzGoalStop.until === mzHitStop) mzGoalStop.shift = Math.max(mzGoalStop.shift, mzHitStop - (tapS.due || tapDemo.walkT)); tapS.due = mzHitStop; tapS.timer = setTimeout(tapWalkTick, hs); return; }
   const nx = tapS.path.shift(), t = targetTile(), sx = Math.floor(t.x), sy = Math.floor(t.y);
   if (!nx || !G.demo || !active || worldMode || driving || mapCovered(false, true) || Math.abs(nx[0] - sx) + Math.abs(nx[1] - sy) !== 1) return tapWalkStop();
   if (!step(nx[0] > sx ? 'right' : nx[0] < sx ? 'left' : nx[1] > sy ? 'down' : 'up') || !tapS.path.length) return tapWalkStop();

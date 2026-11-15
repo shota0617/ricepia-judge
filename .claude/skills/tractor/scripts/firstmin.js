@@ -1448,7 +1448,7 @@ const srv = http.createServer((r, s) => { const u = decodeURIComponent(r.url.spl
       await adv(1); await p.evaluate(() => Object.assign(game.S, { x: -0.1, z: 6, yaw: 0, v: 0, steer: 0 })); await adv(0.5);
       let first = null;
       for (let n = 0; n < 6 && !first; n++) { await fwd(); for (let i = 0; i < 35 && !first; i++) { await adv(0.1); const s1 = await st(); if (s1.out) first = s1; } await T('touchEnd', []); await adv(0.6); if (!first) { const s1 = await st(); if (s1.out) first = s1; } }
-      ok('前へ なぞって 白線に 近づくと、車体が まだ 白線の 内側の うちに「横へ」の 手本が 出る（直す前：白線を 0.4m こえてから）', !!first && first.sd < 0, first);
+      ok('前へ なぞって 白線に 近づくと、車体が まだ 白線の 内側の うちに「横へ」の 手本が 出る（直す前：白線を 0.4m こえてから）', !!first && first.sd < -2, first);
       // 22-2) B：白線の 外で 止まって いる 間は「白線の外は 耕しません、曲がって絵の中へ」を 出した まま（はじめの 1 分も）。絵の 中に もどったら 消す
       const MSG = '白線の外は 耕しません、曲がって絵の中へ';
       await T('touchEnd', []); await p.evaluate(() => { if (game.S.rotDown) game.toggleRotary(); Object.assign(game.S, { x: -0.1, z: 17.5, yaw: 0, v: 0, steer: 0 }); }); await adv(1.5); const b1 = await st(); await adv(10); const b2 = await st();
@@ -1459,6 +1459,11 @@ const srv = http.createServer((r, s) => { const u = decodeURIComponent(r.url.spl
       await p.evaluate(() => { window.__c22 = false; window.__each = () => { if (game.S.rotDown) window.__c22 = true; }; });
       await fwd(); await adv(0.5); const c1 = await p.evaluate(() => ({ everDown: window.__c22, rot: game.S.rotDown, auto: EASY.autoUp, sd: +ART.sdAt(game.S.x + ROTARY_Z * Math.sin(game.S.yaw), game.S.z + ROTARY_Z * Math.cos(game.S.yaw)).toFixed(2) })); await T('touchEnd', []); await p.evaluate(() => { window.__each = null; }); await adv(1.5);
       ok('白線の 外で なぞり 始めても 作業機は 一度も 下がらない（絵の 中に もどれば 🔰 が 下げる。直す前：なぞり 始めで 下がる）', c1.sd > 0.4 && !c1.everDown && !c1.rot && c1.auto, c1);
+      // 22-5) 外の 知らせは、エンスト・作業機が 下りて いる とき の 案内を かくさない（止まって いる エンジンに「曲がって」と 言わない）
+      await p.evaluate(() => { if (game.S.rotDown) game.toggleRotary(); Object.assign(game.S, { x: -0.1, z: 17.5, yaw: 0, v: 0, steer: 0 }); }); await adv(1.5); const e0 = (await st()).coach;
+      await p.evaluate(() => { game.S.stalled = true; }); await adv(0.4); const e1 = await p.evaluate(() => ({ coach: SAY.text[1], stalled: !!game.S.stalled }));
+      await p.evaluate(() => { game.S.stalled = false; game.S.crank = 0; }); await adv(1.5); const e2 = (await st()).coach;
+      ok('白線の 外で エンスト して いる 間は 外の 知らせを 出さない（エンストの 案内を かくさない）・かかれば また 出る', e0 === MSG && e1.stalled && e1.coach !== MSG && e2 === MSG, [e0, e1, e2]);
       // 22-4) D3：白線の 外に いる 間は 手入れ（右はしの 爪の 交換など）を 始めない・中に もどって 止まれば 始める
       await p.evaluate(() => { FIRSTMIN.finish(); Object.assign(game.S, { x: -4.4, z: -12, yaw: 0, v: 0, steer: 0 }); if (!game.S.rotDown) game.toggleRotary(); game.key.fwd = 1; }); await adv(19);
       await p.evaluate(() => { game.key.fwd = 0; }); await adv(1.5);

@@ -1,0 +1,1581 @@
+{
+  "round": 138,
+  "game": "米づくり365",
+  "status": "draft-pr-review-material-complete",
+  "pending": [
+    "required whole pytest suite verification before production merge"
+  ],
+  "story": "one issue: isolated final character in narrow choice-label wrapping",
+  "change": {
+    "productFile": "kome365/index.html",
+    "line": 616,
+    "css": "@media (min-width:301px) and (max-width:359px){#swEdge .eLb{text-wrap:balance}}",
+    "productAddedLines": 1,
+    "testFile": "tests/test_kome365_firstmin.py",
+    "additionStartsAtLine": 2153,
+    "testAddedLines": 99,
+    "newTestCases": 2,
+    "existingHelperChanged": false,
+    "protectedCoreFilesChanged": false,
+    "preserved": [
+      "original wording",
+      "19px font",
+      "swipe decision and tap non-selection",
+      "0.3s demonstration",
+      "2s why and first-three persistence",
+      "30s card",
+      "sound does not alter timing"
+    ]
+  },
+  "source": {
+    "beforeRevision": "9e4bb385fbedf81dd7d9162b1cf9cefde42f7ebf",
+    "beforeHTMLSHA256": "1131aca205f44acd47243b6769d2c68acf0526128eb4bf7ab0e7a242b50f5f62",
+    "appliedHTMLSHA256": "633225944850825e08967b95975be9767b9341447379b6e8623a8680ade06003",
+    "sameOldNewTestSHA256": "1e41a28ef7606ec1f0f81bf059e1ee357b64b7798cdcc38a3e522ede2a0eba98",
+    "appliedHTMLMatchesTestedCandidate": true,
+    "currentHTMLMatchesAppliedReceiptAtDraft": true,
+    "protectedSHA256": {
+      "kome365/engine.js": "c3d0cef6bb108d5b6d8fe38aaf0c08fe7994bdab08bf92775865a6e0222469a3",
+      "kome365/field3d.js": "a5c1dad91d5c0c326f1394fad9c5d04e7e3b8d13e3a2b8b1757c7aa08d3558ff",
+      "kome365/cards.js": "b15c5b2f56ef9c0c8361fa2fa6a039085919ca516b4a2e6e5a1b3bb691dde744"
+    },
+    "finalProductCommit": "f55262f3f4c2a10200b6bb2cef533ab4c3717d56",
+    "productCommit": "2965c1c1",
+    "postMainMergeHead": "f55262f3f4c2a10200b6bb2cef533ab4c3717d56",
+    "mergedMain": "22c91e2cfa16ca901d2c079aba3888d971b6bdff",
+    "postMainMergeTestedFiles": [
+      {
+        "path": "AGENTS.md",
+        "sha256": "3307716adf32bd25c5a9232821447251789c579f3192b423bad0c86c97814ab4",
+        "sameAsTested": true
+      },
+      {
+        "path": ".claude/skills/ricepia-flow/SKILL.md",
+        "sha256": "322f7d5932c8d5fa8eb1778218ce0a4d37f212e63f211629ff7efe9c4ec4720a",
+        "sameAsTested": true
+      },
+      {
+        "path": "kome365/index.html",
+        "sha256": "633225944850825e08967b95975be9767b9341447379b6e8623a8680ade06003",
+        "sameAsTested": true
+      },
+      {
+        "path": "kome365/engine.js",
+        "sha256": "c3d0cef6bb108d5b6d8fe38aaf0c08fe7994bdab08bf92775865a6e0222469a3",
+        "sameAsTested": true
+      },
+      {
+        "path": "kome365/field3d.js",
+        "sha256": "a5c1dad91d5c0c326f1394fad9c5d04e7e3b8d13e3a2b8b1757c7aa08d3558ff",
+        "sameAsTested": true
+      },
+      {
+        "path": "kome365/cards.js",
+        "sha256": "b15c5b2f56ef9c0c8361fa2fa6a039085919ca516b4a2e6e5a1b3bb691dde744",
+        "sameAsTested": true
+      },
+      {
+        "path": "kome365/vendor/three.min.js",
+        "sha256": "9274bbcec8d96168626c732b5d31c775aa8cfb7eaa0599bec0c175908a2c1ce2",
+        "sameAsTested": true
+      },
+      {
+        "path": "tests/test_kome365_firstmin.py",
+        "sha256": "1e41a28ef7606ec1f0f81bf059e1ee357b64b7798cdcc38a3e522ede2a0eba98",
+        "sameAsTested": true
+      }
+    ],
+    "postMainMergeScope": "8 selected Kome/source/test/instruction files byte identical to tested ones; other merged-game changes not claimed retested"
+  },
+  "ordinaryReproduction": {
+    "protocolVersion": 2,
+    "freshContextAndEmptySave": true,
+    "viewport": [
+      320,
+      568
+    ],
+    "observationMs": 10000,
+    "directions": "RLLLL",
+    "swipesPerTrial": 5,
+    "distancePx": 100,
+    "requestedDurationsMs": [
+      120,
+      600
+    ],
+    "trialCount": 10,
+    "trialsPerDuration": 5,
+    "timing": "Primary offsets are minimums; precheck may delay start. Not an absolute timing replay or retention study.",
+    "targetDate": "1月6日",
+    "targetLabel": "田に水を入れる",
+    "targetSide": "either side; fixed directions do not change based on side",
+    "real3dAndAudioProcessingRecorded": true,
+    "realSpeakerListeningVerified": false,
+    "before": {
+      "eligible": 10,
+      "excluded": 0,
+      "lastRowOne": 10,
+      "rows": [
+        6,
+        1
+      ],
+      "sideCounts": {
+        "right": 6,
+        "left": 4
+      },
+      "actualOuterExit": 1,
+      "actualChildExit": 1,
+      "consoleFavicon404Count": 11,
+      "cleanRuns": 0,
+      "glyphOutsideOwnLabel": 10,
+      "glyphOutsideOwnLabelInterpretation": "Range top about2px above own label, parent/viewport contained; not established clipping defect",
+      "trials": [
+        {
+          "trial": 1,
+          "requestedDurationMs": 120,
+          "eligible": true,
+          "exclusions": [],
+          "swipes": 5,
+          "directions": "RLLLL",
+          "targetSide": "right",
+          "lineCounts": [
+            6,
+            1
+          ],
+          "lastRowOne": true,
+          "sentDurationsMs": [
+            119.924,
+            119.225,
+            117.961,
+            109.367,
+            119.765
+          ],
+          "trustedPointerEventDurationsMs": [
+            119.8,
+            122.6,
+            119.2,
+            107.9,
+            118.6
+          ],
+          "rangeCompletedPlayMs": 30270.671,
+          "consoleErrorCount": 2,
+          "pageErrorCount": 0,
+          "sourceHTMLSHA256": "1131aca205f44acd47243b6769d2c68acf0526128eb4bf7ab0e7a242b50f5f62",
+          "trialRecordSHA256": "c754e3b70862933c96330c1aba6f10ebf8e8d60b7bcfdb226eeeb497d7304518",
+          "jan6RawPhotoSHA256": "e859d2a6c7ccd99c3cb9565a057f460fb264a6e272121cd9cc501ecdef1fa99e"
+        },
+        {
+          "trial": 2,
+          "requestedDurationMs": 600,
+          "eligible": true,
+          "exclusions": [],
+          "swipes": 5,
+          "directions": "RLLLL",
+          "targetSide": "right",
+          "lineCounts": [
+            6,
+            1
+          ],
+          "lastRowOne": true,
+          "sentDurationsMs": [
+            599.815,
+            600.183,
+            597.289,
+            600.64,
+            600.053
+          ],
+          "trustedPointerEventDurationsMs": [
+            599.5,
+            599.9,
+            596.1,
+            600.3,
+            599.9
+          ],
+          "rangeCompletedPlayMs": 30317.352,
+          "consoleErrorCount": 1,
+          "pageErrorCount": 0,
+          "sourceHTMLSHA256": "1131aca205f44acd47243b6769d2c68acf0526128eb4bf7ab0e7a242b50f5f62",
+          "trialRecordSHA256": "be031fcb3f1955945aa316eb35f9900052088d9885ffc09b6441193ba44c23ed",
+          "jan6RawPhotoSHA256": "e2e060bf787959255b51c981fff6d1d1a739ee5bbb245cd150b6fcc2e6efb9dc"
+        },
+        {
+          "trial": 3,
+          "requestedDurationMs": 120,
+          "eligible": true,
+          "exclusions": [],
+          "swipes": 5,
+          "directions": "RLLLL",
+          "targetSide": "left",
+          "lineCounts": [
+            6,
+            1
+          ],
+          "lastRowOne": true,
+          "sentDurationsMs": [
+            119.531,
+            119.547,
+            120.14,
+            119.534,
+            108.269
+          ],
+          "trustedPointerEventDurationsMs": [
+            119.1,
+            118.6,
+            119.5,
+            119,
+            106.8
+          ],
+          "rangeCompletedPlayMs": 30288.647,
+          "consoleErrorCount": 1,
+          "pageErrorCount": 0,
+          "sourceHTMLSHA256": "1131aca205f44acd47243b6769d2c68acf0526128eb4bf7ab0e7a242b50f5f62",
+          "trialRecordSHA256": "bdeb5f71c5d83cd860e16521c78db2d9e9a4f73de5f37c4666d27a0b462cf607",
+          "jan6RawPhotoSHA256": "b7762816ec0ff047212c09ea74769a640fc413b179517c7ba75b14e05e078d6e"
+        },
+        {
+          "trial": 4,
+          "requestedDurationMs": 600,
+          "eligible": true,
+          "exclusions": [],
+          "swipes": 5,
+          "directions": "RLLLL",
+          "targetSide": "right",
+          "lineCounts": [
+            6,
+            1
+          ],
+          "lastRowOne": true,
+          "sentDurationsMs": [
+            599.24,
+            598.19,
+            600.855,
+            599.207,
+            599.814
+          ],
+          "trustedPointerEventDurationsMs": [
+            599.2,
+            598.6,
+            600.7,
+            599.1,
+            599.1
+          ],
+          "rangeCompletedPlayMs": 30351.951,
+          "consoleErrorCount": 1,
+          "pageErrorCount": 0,
+          "sourceHTMLSHA256": "1131aca205f44acd47243b6769d2c68acf0526128eb4bf7ab0e7a242b50f5f62",
+          "trialRecordSHA256": "493f73d41c5237a24aa1e7cc2557f573f3fa1812bd2ded3b8055aca2b90da61a",
+          "jan6RawPhotoSHA256": "ed87a2a0737dbaaf75075c3ebb7b931dc6722fd6957190ac42162b8a5e0bdbc8"
+        },
+        {
+          "trial": 5,
+          "requestedDurationMs": 120,
+          "eligible": true,
+          "exclusions": [],
+          "swipes": 5,
+          "directions": "RLLLL",
+          "targetSide": "left",
+          "lineCounts": [
+            6,
+            1
+          ],
+          "lastRowOne": true,
+          "sentDurationsMs": [
+            119.474,
+            120.117,
+            121.082,
+            110.802,
+            120.114
+          ],
+          "trustedPointerEventDurationsMs": [
+            118.9,
+            119.6,
+            120.2,
+            110.1,
+            122
+          ],
+          "rangeCompletedPlayMs": 30210.161,
+          "consoleErrorCount": 1,
+          "pageErrorCount": 0,
+          "sourceHTMLSHA256": "1131aca205f44acd47243b6769d2c68acf0526128eb4bf7ab0e7a242b50f5f62",
+          "trialRecordSHA256": "c23fe7773bec2cce0ab4d076f1666c744f8229f372a0824f94caba0bcf258dac",
+          "jan6RawPhotoSHA256": "b4cbf1540955b900d47422649b54a8e23bf78e5b774cbdb56f5b56bb320e8cec"
+        },
+        {
+          "trial": 6,
+          "requestedDurationMs": 600,
+          "eligible": true,
+          "exclusions": [],
+          "swipes": 5,
+          "directions": "RLLLL",
+          "targetSide": "right",
+          "lineCounts": [
+            6,
+            1
+          ],
+          "lastRowOne": true,
+          "sentDurationsMs": [
+            599.193,
+            599.765,
+            600.164,
+            605.168,
+            599.624
+          ],
+          "trustedPointerEventDurationsMs": [
+            598.9,
+            604,
+            599.1,
+            604.8,
+            601.5
+          ],
+          "rangeCompletedPlayMs": 30288.113,
+          "consoleErrorCount": 1,
+          "pageErrorCount": 0,
+          "sourceHTMLSHA256": "1131aca205f44acd47243b6769d2c68acf0526128eb4bf7ab0e7a242b50f5f62",
+          "trialRecordSHA256": "0429d6cce7c132caaedcf33de0c00af90e4b6b48eb2e8603a4589dd99069c510",
+          "jan6RawPhotoSHA256": "ca0c51dd1a74e5181b0c991f7946ec2989dd74634c775a854115494e28b5a685"
+        },
+        {
+          "trial": 7,
+          "requestedDurationMs": 120,
+          "eligible": true,
+          "exclusions": [],
+          "swipes": 5,
+          "directions": "RLLLL",
+          "targetSide": "right",
+          "lineCounts": [
+            6,
+            1
+          ],
+          "lastRowOne": true,
+          "sentDurationsMs": [
+            119.125,
+            117.792,
+            120.267,
+            119.637,
+            120.168
+          ],
+          "trustedPointerEventDurationsMs": [
+            118.7,
+            117.5,
+            119.4,
+            119.3,
+            120.3
+          ],
+          "rangeCompletedPlayMs": 30119.121,
+          "consoleErrorCount": 1,
+          "pageErrorCount": 0,
+          "sourceHTMLSHA256": "1131aca205f44acd47243b6769d2c68acf0526128eb4bf7ab0e7a242b50f5f62",
+          "trialRecordSHA256": "a46ebc95ec83b01db5a19e4b4b1485ef9cb07055aa6b9c37fdd212dedcd02ac4",
+          "jan6RawPhotoSHA256": "40adf77414016436c03a7b36e838595884f673e883a6d8ec7f4c814ba3efa24e"
+        },
+        {
+          "trial": 8,
+          "requestedDurationMs": 600,
+          "eligible": true,
+          "exclusions": [],
+          "swipes": 5,
+          "directions": "RLLLL",
+          "targetSide": "right",
+          "lineCounts": [
+            6,
+            1
+          ],
+          "lastRowOne": true,
+          "sentDurationsMs": [
+            599.48,
+            596.314,
+            600.371,
+            599.442,
+            599.437
+          ],
+          "trustedPointerEventDurationsMs": [
+            597.4,
+            592.6,
+            599.9,
+            598.9,
+            599.3
+          ],
+          "rangeCompletedPlayMs": 30109.711,
+          "consoleErrorCount": 1,
+          "pageErrorCount": 0,
+          "sourceHTMLSHA256": "1131aca205f44acd47243b6769d2c68acf0526128eb4bf7ab0e7a242b50f5f62",
+          "trialRecordSHA256": "67ffdac444d31d8cd9a691ca18a483f33a14bf864439b9efc9cae742c81abb89",
+          "jan6RawPhotoSHA256": "3321ed0dd2c0c7e3ee7be63e3480939565535ed46892af8f9884f22750d41704"
+        },
+        {
+          "trial": 9,
+          "requestedDurationMs": 120,
+          "eligible": true,
+          "exclusions": [],
+          "swipes": 5,
+          "directions": "RLLLL",
+          "targetSide": "left",
+          "lineCounts": [
+            6,
+            1
+          ],
+          "lastRowOne": true,
+          "sentDurationsMs": [
+            120.113,
+            121.125,
+            120.141,
+            120.292,
+            120.032
+          ],
+          "trustedPointerEventDurationsMs": [
+            120,
+            121.6,
+            121.1,
+            118.5,
+            125.4
+          ],
+          "rangeCompletedPlayMs": 30146.668,
+          "consoleErrorCount": 1,
+          "pageErrorCount": 0,
+          "sourceHTMLSHA256": "1131aca205f44acd47243b6769d2c68acf0526128eb4bf7ab0e7a242b50f5f62",
+          "trialRecordSHA256": "420ab99a4fa61aae48d13def3736f40618464cffc3ccc73d4c85979726d63b4c",
+          "jan6RawPhotoSHA256": "0ae984d5975b6c6e23f3d61f37ea42f2bca2f09091f751fa10518b5738bedd08"
+        },
+        {
+          "trial": 10,
+          "requestedDurationMs": 600,
+          "eligible": true,
+          "exclusions": [],
+          "swipes": 5,
+          "directions": "RLLLL",
+          "targetSide": "left",
+          "lineCounts": [
+            6,
+            1
+          ],
+          "lastRowOne": true,
+          "sentDurationsMs": [
+            598.868,
+            599.282,
+            599.937,
+            600.606,
+            599.797
+          ],
+          "trustedPointerEventDurationsMs": [
+            598.9,
+            599.2,
+            600.4,
+            600.2,
+            601
+          ],
+          "rangeCompletedPlayMs": 30121.549,
+          "consoleErrorCount": 1,
+          "pageErrorCount": 0,
+          "sourceHTMLSHA256": "1131aca205f44acd47243b6769d2c68acf0526128eb4bf7ab0e7a242b50f5f62",
+          "trialRecordSHA256": "e31f811d75ccadc179ed4bebed5357aae18441d37fcb7f35a6b79891dfdfc8ee",
+          "jan6RawPhotoSHA256": "6ebaf44d985ba695c2d7bea1be2aa62640310958cbf1608eb80d2b5f70dcdaa3"
+        }
+      ]
+    },
+    "after": {
+      "eligible": 10,
+      "excluded": 0,
+      "lastRowOne": 0,
+      "rows": [
+        3,
+        4
+      ],
+      "sideCounts": {
+        "left": 6,
+        "right": 4
+      },
+      "trialsPerDuration": {
+        "120": 5,
+        "600": 5
+      },
+      "actualOuterExit": 1,
+      "actualChildExit": 1,
+      "actualExitTool": "413e17",
+      "rootClosureTool": "9112b6",
+      "consoleFavicon404Count": 11,
+      "pageErrors": 0,
+      "cleanRuns": 0,
+      "glyphOutsideOwnLabel": 10,
+      "glyphOutsideParent": 0,
+      "glyphOutsideViewport": 0,
+      "glyphOutsideOwnLabelInterpretation": "Own label Range top exceeds block metrics; parent/viewport contained. Not established clipping defect.",
+      "trials": [
+        {
+          "trial": 1,
+          "requestedDurationMs": 120,
+          "eligible": true,
+          "exclusions": [],
+          "swipes": 5,
+          "directions": "RLLLL",
+          "targetSide": "left",
+          "lineCounts": [
+            3,
+            4
+          ],
+          "lastRowOne": false,
+          "sentDurationsMs": [
+            120.491,
+            119.245,
+            120.053,
+            116.636,
+            119.918
+          ],
+          "trustedPointerEventDurationsMs": [
+            119.9,
+            117.3,
+            120,
+            118.6,
+            126.5
+          ],
+          "rangeCompletedPlayMs": 30317.4,
+          "consoleErrorCount": 2,
+          "pageErrorCount": 0,
+          "sourceHTMLSHA256": "633225944850825e08967b95975be9767b9341447379b6e8623a8680ade06003",
+          "trialRecordSHA256": "b1ca507938c30954d1bffcac55ef0c076d423bdd214aa3fc370a0e26fe6a6aeb",
+          "jan6RawPhotoSHA256": "c74718f1e3b336e539855b9198865966f3b40b250d8a73e797c6ae65d701baff"
+        },
+        {
+          "trial": 2,
+          "requestedDurationMs": 600,
+          "eligible": true,
+          "exclusions": [],
+          "swipes": 5,
+          "directions": "RLLLL",
+          "targetSide": "right",
+          "lineCounts": [
+            3,
+            4
+          ],
+          "lastRowOne": false,
+          "sentDurationsMs": [
+            600.373,
+            600.372,
+            599.293,
+            601.78,
+            597.594
+          ],
+          "trustedPointerEventDurationsMs": [
+            600.2,
+            598.5,
+            598.1,
+            601.2,
+            597.3
+          ],
+          "rangeCompletedPlayMs": 30083.454,
+          "consoleErrorCount": 1,
+          "pageErrorCount": 0,
+          "sourceHTMLSHA256": "633225944850825e08967b95975be9767b9341447379b6e8623a8680ade06003",
+          "trialRecordSHA256": "2e6137d489cf69dbfe512dbbcdcae7e503868d4beec88a50688d9f3bb8f69028",
+          "jan6RawPhotoSHA256": "8d75838f47d9f566cf6fefa7e79a7e4a4b62381454fd381e3340a0bf26ffc5d0"
+        },
+        {
+          "trial": 3,
+          "requestedDurationMs": 120,
+          "eligible": true,
+          "exclusions": [],
+          "swipes": 5,
+          "directions": "RLLLL",
+          "targetSide": "left",
+          "lineCounts": [
+            3,
+            4
+          ],
+          "lastRowOne": false,
+          "sentDurationsMs": [
+            120.021,
+            120.609,
+            120.489,
+            119.599,
+            116.202
+          ],
+          "trustedPointerEventDurationsMs": [
+            119.6,
+            120.1,
+            120,
+            118,
+            115.4
+          ],
+          "rangeCompletedPlayMs": 30186.449,
+          "consoleErrorCount": 1,
+          "pageErrorCount": 0,
+          "sourceHTMLSHA256": "633225944850825e08967b95975be9767b9341447379b6e8623a8680ade06003",
+          "trialRecordSHA256": "19cb3bfb5942e4d76060360bf18d80ebf867e60edaebe542828d49071eb872e1",
+          "jan6RawPhotoSHA256": "5f9f0866e02bb95bd0bf36bbb04adbd189f2817f3fcef3077ff380c3da916fcd"
+        },
+        {
+          "trial": 4,
+          "requestedDurationMs": 600,
+          "eligible": true,
+          "exclusions": [],
+          "swipes": 5,
+          "directions": "RLLLL",
+          "targetSide": "left",
+          "lineCounts": [
+            3,
+            4
+          ],
+          "lastRowOne": false,
+          "sentDurationsMs": [
+            599.516,
+            598.898,
+            601.581,
+            599.813,
+            599.764
+          ],
+          "trustedPointerEventDurationsMs": [
+            598.8,
+            601.3,
+            597.3,
+            598.4,
+            598.9
+          ],
+          "rangeCompletedPlayMs": 30069.43,
+          "consoleErrorCount": 1,
+          "pageErrorCount": 0,
+          "sourceHTMLSHA256": "633225944850825e08967b95975be9767b9341447379b6e8623a8680ade06003",
+          "trialRecordSHA256": "95690775342af24e1a64f6034e663ccd7297ef18870e111d74c35a9517a4c4d3",
+          "jan6RawPhotoSHA256": "78fd620ed8679f825195eb20bb0d68a42fc4f4c0a16763c4667ef1547050945a"
+        },
+        {
+          "trial": 5,
+          "requestedDurationMs": 120,
+          "eligible": true,
+          "exclusions": [],
+          "swipes": 5,
+          "directions": "RLLLL",
+          "targetSide": "left",
+          "lineCounts": [
+            3,
+            4
+          ],
+          "lastRowOne": false,
+          "sentDurationsMs": [
+            119.645,
+            120.202,
+            119.067,
+            121.967,
+            120.194
+          ],
+          "trustedPointerEventDurationsMs": [
+            119.4,
+            120.1,
+            118.4,
+            121.7,
+            119.4
+          ],
+          "rangeCompletedPlayMs": 30266.125,
+          "consoleErrorCount": 1,
+          "pageErrorCount": 0,
+          "sourceHTMLSHA256": "633225944850825e08967b95975be9767b9341447379b6e8623a8680ade06003",
+          "trialRecordSHA256": "3da6412b7b47757d0ee9bb2d0c49283c999afbf08d7c10cfde31c0badcf83389",
+          "jan6RawPhotoSHA256": "b5952cfceea35c29ad2527caf343c04fa1af92441990b1b5ac0de0a263e45663"
+        },
+        {
+          "trial": 6,
+          "requestedDurationMs": 600,
+          "eligible": true,
+          "exclusions": [],
+          "swipes": 5,
+          "directions": "RLLLL",
+          "targetSide": "left",
+          "lineCounts": [
+            3,
+            4
+          ],
+          "lastRowOne": false,
+          "sentDurationsMs": [
+            599.677,
+            600.713,
+            599.626,
+            608.232,
+            599.853
+          ],
+          "trustedPointerEventDurationsMs": [
+            597.8,
+            600.4,
+            599,
+            608.1,
+            599.4
+          ],
+          "rangeCompletedPlayMs": 30118.417,
+          "consoleErrorCount": 1,
+          "pageErrorCount": 0,
+          "sourceHTMLSHA256": "633225944850825e08967b95975be9767b9341447379b6e8623a8680ade06003",
+          "trialRecordSHA256": "8f81cbec9618559d0ed1f39354a205e36111941825a82c749e2b7143855574f0",
+          "jan6RawPhotoSHA256": "5b17508e877066268d8e61b27998107ef7ec617938efa03ba423b6bbb88a925a"
+        },
+        {
+          "trial": 7,
+          "requestedDurationMs": 120,
+          "eligible": true,
+          "exclusions": [],
+          "swipes": 5,
+          "directions": "RLLLL",
+          "targetSide": "right",
+          "lineCounts": [
+            3,
+            4
+          ],
+          "lastRowOne": false,
+          "sentDurationsMs": [
+            116.902,
+            119.374,
+            119.555,
+            120.126,
+            119.13
+          ],
+          "trustedPointerEventDurationsMs": [
+            116.3,
+            119,
+            119.1,
+            117.4,
+            119
+          ],
+          "rangeCompletedPlayMs": 30122.204,
+          "consoleErrorCount": 1,
+          "pageErrorCount": 0,
+          "sourceHTMLSHA256": "633225944850825e08967b95975be9767b9341447379b6e8623a8680ade06003",
+          "trialRecordSHA256": "ecdf56d72bc7c6af4bccd7f14f2b77eafb1d81aae8870e82ec8b84d4e19805f8",
+          "jan6RawPhotoSHA256": "773cf02097da7a211aba262292604dad547b5f4ede5c6328df9effd8e3702b5b"
+        },
+        {
+          "trial": 8,
+          "requestedDurationMs": 600,
+          "eligible": true,
+          "exclusions": [],
+          "swipes": 5,
+          "directions": "RLLLL",
+          "targetSide": "left",
+          "lineCounts": [
+            3,
+            4
+          ],
+          "lastRowOne": false,
+          "sentDurationsMs": [
+            599.317,
+            598.945,
+            600.831,
+            600.368,
+            600.018
+          ],
+          "trustedPointerEventDurationsMs": [
+            598.9,
+            597.8,
+            600.3,
+            599.2,
+            600.8
+          ],
+          "rangeCompletedPlayMs": 30054.958,
+          "consoleErrorCount": 1,
+          "pageErrorCount": 0,
+          "sourceHTMLSHA256": "633225944850825e08967b95975be9767b9341447379b6e8623a8680ade06003",
+          "trialRecordSHA256": "a6db9337e428f686399a26ca38ced9d982f64f78550399f983622e663d4f94ca",
+          "jan6RawPhotoSHA256": "ef01602ff2eaea547060cfd0c65600f3cf1df5f83773b4740e129d7448e00b06"
+        },
+        {
+          "trial": 9,
+          "requestedDurationMs": 120,
+          "eligible": true,
+          "exclusions": [],
+          "swipes": 5,
+          "directions": "RLLLL",
+          "targetSide": "right",
+          "lineCounts": [
+            3,
+            4
+          ],
+          "lastRowOne": false,
+          "sentDurationsMs": [
+            119.564,
+            118.857,
+            125.204,
+            119.306,
+            119.845
+          ],
+          "trustedPointerEventDurationsMs": [
+            119.1,
+            117.3,
+            126.1,
+            118.3,
+            119.2
+          ],
+          "rangeCompletedPlayMs": 30489.662,
+          "consoleErrorCount": 1,
+          "pageErrorCount": 0,
+          "sourceHTMLSHA256": "633225944850825e08967b95975be9767b9341447379b6e8623a8680ade06003",
+          "trialRecordSHA256": "25b8e2706e036228c9465c71eec91abae05e4109fe5361f6d95a064363830a4a",
+          "jan6RawPhotoSHA256": "f01c6aeab271e293f019387c84eca6887b66fc384711b37b67f2b1f5e7910908"
+        },
+        {
+          "trial": 10,
+          "requestedDurationMs": 600,
+          "eligible": true,
+          "exclusions": [],
+          "swipes": 5,
+          "directions": "RLLLL",
+          "targetSide": "right",
+          "lineCounts": [
+            3,
+            4
+          ],
+          "lastRowOne": false,
+          "sentDurationsMs": [
+            600.156,
+            598.941,
+            599.393,
+            598.238,
+            600.163
+          ],
+          "trustedPointerEventDurationsMs": [
+            599.7,
+            598.2,
+            598.6,
+            597.6,
+            599.8
+          ],
+          "rangeCompletedPlayMs": 30213.752,
+          "consoleErrorCount": 1,
+          "pageErrorCount": 0,
+          "sourceHTMLSHA256": "633225944850825e08967b95975be9767b9341447379b6e8623a8680ade06003",
+          "trialRecordSHA256": "500ee8452290769fb4aec7c7ed81245bb20ba1cfefe9ff564d1a5f1bdebcbc55",
+          "jan6RawPhotoSHA256": "869a8f6c4cb5ce64727474c80180f9fcfd2dbc25ac136ab2c8cb2b5431d6183e"
+        }
+      ]
+    },
+    "beforeAfterPairedInvariance": {
+      "sameFrozenProtocol": true,
+      "comparisons": [
+        {
+          "afterTrial": 1,
+          "referenceBeforeTrial": 3,
+          "side": "left",
+          "durationMs": 120,
+          "beforeRows": [
+            6,
+            1
+          ],
+          "afterRows": [
+            3,
+            4
+          ],
+          "fontSameExceptIntentionalWrap": true,
+          "allOffsetBoxesSame": true,
+          "textSame": true,
+          "comparisonScope": "same side/speed/final target, not same randomseed or complete content trajectory"
+        },
+        {
+          "afterTrial": 2,
+          "referenceBeforeTrial": 2,
+          "side": "right",
+          "durationMs": 600,
+          "beforeRows": [
+            6,
+            1
+          ],
+          "afterRows": [
+            3,
+            4
+          ],
+          "fontSameExceptIntentionalWrap": true,
+          "allOffsetBoxesSame": true,
+          "textSame": true,
+          "comparisonScope": "same side/speed/final target, not same randomseed or complete content trajectory"
+        },
+        {
+          "afterTrial": 3,
+          "referenceBeforeTrial": 3,
+          "side": "left",
+          "durationMs": 120,
+          "beforeRows": [
+            6,
+            1
+          ],
+          "afterRows": [
+            3,
+            4
+          ],
+          "fontSameExceptIntentionalWrap": true,
+          "allOffsetBoxesSame": true,
+          "textSame": true,
+          "comparisonScope": "same side/speed/final target, not same randomseed or complete content trajectory"
+        },
+        {
+          "afterTrial": 4,
+          "referenceBeforeTrial": 10,
+          "side": "left",
+          "durationMs": 600,
+          "beforeRows": [
+            6,
+            1
+          ],
+          "afterRows": [
+            3,
+            4
+          ],
+          "fontSameExceptIntentionalWrap": true,
+          "allOffsetBoxesSame": true,
+          "textSame": true,
+          "comparisonScope": "same side/speed/final target, not same randomseed or complete content trajectory"
+        },
+        {
+          "afterTrial": 5,
+          "referenceBeforeTrial": 3,
+          "side": "left",
+          "durationMs": 120,
+          "beforeRows": [
+            6,
+            1
+          ],
+          "afterRows": [
+            3,
+            4
+          ],
+          "fontSameExceptIntentionalWrap": true,
+          "allOffsetBoxesSame": true,
+          "textSame": true,
+          "comparisonScope": "same side/speed/final target, not same randomseed or complete content trajectory"
+        },
+        {
+          "afterTrial": 6,
+          "referenceBeforeTrial": 10,
+          "side": "left",
+          "durationMs": 600,
+          "beforeRows": [
+            6,
+            1
+          ],
+          "afterRows": [
+            3,
+            4
+          ],
+          "fontSameExceptIntentionalWrap": true,
+          "allOffsetBoxesSame": true,
+          "textSame": true,
+          "comparisonScope": "same side/speed/final target, not same randomseed or complete content trajectory"
+        },
+        {
+          "afterTrial": 7,
+          "referenceBeforeTrial": 1,
+          "side": "right",
+          "durationMs": 120,
+          "beforeRows": [
+            6,
+            1
+          ],
+          "afterRows": [
+            3,
+            4
+          ],
+          "fontSameExceptIntentionalWrap": true,
+          "allOffsetBoxesSame": true,
+          "textSame": true,
+          "comparisonScope": "same side/speed/final target, not same randomseed or complete content trajectory"
+        },
+        {
+          "afterTrial": 8,
+          "referenceBeforeTrial": 10,
+          "side": "left",
+          "durationMs": 600,
+          "beforeRows": [
+            6,
+            1
+          ],
+          "afterRows": [
+            3,
+            4
+          ],
+          "fontSameExceptIntentionalWrap": true,
+          "allOffsetBoxesSame": true,
+          "textSame": true,
+          "comparisonScope": "same side/speed/final target, not same randomseed or complete content trajectory"
+        },
+        {
+          "afterTrial": 9,
+          "referenceBeforeTrial": 1,
+          "side": "right",
+          "durationMs": 120,
+          "beforeRows": [
+            6,
+            1
+          ],
+          "afterRows": [
+            3,
+            4
+          ],
+          "fontSameExceptIntentionalWrap": true,
+          "allOffsetBoxesSame": true,
+          "textSame": true,
+          "comparisonScope": "same side/speed/final target, not same randomseed or complete content trajectory"
+        },
+        {
+          "afterTrial": 10,
+          "referenceBeforeTrial": 2,
+          "side": "right",
+          "durationMs": 600,
+          "beforeRows": [
+            6,
+            1
+          ],
+          "afterRows": [
+            3,
+            4
+          ],
+          "fontSameExceptIntentionalWrap": true,
+          "allOffsetBoxesSame": true,
+          "textSame": true,
+          "comparisonScope": "same side/speed/final target, not same randomseed or complete content trajectory"
+        }
+      ],
+      "afterTrialsCompared": 10,
+      "distinctBeforeReferenceTrials": [
+        1,
+        2,
+        3,
+        10
+      ],
+      "scope": "same side, requested pace and final original target; independent random seeds and content trajectories; reference trials reused; not one-to-one10 matched trajectories",
+      "fontEqualExceptIntentionalWrap": true,
+      "allOffsetBoxesEqual": true,
+      "targetTextEqual": true
+    },
+    "frozenInputSchedule": {
+      "movesPerGesture": 6,
+      "gestureMinimumOffsetsAndCoordinates": [
+        {
+          "id": 1,
+          "direction": "right",
+          "startOffsetMs": 252.22040500119328,
+          "start": {
+            "x": 159.9921875,
+            "y": 430.63671875
+          },
+          "end": {
+            "x": 259.9921875,
+            "y": 430.63671875
+          }
+        },
+        {
+          "id": 2,
+          "direction": "left",
+          "startOffsetMs": 9864.263859000057,
+          "start": {
+            "x": 159.9921875,
+            "y": 430.63671875
+          },
+          "end": {
+            "x": 59.9921875,
+            "y": 430.63671875
+          }
+        },
+        {
+          "id": 3,
+          "direction": "left",
+          "startOffsetMs": 14957.971756000072,
+          "start": {
+            "x": 159.9921875,
+            "y": 419.94921875
+          },
+          "end": {
+            "x": 59.9921875,
+            "y": 419.94921875
+          }
+        },
+        {
+          "id": 4,
+          "direction": "left",
+          "startOffsetMs": 20239.87732499838,
+          "start": {
+            "x": 159.9921875,
+            "y": 410.94921875
+          },
+          "end": {
+            "x": 59.9921875,
+            "y": 410.94921875
+          }
+        },
+        {
+          "id": 5,
+          "direction": "left",
+          "startOffsetMs": 25363.758829999715,
+          "start": {
+            "x": 159.9921875,
+            "y": 421.63671875
+          },
+          "end": {
+            "x": 59.9921875,
+            "y": 421.63671875
+          }
+        }
+      ],
+      "precheckMayDelayStart": true,
+      "postFinalGestureSettleMs": 3000,
+      "measurementTargetMs": 30000,
+      "measurementWindowMs": 10000,
+      "noRetriesOrReplacementTrials": true
+    }
+  },
+  "savedUIRegression": {
+    "method": "existing sound_run/pl.save; fake AudioContext and default no3d; product resumeSwipe replay",
+    "seed": 1813280426,
+    "choices": {
+      "jan6": "RLLLL",
+      "jan12": "RLLLLLLLLLL"
+    },
+    "oldActualOuterExit": 1,
+    "oldActualChildExit": 1,
+    "oldFailuresAtIntendedLastRowAssertion": 2,
+    "candidateActualOuterExit": 0,
+    "candidateActualChildExit": 0,
+    "candidatePassed": 2,
+    "cases": {
+      "jan12_320": {
+        "beforeRows": [
+          6,
+          1
+        ],
+        "afterRows": [
+          4,
+          3
+        ],
+        "fontsExactlyEqual": true,
+        "offsetBoxesExactlyEqual": true,
+        "fullTextExactlyEqual": true,
+        "glyphClipping": [],
+        "date": "1月12日"
+      },
+      "jan6_320": {
+        "beforeRows": [
+          6,
+          1
+        ],
+        "afterRows": [
+          3,
+          4
+        ],
+        "fontsExactlyEqual": true,
+        "offsetBoxesExactlyEqual": true,
+        "fullTextExactlyEqual": true,
+        "glyphClipping": [],
+        "date": "1月6日"
+      }
+    },
+    "naturalTenReplacement": false
+  },
+  "layoutSupplement": {
+    "protocol": "corrected-v2",
+    "before": {
+      "sizes": [
+        "320x568",
+        "390x844",
+        "568x320",
+        "844x390",
+        "820x1180",
+        "300x568",
+        "301x568",
+        "359x568",
+        "360x568"
+      ],
+      "completedSizes": 9,
+      "rawPNGs": 36,
+      "labelCounts": {
+        "labelRecords": 126,
+        "labelErrors": 0,
+        "labelTextMissing": 0,
+        "labelGlyphsMissing": 0,
+        "labelRowsUnreliable": 0,
+        "glyphOutsideLabel": 126,
+        "glyphOutsideParent": 0,
+        "glyphOutsideViewport": 0,
+        "labelScrollX": 0,
+        "labelScrollY": 0
+      },
+      "actualOuterExit": 1,
+      "actualChildExit": 1,
+      "unqualifiedPass": false,
+      "rangeAndPhotoSameFrame": false,
+      "console404PerSize": 2,
+      "console404Target": "unknown: individual console records do not contain URL; no favicon inference"
+    },
+    "after": {
+      "status": "execution closed and independent image/geometry comparison complete",
+      "sizes": [
+        "320x568",
+        "390x844",
+        "568x320",
+        "844x390",
+        "820x1180",
+        "300x568",
+        "301x568",
+        "359x568",
+        "360x568"
+      ],
+      "completedSizes": 9,
+      "rawPNGs": 36,
+      "reliableLabelRecords": 126,
+      "sampleErrors": 0,
+      "console404Count": 18,
+      "console404PerSize": 2,
+      "actualOuterExit": 1,
+      "actualChildExit": 1,
+      "exitTool": "d1ae2a",
+      "gates": [
+        {
+          "phase": "before",
+          "pass": true
+        },
+        {
+          "phase": "after",
+          "pass": true
+        }
+      ],
+      "sameFrozenProtocol": true,
+      "closedBrowsers": 9,
+      "liveProcesses": [],
+      "recordedReal3DAudioInputAll9": true,
+      "targetRowsBySize": {
+        "320x568": [
+          3,
+          4
+        ],
+        "390x844": [
+          7
+        ],
+        "568x320": [
+          7
+        ],
+        "844x390": [
+          7
+        ],
+        "820x1180": [
+          7
+        ],
+        "300x568": [
+          7
+        ],
+        "301x568": [
+          3,
+          4
+        ],
+        "359x568": [
+          7
+        ],
+        "360x568": [
+          7
+        ]
+      },
+      "unqualifiedPass": false,
+      "console404Target": "unknown: individual console records do not contain URL; no favicon inference",
+      "labelCounts": {
+        "samples": 63,
+        "labelSlotsMissingFromTwo": 0,
+        "labelRecords": 126,
+        "glyphOutsideLabel": 126,
+        "lastRowOne": 0,
+        "labelErrors": 0,
+        "labelTextMissing": 0,
+        "labelGlyphsMissing": 0,
+        "labelRowsUnreliable": 0,
+        "labelsArrayMissing": 0,
+        "glyphOutsideViewport": 0,
+        "glyphOutsideParent": 0,
+        "labelScrollX": 0,
+        "labelScrollY": 0
+      }
+    },
+    "pairedComparison": {
+      "status": "complete-static-comparison-9-sizes",
+      "eachPhase": {
+        "sizes": 9,
+        "samples": 63,
+        "labels": 126,
+        "rawPNGsViewed": 36
+      },
+      "sameFrozenPlan": true,
+      "preparedAllEqual": true,
+      "pairs": {
+        "sameSampleIdenticalText": 112,
+        "unmatchedBefore": 14,
+        "unmatchedAfter": 14,
+        "fontMetricChangePairs": 0,
+        "labelOffsetSizeChangePairs": 0,
+        "visibleControlSnapshotsCompared": 198,
+        "controlRectangleChanges": 0
+      },
+      "unmatchedReason": "answer-3-feedback random different text; not missing observations",
+      "lastRowOneLabelRecords": {
+        "before": 13,
+        "after": 0,
+        "meaning": "sampled label records, not distinct defects or reproduction trials"
+      },
+      "requiredText": [
+        "date",
+        "left/right choice label text"
+      ],
+      "requiredTextClipOrPositiveAreaIntersection": {
+        "before": 0,
+        "after": 0
+      },
+      "visibleControlCenterMisses": {
+        "before": 0,
+        "after": 0
+      },
+      "nonvisibleFeedbackIntersectionNullIsZeroArea": false,
+      "feedbackVisibilityCountsProveDurationChange": false,
+      "observedNewLayoutRegressionsInScope": 0,
+      "scope": "No new unreadable/clipped required label, missed visible control center, or added visible overlap seen in these samples and images. Not all frames/devices and not an unconditional pass.",
+      "existingFindings": [
+        "568x320 answer1/6 reason bubble overlaps upper choice icons in both phases; choice text remains readable.",
+        "300x568 answer6 reason bubble overlays next-card title area in both phases; title not included in recorded required-text rectangles."
+      ],
+      "unqualifiedPass": false,
+      "allTestsOrMergeApprovalSubstitute": false
+    }
+  },
+  "checks": {
+    "newUIRegression": "old2RED/new2GREEN",
+    "relatedExistingUnittest": {
+      "status": "completed",
+      "tests": 18,
+      "passed": 18,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "actualOuterExit": 0,
+      "actualChildExit": 0,
+      "exitTool": "a14550",
+      "startedAt": "2026-11-15T12:20:33.251489+00:00",
+      "finishedAt": "2026-11-15T12:30:31.277919+00:00",
+      "runtimeSecondsReportedByUnittest": 597.9,
+      "classes": [
+        "TestKome365WhyBothSides",
+        "TestKome365WhyReadable",
+        "TestKome365WhyFit",
+        "TestKome365MarkByFrames",
+        "TestKome365MarkClear"
+      ],
+      "sourceAndTestHashesUnchanged": true,
+      "wholePytestSuiteEquivalent": false,
+      "logSHA256": "041ebb90485c67b3c8d8108e47f863b354fb04e5fc355e4c4f450a7489e1e3f9"
+    },
+    "pytest": {
+      "command": "pytest tests/",
+      "actualExit": 127,
+      "testsExecuted": 0,
+      "reason": "pytest executable unavailable",
+      "wholeSuitePass": false
+    }
+  },
+  "methodDiagnostics": {
+    "firstTenProtocol": {
+      "eligible": 0,
+      "includedInTenBefore": false,
+      "reason": "timing/precheck/observed-handler-duration method failures; not counted as game defects"
+    },
+    "firstLayoutProtocol": {
+      "interrupted": true,
+      "includedInCorrectedNine": false,
+      "reason": "overlarge repeated HTML/body text sampling; retained diagnostics"
+    }
+  },
+  "limitations": [
+    "No measured human understanding, reading-time or retention effect",
+    "Browser emulation is not real device/finger/speaker verification",
+    "Fonts are computed CSS values, not proof of actual fallback font identity",
+    "Raw PNG and geometry are different timestamps",
+    "Geometric own-label overrun is retained separately from parent/viewport clipping",
+    "Closed after-ten report read only after root closure and pinned SHA verification",
+    "Selected photo hand/demo phase differs, not evidence of changed demonstration duration",
+    "Existing18 selected unittest checks passed, but required full pytest suite was not executed",
+    "Independent nine-size comparison covers sampled geometry and four PNGs per size per phase; fourteen random-text records per phase are unmatched, not missing, and existing reason overlaps remain",
+    "Tilt sensor, real finger and physical network-speed behavior unverified; tilt is outside this swipe-choice task",
+    "text-wrap unsupported browsers retain existing wrapping; actual font differences across devices unverified"
+  ],
+  "referencePrinciples": [
+    {
+      "chapter": 115,
+      "url": "https://www.youtube.com/watch?v=vi98rAn4uXE"
+    },
+    {
+      "chapter": 134,
+      "url": "https://www.youtube.com/watch?v=ObhvacfIOg0"
+    },
+    {
+      "chapter": 147,
+      "url": "https://www.youtube.com/watch?v=xrqdU4cZaLw"
+    }
+  ],
+  "referenceBasis": "user-provided transcript/team reading; original videos not claimed viewed or complete",
+  "publicPhotos": [
+    {
+      "path": "primary/observe-10s.png",
+      "sha256": "cad7f3c6f3357bc6a442a8c9fe25a09062bd445000bfea500f3a3b9e4507b2bb",
+      "bytes": 102149,
+      "status": "root selected; raw bytes copied and verified",
+      "sourceOriginalSHA256": "cad7f3c6f3357bc6a442a8c9fe25a09062bd445000bfea500f3a3b9e4507b2bb"
+    },
+    {
+      "path": "primary/play-10s.png",
+      "sha256": "1fdf17efcae8c2a25955dbc6c098efaedd0b70364910fbfdf1ab8bd4a0ceacfb",
+      "bytes": 132939,
+      "status": "root selected; raw bytes copied and verified",
+      "sourceOriginalSHA256": "1fdf17efcae8c2a25955dbc6c098efaedd0b70364910fbfdf1ab8bd4a0ceacfb"
+    },
+    {
+      "path": "primary/play-30s.png",
+      "sha256": "7bace86aae710a119c414c3dbb3a8b266d9f9c655279accac56830e7bcb98f2f",
+      "bytes": 124129,
+      "status": "root selected; raw bytes copied and verified",
+      "sourceOriginalSHA256": "7bace86aae710a119c414c3dbb3a8b266d9f9c655279accac56830e7bcb98f2f"
+    },
+    {
+      "path": "primary/play-60s.png",
+      "sha256": "c3df776dc32495b549aa09e6805d7227d470fa47c56e408f795783c36cd734d6",
+      "bytes": 120431,
+      "status": "root selected; raw bytes copied and verified",
+      "sourceOriginalSHA256": "c3df776dc32495b549aa09e6805d7227d470fa47c56e408f795783c36cd734d6"
+    },
+    {
+      "path": "comparison/before-jan6.png",
+      "sha256": "e2e060bf787959255b51c981fff6d1d1a739ee5bbb245cd150b6fcc2e6efb9dc",
+      "bytes": 131770,
+      "status": "root selected; raw bytes copied and verified",
+      "sourceOriginalSHA256": "e2e060bf787959255b51c981fff6d1d1a739ee5bbb245cd150b6fcc2e6efb9dc"
+    },
+    {
+      "path": "comparison/after-jan6.png",
+      "sha256": "8d75838f47d9f566cf6fefa7e79a7e4a4b62381454fd381e3340a0bf26ffc5d0",
+      "bytes": 131595,
+      "status": "root selected; raw bytes copied and verified",
+      "sourceOriginalSHA256": "8d75838f47d9f566cf6fefa7e79a7e4a4b62381454fd381e3340a0bf26ffc5d0"
+    }
+  ],
+  "evidenceSHA256": {
+    "current-actual-completion.json": "d3cb9f7d5accab2a95450a39913d7e654b5bdffdec1ecb1f3cd339c2a3573ea6",
+    "candidate-decision-current.json": "5a44e95f7563c973821d512d5d7811177c71db527b318a37e0c1720afeea9854",
+    "preparation-9e4bb385/strict/report.json": "b1cd15025ceb433122e376932d744b76ac5ea1dfc9a2d5cc015ee0e1716b5a43",
+    "preparation-9e4bb385/strict/extra.json": "6859dc6d06317dd4660027b59d47a88e6f445bf8a2f1e60e2a4979cee8797aff",
+    "label-wrap-repro-v2/root-before-closure.json": "f990e9e0bc1b890fbba23570e8487772e7aa35efe7b470775c1837dcf9b2ea5c",
+    "label-wrap-before-audit/audit.json": "c34a71b02c197c48a87b74106e52352bbf184ed8964ab7c7f845fc44edfe7013",
+    "label-wrap-validation/old-red-execution.json": "b52fb65e8dfb996371dd96bb0ee2aeff3d3836586f0b99ca3b36da57520ed6dc",
+    "label-wrap-validation/old-red-audit.json": "1ac68a95ab55e21854ed76ed4367be5c12825f643b0d19e375055022936bad02",
+    "label-wrap-validation/candidate-green-execution.json": "a1fc0cfcb8084e0ff59d52268fc2100836cdc810566480af669bc4585a4085f5",
+    "label-wrap-validation/old-new-paired-audit.json": "52661ce1323ceb21c95f7830c1aca5248bab2d593873890a161205160baa5b32",
+    "label-wrap-validation/product-applied.json": "835028ffedcc2bc72c0ec5891dbb29351cd6eaae067550fac3503dd9fdfb3687",
+    "label-wrap-validation/pytest-execution.json": "2a0a08a7540a521ff3416505e3803b7cd8fabad9f618872c63a1ae0cec411630",
+    "label-wrap-layout-supplement/root-before-closure.json": "f85e5ad4c94eadad75e21e8c64260fa90654087839a013e44778d8b5e5a66949",
+    "label-wrap-layout-audit/corrected-before/geometry.json": "4feab4aa63d4b7bd9adcc4c4afe608473750806316edc43fd6c37ba123600bd7",
+    "label-wrap-repro/root-before-diagnostic-closure.json": "2c58df1d81b066bdb25c7143212b4684dda2f121a041b19d70c7aaa269b98322",
+    "label-wrap-layout-prep/root-before-diagnostic-closure.json": "2de52616f3abd94361a8bac4890154a5da101cee88eb6105924fe778a589897d",
+    "label-wrap-test-plan-v2/evidence.json": "fa5fcaada96d52959a6391d200555a997134d91758c42f496eb788b6714f99fb",
+    "label-wrap-repro-v2/root-after-closure-and-comparison.json": "ec76e05eb219ebb69d60651c1d26b7ae0c1cc7b36854a01a773213a510cd5190",
+    "label-wrap-repro-v2/after-balance/report.json": "8f51ae0a3477e0ccc6cd33236b78b41442ca00294ea963ca7263f1100e6b4786",
+    "label-wrap-layout-audit/corrected-before/notes.md": "fda4cb33518683722f7a37134005c4058df848caec0066cd2ee932400b692d6a",
+    "discovery-current-c/findings.json": "e50215b6d11b694baa40822836be0642ac73e10e2303eecd90827a11e387222f",
+    "label-wrap-validation/existing-related-execution.json": "f7664248c132bf3bdb1ee4f4eeaf12c1ebd1bb7f383dcc6f8a6221d7dec8cfb7",
+    "label-wrap-validation/existing-related-closure.json": "f3171165fcb7537a6815a20289c72e7569d9b51c0a44724a2c99bacf506a8fa6",
+    "label-wrap-validation/existing-related.log": "041ebb90485c67b3c8d8108e47f863b354fb04e5fc355e4c4f450a7489e1e3f9",
+    "label-wrap-layout-supplement/root-after-closure.json": "d68cba97c0574fae8d8b11d963640ba4aa84c059c281b15d213a65208817a6da",
+    "post-main-merge.json": "a84a0901bfe7c760b043b2c2622062a1c551f64ff2fcb0c831f516c5e00fa318",
+    "../gmtk-20261115/coverage-summary.json": "3a5d4730d09a0134964ea71ff9b573d874c415924c8f0132201786d1e53c9207",
+    "label-wrap-layout-supplement/after/report.json": "2292be0f7b93bab645cb428cd4ce6566bf786b708e26925106dbad0ace344c1e",
+    "label-wrap-layout-audit/corrected-after/notes.md": "d7486a5866d0ec540e20c47c3e8c699b7f44a92fbde06ab2f061b2515f397441",
+    "label-wrap-layout-audit/corrected-after/comparison.json": "35bd112e4092e1e85ce3f427d840563f334548dd41bde2eca0f6ad7d979120db",
+    "label-wrap-layout-audit/corrected-after/manifest.json": "3c3023be1633bd1075ba76594d8235351743015f0f0eef3be86c9dc75f9f785e"
+  },
+  "productImplemented": true,
+  "humanImprovementMeasured": false,
+  "proposedPublicFiles": 8,
+  "proposedPublicRawPNGs": 6,
+  "comparisonPhotoSelection": {
+    "status": "final root selection after closed run",
+    "before": {
+      "trial": 2,
+      "side": "right",
+      "requestedDurationMs": 600,
+      "path": "comparison/before-jan6.png"
+    },
+    "after": {
+      "trial": 2,
+      "side": "right",
+      "requestedDurationMs": 600,
+      "path": "comparison/after-jan6.png"
+    },
+    "sameLabelSideRequired": true,
+    "selectedPhotoDoesNotFilterTrialCounts": true,
+    "animationPhaseDifferenceAllowed": true,
+    "sameRandomSeedTrajectoryAsserted": false
+  },
+  "separateFutureCandidates": [
+    {
+      "condition": "568x320 answer1/6 why overlaps choice icons in both phases while date and choice text remain readable",
+      "evidenceType": "one run per phase, two original PNGs per phase plus geometry; not ten-trial reproduction",
+      "tenTrialReproductionDone": false,
+      "implementedHere": false
+    },
+    {
+      "condition": "300x568 answer6 why covers area near next card title 種もみの注文 in both phases; date and choice text remain readable",
+      "evidenceType": "one original PNG per phase; precise title intersection not measured; not ten-trial reproduction",
+      "tenTrialReproductionDone": false,
+      "implementedHere": false
+    }
+  ],
+  "measuredProxyChange": {
+    "metric": "isolated final character at Jan6 after5 fixed swipes",
+    "before": "10/10",
+    "after": "0/10",
+    "humanRetentionChange": null
+  },
+  "releaseReadiness": {
+    "draftPRMaterialsComplete": true,
+    "productionMergeApproved": false,
+    "productionDeploymentApproved": false,
+    "mergeHoldReason": "required pytest whole suite unavailable (actual127, zero tests executed)",
+    "pending": [
+      "required whole pytest suite verification before production merge"
+    ]
+  },
+  "primaryObservation": {
+    "sourceRevision": "9e4bb385fbedf81dd7d9162b1cf9cefde42f7ebf",
+    "viewport": [
+      320,
+      568
+    ],
+    "observationActualMs": 10152.990398999304,
+    "playPlannedMs": 60000,
+    "playActualMs": 60001.316873,
+    "inputs": 11,
+    "dateChanges": 11,
+    "noRecordedDOMResponse": 0,
+    "positiveAnswers": 4,
+    "negativeAnswers": 7,
+    "unsentCueSkipOpportunities": 10,
+    "unsentCueSkipsAreInputFailures": false,
+    "firstDOMResponseMs": {
+      "min": 67.1,
+      "median": 358.5,
+      "max": 538.9
+    },
+    "firstPositive": {
+      "inputNumber": 3,
+      "browserMarkerElapsedMs": 15805.4,
+      "nodeEpochElapsedMs": 15809.4,
+      "fromOwnInputMs": 851.3,
+      "clockBaseDifferenceMs": 4.0,
+      "definition": "new whyOn and text starts ○; distinct from date change and first DOM response; elapsed includes earlier inputs/programmed waits/cue skips"
+    },
+    "actualOuterExit": 1,
+    "actualOuterExitTool": "5cdd93",
+    "actualChildExit": null,
+    "childExitSeparatelyObserved": false,
+    "favicon404Count": 2,
+    "firstDOMResponseDefinition": "First recorded mutation after handled pointerdown and before next input/Node deadline. Often drag class; not physical display.",
+    "screenPaintOrHumanReadingTimesMeasured": false
+  },
+  "referenceReadingCoverage": {
+    "providedChaptersReadByTeam": 239,
+    "providedChaptersUnread": 0,
+    "originalVideosViewed": 0,
+    "completeOriginalTranscriptsVerified": 0,
+    "sourceSHA256": "1db50be2482094c159f4fd276ab0e11443f8532e6dfe0ccecc8dddda834ff70a",
+    "scope": "six readers completed provided239 chapters; not a claim each author read all chapters or that original videos were complete"
+  }
+}

@@ -42,11 +42,22 @@
   #face.tilt { transform:rotate(9deg); }
   #headText { flex:1; min-width:0; }
   h1 { margin:0; font-size:12px; font-weight:700; color:#6b6252; }
-  #stepName { font-size:28px; font-weight:800; line-height:1.15; }
+  #stepName { font-size:28px; font-weight:800; line-height:1.15; position:relative; justify-self:start; } /* 箱は 字の はば（下の 大きい ✓ を 字の すぐ 右に 置く ため） */
+  /* 段を 終えた しゅんかん、段の 名前の すぐ 右に 濃い 緑の 大きい ✓ を 0.8秒（サイクル166・最初の1分）。棒の 小さい ✓ だけ では 9px で ほぼ 見えなかった。
+     字の 高さ くらい（em で 段の 名前に そろえる）・緑・頭の 帯の 中 だけ（はんこの 赤い ○ より 小さく、画面の まん中に 出さない）。字・音は 足さない。
+     出す・消すは setStep と hideStepCheck の 1か所。「動きを へらす」では 動き なしで 同じ 0.8秒 出て 消える */
+  #stepName.chk::after { content:""; position:absolute; left:calc(100% + .32em); top:.06em; width:.34em; height:.7em; border:solid var(--green); border-width:0 .14em .14em 0; transform:rotate(45deg); pointer-events:none; animation:chkPop .8s ease-out both; }
+  @keyframes chkPop { 0% { opacity:0; transform:rotate(45deg) scale(.5); } 25% { opacity:1; transform:rotate(45deg) scale(1.08); } 40% { transform:rotate(45deg) scale(1); } 80% { opacity:1; } 100% { opacity:0; transform:rotate(45deg) scale(1); } }
   #pips { display:flex; gap:5px; margin-top:3px; }
   #pips i { width:18px; height:5px; border-radius:3px; background:#cfc6b1; }
   #pips i.done { background:var(--gold); }
   #pips i.now { background:var(--green); }
+  /* 終わった 段の 棒に 小さな ✓（サイクル166・最初の1分の「最初の ごほうび」）。旧版は 最初の「できた」の しるしが はんこの ○ だけで、
+     最初の 操作から 約28.6秒 かかった（390×844）。ぬく を 終えて「はかる」へ 移る しゅんかん（約2秒）から、終わった 段ごとに 棒の 上へ 線で 描いた ✓ を のせる。
+     字・音・新しい 絵は 足さない（音は 今 ある 段の 終わりの 音の まま）。点の 箱（18×5px）は 変えず 上に かさねる ので 頭の 高さは 変わらない。
+     はんこの 赤い ○ より 小さく・細く（目立たせない）。「動きを へらす」でも 同じ 絵・同じ 時 */
+  #pips i { position:relative; }
+  #pips i.done:not(:last-child)::before { content:""; position:absolute; left:7px; top:-3px; width:3px; height:6px; border:solid var(--green); border-width:0 2px 2px 0; transform:rotate(45deg); }
   /* 5つめ（おす）の 点は、はんこの 赤い 丸（サイクル163・最初の1分）。旧版は 5つの 点が どれも 同じ 形で、さいごに はんこを 押す ための 作業だと
      絵で 分かるのは はんこまで 行った 約29秒 後 だった（袋の はんこの 場所の 点線の わくは サイクル156 から ある）。字は 足さない。
      点の 箱の 大きさ（18×5px）は 変えず、丸は その 上に かさねて 描く ので、頭の 高さは 変わらない。「動きを へらす」でも 同じ 絵 */
@@ -282,6 +293,7 @@
   }
   @media (prefers-reduced-motion: reduce) {
     #poke,#guide,.grain img.hint,.grain img.wig,.dot.ping,.gradeBtn.sway { animation:none; }
+    #stepName.chk::after { animation:none; } /* 段を 終えた 大きい ✓ は 動かさず、同じ 0.8秒 出て 消える だけ（サイクル166） */
     #guide::after, #poke::after { display:block; } /* 動きを減らす設定では、止まった指の横に向きの矢印を添える（サイクル140） */
     #guideTrail { animation:none; rotate:90deg; }
     #plateInner.smooth { transition:none; } /* 動きを減らす設定では、寄りも滑らかにせずその場で切り替える（サイクル92・類6） */
@@ -1098,8 +1110,14 @@ function updateCooked() {
   $("cookedRecord").textContent = cookedReturns.length ? cookedReturns.join(" ・ ") : "まだ 炊き上がった お米は ありません。";
 }
 const plate = $("plate"), inner = $("plateInner"), hint = $("hint"), nextBtn = $("nextBtn"), zoomBtn = $("zoomBtn");
+const STEP_CHECK_MS = 800; /* 段を 終えた ✓ を 見せる 長さ（だれにでも 同じ。進むのは 待たない） */
+let stepCheckTimer = 0;
+function hideStepCheck() { clearTimeout(stepCheckTimer); $("stepName").classList.remove("chk"); }
+document.addEventListener("visibilitychange", () => { if (document.hidden) hideStepCheck(); }); /* 画面が かくれて もどった 時に のこさない */
 function setStep(i, text) {
   step = i;
+  hideStepCheck(); /* 続けて 段が 進んでも ✓ は 1つ だけ。次の 袋の はじめ（0）では 出さない */
+  if (i > 0) { void $("stepName").offsetWidth; $("stepName").classList.add("chk"); stepCheckTimer = setTimeout(hideStepCheck, STEP_CHECK_MS); }
   $("stepName").textContent = STEPS[i];
   $("stepName").animate([{ opacity:0, transform:"scale(.7)" }, { opacity:1, transform:"scale(1.05)", offset:.7 }, { opacity:1, transform:"scale(1)" }], { duration:260 * motion, easing:"ease-out" }); /* 段階の名前（#stepName）も、他の現れるもの（チップ=ふわり260ms・差30／つぎの袋ボタン=差31／🔍ボタン=差32／小皿の粒=差33／証印=差34／測定値の枠=差35／平均の数字=差39）と同じくふわりと現れる形にそろえる（サイクル135・差分テーマ差40）。旧版は textContent の差し替えだけで完成形が即座に出ていた（390×844実測で出現時のアニメーション0件）。段階が変わる時（setStep）だけ1回付ける */
   [...$("pips").children].forEach((p, k) => { p.className = k < i ? "done" : k === i ? "now" : ""; });

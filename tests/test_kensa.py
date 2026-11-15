@@ -3468,6 +3468,7 @@ const crankAt = (a) => [310 + 33 * Math.cos(a), 110 + 33 * Math.sin(a)];
         self._node150(self._world152() + """
 var pts = new Map(), plateEnds = [], senseDrag = null, senseHold = null, inkHold = null, inkDrag = null, hankoDrag = null, bagSwipe = null, nextPress = null, offDown = null;
 var endPlatePointer = (e, cancelled) => { plateEnds.push([e.pointerId, cancelled]); pts.delete(e.pointerId); }, endToken = () => {}, cancelHanko = () => {};
+var hideStepCheck = () => {};   // サイクル166: 画面が かくれたら 段の 大きい ✓ を 消す（指では ない。test_cycle166_big_check_... が 見る）
 """ + body + """
 const hideShow = () => { document.hidden = true; (doc.visibilitychange || []).forEach(f => f()); document.hidden = false; (doc.visibilitychange || []).forEach(f => f()); };
 // さす: 動かして いた 指（11）が 残った まま かくれる → もどって 新しい 指（12）で 96px なぞる
@@ -3940,6 +3941,7 @@ const reduced = """ + ("true" if reduced else "false") + """, motion = 1, STEPS 
 const calls = []; const mk = k => ({ className:'', animate(frames, o) { calls.push([k, frames, o]); return {}; } });
 const pips = { children:[0, 1, 2, 3, 4].map(k => mk('pip' + k)) }, stepName = mk('name'), hint = mk('hint');
 const els = { pips, stepName }; const $ = id => els[id]; const document = { documentElement:{ dataset:{} } };
+stepName.classList = { add() {}, remove() {} }; let stepCheckTimer = 0; const STEP_CHECK_MS = 800, hideStepCheck = () => {};   // サイクル166 の 大きい ✓（test_cycle166_... が 見る）
 """ + fn + """
 for (let i = 1; i <= 4; i++) {
   calls.length = 0; setStep(i, '');
@@ -4550,6 +4552,150 @@ assert.equal(swipeDemo, sh);   // 指が ふれる・流す・空振りの 手�
 """))
         # 読む 間・ほめる 間の きまり（サイクル151）: 止めの 長さに motion を かけない
         self.assertNotIn("delay:150 * motion", HTML)
+
+
+    # ---- サイクル166（最初の「できた」の しるしを 早く）----
+
+    def test_cycle166_finished_step_bar_gets_a_small_check(self):
+        # 最初の「できた」の しるしが はんこの ○ だけで、最初の 操作から 約28.6秒 かかった（390×844・点数表）。
+        # ぬく を 終えた しゅんかん（はかる へ 移る 時・約2秒）から、終わった 段の 棒に 小さな ✓ を のせる。字・音・新しい 絵は 足さない。
+        # 本物の ブラウザで 5つの 画面 × 動きを へらす 設定: ✓ が 出る・まだの 段と はんこの 丸には 出ない・頭の 高さ そのまま・字に かからない・はんこの 丸より 小さい
+        node = shutil.which("node")
+        if not node:
+            self.skipTest("node がないので実行の確認は飛ばす")
+        js = r"""
+const fs = require('fs'), path = require('path');
+let chromium; try { ({ chromium } = require('playwright')); } catch (e) { console.log(JSON.stringify({ skip: 'playwright なし' })); process.exit(0); }
+const [root] = process.argv.slice(1, 2);
+const TYPES = { '.html': 'text/html; charset=utf-8', '.webp': 'image/webp', '.png': 'image/png' };
+(async () => {
+  let b; try { b = await chromium.launch(); } catch (e) { console.log(JSON.stringify({ skip: 'chromium が 起動しない' })); return; }
+  const out = [];
+  for (const [w, h] of [[320, 568], [390, 844], [568, 320], [844, 390], [820, 1180]]) for (const rm of ['no-preference', 'reduce']) {
+    const ctx = await b.newContext({ viewport: { width: w, height: h }, isMobile: true, hasTouch: true, reducedMotion: rm }); const p = await ctx.newPage();
+    await p.route('http://kensa.test/**', r => { const f = path.join(root, decodeURIComponent(new URL(r.request().url()).pathname));
+      if (!f.startsWith(root) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) return r.fulfill({ status: 404, body: '' });
+      r.fulfill({ status: 200, contentType: TYPES[path.extname(f)] || 'application/octet-stream', body: fs.readFileSync(f) }); });
+    await p.goto('http://kensa.test/kensa.html'); await p.waitForTimeout(500);
+    out.push(await p.evaluate(([w, h, rm]) => {
+      const pips = [...document.querySelectorAll('#pips i')], head = () => document.getElementById('head').offsetHeight;
+      const at0 = getComputedStyle(pips[0], '::before').content, head0 = head();
+      const glyph = el => { const r = document.createRange(); r.selectNodeContents(el); const q = r.getBoundingClientRect(); return { l: q.left, r: q.right, t: q.top + 2, b: q.bottom - 2 }; };
+      const ov = (a, c) => Math.max(0, Math.min(a.r, c.r) - Math.max(a.l, c.l)) * Math.max(0, Math.min(a.b, c.b) - Math.max(a.t, c.t));
+      const res = { w, h, rm, at0, steps: [] };
+      for (const s of [1, 2, 3, 4]) {
+        setStep(s, '');
+        const marks = pips.map(i => getComputedStyle(i, '::before').content);
+        const pr = pips[0].getBoundingClientRect(), cs = getComputedStyle(pips[0], '::before');
+        const cw = parseFloat(cs.width) + 2, ch = parseFloat(cs.height) + 2, cx = pr.left + parseFloat(cs.left) + cw / 2, cy = pr.top + parseFloat(cs.top) + ch / 2, half = (cw + ch) / (2 * Math.SQRT2);
+        const box = { l: cx - half, r: cx + half, t: cy - half, b: cy + half };
+        const g = ['stepName', 'goal', 'lotTag'].map(id => document.getElementById(id)).concat([document.querySelector('#head h1')]);
+        const ring = getComputedStyle(pips[4], '::after');
+        res.steps.push({ s, marks, color: cs.borderRightColor, head: head(), glyph: Math.round(g.reduce((a, e) => a + ov(box, glyph(e)), 0)), size: Math.round(half * 2),
+          ring: parseFloat(ring.width), inView: box.t >= 0 && box.l >= 0 });
+      }
+      res.head0 = head0; return res;
+    }, [w, h, rm]));
+    await ctx.close();
+  }
+  await b.close(); console.log(JSON.stringify(out));
+})();
+"""
+        r = subprocess.run([node, "-e", js, ROOT], capture_output=True, text=True, timeout=300)
+        self.assertEqual(r.returncode, 0, r.stderr[-1500:])
+        res = json.loads(r.stdout.strip().splitlines()[-1])
+        if isinstance(res, dict) and res.get("skip"):
+            self.skipTest(res["skip"])
+        for c in res:
+            tag = "%dx%d %s" % (c["w"], c["h"], c["rm"])
+            self.assertIn(c["at0"], ("none", "normal"), tag + " で はじめから ✓ が 出て いる")
+            for st in c["steps"]:
+                t2 = tag + " 段%d" % st["s"]
+                for k, m in enumerate(st["marks"]):
+                    if k < st["s"] and k < 4:
+                        self.assertNotIn(m, ("none", "normal"), t2 + " で 終わった 段の 棒に ✓ が 無い")
+                    else:
+                        self.assertIn(m, ("none", "normal"), t2 + " で まだの 段・はんこの 丸に ✓ が 出た")
+                self.assertEqual(st["color"], "rgb(31, 77, 43)", t2)
+                self.assertEqual(st["head"], c["head0"], t2 + " で 頭の 高さが 変わった")
+                self.assertEqual(st["glyph"], 0, t2 + " で ✓ が 字に かかる")
+                self.assertLess(st["size"], st["ring"] + 1, t2 + " で ✓ が はんこの 丸より 大きい")
+                self.assertTrue(st["inView"], t2)
+
+    def test_cycle166_big_check_beside_the_step_name_for_a_moment(self):
+        # 棒の ✓（9px）だけ では はじめての 人には ほぼ 見えなかった（390×844 の 写真）。段を 終えた しゅんかん、段の 名前の すぐ 右に
+        # 濃い 緑の 大きい ✓（字の 高さ くらい）を 0.8秒 出して 消す。字・音は 足さない・進みを 止めない。動きを へらす 設定でも 同じ 0.8秒。
+        # 続けて 段が 進んでも 1つ・次の 袋の はじめ と 画面が かくれた 時は のこさない。5つの 画面で 字・📖・顔・棒に かからない
+        node = shutil.which("node")
+        if not node:
+            self.skipTest("node がないので実行の確認は飛ばす")
+        js = r"""
+const fs = require('fs'), path = require('path');
+let chromium; try { ({ chromium } = require('playwright')); } catch (e) { console.log(JSON.stringify({ skip: 'playwright なし' })); process.exit(0); }
+const [root] = process.argv.slice(1, 2);
+const TYPES = { '.html': 'text/html; charset=utf-8', '.webp': 'image/webp', '.png': 'image/png' };
+(async () => {
+  let b; try { b = await chromium.launch(); } catch (e) { console.log(JSON.stringify({ skip: 'chromium が 起動しない' })); return; }
+  const out = [];
+  for (const [w, h] of [[320, 568], [390, 844], [568, 320], [844, 390], [820, 1180]]) for (const rm of ['no-preference', 'reduce']) {
+    const ctx = await b.newContext({ viewport: { width: w, height: h }, isMobile: true, hasTouch: true, reducedMotion: rm }); const p = await ctx.newPage();
+    await p.route('http://kensa.test/**', r => { const f = path.join(root, decodeURIComponent(new URL(r.request().url()).pathname));
+      if (!f.startsWith(root) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) return r.fulfill({ status: 404, body: '' });
+      r.fulfill({ status: 200, contentType: TYPES[path.extname(f)] || 'application/octet-stream', body: fs.readFileSync(f) }); });
+    await p.goto('http://kensa.test/kensa.html'); await p.waitForTimeout(500);
+    out.push(await p.evaluate(async ([w, h, rm]) => {
+      const sn = document.getElementById('stepName'), wait = ms => new Promise(r => setTimeout(r, ms));
+      const on = () => !['none', 'normal'].includes(getComputedStyle(sn, '::after').content);
+      const head = () => document.getElementById('head').offsetHeight, head0 = head(), at0 = on();
+      const glyph = el => { const r = document.createRange(); r.selectNodeContents(el); const q = r.getBoundingClientRect(); return { l: q.left, r: q.right, t: q.top + 2, b: q.bottom - 2 }; };
+      const rect = el => { const q = el.getBoundingClientRect(); return { l: q.left, r: q.right, t: q.top, b: q.bottom }; };
+      const ov = (a, c) => Math.max(0, Math.min(a.r, c.r) - Math.max(a.l, c.l)) * Math.max(0, Math.min(a.b, c.b) - Math.max(a.t, c.t));
+      const res = { w, h, rm, at0, steps: [] };
+      for (const s of [1, 2, 3, 4]) {
+        setStep(s, ''); await wait(220);
+        const cs = getComputedStyle(sn, '::after'), q = sn.getBoundingClientRect(), bw = parseFloat(cs.borderRightWidth);
+        const cw = parseFloat(cs.width) + bw, ch = parseFloat(cs.height) + bw, cx = q.left + parseFloat(cs.left) + cw / 2, cy = q.top + parseFloat(cs.top) + ch / 2, half = (cw + ch) / (2 * Math.SQRT2);
+        const box = { l: cx - half, r: cx + half, t: cy - half, b: cy + half };
+        const hit = ['stepName', 'goal', 'lotTag'].map(id => ov(box, glyph(document.getElementById(id)))).concat([ov(box, glyph(document.querySelector('#head h1')))],
+          ['notesLink', 'face', 'pips'].map(id => ov(box, rect(document.getElementById(id)))));
+        res.steps.push({ s, on: on(), color: cs.borderRightColor, size: Math.round(half * 2), font: parseFloat(getComputedStyle(sn).fontSize), hit: Math.round(hit.reduce((a, x) => a + x, 0)),
+          inView: box.l >= 0 && box.r <= innerWidth && box.t >= 0, head: head(), opacity: +cs.opacity });
+        await wait(700);
+      }
+      setStep(1, ''); const t0 = performance.now(); let off = null; while (performance.now() - t0 < 1500) { await wait(20); if (!on()) { off = Math.round(performance.now() - t0); break; } }
+      res.shownMs = off;
+      setStep(2, ''); await wait(400); setStep(3, ''); await wait(600); res.chainStill = on(); await wait(350); res.chainOff = !on();
+      setStep(1, ''); setStep(0, ''); res.newBagOff = !on();
+      setStep(2, ''); Object.defineProperty(document, 'hidden', { configurable: true, get: () => true }); document.dispatchEvent(new Event('visibilitychange')); res.hiddenOff = !on();
+      res.head0 = head0; return res;
+    }, [w, h, rm]));
+    await ctx.close();
+  }
+  await b.close(); console.log(JSON.stringify(out));
+})();
+"""
+        r = subprocess.run([node, "-e", js, ROOT], capture_output=True, text=True, timeout=400)
+        self.assertEqual(r.returncode, 0, r.stderr[-1500:])
+        res = json.loads(r.stdout.strip().splitlines()[-1])
+        if isinstance(res, dict) and res.get("skip"):
+            self.skipTest(res["skip"])
+        for c in res:
+            tag = "%dx%d %s" % (c["w"], c["h"], c["rm"])
+            self.assertFalse(c["at0"], tag + " で はじめから 大きい ✓ が 出て いる")
+            for st in c["steps"]:
+                t2 = tag + " 段%d" % st["s"]
+                self.assertTrue(st["on"], t2 + " で 段を 終えた しゅんかんに 大きい ✓ が 出ない")
+                self.assertEqual(st["color"], "rgb(31, 77, 43)", t2)                 # 濃い 緑（赤は 使わない）
+                self.assertGreaterEqual(st["size"], st["font"] * 0.8, t2 + " で ✓ が 字の 高さより ずっと 小さい")
+                self.assertLessEqual(st["size"], 34, t2 + " で ✓ が 大きすぎる（はんこの ○ より 目立つ）")
+                self.assertEqual(st["hit"], 0, t2 + " で ✓ が 字・📖・顔・棒に かかる")
+                self.assertTrue(st["inView"], t2)
+                self.assertEqual(st["head"], c["head0"], t2 + " で 頭の 高さが 変わった")
+            self.assertIsNotNone(c["shownMs"], tag + " で ✓ が 消えない")
+            self.assertTrue(760 <= c["shownMs"] <= 1000, tag + " で 見えて いる 長さが 0.8秒で ない: %s" % c["shownMs"])   # 動きを へらしても 同じ
+            self.assertTrue(c["chainStill"] and c["chainOff"], tag + " で 続けて 進んだ 時の ✓ が おかしい")
+            self.assertTrue(c["newBagOff"], tag + " で 次の 袋の はじめに ✓ が のこる")
+            self.assertTrue(c["hiddenOff"], tag + " で 画面が かくれても ✓ が のこる")
 
 if __name__ == "__main__":
     unittest.main()

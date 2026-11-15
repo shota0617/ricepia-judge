@@ -1943,7 +1943,7 @@ function plateXY(cx, cy) {
 function startPinch() {
   const [a, b] = [...pts.values()];
   const mid = plateXY((a.x + b.x) / 2, (a.y + b.y) / 2);
-  pinch = { d0:Math.hypot(a.x - b.x, a.y - b.y) || 1, s0:Z.s, lx:(mid.x - Z.tx) / Z.s, ly:(mid.y - Z.ty) / Z.s, ang:Math.atan2(b.y - a.y, b.x - a.x), twist:0 };
+  pinch = { d0:Math.hypot(a.x - b.x, a.y - b.y) || 1, s0:Z.s, lx:(mid.x - Z.tx) / Z.s, ly:(mid.y - Z.ty) / Z.s, ang:Math.atan2(b.y - a.y, b.x - a.x), twist:0, mx:(a.x + b.x) / 2, my:(a.y + b.y) / 2, moved:false }; /* moved: この 2本指で 寄り・ひねり・見る場所が 一度でも 動いた（サイクル167b。始まりで 消える） */
   sortDrag = null;
 }
 plate.addEventListener("pointerdown", (e) => {
@@ -1971,6 +1971,7 @@ plate.addEventListener("pointermove", (e) => {
     if (turn < -180) turn += 360;
     pinch.ang = ang;
     pinch.twist += turn;
+    if (Math.abs(Z.s - pinch.s0) >= 0.01 || Math.abs(pinch.twist) >= 2 || Math.hypot((a.x + b.x) / 2 - pinch.mx, (a.y + b.y) / 2 - pinch.my) > 8) pinch.moved = true; /* 寄せて もどす・ひねって もどす・寄った まま 2本指で ずらす も「動いた」（Codex指摘・レビュー PR #1209） */
     if (turn) twistPlate(turn);
     return;
   }
@@ -1990,7 +1991,7 @@ function endPlatePointer(e, cancelled) {
   if (!pts.has(e.pointerId)) return;
   if (pageSlid(e)) cancelled = true; /* ページを動かした指は、取り消しと同じ（タップ・はじき・空振りに数えない） */
   pts.delete(e.pointerId);
-  if (pts.size < 2 && pinch) { const p = pinch; pinch = null; if (!cancelled && step === 2 && Math.abs(Z.s - p.s0) < 0.01 && Math.abs(p.twist) < 2) stillPinch(); }
+  if (pts.size < 2 && pinch) { const p = pinch; pinch = null; if (!cancelled && step === 2 && !p.moved && Math.abs(Z.s - p.s0) < 0.01 && Math.abs(p.twist) < 2) stillPinch(); }
   if (pts.size === 1 && !sortDrag) { /* ズームのあと片方を離しても、残った指で見る場所を動かせる */
     const [p] = pts.values();
     sortDrag = { x:p.x, y:p.y, lx:p.x, ly:p.y, moved:true, t0:0, startG:null, noTap:true }; /* 見る場所を動かすための残り指は、離した時にタップとしない */

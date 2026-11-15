@@ -1,0 +1,14 @@
+test_reduced_arrows_leave_initial_choice_text_clear (__main__.TestKome365ReduceCue.test_reduced_arrows_leave_initial_choice_text_clear) ... FAIL
+
+======================================================================
+FAIL: test_reduced_arrows_leave_initial_choice_text_clear (__main__.TestKome365ReduceCue.test_reduced_arrows_leave_initial_choice_text_clear)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/ricepia-firstminute-round146/tests/test_kome365_reduce_cue.py", line 145, in test_reduced_arrows_leave_initial_choice_text_clear
+    self.assertEqual(a["layout"][key], b["layout"][key])
+AssertionError: 9 != 21
+
+----------------------------------------------------------------------
+Ran 1 test in 4.437s
+
+FAILED (failures=1)

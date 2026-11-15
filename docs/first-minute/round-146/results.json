@@ -1,0 +1,892 @@
+{
+  "status": "fixed execution and independent audit evidence; publication PENDING; HOLD for existing failure and pytest unavailable",
+  "createdUTC": "2026-11-15T21:47:01.560198+00:00",
+  "round": 146,
+  "game": "米づくり365",
+  "source": {
+    "root": "/workspace/ricepia-firstminute-round146",
+    "baselineHEAD": "6334d3103bbfa20f8b92e744b369be2183af1abe",
+    "baselineHTMLSHA256": "1131aca205f44acd47243b6769d2c68acf0526128eb4bf7ab0e7a242b50f5f62",
+    "appliedHTMLSHA256": "0186cfdb92297e810ef66cf93890b98816ce30ff35751eb234926167e88648e7",
+    "candidateCommit": "c3598c76b03b37aeab47d9b260cea952fa00fdb1",
+    "existingFirstminTestCurrentSHA256": "f32b5c8d215782efe69ef301b720d9aac00dd47cc7dcfe51f730f69145057b7b",
+    "newTestSHA256": "fa024a6010771a1fdc3d6b9e560aa40216895eb6ce6e1b1017e274f17acdd259",
+    "protectedThree": {
+      "kome365/engine.js": "c3d0cef6bb108d5b6d8fe38aaf0c08fe7994bdab08bf92775865a6e0222469a3",
+      "kome365/field3d.js": "a5c1dad91d5c0c326f1394fad9c5d04e7e3b8d13e3a2b8b1757c7aa08d3558ff",
+      "kome365/cards.js": "b15c5b2f56ef9c0c8361fa2fa6a039085919ca516b4a2e6e5a1b3bb691dde744"
+    },
+    "noGitCommandByAuthor": true,
+    "candidateCommitEvidence": {
+      "path": "/workspace/scratch/first-minute/round-146/code-commit.json",
+      "bytes": 1202,
+      "sha256": "af6c2cee6b743ebfe6632b8ea753541291bdd466d2094215440f4ef3247b95c8"
+    },
+    "testExecutionPreCommitHEAD": "6334d3103bbfa20f8b92e744b369be2183af1abe",
+    "commitChangedFilesExactly": [
+      "kome365/index.html",
+      "tests/test_kome365_reduce_cue.py"
+    ],
+    "runtimeCompleteBeforeCommitWithSameProductAndTestBytes": true
+  },
+  "candidate": {
+    "problem": "Reduced-motion initial static round arrows overlap actual choice text at844x390",
+    "change": "one CSS line only, added atindex799",
+    "css": "@media (prefers-reduced-motion: reduce) and (max-height:440px) and (min-width:564px){#swGuide .gd{top:33px}}",
+    "applied": true,
+    "productLinesAdded": 1,
+    "arrowWidth": 70,
+    "arrowHeight": 54,
+    "arrowFontPx": 40,
+    "existingMarginTopPx": -27,
+    "resultingArrowTopRelativeToCardPx": 6,
+    "normalMotionChanged": false,
+    "narrowerThan564Changed": false,
+    "largerHeightThan440Changed": false,
+    "labelTextFontSizeCardInputChanged": false,
+    "rejectedPrototypes": [
+      "outside horizontal shift: overlapspaddy status text",
+      "extra62pxrow: movescard/paddy into sun area"
+    ],
+    "prototypeResultsUsedAsFinal": false
+  },
+  "normalPrimary": {
+    "status": "fixed independent audit and timing addendum",
+    "viewport": [
+      844,
+      390
+    ],
+    "motion": "no-preference",
+    "observeSeconds": 10,
+    "playSeconds": 60.002205,
+    "actualExit": 1,
+    "completionTool": "7ecc62",
+    "sentGestures": 8,
+    "unsentGuideWaitOpportunities": 13,
+    "CDPCommands": 64,
+    "trustedNativeDown": 8,
+    "trustedNativeUp": 8,
+    "trustedNativeMove": 13,
+    "nextDateRecordedAfterAllSent": 8,
+    "noRecordedNextDateAfterSent": 0,
+    "firstToLastDate": "1月1日→1月9日",
+    "console404": 2,
+    "faviconAttribution": "same-run extraresource timing, not URL in console message",
+    "pageError": 0,
+    "blocked": 0,
+    "lateCleanup": 0,
+    "originalPNGs": 4,
+    "photosPersonallyViewedByReportAuthor": 0,
+    "photoFindingsSource": "fixed independent primary image audit",
+    "firstInputSendNodePlaySeconds": 0.251529,
+    "firstDOMResponse": {
+      "dragBrowserPlaySeconds": 0.2821,
+      "dragFromSendApproxSeconds": 0.0339,
+      "transformBrowserPlaySeconds": 0.3092,
+      "transformFromSendApproxSeconds": 0.061,
+      "clockMapping": "browser timeOrigin+at minus Node integer epoch; conditional not physical paint",
+      "nearbyReadConditionalTransformRangeMs": [
+        58.01,
+        69.107
+      ]
+    },
+    "firstPositiveProxy": {
+      "kind": "○markVisible with same UIwhyTextprefix",
+      "gesture": 3,
+      "browserPlaySeconds": 19.7807,
+      "fromFirstInputApproxSeconds": 19.5325,
+      "fromOwnGestureApproxSeconds": 1.2955,
+      "notSingleInputLatencyFromFirstInput": true,
+      "notHumanRewardOrPaint": true
+    },
+    "recordedLongtaskMaxSeconds": 5.282,
+    "heartbeatMaxGapSeconds": 6.3463,
+    "rAFMaxGapSeconds": 5.3132,
+    "startupOrGPUCauseConfirmed": false,
+    "environment": "SwiftShader/local controlled browser",
+    "source7Env8HTTP5Unchanged": true,
+    "CPUReset": true,
+    "browserClosed": true,
+    "rootLiveBrowsers": [],
+    "report": {
+      "path": "/workspace/scratch/first-minute/round-146/preparation-bound146/strict/report.json",
+      "sha256": "06a4980943a886fad463be776c49b2993d2a824f14c84d955aa9a376ba3db177",
+      "bytes": 1299603
+    },
+    "timingAudit": {
+      "path": "/workspace/scratch/first-minute/round-146/discovery-a/primary-timing-audit.json",
+      "sha256": "32aa133330fb878606a7ec9910913ada23228d12812e1911bcc3520df7872b0a",
+      "bytes": 18432
+    },
+    "limits": [
+      "normal primary does not test reduced-motion candidate",
+      "unsent guide waiting is not failed input",
+      "DOM/rAF records do not prove paint/comprehension/physical audio",
+      "timing addendum supersedes ambiguous clock/first-response wording in earlier primary note"
+    ]
+  },
+  "reducePilot": {
+    "status": "fixed separate1observation",
+    "motion": "reduce",
+    "viewport": [
+      844,
+      390
+    ],
+    "actualExit": 1,
+    "consoleFavicon404": 1,
+    "gesturesSent": 0,
+    "trustedInputs": 0,
+    "nonTrustedStartClick": 1,
+    "nonTrustedOrigin": "stack not recorded; unknown",
+    "choiceRangeIntersections": 6,
+    "leftIntersectedCharacters": "畦から",
+    "rightIntersectedCharacters": "かない",
+    "originalImagesViewedByIndependentAuditor": 1,
+    "countsAddedToRepeat": 0,
+    "audit": {
+      "path": "/workspace/scratch/first-minute/round-146/discovery-a/reduce-pilot-audit.json",
+      "sha256": "efd46b374a7f7d85766ace481bba21d1564bb5260a04f70626d52e672a615e7c",
+      "bytes": 5462
+    }
+  },
+  "naturalRepeat10": {
+    "before": {
+      "status": "fixed independent raw/threeuniqueimageaudit",
+      "planned": 10,
+      "recorded": 10,
+      "eligibleLayoutObservations": 10,
+      "eligibleInputObservations": 10,
+      "unknown": 0,
+      "notRun": 0,
+      "replacements": 0,
+      "actualExit": 1,
+      "consoleFavicon404": 11,
+      "otherRecordedErrors": 0,
+      "inputBeforePhoto": false,
+      "intersectionCases": 10,
+      "choiceRangeIntersectionCountEach": 6,
+      "sixFullCharactersUnreadableClaim": false,
+      "specifiedHoldsMs": [
+        120,
+        600
+      ],
+      "trialsEachHold": 5,
+      "actualNodeHoldMs": {
+        "120": [
+          119.956,
+          122.19
+        ],
+        "600": [
+          599.565,
+          602.828
+        ]
+      },
+      "nativeTimestampHoldMs": {
+        "120": [
+          119.7,
+          122.1
+        ],
+        "600": [
+          599.7,
+          610.4
+        ]
+      },
+      "CDPCommandsAndACK": 80,
+      "trustedDown": 10,
+      "trustedUp": 10,
+      "trustedMoves": 56,
+      "nativeCancel": 0,
+      "leftDisplacementPx": 100,
+      "verticalDisplacementPx": 0,
+      "allNextDates": 10,
+      "dateTransition": "1月1日→1月2日",
+      "preReleaseDateUpdates": 0,
+      "nonTrustedBStartClickEach": 1,
+      "nonTrustedOriginConfirmed": false,
+      "contextsClosed": 10,
+      "browserClosed": true,
+      "rootLiveBrowsers": [],
+      "source7Env8HTTP5Unchanged": true,
+      "initial3DNotStartedAccepted": true,
+      "postInputRealThree128Field3DAndAppAudioRunning": 10,
+      "physicalAudioHeard": false,
+      "rawPNGs": 10,
+      "independentlyViewedUniquePNGs": 3,
+      "representativeCases": [
+        1,
+        5,
+        7
+      ],
+      "other7MatchedByByteNotSeparatelyViewed": true,
+      "maximumStateSampleGapSecondsByCaseRange": [
+        5.528,
+        5.769
+      ],
+      "continuous8SecondObservationClaim": false,
+      "report": {
+        "path": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/run-01/report.json",
+        "sha256": "ea71421bc646cc26caf2ee9f508b116e43cca1942b5ee34d5ce544e267b62de2",
+        "bytes": 30869
+      },
+      "independentAudit": {
+        "path": "/workspace/scratch/first-minute/round-146/reduce-cue-before-audit/audit.json",
+        "sha256": "4e024c189f06a6598218bd2963aa5993256b7edee741c0162e3c94cf5fac5336",
+        "bytes": 80687
+      }
+    },
+    "after": {
+      "status": "fixed independent raw/paired audit; two unique images actually viewed",
+      "planned": 10,
+      "recorded": 10,
+      "eligibleLayoutObservations": 10,
+      "eligibleInputObservations": 10,
+      "actualToolExit": 1,
+      "actualChildExit": 1,
+      "completionToolFromRoot": "0b635a",
+      "closureToolFromRoot": "7aad75",
+      "photoBeforeCharacterIntersectionCases": 0,
+      "photoAfterCharacterIntersectionCases": 0,
+      "dateAdvancedCases": 10,
+      "consoleFavicon404": 11,
+      "otherRecordedErrors": 0,
+      "contextsClosed": 10,
+      "browserClosed": true,
+      "rootLiveBrowsers": [],
+      "gatesUnchanged": true,
+      "rootOriginalCase01Viewed": true,
+      "independentAllImagesReviewed": false,
+      "report": {
+        "path": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/run-02/report.json",
+        "sha256": "b6cbe000489498315abc9f69c33b2b19634c6de5262fa04668848ea8b027f2fb",
+        "bytes": 30936
+      },
+      "rootClosure": {
+        "path": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/run-02/root-closure.json",
+        "sha256": "7084cefe3f209e304b0f77831a5aecac406c140c77ec5d8bf813f1ff9228647b",
+        "bytes": 12389
+      },
+      "rawPNGs": 10,
+      "independentlyViewedUniquePNGs": 2,
+      "representativeCases": [
+        1,
+        3
+      ],
+      "remaining8ByteMatchedNotSeparatelyViewed": true,
+      "CDPCommandsAndACK": 80,
+      "trustedDown": 10,
+      "trustedUp": 10,
+      "trustedMoves": 57,
+      "nativeCancel": 0,
+      "leftDisplacementPx": 100,
+      "verticalDisplacementPx": 0,
+      "nativeTimestampHoldMs": {
+        "120": [
+          117.7,
+          120.1
+        ],
+        "600": [
+          600.0,
+          600.8
+        ]
+      },
+      "actualNodeHoldMs": {
+        "120": [
+          119.063,
+          120.512
+        ],
+        "600": [
+          599.944,
+          600.69
+        ]
+      },
+      "preReleaseDateUpdates": 0,
+      "maximumStateSampleGapSecondsByCaseRange": [
+        5.611,
+        6.025
+      ],
+      "nonTrustedBStartClickEach": 1,
+      "nonTrustedOriginConfirmed": false,
+      "postInputRealThree128Field3DAndAppAudioRunning": 10,
+      "unknown": 0,
+      "notRun": 0,
+      "replacements": 0,
+      "independentAudit": {
+        "path": "/workspace/scratch/first-minute/round-146/reduce-cue-after-audit/audit.json",
+        "bytes": 49228,
+        "sha256": "a2c47616556f7e6109d41bf5e414b5c7c1871da6ea65898f1e98aac91bdcbe8e"
+      }
+    },
+    "paired": {
+      "status": "fixed independent paired audit",
+      "intersectionCases": {
+        "before": 10,
+        "after": 0
+      },
+      "dateAdvance": {
+        "before": 10,
+        "after": 10
+      },
+      "visibleArrows": {
+        "before": 10,
+        "after": 10
+      },
+      "eachSnapshotCharacterIntersections": {
+        "before": 6,
+        "after": 0
+      },
+      "sameProtocolAndSpecifiedHoldGroups": true,
+      "targetElementRectsFontsFullTextAndCharacterRangesEqualExcludingArrows": true,
+      "arrowYDeltaPx": -107,
+      "sourceChangedOnlyIndexAmong7": true,
+      "sameEnvironment8": true,
+      "comparison": {
+        "path": "/workspace/scratch/first-minute/round-146/reduce-cue-after-audit/comparison.json",
+        "bytes": 41473,
+        "sha256": "9119d4196d0e9420dc05c6caeaa9ca3e0264e6f48f2a829ad904f99500a48cd5"
+      },
+      "fullSeedWeatherTrajectoryPaired": false,
+      "continuousObservationOrPerformanceImprovementClaim": false
+    }
+  },
+  "layoutFiveSizesTwoMotion": {
+    "before": {
+      "status": "fixed raw/exit and independent original image/geometry audit",
+      "sizes": [
+        [
+          320,
+          568
+        ],
+        [
+          390,
+          844
+        ],
+        [
+          568,
+          320
+        ],
+        [
+          844,
+          390
+        ],
+        [
+          820,
+          1180
+        ]
+      ],
+      "motion": [
+        "no-preference",
+        "reduce"
+      ],
+      "plannedContexts": 10,
+      "recordedContexts": 10,
+      "actualExit": 1,
+      "consoleFavicon404": 1,
+      "observationStatus": "OBSERVED_NOT_A_LAYOUT_PASS",
+      "browserClosed": true,
+      "rootLiveBrowsers": [],
+      "raw": {
+        "path": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-01/report.json",
+        "sha256": "97fe7abb26231d2e84765d224f50992559581909651ad0e643fac2ba1b738adf",
+        "bytes": 13758
+      },
+      "geometryConclusion": "Existing contacts retained; low horizontal reduce choice intersections6 each",
+      "imageConclusion": "All10 original paths viewed by independent audit"
+    },
+    "after": {
+      "status": "fixed independent original image/geometry paired audit",
+      "plannedContexts": 10,
+      "recordedContexts": 10,
+      "motion": [
+        "no-preference",
+        "reduce"
+      ],
+      "sizes": [
+        [
+          320,
+          568
+        ],
+        [
+          390,
+          844
+        ],
+        [
+          568,
+          320
+        ],
+        [
+          844,
+          390
+        ],
+        [
+          820,
+          1180
+        ]
+      ],
+      "actualToolExit": 1,
+      "actualChildExit": 1,
+      "completionToolFromRoot": "3ad927",
+      "closureToolFromRoot": "1c4f0f",
+      "recordedChoiceIntersectionCases": 0,
+      "trustedInputs": 0,
+      "syntheticBStartClickEach": 1,
+      "syntheticOriginConfirmed": false,
+      "consoleFavicon404": 1,
+      "otherRecordedErrors": 0,
+      "browserClosed": true,
+      "rootLiveBrowsers": [],
+      "observationStatus": "OBSERVED_NOT_A_LAYOUT_PASS",
+      "report": {
+        "path": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-02/report.json",
+        "sha256": "b94ee28531dd6537e47357f4ad6144b142a673e059eae1b51979ea2f3aae171b",
+        "bytes": 13754
+      },
+      "rootClosure": {
+        "path": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-02/root-closure.json",
+        "sha256": "78c463873709f4823a306b223e8cc4b89f561a63a80cfddc35588144df91734d",
+        "bytes": 7662
+      }
+    },
+    "paired": {
+      "status": "fixed independent audit",
+      "evidence": {
+        "path": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-audit/after/audit.json",
+        "bytes": 65140,
+        "sha256": "ce97cce2b206c247088f37ea21e5ce875fa8e10fd41bd94c7b3cc4fc0aa10d35"
+      },
+      "originalPNGPathsViewed": 20,
+      "uniqueHashes": 18,
+      "lowHorizontalReducedCases": 2,
+      "choiceRangeCountsForEachAffectedCase": {
+        "before": 6,
+        "after": 0
+      },
+      "arrowYDeltaPx": -107,
+      "remaining8CaseArrowRectsUnchanged": true,
+      "dateTitleLabelsCardHomeSoundPhotoPrePostRectFontEqual": true,
+      "normalPaddyWeatherTextDifferences": [
+        390,
+        844
+      ],
+      "sameSeedOrAnimationFrameClaim": false,
+      "retained320ReducedTitleRangeContactWidthPx": 0.890625,
+      "retainedReducedFingerContacts": true,
+      "normalAfterPhotoFingerRangeContacts": {
+        "case03": [
+          0,
+          2
+        ],
+        "case09": [
+          2,
+          0
+        ]
+      },
+      "newOpaqueOcclusionSeenInOriginalImages": false,
+      "allIndividualSnapshotNoIntersectionIncreaseClaim": false,
+      "homeSoundCenterInsideAndHitPerPhase": 60,
+      "actualPresses": 0,
+      "allLayoutPassClaim": false
+    }
+  },
+  "regression": {
+    "v1": {
+      "meaningfulOldRED": false,
+      "actualExit": 1,
+      "methodCount": 1,
+      "failureLine": 145,
+      "failure": "9!=21 in mismatched label offsetParent coordinate systems",
+      "unittestSeconds": 4.437,
+      "evidence": {
+        "path": "/workspace/scratch/first-minute/round-146/regression-before/stderr.log",
+        "sha256": "1f73a8fdd3257091f3a49033fba6b7fbc5fd84f76636612cc1571e7cf5efffb2",
+        "bytes": 808
+      },
+      "historyKept": true
+    },
+    "v2": {
+      "testSHA256": "fa024a6010771a1fdc3d6b9e560aa40216895eb6ce6e1b1017e274f17acdd259",
+      "methods": 1,
+      "before": {
+        "actualChildExit": 1,
+        "failureLine": 178,
+        "failure": "6 actual choice-characterRange intersections; earlier initialization/size/visibility/layoutasserts passed",
+        "meaningfulOldRED": true,
+        "unittestSeconds": 4.822,
+        "execution": {
+          "path": "/workspace/scratch/first-minute/round-146/regression-before-v2/execution.json",
+          "sha256": "c88d58fd5e25a0198796b5e33c4f47296a2c0e68ec7c7869608b1088315fe70a",
+          "bytes": 492
+        },
+        "stderr": {
+          "path": "/workspace/scratch/first-minute/round-146/regression-before-v2/stderr.log",
+          "sha256": "789d59281f27ea67e8ba991d82f0ee44acc628373f49aa6c62bad1b77d6b23a5",
+          "bytes": 1191
+        }
+      },
+      "after": {
+        "actualChildExit": 0,
+        "rootReportedCompletionTool": "503126",
+        "passedMethods": 1,
+        "unittestSeconds": 4.132,
+        "execution": {
+          "path": "/workspace/scratch/first-minute/round-146/regression-after/execution.json",
+          "sha256": "3c17ed175010ea6b7c5f6cb4312533e6b5e110ba3a96e07395856c160906c0ba",
+          "bytes": 492
+        },
+        "stderr": {
+          "path": "/workspace/scratch/first-minute/round-146/regression-after/stderr.log",
+          "sha256": "26dd3dd92d2142bf403dd20d1da42c713a9c259fa4ba2ad7fe127cc6a9c3a24e",
+          "bytes": 240
+        }
+      },
+      "scope": "fresh844x390 actualHTML/localassets; normal/reduce initialcontexts; realRangeandrender; no naturalinput/longdate/full5sizeclaim",
+      "protectedTestDimensions": "arrow70x54/font40 and visible; labelsize/cardlayout; no shrink/hide escape",
+      "faviconPolicy": "knownfavicon404 retained in raw test logs;GREEN does not meanconsole0",
+      "sourcePreparedReadmeLabelsAreHistorical": true
+    }
+  },
+  "longDateFixture": {
+    "status": "fixed independent all-row recalculation and all15 original PNG audit",
+    "isNaturalPlay": false,
+    "viewportContexts": [
+      [
+        844,
+        390
+      ],
+      [
+        568,
+        320
+      ],
+      [
+        564,
+        440
+      ]
+    ],
+    "modes": [
+      "normal",
+      "gold",
+      "fest",
+      "goldfest"
+    ],
+    "dateStringsPerMode": 372,
+    "dateStringSpace": "12months×31days, including invalid calendar dates as widthstress only",
+    "plannedRows": 4464,
+    "recordedRows": 4464,
+    "unknownRows": 0,
+    "rawGeometryAllMeasured": true,
+    "rawAllRecordedIntersectionsClear": true,
+    "rootMinimumSignedDateGapPx": 1.078125,
+    "originalPNGs": 15,
+    "rootActualExit": 1,
+    "consoleFavicon404": 1,
+    "rootOtherErrors": 0,
+    "browserClosed": true,
+    "rootLiveBrowsers": [],
+    "temporaryChanges": "onlydate.textContent and gold/festclasses;explicitfixture",
+    "fullHumanVisibilityOr4464PaintsClaim": false,
+    "realSaveResumeClaim": false,
+    "independentAudit": {
+      "status": "fixed",
+      "manifest": {
+        "path": "/workspace/scratch/first-minute/round-146/long-date-fixture-audit/manifest.json",
+        "bytes": 635,
+        "sha256": "60401945a3622ecf9b77dc55867c8a4f4049139d5178d28ff6b573ec86583ef9"
+      },
+      "geometry": {
+        "path": "/workspace/scratch/first-minute/round-146/long-date-fixture-audit/geometry-audit.json",
+        "bytes": 28887,
+        "sha256": "48e3b0e353b7c224b07e4da27aee3ca47622379a4ae94277245fe49cbc076388"
+      },
+      "metadata": {
+        "path": "/workspace/scratch/first-minute/round-146/long-date-fixture-audit/metadata-audit.json",
+        "bytes": 34827,
+        "sha256": "b8e9c39e5580640ed0855793e120d5b879a1538fb524aae161caa85a934523e3"
+      },
+      "recomputedRows": 4464,
+      "dateRectPairs": 44280,
+      "otherRectPairs": 258912,
+      "dateIntersectionRows": 0,
+      "otherIntersectionRows": 0,
+      "unknownRows": 0,
+      "recordMismatchCount": 0,
+      "minimumSignedDateGapPx": 1.078125,
+      "originalPNGsActuallyViewed": 15,
+      "uniquePNGCount": 15,
+      "exactDOMRestorations": 24,
+      "exactSavedKeyValueSets": 3,
+      "hashChecksMatched": 60,
+      "trustedInputs": 0,
+      "nonTrustedBStartClicks": 3,
+      "nonTrustedOriginConfirmed": false,
+      "postInput3DOrPhysicalAudioEvidence": false
+    },
+    "report": {
+      "path": "/workspace/scratch/first-minute/round-146/long-date-fixture-prep/run-new-01/report.json",
+      "sha256": "d68adc02619ae576bf2316a8745190b7928550da4182c2e80b0bb370e65c4ea5",
+      "bytes": 7021280
+    },
+    "rootClosure": {
+      "path": "/workspace/scratch/first-minute/round-146/long-date-fixture-prep/run-new-01/root-closure.json",
+      "sha256": "041dec173cc4ed6b10bc463531d2e9b5fda21db1a04b58601a68a0b0a1a44678",
+      "bytes": 3074
+    },
+    "closureGateClarification": {
+      "evidence": {
+        "path": "/workspace/scratch/first-minute/round-146/long-date-fixture-prep/run-new-01/root-closure-clarification.json",
+        "sha256": "f62fec02e2b9edb92650be84c4b62224029ebd22c646eb0e87169bc4f7c1d517",
+        "bytes": 1645
+      },
+      "attachedFile": "longfixture-root-closure-clarification.json",
+      "sharedReceiptScope": "source7/env8/HTTP5/server/historical-live0 only",
+      "sharedPrepared8AndBinding": "repeat runner; not fixtureprepared evidence",
+      "fixturePreparedFiles": 7,
+      "fixtureFrozenSHA256": "38ee2ef5872b2edd7a7014696740f610f348b2e1f9122bedec48b1fe7c6099b1",
+      "fixtureBindingSHA256": "72c78a32fcfce64769d00ea6be2f320a793101f8d04cded06cb2a75fbfdff674",
+      "originalClosureUnchanged": true,
+      "currentBrowserStateNotRechecked": true
+    },
+    "consoleWarnings": 6,
+    "warningKind": "unused preload",
+    "nonDateTextStaysInitial": true,
+    "fullSeasonPd4FontDeviceCoverageClaim": false
+  },
+  "existing107": {
+    "before": {
+      "actualChildExit": 1,
+      "methods": 107,
+      "passed": 106,
+      "failed": 1,
+      "failure": "TestKome365Finger3D.test_demo_finger_clear_of_text; f568x320; best swTitle:元日の田んぼ=73",
+      "failureLine": 1928,
+      "baselineBeforeCandidate": true,
+      "regressionAttributionToCandidate": false,
+      "unittestSeconds": 1003.352,
+      "execution": {
+        "path": "/workspace/scratch/first-minute/round-146/existing-before/execution.json",
+        "sha256": "5be3928c3614fd84e8be3852d69388ec8c1ca8e66e01707a9638467fd5c4c9f0",
+        "bytes": 622
+      },
+      "stderr": {
+        "path": "/workspace/scratch/first-minute/round-146/existing-before/stderr.log",
+        "sha256": "9442ae345353dc8075d2cfa7d307bd094d44eff164f56cdbcc6afde636947a6a",
+        "bytes": 14016
+      }
+    },
+    "after": {
+      "status": "fixed completed execution/closure",
+      "actualToolExit": 1,
+      "actualChildExit": 1,
+      "completionToolFromRoot": "3f7d9e",
+      "closureToolFromRoot": "0fc9ae",
+      "rootLiveClosureTool": "12d34b",
+      "methods": 107,
+      "passed": 106,
+      "failed": 1,
+      "failure": "TestKome365Finger3D.test_demo_finger_clear_of_text; f568x320; best swTitle:元日の田んぼ=73",
+      "failureLine": 1928,
+      "sameMethodAndRecordedValueAsBefore": true,
+      "unittestSeconds": 999.906,
+      "sourceNewAndExistingTestsUnchanged": true,
+      "rootLiveBrowsers": [],
+      "execution": {
+        "path": "/workspace/scratch/first-minute/round-146/existing-after/execution.json",
+        "bytes": 490,
+        "sha256": "7280b83de2eae33111279283b966a6b9ba476633767a3a20347dfeac8682a4db"
+      },
+      "stderr": {
+        "path": "/workspace/scratch/first-minute/round-146/existing-after/stderr.log",
+        "bytes": 14015,
+        "sha256": "37e8bebd59df84d4059716e07396985d487700986504258ad9b9cbc28d1e674f"
+      },
+      "closure": {
+        "path": "/workspace/scratch/first-minute/round-146/existing-after/root-closure.json",
+        "bytes": 2949,
+        "sha256": "922666341364241df086daaa3e92803f884838e013e95fb414b04a964b8d27f1"
+      }
+    },
+    "existingTestsChangedByThisAuthor": false,
+    "savedLogCountAudit": {
+      "attached": "tests/existing-count-audit.json",
+      "methodsEach": 107,
+      "passedEach": 106,
+      "failedEach": 1,
+      "skippedEach": 0,
+      "newExecution": 0
+    }
+  },
+  "pytest": {
+    "before": {
+      "at": "2026-11-15T20:51:41.375134+00:00",
+      "command": "pytest tests/",
+      "cwd": "/workspace/ricepia-firstminute-round146",
+      "actualChildExit": 127,
+      "testsExecuted": 0,
+      "stdout": "",
+      "stderr": "/bin/bash: line 1: pytest: command not found\n"
+    },
+    "after": {
+      "status": "completecommandfailure",
+      "actualChildExit": 127,
+      "completionToolFromRoot": "bcd451",
+      "testsExecuted": 0,
+      "stderr": "bash: line 1: pytest: command not found\n",
+      "execution": {
+        "path": "/workspace/scratch/first-minute/round-146/pytest-after/execution.json",
+        "sha256": "f2f0a809ff515d3678240e4ca956533eca4bd9791e9661ab598f8d3c4e76955d",
+        "bytes": 472
+      },
+      "stderrFile": {
+        "path": "/workspace/scratch/first-minute/round-146/pytest-after/stderr.log",
+        "sha256": "b6fe94a4971280b69606b3ad6039ae9ed0e48557776ea68f678174b6c8da879a",
+        "bytes": 40
+      }
+    },
+    "wholeSuitePassClaim": false
+  },
+  "protected": [
+    "0.3second swipe demonstration",
+    "quick swipe accepted; tap does not choose/move card",
+    "initial card edge shadow",
+    "○✗reason2seconds and first3carry; fit away from date/choices",
+    "30secondcard",
+    "sound toggle/procedural gentle audio; audio does notchange time/motion",
+    "scarecrow/sun",
+    "engine.js/field3d.js/cards.js unchanged",
+    "static finger/directional arrows remain forreduce; circle size/color/displayrules unchanged"
+  ],
+  "providedMaterial": {
+    "only": "GMTK89",
+    "title": "The Power of Video Game HUDs",
+    "url": "https://www.youtube.com/watch?v=4Bv45aPMGyI",
+    "sourceLines": [
+      908,
+      913
+    ],
+    "sectionSHA256": "6ca6bbad43028aabf3322c7339ceaa8abcb21ff1cf51765fc8b37428471b0f36",
+    "existingLocator": "/workspace/scratch/first-minute/gmtk-20261115/application-backlog.json chapters[id=89]",
+    "existingNotes": "/workspace/scratch/first-minute/gmtk-20261115/batch-3/notes.md:225",
+    "application": "HUDの案内を残しながら、読める情報の配置を守る。静止方向矢印と選択肢が互いを隠さない配置へ。",
+    "notClaimed": "video specifically instructs reducedmotion/top33/equalarrowsize",
+    "newFullRead": false,
+    "originalVideoViewed": false
+  },
+  "humanEffect": {
+    "comprehensionMeasured": false,
+    "retentionMeasured": false,
+    "retentionImprovement": null,
+    "actualHumanImprovementCount": 0,
+    "realDeviceTiltFingerNetworkSpeedVerified": false
+  },
+  "publication": {
+    "snapshotAsOfUTC": "2026-11-15T22:08:49.836631+00:00",
+    "commit": "c3598c76b03b37aeab47d9b260cea952fa00fdb1",
+    "PR": null,
+    "URL": null,
+    "merge": false,
+    "deployment": false,
+    "status": "commit created by root; PR/public destination PENDING at this snapshot",
+    "push": false
+  },
+  "archivePlan": {
+    "status": "two lossless archives created and separately extracted; every byte and SHA verified",
+    "archives": [
+      {
+        "name": "long-date-raw.tar.gz",
+        "archive": {
+          "path": "/workspace/scratch/first-minute/round-146/report-prep/stage-final-prep/evidence/long-date-raw.tar.gz",
+          "bytes": 513678,
+          "sha256": "699e3d391b2e9a0b4cd3fa9ff2282ca04fbad880b1bad40c60177cbc9f6f97b9"
+        },
+        "memberCount": 35,
+        "uncompressedMemberBytes": 32488668,
+        "rawPNGMembers": 0,
+        "extractedMembers": 35,
+        "allByteAndSHAEqual": true,
+        "separateExtractionDirectory": "/workspace/scratch/first-minute/round-146/report-prep/stage-final-prep-extract-verification/long-date-raw"
+      },
+      {
+        "name": "natural-evidence.tar.gz",
+        "archive": {
+          "path": "/workspace/scratch/first-minute/round-146/report-prep/stage-final-prep/evidence/natural-evidence.tar.gz",
+          "bytes": 9672703,
+          "sha256": "2752ae4f410333c573bcae7c76941671f2f80fcc598ae4b9633a11af310c1578"
+        },
+        "memberCount": 194,
+        "uncompressedMemberBytes": 37629092,
+        "rawPNGMembers": 45,
+        "extractedMembers": 194,
+        "allByteAndSHAEqual": true,
+        "separateExtractionDirectory": "/workspace/scratch/first-minute/round-146/report-prep/stage-final-prep-extract-verification/natural-evidence"
+      }
+    ],
+    "acquiredNaturalPNGRecords": 45,
+    "acquiredLongFixturePNGRecords": 15,
+    "acquiredTotalPNGRecords": 60,
+    "directOriginalPNGExports": 41,
+    "directExportsAndArchiveCopiesNotAdditionalMeasurements": true,
+    "liveExistingAfterOutputIncluded": false,
+    "completedExistingAfterRawDirectlyAttached": true
+  },
+  "hold": [
+    "same pre-existing Finger3D failure before/after:107 methods,106pass/1fail",
+    "pytest before/after exit127:pytest command not found;0 tests"
+  ],
+  "activity": {
+    "outputOnly": "/workspace/scratch/first-minute/round-146/report-prep",
+    "browser": 0,
+    "Node": 0,
+    "tests": 0,
+    "network": 0,
+    "Git": 0,
+    "productEdits": 0,
+    "existingTestEdits": 0,
+    "rawEvidenceEdits": 0,
+    "rawCopies": 84,
+    "archiveCreated": 2,
+    "newPNGViews": 0,
+    "readActiveAfterRepeat": false,
+    "R145OrOtherPRModified": false,
+    "copiedOnly": "fixed evidence and unchanged raw PNGs; no active test outputs",
+    "readCompletedAfterRepeat": true,
+    "readCompletedAfterLayout": true,
+    "readActiveExistingAfter": false,
+    "archiveExtractionVerified": true,
+    "readCompletedExistingAfter": true
+  },
+  "updatedUTC": "2026-11-15T22:10:06.863059+00:00",
+  "staticCodeReview": {
+    "status": "fixed",
+    "P0ThroughP3Findings": 0,
+    "blocking": 0,
+    "review": {
+      "path": "/workspace/scratch/first-minute/round-146/code-review/review.json",
+      "bytes": 7134,
+      "sha256": "b38768157c22b5a26c297b9a2e4aea61fc3b79a279b8e56166351aee564e2207"
+    },
+    "notes": {
+      "path": "/workspace/scratch/first-minute/round-146/code-review/notes.md",
+      "bytes": 2936,
+      "sha256": "6ab2bde9460c6972a9e41fbbef9f4b048c422e39bdef5e0af604220ed61668fa"
+    },
+    "manifest": {
+      "path": "/workspace/scratch/first-minute/round-146/code-review/manifest.json",
+      "bytes": 209,
+      "sha256": "e898d15dc0b9bd964bbf137a771527262683e1d4ecf0b8bf2fb875d7d67a9d7f"
+    },
+    "runtime": 0,
+    "reviewReadBeforeExistingAfterCompleted": true,
+    "historicalPendingTextPreserved": true,
+    "unmeasuredConditionsNotCountedAsDefects": [
+      "why fallback placement",
+      "two short taps ghostBack",
+      "rapid first3 carry"
+    ],
+    "normalWhyFirstPlacementArrowSeparationPx": 12
+  },
+  "methodResult": {
+    "ricepiaFlowLine": 224,
+    "method": "normal/reduce setting comparison + character Range geometry + original PNG inspection",
+    "confirmedIssues": 1,
+    "otherUnreproducedCandidatesConfirmedIssues": 0,
+    "otherCandidatesStatus": "unconfirmed, not counted"
+  }
+}

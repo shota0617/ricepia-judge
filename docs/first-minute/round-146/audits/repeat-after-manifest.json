@@ -1,0 +1,23 @@
+{
+  "phase": "after-and-before-comparison",
+  "status": "FROZEN",
+  "createdAtUTC": "2026-11-15T21:50:43.171576+00:00",
+  "files": {
+    "notes.md": {
+      "sha256": "6ba822e14af1b702e9c26d3698d85cedc427846ea1ed9bd5840877b33147d644",
+      "bytes": 3483
+    },
+    "audit.json": {
+      "sha256": "a2c47616556f7e6109d41bf5e414b5c7c1871da6ea65898f1e98aac91bdcbe8e",
+      "bytes": 49228
+    },
+    "comparison.json": {
+      "sha256": "9119d4196d0e9420dc05c6caeaa9ca3e0264e6f48f2a829ad904f99500a48cd5",
+      "bytes": 41473
+    }
+  },
+  "originalPNGFiles": 10,
+  "uniqueImagesActuallyViewed": 2,
+  "beforeAuditUnchanged": true,
+  "newRuntime": 0
+}

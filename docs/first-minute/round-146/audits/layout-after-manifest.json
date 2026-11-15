@@ -1,0 +1,27 @@
+{
+  "fixedAtUTC": "2026-11-15T21:54:10.788036+00:00",
+  "files": {
+    "audit.json": {
+      "sha256": "ce97cce2b206c247088f37ea21e5ce875fa8e10fd41bd94c7b3cc4fc0aa10d35",
+      "bytes": 65140
+    },
+    "notes.md": {
+      "sha256": "7371891299c41a9cf4997b3da6f4083f6eb171ab2f290915829832594df56a89",
+      "bytes": 5092
+    }
+  },
+  "externalEvidence": {
+    "geometrySummary": {
+      "path": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-audit/after-independent-geometry/summary.json",
+      "sha256": "a674f223b0a2b8d6962a53788e2df2a83b218d94402bb5c3f0f0ac27feaef9a5"
+    },
+    "geometryComparison": {
+      "path": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-audit/after-independent-geometry/comparison.json",
+      "sha256": "f9563ba386a7f609c4fcb4b51a2ca6caee95481db5eb4de43832922507c036e5"
+    }
+  },
+  "all20OriginalPNGPathsViewed": true,
+  "uniqueOriginalPNGHashes": 18,
+  "runtime": 0,
+  "productEdits": 0
+}

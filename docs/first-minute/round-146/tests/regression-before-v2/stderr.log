@@ -1,0 +1,20 @@
+test_reduced_arrows_leave_initial_choice_text_clear (__main__.TestKome365ReduceCue.test_reduced_arrows_leave_initial_choice_text_clear) ... FAIL
+
+======================================================================
+FAIL: test_reduced_arrows_leave_initial_choice_text_clear (__main__.TestKome365ReduceCue.test_reduced_arrows_leave_initial_choice_text_clear)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/ricepia-firstminute-round146/tests/test_kome365_reduce_cue.py", line 178, in test_reduced_arrows_leave_initial_choice_text_clear
+    self.assertEqual(reduced["intersections"], [],
+AssertionError: Lists differ: [{'arrow': 0, 'target': 'left', 'character[554 chars]375}] != []
+
+First list contains 6 additional elements.
+First extra element 0:
+{'arrow': 0, 'target': 'left', 'character': 0, 'text': '畦', 'width': 18.515625, 'height': 22.609375}
+
+Diff is 744 characters long. Set self.maxDiff to None to see it. : Reduced-motion arrows overlap actual initial choice/date/title character ranges
+
+----------------------------------------------------------------------
+Ran 1 test in 4.822s
+
+FAILED (failures=1)

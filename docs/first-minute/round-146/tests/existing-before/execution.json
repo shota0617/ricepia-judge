@@ -1,0 +1,18 @@
+{
+  "startedAt": "2026-11-15T21:04:55.818703+00:00",
+  "command": [
+    "python3",
+    "tests/test_kome365_firstmin.py",
+    "-v"
+  ],
+  "cwd": "/workspace/ricepia-firstminute-round146",
+  "environmentOverrides": {
+    "NODE_PATH": "/workspace/ricepia-judge/node_modules",
+    "NODE_OPTIONS": "--require=/workspace/scratch/first-minute/offline.cjs",
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "scope": "Existing tests unchanged; includes synthetic saved-state/audio and no3d browser fixtures, distinct from natural play.",
+  "childPid": 234497,
+  "completedAt": "2026-11-15T21:21:39.426026+00:00",
+  "actualChildExit": 1
+}

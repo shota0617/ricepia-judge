@@ -1,0 +1,71 @@
+{
+  "at": "2026-11-15T22:05:11.378297+00:00",
+  "actualToolExit": 1,
+  "actualChildExit": 1,
+  "totalTests": 107,
+  "passed": 106,
+  "failures": 1,
+  "failure": "TestKome365Finger3D.test_demo_finger_clear_of_text; f568x320 swTitle:元日の田んぼ area73",
+  "beforeComparison": "Same method and recorded value73 failed before candidate; this does not establish causality of all untested behavior.",
+  "gateAfter": {
+    "at": "2026-11-15T22:05:09.130719+00:00",
+    "phase": "after",
+    "bindingSHA256": "191446c16a17b02c88b247e6172c431846207e07c9a90176258e13ad037df3a8",
+    "checks": {
+      "AGENTS.md": "06d6baa54cbcfd5135264dd174aaf4caaf0d278e3e09efc841b2c04b42a916ec",
+      ".claude/skills/ricepia-flow/SKILL.md": "322f7d5932c8d5fa8eb1778218ce0a4d37f212e63f211629ff7efe9c4ec4720a",
+      "kome365/index.html": "0186cfdb92297e810ef66cf93890b98816ce30ff35751eb234926167e88648e7",
+      "kome365/engine.js": "c3d0cef6bb108d5b6d8fe38aaf0c08fe7994bdab08bf92775865a6e0222469a3",
+      "kome365/field3d.js": "a5c1dad91d5c0c326f1394fad9c5d04e7e3b8d13e3a2b8b1757c7aa08d3558ff",
+      "kome365/cards.js": "b15c5b2f56ef9c0c8361fa2fa6a039085919ca516b4a2e6e5a1b3bb691dde744",
+      "kome365/vendor/three.min.js": "9274bbcec8d96168626c732b5d31c775aa8cfb7eaa0599bec0c175908a2c1ce2"
+    },
+    "environment8": true,
+    "prepared8": true,
+    "head": "6334d3103bbfa20f8b92e744b369be2183af1abe",
+    "status": " M kome365/index.html\n?? tests/test_kome365_reduce_cue.py\n",
+    "http": {
+      "kome365/index.html": {
+        "status": 200,
+        "sha256": "0186cfdb92297e810ef66cf93890b98816ce30ff35751eb234926167e88648e7"
+      },
+      "kome365/engine.js": {
+        "status": 200,
+        "sha256": "c3d0cef6bb108d5b6d8fe38aaf0c08fe7994bdab08bf92775865a6e0222469a3"
+      },
+      "kome365/field3d.js": {
+        "status": 200,
+        "sha256": "a5c1dad91d5c0c326f1394fad9c5d04e7e3b8d13e3a2b8b1757c7aa08d3558ff"
+      },
+      "kome365/cards.js": {
+        "status": 200,
+        "sha256": "b15c5b2f56ef9c0c8361fa2fa6a039085919ca516b4a2e6e5a1b3bb691dde744"
+      },
+      "kome365/vendor/three.min.js": {
+        "status": 200,
+        "sha256": "9274bbcec8d96168626c732b5d31c775aa8cfb7eaa0599bec0c175908a2c1ce2"
+      }
+    },
+    "serverIdentity": {
+      "pid": 227012,
+      "startTicks": "5468082",
+      "argv": "python3 -m http.server 8000"
+    },
+    "liveBrowsers": [],
+    "parse": {
+      "actualExit": 0,
+      "stdout": "Parsed 3 files without invocation\n",
+      "stderr": "",
+      "preparedFiles": 8
+    },
+    "independentReviewSHA256": "c69e630780fa63a57420f9bdf3baff404174c9f737f7d647ccae19b4f080a9b1",
+    "rootRead": [
+      "run.cjs full",
+      "case.cjs full",
+      "README.md full",
+      "diagnose.cjs prior full read, unchanged"
+    ]
+  },
+  "stderrSHA256": "37e8bebd59df84d4059716e07396985d487700986504258ad9b9cbc28d1e674f",
+  "existingTestSHA256": "f32b5c8d215782efe69ef301b720d9aac00dd47cc7dcfe51f730f69145057b7b"
+}

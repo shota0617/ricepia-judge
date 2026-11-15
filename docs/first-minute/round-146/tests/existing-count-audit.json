@@ -1,0 +1,39 @@
+{
+  "createdUTC": "2026-11-15T22:08:49.836631+00:00",
+  "type": "saved stderr record count only, no test execution",
+  "phases": {
+    "before": {
+      "stderr": {
+        "path": "/workspace/scratch/first-minute/round-146/existing-before/stderr.log",
+        "bytes": 14016,
+        "sha256": "9442ae345353dc8075d2cfa7d307bd094d44eff164f56cdbcc6afde636947a6a"
+      },
+      "methodRecords": 107,
+      "passed": 106,
+      "failed": 1,
+      "skipped": 0,
+      "failureTests": [
+        "test_demo_finger_clear_of_text (__main__.TestKome365Finger3D.test_demo_finger_clear_of_text)"
+      ],
+      "summaryMatches": true,
+      "parserAccountsForDescriptionAndWarningMultilines": true
+    },
+    "after": {
+      "stderr": {
+        "path": "/workspace/scratch/first-minute/round-146/existing-after/stderr.log",
+        "bytes": 14015,
+        "sha256": "37e8bebd59df84d4059716e07396985d487700986504258ad9b9cbc28d1e674f"
+      },
+      "methodRecords": 107,
+      "passed": 106,
+      "failed": 1,
+      "skipped": 0,
+      "failureTests": [
+        "test_demo_finger_clear_of_text (__main__.TestKome365Finger3D.test_demo_finger_clear_of_text)"
+      ],
+      "summaryMatches": true,
+      "parserAccountsForDescriptionAndWarningMultilines": true
+    }
+  },
+  "sameFailingMethod": true
+}

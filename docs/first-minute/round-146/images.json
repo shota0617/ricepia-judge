@@ -1,0 +1,298 @@
+{
+  "acquiredNaturalPNGRecords": 45,
+  "acquiredLongFixturePNGRecords": 15,
+  "acquiredTotalPNGRecords": 60,
+  "directExports": 41,
+  "exportsAreNotExtraMeasurements": true,
+  "originalByteCopies": [
+    {
+      "source": "/workspace/scratch/first-minute/round-146/preparation-bound146/strict/observe-10s.png",
+      "destination": "images/primary-observe-10s.png",
+      "role": "normal primary raw PNG",
+      "bytes": 145795,
+      "sha256": "d1508476fc413baf7e719ae78ea70b0c1d5847e5dbba26202c0e5dae06db6762"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/preparation-bound146/strict/play-10s.png",
+      "destination": "images/primary-play-10s.png",
+      "role": "normal primary raw PNG",
+      "bytes": 260598,
+      "sha256": "c0a01d69b47992d2abfdc4c803f1b132af005c4ade9b96f282f683aea0a45aee"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/preparation-bound146/strict/play-30s.png",
+      "destination": "images/primary-play-30s.png",
+      "role": "normal primary raw PNG",
+      "bytes": 252744,
+      "sha256": "1eb41f0692841cd5611c8c3ee1a9a0c697a42b72d8de750b23d8903392cd63eb"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/preparation-bound146/strict/play-60s.png",
+      "destination": "images/primary-play-60s.png",
+      "role": "normal primary raw PNG",
+      "bytes": 284330,
+      "sha256": "976f2bb986635d165bdca03c9b6349283f9b6c382af9c416586d646a3eea89dd"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/run-01/case-01/observe-10s.png",
+      "destination": "images/repeat-before-case01.png",
+      "role": "repeat representative raw PNG; not new measurement",
+      "bytes": 178364,
+      "sha256": "2f5fd63cd51bf6a908eb1581aeaad214d2ae7cc78fc1d38317d9550414e33a18"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-01/case-01/observe-10s.png",
+      "destination": "images/layout-before-case01.png",
+      "role": "five sizes × two motion raw PNG",
+      "bytes": 103886,
+      "sha256": "d280fabc718d74c1b36182f7413f6fdd8574e62a241ecd5950b9ab2c6440e8a2"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-01/case-02/observe-10s.png",
+      "destination": "images/layout-before-case02.png",
+      "role": "five sizes × two motion raw PNG",
+      "bytes": 116250,
+      "sha256": "e834e2793637a4927b5d8e5a73326f35a18aedc6325968fddaef3cc644188255"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-01/case-03/observe-10s.png",
+      "destination": "images/layout-before-case03.png",
+      "role": "five sizes × two motion raw PNG",
+      "bytes": 134642,
+      "sha256": "8a2d17258e82ff03316851e31d52ae4ebee64ee302e22e52d9e60da0d2c25f10"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-01/case-04/observe-10s.png",
+      "destination": "images/layout-before-case04.png",
+      "role": "five sizes × two motion raw PNG",
+      "bytes": 166535,
+      "sha256": "9d2c341d36f6e44fde0efe59eda40849b36eec6616fb22ad00ee85f55fd28265"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-01/case-05/observe-10s.png",
+      "destination": "images/layout-before-case05.png",
+      "role": "five sizes × two motion raw PNG",
+      "bytes": 95746,
+      "sha256": "b832d770b029f777b2183338d6c8cf9767de9e63bee553a55a50129a62224d5a"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-01/case-06/observe-10s.png",
+      "destination": "images/layout-before-case06.png",
+      "role": "five sizes × two motion raw PNG",
+      "bytes": 107369,
+      "sha256": "5ed06e3f5152f889f3414a5153700ede26d80d400f1570cdd864d923866cb5f3"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-01/case-07/observe-10s.png",
+      "destination": "images/layout-before-case07.png",
+      "role": "five sizes × two motion raw PNG",
+      "bytes": 147303,
+      "sha256": "19cc9e383c1e09b3ee7c200b2022db6eeafabff0d656b34fb37dc204ea4d9987"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-01/case-08/observe-10s.png",
+      "destination": "images/layout-before-case08.png",
+      "role": "five sizes × two motion raw PNG",
+      "bytes": 183190,
+      "sha256": "0ccccbdd3beb57621673d7f58c3e3391ac942ad416f83a3664cc8bbdf07b2c99"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-01/case-09/observe-10s.png",
+      "destination": "images/layout-before-case09.png",
+      "role": "five sizes × two motion raw PNG",
+      "bytes": 297296,
+      "sha256": "1c67fdbf2b25c31bfdcc4f670b67aad43e3cb8314b321559df4c5fdf2a931653"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-01/case-10/observe-10s.png",
+      "destination": "images/layout-before-case10.png",
+      "role": "five sizes × two motion raw PNG",
+      "bytes": 430128,
+      "sha256": "f86566155a801a93c5e0c196ac4018dfbc27dd2b4af50dc8053192e37a962bc6"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-repeat-prep/run-02/case-01/observe-10s.png",
+      "destination": "images/repeat-after-case01.png",
+      "role": "repeat representative raw PNG; not new measurement",
+      "bytes": 177110,
+      "sha256": "339175cda7b38bbeb924ee51c2feb907700e79b62a11f67429f9a17d2421c5e2"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-02/case-01/observe-10s.png",
+      "destination": "images/layout-after-case01.png",
+      "role": "five sizes × two motion raw PNG",
+      "bytes": 104292,
+      "sha256": "2c37ad45babf23019f673c7414f07b848cee57f03ceee8fd4dd75d3baed182d6"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-02/case-02/observe-10s.png",
+      "destination": "images/layout-after-case02.png",
+      "role": "five sizes × two motion raw PNG",
+      "bytes": 116250,
+      "sha256": "e834e2793637a4927b5d8e5a73326f35a18aedc6325968fddaef3cc644188255"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-02/case-03/observe-10s.png",
+      "destination": "images/layout-after-case03.png",
+      "role": "five sizes × two motion raw PNG",
+      "bytes": 137474,
+      "sha256": "8b8b5fa2b6385be5952c759e202d820bf2770dff850b7023f7370aa1844bef6f"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-02/case-04/observe-10s.png",
+      "destination": "images/layout-after-case04.png",
+      "role": "five sizes × two motion raw PNG",
+      "bytes": 167807,
+      "sha256": "7dca7f767b0d89b6351a2d7a193fa901cdd075f101114c153f891d7baec79751"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-02/case-05/observe-10s.png",
+      "destination": "images/layout-after-case05.png",
+      "role": "five sizes × two motion raw PNG",
+      "bytes": 95834,
+      "sha256": "ecb531db89c6f63258913b90c6f5b574c2000f4cccc95684e4b43f27e41775fd"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-02/case-06/observe-10s.png",
+      "destination": "images/layout-after-case06.png",
+      "role": "five sizes × two motion raw PNG",
+      "bytes": 106754,
+      "sha256": "167915bd7c20101826a1913e8a8ba5bd9b5425e9e56b057c17f438b164544c3a"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-02/case-07/observe-10s.png",
+      "destination": "images/layout-after-case07.png",
+      "role": "five sizes × two motion raw PNG",
+      "bytes": 154099,
+      "sha256": "6e2288242d84d434d7a6bd8a04a68a5d84b5133724fecaac338d7dc371777c8c"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-02/case-08/observe-10s.png",
+      "destination": "images/layout-after-case08.png",
+      "role": "five sizes × two motion raw PNG",
+      "bytes": 182501,
+      "sha256": "d8e04b93d8cdcc5b732783c310d40d951c9b1207ac8213f299515abd44bb6e4d"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-02/case-09/observe-10s.png",
+      "destination": "images/layout-after-case09.png",
+      "role": "five sizes × two motion raw PNG",
+      "bytes": 294743,
+      "sha256": "6ef4a1b5f3a95ffc967ce0dcffca4f701c9b7a56d43d7e7c26da6c1c3577c19c"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/reduce-cue-layout-prep/run-02/case-10/observe-10s.png",
+      "destination": "images/layout-after-case10.png",
+      "role": "five sizes × two motion raw PNG",
+      "bytes": 430128,
+      "sha256": "f86566155a801a93c5e0c196ac4018dfbc27dd2b4af50dc8053192e37a962bc6"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-prep/run-new-01/564x440-fest-max.png",
+      "destination": "images/long-date-564x440-fest-max.png",
+      "role": "long-date fixture raw PNG",
+      "bytes": 145059,
+      "sha256": "c3b61e130047f33ab8350e25865ba29c8ff33222cec8afe0ed11a6848c14a939"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-prep/run-new-01/564x440-gold-max.png",
+      "destination": "images/long-date-564x440-gold-max.png",
+      "role": "long-date fixture raw PNG",
+      "bytes": 145073,
+      "sha256": "d3cdee05d21f4e77b875040fccad265ac5e0a7313e52069ed26ace9faa649311"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-prep/run-new-01/564x440-goldfest-max.png",
+      "destination": "images/long-date-564x440-goldfest-max.png",
+      "role": "long-date fixture raw PNG",
+      "bytes": 144422,
+      "sha256": "246ab9462b0b375d0856b4d81147406555c4a15089d8e7ecb427c99782cf50fe"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-prep/run-new-01/564x440-initial.png",
+      "destination": "images/long-date-564x440-initial.png",
+      "role": "long-date fixture raw PNG",
+      "bytes": 144293,
+      "sha256": "40c06d095d8409754a89320946ef4fa5ddc68e559897ec048bd416e896436522"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-prep/run-new-01/564x440-normal-max.png",
+      "destination": "images/long-date-564x440-normal-max.png",
+      "role": "long-date fixture raw PNG",
+      "bytes": 145579,
+      "sha256": "77b527c0bd657924a20ae180aac0d2882526a50df45280677fb2bfefaf23324f"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-prep/run-new-01/568x320-fest-max.png",
+      "destination": "images/long-date-568x320-fest-max.png",
+      "role": "long-date fixture raw PNG",
+      "bytes": 107478,
+      "sha256": "c20ec3d2b24dd848279a95951c41fdff6ef4e287c50fbcda9bb259397669ee9f"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-prep/run-new-01/568x320-gold-max.png",
+      "destination": "images/long-date-568x320-gold-max.png",
+      "role": "long-date fixture raw PNG",
+      "bytes": 107376,
+      "sha256": "80c671ef7913c9bb07db837b99a7685d026c906f2de246c1ce986f12ce15b9e4"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-prep/run-new-01/568x320-goldfest-max.png",
+      "destination": "images/long-date-568x320-goldfest-max.png",
+      "role": "long-date fixture raw PNG",
+      "bytes": 106588,
+      "sha256": "9439f41e9e319b9456392bac8d45b3d916206d4584b90587d5f4438c8e5dcded"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-prep/run-new-01/568x320-initial.png",
+      "destination": "images/long-date-568x320-initial.png",
+      "role": "long-date fixture raw PNG",
+      "bytes": 106754,
+      "sha256": "167915bd7c20101826a1913e8a8ba5bd9b5425e9e56b057c17f438b164544c3a"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-prep/run-new-01/568x320-normal-max.png",
+      "destination": "images/long-date-568x320-normal-max.png",
+      "role": "long-date fixture raw PNG",
+      "bytes": 108085,
+      "sha256": "cc3d3d71c3261ec69c225df70b6703ee554e95bc863682864f2ce18a15ed3ed1"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-prep/run-new-01/844x390-fest-max.png",
+      "destination": "images/long-date-844x390-fest-max.png",
+      "role": "long-date fixture raw PNG",
+      "bytes": 177451,
+      "sha256": "85f59242da7fabbcb48db7eaa368c6f98b43b0094e0d8aafda17d27e6f304874"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-prep/run-new-01/844x390-gold-max.png",
+      "destination": "images/long-date-844x390-gold-max.png",
+      "role": "long-date fixture raw PNG",
+      "bytes": 179247,
+      "sha256": "c07a9610331b3db3142b8fb562c3630578e033290ca8ae840639d96d23e41f3a"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-prep/run-new-01/844x390-goldfest-max.png",
+      "destination": "images/long-date-844x390-goldfest-max.png",
+      "role": "long-date fixture raw PNG",
+      "bytes": 177903,
+      "sha256": "f64ef54a357623160ed7d0e8fa661f5a164195cb6b134d11f42b6c6d15061b13"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-prep/run-new-01/844x390-initial.png",
+      "destination": "images/long-date-844x390-initial.png",
+      "role": "long-date fixture raw PNG",
+      "bytes": 177110,
+      "sha256": "339175cda7b38bbeb924ee51c2feb907700e79b62a11f67429f9a17d2421c5e2"
+    },
+    {
+      "source": "/workspace/scratch/first-minute/round-146/long-date-fixture-prep/run-new-01/844x390-normal-max.png",
+      "destination": "images/long-date-844x390-normal-max.png",
+      "role": "long-date fixture raw PNG",
+      "bytes": 178480,
+      "sha256": "c1a658393f6642e0927680c1297a0f406978475ec5c9912d2eb5fa3315c78df4"
+    }
+  ],
+  "thisAuthorNewImageViews": 0,
+  "independentReview": "Fixed separate audit notes identify actual viewed images; repeat uses unique-image byte correspondence."
+}

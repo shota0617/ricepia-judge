@@ -1,0 +1,33 @@
+{
+  "at": "2026-11-15T21:44:40.610897+00:00",
+  "originalClosureSHA256": "041dec173cc4ed6b10bc463531d2e9b5fda21db1a04b58601a68a0b0a1a44678",
+  "clarification": "gateAfter is the shared source7/environment8/HTTP5/server/live0 receipt produced by root-repeat-gate.py. Its prepared8 and bindingSHA256 belong to the repeat runner, not this fixture. They are not evidence for fixture prepared bytes.",
+  "sharedGateAt": "2026-11-15T21:40:04.760925+00:00",
+  "fixturePrepared7Readback": {
+    "run.cjs": true,
+    "measure.cjs": true,
+    "diagnose.cjs": true,
+    "README.md": true,
+    "binding-template.json": true,
+    "source-manifest.json": true,
+    "environment-manifest.json": true
+  },
+  "fixtureFrozenSHA256": "38ee2ef5872b2edd7a7014696740f610f348b2e1f9122bedec48b1fe7c6099b1",
+  "fixtureBindingSHA256": "72c78a32fcfce64769d00ea6be2f320a793101f8d04cded06cb2a75fbfdff674",
+  "fixtureParse": {
+    "actualExit": 0,
+    "stdout": "Parsed3 without invocation\n",
+    "stderr": "",
+    "prepared7": true,
+    "rootRead": [
+      "full run.cjs",
+      "full measure.cjs",
+      "full README.md",
+      "diagnose one-line diff from fully read pilot"
+    ]
+  },
+  "fixtureReportSHA256": "d68adc02619ae576bf2316a8745190b7928550da4182c2e80b0bb370e65c4ea5",
+  "fixtureOwnRuntimeGates": "report.json identityBefore/identityAfter/httpBefore/httpAfter; sourceEnvironmentUnchanged true; run validates frozen prepared bytes and binding before opening browser.",
+  "originalRuntimeAndClosureFilesPreserved": true,
+  "currentBrowserStateNotRechecked": "Root is running the next repeat measurement; the historical live0 receipt applies before that launch."
+}

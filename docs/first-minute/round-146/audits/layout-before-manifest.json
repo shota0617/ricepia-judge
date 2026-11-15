@@ -1,0 +1,25 @@
+{
+  "phase": "before",
+  "status": "FROZEN",
+  "createdAtUTC": "2026-11-15T21:45:24.584491+00:00",
+  "files": {
+    "notes.md": {
+      "sha256": "bcee42c6494d23bde1a533c3b6586d5749b67cc5f97947ab43d2d502a83a1a30",
+      "bytes": 4491
+    },
+    "baseline.json": {
+      "sha256": "e843cf8e845040bdffca56e71cbeeae96c8d2f9c9fbda86e9a7188e51081bfc0",
+      "bytes": 1150205
+    },
+    "geometry-check.json": {
+      "sha256": "1b971c2a722ed5ba4cf6955069bae6a15aa8ff88d0a98f72517bf2dc00fe3ad7",
+      "bytes": 461372
+    }
+  },
+  "rawReportSHA256": "97fe7abb26231d2e84765d224f50992559581909651ad0e643fac2ba1b738adf",
+  "rootClosureSHA256": "fd2c777c241c920a795bc3e485ebc33943d2f3324b02d14779ca20e3965619d6",
+  "originalPNGFiles": 10,
+  "uniqueOriginalImagesActuallyViewed": 10,
+  "newRuntime": 0,
+  "afterResultsIncluded": false
+}

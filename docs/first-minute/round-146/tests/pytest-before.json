@@ -1,0 +1,9 @@
+{
+  "at": "2026-11-15T20:51:41.375134+00:00",
+  "command": "pytest tests/",
+  "cwd": "/workspace/ricepia-firstminute-round146",
+  "actualChildExit": 127,
+  "testsExecuted": 0,
+  "stdout": "",
+  "stderr": "/bin/bash: line 1: pytest: command not found\n"
+}

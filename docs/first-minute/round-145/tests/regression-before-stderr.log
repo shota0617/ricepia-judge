@@ -1,0 +1,18 @@
+test_actual_helper_and_metadata_preserve_fallback_and_input (__main__.GuideMetadataNameRegression.test_actual_helper_and_metadata_preserve_fallback_and_input) ... 
+  test_actual_helper_and_metadata_preserve_fallback_and_input (__main__.GuideMetadataNameRegression.test_actual_helper_and_metadata_preserve_fallback_and_input) (case='canonical') ... FAIL
+
+======================================================================
+FAIL: test_actual_helper_and_metadata_preserve_fallback_and_input (__main__.GuideMetadataNameRegression.test_actual_helper_and_metadata_preserve_fallback_and_input) (case='canonical')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/ricepia-firstminute-round145/tests/test_nishio_guide_metadata_name.py", line 104, in test_actual_helper_and_metadata_preserve_fallback_and_input
+    self.assertEqual(row["result"], expected[row["name"]])
+AssertionError: '観光ボランティアガイドさん（西尾市歴史公園（西尾城跡））' != '西尾市歴史公園（西尾城跡）（観光ボランティアガイドさん）'
+- 観光ボランティアガイドさん（西尾市歴史公園（西尾城跡））
++ 西尾市歴史公園（西尾城跡）（観光ボランティアガイドさん）
+
+
+----------------------------------------------------------------------
+Ran 1 test in 0.202s
+
+FAILED (failures=1)

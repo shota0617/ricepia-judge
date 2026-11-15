@@ -1,0 +1,1289 @@
+{
+  "status": "Final scratch report candidate: natural results and v2 fixture recorded; required tests fail/HOLD",
+  "createdUTC": "2026-11-15T19:57:12.097883+00:00",
+  "game": "にしおさんぽGO",
+  "candidate": "guideDispName metadata exact match: existing place name first",
+  "source": {
+    "baselineHEAD": "71bd05c991ba0e2715f687393081b997e3259648",
+    "oldGameSHA256": "1ac1eee951f7a8889a622121ba4e1e17bbbf0ee695dcdebbc86ade430c9ca610",
+    "oldMinGameSHA256": "45f4ba7b4aa8961222f5c57ac26428aff3aa8e5e9135bfd7c93989c0b5d7dc64",
+    "oldTest205SHA256": "91be37e1b64b8b1233b7e6375cd1bd9ffb65add827eb8e583e793cdeed38911b",
+    "expectedCandidateGameSHA256FromPreparedPatch": "0c13ef8c6ec0e8d5be4813365acc0c77883465b88feceb981c073e50524f7e16",
+    "candidateAppliedSHA256": "0c13ef8c6ec0e8d5be4813365acc0c77883465b88feceb981c073e50524f7e16",
+    "candidateMinSHA256": "8267f4412c8f77a36a0cb3e45096d065188784cd7b24152e055ffc66279c77cc",
+    "candidateCommit": "69c0891a6c4be6a8057e01ff8f01034b1d49978f",
+    "codeLocations": [
+      "nishio-go/game.js:2504-2512; added2507-2510",
+      "nishio-go/game.js:556-559",
+      "nishio-go/game.js:1923",
+      "nishio-go/game.js:1957",
+      "nishio-go/game.js:2524-2527",
+      "nishio-go/style.css:515-519",
+      "nishio-go/npcs.js:2,10",
+      "nishio-go/spots.json:spots[id=nishio-castle]"
+    ],
+    "commitEvidence": "parent fixed commit + required-checks-prep/frozen.json; no Git command by reporter",
+    "laterMainNotice": {
+      "source": "parent message; no Git read by report author",
+      "laterOriginMainShort": "6334d310",
+      "testTimeOriginMainShort": "71bd05c9",
+      "R145ProductHEAD": "69c0891a6c4be6a8057e01ff8f01034b1d49978f",
+      "R145BaseAndMergeBaseShort": "71bd05c9",
+      "rebasedOrMergedLaterMain": false,
+      "latestMainEqualsTestedSourceClaim": false
+    }
+  },
+  "primary": {
+    "status": "completed before-change natural observation; independent numeric audit available",
+    "viewport": [
+      390,
+      844
+    ],
+    "observeSeconds": 10,
+    "playSeconds": 60,
+    "actualToolExit": 0,
+    "rootCompletionChunk": "b26f1f",
+    "metrics": {
+      "actions": 10,
+      "visibleHand": 10,
+      "normalHand": 9,
+      "ACKPairs": 10,
+      "trustedDownUpClickTriples": 10,
+      "complete1100msWindows": 10,
+      "noRecordedResponseFullWindow": 0,
+      "incompleteNoResponseWindows": 0,
+      "coordinateChangedWindows": 10,
+      "worldOpenWindows": 0,
+      "infoOpenWindows": 0,
+      "newStartsAfterDeadline": 0,
+      "lateReleases": 0,
+      "lateCompletions": 0,
+      "firstFeedback": {
+        "action": 1,
+        "kind": "coordinateChanged",
+        "observedPlaySeconds": 0.1582998046875,
+        "sendToObservedMs": 129.2998046875
+      },
+      "firstPositiveVisiblePoints": {
+        "observedAt": 1794768336245.7998,
+        "playSeconds": 0.1577998046875,
+        "phase": "play",
+        "text": "30",
+        "value": 30,
+        "visible": true,
+        "centerUnobscured": true
+      },
+      "firstInputToPositivePointsMs": 128.7998046875,
+      "baselineAlreadyPositive": false,
+      "NodeHoldMs": {
+        "min": 40,
+        "max": 41
+      },
+      "nativeTimestampHoldMs": {
+        "min": 39.899999998509884,
+        "max": 41.0
+      },
+      "listenerHoldMs": {
+        "min": 1.300048828125,
+        "max": 2.199951171875
+      },
+      "startAckMs": {
+        "min": 43,
+        "max": 77
+      },
+      "endAckMs": {
+        "min": 64,
+        "max": 128
+      },
+      "firstResponseLatencyMs": {
+        "min": 102.5,
+        "max": 167.099853515625
+      },
+      "sampleCadence": {
+        "count": 869,
+        "maxConsecutiveGapMs": 269.5,
+        "firstPlaySeconds": 0.0385,
+        "lastPlaySeconds": 59.943
+      },
+      "frameCadence": {
+        "count": 1742,
+        "maxConsecutiveGapMs": 166.699951171875,
+        "firstPlaySeconds": 0.006599853515625,
+        "lastPlaySeconds": 59.97089990234375
+      },
+      "idleReads": 378,
+      "idleReasons": {
+        "no-visible-selectable-cue": 378
+      },
+      "observationToPlayStartMs": 10141,
+      "playWindowMs": 60000,
+      "deadlineCallbackLatenessMs": 0,
+      "traceStopAfterDeadlineMs": 224.89990234375,
+      "reportFinishAfterDeadlineMs": 6665,
+      "rawSamplesAfterDeadline": 4,
+      "firstInputDOMResponseRoundedSeconds": {
+        "coordinate": 0.129,
+        "visible30Points": 0.129,
+        "precisionNote": "raw send-to-coordinate129.2998046875ms / send-to-points128.7998046875ms; not physical paint or human felt response"
+      }
+    },
+    "sourceEnvironmentHTTPGates": {
+      "sourceBefore": {
+        "verified": true,
+        "localCount": 15,
+        "httpCount": 6,
+        "environmentCount": 16
+      },
+      "sourceAfter": {
+        "verified": true,
+        "localCount": 15,
+        "httpCount": 6,
+        "environmentCount": 16
+      }
+    },
+    "errors": {
+      "pageOrConsole": [],
+      "failedRequests": [],
+      "httpErrors": [],
+      "inputErrors": [],
+      "lifecycle": {
+        "pageOrConsole": [],
+        "inputCommands": [],
+        "screenshots": [],
+        "lateNewInputs": [],
+        "unfinishedTouchActions": []
+      },
+      "runIssues": [],
+      "conditionErrors": []
+    },
+    "browserClosed": true,
+    "liveBrowsersAfter": [],
+    "finalPointsAsRecorded": 576,
+    "longGuideNameFirstSampleSecondsAsRecorded": 22.2461,
+    "images": [
+      {
+        "path": "/workspace/scratch/first-minute/round-145/preparation-bound145/observe-10s.png",
+        "SHA256": "933a2f2aeb0901855002083b6382de8b2d3d6f705539e71f4696470d58c02967",
+        "viewedOriginal": true,
+        "requestSeconds": 10.003,
+        "completeSeconds": 10.14,
+        "phase": "observe"
+      },
+      {
+        "path": "/workspace/scratch/first-minute/round-145/preparation-bound145/play-10s.png",
+        "SHA256": "1ece69cf3e0a2974feceaa834d2411e0cdc65b716e8436c08c53355c31f45d4f",
+        "viewedOriginal": true,
+        "requestSeconds": 10,
+        "completeSeconds": 10.193,
+        "phase": "play"
+      },
+      {
+        "path": "/workspace/scratch/first-minute/round-145/preparation-bound145/play-30s.png",
+        "SHA256": "8c8a7dc4d183dc384210b8c1760fc925592f11979197443799e418cdf541c9d1",
+        "viewedOriginal": true,
+        "requestSeconds": 30,
+        "completeSeconds": 30.206,
+        "phase": "play"
+      },
+      {
+        "path": "/workspace/scratch/first-minute/round-145/preparation-bound145/play-60s.png",
+        "SHA256": "93477d2d1d593552276966b9f313fce54bdd80c8f9771cf8e547abd54b820bc8",
+        "viewedOriginal": true,
+        "requestSeconds": 60,
+        "completeSeconds": 60.221,
+        "phase": "play"
+      }
+    ],
+    "imageAuditAttribution": "Original four images were viewed by design reviewer/root. This skeleton preparer read the fixed review, not newly viewed PNGs.",
+    "limits": [
+      "Only this R145 raw dataset supplies numerical results; no R141 outcome reused.",
+      "Input choice follows visible close/return title/hand center. Read-only coordinates/goals inform observation only.",
+      "Coordinate change is not proof of forward route progress or input causality.",
+      "Event timestamps include supplied CDP timestamps; browser listener intervals are separately reported.",
+      "Displayed points are observed visible DOM text, not physical paint, award time, or human comprehension.",
+      "Point mutations contribute to reward extraction but are not in classifier response records; therefore first visible points can precede first classified feedback.",
+      "Idle polls are not failed inputs. After-deadline samples remain raw but are excluded from60s response windows.",
+      "Photo times bracket capture, not a single guaranteed visual frame; auditor did not view PNGs in this numeric task.",
+      "No browser/Node/game/test/HTTP/Git execution by auditor."
+    ]
+  },
+  "name": {
+    "NPCIdFromStaticMetadata": "castle-guide",
+    "spotId": "nishio-castle",
+    "person": "観光ボランティアガイドさん",
+    "place": "西尾市歴史公園（西尾城跡）",
+    "beforeName": "観光ボランティアガイドさん（西尾市歴史公園（西尾城跡））",
+    "proposedName": "西尾市歴史公園（西尾城跡）（観光ボランティアガイドさん）",
+    "charactersEach": 28,
+    "runtimeKindAndIdRecordedInPrimary": false,
+    "visibleObservationAsReported": "primary30/60s shows person-first part and ellipsis on place-side; DOM rawText contains full nested name",
+    "sameFullNameAloneDoesNotProveRuntimeObjectIdentity": true,
+    "characterCountScope": "Name body only; displayed main guide name includes flag and a space.",
+    "displayPrefix": "🏁 ",
+    "displayedMainNameCodepointsEach": 30,
+    "runtimeTargetMetadataVerifiedInOldRepeat": true,
+    "runtimeTargetMetadataEligibleTrialsOnly": 6,
+    "otherKnownNPCNaturalVerificationClaim": false,
+    "exactSameCharacterMultisetObservedInQualifiedRepeat": true,
+    "runtimeTargetMetadataVerifiedInNewRepeat": true,
+    "runtimeTargetMetadataEligibleTrialsPerPhase": {
+      "old": 6,
+      "new": 6
+    }
+  },
+  "implementation": {
+    "status": "four source lines applied and committed; min synchronized; helper regression and natural comparisons complete; full Node12fail; supplementaryv2 completed with0strict stable same-condition pairs",
+    "addedProductLinesPlanned": 4,
+    "function": "guideDispName",
+    "condition": "kind npc, matching known id, nonempty string NPC name and spotName, and full original synthesized name exact equality",
+    "output": "place(person)",
+    "otherwise": "all prior regex/fallback behavior unchanged",
+    "newSharedGlobalState": false,
+    "dataOrStorageSchemaChange": false,
+    "minSyncStatus": "applied and bound by regression-after source snapshots",
+    "allCallSitesEscapingAndUnknownFallback": "existing seven helper call sites unchanged; exact metadata branch applies to all matching known NPCs, not a castle-guide hardcode",
+    "preparedPatch": {
+      "path": "/workspace/scratch/first-minute/round-145/guide-name-fix-prep/game.patch",
+      "SHA256": "212ba70e8cbfef92e2c1bc2c509d61fc36b76516d13cebd6ad36428d984ab217"
+    },
+    "applied": true,
+    "productSourceLinesAdded": 4,
+    "callSiteLines": [
+      2335,
+      2340,
+      2439,
+      2441,
+      2488,
+      2524,
+      2527
+    ],
+    "callSiteRoles": [
+      "conversation choices",
+      "arrival messages",
+      "selection toast",
+      "main guide",
+      "alternatives"
+    ],
+    "naturalReproductionTargetOnly": "castle-guide; not natural verification of all known NPCs"
+  },
+  "naturalRepeat10": {
+    "old": {
+      "planned": 10,
+      "completed": 10,
+      "target": 6,
+      "unknown": 4,
+      "notRun": 0,
+      "actualOuterExit": 0,
+      "eligibleTrials": [
+        1,
+        2,
+        5,
+        7,
+        8,
+        9
+      ],
+      "unknownTrials": [
+        3,
+        4,
+        6,
+        10
+      ],
+      "actions": 62,
+      "trustedDownUpClickTriples": 62,
+      "ACKPairs": 62,
+      "lateStarts": 0,
+      "errors": 0,
+      "contextsClosed": 10,
+      "holdGroups": {
+        "40": {
+          "attempts": 5,
+          "eligible": 4,
+          "unknown": 1,
+          "actions": 28,
+          "nodeHoldMs": [
+            40,
+            41
+          ],
+          "eventTimestampHoldMs": [
+            39.899999998509884,
+            41.100000001490116
+          ],
+          "listenerHoldMs": [
+            1.1999999955296516,
+            68.29999999701977
+          ],
+          "startACKms": [
+            36,
+            116
+          ],
+          "endACKms": [
+            74,
+            191
+          ]
+        },
+        "200": {
+          "attempts": 5,
+          "eligible": 2,
+          "unknown": 3,
+          "actions": 34,
+          "nodeHoldMs": [
+            200,
+            203
+          ],
+          "eventTimestampHoldMs": [
+            199.89999999850988,
+            202.89999999850988
+          ],
+          "listenerHoldMs": [
+            119.20000000298023,
+            261.0
+          ],
+          "startACKms": [
+            39,
+            103
+          ],
+          "endACKms": [
+            62,
+            266
+          ]
+        }
+      },
+      "rootLiveAfter": 0,
+      "trials": [
+        {
+          "trial": 1,
+          "holdMs": 40,
+          "status": "TARGET_REACHED",
+          "image": "images/repeat-old-01.png"
+        },
+        {
+          "trial": 2,
+          "holdMs": 200,
+          "status": "TARGET_REACHED",
+          "image": "images/repeat-old-02.png"
+        },
+        {
+          "trial": 3,
+          "holdMs": 40,
+          "status": "UNKNOWN_NOT_REACHED",
+          "image": "images/repeat-old-03.png"
+        },
+        {
+          "trial": 4,
+          "holdMs": 200,
+          "status": "UNKNOWN_NOT_REACHED",
+          "image": "images/repeat-old-04.png"
+        },
+        {
+          "trial": 5,
+          "holdMs": 40,
+          "status": "TARGET_REACHED",
+          "image": "images/repeat-old-05.png"
+        },
+        {
+          "trial": 6,
+          "holdMs": 200,
+          "status": "UNKNOWN_NOT_REACHED",
+          "image": "images/repeat-old-06.png"
+        },
+        {
+          "trial": 7,
+          "holdMs": 40,
+          "status": "TARGET_REACHED",
+          "image": "images/repeat-old-07.png"
+        },
+        {
+          "trial": 8,
+          "holdMs": 200,
+          "status": "TARGET_REACHED",
+          "image": "images/repeat-old-08.png"
+        },
+        {
+          "trial": 9,
+          "holdMs": 40,
+          "status": "TARGET_REACHED",
+          "image": "images/repeat-old-09.png"
+        },
+        {
+          "trial": 10,
+          "holdMs": 200,
+          "status": "UNKNOWN_NOT_REACHED",
+          "image": "images/repeat-old-10.png"
+        }
+      ]
+    },
+    "new": {
+      "planned": 10,
+      "completed": 10,
+      "target": 6,
+      "unknown": 4,
+      "notRun": 0,
+      "actualOuterExit": 0,
+      "eligibleTrials": [
+        1,
+        3,
+        4,
+        5,
+        6,
+        8
+      ],
+      "unknownTrials": [
+        2,
+        7,
+        9,
+        10
+      ],
+      "actions": 62,
+      "trustedDownUpClickTriples": 62,
+      "ACKPairs": 62,
+      "lateStarts": 0,
+      "errors": 0,
+      "contextsClosed": 10,
+      "holdGroups": {
+        "40": {
+          "attempts": 5,
+          "eligible": 3,
+          "unknown": 2,
+          "actions": 31,
+          "nodeHoldMs": [
+            39,
+            44
+          ],
+          "eventTimestampHoldMs": [
+            38.899999998509884,
+            44.0
+          ],
+          "listenerHoldMs": [
+            1.2999999970197678,
+            63.899999998509884
+          ],
+          "startACKms": [
+            34,
+            243
+          ],
+          "endACKms": [
+            72,
+            322
+          ]
+        },
+        "200": {
+          "attempts": 5,
+          "eligible": 3,
+          "unknown": 2,
+          "actions": 31,
+          "nodeHoldMs": [
+            200,
+            205
+          ],
+          "eventTimestampHoldMs": [
+            199.89999999850988,
+            205.0
+          ],
+          "listenerHoldMs": [
+            72.39999999850988,
+            247.5
+          ],
+          "startACKms": [
+            41,
+            128
+          ],
+          "endACKms": [
+            69,
+            216
+          ]
+        }
+      },
+      "rootLiveAfter": 0,
+      "trials": [
+        {
+          "trial": 1,
+          "holdMs": 40,
+          "status": "TARGET_REACHED",
+          "image": "images/repeat-new-01.png"
+        },
+        {
+          "trial": 2,
+          "holdMs": 200,
+          "status": "UNKNOWN_NOT_REACHED",
+          "image": "images/repeat-new-02.png"
+        },
+        {
+          "trial": 3,
+          "holdMs": 40,
+          "status": "TARGET_REACHED",
+          "image": "images/repeat-new-03.png"
+        },
+        {
+          "trial": 4,
+          "holdMs": 200,
+          "status": "TARGET_REACHED",
+          "image": "images/repeat-new-04.png"
+        },
+        {
+          "trial": 5,
+          "holdMs": 40,
+          "status": "TARGET_REACHED",
+          "image": "images/repeat-new-05.png"
+        },
+        {
+          "trial": 6,
+          "holdMs": 200,
+          "status": "TARGET_REACHED",
+          "image": "images/repeat-new-06.png"
+        },
+        {
+          "trial": 7,
+          "holdMs": 40,
+          "status": "UNKNOWN_NOT_REACHED",
+          "image": "images/repeat-new-07.png"
+        },
+        {
+          "trial": 8,
+          "holdMs": 200,
+          "status": "TARGET_REACHED",
+          "image": "images/repeat-new-08.png"
+        },
+        {
+          "trial": 9,
+          "holdMs": 40,
+          "status": "UNKNOWN_NOT_REACHED",
+          "image": "images/repeat-new-09.png"
+        },
+        {
+          "trial": 10,
+          "holdMs": 200,
+          "status": "UNKNOWN_NOT_REACHED",
+          "image": "images/repeat-new-10.png"
+        }
+      ]
+    },
+    "comparison": {
+      "sourceDifference": {
+        "nishio-go/game.js": {
+          "old": "1ac1eee951f7a8889a622121ba4e1e17bbbf0ee695dcdebbc86ade430c9ca610",
+          "new": "0c13ef8c6ec0e8d5be4813365acc0c77883465b88feceb981c073e50524f7e16"
+        },
+        "nishio-go/min/game.js": {
+          "old": "45f4ba7b4aa8961222f5c57ac26428aff3aa8e5e9135bfd7c93989c0b5d7dc64",
+          "new": "8267f4412c8f77a36a0cb3e45096d065188784cd7b24152e055ffc66279c77cc"
+        }
+      },
+      "sourceGatesAll40Valid": true,
+      "environment16Same": true,
+      "httpTargets8Same": true,
+      "metric": "full place name unreadable in qualified original terminal PNGs",
+      "old": {
+        "unreadable": 6,
+        "denominator": 6
+      },
+      "new": {
+        "unreadable": 0,
+        "denominator": 6
+      },
+      "unknownOld": 4,
+      "unknownNew": 4,
+      "sameTrialRouteOrFramePairs": false,
+      "sameCharacterCountAndMultiset": true,
+      "nameBodyCodepoints": 28,
+      "displayedDOMNameCodepointsIncludingFlagAndSpace": 30,
+      "nameOneLine": true,
+      "personSuffixStillEllipsized": true,
+      "distanceAllQualifiedPhotos": "2.3km",
+      "originalTerminalPNGsViewedByIndependentAuditor": 20,
+      "observePNGsNotViewedByThatAuditor": 20,
+      "photoBeforeAfterDiagnostics": 24,
+      "limits": [
+        "Each variant has only six evaluable target appearances, not ten defect reproductions. Unknowns remain four in each separate denominator.",
+        "Old and new qualified trial indexes differ; route, exact time, frame and rewards are not paired.",
+        "No human retention, comprehension, audio, physical paint or speed effect measured.",
+        "Range is pre-ellipsis layout; visible glyph findings come from original PNG review.",
+        "Fixed CSS/name boxes and character preservation do not prove every other UI or protected behavior; this is the repeat10 result audit only."
+      ],
+      "frozenManifestSHA256": "e9521e2357e5133dc890d4fa25a7a4214a9a992f2d703c006a833215e3fca369"
+    }
+  },
+  "naturalLayout5": {
+    "old": {
+      "planned": 5,
+      "completed": 5,
+      "target": 3,
+      "unknown": 2,
+      "notRun": 0,
+      "actualOuterExit": 0,
+      "contextsClosed": 5,
+      "errors": 0,
+      "trials": [
+        {
+          "trial": 1,
+          "viewport": {
+            "width": 320,
+            "height": 568
+          },
+          "holdMs": 40,
+          "status": "TARGET_REACHED",
+          "image": "images/layout-old-01.png"
+        },
+        {
+          "trial": 2,
+          "viewport": {
+            "width": 390,
+            "height": 844
+          },
+          "holdMs": 40,
+          "status": "UNKNOWN_NOT_REACHED",
+          "image": "images/layout-old-02.png"
+        },
+        {
+          "trial": 3,
+          "viewport": {
+            "width": 568,
+            "height": 320
+          },
+          "holdMs": 40,
+          "status": "UNKNOWN_NOT_REACHED",
+          "image": "images/layout-old-03.png"
+        },
+        {
+          "trial": 4,
+          "viewport": {
+            "width": 844,
+            "height": 390
+          },
+          "holdMs": 40,
+          "status": "TARGET_REACHED",
+          "image": "images/layout-old-04.png"
+        },
+        {
+          "trial": 5,
+          "viewport": {
+            "width": 820,
+            "height": 1180
+          },
+          "holdMs": 40,
+          "status": "TARGET_REACHED",
+          "image": "images/layout-old-05.png"
+        }
+      ]
+    },
+    "new": {
+      "planned": 5,
+      "completed": 5,
+      "target": 1,
+      "unknown": 4,
+      "notRun": 0,
+      "actualOuterExit": 0,
+      "contextsClosed": 5,
+      "errors": 0,
+      "trials": [
+        {
+          "trial": 1,
+          "viewport": {
+            "width": 320,
+            "height": 568
+          },
+          "holdMs": 40,
+          "status": "UNKNOWN_NOT_REACHED",
+          "image": "images/layout-new-01.png"
+        },
+        {
+          "trial": 2,
+          "viewport": {
+            "width": 390,
+            "height": 844
+          },
+          "holdMs": 40,
+          "status": "UNKNOWN_NOT_REACHED",
+          "image": "images/layout-new-02.png"
+        },
+        {
+          "trial": 3,
+          "viewport": {
+            "width": 568,
+            "height": 320
+          },
+          "holdMs": 40,
+          "status": "UNKNOWN_NOT_REACHED",
+          "image": "images/layout-new-03.png"
+        },
+        {
+          "trial": 4,
+          "viewport": {
+            "width": 844,
+            "height": 390
+          },
+          "holdMs": 40,
+          "status": "UNKNOWN_NOT_REACHED",
+          "image": "images/layout-new-04.png"
+        },
+        {
+          "trial": 5,
+          "viewport": {
+            "width": 820,
+            "height": 1180
+          },
+          "holdMs": 40,
+          "status": "TARGET_REACHED",
+          "image": "images/layout-new-05.png"
+        }
+      ]
+    },
+    "comparison": {
+      "counts": {
+        "bothTargetSizePairs": 1,
+        "bothTargetViewports": [
+          "820x1180"
+        ],
+        "genericSizePairs": 5,
+        "diagnosticPointsPerPhase": 10,
+        "oldPlusNewDiagnosticPoints": 20,
+        "nameOneLineObservations": 20,
+        "visibleButtonObservations": 100,
+        "visibleButtonOutsideViewport": 0,
+        "visibleButtonCenterHitFailures": 0,
+        "oldNewButtonCorrespondences": 50,
+        "buttonGeometryMismatch": [],
+        "guideNameDistanceGeometryMismatch": []
+      },
+      "findings": {
+        "sameTarget820": "人物先行→場所先行。文字集合30 codepoints（旗と空白を含む）、1行、13px/19.5px、距離2.3kmおよび案内/名前/距離の矩形は両版前後診断で維持。原画像でも全文可読。",
+        "newBlockingObserved": 0,
+        "existingLimits": "320では別行先の括弧内人物の後半が省略。旧長名の地名省略が新320で解消したかは、この自然サイズ実行では未確認。",
+        "genericGeometry": "5サイズの写真前後10対応点で案内/名前/距離の指定幾何属性が一致。320のscrollWidth 380→205は別本文による違いで改善数にしない。",
+        "distanceTiming": "390新は写真前1.4km/後1.3km、原PNGは1.4km。診断と取得は同時刻ではない。820最初のtarget stateは0m、写真前後は2.3kmであり、本比較は写真前後診断を使う。"
+      },
+      "limits": [
+        "対象到達は旧3/5、新1/5。unknownを対象成功や配置失敗へ置換せず、到達率改善を主張しない。",
+        "同対象前後比較は820のみ。320/844の終端は別行先。390/568は同じ非対象名であり対象改善の母数にしない。",
+        "全20診断のvisibleButtonsは下部5タブのみ。100観測は実タップ100回でも全操作域の検査でもない。",
+        "Rangeは省略描画前の文字位置。wholeGlyphCountInsideClipはpaint可視文字数ではない。交差rectだけを遮蔽と認定しない。",
+        "新10原PNGは全実見。新たな遮蔽/切れはこの画像範囲で未確認だが、全画面全時点の保証はしない。",
+        "自然経路/seed/撮影frameは一致せず、地図の描画や動物/粒の位相は異なる。速度・理解・人の離脱率の改善は未測定。",
+        "固定before監査は不変。旧outer nullの歴史は別closure補足に結んだ。"
+      ],
+      "sameTargetPairs": 1,
+      "sameTargetViewports": [
+        [
+          820,
+          1180
+        ]
+      ],
+      "rawPNGsViewedByIndependentAuditor": 20,
+      "rawPNGsIncludedHere": 10,
+      "photoBeforeAfterDiagnosticPointsPerPhase": 10,
+      "bottomFiveTabObservationsPerPhasePerDiagnostic": 25,
+      "bottomFiveTabObservationsPerPhaseBothDiagnostics": 50,
+      "oldPlusNewTabObservations": 100,
+      "pairedTabRectComparisons": 50,
+      "tabRectDifferences": 0,
+      "realTapsRepresentedByThoseObservations": false,
+      "allUIOrAllTimeGuarantee": false,
+      "tabObservationDefinition": "1 screen x1 diagnosis =5 bottom tabs; 5 sizes x2 photo-adjacent diagnoses x2 variants x5 tabs =100 observations,50 paired rectangles; not actual taps"
+    }
+  },
+  "displayFixture": {
+    "status": "v1 stopped retained; v2 completed with comparison limitations; separate from natural samples",
+    "separateFromNaturalDenominators": true,
+    "chapter": "fixture.md",
+    "run01": {
+      "plannedCases": 10,
+      "completedCases": 1,
+      "acceptedObserved": 0,
+      "notRun": 9,
+      "oldNewPairs": 0,
+      "actualChildExit": 1,
+      "actualOuterExit": 1,
+      "completionTool": "635daa",
+      "case": "case-01-old",
+      "viewport": [
+        320,
+        568
+      ],
+      "inputCommands": 0,
+      "trustedEvents": 0,
+      "nonTrustedClickEvents": 2,
+      "stopReason": "Unexpected input event recorded",
+      "caseStatusAloneNotAcceptedSuccess": "FIXTURE_OBSERVED",
+      "stateRestoredEqual": true,
+      "sameOriginalGuideReferenceRestored": true,
+      "contextClosed": true,
+      "browserClosed": true,
+      "rootLiveBrowsers": [],
+      "auditorOriginalPNGsViewed": 1,
+      "photoNotAddedTo34NaturalImages": true,
+      "rawReportSHA256": "1e10b7d36821856094809e23a2e5b636dd6ee7359e0a2e68383796ff33dae777",
+      "auditSHA256": "2d9c6c83bcf2bb7e831a4cab80717130056bbdd10252dbecaca995e82cac07fd",
+      "causeAttribution": "not determined in fixed image/JSON audit; separate investigation",
+      "countsAddedToNaturalRepeatOrLayout": 0,
+      "image": "images/fixture-v1-case-01-old.png"
+    },
+    "v2": {
+      "status": "completed; observed target fixture identity is not a layout/readability pass",
+      "actualOuterExit": 0,
+      "actualChildExits": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "completionTool": "d9f5a7",
+      "rootLiveBrowsers": [],
+      "counts": {
+        "completedCases": 10,
+        "recordedObserved": 10,
+        "unknown": 0,
+        "notRun": 0,
+        "originalImagesViewed": 10,
+        "originalImagesUnviewed": 0,
+        "actualOuterExit": 0,
+        "actualChildExits": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "contextAndBrowserClosed": 10,
+        "verifiedBeforeAfterGates": 20,
+        "inputCommands": 0,
+        "trustedInputs": 0,
+        "classifiedBootstrapSynthetic": 20,
+        "unexpectedInputs": 0,
+        "totalDOMEvents": 20,
+        "independentBootstrapMismatch": [],
+        "nameOneLineDiagnosticObservations": 20,
+        "buttonObservations": 120,
+        "buttonsPerDiagnostic": 6,
+        "buttonOutsideViewport": 0,
+        "buttonCenterHitFailures": 0,
+        "originalGuideReferenceRestored": 10,
+        "fullStateSnapshotUnchanged": 2,
+        "strictStableSameConditionPairs": 0
+      },
+      "findings": {
+        "newPlaceNamePrefixVisibleImages": 5,
+        "newCompletePlaceNameClaimAt320": false,
+        "newBlockingObservedWithinImages": 0,
+        "distanceChangesDuringPhotoCases": [
+          2,
+          3,
+          6,
+          7,
+          9,
+          10
+        ],
+        "rawFlagDifferenceSizePairs": 4,
+        "correspondingPhaseGeometryAndDistanceMatchSizePairs": [
+          {
+            "width": 820,
+            "height": 1180
+          }
+        ],
+        "stateLimits": "guide参照だけ復元する設計。01/04/08はguides/glowGoal、02/03/07/09/10はidleの記録差分が残る。全stateを復元したとはしない。今回の表示順変更が差分を起こしたとの因果は判定しない。"
+      },
+      "limitations": [
+        "Observed10は対象fixtureの記録成立で、10自然到達・10人・可読性全面合格を意味しない。",
+        "4組の旧新で旗prefix/距離条件が異なる。820は対応する前後診断でgeometryと距離が一致するが両caseで408m→2.0kmと撮影中に変わる。厳密な静止同条件pairは0/5。",
+        "新320は場所の先頭が見えるが内部括弧の末尾まで全文可読とはしない。人物名の後半省略も残る。",
+        "6caseの距離幅36.015625→42.015625pxに伴い名前幅が6px減る。全5サイズのgeometry不変という主張はしない。",
+        "全20診断で名前1行/13px/19.5pxを保持。6buttonは傾き案内と下部5タブ。120診断観測は実入力回数でも全操作域の証明でもない。",
+        "Rangeはellipsis paint前の配置。矩形交差をpaint遮蔽とみなさない。写真と診断は同一frameでなく手本/粒/背景など位相差がある。",
+        "距離DOMは置換せず実renderの値を記録したfixtureでありcastle-guideへの自然移動距離ではない。",
+        "v1の2clickにはtarget/stackがなく起源未確定のまま。v2で一致したbootstrap起源をv1へ遡及適用しない。v1停止監査と自然UNKNOWN/対象6母数は不変。",
+        "guide参照復元10とfull snapshot不変2は別。物理端末/本物の指/センサー/回線、人の理解・離脱改善は未確認。"
+      ],
+      "rawReportSHA256": "3089b8895ff3867c5d62d95d19dd2f1a34811a76a2f29640d2e39ff6e7a87ba5",
+      "rootReceiptSHA256": "1e30b98fca7b5e32aab0c154b2f5d9cdc2469480992ce69fe8a8af930c205a0a",
+      "independentAuditSHA256": "7651969ec035f5b92dd86884f8f38efc8e287c38109d8ce3b2335913acf1b5e9",
+      "newNameBodyCodepoints": 28,
+      "rawDisplayPrefixDifferenceSizePairs": 4,
+      "nameBodyCharacterMultisetMatchesPairs": 5,
+      "strictStableSameConditionPairs": 0,
+      "correspondingDiagnosisGeometryAndDistanceMatchingSizes": [
+        [
+          820,
+          1180
+        ]
+      ],
+      "distanceChangesDuringPhotoCases": [
+        2,
+        3,
+        6,
+        7,
+        9,
+        10
+      ],
+      "distanceWidthChangePx": 6,
+      "nameWidthChangePx": -6,
+      "originalGuideReferenceRestored": 10,
+      "fullStateSnapshotUnchangedCases": [
+        5,
+        6
+      ],
+      "fullStateDifferences": {
+        "guidesAndGlowGoal": [
+          1,
+          4,
+          8
+        ],
+        "idleLast": [
+          2,
+          3,
+          7,
+          9,
+          10
+        ]
+      },
+      "allEvents": 20,
+      "bootstrapSyntheticEvents": 20,
+      "inputCommands": 0,
+      "trustedEvents": 0,
+      "unexpectedEvents": 0,
+      "eventClassificationRetroactivelyAppliedToV1": false,
+      "humanOrNaturalEvidence": false,
+      "newPlacePrefixVisibleImages": 5,
+      "newCompletePlaceNameAt320": false,
+      "images": "images.json group fixture-v2"
+    }
+  },
+  "tests": {
+    "additionalRegression": {
+      "status": "same test bytes oldRED/newGREEN executed",
+      "plannedMethods": 1,
+      "plannedScenarios": 21,
+      "testPreparedSHA256": "f64d4e666234b6d1e2b0469f959a673505519be424497778a25eda94dec8cda1",
+      "before": {
+        "actualExit": 1,
+        "toolFromParent": "546313",
+        "failedMethods": 1,
+        "failureEntries": 1,
+        "failureCase": "canonical",
+        "failureReason": "actual helper returns person-first for nested actual metadata, expected place-first",
+        "elapsedSeconds": 0.3478457380042528,
+        "unittestReportedSeconds": 0.202,
+        "evidence": {
+          "path": "/workspace/scratch/first-minute/round-145/regression-before/execution.json",
+          "SHA256": "752c19e0ffe3a230943a22872789f0cfd4ccb58071e02698790937bdaae6e12c"
+        }
+      },
+      "after": {
+        "actualExit": 0,
+        "toolFromParent": "dbc708",
+        "passedMethods": 1,
+        "failed": 0,
+        "errors": 0,
+        "elapsedSeconds": 0.4073588669998571,
+        "unittestReportedSeconds": 0.197,
+        "evidence": {
+          "path": "/workspace/scratch/first-minute/round-145/regression-after/execution.json",
+          "SHA256": "9eec5c1185bb280c2d8c0bc0e7046bcc6e9a8f50bf370a9a8ee3275902e84fd7"
+        }
+      },
+      "fixture": "Real guideDispName and placeNpcs extracted; actual npcs/spots metadata supplied in NodeVM fixture. No real browser/render/input/storage run.",
+      "scopeLimits": [
+        "cache reference identity does not establish unchanged cache object contents",
+        "guide/NPC/spots serialized invariants are not real storage verification",
+        "function output is not visible name/reading/retention evidence"
+      ],
+      "methods": 1,
+      "scenarios": 21,
+      "scenarioCountBasis": "21 scenarios is the unchanged prepared test definition/receipt, not 21 methods or 21 lines printed by stderr; actual stderr reports one method."
+    },
+    "existingTest205": {
+      "status": "before8pass; after7pass1scopefail; all original test bytes unchanged",
+      "plannedMethods": 8,
+      "byteSHA256ToPreserve": "91be37e1b64b8b1233b7e6375cd1bd9ffb65add827eb8e583e793cdeed38911b",
+      "before": {
+        "actualExit": 0,
+        "methods": 8,
+        "passed": 8,
+        "failed": 0,
+        "unittestReportedSeconds": 0.773,
+        "evidence": {
+          "path": "/workspace/scratch/first-minute/round-145/existing-name-before/execution.json",
+          "SHA256": "d17ed5716f3067b95d691ca3e99d234d266f19737011d4d836b8877b3363cc14"
+        }
+      },
+      "after": {
+        "actualExit": 1,
+        "toolFromParent": "d6f4c5",
+        "methods": 8,
+        "passed": 7,
+        "failed": 1,
+        "errors": 0,
+        "skipped": 0,
+        "failure": "test_scope",
+        "failureLine": 72,
+        "unexpectedAllowedPaths": [
+          "nishio-go/min/game.js",
+          "tests/test_nishio_guide_metadata_name.py"
+        ],
+        "elapsedSeconds": 1.2216531109952484,
+        "unittestReportedSeconds": 0.962,
+        "evidence": {
+          "path": "/workspace/scratch/first-minute/round-145/existing-name-after/execution.json",
+          "SHA256": "829cb586a2a2f4d380aaccbf6cac2e4a070fb2abaf50c377e57f7ddd6b5e5aaf"
+        }
+      },
+      "scopeMismatchExpectedNotObservedYet": false,
+      "scopeReason": "Actual test_scope fails because min/game.js and new regression file exceed old allowlist; docs not yet included in that measured failure, but future docs would also be outside allowlist.",
+      "doNotDeleteRelaxOrSkip": true,
+      "recordActualFailureSeparately": true,
+      "scopeMismatchObserved": true,
+      "assertionDeletedRelaxedOrSkipped": false
+    },
+    "requiredPytest": {
+      "before": {
+        "command": "pytest tests/",
+        "cwd": "/workspace/ricepia-firstminute-round145",
+        "actualToolExit": 127,
+        "chunk": "f4aef9",
+        "stderr": "/bin/bash: line 1: pytest: command not found\n",
+        "testsExecuted": 0
+      },
+      "after": {
+        "at": "2026-11-15T19:26:31.711826+00:00",
+        "command": "pytest tests/",
+        "cwd": "/workspace/ricepia-firstminute-round145",
+        "actualExit": 127,
+        "tool": "6d5311",
+        "testsExecuted": 0,
+        "stderr": "/bin/bash: line 1: pytest: command not found\n"
+      },
+      "wholeSuitePassed": false,
+      "hold": "CLI unavailable actual127/0tests already recorded; do not replace whole suite with targeted checks."
+    },
+    "fullNode": {
+      "status": "complete normal terminal, failed; not natural primary",
+      "command": "node tools/playtest.js; PLAYTEST_ONLY unset",
+      "sourceCommit": "69c0891a6c4be6a8057e01ff8f01034b1d49978f",
+      "logicalTerminalConditions": 231,
+      "logicalPass": 219,
+      "logicalFail": 12,
+      "allowedWholeGroupSkipsIncludedInPass": 3,
+      "wholeSkipKeys": [
+        "yuruMeiro",
+        "alley",
+        "mzSameCellGoal"
+      ],
+      "recordedGroups": 253,
+      "explicitTrueCountNotTerminalPass": 221,
+      "actualChildExit": 1,
+      "actualOuterExit": 1,
+      "actualOuterExitSource": "tests/full-node-root-closure.json; execution.json retains null",
+      "timeout": false,
+      "automaticRetries": 0,
+      "wrapperSeconds": 1706.932484,
+      "childExactDurationSeconds": null,
+      "walkReached": 4,
+      "walkCases": 4,
+      "recordedPageErrors": [],
+      "recordedErrorScopeCaveat": "空errorsは収集済みのページエラー欄。source922のLeaflet関連除外があり、全console/HTTP/ブラウザ事象の不在ではない。godotRec.errs=[]のshade不足をクラッシュとしない。",
+      "rootLiveBrowsers": [],
+      "wrapperBrowserClosureConfirmed": false,
+      "rootClosureConfirmed": true,
+      "plainBindErrno": 98,
+      "reuseBind": true,
+      "sourceFiles": 338,
+      "pythonTestFiles": 315,
+      "dependencyFiles": 550,
+      "sourceAndDependencySnapshotsUnchanged": true,
+      "sourceRehashByIndependentAuditMismatches": [],
+      "rawResultSHA256": "27a8fc2cc60765664491ccabff6d059f374e0f565f0400a6fd3ebddf1d331db3",
+      "rawResultCopied": true,
+      "auditSHA256": "1c4454252f6b06ca1b1f2a4674dde49d7d5bb9e9e8003339987c769389b3720b",
+      "failureKeys": [
+        "godotRec",
+        "swipeHold",
+        "restFinger",
+        "tiltDemoShown",
+        "a2hsAutoHide",
+        "tapDemoQuick",
+        "lowDemoKept",
+        "lowGoalDemo",
+        "rollNoDemo",
+        "infoSecondTap",
+        "infoRotate",
+        "speedLines"
+      ],
+      "limits": [
+        "R141の失敗10→今回12という件数差は因果未確定。過去の原因や前提を転記しない。通しfixtureの論理判定を自然初見・実機傾き・利用者体感・離脱改善と混同しない。",
+        "Logical passes include three allowed whole-group skips; not219 independent successful real behaviors."
+      ],
+      "rawResultPath": "tests/full-node-playtest.json",
+      "rawResultBytes": 98082
+    }
+  },
+  "protected": {
+    "AGENTS": {
+      "path": "/workspace/ricepia-firstminute-round145/AGENTS.md",
+      "SHA256": "3307716adf32bd25c5a9232821447251789c579f3192b423bad0c86c97814ab4"
+    },
+    "rules": [
+      "tilt usable",
+      "first real click requests tilt permission once even after previous refusal",
+      "tap prompt before permission",
+      "guidance while stopped",
+      "no start card",
+      "no arrival card",
+      "same28 characters and same character multiset for target name",
+      "one line, distance priority, current font and geometry",
+      "unknown nested/non-npc/fallback and escaping",
+      "protected engine.js/field3d.js/cards.js untouched"
+    ],
+    "openwrap": {
+      "classification": "operator decision boundary",
+      "status": "deferred; excluded from this candidate",
+      "source": "game.js:2525 current (2521 old) operator one-line/not-too-much-text comment; style.css:517-519",
+      "notAutomaticallyAuthorizedByOrdinaryDesignPermission": true
+    },
+    "ordinaryUnprotectedDesign": "Within authorized normal design scope; not blanket operator-wait for metadata-backed order only."
+  },
+  "metadataProvenance": {
+    "npcs": {
+      "source": {
+        "path": "/workspace/ricepia-firstminute-round145/nishio-go/npcs.js",
+        "SHA256": "e0e4f3ae807150b0b85902a5ccbdece6a72bd093c00b7a1554a2f00ebe047114"
+      },
+      "lines": [
+        2,
+        10
+      ],
+      "existingPolicy": "fictional local people, existing areas/spots/events/meibutsu/site facts only"
+    },
+    "spots": {
+      "source": {
+        "path": "/workspace/ricepia-firstminute-round145/nishio-go/spots.json",
+        "SHA256": "2b7eb05f8eaf13b6a6230326079003ec9cbeddeb8cedcd19f950234e5ec29ada"
+      },
+      "record": "spots[id=nishio-castle]",
+      "policyField": "_説明",
+      "scope": "Existing published-info-derived names copied in same characters/order changed; new geographic/history fact, coordinate or source added0. This reporter did not independently validate external factual sources."
+    }
+  },
+  "providedMaterial": [
+    {
+      "collection": "Sakurai110",
+      "id": "J01",
+      "ordinal": 60,
+      "title": "Ease of understanding and style [UI]",
+      "url": "https://www.youtube.com/watch?v=0Va3ue6Qk-0",
+      "sourceChapterLines": [
+        634,
+        642
+      ],
+      "sourceBodyLines": [
+        638,
+        640
+      ],
+      "sourceBodySHA256": "2bd781160e16e7db76d6d70fe647743990b2ccf4e981493acca6872918e773fd",
+      "existingLocator": "/workspace/scratch/first-minute/sakurai-full-20261114/broad-application-backlog.json chapters[id=J01]",
+      "existingNotes": "/workspace/scratch/first-minute/sakurai-full-20261114/category-j.md #J01",
+      "principles": [
+        "見やすさと装飾を一つの尺度で決めず、そのゲームで何を見つけてほしいかに合わせる。",
+        "関連する情報をまとめ、視線の順序・表示の大小・文字を整える。"
+      ],
+      "application": "行き先を見つける場面で、既存の場所名を人物名より先へ置く仮説。",
+      "limitation": "28字/1行/距離とmetadata条件は製品側の具体策。資料がこの実装やopenwrapを推奨したとはしない。",
+      "newFullRead": false,
+      "originalVideoViewed": false
+    },
+    {
+      "collection": "GMTK239",
+      "id": 89,
+      "title": "The Power of Video Game HUDs",
+      "url": "https://www.youtube.com/watch?v=4Bv45aPMGyI",
+      "sourceChapterLines": [
+        908,
+        913
+      ],
+      "sectionSHA256": "6ca6bbad43028aabf3322c7339ceaa8abcb21ff1cf51765fc8b37428471b0f36",
+      "existingLocator": "/workspace/scratch/first-minute/gmtk-20261115/application-backlog.json chapters[id=89]",
+      "existingNotes": "/workspace/scratch/first-minute/gmtk-20261115/batch-3/notes.md:225",
+      "principle": "HUDは現在状態の計器と行為の結果予告を分けて考える。情報を隠すだけでなく、重要度の階層と適時表示で認知負荷を下げる。見た目の没入感のために理解を犠牲にしない。",
+      "application": "情報を削ったり増やしたりする前に、HUD内の重要度を順序で示す。",
+      "limitation": "人の読解/離脱の改善は別測定。",
+      "newFullRead": false,
+      "originalVideoViewed": false
+    }
+  ],
+  "knownHistory": {
+    "newPhenomenonDiscoveryClaim": false,
+    "source": "/workspace/ricepia-firstminute-round145/docs/meiro.md:653",
+    "finding": "Nested-parenthesis name order was previously left unchanged because existing test205 requires unknown nested names to remain unchanged.",
+    "proposalDifference": "Do not widen regex. Add only exact known-source NPC metadata identity; all existing no-id/unknown-string boundary inputs keep old behavior.",
+    "note": "Historical broad hold is acknowledged; current candidate is the narrower source-identity branch authorized for comparison, not removal of existing boundary tests."
+  },
+  "coverage": {
+    "newFullChaptersRead": 0,
+    "originalVideosViewed": 0,
+    "GMTK239OrSakurai110ImplementedClaim": false,
+    "sourceCoverageFilesModified": 0
+  },
+  "humanEffect": {
+    "comprehensionMeasured": false,
+    "findingSpeedMeasured": false,
+    "retentionMeasured": false,
+    "improvement": null
+  },
+  "publication": {
+    "productCommit": "69c0891a6c4be6a8057e01ff8f01034b1d49978f",
+    "productCommitFiles": 3,
+    "productCommitAdditions": 123,
+    "PR": null,
+    "URL": null,
+    "draftCreated": false,
+    "merge": false,
+    "deployment": false,
+    "repoDocsCopied": false,
+    "status": "scratch final report candidate ready for root review/copy; HOLD retained, no PR/repo copy by preparer"
+  },
+  "hold": [
+    "Existing test205 original bytes:7pass/1scope failure after change",
+    "Required pytest tests/: pytest: command not found; actual127/0tests",
+    "Full Node complete:231terminal conditions,219pass including3whole skips,12fail; actualchild/outer1/1"
+  ],
+  "imageInventory": {
+    "count": 45,
+    "naturalCount": 34,
+    "primary": 4,
+    "repeatTerminalOld": 10,
+    "repeatTerminalNew": 10,
+    "layoutTerminalOld": 5,
+    "layoutTerminalNew": 5,
+    "fixtureV1Stopped": 1,
+    "fixtureV2": 10,
+    "fixtureTotal": 11,
+    "unknownIncluded": true,
+    "pilotIncluded": false,
+    "allCopiesByteIdentical": true,
+    "manifest": "images.json",
+    "fixtureCountsAddedToNatural": 0
+  },
+  "reporterActivity": {
+    "browser": 0,
+    "Node": 0,
+    "tests": 0,
+    "Git": 0,
+    "productEdits": 0,
+    "repoDocsEdits": 0,
+    "newScreenshotViews": 0,
+    "activeFullNodeOutputRead": false,
+    "scratchOnly": true,
+    "imageFindingSource": "fixed independent image audits; byte copying is not new viewing",
+    "readCompletedNodeAudit": true,
+    "readCompletedFixtureRun01": true,
+    "readCompletedFixtureV2": true
+  },
+  "updatedUTC": "2026-11-15T20:40:04.313665+00:00"
+}

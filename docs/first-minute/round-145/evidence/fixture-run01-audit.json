@@ -1,0 +1,588 @@
+{
+  "status": "FIXED_FAILED_FIXTURE_RUN_DIAGNOSTIC_ONLY",
+  "updatedUTC": "2026-11-15T20:25:39.984550+00:00",
+  "sourceHead": "69c0891a6c4be6a8057e01ff8f01034b1d49978f",
+  "case": 1,
+  "variant": "old",
+  "viewport": {
+    "width": 320,
+    "height": 568
+  },
+  "plannedCases": 10,
+  "completedCases": 1,
+  "acceptedObserved": 0,
+  "notRun": 9,
+  "beforeAfterPairs": 0,
+  "originalImagesAvailable": 1,
+  "originalImagesPersonallyViewed": 1,
+  "originalImagesUnviewed": 0,
+  "expectedImagesNotCreated": 9,
+  "outerExit": 1,
+  "childExit": 1,
+  "caseStatus": "FIXTURE_OBSERVED",
+  "safeToContinue": false,
+  "stopReason": "Input/error/source/process/closure receipt failed. Remaining cases NOTRUN; root must verify browser descendants closed.",
+  "errors": [
+    "Unexpected input event recorded"
+  ],
+  "pageErrors": [],
+  "consoleErrors": [],
+  "failedRequests": [],
+  "httpErrors": [],
+  "input": {
+    "commandsSent": 0,
+    "observedTrusted": 0,
+    "observedNonTrusted": 2,
+    "events": [
+      {
+        "type": "click",
+        "isTrusted": false,
+        "at": 1110,
+        "epoch": 1794774182189.5,
+        "pointerId": -1,
+        "key": null
+      },
+      {
+        "type": "click",
+        "isTrusted": false,
+        "at": 1110.8999999985099,
+        "epoch": 1794774182190.4,
+        "pointerId": -1,
+        "key": null
+      }
+    ],
+    "note": "入力送信0とイベント0は別。記録はnon-trusted click2件で停止。発火コード位置の調査は別担当。"
+  },
+  "sourceResponse": {
+    "valid": true,
+    "gameResponses": [
+      {
+        "url": "http://localhost:8000/nishio-go/min/game.js",
+        "status": 200,
+        "sha256": "45f4ba7b4aa8961222f5c57ac26428aff3aa8e5e9135bfd7c93989c0b5d7dc64",
+        "bytes": 276440,
+        "completedAt": 1794774181558
+      }
+    ],
+    "oldFulfill": [
+      {
+        "url": "http://localhost:8000/nishio-go/min/game.js",
+        "requestedAt": 1794774181187,
+        "file": "/workspace/ricepia-firstminute-round144/nishio-go/min/game.js",
+        "sha256": "45f4ba7b4aa8961222f5c57ac26428aff3aa8e5e9135bfd7c93989c0b5d7dc64",
+        "bytes": 276440
+      }
+    ],
+    "helperIdentity": {
+      "expectedSHA256": "916bc62cde495ad9e3885d1297f533174ea833a67932882c9e7ac650d76a62b7",
+      "actualSHA256": "916bc62cde495ad9e3885d1297f533174ea833a67932882c9e7ac650d76a62b7",
+      "sameSource": true
+    },
+    "limits": "サーバ実体は新minだが、この旧caseの応答はrouteした旧min45f4ba…である。両者を混同しない。"
+  },
+  "fixture": {
+    "assigned": true,
+    "guide": {
+      "kind": "npc",
+      "id": "castle-guide",
+      "name": "観光ボランティアガイドさん（西尾市歴史公園（西尾城跡））",
+      "by": "",
+      "why": "",
+      "alts": []
+    },
+    "helperOutput": "観光ボランティアガイドさん（西尾市歴史公園（西尾城跡））",
+    "helperPreservesFullNames": true,
+    "renderedNameUsesHelper": true,
+    "distanceAfterRender": "　915m",
+    "identity": {
+      "before": true,
+      "after": true
+    },
+    "visible": {
+      "before": true,
+      "after": true
+    },
+    "limits": "Layout fixture only. No natural-input, arrival, retention, or paired-seed claim. No distance DOM substitution. Actual renderGuide may arm existing glow; all state snapshots retained."
+  },
+  "restoration": {
+    "sameOriginalReference": true,
+    "stateChangedKeys": {
+      "beforeToAfterRender": [
+        "guide"
+      ],
+      "beforeToBeforeRestore": [
+        "guide"
+      ],
+      "beforeToAfterRestore": []
+    },
+    "stateAfterRestoreEqualsBeforeInjection": true
+  },
+  "closure": {
+    "contextClosed": true,
+    "browserClosed": true,
+    "beforeGateVerified": true,
+    "afterGateVerified": true,
+    "liveBrowsers": [],
+    "rootSourceGates": true,
+    "rootGitClean": true,
+    "rootReceipt": {
+      "path": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep/run-01/root-execution-receipt.json",
+      "sha256": "0452e25404047645500d98c7b32565dae3136b4138e30801418c1a34d63c9bfc"
+    }
+  },
+  "diagnostics": {
+    "beforePhoto": {
+      "epoch": 1794774182865.1,
+      "guide": {
+        "rawText": " 観光ボランティアガイドさん（西尾市歴史公園（西尾城跡））　915m",
+        "rect": {
+          "x": 25,
+          "y": 447.5,
+          "left": 25,
+          "top": 447.5,
+          "right": 295,
+          "bottom": 481,
+          "width": 270,
+          "height": 33.5
+        },
+        "fontSize": "13px",
+        "lineHeight": "19.5px",
+        "lineCount": null,
+        "clientWidth": 268,
+        "scrollWidth": 268,
+        "codePointLength": null,
+        "wholeGlyphCountInsideClip": null,
+        "ellipsisCSSApplicable": null,
+        "whollyInViewport": true,
+        "centerHitInside": true
+      },
+      "name": {
+        "rawText": "観光ボランティアガイドさん（西尾市歴史公園（西尾城跡））",
+        "rect": {
+          "x": 59,
+          "y": 454.5,
+          "left": 59,
+          "top": 454.5,
+          "right": 247.984375,
+          "bottom": 474,
+          "width": 188.984375,
+          "height": 19.5
+        },
+        "fontSize": "13px",
+        "lineHeight": "19.5px",
+        "lineCount": 1,
+        "clientWidth": 189,
+        "scrollWidth": 358,
+        "codePointLength": 28,
+        "wholeGlyphCountInsideClip": 14,
+        "ellipsisCSSApplicable": true,
+        "whollyInViewport": true,
+        "centerHitInside": true
+      },
+      "distance": {
+        "rawText": "　915m",
+        "rect": {
+          "x": 247.984375,
+          "y": 455.25,
+          "left": 247.984375,
+          "top": 455.25,
+          "right": 284,
+          "bottom": 473.25,
+          "width": 36.015625,
+          "height": 18
+        },
+        "fontSize": "12px",
+        "lineHeight": "18px",
+        "lineCount": 1,
+        "clientWidth": 36,
+        "scrollWidth": 36,
+        "codePointLength": 5,
+        "wholeGlyphCountInsideClip": 5,
+        "ellipsisCSSApplicable": false,
+        "whollyInViewport": true,
+        "centerHitInside": true
+      },
+      "visibleButtons": [
+        {
+          "rawText": "📱かたむけて ころがす",
+          "rect": {
+            "x": 10,
+            "y": 62,
+            "left": 10,
+            "top": 62,
+            "right": 188.484375,
+            "bottom": 102,
+            "width": 178.484375,
+            "height": 40
+          },
+          "fontSize": "20px",
+          "lineHeight": "20px",
+          "lineCount": null,
+          "clientWidth": 174,
+          "scrollWidth": 174,
+          "whollyInViewport": true,
+          "centerHitInside": true
+        },
+        {
+          "rawText": "マップ",
+          "rect": {
+            "x": 0,
+            "y": 511,
+            "left": 0,
+            "top": 511,
+            "right": 64,
+            "bottom": 568,
+            "width": 64,
+            "height": 57
+          },
+          "fontSize": "20px",
+          "lineHeight": "normal",
+          "lineCount": null,
+          "clientWidth": 64,
+          "scrollWidth": 64,
+          "whollyInViewport": true,
+          "centerHitInside": true
+        },
+        {
+          "rawText": "きろく",
+          "rect": {
+            "x": 64,
+            "y": 511,
+            "left": 64,
+            "top": 511,
+            "right": 128,
+            "bottom": 568,
+            "width": 64,
+            "height": 57
+          },
+          "fontSize": "20px",
+          "lineHeight": "normal",
+          "lineCount": null,
+          "clientWidth": 64,
+          "scrollWidth": 64,
+          "whollyInViewport": true,
+          "centerHitInside": true
+        },
+        {
+          "rawText": "こえ",
+          "rect": {
+            "x": 128,
+            "y": 511,
+            "left": 128,
+            "top": 511,
+            "right": 192,
+            "bottom": 568,
+            "width": 64,
+            "height": 57
+          },
+          "fontSize": "20px",
+          "lineHeight": "normal",
+          "lineCount": null,
+          "clientWidth": 64,
+          "scrollWidth": 64,
+          "whollyInViewport": true,
+          "centerHitInside": true
+        },
+        {
+          "rawText": "とくてん",
+          "rect": {
+            "x": 192,
+            "y": 511,
+            "left": 192,
+            "top": 511,
+            "right": 256,
+            "bottom": 568,
+            "width": 64,
+            "height": 57
+          },
+          "fontSize": "20px",
+          "lineHeight": "normal",
+          "lineCount": null,
+          "clientWidth": 64,
+          "scrollWidth": 64,
+          "whollyInViewport": true,
+          "centerHitInside": true
+        },
+        {
+          "rawText": "せってい",
+          "rect": {
+            "x": 256,
+            "y": 511,
+            "left": 256,
+            "top": 511,
+            "right": 320,
+            "bottom": 568,
+            "width": 64,
+            "height": 57
+          },
+          "fontSize": "20px",
+          "lineHeight": "normal",
+          "lineCount": null,
+          "clientWidth": 64,
+          "scrollWidth": 64,
+          "whollyInViewport": true,
+          "centerHitInside": true
+        }
+      ]
+    },
+    "afterPhoto": {
+      "epoch": 1794774183078.2,
+      "guide": {
+        "rawText": " 観光ボランティアガイドさん（西尾市歴史公園（西尾城跡））　915m",
+        "rect": {
+          "x": 25,
+          "y": 447.5,
+          "left": 25,
+          "top": 447.5,
+          "right": 295,
+          "bottom": 481,
+          "width": 270,
+          "height": 33.5
+        },
+        "fontSize": "13px",
+        "lineHeight": "19.5px",
+        "lineCount": null,
+        "clientWidth": 268,
+        "scrollWidth": 268,
+        "codePointLength": null,
+        "wholeGlyphCountInsideClip": null,
+        "ellipsisCSSApplicable": null,
+        "whollyInViewport": true,
+        "centerHitInside": true
+      },
+      "name": {
+        "rawText": "観光ボランティアガイドさん（西尾市歴史公園（西尾城跡））",
+        "rect": {
+          "x": 59,
+          "y": 454.5,
+          "left": 59,
+          "top": 454.5,
+          "right": 247.984375,
+          "bottom": 474,
+          "width": 188.984375,
+          "height": 19.5
+        },
+        "fontSize": "13px",
+        "lineHeight": "19.5px",
+        "lineCount": 1,
+        "clientWidth": 189,
+        "scrollWidth": 358,
+        "codePointLength": 28,
+        "wholeGlyphCountInsideClip": 14,
+        "ellipsisCSSApplicable": true,
+        "whollyInViewport": true,
+        "centerHitInside": true
+      },
+      "distance": {
+        "rawText": "　915m",
+        "rect": {
+          "x": 247.984375,
+          "y": 455.25,
+          "left": 247.984375,
+          "top": 455.25,
+          "right": 284,
+          "bottom": 473.25,
+          "width": 36.015625,
+          "height": 18
+        },
+        "fontSize": "12px",
+        "lineHeight": "18px",
+        "lineCount": 1,
+        "clientWidth": 36,
+        "scrollWidth": 36,
+        "codePointLength": 5,
+        "wholeGlyphCountInsideClip": 5,
+        "ellipsisCSSApplicable": false,
+        "whollyInViewport": true,
+        "centerHitInside": true
+      },
+      "visibleButtons": [
+        {
+          "rawText": "📱かたむけて ころがす",
+          "rect": {
+            "x": 10,
+            "y": 62,
+            "left": 10,
+            "top": 62,
+            "right": 188.484375,
+            "bottom": 102,
+            "width": 178.484375,
+            "height": 40
+          },
+          "fontSize": "20px",
+          "lineHeight": "20px",
+          "lineCount": null,
+          "clientWidth": 174,
+          "scrollWidth": 174,
+          "whollyInViewport": true,
+          "centerHitInside": true
+        },
+        {
+          "rawText": "マップ",
+          "rect": {
+            "x": 0,
+            "y": 511,
+            "left": 0,
+            "top": 511,
+            "right": 64,
+            "bottom": 568,
+            "width": 64,
+            "height": 57
+          },
+          "fontSize": "20px",
+          "lineHeight": "normal",
+          "lineCount": null,
+          "clientWidth": 64,
+          "scrollWidth": 64,
+          "whollyInViewport": true,
+          "centerHitInside": true
+        },
+        {
+          "rawText": "きろく",
+          "rect": {
+            "x": 64,
+            "y": 511,
+            "left": 64,
+            "top": 511,
+            "right": 128,
+            "bottom": 568,
+            "width": 64,
+            "height": 57
+          },
+          "fontSize": "20px",
+          "lineHeight": "normal",
+          "lineCount": null,
+          "clientWidth": 64,
+          "scrollWidth": 64,
+          "whollyInViewport": true,
+          "centerHitInside": true
+        },
+        {
+          "rawText": "こえ",
+          "rect": {
+            "x": 128,
+            "y": 511,
+            "left": 128,
+            "top": 511,
+            "right": 192,
+            "bottom": 568,
+            "width": 64,
+            "height": 57
+          },
+          "fontSize": "20px",
+          "lineHeight": "normal",
+          "lineCount": null,
+          "clientWidth": 64,
+          "scrollWidth": 64,
+          "whollyInViewport": true,
+          "centerHitInside": true
+        },
+        {
+          "rawText": "とくてん",
+          "rect": {
+            "x": 192,
+            "y": 511,
+            "left": 192,
+            "top": 511,
+            "right": 256,
+            "bottom": 568,
+            "width": 64,
+            "height": 57
+          },
+          "fontSize": "20px",
+          "lineHeight": "normal",
+          "lineCount": null,
+          "clientWidth": 64,
+          "scrollWidth": 64,
+          "whollyInViewport": true,
+          "centerHitInside": true
+        },
+        {
+          "rawText": "せってい",
+          "rect": {
+            "x": 256,
+            "y": 511,
+            "left": 256,
+            "top": 511,
+            "right": 320,
+            "bottom": 568,
+            "width": 64,
+            "height": 57
+          },
+          "fontSize": "20px",
+          "lineHeight": "normal",
+          "lineCount": null,
+          "clientWidth": 64,
+          "scrollWidth": 64,
+          "whollyInViewport": true,
+          "centerHitInside": true
+        }
+      ]
+    }
+  },
+  "geometry": {
+    "beforeAfterDifferences": [],
+    "buttonsPerDiagnostic": 6,
+    "buttonObservations": 12,
+    "outsideViewport": 0,
+    "centerHitFailures": 0,
+    "headingButtonRectangleIntersectionsBefore": [],
+    "headingButtonRectangleIntersectionsAfter": []
+  },
+  "photo": {
+    "file": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep/run-01/case-01-old/fixture.png",
+    "requestedAt": 1794774182907,
+    "pageMarkerBefore": {
+      "at": 1861.6999999955297,
+      "epoch": 1794774182941.2
+    },
+    "sha256": "4a464381f15a82485ceb1b15771678e279eb4f95364a61be834f329fa488ff2d",
+    "completedAt": 1794774183074,
+    "personallyViewed": true,
+    "visual": "人物先行「観光ボランティアガイドさん…」が1行で省略され、地名は原画像で読めない。915mは読める。傾き案内と下部5タブが見え、たからばこtoastは案内の上にあり当該写真では案内文字を覆っていない。"
+  },
+  "limitations": [
+    "失敗した表示fixture1件のみ。自然到達/入力/人の理解・離脱効果の証拠ではない。自然UNKNOWNや6対象の母数は不変。",
+    "比較用new画像は未作成。10枚/5サイズ完了や前後改善を主張しない。",
+    "28字はDOM全文、Range内14字はpaint可視文字数ではない。省略は原画像で確認した。",
+    "6ボタン×写真前後=12診断観測であり実タップ12回ではない。全操作域の検査でもない。",
+    "表示距離915mは実renderが返した値。注入したcastle-guideへの自然移動距離や到達結果とみなさない。"
+  ],
+  "evidence": [
+    {
+      "path": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep/run-01/case-01-old/case.json",
+      "sha256": "6921c8f8c7ff6ecdd9691ed68548bee53e28716fffb29d9cc9449032e9a650a5"
+    },
+    {
+      "path": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep/run-01/case-01-old/fixture.png",
+      "sha256": "4a464381f15a82485ceb1b15771678e279eb4f95364a61be834f329fa488ff2d"
+    },
+    {
+      "path": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep/run-01/report.json",
+      "sha256": "1e10b7d36821856094809e23a2e5b636dd6ee7359e0a2e68383796ff33dae777"
+    },
+    {
+      "path": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep/run-01/root-execution-receipt.json",
+      "sha256": "0452e25404047645500d98c7b32565dae3136b4138e30801418c1a34d63c9bfc"
+    },
+    {
+      "path": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep/root-execution-gate.json",
+      "sha256": "60a0c45f2f50cc6fe39282a988cfa2c3383ed303bc2a9c214e2d7d70364df617"
+    },
+    {
+      "path": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep/frozen.json",
+      "sha256": "15332ba6c3851bb03e2c3b2254a6e02f8cfc7691d6afd89421d885f5605750e8"
+    }
+  ],
+  "activity": {
+    "browser": 0,
+    "Node": 0,
+    "productParse": 0,
+    "tests": 0,
+    "HTTP": 0,
+    "Git": 0,
+    "productEdits": 0,
+    "originalImageView": 1,
+    "scratchAuditOnly": true
+  }
+}

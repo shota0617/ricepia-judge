@@ -1,0 +1,22 @@
+test_boundary_unchanged (__main__.GuideDispName205.test_boundary_unchanged)
+Codex注記（サイクル205）の境界：入れ子・複数組・半角だけ・空・先頭かっこは壊さずそのまま ... ok
+test_deterministic_and_permutation (__main__.GuideDispName205.test_deterministic_and_permutation) ... ok
+test_no_forbidden (__main__.GuideDispName205.test_no_forbidden) ... ok
+test_scope (__main__.GuideDispName205.test_scope) ... FAIL
+test_source (__main__.GuideDispName205.test_source) ... ok
+test_swap (__main__.GuideDispName205.test_swap) ... ok
+test_syntax (__main__.GuideDispName205.test_syntax) ... ok
+test_unchanged (__main__.GuideDispName205.test_unchanged) ... ok
+
+======================================================================
+FAIL: test_scope (__main__.GuideDispName205.test_scope)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/ricepia-firstminute-round145/tests/test_maze_loop4_205.py", line 72, in test_scope
+    self.assertLessEqual(files, {"nishio-go/game.js", "tests/test_maze_loop4_205.py"})
+AssertionError: {'tests/test_nishio_guide_metadata_name.py', 'nishio-go/min/game.js', 'nishio-go/game.js'} not less than or equal to {'nishio-go/game.js', 'tests/test_maze_loop4_205.py'}
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.962s
+
+FAILED (failures=1)

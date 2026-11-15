@@ -1,0 +1,17 @@
+{
+  "at": "2026-11-15T20:24:06.009804+00:00",
+  "actualOuterExit": 1,
+  "actualExitTool": "635daa",
+  "launchTool": "1477bd",
+  "session": 61411,
+  "reportSHA256": "1e10b7d36821856094809e23a2e5b636dd6ee7359e0a2e68383796ff33dae777",
+  "completedCases": 1,
+  "notRun": 9,
+  "observedAccepted": 0,
+  "liveBrowsers": [],
+  "childExit": 1,
+  "contextClosed": true,
+  "browserClosed": true,
+  "sourceGates": true,
+  "gitClean": true
+}

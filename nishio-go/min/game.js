@@ -2504,6 +2504,10 @@ function spotThumb(sp) {
 function guideDispName(g) {
   if (!g || !g.name) return '';
   if (g.kind !== 'npc') return g.name;
+
+  const n = g.id && typeof placeNpcs === 'function' && placeNpcs().find(n => n.id === g.id);
+  if (n && typeof n.name === 'string' && n.name && typeof n.spotName === 'string' && n.spotName
+    && g.name === `${n.name}（${n.spotName}）`) return `${n.spotName}（${n.name}）`;
   const m = /^([^（）]+)（([^（）]+)）$/.exec(g.name);
   return m ? `${m[2]}（${m[1]}）` : g.name;
 }

@@ -1,0 +1,410 @@
+{
+  "at": "2026-11-15T19:37:51.993326+00:00",
+  "actualExit": 0,
+  "launchTool": "d66c5e",
+  "completionTool": "b5c1d5",
+  "session": 58271,
+  "reportSHA256": "2e2e261825a232244cfe0fd4846338c478dd05bf57e8c97a9d78d87f48f5e82d",
+  "result": {
+    "complete": true,
+    "completedAttempts": 10,
+    "eligible": 6,
+    "unknown": 4,
+    "notRun": 0
+  },
+  "trials": [
+    {
+      "n": 1,
+      "hold": 40,
+      "status": "TARGET_REACHED",
+      "actions": 5,
+      "events": {
+        "pointerdown": 5,
+        "pointerup": 5,
+        "click": 5
+      },
+      "allTrusted": true,
+      "nativeHoldRange": [
+        40.0,
+        40.100000001490116
+      ],
+      "bothACK": 5,
+      "errors": [],
+      "photoEvidence": {
+        "stopMainText": "🏁 西尾市歴史公園（西尾城跡）（観光ボランティアガイドさん）",
+        "before": {
+          "sameAsStoppedMainText": true,
+          "containsBothLiterals": true,
+          "visibleMain": true
+        },
+        "after": {
+          "sameAsStoppedMainText": true,
+          "containsBothLiterals": true,
+          "visibleMain": true
+        },
+        "limitation": "Before/after diagnostic identity is separate from stop eligibility and screenshot acquisition. No excluded/replacement attempt if the identity changes."
+      },
+      "order": {
+        "personIndex": 17,
+        "placeIndex": 3
+      },
+      "name": "🏁 西尾市歴史公園（西尾城跡）（観光ボランティアガイドさん）",
+      "nameLineCount": 1,
+      "safe": true
+    },
+    {
+      "n": 2,
+      "hold": 200,
+      "status": "UNKNOWN_NOT_REACHED",
+      "actions": 8,
+      "events": {
+        "pointerdown": 8,
+        "pointerup": 8,
+        "click": 8
+      },
+      "allTrusted": true,
+      "nativeHoldRange": [
+        199.89999999850988,
+        201.0
+      ],
+      "bothACK": 8,
+      "errors": [],
+      "photoEvidence": {
+        "stopMainText": null,
+        "before": {
+          "sameAsStoppedMainText": false,
+          "containsBothLiterals": false,
+          "visibleMain": true
+        },
+        "after": {
+          "sameAsStoppedMainText": false,
+          "containsBothLiterals": false,
+          "visibleMain": true
+        },
+        "limitation": "Before/after diagnostic identity is separate from stop eligibility and screenshot acquisition. No excluded/replacement attempt if the identity changes."
+      },
+      "order": {
+        "personIndex": -1,
+        "placeIndex": -1
+      },
+      "name": "🏁 伊文神社（氏子のおばあさん）",
+      "nameLineCount": 1,
+      "safe": true
+    },
+    {
+      "n": 3,
+      "hold": 40,
+      "status": "TARGET_REACHED",
+      "actions": 5,
+      "events": {
+        "pointerdown": 5,
+        "pointerup": 5,
+        "click": 5
+      },
+      "allTrusted": true,
+      "nativeHoldRange": [
+        40.0,
+        42.100000001490116
+      ],
+      "bothACK": 5,
+      "errors": [],
+      "photoEvidence": {
+        "stopMainText": "🏁 西尾市歴史公園（西尾城跡）（観光ボランティアガイドさん）",
+        "before": {
+          "sameAsStoppedMainText": true,
+          "containsBothLiterals": true,
+          "visibleMain": true
+        },
+        "after": {
+          "sameAsStoppedMainText": true,
+          "containsBothLiterals": true,
+          "visibleMain": true
+        },
+        "limitation": "Before/after diagnostic identity is separate from stop eligibility and screenshot acquisition. No excluded/replacement attempt if the identity changes."
+      },
+      "order": {
+        "personIndex": 17,
+        "placeIndex": 3
+      },
+      "name": "🏁 西尾市歴史公園（西尾城跡）（観光ボランティアガイドさん）",
+      "nameLineCount": 1,
+      "safe": true
+    },
+    {
+      "n": 4,
+      "hold": 200,
+      "status": "TARGET_REACHED",
+      "actions": 5,
+      "events": {
+        "pointerdown": 5,
+        "pointerup": 5,
+        "click": 5
+      },
+      "allTrusted": true,
+      "nativeHoldRange": [
+        200.0,
+        205.0
+      ],
+      "bothACK": 5,
+      "errors": [],
+      "photoEvidence": {
+        "stopMainText": "🏁 西尾市歴史公園（西尾城跡）（観光ボランティアガイドさん）",
+        "before": {
+          "sameAsStoppedMainText": true,
+          "containsBothLiterals": true,
+          "visibleMain": true
+        },
+        "after": {
+          "sameAsStoppedMainText": true,
+          "containsBothLiterals": true,
+          "visibleMain": true
+        },
+        "limitation": "Before/after diagnostic identity is separate from stop eligibility and screenshot acquisition. No excluded/replacement attempt if the identity changes."
+      },
+      "order": {
+        "personIndex": 17,
+        "placeIndex": 3
+      },
+      "name": "🏁 西尾市歴史公園（西尾城跡）（観光ボランティアガイドさん）",
+      "nameLineCount": 1,
+      "safe": true
+    },
+    {
+      "n": 5,
+      "hold": 40,
+      "status": "TARGET_REACHED",
+      "actions": 5,
+      "events": {
+        "pointerdown": 5,
+        "pointerup": 5,
+        "click": 5
+      },
+      "allTrusted": true,
+      "nativeHoldRange": [
+        38.899999998509884,
+        40.0
+      ],
+      "bothACK": 5,
+      "errors": [],
+      "photoEvidence": {
+        "stopMainText": "🏁 西尾市歴史公園（西尾城跡）（観光ボランティアガイドさん）",
+        "before": {
+          "sameAsStoppedMainText": true,
+          "containsBothLiterals": true,
+          "visibleMain": true
+        },
+        "after": {
+          "sameAsStoppedMainText": true,
+          "containsBothLiterals": true,
+          "visibleMain": true
+        },
+        "limitation": "Before/after diagnostic identity is separate from stop eligibility and screenshot acquisition. No excluded/replacement attempt if the identity changes."
+      },
+      "order": {
+        "personIndex": 17,
+        "placeIndex": 3
+      },
+      "name": "🏁 西尾市歴史公園（西尾城跡）（観光ボランティアガイドさん）",
+      "nameLineCount": 1,
+      "safe": true
+    },
+    {
+      "n": 6,
+      "hold": 200,
+      "status": "TARGET_REACHED",
+      "actions": 5,
+      "events": {
+        "pointerdown": 5,
+        "pointerup": 5,
+        "click": 5
+      },
+      "allTrusted": true,
+      "nativeHoldRange": [
+        199.89999999850988,
+        200.0
+      ],
+      "bothACK": 5,
+      "errors": [],
+      "photoEvidence": {
+        "stopMainText": "🏁 西尾市歴史公園（西尾城跡）（観光ボランティアガイドさん）",
+        "before": {
+          "sameAsStoppedMainText": true,
+          "containsBothLiterals": true,
+          "visibleMain": true
+        },
+        "after": {
+          "sameAsStoppedMainText": true,
+          "containsBothLiterals": true,
+          "visibleMain": true
+        },
+        "limitation": "Before/after diagnostic identity is separate from stop eligibility and screenshot acquisition. No excluded/replacement attempt if the identity changes."
+      },
+      "order": {
+        "personIndex": 17,
+        "placeIndex": 3
+      },
+      "name": "🏁 西尾市歴史公園（西尾城跡）（観光ボランティアガイドさん）",
+      "nameLineCount": 1,
+      "safe": true
+    },
+    {
+      "n": 7,
+      "hold": 40,
+      "status": "UNKNOWN_NOT_REACHED",
+      "actions": 8,
+      "events": {
+        "pointerdown": 8,
+        "pointerup": 8,
+        "click": 8
+      },
+      "allTrusted": true,
+      "nativeHoldRange": [
+        39.899999998509884,
+        44.0
+      ],
+      "bothACK": 8,
+      "errors": [],
+      "photoEvidence": {
+        "stopMainText": null,
+        "before": {
+          "sameAsStoppedMainText": false,
+          "containsBothLiterals": false,
+          "visibleMain": true
+        },
+        "after": {
+          "sameAsStoppedMainText": false,
+          "containsBothLiterals": false,
+          "visibleMain": true
+        },
+        "limitation": "Before/after diagnostic identity is separate from stop eligibility and screenshot acquisition. No excluded/replacement attempt if the identity changes."
+      },
+      "order": {
+        "personIndex": -1,
+        "placeIndex": -1
+      },
+      "name": "🏁 伊文神社（氏子のおばあさん）",
+      "nameLineCount": 1,
+      "safe": true
+    },
+    {
+      "n": 8,
+      "hold": 200,
+      "status": "TARGET_REACHED",
+      "actions": 5,
+      "events": {
+        "pointerdown": 5,
+        "pointerup": 5,
+        "click": 5
+      },
+      "allTrusted": true,
+      "nativeHoldRange": [
+        200.0,
+        201.0
+      ],
+      "bothACK": 5,
+      "errors": [],
+      "photoEvidence": {
+        "stopMainText": "🏁 西尾市歴史公園（西尾城跡）（観光ボランティアガイドさん）",
+        "before": {
+          "sameAsStoppedMainText": true,
+          "containsBothLiterals": true,
+          "visibleMain": true
+        },
+        "after": {
+          "sameAsStoppedMainText": true,
+          "containsBothLiterals": true,
+          "visibleMain": true
+        },
+        "limitation": "Before/after diagnostic identity is separate from stop eligibility and screenshot acquisition. No excluded/replacement attempt if the identity changes."
+      },
+      "order": {
+        "personIndex": 17,
+        "placeIndex": 3
+      },
+      "name": "🏁 西尾市歴史公園（西尾城跡）（観光ボランティアガイドさん）",
+      "nameLineCount": 1,
+      "safe": true
+    },
+    {
+      "n": 9,
+      "hold": 40,
+      "status": "UNKNOWN_NOT_REACHED",
+      "actions": 8,
+      "events": {
+        "pointerdown": 8,
+        "pointerup": 8,
+        "click": 8
+      },
+      "allTrusted": true,
+      "nativeHoldRange": [
+        40.0,
+        43.0
+      ],
+      "bothACK": 8,
+      "errors": [],
+      "photoEvidence": {
+        "stopMainText": null,
+        "before": {
+          "sameAsStoppedMainText": false,
+          "containsBothLiterals": false,
+          "visibleMain": true
+        },
+        "after": {
+          "sameAsStoppedMainText": false,
+          "containsBothLiterals": false,
+          "visibleMain": true
+        },
+        "limitation": "Before/after diagnostic identity is separate from stop eligibility and screenshot acquisition. No excluded/replacement attempt if the identity changes."
+      },
+      "order": {
+        "personIndex": -1,
+        "placeIndex": -1
+      },
+      "name": "🏁 伊文神社（氏子のおばあさん）",
+      "nameLineCount": 1,
+      "safe": true
+    },
+    {
+      "n": 10,
+      "hold": 200,
+      "status": "UNKNOWN_NOT_REACHED",
+      "actions": 8,
+      "events": {
+        "pointerdown": 8,
+        "pointerup": 8,
+        "click": 8
+      },
+      "allTrusted": true,
+      "nativeHoldRange": [
+        199.89999999850988,
+        200.0
+      ],
+      "bothACK": 8,
+      "errors": [],
+      "photoEvidence": {
+        "stopMainText": null,
+        "before": {
+          "sameAsStoppedMainText": false,
+          "containsBothLiterals": false,
+          "visibleMain": true
+        },
+        "after": {
+          "sameAsStoppedMainText": false,
+          "containsBothLiterals": false,
+          "visibleMain": true
+        },
+        "limitation": "Before/after diagnostic identity is separate from stop eligibility and screenshot acquisition. No excluded/replacement attempt if the identity changes."
+      },
+      "order": {
+        "personIndex": -1,
+        "placeIndex": -1
+      },
+      "name": "🏁 伊文神社（氏子のおばあさん）",
+      "nameLineCount": 1,
+      "safe": true
+    }
+  ],
+  "liveBrowsers": [],
+  "head": "71bd05c991ba0e2715f687393081b997e3259648",
+  "gitStatus": " M nishio-go/game.js\n M nishio-go/min/game.js\n?? tests/test_nishio_guide_metadata_name.py\n"
+}

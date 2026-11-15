@@ -1,0 +1,714 @@
+[
+  {
+    "source": "/workspace/scratch/first-minute/round-145/preparation-bound145/observe-10s.png",
+    "packagePath": "images/primary-observe-10s.png",
+    "sha256": "933a2f2aeb0901855002083b6382de8b2d3d6f705539e71f4696470d58c02967",
+    "bytes": 275506,
+    "byteIdentical": true,
+    "group": "primary",
+    "phase": "old",
+    "moment": "observe-10s",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    }
+  },
+  {
+    "source": "/workspace/scratch/first-minute/round-145/preparation-bound145/play-10s.png",
+    "packagePath": "images/primary-play-10s.png",
+    "sha256": "1ece69cf3e0a2974feceaa834d2411e0cdc65b716e8436c08c53355c31f45d4f",
+    "bytes": 263964,
+    "byteIdentical": true,
+    "group": "primary",
+    "phase": "old",
+    "moment": "play-10s",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    }
+  },
+  {
+    "source": "/workspace/scratch/first-minute/round-145/preparation-bound145/play-30s.png",
+    "packagePath": "images/primary-play-30s.png",
+    "sha256": "8c8a7dc4d183dc384210b8c1760fc925592f11979197443799e418cdf541c9d1",
+    "bytes": 293301,
+    "byteIdentical": true,
+    "group": "primary",
+    "phase": "old",
+    "moment": "play-30s",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    }
+  },
+  {
+    "source": "/workspace/scratch/first-minute/round-145/preparation-bound145/play-60s.png",
+    "packagePath": "images/primary-play-60s.png",
+    "sha256": "93477d2d1d593552276966b9f313fce54bdd80c8f9771cf8e547abd54b820bc8",
+    "bytes": 311032,
+    "byteIdentical": true,
+    "group": "primary",
+    "phase": "old",
+    "moment": "play-60s",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    }
+  },
+  {
+    "source": "/workspace/scratch/first-minute/round-145/guide-name-prep/old-repeat10/trial-01/target.png",
+    "packagePath": "images/repeat-old-01.png",
+    "sha256": "c4aa15fbcdf9f4f31b3e7a69162c52a54757418cacccf5fdef505dccc9ac43aa",
+    "bytes": 269842,
+    "byteIdentical": true,
+    "group": "repeat",
+    "phase": "old",
+    "trial": 1,
+    "status": "TARGET_REACHED",
+    "holdMs": 40,
+    "viewport": {
+      "width": 390,
+      "height": 844
+    }
+  },
+  {
+    "source": "/workspace/scratch/first-minute/round-145/guide-name-prep/old-repeat10/trial-02/target.png",
+    "packagePath": "images/repeat-old-02.png",
+    "sha256": "0734bd586b11c81574b010fd5b5e9cc220a4580d5e79d212e984ccdd5f49ac9f",
+    "bytes": 269549,
+    "byteIdentical": true,
+    "group": "repeat",
+    "phase": "old",
+    "trial": 2,
+    "status": "TARGET_REACHED",
+    "holdMs": 200,
+    "viewport": {
+      "width": 390,
+      "height": 844
+    }
+  },
+  {
+    "source": "/workspace/scratch/first-minute/round-145/guide-name-prep/old-repeat10/trial-03/timeout-or-late.png",
+    "packagePath": "images/repeat-old-03.png",
+    "sha256": "cb467a6afbe347b51080b10c9ad7daadfc8454fad0d7f1b1aa13dc81473e86df",
+    "bytes": 323407,
+    "byteIdentical": true,
+    "group": "repeat",
+    "phase": "old",
+    "trial": 3,
+    "status": "UNKNOWN_NOT_REACHED",
+    "holdMs": 40,
+    "viewport": {
+      "width": 390,
+      "height": 844
+    }
+  },
+  {
+    "source": "/workspace/scratch/first-minute/round-145/guide-name-prep/old-repeat10/trial-04/timeout-or-late.png",
+    "packagePath": "images/repeat-old-04.png",
+    "sha256": "4fd8ec632de07a61d01f757f3ce3631714571e2f809ea0e4c73af241a4d1126c",
+    "bytes": 333722,
+    "byteIdentical": true,
+    "group": "repeat",
+    "phase": "old",
+    "trial": 4,
+    "status": "UNKNOWN_NOT_REACHED",
+    "holdMs": 200,
+    "viewport": {
+      "width": 390,
+      "height": 844
+    }
+  },
+  {
+    "source": "/workspace/scratch/first-minute/round-145/guide-name-prep/old-repeat10/trial-05/target.png",
+    "packagePath": "images/repeat-old-05.png",
+    "sha256": "8e4da6c61ac5bfe5ea84ad0e4f92674ccbe2044431b0a84a704ed44b0371a3e4",
+    "bytes": 272307,
+    "byteIdentical": true,
+    "group": "repeat",
+    "phase": "old",
+    "trial": 5,
+    "status": "TARGET_REACHED",
+    "holdMs": 40,
+    "viewport": {
+      "width": 390,
+      "height": 844
+    }
+  },
+  {
+    "source": "/workspace/scratch/first-minute/round-145/guide-name-prep/old-repeat10/trial-06/timeout-or-late.png",
+    "packagePath": "images/repeat-old-06.png",
+    "sha256": "8efae1faf7c20928b8f57b108f735bbedd5028e901cd8b3a24e825fce8d03ee0",
+    "bytes": 337208,
+    "byteIdentical": true,
+    "group": "repeat",
+    "phase": "old",
+    "trial": 6,
+    "status": "UNKNOWN_NOT_REACHED",
+    "holdMs": 200,
+    "viewport": {
+      "width": 390,
+      "height": 844
+    }
+  },
+  {
+    "source": "/workspace/scratch/first-minute/round-145/guide-name-prep/old-repeat10/trial-07/target.png",
+    "packagePath": "images/repeat-old-07.png",
+    "sha256": "201f9f13a31d0c4e07e098143eb35453fddf0f42baa355008c3c94b6c884c56b",
+    "bytes": 271066,
+    "byteIdentical": true,
+    "group": "repeat",
+    "phase": "old",
+    "trial": 7,
+    "status": "TARGET_REACHED",
+    "holdMs": 40,
+    "viewport": {
+      "width": 390,
+      "height": 844
+    }
+  },
+  {
+    "source": "/workspace/scratch/first-minute/round-145/guide-name-prep/old-repeat10/trial-08/target.png",
+    "packagePath": "images/repeat-old-08.png",
+    "sha256": "0f5ba3010eee7264914d5d18a5708c6ba07a496195e51a581c1bd90a5fc8f22f",
+    "bytes": 271539,
+    "byteIdentical": true,
+    "group": "repeat",
+    "phase": "old",
+    "trial": 8,
+    "status": "TARGET_REACHED",
+    "holdMs": 200,
+    "viewport": {
+      "width": 390,
+      "height": 844
+    }
+  },
+  {
+    "source": "/workspace/scratch/first-minute/round-145/guide-name-prep/old-repeat10/trial-09/target.png",
+    "packagePath": "images/repeat-old-09.png",
+    "sha256": "e42853cab6a5b7a5c0288619b1865719d2ac4dca5f7f8498ca8317354a5a50f1",
+    "bytes": 267143,
+    "byteIdentical": true,
+    "group": "repeat",
+    "phase": "old",
+    "trial": 9,
+    "status": "TARGET_REACHED",
+    "holdMs": 40,
+    "viewport": {
+      "width": 390,
+      "height": 844
+    }
+  },
+  {
+    "source": "/workspace/scratch/first-minute/round-145/guide-name-prep/old-repeat10/trial-10/timeout-or-late.png",
+    "packagePath": "images/repeat-old-10.png",
+    "sha256": "a0ea81895fc85cb0a02efb6163380112f017f9175fca3c44f4e8e118dc67c528",
+    "bytes": 331612,
+    "byteIdentical": true,
+    "group": "repeat",
+    "phase": "old",
+    "trial": 10,
+    "status": "UNKNOWN_NOT_REACHED",
+    "holdMs": 200,
+    "viewport": {
+      "width": 390,
+      "height": 844
+    }
+  },
+  {
+    "source": "/workspace/scratch/first-minute/round-145/guide-name-prep/new-repeat10/trial-01/target.png",
+    "packagePath": "images/repeat-new-01.png",
+    "sha256": "6b66b78198f4586cf8f6692a65f2f38d58b1b04eca94f70aa20846e3bb44bb66",
+    "bytes": 271058,
+    "byteIdentical": true,
+    "group": "repeat",
+    "phase": "new",
+    "trial": 1,
+    "status": "TARGET_REACHED",
+    "holdMs": 40,
+    "viewport": {
+      "width": 390,
+      "height": 844
+    }
+  },
+  {
+    "source": "/workspace/scratch/first-minute/round-145/guide-name-prep/new-repeat10/trial-02/timeout-or-late.png",
+    "packagePath": "images/repeat-new-02.png",
+    "sha256": "a1b2968c7021564e514b3291b0b432ce5f6ac9782f7a5c3c1baa173b4ca29d5a",
+    "bytes": 331831,
+    "byteIdentical": true,
+    "group": "repeat",
+    "phase": "new",
+    "trial": 2,
+    "status": "UNKNOWN_NOT_REACHED",
+    "holdMs": 200,
+    "viewport": {
+      "width": 390,
+      "height": 844
+    }
+  },
+  {
+    "source": "/workspace/scratch/first-minute/round-145/guide-name-prep/new-repeat10/trial-03/target.png",
+    "packagePath": "images/repeat-new-03.png",
+    "sha256": "7ead8d34b8722c2d02817c9d86ee36225287f1f7248e4f2879c260b19f459bc4",
+    "bytes": 269756,
+    "byteIdentical": true,
+    "group": "repeat",
+    "phase": "new",
+    "trial": 3,
+    "status": "TARGET_REACHED",
+    "holdMs": 40,
+    "viewport": {
+      "width": 390,
+      "height": 844
+    }
+  },
+  {
+    "source": "/workspace/scratch/first-minute/round-145/guide-name-prep/new-repeat10/trial-04/target.png",
+    "packagePath": "images/repeat-new-04.png",
+    "sha256": "df37754e10f9f47d16e0ff465f260bf2da6ea9f26608de6a3b3debf733f2fd5b",
+    "bytes": 268286,
+    "byteIdentical": true,
+    "group": "repeat",
+    "phase": "new",
+    "trial": 4,
+    "status": "TARGET_REACHED",
+    "holdMs": 200,
+    "viewport": {
+      "width": 390,
+      "height": 844
+    }
+  },
+  {
+    "source": "/workspace/scratch/first-minute/round-145/guide-name-prep/new-repeat10/trial-05/target.png",
+    "packagePath": "images/repeat-new-05.png",
+    "sha256": "5c82fe15d9e9a047a479286d64229712c1f6d7298e30c25f4a8dda663d5b1db6",
+    "bytes": 270315,
+    "byteIdentical": true,
+    "group": "repeat",
+    "phase": "new",
+    "trial": 5,
+    "status": "TARGET_REACHED",
+    "holdMs": 40,
+    "viewport": {
+      "width": 390,
+      "height": 844
+    }
+  },
+  {
+    "source": "/workspace/scratch/first-minute/round-145/guide-name-prep/new-repeat10/trial-06/target.png",
+    "packagePath": "images/repeat-new-06.png",
+    "sha256": "f1ff3ae800d0099ba7e065d7fb5119a21e1a4e42ccb5c484b6de0ac3415025cc",
+    "bytes": 268704,
+    "byteIdentical": true,
+    "group": "repeat",
+    "phase": "new",
+    "trial": 6,
+    "status": "TARGET_REACHED",
+    "holdMs": 200,
+    "viewport": {
+      "width": 390,
+      "height": 844
+    }
+  },
+  {
+    "source": "/workspace/scratch/first-minute/round-145/guide-name-prep/new-repeat10/trial-07/timeout-or-late.png",
+    "packagePath": "images/repeat-new-07.png",
+    "sha256": "0272540ff605d7aefe84420db44d97ac6cd717312aac1dc17d4982695c9ff81d",
+    "bytes": 326369,
+    "byteIdentical": true,
+    "group": "repeat",
+    "phase": "new",
+    "trial": 7,
+    "status": "UNKNOWN_NOT_REACHED",
+    "holdMs": 40,
+    "viewport": {
+      "width": 390,
+      "height": 844
+    }
+  },
+  {
+    "source": "/workspace/scratch/first-minute/round-145/guide-name-prep/new-repeat10/trial-08/target.png",
+    "packagePath": "images/repeat-new-08.png",
+    "sha256": "3f881d59f433988f65c29a9f7cb42f21db27513ead5b6b174baa3cb24ae24e88",
+    "bytes": 269354,
+    "byteIdentical": true,
+    "group": "repeat",
+    "phase": "new",
+    "trial": 8,
+    "status": "TARGET_REACHED",
+    "holdMs": 200,
+    "viewport": {
+      "width": 390,
+      "height": 844
+    }
+  },
+  {
+    "source": "/workspace/scratch/first-minute/round-145/guide-name-prep/new-repeat10/trial-09/timeout-or-late.png",
+    "packagePath": "images/repeat-new-09.png",
+    "sha256": "c7908b8cdd2918958cb803589289abf342602593814f425177cea907d62bb491",
+    "bytes": 323868,
+    "byteIdentical": true,
+    "group": "repeat",
+    "phase": "new",
+    "trial": 9,
+    "status": "UNKNOWN_NOT_REACHED",
+    "holdMs": 40,
+    "viewport": {
+      "width": 390,
+      "height": 844
+    }
+  },
+  {
+    "source": "/workspace/scratch/first-minute/round-145/guide-name-prep/new-repeat10/trial-10/timeout-or-late.png",
+    "packagePath": "images/repeat-new-10.png",
+    "sha256": "0799d5832c537bb7ee6dceb60a1235200129c901b28c02a8454d37fa1ec756cc",
+    "bytes": 323770,
+    "byteIdentical": true,
+    "group": "repeat",
+    "phase": "new",
+    "trial": 10,
+    "status": "UNKNOWN_NOT_REACHED",
+    "holdMs": 200,
+    "viewport": {
+      "width": 390,
+      "height": 844
+    }
+  },
+  {
+    "source": "/workspace/scratch/first-minute/round-145/guide-name-layout-prep/old-layout5/trial-01/target.png",
+    "packagePath": "images/layout-old-01.png",
+    "sha256": "10f05af74922e9338c2d83c6fb5f66d34379f319d3ee72696170e021d6f81dc0",
+    "bytes": 143420,
+    "byteIdentical": true,
+    "group": "layout",
+    "phase": "old",
+    "trial": 1,
+    "status": "TARGET_REACHED",
+    "holdMs": 40,
+    "viewport": {
+      "width": 320,
+      "height": 568
+    }
+  },
+  {
+    "source": "/workspace/scratch/first-minute/round-145/guide-name-layout-prep/old-layout5/trial-02/timeout-or-late.png",
+    "packagePath": "images/layout-old-02.png",
+    "sha256": "b8f581c4b5121327439e842e20cdfd3e19b08c8b573b4ec1b430e55584a50802",
+    "bytes": 321638,
+    "byteIdentical": true,
+    "group": "layout",
+    "phase": "old",
+    "trial": 2,
+    "status": "UNKNOWN_NOT_REACHED",
+    "holdMs": 40,
+    "viewport": {
+      "width": 390,
+      "height": 844
+    }
+  },
+  {
+    "source": "/workspace/scratch/first-minute/round-145/guide-name-layout-prep/old-layout5/trial-03/timeout-or-late.png",
+    "packagePath": "images/layout-old-03.png",
+    "sha256": "ffb63ba61cd5104e0587d7d2895c97a9f5bdc5214f7677778886cb6dc4950c4b",
+    "bytes": 105735,
+    "byteIdentical": true,
+    "group": "layout",
+    "phase": "old",
+    "trial": 3,
+    "status": "UNKNOWN_NOT_REACHED",
+    "holdMs": 40,
+    "viewport": {
+      "width": 568,
+      "height": 320
+    }
+  },
+  {
+    "source": "/workspace/scratch/first-minute/round-145/guide-name-layout-prep/old-layout5/trial-04/target.png",
+    "packagePath": "images/layout-old-04.png",
+    "sha256": "8ca7305666d15a6f8e80138185500bc3cb252aced0c1fd221f0f42cfdda8a0d3",
+    "bytes": 217002,
+    "byteIdentical": true,
+    "group": "layout",
+    "phase": "old",
+    "trial": 4,
+    "status": "TARGET_REACHED",
+    "holdMs": 40,
+    "viewport": {
+      "width": 844,
+      "height": 390
+    }
+  },
+  {
+    "source": "/workspace/scratch/first-minute/round-145/guide-name-layout-prep/old-layout5/trial-05/target.png",
+    "packagePath": "images/layout-old-05.png",
+    "sha256": "288389ca9da139d5eab10eeeeab72062b8edec741e1d897885b674574107e5cc",
+    "bytes": 357572,
+    "byteIdentical": true,
+    "group": "layout",
+    "phase": "old",
+    "trial": 5,
+    "status": "TARGET_REACHED",
+    "holdMs": 40,
+    "viewport": {
+      "width": 820,
+      "height": 1180
+    }
+  },
+  {
+    "source": "/workspace/scratch/first-minute/round-145/guide-name-layout-prep/new-layout5/trial-01/timeout-or-late.png",
+    "packagePath": "images/layout-new-01.png",
+    "sha256": "990f8a0eeb94960745ff9f59acbae4875f33c85662e6764b0526831d53be7f08",
+    "bytes": 186739,
+    "byteIdentical": true,
+    "group": "layout",
+    "phase": "new",
+    "trial": 1,
+    "status": "UNKNOWN_NOT_REACHED",
+    "holdMs": 40,
+    "viewport": {
+      "width": 320,
+      "height": 568
+    }
+  },
+  {
+    "source": "/workspace/scratch/first-minute/round-145/guide-name-layout-prep/new-layout5/trial-02/timeout-or-late.png",
+    "packagePath": "images/layout-new-02.png",
+    "sha256": "c583cd9d9260713fe6dfc570b358efca6dc09e6cdc62001a6e08a254e0bd35cd",
+    "bytes": 316879,
+    "byteIdentical": true,
+    "group": "layout",
+    "phase": "new",
+    "trial": 2,
+    "status": "UNKNOWN_NOT_REACHED",
+    "holdMs": 40,
+    "viewport": {
+      "width": 390,
+      "height": 844
+    }
+  },
+  {
+    "source": "/workspace/scratch/first-minute/round-145/guide-name-layout-prep/new-layout5/trial-03/timeout-or-late.png",
+    "packagePath": "images/layout-new-03.png",
+    "sha256": "fecd9208166e91710b047d01c652213fdbf03bd31686aa3d5d89c23bcdea8571",
+    "bytes": 105570,
+    "byteIdentical": true,
+    "group": "layout",
+    "phase": "new",
+    "trial": 3,
+    "status": "UNKNOWN_NOT_REACHED",
+    "holdMs": 40,
+    "viewport": {
+      "width": 568,
+      "height": 320
+    }
+  },
+  {
+    "source": "/workspace/scratch/first-minute/round-145/guide-name-layout-prep/new-layout5/trial-04/timeout-or-late.png",
+    "packagePath": "images/layout-new-04.png",
+    "sha256": "e4eb266520b7e5fe00d48c958ac70f45f5abef339e18910d2030618d8ebb1d4e",
+    "bytes": 237887,
+    "byteIdentical": true,
+    "group": "layout",
+    "phase": "new",
+    "trial": 4,
+    "status": "UNKNOWN_NOT_REACHED",
+    "holdMs": 40,
+    "viewport": {
+      "width": 844,
+      "height": 390
+    }
+  },
+  {
+    "source": "/workspace/scratch/first-minute/round-145/guide-name-layout-prep/new-layout5/trial-05/target.png",
+    "packagePath": "images/layout-new-05.png",
+    "sha256": "5797df10f0b008abcc6081ac0de9fbaeaac42716aa95e2f03d5b53c5f1ce17a7",
+    "bytes": 354550,
+    "byteIdentical": true,
+    "group": "layout",
+    "phase": "new",
+    "trial": 5,
+    "status": "TARGET_REACHED",
+    "holdMs": 40,
+    "viewport": {
+      "width": 820,
+      "height": 1180
+    }
+  },
+  {
+    "source": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep/run-01/case-01-old/fixture.png",
+    "packagePath": "images/fixture-v1-case-01-old.png",
+    "sha256": "4a464381f15a82485ceb1b15771678e279eb4f95364a61be834f329fa488ff2d",
+    "bytes": 171314,
+    "byteIdentical": true,
+    "group": "fixture-v1",
+    "phase": "old",
+    "case": 1,
+    "viewport": {
+      "width": 320,
+      "height": 568
+    },
+    "status": "STOPPED_UNACCEPTED",
+    "separateFromNatural": true
+  },
+  {
+    "source": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep-v2/run-01/case-01-old/fixture.png",
+    "packagePath": "images/fixture-v2-case-01-old.png",
+    "sha256": "a57736b81fd682d945c5754db266180b8a4afb1f7cdb477079226a076edd94ba",
+    "bytes": 171858,
+    "byteIdentical": true,
+    "group": "fixture-v2",
+    "phase": "old",
+    "case": 1,
+    "viewport": {
+      "width": 320,
+      "height": 568
+    },
+    "status": "FIXTURE_OBSERVED_not_a_layout_pass",
+    "separateFromNatural": true
+  },
+  {
+    "source": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep-v2/run-01/case-02-new/fixture.png",
+    "packagePath": "images/fixture-v2-case-02-new.png",
+    "sha256": "214bd1d61ec84fe11b9aacbb958ca7824578f718f334238607789517b9a06c5b",
+    "bytes": 173488,
+    "byteIdentical": true,
+    "group": "fixture-v2",
+    "phase": "new",
+    "case": 2,
+    "viewport": {
+      "width": 320,
+      "height": 568
+    },
+    "status": "FIXTURE_OBSERVED_not_a_layout_pass",
+    "separateFromNatural": true
+  },
+  {
+    "source": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep-v2/run-01/case-03-old/fixture.png",
+    "packagePath": "images/fixture-v2-case-03-old.png",
+    "sha256": "121cc448e6e417c8bd635c22e4b3033b2c8bfb922b63cad5201ab1a805e86645",
+    "bytes": 327504,
+    "byteIdentical": true,
+    "group": "fixture-v2",
+    "phase": "old",
+    "case": 3,
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "status": "FIXTURE_OBSERVED_not_a_layout_pass",
+    "separateFromNatural": true
+  },
+  {
+    "source": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep-v2/run-01/case-04-new/fixture.png",
+    "packagePath": "images/fixture-v2-case-04-new.png",
+    "sha256": "a5285bd38336abdda55cddfbd354e7a6851c361fd1a6cfa23e36588e202a5190",
+    "bytes": 322180,
+    "byteIdentical": true,
+    "group": "fixture-v2",
+    "phase": "new",
+    "case": 4,
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "status": "FIXTURE_OBSERVED_not_a_layout_pass",
+    "separateFromNatural": true
+  },
+  {
+    "source": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep-v2/run-01/case-05-old/fixture.png",
+    "packagePath": "images/fixture-v2-case-05-old.png",
+    "sha256": "1d83d732d36ad1dc95c2d751376f8a5ef38c7f972b57404e1c5f65a4ce3fd887",
+    "bytes": 121108,
+    "byteIdentical": true,
+    "group": "fixture-v2",
+    "phase": "old",
+    "case": 5,
+    "viewport": {
+      "width": 568,
+      "height": 320
+    },
+    "status": "FIXTURE_OBSERVED_not_a_layout_pass",
+    "separateFromNatural": true
+  },
+  {
+    "source": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep-v2/run-01/case-06-new/fixture.png",
+    "packagePath": "images/fixture-v2-case-06-new.png",
+    "sha256": "e2a14cccaa6aa53939cef0ac43e6ade129691708f844fe791f2d7b1ab4d51e52",
+    "bytes": 123611,
+    "byteIdentical": true,
+    "group": "fixture-v2",
+    "phase": "new",
+    "case": 6,
+    "viewport": {
+      "width": 568,
+      "height": 320
+    },
+    "status": "FIXTURE_OBSERVED_not_a_layout_pass",
+    "separateFromNatural": true
+  },
+  {
+    "source": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep-v2/run-01/case-07-old/fixture.png",
+    "packagePath": "images/fixture-v2-case-07-old.png",
+    "sha256": "de22d766f1da6bafc59e2145dc720b6c8ae2817b8396c9fa5b5bac8079109f4f",
+    "bytes": 255968,
+    "byteIdentical": true,
+    "group": "fixture-v2",
+    "phase": "old",
+    "case": 7,
+    "viewport": {
+      "width": 844,
+      "height": 390
+    },
+    "status": "FIXTURE_OBSERVED_not_a_layout_pass",
+    "separateFromNatural": true
+  },
+  {
+    "source": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep-v2/run-01/case-08-new/fixture.png",
+    "packagePath": "images/fixture-v2-case-08-new.png",
+    "sha256": "e51081dde224df2112355ac71e4f37a53d2d813b633f7b65fb66a974aeac42a1",
+    "bytes": 253345,
+    "byteIdentical": true,
+    "group": "fixture-v2",
+    "phase": "new",
+    "case": 8,
+    "viewport": {
+      "width": 844,
+      "height": 390
+    },
+    "status": "FIXTURE_OBSERVED_not_a_layout_pass",
+    "separateFromNatural": true
+  },
+  {
+    "source": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep-v2/run-01/case-09-old/fixture.png",
+    "packagePath": "images/fixture-v2-case-09-old.png",
+    "sha256": "7a8a14d20b32b9d996d21517d0fd34ee70aba4a43fe6a08a79813558d5090144",
+    "bytes": 581800,
+    "byteIdentical": true,
+    "group": "fixture-v2",
+    "phase": "old",
+    "case": 9,
+    "viewport": {
+      "width": 820,
+      "height": 1180
+    },
+    "status": "FIXTURE_OBSERVED_not_a_layout_pass",
+    "separateFromNatural": true
+  },
+  {
+    "source": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep-v2/run-01/case-10-new/fixture.png",
+    "packagePath": "images/fixture-v2-case-10-new.png",
+    "sha256": "1e0b5708a4724a555894b871dd19cd07537d23ba6f6d7599cbc5431cdfd6e77d",
+    "bytes": 578747,
+    "byteIdentical": true,
+    "group": "fixture-v2",
+    "phase": "new",
+    "case": 10,
+    "viewport": {
+      "width": 820,
+      "height": 1180
+    },
+    "status": "FIXTURE_OBSERVED_not_a_layout_pass",
+    "separateFromNatural": true
+  }
+]

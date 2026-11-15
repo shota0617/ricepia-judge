@@ -2504,6 +2504,10 @@ function spotThumb(sp) {
 function guideDispName(g) {
   if (!g || !g.name) return '';
   if (g.kind !== 'npc') return g.name;
+  // 元の人・場所と名前が一致するときだけ、入れ子のかっこも場所を先にする。
+  const n = g.id && typeof placeNpcs === 'function' && placeNpcs().find(n => n.id === g.id);
+  if (n && typeof n.name === 'string' && n.name && typeof n.spotName === 'string' && n.spotName
+    && g.name === `${n.name}（${n.spotName}）`) return `${n.spotName}（${n.name}）`;
   const m = /^([^（）]+)（([^（）]+)）$/.exec(g.name);
   return m ? `${m[2]}（${m[1]}）` : g.name;
 }

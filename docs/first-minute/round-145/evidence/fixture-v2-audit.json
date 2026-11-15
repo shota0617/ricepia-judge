@@ -1,0 +1,5289 @@
+{
+  "status": "FIXED_V2_CONTROLLED_DISPLAY_AUDIT",
+  "updatedUTC": "2026-11-15T20:37:32.864506+00:00",
+  "sourceHead": "69c0891a6c4be6a8057e01ff8f01034b1d49978f",
+  "frozenSHA256": "b33e6f466bae782042050df3f0436d59312bf327ca27ad192d65f9ea5c3fdce2",
+  "scope": "5 sizes × old/new, one fresh context each; temporary guide display fixture. Natural trials remain unchanged.",
+  "counts": {
+    "completedCases": 10,
+    "recordedObserved": 10,
+    "unknown": 0,
+    "notRun": 0,
+    "originalImagesViewed": 10,
+    "originalImagesUnviewed": 0,
+    "actualOuterExit": 0,
+    "actualChildExits": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "contextAndBrowserClosed": 10,
+    "verifiedBeforeAfterGates": 20,
+    "inputCommands": 0,
+    "trustedInputs": 0,
+    "classifiedBootstrapSynthetic": 20,
+    "unexpectedInputs": 0,
+    "totalDOMEvents": 20,
+    "independentBootstrapMismatch": [],
+    "nameOneLineDiagnosticObservations": 20,
+    "buttonObservations": 120,
+    "buttonsPerDiagnostic": 6,
+    "buttonOutsideViewport": 0,
+    "buttonCenterHitFailures": 0,
+    "originalGuideReferenceRestored": 10,
+    "fullStateSnapshotUnchanged": 2,
+    "strictStableSameConditionPairs": 0
+  },
+  "cases": [
+    {
+      "case": 1,
+      "directory": "case-01-old",
+      "variant": "old",
+      "viewport": {
+        "width": 320,
+        "height": 568
+      },
+      "source": {
+        "path": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep-v2/run-01/case-01-old/case.json",
+        "sha256": "1b25ca34e72779f575edf8380a57890e352aacf83090fb7a7570d0a4d027e788"
+      },
+      "status": "FIXTURE_OBSERVED",
+      "sourceResponseValidIndependently": true,
+      "gameResponseSHA256": "45f4ba7b4aa8961222f5c57ac26428aff3aa8e5e9135bfd7c93989c0b5d7dc64",
+      "meiroResponseSHA256": "59c9977fa3e6557295deb2c816889711f494f3c142574f065766656b25b2043e",
+      "helperSourceSHA256": "916bc62cde495ad9e3885d1297f533174ea833a67932882c9e7ac650d76a62b7",
+      "inputCommands": 0,
+      "events": [
+        {
+          "type": "click",
+          "isTrusted": false,
+          "at": 965.9000000059605,
+          "pointerId": -1,
+          "detail": 0,
+          "button": 0,
+          "buttons": 0,
+          "phase": "dom-content-loaded",
+          "readyState": "interactive",
+          "targetTag": "BUTTON",
+          "targetId": "meiroBtn",
+          "productionFrames": [
+            [
+              "min/meiro.js",
+              "836",
+              "32"
+            ]
+          ],
+          "independentExactMatch": true
+        },
+        {
+          "type": "click",
+          "isTrusted": false,
+          "at": 967.4000000059605,
+          "pointerId": -1,
+          "detail": 0,
+          "button": 0,
+          "buttons": 0,
+          "phase": "dom-content-loaded",
+          "readyState": "interactive",
+          "targetTag": "BUTTON",
+          "targetId": "demoBtn",
+          "productionFrames": [
+            [
+              "min/meiro.js",
+              "821",
+              "38"
+            ],
+            [
+              "min/meiro.js",
+              "836",
+              "32"
+            ]
+          ],
+          "independentExactMatch": true
+        }
+      ],
+      "dclMarkers": {
+        "dom-content-loaded": [
+          {
+            "phase": "dom-content-loaded",
+            "at": 961.8000000044703,
+            "epoch": 1794774773911.5
+          }
+        ],
+        "post-dom-content-loaded": [
+          {
+            "phase": "post-dom-content-loaded",
+            "at": 980.5,
+            "epoch": 1794774773930.2
+          }
+        ],
+        "fixture-snapshot": [
+          {
+            "phase": "fixture-snapshot",
+            "at": 1581.6000000014901,
+            "epoch": 1794774774531.3
+          }
+        ]
+      },
+      "helperOutput": "観光ボランティアガイドさん（西尾市歴史公園（西尾城跡））",
+      "helperPreservesFullNames": true,
+      "renderedNameUsesHelper": true,
+      "identity": {
+        "before": true,
+        "after": true
+      },
+      "visible": {
+        "before": true,
+        "after": true
+      },
+      "diagnostics": {
+        "beforePhoto": {
+          "epoch": 1794774774735.4,
+          "guide": {
+            "rawText": " 観光ボランティアガイドさん（西尾市歴史公園（西尾城跡））　915m",
+            "rect": {
+              "x": 25,
+              "y": 447.5,
+              "left": 25,
+              "top": 447.5,
+              "right": 295,
+              "bottom": 481,
+              "width": 270,
+              "height": 33.5
+            },
+            "fontSize": "13px",
+            "lineHeight": "19.5px",
+            "lineCount": null,
+            "whollyInViewport": true,
+            "centerHitInside": true
+          },
+          "name": {
+            "rawText": "観光ボランティアガイドさん（西尾市歴史公園（西尾城跡））",
+            "rect": {
+              "x": 59,
+              "y": 454.5,
+              "left": 59,
+              "top": 454.5,
+              "right": 247.984375,
+              "bottom": 474,
+              "width": 188.984375,
+              "height": 19.5
+            },
+            "fontSize": "13px",
+            "lineHeight": "19.5px",
+            "lineCount": 1,
+            "codePointLength": 28,
+            "sortedCodePoints": "さんアィイガテドボラン光公史園城尾尾市歴西西観跡（（））",
+            "wholeGlyphCountInsideClip": 14,
+            "ellipsisCSSApplicable": true,
+            "whollyInViewport": true,
+            "centerHitInside": true
+          },
+          "distance": {
+            "rawText": "　915m",
+            "rect": {
+              "x": 247.984375,
+              "y": 455.25,
+              "left": 247.984375,
+              "top": 455.25,
+              "right": 284,
+              "bottom": 473.25,
+              "width": 36.015625,
+              "height": 18
+            },
+            "fontSize": "12px",
+            "lineHeight": "18px",
+            "lineCount": 1,
+            "codePointLength": 5,
+            "sortedCodePoints": "159m　",
+            "wholeGlyphCountInsideClip": 5,
+            "ellipsisCSSApplicable": false,
+            "whollyInViewport": true,
+            "centerHitInside": true
+          },
+          "buttons": [
+            {
+              "rawText": "📱かたむけて ころがす",
+              "rect": {
+                "x": 10,
+                "y": 62,
+                "left": 10,
+                "top": 62,
+                "right": 188.484375,
+                "bottom": 102,
+                "width": 178.484375,
+                "height": 40
+              },
+              "fontSize": "20px",
+              "lineHeight": "20px",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "マップ",
+              "rect": {
+                "x": 0,
+                "y": 511,
+                "left": 0,
+                "top": 511,
+                "right": 64,
+                "bottom": 568,
+                "width": 64,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "きろく",
+              "rect": {
+                "x": 64,
+                "y": 511,
+                "left": 64,
+                "top": 511,
+                "right": 128,
+                "bottom": 568,
+                "width": 64,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "こえ",
+              "rect": {
+                "x": 128,
+                "y": 511,
+                "left": 128,
+                "top": 511,
+                "right": 192,
+                "bottom": 568,
+                "width": 64,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "とくてん",
+              "rect": {
+                "x": 192,
+                "y": 511,
+                "left": 192,
+                "top": 511,
+                "right": 256,
+                "bottom": 568,
+                "width": 64,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "せってい",
+              "rect": {
+                "x": 256,
+                "y": 511,
+                "left": 256,
+                "top": 511,
+                "right": 320,
+                "bottom": 568,
+                "width": 64,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            }
+          ]
+        },
+        "afterPhoto": {
+          "epoch": 1794774774986.4,
+          "guide": {
+            "rawText": " 観光ボランティアガイドさん（西尾市歴史公園（西尾城跡））　915m",
+            "rect": {
+              "x": 25,
+              "y": 447.5,
+              "left": 25,
+              "top": 447.5,
+              "right": 295,
+              "bottom": 481,
+              "width": 270,
+              "height": 33.5
+            },
+            "fontSize": "13px",
+            "lineHeight": "19.5px",
+            "lineCount": null,
+            "whollyInViewport": true,
+            "centerHitInside": true
+          },
+          "name": {
+            "rawText": "観光ボランティアガイドさん（西尾市歴史公園（西尾城跡））",
+            "rect": {
+              "x": 59,
+              "y": 454.5,
+              "left": 59,
+              "top": 454.5,
+              "right": 247.984375,
+              "bottom": 474,
+              "width": 188.984375,
+              "height": 19.5
+            },
+            "fontSize": "13px",
+            "lineHeight": "19.5px",
+            "lineCount": 1,
+            "codePointLength": 28,
+            "sortedCodePoints": "さんアィイガテドボラン光公史園城尾尾市歴西西観跡（（））",
+            "wholeGlyphCountInsideClip": 14,
+            "ellipsisCSSApplicable": true,
+            "whollyInViewport": true,
+            "centerHitInside": true
+          },
+          "distance": {
+            "rawText": "　915m",
+            "rect": {
+              "x": 247.984375,
+              "y": 455.25,
+              "left": 247.984375,
+              "top": 455.25,
+              "right": 284,
+              "bottom": 473.25,
+              "width": 36.015625,
+              "height": 18
+            },
+            "fontSize": "12px",
+            "lineHeight": "18px",
+            "lineCount": 1,
+            "codePointLength": 5,
+            "sortedCodePoints": "159m　",
+            "wholeGlyphCountInsideClip": 5,
+            "ellipsisCSSApplicable": false,
+            "whollyInViewport": true,
+            "centerHitInside": true
+          },
+          "buttons": [
+            {
+              "rawText": "📱かたむけて ころがす",
+              "rect": {
+                "x": 10,
+                "y": 62,
+                "left": 10,
+                "top": 62,
+                "right": 188.484375,
+                "bottom": 102,
+                "width": 178.484375,
+                "height": 40
+              },
+              "fontSize": "20px",
+              "lineHeight": "20px",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "マップ",
+              "rect": {
+                "x": 0,
+                "y": 511,
+                "left": 0,
+                "top": 511,
+                "right": 64,
+                "bottom": 568,
+                "width": 64,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "きろく",
+              "rect": {
+                "x": 64,
+                "y": 511,
+                "left": 64,
+                "top": 511,
+                "right": 128,
+                "bottom": 568,
+                "width": 64,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "こえ",
+              "rect": {
+                "x": 128,
+                "y": 511,
+                "left": 128,
+                "top": 511,
+                "right": 192,
+                "bottom": 568,
+                "width": 64,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "とくてん",
+              "rect": {
+                "x": 192,
+                "y": 511,
+                "left": 192,
+                "top": 511,
+                "right": 256,
+                "bottom": 568,
+                "width": 64,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "せってい",
+              "rect": {
+                "x": 256,
+                "y": 511,
+                "left": 256,
+                "top": 511,
+                "right": 320,
+                "bottom": 568,
+                "width": 64,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            }
+          ]
+        }
+      },
+      "photo": {
+        "file": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep-v2/run-01/case-01-old/fixture.png",
+        "requestedAt": 1794774774787,
+        "pageMarkerBefore": {
+          "at": 1873.2000000029802,
+          "epoch": 1794774774822.9
+        },
+        "sha256": "a57736b81fd682d945c5754db266180b8a4afb1f7cdb477079226a076edd94ba",
+        "completedAt": 1794774774977,
+        "personallyViewed": true,
+        "visual": "旧320。人物名が先頭で省略され、地名は読めない。915mと下部5タブ、傾き案内が読める。"
+      },
+      "restoration": {
+        "sameOriginalGuideReference": true,
+        "fullStateSnapshotEqual": false,
+        "changedTopLevelKeys": [
+          "glowGoal",
+          "guides"
+        ],
+        "changedValues": {
+          "glowGoal": {
+            "before": {
+              "id": "f-nishio-station",
+              "name": "名鉄 西尾駅",
+              "lat": 34.863873,
+              "lng": 137.057754
+            },
+            "after": {
+              "id": "w1218662917",
+              "name": "名鉄高架下公園",
+              "lat": 34.86145,
+              "lng": 137.05589
+            }
+          },
+          "guides": {
+            "before": 1,
+            "after": 5
+          }
+        }
+      },
+      "lifecycle": {
+        "contextClosed": true,
+        "browserClosed": true,
+        "contextCloseRequestedAt": 1794774775347,
+        "contextClosedAt": 1794774775390,
+        "browserCloseRequestedAt": 1794774775390,
+        "browserClosedAt": 1794774775494
+      },
+      "errors": {
+        "errors": [],
+        "pageErrors": [],
+        "consoleErrors": [],
+        "failedRequests": [],
+        "httpErrors": []
+      }
+    },
+    {
+      "case": 2,
+      "directory": "case-02-new",
+      "variant": "new",
+      "viewport": {
+        "width": 320,
+        "height": 568
+      },
+      "source": {
+        "path": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep-v2/run-01/case-02-new/case.json",
+        "sha256": "f53c1c59529d2ae83e00417a49ba329428a1d5ba6db7c8eb8928dac6c44b9bb1"
+      },
+      "status": "FIXTURE_OBSERVED",
+      "sourceResponseValidIndependently": true,
+      "gameResponseSHA256": "8267f4412c8f77a36a0cb3e45096d065188784cd7b24152e055ffc66279c77cc",
+      "meiroResponseSHA256": "59c9977fa3e6557295deb2c816889711f494f3c142574f065766656b25b2043e",
+      "helperSourceSHA256": "b11fe2bd721e0a6620f686ea105a3f667207ac68a09a0eba88c41709059813d8",
+      "inputCommands": 0,
+      "events": [
+        {
+          "type": "click",
+          "isTrusted": false,
+          "at": 1260.5,
+          "pointerId": -1,
+          "detail": 0,
+          "button": 0,
+          "buttons": 0,
+          "phase": "dom-content-loaded",
+          "readyState": "interactive",
+          "targetTag": "BUTTON",
+          "targetId": "meiroBtn",
+          "productionFrames": [
+            [
+              "min/meiro.js",
+              "836",
+              "32"
+            ]
+          ],
+          "independentExactMatch": true
+        },
+        {
+          "type": "click",
+          "isTrusted": false,
+          "at": 1262.5,
+          "pointerId": -1,
+          "detail": 0,
+          "button": 0,
+          "buttons": 0,
+          "phase": "dom-content-loaded",
+          "readyState": "interactive",
+          "targetTag": "BUTTON",
+          "targetId": "demoBtn",
+          "productionFrames": [
+            [
+              "min/meiro.js",
+              "821",
+              "38"
+            ],
+            [
+              "min/meiro.js",
+              "836",
+              "32"
+            ]
+          ],
+          "independentExactMatch": true
+        }
+      ],
+      "dclMarkers": {
+        "dom-content-loaded": [
+          {
+            "phase": "dom-content-loaded",
+            "at": 1254.6000000014901,
+            "epoch": 1794774779819.4001
+          }
+        ],
+        "post-dom-content-loaded": [
+          {
+            "phase": "post-dom-content-loaded",
+            "at": 1275.8000000044703,
+            "epoch": 1794774779840.6
+          }
+        ],
+        "fixture-snapshot": [
+          {
+            "phase": "fixture-snapshot",
+            "at": 2222.4000000059605,
+            "epoch": 1794774780787.2
+          }
+        ]
+      },
+      "helperOutput": "西尾市歴史公園（西尾城跡）（観光ボランティアガイドさん）",
+      "helperPreservesFullNames": true,
+      "renderedNameUsesHelper": true,
+      "identity": {
+        "before": true,
+        "after": true
+      },
+      "visible": {
+        "before": true,
+        "after": true
+      },
+      "diagnostics": {
+        "beforePhoto": {
+          "epoch": 1794774781027.6,
+          "guide": {
+            "rawText": " 🏁 西尾市歴史公園（西尾城跡）（観光ボランティアガイドさん）　408m",
+            "rect": {
+              "x": 25,
+              "y": 447.5,
+              "left": 25,
+              "top": 447.5,
+              "right": 295,
+              "bottom": 481,
+              "width": 270,
+              "height": 33.5
+            },
+            "fontSize": "13px",
+            "lineHeight": "19.5px",
+            "lineCount": null,
+            "whollyInViewport": true,
+            "centerHitInside": true
+          },
+          "name": {
+            "rawText": "🏁 西尾市歴史公園（西尾城跡）（観光ボランティアガイドさん）",
+            "rect": {
+              "x": 59,
+              "y": 454.5,
+              "left": 59,
+              "top": 454.5,
+              "right": 247.984375,
+              "bottom": 474,
+              "width": 188.984375,
+              "height": 19.5
+            },
+            "fontSize": "13px",
+            "lineHeight": "19.5px",
+            "lineCount": 1,
+            "codePointLength": 30,
+            "sortedCodePoints": " さんアィイガテドボラン光公史園城尾尾市歴西西観跡🏁（（））",
+            "wholeGlyphCountInsideClip": 14,
+            "ellipsisCSSApplicable": true,
+            "whollyInViewport": true,
+            "centerHitInside": true
+          },
+          "distance": {
+            "rawText": "　408m",
+            "rect": {
+              "x": 247.984375,
+              "y": 455.25,
+              "left": 247.984375,
+              "top": 455.25,
+              "right": 284,
+              "bottom": 473.25,
+              "width": 36.015625,
+              "height": 18
+            },
+            "fontSize": "12px",
+            "lineHeight": "18px",
+            "lineCount": 1,
+            "codePointLength": 5,
+            "sortedCodePoints": "048m　",
+            "wholeGlyphCountInsideClip": 5,
+            "ellipsisCSSApplicable": false,
+            "whollyInViewport": true,
+            "centerHitInside": true
+          },
+          "buttons": [
+            {
+              "rawText": "📱かたむけて ころがす",
+              "rect": {
+                "x": 10,
+                "y": 62,
+                "left": 10,
+                "top": 62,
+                "right": 188.484375,
+                "bottom": 102,
+                "width": 178.484375,
+                "height": 40
+              },
+              "fontSize": "20px",
+              "lineHeight": "20px",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "マップ",
+              "rect": {
+                "x": 0,
+                "y": 511,
+                "left": 0,
+                "top": 511,
+                "right": 64,
+                "bottom": 568,
+                "width": 64,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "きろく",
+              "rect": {
+                "x": 64,
+                "y": 511,
+                "left": 64,
+                "top": 511,
+                "right": 128,
+                "bottom": 568,
+                "width": 64,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "こえ",
+              "rect": {
+                "x": 128,
+                "y": 511,
+                "left": 128,
+                "top": 511,
+                "right": 192,
+                "bottom": 568,
+                "width": 64,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "とくてん",
+              "rect": {
+                "x": 192,
+                "y": 511,
+                "left": 192,
+                "top": 511,
+                "right": 256,
+                "bottom": 568,
+                "width": 64,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "せってい",
+              "rect": {
+                "x": 256,
+                "y": 511,
+                "left": 256,
+                "top": 511,
+                "right": 320,
+                "bottom": 568,
+                "width": 64,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            }
+          ]
+        },
+        "afterPhoto": {
+          "epoch": 1794774781338.3,
+          "guide": {
+            "rawText": " 🏁 西尾市歴史公園（西尾城跡）（観光ボランティアガイドさん）　2.0km",
+            "rect": {
+              "x": 25,
+              "y": 447.5,
+              "left": 25,
+              "top": 447.5,
+              "right": 295,
+              "bottom": 481,
+              "width": 270,
+              "height": 33.5
+            },
+            "fontSize": "13px",
+            "lineHeight": "19.5px",
+            "lineCount": null,
+            "whollyInViewport": true,
+            "centerHitInside": true
+          },
+          "name": {
+            "rawText": "🏁 西尾市歴史公園（西尾城跡）（観光ボランティアガイドさん）",
+            "rect": {
+              "x": 59,
+              "y": 454.5,
+              "left": 59,
+              "top": 454.5,
+              "right": 241.984375,
+              "bottom": 474,
+              "width": 182.984375,
+              "height": 19.5
+            },
+            "fontSize": "13px",
+            "lineHeight": "19.5px",
+            "lineCount": 1,
+            "codePointLength": 30,
+            "sortedCodePoints": " さんアィイガテドボラン光公史園城尾尾市歴西西観跡🏁（（））",
+            "wholeGlyphCountInsideClip": 14,
+            "ellipsisCSSApplicable": true,
+            "whollyInViewport": true,
+            "centerHitInside": true
+          },
+          "distance": {
+            "rawText": "　2.0km",
+            "rect": {
+              "x": 241.984375,
+              "y": 455.25,
+              "left": 241.984375,
+              "top": 455.25,
+              "right": 284,
+              "bottom": 473.25,
+              "width": 42.015625,
+              "height": 18
+            },
+            "fontSize": "12px",
+            "lineHeight": "18px",
+            "lineCount": 1,
+            "codePointLength": 6,
+            "sortedCodePoints": ".02km　",
+            "wholeGlyphCountInsideClip": 6,
+            "ellipsisCSSApplicable": false,
+            "whollyInViewport": true,
+            "centerHitInside": true
+          },
+          "buttons": [
+            {
+              "rawText": "📱かたむけて ころがす",
+              "rect": {
+                "x": 10,
+                "y": 62,
+                "left": 10,
+                "top": 62,
+                "right": 188.484375,
+                "bottom": 102,
+                "width": 178.484375,
+                "height": 40
+              },
+              "fontSize": "20px",
+              "lineHeight": "20px",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "マップ",
+              "rect": {
+                "x": 0,
+                "y": 511,
+                "left": 0,
+                "top": 511,
+                "right": 64,
+                "bottom": 568,
+                "width": 64,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "きろく",
+              "rect": {
+                "x": 64,
+                "y": 511,
+                "left": 64,
+                "top": 511,
+                "right": 128,
+                "bottom": 568,
+                "width": 64,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "こえ",
+              "rect": {
+                "x": 128,
+                "y": 511,
+                "left": 128,
+                "top": 511,
+                "right": 192,
+                "bottom": 568,
+                "width": 64,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "とくてん",
+              "rect": {
+                "x": 192,
+                "y": 511,
+                "left": 192,
+                "top": 511,
+                "right": 256,
+                "bottom": 568,
+                "width": 64,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "せってい",
+              "rect": {
+                "x": 256,
+                "y": 511,
+                "left": 256,
+                "top": 511,
+                "right": 320,
+                "bottom": 568,
+                "width": 64,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            }
+          ]
+        }
+      },
+      "photo": {
+        "file": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep-v2/run-01/case-02-new/fixture.png",
+        "requestedAt": 1794774781097,
+        "pageMarkerBefore": {
+          "at": 2582.8000000044703,
+          "epoch": 1794774781147.6
+        },
+        "sha256": "214bd1d61ec84fe11b9aacbb958ca7824578f718f334238607789517b9a06c5b",
+        "completedAt": 1794774781322,
+        "personallyViewed": true,
+        "visual": "新320。西尾市歴史公園が先頭に見えるが、内部括弧末尾までの全文可読とはしない。人物名も全文は出ない。写真の距離2.0km。手本とtoastは名前欄とは別の場所。"
+      },
+      "restoration": {
+        "sameOriginalGuideReference": true,
+        "fullStateSnapshotEqual": false,
+        "changedTopLevelKeys": [
+          "idle"
+        ],
+        "changedValues": {
+          "idle": {
+            "before": {
+              "last": 0,
+              "lv": {}
+            },
+            "after": {
+              "last": 1794774781377,
+              "lv": {}
+            }
+          }
+        }
+      },
+      "lifecycle": {
+        "contextClosed": true,
+        "browserClosed": true,
+        "contextCloseRequestedAt": 1794774781497,
+        "contextClosedAt": 1794774781559,
+        "browserCloseRequestedAt": 1794774781559,
+        "browserClosedAt": 1794774781662
+      },
+      "errors": {
+        "errors": [],
+        "pageErrors": [],
+        "consoleErrors": [],
+        "failedRequests": [],
+        "httpErrors": []
+      }
+    },
+    {
+      "case": 3,
+      "directory": "case-03-old",
+      "variant": "old",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "source": {
+        "path": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep-v2/run-01/case-03-old/case.json",
+        "sha256": "c504d8ba8b75e267585288418663004011df69948e449c5cddd800728e181b90"
+      },
+      "status": "FIXTURE_OBSERVED",
+      "sourceResponseValidIndependently": true,
+      "gameResponseSHA256": "45f4ba7b4aa8961222f5c57ac26428aff3aa8e5e9135bfd7c93989c0b5d7dc64",
+      "meiroResponseSHA256": "59c9977fa3e6557295deb2c816889711f494f3c142574f065766656b25b2043e",
+      "helperSourceSHA256": "916bc62cde495ad9e3885d1297f533174ea833a67932882c9e7ac650d76a62b7",
+      "inputCommands": 0,
+      "events": [
+        {
+          "type": "click",
+          "isTrusted": false,
+          "at": 1112.8999999985099,
+          "pointerId": -1,
+          "detail": 0,
+          "button": 0,
+          "buttons": 0,
+          "phase": "dom-content-loaded",
+          "readyState": "interactive",
+          "targetTag": "BUTTON",
+          "targetId": "meiroBtn",
+          "productionFrames": [
+            [
+              "min/meiro.js",
+              "836",
+              "32"
+            ]
+          ],
+          "independentExactMatch": true
+        },
+        {
+          "type": "click",
+          "isTrusted": false,
+          "at": 1114.1000000014901,
+          "pointerId": -1,
+          "detail": 0,
+          "button": 0,
+          "buttons": 0,
+          "phase": "dom-content-loaded",
+          "readyState": "interactive",
+          "targetTag": "BUTTON",
+          "targetId": "demoBtn",
+          "productionFrames": [
+            [
+              "min/meiro.js",
+              "821",
+              "38"
+            ],
+            [
+              "min/meiro.js",
+              "836",
+              "32"
+            ]
+          ],
+          "independentExactMatch": true
+        }
+      ],
+      "dclMarkers": {
+        "dom-content-loaded": [
+          {
+            "phase": "dom-content-loaded",
+            "at": 1109.3000000044703,
+            "epoch": 1794774785124.6
+          }
+        ],
+        "post-dom-content-loaded": [
+          {
+            "phase": "post-dom-content-loaded",
+            "at": 1131,
+            "epoch": 1794774785146.3
+          }
+        ],
+        "fixture-snapshot": [
+          {
+            "phase": "fixture-snapshot",
+            "at": 2000.5,
+            "epoch": 1794774786015.8
+          }
+        ]
+      },
+      "helperOutput": "観光ボランティアガイドさん（西尾市歴史公園（西尾城跡））",
+      "helperPreservesFullNames": true,
+      "renderedNameUsesHelper": true,
+      "identity": {
+        "before": true,
+        "after": true
+      },
+      "visible": {
+        "before": true,
+        "after": true
+      },
+      "diagnostics": {
+        "beforePhoto": {
+          "epoch": 1794774786241.7,
+          "guide": {
+            "rawText": " 🏁 観光ボランティアガイドさん（西尾市歴史公園（西尾城跡））　408m",
+            "rect": {
+              "x": 25,
+              "y": 723.5,
+              "left": 25,
+              "top": 723.5,
+              "right": 365,
+              "bottom": 757,
+              "width": 340,
+              "height": 33.5
+            },
+            "fontSize": "13px",
+            "lineHeight": "19.5px",
+            "lineCount": null,
+            "whollyInViewport": true,
+            "centerHitInside": true
+          },
+          "name": {
+            "rawText": "🏁 観光ボランティアガイドさん（西尾市歴史公園（西尾城跡））",
+            "rect": {
+              "x": 59,
+              "y": 730.5,
+              "left": 59,
+              "top": 730.5,
+              "right": 317.984375,
+              "bottom": 750,
+              "width": 258.984375,
+              "height": 19.5
+            },
+            "fontSize": "13px",
+            "lineHeight": "19.5px",
+            "lineCount": 1,
+            "codePointLength": 30,
+            "sortedCodePoints": " さんアィイガテドボラン光公史園城尾尾市歴西西観跡🏁（（））",
+            "wholeGlyphCountInsideClip": 20,
+            "ellipsisCSSApplicable": true,
+            "whollyInViewport": true,
+            "centerHitInside": true
+          },
+          "distance": {
+            "rawText": "　408m",
+            "rect": {
+              "x": 317.984375,
+              "y": 731.25,
+              "left": 317.984375,
+              "top": 731.25,
+              "right": 354,
+              "bottom": 749.25,
+              "width": 36.015625,
+              "height": 18
+            },
+            "fontSize": "12px",
+            "lineHeight": "18px",
+            "lineCount": 1,
+            "codePointLength": 5,
+            "sortedCodePoints": "048m　",
+            "wholeGlyphCountInsideClip": 5,
+            "ellipsisCSSApplicable": false,
+            "whollyInViewport": true,
+            "centerHitInside": true
+          },
+          "buttons": [
+            {
+              "rawText": "📱かたむけて ころがす",
+              "rect": {
+                "x": 10,
+                "y": 62,
+                "left": 10,
+                "top": 62,
+                "right": 188.484375,
+                "bottom": 102,
+                "width": 178.484375,
+                "height": 40
+              },
+              "fontSize": "20px",
+              "lineHeight": "20px",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "マップ",
+              "rect": {
+                "x": 0,
+                "y": 787,
+                "left": 0,
+                "top": 787,
+                "right": 78,
+                "bottom": 844,
+                "width": 78,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "きろく",
+              "rect": {
+                "x": 78,
+                "y": 787,
+                "left": 78,
+                "top": 787,
+                "right": 156,
+                "bottom": 844,
+                "width": 78,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "こえ",
+              "rect": {
+                "x": 156,
+                "y": 787,
+                "left": 156,
+                "top": 787,
+                "right": 234,
+                "bottom": 844,
+                "width": 78,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "とくてん",
+              "rect": {
+                "x": 234,
+                "y": 787,
+                "left": 234,
+                "top": 787,
+                "right": 312,
+                "bottom": 844,
+                "width": 78,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "せってい",
+              "rect": {
+                "x": 312,
+                "y": 787,
+                "left": 312,
+                "top": 787,
+                "right": 390,
+                "bottom": 844,
+                "width": 78,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            }
+          ]
+        },
+        "afterPhoto": {
+          "epoch": 1794774786637.5,
+          "guide": {
+            "rawText": " 🏁 観光ボランティアガイドさん（西尾市歴史公園（西尾城跡））　2.0km",
+            "rect": {
+              "x": 25,
+              "y": 723.5,
+              "left": 25,
+              "top": 723.5,
+              "right": 365,
+              "bottom": 757,
+              "width": 340,
+              "height": 33.5
+            },
+            "fontSize": "13px",
+            "lineHeight": "19.5px",
+            "lineCount": null,
+            "whollyInViewport": true,
+            "centerHitInside": true
+          },
+          "name": {
+            "rawText": "🏁 観光ボランティアガイドさん（西尾市歴史公園（西尾城跡））",
+            "rect": {
+              "x": 59,
+              "y": 730.5,
+              "left": 59,
+              "top": 730.5,
+              "right": 311.984375,
+              "bottom": 750,
+              "width": 252.984375,
+              "height": 19.5
+            },
+            "fontSize": "13px",
+            "lineHeight": "19.5px",
+            "lineCount": 1,
+            "codePointLength": 30,
+            "sortedCodePoints": " さんアィイガテドボラン光公史園城尾尾市歴西西観跡🏁（（））",
+            "wholeGlyphCountInsideClip": 19,
+            "ellipsisCSSApplicable": true,
+            "whollyInViewport": true,
+            "centerHitInside": true
+          },
+          "distance": {
+            "rawText": "　2.0km",
+            "rect": {
+              "x": 311.984375,
+              "y": 731.25,
+              "left": 311.984375,
+              "top": 731.25,
+              "right": 354,
+              "bottom": 749.25,
+              "width": 42.015625,
+              "height": 18
+            },
+            "fontSize": "12px",
+            "lineHeight": "18px",
+            "lineCount": 1,
+            "codePointLength": 6,
+            "sortedCodePoints": ".02km　",
+            "wholeGlyphCountInsideClip": 6,
+            "ellipsisCSSApplicable": false,
+            "whollyInViewport": true,
+            "centerHitInside": true
+          },
+          "buttons": [
+            {
+              "rawText": "📱かたむけて ころがす",
+              "rect": {
+                "x": 10,
+                "y": 62,
+                "left": 10,
+                "top": 62,
+                "right": 188.484375,
+                "bottom": 102,
+                "width": 178.484375,
+                "height": 40
+              },
+              "fontSize": "20px",
+              "lineHeight": "20px",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "マップ",
+              "rect": {
+                "x": 0,
+                "y": 787,
+                "left": 0,
+                "top": 787,
+                "right": 78,
+                "bottom": 844,
+                "width": 78,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "きろく",
+              "rect": {
+                "x": 78,
+                "y": 787,
+                "left": 78,
+                "top": 787,
+                "right": 156,
+                "bottom": 844,
+                "width": 78,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "こえ",
+              "rect": {
+                "x": 156,
+                "y": 787,
+                "left": 156,
+                "top": 787,
+                "right": 234,
+                "bottom": 844,
+                "width": 78,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "とくてん",
+              "rect": {
+                "x": 234,
+                "y": 787,
+                "left": 234,
+                "top": 787,
+                "right": 312,
+                "bottom": 844,
+                "width": 78,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "せってい",
+              "rect": {
+                "x": 312,
+                "y": 787,
+                "left": 312,
+                "top": 787,
+                "right": 390,
+                "bottom": 844,
+                "width": 78,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            }
+          ]
+        }
+      },
+      "photo": {
+        "file": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep-v2/run-01/case-03-old/fixture.png",
+        "requestedAt": 1794774786301,
+        "pageMarkerBefore": {
+          "at": 2343.7000000029802,
+          "epoch": 1794774786359
+        },
+        "sha256": "121cc448e6e417c8bd635c22e4b3033b2c8bfb922b63cad5201ab1a805e86645",
+        "completedAt": 1794774786634,
+        "personallyViewed": true,
+        "visual": "旧390。人物名の後に場所名が途中まで見えて省略される。写真の距離2.0km。"
+      },
+      "restoration": {
+        "sameOriginalGuideReference": true,
+        "fullStateSnapshotEqual": false,
+        "changedTopLevelKeys": [
+          "idle"
+        ],
+        "changedValues": {
+          "idle": {
+            "before": {
+              "last": 0,
+              "lv": {}
+            },
+            "after": {
+              "last": 1794774786689,
+              "lv": {}
+            }
+          }
+        }
+      },
+      "lifecycle": {
+        "contextClosed": true,
+        "browserClosed": true,
+        "contextCloseRequestedAt": 1794774786776,
+        "contextClosedAt": 1794774786851,
+        "browserCloseRequestedAt": 1794774786851,
+        "browserClosedAt": 1794774786936
+      },
+      "errors": {
+        "errors": [],
+        "pageErrors": [],
+        "consoleErrors": [],
+        "failedRequests": [],
+        "httpErrors": []
+      }
+    },
+    {
+      "case": 4,
+      "directory": "case-04-new",
+      "variant": "new",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "source": {
+        "path": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep-v2/run-01/case-04-new/case.json",
+        "sha256": "4577e3b0da7e0624d096308f18c47dec48a7f8e70a01f131906368e83d0431f6"
+      },
+      "status": "FIXTURE_OBSERVED",
+      "sourceResponseValidIndependently": true,
+      "gameResponseSHA256": "8267f4412c8f77a36a0cb3e45096d065188784cd7b24152e055ffc66279c77cc",
+      "meiroResponseSHA256": "59c9977fa3e6557295deb2c816889711f494f3c142574f065766656b25b2043e",
+      "helperSourceSHA256": "b11fe2bd721e0a6620f686ea105a3f667207ac68a09a0eba88c41709059813d8",
+      "inputCommands": 0,
+      "events": [
+        {
+          "type": "click",
+          "isTrusted": false,
+          "at": 1104.5,
+          "pointerId": -1,
+          "detail": 0,
+          "button": 0,
+          "buttons": 0,
+          "phase": "dom-content-loaded",
+          "readyState": "interactive",
+          "targetTag": "BUTTON",
+          "targetId": "meiroBtn",
+          "productionFrames": [
+            [
+              "min/meiro.js",
+              "836",
+              "32"
+            ]
+          ],
+          "independentExactMatch": true
+        },
+        {
+          "type": "click",
+          "isTrusted": false,
+          "at": 1105.8999999985099,
+          "pointerId": -1,
+          "detail": 0,
+          "button": 0,
+          "buttons": 0,
+          "phase": "dom-content-loaded",
+          "readyState": "interactive",
+          "targetTag": "BUTTON",
+          "targetId": "demoBtn",
+          "productionFrames": [
+            [
+              "min/meiro.js",
+              "821",
+              "38"
+            ],
+            [
+              "min/meiro.js",
+              "836",
+              "32"
+            ]
+          ],
+          "independentExactMatch": true
+        }
+      ],
+      "dclMarkers": {
+        "dom-content-loaded": [
+          {
+            "phase": "dom-content-loaded",
+            "at": 1097.8999999985099,
+            "epoch": 1794774791256.7
+          }
+        ],
+        "post-dom-content-loaded": [
+          {
+            "phase": "post-dom-content-loaded",
+            "at": 1121.3999999985099,
+            "epoch": 1794774791280.2
+          }
+        ],
+        "fixture-snapshot": [
+          {
+            "phase": "fixture-snapshot",
+            "at": 1847,
+            "epoch": 1794774792005.8
+          }
+        ]
+      },
+      "helperOutput": "西尾市歴史公園（西尾城跡）（観光ボランティアガイドさん）",
+      "helperPreservesFullNames": true,
+      "renderedNameUsesHelper": true,
+      "identity": {
+        "before": true,
+        "after": true
+      },
+      "visible": {
+        "before": true,
+        "after": true
+      },
+      "diagnostics": {
+        "beforePhoto": {
+          "epoch": 1794774792218.9001,
+          "guide": {
+            "rawText": " 西尾市歴史公園（西尾城跡）（観光ボランティアガイドさん）　915m",
+            "rect": {
+              "x": 25,
+              "y": 723.5,
+              "left": 25,
+              "top": 723.5,
+              "right": 365,
+              "bottom": 757,
+              "width": 340,
+              "height": 33.5
+            },
+            "fontSize": "13px",
+            "lineHeight": "19.5px",
+            "lineCount": null,
+            "whollyInViewport": true,
+            "centerHitInside": true
+          },
+          "name": {
+            "rawText": "西尾市歴史公園（西尾城跡）（観光ボランティアガイドさん）",
+            "rect": {
+              "x": 59,
+              "y": 730.5,
+              "left": 59,
+              "top": 730.5,
+              "right": 317.984375,
+              "bottom": 750,
+              "width": 258.984375,
+              "height": 19.5
+            },
+            "fontSize": "13px",
+            "lineHeight": "19.5px",
+            "lineCount": 1,
+            "codePointLength": 28,
+            "sortedCodePoints": "さんアィイガテドボラン光公史園城尾尾市歴西西観跡（（））",
+            "wholeGlyphCountInsideClip": 20,
+            "ellipsisCSSApplicable": true,
+            "whollyInViewport": true,
+            "centerHitInside": true
+          },
+          "distance": {
+            "rawText": "　915m",
+            "rect": {
+              "x": 317.984375,
+              "y": 731.25,
+              "left": 317.984375,
+              "top": 731.25,
+              "right": 354,
+              "bottom": 749.25,
+              "width": 36.015625,
+              "height": 18
+            },
+            "fontSize": "12px",
+            "lineHeight": "18px",
+            "lineCount": 1,
+            "codePointLength": 5,
+            "sortedCodePoints": "159m　",
+            "wholeGlyphCountInsideClip": 5,
+            "ellipsisCSSApplicable": false,
+            "whollyInViewport": true,
+            "centerHitInside": true
+          },
+          "buttons": [
+            {
+              "rawText": "📱かたむけて ころがす",
+              "rect": {
+                "x": 10,
+                "y": 62,
+                "left": 10,
+                "top": 62,
+                "right": 188.484375,
+                "bottom": 102,
+                "width": 178.484375,
+                "height": 40
+              },
+              "fontSize": "20px",
+              "lineHeight": "20px",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "マップ",
+              "rect": {
+                "x": 0,
+                "y": 787,
+                "left": 0,
+                "top": 787,
+                "right": 78,
+                "bottom": 844,
+                "width": 78,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "きろく",
+              "rect": {
+                "x": 78,
+                "y": 787,
+                "left": 78,
+                "top": 787,
+                "right": 156,
+                "bottom": 844,
+                "width": 78,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "こえ",
+              "rect": {
+                "x": 156,
+                "y": 787,
+                "left": 156,
+                "top": 787,
+                "right": 234,
+                "bottom": 844,
+                "width": 78,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "とくてん",
+              "rect": {
+                "x": 234,
+                "y": 787,
+                "left": 234,
+                "top": 787,
+                "right": 312,
+                "bottom": 844,
+                "width": 78,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "せってい",
+              "rect": {
+                "x": 312,
+                "y": 787,
+                "left": 312,
+                "top": 787,
+                "right": 390,
+                "bottom": 844,
+                "width": 78,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            }
+          ]
+        },
+        "afterPhoto": {
+          "epoch": 1794774792540.9001,
+          "guide": {
+            "rawText": " 西尾市歴史公園（西尾城跡）（観光ボランティアガイドさん）　915m",
+            "rect": {
+              "x": 25,
+              "y": 723.5,
+              "left": 25,
+              "top": 723.5,
+              "right": 365,
+              "bottom": 757,
+              "width": 340,
+              "height": 33.5
+            },
+            "fontSize": "13px",
+            "lineHeight": "19.5px",
+            "lineCount": null,
+            "whollyInViewport": true,
+            "centerHitInside": true
+          },
+          "name": {
+            "rawText": "西尾市歴史公園（西尾城跡）（観光ボランティアガイドさん）",
+            "rect": {
+              "x": 59,
+              "y": 730.5,
+              "left": 59,
+              "top": 730.5,
+              "right": 317.984375,
+              "bottom": 750,
+              "width": 258.984375,
+              "height": 19.5
+            },
+            "fontSize": "13px",
+            "lineHeight": "19.5px",
+            "lineCount": 1,
+            "codePointLength": 28,
+            "sortedCodePoints": "さんアィイガテドボラン光公史園城尾尾市歴西西観跡（（））",
+            "wholeGlyphCountInsideClip": 20,
+            "ellipsisCSSApplicable": true,
+            "whollyInViewport": true,
+            "centerHitInside": true
+          },
+          "distance": {
+            "rawText": "　915m",
+            "rect": {
+              "x": 317.984375,
+              "y": 731.25,
+              "left": 317.984375,
+              "top": 731.25,
+              "right": 354,
+              "bottom": 749.25,
+              "width": 36.015625,
+              "height": 18
+            },
+            "fontSize": "12px",
+            "lineHeight": "18px",
+            "lineCount": 1,
+            "codePointLength": 5,
+            "sortedCodePoints": "159m　",
+            "wholeGlyphCountInsideClip": 5,
+            "ellipsisCSSApplicable": false,
+            "whollyInViewport": true,
+            "centerHitInside": true
+          },
+          "buttons": [
+            {
+              "rawText": "📱かたむけて ころがす",
+              "rect": {
+                "x": 10,
+                "y": 62,
+                "left": 10,
+                "top": 62,
+                "right": 188.484375,
+                "bottom": 102,
+                "width": 178.484375,
+                "height": 40
+              },
+              "fontSize": "20px",
+              "lineHeight": "20px",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "マップ",
+              "rect": {
+                "x": 0,
+                "y": 787,
+                "left": 0,
+                "top": 787,
+                "right": 78,
+                "bottom": 844,
+                "width": 78,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "きろく",
+              "rect": {
+                "x": 78,
+                "y": 787,
+                "left": 78,
+                "top": 787,
+                "right": 156,
+                "bottom": 844,
+                "width": 78,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "こえ",
+              "rect": {
+                "x": 156,
+                "y": 787,
+                "left": 156,
+                "top": 787,
+                "right": 234,
+                "bottom": 844,
+                "width": 78,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "とくてん",
+              "rect": {
+                "x": 234,
+                "y": 787,
+                "left": 234,
+                "top": 787,
+                "right": 312,
+                "bottom": 844,
+                "width": 78,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "せってい",
+              "rect": {
+                "x": 312,
+                "y": 787,
+                "left": 312,
+                "top": 787,
+                "right": 390,
+                "bottom": 844,
+                "width": 78,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            }
+          ]
+        }
+      },
+      "photo": {
+        "file": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep-v2/run-01/case-04-new/fixture.png",
+        "requestedAt": 1794774792273,
+        "pageMarkerBefore": {
+          "at": 2143.8000000044703,
+          "epoch": 1794774792302.6
+        },
+        "sha256": "a5285bd38336abdda55cddfbd354e7a6851c361fd1a6cfa23e36588e202a5190",
+        "completedAt": 1794774792522,
+        "personallyViewed": true,
+        "visual": "新390。場所名は先頭に見え、人物名後半は省略される。915mが読める。"
+      },
+      "restoration": {
+        "sameOriginalGuideReference": true,
+        "fullStateSnapshotEqual": false,
+        "changedTopLevelKeys": [
+          "glowGoal",
+          "guides"
+        ],
+        "changedValues": {
+          "glowGoal": {
+            "before": {
+              "id": "f-nishio-station",
+              "name": "名鉄 西尾駅",
+              "lat": 34.863873,
+              "lng": 137.057754
+            },
+            "after": {
+              "id": "w1218662917",
+              "name": "名鉄高架下公園",
+              "lat": 34.86145,
+              "lng": 137.05589
+            }
+          },
+          "guides": {
+            "before": 1,
+            "after": 5
+          }
+        }
+      },
+      "lifecycle": {
+        "contextClosed": true,
+        "browserClosed": true,
+        "contextCloseRequestedAt": 1794774792851,
+        "contextClosedAt": 1794774792901,
+        "browserCloseRequestedAt": 1794774792901,
+        "browserClosedAt": 1794774793077
+      },
+      "errors": {
+        "errors": [],
+        "pageErrors": [],
+        "consoleErrors": [],
+        "failedRequests": [],
+        "httpErrors": []
+      }
+    },
+    {
+      "case": 5,
+      "directory": "case-05-old",
+      "variant": "old",
+      "viewport": {
+        "width": 568,
+        "height": 320
+      },
+      "source": {
+        "path": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep-v2/run-01/case-05-old/case.json",
+        "sha256": "806f6d1e3b4f0e72b676164034debcb7668aece9f0ef4623b9f1e74475e1f050"
+      },
+      "status": "FIXTURE_OBSERVED",
+      "sourceResponseValidIndependently": true,
+      "gameResponseSHA256": "45f4ba7b4aa8961222f5c57ac26428aff3aa8e5e9135bfd7c93989c0b5d7dc64",
+      "meiroResponseSHA256": "59c9977fa3e6557295deb2c816889711f494f3c142574f065766656b25b2043e",
+      "helperSourceSHA256": "916bc62cde495ad9e3885d1297f533174ea833a67932882c9e7ac650d76a62b7",
+      "inputCommands": 0,
+      "events": [
+        {
+          "type": "click",
+          "isTrusted": false,
+          "at": 934.7999999970198,
+          "pointerId": -1,
+          "detail": 0,
+          "button": 0,
+          "buttons": 0,
+          "phase": "dom-content-loaded",
+          "readyState": "interactive",
+          "targetTag": "BUTTON",
+          "targetId": "meiroBtn",
+          "productionFrames": [
+            [
+              "min/meiro.js",
+              "836",
+              "32"
+            ]
+          ],
+          "independentExactMatch": true
+        },
+        {
+          "type": "click",
+          "isTrusted": false,
+          "at": 936,
+          "pointerId": -1,
+          "detail": 0,
+          "button": 0,
+          "buttons": 0,
+          "phase": "dom-content-loaded",
+          "readyState": "interactive",
+          "targetTag": "BUTTON",
+          "targetId": "demoBtn",
+          "productionFrames": [
+            [
+              "min/meiro.js",
+              "821",
+              "38"
+            ],
+            [
+              "min/meiro.js",
+              "836",
+              "32"
+            ]
+          ],
+          "independentExactMatch": true
+        }
+      ],
+      "dclMarkers": {
+        "dom-content-loaded": [
+          {
+            "phase": "dom-content-loaded",
+            "at": 929.1999999955297,
+            "epoch": 1794774797330.2
+          }
+        ],
+        "post-dom-content-loaded": [
+          {
+            "phase": "post-dom-content-loaded",
+            "at": 950.5999999940395,
+            "epoch": 1794774797351.6
+          }
+        ],
+        "fixture-snapshot": [
+          {
+            "phase": "fixture-snapshot",
+            "at": 1503.6999999955297,
+            "epoch": 1794774797904.7
+          }
+        ]
+      },
+      "helperOutput": "観光ボランティアガイドさん（西尾市歴史公園（西尾城跡））",
+      "helperPreservesFullNames": true,
+      "renderedNameUsesHelper": true,
+      "identity": {
+        "before": true,
+        "after": true
+      },
+      "visible": {
+        "before": true,
+        "after": true
+      },
+      "diagnostics": {
+        "beforePhoto": {
+          "epoch": 1794774798096.4,
+          "guide": {
+            "rawText": " 観光ボランティアガイドさん（西尾市歴史公園（西尾城跡））　915m",
+            "rect": {
+              "x": 39,
+              "y": 199.5,
+              "left": 39,
+              "top": 199.5,
+              "right": 529,
+              "bottom": 233,
+              "width": 490,
+              "height": 33.5
+            },
+            "fontSize": "13px",
+            "lineHeight": "19.5px",
+            "lineCount": null,
+            "whollyInViewport": true,
+            "centerHitInside": true
+          },
+          "name": {
+            "rawText": "観光ボランティアガイドさん（西尾市歴史公園（西尾城跡））",
+            "rect": {
+              "x": 73,
+              "y": 206.5,
+              "left": 73,
+              "top": 206.5,
+              "right": 481.984375,
+              "bottom": 226,
+              "width": 408.984375,
+              "height": 19.5
+            },
+            "fontSize": "13px",
+            "lineHeight": "19.5px",
+            "lineCount": 1,
+            "codePointLength": 28,
+            "sortedCodePoints": "さんアィイガテドボラン光公史園城尾尾市歴西西観跡（（））",
+            "wholeGlyphCountInsideClip": 28,
+            "ellipsisCSSApplicable": false,
+            "whollyInViewport": true,
+            "centerHitInside": true
+          },
+          "distance": {
+            "rawText": "　915m",
+            "rect": {
+              "x": 481.984375,
+              "y": 207.25,
+              "left": 481.984375,
+              "top": 207.25,
+              "right": 518,
+              "bottom": 225.25,
+              "width": 36.015625,
+              "height": 18
+            },
+            "fontSize": "12px",
+            "lineHeight": "18px",
+            "lineCount": 1,
+            "codePointLength": 5,
+            "sortedCodePoints": "159m　",
+            "wholeGlyphCountInsideClip": 5,
+            "ellipsisCSSApplicable": false,
+            "whollyInViewport": true,
+            "centerHitInside": true
+          },
+          "buttons": [
+            {
+              "rawText": "📱かたむけて ころがす",
+              "rect": {
+                "x": 10,
+                "y": 62,
+                "left": 10,
+                "top": 62,
+                "right": 188.484375,
+                "bottom": 102,
+                "width": 178.484375,
+                "height": 40
+              },
+              "fontSize": "20px",
+              "lineHeight": "20px",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "マップ",
+              "rect": {
+                "x": 0,
+                "y": 263,
+                "left": 0,
+                "top": 263,
+                "right": 113.59375,
+                "bottom": 320,
+                "width": 113.59375,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "きろく",
+              "rect": {
+                "x": 113.59375,
+                "y": 263,
+                "left": 113.59375,
+                "top": 263,
+                "right": 227.203125,
+                "bottom": 320,
+                "width": 113.609375,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "こえ",
+              "rect": {
+                "x": 227.203125,
+                "y": 263,
+                "left": 227.203125,
+                "top": 263,
+                "right": 340.796875,
+                "bottom": 320,
+                "width": 113.59375,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "とくてん",
+              "rect": {
+                "x": 340.796875,
+                "y": 263,
+                "left": 340.796875,
+                "top": 263,
+                "right": 454.40625,
+                "bottom": 320,
+                "width": 113.609375,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "せってい",
+              "rect": {
+                "x": 454.40625,
+                "y": 263,
+                "left": 454.40625,
+                "top": 263,
+                "right": 568,
+                "bottom": 320,
+                "width": 113.59375,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            }
+          ]
+        },
+        "afterPhoto": {
+          "epoch": 1794774798338.6,
+          "guide": {
+            "rawText": " 観光ボランティアガイドさん（西尾市歴史公園（西尾城跡））　915m",
+            "rect": {
+              "x": 39,
+              "y": 199.5,
+              "left": 39,
+              "top": 199.5,
+              "right": 529,
+              "bottom": 233,
+              "width": 490,
+              "height": 33.5
+            },
+            "fontSize": "13px",
+            "lineHeight": "19.5px",
+            "lineCount": null,
+            "whollyInViewport": true,
+            "centerHitInside": true
+          },
+          "name": {
+            "rawText": "観光ボランティアガイドさん（西尾市歴史公園（西尾城跡））",
+            "rect": {
+              "x": 73,
+              "y": 206.5,
+              "left": 73,
+              "top": 206.5,
+              "right": 481.984375,
+              "bottom": 226,
+              "width": 408.984375,
+              "height": 19.5
+            },
+            "fontSize": "13px",
+            "lineHeight": "19.5px",
+            "lineCount": 1,
+            "codePointLength": 28,
+            "sortedCodePoints": "さんアィイガテドボラン光公史園城尾尾市歴西西観跡（（））",
+            "wholeGlyphCountInsideClip": 28,
+            "ellipsisCSSApplicable": false,
+            "whollyInViewport": true,
+            "centerHitInside": true
+          },
+          "distance": {
+            "rawText": "　915m",
+            "rect": {
+              "x": 481.984375,
+              "y": 207.25,
+              "left": 481.984375,
+              "top": 207.25,
+              "right": 518,
+              "bottom": 225.25,
+              "width": 36.015625,
+              "height": 18
+            },
+            "fontSize": "12px",
+            "lineHeight": "18px",
+            "lineCount": 1,
+            "codePointLength": 5,
+            "sortedCodePoints": "159m　",
+            "wholeGlyphCountInsideClip": 5,
+            "ellipsisCSSApplicable": false,
+            "whollyInViewport": true,
+            "centerHitInside": true
+          },
+          "buttons": [
+            {
+              "rawText": "📱かたむけて ころがす",
+              "rect": {
+                "x": 10,
+                "y": 62,
+                "left": 10,
+                "top": 62,
+                "right": 188.484375,
+                "bottom": 102,
+                "width": 178.484375,
+                "height": 40
+              },
+              "fontSize": "20px",
+              "lineHeight": "20px",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "マップ",
+              "rect": {
+                "x": 0,
+                "y": 263,
+                "left": 0,
+                "top": 263,
+                "right": 113.59375,
+                "bottom": 320,
+                "width": 113.59375,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "きろく",
+              "rect": {
+                "x": 113.59375,
+                "y": 263,
+                "left": 113.59375,
+                "top": 263,
+                "right": 227.203125,
+                "bottom": 320,
+                "width": 113.609375,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "こえ",
+              "rect": {
+                "x": 227.203125,
+                "y": 263,
+                "left": 227.203125,
+                "top": 263,
+                "right": 340.796875,
+                "bottom": 320,
+                "width": 113.59375,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "とくてん",
+              "rect": {
+                "x": 340.796875,
+                "y": 263,
+                "left": 340.796875,
+                "top": 263,
+                "right": 454.40625,
+                "bottom": 320,
+                "width": 113.609375,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "せってい",
+              "rect": {
+                "x": 454.40625,
+                "y": 263,
+                "left": 454.40625,
+                "top": 263,
+                "right": 568,
+                "bottom": 320,
+                "width": 113.59375,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            }
+          ]
+        }
+      },
+      "photo": {
+        "file": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep-v2/run-01/case-05-old/fixture.png",
+        "requestedAt": 1794774798141,
+        "pageMarkerBefore": {
+          "at": 1777,
+          "epoch": 1794774798178
+        },
+        "sha256": "1d83d732d36ad1dc95c2d751376f8a5ef38c7f972b57404e1c5f65a4ce3fd887",
+        "completedAt": 1794774798332,
+        "personallyViewed": true,
+        "visual": "旧568。人物先行の全文と915mが1行で読める。toastと案内欄の文字は分かれている。"
+      },
+      "restoration": {
+        "sameOriginalGuideReference": true,
+        "fullStateSnapshotEqual": true,
+        "changedTopLevelKeys": [],
+        "changedValues": {}
+      },
+      "lifecycle": {
+        "contextClosed": true,
+        "browserClosed": true,
+        "contextCloseRequestedAt": 1794774798713,
+        "contextClosedAt": 1794774798769,
+        "browserCloseRequestedAt": 1794774798769,
+        "browserClosedAt": 1794774798885
+      },
+      "errors": {
+        "errors": [],
+        "pageErrors": [],
+        "consoleErrors": [],
+        "failedRequests": [],
+        "httpErrors": []
+      }
+    },
+    {
+      "case": 6,
+      "directory": "case-06-new",
+      "variant": "new",
+      "viewport": {
+        "width": 568,
+        "height": 320
+      },
+      "source": {
+        "path": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep-v2/run-01/case-06-new/case.json",
+        "sha256": "e7eef6e158ff08b0ca9dcb9e0e9f67b5fde72d790faca5ba00b8f39808ac4af7"
+      },
+      "status": "FIXTURE_OBSERVED",
+      "sourceResponseValidIndependently": true,
+      "gameResponseSHA256": "8267f4412c8f77a36a0cb3e45096d065188784cd7b24152e055ffc66279c77cc",
+      "meiroResponseSHA256": "59c9977fa3e6557295deb2c816889711f494f3c142574f065766656b25b2043e",
+      "helperSourceSHA256": "b11fe2bd721e0a6620f686ea105a3f667207ac68a09a0eba88c41709059813d8",
+      "inputCommands": 0,
+      "events": [
+        {
+          "type": "click",
+          "isTrusted": false,
+          "at": 891.1000000014901,
+          "pointerId": -1,
+          "detail": 0,
+          "button": 0,
+          "buttons": 0,
+          "phase": "dom-content-loaded",
+          "readyState": "interactive",
+          "targetTag": "BUTTON",
+          "targetId": "meiroBtn",
+          "productionFrames": [
+            [
+              "min/meiro.js",
+              "836",
+              "32"
+            ]
+          ],
+          "independentExactMatch": true
+        },
+        {
+          "type": "click",
+          "isTrusted": false,
+          "at": 893.4000000059605,
+          "pointerId": -1,
+          "detail": 0,
+          "button": 0,
+          "buttons": 0,
+          "phase": "dom-content-loaded",
+          "readyState": "interactive",
+          "targetTag": "BUTTON",
+          "targetId": "demoBtn",
+          "productionFrames": [
+            [
+              "min/meiro.js",
+              "821",
+              "38"
+            ],
+            [
+              "min/meiro.js",
+              "836",
+              "32"
+            ]
+          ],
+          "independentExactMatch": true
+        }
+      ],
+      "dclMarkers": {
+        "dom-content-loaded": [
+          {
+            "phase": "dom-content-loaded",
+            "at": 885.2000000029802,
+            "epoch": 1794774802964.8
+          }
+        ],
+        "post-dom-content-loaded": [
+          {
+            "phase": "post-dom-content-loaded",
+            "at": 910.8000000044703,
+            "epoch": 1794774802990.4001
+          }
+        ],
+        "fixture-snapshot": [
+          {
+            "phase": "fixture-snapshot",
+            "at": 1735.6000000014901,
+            "epoch": 1794774803815.2002
+          }
+        ]
+      },
+      "helperOutput": "西尾市歴史公園（西尾城跡）（観光ボランティアガイドさん）",
+      "helperPreservesFullNames": true,
+      "renderedNameUsesHelper": true,
+      "identity": {
+        "before": true,
+        "after": true
+      },
+      "visible": {
+        "before": true,
+        "after": true
+      },
+      "diagnostics": {
+        "beforePhoto": {
+          "epoch": 1794774803998.3,
+          "guide": {
+            "rawText": " 🏁 西尾市歴史公園（西尾城跡）（観光ボランティアガイドさん）　408m",
+            "rect": {
+              "x": 39,
+              "y": 199.5,
+              "left": 39,
+              "top": 199.5,
+              "right": 529,
+              "bottom": 233,
+              "width": 490,
+              "height": 33.5
+            },
+            "fontSize": "13px",
+            "lineHeight": "19.5px",
+            "lineCount": null,
+            "whollyInViewport": true,
+            "centerHitInside": true
+          },
+          "name": {
+            "rawText": "🏁 西尾市歴史公園（西尾城跡）（観光ボランティアガイドさん）",
+            "rect": {
+              "x": 73,
+              "y": 206.5,
+              "left": 73,
+              "top": 206.5,
+              "right": 481.984375,
+              "bottom": 226,
+              "width": 408.984375,
+              "height": 19.5
+            },
+            "fontSize": "13px",
+            "lineHeight": "19.5px",
+            "lineCount": 1,
+            "codePointLength": 30,
+            "sortedCodePoints": " さんアィイガテドボラン光公史園城尾尾市歴西西観跡🏁（（））",
+            "wholeGlyphCountInsideClip": 30,
+            "ellipsisCSSApplicable": false,
+            "whollyInViewport": true,
+            "centerHitInside": true
+          },
+          "distance": {
+            "rawText": "　408m",
+            "rect": {
+              "x": 481.984375,
+              "y": 207.25,
+              "left": 481.984375,
+              "top": 207.25,
+              "right": 518,
+              "bottom": 225.25,
+              "width": 36.015625,
+              "height": 18
+            },
+            "fontSize": "12px",
+            "lineHeight": "18px",
+            "lineCount": 1,
+            "codePointLength": 5,
+            "sortedCodePoints": "048m　",
+            "wholeGlyphCountInsideClip": 5,
+            "ellipsisCSSApplicable": false,
+            "whollyInViewport": true,
+            "centerHitInside": true
+          },
+          "buttons": [
+            {
+              "rawText": "📱かたむけて ころがす",
+              "rect": {
+                "x": 10,
+                "y": 62,
+                "left": 10,
+                "top": 62,
+                "right": 188.484375,
+                "bottom": 102,
+                "width": 178.484375,
+                "height": 40
+              },
+              "fontSize": "20px",
+              "lineHeight": "20px",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "マップ",
+              "rect": {
+                "x": 0,
+                "y": 263,
+                "left": 0,
+                "top": 263,
+                "right": 113.59375,
+                "bottom": 320,
+                "width": 113.59375,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "きろく",
+              "rect": {
+                "x": 113.59375,
+                "y": 263,
+                "left": 113.59375,
+                "top": 263,
+                "right": 227.203125,
+                "bottom": 320,
+                "width": 113.609375,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "こえ",
+              "rect": {
+                "x": 227.203125,
+                "y": 263,
+                "left": 227.203125,
+                "top": 263,
+                "right": 340.796875,
+                "bottom": 320,
+                "width": 113.59375,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "とくてん",
+              "rect": {
+                "x": 340.796875,
+                "y": 263,
+                "left": 340.796875,
+                "top": 263,
+                "right": 454.40625,
+                "bottom": 320,
+                "width": 113.609375,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "せってい",
+              "rect": {
+                "x": 454.40625,
+                "y": 263,
+                "left": 454.40625,
+                "top": 263,
+                "right": 568,
+                "bottom": 320,
+                "width": 113.59375,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            }
+          ]
+        },
+        "afterPhoto": {
+          "epoch": 1794774804349.6,
+          "guide": {
+            "rawText": " 🏁 西尾市歴史公園（西尾城跡）（観光ボランティアガイドさん）　2.0km",
+            "rect": {
+              "x": 39,
+              "y": 199.5,
+              "left": 39,
+              "top": 199.5,
+              "right": 529,
+              "bottom": 233,
+              "width": 490,
+              "height": 33.5
+            },
+            "fontSize": "13px",
+            "lineHeight": "19.5px",
+            "lineCount": null,
+            "whollyInViewport": true,
+            "centerHitInside": true
+          },
+          "name": {
+            "rawText": "🏁 西尾市歴史公園（西尾城跡）（観光ボランティアガイドさん）",
+            "rect": {
+              "x": 73,
+              "y": 206.5,
+              "left": 73,
+              "top": 206.5,
+              "right": 475.984375,
+              "bottom": 226,
+              "width": 402.984375,
+              "height": 19.5
+            },
+            "fontSize": "13px",
+            "lineHeight": "19.5px",
+            "lineCount": 1,
+            "codePointLength": 30,
+            "sortedCodePoints": " さんアィイガテドボラン光公史園城尾尾市歴西西観跡🏁（（））",
+            "wholeGlyphCountInsideClip": 30,
+            "ellipsisCSSApplicable": false,
+            "whollyInViewport": true,
+            "centerHitInside": true
+          },
+          "distance": {
+            "rawText": "　2.0km",
+            "rect": {
+              "x": 475.984375,
+              "y": 207.25,
+              "left": 475.984375,
+              "top": 207.25,
+              "right": 518,
+              "bottom": 225.25,
+              "width": 42.015625,
+              "height": 18
+            },
+            "fontSize": "12px",
+            "lineHeight": "18px",
+            "lineCount": 1,
+            "codePointLength": 6,
+            "sortedCodePoints": ".02km　",
+            "wholeGlyphCountInsideClip": 6,
+            "ellipsisCSSApplicable": false,
+            "whollyInViewport": true,
+            "centerHitInside": true
+          },
+          "buttons": [
+            {
+              "rawText": "📱かたむけて ころがす",
+              "rect": {
+                "x": 10,
+                "y": 62,
+                "left": 10,
+                "top": 62,
+                "right": 188.484375,
+                "bottom": 102,
+                "width": 178.484375,
+                "height": 40
+              },
+              "fontSize": "20px",
+              "lineHeight": "20px",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "マップ",
+              "rect": {
+                "x": 0,
+                "y": 263,
+                "left": 0,
+                "top": 263,
+                "right": 113.59375,
+                "bottom": 320,
+                "width": 113.59375,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "きろく",
+              "rect": {
+                "x": 113.59375,
+                "y": 263,
+                "left": 113.59375,
+                "top": 263,
+                "right": 227.203125,
+                "bottom": 320,
+                "width": 113.609375,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "こえ",
+              "rect": {
+                "x": 227.203125,
+                "y": 263,
+                "left": 227.203125,
+                "top": 263,
+                "right": 340.796875,
+                "bottom": 320,
+                "width": 113.59375,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "とくてん",
+              "rect": {
+                "x": 340.796875,
+                "y": 263,
+                "left": 340.796875,
+                "top": 263,
+                "right": 454.40625,
+                "bottom": 320,
+                "width": 113.609375,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "せってい",
+              "rect": {
+                "x": 454.40625,
+                "y": 263,
+                "left": 454.40625,
+                "top": 263,
+                "right": 568,
+                "bottom": 320,
+                "width": 113.59375,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            }
+          ]
+        }
+      },
+      "photo": {
+        "file": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep-v2/run-01/case-06-new/fixture.png",
+        "requestedAt": 1794774804053,
+        "pageMarkerBefore": {
+          "at": 1981.5,
+          "epoch": 1794774804061.1
+        },
+        "sha256": "e2a14cccaa6aa53939cef0ac43e6ade129691708f844fe791f2d7b1ab4d51e52",
+        "completedAt": 1794774804340,
+        "personallyViewed": true,
+        "visual": "新568。場所先行の全文と2.0kmが1行で読める。既存旗があり、旧と距離条件は異なる。"
+      },
+      "restoration": {
+        "sameOriginalGuideReference": true,
+        "fullStateSnapshotEqual": true,
+        "changedTopLevelKeys": [],
+        "changedValues": {}
+      },
+      "lifecycle": {
+        "contextClosed": true,
+        "browserClosed": true,
+        "contextCloseRequestedAt": 1794774804478,
+        "contextClosedAt": 1794774804523,
+        "browserCloseRequestedAt": 1794774804523,
+        "browserClosedAt": 1794774804602
+      },
+      "errors": {
+        "errors": [],
+        "pageErrors": [],
+        "consoleErrors": [],
+        "failedRequests": [],
+        "httpErrors": []
+      }
+    },
+    {
+      "case": 7,
+      "directory": "case-07-old",
+      "variant": "old",
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "source": {
+        "path": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep-v2/run-01/case-07-old/case.json",
+        "sha256": "b33437c260da9a0569e423b48e7dbcf5dcbd9f70f3a9715aecc2f74d03e80a91"
+      },
+      "status": "FIXTURE_OBSERVED",
+      "sourceResponseValidIndependently": true,
+      "gameResponseSHA256": "45f4ba7b4aa8961222f5c57ac26428aff3aa8e5e9135bfd7c93989c0b5d7dc64",
+      "meiroResponseSHA256": "59c9977fa3e6557295deb2c816889711f494f3c142574f065766656b25b2043e",
+      "helperSourceSHA256": "916bc62cde495ad9e3885d1297f533174ea833a67932882c9e7ac650d76a62b7",
+      "inputCommands": 0,
+      "events": [
+        {
+          "type": "click",
+          "isTrusted": false,
+          "at": 1061.2999999970198,
+          "pointerId": -1,
+          "detail": 0,
+          "button": 0,
+          "buttons": 0,
+          "phase": "dom-content-loaded",
+          "readyState": "interactive",
+          "targetTag": "BUTTON",
+          "targetId": "meiroBtn",
+          "productionFrames": [
+            [
+              "min/meiro.js",
+              "836",
+              "32"
+            ]
+          ],
+          "independentExactMatch": true
+        },
+        {
+          "type": "click",
+          "isTrusted": false,
+          "at": 1062.6000000014901,
+          "pointerId": -1,
+          "detail": 0,
+          "button": 0,
+          "buttons": 0,
+          "phase": "dom-content-loaded",
+          "readyState": "interactive",
+          "targetTag": "BUTTON",
+          "targetId": "demoBtn",
+          "productionFrames": [
+            [
+              "min/meiro.js",
+              "821",
+              "38"
+            ],
+            [
+              "min/meiro.js",
+              "836",
+              "32"
+            ]
+          ],
+          "independentExactMatch": true
+        }
+      ],
+      "dclMarkers": {
+        "dom-content-loaded": [
+          {
+            "phase": "dom-content-loaded",
+            "at": 1058.1000000014901,
+            "epoch": 1794774809029.6
+          }
+        ],
+        "post-dom-content-loaded": [
+          {
+            "phase": "post-dom-content-loaded",
+            "at": 1075.7999999970198,
+            "epoch": 1794774809047.3
+          }
+        ],
+        "fixture-snapshot": [
+          {
+            "phase": "fixture-snapshot",
+            "at": 2046.6000000014901,
+            "epoch": 1794774810018.1
+          }
+        ]
+      },
+      "helperOutput": "観光ボランティアガイドさん（西尾市歴史公園（西尾城跡））",
+      "helperPreservesFullNames": true,
+      "renderedNameUsesHelper": true,
+      "identity": {
+        "before": true,
+        "after": true
+      },
+      "visible": {
+        "before": true,
+        "after": true
+      },
+      "diagnostics": {
+        "beforePhoto": {
+          "epoch": 1794774810241.7,
+          "guide": {
+            "rawText": " 🏁 観光ボランティアガイドさん（西尾市歴史公園（西尾城跡））　408m",
+            "rect": {
+              "x": 177,
+              "y": 269.5,
+              "left": 177,
+              "top": 269.5,
+              "right": 667,
+              "bottom": 303,
+              "width": 490,
+              "height": 33.5
+            },
+            "fontSize": "13px",
+            "lineHeight": "19.5px",
+            "lineCount": null,
+            "whollyInViewport": true,
+            "centerHitInside": true
+          },
+          "name": {
+            "rawText": "🏁 観光ボランティアガイドさん（西尾市歴史公園（西尾城跡））",
+            "rect": {
+              "x": 211,
+              "y": 276.5,
+              "left": 211,
+              "top": 276.5,
+              "right": 619.984375,
+              "bottom": 296,
+              "width": 408.984375,
+              "height": 19.5
+            },
+            "fontSize": "13px",
+            "lineHeight": "19.5px",
+            "lineCount": 1,
+            "codePointLength": 30,
+            "sortedCodePoints": " さんアィイガテドボラン光公史園城尾尾市歴西西観跡🏁（（））",
+            "wholeGlyphCountInsideClip": 30,
+            "ellipsisCSSApplicable": false,
+            "whollyInViewport": true,
+            "centerHitInside": true
+          },
+          "distance": {
+            "rawText": "　408m",
+            "rect": {
+              "x": 619.984375,
+              "y": 277.25,
+              "left": 619.984375,
+              "top": 277.25,
+              "right": 656,
+              "bottom": 295.25,
+              "width": 36.015625,
+              "height": 18
+            },
+            "fontSize": "12px",
+            "lineHeight": "18px",
+            "lineCount": 1,
+            "codePointLength": 5,
+            "sortedCodePoints": "048m　",
+            "wholeGlyphCountInsideClip": 5,
+            "ellipsisCSSApplicable": false,
+            "whollyInViewport": true,
+            "centerHitInside": true
+          },
+          "buttons": [
+            {
+              "rawText": "📱かたむけて ころがす",
+              "rect": {
+                "x": 10,
+                "y": 62,
+                "left": 10,
+                "top": 62,
+                "right": 188.484375,
+                "bottom": 102,
+                "width": 178.484375,
+                "height": 40
+              },
+              "fontSize": "20px",
+              "lineHeight": "20px",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "マップ",
+              "rect": {
+                "x": 0,
+                "y": 333,
+                "left": 0,
+                "top": 333,
+                "right": 168.796875,
+                "bottom": 390,
+                "width": 168.796875,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "きろく",
+              "rect": {
+                "x": 168.796875,
+                "y": 333,
+                "left": 168.796875,
+                "top": 333,
+                "right": 337.609375,
+                "bottom": 390,
+                "width": 168.8125,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "こえ",
+              "rect": {
+                "x": 337.609375,
+                "y": 333,
+                "left": 337.609375,
+                "top": 333,
+                "right": 506.40625,
+                "bottom": 390,
+                "width": 168.796875,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "とくてん",
+              "rect": {
+                "x": 506.40625,
+                "y": 333,
+                "left": 506.40625,
+                "top": 333,
+                "right": 675.203125,
+                "bottom": 390,
+                "width": 168.796875,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "せってい",
+              "rect": {
+                "x": 675.203125,
+                "y": 333,
+                "left": 675.203125,
+                "top": 333,
+                "right": 844,
+                "bottom": 390,
+                "width": 168.796875,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            }
+          ]
+        },
+        "afterPhoto": {
+          "epoch": 1794774810634.6,
+          "guide": {
+            "rawText": " 🏁 観光ボランティアガイドさん（西尾市歴史公園（西尾城跡））　2.0km",
+            "rect": {
+              "x": 177,
+              "y": 269.5,
+              "left": 177,
+              "top": 269.5,
+              "right": 667,
+              "bottom": 303,
+              "width": 490,
+              "height": 33.5
+            },
+            "fontSize": "13px",
+            "lineHeight": "19.5px",
+            "lineCount": null,
+            "whollyInViewport": true,
+            "centerHitInside": true
+          },
+          "name": {
+            "rawText": "🏁 観光ボランティアガイドさん（西尾市歴史公園（西尾城跡））",
+            "rect": {
+              "x": 211,
+              "y": 276.5,
+              "left": 211,
+              "top": 276.5,
+              "right": 613.984375,
+              "bottom": 296,
+              "width": 402.984375,
+              "height": 19.5
+            },
+            "fontSize": "13px",
+            "lineHeight": "19.5px",
+            "lineCount": 1,
+            "codePointLength": 30,
+            "sortedCodePoints": " さんアィイガテドボラン光公史園城尾尾市歴西西観跡🏁（（））",
+            "wholeGlyphCountInsideClip": 30,
+            "ellipsisCSSApplicable": false,
+            "whollyInViewport": true,
+            "centerHitInside": true
+          },
+          "distance": {
+            "rawText": "　2.0km",
+            "rect": {
+              "x": 613.984375,
+              "y": 277.25,
+              "left": 613.984375,
+              "top": 277.25,
+              "right": 656,
+              "bottom": 295.25,
+              "width": 42.015625,
+              "height": 18
+            },
+            "fontSize": "12px",
+            "lineHeight": "18px",
+            "lineCount": 1,
+            "codePointLength": 6,
+            "sortedCodePoints": ".02km　",
+            "wholeGlyphCountInsideClip": 6,
+            "ellipsisCSSApplicable": false,
+            "whollyInViewport": true,
+            "centerHitInside": true
+          },
+          "buttons": [
+            {
+              "rawText": "📱かたむけて ころがす",
+              "rect": {
+                "x": 10,
+                "y": 62,
+                "left": 10,
+                "top": 62,
+                "right": 188.484375,
+                "bottom": 102,
+                "width": 178.484375,
+                "height": 40
+              },
+              "fontSize": "20px",
+              "lineHeight": "20px",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "マップ",
+              "rect": {
+                "x": 0,
+                "y": 333,
+                "left": 0,
+                "top": 333,
+                "right": 168.796875,
+                "bottom": 390,
+                "width": 168.796875,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "きろく",
+              "rect": {
+                "x": 168.796875,
+                "y": 333,
+                "left": 168.796875,
+                "top": 333,
+                "right": 337.609375,
+                "bottom": 390,
+                "width": 168.8125,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "こえ",
+              "rect": {
+                "x": 337.609375,
+                "y": 333,
+                "left": 337.609375,
+                "top": 333,
+                "right": 506.40625,
+                "bottom": 390,
+                "width": 168.796875,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "とくてん",
+              "rect": {
+                "x": 506.40625,
+                "y": 333,
+                "left": 506.40625,
+                "top": 333,
+                "right": 675.203125,
+                "bottom": 390,
+                "width": 168.796875,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "せってい",
+              "rect": {
+                "x": 675.203125,
+                "y": 333,
+                "left": 675.203125,
+                "top": 333,
+                "right": 844,
+                "bottom": 390,
+                "width": 168.796875,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            }
+          ]
+        }
+      },
+      "photo": {
+        "file": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep-v2/run-01/case-07-old/fixture.png",
+        "requestedAt": 1794774810308,
+        "pageMarkerBefore": {
+          "at": 2345.7999999970198,
+          "epoch": 1794774810317.3
+        },
+        "sha256": "de22d766f1da6bafc59e2145dc720b6c8ae2817b8396c9fa5b5bac8079109f4f",
+        "completedAt": 1794774810599,
+        "personallyViewed": true,
+        "visual": "旧844。人物先行の全文と2.0kmが1行で読める。"
+      },
+      "restoration": {
+        "sameOriginalGuideReference": true,
+        "fullStateSnapshotEqual": false,
+        "changedTopLevelKeys": [
+          "idle"
+        ],
+        "changedValues": {
+          "idle": {
+            "before": {
+              "last": 0,
+              "lv": {}
+            },
+            "after": {
+              "last": 1794774810560,
+              "lv": {}
+            }
+          }
+        }
+      },
+      "lifecycle": {
+        "contextClosed": true,
+        "browserClosed": true,
+        "contextCloseRequestedAt": 1794774810763,
+        "contextClosedAt": 1794774810817,
+        "browserCloseRequestedAt": 1794774810817,
+        "browserClosedAt": 1794774810915
+      },
+      "errors": {
+        "errors": [],
+        "pageErrors": [],
+        "consoleErrors": [],
+        "failedRequests": [],
+        "httpErrors": []
+      }
+    },
+    {
+      "case": 8,
+      "directory": "case-08-new",
+      "variant": "new",
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "source": {
+        "path": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep-v2/run-01/case-08-new/case.json",
+        "sha256": "a82e01cb5ada2ac6395e38776add963633592a00414f8465ae14bcb55f10259b"
+      },
+      "status": "FIXTURE_OBSERVED",
+      "sourceResponseValidIndependently": true,
+      "gameResponseSHA256": "8267f4412c8f77a36a0cb3e45096d065188784cd7b24152e055ffc66279c77cc",
+      "meiroResponseSHA256": "59c9977fa3e6557295deb2c816889711f494f3c142574f065766656b25b2043e",
+      "helperSourceSHA256": "b11fe2bd721e0a6620f686ea105a3f667207ac68a09a0eba88c41709059813d8",
+      "inputCommands": 0,
+      "events": [
+        {
+          "type": "click",
+          "isTrusted": false,
+          "at": 1174.6999999955297,
+          "pointerId": -1,
+          "detail": 0,
+          "button": 0,
+          "buttons": 0,
+          "phase": "dom-content-loaded",
+          "readyState": "interactive",
+          "targetTag": "BUTTON",
+          "targetId": "meiroBtn",
+          "productionFrames": [
+            [
+              "min/meiro.js",
+              "836",
+              "32"
+            ]
+          ],
+          "independentExactMatch": true
+        },
+        {
+          "type": "click",
+          "isTrusted": false,
+          "at": 1175.8999999985099,
+          "pointerId": -1,
+          "detail": 0,
+          "button": 0,
+          "buttons": 0,
+          "phase": "dom-content-loaded",
+          "readyState": "interactive",
+          "targetTag": "BUTTON",
+          "targetId": "demoBtn",
+          "productionFrames": [
+            [
+              "min/meiro.js",
+              "821",
+              "38"
+            ],
+            [
+              "min/meiro.js",
+              "836",
+              "32"
+            ]
+          ],
+          "independentExactMatch": true
+        }
+      ],
+      "dclMarkers": {
+        "dom-content-loaded": [
+          {
+            "phase": "dom-content-loaded",
+            "at": 1171.1000000014901,
+            "epoch": 1794774814779
+          }
+        ],
+        "post-dom-content-loaded": [
+          {
+            "phase": "post-dom-content-loaded",
+            "at": 1190.7999999970198,
+            "epoch": 1794774814798.7
+          }
+        ],
+        "fixture-snapshot": [
+          {
+            "phase": "fixture-snapshot",
+            "at": 1730.1999999955297,
+            "epoch": 1794774815338.0999
+          }
+        ]
+      },
+      "helperOutput": "西尾市歴史公園（西尾城跡）（観光ボランティアガイドさん）",
+      "helperPreservesFullNames": true,
+      "renderedNameUsesHelper": true,
+      "identity": {
+        "before": true,
+        "after": true
+      },
+      "visible": {
+        "before": true,
+        "after": true
+      },
+      "diagnostics": {
+        "beforePhoto": {
+          "epoch": 1794774815546.2998,
+          "guide": {
+            "rawText": " 西尾市歴史公園（西尾城跡）（観光ボランティアガイドさん）　915m",
+            "rect": {
+              "x": 177,
+              "y": 269.5,
+              "left": 177,
+              "top": 269.5,
+              "right": 667,
+              "bottom": 303,
+              "width": 490,
+              "height": 33.5
+            },
+            "fontSize": "13px",
+            "lineHeight": "19.5px",
+            "lineCount": null,
+            "whollyInViewport": true,
+            "centerHitInside": true
+          },
+          "name": {
+            "rawText": "西尾市歴史公園（西尾城跡）（観光ボランティアガイドさん）",
+            "rect": {
+              "x": 211,
+              "y": 276.5,
+              "left": 211,
+              "top": 276.5,
+              "right": 619.984375,
+              "bottom": 296,
+              "width": 408.984375,
+              "height": 19.5
+            },
+            "fontSize": "13px",
+            "lineHeight": "19.5px",
+            "lineCount": 1,
+            "codePointLength": 28,
+            "sortedCodePoints": "さんアィイガテドボラン光公史園城尾尾市歴西西観跡（（））",
+            "wholeGlyphCountInsideClip": 28,
+            "ellipsisCSSApplicable": false,
+            "whollyInViewport": true,
+            "centerHitInside": true
+          },
+          "distance": {
+            "rawText": "　915m",
+            "rect": {
+              "x": 619.984375,
+              "y": 277.25,
+              "left": 619.984375,
+              "top": 277.25,
+              "right": 656,
+              "bottom": 295.25,
+              "width": 36.015625,
+              "height": 18
+            },
+            "fontSize": "12px",
+            "lineHeight": "18px",
+            "lineCount": 1,
+            "codePointLength": 5,
+            "sortedCodePoints": "159m　",
+            "wholeGlyphCountInsideClip": 5,
+            "ellipsisCSSApplicable": false,
+            "whollyInViewport": true,
+            "centerHitInside": true
+          },
+          "buttons": [
+            {
+              "rawText": "📱かたむけて ころがす",
+              "rect": {
+                "x": 10,
+                "y": 62,
+                "left": 10,
+                "top": 62,
+                "right": 188.484375,
+                "bottom": 102,
+                "width": 178.484375,
+                "height": 40
+              },
+              "fontSize": "20px",
+              "lineHeight": "20px",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "マップ",
+              "rect": {
+                "x": 0,
+                "y": 333,
+                "left": 0,
+                "top": 333,
+                "right": 168.796875,
+                "bottom": 390,
+                "width": 168.796875,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "きろく",
+              "rect": {
+                "x": 168.796875,
+                "y": 333,
+                "left": 168.796875,
+                "top": 333,
+                "right": 337.609375,
+                "bottom": 390,
+                "width": 168.8125,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "こえ",
+              "rect": {
+                "x": 337.609375,
+                "y": 333,
+                "left": 337.609375,
+                "top": 333,
+                "right": 506.40625,
+                "bottom": 390,
+                "width": 168.796875,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "とくてん",
+              "rect": {
+                "x": 506.40625,
+                "y": 333,
+                "left": 506.40625,
+                "top": 333,
+                "right": 675.203125,
+                "bottom": 390,
+                "width": 168.796875,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "せってい",
+              "rect": {
+                "x": 675.203125,
+                "y": 333,
+                "left": 675.203125,
+                "top": 333,
+                "right": 844,
+                "bottom": 390,
+                "width": 168.796875,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            }
+          ]
+        },
+        "afterPhoto": {
+          "epoch": 1794774815854,
+          "guide": {
+            "rawText": " 西尾市歴史公園（西尾城跡）（観光ボランティアガイドさん）　915m",
+            "rect": {
+              "x": 177,
+              "y": 269.5,
+              "left": 177,
+              "top": 269.5,
+              "right": 667,
+              "bottom": 303,
+              "width": 490,
+              "height": 33.5
+            },
+            "fontSize": "13px",
+            "lineHeight": "19.5px",
+            "lineCount": null,
+            "whollyInViewport": true,
+            "centerHitInside": true
+          },
+          "name": {
+            "rawText": "西尾市歴史公園（西尾城跡）（観光ボランティアガイドさん）",
+            "rect": {
+              "x": 211,
+              "y": 276.5,
+              "left": 211,
+              "top": 276.5,
+              "right": 619.984375,
+              "bottom": 296,
+              "width": 408.984375,
+              "height": 19.5
+            },
+            "fontSize": "13px",
+            "lineHeight": "19.5px",
+            "lineCount": 1,
+            "codePointLength": 28,
+            "sortedCodePoints": "さんアィイガテドボラン光公史園城尾尾市歴西西観跡（（））",
+            "wholeGlyphCountInsideClip": 28,
+            "ellipsisCSSApplicable": false,
+            "whollyInViewport": true,
+            "centerHitInside": true
+          },
+          "distance": {
+            "rawText": "　915m",
+            "rect": {
+              "x": 619.984375,
+              "y": 277.25,
+              "left": 619.984375,
+              "top": 277.25,
+              "right": 656,
+              "bottom": 295.25,
+              "width": 36.015625,
+              "height": 18
+            },
+            "fontSize": "12px",
+            "lineHeight": "18px",
+            "lineCount": 1,
+            "codePointLength": 5,
+            "sortedCodePoints": "159m　",
+            "wholeGlyphCountInsideClip": 5,
+            "ellipsisCSSApplicable": false,
+            "whollyInViewport": true,
+            "centerHitInside": true
+          },
+          "buttons": [
+            {
+              "rawText": "📱かたむけて ころがす",
+              "rect": {
+                "x": 10,
+                "y": 62,
+                "left": 10,
+                "top": 62,
+                "right": 188.484375,
+                "bottom": 102,
+                "width": 178.484375,
+                "height": 40
+              },
+              "fontSize": "20px",
+              "lineHeight": "20px",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "マップ",
+              "rect": {
+                "x": 0,
+                "y": 333,
+                "left": 0,
+                "top": 333,
+                "right": 168.796875,
+                "bottom": 390,
+                "width": 168.796875,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "きろく",
+              "rect": {
+                "x": 168.796875,
+                "y": 333,
+                "left": 168.796875,
+                "top": 333,
+                "right": 337.609375,
+                "bottom": 390,
+                "width": 168.8125,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "こえ",
+              "rect": {
+                "x": 337.609375,
+                "y": 333,
+                "left": 337.609375,
+                "top": 333,
+                "right": 506.40625,
+                "bottom": 390,
+                "width": 168.796875,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "とくてん",
+              "rect": {
+                "x": 506.40625,
+                "y": 333,
+                "left": 506.40625,
+                "top": 333,
+                "right": 675.203125,
+                "bottom": 390,
+                "width": 168.796875,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "せってい",
+              "rect": {
+                "x": 675.203125,
+                "y": 333,
+                "left": 675.203125,
+                "top": 333,
+                "right": 844,
+                "bottom": 390,
+                "width": 168.796875,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            }
+          ]
+        }
+      },
+      "photo": {
+        "file": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep-v2/run-01/case-08-new/fixture.png",
+        "requestedAt": 1794774815591,
+        "pageMarkerBefore": {
+          "at": 2033.6999999955297,
+          "epoch": 1794774815641.7
+        },
+        "sha256": "e51081dde224df2112355ac71e4f37a53d2d813b633f7b65fb66a974aeac42a1",
+        "completedAt": 1794774815839,
+        "personallyViewed": true,
+        "visual": "新844。場所先行の全文と915mが1行で読める。"
+      },
+      "restoration": {
+        "sameOriginalGuideReference": true,
+        "fullStateSnapshotEqual": false,
+        "changedTopLevelKeys": [
+          "glowGoal",
+          "guides"
+        ],
+        "changedValues": {
+          "glowGoal": {
+            "before": {
+              "id": "f-nishio-station",
+              "name": "名鉄 西尾駅",
+              "lat": 34.863873,
+              "lng": 137.057754
+            },
+            "after": {
+              "id": "w1218662917",
+              "name": "名鉄高架下公園",
+              "lat": 34.86145,
+              "lng": 137.05589
+            }
+          },
+          "guides": {
+            "before": 1,
+            "after": 5
+          }
+        }
+      },
+      "lifecycle": {
+        "contextClosed": true,
+        "browserClosed": true,
+        "contextCloseRequestedAt": 1794774816128,
+        "contextClosedAt": 1794774816180,
+        "browserCloseRequestedAt": 1794774816180,
+        "browserClosedAt": 1794774816297
+      },
+      "errors": {
+        "errors": [],
+        "pageErrors": [],
+        "consoleErrors": [],
+        "failedRequests": [],
+        "httpErrors": []
+      }
+    },
+    {
+      "case": 9,
+      "directory": "case-09-old",
+      "variant": "old",
+      "viewport": {
+        "width": 820,
+        "height": 1180
+      },
+      "source": {
+        "path": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep-v2/run-01/case-09-old/case.json",
+        "sha256": "5ee779c8ed23eed8bbb07b3789886d392e747311437a915cd823606f27afafbf"
+      },
+      "status": "FIXTURE_OBSERVED",
+      "sourceResponseValidIndependently": true,
+      "gameResponseSHA256": "45f4ba7b4aa8961222f5c57ac26428aff3aa8e5e9135bfd7c93989c0b5d7dc64",
+      "meiroResponseSHA256": "59c9977fa3e6557295deb2c816889711f494f3c142574f065766656b25b2043e",
+      "helperSourceSHA256": "916bc62cde495ad9e3885d1297f533174ea833a67932882c9e7ac650d76a62b7",
+      "inputCommands": 0,
+      "events": [
+        {
+          "type": "click",
+          "isTrusted": false,
+          "at": 1503.3000000044703,
+          "pointerId": -1,
+          "detail": 0,
+          "button": 0,
+          "buttons": 0,
+          "phase": "dom-content-loaded",
+          "readyState": "interactive",
+          "targetTag": "BUTTON",
+          "targetId": "meiroBtn",
+          "productionFrames": [
+            [
+              "min/meiro.js",
+              "836",
+              "32"
+            ]
+          ],
+          "independentExactMatch": true
+        },
+        {
+          "type": "click",
+          "isTrusted": false,
+          "at": 1504.8999999985099,
+          "pointerId": -1,
+          "detail": 0,
+          "button": 0,
+          "buttons": 0,
+          "phase": "dom-content-loaded",
+          "readyState": "interactive",
+          "targetTag": "BUTTON",
+          "targetId": "demoBtn",
+          "productionFrames": [
+            [
+              "min/meiro.js",
+              "821",
+              "38"
+            ],
+            [
+              "min/meiro.js",
+              "836",
+              "32"
+            ]
+          ],
+          "independentExactMatch": true
+        }
+      ],
+      "dclMarkers": {
+        "dom-content-loaded": [
+          {
+            "phase": "dom-content-loaded",
+            "at": 1498.3999999985099,
+            "epoch": 1794774822211.7
+          }
+        ],
+        "post-dom-content-loaded": [
+          {
+            "phase": "post-dom-content-loaded",
+            "at": 1518.3999999985099,
+            "epoch": 1794774822231.7
+          }
+        ],
+        "fixture-snapshot": [
+          {
+            "phase": "fixture-snapshot",
+            "at": 2510,
+            "epoch": 1794774823223.3
+          }
+        ]
+      },
+      "helperOutput": "観光ボランティアガイドさん（西尾市歴史公園（西尾城跡））",
+      "helperPreservesFullNames": true,
+      "renderedNameUsesHelper": true,
+      "identity": {
+        "before": true,
+        "after": true
+      },
+      "visible": {
+        "before": true,
+        "after": true
+      },
+      "diagnostics": {
+        "beforePhoto": {
+          "epoch": 1794774823413.1,
+          "guide": {
+            "rawText": " 🏁 観光ボランティアガイドさん（西尾市歴史公園（西尾城跡））　408m",
+            "rect": {
+              "x": 165,
+              "y": 1059.5,
+              "left": 165,
+              "top": 1059.5,
+              "right": 655,
+              "bottom": 1093,
+              "width": 490,
+              "height": 33.5
+            },
+            "fontSize": "13px",
+            "lineHeight": "19.5px",
+            "lineCount": null,
+            "whollyInViewport": true,
+            "centerHitInside": true
+          },
+          "name": {
+            "rawText": "🏁 観光ボランティアガイドさん（西尾市歴史公園（西尾城跡））",
+            "rect": {
+              "x": 199,
+              "y": 1066.5,
+              "left": 199,
+              "top": 1066.5,
+              "right": 607.984375,
+              "bottom": 1086,
+              "width": 408.984375,
+              "height": 19.5
+            },
+            "fontSize": "13px",
+            "lineHeight": "19.5px",
+            "lineCount": 1,
+            "codePointLength": 30,
+            "sortedCodePoints": " さんアィイガテドボラン光公史園城尾尾市歴西西観跡🏁（（））",
+            "wholeGlyphCountInsideClip": 30,
+            "ellipsisCSSApplicable": false,
+            "whollyInViewport": true,
+            "centerHitInside": true
+          },
+          "distance": {
+            "rawText": "　408m",
+            "rect": {
+              "x": 607.984375,
+              "y": 1067.25,
+              "left": 607.984375,
+              "top": 1067.25,
+              "right": 644,
+              "bottom": 1085.25,
+              "width": 36.015625,
+              "height": 18
+            },
+            "fontSize": "12px",
+            "lineHeight": "18px",
+            "lineCount": 1,
+            "codePointLength": 5,
+            "sortedCodePoints": "048m　",
+            "wholeGlyphCountInsideClip": 5,
+            "ellipsisCSSApplicable": false,
+            "whollyInViewport": true,
+            "centerHitInside": true
+          },
+          "buttons": [
+            {
+              "rawText": "📱かたむけて ころがす",
+              "rect": {
+                "x": 10,
+                "y": 62,
+                "left": 10,
+                "top": 62,
+                "right": 188.484375,
+                "bottom": 102,
+                "width": 178.484375,
+                "height": 40
+              },
+              "fontSize": "20px",
+              "lineHeight": "20px",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "マップ",
+              "rect": {
+                "x": 0,
+                "y": 1123,
+                "left": 0,
+                "top": 1123,
+                "right": 164,
+                "bottom": 1180,
+                "width": 164,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "きろく",
+              "rect": {
+                "x": 164,
+                "y": 1123,
+                "left": 164,
+                "top": 1123,
+                "right": 328,
+                "bottom": 1180,
+                "width": 164,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "こえ",
+              "rect": {
+                "x": 328,
+                "y": 1123,
+                "left": 328,
+                "top": 1123,
+                "right": 492,
+                "bottom": 1180,
+                "width": 164,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "とくてん",
+              "rect": {
+                "x": 492,
+                "y": 1123,
+                "left": 492,
+                "top": 1123,
+                "right": 656,
+                "bottom": 1180,
+                "width": 164,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "せってい",
+              "rect": {
+                "x": 656,
+                "y": 1123,
+                "left": 656,
+                "top": 1123,
+                "right": 820,
+                "bottom": 1180,
+                "width": 164,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            }
+          ]
+        },
+        "afterPhoto": {
+          "epoch": 1794774824023.4001,
+          "guide": {
+            "rawText": " 🏁 観光ボランティアガイドさん（西尾市歴史公園（西尾城跡））　2.0km",
+            "rect": {
+              "x": 165,
+              "y": 1059.5,
+              "left": 165,
+              "top": 1059.5,
+              "right": 655,
+              "bottom": 1093,
+              "width": 490,
+              "height": 33.5
+            },
+            "fontSize": "13px",
+            "lineHeight": "19.5px",
+            "lineCount": null,
+            "whollyInViewport": true,
+            "centerHitInside": true
+          },
+          "name": {
+            "rawText": "🏁 観光ボランティアガイドさん（西尾市歴史公園（西尾城跡））",
+            "rect": {
+              "x": 199,
+              "y": 1066.5,
+              "left": 199,
+              "top": 1066.5,
+              "right": 601.984375,
+              "bottom": 1086,
+              "width": 402.984375,
+              "height": 19.5
+            },
+            "fontSize": "13px",
+            "lineHeight": "19.5px",
+            "lineCount": 1,
+            "codePointLength": 30,
+            "sortedCodePoints": " さんアィイガテドボラン光公史園城尾尾市歴西西観跡🏁（（））",
+            "wholeGlyphCountInsideClip": 30,
+            "ellipsisCSSApplicable": false,
+            "whollyInViewport": true,
+            "centerHitInside": true
+          },
+          "distance": {
+            "rawText": "　2.0km",
+            "rect": {
+              "x": 601.984375,
+              "y": 1067.25,
+              "left": 601.984375,
+              "top": 1067.25,
+              "right": 644,
+              "bottom": 1085.25,
+              "width": 42.015625,
+              "height": 18
+            },
+            "fontSize": "12px",
+            "lineHeight": "18px",
+            "lineCount": 1,
+            "codePointLength": 6,
+            "sortedCodePoints": ".02km　",
+            "wholeGlyphCountInsideClip": 6,
+            "ellipsisCSSApplicable": false,
+            "whollyInViewport": true,
+            "centerHitInside": true
+          },
+          "buttons": [
+            {
+              "rawText": "📱かたむけて ころがす",
+              "rect": {
+                "x": 10,
+                "y": 62,
+                "left": 10,
+                "top": 62,
+                "right": 188.484375,
+                "bottom": 102,
+                "width": 178.484375,
+                "height": 40
+              },
+              "fontSize": "20px",
+              "lineHeight": "20px",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "マップ",
+              "rect": {
+                "x": 0,
+                "y": 1123,
+                "left": 0,
+                "top": 1123,
+                "right": 164,
+                "bottom": 1180,
+                "width": 164,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "きろく",
+              "rect": {
+                "x": 164,
+                "y": 1123,
+                "left": 164,
+                "top": 1123,
+                "right": 328,
+                "bottom": 1180,
+                "width": 164,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "こえ",
+              "rect": {
+                "x": 328,
+                "y": 1123,
+                "left": 328,
+                "top": 1123,
+                "right": 492,
+                "bottom": 1180,
+                "width": 164,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "とくてん",
+              "rect": {
+                "x": 492,
+                "y": 1123,
+                "left": 492,
+                "top": 1123,
+                "right": 656,
+                "bottom": 1180,
+                "width": 164,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "せってい",
+              "rect": {
+                "x": 656,
+                "y": 1123,
+                "left": 656,
+                "top": 1123,
+                "right": 820,
+                "bottom": 1180,
+                "width": 164,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            }
+          ]
+        }
+      },
+      "photo": {
+        "file": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep-v2/run-01/case-09-old/fixture.png",
+        "requestedAt": 1794774823459,
+        "pageMarkerBefore": {
+          "at": 2834.2000000029802,
+          "epoch": 1794774823547.6
+        },
+        "sha256": "7a8a14d20b32b9d996d21517d0fd34ee70aba4a43fe6a08a79813558d5090144",
+        "completedAt": 1794774823994,
+        "personallyViewed": true,
+        "visual": "旧820。人物先行の全文と2.0kmが1行で読める。手本表示の位相は新と違う。"
+      },
+      "restoration": {
+        "sameOriginalGuideReference": true,
+        "fullStateSnapshotEqual": false,
+        "changedTopLevelKeys": [
+          "idle"
+        ],
+        "changedValues": {
+          "idle": {
+            "before": {
+              "last": 0,
+              "lv": {}
+            },
+            "after": {
+              "last": 1794774823756,
+              "lv": {}
+            }
+          }
+        }
+      },
+      "lifecycle": {
+        "contextClosed": true,
+        "browserClosed": true,
+        "contextCloseRequestedAt": 1794774824118,
+        "contextClosedAt": 1794774824179,
+        "browserCloseRequestedAt": 1794774824179,
+        "browserClosedAt": 1794774824274
+      },
+      "errors": {
+        "errors": [],
+        "pageErrors": [],
+        "consoleErrors": [],
+        "failedRequests": [],
+        "httpErrors": []
+      }
+    },
+    {
+      "case": 10,
+      "directory": "case-10-new",
+      "variant": "new",
+      "viewport": {
+        "width": 820,
+        "height": 1180
+      },
+      "source": {
+        "path": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep-v2/run-01/case-10-new/case.json",
+        "sha256": "b6e7d056c857ec8d6b3f5327984e3a96c51ff2e6a123b15d3554fa14d48ae7b0"
+      },
+      "status": "FIXTURE_OBSERVED",
+      "sourceResponseValidIndependently": true,
+      "gameResponseSHA256": "8267f4412c8f77a36a0cb3e45096d065188784cd7b24152e055ffc66279c77cc",
+      "meiroResponseSHA256": "59c9977fa3e6557295deb2c816889711f494f3c142574f065766656b25b2043e",
+      "helperSourceSHA256": "b11fe2bd721e0a6620f686ea105a3f667207ac68a09a0eba88c41709059813d8",
+      "inputCommands": 0,
+      "events": [
+        {
+          "type": "click",
+          "isTrusted": false,
+          "at": 1561.8000000044703,
+          "pointerId": -1,
+          "detail": 0,
+          "button": 0,
+          "buttons": 0,
+          "phase": "dom-content-loaded",
+          "readyState": "interactive",
+          "targetTag": "BUTTON",
+          "targetId": "meiroBtn",
+          "productionFrames": [
+            [
+              "min/meiro.js",
+              "836",
+              "32"
+            ]
+          ],
+          "independentExactMatch": true
+        },
+        {
+          "type": "click",
+          "isTrusted": false,
+          "at": 1564.6000000014901,
+          "pointerId": -1,
+          "detail": 0,
+          "button": 0,
+          "buttons": 0,
+          "phase": "dom-content-loaded",
+          "readyState": "interactive",
+          "targetTag": "BUTTON",
+          "targetId": "demoBtn",
+          "productionFrames": [
+            [
+              "min/meiro.js",
+              "821",
+              "38"
+            ],
+            [
+              "min/meiro.js",
+              "836",
+              "32"
+            ]
+          ],
+          "independentExactMatch": true
+        }
+      ],
+      "dclMarkers": {
+        "dom-content-loaded": [
+          {
+            "phase": "dom-content-loaded",
+            "at": 1552.8999999985099,
+            "epoch": 1794774829088.2998
+          }
+        ],
+        "post-dom-content-loaded": [
+          {
+            "phase": "post-dom-content-loaded",
+            "at": 1578.8000000044703,
+            "epoch": 1794774829114.2
+          }
+        ],
+        "fixture-snapshot": [
+          {
+            "phase": "fixture-snapshot",
+            "at": 2481.10000000149,
+            "epoch": 1794774830016.5
+          }
+        ]
+      },
+      "helperOutput": "西尾市歴史公園（西尾城跡）（観光ボランティアガイドさん）",
+      "helperPreservesFullNames": true,
+      "renderedNameUsesHelper": true,
+      "identity": {
+        "before": true,
+        "after": true
+      },
+      "visible": {
+        "before": true,
+        "after": true
+      },
+      "diagnostics": {
+        "beforePhoto": {
+          "epoch": 1794774830180.7998,
+          "guide": {
+            "rawText": " 🏁 西尾市歴史公園（西尾城跡）（観光ボランティアガイドさん）　408m",
+            "rect": {
+              "x": 165,
+              "y": 1059.5,
+              "left": 165,
+              "top": 1059.5,
+              "right": 655,
+              "bottom": 1093,
+              "width": 490,
+              "height": 33.5
+            },
+            "fontSize": "13px",
+            "lineHeight": "19.5px",
+            "lineCount": null,
+            "whollyInViewport": true,
+            "centerHitInside": true
+          },
+          "name": {
+            "rawText": "🏁 西尾市歴史公園（西尾城跡）（観光ボランティアガイドさん）",
+            "rect": {
+              "x": 199,
+              "y": 1066.5,
+              "left": 199,
+              "top": 1066.5,
+              "right": 607.984375,
+              "bottom": 1086,
+              "width": 408.984375,
+              "height": 19.5
+            },
+            "fontSize": "13px",
+            "lineHeight": "19.5px",
+            "lineCount": 1,
+            "codePointLength": 30,
+            "sortedCodePoints": " さんアィイガテドボラン光公史園城尾尾市歴西西観跡🏁（（））",
+            "wholeGlyphCountInsideClip": 30,
+            "ellipsisCSSApplicable": false,
+            "whollyInViewport": true,
+            "centerHitInside": true
+          },
+          "distance": {
+            "rawText": "　408m",
+            "rect": {
+              "x": 607.984375,
+              "y": 1067.25,
+              "left": 607.984375,
+              "top": 1067.25,
+              "right": 644,
+              "bottom": 1085.25,
+              "width": 36.015625,
+              "height": 18
+            },
+            "fontSize": "12px",
+            "lineHeight": "18px",
+            "lineCount": 1,
+            "codePointLength": 5,
+            "sortedCodePoints": "048m　",
+            "wholeGlyphCountInsideClip": 5,
+            "ellipsisCSSApplicable": false,
+            "whollyInViewport": true,
+            "centerHitInside": true
+          },
+          "buttons": [
+            {
+              "rawText": "📱かたむけて ころがす",
+              "rect": {
+                "x": 10,
+                "y": 62,
+                "left": 10,
+                "top": 62,
+                "right": 188.484375,
+                "bottom": 102,
+                "width": 178.484375,
+                "height": 40
+              },
+              "fontSize": "20px",
+              "lineHeight": "20px",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "マップ",
+              "rect": {
+                "x": 0,
+                "y": 1123,
+                "left": 0,
+                "top": 1123,
+                "right": 164,
+                "bottom": 1180,
+                "width": 164,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "きろく",
+              "rect": {
+                "x": 164,
+                "y": 1123,
+                "left": 164,
+                "top": 1123,
+                "right": 328,
+                "bottom": 1180,
+                "width": 164,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "こえ",
+              "rect": {
+                "x": 328,
+                "y": 1123,
+                "left": 328,
+                "top": 1123,
+                "right": 492,
+                "bottom": 1180,
+                "width": 164,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "とくてん",
+              "rect": {
+                "x": 492,
+                "y": 1123,
+                "left": 492,
+                "top": 1123,
+                "right": 656,
+                "bottom": 1180,
+                "width": 164,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "せってい",
+              "rect": {
+                "x": 656,
+                "y": 1123,
+                "left": 656,
+                "top": 1123,
+                "right": 820,
+                "bottom": 1180,
+                "width": 164,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            }
+          ]
+        },
+        "afterPhoto": {
+          "epoch": 1794774830666.2,
+          "guide": {
+            "rawText": " 🏁 西尾市歴史公園（西尾城跡）（観光ボランティアガイドさん）　2.0km",
+            "rect": {
+              "x": 165,
+              "y": 1059.5,
+              "left": 165,
+              "top": 1059.5,
+              "right": 655,
+              "bottom": 1093,
+              "width": 490,
+              "height": 33.5
+            },
+            "fontSize": "13px",
+            "lineHeight": "19.5px",
+            "lineCount": null,
+            "whollyInViewport": true,
+            "centerHitInside": true
+          },
+          "name": {
+            "rawText": "🏁 西尾市歴史公園（西尾城跡）（観光ボランティアガイドさん）",
+            "rect": {
+              "x": 199,
+              "y": 1066.5,
+              "left": 199,
+              "top": 1066.5,
+              "right": 601.984375,
+              "bottom": 1086,
+              "width": 402.984375,
+              "height": 19.5
+            },
+            "fontSize": "13px",
+            "lineHeight": "19.5px",
+            "lineCount": 1,
+            "codePointLength": 30,
+            "sortedCodePoints": " さんアィイガテドボラン光公史園城尾尾市歴西西観跡🏁（（））",
+            "wholeGlyphCountInsideClip": 30,
+            "ellipsisCSSApplicable": false,
+            "whollyInViewport": true,
+            "centerHitInside": true
+          },
+          "distance": {
+            "rawText": "　2.0km",
+            "rect": {
+              "x": 601.984375,
+              "y": 1067.25,
+              "left": 601.984375,
+              "top": 1067.25,
+              "right": 644,
+              "bottom": 1085.25,
+              "width": 42.015625,
+              "height": 18
+            },
+            "fontSize": "12px",
+            "lineHeight": "18px",
+            "lineCount": 1,
+            "codePointLength": 6,
+            "sortedCodePoints": ".02km　",
+            "wholeGlyphCountInsideClip": 6,
+            "ellipsisCSSApplicable": false,
+            "whollyInViewport": true,
+            "centerHitInside": true
+          },
+          "buttons": [
+            {
+              "rawText": "📱かたむけて ころがす",
+              "rect": {
+                "x": 10,
+                "y": 62,
+                "left": 10,
+                "top": 62,
+                "right": 188.484375,
+                "bottom": 102,
+                "width": 178.484375,
+                "height": 40
+              },
+              "fontSize": "20px",
+              "lineHeight": "20px",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "マップ",
+              "rect": {
+                "x": 0,
+                "y": 1123,
+                "left": 0,
+                "top": 1123,
+                "right": 164,
+                "bottom": 1180,
+                "width": 164,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "きろく",
+              "rect": {
+                "x": 164,
+                "y": 1123,
+                "left": 164,
+                "top": 1123,
+                "right": 328,
+                "bottom": 1180,
+                "width": 164,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "こえ",
+              "rect": {
+                "x": 328,
+                "y": 1123,
+                "left": 328,
+                "top": 1123,
+                "right": 492,
+                "bottom": 1180,
+                "width": 164,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "とくてん",
+              "rect": {
+                "x": 492,
+                "y": 1123,
+                "left": 492,
+                "top": 1123,
+                "right": 656,
+                "bottom": 1180,
+                "width": 164,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            },
+            {
+              "rawText": "せってい",
+              "rect": {
+                "x": 656,
+                "y": 1123,
+                "left": 656,
+                "top": 1123,
+                "right": 820,
+                "bottom": 1180,
+                "width": 164,
+                "height": 57
+              },
+              "fontSize": "20px",
+              "lineHeight": "normal",
+              "whollyInViewport": true,
+              "centerHitInside": true
+            }
+          ]
+        }
+      },
+      "photo": {
+        "file": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep-v2/run-01/case-10-new/fixture.png",
+        "requestedAt": 1794774830217,
+        "pageMarkerBefore": {
+          "at": 2688.7000000029802,
+          "epoch": 1794774830224.0999
+        },
+        "sha256": "1e0b5708a4724a555894b871dd19cd07537d23ba6f6d7599cbc5431cdfd6e77d",
+        "completedAt": 1794774830637,
+        "personallyViewed": true,
+        "visual": "新820。場所先行の全文と2.0kmが1行で読める。地図/手本/粒の位相差を画素同一や配置退行とみなさない。"
+      },
+      "restoration": {
+        "sameOriginalGuideReference": true,
+        "fullStateSnapshotEqual": false,
+        "changedTopLevelKeys": [
+          "idle"
+        ],
+        "changedValues": {
+          "idle": {
+            "before": {
+              "last": 0,
+              "lv": {}
+            },
+            "after": {
+              "last": 1794774830665,
+              "lv": {}
+            }
+          }
+        }
+      },
+      "lifecycle": {
+        "contextClosed": true,
+        "browserClosed": true,
+        "contextCloseRequestedAt": 1794774830788,
+        "contextClosedAt": 1794774830849,
+        "browserCloseRequestedAt": 1794774830849,
+        "browserClosedAt": 1794774830942
+      },
+      "errors": {
+        "errors": [],
+        "pageErrors": [],
+        "consoleErrors": [],
+        "failedRequests": [],
+        "httpErrors": []
+      }
+    }
+  ],
+  "pairs": [
+    {
+      "viewport": {
+        "width": 320,
+        "height": 568
+      },
+      "oldCase": 1,
+      "newCase": 2,
+      "distanceOld": [
+        "　915m",
+        "　915m"
+      ],
+      "distanceNew": [
+        "　408m",
+        "　2.0km"
+      ],
+      "nameHasFlagOld": [
+        false,
+        false
+      ],
+      "nameHasFlagNew": [
+        true,
+        true
+      ],
+      "withinPhotoDistanceStable": {
+        "old": true,
+        "new": false
+      },
+      "correspondingDiagnosticsGeometryMatch": {
+        "beforePhoto": true,
+        "afterPhoto": false
+      },
+      "correspondingDistanceMatch": {
+        "beforePhoto": false,
+        "afterPhoto": false
+      },
+      "rawDisplayCharacterMultisetMatch": {
+        "beforePhoto": false,
+        "afterPhoto": false
+      },
+      "helperOutputCharacterMultisetMatch": true,
+      "strictStableSameConditionPair": false
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "oldCase": 3,
+      "newCase": 4,
+      "distanceOld": [
+        "　408m",
+        "　2.0km"
+      ],
+      "distanceNew": [
+        "　915m",
+        "　915m"
+      ],
+      "nameHasFlagOld": [
+        true,
+        true
+      ],
+      "nameHasFlagNew": [
+        false,
+        false
+      ],
+      "withinPhotoDistanceStable": {
+        "old": false,
+        "new": true
+      },
+      "correspondingDiagnosticsGeometryMatch": {
+        "beforePhoto": true,
+        "afterPhoto": false
+      },
+      "correspondingDistanceMatch": {
+        "beforePhoto": false,
+        "afterPhoto": false
+      },
+      "rawDisplayCharacterMultisetMatch": {
+        "beforePhoto": false,
+        "afterPhoto": false
+      },
+      "helperOutputCharacterMultisetMatch": true,
+      "strictStableSameConditionPair": false
+    },
+    {
+      "viewport": {
+        "width": 568,
+        "height": 320
+      },
+      "oldCase": 5,
+      "newCase": 6,
+      "distanceOld": [
+        "　915m",
+        "　915m"
+      ],
+      "distanceNew": [
+        "　408m",
+        "　2.0km"
+      ],
+      "nameHasFlagOld": [
+        false,
+        false
+      ],
+      "nameHasFlagNew": [
+        true,
+        true
+      ],
+      "withinPhotoDistanceStable": {
+        "old": true,
+        "new": false
+      },
+      "correspondingDiagnosticsGeometryMatch": {
+        "beforePhoto": true,
+        "afterPhoto": false
+      },
+      "correspondingDistanceMatch": {
+        "beforePhoto": false,
+        "afterPhoto": false
+      },
+      "rawDisplayCharacterMultisetMatch": {
+        "beforePhoto": false,
+        "afterPhoto": false
+      },
+      "helperOutputCharacterMultisetMatch": true,
+      "strictStableSameConditionPair": false
+    },
+    {
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "oldCase": 7,
+      "newCase": 8,
+      "distanceOld": [
+        "　408m",
+        "　2.0km"
+      ],
+      "distanceNew": [
+        "　915m",
+        "　915m"
+      ],
+      "nameHasFlagOld": [
+        true,
+        true
+      ],
+      "nameHasFlagNew": [
+        false,
+        false
+      ],
+      "withinPhotoDistanceStable": {
+        "old": false,
+        "new": true
+      },
+      "correspondingDiagnosticsGeometryMatch": {
+        "beforePhoto": true,
+        "afterPhoto": false
+      },
+      "correspondingDistanceMatch": {
+        "beforePhoto": false,
+        "afterPhoto": false
+      },
+      "rawDisplayCharacterMultisetMatch": {
+        "beforePhoto": false,
+        "afterPhoto": false
+      },
+      "helperOutputCharacterMultisetMatch": true,
+      "strictStableSameConditionPair": false
+    },
+    {
+      "viewport": {
+        "width": 820,
+        "height": 1180
+      },
+      "oldCase": 9,
+      "newCase": 10,
+      "distanceOld": [
+        "　408m",
+        "　2.0km"
+      ],
+      "distanceNew": [
+        "　408m",
+        "　2.0km"
+      ],
+      "nameHasFlagOld": [
+        true,
+        true
+      ],
+      "nameHasFlagNew": [
+        true,
+        true
+      ],
+      "withinPhotoDistanceStable": {
+        "old": false,
+        "new": false
+      },
+      "correspondingDiagnosticsGeometryMatch": {
+        "beforePhoto": true,
+        "afterPhoto": true
+      },
+      "correspondingDistanceMatch": {
+        "beforePhoto": true,
+        "afterPhoto": true
+      },
+      "rawDisplayCharacterMultisetMatch": {
+        "beforePhoto": true,
+        "afterPhoto": true
+      },
+      "helperOutputCharacterMultisetMatch": true,
+      "strictStableSameConditionPair": false
+    }
+  ],
+  "findings": {
+    "newPlaceNamePrefixVisibleImages": 5,
+    "newCompletePlaceNameClaimAt320": false,
+    "newBlockingObservedWithinImages": 0,
+    "distanceChangesDuringPhotoCases": [
+      2,
+      3,
+      6,
+      7,
+      9,
+      10
+    ],
+    "rawFlagDifferenceSizePairs": 4,
+    "correspondingPhaseGeometryAndDistanceMatchSizePairs": [
+      {
+        "width": 820,
+        "height": 1180
+      }
+    ],
+    "stateLimits": "guide参照だけ復元する設計。01/04/08はguides/glowGoal、02/03/07/09/10はidleの記録差分が残る。全stateを復元したとはしない。今回の表示順変更が差分を起こしたとの因果は判定しない。"
+  },
+  "limits": [
+    "Observed10は対象fixtureの記録成立で、10自然到達・10人・可読性全面合格を意味しない。",
+    "4組の旧新で旗prefix/距離条件が異なる。820は対応する前後診断でgeometryと距離が一致するが両caseで408m→2.0kmと撮影中に変わる。厳密な静止同条件pairは0/5。",
+    "新320は場所の先頭が見えるが内部括弧の末尾まで全文可読とはしない。人物名の後半省略も残る。",
+    "6caseの距離幅36.015625→42.015625pxに伴い名前幅が6px減る。全5サイズのgeometry不変という主張はしない。",
+    "全20診断で名前1行/13px/19.5pxを保持。6buttonは傾き案内と下部5タブ。120診断観測は実入力回数でも全操作域の証明でもない。",
+    "Rangeはellipsis paint前の配置。矩形交差をpaint遮蔽とみなさない。写真と診断は同一frameでなく手本/粒/背景など位相差がある。",
+    "距離DOMは置換せず実renderの値を記録したfixtureでありcastle-guideへの自然移動距離ではない。",
+    "v1の2clickにはtarget/stackがなく起源未確定のまま。v2で一致したbootstrap起源をv1へ遡及適用しない。v1停止監査と自然UNKNOWN/対象6母数は不変。",
+    "guide参照復元10とfull snapshot不変2は別。物理端末/本物の指/センサー/回線、人の理解・離脱改善は未確認。"
+  ],
+  "evidence": [
+    {
+      "path": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep-v2/run-01/case-01-old/case.json",
+      "sha256": "1b25ca34e72779f575edf8380a57890e352aacf83090fb7a7570d0a4d027e788"
+    },
+    {
+      "path": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep-v2/run-01/case-01-old/fixture.png",
+      "sha256": "a57736b81fd682d945c5754db266180b8a4afb1f7cdb477079226a076edd94ba"
+    },
+    {
+      "path": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep-v2/run-01/case-02-new/case.json",
+      "sha256": "f53c1c59529d2ae83e00417a49ba329428a1d5ba6db7c8eb8928dac6c44b9bb1"
+    },
+    {
+      "path": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep-v2/run-01/case-02-new/fixture.png",
+      "sha256": "214bd1d61ec84fe11b9aacbb958ca7824578f718f334238607789517b9a06c5b"
+    },
+    {
+      "path": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep-v2/run-01/case-03-old/case.json",
+      "sha256": "c504d8ba8b75e267585288418663004011df69948e449c5cddd800728e181b90"
+    },
+    {
+      "path": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep-v2/run-01/case-03-old/fixture.png",
+      "sha256": "121cc448e6e417c8bd635c22e4b3033b2c8bfb922b63cad5201ab1a805e86645"
+    },
+    {
+      "path": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep-v2/run-01/case-04-new/case.json",
+      "sha256": "4577e3b0da7e0624d096308f18c47dec48a7f8e70a01f131906368e83d0431f6"
+    },
+    {
+      "path": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep-v2/run-01/case-04-new/fixture.png",
+      "sha256": "a5285bd38336abdda55cddfbd354e7a6851c361fd1a6cfa23e36588e202a5190"
+    },
+    {
+      "path": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep-v2/run-01/case-05-old/case.json",
+      "sha256": "806f6d1e3b4f0e72b676164034debcb7668aece9f0ef4623b9f1e74475e1f050"
+    },
+    {
+      "path": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep-v2/run-01/case-05-old/fixture.png",
+      "sha256": "1d83d732d36ad1dc95c2d751376f8a5ef38c7f972b57404e1c5f65a4ce3fd887"
+    },
+    {
+      "path": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep-v2/run-01/case-06-new/case.json",
+      "sha256": "e7eef6e158ff08b0ca9dcb9e0e9f67b5fde72d790faca5ba00b8f39808ac4af7"
+    },
+    {
+      "path": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep-v2/run-01/case-06-new/fixture.png",
+      "sha256": "e2a14cccaa6aa53939cef0ac43e6ade129691708f844fe791f2d7b1ab4d51e52"
+    },
+    {
+      "path": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep-v2/run-01/case-07-old/case.json",
+      "sha256": "b33437c260da9a0569e423b48e7dbcf5dcbd9f70f3a9715aecc2f74d03e80a91"
+    },
+    {
+      "path": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep-v2/run-01/case-07-old/fixture.png",
+      "sha256": "de22d766f1da6bafc59e2145dc720b6c8ae2817b8396c9fa5b5bac8079109f4f"
+    },
+    {
+      "path": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep-v2/run-01/case-08-new/case.json",
+      "sha256": "a82e01cb5ada2ac6395e38776add963633592a00414f8465ae14bcb55f10259b"
+    },
+    {
+      "path": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep-v2/run-01/case-08-new/fixture.png",
+      "sha256": "e51081dde224df2112355ac71e4f37a53d2d813b633f7b65fb66a974aeac42a1"
+    },
+    {
+      "path": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep-v2/run-01/case-09-old/case.json",
+      "sha256": "5ee779c8ed23eed8bbb07b3789886d392e747311437a915cd823606f27afafbf"
+    },
+    {
+      "path": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep-v2/run-01/case-09-old/fixture.png",
+      "sha256": "7a8a14d20b32b9d996d21517d0fd34ee70aba4a43fe6a08a79813558d5090144"
+    },
+    {
+      "path": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep-v2/run-01/case-10-new/case.json",
+      "sha256": "b6e7d056c857ec8d6b3f5327984e3a96c51ff2e6a123b15d3554fa14d48ae7b0"
+    },
+    {
+      "path": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep-v2/run-01/case-10-new/fixture.png",
+      "sha256": "1e0b5708a4724a555894b871dd19cd07537d23ba6f6d7599cbc5431cdfd6e77d"
+    },
+    {
+      "path": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep-v2/run-01/report.json",
+      "sha256": "3089b8895ff3867c5d62d95d19dd2f1a34811a76a2f29640d2e39ff6e7a87ba5"
+    },
+    {
+      "path": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep-v2/run-01/root-execution-receipt.json",
+      "sha256": "1e30b98fca7b5e32aab0c154b2f5d9cdc2469480992ce69fe8a8af930c205a0a"
+    },
+    {
+      "path": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep-v2/frozen.json",
+      "sha256": "b33e6f466bae782042050df3f0436d59312bf327ca27ad192d65f9ea5c3fdce2"
+    },
+    {
+      "path": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep-v2/binding.json",
+      "sha256": "8b4cf4db289bf3654b8f8f3caa523f9ad59a13fd05be5b4be1350202b228ae68"
+    },
+    {
+      "path": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep-v2/README.md",
+      "sha256": "a2329fbd45d47a6b477bd5f2a201dcf8019c8f963d9e42129942af5cf18a6a05"
+    },
+    {
+      "path": "/workspace/scratch/first-minute/round-145/guide-name-fixture-audit/run-01/manifest.json",
+      "sha256": "b479af6edd2704f1c05eb3cbac0037bf89ff6ebdca032b41abceaa878edcc6ec"
+    }
+  ],
+  "independentGeometryReview": "別担当の全10case JSON照合と一致。画像実見は本担当。",
+  "reviewerActivity": {
+    "browser": 0,
+    "Node": 0,
+    "productParse": 0,
+    "tests": 0,
+    "HTTP": 0,
+    "Git": 0,
+    "productEdits": 0,
+    "originalImageViews": 10,
+    "scratchAuditOnly": true
+  }
+}

@@ -654,11 +654,7 @@ a{color:var(--acc)}
 #swMark.on{opacity:1;transition:none;animation:swMarkPop .23s ease-out}   /* サイクル180(運営者の声 2026-11-14「前のように スワイプ すると マルバツが 出る ように」): しるしは 時間で 終わる アニメ 1回 では なく、描かれた こまで 数えて 約0.6秒 見せてから 0.15秒で 消す(markShow・markTick)。重い 端末で 1こまも 描かれずに 終わる ことが ない */
 @keyframes swMarkPop{0%{transform:scale(.55)}78%{transform:scale(1.08)}100%{transform:scale(1)}}
 @media (prefers-reduced-motion:reduce){#swMark.on{animation:none}}
-/* サイクル185: 小さい 画面で 大きな ○✗ が 次の カードの 日づけ・題に かかって いた(320×568・568×320・844×390)。
-   せまい たて画面は カードの 上の 空きへ(⌂🔊 の 列の すぐ 下から。カードは 字の 長さで 上下する ので、高さに 合わせて 少し 小さく)。
-   よこ画面は カードの 左上(いちばん 長い 日づけ「12月31日」の 字より 左・選ぶ 所より 上。とびだす 動きの 1.08倍も 見こむ)へ。大きさは 空きに 合わせ、240px を こえない。わけ の 吹き出しは ○✗ より 上(z-index 41)なので 字は かくれない */
-@media (max-width:360px) and (min-height:441px){#swMark{--mk:min(58vw, 240px, max(140px, 100vh - 408px));width:var(--mk);margin-left:calc(var(--mk) / -2);top:60px;margin-top:0}}
-@media (max-height:440px) and (min-width:564px){#swMark{--mk:min(240px, 48vw - 104px, 100vh - 163px);width:var(--mk);left:calc(50% - 104px - var(--mk) * 1.04);top:58px;margin:0}}
+/* サイクル185b: 大きな ○✗ の 置き場所と 大きさは markFit(JS)が 出す たびに 決める(この CSS は JS が 動かない ときの もと) */
 #swWhy{position:absolute;left:50%;top:calc(40% + min(29vw,120px) + 10px);transform:translateX(-50%);width:max-content;max-width:88%;z-index:41;pointer-events:none;opacity:0;background:rgba(255,253,247,.94);color:#b4472f;font-size:15px;font-weight:700;line-height:1.4;padding:5px 12px;border-radius:999px;text-align:center;box-shadow:0 2px 8px rgba(60,40,20,.20)}   /* 店主指示 2026-11-08: バツの一言理由。マークの下に浮かせて約2秒で消す。入力はふさがない */
 #swWhy.on{animation:swWhyIn 2s ease-out both}
 #swWhy[data-k="ok"]{color:#2e7d32}   /* サイクル177: ○ の わけは 緑(✗ は 今の 赤茶の まま)。場所・2秒・入力を ふさがない のは 同じ */
@@ -3824,14 +3820,42 @@ renderTitle();
   var MARK_SEEN_MS = 600, markRaf = 0, markWatch = null, markSeen = 0, markLast = 0;
   function markStop(){ if (markRaf) cancelAnimationFrame(markRaf); markRaf = 0; clearTimeout(markWatch); markWatch = null; }
   function markOff(){ markStop(); var e = $('swMark'); if (e) e.classList.remove('on'); }
-  function markTick(){ var now = performance.now(); markSeen += Math.min(50, now - markLast); markLast = now; if (markSeen >= MARK_SEEN_MS) { markOff(); return; } markRaf = requestAnimationFrame(markTick); }
+  function markTick(){ var now = performance.now(); markSeen += Math.min(50, now - markLast); markLast = now; if (markSeen >= MARK_SEEN_MS) { markOff(); return; } var me = $('swMark'); if (me && markSigOf() !== markSig) markFit(me); markRaf = requestAnimationFrame(markTick); }
   function markGuard(){ markWatch = setTimeout(function(){ if (document.hidden) markOff(); else markGuard(); }, 1000); }
   function markShow(k){ var e = $('swMark'); if (!e) return; markAt = performance.now(); markStop(); e.classList.remove('on'); e.style.backgroundImage = 'url("' + markURL(k) + '")';
-    markRaf = requestAnimationFrame(function(){ void e.offsetWidth; e.classList.add('on'); markSeen = 0; markLast = performance.now(); markRaf = requestAnimationFrame(markTick); }); markGuard(); }
+    markRaf = requestAnimationFrame(function(){ markFit(e); void e.offsetWidth; e.classList.add('on'); markSeen = 0; markLast = performance.now(); markRaf = requestAnimationFrame(markTick); }); markGuard(); }
+  /* サイクル185b(PR #1196 の レビュー): 大きな ○✗ は、出す たびに 日づけ・題・カードの 字・選ぶ 文・⌂🔊 の 箱を はかり、
+     かからない 所の うち いちばん 大きく(240px と 画面の はば 58% まで)、もとの 場所(まん中・高さ 40%)に いちばん 近い 所へ 置く。とびだす 動きの 1.08倍も 見こむ。
+     ゆずる 順: ① 字・ボタン・わけ の 吹き出し を ぜんぶ よけて 150px 以上 → ② 吹き出し だけ ゆずる(吹き出しが 上に 重なる。字は 読める) → ③ 題・日づけ も ゆずる(選ぶ 文・⌂🔊・画面の 外は 守る) → ④ もとの 場所(CSS)。
+     出て いる 間に 次の カードが 入る・回す・大きさが 変わる ときは こま ごとに 見なおす(markTick)。0.6秒・こまで 数える しくみ(180)は そのまま */
+  var MARK_MIN = 150, markBox = null, markSig = '', markVer = 0;
+  function markObs(){ var rr = document.createRange(), txt = [], btn = [], vis = function(n){ return n && n.getClientRects().length && getComputedStyle(n).visibility !== 'hidden'; };
+    var t = function(n){ if (!vis(n)) return; rr.selectNodeContents(n); var b = rr.getBoundingClientRect(); if (b.width > 1 && b.height > 1) txt.push(b); };
+    t($('swBigDate')); t($('swTitle')); t($('swText')); var ed = [];
+    [].forEach.call(document.querySelectorAll('#swEdge .eLb'), function(n){ if (!vis(n)) return; rr.selectNodeContents(n); var b = rr.getBoundingClientRect(); if (b.width > 1) ed.push(b); });
+    ['swHome', 'swSnd', 'swVib'].forEach(function(id){ var n = $(id); if (vis(n)) { var b = n.getBoundingClientRect(); if (b.width > 1) btn.push(b); } });
+    return { soft: txt, hard: ed.concat(btn) }; }
+  function markSigOf(){ var d = $('swBigDate'), b = d ? d.getBoundingClientRect() : { top: 0, left: 0, width: 0 }; return window.innerWidth + 'x' + window.innerHeight + ':' + Math.round(b.top) + ',' + Math.round(b.left) + ',' + Math.round(b.width) + ':' + (d ? d.textContent : ''); }
+  function markFit(e){ try {
+    e.style.width = e.style.left = e.style.top = e.style.margin = ''; e.removeAttribute('data-fit'); markBox = null; markSig = markSigOf(); markVer++;
+    var W = window.innerWidth, H = window.innerHeight, par = (e.offsetParent || $('swipe')).getBoundingClientRect(), sw = $('swipe').getBoundingClientRect();
+    var px = sw.left + sw.width / 2, py = sw.top + Math.min(sw.height, H) * 0.4, s0 = Math.min(240, Math.round(W * 0.58)), ob = markObs();
+    var free = function(cx, cy, s, list){ var q = s * 0.54 + 2; if (cx - q < 2 || cy - q < 2 || cx + q > W - 2 || cy + q > H - 2) return false;
+      for (var i = 0; i < list.length; i++) { var b = list[i]; if (cx - q < b.right && cx + q > b.left && cy - q < b.bottom && cy + q > b.top) return false; } return true; };
+    var find = function(list){ for (var s = s0; s >= MARK_MIN; s -= 6) { if (free(px, py, s, list)) return [px, py, s]; var best = null, bd = 1e12;
+        for (var y = 2 + s * 0.54; y <= H - 2 - s * 0.54; y += 6) for (var x = 2 + s * 0.54; x <= W - 2 - s * 0.54; x += 6) { var d = (x - px) * (x - px) + (y - py) * (y - py); if (d < bd && free(x, y, s, list)) { bd = d; best = [x, y, s]; } }
+        if (best) return best; } return null; };
+    var wy = $('swWhy'), wb = null; if (wy && (whyPend || wy.classList.contains('on'))) { whyFit(wy); var b0 = wy.getBoundingClientRect(); if (b0.width > 1) wb = { left: b0.left - 2, top: b0.top - 2, right: b0.right + 2, bottom: b0.bottom + 2 }; }   /* 吹き出しを 先に 字だけ よけて 置き、○✗ は その 吹き出しも よける(輪が 欠けない) */
+    var r = null, ph = 0, tries = [wb ? ob.hard.concat(ob.soft, [wb]) : null, ob.hard.concat(ob.soft), ob.hard];
+    for (var ti = 0; ti < 3 && !r; ti++) if (tries[ti]) { r = find(tries[ti]); ph = ti + 1; }
+    e.setAttribute('data-fit', r ? ph : 4); if (!r) return;   /* data-fit: どの ゆずり方で 置いたか(1〜3。4 は もとの 場所) */
+    e.style.width = r[2] + 'px'; e.style.margin = '0'; e.style.left = Math.round(r[0] - r[2] / 2 - par.left) + 'px'; e.style.top = Math.round(r[1] - r[2] / 2 - par.top) + 'px';
+    var q = r[2] * 0.54; markBox = { left: r[0] - q, top: r[1] - q, right: r[0] + q, bottom: r[1] + q };   /* とびだす 1.08倍 の 箱 */
+  } catch (x) { e.style.width = e.style.left = e.style.top = e.style.margin = ''; markBox = null; } }
   /* 店主指示 2026-11-08: 判定文 why の最初の一文をマークの下に小さく浮かせて約2秒出す。サイクル177(運営者の声 2026-11-13「⭕️❌とその理由も出す」)で ○ の ときも 出す(前は ✗ だけ) */
   function whyShow(fb, k){ var e = $('swWhy'); if (!e) return; var t = String(fb || '').replace(/^\S+\s+/, ''); var i = t.indexOf('。'); if (i >= 0) t = t.slice(0, i + 1); if (!t) return; k = k === 'ok' ? 'ok' : 'ng'; e.setAttribute('data-k', k); e.textContent = (k === 'ok' ? '○ ' : '✗ ') + t;   /* サイクル177(運営者の声 2026-11-13「⭕️❌とその理由も出す」): ○ でも わけの 一文を 出す。先頭に ○／✗(色 だけに たよらない) */ e.classList.remove('on'); clearTimeout(whyTimer); whyTimer = null; whyKeep = choices.length <= 3; var go = function(){ void e.offsetWidth; e.classList.add('on'); clearTimeout(whyTimer); whyTimer = setTimeout(whyHide, 2100); };
-    e.style.top = ''; requestAnimationFrame(function(){ whyFit(e); go(); whyWatchOn(); }); }   /* サイクル181: 小さい たて画面・よこ画面は 次の カードを 描いた あとの こまで 置き場所を 決めてから 出す(2秒は 出た ときから)。サイクル174 の 直し: 吹き出しの 2秒(アニメ)が 終わったら on を 外す(状態の ことばが もどる)。場所と 2秒は そのまま */
-  var whyTimer = null, whyKeep = false;
+    e.style.top = ''; whyPend = true; requestAnimationFrame(function(){ whyPend = false; whyFit(e); go(); whyWatchOn(); }); }   /* サイクル181: 小さい たて画面・よこ画面は 次の カードを 描いた あとの こまで 置き場所を 決めてから 出す(2秒は 出た ときから)。サイクル174 の 直し: 吹き出しの 2秒(アニメ)が 終わったら on を 外す(状態の ことばが もどる)。場所と 2秒は そのまま */
+  var whyTimer = null, whyKeep = false, whyPend = false;
   /* サイクル181(運営者 2026-11-14): わけの 吹き出しの 置き場所。390×844・820×1180 など ふつうの たて画面は 今の まま(CSS)。
      小さい たて画面(はば 360px 以下 か 高さ 700px 以下)は カードの 絵の 上(日づけに かぶらない)、よこの 低い 画面は カードの 上の はしの 外(選ぶ 所に かぶらない) */
   function whyNeedPlace(){ var W = window.innerWidth, H = window.innerHeight; return (H <= 440 && W >= 564) || (H > 440 && (W <= 360 || H <= 700)); }
@@ -3841,19 +3865,22 @@ renderTitle();
   /* サイクル183(PR #1168 の レビュー): 置き場所は どの 大きさでも 日づけ・選ぶ 文・画面の 外を よける。
      ふつうの たて画面(390×844・820×1180)は まず 今の 場所(CSS)。日づけ か 選ぶ 文に かかる とき だけ カードの 絵の 上へ(だめなら カードの 上の 外)。
      出て いる 間に 回したり 大きさが 変わったり したら 置きなおす(のこりの 時間は そのまま) */
-  function whyHits(e){ try { var A = e.getBoundingClientRect(), W = window.innerWidth, H = window.innerHeight; if (A.left < 0 || A.top < 0 || A.right > W || A.bottom > H) return true;
+  function whyHits(e, noMark){ try { var A = e.getBoundingClientRect(), W = window.innerWidth, H = window.innerHeight; if (A.left < 0 || A.top < 0 || A.right > W || A.bottom > H) return true;
       var rs = [], rr = document.createRange(), add = function(n){ if (!n || !n.getClientRects().length) return; rr.selectNodeContents(n); var b = rr.getBoundingClientRect(); if (b.width) rs.push(b); };
+      var mk = $('swMark'); if (!noMark && markBox && mk && mk.classList.contains('on')) rs.push(markBox);   /* サイクル185b: ○✗ の 輪にも のらない */
       add($('swBigDate')); [].forEach.call(document.querySelectorAll('#swEdge .eLb'), add);
       return rs.some(function(b){ return Math.min(A.right, b.right) - Math.max(A.left, b.left) > 0.5 && Math.min(A.bottom, b.bottom) - Math.max(A.top, b.top) > 0.5; }); } catch (x) { return false; } }
   function whyFit(e){ try { e.style.top = ''; if (whyNeedPlace()) whyPlace(e);
       if (!whyHits(e)) return; var sw = $('swipe').getBoundingClientRect(), ic = $('swIc'), h = e.offsetHeight, wr = $('swWrap').getBoundingClientRect(), dt = $('swBigDate'), ys = [], i;
       if (ic && ic.offsetParent && ic.getBoundingClientRect().height > 20) ys.push(ic.getBoundingClientRect().top);
       ys.push(wr.top - h - 6); if (dt && dt.offsetParent) { var db = dt.getBoundingClientRect(); ys.push(db.bottom + 4); ys.push(db.top - h - 4); }
+      var mk = $('swMark'); if (markBox && mk && mk.classList.contains('on')) { ys.push(markBox.bottom + 4); ys.push(markBox.top - h - 4); }
       for (i = 0; i < ys.length; i++) { e.style.top = Math.round(Math.max(4, ys[i] - sw.top)) + 'px'; if (!whyHits(e)) return; }
+      for (i = 0; i < ys.length; i++) { e.style.top = Math.round(Math.max(4, ys[i] - sw.top)) + 'px'; if (!whyHits(e, true)) return; }   /* ○✗ を よけきれない ときは 字 だけ よける(183 の まま) */
       e.style.top = Math.round(Math.max(4, ys[0] - sw.top)) + 'px'; } catch (x) {} }
   /* 次の カードは 入って くる 間に 動く ので、出て いる 間は こま ごとに 見て、かかったら その こまで 置きなおす */
   var whyWatch = null;
-  function whyWatchOn(){ cancelAnimationFrame(whyWatch); var f = function(){ var e = $('swWhy'); if (!e || !e.classList.contains('on')) { whyWatch = null; return; } if (whyHits(e)) whyFit(e); whyWatch = requestAnimationFrame(f); }; whyWatch = requestAnimationFrame(f); }
+  function whyWatchOn(){ cancelAnimationFrame(whyWatch); var f = function(){ var e = $('swWhy'); if (!e || !e.classList.contains('on')) { whyWatch = null; return; } if (whyHits(e, true) || (e.__mkV !== markVer && whyHits(e))) { e.__mkV = markVer; whyFit(e); } whyWatch = requestAnimationFrame(f); }; whyWatch = requestAnimationFrame(f); }
   window.addEventListener('resize', function(){ var e = $('swWhy'); if (e && e.classList.contains('on')) requestAnimationFrame(function(){ whyFit(e); }); });
   function whyHide(){ clearTimeout(whyTimer); whyTimer = null; cancelAnimationFrame(whyWatch); whyWatch = null; whyKeep = false; var e = $('swWhy'); if (e) e.classList.remove('on'); }
   try { $('swWhy').addEventListener('animationend', function(ev){ if (ev.target === this && /^swWhy(In|Fade)$/.test(ev.animationName)) whyHide(); }); } catch (e) {}

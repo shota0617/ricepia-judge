@@ -2011,22 +2011,35 @@ class TestKome365PaddyReadable(unittest.TestCase):
 
 # サイクル185: 大きな ○✗ が 出て いる 間(こま ごとに 見る)、次の カードの 日づけ・題・選ぶ 文と ⌂🔊 に かからない。
 # わけ の 吹き出しは ○✗ より 上(z-index)に ある ときだけ 重なって よい(字は かくれない)。○✗ は 150px より 小さく しない
-MARK_CLEAR_ON = "js:(() => { window.__mc = { n: 0, o: {}, w: 9999, out: 0, zWhy: 0 }; const m = document.getElementById('swMark'), rr = document.createRange(); const f = () => { if (m.classList.contains('on') && +getComputedStyle(m).opacity > 0.5) { const A = m.getBoundingClientRect(), mc = window.__mc; mc.n++; mc.w = Math.min(mc.w, m.offsetWidth); if (A.left < -0.5 || A.top < -0.5 || A.right > innerWidth + 0.5 || A.bottom > innerHeight + 0.5) mc.out++; const hit = (k, b) => { if (!b || b.width < 1) return; const ix = Math.min(A.right, b.right) - Math.max(A.left, b.left), iy = Math.min(A.bottom, b.bottom) - Math.max(A.top, b.top); if (ix > 0.5 && iy > 0.5) mc.o[k] = Math.max(mc.o[k] || 0, Math.round(ix * iy)); }; const txt = (k, e) => { if (!e || !e.getClientRects().length) return; rr.selectNodeContents(e); hit(k, rr.getBoundingClientRect()); }; txt('date', document.getElementById('swBigDate')); txt('title', document.getElementById('swTitle')); document.querySelectorAll('#swEdge .eLb').forEach((e, i) => txt('edge' + i, e)); ['swSnd', 'swHome'].forEach(id => { const e = document.getElementById(id); if (e && e.getClientRects().length && getComputedStyle(e).visibility !== 'hidden') hit(id, e.getBoundingClientRect()); }); const w = document.getElementById('swWhy'); if (w.classList.contains('on')) { const b = w.getBoundingClientRect(), ix = Math.min(A.right, b.right) - Math.max(A.left, b.left), iy = Math.min(A.bottom, b.bottom) - Math.max(A.top, b.top); if (ix > 0.5 && iy > 0.5 && !(+getComputedStyle(w).zIndex > +getComputedStyle(m).zIndex)) mc.zWhy++; } } requestAnimationFrame(f); }; requestAnimationFrame(f); return 1; })()"
+MARK_CLEAR_ON = "js:(() => { window.__mc = { n: 0, o: {}, o12: {}, o3: {}, w: 9999, out: 0, zWhy: 0, ring: 0, ring1: 0, fit1: 0, t1: 0, fits: {} }; const m = document.getElementById('swMark'), rr = document.createRange(); const f = () => { if (m.classList.contains('on') && +getComputedStyle(m).opacity > 0.5) { const A = m.getBoundingClientRect(), mc = window.__mc, fit = +m.getAttribute('data-fit') || 1; mc.n++; const now = performance.now(); if (!mc.t1) mc.t1 = now; if (now - mc.t1 < 700) mc.fit1 = Math.max(mc.fit1, fit); mc.fits[fit] = (mc.fits[fit] || 0) + 1; mc.w = Math.min(mc.w, m.offsetWidth); if (A.left < -0.5 || A.top < -0.5 || A.right > innerWidth + 0.5 || A.bottom > innerHeight + 0.5) mc.out++; const hit = (k, b) => { if (!b || b.width < 1) return; const ix = Math.min(A.right, b.right) - Math.max(A.left, b.left), iy = Math.min(A.bottom, b.bottom) - Math.max(A.top, b.top); if (ix > 0.5 && iy > 0.5) { const a = Math.round(ix * iy), t = fit >= 3 ? mc.o3 : mc.o12; mc.o[k] = Math.max(mc.o[k] || 0, a); t[k] = Math.max(t[k] || 0, a); } }; const txt = (k, e) => { if (!e || !e.getClientRects().length) return; rr.selectNodeContents(e); hit(k, rr.getBoundingClientRect()); }; txt('date', document.getElementById('swBigDate')); txt('title', document.getElementById('swTitle')); document.querySelectorAll('#swEdge .eLb').forEach((e, i) => txt('edge' + i, e)); ['swSnd', 'swHome'].forEach(id => { const e = document.getElementById(id); if (e && e.getClientRects().length && getComputedStyle(e).visibility !== 'hidden') hit(id, e.getBoundingClientRect()); }); const w = document.getElementById('swWhy'); if (w.classList.contains('on')) { const b = w.getBoundingClientRect(), ix = Math.min(A.right, b.right) - Math.max(A.left, b.left), iy = Math.min(A.bottom, b.bottom) - Math.max(A.top, b.top); if (ix > 0.5 && iy > 0.5 && !(+getComputedStyle(w).zIndex > +getComputedStyle(m).zIndex)) mc.zWhy++; if (ix > 0.5 && iy > 0.5 && +getComputedStyle(w).opacity > 0.05) { const a = Math.round(ix * iy); mc.ring = Math.max(mc.ring, a); if (fit === 1) mc.ring1 = Math.max(mc.ring1, a); } } } requestAnimationFrame(f); }; requestAnimationFrame(f); return 1; })()"
 MARK_CLEAR_GET = "js:window.__mc"
 
 
+# サイクル185b(PR #1196 の レビュー): 5つの 大きさの 境の すぐ 外(よく ある 小さい iPhone・低い よこ画面・せまい よこ画面)も 見る
+MARK_VPS = VPS5 + [[375, 667], [361, 640], [800, 450], [640, 480], [563, 320], [480, 320], [320, 480], [360, 441], [667, 300]]
+# 1枚めから 150px の ○✗ が 字を よけて 入らない 大きさ(ゆずる 順 ③: 題・日づけ だけ ゆずる。選ぶ 文・⌂🔊・画面の 外は 守る)
+MARK_YIELD = [[480, 320], [360, 441]]
+
+
+MARK_NOW_JS = "js:(() => { const m = document.getElementById('swMark'), A = m.getBoundingClientRect(), rr = document.createRange(), o = {}; const hit = (k, b) => { const ix = Math.min(A.right, b.right) - Math.max(A.left, b.left), iy = Math.min(A.bottom, b.bottom) - Math.max(A.top, b.top); if (ix > 0.5 && iy > 0.5) o[k] = Math.round(ix * iy); }; const txt = (k, e) => { if (!e || !e.getClientRects().length) return; rr.selectNodeContents(e); hit(k, rr.getBoundingClientRect()); }; txt('date', document.getElementById('swBigDate')); txt('title', document.getElementById('swTitle')); document.querySelectorAll('#swEdge .eLb').forEach((e, i) => txt('edge' + i, e)); return { on: m.classList.contains('on'), o: o, inView: A.left >= 0 && A.top >= 0 && A.right <= innerWidth && A.bottom <= innerHeight, w: m.offsetWidth, vw: innerWidth }; })()"
+
+
 class TestKome365MarkClear(unittest.TestCase):
-    """サイクル185"""
+    """サイクル185・185b"""
 
     @classmethod
     def setUpClass(cls):
         plans = []
-        for w, h in VPS5:
+        for w, h in MARK_VPS:
             # 8枚 つづけて(カードの 字の 長さで カードの 高さ・日づけの 位置が かわる)
             plans.append({"name": "m%dx%d" % (w, h), "w": w, "h": h, "acts": [MARK_CLEAR_ON] + ["keyjs:1", "wait"] * 8 + [MARK_CLEAR_GET]})
+        # ○✗ が 出て いる 間に 回す(両向き)。回した あとの ○✗ も 字・画面の 外に かからない
+        for (w, h, rw, rh) in [(320, 568, 568, 320), (568, 320, 320, 568), (390, 844, 844, 390), (844, 390, 390, 844)]:
+            plans.append({"name": "r%dx%d" % (w, h), "w": w, "h": h, "acts": ["keyjs:1", "rotate:%dx%d" % (rw, rh), MARK_NOW_JS]})
         cls.r = sound_run(plans)
 
     def test_mark_clear_of_card_text_and_buttons(self):
+        # 5つの 大きさ(185): 8枚 ずっと 字・ボタンに かからない(ゆずり なし)
         for w, h in VPS5:
             name = "m%dx%d" % (w, h)
             x = self.r[name]
@@ -2037,10 +2050,47 @@ class TestKome365MarkClear(unittest.TestCase):
             self.assertEqual(mc["out"], 0, name + ": ○✗ が 画面の 外 %r" % (mc,))
             self.assertEqual(mc["zWhy"], 0, name + ": ○✗ が わけ の 吹き出しの 上に 重なる %r" % (mc,))
 
+    def test_mark_yields_in_order_on_any_size(self):
+        # 185b: どの 大きさ でも、選ぶ 文・⌂🔊・画面の 外は 守る。題・日づけ を ゆずるのは 150px が 入らない とき(data-fit 3)だけ
+        for w, h in MARK_VPS:
+            name = "m%dx%d" % (w, h)
+            x = self.r[name]
+            self.assertEqual(x["errs"], [], name)
+            mc = x["js"][-1]
+            self.assertGreater(mc["n"], 8, name + ": ○✗ が 見えない %r" % (mc,))
+            self.assertEqual(mc["o12"], {}, name + ": ○✗ が 字・ボタンに かかる %r" % (mc,))
+            self.assertEqual({k: v for k, v in mc["o3"].items() if k not in ("date", "title")}, {}, name + ": ゆずった ときも 選ぶ 文・⌂🔊 は 守る %r" % (mc,))
+            self.assertEqual(mc["out"], 0, name + ": ○✗ が 画面の 外 %r" % (mc,))
+            self.assertEqual(mc["zWhy"], 0, name + ": ○✗ が わけ の 吹き出しの 上に 重なる %r" % (mc,))
+
+    def test_first_answer_mark_needs_no_yield(self):
+        # レビューで 見つかった 大きさ(1枚め): 題・日づけ を ゆずらずに 置ける(2 は 吹き出しを 後から よけさせる 形。MARK_YIELD は 150px が 字を よけて 入らない ので のぞく)
+        for w, h in MARK_VPS:
+            if [w, h] in MARK_YIELD:
+                continue
+            mc = self.r["m%dx%d" % (w, h)]["js"][-1]
+            self.assertIn(mc["fit1"], (1, 2), "%dx%d: 1枚めで 題・日づけ を ゆずった %r" % (w, h, mc))
+
     def test_mark_not_too_small(self):
-        for w, h in VPS5:
+        for w, h in MARK_VPS:
             mc = self.r["m%dx%d" % (w, h)]["js"][-1]
             self.assertGreaterEqual(mc["w"], 150, "%dx%d: ○✗ が 小さすぎる %r" % (w, h, mc))
+
+    def test_mark_refits_after_rotation(self):
+        for (w, h) in [(320, 568), (568, 320), (390, 844), (844, 390)]:
+            x = self.r["r%dx%d" % (w, h)]
+            self.assertEqual(x["errs"], [])
+            j = x["js"][-1]
+            self.assertTrue(j["on"], "%dx%d: 回した あと ○✗ が もう 消えた %r" % (w, h, j))
+            self.assertTrue(j["inView"], "%dx%d: 回した あと ○✗ が 画面の 外 %r" % (w, h, j))
+            self.assertEqual(j["o"], {}, "%dx%d: 回した あと ○✗ が 字に かかる %r" % (w, h, j))
+            self.assertGreaterEqual(j["w"], 150)
+
+    def test_reason_bubble_off_mark_ring(self):
+        # わけ の 吹き出しが ○✗ の 輪に のらない(輪が 欠けない)。のって よいのは 吹き出しも よける 置き場所が 無い とき(data-fit 2・3)だけ
+        for w, h in MARK_VPS:
+            mc = self.r["m%dx%d" % (w, h)]["js"][-1]
+            self.assertEqual(mc["ring1"], 0, "%dx%d: 吹き出しが ○✗ に のる %r" % (w, h, mc))
 
 
 if __name__ == "__main__":

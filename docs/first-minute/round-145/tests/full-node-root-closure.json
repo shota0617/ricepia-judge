@@ -1,0 +1,43 @@
+{
+  "atUTC": "2026-11-15T20:17:41.328044+00:00",
+  "actualOuterExit": 1,
+  "completionTool": "8d59c4",
+  "launchTool": "ecb83f",
+  "session": 74249,
+  "actualChildExit": 1,
+  "timedOut": false,
+  "sourceUnchanged": true,
+  "dependenciesUnchanged": true,
+  "startedAtUTC": "2026-11-15T19:48:52.529831+00:00",
+  "completedAtUTC": "2026-11-15T20:17:19.462315+00:00",
+  "resultSHA256": "27a8fc2cc60765664491ccabff6d059f374e0f565f0400a6fd3ebddf1d331db3",
+  "resultSummary": {
+    "ok": false,
+    "groups": 253,
+    "failures": 12,
+    "pageErrors": []
+  },
+  "liveBrowsers": [],
+  "ownedPreviousProcesses": [
+    {
+      "pid": 209472,
+      "existed": false
+    },
+    {
+      "pid": 209579,
+      "existed": false
+    },
+    {
+      "pid": 209598,
+      "existed": false
+    }
+  ],
+  "port8899ConnectResult": 111,
+  "plainBind": {
+    "errno": 98,
+    "error": "[Errno 98] Address already in use"
+  },
+  "reuseBind": true,
+  "gitStatus": "",
+  "serialBrowserResumeAllowed": true
+}

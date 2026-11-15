@@ -1,0 +1,23 @@
+{
+  "at": "2026-11-15T20:34:50.852581+00:00",
+  "actualOuterExit": 0,
+  "actualExitTool": "d9f5a7",
+  "launchTool": "b81f45",
+  "session": 25475,
+  "reportSHA256": "3089b8895ff3867c5d62d95d19dd2f1a34811a76a2f29640d2e39ff6e7a87ba5",
+  "completedCases": 10,
+  "notRun": 0,
+  "observedAccepted": 10,
+  "liveBrowsers": [],
+  "allChildActualExit0": true,
+  "contextClosed": true,
+  "browserClosed": true,
+  "sourceGates": true,
+  "gitClean": true,
+  "independentStaticReviewSHA": "32551e8003315320692b47a07c03c330d7d325809f9221c23521ee6d65c9f56d",
+  "rootViewedOriginalPNGs": [
+    "case-01-old/fixture.png",
+    "case-02-new/fixture.png"
+  ],
+  "limitation": "Observed status means target fixture identity, not a layout or readability pass; pairs have independently recorded distance/prefix differences."
+}

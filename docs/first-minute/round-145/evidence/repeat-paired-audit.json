@@ -1,0 +1,537 @@
+{
+  "final": true,
+  "scope": "Fixed-protocol independent old/new natural attempts; not one-to-one matched natural routes or frames.",
+  "oldAuditSHA256": "fbaed015080a315cd42342244a221c6c209114a2fb177cb0efe92a51ef1e6407",
+  "newAuditSHA256": "0777f126e199c15b5f653ee0583791538ebad85eec9c8e62ab3204c7333b1a01",
+  "sameOfflineAuditScriptSHA256": "fb7a41c02b0a3205ebda641d0a1e0105926a4b45b0ab537d15ad1f9cfa207631",
+  "old": {
+    "attempts": 10,
+    "eligibleTrials": [
+      1,
+      2,
+      5,
+      7,
+      8,
+      9
+    ],
+    "unknownTrials": [
+      3,
+      4,
+      6,
+      10
+    ],
+    "actions": 62,
+    "allVisibleHand": true,
+    "trustedTriples": 62,
+    "bothACK": 62,
+    "lateStarts": 0,
+    "errors": 0,
+    "closed": 10,
+    "unknownTraceCandidateObservations": {
+      "3": 0,
+      "4": 0,
+      "6": 0,
+      "10": 0
+    },
+    "holds": {
+      "40": {
+        "attempts": 5,
+        "eligible": 4,
+        "unknown": 1,
+        "actions": 28,
+        "nodeHoldMs": [
+          40,
+          41
+        ],
+        "eventTimestampHoldMs": [
+          39.899999998509884,
+          41.100000001490116
+        ],
+        "listenerHoldMs": [
+          1.1999999955296516,
+          68.29999999701977
+        ],
+        "startACKms": [
+          36,
+          116
+        ],
+        "endACKms": [
+          74,
+          191
+        ]
+      },
+      "200": {
+        "attempts": 5,
+        "eligible": 2,
+        "unknown": 3,
+        "actions": 34,
+        "nodeHoldMs": [
+          200,
+          203
+        ],
+        "eventTimestampHoldMs": [
+          199.89999999850988,
+          202.89999999850988
+        ],
+        "listenerHoldMs": [
+          119.20000000298023,
+          261.0
+        ],
+        "startACKms": [
+          39,
+          103
+        ],
+        "endACKms": [
+          62,
+          266
+        ]
+      }
+    }
+  },
+  "new": {
+    "attempts": 10,
+    "eligibleTrials": [
+      1,
+      3,
+      4,
+      5,
+      6,
+      8
+    ],
+    "unknownTrials": [
+      2,
+      7,
+      9,
+      10
+    ],
+    "actions": 62,
+    "allVisibleHand": true,
+    "trustedTriples": 62,
+    "bothACK": 62,
+    "lateStarts": 0,
+    "errors": 0,
+    "closed": 10,
+    "unknownTraceCandidateObservations": {
+      "2": 0,
+      "7": 0,
+      "9": 0,
+      "10": 0
+    },
+    "holds": {
+      "40": {
+        "attempts": 5,
+        "eligible": 3,
+        "unknown": 2,
+        "actions": 31,
+        "nodeHoldMs": [
+          39,
+          44
+        ],
+        "eventTimestampHoldMs": [
+          38.899999998509884,
+          44.0
+        ],
+        "listenerHoldMs": [
+          1.2999999970197678,
+          63.899999998509884
+        ],
+        "startACKms": [
+          34,
+          243
+        ],
+        "endACKms": [
+          72,
+          322
+        ]
+      },
+      "200": {
+        "attempts": 5,
+        "eligible": 3,
+        "unknown": 2,
+        "actions": 31,
+        "nodeHoldMs": [
+          200,
+          205
+        ],
+        "eventTimestampHoldMs": [
+          199.89999999850988,
+          205.0
+        ],
+        "listenerHoldMs": [
+          72.39999999850988,
+          247.5
+        ],
+        "startACKms": [
+          41,
+          128
+        ],
+        "endACKms": [
+          69,
+          216
+        ]
+      }
+    }
+  },
+  "originalImageFindings": {
+    "old": {
+      "terminalViewed": 10,
+      "qualifiedTargetImages": 6,
+      "fullPlaceUnreadable": 6,
+      "unknownExcludedFromDefectJudgment": 4
+    },
+    "new": {
+      "terminalViewed": 10,
+      "qualifiedTargetImages": 6,
+      "fullPlaceUnreadable": 0,
+      "fullPlaceReadable": 6,
+      "unknownExcludedFromDefectJudgment": 4
+    },
+    "oldVisible": "観光ボランティアガイドさん（西…",
+    "newVisible": "西尾市歴史公園（西尾城跡）（観…",
+    "distanceAllQualifiedImages": "2.3km",
+    "personSuffixRemainsEllipsized": true,
+    "observePNGsNotViewed": 20,
+    "pilotExcluded": true
+  },
+  "qualifiedGeometryComparisons": [
+    {
+      "variant": "old",
+      "trial": 1,
+      "phase": "diagnosticBefore",
+      "sameCodePointCount": true,
+      "sameCodePointMultiset": true,
+      "sameNameRect": true,
+      "sameFont": true,
+      "sameClientAndScrollWidth": true,
+      "sameLineCount": true,
+      "metadataExact": true,
+      "photoIdentityAll": true
+    },
+    {
+      "variant": "old",
+      "trial": 1,
+      "phase": "diagnosticAfter",
+      "sameCodePointCount": true,
+      "sameCodePointMultiset": true,
+      "sameNameRect": true,
+      "sameFont": true,
+      "sameClientAndScrollWidth": true,
+      "sameLineCount": true,
+      "metadataExact": true,
+      "photoIdentityAll": true
+    },
+    {
+      "variant": "old",
+      "trial": 2,
+      "phase": "diagnosticBefore",
+      "sameCodePointCount": true,
+      "sameCodePointMultiset": true,
+      "sameNameRect": true,
+      "sameFont": true,
+      "sameClientAndScrollWidth": true,
+      "sameLineCount": true,
+      "metadataExact": true,
+      "photoIdentityAll": true
+    },
+    {
+      "variant": "old",
+      "trial": 2,
+      "phase": "diagnosticAfter",
+      "sameCodePointCount": true,
+      "sameCodePointMultiset": true,
+      "sameNameRect": true,
+      "sameFont": true,
+      "sameClientAndScrollWidth": true,
+      "sameLineCount": true,
+      "metadataExact": true,
+      "photoIdentityAll": true
+    },
+    {
+      "variant": "old",
+      "trial": 5,
+      "phase": "diagnosticBefore",
+      "sameCodePointCount": true,
+      "sameCodePointMultiset": true,
+      "sameNameRect": true,
+      "sameFont": true,
+      "sameClientAndScrollWidth": true,
+      "sameLineCount": true,
+      "metadataExact": true,
+      "photoIdentityAll": true
+    },
+    {
+      "variant": "old",
+      "trial": 5,
+      "phase": "diagnosticAfter",
+      "sameCodePointCount": true,
+      "sameCodePointMultiset": true,
+      "sameNameRect": true,
+      "sameFont": true,
+      "sameClientAndScrollWidth": true,
+      "sameLineCount": true,
+      "metadataExact": true,
+      "photoIdentityAll": true
+    },
+    {
+      "variant": "old",
+      "trial": 7,
+      "phase": "diagnosticBefore",
+      "sameCodePointCount": true,
+      "sameCodePointMultiset": true,
+      "sameNameRect": true,
+      "sameFont": true,
+      "sameClientAndScrollWidth": true,
+      "sameLineCount": true,
+      "metadataExact": true,
+      "photoIdentityAll": true
+    },
+    {
+      "variant": "old",
+      "trial": 7,
+      "phase": "diagnosticAfter",
+      "sameCodePointCount": true,
+      "sameCodePointMultiset": true,
+      "sameNameRect": true,
+      "sameFont": true,
+      "sameClientAndScrollWidth": true,
+      "sameLineCount": true,
+      "metadataExact": true,
+      "photoIdentityAll": true
+    },
+    {
+      "variant": "old",
+      "trial": 8,
+      "phase": "diagnosticBefore",
+      "sameCodePointCount": true,
+      "sameCodePointMultiset": true,
+      "sameNameRect": true,
+      "sameFont": true,
+      "sameClientAndScrollWidth": true,
+      "sameLineCount": true,
+      "metadataExact": true,
+      "photoIdentityAll": true
+    },
+    {
+      "variant": "old",
+      "trial": 8,
+      "phase": "diagnosticAfter",
+      "sameCodePointCount": true,
+      "sameCodePointMultiset": true,
+      "sameNameRect": true,
+      "sameFont": true,
+      "sameClientAndScrollWidth": true,
+      "sameLineCount": true,
+      "metadataExact": true,
+      "photoIdentityAll": true
+    },
+    {
+      "variant": "old",
+      "trial": 9,
+      "phase": "diagnosticBefore",
+      "sameCodePointCount": true,
+      "sameCodePointMultiset": true,
+      "sameNameRect": true,
+      "sameFont": true,
+      "sameClientAndScrollWidth": true,
+      "sameLineCount": true,
+      "metadataExact": true,
+      "photoIdentityAll": true
+    },
+    {
+      "variant": "old",
+      "trial": 9,
+      "phase": "diagnosticAfter",
+      "sameCodePointCount": true,
+      "sameCodePointMultiset": true,
+      "sameNameRect": true,
+      "sameFont": true,
+      "sameClientAndScrollWidth": true,
+      "sameLineCount": true,
+      "metadataExact": true,
+      "photoIdentityAll": true
+    },
+    {
+      "variant": "new",
+      "trial": 1,
+      "phase": "diagnosticBefore",
+      "sameCodePointCount": true,
+      "sameCodePointMultiset": true,
+      "sameNameRect": true,
+      "sameFont": true,
+      "sameClientAndScrollWidth": true,
+      "sameLineCount": true,
+      "metadataExact": true,
+      "photoIdentityAll": true
+    },
+    {
+      "variant": "new",
+      "trial": 1,
+      "phase": "diagnosticAfter",
+      "sameCodePointCount": true,
+      "sameCodePointMultiset": true,
+      "sameNameRect": true,
+      "sameFont": true,
+      "sameClientAndScrollWidth": true,
+      "sameLineCount": true,
+      "metadataExact": true,
+      "photoIdentityAll": true
+    },
+    {
+      "variant": "new",
+      "trial": 3,
+      "phase": "diagnosticBefore",
+      "sameCodePointCount": true,
+      "sameCodePointMultiset": true,
+      "sameNameRect": true,
+      "sameFont": true,
+      "sameClientAndScrollWidth": true,
+      "sameLineCount": true,
+      "metadataExact": true,
+      "photoIdentityAll": true
+    },
+    {
+      "variant": "new",
+      "trial": 3,
+      "phase": "diagnosticAfter",
+      "sameCodePointCount": true,
+      "sameCodePointMultiset": true,
+      "sameNameRect": true,
+      "sameFont": true,
+      "sameClientAndScrollWidth": true,
+      "sameLineCount": true,
+      "metadataExact": true,
+      "photoIdentityAll": true
+    },
+    {
+      "variant": "new",
+      "trial": 4,
+      "phase": "diagnosticBefore",
+      "sameCodePointCount": true,
+      "sameCodePointMultiset": true,
+      "sameNameRect": true,
+      "sameFont": true,
+      "sameClientAndScrollWidth": true,
+      "sameLineCount": true,
+      "metadataExact": true,
+      "photoIdentityAll": true
+    },
+    {
+      "variant": "new",
+      "trial": 4,
+      "phase": "diagnosticAfter",
+      "sameCodePointCount": true,
+      "sameCodePointMultiset": true,
+      "sameNameRect": true,
+      "sameFont": true,
+      "sameClientAndScrollWidth": true,
+      "sameLineCount": true,
+      "metadataExact": true,
+      "photoIdentityAll": true
+    },
+    {
+      "variant": "new",
+      "trial": 5,
+      "phase": "diagnosticBefore",
+      "sameCodePointCount": true,
+      "sameCodePointMultiset": true,
+      "sameNameRect": true,
+      "sameFont": true,
+      "sameClientAndScrollWidth": true,
+      "sameLineCount": true,
+      "metadataExact": true,
+      "photoIdentityAll": true
+    },
+    {
+      "variant": "new",
+      "trial": 5,
+      "phase": "diagnosticAfter",
+      "sameCodePointCount": true,
+      "sameCodePointMultiset": true,
+      "sameNameRect": true,
+      "sameFont": true,
+      "sameClientAndScrollWidth": true,
+      "sameLineCount": true,
+      "metadataExact": true,
+      "photoIdentityAll": true
+    },
+    {
+      "variant": "new",
+      "trial": 6,
+      "phase": "diagnosticBefore",
+      "sameCodePointCount": true,
+      "sameCodePointMultiset": true,
+      "sameNameRect": true,
+      "sameFont": true,
+      "sameClientAndScrollWidth": true,
+      "sameLineCount": true,
+      "metadataExact": true,
+      "photoIdentityAll": true
+    },
+    {
+      "variant": "new",
+      "trial": 6,
+      "phase": "diagnosticAfter",
+      "sameCodePointCount": true,
+      "sameCodePointMultiset": true,
+      "sameNameRect": true,
+      "sameFont": true,
+      "sameClientAndScrollWidth": true,
+      "sameLineCount": true,
+      "metadataExact": true,
+      "photoIdentityAll": true
+    },
+    {
+      "variant": "new",
+      "trial": 8,
+      "phase": "diagnosticBefore",
+      "sameCodePointCount": true,
+      "sameCodePointMultiset": true,
+      "sameNameRect": true,
+      "sameFont": true,
+      "sameClientAndScrollWidth": true,
+      "sameLineCount": true,
+      "metadataExact": true,
+      "photoIdentityAll": true
+    },
+    {
+      "variant": "new",
+      "trial": 8,
+      "phase": "diagnosticAfter",
+      "sameCodePointCount": true,
+      "sameCodePointMultiset": true,
+      "sameNameRect": true,
+      "sameFont": true,
+      "sameClientAndScrollWidth": true,
+      "sameLineCount": true,
+      "metadataExact": true,
+      "photoIdentityAll": true
+    }
+  ],
+  "sourceDifference": {
+    "nishio-go/game.js": {
+      "old": "1ac1eee951f7a8889a622121ba4e1e17bbbf0ee695dcdebbc86ade430c9ca610",
+      "new": "0c13ef8c6ec0e8d5be4813365acc0c77883465b88feceb981c073e50524f7e16"
+    },
+    "nishio-go/min/game.js": {
+      "old": "45f4ba7b4aa8961222f5c57ac26428aff3aa8e5e9135bfd7c93989c0b5d7dc64",
+      "new": "8267f4412c8f77a36a0cb3e45096d065188784cd7b24152e055ffc66279c77cc"
+    }
+  },
+  "environment16Same": true,
+  "httpTargets8Same": true,
+  "sourceGatesAll40Valid": true,
+  "frozenUnchangedSHA256": "e9521e2357e5133dc890d4fa25a7a4214a9a992f2d703c006a833215e3fca369",
+  "oldAuditManifestUnchangedSHA256": "38f2569aafe9b8b06b20d13d2e963a7f3e1956f2a17ae41d8430afb9c30cee7a",
+  "newRootReceiptSHA256": "4a06e5cb54723ad006ef4ea0b7f1b53e3d9dfeea48299ada5389a3915ef03297",
+  "newRootActualExit": 0,
+  "newRootCompletionTool": "b5c1d5",
+  "newRootLiveBrowsers": [],
+  "runtimeByAuditor": false,
+  "limits": [
+    "Each variant has only six evaluable target appearances, not ten defect reproductions. Unknowns remain four in each separate denominator.",
+    "Old and new qualified trial indexes differ; route, exact time, frame and rewards are not paired.",
+    "No human retention, comprehension, audio, physical paint or speed effect measured.",
+    "Range is pre-ellipsis layout; visible glyph findings come from original PNG review.",
+    "Fixed CSS/name boxes and character preservation do not prove every other UI or protected behavior; this is the repeat10 result audit only."
+  ]
+}

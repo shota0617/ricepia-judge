@@ -1,0 +1,937 @@
+{
+  "schemaVersion": 1,
+  "round": 145,
+  "scope": "静的独立集計。新規Node/browser/parse/test/Git/HTTP実行0、製品/既存証拠変更0。",
+  "createdAtUTC": "2026-11-15T20:23:54.137186+00:00",
+  "normalFullTerminal": {
+    "confirmed": true,
+    "basis": [
+      "PLAYTEST_ONLY unset; command is full tools/playtest.js",
+      "normal terminal failures map uniquely to 12 predicate keys",
+      "scriptStopped/crash_*/nested crashed absent",
+      "errors empty and 4/4 walk reached",
+      "recorded child/outer exit 1/1; no timeout"
+    ],
+    "sourceTerminalLines": [
+      4807,
+      4989
+    ],
+    "directNeedCount": 170,
+    "directNeedLineNumbers": [
+      4810,
+      4811,
+      4812,
+      4813,
+      4814,
+      4816,
+      4817,
+      4818,
+      4819,
+      4820,
+      4821,
+      4822,
+      4823,
+      4824,
+      4825,
+      4826,
+      4827,
+      4828,
+      4829,
+      4830,
+      4831,
+      4832,
+      4833,
+      4834,
+      4835,
+      4836,
+      4837,
+      4838,
+      4839,
+      4840,
+      4841,
+      4842,
+      4843,
+      4844,
+      4845,
+      4846,
+      4847,
+      4848,
+      4849,
+      4850,
+      4851,
+      4852,
+      4853,
+      4854,
+      4855,
+      4856,
+      4857,
+      4858,
+      4859,
+      4860,
+      4861,
+      4862,
+      4863,
+      4864,
+      4865,
+      4866,
+      4867,
+      4868,
+      4869,
+      4871,
+      4872,
+      4873,
+      4874,
+      4875,
+      4876,
+      4877,
+      4878,
+      4879,
+      4880,
+      4882,
+      4883,
+      4884,
+      4885,
+      4886,
+      4887,
+      4888,
+      4889,
+      4891,
+      4892,
+      4893,
+      4894,
+      4895,
+      4896,
+      4897,
+      4899,
+      4900,
+      4901,
+      4902,
+      4903,
+      4904,
+      4905,
+      4906,
+      4907,
+      4908,
+      4909,
+      4910,
+      4911,
+      4913,
+      4914,
+      4915,
+      4916,
+      4917,
+      4918,
+      4919,
+      4920,
+      4921,
+      4922,
+      4923,
+      4924,
+      4925,
+      4926,
+      4927,
+      4928,
+      4929,
+      4930,
+      4931,
+      4932,
+      4933,
+      4934,
+      4935,
+      4936,
+      4937,
+      4938,
+      4939,
+      4940,
+      4941,
+      4942,
+      4943,
+      4944,
+      4945,
+      4946,
+      4947,
+      4948,
+      4949,
+      4950,
+      4951,
+      4952,
+      4953,
+      4954,
+      4955,
+      4956,
+      4957,
+      4958,
+      4959,
+      4960,
+      4961,
+      4962,
+      4963,
+      4964,
+      4965,
+      4966,
+      4968,
+      4969,
+      4970,
+      4971,
+      4972,
+      4973,
+      4974,
+      4975,
+      4976,
+      4977,
+      4978,
+      4979,
+      4980,
+      4981,
+      4982,
+      4983,
+      4984,
+      4985,
+      4986
+    ],
+    "firstMinuteNeedCount": 61,
+    "firstMinuteNeedUniqueKeys": [
+      "slowCover",
+      "bgmAfterMap",
+      "houseLazy",
+      "firstGoalNear",
+      "lazySprites",
+      "playAskQuick",
+      "worldBack",
+      "tiltDeniedMsg",
+      "swipeWalk",
+      "swipeHold",
+      "walkHopSmall",
+      "arrowRouteWalk",
+      "restFinger",
+      "tiltDemoShown",
+      "tapWalkTilt",
+      "infoCloseSmall",
+      "fontNoBlock",
+      "tapStepPace",
+      "ptsPop",
+      "arriveNoSpin",
+      "a2hsFirstWalk",
+      "a2hsShown",
+      "a2hsAutoHide",
+      "a2hsClose",
+      "a2hsStandalone",
+      "a2hsPrompt",
+      "a2hsInApp",
+      "startNoJump",
+      "firstGoalNoFlip",
+      "tapDemoLabel",
+      "tapDemoFollow",
+      "tapDemoQuick",
+      "tapDemoInMap",
+      "tapDemoHand",
+      "worldBackDemo",
+      "tiltOkQuiet",
+      "grainToast",
+      "tapDemoNoBlind",
+      "lowDemoKept",
+      "playAskLate",
+      "firstTapBig",
+      "firstTapFit6",
+      "laterDemoSame",
+      "lowGoalDemo",
+      "bigHandTap",
+      "handHelpScope",
+      "firstDemoFast",
+      "demoTouchWait",
+      "rollNoDemo",
+      "slowCoverCalm",
+      "missTapDemo",
+      "missTapPerm",
+      "bootLoaded",
+      "bootFailed",
+      "bootSlow",
+      "bootNever",
+      "goalTapNoWorld",
+      "arrowPinWorld",
+      "infoSecondTap",
+      "chestToastRing",
+      "infoRotate"
+    ],
+    "logicalConditionCount": 231,
+    "logicalPassCount": 219,
+    "logicalFailureCount": 12,
+    "allowedWholeGroupSkipsIncludedInPassCount": 3,
+    "countsAreLogicalConditionsNotIndependentBehaviors": true
+  },
+  "groupClassification": {
+    "groups": 253,
+    "ownBooleanOkTrue": 178,
+    "ownBooleanOkFalse": 12,
+    "bareBooleanTrue": 43,
+    "bareBooleanFalse": 0,
+    "otherWithoutBooleanOk": 20,
+    "types": {
+      "object": 196,
+      "boolean": 43,
+      "number": 7,
+      "array": 3,
+      "string": 4,
+      "null": 0
+    },
+    "otherKeys": [
+      "welcomeChestM",
+      "tapWalkInfo",
+      "tapWalkOnPill",
+      "chestsNearby",
+      "firstPickN",
+      "firstPickId",
+      "welcomeBag",
+      "trail",
+      "weekTheme",
+      "worldLabels",
+      "quests",
+      "facts",
+      "todayWalk",
+      "dotHints",
+      "eyeTalkWin",
+      "heardHintDbg",
+      "operateFinal",
+      "walkModePoints",
+      "walkChests",
+      "operatePointsKept"
+    ],
+    "explicitTrueTotal": 221,
+    "explicitTrueTotalIsNotTerminalPassCount": true
+  },
+  "skips": {
+    "wholeGroupAllowed": [
+      {
+        "key": "yuruMeiro",
+        "reason": "no-route",
+        "observed": {
+          "skipped": "no-route",
+          "ok": true
+        },
+        "branchLines": [
+          2529,
+          2546
+        ],
+        "terminalLine": 4932
+      },
+      {
+        "key": "alley",
+        "reason": "no-alley",
+        "observed": {
+          "ok": true,
+          "skipped": "no-alley"
+        },
+        "branchLines": [
+          3142,
+          3149
+        ],
+        "terminalLine": 4919
+      },
+      {
+        "key": "mzSameCellGoal",
+        "reason": "no pair",
+        "observed": {
+          "skip": "no pair",
+          "ok": true
+        },
+        "branchLines": [
+          4335
+        ],
+        "terminalLine": 4837
+      }
+    ],
+    "notWholeGroupSkips": [
+      {
+        "key": "npcArriveBump",
+        "field": "skipped",
+        "value": [],
+        "reason": "空配列は候補除外の記録であり全体skipではない。"
+      },
+      {
+        "key": "koroRec",
+        "field": "share",
+        "value": "skip",
+        "reason": "共有しない分岐の記録であり全体skipではない。"
+      }
+    ]
+  },
+  "failures": [
+    {
+      "failureIndex": 1,
+      "key": "godotRec",
+      "predicateSourceLine": 2152,
+      "terminalSourceLine": 4878,
+      "viaFirstMinuteNeed": false,
+      "predicate": "!errs.length && len > 50 && shade > 0",
+      "observed": {
+        "errs": [],
+        "len": 5908,
+        "shade": 0,
+        "ok": false
+      },
+      "termsFromRecordedValues": {
+        "errs.length===0": true,
+        "len>50": true,
+        "shade>0": false
+      },
+      "failedTerms": [
+        "shade>0"
+      ],
+      "interpretation": "errs=[]・len=5908は成立、shade=0のみ未達。判定文の「途中で止まる」を例外・クラッシュと断定しない。Godot読込みそのものではなく記録係fixture。",
+      "rawFailureText": "Godot の 記録係で 歩く地図を 描くと とちゅうで 止まる（?godot=1。記録係に ない canvas の 命令）（{\"errs\":[],\"len\":5908,\"shade\":0,\"ok\":false}）"
+    },
+    {
+      "failureIndex": 2,
+      "key": "swipeHold",
+      "predicateSourceLine": 262,
+      "terminalSourceLine": 4890,
+      "viaFirstMinuteNeed": true,
+      "predicate": "held && still === 'null' && g2 === g1 && far && g4 === want && (g3 === 'null' || g3 === g4) && !info && !!cfg && cfg.ms <= 400",
+      "observed": {
+        "held": true,
+        "ms": 615,
+        "still": "null",
+        "g1": "[1807,1900]",
+        "g2": "[1807,1900]",
+        "g4": "[1807,1900]",
+        "g3": "[1804,1897]",
+        "want": "[1804,1897]",
+        "far": true,
+        "info": false,
+        "cfg": {
+          "ms": 300,
+          "px": 5,
+          "min": 12
+        },
+        "ok": false
+      },
+      "termsFromRecordedValues": {
+        "held": true,
+        "still==='null'": true,
+        "g2===g1": true,
+        "far": true,
+        "g4===want": false,
+        "g3==='null'||g3===g4": false,
+        "!info": true,
+        "!!cfg": true,
+        "cfg.ms<=400": true
+      },
+      "failedTerms": [
+        "g4===want",
+        "g3==='null'||g3===g4"
+      ],
+      "interpretation": "g4=[1807,1900]とwant=[1804,1897]が異なり、離指後g3=[1804,1897]もg4と異なる。記録ms=615は直接の判定項目ではなくcfg.ms=300が条件。",
+      "rawFailureText": "なぞった 先で 指を おいた まま 待っても、指を はなすまで 歩きださない／歩きだした あと、指を 少し ずらした だけで 行き先が かわる／先へ 進めて 止めた 指に ついて いかない（行きすぎる）／動かさない 長押しで 指を おいた まま 歩く／窓が 開く（{\"held\":true,\"ms\":615,\"still\":\"null\",\"g1\":\"[1807,1900]\",\"g2\":\"[1807,1900]\",\"g4\":\"[1807,1900]\",\"g3\":\"[1804,1897]\",\"want\":\"[1804,1897]\",\"far\":true,\"info\":false,\"cfg\":{\"ms\":300,\"px\":5,\"min\":12},\"ok\":false}）"
+    },
+    {
+      "failureIndex": 3,
+      "key": "restFinger",
+      "predicateSourceLine": 733,
+      "terminalSourceLine": 4890,
+      "viaFirstMinuteNeed": true,
+      "predicate": "tap === true && swipe === true && pinch === false && touchAction === 'pinch-zoom' && !info",
+      "observed": {
+        "tap": false,
+        "swipe": false,
+        "pinch": false,
+        "touchAction": "pinch-zoom",
+        "info": false,
+        "ok": false
+      },
+      "termsFromRecordedValues": {
+        "tap===true": false,
+        "swipe===true": false,
+        "pinch===false": true,
+        "touchAction==='pinch-zoom'": true,
+        "!info": true
+      },
+      "failedTerms": [
+        "tap===true",
+        "swipe===true"
+      ],
+      "interpretation": "tap/swipeがfalse。pinch=false、touchAction、info=falseは成立。",
+      "rawFailureText": "指が 1本 のって いると（下の タブ）、地図の タップ・なぞりが 効かない／2本指で つまむ 動きで 歩く／地図の touch-action が もどらない（{\"tap\":false,\"swipe\":false,\"pinch\":false,\"touchAction\":\"pinch-zoom\",\"info\":false,\"ok\":false}）"
+    },
+    {
+      "failureIndex": 4,
+      "key": "tiltDemoShown",
+      "predicateSourceLine": 741,
+      "terminalSourceLine": 4890,
+      "viaFirstMinuteNeed": true,
+      "predicate": "on && phone && force > 0.2",
+      "observed": {
+        "on": false,
+        "phone": false,
+        "force": 0.28,
+        "at": [
+          1801.8533182119165,
+          1893.7140975429197
+        ],
+        "moved": 0.862,
+        "ok": false
+      },
+      "termsFromRecordedValues": {
+        "on": false,
+        "phone": false,
+        "force>0.2": true
+      },
+      "failedTerms": [
+        "on",
+        "phone"
+      ],
+      "interpretation": "on/phoneがfalse、force=0.28は成立。moved=0.862は判定式に含まれず、本物の傾きセンサー試験ではない。",
+      "rawFailureText": "スマホが 1.5度 傾いて いる だけで（お米は 止まって いる）、手本（👆・📱）が 出ない（{\"on\":false,\"phone\":false,\"force\":0.28,\"at\":[1801.8533182119165,1893.7140975429197],\"moved\":0.862,\"ok\":false}）"
+    },
+    {
+      "failureIndex": 5,
+      "key": "a2hsAutoHide",
+      "predicateSourceLine": 348,
+      "terminalSourceLine": 4890,
+      "viaFirstMinuteNeed": true,
+      "predicate": "on && off && x === null && elig === false && !again",
+      "observed": {
+        "off": false,
+        "x": null,
+        "elig": false,
+        "again": false,
+        "ok": false
+      },
+      "termsFromRecordedValues": {
+        "on": true,
+        "off": false,
+        "x===null": true,
+        "elig===false": true,
+        "!again": true
+      },
+      "failedTerms": [
+        "off"
+      ],
+      "interpretation": "a2hsShown.on=true。6秒上限のhidden待機off=falseのみ未達。その後again=falseなので永久に消えない、または7日以内に再表示したとは断定しない。",
+      "rawFailureText": "ホーム画面に追加の 札が ひとりでに 消えない／7日の うちに また 出る（{\"off\":false,\"x\":null,\"elig\":false,\"again\":false,\"ok\":false}）"
+    },
+    {
+      "failureIndex": 6,
+      "key": "tapDemoQuick",
+      "predicateSourceLine": 476,
+      "terminalSourceLine": 4890,
+      "viaFirstMinuteNeed": true,
+      "predicate": "n >= 4 && med > 0 && med < 1700",
+      "observed": {
+        "n": 7,
+        "med": 2264,
+        "min": 2095,
+        "ok": false
+      },
+      "termsFromRecordedValues": {
+        "n>=4": true,
+        "med>0": true,
+        "med<1700": false
+      },
+      "failedTerms": [
+        "med<1700"
+      ],
+      "interpretation": "n=7、med=2264ms、min=2095ms。中央値<1700msのみ未達。全利用者の反応時間や離脱率ではない。",
+      "rawFailureText": "タップで 歩いて 着いた あと、次の 手本が 出るまでが 1.7秒 以上（{\"n\":7,\"med\":2264,\"min\":2095,\"ok\":false}）"
+    },
+    {
+      "failureIndex": 7,
+      "key": "lowDemoKept",
+      "predicateSourceLine": 852,
+      "terminalSourceLine": 4890,
+      "viaFirstMinuteNeed": true,
+      "predicate": "ready && walked && a.inMap && b.inMap && b.guide === 'ibun-parish'",
+      "observed": {
+        "ready": true,
+        "walked": true,
+        "a": {
+          "on": false,
+          "x": null,
+          "y": null,
+          "inMap": false,
+          "free": 135,
+          "status": false,
+          "guide": "ibun-parish"
+        },
+        "b": {
+          "on": true,
+          "x": 283,
+          "y": 127,
+          "inMap": true,
+          "free": 135,
+          "status": false,
+          "guide": "ibun-parish"
+        },
+        "ok": false
+      },
+      "termsFromRecordedValues": {
+        "ready": true,
+        "walked": true,
+        "a.inMap": false,
+        "b.inMap": true,
+        "b.guide==='ibun-parish'": true
+      },
+      "failedTerms": [
+        "a.inMap"
+      ],
+      "interpretation": "aはon=false/x,y=null/inMap=false、bはon=true/(283,127)/inMap=true。停止待機の失敗を握りつぶす構造後の3500msと追加5000msの採取で、実到着から厳密3.5秒とは言えず、恒久非表示や画面外を証明しない。",
+      "rawFailureText": "横向き 568×320 で もどって きた 人が 1回 歩くと、止まって いても「タップ！」の 指が 出ない・地図の 外（下の 欄の 裏）に 出る（{\"ready\":true,\"walked\":true,\"a\":{\"on\":false,\"x\":null,\"y\":null,\"inMap\":false,\"free\":135,\"status\":false,\"guide\":\"ibun-parish\"},\"b\":{\"on\":true,\"x\":283,\"y\":127,\"inMap\":true,\"free\":135,\"status\":false,\"guide\":\"ibun-parish\"},\"ok\":false}）"
+    },
+    {
+      "failureIndex": 8,
+      "key": "lowGoalDemo",
+      "predicateSourceLine": 1144,
+      "terminalSourceLine": 4890,
+      "viaFirstMinuteNeed": true,
+      "predicate": "rows.length === 4 && rows.every(r => r.shown && r.inMap && !r.onRice)",
+      "observed": {
+        "rows": [
+          {
+            "vp": "568x320",
+            "k": 1,
+            "left": 1,
+            "shown": false,
+            "at": null,
+            "inMap": null,
+            "onRice": null
+          },
+          {
+            "vp": "568x320",
+            "k": 2,
+            "left": 2,
+            "shown": true,
+            "at": 3.73,
+            "inMap": true,
+            "onRice": false
+          },
+          {
+            "vp": "844x390",
+            "k": 1,
+            "left": 1,
+            "shown": true,
+            "at": 3.45,
+            "inMap": true,
+            "onRice": false
+          },
+          {
+            "vp": "844x390",
+            "k": 2,
+            "left": 2,
+            "shown": true,
+            "at": 4.54,
+            "inMap": true,
+            "onRice": false
+          }
+        ],
+        "ok": false
+      },
+      "termsFromRecordedValues": {
+        "rows.length===4": true,
+        "568x320/k1/shown&&inMap&&!onRice": false,
+        "568x320/k2/shown&&inMap&&!onRice": true,
+        "844x390/k1/shown&&inMap&&!onRice": true,
+        "844x390/k2/shown&&inMap&&!onRice": true
+      },
+      "failedTerms": [
+        "568x320/k1/shown&&inMap&&!onRice"
+      ],
+      "interpretation": "568×320/k1のみshown=false・位置/幾何null。他3条件は成立。見えていない指の位置を画面外・お米重なりとは判定しない。これはゴール手前へ配置するfixture。",
+      "rawFailureText": "低い 横向き（568×320・844×390）で ゴールの 1〜2マス 手前に 止まると、手本の 指が 出ない（N1b）（{\"rows\":[{\"vp\":\"568x320\",\"k\":1,\"left\":1,\"shown\":false,\"at\":null,\"inMap\":null,\"onRice\":null},{\"vp\":\"568x320\",\"k\":2,\"left\":2,\"shown\":true,\"at\":3.73,\"inMap\":true,\"onRice\":false},{\"vp\":\"844x390\",\"k\":1,\"left\":1,\"shown\":true,\"at\":3.45,\"inMap\":true,\"onRice\":false},{\"vp\":\"844x390\",\"k\":2,\"left\":2,\"shown\":true,\"at\":4.54,\"inMap\":true,\"onRice\":false}],\"ok\":false}）"
+    },
+    {
+      "failureIndex": 9,
+      "key": "rollNoDemo",
+      "predicateSourceLine": 1252,
+      "terminalSourceLine": 4890,
+      "viaFirstMinuteNeed": true,
+      "predicate": "rice != null && vmax >= 1 && fresh === false && bad === 0",
+      "observed": {
+        "rice": 275,
+        "route": 515,
+        "demo": 515,
+        "first": false,
+        "fresh": true,
+        "bad": 0,
+        "vmax": 0,
+        "ok": false
+      },
+      "termsFromRecordedValues": {
+        "rice!=null": true,
+        "vmax>=1": false,
+        "fresh===false": false,
+        "bad===0": true
+      },
+      "failedTerms": [
+        "vmax>=1",
+        "fresh===false"
+      ],
+      "interpretation": "rice=275、vmax=0、fresh=true、bad=0。速度前提未成立なのでbad=0を転がり中に手本が出ないことの実証にしない。",
+      "rawFailureText": "開いて すぐ 傾けて（8度）も 転がらない（速さ 1マス/秒 に とどかない）／転がって いる 間に 手本が 出る／転がった あとも「はじめての 手本」の まま（サイクル210）（{\"rice\":275,\"route\":515,\"demo\":515,\"first\":false,\"fresh\":true,\"bad\":0,\"vmax\":0,\"ok\":false}）"
+    },
+    {
+      "failureIndex": 10,
+      "key": "infoSecondTap",
+      "predicateSourceLine": 1007,
+      "terminalSourceLine": 4890,
+      "viaFirstMinuteNeed": true,
+      "predicate": "!!win && win.open && win.atTap !== 'info-btn' && !second.form && !second.clicks.includes('info-btn')",
+      "observed": {
+        "moved": true,
+        "g": {
+          "x": 195,
+          "y": 270,
+          "len": 5,
+          "goal": "station-student"
+        },
+        "win": {
+          "open": false,
+          "atTap": "pxCanvas"
+        },
+        "second": {
+          "form": false,
+          "clicks": [
+            "pxCanvas",
+            "pxCanvas"
+          ]
+        },
+        "ok": false
+      },
+      "termsFromRecordedValues": {
+        "!!win": true,
+        "win.open": false,
+        "win.atTap!=='info-btn'": true,
+        "!second.form": true,
+        "!second.clicks.includes('info-btn')": true
+      },
+      "failedTerms": [
+        "win.open"
+      ],
+      "interpretation": "窓未開。atTapと2クリックはpxCanvas、form=false。窓内ボタンへの危険な2回タップを観測したとは言わない。",
+      "rawFailureText": "名所の 窓を 開いた タップと 同じ 所を もう 1回 タップすると、窓の ボタン（教える など）に 当たる／窓が 開かない（{\"moved\":true,\"g\":{\"x\":195,\"y\":270,\"len\":5,\"goal\":\"station-student\"},\"win\":{\"open\":false,\"atTap\":\"pxCanvas\"},\"second\":{\"form\":false,\"clicks\":[\"pxCanvas\",\"pxCanvas\"]},\"ok\":false}）"
+    },
+    {
+      "failureIndex": 11,
+      "key": "infoRotate",
+      "predicateSourceLine": 1036,
+      "terminalSourceLine": 4890,
+      "viaFirstMinuteNeed": true,
+      "predicate": "runs.length === 2 && runs.every(o => o.opened && o.opened.open && o.steps.length && o.steps.every(x => x.open && x.closeOk && x.allIn) && o.closed === true)",
+      "observed": {
+        "runs": [
+          {
+            "from": "390x844",
+            "steps": [
+              {
+                "to": "390x560",
+                "open": false,
+                "mt": "",
+                "close": [
+                  0,
+                  0
+                ],
+                "pt": [
+                  0,
+                  0
+                ],
+                "closeOk": false,
+                "allIn": true
+              },
+              {
+                "to": "844x390",
+                "open": false,
+                "mt": "",
+                "close": [
+                  0,
+                  0
+                ],
+                "pt": [
+                  0,
+                  0
+                ],
+                "closeOk": false,
+                "allIn": true
+              }
+            ],
+            "opened": {
+              "open": false,
+              "mt": "",
+              "close": [
+                0,
+                0
+              ],
+              "pt": [
+                0,
+                0
+              ],
+              "closeOk": false,
+              "allIn": true
+            }
+          },
+          {
+            "from": "820x1180",
+            "steps": [
+              {
+                "to": "1180x820",
+                "open": false,
+                "mt": "",
+                "close": [
+                  0,
+                  0
+                ],
+                "pt": [
+                  0,
+                  0
+                ],
+                "closeOk": false,
+                "allIn": true
+              }
+            ],
+            "opened": {
+              "open": false,
+              "mt": "",
+              "close": [
+                0,
+                0
+              ],
+              "pt": [
+                0,
+                0
+              ],
+              "closeOk": false,
+              "allIn": true
+            }
+          }
+        ],
+        "ok": false
+      },
+      "termsFromRecordedValues": {
+        "runs.length===2": true,
+        "phone opened.open": false,
+        "tablet opened.open": false,
+        "phone all step open&&closeOk&&allIn": false,
+        "tablet all step open&&closeOk&&allIn": false,
+        "phone closed===true": false,
+        "tablet closed===true": false
+      },
+      "failedTerms": [
+        "phone opened.open",
+        "tablet opened.open",
+        "phone all step open&&closeOk&&allIn",
+        "tablet all step open&&closeOk&&allIn",
+        "phone closed===true",
+        "tablet closed===true"
+      ],
+      "interpretation": "phone/tabletとも最初からopened.open=false、全リサイズ後もfalse、closed欠落。1030行の分岐により閉じるタップ未送信。allIn=trueは表示幅のあるボタン0件でも成立し、読める/操作可能の証拠ではない。",
+      "rawFailureText": "名所の 窓を 開いた まま 画面の 高さ・向きを かえると、「▶ とじる」が 押せない・ボタンが 画面の 外に 出る・タップで 閉じられない（390×844 → 390×560 → 844×390・820×1180 → 1180×820）（{\"runs\":[{\"from\":\"390x844\",\"steps\":[{\"to\":\"390x560\",\"open\":false,\"mt\":\"\",\"close\":[0,0],\"pt\":[0,0],\"closeOk\":false,\"allIn\":true},{\"to\":\"844x390\",\"open\":false,\"mt\":\"\",\"close\":[0,0],\"pt\":[0,0],\"closeOk\":false,\"allIn\":true}],\"opened\":{\"open\":false,\"mt\":\"\",\"close\":[0,0],\"pt\":[0,0],\"closeOk\":false,\"allIn\":true}},{\"from\":\"820x1180\",\"steps\":[{\"to\":\"1180x820\",\"open\":false,\"mt\":\"\",\"close\":[0,0],\"pt\":[0,0],\"closeOk\":false,\"allIn\":true}],\"opened\":{\"open\":false,\"mt\":\"\",\"close\":[0,0],\"pt\":[0,0],\"closeOk\":false,\"allIn\":true}}],\"ok\":false}）"
+    },
+    {
+      "failureIndex": 12,
+      "key": "speedLines",
+      "predicateSourceLine": 2689,
+      "terminalSourceLine": 4937,
+      "viaFirstMinuteNeed": false,
+      "predicate": "fast === 0 && vmax > 2 && vmax <= 5 && far > 1.5",
+      "observed": {
+        "ok": false,
+        "room": 7,
+        "fast": 0,
+        "vmax": 3.99,
+        "far": 1.18
+      },
+      "termsFromRecordedValues": {
+        "fast===0": true,
+        "vmax>2": true,
+        "vmax<=5": true,
+        "far>1.5": false
+      },
+      "failedTerms": [
+        "far>1.5"
+      ],
+      "interpretation": "fast=0、vmax=3.99は成立、far=1.18のみ未達。スピード線が出現したという結果ではない。元式は丸め前の数で判定し、記録は小数2桁。",
+      "rawFailureText": "スピード線：速く 転がすと 線が 出る（出さない きまり）／速く 転がらない（{\"ok\":false,\"room\":7,\"fast\":0,\"vmax\":3.99,\"far\":1.18}）"
+    }
+  ],
+  "errorsAndCrash": {
+    "pageErrorsRecorded": [],
+    "scriptStoppedKeyPresent": false,
+    "guardCrashKeys": [],
+    "nestedCrashRecords": [],
+    "additionalCrashFailureReasons": 0,
+    "caveat": "空errorsは収集済みのページエラー欄。source922のLeaflet関連除外があり、全console/HTTP/ブラウザ事象の不在ではない。godotRec.errs=[]のshade不足をクラッシュとしない。"
+  },
+  "walk": {
+    "count": 4,
+    "reachedCount": 4
+  },
+  "execution": {
+    "childExit": 1,
+    "outerExit": 1,
+    "outerExitEvidence": "root-closure.json / completionTool 8d59c4",
+    "executionJsonOuterExit": null,
+    "requestedWrapperExit": 1,
+    "timedOut": false,
+    "retries": 0,
+    "wrapperStartedAtUTC": "2026-11-15T19:48:52.529831+00:00",
+    "childStartedAtUTC": "2026-11-15T19:48:54.599800+00:00",
+    "wrapperCompletedAtUTC": "2026-11-15T20:17:19.462315+00:00",
+    "wrapperWallSeconds": 1706.932484,
+    "childExactCompletedAtUTC": null,
+    "childExactDurationSeconds": null,
+    "childEndCaveat": "child終了時刻の独立記録はない。wrapper完了時刻をchild終了時刻に置換しない。",
+    "readOnlyMinCheckActualExit": 0,
+    "naturalPrimaryRun": false
+  },
+  "closure": {
+    "rootClosureAtUTC": "2026-11-15T20:17:41.328044+00:00",
+    "liveBrowsers": [],
+    "previousOwnedProcesses": [
+      {
+        "pid": 209472,
+        "existed": false
+      },
+      {
+        "pid": 209579,
+        "existed": false
+      },
+      {
+        "pid": 209598,
+        "existed": false
+      }
+    ],
+    "connectErrno": 111,
+    "plainBind": {
+      "errno": 98,
+      "error": "[Errno 98] Address already in use"
+    },
+    "reuseBind": true,
+    "serialBrowserResumeAllowed": true,
+    "wrapperBrowserClosureConfirmed": false,
+    "caveat": "wrapper単体の閉鎖確認falseをroot閉鎖記録で補う。plain bind errno98を成功と書き換えない。"
+  },
+  "binding": {
+    "head": "69c0891a6c4be6a8057e01ff8f01034b1d49978f",
+    "branch": "codex/firstminute-round145",
+    "sourceFiles": 338,
+    "pythonTests": 315,
+    "dependencies": 550,
+    "sourceSnapshotsAllEqual": true,
+    "sourceSnapshotEqualsManifest": true,
+    "sourceActualRehashMismatches": [],
+    "dependencyBeforeAfterManifestAllEqual": true,
+    "dependencyActualRehashRepeatedByThisAudit": false,
+    "rootGitStatus": "",
+    "sourceSuiteSameAsR141SHA256": "138a490e72d206e10dbb3e6b84eae43c88330e2598a3382f18605605d710b83e"
+  },
+  "comparisonLimit": "R141の失敗10→今回12という件数差は因果未確定。過去の原因や前提を転記しない。通しfixtureの論理判定を自然初見・実機傾き・利用者体感・離脱改善と混同しない。",
+  "evidenceSHA256": {
+    "/workspace/scratch/first-minute/round-145/full-node-runtime/artifacts/playtest.json": "27a8fc2cc60765664491ccabff6d059f374e0f565f0400a6fd3ebddf1d331db3",
+    "/workspace/ricepia-firstminute-round145/tools/playtest.js": "138a490e72d206e10dbb3e6b84eae43c88330e2598a3382f18605605d710b83e",
+    "/workspace/scratch/first-minute/round-145/required-checks-prep/manifest.json": "38050f4423470e9d98de5485a439100556e5dda17a756aaaea92f44a6d7fa999",
+    "/workspace/scratch/first-minute/round-145/required-checks-prep/frozen.json": "bf9595745f8f64f95da7de60816fb2772b2489dafb9e3bd5790504bf146148eb",
+    "/workspace/scratch/first-minute/round-145/required-checks-prep/run_node.py": "6c4503c00d56399497f3c54b4ce72e1398bf7f5561b0e4d383f23f5656eac774",
+    "/workspace/scratch/first-minute/round-145/full-node-runtime/execution.json": "97d5cd079ecfa0f5214fb951c06f1e1af2d66958dd825e9e5a4c575dc08d0f3a",
+    "/workspace/scratch/first-minute/round-145/full-node-runtime/root-closure.json": "817710e0b371098cac4122cf40c6f831433ce95b36002761e5c8f98dcd9e5d10",
+    "/workspace/scratch/first-minute/round-145/full-node-runtime/run.log": "a5514174842fc2bc6a0dffaca010ab6fc5b3378090de107e50c92ed040038c58",
+    "/workspace/scratch/first-minute/round-145/count-audit-preparation/plan.json": "1829c3833f1a7c42e5354647546a14513e4e7873dd49258ad7511240db47a789",
+    "/workspace/scratch/first-minute/round-145/count-audit-preparation/frozen.json": "d10232481bfddbb45833b5ad8b310723a984620b8783da1c2de8a2f42475e1dd"
+  }
+}

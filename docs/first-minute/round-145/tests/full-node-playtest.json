@@ -1,0 +1,4562 @@
+{
+  "shots": [
+    "01-intro.png",
+    "02-operate-start.png",
+    "02b-chest.png",
+    "03-ricepia-checkin.png",
+    "03b-bag-open.png",
+    "04-shop-card.png",
+    "05-world-map.png",
+    "06-log.png",
+    "07-badges.png",
+    "07b-eye.png",
+    "07d-meiro.png",
+    "07c-movie.png",
+    "08-walk-mode.png",
+    "10-alley.png",
+    "09-seal-pick.png",
+    "11-wait-fact.png",
+    "07e-meiro-land.png",
+    "12b-kome-talk.png",
+    "12-howto.png",
+    "13-city.png"
+  ],
+  "checks": {
+    "riceBubbleTime": {
+      "samples": [
+        {
+          "calm": false,
+          "dpr": 1,
+          "frames": [
+            {
+              "age": -1000,
+              "calls": 0,
+              "ink": 0,
+              "error": null
+            },
+            {
+              "age": -220,
+              "calls": 0,
+              "ink": 0,
+              "error": null
+            },
+            {
+              "age": 0,
+              "calls": 0,
+              "ink": 0,
+              "error": null
+            },
+            {
+              "age": 120,
+              "calls": 0,
+              "ink": 0,
+              "error": null
+            },
+            {
+              "age": 500,
+              "calls": 0,
+              "ink": 0,
+              "error": null
+            },
+            {
+              "age": 1300,
+              "calls": 0,
+              "ink": 0,
+              "error": null
+            },
+            {
+              "age": 1401,
+              "calls": 0,
+              "ink": 0,
+              "error": null
+            }
+          ],
+          "ok": true
+        },
+        {
+          "calm": false,
+          "dpr": 3,
+          "frames": [
+            {
+              "age": -1000,
+              "calls": 0,
+              "ink": 0,
+              "error": null
+            },
+            {
+              "age": -220,
+              "calls": 0,
+              "ink": 0,
+              "error": null
+            },
+            {
+              "age": 0,
+              "calls": 0,
+              "ink": 0,
+              "error": null
+            },
+            {
+              "age": 120,
+              "calls": 0,
+              "ink": 0,
+              "error": null
+            },
+            {
+              "age": 500,
+              "calls": 0,
+              "ink": 0,
+              "error": null
+            },
+            {
+              "age": 1300,
+              "calls": 0,
+              "ink": 0,
+              "error": null
+            },
+            {
+              "age": 1401,
+              "calls": 0,
+              "ink": 0,
+              "error": null
+            }
+          ],
+          "ok": true
+        },
+        {
+          "calm": true,
+          "dpr": 1,
+          "frames": [
+            {
+              "age": -1000,
+              "calls": 0,
+              "ink": 0,
+              "error": null
+            },
+            {
+              "age": -220,
+              "calls": 0,
+              "ink": 0,
+              "error": null
+            },
+            {
+              "age": 0,
+              "calls": 0,
+              "ink": 0,
+              "error": null
+            },
+            {
+              "age": 120,
+              "calls": 0,
+              "ink": 0,
+              "error": null
+            },
+            {
+              "age": 500,
+              "calls": 0,
+              "ink": 0,
+              "error": null
+            },
+            {
+              "age": 1300,
+              "calls": 0,
+              "ink": 0,
+              "error": null
+            },
+            {
+              "age": 1401,
+              "calls": 0,
+              "ink": 0,
+              "error": null
+            }
+          ],
+          "ok": true
+        },
+        {
+          "calm": true,
+          "dpr": 3,
+          "frames": [
+            {
+              "age": -1000,
+              "calls": 0,
+              "ink": 0,
+              "error": null
+            },
+            {
+              "age": -220,
+              "calls": 0,
+              "ink": 0,
+              "error": null
+            },
+            {
+              "age": 0,
+              "calls": 0,
+              "ink": 0,
+              "error": null
+            },
+            {
+              "age": 120,
+              "calls": 0,
+              "ink": 0,
+              "error": null
+            },
+            {
+              "age": 500,
+              "calls": 0,
+              "ink": 0,
+              "error": null
+            },
+            {
+              "age": 1300,
+              "calls": 0,
+              "ink": 0,
+              "error": null
+            },
+            {
+              "age": 1401,
+              "calls": 0,
+              "ink": 0,
+              "error": null
+            }
+          ],
+          "ok": true
+        }
+      ],
+      "errors": [],
+      "noWords": true,
+      "ok": true
+    },
+    "startTilt": {
+      "normalIdleDemo": {
+        "d1": 838,
+        "dOff": true,
+        "d2": 893,
+        "n1": 2,
+        "n2": 3,
+        "w1": {
+          "wait": [],
+          "sight": false,
+          "cover": []
+        },
+        "pe": "none",
+        "hit": true,
+        "ok": true
+      },
+      "normalNoAsk": {
+        "synthetic": {
+          "asks": 0,
+          "asked": false
+        },
+        "mapOnly": {
+          "asks": 0,
+          "asked": false,
+          "retry": false,
+          "btn": false,
+          "cls": "",
+          "text": "📱かたむけて ころがす",
+          "saved": null
+        },
+        "first": {
+          "asks": 0,
+          "asked": false,
+          "retry": false,
+          "btn": false,
+          "cls": "",
+          "text": "📱かたむけて ころがす",
+          "saved": null
+        },
+        "last": {
+          "asks": 0,
+          "asked": false,
+          "retry": false,
+          "btn": false,
+          "cls": "",
+          "text": "📱かたむけて ころがす",
+          "saved": null
+        },
+        "ok": true
+      },
+      "normalControls": {
+        "ok": true
+      },
+      "normal": {
+        "before": {
+          "intro": false,
+          "help": false,
+          "panel": false,
+          "playing": true,
+          "talk": false,
+          "asks": 0
+        },
+        "after": {
+          "intro": false,
+          "help": false,
+          "panel": false,
+          "playing": true,
+          "talk": false,
+          "asks": 0
+        },
+        "revisit": {
+          "intro": false,
+          "help": false,
+          "panel": false,
+          "playing": true,
+          "talk": false,
+          "asks": 0
+        },
+        "kept": true,
+        "back": true,
+        "persistence": {
+          "points": 123,
+          "total": 456,
+          "tilt": "16",
+          "marker": "keep",
+          "legacyPoints": 789,
+          "kept": true
+        },
+        "reask0": 0,
+        "reaskMap": 0,
+        "again": {
+          "asks": 0,
+          "asked": false,
+          "retry": false,
+          "btn": false,
+          "cls": "",
+          "text": "📱かたむけて ころがす",
+          "saved": null
+        },
+        "remembered": true,
+        "reask": 0,
+        "ok": true
+      },
+      "unsupportedNoAsk": {
+        "synthetic": {
+          "asks": 0,
+          "asked": false
+        },
+        "mapOnly": {
+          "asks": 0,
+          "asked": false,
+          "retry": false,
+          "btn": false,
+          "cls": "",
+          "text": "📱かたむけて ころがす",
+          "saved": null
+        },
+        "first": {
+          "asks": 0,
+          "asked": false,
+          "retry": false,
+          "btn": false,
+          "cls": "",
+          "text": "📱かたむけて ころがす",
+          "saved": null
+        },
+        "last": {
+          "asks": 0,
+          "asked": false,
+          "retry": false,
+          "btn": false,
+          "cls": "",
+          "text": "📱かたむけて ころがす",
+          "saved": null
+        },
+        "ok": true
+      },
+      "unsupportedControls": {
+        "small": 0.867180567322066,
+        "stopped": null,
+        "noise": null,
+        "touch": 0.8640726946618064,
+        "covered": false,
+        "blockers": [],
+        "ok": true,
+        "attempts": [
+          {
+            "small": 0.867180567322066,
+            "stopped": null,
+            "noise": null,
+            "touch": 0.8640726946618064,
+            "covered": false,
+            "blockers": [],
+            "ok": true
+          }
+        ]
+      },
+      "unsupported": {
+        "before": {
+          "intro": false,
+          "help": false,
+          "panel": false,
+          "playing": true,
+          "talk": false,
+          "asks": 0
+        },
+        "after": {
+          "intro": false,
+          "help": false,
+          "panel": false,
+          "playing": true,
+          "talk": false,
+          "asks": 0
+        },
+        "revisit": {
+          "intro": false,
+          "help": false,
+          "panel": false,
+          "playing": true,
+          "talk": false,
+          "asks": 0
+        },
+        "kept": true,
+        "back": true,
+        "persistence": {
+          "points": 123,
+          "total": 456,
+          "tilt": "16",
+          "marker": "keep",
+          "legacyPoints": 789,
+          "kept": true
+        },
+        "reask0": 0,
+        "reaskMap": 0,
+        "again": {
+          "asks": 0,
+          "asked": false,
+          "retry": false,
+          "btn": false,
+          "cls": "",
+          "text": "📱かたむけて ころがす",
+          "saved": null
+        },
+        "remembered": true,
+        "reask": 0,
+        "ok": true
+      },
+      "desktopNoAsk": {
+        "synthetic": {
+          "asks": 0,
+          "asked": false
+        },
+        "mapOnly": {
+          "asks": 0,
+          "asked": false,
+          "retry": false,
+          "btn": false,
+          "cls": "",
+          "text": "📱かたむけて ころがす",
+          "saved": null
+        },
+        "first": {
+          "asks": 0,
+          "asked": false,
+          "retry": false,
+          "btn": false,
+          "cls": "",
+          "text": "📱かたむけて ころがす",
+          "saved": null
+        },
+        "last": {
+          "asks": 0,
+          "asked": false,
+          "retry": false,
+          "btn": false,
+          "cls": "",
+          "text": "📱かたむけて ころがす",
+          "saved": null
+        },
+        "ok": true
+      },
+      "desktopControls": {
+        "small": 2.6748576387309826,
+        "stopped": null,
+        "noise": null,
+        "touch": 0.9999999999649845,
+        "covered": false,
+        "blockers": [],
+        "ok": true,
+        "attempts": [
+          {
+            "small": 2.6748576387309826,
+            "stopped": null,
+            "noise": null,
+            "touch": 0.9999999999649845,
+            "covered": false,
+            "blockers": [],
+            "ok": true
+          }
+        ]
+      },
+      "desktop": {
+        "before": {
+          "intro": false,
+          "help": false,
+          "panel": false,
+          "playing": true,
+          "talk": false,
+          "asks": 0
+        },
+        "after": {
+          "intro": false,
+          "help": false,
+          "panel": false,
+          "playing": true,
+          "talk": false,
+          "asks": 0
+        },
+        "revisit": {
+          "intro": false,
+          "help": false,
+          "panel": false,
+          "playing": true,
+          "talk": false,
+          "asks": 0
+        },
+        "kept": true,
+        "back": true,
+        "persistence": {
+          "points": 123,
+          "total": 456,
+          "tilt": "16",
+          "marker": "keep",
+          "legacyPoints": 789,
+          "kept": true
+        },
+        "reask0": 0,
+        "reaskMap": 0,
+        "again": {
+          "asks": 0,
+          "asked": false,
+          "retry": false,
+          "btn": false,
+          "cls": "",
+          "text": "📱かたむけて ころがす",
+          "saved": null
+        },
+        "remembered": true,
+        "reask": 0,
+        "ok": true
+      },
+      "grantedIdleDemo": {
+        "d1": 766,
+        "dOff": true,
+        "d2": 951,
+        "n1": 2,
+        "n2": 3,
+        "w1": {
+          "wait": [],
+          "sight": false,
+          "cover": []
+        },
+        "pe": "none",
+        "hit": true,
+        "ok": true
+      },
+      "grantedMsg": {
+        "text": "🎁 すぐ近くに たからばこ！",
+        "okText": "📱かたむけて ころがす",
+        "ok": true
+      },
+      "grantedNoRetry": {
+        "synthetic": {
+          "asks": 0,
+          "asked": false
+        },
+        "mapOnly": {
+          "asks": 1,
+          "asked": true,
+          "retry": false,
+          "btn": false,
+          "cls": "lab",
+          "text": "📱かたむけて ころがす",
+          "saved": "1"
+        },
+        "first": {
+          "asks": 1,
+          "asked": true,
+          "retry": false,
+          "btn": false,
+          "cls": "lab",
+          "text": "📱かたむけて ころがす",
+          "saved": "1"
+        },
+        "second": {
+          "asks": 1,
+          "asked": true,
+          "retry": false,
+          "btn": false,
+          "cls": "lab",
+          "text": "📱かたむけて ころがす",
+          "saved": "1"
+        },
+        "last": {
+          "asks": 1,
+          "asked": true,
+          "retry": false,
+          "btn": false,
+          "cls": "lab",
+          "text": "📱かたむけて ころがす",
+          "saved": "1"
+        },
+        "ok": true
+      },
+      "grantedControls": {
+        "ok": true
+      },
+      "granted": {
+        "before": {
+          "intro": false,
+          "help": false,
+          "panel": false,
+          "playing": true,
+          "talk": false,
+          "asks": 0
+        },
+        "after": {
+          "intro": false,
+          "help": false,
+          "panel": false,
+          "playing": true,
+          "talk": false,
+          "asks": 1
+        },
+        "revisit": {
+          "intro": false,
+          "help": false,
+          "panel": false,
+          "playing": true,
+          "talk": false,
+          "asks": 0
+        },
+        "kept": true,
+        "back": true,
+        "persistence": {
+          "points": 123,
+          "total": 456,
+          "tilt": "16",
+          "marker": "keep",
+          "legacyPoints": 789,
+          "kept": true
+        },
+        "reask0": 0,
+        "reaskMap": 1,
+        "again": {
+          "asks": 1,
+          "asked": true,
+          "retry": false,
+          "btn": true,
+          "cls": "lab ok",
+          "text": "📱OK",
+          "saved": "1"
+        },
+        "remembered": true,
+        "reask": 1,
+        "ok": true
+      },
+      "deniedIdleDemo": {
+        "d1": 852,
+        "dOff": true,
+        "d2": 931,
+        "n1": 2,
+        "n2": 3,
+        "w1": {
+          "wait": [],
+          "sight": false,
+          "cover": []
+        },
+        "pe": "none",
+        "hit": true,
+        "ok": true
+      },
+      "deniedMsg": {
+        "text": "地図を タップして 遊べるよ",
+        "ok": true
+      },
+      "deniedNoRetry": {
+        "synthetic": {
+          "asks": 0,
+          "asked": false
+        },
+        "mapOnly": {
+          "asks": 1,
+          "asked": true,
+          "retry": false,
+          "btn": true,
+          "cls": "quiet",
+          "text": "📱かたむけて ころがす",
+          "saved": "0"
+        },
+        "first": {
+          "asks": 1,
+          "asked": true,
+          "retry": false,
+          "btn": true,
+          "cls": "quiet",
+          "text": "📱かたむけて ころがす",
+          "saved": "0"
+        },
+        "second": {
+          "asks": 1,
+          "asked": true,
+          "retry": false,
+          "btn": true,
+          "cls": "quiet",
+          "text": "📱かたむけて ころがす",
+          "saved": "0"
+        },
+        "last": {
+          "asks": 1,
+          "asked": true,
+          "retry": false,
+          "btn": true,
+          "cls": "quiet",
+          "text": "📱かたむけて ころがす",
+          "saved": "0"
+        },
+        "ok": true
+      },
+      "deniedControls": {
+        "small": 0.8021129397768618,
+        "stopped": null,
+        "noise": null,
+        "touch": 0.8640726946024146,
+        "covered": false,
+        "blockers": [],
+        "ok": true,
+        "attempts": [
+          {
+            "small": 0.8021129397768618,
+            "stopped": null,
+            "noise": null,
+            "touch": 0.8640726946024146,
+            "covered": false,
+            "blockers": [],
+            "ok": true
+          }
+        ]
+      },
+      "denied": {
+        "before": {
+          "intro": false,
+          "help": false,
+          "panel": false,
+          "playing": true,
+          "talk": false,
+          "asks": 0
+        },
+        "after": {
+          "intro": false,
+          "help": false,
+          "panel": false,
+          "playing": true,
+          "talk": false,
+          "asks": 1
+        },
+        "revisit": {
+          "intro": false,
+          "help": false,
+          "panel": false,
+          "playing": true,
+          "talk": false,
+          "asks": 0
+        },
+        "kept": true,
+        "back": true,
+        "persistence": {
+          "points": 123,
+          "total": 456,
+          "tilt": "16",
+          "marker": "keep",
+          "legacyPoints": 789,
+          "kept": true
+        },
+        "reask0": 0,
+        "reaskMap": 1,
+        "again": {
+          "asks": 1,
+          "asked": true,
+          "retry": false,
+          "btn": true,
+          "cls": "quiet",
+          "text": "📱かたむけて ころがす",
+          "saved": "0"
+        },
+        "remembered": true,
+        "reask": 1,
+        "ok": true
+      },
+      "throwsMsg": {
+        "text": "地図を タップして 遊べるよ",
+        "ok": true
+      },
+      "throwsNoRetry": {
+        "synthetic": {
+          "asks": 0,
+          "asked": false
+        },
+        "mapOnly": {
+          "asks": 1,
+          "asked": true,
+          "retry": false,
+          "btn": true,
+          "cls": "quiet",
+          "text": "📱かたむけて ころがす",
+          "saved": "0"
+        },
+        "first": {
+          "asks": 1,
+          "asked": true,
+          "retry": false,
+          "btn": true,
+          "cls": "quiet",
+          "text": "📱かたむけて ころがす",
+          "saved": "0"
+        },
+        "second": {
+          "asks": 1,
+          "asked": true,
+          "retry": false,
+          "btn": true,
+          "cls": "quiet",
+          "text": "📱かたむけて ころがす",
+          "saved": "0"
+        },
+        "last": {
+          "asks": 1,
+          "asked": true,
+          "retry": false,
+          "btn": true,
+          "cls": "quiet",
+          "text": "📱かたむけて ころがす",
+          "saved": "0"
+        },
+        "ok": true
+      },
+      "throwsControls": {
+        "small": 0.786333529438897,
+        "stopped": null,
+        "noise": null,
+        "touch": 1.5345128639287906,
+        "covered": false,
+        "blockers": [],
+        "ok": true,
+        "attempts": [
+          {
+            "small": 0.786333529438897,
+            "stopped": null,
+            "noise": null,
+            "touch": 1.5345128639287906,
+            "covered": false,
+            "blockers": [],
+            "ok": true
+          }
+        ]
+      },
+      "throws": {
+        "before": {
+          "intro": false,
+          "help": false,
+          "panel": false,
+          "playing": true,
+          "talk": false,
+          "asks": 0
+        },
+        "after": {
+          "intro": false,
+          "help": false,
+          "panel": false,
+          "playing": true,
+          "talk": false,
+          "asks": 1
+        },
+        "revisit": {
+          "intro": false,
+          "help": false,
+          "panel": false,
+          "playing": true,
+          "talk": false,
+          "asks": 0
+        },
+        "kept": true,
+        "back": true,
+        "persistence": {
+          "points": 123,
+          "total": 456,
+          "tilt": "16",
+          "marker": "keep",
+          "legacyPoints": 789,
+          "kept": true
+        },
+        "reask0": 0,
+        "reaskMap": 1,
+        "again": {
+          "asks": 1,
+          "asked": true,
+          "retry": false,
+          "btn": true,
+          "cls": "quiet",
+          "text": "📱かたむけて ころがす",
+          "saved": "0"
+        },
+        "remembered": true,
+        "reask": 1,
+        "ok": true
+      },
+      "rejectedMsg": {
+        "text": "地図を タップして 遊べるよ",
+        "ok": true
+      },
+      "rejectedNoRetry": {
+        "synthetic": {
+          "asks": 0,
+          "asked": false
+        },
+        "mapOnly": {
+          "asks": 1,
+          "asked": true,
+          "retry": false,
+          "btn": true,
+          "cls": "quiet",
+          "text": "📱かたむけて ころがす",
+          "saved": "0"
+        },
+        "first": {
+          "asks": 1,
+          "asked": true,
+          "retry": false,
+          "btn": true,
+          "cls": "quiet",
+          "text": "📱かたむけて ころがす",
+          "saved": "0"
+        },
+        "second": {
+          "asks": 1,
+          "asked": true,
+          "retry": false,
+          "btn": true,
+          "cls": "quiet",
+          "text": "📱かたむけて ころがす",
+          "saved": "0"
+        },
+        "last": {
+          "asks": 1,
+          "asked": true,
+          "retry": false,
+          "btn": true,
+          "cls": "quiet",
+          "text": "📱かたむけて ころがす",
+          "saved": "0"
+        },
+        "ok": true
+      },
+      "rejectedControls": {
+        "small": 0.957623623935433,
+        "stopped": null,
+        "noise": null,
+        "touch": 0.9846036991389855,
+        "covered": false,
+        "blockers": [],
+        "ok": true,
+        "attempts": [
+          {
+            "small": 0.957623623935433,
+            "stopped": null,
+            "noise": null,
+            "touch": 0.9846036991389855,
+            "covered": false,
+            "blockers": [],
+            "ok": true
+          }
+        ]
+      },
+      "rejected": {
+        "before": {
+          "intro": false,
+          "help": false,
+          "panel": false,
+          "playing": true,
+          "talk": false,
+          "asks": 0
+        },
+        "after": {
+          "intro": false,
+          "help": false,
+          "panel": false,
+          "playing": true,
+          "talk": false,
+          "asks": 1
+        },
+        "revisit": {
+          "intro": false,
+          "help": false,
+          "panel": false,
+          "playing": true,
+          "talk": false,
+          "asks": 0
+        },
+        "kept": true,
+        "back": true,
+        "persistence": {
+          "points": 123,
+          "total": 456,
+          "tilt": "16",
+          "marker": "keep",
+          "legacyPoints": 789,
+          "kept": true
+        },
+        "reask0": 0,
+        "reaskMap": 1,
+        "again": {
+          "asks": 1,
+          "asked": true,
+          "retry": false,
+          "btn": true,
+          "cls": "quiet",
+          "text": "📱かたむけて ころがす",
+          "saved": "0"
+        },
+        "remembered": true,
+        "reask": 1,
+        "ok": true
+      },
+      "notallowedRetry": {
+        "synthetic": {
+          "asks": 0,
+          "asked": false
+        },
+        "mapOnly": {
+          "asks": 2,
+          "asked": true,
+          "retry": false,
+          "btn": false,
+          "cls": "lab",
+          "text": "📱かたむけて ころがす",
+          "saved": "1"
+        },
+        "first": {
+          "asks": 2,
+          "asked": true,
+          "retry": false,
+          "btn": false,
+          "cls": "lab",
+          "text": "📱かたむけて ころがす",
+          "saved": "1"
+        },
+        "second": {
+          "asks": 2,
+          "asked": true,
+          "retry": false,
+          "btn": false,
+          "cls": "lab",
+          "text": "📱かたむけて ころがす",
+          "saved": "1"
+        },
+        "last": {
+          "asks": 2,
+          "asked": true,
+          "retry": false,
+          "btn": false,
+          "cls": "lab",
+          "text": "📱かたむけて ころがす",
+          "saved": "1"
+        },
+        "ok": true
+      },
+      "notallowedControls": {
+        "ok": true
+      },
+      "notallowed": {
+        "before": {
+          "intro": false,
+          "help": false,
+          "panel": false,
+          "playing": true,
+          "talk": false,
+          "asks": 0
+        },
+        "after": {
+          "intro": false,
+          "help": false,
+          "panel": false,
+          "playing": true,
+          "talk": false,
+          "asks": 2
+        },
+        "revisit": {
+          "intro": false,
+          "help": false,
+          "panel": false,
+          "playing": true,
+          "talk": false,
+          "asks": 0
+        },
+        "kept": true,
+        "back": true,
+        "persistence": {
+          "points": 123,
+          "total": 456,
+          "tilt": "16",
+          "marker": "keep",
+          "legacyPoints": 789,
+          "kept": true
+        },
+        "reask0": 0,
+        "reaskMap": 2,
+        "again": {
+          "asks": 2,
+          "asked": true,
+          "retry": false,
+          "btn": true,
+          "cls": "lab ok",
+          "text": "📱OK",
+          "saved": "1"
+        },
+        "remembered": true,
+        "reask": 2,
+        "ok": true
+      },
+      "notallowed-syncRetry": {
+        "synthetic": {
+          "asks": 0,
+          "asked": false
+        },
+        "mapOnly": {
+          "asks": 2,
+          "asked": true,
+          "retry": false,
+          "btn": false,
+          "cls": "lab",
+          "text": "📱かたむけて ころがす",
+          "saved": "1"
+        },
+        "first": {
+          "asks": 2,
+          "asked": true,
+          "retry": false,
+          "btn": false,
+          "cls": "lab",
+          "text": "📱かたむけて ころがす",
+          "saved": "1"
+        },
+        "second": {
+          "asks": 2,
+          "asked": true,
+          "retry": false,
+          "btn": false,
+          "cls": "lab",
+          "text": "📱かたむけて ころがす",
+          "saved": "1"
+        },
+        "last": {
+          "asks": 2,
+          "asked": true,
+          "retry": false,
+          "btn": false,
+          "cls": "lab",
+          "text": "📱かたむけて ころがす",
+          "saved": "1"
+        },
+        "ok": true
+      },
+      "notallowed-syncControls": {
+        "ok": true
+      },
+      "notallowed-sync": {
+        "before": {
+          "intro": false,
+          "help": false,
+          "panel": false,
+          "playing": true,
+          "talk": false,
+          "asks": 0
+        },
+        "after": {
+          "intro": false,
+          "help": false,
+          "panel": false,
+          "playing": true,
+          "talk": false,
+          "asks": 2
+        },
+        "revisit": {
+          "intro": false,
+          "help": false,
+          "panel": false,
+          "playing": true,
+          "talk": false,
+          "asks": 0
+        },
+        "kept": true,
+        "back": true,
+        "persistence": {
+          "points": 123,
+          "total": 456,
+          "tilt": "16",
+          "marker": "keep",
+          "legacyPoints": 789,
+          "kept": true
+        },
+        "reask0": 0,
+        "reaskMap": 2,
+        "again": {
+          "asks": 2,
+          "asked": true,
+          "retry": false,
+          "btn": true,
+          "cls": "lab ok",
+          "text": "📱OK",
+          "saved": "1"
+        },
+        "remembered": true,
+        "reask": 2,
+        "ok": true
+      },
+      "share-1-granted": {
+        "automatic": {
+          "calls": 0,
+          "asked": false,
+          "legacy": true
+        },
+        "first": {
+          "calls": 1,
+          "asked": true
+        },
+        "last": {
+          "calls": 1,
+          "asked": true
+        },
+        "moved": 0.4005179712571731,
+        "ok": true
+      },
+      "share-1-denied": {
+        "automatic": {
+          "calls": 0,
+          "asked": false,
+          "legacy": true
+        },
+        "first": {
+          "calls": 1,
+          "asked": true
+        },
+        "last": {
+          "calls": 1,
+          "asked": true
+        },
+        "moved": 0.3610157885078593,
+        "ok": true
+      },
+      "share-1-notallowed": {
+        "automatic": {
+          "calls": 0,
+          "asked": false,
+          "legacy": true
+        },
+        "first": {
+          "calls": 1,
+          "asked": false
+        },
+        "last": {
+          "calls": 2,
+          "asked": true
+        },
+        "moved": 0.37341380906161226,
+        "ok": true
+      },
+      "share-daily-granted": {
+        "automatic": {
+          "calls": 0,
+          "asked": false,
+          "legacy": true
+        },
+        "first": {
+          "calls": 1,
+          "asked": true
+        },
+        "last": {
+          "calls": 1,
+          "asked": true
+        },
+        "moved": 0.28354778862138186,
+        "ok": true
+      },
+      "share-daily-denied": {
+        "automatic": {
+          "calls": 0,
+          "asked": false,
+          "legacy": true
+        },
+        "first": {
+          "calls": 1,
+          "asked": true
+        },
+        "last": {
+          "calls": 1,
+          "asked": true
+        },
+        "moved": 0.2756034496475327,
+        "ok": true
+      },
+      "share-daily-notallowed": {
+        "automatic": {
+          "calls": 0,
+          "asked": false,
+          "legacy": true
+        },
+        "first": {
+          "calls": 1,
+          "asked": false
+        },
+        "last": {
+          "calls": 2,
+          "asked": true
+        },
+        "moved": 0.28354778862138186,
+        "ok": true
+      },
+      "sensor": {
+        "seam": true,
+        "blur": true,
+        "samples": [
+          {
+            "hz": 30,
+            "first": 33.333333333333336,
+            "force": 0.7276957677164083,
+            "want": 0.7277777777777779
+          },
+          {
+            "hz": 60,
+            "first": 33.333333333333336,
+            "force": 0.7276957677164083,
+            "want": 0.7277777777777779
+          },
+          {
+            "hz": 100,
+            "first": 20,
+            "force": 0.7276957677164083,
+            "want": 0.7277777777777779
+          }
+        ],
+        "rotations": [
+          {
+            "angle": 90,
+            "neutral": true,
+            "right": true,
+            "y": 0
+          },
+          {
+            "angle": 180,
+            "neutral": true,
+            "right": true,
+            "y": 0
+          },
+          {
+            "angle": 270,
+            "neutral": true,
+            "right": true,
+            "y": 0
+          },
+          {
+            "angle": 0,
+            "neutral": true,
+            "right": true,
+            "y": 0
+          },
+          {
+            "angle": -90,
+            "neutral": true,
+            "right": true,
+            "y": 0
+          }
+        ],
+        "reset": true,
+        "invalid": true,
+        "deg": 12,
+        "ok": true
+      },
+      "motion": {
+        "small": 6.219086703363407,
+        "stopped": true,
+        "noise": 0,
+        "touch": null,
+        "covered": false,
+        "blockers": [],
+        "ok": true,
+        "attempts": [
+          {
+            "small": 6.219086703363407,
+            "stopped": true,
+            "noise": 0,
+            "touch": null,
+            "covered": false,
+            "blockers": [],
+            "ok": true
+          }
+        ]
+      },
+      "help": {
+        "frozen": true,
+        "closed": true,
+        "ok": true
+      },
+      "layout": {
+        "fit": true,
+        "ok": true
+      },
+      "errors": [],
+      "ok": true
+    },
+    "meiroMain": true,
+    "simpleDefault": true,
+    "firstOnField": true,
+    "welcomeChestM": 33,
+    "padOnWorldMap": true,
+    "controlsGone": true,
+    "keyWalkedNorth": true,
+    "tapWalkInfo": {
+      "ms": 3148,
+      "goal": [
+        1792,
+        1903
+      ]
+    },
+    "tapWalk": true,
+    "tapWalkStopsOnPanel": true,
+    "tapWalkStopsOnTouch": true,
+    "tapWalkOnPill": [
+      "walk",
+      "walk"
+    ],
+    "operateMode": true,
+    "bgmStarted": true,
+    "chestsNearby": 14,
+    "firstPickN": 0,
+    "firstPickId": 51437,
+    "welcomeBag": "1",
+    "h100FirstDay": true,
+    "teleportNoBag": true,
+    "dankyu": true,
+    "fourth": true,
+    "kirara": true,
+    "yatsumushi": true,
+    "evart": true,
+    "oldmap": true,
+    "hiryo": true,
+    "trail": {
+      "total": 43,
+      "path": true,
+      "again": 0,
+      "teleport": 0,
+      "jumped": false,
+      "saved": true
+    },
+    "weekTheme": "art",
+    "checkinSound": true,
+    "noRewardCard": {
+      "card": false,
+      "covered": false,
+      "pts": 3,
+      "long": [],
+      "ok": true
+    },
+    "chain": {
+      "best": 3,
+      "n": 3,
+      "said": [],
+      "line": false,
+      "ok": true
+    },
+    "bigText": {
+      "clockS": 18,
+      "tapK": 0.5,
+      "floatPx": 16,
+      "tabPx": 12,
+      "ats": [
+        0,
+        1250,
+        2500,
+        3750
+      ],
+      "last": "テストの 浮かぶ 文字 11",
+      "teaser": false,
+      "simple": true,
+      "ok": true
+    },
+    "h100": {
+      "steps": 100,
+      "fresh": 64,
+      "done": true,
+      "best": 64,
+      "ok": true
+    },
+    "trailMile": {
+      "mile": 3,
+      "trail": 280,
+      "logged": true,
+      "ok": true
+    },
+    "bagOpened": true,
+    "cooldown": true,
+    "shopCard": true,
+    "worldBtnFirstWalk": {
+      "before": true,
+      "goals": "3",
+      "after": true,
+      "ok": true
+    },
+    "worldLabels": {
+      "rv": 391,
+      "tw": 4223,
+      "st": 146
+    },
+    "worldBgm": true,
+    "reactOffTab": true,
+    "quests": [
+      "✅ 西尾の注目スポットに行く +60",
+      "たからばこを2つ開ける +30",
+      "今月の「瀬門神社 馬駈神事」の会場に行く +60",
+      "3つぜんぶ達成 +50"
+    ],
+    "facts": "8/378",
+    "todayWalk": " きょうのさんぽ 歩いた 3.6km はじめての道 2.2km チェックイン 3回 知らない道をたくさん歩きました。地図に足あとが ふえています 西尾市役所 西尾 名鉄 西尾駅 西尾 らいすぴあ秀幸（永吉） 西尾 あっちこっち 寄れたねぇ。ええ名所めぐりだったがん はじめての名所、行けたねぇ。この調子で ぼちぼち めぐりりん 👣 100歩たんけん 64マス ✓ 🔍 路地の行き止まり 0/3 👀 水べで じっと見る 0/2 自己ベスト 3.6km・これまでに歩いた道 2.2km（つぎの節目 4.0km まで あと 1.8km）・いちばんの れんさ 3・100歩たんけんの自己ベスト 64マス",
+    "dotHints": 32,
+    "firstPickKept": true,
+    "eyeNotYet": true,
+    "eyeLocked": true,
+    "eyeTalkWin": {
+      "quiet": {
+        "hidden": true,
+        "met": true,
+        "covered": false
+      },
+      "tapNpc": {
+        "x": 195.0000000039745,
+        "y": 163.49975672069013,
+        "clear": true
+      },
+      "tapped": true
+    },
+    "eyeTalk": true,
+    "parcel": true,
+    "heard": true,
+    "heardHint": true,
+    "heardHintDbg": {
+      "hk": "f-konoe-tei",
+      "h": {
+        "by": "観光ボランティアガイドさん",
+        "byId": "castle-guide",
+        "t": 1792112400000
+      },
+      "spot": true,
+      "n": 10,
+      "marks": "🧭🔍",
+      "tail": "るが のこっとるよ。」 （7/7）おわり 観光ボランティアガイドさん 「📒 記録しといたよ。つぎの レベル8まで あと330pt。しるしは 0/5。いちばん近いのは 西尾のしるしで、あと2か所めぐると もらえるよ。きょうは まだ 路地の行き止まり あと3か所・水べで じっと見るが のこっとるよ。」 （7/7）おわり "
+    },
+    "eyeFree": true,
+    "roll": {
+      "ready": true,
+      "moved": 0.96,
+      "rolled": 0.96,
+      "tilt": -3.36,
+      "tries": 0,
+      "ok": true
+    },
+    "slope": {
+      "flat": 0,
+      "downhill": 1.84,
+      "ok": true,
+      "tries": 0
+    },
+    "rollFeel": {
+      "stopS": 1.2,
+      "still": true,
+      "spread": 0,
+      "vmax": 0.053,
+      "samples": 10,
+      "pressed": true,
+      "style": "ロケット・ハート",
+      "wall": "ArrowDown",
+      "round": true,
+      "flatGrew": 0,
+      "ok": true
+    },
+    "babyRice": {
+      "keys": [
+        "smile",
+        "blink",
+        "happy",
+        "excited",
+        "wow",
+        "yawn",
+        "ouch",
+        "dizzy",
+        "sleepy"
+      ],
+      "shine": 2,
+      "m": {
+        "a": "smile",
+        "y": "smile",
+        "b": "smile",
+        "s": "smile"
+      },
+      "ok": true
+    },
+    "riceAichi": {
+      "cool": 8.3,
+      "shade": 3095,
+      "st": [
+        1,
+        0,
+        0
+      ],
+      "ok": true
+    },
+    "introScenes": {
+      "n": 12,
+      "bad": [],
+      "howto": {
+        "bg": "url(\"nishio-go/art/intro/matcha.png\")",
+        "scene": "nishio-go/art/intro/matcha.png"
+      },
+      "ok": true
+    },
+    "autoStart": {
+      "intro": false,
+      "demo": true,
+      "roll": true,
+      "howto": false,
+      "walkBtn": false,
+      "modeSw": false,
+      "walker": {
+        "demo": true,
+        "mode": "\"demo\""
+      },
+      "ok": true
+    },
+    "firstGoalNear": {
+      "goal": "名鉄 西尾駅",
+      "straight": 156,
+      "route": 408,
+      "seen": [
+        "名鉄 西尾駅"
+      ],
+      "best": "b",
+      "goals": null,
+      "ok": true
+    },
+    "lazySprites": {
+      "lazy": 249,
+      "made": 1,
+      "size": 48,
+      "madeBefore": false,
+      "w": 48,
+      "gray": 48,
+      "same": true,
+      "madeAfter": true,
+      "ok": true
+    },
+    "playAskQuick": {
+      "quick": false,
+      "slow": true,
+      "third": false,
+      "later": true,
+      "kept": true,
+      "min": 60,
+      "ok": true
+    },
+    "worldBack": {
+      "before": true,
+      "open": {
+        "world": true,
+        "hidden": false,
+        "w": 40,
+        "inView": true
+      },
+      "back": {
+        "world": false,
+        "hidden": true
+      },
+      "ok": true
+    },
+    "tiltDeniedMsg": {
+      "text": "地図を タップして 遊べるよ",
+      "n": 2,
+      "ok": true
+    },
+    "swipeWalk": {
+      "started": true,
+      "info": false,
+      "two": false,
+      "touchAction": "pinch-zoom",
+      "ok": true,
+      "hold": {
+        "held": true,
+        "ms": 615,
+        "still": "null",
+        "g1": "[1807,1900]",
+        "g2": "[1807,1900]",
+        "g4": "[1807,1900]",
+        "g3": "[1804,1897]",
+        "want": "[1804,1897]",
+        "far": true,
+        "info": false,
+        "cfg": {
+          "ms": 300,
+          "px": 5,
+          "min": 12
+        }
+      },
+      "holdOk": false,
+      "pace": {
+        "steps": 7,
+        "mid": 176,
+        "min": 176,
+        "info": false,
+        "cfg": {
+          "ms": 180,
+          "min": 60
+        }
+      },
+      "paceOk": true
+    },
+    "swipeHold": {
+      "held": true,
+      "ms": 615,
+      "still": "null",
+      "g1": "[1807,1900]",
+      "g2": "[1807,1900]",
+      "g4": "[1807,1900]",
+      "g3": "[1804,1897]",
+      "want": "[1804,1897]",
+      "far": true,
+      "info": false,
+      "cfg": {
+        "ms": 300,
+        "px": 5,
+        "min": 12
+      },
+      "ok": false
+    },
+    "tapStepPace": {
+      "steps": 7,
+      "mid": 176,
+      "min": 176,
+      "info": false,
+      "cfg": {
+        "ms": 180,
+        "min": 60
+      },
+      "ok": true
+    },
+    "arriveNoSpin": {
+      "goal": "名鉄 西尾駅",
+      "shown": 0,
+      "h0": 74,
+      "hMax": 74,
+      "checked": true,
+      "other": "名鉄高架下公園",
+      "otherBtn": true,
+      "pop": {
+        "seen": true,
+        "scale": 1.46,
+        "gold": true,
+        "gained": 200,
+        "left": false,
+        "shown": true,
+        "text": "238"
+      },
+      "ok": true
+    },
+    "ptsPop": {
+      "seen": true,
+      "scale": 1.46,
+      "gold": true,
+      "gained": 200,
+      "left": false,
+      "shown": true,
+      "text": "238",
+      "ok": true
+    },
+    "startNoJump": {
+      "frames": 119,
+      "jump": 0,
+      "startCell": 1,
+      "ok": true
+    },
+    "firstGoalNoFlip": {
+      "ids": [
+        "f-nishio-station"
+      ],
+      "ok": true
+    },
+    "a2hsFirstWalk": {
+      "elig2": false,
+      "shown2": false,
+      "offer2": false,
+      "elig3": true,
+      "shownEarly": false,
+      "ok": true
+    },
+    "a2hsShown": {
+      "inWorld": false,
+      "on": true,
+      "role": "status",
+      "ids": [
+        "a2hsText",
+        "a2hsNo"
+      ],
+      "text": "📲 □↑ →「ホーム画面に追加」で すぐ 開けるよ",
+      "h": 33,
+      "inView": true,
+      "covered": false,
+      "overRice": false,
+      "overSheet": false,
+      "how": "ios",
+      "t": true,
+      "dialogs": 0,
+      "ok": true
+    },
+    "a2hsAutoHide": {
+      "off": false,
+      "x": null,
+      "elig": false,
+      "again": false,
+      "ok": false
+    },
+    "a2hsClose": {
+      "on2": true,
+      "off2": true,
+      "x": true,
+      "elig": false,
+      "eligAfter": true,
+      "days": 30,
+      "every": 7,
+      "ok": true
+    },
+    "a2hsStandalone": {
+      "st": false,
+      "offer": false,
+      "done": false,
+      "back": true,
+      "hidden": true,
+      "ok": true
+    },
+    "a2hsPrompt": {
+      "how0": "",
+      "before": false,
+      "how1": "prompt",
+      "on": true,
+      "ids": [
+        "a2hsAdd",
+        "a2hsNo"
+      ],
+      "label": "📲 ホーム画面に 追加",
+      "tag": "BUTTON",
+      "covered": false,
+      "off": true,
+      "prompted": 1,
+      "how": "",
+      "ok": true
+    },
+    "a2hsInApp": {
+      "elig": true,
+      "how": "",
+      "shown": false,
+      "t": null,
+      "uas": [
+        true,
+        true,
+        true,
+        false,
+        false
+      ],
+      "ok": true
+    },
+    "tapDemoLabel": {
+      "rows": [
+        {
+          "i": 0,
+          "dir": [
+            96,
+            47
+          ],
+          "first": true,
+          "sd": "",
+          "dn": false,
+          "lab": 0,
+          "hand": 0,
+          "out": 0,
+          "asks": 0
+        },
+        {
+          "i": 1,
+          "dir": [
+            96,
+            -48
+          ],
+          "first": true,
+          "sd": "ll",
+          "dn": true,
+          "lab": 0,
+          "hand": 0,
+          "out": 0,
+          "asks": 0
+        },
+        {
+          "i": 2,
+          "dir": [
+            0,
+            -144
+          ],
+          "first": true,
+          "sd": "ll",
+          "dn": true,
+          "lab": 0,
+          "hand": 0,
+          "out": 0,
+          "asks": 0
+        },
+        {
+          "i": 3,
+          "dir": [
+            -96,
+            48
+          ],
+          "first": true,
+          "sd": "",
+          "dn": false,
+          "lab": 0,
+          "hand": 0,
+          "out": 0,
+          "asks": 0
+        },
+        {
+          "i": 4,
+          "dir": [
+            -48,
+            -96
+          ],
+          "first": true,
+          "sd": "lr",
+          "dn": true,
+          "lab": 0,
+          "hand": 0,
+          "out": 0,
+          "asks": 0
+        },
+        {
+          "i": 5,
+          "dir": [
+            64,
+            -32
+          ],
+          "first": true,
+          "sd": "",
+          "dn": false,
+          "lab": 0,
+          "hand": 0,
+          "out": 0,
+          "asks": 0
+        },
+        {
+          "i": 6,
+          "dir": [
+            32,
+            -127
+          ],
+          "first": true,
+          "sd": "ll",
+          "dn": true,
+          "lab": 0,
+          "hand": 0,
+          "out": 0,
+          "asks": 0
+        },
+        {
+          "i": 7,
+          "dir": [
+            -96,
+            -31
+          ],
+          "first": true,
+          "sd": "lr",
+          "dn": true,
+          "lab": 0,
+          "hand": 0,
+          "out": 0,
+          "asks": 0
+        }
+      ],
+      "n": 8,
+      "up": 6,
+      "ok": true
+    },
+    "tapDemoFollow": {
+      "goals": 2,
+      "taps": 8,
+      "taps1": 6,
+      "sec1": 38.7,
+      "wins": [],
+      "ok": true
+    },
+    "tapDemoQuick": {
+      "n": 7,
+      "med": 2264,
+      "min": 2095,
+      "ok": false
+    },
+    "tapDemoHand": {
+      "stops": 8,
+      "bad": [],
+      "ok": true
+    },
+    "worldBackDemo": {
+      "arrow": true,
+      "opened": true,
+      "shown": true,
+      "ms": 2454,
+      "tip": true,
+      "hand": true,
+      "plain": true,
+      "an": "tapDemoPressS",
+      "at": [
+        364,
+        90
+      ],
+      "back": true,
+      "maze": true,
+      "ok": true
+    },
+    "tiltOkQuiet": {
+      "shown": true,
+      "okOn": true,
+      "at": [
+        43.984375,
+        82
+      ],
+      "text": "📱OK",
+      "hit": true,
+      "toast": "🎁 すぐ近くに たからばこ！",
+      "notes": 0,
+      "asks": 1,
+      "granted": true,
+      "ok": true
+    },
+    "grainToast": {
+      "text": "🌾 金の米つぶ：行き止まりに おちているよ（毎日 かわる）",
+      "show": true,
+      "lines": 2,
+      "wide": 2,
+      "w": 375,
+      "ok": true
+    },
+    "tapDemoInMap": {
+      "rows": [
+        {
+          "i": 0,
+          "on": true,
+          "q": [
+            514,
+            182
+          ],
+          "dn": true,
+          "sd": "lr",
+          "hand": 0,
+          "lab": 0,
+          "walks": true,
+          "bad": 0,
+          "mapH": 166
+        },
+        {
+          "i": 1,
+          "on": true,
+          "q": [
+            434,
+            135
+          ],
+          "dn": true,
+          "sd": "lr",
+          "hand": 0,
+          "lab": 0,
+          "walks": true,
+          "bad": 0,
+          "mapH": 166
+        },
+        {
+          "i": 2,
+          "on": true,
+          "q": [
+            434,
+            87
+          ],
+          "dn": false,
+          "sd": "lr",
+          "hand": 0,
+          "lab": 0,
+          "walks": true,
+          "bad": 0,
+          "mapH": 166
+        },
+        {
+          "i": 3,
+          "on": true,
+          "q": [
+            322,
+            55
+          ],
+          "dn": false,
+          "sd": "ll",
+          "hand": 0,
+          "lab": 0,
+          "walks": true,
+          "bad": 0,
+          "mapH": 166
+        },
+        {
+          "i": 4,
+          "on": true,
+          "q": [
+            226,
+            71
+          ],
+          "dn": false,
+          "sd": "",
+          "hand": 0,
+          "lab": 0,
+          "walks": true,
+          "bad": 0,
+          "mapH": 166
+        },
+        {
+          "i": 5,
+          "on": true,
+          "q": [
+            322,
+            199
+          ],
+          "dn": true,
+          "sd": "ll",
+          "hand": 0,
+          "lab": 0,
+          "walks": true,
+          "bad": 0,
+          "mapH": 166
+        },
+        {
+          "i": 6,
+          "on": true,
+          "q": [
+            370,
+            55
+          ],
+          "dn": false,
+          "sd": "lr",
+          "hand": 0,
+          "lab": 0,
+          "walks": true,
+          "bad": 0,
+          "mapH": 166
+        },
+        {
+          "i": 7,
+          "on": true,
+          "q": [
+            418,
+            55
+          ],
+          "dn": false,
+          "sd": "lr",
+          "hand": 0,
+          "lab": 0,
+          "walks": true,
+          "bad": 0,
+          "mapH": 166
+        }
+      ],
+      "shown": 8,
+      "ok": true
+    },
+    "tapDemoNoBlind": {
+      "before": true,
+      "covered": {
+        "on": false,
+        "phone": true,
+        "spot": null,
+        "wait": [],
+        "hit": false
+      },
+      "back": true,
+      "ok": true
+    },
+    "missTapDemo": {
+      "q": {
+        "x": 195,
+        "y": 374
+      },
+      "on": 930,
+      "walked": true,
+      "miss": true,
+      "walking": false,
+      "win": false,
+      "ok": true
+    },
+    "missTapPerm": {
+      "q": {
+        "x": 195,
+        "y": 374
+      },
+      "asks": 1,
+      "miss": 0,
+      "walking": false,
+      "ok": true
+    },
+    "slowCoverCalm": {
+      "still": true,
+      "glow": true,
+      "normal": true,
+      "ops": [
+        0.17,
+        0.406,
+        0.538,
+        0.527
+      ],
+      "rd0": {
+        "x": 189.5,
+        "y": 435,
+        "anim": "none",
+        "tf": "none",
+        "after": "\"\"",
+        "aAnim": "bootGlow",
+        "aDur": 1.6,
+        "aOp": 0.17,
+        "aTf": "none"
+      },
+      "nm0": {
+        "x": 211.3,
+        "y": 433.8,
+        "anim": "bootRoll",
+        "tf": "matrix(-0.962652, -0.270742, 0.270742, -0.962652, 23.485, 0)",
+        "after": "none",
+        "aAnim": "none",
+        "aDur": 0,
+        "aOp": 1,
+        "aTf": "none"
+      },
+      "ok": true
+    },
+    "firstDemoFast": {
+      "rice": 250,
+      "route": 520,
+      "demo": 520,
+      "first": false,
+      "fresh": true,
+      "bad": 0,
+      "vmax": 0,
+      "ok": true
+    },
+    "demoTouchWait": {
+      "shown": true,
+      "hidden": true,
+      "back": 2120,
+      "fresh": false,
+      "ok": true
+    },
+    "rollNoDemo": {
+      "rice": 275,
+      "route": 515,
+      "demo": 515,
+      "first": false,
+      "fresh": true,
+      "bad": 0,
+      "vmax": 0,
+      "ok": false
+    },
+    "firstTapBig": {
+      "m": {
+        "first": true,
+        "big": true,
+        "handPx": 56,
+        "labPx": 24,
+        "labBox": [
+          219,
+          499,
+          363,
+          557
+        ],
+        "inMap": true,
+        "onBtn": false,
+        "onRice": false,
+        "at": 0.21
+      },
+      "ok": true
+    },
+    "firstTapFit6": {
+      "rows": [
+        {
+          "vp": "320x568",
+          "first": true,
+          "big": true,
+          "handPx": 56,
+          "labPx": 24,
+          "labBox": [
+            79,
+            307,
+            223,
+            365
+          ],
+          "inMap": true,
+          "onBtn": false,
+          "onRice": false,
+          "at": 0.04
+        },
+        {
+          "vp": "360x640",
+          "first": true,
+          "big": true,
+          "handPx": 56,
+          "labPx": 24,
+          "labBox": [
+            204,
+            397,
+            348,
+            455
+          ],
+          "inMap": true,
+          "onBtn": false,
+          "onRice": false,
+          "at": 0.04
+        },
+        {
+          "vp": "390x844",
+          "first": true,
+          "big": true,
+          "handPx": 56,
+          "labPx": 24,
+          "labBox": [
+            219,
+            499,
+            363,
+            557
+          ],
+          "inMap": true,
+          "onBtn": false,
+          "onRice": false,
+          "at": 0.15
+        },
+        {
+          "vp": "568x320",
+          "first": true,
+          "big": false,
+          "handPx": 38,
+          "labPx": 15,
+          "labBox": [
+            414,
+            137,
+            502,
+            168
+          ],
+          "inMap": true,
+          "onBtn": false,
+          "onRice": false,
+          "at": 0.15
+        },
+        {
+          "vp": "844x390",
+          "first": true,
+          "big": true,
+          "handPx": 56,
+          "labPx": 24,
+          "labBox": [
+            599,
+            118,
+            743,
+            176
+          ],
+          "inMap": true,
+          "onBtn": false,
+          "onRice": false,
+          "at": 0.1
+        },
+        {
+          "vp": "820x1180",
+          "first": true,
+          "big": true,
+          "handPx": 56,
+          "labPx": 24,
+          "labBox": [
+            579,
+            739,
+            723,
+            797
+          ],
+          "inMap": true,
+          "onBtn": false,
+          "onRice": false,
+          "at": 0.1
+        }
+      ],
+      "ok": true
+    },
+    "laterDemoSame": {
+      "m": {
+        "first": false,
+        "big": false,
+        "handPx": 38,
+        "labPx": 0,
+        "labBox": null,
+        "inMap": true,
+        "onBtn": false,
+        "onRice": false,
+        "at": 0.22
+      },
+      "ok": true
+    },
+    "lowGoalDemo": {
+      "rows": [
+        {
+          "vp": "568x320",
+          "k": 1,
+          "left": 1,
+          "shown": false,
+          "at": null,
+          "inMap": null,
+          "onRice": null
+        },
+        {
+          "vp": "568x320",
+          "k": 2,
+          "left": 2,
+          "shown": true,
+          "at": 3.73,
+          "inMap": true,
+          "onRice": false
+        },
+        {
+          "vp": "844x390",
+          "k": 1,
+          "left": 1,
+          "shown": true,
+          "at": 3.45,
+          "inMap": true,
+          "onRice": false
+        },
+        {
+          "vp": "844x390",
+          "k": 2,
+          "left": 2,
+          "shown": true,
+          "at": 4.54,
+          "inMap": true,
+          "onRice": false
+        }
+      ],
+      "ok": false
+    },
+    "bigHandTap": {
+      "rows": [
+        {
+          "part": "mid",
+          "o": 20,
+          "big": false,
+          "tip": [
+            470,
+            70
+          ],
+          "world": false,
+          "win": false,
+          "walk": true
+        },
+        {
+          "part": "wrist",
+          "o": 36,
+          "big": false,
+          "tip": [
+            470,
+            70
+          ],
+          "world": false,
+          "win": false,
+          "walk": true
+        }
+      ],
+      "ok": true
+    },
+    "handHelpScope": {
+      "rows": [
+        {
+          "mode": "before",
+          "tip": [
+            195,
+            329
+          ],
+          "big": false,
+          "pick": [
+            188,
+            277
+          ],
+          "win": true,
+          "world": false,
+          "walk": false
+        },
+        {
+          "mode": "asked",
+          "tip": [
+            195,
+            329
+          ],
+          "big": false,
+          "pick": [
+            188,
+            277
+          ],
+          "win": true,
+          "world": false,
+          "walk": false
+        }
+      ],
+      "ok": true
+    },
+    "bootLoaded": {
+      "slowAt": null,
+      "slowText": "",
+      "retryAt": null,
+      "startAt": 2.9,
+      "slowAfterStart": false,
+      "reload": null,
+      "ok": true
+    },
+    "bootFailed": {
+      "slowAt": null,
+      "slowText": "",
+      "retryAt": 0.8,
+      "startAt": null,
+      "slowAfterStart": false,
+      "reload": true,
+      "ok": true
+    },
+    "bootSlow": {
+      "slow8": {
+        "slowAt": null,
+        "slowText": "",
+        "retryAt": null,
+        "startAt": 11.8,
+        "slowAfterStart": false,
+        "reload": null
+      },
+      "slow20": {
+        "slowAt": 12.3,
+        "slowText": "読みこみに 時間が かかっていますこのまま 待つか、タップで やりなおし",
+        "retryAt": null,
+        "startAt": 23.6,
+        "slowAfterStart": false,
+        "reload": null
+      },
+      "ok": true
+    },
+    "bootNever": {
+      "slowAt": 12.3,
+      "slowText": "読みこみに 時間が かかっていますこのまま 待つか、タップで やりなおし",
+      "retryAt": null,
+      "startAt": null,
+      "slowAfterStart": false,
+      "reload": true,
+      "ok": true
+    },
+    "goalTapNoWorld": {
+      "log": [
+        {
+          "g": [
+            291,
+            136
+          ],
+          "len": 18,
+          "inArrow": false
+        },
+        {
+          "g": [
+            211,
+            105
+          ],
+          "len": 15,
+          "inArrow": true,
+          "world": false
+        },
+        {
+          "g": [
+            147,
+            105
+          ],
+          "len": 14,
+          "inArrow": true,
+          "world": false
+        }
+      ],
+      "inArrow": 2,
+      "ok": true
+    },
+    "arrowPinWorld": {
+      "pin": {
+        "x": 490,
+        "y": 126
+      },
+      "world": true,
+      "ok": true
+    },
+    "infoSecondTap": {
+      "moved": true,
+      "g": {
+        "x": 195,
+        "y": 270,
+        "len": 5,
+        "goal": "station-student"
+      },
+      "win": {
+        "open": false,
+        "atTap": "pxCanvas"
+      },
+      "second": {
+        "form": false,
+        "clicks": [
+          "pxCanvas",
+          "pxCanvas"
+        ]
+      },
+      "ok": false
+    },
+    "infoRotate": {
+      "runs": [
+        {
+          "from": "390x844",
+          "steps": [
+            {
+              "to": "390x560",
+              "open": false,
+              "mt": "",
+              "close": [
+                0,
+                0
+              ],
+              "pt": [
+                0,
+                0
+              ],
+              "closeOk": false,
+              "allIn": true
+            },
+            {
+              "to": "844x390",
+              "open": false,
+              "mt": "",
+              "close": [
+                0,
+                0
+              ],
+              "pt": [
+                0,
+                0
+              ],
+              "closeOk": false,
+              "allIn": true
+            }
+          ],
+          "opened": {
+            "open": false,
+            "mt": "",
+            "close": [
+              0,
+              0
+            ],
+            "pt": [
+              0,
+              0
+            ],
+            "closeOk": false,
+            "allIn": true
+          }
+        },
+        {
+          "from": "820x1180",
+          "steps": [
+            {
+              "to": "1180x820",
+              "open": false,
+              "mt": "",
+              "close": [
+                0,
+                0
+              ],
+              "pt": [
+                0,
+                0
+              ],
+              "closeOk": false,
+              "allIn": true
+            }
+          ],
+          "opened": {
+            "open": false,
+            "mt": "",
+            "close": [
+              0,
+              0
+            ],
+            "pt": [
+              0,
+              0
+            ],
+            "closeOk": false,
+            "allIn": true
+          }
+        }
+      ],
+      "ok": false
+    },
+    "chestToastRing": {
+      "worst": 0,
+      "seen": 0.4,
+      "frames": 153,
+      "toast": [
+        96,
+        649,
+        294,
+        688
+      ],
+      "ring": [
+        208,
+        0,
+        382,
+        174
+      ],
+      "ok": true
+    },
+    "lowDemoKept": {
+      "ready": true,
+      "walked": true,
+      "a": {
+        "on": false,
+        "x": null,
+        "y": null,
+        "inMap": false,
+        "free": 135,
+        "status": false,
+        "guide": "ibun-parish"
+      },
+      "b": {
+        "on": true,
+        "x": 283,
+        "y": 127,
+        "inMap": true,
+        "free": 135,
+        "status": false,
+        "guide": "ibun-parish"
+      },
+      "ok": false
+    },
+    "playAskLate": {
+      "npc": "castle-guide",
+      "pending": null,
+      "ask89": true,
+      "ok": true
+    },
+    "arrowRouteWalk": {
+      "stops": 1,
+      "found": true,
+      "world": false,
+      "walked": true,
+      "cell": {
+        "x": 291.39079160639085,
+        "y": 152.40699999990466,
+        "j": 16
+      },
+      "ok": true
+    },
+    "walkHopSmall": {
+      "h": 0.152,
+      "sq": 0.164,
+      "bad": 0,
+      "n": 230,
+      "d": 20,
+      "cfg": {
+        "v": 6,
+        "sq": 0.5
+      },
+      "ok": true
+    },
+    "restFinger": {
+      "tap": false,
+      "swipe": false,
+      "pinch": false,
+      "touchAction": "pinch-zoom",
+      "info": false,
+      "ok": false
+    },
+    "tiltDemoShown": {
+      "on": false,
+      "phone": false,
+      "force": 0.28,
+      "at": [
+        1801.8533182119165,
+        1893.7140975429197
+      ],
+      "moved": 0.862,
+      "ok": false
+    },
+    "tapWalkTilt": {
+      "small": [
+        {
+          "started": true,
+          "done": true,
+          "ms": 416,
+          "at": [
+            1801,
+            1890
+          ],
+          "goal": [
+            1801,
+            1890
+          ],
+          "vmax": 0
+        },
+        {
+          "started": true,
+          "done": true,
+          "ms": 1456,
+          "at": [
+            1804,
+            1884
+          ],
+          "goal": [
+            1804,
+            1884
+          ],
+          "vmax": 0
+        },
+        {
+          "started": true,
+          "done": true,
+          "ms": 1280,
+          "at": [
+            1798,
+            1882
+          ],
+          "goal": [
+            1798,
+            1882
+          ],
+          "vmax": 0
+        }
+      ],
+      "strong": {
+        "force": 0.92,
+        "started": true,
+        "stopped": true,
+        "at": [
+          1800,
+          1883
+        ],
+        "goal": [
+          1804,
+          1884
+        ]
+      },
+      "roll": 0.71,
+      "cfg": {
+        "tapTiltOver": 0.75,
+        "demoMove": 0.05,
+        "demoTapR": 24,
+        "restMs": 300,
+        "restPx": 10,
+        "swipeOnPx": 24,
+        "tiltKeepDeg": 4
+      },
+      "ok": true
+    },
+    "fontNoBlock": {
+      "up": 465,
+      "ms": 9764,
+      "link": {
+        "media": "print",
+        "onload": true,
+        "n": 3
+      },
+      "ok": true
+    },
+    "infoCloseSmall": {
+      "opened": true,
+      "pct": 100,
+      "inside": true,
+      "scroll": true,
+      "x": 160,
+      "y": 337.2890625,
+      "h": 32,
+      "closed": true,
+      "ok": true
+    },
+    "slowCover": {
+      "cover": true,
+      "dot": true,
+      "anim": "bootRoll",
+      "pos": "fixed",
+      "sheets": 3,
+      "inHead": 0,
+      "after": true,
+      "ok": true
+    },
+    "bgmAfterMap": {
+      "early": {
+        "go": true,
+        "up": false
+      },
+      "earlyMp3": 0,
+      "earlyPlayed": 0,
+      "late": true,
+      "ok": true
+    },
+    "houseLazy": {
+      "cut": 66,
+      "type": "number",
+      "ok": true
+    },
+    "smoothRice": {
+      "P": 3,
+      "S": 147,
+      "soft": 225,
+      "solid": 3918,
+      "tones": 101,
+      "diff": 272,
+      "ring": [
+        0,
+        0,
+        0
+      ],
+      "ok": true
+    },
+    "riceBreath": {
+      "n": 14,
+      "rg": 3.3,
+      "hb": 174,
+      "b": [
+        0,
+        0.03
+      ],
+      "ok": true
+    },
+    "riceBfly": {
+      "a": [
+        46,
+        -37
+      ],
+      "rest": true,
+      "b": [
+        0,
+        0
+      ],
+      "st": {
+        "phase": "rest",
+        "drawn": 36934,
+        "calm": false,
+        "smooth": true,
+        "at": [
+          363.804226481996,
+          377.212466481933
+        ],
+        "kind": "tonbo",
+        "season": "tonbo",
+        "mood": "smile"
+      },
+      "more": 18,
+      "gb": {
+        "smooth": false,
+        "at": [
+          364,
+          369
+        ]
+      },
+      "zz": {
+        "n": 36851,
+        "at": [
+          519.4342264819968,
+          337.5788948923447
+        ]
+      },
+      "ok": true
+    },
+    "riceWake": {
+      "w": [
+        0,
+        0.1,
+        0
+      ],
+      "woke": true,
+      "ph": "out",
+      "calm": false,
+      "ok": true
+    },
+    "ricePerf": {
+      "ms": 0,
+      "P": 4,
+      "lowQ": false,
+      "ok": true
+    },
+    "dropSmooth": {
+      "n": 4,
+      "at": [
+        310.054226481996,
+        427.6238018052294
+      ],
+      "ok": true
+    },
+    "toastSnap": {
+      "before": 1,
+      "op": 0,
+      "blocked": false,
+      "reward": false,
+      "ok": true
+    },
+    "smoothShadow": {
+      "n": 4,
+      "near": 4,
+      "first": [
+        389.8,
+        626.6,
+        65.25,
+        14.5
+      ],
+      "ok": true
+    },
+    "godotRec": {
+      "errs": [],
+      "len": 5908,
+      "shade": 0,
+      "ok": false
+    },
+    "rollVert": {
+      "key": "ArrowDown",
+      "room": 6,
+      "moved": true,
+      "style": "ロケット・ハート",
+      "pitch": 2.99,
+      "spin": 0,
+      "up": true,
+      "upS": 4.2,
+      "endPitch": 6.2,
+      "endV": 0,
+      "kind": "tumble",
+      "slope": {
+        "x": 0,
+        "y": 0,
+        "g": 0,
+        "known": false
+      },
+      "at": [
+        1795.78,
+        1907.22
+      ],
+      "cov": "",
+      "ok": true
+    },
+    "cornerAssist": {
+      "ok": true,
+      "cell": [
+        564,
+        612
+      ],
+      "entered": true,
+      "diag": true
+    },
+    "suzume": {
+      "n": 3,
+      "still": true,
+      "all": true,
+      "gone": true,
+      "pts": 0,
+      "lane": {
+        "cx": 1697,
+        "cy": 1836,
+        "tried": 6
+      },
+      "ok": true
+    },
+    "suzumeVisit": {
+      "n": 2,
+      "near": true,
+      "stay": true,
+      "fly": true,
+      "after": 18,
+      "ok": true
+    },
+    "neko": {
+      "asleep": true,
+      "woke": true,
+      "back": true,
+      "toast": false,
+      "pts": 0,
+      "lane": {
+        "cx": 1696,
+        "cy": 1836,
+        "tried": 1
+      },
+      "put": [
+        1694.9,
+        1836.6
+      ],
+      "pre": [
+        1694.9,
+        1836.6,
+        0,
+        0
+      ],
+      "ok": true
+    },
+    "kaeru": {
+      "season": true,
+      "sit": true,
+      "jump": true,
+      "gone": true,
+      "toast": false,
+      "lane": {
+        "cx": 1694,
+        "cy": 1834,
+        "tried": 2
+      },
+      "ok": true
+    },
+    "chaHana": {
+      "on": true,
+      "bloom": 19,
+      "of": 30,
+      "ok": true
+    },
+    "nightLamps": {
+      "night": {
+        "n": 6,
+        "warm": 6,
+        "vis": 6,
+        "lit": 6
+      },
+      "day": {
+        "n": 0,
+        "warm": 0,
+        "vis": 0,
+        "lit": 0
+      },
+      "toast": false,
+      "ok": true
+    },
+    "kabuse": {
+      "apr10": false,
+      "apr20": true,
+      "may10": true,
+      "may25": false,
+      "now": false,
+      "paint": 1024,
+      "ok": true
+    },
+    "morning": {
+      "lv": {
+        "04:30": 0,
+        "05:30": 0.5,
+        "06:00": 1,
+        "07:00": 0.5,
+        "08:30": 0,
+        "10:00": 0
+      },
+      "now": 0,
+      "on": 1,
+      "ok": true
+    },
+    "sentaku": {
+      "day": true,
+      "sunny": true,
+      "rain": false,
+      "snow": false,
+      "night": false,
+      "paint": 300,
+      "n": 1,
+      "ok": true
+    },
+    "donguri": {
+      "season": true,
+      "rolled": true,
+      "stopped": true,
+      "apart": true,
+      "free": true,
+      "gone": true,
+      "pushed": true,
+      "tree": true,
+      "spawn": true,
+      "spawnGap": 0.8,
+      "toast": false,
+      "moved": false,
+      "ok": true
+    },
+    "ambCap": {
+      "max": 2,
+      "two": 2,
+      "blocked": true,
+      "freed": true,
+      "sentaku": 3,
+      "ok": true
+    },
+    "koroArt": {
+      "cut": [],
+      "sig": [
+        300,
+        289,
+        204,
+        238
+      ],
+      "inGame": true,
+      "ok": true
+    },
+    "nakama": {
+      "kind": "nasu",
+      "kinds": "nasu",
+      "d0": 3,
+      "d1": 1.27,
+      "follow": true,
+      "stop": true,
+      "gone": true,
+      "toast": false,
+      "ok": true
+    },
+    "kisetsuMushi": {
+      "kind": "tonbo",
+      "flying": true,
+      "moved": true,
+      "flee": true,
+      "gone": true,
+      "toast": false,
+      "pts": 0,
+      "lane": {
+        "cx": 1696,
+        "cy": 1836,
+        "tried": 8
+      },
+      "ok": true
+    },
+    "yuruMeiro": {
+      "skipped": "no-route",
+      "ok": true
+    },
+    "yuruSoft": {
+      "cell": [
+        566,
+        615
+      ],
+      "out": [
+        {
+          "v": 5,
+          "tries": 0,
+          "busy": 0,
+          "pen": 0.09,
+          "e": 0.33,
+          "dent": 0.21,
+          "show": 224,
+          "boing": 1,
+          "settled": true,
+          "stuck": false,
+          "same": true
+        },
+        {
+          "v": 8,
+          "tries": 0,
+          "busy": 0,
+          "pen": 0.09,
+          "e": 0.33,
+          "dent": 0.21,
+          "show": 224,
+          "boing": 1,
+          "settled": true,
+          "stuck": false,
+          "same": true
+        }
+      ],
+      "ok": true
+    },
+    "springQuiet": {
+      "toast": false,
+      "fx": 5,
+      "said": 0,
+      "ok": true
+    },
+    "yuruSpring": {
+      "cell": [
+        566,
+        615
+      ],
+      "off": {
+        "vin": 2.26,
+        "back": 1.39
+      },
+      "took": {
+        "got": 1,
+        "left": 12
+      },
+      "on": {
+        "vin": 2.26,
+        "back": 2.91
+      },
+      "boosts": 1,
+      "after": {
+        "vin": 2.26,
+        "back": 1.39
+      },
+      "ok": true
+    },
+    "rollCombo": {
+      "ok": true,
+      "key": "ArrowLeft",
+      "room": 7,
+      "max": 5,
+      "after": {
+        "n": 0,
+        "best": 0,
+        "beat": false,
+        "pop": 0
+      },
+      "ended": true
+    },
+    "comboQuiet": {
+      "ten": {
+        "floats": [],
+        "drawn": [],
+        "saved": null,
+        "top": 10,
+        "end": {
+          "n": 0,
+          "best": 0,
+          "beat": false
+        }
+      },
+      "over": {
+        "floats": [],
+        "drawn": [],
+        "saved": null,
+        "top": 8,
+        "end": {
+          "n": 0,
+          "best": 0,
+          "beat": false
+        }
+      },
+      "near": {
+        "floats": [],
+        "drawn": [],
+        "saved": null,
+        "top": 8,
+        "end": {
+          "n": 0,
+          "best": 0,
+          "beat": false
+        }
+      },
+      "ok": true
+    },
+    "speedLines": {
+      "ok": false,
+      "room": 7,
+      "fast": 0,
+      "vmax": 3.99,
+      "far": 1.18
+    },
+    "mazePad": {
+      "ok": true,
+      "pad": [
+        563,
+        602,
+        1
+      ],
+      "boosted": 1,
+      "vmax": 4.4,
+      "against": 0,
+      "chain": 2,
+      "tries": 0
+    },
+    "mazeDots": {
+      "ok": true,
+      "len": 9,
+      "got": 9,
+      "lines": 1,
+      "run": 9,
+      "tip": "🍵 西尾は 抹茶の まちだら",
+      "tipOk": true
+    },
+    "noGoalMap": {
+      "left": [],
+      "ok": true
+    },
+    "noGoalMapApi": {
+      "map": "undefined",
+      "shown": false,
+      "ok": true
+    },
+    "coupon100": {
+      "found": true,
+      "chip": true,
+      "listCond": true,
+      "shown": true,
+      "cond": "お米5kg以上のお買い上げで使えます。お米1袋につき1回まで。売り出し期間中は使えません。LINE のクーポンとは併用できません（ほかのクーポン・割引とも併用できません）。",
+      "state": "有効 あと10分00秒（10/16 01:00 交換）",
+      "validMin": 10,
+      "toastOver": false,
+      "toastAfter": true,
+      "toastSeen": [
+        "🏅 バッジ獲得：🚶 5kmウォーカー",
+        "🎁 テストの 知らせ（クーポン）"
+      ],
+      "blocked": true,
+      "unblocked": true,
+      "ok": true
+    },
+    "koroRec": {
+      "ok": true,
+      "want": {
+        "c": 0,
+        "d": 9
+      },
+      "share": "skip",
+      "text": "🍙 ころころの きろく🍚 きょう ひろった つぶ 9"
+    },
+    "mzGoalShare": {
+      "ok": true,
+      "card": false,
+      "open": true,
+      "png": 315126,
+      "npc": true,
+      "img": true,
+      "tNishio": "にしおさんぽGOで、抹茶とうなぎのまち・西尾の まちが めいろに🌀「テストの 名所」まで ついた",
+      "tHeki": "にしおさんぽGOで、碧南市の まちが めいろに🌀「テストの 名所」まで ついた",
+      "text": "にしおさんぽGOで、抹茶とうなぎのまち・西尾の まちが めいろに🌀「テストの 名所」まで ついた\n🍚 つぶ 9・🍵 びゅん 2・🎵 コンボ ×6\nスマホを 傾けると お米が ころころ。このリンクから始めると +20pt もらえるよ\n#にしおさんぽGO #西尾市 #らいすぴあ\nhttps://go.ricepia.jp/?play=1&utm_source=share&utm_medium="
+    },
+    "mazeSpeed": {
+      "a": "",
+      "b": "",
+      "c": "",
+      "d": "",
+      "w": "",
+      "e": "",
+      "best": null,
+      "kept": "21.6",
+      "ok": true
+    },
+    "arriveMsg": {
+      "maze": "🧭 +5pt",
+      "walk": "🧭 西尾市歴史公園（西尾城跡） +5pt",
+      "none": "",
+      "ev": "🎉 +30pt",
+      "ok": true
+    },
+    "npcBriefMsg": {
+      "maze": "💬🎉🏁 +25pt　🔍",
+      "walk": "💬🎉🏁 +25pt　📜 → 尚古荘 🔍",
+      "plain": "💬🎉🏁 +25pt Lv7",
+      "none": "",
+      "ok": true
+    },
+    "playRating": {
+      "shown": true,
+      "big": 38,
+      "on": 4,
+      "more": true,
+      "share2": false,
+      "share4": true,
+      "closed": true,
+      "again": false,
+      "tabClosed": true,
+      "shareOpen": true,
+      "npcWait": true,
+      "npcKeep": true,
+      "npcShown": true,
+      "day": "\"2026-10-16\"",
+      "sent": 3,
+      "body": {
+        "kind": "play",
+        "r": 4,
+        "text": "テストの ひとこと",
+        "sec": 83,
+        "st": 0,
+        "t": 0,
+        "hp": ""
+      },
+      "tab": {
+        "kind": "play",
+        "r": 5,
+        "text": "",
+        "sec": 40,
+        "st": 0,
+        "t": 0,
+        "hp": ""
+      },
+      "viaShare": {
+        "kind": "play",
+        "r": 5,
+        "text": "",
+        "sec": 61,
+        "st": 0,
+        "t": 0,
+        "hp": ""
+      },
+      "ok": true
+    },
+    "rollKeyLeavesWorld": true,
+    "mapMaze": {
+      "ok": true,
+      "on": true,
+      "floors": 84,
+      "walls": 30,
+      "trail": 13,
+      "grain": {
+        "back": 2
+      },
+      "grains": 12,
+      "clock": {
+        "sec": 72
+      }
+    },
+    "mazeWallFit": {
+      "ok": true,
+      "gap": 1.027,
+      "tube": 0.473,
+      "same": true,
+      "bounced": true,
+      "hitMood": "smile",
+      "tries": 0
+    },
+    "heightJump": {
+      "room": 7,
+      "jumps": 1,
+      "hmax": 0.04,
+      "vmax": 4.2,
+      "far": 5.74,
+      "busy": false,
+      "ok": true
+    },
+    "koroStyles": {
+      "n": 200,
+      "uniq": 200,
+      "daily": "ロケット・ハート",
+      "cells": 200,
+      "need": 40,
+      "have": 0,
+      "ok": true
+    },
+    "koroDist": {
+      "jump": 0,
+      "steps": 4,
+      "ok": true
+    },
+    "meiro": {
+      "spot": "名鉄 西尾駅",
+      "len": 60,
+      "tw": 17,
+      "th": 28,
+      "x": 7.5,
+      "y": 16.5,
+      "grains": 3,
+      "grainsOk": true,
+      "hint": 12,
+      "resume": true,
+      "moved": 1.25,
+      "goal": true,
+      "back": true,
+      "ok": true
+    },
+    "critter": true,
+    "movieAfterReward": {
+      "rw": false,
+      "mv": false,
+      "checked": true,
+      "ok": true
+    },
+    "movieBtn": true,
+    "movieOpen": true,
+    "movieDone": true,
+    "operateFinal": {
+      "pts": 1265,
+      "demo": true,
+      "status": ""
+    },
+    "textMore": true,
+    "textLessAgain": true,
+    "walkMode": true,
+    "walkModePoints": 30,
+    "walkWelcome": true,
+    "walkChests": [
+      "縁心寺",
+      "井桁屋公園",
+      "勝山寺（節分会）",
+      "康全寺",
+      "尚古荘",
+      "浄賢寺",
+      "竜神ひろば",
+      "西尾駅東駅前広場",
+      "矢谷公園",
+      "永吉公園",
+      "名鉄高架下公園"
+    ],
+    "operatePointsKept": 1265,
+    "guideRecord": {
+      "text": "📒 記録しといたよ。つぎの レベル8まで あと135pt。しるしは 0/5。いちばん近いのは 西尾のしるしで、あと1か所めぐると もらえるよ。きょうは まだ 路地の行き止まり あと3か所・水べで じっと見るが のこっとるよ。」\n ",
+      "ok": true
+    },
+    "sealPage": {
+      "near": true,
+      "text": "🔖 一色の注目スポットを あと5か所 めぐったら、一色のしるしを わたすでね（いま 0/5）",
+      "ok": true
+    },
+    "kiraFar": {
+      "told": 2,
+      "said": true,
+      "seen": [],
+      "showing": "🎮 操作して移動にしました（スマホを傾けると お米が 迷路を ころころ進みます。記録は別です）",
+      "ok": true
+    },
+    "alley": {
+      "ok": true,
+      "skipped": "no-alley"
+    },
+    "sealPick": {
+      "shown": true,
+      "inArea": true,
+      "two": true,
+      "queued": [
+        "isshiki"
+      ],
+      "ok": true
+    },
+    "waterWatch": {
+      "at": [
+        2307,
+        2894
+      ],
+      "watch0": 0,
+      "watch": 1,
+      "critters": 1,
+      "ok": true
+    },
+    "critterSure": {
+      "left": {
+        "left": 4,
+        "all": 4
+      },
+      "told": "🌾 田んぼ：まだ会っていない生きもの 4",
+      "first": 3,
+      "next": 100,
+      "early": 0,
+      "capped": null,
+      "underPanel": 0,
+      "afterPanel": 1,
+      "ok": true
+    },
+    "hamon": {
+      "shown": true,
+      "fade": true,
+      "shore": true,
+      "spawn": true,
+      "toast": false,
+      "ok": true
+    },
+    "waitFact": {
+      "f1": "📖 まめちしき：蒲郡：市の木は「クス」、市の花は「ツツジ」。どちらも1972年11月3日、蒲郡市民憲章ができたときにきまりました。",
+      "f2": "📖 まめちしき：西尾：西尾の茶づくりは明治5年（1872年）、紅樹院の住職・足立順道が京都の宇治から茶の種を取り寄せて茶園を開いたのが始まり。紅樹院は「茶祖の寺」と呼ばれてい…",
+      "fact": false,
+      "ready": true,
+      "toasts": [
+        "ようこそ にしおさんぽGOへ！　+30pt　🖼 NEW 石臼でひく抹茶",
+        "📍 いまの場所が わかった！ さんぽを はじめよう"
+      ],
+      "me": true,
+      "reward": false,
+      "ok": true
+    },
+    "meiroLand": {
+      "built": true,
+      "lay": {
+        "grid": true,
+        "scroll": false,
+        "btnsIn": true,
+        "side": true,
+        "boardH": 300
+      },
+      "soft": "ok",
+      "slow": {
+        "v": 1,
+        "boing": 0,
+        "dmax": 0.044,
+        "dmin": -0.013
+      },
+      "fast": {
+        "v": 8,
+        "boing": 2,
+        "dmax": 0.12,
+        "dmin": -0.048
+      },
+      "spring": {
+        "got": true,
+        "vin": 4.69,
+        "back": 6.09,
+        "boosts": 1
+      },
+      "ok": true
+    },
+    "friendVs": {
+      "started": true,
+      "said": [],
+      "stored": null,
+      "url": "?play=1&utm_source=share&utm_medium=social&utm_campaign=mzgoal",
+      "api": "undefined",
+      "friend": "2",
+      "reload": {
+        "vs": null,
+        "url": "?play=1&utm_source=share&utm_medium=social&utm_campaign=mzgoal"
+      },
+      "ok": true
+    },
+    "komeTalk": {
+      "seen": 0,
+      "chest": true,
+      "api": {
+        "said": false,
+        "on": false,
+        "open": false,
+        "text": "",
+        "el": false
+      },
+      "opened": true,
+      "guide": "名鉄 西尾駅",
+      "covered": false,
+      "ok": true
+    },
+    "mzHelp": {
+      "helpA": {
+        "on": true,
+        "dots": 16,
+        "dead": 13,
+        "goals": 0,
+        "told": false,
+        "helpToast": false,
+        "banner": false
+      },
+      "was": true,
+      "off": {
+        "on": false,
+        "dots": 0,
+        "dead": 0,
+        "goals": 0,
+        "told": true,
+        "helpToast": false,
+        "banner": false
+      },
+      "on": {
+        "on": true,
+        "dots": 16,
+        "dead": 13,
+        "goals": 0,
+        "told": true,
+        "helpToast": false,
+        "banner": false
+      },
+      "auto3": {
+        "on": false,
+        "dots": 0,
+        "dead": 0,
+        "goals": 3,
+        "told": true,
+        "helpToast": false,
+        "banner": false
+      },
+      "ok": true
+    },
+    "mzCrow": {
+      "firstN": 0,
+      "n": 1,
+      "moved": true,
+      "hit": 0,
+      "jump": 0.6,
+      "offN": 0,
+      "offOn": false,
+      "many": 2,
+      "helpN": 1,
+      "ok": true
+    },
+    "mzScare": {
+      "auto": true,
+      "got": 1,
+      "left": 7606,
+      "scaredAll": true,
+      "shoo": 1,
+      "hit": 0,
+      "jump": 0.5,
+      "float": true,
+      "said": false,
+      "happy": true,
+      "same": {
+        "shoo": 1,
+        "hit": 0
+      },
+      "mv": {
+        "jitter": 100,
+        "slow": 4,
+        "line": 3,
+        "diag": 3,
+        "reset": 1,
+        "diagBack": 2
+      },
+      "ok": true
+    },
+    "rewardLine": {
+      "line": "toast:テストの 名所　+15pt",
+      "card": false,
+      "covered": false,
+      "ok": true
+    },
+    "mzArrive": {
+      "spot": true,
+      "sb": true,
+      "sbSeen": {
+        "goals": 1,
+        "fx": 30,
+        "text": ""
+      },
+      "held": {
+        "aged": true,
+        "during": true,
+        "got": true
+      },
+      "talk": true,
+      "talkWin": false,
+      "nb": true,
+      "npc": "駅前の学生",
+      "nbSeen": {
+        "goals": 1,
+        "fx": 24,
+        "text": ""
+      },
+      "ok": true
+    },
+    "npcBump": {
+      "npc": "観光ボランティアガイドさん",
+      "curve": true,
+      "first": true,
+      "again": false,
+      "passed": true,
+      "minD": 0.76,
+      "back": false,
+      "fresh": true,
+      "ok": true
+    },
+    "npcArriveBump": {
+      "npc": "観光ボランティアガイドさん",
+      "curve": true,
+      "arrived": true,
+      "moved": true,
+      "other": "",
+      "again": false,
+      "back": false,
+      "minD": 0.77,
+      "reroute": {
+        "arrived": true,
+        "moved": true,
+        "other": "お茶好きのお姉さん",
+        "again": false,
+        "back": true,
+        "minD": 1.22
+      },
+      "skipped": [],
+      "ok": true
+    },
+    "npcBumpInTile": {
+      "npc": "観光ボランティアガイドさん・駅前の学生・らいすぴあの店員さん",
+      "tries": [
+        {
+          "npc": "観光ボランティアガイドさん",
+          "d": 1.04,
+          "hit": false,
+          "sameTile": true
+        },
+        {
+          "npc": "駅前の学生",
+          "d": 1.04,
+          "hit": true,
+          "sameTile": true
+        },
+        {
+          "npc": "らいすぴあの店員さん",
+          "d": 1,
+          "hit": true,
+          "sameTile": true
+        }
+      ],
+      "ok": true
+    },
+    "npcSightBump": {
+      "npc": "観光ボランティアガイドさん",
+      "called": true,
+      "again": false,
+      "left": true,
+      "back": false,
+      "ok": true
+    },
+    "npcTouchNoWin": {
+      "win": 0,
+      "ok": true
+    },
+    "mzGoalGate": {
+      "goal": "らいすぴあの店員さん",
+      "man": 4,
+      "before": 42,
+      "after": 4,
+      "opened": 1,
+      "cells": 2,
+      "ok": true
+    },
+    "rollStartTilt": {
+      "spot": {
+        "x": 1695.5,
+        "y": 1851.5
+      },
+      "style": "ぴたっ",
+      "moved": {
+        "r": 2.73,
+        "l": 0.22,
+        "d": 0.68,
+        "u": 0.08
+      },
+      "ok": true
+    },
+    "mzFarWorld": {
+      "far": "不退院",
+      "m": 3692,
+      "world": true,
+      "goal": [
+        285,
+        465
+      ],
+      "visBottom": 644,
+      "tag": [
+        8,
+        364,
+        623,
+        406
+      ],
+      "w": 640,
+      "inView": true,
+      "tagIn": true,
+      "ok": true
+    },
+    "wrapWords320": {
+      "toast": true,
+      "short": true,
+      "one": false,
+      "longIn": true,
+      "place": true,
+      "ok": true
+    },
+    "pickFit320": {
+      "row": [
+        31,
+        289
+      ],
+      "sw": 258,
+      "cw": 258,
+      "btns": [
+        [
+          31,
+          112
+        ],
+        [
+          120,
+          200
+        ],
+        [
+          208,
+          289
+        ]
+      ],
+      "inside": true,
+      "ok": true
+    },
+    "landscape568": {
+      "H": 320,
+      "cards": [
+        [
+          135,
+          232
+        ],
+        [
+          135,
+          232
+        ],
+        [
+          135,
+          232
+        ]
+      ],
+      "dq": [
+        62,
+        252
+      ],
+      "sheetTop": 320,
+      "pickOk": true,
+      "reward": [
+        48,
+        272
+      ],
+      "rewardOk": true,
+      "ok": true
+    },
+    "jumpCard320": {
+      "cards": [
+        {
+          "w": 288,
+          "right": 304,
+          "btnRight": 291
+        },
+        {
+          "w": 288,
+          "right": 304,
+          "btnRight": 291
+        },
+        {
+          "w": 288,
+          "right": 304,
+          "btnRight": 291
+        }
+      ],
+      "titleOne": true,
+      "ok": true
+    },
+    "codeCardHead": {
+      "bBottom": 718,
+      "smTop": 720,
+      "smLeft": 29,
+      "bLeft": 29,
+      "ok": true
+    },
+    "badgeGrid320": {
+      "n": 43,
+      "cols": [
+        91,
+        91,
+        91
+      ],
+      "spread": 0,
+      "sw": 288,
+      "cw": 288,
+      "out": 0,
+      "ok": true
+    },
+    "spinCompact": {
+      "px": true,
+      "h0": 26,
+      "h1": 66,
+      "spinH": 40,
+      "spinH2": 40,
+      "over": false,
+      "shortName": true,
+      "ok": true
+    },
+    "shareToast": {
+      "over": false,
+      "after": true,
+      "inMsg": "🔗 シェアの文とリンクをコピーしました",
+      "ok": true
+    },
+    "eventToast": {
+      "over": false,
+      "after": true,
+      "ok": true
+    },
+    "playMore320": {
+      "shown": true,
+      "need": 168,
+      "room": 184,
+      "out": false,
+      "share": true,
+      "ok": true
+    },
+    "nextGoalToast": {
+      "maze": true,
+      "seen": false,
+      "block": false,
+      "now": true,
+      "paused": true,
+      "api": true,
+      "ok": true
+    },
+    "mzEdgeToast": {
+      "arrow": true,
+      "shown": true,
+      "hit": false,
+      "low": true,
+      "A": [
+        135,
+        94,
+        202,
+        192
+      ],
+      "t": [
+        262,
+        360
+      ],
+      "ok": true
+    },
+    "mzEdgeToastWide": {
+      "740x360": {
+        "arrow": true,
+        "shown": true,
+        "hit": false,
+        "mode": "wside",
+        "inside": true,
+        "A": [
+          402,
+          54,
+          469,
+          152
+        ],
+        "q": [
+          215,
+          104,
+          394,
+          144
+        ]
+      },
+      "568x320": {
+        "arrow": true,
+        "shown": true,
+        "hit": false,
+        "mode": "wside",
+        "inside": true,
+        "A": [
+          316,
+          39,
+          383,
+          137
+        ],
+        "q": [
+          129,
+          104,
+          308,
+          144
+        ]
+      },
+      "rotate": {
+        "before": {
+          "mode": "wside",
+          "dl": null
+        },
+        "mode": "wlow",
+        "shown": true,
+        "inside": true,
+        "q": [
+          90,
+          270
+        ]
+      },
+      "ok": true
+    },
+    "worldToast": {
+      "far": "米津駅",
+      "world": true,
+      "tagIn": true,
+      "would": false,
+      "wlow": false,
+      "hit": false,
+      "drag": {
+        "x": 194.25,
+        "y": 86.5,
+        "dy": 67
+      },
+      "would2": true,
+      "dodge2": "wlow",
+      "tagIn2": true,
+      "wlow2": true,
+      "hit2": false,
+      "shown2": true,
+      "ok": true
+    },
+    "mzSameCellGoal": {
+      "skip": "no pair",
+      "ok": true
+    },
+    "mzKeepGoal": {
+      "npc": "観光ボランティアガイドさん",
+      "goal": "お茶好きのお姉さん",
+      "near": true,
+      "keep": true,
+      "set": true,
+      "ok": true
+    },
+    "mzFarGuide": {
+      "far": "本證寺のお坊さん",
+      "d": 5028,
+      "refer": false,
+      "d1": 707,
+      "kept": false,
+      "d2": 707,
+      "mapRefer": true,
+      "mapKept": true,
+      "ok": true
+    },
+    "mzArrowTop": {
+      "top": 85,
+      "clock": 85,
+      "hits": [
+        0,
+        0
+      ],
+      "ok": true
+    },
+    "toastHud": {
+      "toast": [
+        62,
+        104,
+        328,
+        183
+      ],
+      "shown": true,
+      "top": true,
+      "hit": [],
+      "ok": true
+    },
+    "toastTalk": {
+      "first": {
+        "shown": true,
+        "hit": false,
+        "t": [
+          408,
+          486
+        ],
+        "d": [
+          68,
+          326
+        ]
+      },
+      "second": {
+        "shown": true,
+        "hit": false,
+        "t": [
+          408,
+          486
+        ],
+        "d": [
+          68,
+          326
+        ]
+      },
+      "shortPage": {
+        "shown": true,
+        "hit": false,
+        "t": [
+          309,
+          387
+        ],
+        "d": [
+          68,
+          166
+        ]
+      },
+      "page": {
+        "shown": true,
+        "hit": false,
+        "t": [
+          408,
+          486
+        ],
+        "d": [
+          68,
+          326
+        ]
+      },
+      "update": {
+        "shown": true,
+        "hit": false,
+        "t": [
+          408,
+          486
+        ],
+        "d": [
+          68,
+          326
+        ],
+        "before": {
+          "shown": true,
+          "hit": false,
+          "t": [
+            408,
+            486
+          ],
+          "d": [
+            68,
+            326
+          ]
+        },
+        "wasLow": true
+      },
+      "ok": true
+    },
+    "mzBannerFloat": {
+      "during": false,
+      "held": 22,
+      "after": true,
+      "after2": true,
+      "after3": true,
+      "both": false,
+      "gone": true,
+      "ok": true
+    },
+    "goalConfetti": {
+      "n": 24,
+      "rice": 12,
+      "leaf": 8,
+      "gold": 4,
+      "ok": true
+    },
+    "mzGoalEdge": {
+      "kept": 12,
+      "labs": 0,
+      "drawn": 0,
+      "ok": true
+    },
+    "mzHintToast": {
+      "got": [],
+      "ok": true
+    },
+    "howtoFirst": {
+      "noAutoHowto": true,
+      "sub": "スマホを傾けて、お米を 名所へ。家で遊べる",
+      "shown": true,
+      "toastOver": false,
+      "toastAfterOk": false,
+      "frozen": true,
+      "closed": true,
+      "rolls": true,
+      "again": false,
+      "reopen": true,
+      "heldBack": true,
+      "afterOk": true,
+      "ok": true
+    },
+    "reactNoCount": {
+      "t": "みんなの声：😍 よかった 📷 映える 🍵 ほっこり",
+      "ok": true
+    },
+    "rivalNear": {
+      "a": {
+        "at": null,
+        "n": 2
+      },
+      "b": {
+        "at": "test-far",
+        "n": 3
+      },
+      "ok": true
+    },
+    "townBandGone": {
+      "frames": 20,
+      "drawn": 0,
+      "boxed": 0,
+      "mid": "テストの 町",
+      "gone": true,
+      "t0": "錦城町",
+      "town": "米津町",
+      "ok": true
+    },
+    "floatArrow": {
+      "tried": 1,
+      "goal": "若宮公園",
+      "frames": 28,
+      "hits": 0,
+      "dodged": 28,
+      "emoji": true,
+      "split": 2,
+      "swapped": 0,
+      "g2": "井桁屋公園",
+      "bannerFrames": 0,
+      "during": 0,
+      "after": true,
+      "ok": true
+    },
+    "floatToast": {
+      "frames": 0,
+      "under": 0,
+      "drawn": 30,
+      "after": 30,
+      "ok": true
+    },
+    "cityPage": {
+      "count": 74000,
+      "nums": {
+        "spots": "82",
+        "npcs": "29",
+        "events": "43",
+        "dots": "74,000",
+        "near": "6"
+      },
+      "imgs": [
+        [
+          "logo.svg",
+          544
+        ],
+        [
+          "city-qr.svg",
+          150
+        ],
+        [
+          "shots/city-meiro.webp",
+          540
+        ],
+        [
+          "shots/city-talk.webp",
+          540
+        ],
+        [
+          "shots/city-goal.webp",
+          540
+        ],
+        [
+          "shots/city-world.webp",
+          540
+        ]
+      ],
+      "notOfficial": true,
+      "demo": "https://go.ricepia.jp/nishio-go.html?ed=city&utm_source=city_proposal&utm_medium=page",
+      "wide": true,
+      "ok": true
+    },
+    "mileCollapse": {
+      "pre": "👣 歩いた道 ",
+      "msg": "👣 歩いた道 ",
+      "ok": true
+    },
+    "noRivalry": {
+      "bad": [],
+      "ok": true
+    },
+    "shortText": {
+      "long": [],
+      "ok": true
+    },
+    "scareToast": {
+      "t": "🐦 かかしで 青く なった カラスに さわると おいはらえる（+3pt）",
+      "ok": true
+    },
+    "powerWords": {
+      "fl": [
+        "かかし だ！",
+        "ばね だ！"
+      ],
+      "tags": [],
+      "ok": true
+    },
+    "mzDentBack": {
+      "held": {
+        "dent": 0.016,
+        "dv": 0
+      },
+      "moved": 0,
+      "off": {
+        "dent": 0,
+        "dv": 0
+      },
+      "ok": true
+    },
+    "mzGateSearch": {
+      "both": {
+        "opened": true,
+        "gates": 3
+      },
+      "only3": {
+        "opened": true,
+        "gates": 3
+      },
+      "ok": true
+    },
+    "entryPrint": {
+      "shots": 2,
+      "bad": [],
+      "missing": [],
+      "cards": 10,
+      "uses": 10,
+      "same": true,
+      "ok": true
+    }
+  },
+  "walk": [
+    {
+      "id": "chest",
+      "name": "たからばこ",
+      "straightM": 72,
+      "steps": 17,
+      "first": {
+        "n": 0,
+        "info": false,
+        "id": 51437,
+        "dots": 1
+      },
+      "popup": {
+        "card": false,
+        "covered": false,
+        "notes": [
+          "float:🎁 +30",
+          "float:📖 +1",
+          "float:🎒 1km"
+        ],
+        "facts": 1,
+        "logged": true
+      },
+      "reached": true
+    },
+    {
+      "id": "f-nishio-cityhall",
+      "name": "西尾市役所",
+      "straightM": 398,
+      "steps": 55,
+      "reached": true,
+      "after": {
+        "pts": 429,
+        "demo": true,
+        "status": " たんけん 78/100"
+      }
+    },
+    {
+      "id": "f-nishio-station",
+      "name": "名鉄 西尾駅",
+      "straightM": 430,
+      "steps": 67,
+      "reached": true,
+      "after": {
+        "pts": 694,
+        "demo": true,
+        "status": ""
+      }
+    },
+    {
+      "id": "f-ricepia",
+      "name": "らいすぴあ秀幸（永吉）",
+      "straightM": 857,
+      "steps": 140,
+      "reached": true,
+      "after": {
+        "pts": 1050,
+        "demo": true,
+        "status": ""
+      }
+    }
+  ],
+  "errors": [],
+  "failures": [
+    "Godot の 記録係で 歩く地図を 描くと とちゅうで 止まる（?godot=1。記録係に ない canvas の 命令）（{\"errs\":[],\"len\":5908,\"shade\":0,\"ok\":false}）",
+    "なぞった 先で 指を おいた まま 待っても、指を はなすまで 歩きださない／歩きだした あと、指を 少し ずらした だけで 行き先が かわる／先へ 進めて 止めた 指に ついて いかない（行きすぎる）／動かさない 長押しで 指を おいた まま 歩く／窓が 開く（{\"held\":true,\"ms\":615,\"still\":\"null\",\"g1\":\"[1807,1900]\",\"g2\":\"[1807,1900]\",\"g4\":\"[1807,1900]\",\"g3\":\"[1804,1897]\",\"want\":\"[1804,1897]\",\"far\":true,\"info\":false,\"cfg\":{\"ms\":300,\"px\":5,\"min\":12},\"ok\":false}）",
+    "指が 1本 のって いると（下の タブ）、地図の タップ・なぞりが 効かない／2本指で つまむ 動きで 歩く／地図の touch-action が もどらない（{\"tap\":false,\"swipe\":false,\"pinch\":false,\"touchAction\":\"pinch-zoom\",\"info\":false,\"ok\":false}）",
+    "スマホが 1.5度 傾いて いる だけで（お米は 止まって いる）、手本（👆・📱）が 出ない（{\"on\":false,\"phone\":false,\"force\":0.28,\"at\":[1801.8533182119165,1893.7140975429197],\"moved\":0.862,\"ok\":false}）",
+    "ホーム画面に追加の 札が ひとりでに 消えない／7日の うちに また 出る（{\"off\":false,\"x\":null,\"elig\":false,\"again\":false,\"ok\":false}）",
+    "タップで 歩いて 着いた あと、次の 手本が 出るまでが 1.7秒 以上（{\"n\":7,\"med\":2264,\"min\":2095,\"ok\":false}）",
+    "横向き 568×320 で もどって きた 人が 1回 歩くと、止まって いても「タップ！」の 指が 出ない・地図の 外（下の 欄の 裏）に 出る（{\"ready\":true,\"walked\":true,\"a\":{\"on\":false,\"x\":null,\"y\":null,\"inMap\":false,\"free\":135,\"status\":false,\"guide\":\"ibun-parish\"},\"b\":{\"on\":true,\"x\":283,\"y\":127,\"inMap\":true,\"free\":135,\"status\":false,\"guide\":\"ibun-parish\"},\"ok\":false}）",
+    "低い 横向き（568×320・844×390）で ゴールの 1〜2マス 手前に 止まると、手本の 指が 出ない（N1b）（{\"rows\":[{\"vp\":\"568x320\",\"k\":1,\"left\":1,\"shown\":false,\"at\":null,\"inMap\":null,\"onRice\":null},{\"vp\":\"568x320\",\"k\":2,\"left\":2,\"shown\":true,\"at\":3.73,\"inMap\":true,\"onRice\":false},{\"vp\":\"844x390\",\"k\":1,\"left\":1,\"shown\":true,\"at\":3.45,\"inMap\":true,\"onRice\":false},{\"vp\":\"844x390\",\"k\":2,\"left\":2,\"shown\":true,\"at\":4.54,\"inMap\":true,\"onRice\":false}],\"ok\":false}）",
+    "開いて すぐ 傾けて（8度）も 転がらない（速さ 1マス/秒 に とどかない）／転がって いる 間に 手本が 出る／転がった あとも「はじめての 手本」の まま（サイクル210）（{\"rice\":275,\"route\":515,\"demo\":515,\"first\":false,\"fresh\":true,\"bad\":0,\"vmax\":0,\"ok\":false}）",
+    "名所の 窓を 開いた タップと 同じ 所を もう 1回 タップすると、窓の ボタン（教える など）に 当たる／窓が 開かない（{\"moved\":true,\"g\":{\"x\":195,\"y\":270,\"len\":5,\"goal\":\"station-student\"},\"win\":{\"open\":false,\"atTap\":\"pxCanvas\"},\"second\":{\"form\":false,\"clicks\":[\"pxCanvas\",\"pxCanvas\"]},\"ok\":false}）",
+    "名所の 窓を 開いた まま 画面の 高さ・向きを かえると、「▶ とじる」が 押せない・ボタンが 画面の 外に 出る・タップで 閉じられない（390×844 → 390×560 → 844×390・820×1180 → 1180×820）（{\"runs\":[{\"from\":\"390x844\",\"steps\":[{\"to\":\"390x560\",\"open\":false,\"mt\":\"\",\"close\":[0,0],\"pt\":[0,0],\"closeOk\":false,\"allIn\":true},{\"to\":\"844x390\",\"open\":false,\"mt\":\"\",\"close\":[0,0],\"pt\":[0,0],\"closeOk\":false,\"allIn\":true}],\"opened\":{\"open\":false,\"mt\":\"\",\"close\":[0,0],\"pt\":[0,0],\"closeOk\":false,\"allIn\":true}},{\"from\":\"820x1180\",\"steps\":[{\"to\":\"1180x820\",\"open\":false,\"mt\":\"\",\"close\":[0,0],\"pt\":[0,0],\"closeOk\":false,\"allIn\":true}],\"opened\":{\"open\":false,\"mt\":\"\",\"close\":[0,0],\"pt\":[0,0],\"closeOk\":false,\"allIn\":true}}],\"ok\":false}）",
+    "スピード線：速く 転がすと 線が 出る（出さない きまり）／速く 転がらない（{\"ok\":false,\"room\":7,\"fast\":0,\"vmax\":3.99,\"far\":1.18}）"
+  ],
+  "ok": false
+}

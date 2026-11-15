@@ -1,0 +1,25 @@
+{
+  "startedAtUTC": "2026-11-15T19:24:49.859721+00:00",
+  "command": [
+    "python",
+    "tests/test_nishio_guide_metadata_name.py",
+    "-v"
+  ],
+  "cwd": "/workspace/ricepia-firstminute-round145",
+  "sourceBefore": {
+    "nishio-go/game.js": "1ac1eee951f7a8889a622121ba4e1e17bbbf0ee695dcdebbc86ade430c9ca610",
+    "nishio-go/min/game.js": "45f4ba7b4aa8961222f5c57ac26428aff3aa8e5e9135bfd7c93989c0b5d7dc64",
+    "tests/test_nishio_guide_metadata_name.py": "f64d4e666234b6d1e2b0469f959a673505519be424497778a25eda94dec8cda1",
+    "tests/test_maze_loop4_205.py": "91be37e1b64b8b1233b7e6375cd1bd9ffb65add827eb8e583e793cdeed38911b"
+  },
+  "kind": "VM helper plus original metadata; not natural browser play",
+  "actualExit": 1,
+  "elapsedSeconds": 0.3478457380042528,
+  "completedAtUTC": "2026-11-15T19:24:50.210036+00:00",
+  "sourceAfter": {
+    "nishio-go/game.js": "1ac1eee951f7a8889a622121ba4e1e17bbbf0ee695dcdebbc86ade430c9ca610",
+    "nishio-go/min/game.js": "45f4ba7b4aa8961222f5c57ac26428aff3aa8e5e9135bfd7c93989c0b5d7dc64",
+    "tests/test_nishio_guide_metadata_name.py": "f64d4e666234b6d1e2b0469f959a673505519be424497778a25eda94dec8cda1",
+    "tests/test_maze_loop4_205.py": "91be37e1b64b8b1233b7e6375cd1bd9ffb65add827eb8e583e793cdeed38911b"
+  }
+}

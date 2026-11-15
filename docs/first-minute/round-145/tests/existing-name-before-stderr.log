@@ -1,0 +1,14 @@
+test_boundary_unchanged (test_maze_loop4_205.GuideDispName205.test_boundary_unchanged)
+Codex注記（サイクル205）の境界：入れ子・複数組・半角だけ・空・先頭かっこは壊さずそのまま ... ok
+test_deterministic_and_permutation (test_maze_loop4_205.GuideDispName205.test_deterministic_and_permutation) ... ok
+test_no_forbidden (test_maze_loop4_205.GuideDispName205.test_no_forbidden) ... ok
+test_scope (test_maze_loop4_205.GuideDispName205.test_scope) ... ok
+test_source (test_maze_loop4_205.GuideDispName205.test_source) ... ok
+test_swap (test_maze_loop4_205.GuideDispName205.test_swap) ... ok
+test_syntax (test_maze_loop4_205.GuideDispName205.test_syntax) ... ok
+test_unchanged (test_maze_loop4_205.GuideDispName205.test_unchanged) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.773s
+
+OK

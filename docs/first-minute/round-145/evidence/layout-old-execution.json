@@ -1,0 +1,119 @@
+{
+  "at": "2026-11-15T19:24:14.839521+00:00",
+  "actualExit": 0,
+  "launchTool": "001e13",
+  "completionTool": "9e95b6",
+  "session": 58152,
+  "reportSHA256": "df47bf26846075e5657c271d3fc96b3868861824c1faebac681257a38431b993",
+  "result": {
+    "complete": true,
+    "completedAttempts": 5,
+    "eligible": 3,
+    "unknown": 2,
+    "notRun": 0
+  },
+  "liveBrowsers": [],
+  "rows": [
+    {
+      "trial": 1,
+      "viewport": {
+        "width": 320,
+        "height": 568
+      },
+      "diagnosticViewport": {
+        "width": 320,
+        "height": 568
+      },
+      "status": "TARGET_REACHED",
+      "actions": 7,
+      "name": "🏁 観光ボランティアガイドさん（西尾市歴史公園（西尾城跡））",
+      "lineCount": 1,
+      "distance": "　2.3km",
+      "buttons": 5,
+      "allButtonsInHit": true,
+      "safe": true,
+      "errors": []
+    },
+    {
+      "trial": 2,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "diagnosticViewport": {
+        "width": 390,
+        "height": 844
+      },
+      "status": "UNKNOWN_NOT_REACHED",
+      "actions": 8,
+      "name": "🏁 伊文神社（氏子のおばあさん）",
+      "lineCount": 1,
+      "distance": "　1.4km",
+      "buttons": 5,
+      "allButtonsInHit": true,
+      "safe": true,
+      "errors": []
+    },
+    {
+      "trial": 3,
+      "viewport": {
+        "width": 568,
+        "height": 320
+      },
+      "diagnosticViewport": {
+        "width": 568,
+        "height": 320
+      },
+      "status": "UNKNOWN_NOT_REACHED",
+      "actions": 20,
+      "name": "🏁 名鉄 西尾駅",
+      "lineCount": 1,
+      "distance": "　312m",
+      "buttons": 5,
+      "allButtonsInHit": true,
+      "safe": true,
+      "errors": []
+    },
+    {
+      "trial": 4,
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "diagnosticViewport": {
+        "width": 844,
+        "height": 390
+      },
+      "status": "TARGET_REACHED",
+      "actions": 11,
+      "name": "🏁 観光ボランティアガイドさん（西尾市歴史公園（西尾城跡））",
+      "lineCount": 1,
+      "distance": "　2.3km",
+      "buttons": 5,
+      "allButtonsInHit": true,
+      "safe": true,
+      "errors": []
+    },
+    {
+      "trial": 5,
+      "viewport": {
+        "width": 820,
+        "height": 1180
+      },
+      "diagnosticViewport": {
+        "width": 820,
+        "height": 1180
+      },
+      "status": "TARGET_REACHED",
+      "actions": 10,
+      "name": "🏁 観光ボランティアガイドさん（西尾市歴史公園（西尾城跡））",
+      "lineCount": 1,
+      "distance": "　2.3km",
+      "buttons": 5,
+      "allButtonsInHit": true,
+      "safe": true,
+      "errors": []
+    }
+  ],
+  "gitStatus": ""
+}

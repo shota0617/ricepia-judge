@@ -1,0 +1,859 @@
+{
+  "startedAtUTC": "2026-11-15T20:22:58.776Z",
+  "sourceHead": "69c0891a6c4be6a8057e01ff8f01034b1d49978f",
+  "frozenSHA256": "15332ba6c3851bb03e2c3b2254a6e02f8cfc7691d6afd89421d885f5605750e8",
+  "planned": [
+    {
+      "case": 1,
+      "viewport": {
+        "width": 320,
+        "height": 568
+      },
+      "variant": "old",
+      "status": "FIXTURE_OBSERVED"
+    },
+    {
+      "case": 2,
+      "viewport": {
+        "width": 320,
+        "height": 568
+      },
+      "variant": "new",
+      "status": "NOTRUN"
+    },
+    {
+      "case": 3,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "variant": "old",
+      "status": "NOTRUN"
+    },
+    {
+      "case": 4,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "variant": "new",
+      "status": "NOTRUN"
+    },
+    {
+      "case": 5,
+      "viewport": {
+        "width": 568,
+        "height": 320
+      },
+      "variant": "old",
+      "status": "NOTRUN"
+    },
+    {
+      "case": 6,
+      "viewport": {
+        "width": 568,
+        "height": 320
+      },
+      "variant": "new",
+      "status": "NOTRUN"
+    },
+    {
+      "case": 7,
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "variant": "old",
+      "status": "NOTRUN"
+    },
+    {
+      "case": 8,
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "variant": "new",
+      "status": "NOTRUN"
+    },
+    {
+      "case": 9,
+      "viewport": {
+        "width": 820,
+        "height": 1180
+      },
+      "variant": "old",
+      "status": "NOTRUN"
+    },
+    {
+      "case": 10,
+      "viewport": {
+        "width": 820,
+        "height": 1180
+      },
+      "variant": "new",
+      "status": "NOTRUN"
+    }
+  ],
+  "cases": [
+    {
+      "case": 1,
+      "variant": "old",
+      "viewport": {
+        "width": 320,
+        "height": 568
+      },
+      "beforeGate": {
+        "label": "before-1",
+        "startedAtUTC": "2026-11-15T20:22:58.777Z",
+        "local": {
+          "AGENTS.md": "3307716adf32bd25c5a9232821447251789c579f3192b423bad0c86c97814ab4",
+          ".claude/skills/ricepia-flow/SKILL.md": "322f7d5932c8d5fa8eb1778218ce0a4d37f212e63f211629ff7efe9c4ec4720a",
+          "nishio-go.html": "a8ec3dcfb00ae72dcc86ab89c64342f49f2459ce8a7509be6c1fdc5531fe671e",
+          "nishio-go/game.js": "0c13ef8c6ec0e8d5be4813365acc0c77883465b88feceb981c073e50524f7e16",
+          "nishio-go/pixel.js": "62f64061783708e172d5eb0e882fd232ad2aebf181e69aa4a52919183751dade",
+          "nishio-go/meiro.js": "c8a153a42908a955449858bdea1bdc7c971095fab12174d55cf2eb0fb6bab384",
+          "nishio-go/style.css": "c00be168073dab5fbc6e9896f43520af098252a49a3bec5bf5ef8f9ac7621f46",
+          "nishio-go/icons.js": "3fed8790bc9eeee79eaeccfa430e68a05447e19007bfe4946993940742faed61",
+          "nishio-go/min/game.js": "8267f4412c8f77a36a0cb3e45096d065188784cd7b24152e055ffc66279c77cc",
+          "nishio-go/min/pixel.js": "ba9653773683528b18c6db28a18f953b7df579468af16a91c7be10dd3b9c5bf0",
+          "nishio-go/min/meiro.js": "59c9977fa3e6557295deb2c816889711f494f3c142574f065766656b25b2043e",
+          "nishio-go/min/style.css": "8abb7291eea891d50f1c08fca391dd73988bf84da412caa83eacb53bab36c44d",
+          "kome365/engine.js": "c3d0cef6bb108d5b6d8fe38aaf0c08fe7994bdab08bf92775865a6e0222469a3",
+          "kome365/field3d.js": "a5c1dad91d5c0c326f1394fad9c5d04e7e3b8d13e3a2b8b1757c7aa08d3558ff",
+          "kome365/cards.js": "b15c5b2f56ef9c0c8361fa2fa6a039085919ca516b4a2e6e5a1b3bb691dde744",
+          "nishio-go/npcs.js": "e0e4f3ae807150b0b85902a5ccbdece6a72bd093c00b7a1554a2f00ebe047114",
+          "nishio-go/spots.json": "2b7eb05f8eaf13b6a6230326079003ec9cbeddeb8cedcd19f950234e5ec29ada",
+          "tests/test_maze_loop4_205.py": "91be37e1b64b8b1233b7e6375cd1bd9ffb65add827eb8e583e793cdeed38911b"
+        },
+        "environment": {
+          "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node": "bc17c508ffeed0ec622934f9b7fa72f8e78da65350e63c3eceb56fa688aa5e12",
+          "/usr/bin/chromium": "2c8d32d29dc6781c35ae196ea83299d507ac88fc339301abe74672feda299779",
+          "/usr/lib/chromium/chromium": "4dc9f9f9b20e9bd95bf201f43d2d643f48938f36a70ddcb6fce3dd611a178180",
+          "/workspace/scratch/first-minute/browser-resumed.cjs": "9079e386bdbf50afbb939f9148203beddecb6eab5aaca1c8ff6eaec5e236004d",
+          "/workspace/ricepia-judge/node_modules/playwright/package.json": "e0596151ae1f2776a59eeb8770a0b16664b07e5cf3282ccc10d74ad2c1952573",
+          "/workspace/ricepia-judge/node_modules/playwright/index.js": "4e98f65f0a9d9bcab8cffc0c5cfdd87fd3f5b0be74fc494ff166a466b204cd44",
+          "/workspace/ricepia-judge/node_modules/playwright-core/package.json": "d9764b6508b7c98c5df2695d2243544a5ba43f28bfd0aba647bb8645d299239d",
+          "/workspace/ricepia-judge/node_modules/playwright-core/index.js": "8791ca480e7b771679746299725f7aed3bf713a96400cef02b97cf6dcc0dee6a",
+          "/workspace/ricepia-judge/node_modules/leaflet/package.json": "f070235e01c500ce19a3c687112f8d401e12abda49acd9f98a553c6f217368fa",
+          "/workspace/ricepia-judge/node_modules/leaflet/dist/leaflet.js": "db49d009c841f5ca34a888c96511ae936fd9f5533e90d8b2c4d57596f4e5641a",
+          "/workspace/ricepia-judge/node_modules/leaflet/dist/leaflet.css": "a7837102824184820dfa198d1ebcd109ff6d0ff9a2672a074b9a1b4d147d04c6",
+          "/workspace/ricepia-judge/node_modules/leaflet/dist/images/layers-2x.png": "066daca850d8ffbef007af00b06eac0015728dee279c51f3cb6c716df7c42edf",
+          "/workspace/ricepia-judge/node_modules/leaflet/dist/images/layers.png": "1dbbe9d028e292f36fcba8f8b3a28d5e8932754fc2215b9ac69e4cdecf5107c6",
+          "/workspace/ricepia-judge/node_modules/leaflet/dist/images/marker-icon-2x.png": "00179c4c1ee830d3a108412ae0d294f55776cfeb085c60129a39aa6fc4ae2528",
+          "/workspace/ricepia-judge/node_modules/leaflet/dist/images/marker-icon.png": "574c3a5cca85f4114085b6841596d62f00d7c892c7b03f28cbfa301deb1dc437",
+          "/workspace/ricepia-judge/node_modules/leaflet/dist/images/marker-shadow.png": "264f5c640339f042dd729062cfc04c17f8ea0f29882b538e3848ed8f10edb4da"
+        },
+        "httpActualNewSource": {
+          "nishio-go.html": {
+            "status": 200,
+            "sha256": "a8ec3dcfb00ae72dcc86ab89c64342f49f2459ce8a7509be6c1fdc5531fe671e"
+          },
+          "nishio-go/spots.json": {
+            "status": 200,
+            "sha256": "2b7eb05f8eaf13b6a6230326079003ec9cbeddeb8cedcd19f950234e5ec29ada"
+          },
+          "nishio-go/min/style.css": {
+            "status": 200,
+            "sha256": "8abb7291eea891d50f1c08fca391dd73988bf84da412caa83eacb53bab36c44d"
+          },
+          "nishio-go/npcs.js": {
+            "status": 200,
+            "sha256": "e0e4f3ae807150b0b85902a5ccbdece6a72bd093c00b7a1554a2f00ebe047114"
+          },
+          "nishio-go/icons.js": {
+            "status": 200,
+            "sha256": "3fed8790bc9eeee79eaeccfa430e68a05447e19007bfe4946993940742faed61"
+          },
+          "nishio-go/min/meiro.js": {
+            "status": 200,
+            "sha256": "59c9977fa3e6557295deb2c816889711f494f3c142574f065766656b25b2043e"
+          },
+          "nishio-go/min/game.js": {
+            "status": 200,
+            "sha256": "8267f4412c8f77a36a0cb3e45096d065188784cd7b24152e055ffc66279c77cc"
+          },
+          "nishio-go/min/pixel.js": {
+            "status": 200,
+            "sha256": "ba9653773683528b18c6db28a18f953b7df579468af16a91c7be10dd3b9c5bf0"
+          }
+        },
+        "verified": true,
+        "oldMin": {
+          "path": "/workspace/ricepia-firstminute-round144/nishio-go/min/game.js",
+          "sha256": "45f4ba7b4aa8961222f5c57ac26428aff3aa8e5e9135bfd7c93989c0b5d7dc64"
+        },
+        "completedAtUTC": "2026-11-15T20:23:00.244Z"
+      },
+      "directory": "/workspace/scratch/first-minute/round-145/guide-name-fixture-prep/run-01/case-01-old",
+      "process": {
+        "startedAtUTC": "2026-11-15T20:23:00.245Z",
+        "timeoutMs": 60000,
+        "timedOut": false,
+        "recordingErrors": [],
+        "pid": 220445,
+        "actualExit": 1,
+        "signal": null,
+        "completedAtUTC": "2026-11-15T20:23:03.524Z"
+      },
+      "afterGate": {
+        "label": "after-1",
+        "startedAtUTC": "2026-11-15T20:23:03.526Z",
+        "local": {
+          "AGENTS.md": "3307716adf32bd25c5a9232821447251789c579f3192b423bad0c86c97814ab4",
+          ".claude/skills/ricepia-flow/SKILL.md": "322f7d5932c8d5fa8eb1778218ce0a4d37f212e63f211629ff7efe9c4ec4720a",
+          "nishio-go.html": "a8ec3dcfb00ae72dcc86ab89c64342f49f2459ce8a7509be6c1fdc5531fe671e",
+          "nishio-go/game.js": "0c13ef8c6ec0e8d5be4813365acc0c77883465b88feceb981c073e50524f7e16",
+          "nishio-go/pixel.js": "62f64061783708e172d5eb0e882fd232ad2aebf181e69aa4a52919183751dade",
+          "nishio-go/meiro.js": "c8a153a42908a955449858bdea1bdc7c971095fab12174d55cf2eb0fb6bab384",
+          "nishio-go/style.css": "c00be168073dab5fbc6e9896f43520af098252a49a3bec5bf5ef8f9ac7621f46",
+          "nishio-go/icons.js": "3fed8790bc9eeee79eaeccfa430e68a05447e19007bfe4946993940742faed61",
+          "nishio-go/min/game.js": "8267f4412c8f77a36a0cb3e45096d065188784cd7b24152e055ffc66279c77cc",
+          "nishio-go/min/pixel.js": "ba9653773683528b18c6db28a18f953b7df579468af16a91c7be10dd3b9c5bf0",
+          "nishio-go/min/meiro.js": "59c9977fa3e6557295deb2c816889711f494f3c142574f065766656b25b2043e",
+          "nishio-go/min/style.css": "8abb7291eea891d50f1c08fca391dd73988bf84da412caa83eacb53bab36c44d",
+          "kome365/engine.js": "c3d0cef6bb108d5b6d8fe38aaf0c08fe7994bdab08bf92775865a6e0222469a3",
+          "kome365/field3d.js": "a5c1dad91d5c0c326f1394fad9c5d04e7e3b8d13e3a2b8b1757c7aa08d3558ff",
+          "kome365/cards.js": "b15c5b2f56ef9c0c8361fa2fa6a039085919ca516b4a2e6e5a1b3bb691dde744",
+          "nishio-go/npcs.js": "e0e4f3ae807150b0b85902a5ccbdece6a72bd093c00b7a1554a2f00ebe047114",
+          "nishio-go/spots.json": "2b7eb05f8eaf13b6a6230326079003ec9cbeddeb8cedcd19f950234e5ec29ada",
+          "tests/test_maze_loop4_205.py": "91be37e1b64b8b1233b7e6375cd1bd9ffb65add827eb8e583e793cdeed38911b"
+        },
+        "environment": {
+          "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node": "bc17c508ffeed0ec622934f9b7fa72f8e78da65350e63c3eceb56fa688aa5e12",
+          "/usr/bin/chromium": "2c8d32d29dc6781c35ae196ea83299d507ac88fc339301abe74672feda299779",
+          "/usr/lib/chromium/chromium": "4dc9f9f9b20e9bd95bf201f43d2d643f48938f36a70ddcb6fce3dd611a178180",
+          "/workspace/scratch/first-minute/browser-resumed.cjs": "9079e386bdbf50afbb939f9148203beddecb6eab5aaca1c8ff6eaec5e236004d",
+          "/workspace/ricepia-judge/node_modules/playwright/package.json": "e0596151ae1f2776a59eeb8770a0b16664b07e5cf3282ccc10d74ad2c1952573",
+          "/workspace/ricepia-judge/node_modules/playwright/index.js": "4e98f65f0a9d9bcab8cffc0c5cfdd87fd3f5b0be74fc494ff166a466b204cd44",
+          "/workspace/ricepia-judge/node_modules/playwright-core/package.json": "d9764b6508b7c98c5df2695d2243544a5ba43f28bfd0aba647bb8645d299239d",
+          "/workspace/ricepia-judge/node_modules/playwright-core/index.js": "8791ca480e7b771679746299725f7aed3bf713a96400cef02b97cf6dcc0dee6a",
+          "/workspace/ricepia-judge/node_modules/leaflet/package.json": "f070235e01c500ce19a3c687112f8d401e12abda49acd9f98a553c6f217368fa",
+          "/workspace/ricepia-judge/node_modules/leaflet/dist/leaflet.js": "db49d009c841f5ca34a888c96511ae936fd9f5533e90d8b2c4d57596f4e5641a",
+          "/workspace/ricepia-judge/node_modules/leaflet/dist/leaflet.css": "a7837102824184820dfa198d1ebcd109ff6d0ff9a2672a074b9a1b4d147d04c6",
+          "/workspace/ricepia-judge/node_modules/leaflet/dist/images/layers-2x.png": "066daca850d8ffbef007af00b06eac0015728dee279c51f3cb6c716df7c42edf",
+          "/workspace/ricepia-judge/node_modules/leaflet/dist/images/layers.png": "1dbbe9d028e292f36fcba8f8b3a28d5e8932754fc2215b9ac69e4cdecf5107c6",
+          "/workspace/ricepia-judge/node_modules/leaflet/dist/images/marker-icon-2x.png": "00179c4c1ee830d3a108412ae0d294f55776cfeb085c60129a39aa6fc4ae2528",
+          "/workspace/ricepia-judge/node_modules/leaflet/dist/images/marker-icon.png": "574c3a5cca85f4114085b6841596d62f00d7c892c7b03f28cbfa301deb1dc437",
+          "/workspace/ricepia-judge/node_modules/leaflet/dist/images/marker-shadow.png": "264f5c640339f042dd729062cfc04c17f8ea0f29882b538e3848ed8f10edb4da"
+        },
+        "httpActualNewSource": {
+          "nishio-go.html": {
+            "status": 200,
+            "sha256": "a8ec3dcfb00ae72dcc86ab89c64342f49f2459ce8a7509be6c1fdc5531fe671e"
+          },
+          "nishio-go/min/game.js": {
+            "status": 200,
+            "sha256": "8267f4412c8f77a36a0cb3e45096d065188784cd7b24152e055ffc66279c77cc"
+          },
+          "nishio-go/npcs.js": {
+            "status": 200,
+            "sha256": "e0e4f3ae807150b0b85902a5ccbdece6a72bd093c00b7a1554a2f00ebe047114"
+          },
+          "nishio-go/min/meiro.js": {
+            "status": 200,
+            "sha256": "59c9977fa3e6557295deb2c816889711f494f3c142574f065766656b25b2043e"
+          },
+          "nishio-go/min/style.css": {
+            "status": 200,
+            "sha256": "8abb7291eea891d50f1c08fca391dd73988bf84da412caa83eacb53bab36c44d"
+          },
+          "nishio-go/icons.js": {
+            "status": 200,
+            "sha256": "3fed8790bc9eeee79eaeccfa430e68a05447e19007bfe4946993940742faed61"
+          },
+          "nishio-go/spots.json": {
+            "status": 200,
+            "sha256": "2b7eb05f8eaf13b6a6230326079003ec9cbeddeb8cedcd19f950234e5ec29ada"
+          },
+          "nishio-go/min/pixel.js": {
+            "status": 200,
+            "sha256": "ba9653773683528b18c6db28a18f953b7df579468af16a91c7be10dd3b9c5bf0"
+          }
+        },
+        "verified": true,
+        "oldMin": {
+          "path": "/workspace/ricepia-firstminute-round144/nishio-go/min/game.js",
+          "sha256": "45f4ba7b4aa8961222f5c57ac26428aff3aa8e5e9135bfd7c93989c0b5d7dc64"
+        },
+        "completedAtUTC": "2026-11-15T20:23:04.628Z"
+      },
+      "status": "FIXTURE_OBSERVED",
+      "summary": {
+        "status": "FIXTURE_OBSERVED",
+        "inputCommands": 0,
+        "inputEvents": 2,
+        "helperIdentity": {
+          "expectedSHA256": "916bc62cde495ad9e3885d1297f533174ea833a67932882c9e7ac650d76a62b7",
+          "actualSHA256": "916bc62cde495ad9e3885d1297f533174ea833a67932882c9e7ac650d76a62b7",
+          "sameSource": true
+        },
+        "identity": {
+          "before": true,
+          "after": true
+        },
+        "visible": {
+          "before": true,
+          "after": true
+        },
+        "actualViewport": {
+          "width": 320,
+          "height": 568
+        },
+        "distanceBefore": {
+          "rawText": "　915m",
+          "rect": {
+            "x": 247.984375,
+            "y": 455.25,
+            "left": 247.984375,
+            "top": 455.25,
+            "right": 284,
+            "bottom": 473.25,
+            "width": 36.015625,
+            "height": 18
+          },
+          "cssVisible": true,
+          "intersectsViewport": true,
+          "whollyInViewport": true,
+          "centerHit": {
+            "id": "",
+            "tag": "SPAN",
+            "className": ""
+          },
+          "centerHitInside": true,
+          "font": "12px / 18px DotGothic16, \"Hiragino Sans\", monospace",
+          "fontSize": "12px",
+          "lineHeight": "18px",
+          "whiteSpace": "nowrap",
+          "textOverflow": "clip",
+          "overflowX": "visible",
+          "overflowY": "visible",
+          "clientWidth": 36,
+          "scrollWidth": 36,
+          "clientHeight": 18,
+          "scrollHeight": 18,
+          "codePointLength": 5,
+          "sortedCodePoints": "159m　",
+          "clip": {
+            "left": 36,
+            "top": 454.5,
+            "right": 284,
+            "bottom": 474
+          },
+          "clippingAncestors": [
+            {
+              "id": "",
+              "tag": "B",
+              "overflowX": "hidden",
+              "overflowY": "hidden",
+              "rect": {
+                "x": 36,
+                "y": 454.5,
+                "left": 36,
+                "top": 454.5,
+                "right": 284,
+                "bottom": 474,
+                "width": 248,
+                "height": 19.5
+              }
+            },
+            {
+              "id": "",
+              "tag": "BODY",
+              "overflowX": "hidden",
+              "overflowY": "hidden",
+              "rect": {
+                "x": 0,
+                "y": 0,
+                "left": 0,
+                "top": 0,
+                "right": 320,
+                "bottom": 568,
+                "width": 320,
+                "height": 568
+              }
+            },
+            {
+              "id": "",
+              "tag": "HTML",
+              "overflowX": "hidden",
+              "overflowY": "hidden",
+              "rect": {
+                "x": 0,
+                "y": 0,
+                "left": 0,
+                "top": 0,
+                "right": 320,
+                "bottom": 568,
+                "width": 320,
+                "height": 568
+              }
+            }
+          ],
+          "fullRangeRects": [
+            {
+              "x": 247.984375,
+              "y": 455.25,
+              "left": 247.984375,
+              "top": 455.25,
+              "right": 284,
+              "bottom": 472.25,
+              "width": 36.015625,
+              "height": 17
+            }
+          ],
+          "chars": [
+            {
+              "index": 0,
+              "glyph": "　",
+              "utf16Offset": 0,
+              "rects": [
+                {
+                  "x": 247.984375,
+                  "y": 455.25,
+                  "left": 247.984375,
+                  "top": 455.25,
+                  "right": 260,
+                  "bottom": 472.25,
+                  "width": 12.015625,
+                  "height": 17
+                }
+              ],
+              "fullyInsideClip": true,
+              "intersectsClip": true
+            },
+            {
+              "index": 1,
+              "glyph": "9",
+              "utf16Offset": 1,
+              "rects": [
+                {
+                  "x": 259.984375,
+                  "y": 455.25,
+                  "left": 259.984375,
+                  "top": 455.25,
+                  "right": 266,
+                  "bottom": 472.25,
+                  "width": 6.015625,
+                  "height": 17
+                }
+              ],
+              "fullyInsideClip": true,
+              "intersectsClip": true
+            },
+            {
+              "index": 2,
+              "glyph": "1",
+              "utf16Offset": 2,
+              "rects": [
+                {
+                  "x": 265.984375,
+                  "y": 455.25,
+                  "left": 265.984375,
+                  "top": 455.25,
+                  "right": 272,
+                  "bottom": 472.25,
+                  "width": 6.015625,
+                  "height": 17
+                }
+              ],
+              "fullyInsideClip": true,
+              "intersectsClip": true
+            },
+            {
+              "index": 3,
+              "glyph": "5",
+              "utf16Offset": 3,
+              "rects": [
+                {
+                  "x": 271.984375,
+                  "y": 455.25,
+                  "left": 271.984375,
+                  "top": 455.25,
+                  "right": 278,
+                  "bottom": 472.25,
+                  "width": 6.015625,
+                  "height": 17
+                }
+              ],
+              "fullyInsideClip": true,
+              "intersectsClip": true
+            },
+            {
+              "index": 4,
+              "glyph": "m",
+              "utf16Offset": 4,
+              "rects": [
+                {
+                  "x": 277.984375,
+                  "y": 455.25,
+                  "left": 277.984375,
+                  "top": 455.25,
+                  "right": 284,
+                  "bottom": 472.25,
+                  "width": 6.015625,
+                  "height": 17
+                }
+              ],
+              "fullyInsideClip": true,
+              "intersectsClip": true
+            }
+          ],
+          "lineTops": [
+            455.25
+          ],
+          "lineCount": 1,
+          "ellipsisCSSApplicable": false,
+          "wholeGlyphCountInsideClip": 5,
+          "limitation": "Range bounds describe layout before text-overflow painting. Ellipsis glyph and which glyphs were actually painted require the original PNG; no inferred visible string is asserted."
+        },
+        "distanceAfter": {
+          "rawText": "　915m",
+          "rect": {
+            "x": 247.984375,
+            "y": 455.25,
+            "left": 247.984375,
+            "top": 455.25,
+            "right": 284,
+            "bottom": 473.25,
+            "width": 36.015625,
+            "height": 18
+          },
+          "cssVisible": true,
+          "intersectsViewport": true,
+          "whollyInViewport": true,
+          "centerHit": {
+            "id": "",
+            "tag": "SPAN",
+            "className": ""
+          },
+          "centerHitInside": true,
+          "font": "12px / 18px DotGothic16, \"Hiragino Sans\", monospace",
+          "fontSize": "12px",
+          "lineHeight": "18px",
+          "whiteSpace": "nowrap",
+          "textOverflow": "clip",
+          "overflowX": "visible",
+          "overflowY": "visible",
+          "clientWidth": 36,
+          "scrollWidth": 36,
+          "clientHeight": 18,
+          "scrollHeight": 18,
+          "codePointLength": 5,
+          "sortedCodePoints": "159m　",
+          "clip": {
+            "left": 36,
+            "top": 454.5,
+            "right": 284,
+            "bottom": 474
+          },
+          "clippingAncestors": [
+            {
+              "id": "",
+              "tag": "B",
+              "overflowX": "hidden",
+              "overflowY": "hidden",
+              "rect": {
+                "x": 36,
+                "y": 454.5,
+                "left": 36,
+                "top": 454.5,
+                "right": 284,
+                "bottom": 474,
+                "width": 248,
+                "height": 19.5
+              }
+            },
+            {
+              "id": "",
+              "tag": "BODY",
+              "overflowX": "hidden",
+              "overflowY": "hidden",
+              "rect": {
+                "x": 0,
+                "y": 0,
+                "left": 0,
+                "top": 0,
+                "right": 320,
+                "bottom": 568,
+                "width": 320,
+                "height": 568
+              }
+            },
+            {
+              "id": "",
+              "tag": "HTML",
+              "overflowX": "hidden",
+              "overflowY": "hidden",
+              "rect": {
+                "x": 0,
+                "y": 0,
+                "left": 0,
+                "top": 0,
+                "right": 320,
+                "bottom": 568,
+                "width": 320,
+                "height": 568
+              }
+            }
+          ],
+          "fullRangeRects": [
+            {
+              "x": 247.984375,
+              "y": 455.25,
+              "left": 247.984375,
+              "top": 455.25,
+              "right": 284,
+              "bottom": 472.25,
+              "width": 36.015625,
+              "height": 17
+            }
+          ],
+          "chars": [
+            {
+              "index": 0,
+              "glyph": "　",
+              "utf16Offset": 0,
+              "rects": [
+                {
+                  "x": 247.984375,
+                  "y": 455.25,
+                  "left": 247.984375,
+                  "top": 455.25,
+                  "right": 260,
+                  "bottom": 472.25,
+                  "width": 12.015625,
+                  "height": 17
+                }
+              ],
+              "fullyInsideClip": true,
+              "intersectsClip": true
+            },
+            {
+              "index": 1,
+              "glyph": "9",
+              "utf16Offset": 1,
+              "rects": [
+                {
+                  "x": 259.984375,
+                  "y": 455.25,
+                  "left": 259.984375,
+                  "top": 455.25,
+                  "right": 266,
+                  "bottom": 472.25,
+                  "width": 6.015625,
+                  "height": 17
+                }
+              ],
+              "fullyInsideClip": true,
+              "intersectsClip": true
+            },
+            {
+              "index": 2,
+              "glyph": "1",
+              "utf16Offset": 2,
+              "rects": [
+                {
+                  "x": 265.984375,
+                  "y": 455.25,
+                  "left": 265.984375,
+                  "top": 455.25,
+                  "right": 272,
+                  "bottom": 472.25,
+                  "width": 6.015625,
+                  "height": 17
+                }
+              ],
+              "fullyInsideClip": true,
+              "intersectsClip": true
+            },
+            {
+              "index": 3,
+              "glyph": "5",
+              "utf16Offset": 3,
+              "rects": [
+                {
+                  "x": 271.984375,
+                  "y": 455.25,
+                  "left": 271.984375,
+                  "top": 455.25,
+                  "right": 278,
+                  "bottom": 472.25,
+                  "width": 6.015625,
+                  "height": 17
+                }
+              ],
+              "fullyInsideClip": true,
+              "intersectsClip": true
+            },
+            {
+              "index": 4,
+              "glyph": "m",
+              "utf16Offset": 4,
+              "rects": [
+                {
+                  "x": 277.984375,
+                  "y": 455.25,
+                  "left": 277.984375,
+                  "top": 455.25,
+                  "right": 284,
+                  "bottom": 472.25,
+                  "width": 6.015625,
+                  "height": 17
+                }
+              ],
+              "fullyInsideClip": true,
+              "intersectsClip": true
+            }
+          ],
+          "lineTops": [
+            455.25
+          ],
+          "lineCount": 1,
+          "ellipsisCSSApplicable": false,
+          "wholeGlyphCountInsideClip": 5,
+          "limitation": "Range bounds describe layout before text-overflow painting. Ellipsis glyph and which glyphs were actually painted require the original PNG; no inferred visible string is asserted."
+        },
+        "nameBoxBefore": {
+          "x": 59,
+          "y": 454.5,
+          "left": 59,
+          "top": 454.5,
+          "right": 247.984375,
+          "bottom": 474,
+          "width": 188.984375,
+          "height": 19.5
+        },
+        "nameBoxAfter": {
+          "x": 59,
+          "y": 454.5,
+          "left": 59,
+          "top": 454.5,
+          "right": 247.984375,
+          "bottom": 474,
+          "width": 188.984375,
+          "height": 19.5
+        },
+        "restoreSameReference": true,
+        "sourceResponseValid": true,
+        "lifecycle": {
+          "contextClosed": true,
+          "browserClosed": true,
+          "contextCloseRequestedAt": 1794774183334,
+          "contextClosedAt": 1794774183426,
+          "browserCloseRequestedAt": 1794774183426,
+          "browserClosedAt": 1794774183503
+        },
+        "errors": [
+          "Unexpected input event recorded"
+        ],
+        "pageErrors": [],
+        "consoleErrors": [],
+        "failedRequests": [],
+        "httpErrors": [],
+        "caseSHA256": "6921c8f8c7ff6ecdd9691ed68548bee53e28716fffb29d9cc9449032e9a650a5"
+      },
+      "safeToContinue": false
+    }
+  ],
+  "pairs": [
+    {
+      "viewport": {
+        "width": 320,
+        "height": 568
+      },
+      "oldCase": 1,
+      "newCase": null,
+      "bothValidObserved": false,
+      "oldDistanceStable": true,
+      "newDistanceStable": false,
+      "sameDistanceText": false,
+      "sameDistanceWidth": false,
+      "oldNameBox": {
+        "x": 59,
+        "y": 454.5,
+        "left": 59,
+        "top": 454.5,
+        "right": 247.984375,
+        "bottom": 474,
+        "width": 188.984375,
+        "height": 19.5
+      },
+      "newNameBox": null,
+      "limitation": "Compare the actual recorded distances and geometry. No fixed distance, same seed, same frame, or natural journey claim."
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "oldCase": null,
+      "newCase": null,
+      "bothValidObserved": false,
+      "oldDistanceStable": false,
+      "newDistanceStable": false,
+      "sameDistanceText": false,
+      "sameDistanceWidth": false,
+      "oldNameBox": null,
+      "newNameBox": null,
+      "limitation": "Compare the actual recorded distances and geometry. No fixed distance, same seed, same frame, or natural journey claim."
+    },
+    {
+      "viewport": {
+        "width": 568,
+        "height": 320
+      },
+      "oldCase": null,
+      "newCase": null,
+      "bothValidObserved": false,
+      "oldDistanceStable": false,
+      "newDistanceStable": false,
+      "sameDistanceText": false,
+      "sameDistanceWidth": false,
+      "oldNameBox": null,
+      "newNameBox": null,
+      "limitation": "Compare the actual recorded distances and geometry. No fixed distance, same seed, same frame, or natural journey claim."
+    },
+    {
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "oldCase": null,
+      "newCase": null,
+      "bothValidObserved": false,
+      "oldDistanceStable": false,
+      "newDistanceStable": false,
+      "sameDistanceText": false,
+      "sameDistanceWidth": false,
+      "oldNameBox": null,
+      "newNameBox": null,
+      "limitation": "Compare the actual recorded distances and geometry. No fixed distance, same seed, same frame, or natural journey claim."
+    },
+    {
+      "viewport": {
+        "width": 820,
+        "height": 1180
+      },
+      "oldCase": null,
+      "newCase": null,
+      "bothValidObserved": false,
+      "oldDistanceStable": false,
+      "newDistanceStable": false,
+      "sameDistanceText": false,
+      "sameDistanceWidth": false,
+      "oldNameBox": null,
+      "newNameBox": null,
+      "limitation": "Compare the actual recorded distances and geometry. No fixed distance, same seed, same frame, or natural journey claim."
+    }
+  ],
+  "limits": "Ten fresh contexts with one browser each; layout fixtures only, not ten natural observations or users. Original natural UNKNOWN cases remain unchanged. No excluded/replaced attempts. Server actual new bytes and runtime routed old bytes have separate receipts.",
+  "stoppedReason": "Input/error/source/process/closure receipt failed. Remaining cases NOTRUN; root must verify browser descendants closed.",
+  "completedAtUTC": "2026-11-15T20:23:04.629Z",
+  "completedCases": 1,
+  "observed": 0,
+  "unknown": 0,
+  "notRun": 9,
+  "processComplete": false,
+  "allCasesObserved": false,
+  "requestedExit": 1
+}

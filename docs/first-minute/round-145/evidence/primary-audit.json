@@ -1,0 +1,703 @@
+{
+  "followSHA256": "af812e844dd60306b8a5369fc5b85aca1d68d8552f813692d450369e791a7859",
+  "resultSHA256": "2f9bb4799407a730fd71f60a7314662d0b5f368e5050015fb420cb774e5ae660",
+  "rootExecutionSHA256": "f74dc643631e36dfd2065661e032ff745df58b47ce08f34cf755e4e75447ae49",
+  "actualToolExit": 0,
+  "childActualExit": 0,
+  "requestedExitCode": 0,
+  "browserLiveAfter": [],
+  "classifierRowDifferences": [],
+  "rows": [
+    {
+      "action": 1,
+      "kind": "visible-hand-center",
+      "requestedHoldMs": 40,
+      "sentPlaySeconds": 0.029,
+      "sentWithinPlay": true,
+      "actualNodeHoldMs": 40,
+      "touchStartAckMs": 52,
+      "touchEndAckMs": 90,
+      "full1100msWindowObserved": true,
+      "minimumWindowDuePlaySeconds": 1.259,
+      "observationEndPlaySeconds": 2.875,
+      "inputErrors": [],
+      "result": "coordinateChanged",
+      "firstRecordedResponse": {
+        "kind": "coordinateChanged",
+        "observedPlaySeconds": 0.1582998046875,
+        "sendToObservedMs": 129.2998046875
+      },
+      "responseMoments": {
+        "informationPanelOpened": null,
+        "informationPanelClosed": null,
+        "worldOpened": null,
+        "worldReturned": null,
+        "coordinateChanged": {
+          "observedPlaySeconds": 0.1582998046875,
+          "sendToObservedMs": 129.2998046875
+        },
+        "displayedPointChanged": {
+          "observedPlaySeconds": 0.1582998046875,
+          "sendToObservedMs": 129.2998046875
+        },
+        "storedGoalChanged": null,
+        "toastTextChanged": null
+      },
+      "trustedDownUpClick": [
+        true,
+        true,
+        true
+      ],
+      "downToUpEventTimestampMs": 40.0,
+      "downToUpListenerMs": 1.699951171875,
+      "sendToDownListenerMs": 71.699951171875,
+      "actualTarget": {
+        "id": "pxCanvas",
+        "tag": "CANVAS"
+      },
+      "normalHand": false
+    },
+    {
+      "action": 2,
+      "kind": "visible-hand-center",
+      "requestedHoldMs": 40,
+      "sentPlaySeconds": 2.875,
+      "sentWithinPlay": true,
+      "actualNodeHoldMs": 41,
+      "touchStartAckMs": 56,
+      "touchEndAckMs": 65,
+      "full1100msWindowObserved": true,
+      "minimumWindowDuePlaySeconds": 4.081,
+      "observationEndPlaySeconds": 5.92,
+      "inputErrors": [],
+      "result": "coordinateChanged",
+      "firstRecordedResponse": {
+        "kind": "coordinateChanged",
+        "observedPlaySeconds": 2.980099853515625,
+        "sendToObservedMs": 105.099853515625
+      },
+      "responseMoments": {
+        "informationPanelOpened": null,
+        "informationPanelClosed": null,
+        "worldOpened": null,
+        "worldReturned": null,
+        "coordinateChanged": {
+          "observedPlaySeconds": 2.980099853515625,
+          "sendToObservedMs": 105.099853515625
+        },
+        "displayedPointChanged": {
+          "observedPlaySeconds": 3.53289990234375,
+          "sendToObservedMs": 657.89990234375
+        },
+        "storedGoalChanged": null,
+        "toastTextChanged": null
+      },
+      "trustedDownUpClick": [
+        true,
+        true,
+        true
+      ],
+      "downToUpEventTimestampMs": 41.0,
+      "downToUpListenerMs": 1.800048828125,
+      "sendToDownListenerMs": 76.599853515625,
+      "actualTarget": {
+        "id": "pxCanvas",
+        "tag": "CANVAS"
+      },
+      "normalHand": true
+    },
+    {
+      "action": 3,
+      "kind": "visible-hand-center",
+      "requestedHoldMs": 40,
+      "sentPlaySeconds": 5.92,
+      "sentWithinPlay": true,
+      "actualNodeHoldMs": 40,
+      "touchStartAckMs": 43,
+      "touchEndAckMs": 64,
+      "full1100msWindowObserved": true,
+      "minimumWindowDuePlaySeconds": 7.124,
+      "observationEndPlaySeconds": 18.67,
+      "inputErrors": [],
+      "result": "coordinateChanged",
+      "firstRecordedResponse": {
+        "kind": "coordinateChanged",
+        "observedPlaySeconds": 6.0225,
+        "sendToObservedMs": 102.5
+      },
+      "responseMoments": {
+        "informationPanelOpened": null,
+        "informationPanelClosed": null,
+        "worldOpened": null,
+        "worldReturned": null,
+        "coordinateChanged": {
+          "observedPlaySeconds": 6.0225,
+          "sendToObservedMs": 102.5
+        },
+        "displayedPointChanged": {
+          "observedPlaySeconds": 6.7915,
+          "sendToObservedMs": 871.5
+        },
+        "storedGoalChanged": null,
+        "toastTextChanged": null
+      },
+      "trustedDownUpClick": [
+        true,
+        true,
+        true
+      ],
+      "downToUpEventTimestampMs": 40.0,
+      "downToUpListenerMs": 1.5,
+      "sendToDownListenerMs": 64.7998046875,
+      "actualTarget": {
+        "id": "pxCanvas",
+        "tag": "CANVAS"
+      },
+      "normalHand": true
+    },
+    {
+      "action": 4,
+      "kind": "visible-hand-center",
+      "requestedHoldMs": 40,
+      "sentPlaySeconds": 18.67,
+      "sentWithinPlay": true,
+      "actualNodeHoldMs": 40,
+      "touchStartAckMs": 53,
+      "touchEndAckMs": 70,
+      "full1100msWindowObserved": true,
+      "minimumWindowDuePlaySeconds": 19.88,
+      "observationEndPlaySeconds": 20.882,
+      "inputErrors": [],
+      "result": "coordinateChanged",
+      "firstRecordedResponse": {
+        "kind": "coordinateChanged",
+        "observedPlaySeconds": 18.779199951171876,
+        "sendToObservedMs": 109.199951171875
+      },
+      "responseMoments": {
+        "informationPanelOpened": null,
+        "informationPanelClosed": null,
+        "worldOpened": null,
+        "worldReturned": null,
+        "coordinateChanged": {
+          "observedPlaySeconds": 18.779199951171876,
+          "sendToObservedMs": 109.199951171875
+        },
+        "displayedPointChanged": {
+          "observedPlaySeconds": 19.4622998046875,
+          "sendToObservedMs": 792.2998046875
+        },
+        "storedGoalChanged": {
+          "observedPlaySeconds": 19.62439990234375,
+          "sendToObservedMs": 954.39990234375
+        },
+        "toastTextChanged": {
+          "observedPlaySeconds": 19.9197998046875,
+          "sendToObservedMs": 1249.7998046875
+        }
+      },
+      "trustedDownUpClick": [
+        true,
+        true,
+        true
+      ],
+      "downToUpEventTimestampMs": 39.899999998509884,
+      "downToUpListenerMs": 1.39990234375,
+      "sendToDownListenerMs": 75.39990234375,
+      "actualTarget": {
+        "id": "pxCanvas",
+        "tag": "CANVAS"
+      },
+      "normalHand": true
+    },
+    {
+      "action": 5,
+      "kind": "visible-hand-center",
+      "requestedHoldMs": 40,
+      "sentPlaySeconds": 20.882,
+      "sentWithinPlay": true,
+      "actualNodeHoldMs": 40,
+      "touchStartAckMs": 45,
+      "touchEndAckMs": 74,
+      "full1100msWindowObserved": true,
+      "minimumWindowDuePlaySeconds": 22.096,
+      "observationEndPlaySeconds": 31.711,
+      "inputErrors": [],
+      "result": "coordinateChanged",
+      "firstRecordedResponse": {
+        "kind": "coordinateChanged",
+        "observedPlaySeconds": 20.9952998046875,
+        "sendToObservedMs": 113.2998046875
+      },
+      "responseMoments": {
+        "informationPanelOpened": null,
+        "informationPanelClosed": null,
+        "worldOpened": null,
+        "worldReturned": null,
+        "coordinateChanged": {
+          "observedPlaySeconds": 20.9952998046875,
+          "sendToObservedMs": 113.2998046875
+        },
+        "displayedPointChanged": {
+          "observedPlaySeconds": 22.16539990234375,
+          "sendToObservedMs": 1283.39990234375
+        },
+        "storedGoalChanged": null,
+        "toastTextChanged": null
+      },
+      "trustedDownUpClick": [
+        true,
+        true,
+        true
+      ],
+      "downToUpEventTimestampMs": 40.0,
+      "downToUpListenerMs": 1.300048828125,
+      "sendToDownListenerMs": 71.39990234375,
+      "actualTarget": {
+        "id": "pxCanvas",
+        "tag": "CANVAS"
+      },
+      "normalHand": true
+    },
+    {
+      "action": 6,
+      "kind": "visible-hand-center",
+      "requestedHoldMs": 40,
+      "sentPlaySeconds": 31.711,
+      "sentWithinPlay": true,
+      "actualNodeHoldMs": 40,
+      "touchStartAckMs": 52,
+      "touchEndAckMs": 81,
+      "full1100msWindowObserved": true,
+      "minimumWindowDuePlaySeconds": 32.932,
+      "observationEndPlaySeconds": 33.956,
+      "inputErrors": [],
+      "result": "coordinateChanged",
+      "firstRecordedResponse": {
+        "kind": "coordinateChanged",
+        "observedPlaySeconds": 31.83139990234375,
+        "sendToObservedMs": 120.39990234375
+      },
+      "responseMoments": {
+        "informationPanelOpened": null,
+        "informationPanelClosed": null,
+        "worldOpened": null,
+        "worldReturned": null,
+        "coordinateChanged": {
+          "observedPlaySeconds": 31.83139990234375,
+          "sendToObservedMs": 120.39990234375
+        },
+        "displayedPointChanged": null,
+        "storedGoalChanged": null,
+        "toastTextChanged": null
+      },
+      "trustedDownUpClick": [
+        true,
+        true,
+        true
+      ],
+      "downToUpEventTimestampMs": 40.100000001490116,
+      "downToUpListenerMs": 1.7998046875,
+      "sendToDownListenerMs": 75,
+      "actualTarget": {
+        "id": "pxCanvas",
+        "tag": "CANVAS"
+      },
+      "normalHand": true
+    },
+    {
+      "action": 7,
+      "kind": "visible-hand-center",
+      "requestedHoldMs": 40,
+      "sentPlaySeconds": 33.956,
+      "sentWithinPlay": true,
+      "actualNodeHoldMs": 40,
+      "touchStartAckMs": 60,
+      "touchEndAckMs": 106,
+      "full1100msWindowObserved": true,
+      "minimumWindowDuePlaySeconds": 35.202,
+      "observationEndPlaySeconds": 48.948,
+      "inputErrors": [],
+      "result": "coordinateChanged",
+      "firstRecordedResponse": {
+        "kind": "coordinateChanged",
+        "observedPlaySeconds": 34.10119995117188,
+        "sendToObservedMs": 145.199951171875
+      },
+      "responseMoments": {
+        "informationPanelOpened": null,
+        "informationPanelClosed": null,
+        "worldOpened": null,
+        "worldReturned": null,
+        "coordinateChanged": {
+          "observedPlaySeconds": 34.10119995117188,
+          "sendToObservedMs": 145.199951171875
+        },
+        "displayedPointChanged": {
+          "observedPlaySeconds": 34.10119995117188,
+          "sendToObservedMs": 145.199951171875
+        },
+        "storedGoalChanged": null,
+        "toastTextChanged": null
+      },
+      "trustedDownUpClick": [
+        true,
+        true,
+        true
+      ],
+      "downToUpEventTimestampMs": 40.0,
+      "downToUpListenerMs": 1.89990234375,
+      "sendToDownListenerMs": 86.199951171875,
+      "actualTarget": {
+        "id": "pxCanvas",
+        "tag": "CANVAS"
+      },
+      "normalHand": true
+    },
+    {
+      "action": 8,
+      "kind": "visible-hand-center",
+      "requestedHoldMs": 40,
+      "sentPlaySeconds": 48.948,
+      "sentWithinPlay": true,
+      "actualNodeHoldMs": 40,
+      "touchStartAckMs": 69,
+      "touchEndAckMs": 112,
+      "full1100msWindowObserved": true,
+      "minimumWindowDuePlaySeconds": 50.2,
+      "observationEndPlaySeconds": 52.469,
+      "inputErrors": [],
+      "result": "coordinateChanged",
+      "firstRecordedResponse": {
+        "kind": "coordinateChanged",
+        "observedPlaySeconds": 49.09939990234375,
+        "sendToObservedMs": 151.39990234375
+      },
+      "responseMoments": {
+        "informationPanelOpened": null,
+        "informationPanelClosed": null,
+        "worldOpened": null,
+        "worldReturned": null,
+        "coordinateChanged": {
+          "observedPlaySeconds": 49.09939990234375,
+          "sendToObservedMs": 151.39990234375
+        },
+        "displayedPointChanged": null,
+        "storedGoalChanged": null,
+        "toastTextChanged": null
+      },
+      "trustedDownUpClick": [
+        true,
+        true,
+        true
+      ],
+      "downToUpEventTimestampMs": 40.0,
+      "downToUpListenerMs": 2.10009765625,
+      "sendToDownListenerMs": 104.099853515625,
+      "actualTarget": {
+        "id": "pxCanvas",
+        "tag": "CANVAS"
+      },
+      "normalHand": true
+    },
+    {
+      "action": 9,
+      "kind": "visible-hand-center",
+      "requestedHoldMs": 40,
+      "sentPlaySeconds": 52.469,
+      "sentWithinPlay": true,
+      "actualNodeHoldMs": 40,
+      "touchStartAckMs": 77,
+      "touchEndAckMs": 125,
+      "full1100msWindowObserved": true,
+      "minimumWindowDuePlaySeconds": 53.734,
+      "observationEndPlaySeconds": 55.384,
+      "inputErrors": [],
+      "result": "coordinateChanged",
+      "firstRecordedResponse": {
+        "kind": "coordinateChanged",
+        "observedPlaySeconds": 52.63269995117187,
+        "sendToObservedMs": 163.699951171875
+      },
+      "responseMoments": {
+        "informationPanelOpened": null,
+        "informationPanelClosed": null,
+        "worldOpened": null,
+        "worldReturned": null,
+        "coordinateChanged": {
+          "observedPlaySeconds": 52.63269995117187,
+          "sendToObservedMs": 163.699951171875
+        },
+        "displayedPointChanged": {
+          "observedPlaySeconds": 52.63269995117187,
+          "sendToObservedMs": 163.699951171875
+        },
+        "storedGoalChanged": null,
+        "toastTextChanged": null
+      },
+      "trustedDownUpClick": [
+        true,
+        true,
+        true
+      ],
+      "downToUpEventTimestampMs": 39.899999998509884,
+      "downToUpListenerMs": 2.199951171875,
+      "sendToDownListenerMs": 111.39990234375,
+      "actualTarget": {
+        "id": "pxCanvas",
+        "tag": "CANVAS"
+      },
+      "normalHand": true
+    },
+    {
+      "action": 10,
+      "kind": "visible-hand-center",
+      "requestedHoldMs": 40,
+      "sentPlaySeconds": 55.384,
+      "sentWithinPlay": true,
+      "actualNodeHoldMs": 40,
+      "touchStartAckMs": 72,
+      "touchEndAckMs": 128,
+      "full1100msWindowObserved": true,
+      "minimumWindowDuePlaySeconds": 56.652,
+      "observationEndPlaySeconds": 60.0,
+      "inputErrors": [],
+      "result": "coordinateChanged",
+      "firstRecordedResponse": {
+        "kind": "coordinateChanged",
+        "observedPlaySeconds": 55.55109985351562,
+        "sendToObservedMs": 167.099853515625
+      },
+      "responseMoments": {
+        "informationPanelOpened": null,
+        "informationPanelClosed": null,
+        "worldOpened": null,
+        "worldReturned": null,
+        "coordinateChanged": {
+          "observedPlaySeconds": 55.55109985351562,
+          "sendToObservedMs": 167.099853515625
+        },
+        "displayedPointChanged": {
+          "observedPlaySeconds": 55.917199951171874,
+          "sendToObservedMs": 533.199951171875
+        },
+        "storedGoalChanged": null,
+        "toastTextChanged": null
+      },
+      "trustedDownUpClick": [
+        true,
+        true,
+        true
+      ],
+      "downToUpEventTimestampMs": 40.0,
+      "downToUpListenerMs": 1.89990234375,
+      "sendToDownListenerMs": 110.89990234375,
+      "actualTarget": {
+        "id": "pxCanvas",
+        "tag": "CANVAS"
+      },
+      "normalHand": true
+    }
+  ],
+  "metrics": {
+    "actions": 10,
+    "visibleHand": 10,
+    "normalHand": 9,
+    "ACKPairs": 10,
+    "trustedDownUpClickTriples": 10,
+    "complete1100msWindows": 10,
+    "noRecordedResponseFullWindow": 0,
+    "incompleteNoResponseWindows": 0,
+    "coordinateChangedWindows": 10,
+    "worldOpenWindows": 0,
+    "infoOpenWindows": 0,
+    "newStartsAfterDeadline": 0,
+    "lateReleases": 0,
+    "lateCompletions": 0,
+    "firstFeedback": {
+      "action": 1,
+      "kind": "coordinateChanged",
+      "observedPlaySeconds": 0.1582998046875,
+      "sendToObservedMs": 129.2998046875
+    },
+    "firstPositiveVisiblePoints": {
+      "observedAt": 1794768336245.7998,
+      "playSeconds": 0.1577998046875,
+      "phase": "play",
+      "text": "30",
+      "value": 30,
+      "visible": true,
+      "centerUnobscured": true
+    },
+    "firstInputToPositivePointsMs": 128.7998046875,
+    "baselineAlreadyPositive": false,
+    "NodeHoldMs": {
+      "min": 40,
+      "max": 41
+    },
+    "nativeTimestampHoldMs": {
+      "min": 39.899999998509884,
+      "max": 41.0
+    },
+    "listenerHoldMs": {
+      "min": 1.300048828125,
+      "max": 2.199951171875
+    },
+    "startAckMs": {
+      "min": 43,
+      "max": 77
+    },
+    "endAckMs": {
+      "min": 64,
+      "max": 128
+    },
+    "firstResponseLatencyMs": {
+      "min": 102.5,
+      "max": 167.099853515625
+    },
+    "sampleCadence": {
+      "count": 869,
+      "maxConsecutiveGapMs": 269.5,
+      "firstPlaySeconds": 0.0385,
+      "lastPlaySeconds": 59.943
+    },
+    "frameCadence": {
+      "count": 1742,
+      "maxConsecutiveGapMs": 166.699951171875,
+      "firstPlaySeconds": 0.006599853515625,
+      "lastPlaySeconds": 59.97089990234375
+    },
+    "idleReads": 378,
+    "idleReasons": {
+      "no-visible-selectable-cue": 378
+    },
+    "observationToPlayStartMs": 10141,
+    "playWindowMs": 60000,
+    "deadlineCallbackLatenessMs": 0,
+    "traceStopAfterDeadlineMs": 224.89990234375,
+    "reportFinishAfterDeadlineMs": 6665,
+    "rawSamplesAfterDeadline": 4
+  },
+  "errors": {
+    "pageOrConsole": [],
+    "failedRequests": [],
+    "httpErrors": [],
+    "inputErrors": [],
+    "lifecycle": {
+      "pageOrConsole": [],
+      "inputCommands": [],
+      "screenshots": [],
+      "lateNewInputs": [],
+      "unfinishedTouchActions": []
+    },
+    "runIssues": [],
+    "conditionErrors": []
+  },
+  "blockedURLs": [
+    "https://fonts.googleapis.com/css2?family=DotGothic16&display=swap",
+    "https://www.jma.go.jp/bosai/forecast/data/forecast/230000.json",
+    "https://www.jma.go.jp/bosai/amedas/data/latest_time.txt",
+    "https://cyberjapandata.gsi.go.jp/xyz/dem_png/14/14429/6497.png"
+  ],
+  "photos": [
+    {
+      "name": "observe-10s",
+      "phase": "observe",
+      "scheduledSeconds": 10,
+      "file": "/workspace/scratch/first-minute/round-145/preparation-bound145/observe-10s.png",
+      "requestedAt": 1794768335950,
+      "requestedSeconds": 10.003,
+      "completedAt": 1794768336087,
+      "completedSeconds": 10.14
+    },
+    {
+      "name": "play-10s",
+      "phase": "play",
+      "scheduledSeconds": 10,
+      "file": "/workspace/scratch/first-minute/round-145/preparation-bound145/play-10s.png",
+      "requestedAt": 1794768346088,
+      "requestedSeconds": 10,
+      "completedAt": 1794768346281,
+      "completedSeconds": 10.193
+    },
+    {
+      "name": "play-30s",
+      "phase": "play",
+      "scheduledSeconds": 30,
+      "file": "/workspace/scratch/first-minute/round-145/preparation-bound145/play-30s.png",
+      "requestedAt": 1794768366088,
+      "requestedSeconds": 30,
+      "completedAt": 1794768366294,
+      "completedSeconds": 30.206
+    },
+    {
+      "name": "play-60s",
+      "phase": "play",
+      "scheduledSeconds": 60,
+      "file": "/workspace/scratch/first-minute/round-145/preparation-bound145/play-60s.png",
+      "requestedAt": 1794768396088,
+      "requestedSeconds": 60,
+      "completedAt": 1794768396309,
+      "completedSeconds": 60.221
+    }
+  ],
+  "gates": {
+    "sourceBefore": {
+      "verified": true,
+      "localCount": 15,
+      "httpCount": 6,
+      "environmentCount": 16
+    },
+    "sourceAfter": {
+      "verified": true,
+      "localCount": 15,
+      "httpCount": 6,
+      "environmentCount": 16
+    }
+  },
+  "sourceAndEnvironmentStable": true,
+  "servedBytesStable": true,
+  "networkDecisionCounts": {
+    "continue-local": 179,
+    "fulfill-local-leaflet": 2,
+    "fulfill-empty-no-external-request": 6
+  },
+  "nonlocalContinuedRequests": [],
+  "rawTraceCounts": {
+    "samples": 1041,
+    "events": 30,
+    "pointChanges": 48,
+    "infoChanges": 0,
+    "guideChanges": 342,
+    "frames": 2139,
+    "idleReads": 378
+  },
+  "CPU1BeforeNavigation": true,
+  "CPUReset": true,
+  "browserClosed": true,
+  "parseCorrection": {
+    "parseToolChunk": "17e45e",
+    "actualToolExit": 1,
+    "allFiveScriptsParsed": true,
+    "failedCheck": "Root assumed an extra trailing space in serialized driver input. The existing serializer removes trailing whitespace before its single LF.",
+    "differenceOnlyFinalSpace": true,
+    "correctSerializationMatches": true,
+    "browserLaunched": false,
+    "runnerCodeChanged": false,
+    "rootSourceHTTPGateWasCompletedSeparately": "a8209f",
+    "status": "Resolved before execution by checking the actual one-line serialization; preserve the original prepared input."
+  },
+  "runtimeExecutedByAuditor": false,
+  "offlinePythonAnalysisOnly": true,
+  "limits": [
+    "Only this R145 raw dataset supplies numerical results; no R141 outcome reused.",
+    "Input choice follows visible close/return title/hand center. Read-only coordinates/goals inform observation only.",
+    "Coordinate change is not proof of forward route progress or input causality.",
+    "Event timestamps include supplied CDP timestamps; browser listener intervals are separately reported.",
+    "Displayed points are observed visible DOM text, not physical paint, award time, or human comprehension.",
+    "Point mutations contribute to reward extraction but are not in classifier response records; therefore first visible points can precede first classified feedback.",
+    "Idle polls are not failed inputs. After-deadline samples remain raw but are excluded from60s response windows.",
+    "Photo times bracket capture, not a single guaranteed visual frame; auditor did not view PNGs in this numeric task.",
+    "No browser/Node/game/test/HTTP/Git execution by auditor."
+  ]
+}

@@ -1,0 +1,7 @@
+# 固定試験ログ
+
+同じ追加回帰1メソッド21条件はregression-beforeがcanonical不一致でexit1、regression-afterがexit0。21条件は固定testの定義で、stderr上は1メソッドである。
+
+既存test205はbefore8pass、after7pass/1scope failure、元byte不変。失敗の理由は旧scope allowlistの外に配布min/追加testがあるため。pytestはbefore/afterともCLI不在exit127で試験0件。stderrと外側executionは別ファイルに保存した。空stdoutは省略した。
+
+全体Nodeは通常終端まで完了。231終端論理条件中219通過・12失敗、219にはwhole skip3を含む。actual child/outer1/1、timeoutなし、wrapper約28分27秒、child厳密所要時間は独立記録なし。count-audit/notes・execution・child exit・root closureを原byteで添付した。executionのouter=nullはroot-closureのactual1で補い、書き換えていない。原playtest.json（98,082 bytes）をfull-node-playtest.jsonへ元byteで添付し、SHAをprovenance/resultsへ記録した。253groups/231終端条件を再集計できる。既存失敗や未実行を対象試験の成功で置き換えない。

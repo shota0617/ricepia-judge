@@ -3124,7 +3124,7 @@ assert.deepEqual(sweep(), ['sound', 'wig', 'spread']);
 // 粒を押した なで・取り消された指・広げた後・ぜんぶ取った後 は数えない
 hitPile = true; assert.deepEqual(sweep(), []); hitPile = false;
 assert.deepEqual(sweep(true), []);
-spread = true; assert.deepEqual(sweep(), []); spread = false;
+spread = true; assert.deepEqual(sweep(), ['sound', 'wig']); spread = false;   // 広げた後は 広げる空振りに 数えない（サイクル167: トンの音と 粒のゆれ は 返す。つまむ の 空振りは test_cycle167_... が 見る）
 badLeft = 0; assert.deepEqual(sweep(), []); badLeft = 2;
 // 動かさないタップは 今までどおり（皿をたたく＋広げる空振り）
 calls = []; on.pointerdown({ pointerId:1, clientX:40, clientY:40, target:plate }); endPlatePointer({ pointerId:1, clientX:41, clientY:40 }, false);
@@ -4739,6 +4739,99 @@ setStep(4, ''); assert.equal(stepName.textContent, 'きめる'); setStep(0, '');
 // 画面が かくれた
 setStep(1, ''); hidden = true; vis.forEach(f => f()); assert.equal(stepName.textContent, 'はかる'); assert.ok(!cls.has('chk'));
 assert.equal(q.length, 0);                                               // タイマーは のこらない
+""")
+
+
+    # ---- サイクル167（さわった のに 何も 返らない 2つ）----
+
+    def _plate167(self, body):
+        fn = HTML[HTML.index("const pts = new Map();"):HTML.index("/* 振る:")]
+        self._node150("""
+const assert = require('node:assert/strict');
+let step = 2, spread = true, badLeft = 2, motion = 1, lastGoodTap = 0, lastGoodX = 0, lastGoodY = 0, brushHit = false, now = 0;
+const Z = { s:1, tx:0, ty:0 }, ZOOM_MAX = 3.4, token = { hidden:true }, performance = { now: () => now };
+const calls = []; const c = k => () => { calls.push(k); };
+const knockSound = c('knock'), pickMiss = c('miss'), nudgeSpread = c('spread'), knockPlate = c('knockPlate'), tapGrain = c('tapGrain'), flickGrain = c('flick'), zoomTo = c('zoom'), resetZoom = c('reset');
+const applyZoom = () => {}, stopSmoothZoom = () => {}, capture = () => {}, guideOff = () => {}, twistPlate = c('twist'), pageFinger = () => false, pageSlid = () => false;
+const toLocal = (x, y) => ({ x, y }), grainAt = () => null, brush = () => brushHit;
+const on = {}; const plate = { clientLeft:0, clientTop:0, getBoundingClientRect: () => ({ left:0, top:0 }), addEventListener(t, f) { on[t] = f; } };
+const zoomBtn = { hidden:false, animate: (k, o) => { calls.push('zoomBtnShake'); return {}; } };
+const mk = () => ({ gone:false, img:{ offsetWidth:0, classList:{ remove() {}, add(x) { if (x === 'wig') calls.push('wig'); } } } });
+const grains = [mk(), mk()];
+""" + fn + """
+const down = (id, x, y) => on.pointerdown({ pointerId:id, clientX:x, clientY:y, target:{} });
+const move = (id, x, y) => on.pointermove({ pointerId:id, clientX:x, clientY:y });
+const up = (id, x, y) => endPlatePointer({ pointerId:id, clientX:x, clientY:y, type:'pointerup' }, false);
+const cancel = id => endPlatePointer({ pointerId:id, type:'pointercancel' }, true);
+const n = k => calls.filter(x => x === k).length, take = () => calls.splice(0);
+""" + body)
+
+    def test_cycle167_missed_sweep_while_picking_answers(self):
+        # つまむ（広げた あと）で 皿の 粒が 無い 所を なぞって 離すと、音も 動きも 0 だった（9回中7回）。
+        # 粒の 無い 所の タップと 同じ 返し（トン・粒の ゆれ・つまむ の 空振り）。粒に 当たった なで・寄って いる 間の なで（見る場所が 動く）・取り消しは 今までどおり
+        self._plate167("""
+down(1, 100, 100); for (let x = 110; x <= 200; x += 10) move(1, x, 100); up(1, 200, 100);
+assert.equal(n('knock'), 1, '広げた あと 粒の 無い 所を なでても 音が 返らない'); assert.ok(n('wig') > 0); assert.equal(n('miss'), 1);
+assert.equal(n('spread'), 0); assert.equal(badLeft, 2); take();              // 粒は 取らない・広げる 数えは さわらない
+brushHit = true; down(1, 100, 100); for (let x = 110; x <= 200; x += 10) move(1, x, 100); up(1, 200, 100);
+assert.deepEqual(take(), []); brushHit = false;                              // 粒を 押せた なでは 粒が 動く（余分な 音なし）
+Z.s = 2; down(1, 100, 100); for (let x = 110; x <= 200; x += 10) move(1, x, 100); up(1, 200, 100);
+assert.equal(n('knock'), 0); take(); Z.s = 1;                               // 寄って いる 間は 見る場所が 動く
+down(1, 100, 100); for (let x = 110; x <= 200; x += 10) move(1, x, 100); cancel(1);
+assert.deepEqual(take(), []);                                                // 取り消しは 数えない
+badLeft = 0; down(1, 100, 100); for (let x = 110; x <= 200; x += 10) move(1, x, 100); up(1, 200, 100);
+assert.deepEqual(take(), []);                                                // ぜんぶ 取った あとの 待ちは 数えない
+""")
+
+    def test_cycle167_still_two_fingers_answer_once(self):
+        # 皿に 2本指を ほぼ 動かさず 置いて 離すと、音も 動きも 0 だった（なでて ひろげる 9回中9回・つまむ 9回中8回）。
+        # 寄りも ひねりも 0 の 2本指が 終わったら、トンの 音 1つ と 🔍（出て いれば）か 粒の 小さな ゆれ。空振りには 数えない。1回の 2本指で 1回 だけ
+        self._plate167("""
+down(1, 100, 100); down(2, 160, 100); up(1, 100, 100); up(2, 160, 100);
+assert.equal(n('knock'), 1, '動かさない 2本指に 音が 返らない'); assert.ok(n('wig') > 0);
+assert.equal(n('miss') + n('spread') + n('tapGrain') + n('knockPlate'), 0); take();   // 空振りに 数えない・つままない
+// 3本め まで 置いても 1回
+down(1, 100, 100); down(2, 160, 100); down(3, 130, 160); up(3, 130, 160); up(1, 100, 100); up(2, 160, 100);
+assert.equal(n('knock'), 1); take();
+// 寄せた・ひねった 2本指は 鳴らさない（寄り・回りが 返し）
+down(1, 100, 100); down(2, 160, 100); move(2, 260, 100); up(1, 100, 100); up(2, 260, 100);
+assert.ok(Z.s > 1.5); assert.equal(n('knock'), 0); take(); Z.s = 1;
+down(1, 100, 100); down(2, 160, 100); move(2, 150, 140); up(1, 100, 100); up(2, 150, 140);
+assert.equal(n('knock'), 0); assert.ok(n('twist') > 0); take();
+// 取り消された 指では 鳴らさない
+down(1, 100, 100); down(2, 160, 100); cancel(1); up(2, 160, 100);
+assert.deepEqual(take(), []);
+// 広げる 前（🔍 が まだ 無い）: 粒が ゆれる・広げる 数えは さわらない
+spread = false; zoomBtn.hidden = true;
+down(1, 100, 100); down(2, 160, 100); up(2, 160, 100); up(1, 100, 100);
+assert.equal(n('knock'), 1); assert.ok(n('wig') > 0); assert.equal(n('spread'), 0);
+""")
+
+    def test_cycle167b_pinch_that_moved_and_came_back_stays_quiet(self):
+        # Codex・レビュー PR #1209: さいごの 差 だけ 見て いた ため、寄せて もどす・ひねって もどす・寄った まま 2本指で ずらす と、
+        # 「動かさず 置いた」と まちがえて 余分な トンと ゆれ が 出た。この 2本指で 一度でも 動いたら 鳴らさない。本当に 動かさない 2本指は 今までどおり 1回
+        self._plate167("""
+// 寄せて もどす
+down(1, 100, 100); down(2, 160, 100); move(2, 240, 100); move(2, 160, 100); up(1, 100, 100); up(2, 160, 100);
+assert.equal(Z.s, 1); assert.equal(n('knock'), 0, '寄せて もどした 2本指で 鳴った'); take();
+// ひねって もどす（間隔は 同じ）
+down(1, 100, 100); down(2, 160, 100); move(2, 130, 130); move(2, 160, 100); up(1, 100, 100); up(2, 160, 100);
+assert.equal(n('knock'), 0, 'ひねって もどした 2本指で 鳴った'); take();
+// 寄った まま 2本指で ずらす（間隔は 同じ・見る場所が 動く）
+Z.s = 2;
+down(1, 100, 100); down(2, 160, 100); for (let k = 1; k <= 5; k++) { move(1, 100 + k * 10, 100); move(2, 160 + k * 10, 100); }
+up(1, 150, 100); up(2, 210, 100);
+assert.equal(n('knock'), 0, '寄った まま 2本指で ずらして 鳴った'); take(); Z.s = 1;
+// 取り消した あとの 新しい 2本指は 旗を のこさない（動かさなければ 1回）
+down(1, 100, 100); down(2, 160, 100); move(2, 240, 100); cancel(1); up(2, 240, 100); take(); Z.s = 1;
+down(1, 100, 100); down(2, 160, 100); up(1, 100, 100); up(2, 160, 100);
+assert.equal(n('knock'), 1, '動かさない 2本指で 鳴らない'); take();
+// 少し ふるえる だけ（8px 以内・寄り 1% 未満）の 2本指も 1回
+down(1, 100, 100); down(2, 160, 100); move(1, 101, 101); move(2, 160, 101); up(1, 101, 101); up(2, 160, 101);
+assert.equal(n('knock'), 1); take();
+// Codex PR #1209: 3本指の とちゅうで 1本が 取り消された ピンチ では 鳴らさない（のこりの 指を ふつうに はなしても）
+down(1, 100, 100); down(2, 160, 100); down(3, 130, 160); cancel(1); up(2, 160, 100); up(3, 130, 160);
+assert.equal(n('knock'), 0, '取り消しの あった 3本指で 鳴った');
 """)
 
 if __name__ == "__main__":

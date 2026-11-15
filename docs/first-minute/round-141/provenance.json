@@ -1,0 +1,803 @@
+{
+  "atUTC": "2026-11-15T15:56:06.308553+00:00",
+  "rawSources": {
+    "beforeRaw": {
+      "path": "/workspace/scratch/first-minute/round-141/world-label-repeat10-v2/old/follow.json",
+      "SHA256": "ce92c1311a3409465ba028bf8f283635597bca7ce94ff521afa65cc99968c3d9"
+    },
+    "beforeRunResult": {
+      "path": "/workspace/scratch/first-minute/round-141/world-label-repeat10-v2/old/run-result.json",
+      "SHA256": "e4e7b16f3ce5f2894209515e97d8077bdfb1c11ccd6bf24bc2ea903fe57cdb05"
+    },
+    "afterRaw": {
+      "path": "/workspace/scratch/first-minute/round-141/world-label-repeat10-v2/new/follow.json",
+      "SHA256": "b0ce408918324f8398e819a57e02b153d397c74bbdf065b9d33ab9394f08d1d8"
+    },
+    "afterRunResult": {
+      "path": "/workspace/scratch/first-minute/round-141/world-label-repeat10-v2/new/run-result.json",
+      "SHA256": "ac74803825dc5d171368217e993c51c2e5b3408fe42b59b588a40b28bf2a3ce4"
+    },
+    "primaryRaw": {
+      "path": "/workspace/scratch/first-minute/round-141/preparation/follow.json",
+      "SHA256": "f037ffcf9d35742cd47747d5745b31b26c480471a25b90a923fa92509b877e97"
+    },
+    "primaryAudit": {
+      "path": "/workspace/scratch/first-minute/round-141/discovery-a/summary.json",
+      "SHA256": "a4e8c4cc099a2787909be72571abac0b60cea8dbde373cb46a2b6da10c12dcbb"
+    },
+    "primaryClosure": {
+      "path": "/workspace/scratch/first-minute/round-141/preparation/root-after-gate.json",
+      "SHA256": "a09332b996c8f71838696e11b41b37fcf438e91c7834f4e5903b5beae24ff1d3"
+    },
+    "beforeClosure": {
+      "path": "/workspace/scratch/first-minute/round-141/world-label-repeat10-v2/root-old-closure.json",
+      "SHA256": "3aad18e79466682df12366e0afa5b9d31a3510bfaa655d6aee45d108bdb562ca"
+    },
+    "afterClosure": {
+      "path": "/workspace/scratch/first-minute/round-141/world-label-repeat10-v2/root-new-closure.json",
+      "SHA256": "8860172d351cf553a87dc6287cf0574bbd6c58d5312a0ae4397b2caa37a0fdcc"
+    },
+    "oldUnit": {
+      "path": "/workspace/scratch/first-minute/round-141/regression-results/old-red-v2-audit.json",
+      "SHA256": "837c1695e41357a44e58a5e10cd98d913a01d689472386f0ee6899a9f038efcd"
+    },
+    "newUnit": {
+      "path": "/workspace/scratch/first-minute/round-141/regression-results/new-green-v2-2.json",
+      "SHA256": "2d76d4f62091cff745cef4501ce66c6459a0fd125dc5464e6a9ec68dbab383f6"
+    },
+    "newCollectionError": {
+      "path": "/workspace/scratch/first-minute/round-141/regression-results/new-green-v2-collection-error.json",
+      "SHA256": "5eac79da523edf340ebc3737d6ae3c0f4c5db87699466a19172f9b7c15ec1971"
+    },
+    "layoutBefore": {
+      "path": "/workspace/scratch/first-minute/round-141/world-label-layout/before-output/report.json",
+      "SHA256": "fe6803e74f4a77d50953869083870020a91c62b7d1d0c8c486f781a8b012ef9a"
+    },
+    "layoutAfter": {
+      "path": "/workspace/scratch/first-minute/round-141/world-label-layout/after-output/report.json",
+      "SHA256": "fcdc12ba2d6f1bdb8ac850f74417137bd84c235fa6d207d2f995621c1c3854d5"
+    },
+    "layoutPair": {
+      "path": "/workspace/scratch/first-minute/round-141/world-label-layout/paired-result.json",
+      "SHA256": "66423bcf84e7a4465ac779cce706f6c31dbf0c9b6afbc0172d64993eb51e1ecd"
+    },
+    "layoutIndependentNotes": {
+      "path": "/workspace/scratch/first-minute/round-141/world-label-layout/after-image-audit/notes.md",
+      "SHA256": "7f5d8768e4dd2fadda4c79c2131b2595352582e244051f2e34b8d1fc78693035"
+    },
+    "layoutIndependentManifest": {
+      "path": "/workspace/scratch/first-minute/round-141/world-label-layout/after-image-audit/manifest.json",
+      "SHA256": "c357d82530f46af6de62900fe13b3124f4ffe54e7207627e0c5e82c7a7c34700"
+    },
+    "relatedBefore": {
+      "path": "/workspace/scratch/first-minute/round-141/related-baseline/result.json",
+      "SHA256": "6c481637b93a439758cda19099fd17ae09ee131153e0d4627560b0c18e914074"
+    },
+    "relatedAfter": {
+      "path": "/workspace/scratch/first-minute/round-141/related-after/result.json",
+      "SHA256": "f1681b5e73b4ae2abe166d5f711bc5039f2758f745646ecc2d08dd7adf398336"
+    },
+    "pytestAfter": {
+      "path": "/workspace/scratch/first-minute/round-141/pytest-after.json",
+      "SHA256": "93ba64e43adc7b2a6e0b8a494af0158fbe984ddabb3c09aa021c67ed59ffe627"
+    },
+    "staticProductAudit": {
+      "path": "/workspace/scratch/first-minute/round-141/static-product-review/audit.json",
+      "SHA256": "ef983592cd7a6dca43b73dbc59934ffdeaa2c1169d949ed2eebb6b89c474e8e9"
+    },
+    "oldExploration": {
+      "path": "/workspace/scratch/first-minute/round-141/world-label-repeat10/root-old-closure.json",
+      "SHA256": "6d6051a6b0e27fa9938d6757f7b87aae4d3f4c519160c215e2ae80ed360dc339"
+    },
+    "initialOldFixtureFailure": {
+      "path": "/workspace/scratch/first-minute/round-141/regression-results/old-red.json",
+      "SHA256": "d4306bd776ecdfe8892bb82e2e4cc3a60be2ba01394edc36eaa60a636bbb6a30"
+    },
+    "introDiagnosis": {
+      "path": "/workspace/scratch/first-minute/round-141/regression-results/covered-diagnostic-01/covered-before-touch.json",
+      "SHA256": "294f13fcfd3264604ff1b9b99904cc0e92b2c8acf2375553f553d04ed36233a2"
+    },
+    "verifiedNewUnitStdout": {
+      "path": "/workspace/scratch/first-minute/round-141/regression-results/new-green-v2-2.stdout.log",
+      "SHA256": "1045ce6aa96af2f78ae3db354878a54f0476bdf2b923740f61a5d187a0fe658b"
+    },
+    "verifiedNewUnitStderr": {
+      "path": "/workspace/scratch/first-minute/round-141/regression-results/new-green-v2-2.stderr.log",
+      "SHA256": "7c846a7607601086eb26e1107d016320d95ffea21e06d6f564e97b707b198950"
+    },
+    "relatedAfterLog": {
+      "path": "/workspace/scratch/first-minute/round-141/related-after/run.log",
+      "SHA256": "f6cbcddf8da24eab2e5f9e0a8182146df5c41123f746f1dd12cbeea0e34505d8"
+    },
+    "requiredNodePreparationOnly": {
+      "path": "/workspace/scratch/first-minute/round-141/required-checks-prep/manifest.json",
+      "SHA256": "38b83ccf4a24cc3be16feb7e3390c24739794b05b613ad6744ece80a53619d1c"
+    },
+    "fullNodeExecution": {
+      "path": "/workspace/scratch/first-minute/round-141/full-node-runtime/execution.json",
+      "SHA256": "3b85800a9ba683b2fc988f19be25178eca03292a15457d3a2341c90e243baca9"
+    },
+    "fullNodeClosure": {
+      "path": "/workspace/scratch/first-minute/round-141/full-node-runtime/root-closure.json",
+      "SHA256": "baff36bd80b367154a31eb3b3091b75d5922036558793ae08cd2829d04177f75"
+    },
+    "fullNodeRaw": {
+      "path": "/workspace/scratch/first-minute/round-141/full-node-runtime/artifacts/playtest.json",
+      "SHA256": "e8fd0af142bcca939b06d9c9df9ea5cd17f89215c771d4ec00de47f9db5ee86b"
+    },
+    "fullNodeCountAudit": {
+      "path": "/workspace/scratch/first-minute/round-141/full-node-runtime/count-audit.json",
+      "SHA256": "7daf4aefc938ecc6f1183f2f139158777d610ad196c72f48d782b1f1d378a0bd"
+    },
+    "fullNodeCountAuditNotes": {
+      "path": "/workspace/scratch/first-minute/round-141/full-node-runtime/count-audit-notes.md",
+      "SHA256": "817be3647881ddee99c136d97844b18fd1b9b3425a6c2289807e725dd817a251"
+    },
+    "fullNodeSource": {
+      "path": "/workspace/ricepia-firstminute-round141/tools/playtest.js",
+      "SHA256": "138a490e72d206e10dbb3e6b84eae43c88330e2598a3382f18605605d710b83e"
+    }
+  },
+  "trialExtractions": [
+    {
+      "destination": "results.json#/pairedRepeat/before/trials/0",
+      "sourceKey": "beforeRaw",
+      "trialJSONPath": "$.repeat.trials[0]",
+      "entryAction": 1,
+      "returnAction": 2,
+      "actionJSONPaths": [
+        "$.actions[0]",
+        "$.actions[1]"
+      ],
+      "eventArrayIndices": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "summarySourceKey": "beforeRunResult",
+      "summaryRowJSONPaths": [
+        "$.summary.rows[0]",
+        "$.summary.rows[1]"
+      ]
+    },
+    {
+      "destination": "results.json#/pairedRepeat/before/trials/1",
+      "sourceKey": "beforeRaw",
+      "trialJSONPath": "$.repeat.trials[1]",
+      "entryAction": 3,
+      "returnAction": 4,
+      "actionJSONPaths": [
+        "$.actions[2]",
+        "$.actions[3]"
+      ],
+      "eventArrayIndices": [
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ],
+      "summarySourceKey": "beforeRunResult",
+      "summaryRowJSONPaths": [
+        "$.summary.rows[2]",
+        "$.summary.rows[3]"
+      ]
+    },
+    {
+      "destination": "results.json#/pairedRepeat/before/trials/2",
+      "sourceKey": "beforeRaw",
+      "trialJSONPath": "$.repeat.trials[2]",
+      "entryAction": 5,
+      "returnAction": 6,
+      "actionJSONPaths": [
+        "$.actions[4]",
+        "$.actions[5]"
+      ],
+      "eventArrayIndices": [
+        12,
+        13,
+        14,
+        15,
+        16,
+        17
+      ],
+      "summarySourceKey": "beforeRunResult",
+      "summaryRowJSONPaths": [
+        "$.summary.rows[4]",
+        "$.summary.rows[5]"
+      ]
+    },
+    {
+      "destination": "results.json#/pairedRepeat/before/trials/3",
+      "sourceKey": "beforeRaw",
+      "trialJSONPath": "$.repeat.trials[3]",
+      "entryAction": 7,
+      "returnAction": 8,
+      "actionJSONPaths": [
+        "$.actions[6]",
+        "$.actions[7]"
+      ],
+      "eventArrayIndices": [
+        18,
+        19,
+        20,
+        21,
+        22,
+        23
+      ],
+      "summarySourceKey": "beforeRunResult",
+      "summaryRowJSONPaths": [
+        "$.summary.rows[6]",
+        "$.summary.rows[7]"
+      ]
+    },
+    {
+      "destination": "results.json#/pairedRepeat/before/trials/4",
+      "sourceKey": "beforeRaw",
+      "trialJSONPath": "$.repeat.trials[4]",
+      "entryAction": 9,
+      "returnAction": 10,
+      "actionJSONPaths": [
+        "$.actions[8]",
+        "$.actions[9]"
+      ],
+      "eventArrayIndices": [
+        24,
+        25,
+        26,
+        27,
+        28,
+        29
+      ],
+      "summarySourceKey": "beforeRunResult",
+      "summaryRowJSONPaths": [
+        "$.summary.rows[8]",
+        "$.summary.rows[9]"
+      ]
+    },
+    {
+      "destination": "results.json#/pairedRepeat/before/trials/5",
+      "sourceKey": "beforeRaw",
+      "trialJSONPath": "$.repeat.trials[5]",
+      "entryAction": 11,
+      "returnAction": 12,
+      "actionJSONPaths": [
+        "$.actions[10]",
+        "$.actions[11]"
+      ],
+      "eventArrayIndices": [
+        30,
+        31,
+        32,
+        33,
+        34,
+        35
+      ],
+      "summarySourceKey": "beforeRunResult",
+      "summaryRowJSONPaths": [
+        "$.summary.rows[10]",
+        "$.summary.rows[11]"
+      ]
+    },
+    {
+      "destination": "results.json#/pairedRepeat/before/trials/6",
+      "sourceKey": "beforeRaw",
+      "trialJSONPath": "$.repeat.trials[6]",
+      "entryAction": 13,
+      "returnAction": 14,
+      "actionJSONPaths": [
+        "$.actions[12]",
+        "$.actions[13]"
+      ],
+      "eventArrayIndices": [
+        36,
+        37,
+        38,
+        39,
+        40,
+        41
+      ],
+      "summarySourceKey": "beforeRunResult",
+      "summaryRowJSONPaths": [
+        "$.summary.rows[12]",
+        "$.summary.rows[13]"
+      ]
+    },
+    {
+      "destination": "results.json#/pairedRepeat/before/trials/7",
+      "sourceKey": "beforeRaw",
+      "trialJSONPath": "$.repeat.trials[7]",
+      "entryAction": 15,
+      "returnAction": 16,
+      "actionJSONPaths": [
+        "$.actions[14]",
+        "$.actions[15]"
+      ],
+      "eventArrayIndices": [
+        42,
+        43,
+        44,
+        45,
+        46,
+        47
+      ],
+      "summarySourceKey": "beforeRunResult",
+      "summaryRowJSONPaths": [
+        "$.summary.rows[14]",
+        "$.summary.rows[15]"
+      ]
+    },
+    {
+      "destination": "results.json#/pairedRepeat/before/trials/8",
+      "sourceKey": "beforeRaw",
+      "trialJSONPath": "$.repeat.trials[8]",
+      "entryAction": 17,
+      "returnAction": 18,
+      "actionJSONPaths": [
+        "$.actions[16]",
+        "$.actions[17]"
+      ],
+      "eventArrayIndices": [
+        48,
+        49,
+        50,
+        51,
+        52,
+        53
+      ],
+      "summarySourceKey": "beforeRunResult",
+      "summaryRowJSONPaths": [
+        "$.summary.rows[16]",
+        "$.summary.rows[17]"
+      ]
+    },
+    {
+      "destination": "results.json#/pairedRepeat/before/trials/9",
+      "sourceKey": "beforeRaw",
+      "trialJSONPath": "$.repeat.trials[9]",
+      "entryAction": 19,
+      "returnAction": 20,
+      "actionJSONPaths": [
+        "$.actions[18]",
+        "$.actions[19]"
+      ],
+      "eventArrayIndices": [
+        54,
+        55,
+        56,
+        57,
+        58,
+        59
+      ],
+      "summarySourceKey": "beforeRunResult",
+      "summaryRowJSONPaths": [
+        "$.summary.rows[18]",
+        "$.summary.rows[19]"
+      ]
+    },
+    {
+      "destination": "results.json#/pairedRepeat/after/trials/0",
+      "sourceKey": "afterRaw",
+      "trialJSONPath": "$.repeat.trials[0]",
+      "entryAction": 1,
+      "returnAction": 2,
+      "actionJSONPaths": [
+        "$.actions[0]",
+        "$.actions[1]"
+      ],
+      "eventArrayIndices": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "summarySourceKey": "afterRunResult",
+      "summaryRowJSONPaths": [
+        "$.summary.rows[0]",
+        "$.summary.rows[1]"
+      ]
+    },
+    {
+      "destination": "results.json#/pairedRepeat/after/trials/1",
+      "sourceKey": "afterRaw",
+      "trialJSONPath": "$.repeat.trials[1]",
+      "entryAction": 3,
+      "returnAction": 4,
+      "actionJSONPaths": [
+        "$.actions[2]",
+        "$.actions[3]"
+      ],
+      "eventArrayIndices": [
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ],
+      "summarySourceKey": "afterRunResult",
+      "summaryRowJSONPaths": [
+        "$.summary.rows[2]",
+        "$.summary.rows[3]"
+      ]
+    },
+    {
+      "destination": "results.json#/pairedRepeat/after/trials/2",
+      "sourceKey": "afterRaw",
+      "trialJSONPath": "$.repeat.trials[2]",
+      "entryAction": 5,
+      "returnAction": 6,
+      "actionJSONPaths": [
+        "$.actions[4]",
+        "$.actions[5]"
+      ],
+      "eventArrayIndices": [
+        12,
+        13,
+        14,
+        15,
+        16,
+        17
+      ],
+      "summarySourceKey": "afterRunResult",
+      "summaryRowJSONPaths": [
+        "$.summary.rows[4]",
+        "$.summary.rows[5]"
+      ]
+    },
+    {
+      "destination": "results.json#/pairedRepeat/after/trials/3",
+      "sourceKey": "afterRaw",
+      "trialJSONPath": "$.repeat.trials[3]",
+      "entryAction": 7,
+      "returnAction": 8,
+      "actionJSONPaths": [
+        "$.actions[6]",
+        "$.actions[7]"
+      ],
+      "eventArrayIndices": [
+        18,
+        19,
+        20,
+        21,
+        22,
+        23
+      ],
+      "summarySourceKey": "afterRunResult",
+      "summaryRowJSONPaths": [
+        "$.summary.rows[6]",
+        "$.summary.rows[7]"
+      ]
+    },
+    {
+      "destination": "results.json#/pairedRepeat/after/trials/4",
+      "sourceKey": "afterRaw",
+      "trialJSONPath": "$.repeat.trials[4]",
+      "entryAction": 9,
+      "returnAction": 10,
+      "actionJSONPaths": [
+        "$.actions[8]",
+        "$.actions[9]"
+      ],
+      "eventArrayIndices": [
+        24,
+        25,
+        26,
+        27,
+        28,
+        29
+      ],
+      "summarySourceKey": "afterRunResult",
+      "summaryRowJSONPaths": [
+        "$.summary.rows[8]",
+        "$.summary.rows[9]"
+      ]
+    },
+    {
+      "destination": "results.json#/pairedRepeat/after/trials/5",
+      "sourceKey": "afterRaw",
+      "trialJSONPath": "$.repeat.trials[5]",
+      "entryAction": 11,
+      "returnAction": 12,
+      "actionJSONPaths": [
+        "$.actions[10]",
+        "$.actions[11]"
+      ],
+      "eventArrayIndices": [
+        30,
+        31,
+        32,
+        33,
+        34,
+        35
+      ],
+      "summarySourceKey": "afterRunResult",
+      "summaryRowJSONPaths": [
+        "$.summary.rows[10]",
+        "$.summary.rows[11]"
+      ]
+    },
+    {
+      "destination": "results.json#/pairedRepeat/after/trials/6",
+      "sourceKey": "afterRaw",
+      "trialJSONPath": "$.repeat.trials[6]",
+      "entryAction": 13,
+      "returnAction": 14,
+      "actionJSONPaths": [
+        "$.actions[12]",
+        "$.actions[13]"
+      ],
+      "eventArrayIndices": [
+        36,
+        37,
+        38,
+        39,
+        40,
+        41
+      ],
+      "summarySourceKey": "afterRunResult",
+      "summaryRowJSONPaths": [
+        "$.summary.rows[12]",
+        "$.summary.rows[13]"
+      ]
+    },
+    {
+      "destination": "results.json#/pairedRepeat/after/trials/7",
+      "sourceKey": "afterRaw",
+      "trialJSONPath": "$.repeat.trials[7]",
+      "entryAction": 15,
+      "returnAction": 16,
+      "actionJSONPaths": [
+        "$.actions[14]",
+        "$.actions[15]"
+      ],
+      "eventArrayIndices": [
+        42,
+        43,
+        44,
+        45,
+        46,
+        47
+      ],
+      "summarySourceKey": "afterRunResult",
+      "summaryRowJSONPaths": [
+        "$.summary.rows[14]",
+        "$.summary.rows[15]"
+      ]
+    },
+    {
+      "destination": "results.json#/pairedRepeat/after/trials/8",
+      "sourceKey": "afterRaw",
+      "trialJSONPath": "$.repeat.trials[8]",
+      "entryAction": 17,
+      "returnAction": 18,
+      "actionJSONPaths": [
+        "$.actions[16]",
+        "$.actions[17]"
+      ],
+      "eventArrayIndices": [
+        48,
+        49,
+        50,
+        51,
+        52,
+        53
+      ],
+      "summarySourceKey": "afterRunResult",
+      "summaryRowJSONPaths": [
+        "$.summary.rows[16]",
+        "$.summary.rows[17]"
+      ]
+    },
+    {
+      "destination": "results.json#/pairedRepeat/after/trials/9",
+      "sourceKey": "afterRaw",
+      "trialJSONPath": "$.repeat.trials[9]",
+      "entryAction": 19,
+      "returnAction": 20,
+      "actionJSONPaths": [
+        "$.actions[18]",
+        "$.actions[19]"
+      ],
+      "eventArrayIndices": [
+        54,
+        55,
+        56,
+        57,
+        58,
+        59
+      ],
+      "summarySourceKey": "afterRunResult",
+      "summaryRowJSONPaths": [
+        "$.summary.rows[18]",
+        "$.summary.rows[19]"
+      ]
+    }
+  ],
+  "images": [
+    {
+      "path": "images/primary-observe-10s.png",
+      "sourcePath": "/workspace/scratch/first-minute/round-141/preparation/observe-10s.png",
+      "SHA256": "d7d1a9e24089cee3590bdd2af50ba0467225cce23ecee7957802fc0ff96e86eb",
+      "bytes": 146752,
+      "exactCopy": true,
+      "scope": "Original pre-change primary, all walking-map frames; AX not shown",
+      "sourceLocator": null
+    },
+    {
+      "path": "images/primary-play-10s.png",
+      "sourcePath": "/workspace/scratch/first-minute/round-141/preparation/play-10s.png",
+      "SHA256": "bfae87bd812715bc89393b59445226eea690117110a6c6071338022588f077ac",
+      "bytes": 162465,
+      "exactCopy": true,
+      "scope": "Original pre-change primary, all walking-map frames; AX not shown",
+      "sourceLocator": null
+    },
+    {
+      "path": "images/primary-play-30s.png",
+      "sourcePath": "/workspace/scratch/first-minute/round-141/preparation/play-30s.png",
+      "SHA256": "d8953b0ba5410086e4e8f93a1a48c0b2bb7edb7a2619e7499087aa9b28045cac",
+      "bytes": 149131,
+      "exactCopy": true,
+      "scope": "Original pre-change primary, all walking-map frames; AX not shown",
+      "sourceLocator": null
+    },
+    {
+      "path": "images/primary-play-60s.png",
+      "sourcePath": "/workspace/scratch/first-minute/round-141/preparation/play-60s.png",
+      "SHA256": "f804b844196a26d60deb275321cb6325de83fe61d9119e090bf25bffb7c3cc45",
+      "bytes": 172542,
+      "exactCopy": true,
+      "scope": "Original pre-change primary, all walking-map frames; AX not shown",
+      "sourceLocator": null
+    },
+    {
+      "path": "images/world-before.png",
+      "sourcePath": "/workspace/scratch/first-minute/round-141/world-label-repeat10-v2/old/world-02-before.png",
+      "SHA256": "78edf867731b517f26837b3b1c9e45ba4227b536a6cc884db263bc6f993bb858",
+      "bytes": 62060,
+      "exactCopy": true,
+      "scope": "World state immediately before return trial2 (requested600ms); same operation, not guaranteed same frame/seed",
+      "sourceLocator": "beforeRaw $.repeat.trials[1].beforePhoto"
+    },
+    {
+      "path": "images/world-after.png",
+      "sourcePath": "/workspace/scratch/first-minute/round-141/world-label-repeat10-v2/new/world-02-before.png",
+      "SHA256": "5aa30fe49dba5a78e9ddc256314f53f09ca89d261a7d8d6f9a25d3bc4a99d6d3",
+      "bytes": 62109,
+      "exactCopy": true,
+      "scope": "World state immediately before return trial2 (requested600ms); same operation, not guaranteed same frame/seed",
+      "sourceLocator": "afterRaw $.repeat.trials[1].beforePhoto"
+    },
+    {
+      "path": "images/layout-before-320x568.png",
+      "sourcePath": "/workspace/scratch/first-minute/round-141/world-label-layout/before-output/01-320x568/world-open.png",
+      "SHA256": "aa1432e97091e67a3f7f341ec83c77dcf1135a5a0334944168bc37f02f708643",
+      "bytes": 60152,
+      "exactCopy": true,
+      "scope": "Explicit setWorld fixture world-open state; not natural primary/repeat10",
+      "sourceLocator": "layout-before report $.cases[0] world-open"
+    },
+    {
+      "path": "images/layout-after-320x568.png",
+      "sourcePath": "/workspace/scratch/first-minute/round-141/world-label-layout/after-output/01-320x568/world-open.png",
+      "SHA256": "028c8005ecc06e480e329a72da7fbfdc4d19e8701100aabf8f8ce750fab0a424",
+      "bytes": 61622,
+      "exactCopy": true,
+      "scope": "Explicit setWorld fixture world-open state; not natural primary/repeat10",
+      "sourceLocator": "layout-after report $.cases[0] world-open"
+    },
+    {
+      "path": "images/layout-before-390x844.png",
+      "sourcePath": "/workspace/scratch/first-minute/round-141/world-label-layout/before-output/02-390x844/world-open.png",
+      "SHA256": "972c2fcf76507f07471ba5941f32841881ba86050b0f5896a38fb1604b087c9e",
+      "bytes": 87183,
+      "exactCopy": true,
+      "scope": "Explicit setWorld fixture world-open state; not natural primary/repeat10",
+      "sourceLocator": "layout-before report $.cases[1] world-open"
+    },
+    {
+      "path": "images/layout-after-390x844.png",
+      "sourcePath": "/workspace/scratch/first-minute/round-141/world-label-layout/after-output/02-390x844/world-open.png",
+      "SHA256": "78c9ba85d0fbf6a2209785e617ac994aea80994d991c6013129eb8a248ca8c05",
+      "bytes": 88365,
+      "exactCopy": true,
+      "scope": "Explicit setWorld fixture world-open state; not natural primary/repeat10",
+      "sourceLocator": "layout-after report $.cases[1] world-open"
+    },
+    {
+      "path": "images/layout-before-568x320.png",
+      "sourcePath": "/workspace/scratch/first-minute/round-141/world-label-layout/before-output/03-568x320/world-open.png",
+      "SHA256": "501cde1dfc6818a4f2772a78f9da1a690835725ed10843571001b95eccc6463c",
+      "bytes": 52340,
+      "exactCopy": true,
+      "scope": "Explicit setWorld fixture world-open state; not natural primary/repeat10",
+      "sourceLocator": "layout-before report $.cases[2] world-open"
+    },
+    {
+      "path": "images/layout-after-568x320.png",
+      "sourcePath": "/workspace/scratch/first-minute/round-141/world-label-layout/after-output/03-568x320/world-open.png",
+      "SHA256": "9e2926dc7347a8aa673f205d56450e4a1c1435c1ca2e572984e38639cfe10843",
+      "bytes": 52218,
+      "exactCopy": true,
+      "scope": "Explicit setWorld fixture world-open state; not natural primary/repeat10",
+      "sourceLocator": "layout-after report $.cases[2] world-open"
+    },
+    {
+      "path": "images/layout-before-844x390.png",
+      "sourcePath": "/workspace/scratch/first-minute/round-141/world-label-layout/before-output/04-844x390/world-open.png",
+      "SHA256": "9eabd723e0692b17035a6e3606d8fd5ffcbd99b837717513dc12aa70adfd9ff8",
+      "bytes": 80798,
+      "exactCopy": true,
+      "scope": "Explicit setWorld fixture world-open state; not natural primary/repeat10",
+      "sourceLocator": "layout-before report $.cases[3] world-open"
+    },
+    {
+      "path": "images/layout-after-844x390.png",
+      "sourcePath": "/workspace/scratch/first-minute/round-141/world-label-layout/after-output/04-844x390/world-open.png",
+      "SHA256": "6edd08e0cf0fc967dabcfc67a3a19839cf7457cd6e539fff14bc0e800c188d2f",
+      "bytes": 80846,
+      "exactCopy": true,
+      "scope": "Explicit setWorld fixture world-open state; not natural primary/repeat10",
+      "sourceLocator": "layout-after report $.cases[3] world-open"
+    },
+    {
+      "path": "images/layout-before-820x1180.png",
+      "sourcePath": "/workspace/scratch/first-minute/round-141/world-label-layout/before-output/05-820x1180/world-open.png",
+      "SHA256": "bb957d65db1edfa75dbd9befcc167569fa1037ad569ea7a8c1dab1df239f8c3d",
+      "bytes": 230172,
+      "exactCopy": true,
+      "scope": "Explicit setWorld fixture world-open state; not natural primary/repeat10",
+      "sourceLocator": "layout-before report $.cases[4] world-open"
+    },
+    {
+      "path": "images/layout-after-820x1180.png",
+      "sourcePath": "/workspace/scratch/first-minute/round-141/world-label-layout/after-output/05-820x1180/world-open.png",
+      "SHA256": "5f3badf7bcb347b2010d5d0f9b6eff261df23dfe28e1f921b1c870d9f69fb9b8",
+      "bytes": 226073,
+      "exactCopy": true,
+      "scope": "Explicit setWorld fixture world-open state; not natural primary/repeat10",
+      "sourceLocator": "layout-after report $.cases[4] world-open"
+    }
+  ],
+  "originalPNGCount": 16,
+  "allPNGExactCopies": true,
+  "imageTransforms": null,
+  "mainPairViewedByReportPreparer": true,
+  "layoutImagesViewedByIndependentAudit": 15,
+  "copiedFullRawLogs": false,
+  "copiedFullTranscripts": false,
+  "providedReferenceSource": {
+    "path": "/workspace/attachments/e4f8b64f-2f88-4555-a465-5ac8c7193933/ゲーム開発動画_文字起こし_GMTK_20261115.md",
+    "SHA256": "1db50be2482094c159f4fd276ab0e11443f8532e6dfe0ccecc8dddda834ff70a"
+  },
+  "trialExtractionDefinition": "Each result row is matched to raw trial, entry/return action and three native events per action, plus independent ACK+1100ms after-observation check. Raw full follow.json is not copied.",
+  "extractionVerificationTools": [
+    "a5c0d3",
+    "ed4cf9"
+  ],
+  "fullNodeExecutionResult": {
+    "actualChildExit": 1,
+    "actualOuterExit": 1,
+    "outerExitSource": "fullNodeClosure",
+    "executionOuterExitRemainsNull": true,
+    "resultRef": "results.json#/requiredChecks/fullNodeResult"
+  },
+  "includedMachineResult": {
+    "path": "node-playtest.json",
+    "sourcePath": "/workspace/scratch/first-minute/round-141/full-node-runtime/artifacts/playtest.json",
+    "SHA256": "e8fd0af142bcca939b06d9c9df9ea5cd17f89215c771d4ec00de47f9db5ee86b",
+    "exactCopy": true,
+    "scope": "Complete Node result JSON including failures; run.log and full source/dependency snapshots are not copied."
+  },
+  "nullResultSnapshot": {
+    "path": "/workspace/scratch/first-minute/round-141/report-final-snapshots/before-node-completion-20261115T155451Z",
+    "manifestSHA256": "290068d5ac998408d7aa48377ee1ea44788d768588389a22dbcb8255f584480b"
+  }
+}

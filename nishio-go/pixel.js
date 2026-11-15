@@ -9255,6 +9255,7 @@ function setWorld(on) {
   document.body.classList.toggle('pxw', on);
   $('pxWorld').innerHTML = on ? ICO('feet', '👣', '歩く地図') : ICO('globe', '🌏', 'せかいちず');
   $('pxWorld').title = on ? '歩く地図にもどる' : '西尾市ぜんたいの地図';
+  $('pxWorld').setAttribute('aria-label', on ? '歩く地図にもどる' : 'せかいちず（西尾市と となりの市町）');
   $('pxInfo').hidden = true;
   if (on) { wcam = worldCamStart(); worldCamFitGoal(); buildWorld(); }
   try { localStorage.setItem('nsg_world_on', on ? '1' : '0'); } catch (e) { /* noop */ }

@@ -1976,23 +1976,36 @@ function crashFailures(R, fail) {   // 安全網（guardEvaluate）に かかっ
     const stopped = stopMs !== null, stopS = +((stopped ? stopMs : 4000) / 1000).toFixed(1);
     let still = 'no-wall';
     const dbg = { style: await page.evaluate(() => { const k = window.NISHIO_KOROSTYLE && NISHIO_KOROSTYLE.current(); return k ? k.name : ''; }) };   // 落ちたときに 分かるように
-    const wall = (await look()).pop();   // 止まった所から いちばん近い かべ
-    if (wall[1] < 9) {
+    // サイクル220b（確かめを そろえる）：「いちばん近い かべ」は お米の まん中の 線で さがす が、生け垣の かどでは 曲がり角へ みちびく しくみ（rollStep）で
+    // お米が 横へ すべって すき間を ぬけ、その先 12マスほど 転がって、押す 4.5秒の 終わりに やっと 遠くの かべに 着いて はね返って いる ところを はかって 落ちた
+    // （通しの 2回め・サイクル216 の 通し 3回め：ArrowDown・ゆれ 0.37〜0.46・速さ 1.5〜2.7。その 場所から くり返すと main も 枝も 6回中 6回 ぬける。遠くの かべに 止まって から
+    // 押すと 7秒で ゆれ 0.001）。押した かべを こえて いたら（かべに 押しつけて いない）、止まるのを 待って、いまの 所から かべを さがしなおして もう一度 押す（3回まで）。
+    // かべに 押しつけて いる 間に 動かない ことを 見る きまり（ゆれ 0.02・速さ 0.2・押す 4.5秒・10回）は かえない
+    let wall = null, rfTry = 0;
+    for (;;) {
+      wall = (await look()).pop();   // 止まった所から いちばん近い かべ
+      if (wall[1] >= 9) break;
+      const p0 = await page.evaluate(() => [nishioPixel.roll.x, nishioPixel.roll.y]);
       await page.keyboard.down(wall[0]); const pressed = await gameTime(g => (g >= 4500 ? true : undefined));   // かべまで転がって、はね返りが おさまるまで（ゲームの 時計で 4.5秒）
       // かべの向きの位置（速さは 押しつけている間 1こまだけ 少し つくことがあるので、目に見える 位置のゆれで見る）。ゲームの 時計で 0.1秒 おきに 10回
+      await page.evaluate(() => { window.__rfS = null; });   // サイクル220b：押しなおす ときに 前の 10回を 使わない（はじめの こまの g は 0 で ない）
       const smp = (await gameTime((g, ax) => { const S = window.__rfS = g < 1 ? [] : window.__rfS || []; if (g >= (S.length + 1) * 100) { const r = nishioPixel.roll; S.push([Math.abs(ax ? r.vx : r.vy), ax ? r.x : r.y]); } if (S.length >= 10) return S; }, wall[2])) || [];
       const vs = smp.map(x => x[0]), ps = smp.map(x => x[1]);
       await page.keyboard.up(wall[0]);
+      const p1 = await page.evaluate(() => [nishioPixel.roll.x, nishioPixel.roll.y]), along = (wall[2] ? p1[0] - p0[0] : p1[1] - p0[1]) * (wall[2] || wall[3]);
       dbg.spread = +(Math.max(...ps) - Math.min(...ps)).toFixed(3); dbg.vmax = +Math.max(...vs).toFixed(3); dbg.wall = wall[0];
       dbg.samples = smp.length; dbg.pressed = pressed === true;
       still = pressed === true && smp.length === 10 && dbg.spread < 0.02 && dbg.vmax < 0.2;   // さいごの1秒で 0.02マス（約16cm）も動かない。速さも はね返りほどには ない。押す 4.5秒・10回の 採取が 時間切れ（こまが 来ない）なら 確かめられて いないので 落とす
+      if (along <= wall[1] + 0.5 || ++rfTry >= 3) break;   // 押した かべに 着いた（こえて いない）
+      (dbg.passed = dbg.passed || []).push([wall[0], wall[1], +along.toFixed(1)]);
+      await gameTime(g => { const r = nishioPixel.roll; if (r.vx === 0 && r.vy === 0) return g; if (g >= 4000) return null; });   // こえた：止まるのを 待って から さがしなおす
     }
     await page.evaluate(() => nishioPixel.setRoll(false));
     await page.evaluate(left => { if (left > 0) nishioPixel.maze.springOn(left); }, springLeft);   // サイクル217：バネの のこりを もどす
     const rr = await page.evaluate(() => { const r = nishioPixel.roll; return { round: r.round, flat: r.flat, f0: r.flat }; });
     await page.waitForTimeout(500);
     const flatGrew = (await page.evaluate(() => nishioPixel.roll.flat)) - rr.f0;   // 丸いお米が描けるのに、古い絵（平らな お米）を重ねて描いていないか
-    return { stopS, still, spread: dbg.spread, vmax: dbg.vmax, samples: dbg.samples, pressed: dbg.pressed, style: dbg.style, wall: dbg.wall, round: rr.round, flatGrew, ok: stopped && stopS <= 3.5 && still !== false && rr.round && flatGrew === 0 };
+    return { stopS, still, spread: dbg.spread, vmax: dbg.vmax, samples: dbg.samples, pressed: dbg.pressed, style: dbg.style, wall: dbg.wall, ...(dbg.passed ? { passed: dbg.passed } : {}), round: rr.round, flatGrew, ok: stopped && stopS <= 3.5 && still !== false && rr.round && flatGrew === 0 };
   })();
   // お米の 顔：目の きらっ は そのまま。顔は いつも 笑顔（pixel.js「運営者の声（2026-11-03）『かおりちゃんは いつも 笑顔』…顔は いつも smile」）：止まって 何秒 たっても あくび・ねむい 顔に しない
   R.checks.babyRice = await page.evaluate(() => {
@@ -3178,10 +3191,14 @@ function crashFailures(R, fail) {   // 安全網（guardEvaluate）に かかっ
     if (!at) return { ok: true, skipped: 'no-water' };
     const day = nishioGo.state.day || {}, c0 = day.critters || 0;
     if (c0 >= 5) return { ok: true, skipped: 'critter-cap' };
+    // サイクル220b（確かめを そろえる）：前の 確かめ（すずめ・ねこ・カエル などの 生きものの 確かめは お米を 道の すみに 置いて 止めて 待つ）で、置いた 所が 水の となり だと
+    // そこで「じっと見る」が 起きて、きょうの 2回（WATCH_DAILY）を 使いきって いた（通し 2回め：watch 2・出会い 0。この 確かめ だけ 前で 止めた 通しで、生きものの 確かめの 間に 2回 起きた）。
+    // その とき は 水の となりで 待っても もう 出会わない（1日 2回まで は 正しい）。この 確かめの 前に きょうの「じっと見る」の 数を 0 に して はかる（前の 数は watch0 に のこす）
+    const watch0 = day.watch || 0; if (nishioGo.state.day) nishioGo.state.day.watch = 0;
     const ll = P.toLatLng(at[0] + 0.5, at[1] + 0.5); nishioGo.moveTo(ll.lat, ll.lng);
     await new Promise(r => setTimeout(r, 5500));
     const d = nishioGo.state.day || {};
-    return { at, watch: d.watch || 0, critters: (d.critters || 0) - c0, ok: d.watch === 1 && (d.critters || 0) === c0 + 1 };
+    return { at, watch0, watch: d.watch || 0, critters: (d.critters || 0) - c0, ok: d.watch === 1 && (d.critters || 0) === c0 + 1 };
   });
   // はじめての出会いは かならず・待ちすぎない：まだ1回も会っていなければ 田んぼの 3歩目で（pixel.js「まだ1回も会っていなければ 3歩目で（ループ4サイクル107・最初の1分で会える）」。前は 25歩目）、
   // 会ったことがあれば 100歩目で かならず出会う（運は いつも外れにしておく）。はじめてのさんぽ（3ゴールまで）の 間は 早出しを 止める（サイクル145）ので、運が 外れなら 30歩では 出会わない

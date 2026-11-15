@@ -3311,7 +3311,7 @@ pageScrolled = false; assert.equal(pageFinger(0, 60, e2), false);
         self._node150("""
 const assert = require('node:assert/strict');
 """ + block + """
-assert.deepEqual(READ_MS, { zarazara:560, lastMeasure:240, average:950, averageHigh:1700, cleanSmile:300, clean:1050, faceBig:900, senseRead:1100, chip:320 });
+assert.deepEqual(READ_MS, { zarazara:560, lastMeasure:240, average:950, averageHigh:1700, cleanSmile:300, clean:1050, faceBig:900, senseRead:1100, chip:320, stampHold:250 });
 assert.ok(Object.isFrozen(READ_MS));
 """)
 
@@ -4247,6 +4247,7 @@ tap(); assert.equal(drops, 1, 'はんこ: """ + str(need) + """回めで おり�
 const assert = require('node:assert/strict');
 let stamped = false, step = 4, nextAuto = false, swipeTaps = 0, hankoDrag = null, nextShownAt = 0, guides = [], hides = 0;
 const cookedReturns = [], GRADES = ['1等', '2等', '3等', '規格外'], LOT = {}, lotGrade = () => 0, hankoMax = 80, motion = 1;
+const reduced = false, READ_MS = { stampHold:250 }; let swipeDemo = null;   // サイクル165: 押した しゅんかんの 止めと 袋の ぶれ（test_cycle165_... が 見る）
 const updateCooked = () => {}, armIdle = () => {}, stopBob = () => {}, setHanko = () => {}, thump = () => {}, setFace = () => {}, focusIfKeys = () => {};
 const mk = () => ({ hidden:true, style:{}, classList:{ add() {}, remove() {} }, animate() { return {}; } });
 const els = {}; const $ = id => els[id] || (els[id] = mk()); const hint = mk(), nextBtn = mk();
@@ -4509,6 +4510,46 @@ assert.deepEqual(sounds, []); assert.ok(P.drag); assert.equal($('bagBtn').runs.l
         # 待つ 長さは 変えない（READ_MS の まま・窓を とばさない）
         self.assertIn("setTimeout(toHakaru, READ_MS.zarazara);", HTML)
         self.assertIn("setTimeout(toMiwakeru, high ? READ_MS.averageHigh : READ_MS.average);", HTML)
+
+
+    # ---- サイクル165（はんこを 押した しゅんかんを 止めて 見せる）----
+
+    def test_cycle165_stamp_moment_holds_for_everyone(self):
+        # 最初の ごほうび（はんこ）が 0.15秒 × motion で 上がり 始め、「動きを へらす」人は 0.02秒 しか 紙に のって いなかった。
+        # だれにでも 同じ 0.25秒（READ_MS.stampHold・ほめる 間）止めて 見せる。受けた 袋は 4px → 2px → 0 と ぶれる（動きを へらす 人は ぶれ なし）。
+        # 「つぎの ふくろ」は 今までどおり 押した しゅんかんに 出る（止めの ぶん おくれない）。あとから 動かす タイマーは ふやさない
+        fn = HTML[HTML.index("function stampNow() {"):HTML.index("function dropHanko()")]
+        m = re.search(r"const READ_MS = Object\.freeze\(\{[\s\S]*?\}\);", HTML)
+        for reduced in (False, True):
+            self._node150("""
+const assert = require('node:assert/strict');
+let stamped = false, step = 4, nextAuto = false, swipeTaps = 0, hankoDrag = null, nextShownAt = -1, swipeDemo = null, timers = 0;
+const reduced = """ + ("true" if reduced else "false") + """, motion = reduced ? 0.15 : 1;
+const cookedReturns = [], GRADES = ['1等', '2等', '3等', '規格外'], LOT = {}, lotGrade = () => 0, hankoMax = 80;
+const updateCooked = () => {}, armIdle = () => {}, stopBob = () => {}, setHanko = () => {}, thump = () => {}, setFace = () => {}, focusIfKeys = () => {}, demoHide = () => {}, guideAt = () => {};
+const anims = {};
+const mk = id => ({ hidden:true, style:{}, classList:{ add() {}, remove() {} }, animate(k, o) { const a = { k, o }; (anims[id] = anims[id] || []).push(a); return a; } });
+const els = {}; const $ = id => els[id] || (els[id] = mk(id)); const hint = mk('hint'), nextBtn = mk('nextBtn');
+const setTimeout = () => { timers++; }, performance = { now: () => 1000 };
+""" + (m.group(0) if m else "const READ_MS = {};") + "\n" + fn + """
+stampNow();
+const up = anims.hanko[0];
+assert.equal(up.o.delay, 250, 'はんこが 紙に のって いる 間が 0.25秒で ない: ' + up.o.delay);
+assert.equal(up.k[0].transform, 'translateY(80px)');                // 止めの 間は 紙に のった まま（押した 所から 上がる）
+assert.equal(up.o.duration, 320 * motion);                            // 上がる 動き そのものは 飾り（motion の まま）
+assert.equal(nextShownAt, 1000); assert.equal((anims.nextBtn || []).length, 1);   // 「つぎの ふくろ」は 押した しゅんかんに 出る
+assert.equal(timers, 1);                                              // 新しい 待ちを ふやさない（袋の つぶれの 1つ だけ）
+""" + ("""
+assert.equal((anims.bagBig || []).length, 0, '動きを へらす 人に 袋の ぶれが 出た'); assert.equal(swipeDemo, null);
+""" if reduced else """
+const sh = (anims.bagBig || [])[0];
+assert.ok(sh, '受けた 袋が ぶれない');
+assert.deepEqual(sh.k.map(f => f.transform), ['none', 'translateX(4px)', 'translateX(-2px)', 'none']);
+assert.equal(sh.o.duration, 250);
+assert.equal(swipeDemo, sh);   // 指が ふれる・流す・空振りの 手本で 止まる（stopSwipeDemo）
+"""))
+        # 読む 間・ほめる 間の きまり（サイクル151）: 止めの 長さに motion を かけない
+        self.assertNotIn("delay:150 * motion", HTML)
 
 if __name__ == "__main__":
     unittest.main()

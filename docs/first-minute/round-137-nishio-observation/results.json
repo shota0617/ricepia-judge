@@ -1,0 +1,1329 @@
+{
+  "round": 137,
+  "game": "nishio-go",
+  "status": "Final observation-only report; mandatory Node suite completed with overall failure; no new product fix selected",
+  "source": {
+    "testedHead": "ed4c87fd102c701d5aab4bf9b0aa03bbbca57d27",
+    "selectedHashes": {
+      "AGENTS.md": "3307716adf32bd25c5a9232821447251789c579f3192b423bad0c86c97814ab4",
+      ".claude/skills/ricepia-flow/SKILL.md": "322f7d5932c8d5fa8eb1778218ce0a4d37f212e63f211629ff7efe9c4ec4720a",
+      "nishio-go.html": "a8ec3dcfb00ae72dcc86ab89c64342f49f2459ce8a7509be6c1fdc5531fe671e",
+      "nishio-go/game.js": "1ac1eee951f7a8889a622121ba4e1e17bbbf0ee695dcdebbc86ade430c9ca610",
+      "nishio-go/pixel.js": "e03a05cd8fbed4693f481593cc93a68b3a830c99fb9c77aa91cf6114bb72bb52",
+      "nishio-go/meiro.js": "c8a153a42908a955449858bdea1bdc7c971095fab12174d55cf2eb0fb6bab384",
+      "nishio-go/style.css": "c00be168073dab5fbc6e9896f43520af098252a49a3bec5bf5ef8f9ac7621f46",
+      "nishio-go/icons.js": "3fed8790bc9eeee79eaeccfa430e68a05447e19007bfe4946993940742faed61",
+      "nishio-go/min/game.js": "45f4ba7b4aa8961222f5c57ac26428aff3aa8e5e9135bfd7c93989c0b5d7dc64",
+      "nishio-go/min/pixel.js": "273e94c5de3c4d8555a13fbe893aef526de5bd5654f3c821c6c2dc6a31410f14",
+      "nishio-go/min/meiro.js": "59c9977fa3e6557295deb2c816889711f494f3c142574f065766656b25b2043e",
+      "nishio-go/min/style.css": "8abb7291eea891d50f1c08fca391dd73988bf84da412caa83eacb53bab36c44d",
+      "kome365/engine.js": "c3d0cef6bb108d5b6d8fe38aaf0c08fe7994bdab08bf92775865a6e0222469a3",
+      "kome365/field3d.js": "a5c1dad91d5c0c326f1394fad9c5d04e7e3b8d13e3a2b8b1757c7aa08d3558ff",
+      "kome365/cards.js": "b15c5b2f56ef9c0c8361fa2fa6a039085919ca516b4a2e6e5a1b3bb691dde744"
+    },
+    "servedHashes": {
+      "nishio-go.html": "a8ec3dcfb00ae72dcc86ab89c64342f49f2459ce8a7509be6c1fdc5531fe671e",
+      "nishio-go/min/game.js": "45f4ba7b4aa8961222f5c57ac26428aff3aa8e5e9135bfd7c93989c0b5d7dc64",
+      "nishio-go/min/pixel.js": "273e94c5de3c4d8555a13fbe893aef526de5bd5654f3c821c6c2dc6a31410f14",
+      "nishio-go/min/meiro.js": "59c9977fa3e6557295deb2c816889711f494f3c142574f065766656b25b2043e",
+      "nishio-go/min/style.css": "8abb7291eea891d50f1c08fca391dd73988bf84da412caa83eacb53bab36c44d",
+      "nishio-go/icons.js": "3fed8790bc9eeee79eaeccfa430e68a05447e19007bfe4946993940742faed61"
+    },
+    "productEdits": 0,
+    "testEdits": 0,
+    "servedDistribution": "Actual HTML and min/game,pixel,meiro,style plus icons pinned. Original source and served distribution are distinct."
+  },
+  "method": {
+    "ordinaryRuns": 1,
+    "serverCommand": "python3 -m http.server 8000",
+    "url": "http://localhost:8000/nishio-go.html",
+    "viewport": {
+      "width": 844,
+      "height": 390
+    },
+    "isMobile": true,
+    "hasTouch": true,
+    "cpuRate": 1,
+    "input": "CDP Input.dispatchTouchEvent",
+    "requestedHoldMs": 40,
+    "observationMinimumMs": 10000,
+    "observationToPlayMs": 10145,
+    "playSeconds": 60,
+    "ordinarySelection": "Visible hand DOM center, or visible hit-tested world return button. No new settings, forced goals, hidden state target selection or diagnostic inputs.",
+    "responseWindowMs": 1100,
+    "singleViewportOnly": true
+  },
+  "outcome": {
+    "inputs": 28,
+    "recordedFirstResponses": {
+      "coordinateChanged": 18,
+      "worldOpened": 5,
+      "worldReturned": 5
+    },
+    "fullyObserved1100msWindows": 27,
+    "noRecordedResponseWithFullWindow": 0,
+    "incompleteWindowActionIndices": [
+      28
+    ],
+    "incompleteWindowsWithRecordedResponse": [
+      28
+    ],
+    "informationPanelOpenings": 0,
+    "unissuedOpportunityCount": null,
+    "newConfirmedCandidateCount": 0,
+    "primaryNewConfirmedCandidateCount": 0
+  },
+  "timing": {
+    "clock": "Node epoch milliseconds for send/ACK/play window; performance.timeOrigin+performance.now for browser samples; actual visible onset may be earlier.",
+    "firstInput": {
+      "sentSeconds": 0.024,
+      "completedSeconds": 0.126,
+      "firstResponse": {
+        "kind": "coordinateChanged",
+        "seconds": 0.1248,
+        "sendToObservedMs": 100.800049
+      }
+    },
+    "firstVisiblePositivePoints": {
+      "seconds": 0.3272,
+      "value": 30,
+      "text": "30",
+      "firstInputToPositiveMs": 303.199951,
+      "phase": "play",
+      "centerUnobscured": true
+    },
+    "positivePointsBeforePlay": false,
+    "firstNextGuide": {
+      "seconds": 16.2754,
+      "rawName": "🏁 名鉄 西尾駅（駅前の学生）",
+      "nameVisible": true,
+      "nameOverflowsX": false,
+      "distanceRaw": "24m"
+    },
+    "firstNextGuideBeforeGoal1Ms": 90.2,
+    "storedGoalChanges": [
+      {
+        "seconds": -9.8668,
+        "storedGoals": null
+      },
+      {
+        "seconds": 16.3656,
+        "storedGoals": "1"
+      },
+      {
+        "seconds": 22.5602,
+        "storedGoals": "2"
+      }
+    ],
+    "secondNextGuide": {
+      "seconds": 22.5602,
+      "rawName": "🏁 伊文神社（氏子のおばあさん）",
+      "nameVisible": true,
+      "nameOverflowsX": false,
+      "distanceRaw": "0m"
+    },
+    "lastWithinPlay": {
+      "seconds": 59.9483,
+      "storedGoals": "2",
+      "world": false,
+      "points": {
+        "selector": "#ptsNum",
+        "text": "387",
+        "value": 387,
+        "badgeHidden": false,
+        "badgeClass": "pts",
+        "cssVisible": true,
+        "intersectsViewport": true,
+        "visible": true,
+        "centerUnobscured": true,
+        "centerHit": {
+          "id": "ptsNum",
+          "tag": "B"
+        },
+        "rect": {
+          "left": 736.125,
+          "top": 13,
+          "width": 31.875,
+          "height": 26,
+          "right": 768,
+          "bottom": 39
+        }
+      },
+      "guideNameRaw": "🏁 伊文神社（氏子のおばあさん）",
+      "distanceRaw": "1.5km"
+    },
+    "responseMs": {
+      "min": 76.899902,
+      "median": 110.649902,
+      "max": 160.5
+    },
+    "interpretation": "Coordinate motion, point display, stored goal and guide-name changes are different observations. These are not proof of causation, route completion, reward recognition or retention."
+  },
+  "inputAudit": {
+    "touchCommandsDerivedFromActionStartEnd": 56,
+    "touchACKsDerivedFromActions": 56,
+    "pointerEventCounts": {
+      "pointerdown": 28,
+      "pointerup": 28,
+      "click": 28
+    },
+    "allEventsTrusted": true,
+    "pointerTypeFieldRecorded": false,
+    "unreleasedPointerIds": [],
+    "duplicateDownIds": [],
+    "orphanReleaseIds": [],
+    "nodeHoldMs": {
+      "min": 39,
+      "median": 40.0,
+      "max": 41
+    },
+    "eventTimestampHoldMs": {
+      "min": 38.9,
+      "median": 40.0,
+      "max": 41.1
+    },
+    "captureListenerHoldMs": {
+      "min": 1.199951,
+      "median": 34.450074,
+      "max": 54.100098
+    },
+    "lateStartCount": 0,
+    "lateReleaseCount": 0,
+    "lateCompletionCount": 0
+  },
+  "knownCandidate": {
+    "priority": "2: guidance/intent versus result",
+    "reference": "https://github.com/shota0617/ricepia-judge/pull/1133",
+    "actionIndices": [
+      3,
+      14,
+      16,
+      19,
+      23
+    ],
+    "newDiscovery": false,
+    "newTenTrialReproduction": false,
+    "action": "Retain current additional observation; no duplicate fix. Natural five occurrences are not five of a controlled ten-trial test."
+  },
+  "worldUIEvidence": {
+    "observedOpenings": 5,
+    "allFollowedByVisibleHitTestedReturnButton": true,
+    "allNormalHandInputsHitCanvas": true,
+    "worldPhaseInCheckpointPNGs": false,
+    "meaning": "World scalar change corroborated by visible hit-tested return-button DOM. No checkpoint captures the changed world canvas pixels during these five intervals.",
+    "observedWorldIntervalTotalSeconds": 6.1233,
+    "intervalLimit": "Contains scripted1100ms cadence and rendering/observation delay; not human time lost or retention loss."
+  },
+  "broaderAssessment": {
+    "fullReferenceTeamReadChapters": 110,
+    "referenceNotInstructions": true,
+    "axesCount": 24,
+    "appliedAs": "Broader evidence assessment this round; not changes to the primary input policy and not new product implementation.",
+    "newImplementationsFromFullReference": 0,
+    "planSHA256": "b94067ea89af32958bfb529aaf98a6d076a495d7affd9d8874ff7ba39ceb6f38",
+    "fullReferenceSourceSHA256": "a95ea2424ea4b1a3958e710744a7bb5b962174a1c96f773f8bbeb76fc9ce121c",
+    "reportAuthorReading": "Broad application plan, current three hypotheses and current independent numerical/visual reviews; does not claim personal reading of all110 original chapters.",
+    "currentAuditAxes": [
+      {
+        "axes": [
+          "A02",
+          "A06",
+          "A15",
+          "A17"
+        ],
+        "evidence": "Five displayed-hand inputs produced world-view transitions instead of coordinate response; actual canvas targets and separate return inputs are preserved.",
+        "status": "known issue observation; no new confirmed candidate"
+      },
+      {
+        "axes": [
+          "A04",
+          "A05",
+          "A22"
+        ],
+        "evidence": "Positive displayed points, stored-goal transitions, guide-name transitions and later directions are separately timestamped.",
+        "status": "observed milestones; no retention claim"
+      },
+      {
+        "axes": [
+          "A10",
+          "A20",
+          "A21"
+        ],
+        "evidence": "All five deliberately selected visible return-button inputs returned to walking map. No information panel opening was observed.",
+        "status": "observed existing recovery; absence of info opening is not universal proof"
+      },
+      {
+        "axes": [
+          "A13",
+          "A14",
+          "A18"
+        ],
+        "evidence": "Raw goal-name text and dimensions can show overflow; pixel readability and occlusion require the independent image review.",
+        "status": "no visual defect asserted by this auditor"
+      },
+      {
+        "axes": [
+          "A09",
+          "A23",
+          "A24"
+        ],
+        "evidence": "Actual send holds, event times, full versus incomplete windows, source15/HTTP6 and actual child/outer exits are distinct.",
+        "status": "method applied; no product implementation inferred"
+      }
+    ],
+    "currentDesignSummary": "H1 no new obvious overlap in four original stills; H2 motion comfort and reduce comparison unmeasured; H3 all five visible-return inputs returned by DOM state, but no world-state checkpoint image and title-assisted automation is not human discovery.",
+    "hypothesesBeforeImageReviewSnapshot": [
+      {
+        "id": "R137-H1",
+        "axes": [
+          "注意の優先順位",
+          "色と形の役割",
+          "横画面の実効面積"
+        ],
+        "hypothesis": "844×390で、最初に触る指・道・目的地の旗や札・結果の知らせが競合し、今の対象を見分けにくくならないか。",
+        "referencePrinciples": [
+          "J01目的に合う情報配置",
+          "J07色の役割",
+          "J08主操作の重み",
+          "J15 HUDと対象",
+          "C05狭い窓",
+          "C25色だけに頼らない",
+          "G15指先の意味",
+          "G16見た目と判定"
+        ],
+        "sources": [
+          {
+            "url": "https://www.youtube.com/watch?v=LCVRzehsoxs",
+            "attachmentLines": [
+              700,
+              706
+            ]
+          },
+          {
+            "url": "https://www.youtube.com/watch?v=dVVSH6lVqpI",
+            "attachmentLines": [
+              781,
+              789
+            ]
+          },
+          {
+            "url": "https://www.youtube.com/watch?v=jHuwZIHdKSs",
+            "attachmentLines": [
+              390,
+              396
+            ]
+          },
+          {
+            "url": "https://www.youtube.com/watch?v=4Tfnskapqjg",
+            "attachmentLines": [
+              568,
+              574
+            ]
+          },
+          {
+            "url": "https://www.youtube.com/watch?v=17A36aDJZx8",
+            "attachmentLines": [
+              920,
+              926
+            ]
+          },
+          {
+            "url": "https://www.youtube.com/watch?v=8-NjP4Kn8GY",
+            "attachmentLines": [
+              927,
+              933
+            ]
+          }
+        ],
+        "currentSourceAnchors": [
+          "nishio-go/pixel.js:9129",
+          "nishio-go/pixel.js:9163",
+          "nishio-go/pixel.js:9170",
+          "nishio-go/pixel.js:9608",
+          "nishio-go/style.css:1062",
+          "nishio-go/style.css:1076"
+        ],
+        "codeGrounding": "知らせの回避配置、金色と紺の札、白い接触輪、最初だけ大きい指と「タップ！」の既存表現がある。仕組みの存在は、横画面で全て読める証拠ではない。",
+        "ordinaryPrimaryObservation": "原4枚で実際に読める文字、指・接触輪・道・旗の関係、重なりを記す。自然に表示されなかったものは未確認。特定の宝や名所へ内部座標で誘導しない。",
+        "futureReproductionIfObserved": "同じ自然な表示状態と同じ指位置で10回。中心と指先、速い/遅い入力の差は後続再現へ分け、通常primaryの方針は変えない。",
+        "confidence": "推測。今回の原画はまだ見ていない。"
+      },
+      {
+        "id": "R137-H2",
+        "axes": [
+          "動きの快適さ",
+          "注目対象の安定",
+          "動作の時間配分"
+        ],
+        "hypothesis": "移動後や止まっている間のカメラ寄せと手本の動きが重なり、見ていた米粒や接触点を見失わないか。",
+        "referencePrinciples": [
+          "C15視界の安定",
+          "J03動きへの配慮",
+          "G01動作の段階",
+          "G03予備/要点/余韻",
+          "G11補間と要点の時間"
+        ],
+        "sources": [
+          {
+            "url": "https://www.youtube.com/watch?v=vIIA023p3to",
+            "attachmentLines": [
+              496,
+              502
+            ]
+          },
+          {
+            "url": "https://www.youtube.com/watch?v=7iLDVKItxjk",
+            "attachmentLines": [
+              662,
+              668
+            ]
+          },
+          {
+            "url": "https://www.youtube.com/watch?v=GB00mkau1Kw",
+            "attachmentLines": [
+              790,
+              796
+            ]
+          },
+          {
+            "url": "https://www.youtube.com/watch?v=ZC8znF3t718",
+            "attachmentLines": [
+              804,
+              810
+            ]
+          },
+          {
+            "url": "https://www.youtube.com/watch?v=AqjCfNbUOlM",
+            "attachmentLines": [
+              868,
+              894
+            ]
+          }
+        ],
+        "currentSourceAnchors": [
+          "nishio-go/pixel.js:8141",
+          "nishio-go/pixel.js:8144",
+          "nishio-go/pixel.js:8150",
+          "nishio-go/pixel.js:8174",
+          "nishio-go/pixel.js:9687",
+          "nishio-go/pixel.js:9737",
+          "nishio-go/style.css:1062",
+          "nishio-go/style.css:1097"
+        ],
+        "codeGrounding": "追従camera、進行方向camLead、停止時の手本の置き場を作るdemoLead、米粒を見える縁から残すclamp、手本のreduce時アニメーション抑制がある。これだけで揺れや負担の有無は判定できない。",
+        "ordinaryPrimaryObservation": "原4枚で米粒・手本が見える領域にあるか、traceで手本位置や表示条件がどう変わるかを分けて読む。短い静止画から酔いや滑らかさを断定せず、追従の連続映像がない部分は未確認にする。",
+        "futureReproductionIfObserved": "同じ自然操作で対象が消えた場面を10回確認する。必要な連続写真やreduce比較は別の後続計測とし、通常primaryへ新しい入力/設定を混ぜない。",
+        "confidence": "推測。実機の酔い・指・センサーは未確認。"
+      },
+      {
+        "id": "R137-H3",
+        "axes": [
+          "自分で操作を選ぶ余地",
+          "戻りやすさ",
+          "案内と実結果の一貫性"
+        ],
+        "hypothesis": "手本に触れた結果が歩行以外の情報窓や世界地図だった場合、いま開いたものと戻る方法が分かり、元の散歩へ自分で戻れるか。",
+        "referencePrinciples": [
+          "C08道中の自由",
+          "C20慣れた補助操作",
+          "C29入りやすさと自由",
+          "J11設定と退出の入力分離",
+          "J13結果を説明するヘルプ",
+          "J14非言語の入口",
+          "G16見た目と判定"
+        ],
+        "sources": [
+          {
+            "url": "https://www.youtube.com/watch?v=7oxEVzF_hT4",
+            "attachmentLines": [
+              411,
+              453
+            ]
+          },
+          {
+            "url": "https://www.youtube.com/watch?v=kkDzEszu89g",
+            "attachmentLines": [
+              531,
+              537
+            ]
+          },
+          {
+            "url": "https://www.youtube.com/watch?v=tiBGyNuTZkY",
+            "attachmentLines": [
+              618,
+              624
+            ]
+          },
+          {
+            "url": "https://www.youtube.com/watch?v=Z5zdNEmNoxo",
+            "attachmentLines": [
+              732,
+              740
+            ]
+          },
+          {
+            "url": "https://www.youtube.com/watch?v=hICO4_Fp718",
+            "attachmentLines": [
+              748,
+              760
+            ]
+          },
+          {
+            "url": "https://www.youtube.com/watch?v=6NpEbaU0S3s",
+            "attachmentLines": [
+              761,
+              780
+            ]
+          }
+        ],
+        "currentSourceAnchors": [
+          "nishio-go.html:171",
+          "nishio-go.html:172",
+          "nishio-go/pixel.js:9714",
+          "nishio-go/pixel.js:9743",
+          "nishio-go/pixel.js:9750",
+          "nishio-go/pixel.js:9757",
+          "nishio-go/pixel.js:9770",
+          "nishio-go/pixel.js:13735",
+          "nishio-go/pixel.js:14009"
+        ],
+        "codeGrounding": "任意の地図操作、入力で手本を隠す処理、停止時の再提示、世界地図の戻る手本、手本と実タップ判定の対応処理がある。情報/世界地図の開閉は反応として歩行や報酬と別に扱う。",
+        "ordinaryPrimaryObservation": "通常の画面指示で自然に開いた場合だけ、原画の窓題名と実際に読める閉じる/戻る手がかりを確認する。title属性は画像の文字に数えない。新規メニュー探索や私的な経路情報を入力方針へ入れない。",
+        "futureReproductionIfObserved": "同じ手本入力と閉じる/戻る操作を10回、押す位置と速度を分けて確認。既知の手本/情報窓の話に重なる場合は重複PRを作らない。",
+        "confidence": "推測。自由に遊びたい人の感想や離脱率の実測ではない。"
+      }
+    ],
+    "hypothesesSnapshotNote": "原画像確認前の観察仮説・出典・コード箇所の抜粋。confidence等は当時の未確認状態を表す。画像確認後の現在評価はcurrentDesignSummaryと本文の三仮説表に記録した。実装判断の範囲はcurrentImplementationAuthorityに従う。",
+    "laterReferenceBoundary": {
+      "reference": "GMTK239 items",
+      "receivedDate": "2026-11-15",
+      "usedAsMotivationOrAssessmentForThisRun": false,
+      "reason": "This ordinary play and its110-chapter reference assessment occurred on2026-11-14; later material is not attributed retroactively."
+    },
+    "currentImplementationAuthority": {
+      "explicitProtectedDecisions": [
+        "傾き許可と最初の実click",
+        "許可前と停止時の手本",
+        "開始カード・到着カードなし"
+      ],
+      "operatorDecisionOnlyWhen": "A proposed change touches an explicitly protected operator decision.",
+      "otherRoutineImplementation": "Already authorized within task scope; no blanket approval hold for color, wording, layout, attention, camera or other design hypotheses.",
+      "currentRound": "No new eligible reproduced candidate selected; no product/test change."
+    }
+  },
+  "photos": [
+    {
+      "file": "observe-10s.png",
+      "sha256": "83329ec4375685fbfe12fc34273653d3fe7627db44017fae55502d5a9dc00f32",
+      "bytes": 239363,
+      "sourcePath": "/workspace/scratch/first-minute/round-137/preparation-ed4c87fd/observe-10s.png",
+      "unchangedCopy": true,
+      "reportAuthorViewedOriginal": true,
+      "clock": "observe",
+      "requestedSeconds": 10.001,
+      "savedSeconds": 10.144
+    },
+    {
+      "file": "play-10s.png",
+      "sha256": "710abc28b2c160d6be161964553f03dcea4ae675c296d56f7b25a0b02ead237c",
+      "bytes": 223890,
+      "sourcePath": "/workspace/scratch/first-minute/round-137/preparation-ed4c87fd/play-10s.png",
+      "unchangedCopy": true,
+      "reportAuthorViewedOriginal": true,
+      "clock": "play",
+      "requestedSeconds": 10.0,
+      "savedSeconds": 10.12
+    },
+    {
+      "file": "play-30s.png",
+      "sha256": "b3e8b8addcd1e0cbcd85a9ce25109a1e46eb33d99b5aadb47bac3268ab45aa42",
+      "bytes": 272366,
+      "sourcePath": "/workspace/scratch/first-minute/round-137/preparation-ed4c87fd/play-30s.png",
+      "unchangedCopy": true,
+      "reportAuthorViewedOriginal": true,
+      "clock": "play",
+      "requestedSeconds": 30.001,
+      "savedSeconds": 30.175
+    },
+    {
+      "file": "play-60s.png",
+      "sha256": "96b99c24b4010a3874556588a6fd520b5a137b73d4559e81d6bc8647c377902c",
+      "bytes": 295073,
+      "sourcePath": "/workspace/scratch/first-minute/round-137/preparation-ed4c87fd/play-60s.png",
+      "unchangedCopy": true,
+      "reportAuthorViewedOriginal": true,
+      "clock": "play",
+      "requestedSeconds": 60.001,
+      "savedSeconds": 60.214
+    }
+  ],
+  "execution": {
+    "atUTC": "2026-11-14T22:04:50.183318+00:00",
+    "launch": {
+      "toolChunk": "75c772",
+      "session": 27097,
+      "command": "node /workspace/scratch/first-minute/round-137/preparation-ed4c87fd/run.cjs"
+    },
+    "actualOuterExit": 0,
+    "actualOuterToolChunk": "140547",
+    "actualChildExit": 0,
+    "childReceipt": "preparation-ed4c87fd/run-result.json",
+    "closureToolChunk": "fdffef",
+    "closureReceipt": "root-after-gate.json",
+    "sourceUnchanged": true,
+    "environmentUnchanged": true,
+    "liveRuntime": 0
+  },
+  "rootClosure": {
+    "atUTC": "2026-11-14T22:02:48.040608+00:00",
+    "source15Match": true,
+    "environment26Match": true,
+    "served6Match": true,
+    "prepared8Match": true,
+    "browserClosed": true,
+    "cpuReset": true,
+    "liveRuntime": [],
+    "lifecycleSHA256": "029b8feab01f0b0fbe27e2829e52c05462e347412ae5491f502cb367204c6f1b",
+    "reportSHA256": "05e163d9d4de7c1a1586497ebffa9806d2374df0f18f6e507641018e4d028cec"
+  },
+  "checks": {
+    "pytest": {
+      "atUTC": "2026-11-14T21:58:21.910335+00:00",
+      "command": "pytest tests/",
+      "cwd": "/workspace/ricepia-firstminute-round137",
+      "exitCode": 127,
+      "toolChunk": "cc4925",
+      "stderr": "/bin/bash: line 1: pytest: command not found\n",
+      "suiteExecuted": false
+    },
+    "fullNode": {
+      "command": "node tools/playtest.js",
+      "status": "completed; overall failure",
+      "actualOuterExit": 1,
+      "actualOuterTool": "e01e58",
+      "actualChildExit": 1,
+      "actualCompletionReceipt": {
+        "atUTC": "2026-11-15T10:36:07.197044+00:00",
+        "actualOuterExit": 1,
+        "actualOuterExitTool": "e01e58",
+        "actualChildExit": 1,
+        "closureTool": "a64073",
+        "closureSHA256": "c68ce628f7b02a4a1a63c5583add615c7d37ac0a391fd13b15b2d294f6373cea"
+      },
+      "rootClosure": {
+        "atUTC": "2026-11-15T10:35:33.804730+00:00",
+        "source": 333,
+        "dependencies": 550,
+        "prepared": 5,
+        "allMatched": true,
+        "head": "ed4c87fd102c701d5aab4bf9b0aa03bbbca57d27",
+        "clean": true,
+        "liveRuntime": [],
+        "port8899ConnectResult": 111,
+        "actualChildExit": 1,
+        "readOnlyMinCheckActualExit": 0,
+        "minRebuildWarningPresent": false,
+        "executionSHA256": "1179ec56e90d0237a2eff83f5c679ef45ee34c9f7765f4323bf83076372f25b9",
+        "logSHA256": "6420fde7460b9d817446dd3950eac6e44fd00bd37f88870d1c9f427ec26ff020",
+        "result": {
+          "path": "/workspace/scratch/first-minute/round-137/full-node-runtime/artifacts/playtest.json",
+          "exists": true,
+          "sha256": "d7abcb590c8695c5293a467ea6d319a0512345ef2444937f006a24f43ef8e801",
+          "ok": false,
+          "errors": [],
+          "groups": 253
+        }
+      },
+      "overallOK": false,
+      "groupCount": 253,
+      "groupCounts": {
+        "ownOkTrue": 179,
+        "ownOkFalse": 11,
+        "bareTrue": 43,
+        "bareFalse": 0,
+        "noOwnBoolean": 20
+      },
+      "existingConditionalSkips": {
+        "yuruMeiro": {
+          "skipped": "no-route",
+          "ok": true
+        },
+        "alley": {
+          "ok": true,
+          "skipped": "no-alley"
+        },
+        "mzSameCellGoal": {
+          "skip": "no pair",
+          "ok": true
+        }
+      },
+      "errors": [],
+      "readOnlyMinCheck": {
+        "command": [
+          "node",
+          "tools/strip-nishio.js",
+          "--check",
+          "--quiet"
+        ],
+        "recordedActualExit": 0,
+        "rerunByReviewer": false
+      },
+      "failedPredicates": [
+        {
+          "key": "swipeHold",
+          "predicateLine": 262,
+          "predicateSummary": "held && still===null-string && g2===g1 && far && g4===want && (g3===null-string || g3===g4) && !info && cfg && cfg.ms<=400",
+          "falseTerms": [
+            "g4===want",
+            "g3===null-string || g3===g4"
+          ],
+          "recorded": {
+            "held": true,
+            "ms": 860,
+            "still": "null",
+            "g1": "[1807,1900]",
+            "g2": "[1807,1900]",
+            "g4": "[1807,1900]",
+            "g3": "[1804,1897]",
+            "want": "[1804,1897]",
+            "far": true,
+            "info": false,
+            "cfg": {
+              "ms": 300,
+              "px": 5,
+              "min": 12
+            },
+            "ok": false
+          },
+          "observation": "保持中の開始はheld=trueで成功。追加移動後もg4=[1807,1900]のまま、want=[1804,1897]と不一致。指を離した後g3はwantへ変わりg4と不一致。"
+        },
+        {
+          "key": "tapDemoQuick",
+          "predicateLine": 476,
+          "predicateSummary": "n>=4 && med>0 && med<1700",
+          "falseTerms": [
+            "med<1700"
+          ],
+          "recorded": {
+            "n": 7,
+            "med": 3113,
+            "min": 2278,
+            "ok": false
+          },
+          "observation": "n=7、待ち中央値3113ms、最短2278ms。中央値が1700ms未満の基準を満たさない。"
+        },
+        {
+          "key": "rollNoDemo",
+          "predicateLine": 1252,
+          "predicateSummary": "rice!=null && vmax>=1 && fresh===false && bad===0",
+          "falseTerms": [
+            "vmax>=1",
+            "fresh===false"
+          ],
+          "recorded": {
+            "rice": 308,
+            "route": 518,
+            "demo": 518,
+            "first": false,
+            "fresh": true,
+            "bad": 0,
+            "vmax": 0,
+            "ok": false
+          },
+          "observation": "合成8度入力条件でvmax=0、fresh=true。riceは308msで検出、bad=0。"
+        },
+        {
+          "key": "lowGoalDemo",
+          "predicateLine": 1144,
+          "predicateSummary": "rows.length===4 && rows.every(shown && inMap && !onRice)",
+          "falseTerms": [
+            "568x320, k=2: shown && inMap"
+          ],
+          "recorded": {
+            "rows": [
+              {
+                "vp": "568x320",
+                "k": 1,
+                "left": 1,
+                "shown": true,
+                "at": 5.04,
+                "inMap": true,
+                "onRice": false
+              },
+              {
+                "vp": "568x320",
+                "k": 2,
+                "left": 2,
+                "shown": false,
+                "at": null,
+                "inMap": null,
+                "onRice": null
+              },
+              {
+                "vp": "844x390",
+                "k": 1,
+                "left": 1,
+                "shown": true,
+                "at": 4.36,
+                "inMap": true,
+                "onRice": false
+              },
+              {
+                "vp": "844x390",
+                "k": 2,
+                "left": 2,
+                "shown": true,
+                "at": 3.72,
+                "inMap": true,
+                "onRice": false
+              }
+            ],
+            "ok": false
+          },
+          "observation": "4条件中568×320・ゴール2マス手前のみshown=false。他3条件は表示・枠内・米に非重複。"
+        },
+        {
+          "key": "infoSecondTap",
+          "predicateLine": 1007,
+          "predicateSummary": "win && win.open && win.atTap!==info-btn && !second.form && !second.clicks.includes(info-btn)",
+          "falseTerms": [
+            "win.open"
+          ],
+          "recorded": {
+            "moved": true,
+            "g": {
+              "x": 195,
+              "y": 270,
+              "len": 5,
+              "goal": "station-student"
+            },
+            "win": {
+              "open": false,
+              "atTap": "pxCanvas"
+            },
+            "second": {
+              "form": false,
+              "clicks": [
+                "pxCanvas",
+                "pxCanvas"
+              ]
+            },
+            "ok": false
+          },
+          "observation": "窓はwin.open=false。2回のclick対象はいずれもpxCanvas、form=false。窓が開いた状態を作れず失敗。"
+        },
+        {
+          "key": "infoRotate",
+          "predicateLine": 1036,
+          "predicateSummary": "runs.length===2 && every(opened.open && steps.length && every(step.open && step.closeOk && step.allIn) && closed===true)",
+          "falseTerms": [
+            "tablet opened.open",
+            "tablet step.open / closeOk",
+            "tablet closed===true 未実施"
+          ],
+          "recorded": {
+            "runs": [
+              {
+                "from": "390x844",
+                "steps": [
+                  {
+                    "to": "390x560",
+                    "open": true,
+                    "mt": "58px",
+                    "close": [
+                      374,
+                      406
+                    ],
+                    "pt": [
+                      195,
+                      390
+                    ],
+                    "closeOk": true,
+                    "allIn": true
+                  },
+                  {
+                    "to": "844x390",
+                    "open": true,
+                    "mt": "",
+                    "close": [
+                      277,
+                      309
+                    ],
+                    "pt": [
+                      422,
+                      293
+                    ],
+                    "closeOk": true,
+                    "allIn": true
+                  }
+                ],
+                "opened": {
+                  "open": true,
+                  "mt": "242px",
+                  "close": [
+                    565,
+                    597
+                  ],
+                  "pt": [
+                    195,
+                    581
+                  ],
+                  "closeOk": true,
+                  "allIn": true
+                },
+                "closed": true
+              },
+              {
+                "from": "820x1180",
+                "steps": [
+                  {
+                    "to": "1180x820",
+                    "open": false,
+                    "mt": "",
+                    "close": [
+                      0,
+                      0
+                    ],
+                    "pt": [
+                      0,
+                      0
+                    ],
+                    "closeOk": false,
+                    "allIn": true
+                  }
+                ],
+                "opened": {
+                  "open": false,
+                  "mt": "",
+                  "close": [
+                    0,
+                    0
+                  ],
+                  "pt": [
+                    0,
+                    0
+                  ],
+                  "closeOk": false,
+                  "allIn": true
+                }
+              }
+            ],
+            "ok": false
+          },
+          "observation": "電話相当390×844→390×560→844×390はopen/closeOk/allInすべてtrue、closed=true。820×1180開始ではopened.open=false、1180×820でも未開。最後の閉じる操作は未実施。"
+        },
+        {
+          "key": "lowDemoKept",
+          "predicateLine": 852,
+          "predicateSummary": "ready && walked && a.inMap && b.inMap && b.guide===ibun-parish",
+          "falseTerms": [
+            "a.inMap"
+          ],
+          "recorded": {
+            "ready": true,
+            "walked": true,
+            "a": {
+              "on": false,
+              "x": null,
+              "y": null,
+              "inMap": false,
+              "free": 135,
+              "status": false,
+              "guide": "ibun-parish"
+            },
+            "b": {
+              "on": true,
+              "x": 283,
+              "y": 128,
+              "inMap": true,
+              "free": 135,
+              "status": false,
+              "guide": "ibun-parish"
+            },
+            "ok": false
+          },
+          "observation": "568×320の復帰状態でready/walked=true。停止後3.5秒のaはon=false、続く5秒後のbはon=trueかつinMap=true。"
+        },
+        {
+          "key": "restFinger",
+          "predicateLine": 733,
+          "predicateSummary": "tap===true && swipe===true && pinch===false && touchAction===pinch-zoom && !info",
+          "falseTerms": [
+            "tap===true",
+            "swipe===true"
+          ],
+          "recorded": {
+            "tap": false,
+            "swipe": false,
+            "pinch": false,
+            "touchAction": "pinch-zoom",
+            "info": false,
+            "ok": false
+          },
+          "observation": "置いた指を伴うタップ/なぞりの開始検出はともにfalse。pinch=false、touchAction=pinch-zoom、info=falseは期待どおり。"
+        },
+        {
+          "key": "tiltDemoShown",
+          "predicateLine": 741,
+          "predicateSummary": "on && phone && force>0.2",
+          "falseTerms": [
+            "on",
+            "phone"
+          ],
+          "recorded": {
+            "on": false,
+            "phone": false,
+            "force": 0.28,
+            "at": [
+              1801.8796428738412,
+              1893.6341627127877
+            ],
+            "moved": 0.945,
+            "ok": false
+          },
+          "observation": "合成1.5度条件でforce=0.28は満たすがon/phone=false。最大8秒の手本待ち後に検出なし、移動量0.945。"
+        },
+        {
+          "key": "godotRec",
+          "predicateLine": 2139,
+          "predicateSummary": "!errs.length && len>50 && shade>0",
+          "falseTerms": [
+            "shade>0"
+          ],
+          "recorded": {
+            "errs": [],
+            "len": 5915,
+            "shade": 0,
+            "ok": false
+          },
+          "observation": "errs=[]、記録長5915は満たすが指定色の影fill検出shade=0。Godotを実際には読み込まずonを差替える試験。"
+        },
+        {
+          "key": "speedLines",
+          "predicateLine": 2676,
+          "predicateSummary": "fast===0 && vmax>2 && vmax<=5 && far>1.5",
+          "falseTerms": [
+            "far>1.5"
+          ],
+          "recorded": {
+            "ok": false,
+            "room": 7,
+            "fast": 0,
+            "vmax": 4.07,
+            "far": 0.82
+          },
+          "observation": "room=7、fast=0、vmax=4.07は期待どおり。最大移動距離far=0.82だけが1.5超に届かない。"
+        }
+      ],
+      "sourceIntegrity": {
+        "manifestCount": 333,
+        "beforeAfterEqual": true,
+        "afterMinCheckEqual": true,
+        "currentFilesCompared": 333,
+        "currentMismatches": []
+      },
+      "dependencyIntegrity": {
+        "manifestCount": 550,
+        "beforeAfterEqual": true,
+        "currentFilesCompared": 550,
+        "currentMismatches": []
+      },
+      "timedOut": false,
+      "automaticRetries": 0,
+      "naturalPrimaryRun": false,
+      "logParsedJsonEqualsArtifact": true,
+      "independentReviewSHA256": "cd3323814afe382ee4ce44b0c815469aae950303e7698b09293b5363f3737774",
+      "limits": [
+        "253はcheck groupsで個別assertion数やPython test数ではない。",
+        "ownOkTrue179には既存条件skip3件を含む。残りの176も複数assertionを束ねたgroupsである。",
+        "bareTrue43とnoOwnBoolean20は分離。後者を自動的に合否へ算入しない。",
+        "総合falseかつchild/outer1。errors=[]だけでは合格にならない。",
+        "rawFailureMessagesはOR列挙/包括表現があるため、どの条件が落ちたかを本文の記録値で限定した。",
+        "R133との差分キーだけで製品回帰を断定しない。比較対象の製品/試験/環境差を制御していない。",
+        "この一回の既存suiteは合成状態と複数viewportsを含む。自然な初分・実機・新規10回再現・旧RED新GREEN・実測離脱改善を実施した証拠ではない。"
+      ],
+      "countMeaning": "253 is check groups, not assertions or Python tests. ownOkTrue179 includes3 existing conditional skips. noOwnBoolean20 are not counted automatically as passes. Eleven predicate failures do not establish11 product root causes.",
+      "wrapperTiming": {
+        "startedAtUTC": "2026-11-14T22:07:26.025522+00:00",
+        "childStartedAtUTC": "2026-11-14T22:07:27.554859+00:00",
+        "completedAtUTC": "2026-11-14T22:35:02.121022+00:00"
+      },
+      "outerExitBasis": "execution.json leaves actualOuterExit null. Outer1 is taken from the separate completed-tool receipt e01e58, not requestedWrapperExit."
+    },
+    "fixedTenTrials": false,
+    "speedComparison": false,
+    "newRegressionTest": false,
+    "redGreen": false,
+    "afterReproduction": false,
+    "fiveViewportComparison": false
+  },
+  "network": {
+    "errors": [],
+    "decisionCounts": {
+      "continue-local": 183,
+      "fulfill-local-leaflet": 2,
+      "fulfill-empty-no-external-request": 6
+    },
+    "blockedExternalURLs": [
+      "https://fonts.googleapis.com/css2?family=DotGothic16&display=swap",
+      "https://www.jma.go.jp/bosai/forecast/data/forecast/230000.json",
+      "https://www.jma.go.jp/bosai/amedas/data/latest_time.txt",
+      "https://cyberjapandata.gsi.go.jp/xyz/dem_png/14/14429/6497.png"
+    ],
+    "meaning": "URLs fulfilled empty locally; not external network requests"
+  },
+  "limits": [
+    "Response kinds are deliberately limited; hand change, guide-only change, sound and other canvas feedback are not counted. No-recorded-response is not absence of every feedback.",
+    "Observed DOM/scalar changes in windows are associations, not proof of input causation. Coordinate motion is not route progress or arrival.",
+    "Displayed points and stored goal transitions are proxies; actual reward event, exact paint, human recognition and retention not measured.",
+    "A28 records a response but lacks the full1100ms post-completion observation before60s.",
+    "The4 screenshots and numerical trace are separate evidence. C viewed0 current images; visual audit is independent.",
+    "One ordinary viewport only; no ten-trial speed comparison, private diagnostics, rotation or after-change test.",
+    "Tilt permission behavior, true sensor/finger/network/sound were not validated; protected decisions preserved.",
+    "No new obvious obstruction in four stills does not prove absence in all moments or all sizes.",
+    "Full mandatory suite is separate from the ordinary844x390 touch play.",
+    "Prior rounds or PR measurements are not this round before/after improvements.",
+    "Videos not played; reference URLs only."
+  ],
+  "evidence": [
+    {
+      "scratchIdentifier": "/workspace/scratch/first-minute/round-137/source-selected.json",
+      "sha256": "fe6dd2e7cb07f93605acfc9d7f7046c7792009c73ff3e48030d9fbd132663d7f",
+      "bytes": 1854
+    },
+    {
+      "scratchIdentifier": "/workspace/scratch/first-minute/round-137/server.json",
+      "sha256": "d0a10995f73212c6559f21e7b994f58c773256085c9a2afff1180ff8fbdb77f3",
+      "bytes": 842
+    },
+    {
+      "scratchIdentifier": "/workspace/scratch/first-minute/round-137/root-before-gate.json",
+      "sha256": "6512078b03e031192a98a4053bda79bf5bf6ed12a90eef38a6f3c911a2b85128",
+      "bytes": 6554
+    },
+    {
+      "scratchIdentifier": "/workspace/scratch/first-minute/round-137/root-after-gate.json",
+      "sha256": "e8d156df89829a445644f98e4ebb35eb7d99f6a9a1565b220df4ad23ff5ed106",
+      "bytes": 6773
+    },
+    {
+      "scratchIdentifier": "/workspace/scratch/first-minute/round-137/actual-completion.json",
+      "sha256": "70ce50427624197941502b1d6f7ec0ff6cf484a87094d4c3bf11ecd5b5d355f9",
+      "bytes": 508
+    },
+    {
+      "scratchIdentifier": "/workspace/scratch/first-minute/round-137/pytest-result.json",
+      "sha256": "8da2a422f8c134bad0a1db2584f39e1ca1f091f84438e69a6c2000c0edcf80e7",
+      "bytes": 264
+    },
+    {
+      "scratchIdentifier": "/workspace/scratch/first-minute/round-137/root-freeze.json",
+      "sha256": "560780bfcee861e195977c7daf6bf9ca39a6afde246386f4c63b1dae80672555",
+      "bytes": 819
+    },
+    {
+      "scratchIdentifier": "/workspace/scratch/first-minute/round-137/preparation-ed4c87fd/follow.json",
+      "sha256": "05e163d9d4de7c1a1586497ebffa9806d2374df0f18f6e507641018e4d028cec",
+      "bytes": 12647758
+    },
+    {
+      "scratchIdentifier": "/workspace/scratch/first-minute/round-137/preparation-ed4c87fd/run-result.json",
+      "sha256": "c7619e4b17e2f9e06aa4eb4ef249b321951ccfb8c8f924ea8f3cb05c69d9ce8d",
+      "bytes": 479220
+    },
+    {
+      "scratchIdentifier": "/workspace/scratch/first-minute/round-137/preparation-ed4c87fd/lifecycle.json",
+      "sha256": "029b8feab01f0b0fbe27e2829e52c05462e347412ae5491f502cb367204c6f1b",
+      "bytes": 3021
+    },
+    {
+      "scratchIdentifier": "/workspace/scratch/first-minute/round-137/preparation-ed4c87fd/follow.cjs",
+      "sha256": "a5cd065341199c06628384ee61b9d3528a1a3030ff929c5152a79452e1314388",
+      "bytes": 26507
+    },
+    {
+      "scratchIdentifier": "/workspace/scratch/first-minute/round-137/preparation-ed4c87fd/source-manifest.json",
+      "sha256": "6816f3c2fc11464fc4afee8e2cbf60fa096262861d5c9cc7eaaacd8a979a1d72",
+      "bytes": 3558
+    },
+    {
+      "scratchIdentifier": "/workspace/scratch/first-minute/round-137/preparation-ed4c87fd/input-manifest.json",
+      "sha256": "b11312583d486b7f516f7d8fd98576fe6da0f4a649b460fab25fce665277cb21",
+      "bytes": 1413
+    },
+    {
+      "scratchIdentifier": "/workspace/scratch/first-minute/round-137/discovery-a/summary.json",
+      "sha256": "a60144510a956b60f9db69edf8bb073979baedb8ecb5f9ec3d13749fad0cdd38",
+      "bytes": 16023
+    },
+    {
+      "scratchIdentifier": "/workspace/scratch/first-minute/round-137/discovery-a/frozen.json",
+      "sha256": "9685273fc564290ba25bb2dbf6683a42d6ef1440ee6f2037548bf16dfa24c72e",
+      "bytes": 1578
+    },
+    {
+      "scratchIdentifier": "/workspace/scratch/first-minute/round-137/discovery-c/summary.json",
+      "sha256": "70ce0725db76d94cc6ca38aa883d79c6817535a7b643bbcd6277a3dbef88aeee",
+      "bytes": 10542
+    },
+    {
+      "scratchIdentifier": "/workspace/scratch/first-minute/round-137/discovery-c/frozen.json",
+      "sha256": "f0b9c44d44fd3385e11c01c871a70fcdd48feaea0c93a0f3f641845fded070af",
+      "bytes": 687
+    },
+    {
+      "scratchIdentifier": "/workspace/scratch/first-minute/round-137/design-review/visual-review.json",
+      "sha256": "4aff8d845003d727911e343213a4c0b0cf0aa3c1cb107d1160f45e07786a1ccc",
+      "bytes": 20516
+    },
+    {
+      "scratchIdentifier": "/workspace/scratch/first-minute/round-137/design-review/visual-frozen.json",
+      "sha256": "3e8d5688d5f8b577d087798feccab5d8700eeed4b09ac340e4b8494603d03c1c",
+      "bytes": 1912
+    },
+    {
+      "scratchIdentifier": "/workspace/scratch/first-minute/round-137/design-review/hypotheses.json",
+      "sha256": "0fdb3a063b319dcf8b13676b97eb2e85eb6a4b19eb8fab00b1d0286d47790e76",
+      "bytes": 11195
+    },
+    {
+      "scratchIdentifier": "/workspace/scratch/first-minute/sakurai-full-20261114/broad-application-plan.md",
+      "sha256": "b94067ea89af32958bfb529aaf98a6d076a495d7affd9d8874ff7ba39ceb6f38",
+      "bytes": 10282
+    },
+    {
+      "scratchIdentifier": "/workspace/scratch/first-minute/sakurai-full-20261114/broad-application-frozen.json",
+      "sha256": "97dd1f2db479c651c03d6ef491dd0bd7b173a39aa99aef17f04908e6bcc08f73",
+      "bytes": 2163
+    },
+    {
+      "scratchIdentifier": "/workspace/scratch/first-minute/sakurai-full-20261114/broad-application-backlog.json",
+      "sha256": "31f9bb8805233e50b427e2957dcff3b593097ef282f73704dd029ccd631d4c73",
+      "bytes": 181914
+    },
+    {
+      "scratchIdentifier": "/workspace/scratch/first-minute/round-137/discovery-a/cross-check-c.json",
+      "sha256": "50bf62d44b5873d6829d9905fabe0157f6e0387a860771fe831cee852f7ab09e",
+      "bytes": 1268
+    },
+    {
+      "scratchIdentifier": "/workspace/scratch/first-minute/round-137/candidate-decision.json",
+      "sha256": "0f1b7ac09c8ca6040b7982e17ecc5e4a020950435ab0a7f7a7e607650895f52a",
+      "bytes": 2243
+    },
+    {
+      "scratchIdentifier": "/workspace/scratch/first-minute/round-137/root-photo-observations.json",
+      "sha256": "41280324b1a7bf5002d0a25e79da9c465cee1eddad8977d93f229ca61ee070db",
+      "bytes": 1572
+    },
+    {
+      "scratchIdentifier": "/workspace/scratch/first-minute/round-137/full-node-actual-completion.json",
+      "sha256": "2f3fc984e13b1fe378180604281d68dca1d494a7dd441c84a8e0d98740f0149c",
+      "bytes": 247
+    },
+    {
+      "scratchIdentifier": "/workspace/scratch/first-minute/round-137/root-full-node-closure.json",
+      "sha256": "c68ce628f7b02a4a1a63c5583add615c7d37ac0a391fd13b15b2d294f6373cea",
+      "bytes": 794
+    },
+    {
+      "scratchIdentifier": "/workspace/scratch/first-minute/round-137/full-node-independent-review/summary.json",
+      "sha256": "cd3323814afe382ee4ce44b0c815469aae950303e7698b09293b5363f3737774",
+      "bytes": 22226
+    },
+    {
+      "scratchIdentifier": "/workspace/scratch/first-minute/round-137/full-node-independent-review/review.md",
+      "sha256": "5ec497d613ea80cd4de3489b8cebc15743d0f9350b0c0fc24c01840d7d7385e5",
+      "bytes": 4850
+    },
+    {
+      "scratchIdentifier": "/workspace/scratch/first-minute/round-137/full-node-independent-review/evidence-sha256.json",
+      "sha256": "c8044d6fc95dcff51b1de0064d5af368359fa6bcd9864fe2bacbf7e7ea263322",
+      "bytes": 172
+    },
+    {
+      "scratchIdentifier": "/workspace/scratch/first-minute/round-137/full-node-runtime/execution.json",
+      "sha256": "1179ec56e90d0237a2eff83f5c679ef45ee34c9f7765f4323bf83076372f25b9",
+      "bytes": 277907
+    },
+    {
+      "scratchIdentifier": "/workspace/scratch/first-minute/round-137/full-node-runtime/run.log",
+      "sha256": "6420fde7460b9d817446dd3950eac6e44fd00bd37f88870d1c9f427ec26ff020",
+      "bytes": 98000
+    },
+    {
+      "scratchIdentifier": "/workspace/scratch/first-minute/round-137/full-node-runtime/artifacts/playtest.json",
+      "sha256": "d7abcb590c8695c5293a467ea6d319a0512345ef2444937f006a24f43ef8e801",
+      "bytes": 97999
+    },
+    {
+      "scratchIdentifier": "/workspace/scratch/first-minute/round-137/full-node-preparation/frozen.json",
+      "sha256": "63048083f9f641eee9be3bb60977b4856c9c2adc5ef390911511eb52d0cf441c",
+      "bytes": 930
+    },
+    {
+      "scratchIdentifier": "/workspace/scratch/first-minute/round-137/full-node-preparation/manifest.json",
+      "sha256": "d95c018cc8c417073c8ed491635da435e2a04a407f422742dda7992926af4af2",
+      "bytes": 121010
+    },
+    {
+      "scratchIdentifier": "/workspace/scratch/first-minute/round-137/full-node-root-audit/summary.json",
+      "sha256": "d835909d19629522c52fed16a63e5008eef9d913dffe2f9be95440011f7bc6c0",
+      "bytes": 16419
+    }
+  ],
+  "evidenceNote": "Scratch identifiers are provenance records, not public URLs. Four original screenshots are published alongside this JSON.",
+  "independentAudits": {
+    "A": {
+      "frozenSHA256": "9685273fc564290ba25bb2dbf6683a42d6ef1440ee6f2037548bf16dfa24c72e",
+      "summarySHA256": "a60144510a956b60f9db69edf8bb073979baedb8ecb5f9ec3d13749fad0cdd38",
+      "imagesPersonallyViewed": 0
+    },
+    "C": {
+      "frozenSHA256": "f0b9c44d44fd3385e11c01c871a70fcdd48feaea0c93a0f3f641845fded070af",
+      "imagesPersonallyViewed": 0
+    },
+    "B": {
+      "frozenSHA256": "3e8d5688d5f8b577d087798feccab5d8700eeed4b09ac340e4b8494603d03c1c",
+      "imagesPersonallyViewed": 4
+    },
+    "ACMatchingItems": 29
+  },
+  "primaryCandidateDecisionSnapshot": {
+    "atUTC": "2026-11-14T22:10:42.396324+00:00",
+    "sourceHead": "ed4c87fd102c701d5aab4bf9b0aa03bbbca57d27",
+    "primaryNewConfirmedCandidates": 0,
+    "selectedProductFix": null,
+    "productChanges": 0,
+    "testChanges": 0,
+    "knownCandidates": [
+      {
+        "id": "PR1133",
+        "observation": "5 hand-center inputs followed by world-mode true and visible return control, then5 returns",
+        "rootNewTenTrialReproduction": false,
+        "newCandidate": false
+      },
+      {
+        "id": "PR1156",
+        "observation": "toast visibility not measured; text alone insufficient",
+        "newCandidate": false
+      }
+    ],
+    "independentAuditReceipts": {
+      "discovery-a/frozen.json": "9685273fc564290ba25bb2dbf6683a42d6ef1440ee6f2037548bf16dfa24c72e",
+      "discovery-c/frozen.json": "f0b9c44d44fd3385e11c01c871a70fcdd48feaea0c93a0f3f641845fded070af",
+      "design-review/visual-frozen.json": "3e8d5688d5f8b577d087798feccab5d8700eeed4b09ac340e4b8494603d03c1c"
+    },
+    "ACComparison": {
+      "fields": 29,
+      "allMatch": true
+    }
+  },
+  "finalCandidateDecision": {
+    "newConfirmedCandidates": 0,
+    "selectedProductFix": null,
+    "productChanges": 0,
+    "testChanges": 0,
+    "basis": "Parent finalization instruction after the completed mandatory-suite independent audit. Failures are retained as measured predicates, without declaring new product root causes."
+  }
+}

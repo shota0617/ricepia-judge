@@ -3138,6 +3138,18 @@ function crashFailures(R, fail) {   // 安全網（guardEvaluate）に かかっ
     }
     return { n: G.npcs.length, bad: bad.slice(0, 5), badN: bad.length, edgeBad, castleShown: shown, why, ok: G.npcs.length > 0 && !bad.length && !edgeBad.length && shown === true };
   });
+  // サイクル225：道しるべの 行き先が 人で、その 人の まわりの 地図が まだ 読めて いない（遠い 人）とき、行き先の 名前が「人（場所）」から 人の 名前 だけ に かわり、
+  // 下の 札に 場所が 出なかった（はじめの 場所から 56人中 22人。歩いて 移動では 人の すすめが 10km 先 まで ある）。位置 だけ を 使う。ゲームの 行き先は もとに もどす
+  R.checks.guideNameFar = await page.evaluate(() => {
+    const G = nishioGo, P = nishioPixel, keep = G.state.guide;
+    const n = G.npcs.filter(x => !P.npcTile(x).ok).sort((a, b) => G.dist(G.me, b) - G.dist(G.me, a))[0];
+    if (!n) return { ok: true, skipped: 'all-loaded' };
+    const full = `${n.name}（${n.spotName}）`;
+    G.setGuide({ kind: 'npc', id: n.id, name: full, lat: n.lat, lng: n.lng, why: 'テスト', by: 'テスト' }); G.renderGuide();
+    const g = G.guide, gn = document.querySelector('#guide .gn'), shown = gn ? gn.textContent : '';
+    G.state.guide = keep; G.renderGuide();
+    return { id: n.id, loaded: P.npcTile(n).ok, name: g && g.name, shown, ok: !!g && g.name === full && shown.includes(n.spotName) && g.kind === 'npc' && g.id === n.id };
+  });
   // しるしをくれる人：一色の魚屋のおかみさんの話に「🔖 一色の注目スポットを あと○か所 めぐったら…（いま ○/5）」
   R.checks.sealPage = await page.evaluate(async () => {
     const n = nishioGo.npcs.find(x => x.id === 'sakana-okami');
@@ -4940,6 +4952,7 @@ function crashFailures(R, fail) {   // 安全網（guardEvaluate）に かかっ
   need(c.roll && c.roll.ok, 'かたむけて転がす：お米が転がらない（または絵が回らない）');
   need(c.slope && c.slope.ok, '坂：平らな所で動く、または 下り坂で ひとりでに転がらない');
   need(c.guideRecord && c.guideRecord.ok, 'ガイドさんの記録：西尾城跡のガイドさんの話に、つぎのレベルまでの ポイントと しるしの数が出ない');
+  need(c.guideNameFar && c.guideNameFar.ok, `下の 道しるべ：遠い 人が 行き先の とき 場所が 出ない（${JSON.stringify(c.guideNameFar)}）`);
   need(c.guidePlaceFirst && c.guidePlaceFirst.ok, `下の 道しるべ：場所の 名前に かっこが ある 人でも 場所が 先に 出ない・390 はばで 西尾城跡が 切れる（${JSON.stringify(c.guidePlaceFirst)}）`);
   need(c.kiraFar && c.kiraFar.ok, '遠いほど めずらしい：西尾城跡から 8km をこえても、キラが出やすい知らせが出ない');
   need(c.alley && c.alley.ok, '路地の行き止まり：道が終わるマスに入っても 見つけものが出ない（または 同じマスで2回出る）');

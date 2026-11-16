@@ -2363,7 +2363,9 @@ modeListeners.push(() => { if (KT) KT.clear(); });
 const guideTarget = () => {
   const g = S.guide;
   if (!g) return null;
-  if (g.kind === 'npc') { const n = placeNpcs().find(x => x.id === g.id); return n ? { ...g, ...npcSpot(n) } : null; }
+
+
+  if (g.kind === 'npc') { const n = placeNpcs().find(x => x.id === g.id); if (!n) return null; const p = npcSpot(n); return { ...g, lat: p.lat, lng: p.lng }; }
 
   const s = spots.find(x => x.id === g.id);
   return s ? { ...g, lat: s.lat, lng: s.lng } : g;

@@ -3180,8 +3180,17 @@ renderTitle();
   document.addEventListener('visibilitychange', function(){ if (document.hidden) { demoHeld = !!demoT; demoDisarm(); } else if (demoHeld) { demoHeld = false; demoArm(); } });
   window.addEventListener('resize', function(){ if ($('swWrap').classList.contains('demoOn')) demoSet(true); });   /* Codex指摘(PR #1071): 手本が出ている間に画面を回す・大きさが変わると、指の高さ(--hy)が前の画面のままだった。出ている間は測り直す(絵が無い横向きではカードの46%へ戻る) */
   function ghostOff(){ tapOnly = 0; if (!demoDone) { demoDone = true; store.set(DEMO, '1'); } demoSet(false); demoDisarm(); demoMiss = 0; demoOk++; $('swGhost').classList.remove('on'); $('swGhostArrows').classList.remove('on'); if (!ghostDone) { ghostDone = true; store.set(GHOST, '1'); } }
+  /* サイクル186(最初の 1分): 押した だけ・長押し・たての なぞり・短すぎる 引き で 決まらずに はなした とき、何も 返らなかった(50ms の タップ 55回 で 音・ゆれ・文 0)。
+     はなした その こまで(決まらずに はなした ときの 片づけ ghostBack の 中)、下の 選ぶ 札(◀ ▶)を 外へ 1回 ゆらす(左の 札は 左へ・右の 札は 右へ 10px、0.26秒)。どの カード でも(手本が 出て いない 4枚め から も)同じ。
+     つづけて 押しても 前の ゆれを 止めて 頭から やり直す だけ(ふえない)。動きを へらす 設定では 動かさず、札の ふちを 0.5秒 光らせる。文・絵・音は 足さない。カードは 動かさない・選ばない(2026-11-09 の まま) */
+  var nudgeAn = [];
+  function edgeNudge(){ try { nudgeAn.forEach(function(a){ a.cancel(); }); nudgeAn = []; if (document.hidden) return; var calm = calmOn();
+      [].forEach.call(document.querySelectorAll('#swEdge > .eL, #swEdge > .eR'), function(sp){ if (!sp.animate) return; var d = sp.classList.contains('eL') ? '-10px' : '10px';
+        nudgeAn.push(calm ? sp.animate([{ outline: '3px solid #6f9a3f', outlineOffset: '0px' }, { outline: '3px solid #6f9a3f', outlineOffset: '0px' }, { outline: '3px solid rgba(111,154,63,0)', outlineOffset: '0px' }], { duration: 500 })
+          : sp.animate([{ translate: '0px 0px' }, { translate: d + ' 0px', offset: 0.4 }, { translate: '0px 0px' }], { duration: 260, easing: 'ease-out' })); }); } catch (e) {} }
+  document.addEventListener('visibilitychange', function(){ if (document.hidden) { nudgeAn.forEach(function(a){ a.cancel(); }); nudgeAn = []; } });
   function ghostPause(){ demoSet(false); demoDisarm(); $('swGhost').classList.remove('on'); $('swGhostArrows').classList.remove('on'); }   /* 周回153(最初の1分): つかんでいる間だけ案内を止める(覚えこまない) */
-  function ghostBack(){ demoMiss++; demoArm(); var on = !ghostDone && choices.length === 0 && !calmOn(); $('swGhost').classList.toggle('on', on); $('swGhostArrows').classList.toggle('on', on); demoSet(demoWant()); }   /* 周回153(最初の1分): 決めずに離したら、まだ最初の1枚の間は ◀ ▶ の案内をはじめから出し直す。もとは触れた瞬間に ghostOff で二度と出なくなり、札を押して選ぼうとした人は、押しても何も起きず、矢印も消えたまま止まっていた(両端の影だけが残る)。カードは動かさない(店主指示 2026-11-09 のまま) */   /* スワイプ開始/確定で即消え、以降は二度と出さない */
+  function ghostBack(){ demoMiss++; demoArm(); var on = !ghostDone && choices.length === 0 && !calmOn(); edgeNudge(); $('swGhost').classList.toggle('on', on); $('swGhostArrows').classList.toggle('on', on); demoSet(demoWant()); }   /* 周回153(最初の1分): 決めずに離したら、まだ最初の1枚の間は ◀ ▶ の案内をはじめから出し直す。もとは触れた瞬間に ghostOff で二度と出なくなり、札を押して選ぼうとした人は、押しても何も起きず、矢印も消えたまま止まっていた(両端の影だけが残る)。カードは動かさない(店主指示 2026-11-09 のまま) */   /* スワイプ開始/確定で即消え、以降は二度と出さない */
   function festKind(c){ return c && ({ plant: 'plant', harvest: 'harvest', qf_festival: 'aki', q_niiname: 'niiname' })[c.key] || null; }
   /* 表示専用の短縮(第4弾サイクル4→サイクル71・INSIDE: 読まなくても絵と題で判断が始まる): 日付の前置きはHUDと重複なので外し、七十二候の定型の定義文も毎回同じなので外す。表面は「場面が分かる文」だけ(通常は18字以上になるまでの文・最大46字。数字や適期が2〜3文目にある必須作業 mid/drain/plant/harvest は最大3文・最大72字)。上限は必ず守り空にはしない。全文と左右のhintはくわしい話の「📖 全文」で読める。card.text 自体は不変 */
   function shortText(t, key){

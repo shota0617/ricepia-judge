@@ -330,6 +330,19 @@ const FAKE = (mode) => {
         await p.waitForTimeout(400);
         for (let i = 5; i >= 0; i--) { await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: x - 30 * i, y }] }); await p.waitForTimeout(40); }
         await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); await p.waitForTimeout(1500); }
+      else if (a.startsWith('gest:')) {   // サイクル186: 決まらない 指(tap・long・vert・short・label・hold・taps)を はなして 300ms 以内に 返る ものを はかる
+        const k = a.slice(5); let bx = await p.locator(k === 'label' ? '#swEdge .eLb' : '#swCard').first().boundingBox(); const x = bx.x + bx.width / 2, y = k === 'label' ? bx.y + bx.height / 2 : bx.y + bx.height * 0.4;
+        const T = (t, pts) => cdp.send('Input.dispatchTouchEvent', { type: t, touchPoints: pts });
+        const look = () => p.evaluate(() => { window.__fb = null; const t0 = performance.now(), sp = [...document.querySelectorAll('#swEdge > .eL, #swEdge > .eR')]; const f = () => { const t = performance.now() - t0; if (t > 300) return; if (window.__fb == null && sp.some(e => { const c = getComputedStyle(e); return (c.translate && c.translate !== 'none' && c.translate !== '0px') || c.outlineStyle !== 'none'; })) window.__fb = Math.round(t); requestAnimationFrame(f); }; requestAnimationFrame(f); });
+        if (k === 'hold') { await T('touchStart', [{ x, y }]); await look(); await p.waitForTimeout(350); r.js = r.js || []; r.js.push(await p.evaluate(() => window.__fb)); await T('touchEnd', []); await p.waitForTimeout(900); }
+        else if (k === 'taps') { for (let i = 0; i < 10; i++) { await T('touchStart', [{ x, y }]); await p.waitForTimeout(30); await T('touchEnd', []); await p.waitForTimeout(40); } r.js = r.js || []; r.js.push(await p.evaluate(() => [...document.querySelectorAll('#swEdge > .eL, #swEdge > .eR')].reduce((n, e) => n + e.getAnimations().filter(a => a.playState === 'running' && !(a instanceof CSSAnimation) && !(a instanceof CSSTransition)).length, 0))); await p.waitForTimeout(900); }
+        else {
+          await T('touchStart', [{ x, y }]);
+          if (k === 'long') await p.waitForTimeout(800);
+          else if (k === 'vert') for (let i = 1; i <= 8; i++) { await T('touchMove', [{ x, y: y - 15 * i }]); await p.waitForTimeout(25); }
+          else if (k === 'short') for (let i = 1; i <= 8; i++) { await T('touchMove', [{ x: x - 3 * i, y }]); await p.waitForTimeout(50); }
+          else await p.waitForTimeout(50);
+          await T('touchEnd', []); await look(); await p.waitForTimeout(350); r.js = r.js || []; r.js.push(await p.evaluate(() => [window.__fb, document.getElementById('swBigDate').textContent])); await p.waitForTimeout(900); } }
       else if (a === 'wait31') await p.waitForTimeout(31500);   // 30秒の カードが 出る まで
       else if (a === 'keyL') { await p.keyboard.press('ArrowLeft'); r.js = r.js || []; r.js.push(await p.evaluate(() => window.__fa.live(window.__tc, window.__ts))); }   // 決めた すぐ あとに 古い 予約が のこって いるか
       else if (a === 'dailyKey') {   // 3回めの レビュー(P2): ← で 決めて すぐ ⌂ → 今日の 田んぼ(bDaily) → 新しい ゲームで すぐ ←
@@ -2149,6 +2162,46 @@ class TestKome365MarkClear(unittest.TestCase):
             mc = self.r["m%dx%d" % (w, h)]["js"][-1]
             self.assertEqual(mc["ring1"], 0, "%dx%d: 吹き出しが ○✗ に のる %r" % (w, h, mc))
 
+
+
+# サイクル186(最初の 1分): 押した だけ・長押し・たての なぞり・短すぎる 引き・札の 字の タップ で 決まらずに はなした とき、300ms 以内に 札(◀ ▶)が 横へ 1回 ゆれて 返る
+class TestKome365TapNudge(unittest.TestCase):
+    """サイクル186"""
+
+    @classmethod
+    def setUpClass(cls):
+        g = ["gest:tap", "gest:long", "gest:vert", "gest:short", "gest:label"]
+        plans = [
+            {"name": "p1", "acts": g},
+            {"name": "l1", "w": 844, "h": 390, "acts": g},
+            {"name": "p5", "acts": ["keyjs:1", "wait", "keyjs:1", "wait", "keyjs:1", "wait", "keyjs:1", "wait"] + g},
+            {"name": "red", "reduce": True, "acts": ["gest:tap", "gest:long"]},
+            {"name": "hold", "acts": ["gest:hold", "gest:taps"]},
+        ]
+        cls.r = sound_run(plans)
+
+    def test_release_without_decision_gets_nudge(self):
+        for name in ("p1", "l1", "p5", "red"):
+            x = self.r[name]
+            self.assertEqual(x["errs"], [], name)
+            for j in x["js"]:
+                if not isinstance(j, list):
+                    continue
+                self.assertIsNotNone(j[0], "%s: はなして 300ms 以内に 何も 返らない %r" % (name, x["js"]))
+                self.assertLessEqual(j[0], 300, name)
+
+    def test_nudge_does_not_move_card_or_decide(self):
+        # 決めごと: タップでは 選ばない(日づけが 進まない)
+        for name, d in (("p1", "1月1日"), ("l1", "1月1日"), ("p5", "1月5日")):
+            for j in self.r[name]["js"]:
+                if isinstance(j, list):
+                    self.assertEqual(j[1], d, name + ": タップで 決まった")
+
+    def test_no_nudge_while_finger_down_and_no_pileup(self):
+        x = self.r["hold"]
+        self.assertEqual(x["errs"], [])
+        self.assertIsNone(x["js"][0], "指を 置いた だけで 返しが 出た(スワイプの 始まり)")
+        self.assertLessEqual(x["js"][1], 2, "つづけて 押すと 返しが ふえる %r" % (x["js"],))
 
 if __name__ == "__main__":
     unittest.main()

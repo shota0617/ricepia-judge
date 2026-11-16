@@ -2140,7 +2140,7 @@ function try3d(){
   if (!ok){ swapCanvas(); return false; }
   window.Field3D.onChibiTap = onChibiTap;
   window.Field3D.onFocus = () => { $('fieldTip').textContent = 'ドラッグで見回せます・ダブルタップで近くへ'; $('fieldTip').removeAttribute('aria-label'); if (lookFrom === f.doy && !f.done && $('sheetBg').classList.contains('hidden')) { lookFrom = -1; openPatrol(); } };   /* 🔍で近くを見て戻ったら、見回りの絵カードにもどる(Codex15回目) */
-  window.Field3D.onFail = () => { use3d = false; swapCanvas(); $('fieldTip').classList.add('hidden'); if (f && !f.done) drawField(); };
+  window.Field3D.onFail = () => { if (window.__slow3d) return; use3d = false; swapCanvas(); $('fieldTip').classList.add('hidden'); if (f && !f.done) drawField(); };   /* サイクル190: わざと 止めた あと は 何も しない */
   return true;
 }
 window.addEventListener('three-ready', () => { // 2Dで描いていたキャンバスを新しくして3Dへ
@@ -2155,7 +2155,12 @@ window.addEventListener('three-ready', () => { // 2Dで描いていたキャン�
    3D が 出来て 1.5秒 たってから 30秒の 間、こまの 間隔を 見て、2秒 つづけて 平均 120ms より 長い(3こま 以上 はかって。とても おそい 端末は 2秒に 8こまも 来ない)なら、3D を 止めて ?no3d と 同じ 2D の 絵に もどす
    (止め方は 3D が こわれた とき(onFail)と 同じ。かかしと 太陽は DOM なので そのまま)。速い 端末では 何も しない。画面が かくれた 間は 数えなおす */
 const SLOW3D_MS = 120;
-function slow3dOff(){ if (!use3d) return; use3d = false; try { window.Field3D.dispose(); } catch (e) {} swapCanvas(); $('fieldTip').classList.add('hidden'); if (f && !f.done) drawField(); window.__slow3d = (window.__slow3d || 0) + 1; }
+/* サイクル190: わざと 止める とき は、失敗の 道(field3d.js の fail → console.error → onFail)を 走らせない。
+   dispose の forceContextLoss で 3D の キャンバスに webglcontextlost が 来るので、そのキャンバスに 先に とらえる 受け手(capture)を 付けて 止める
+   (field3d.js は 変えない)。旗(__slow3d)を 先に 立て、onFail も その 旗を 見て 2回めの 入れかえ・描きなおし を しない */
+function slow3dOff(){ if (!use3d) return; use3d = false; window.__slow3d = (window.__slow3d || 0) + 1;
+  try { $('field').addEventListener('webglcontextlost', (e) => { e.preventDefault(); e.stopImmediatePropagation(); }, true); } catch (e) {}
+  try { window.Field3D.dispose(); } catch (e) {} swapCanvas(); $('fieldTip').classList.add('hidden'); if (f && !f.done) drawField(); }
 function slow3dWatch(){   /* サイクル187c(PR #1215 の 見直し): 平均と 窓の はば を やめ、さいごの 8つの 間隔で 見る。
      187d: 8つの うち 6つ 以上 が 120ms より 長い(小さい ほう から 3つめ m[2] が 長い)とき だけ 止める。1回 だけ の 長い 止まり(重い 1こま・うらに 回して もどる)や、
      つづけて 5つ まで の 重い こま(3D の 最初の 描き など)では 止めない。一定の おそさ(125ms・800ms など)は 8つ とも 長い ので かならず 止まる。

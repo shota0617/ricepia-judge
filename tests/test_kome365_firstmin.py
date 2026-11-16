@@ -2265,6 +2265,11 @@ def RAF_HEAVY(at, n, ms):
     return "js:(window.__hv = %d, window.addEventListener('three-ready', () => { window.__t3 = performance.now(); }), window.requestAnimationFrame = function(f){ let d = 16; if (window.__t3 && performance.now() - window.__t3 >= %d && window.__hv > 0) { window.__hv--; d = %d; } setTimeout(() => f(performance.now()), d); return 1; }, window.cancelAnimationFrame = function(){}, 1)" % (n, at, ms)
 
 
+# サイクル190: コンソールの エラー・キャンバスの 入れかえ(swapCanvas)・2D の 描きなおし(drawField)を 数える
+SLOW3D_SPY = "js:(window.__spy = { err: [], swap: 0, draw: 0 }, (() => { const ce = console.error.bind(console); console.error = function(){ window.__spy.err.push(String(arguments[0])); return ce.apply(null, arguments); }; const sw = window.swapCanvas, dr = window.drawField; window.swapCanvas = function(){ window.__spy.swap++; return sw.apply(this, arguments); }; window.drawField = function(){ window.__spy.draw++; return dr.apply(this, arguments); }; })(), 1)"
+SLOW3D_SPY_GET = "js:(() => ({ err: window.__spy.err, swap: window.__spy.swap, off: window.__slow3d || 0, use3d: typeof use3d === 'undefined' ? 'x' : use3d, lostT: window.__lostT == null ? null : window.__lostT, canvas2d: !!document.getElementById('field').getContext('2d') }))()"
+
+
 class TestKome365Slow3D(unittest.TestCase):
     """サイクル187・187c・187d"""
 
@@ -2275,6 +2280,10 @@ class TestKome365Slow3D(unittest.TestCase):
             {"name": "fast", "acts": [FAKE3D, "wait9", SLOW3D_STATE]},
             # 本物の 3D(この 作業場では ソフトで 描くので おそい)も 止まる
             {"name": "real", "three": True, "acts": ["L", "wait9", "wait9", SLOW3D_STATE]},
+            # サイクル190: わざと 止めた とき エラーが 出ない・入れかえ と 描きなおし が 2回 走らない
+            {"name": "realQuiet", "three": True, "acts": [SLOW3D_SPY, "L", "wait9", "wait9", "wait9", SLOW3D_SPY_GET]},
+            # 本当に 3D が こわれた とき(わざと では ない webglcontextlost)は 今までどおり 失敗の 道で 2D に もどる
+            {"name": "realLost", "three": True, "acts": [SLOW3D_SPY, "L", "js:(async () => { for (let i = 0; i < 120; i++) { if (typeof use3d !== 'undefined' && use3d === true && !window.__slow3d) { document.getElementById('field').dispatchEvent(new Event('webglcontextlost', { cancelable: true })); window.__lostT = 1; return 1; } await new Promise(r => setTimeout(r, 100)); } window.__lostT = 0; return 0; })()", "wait", SLOW3D_SPY_GET]},   # 3D が 出来たら すぐ(おそくて 止まる 前に)
             # サイクル187c: 一定の 間隔(境の 前後)と、速い ときの 1回 だけの 止まり
             {"name": "i33", "acts": [RAF_INT(33), FAKE3D, "wait9", "wait9", SLOW3D_STATE]},
             {"name": "i110", "acts": [RAF_INT(110), FAKE3D, "wait9", "wait9", SLOW3D_STATE]},
@@ -2288,6 +2297,27 @@ class TestKome365Slow3D(unittest.TestCase):
             {"name": "heavy4", "acts": [RAF_HEAVY(3000, 4, 300), FAKE3D, "wait9", SLOW3D_STATE]},
             {"name": "heavyStart5", "acts": [RAF_HEAVY(1500, 5, 250), FAKE3D, "wait9", SLOW3D_STATE]},
         ])
+
+    def test_intended_stop_is_quiet(self):
+        # サイクル190: わざと 止めた とき、「3Dの田んぼを止めました」の エラーは 出ない。キャンバスの 入れかえ は 2回(3D へ・2D へ)だけ
+        x = self.r["realQuiet"]
+        self.assertEqual(x["errs"], [])
+        j = x["js"][-1]
+        self.assertEqual(j["off"], 1, j)
+        self.assertEqual([e for e in j["err"] if "3D" in e], [], "止めた とき エラーが 出た %r" % (j,))
+        self.assertEqual(j["swap"], 2, "失敗の 道が もう 1回 走った %r" % (j,))
+        self.assertTrue(j["canvas2d"], j)
+
+    def test_real_context_loss_still_falls_back(self):
+        # 本当に 3D が こわれた とき は 今までどおり 失敗の 道で 2D に もどる(エラーの 文は のこる)
+        x = self.r["realLost"]
+        self.assertEqual(x["errs"], [])
+        j = x["js"][-1]
+        if not j["lostT"]:
+            self.skipTest("3D が 出来る 前に おそくて 止まった %r" % (j,))
+        self.assertIs(j["use3d"], False, j)
+        self.assertTrue(j["canvas2d"], j)
+        self.assertTrue([e for e in j["err"] if "3D" in e], "失敗の 道が 走って いない %r" % (j,))
 
     def test_few_heavy_frames_in_a_row_keep_3d(self):
         # 速い 端末で 重い こまが つづけて 4つ(300ms)・見はりの はじめの 5こまが 重い(250ms)だけ では 止めない

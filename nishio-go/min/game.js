@@ -2501,11 +2501,14 @@ function spotThumb(sp) {
   return u ? `<img class="gthumb" src="${u}" alt="" width="28" height="28"/>` : '';
 }
 
+
+
 function guideDispName(g) {
   if (!g || !g.name) return '';
   if (g.kind !== 'npc') return g.name;
-  const m = /^([^（）]+)（([^（）]+)）$/.exec(g.name);
-  return m ? `${m[2]}（${m[1]}）` : g.name;
+  const i = g.name.indexOf('（'), who = i > 0 ? g.name.slice(0, i) : '', at = i > 0 && g.name.endsWith('）') ? g.name.slice(i + 1, -1) : '';
+  let d = 0; for (const c of at) { d += c === '（' ? 1 : c === '）' ? -1 : 0; if (d < 0) break; }
+  return who && at && d === 0 && !/[（）]/.test(who) ? `${at}（${who}）` : g.name;
 }
 function renderGuide() {
   const el = $('guide');

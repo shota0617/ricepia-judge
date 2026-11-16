@@ -2501,11 +2501,14 @@ function spotThumb(sp) {
   return u ? `<img class="gthumb" src="${u}" alt="" width="28" height="28"/>` : '';
 }
 // 下の札の 名前：人は「場所（人）」の 順に（狭い画面で「…」に なるのは 人の 説明がわ。行き先の 場所が 先に 読める）。並べかえ だけで 字は ふえない。名所は もともと 場所が 先
+// サイクル222：場所の 名前が かっこを ふくむ とき（「ガイドさん（西尾市歴史公園（西尾城跡））」など 56人中 22人）は 前の 正規表現に 合わず 入れかえて いなかった。
+// 3つめの 道しるべが「観光ボランティアガイドさん（…」で 切れて 行き先が 見えなかった。人の 名前は かっこを ふくまない ので、はじめの「（」までが 人、外がわの かっこの 中 ぜんぶが 場所
 function guideDispName(g) {
   if (!g || !g.name) return '';
   if (g.kind !== 'npc') return g.name;
-  const m = /^([^（）]+)（([^（）]+)）$/.exec(g.name);
-  return m ? `${m[2]}（${m[1]}）` : g.name;
+  const i = g.name.indexOf('（'), who = i > 0 ? g.name.slice(0, i) : '', at = i > 0 && g.name.endsWith('）') ? g.name.slice(i + 1, -1) : '';
+  let d = 0; for (const c of at) { d += c === '（' ? 1 : c === '）' ? -1 : 0; if (d < 0) break; }
+  return who && at && d === 0 && !/[（）]/.test(who) ? `${at}（${who}）` : g.name;
 }
 function renderGuide() {
   const el = $('guide');

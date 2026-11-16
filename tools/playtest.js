@@ -3115,13 +3115,13 @@ function crashFailures(R, fail) {   // 安全網（guardEvaluate）に かかっ
   });
   // サイクル222：下の 道しるべ は 人の とき「場所（人）」の 順（狭い 画面で「…」に なるのは 人の がわ）。場所の 名前が かっこを ふくむ 人（西尾城跡の ガイドさん など 56人中 22人）は
   // 前は 入れかえず、2つめの ゴールの あと「観光ボランティアガイドさん（…」で 切れて 行き先が 見えなかった。並べかえ だけ（字は ふやさない・へらさない）。
-  // こわれた 形・名所 は そのまま（境目の 例は 別の 直し役の 下書き PR #1208 の テストから）。この 画面（390 はば）で 西尾城跡の ガイドさんの 場所の 名前が「…」に ならずに 見える
+  // こわれた 形・名所・知らない 入れ子（id が 知って いる 人で ない）は そのまま（サイクル205・222b。境目の 例は 別の 直し役の 下書き PR #1208 の テストから）。この 画面（390 はば）で 西尾城跡の ガイドさんの 場所の 名前が「…」に ならずに 見える
   R.checks.guidePlaceFirst = await page.evaluate(() => {
     const G = nishioGo, f = G.guideDispName, same = (a, b) => a.length === b.length && [...a].sort().join('') === [...b].sort().join('');
     const bad = [];
     for (const n of G.npcs) { const name = `${n.name}（${n.spotName}）`, d = f({ kind: 'npc', id: n.id, name }); if (d !== `${n.spotName}（${n.name}）` || !same(d, name)) bad.push(d); }
     const edge = [[{ kind: 'spot', name: '西尾城跡（ガイドさん）' }, '西尾城跡（ガイドさん）'], [{ kind: 'npc', name: '案内人（西尾駅）' }, '西尾駅（案内人）'],
-      [{ kind: 'npc', name: 'ガイドさん（西尾城跡）（別館）' }, 'ガイドさん（西尾城跡）（別館）'], [{ kind: 'npc', name: '学生 (Nishio)' }, '学生 (Nishio)'], [{ kind: 'npc', name: '（西尾城跡）' }, '（西尾城跡）'],
+      [{ kind: 'npc', name: 'ガイドさん（西尾城跡）（別館）' }, 'ガイドさん（西尾城跡）（別館）'], [{ kind: 'npc', name: '店員さん（本店（永吉））' }, '店員さん（本店（永吉））'], [{ kind: 'npc', id: 'not-a-person', name: '店員さん（本店（永吉））' }, '店員さん（本店（永吉））'], [{ kind: 'npc', name: '学生 (Nishio)' }, '学生 (Nishio)'], [{ kind: 'npc', name: '（西尾城跡）' }, '（西尾城跡）'],
       [{ kind: 'npc', name: 'ガイドさん（）' }, 'ガイドさん（）'], [{ kind: 'npc', name: 'ガイドさん（西尾城跡' }, 'ガイドさん（西尾城跡'], [null, ''], [{ kind: 'npc' }, '']];
     const edgeBad = edge.filter(([g, want]) => f(g) !== want).map(([g]) => g && g.name);
     // 見える か：いまの 下の 札を 写した 見えない 札（同じ 場所・同じ 形）に 入れて、場所の 名前の おわりが 札の 名前の わくに 入るか（ゲームの 状態は さわらない）

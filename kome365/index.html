@@ -3924,7 +3924,12 @@ renderTitle();
   } catch (x) { e.style.width = e.style.left = e.style.top = e.style.margin = ''; markBox = null; } }
   window.addEventListener('resize', function(){ var e = $('swMark'); if (e && e.classList.contains('on')) markFit(e); });   /* 回す・大きさが 変わる ときは 置きなおす */
   /* 店主指示 2026-11-08: 判定文 why の最初の一文をマークの下に小さく浮かせて約2秒出す。サイクル177(運営者の声 2026-11-13「⭕️❌とその理由も出す」)で ○ の ときも 出す(前は ✗ だけ) */
-  function whyShow(fb, k){ var e = $('swWhy'); if (!e) return; var t = String(fb || '').replace(/^\S+\s+/, ''); var i = t.indexOf('。'); if (i >= 0) t = t.slice(0, i + 1); if (!t) return; k = k === 'ok' ? 'ok' : 'ng'; e.setAttribute('data-k', k); e.textContent = (k === 'ok' ? '○ ' : '✗ ') + t;   /* サイクル177(運営者の声 2026-11-13「⭕️❌とその理由も出す」): ○ でも わけの 一文を 出す。先頭に ○／✗(色 だけに たよらない) */ e.classList.remove('on'); clearTimeout(whyTimer); whyTimer = null; whyKeep = choices.length <= 3; var go = function(){ void e.offsetWidth; e.classList.add('on'); clearTimeout(whyTimer); whyTimer = setTimeout(whyHide, 2100); };
+  /* サイクル193(PLAN4 K3・運営者 2026-11-14「判断不要で 進めて」): わけ の 吹き出しは 2秒 を 下限 に、字の 数に 合わせて のばす(縮めない)。
+     2秒で 読めるのは 大人の 黙読(約 650字/分)で 約 20字。こえた 1字 ごとに 0.1秒 のばし、4秒 まで(cards.js の わけ は 先頭の ○✗ を 入れて 9〜38字)。
+     動きを へらす 設定(swWhyFade)でも 同じ 時間。最初の 3枚は 次へ 進んでも のこす・4枚め から は 次へ 進むと 消える(どちらも 今の まま)。吹き出しは 進むのを 止めない */
+  var WHY_MIN_MS = 2000, WHY_MAX_MS = 4000, WHY_FREE = 20, WHY_PER_MS = 100;
+  function whyMs(t){ var n = Array.from(String(t || '')).length; return Math.min(WHY_MAX_MS, WHY_MIN_MS + Math.max(0, n - WHY_FREE) * WHY_PER_MS); }
+  function whyShow(fb, k){ var e = $('swWhy'); if (!e) return; var t = String(fb || '').replace(/^\S+\s+/, ''); var i = t.indexOf('。'); if (i >= 0) t = t.slice(0, i + 1); if (!t) return; k = k === 'ok' ? 'ok' : 'ng'; e.setAttribute('data-k', k); e.textContent = (k === 'ok' ? '○ ' : '✗ ') + t;   /* サイクル177(運営者の声 2026-11-13「⭕️❌とその理由も出す」): ○ でも わけの 一文を 出す。先頭に ○／✗(色 だけに たよらない) */ e.classList.remove('on'); clearTimeout(whyTimer); whyTimer = null; whyKeep = choices.length <= 3; var ms = whyMs(e.textContent); e.style.animationDuration = ms + 'ms'; var go = function(){ void e.offsetWidth; e.classList.add('on'); clearTimeout(whyTimer); whyTimer = setTimeout(whyHide, ms + 100); };
     e.style.top = ''; whyPend = true; requestAnimationFrame(function(){ whyPend = false; whyFit(e); e.__mkV = markVer; go(); whyWatchOn(); }); }   /* サイクル181: 小さい たて画面・よこ画面は 次の カードを 描いた あとの こまで 置き場所を 決めてから 出す(2秒は 出た ときから)。サイクル174 の 直し: 吹き出しの 2秒(アニメ)が 終わったら on を 外す(状態の ことばが もどる)。場所と 2秒は そのまま */
   var whyTimer = null, whyKeep = false, whyPend = false;
   /* サイクル181(運営者 2026-11-14): わけの 吹き出しの 置き場所。390×844・820×1180 など ふつうの たて画面は 今の まま(CSS)。

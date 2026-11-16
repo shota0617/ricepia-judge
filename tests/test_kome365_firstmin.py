@@ -1746,7 +1746,7 @@ class TestKome365WhyBothSides(unittest.TestCase):
         plans = []
         for rm in (False, True):
             sfx = "R" if rm else ""
-            plans.append({"name": "ok" + sfx, "reduce": rm, "acts": ["keyjs:" + WHY_JS, "js:" + WHY_JS, "wait", "js:" + WHY_JS]})
+            plans.append({"name": "ok" + sfx, "reduce": rm, "acts": ["keyjs:" + WHY_JS, "js:" + WHY_JS, "wait", "wait", "js:" + WHY_JS]})   # サイクル193: 吹き出しは 字の 数で のびる(4秒 まで)ので、消えた のを 見るのは 5秒 あと
             plans.append({"name": "ng" + sfx, "reduce": rm, "acts": ["R", "js:" + WHY_JS, "wait", "js:" + WHY_JS]})
         cls.r = sound_run(plans)
 
@@ -1763,7 +1763,7 @@ class TestKome365WhyBothSides(unittest.TestCase):
             self.assertEqual(j["pe"], "none", name)                   # 入力を ふさがない
             self.assertEqual(j["word"], "hidden", name)               # 吹き出しの 間は ことばの 札を しまう(✗ と 同じ)
             self.assertEqual(j["anim"], "swWhyFade" if name.endswith("R") else "swWhyIn", name)   # 動きを へらす 設定でも 2秒
-            end = x["js"][-1]                       # 2.5秒 あと
+            end = x["js"][-1]                       # 5秒 あと(サイクル193: 2秒 以上・字の 数で のびて 4秒 まで)
             self.assertFalse(end["on"], name)
             self.assertEqual(end["word"], "visible", name)
 
@@ -2537,6 +2537,45 @@ class TestKome365SoftGL(unittest.TestCase):
             j = x["js"][-1]
             self.assertGreaterEqual(j["three"], 1, "%s: three を 読まない %r" % (name, j))
             self.assertEqual(j["init"], 1, "%s: 3D を 作らない %r" % (name, j))
+
+
+# サイクル193(PLAN4 K3): わけ の 吹き出しは 2秒 を 下限 に、字の 数に 合わせて のばす(20字 を こえた 1字 ごと 0.1秒・4秒 まで)
+WHY_LIVE_JS = "js:(async () => { const w = document.getElementById('swWhy'), n = Array.from(w.textContent).length, d = getComputedStyle(w).animationDuration; await new Promise(r => setTimeout(r, 2150)); const at24 = w.classList.contains('on') && +getComputedStyle(w).opacity > 0.05; await new Promise(r => setTimeout(r, 1300)); return { n: n, dur: d, at24: at24, at37: w.classList.contains('on') }; })()"
+
+
+class TestKome365WhyLength(unittest.TestCase):
+    """サイクル193"""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.r = sound_run([
+            {"name": "long", "acts": ["keyjs:1", WHY_LIVE_JS]},
+            {"name": "longR", "reduce": True, "acts": ["keyjs:1", WHY_LIVE_JS]},
+        ])
+
+    def why_ms(self, n):
+        code = HTML[HTML.index("var WHY_MIN_MS"):HTML.index("function whyShow(fb, k){")]
+        node = shutil.which("node")
+        if not node:
+            raise unittest.SkipTest("node が ない")
+        out = subprocess.run([node, "-e", code + "; console.log(JSON.stringify(%s.map(n => whyMs('あ'.repeat(n)))));" % json.dumps(n)], capture_output=True, text=True)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        return json.loads(out.stdout)
+
+    def test_time_follows_length_with_floor_and_cap(self):
+        # 短い 文は 2秒 の まま・20字を こえた 分 だけ のびる・4秒 まで
+        self.assertEqual(self.why_ms([7, 15, 20, 21, 27, 38, 40, 80]), [2000, 2000, 2000, 2100, 2700, 3800, 4000, 4000])
+
+    def test_long_first_reason_stays_longer_than_two_seconds(self):
+        # 1枚めの わけ(先頭の ○ を 入れて 27字)は 2.4秒 あとも 出て いて、3.7秒 あと には 消えて いる。動きを へらす 設定でも 同じ 時間
+        for name in ("long", "longR"):
+            x = self.r[name]
+            self.assertEqual(x["errs"], [], name)
+            j = x["js"][-1]
+            self.assertEqual(j["n"], 27, j)
+            self.assertEqual(j["dur"], "2.7s", "%s: %r" % (name, j))
+            self.assertTrue(j["at24"], "%s: 2秒で 消えた %r" % (name, j))
+            self.assertFalse(j["at37"], "%s: のびすぎ %r" % (name, j))
 
 if __name__ == "__main__":
     unittest.main()

@@ -2051,7 +2051,8 @@ function crashFailures(R, fail) {   // 安全網（guardEvaluate）に かかっ
   // （面積 0）。画面の 上で 切れない。ゴールの 数を ふやす ので 別の 窓で
   // サイクル226b（見直し P2・P3-3）：よこ長（844×390）でも 見る（上 だけ だと 絵が 104 に 小さく なって いた。120 より 小さい と 落とす）。描かれた 名所の 数を 名所の 数と くらべる（描かれない 回を 見のがさない）
   R.checks.goalArtClear = { ok: true, views: [] };
-  for (const vp of [null, { width: 844, height: 390 }]) {
+  // サイクル226c（見直し P2・P3）：568×320 の 窓も。手本の 指（#tapDemo）とも かからない（指は 絵が 出た あとから 出る ことが ある ので、1.8秒 ずっと 見る）
+  for (const vp of [null, { width: 844, height: 390 }, { width: 568, height: 320 }]) {
     const v = await newPage(browser, { howto: true, auto: true, goals3: true, hasTouch: true, isMobile: true, ...(vp ? { viewport: vp } : {}) }), p = v.page;
     let one;
     try {
@@ -2074,14 +2075,14 @@ function crashFailures(R, fail) {   // 安全網（guardEvaluate）に かかっ
           C.drawImage = function (img, ...a) { if (arm && a.length === 4 && Math.abs(a[2] - a[3]) < 1 && a[2] >= 40 && /drawMzFx/.test(new Error().stack)) { if (rect) many++; rect = [a[0], a[1], a[0] + a[2], a[1] + a[3]]; } return keep.call(this, img, ...a); };
           await wait(300); arm = true;
           M.goal(s.id); M.goalFx('');
-          const t0 = performance.now(), o = { spot: s.name, art: M.bannerArt(), frames: 0, rice: 0, arrow: 0, guide: 0, hud: 0, offTop: 0, off: 0, size: 1e9 };
-          await new Promise(res => { const f = () => { try { if (rect) { o.frames++; o.rice = Math.max(o.rice, ov(rect, P.riceBox)); o.arrow = Math.max(o.arrow, ov(rect, M.mapArrow)); o.guide = Math.max(o.guide, ov(rect, toCv(document.getElementById('guide'))));
+          const t0 = performance.now(), o = { spot: s.name, art: M.bannerArt(), frames: 0, rice: 0, arrow: 0, guide: 0, hud: 0, demo: 0, demoSeen: 0, offTop: 0, off: 0, size: 1e9 };
+          await new Promise(res => { const f = () => { try { if (rect) { o.frames++; o.rice = Math.max(o.rice, ov(rect, P.riceBox)); o.arrow = Math.max(o.arrow, ov(rect, M.mapArrow)); o.guide = Math.max(o.guide, ov(rect, toCv(document.getElementById('guide')))); const td = toCv(document.getElementById('tapDemo')); if (td) o.demoSeen++; o.demo = Math.max(o.demo, ov(rect, td));
               o.hud = Math.max(o.hud, 0, ...M.hudRects().map(h => ov(rect, h))); o.offTop = Math.max(o.offTop, -rect[1]); o.off = Math.max(o.off, -rect[0], rect[2] - cv.width, rect[3] - cv.height); o.size = Math.min(o.size, Math.round(rect[2] - rect[0])); rect = null; } } catch (e) { o.err = String(e.message || e).slice(0, 120); rect = null; } if (performance.now() - t0 < 1800) requestAnimationFrame(f); else res(); }; requestAnimationFrame(f); });
           C.drawImage = keep; o.many = many; rows.push(o); await wait(600);
         }
         const withArt = rows.filter(r => r.art), drawn = withArt.filter(r => r.frames > 0 && !r.err && !r.many);
         return { w: cv.width, rows, spots: rows.length, withArt: withArt.length, drawn: drawn.length,
-          ok: rows.length === 2 && withArt.length === rows.length && drawn.length === withArt.length && !rows.some(r => r.err) && drawn.every(r => r.rice === 0 && r.arrow === 0 && r.guide === 0 && r.hud === 0 && r.offTop <= 0 && r.off <= 0 && r.size >= 120) };
+          ok: rows.length === 2 && withArt.length === rows.length && drawn.length === withArt.length && !rows.some(r => r.err) && drawn.every(r => r.rice === 0 && r.arrow === 0 && r.guide === 0 && r.hud === 0 && r.demo === 0 && r.offTop <= 0 && r.off <= 0 && r.size >= 120) };
       });
     } catch (e) { one = { ok: false, crashed: String(e.message).slice(0, 160) }; }
     finally { R.errors.push(...v.errors); await v.ctx.close(); }
@@ -5024,7 +5025,7 @@ function crashFailures(R, fail) {   // 安全網（guardEvaluate）に かかっ
   need(c.roll && c.roll.ok, 'かたむけて転がす：お米が転がらない（または絵が回らない）');
   need(c.slope && c.slope.ok, '坂：平らな所で動く、または 下り坂で ひとりでに転がらない');
   need(c.guideRecord && c.guideRecord.ok, 'ガイドさんの記録：西尾城跡のガイドさんの話に、つぎのレベルまでの ポイントと しるしの数が出ない');
-  need(c.goalArtClear && c.goalArtClear.ok, `名所の ゴール：大きな 絵が お米・矢印・道しるべ・上の 部品に かかる・小さすぎる・描かれない（${JSON.stringify(c.goalArtClear)}）`);
+  need(c.goalArtClear && c.goalArtClear.ok, `名所の ゴール：大きな 絵が お米・矢印・道しるべ・上の 部品・手本の 指に かかる・小さすぎる・描かれない（${JSON.stringify(c.goalArtClear)}）`);
   need(c.worldNoticeGone && c.worldNoticeGone.ok, `せかいちず：👣 で もどった あとも「🌏 ゴールは 🏁 の 所」の 知らせが のこる（${JSON.stringify(c.worldNoticeGone)}）`);
   need(c.worldAria && c.worldAria.ok, `せかいちず：🌏／👣 の ボタンの 読み上げの 名前が 役目と ちがう（${JSON.stringify(c.worldAria)}）`);
   need(c.guideNameFar && c.guideNameFar.ok, `下の 道しるべ：遠い 人が 行き先の とき 場所が 出ない（${JSON.stringify(c.guideNameFar)}）`);

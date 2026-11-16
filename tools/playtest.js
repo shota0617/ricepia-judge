@@ -3113,6 +3113,31 @@ function crashFailures(R, fail) {   // 安全網（guardEvaluate）に かかっ
     const st = nishioGo.stats();
     return { text: m ? html.slice(html.indexOf('📒'), html.indexOf('📒') + 120).replace(/<[^>]+>.*/, '') : html.replace(/<[^>]+>/g, ' ').slice(0, 160), ok: !!m && +m[1] === st.lv + 1 && +m[2] > 0 };
   });
+  // サイクル222：下の 道しるべ は 人の とき「場所（人）」の 順（狭い 画面で「…」に なるのは 人の がわ）。場所の 名前が かっこを ふくむ 人（西尾城跡の ガイドさん など 56人中 22人）は
+  // 前は 入れかえず、2つめの ゴールの あと「観光ボランティアガイドさん（…」で 切れて 行き先が 見えなかった。並べかえ だけ（字は ふやさない・へらさない）。
+  // こわれた 形・名所 は そのまま（境目の 例は 別の 直し役の 下書き PR #1208 の テストから）。この 画面（390 はば）で 西尾城跡の ガイドさんの 場所の 名前が「…」に ならずに 見える
+  R.checks.guidePlaceFirst = await page.evaluate(() => {
+    const G = nishioGo, f = G.guideDispName, same = (a, b) => a.length === b.length && [...a].sort().join('') === [...b].sort().join('');
+    const bad = [];
+    for (const n of G.npcs) { const name = `${n.name}（${n.spotName}）`, d = f({ kind: 'npc', id: n.id, name }); if (d !== `${n.spotName}（${n.name}）` || !same(d, name)) bad.push(d); }
+    const edge = [[{ kind: 'spot', name: '西尾城跡（ガイドさん）' }, '西尾城跡（ガイドさん）'], [{ kind: 'npc', name: '案内人（西尾駅）' }, '西尾駅（案内人）'],
+      [{ kind: 'npc', name: 'ガイドさん（西尾城跡）（別館）' }, 'ガイドさん（西尾城跡）（別館）'], [{ kind: 'npc', name: '学生 (Nishio)' }, '学生 (Nishio)'], [{ kind: 'npc', name: '（西尾城跡）' }, '（西尾城跡）'],
+      [{ kind: 'npc', name: 'ガイドさん（）' }, 'ガイドさん（）'], [{ kind: 'npc', name: 'ガイドさん（西尾城跡' }, 'ガイドさん（西尾城跡'], [null, ''], [{ kind: 'npc' }, '']];
+    const edgeBad = edge.filter(([g, want]) => f(g) !== want).map(([g]) => g && g.name);
+    // 見える か：いまの 下の 札を 写した 見えない 札（同じ 場所・同じ 形）に 入れて、場所の 名前の おわりが 札の 名前の わくに 入るか（ゲームの 状態は さわらない）
+    const n = G.npcs.find(x => x.id === 'castle-guide'), g0 = document.getElementById('guide');
+    let shown = null, why = '';
+    if (!n || !g0 || !g0.querySelector('.gn')) why = 'no-guide';
+    else {
+      const c = g0.cloneNode(true); c.removeAttribute('id'); c.hidden = false; c.setAttribute('aria-hidden', 'true'); c.style.visibility = 'hidden'; g0.after(c);
+      const gn = c.querySelector('.gn'), pre = /^🏁 /.test(gn.textContent) ? '🏁 ' : '';
+      gn.textContent = pre + f({ kind: 'npc', id: n.id, name: `${n.name}（${n.spotName}）` });
+      const rg = document.createRange(); rg.setStart(gn.firstChild, 0); rg.setEnd(gn.firstChild, pre.length + n.spotName.length);
+      shown = gn.textContent.startsWith(pre + n.spotName) && rg.getBoundingClientRect().right <= gn.getBoundingClientRect().right + 0.5;
+      c.remove();
+    }
+    return { n: G.npcs.length, bad: bad.slice(0, 5), badN: bad.length, edgeBad, castleShown: shown, why, ok: G.npcs.length > 0 && !bad.length && !edgeBad.length && shown === true };
+  });
   // しるしをくれる人：一色の魚屋のおかみさんの話に「🔖 一色の注目スポットを あと○か所 めぐったら…（いま ○/5）」
   R.checks.sealPage = await page.evaluate(async () => {
     const n = nishioGo.npcs.find(x => x.id === 'sakana-okami');
@@ -4915,6 +4940,7 @@ function crashFailures(R, fail) {   // 安全網（guardEvaluate）に かかっ
   need(c.roll && c.roll.ok, 'かたむけて転がす：お米が転がらない（または絵が回らない）');
   need(c.slope && c.slope.ok, '坂：平らな所で動く、または 下り坂で ひとりでに転がらない');
   need(c.guideRecord && c.guideRecord.ok, 'ガイドさんの記録：西尾城跡のガイドさんの話に、つぎのレベルまでの ポイントと しるしの数が出ない');
+  need(c.guidePlaceFirst && c.guidePlaceFirst.ok, `下の 道しるべ：場所の 名前に かっこが ある 人でも 場所が 先に 出ない・390 はばで 西尾城跡が 切れる（${JSON.stringify(c.guidePlaceFirst)}）`);
   need(c.kiraFar && c.kiraFar.ok, '遠いほど めずらしい：西尾城跡から 8km をこえても、キラが出やすい知らせが出ない');
   need(c.alley && c.alley.ok, '路地の行き止まり：道が終わるマスに入っても 見つけものが出ない（または 同じマスで2回出る）');
   need(c.sealPick && c.sealPick.ok, 'しるしの2枚：2枚から えらぶ窓が出ない、または えらんだ1枚が キラで入らない');

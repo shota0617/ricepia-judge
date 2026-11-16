@@ -12773,7 +12773,7 @@ function mzGoalFx(text) {
     const a = Math.random() * Math.PI * 2, v = MZ_GOAL_FX.vMin + Math.random() * MZ_GOAL_FX.vVar, k = kinds[i % kinds.length];
     mzFx.push({ t0: fxT, vx: Math.cos(a) * v, vy: Math.sin(a) * v - MZ_GOAL_FX.up, k, c: k === 'leaf' ? cols.leaf[i % 2] : cols[k], spin: 4 + Math.random() * 8, ph: Math.random() * 6.3, life: MZ_GOAL_FX.lifeMin + Math.random() * MZ_GOAL_FX.lifeVar });
   }
-  mzBanner.t0 = fxT; mzBanner.text = text || ''; mzBanner.said = false; mzBanner.spot = null;
+  mzBanner.t0 = fxT; mzBanner.text = text || ''; mzBanner.said = false; mzBanner.spot = null; mzBanner.demo = null;
   mzBanner.gid = mzGoalAsk.id && now - mzGoalAsk.at < 100 && (G.spots || []).some(s => s.id === mzGoalAsk.id) ? mzGoalAsk.id : ''; mzGoalAsk.id = '';
   mzHelpGoal();
 }
@@ -12794,20 +12794,25 @@ function demoBoxAt(q, up, side, first, big) {
 }
 
 
-const mzArtDemo = { t: -1e9, r: [] };
-function mzArtDemoRects(now) {
-  if (now - mzArtDemo.t < 250) return mzArtDemo.r;
-  mzArtDemo.t = now;
-  const c = cv.getBoundingClientRect(), k = c.width ? cv.width / c.width : 1, out = [], el = tapDemo.el;
-  const toCv = b => [(b[0] - c.left) * k, (b[1] - c.top) * k, (b[2] - c.left) * k, (b[3] - c.top) * k];
-  if (el && !el.hidden && !tapDemo.world) { const q = { x: parseFloat(el.style.left), y: parseFloat(el.style.top) }; if (isFinite(q.x) && isFinite(q.y)) out.push(toCv(demoBoxAt(q, tapDemo.up, tapDemo.side, el.classList.contains('first'), el.classList.contains('big')))); }
-  const path = mzRt.path;
-  if (path && path.length > 1 && rp.x !== null && !worldMode) {
-    const first = !!(el && el.classList.contains('first')), sp = tapDemoSpot(path, first);
-    if (sp) out.push(toCv(demoBoxAt(sp.q, sp.up, sp.side, first, !!sp.big)));
-  }
-  mzArtDemo.r = out;
+
+
+function mzArtDemoBox(q, up, side, big) {
+  const a = demoBoxAt(q, up, side, false, big), b = demoBoxAt(q, up, side, true, big);
+  return [Math.min(a[0], b[0]), Math.min(a[1], b[1]), Math.max(a[2], b[2]), Math.max(a[3], b[3])];
+}
+function mzArtDemoToCv() { const c = cv.getBoundingClientRect(), k = c.width ? cv.width / c.width : 1; return b => [(b[0] - c.left) * k, (b[1] - c.top) * k, (b[2] - c.left) * k, (b[3] - c.top) * k]; }
+function mzArtDemoAhead() {
+  const path = mzRt.path, out = [];
+  if (!path || path.length < 2 || rp.x === null || worldMode) return out;
+  const toCv = mzArtDemoToCv();
+  for (const first of [false, true]) { const sp = tapDemoSpot(path, first); if (sp) out.push(toCv(mzArtDemoBox(sp.q, sp.up, sp.side, !!sp.big))); }
   return out;
+}
+function mzArtDemoShown() {
+  const el = tapDemo.el;
+  if (!el || el.hidden || tapDemo.world) return null;
+  const q = { x: parseFloat(el.style.left), y: parseFloat(el.style.top) };
+  return isFinite(q.x) && isFinite(q.y) ? mzArtDemoToCv()(mzArtDemoBox(q, tapDemo.up, tapDemo.side, el.classList.contains('big'))) : null;
 }
 
 function mzArtFits(w, vh, gap, all, x, y, z) {
@@ -12858,16 +12863,17 @@ function drawMzFx(w, cy, T, now, S) {
 
     if (gimg) {
       const gi = gimg[0], gap = Math.round(S * 0.25), rb = roll.box || [w / 2 - S, cy - S * 2, w / 2 + S, cy + S], want = Math.round(Math.min(S * 5, w * 0.8));
-      const demo = mzArtDemoRects(now), obs = [...mzHudRects(now), mzHud.g, mzMap.arrow, ...demo].filter(Boolean), vh = cy * 2;
+      const vh = cy * 2, D = mzBanner.demo && mzBanner.demo.w === w && mzBanner.demo.vh === vh ? mzBanner.demo : (mzBanner.demo = { w, vh, r: mzArtDemoAhead() });
+      const demo = [mzArtDemoShown(), ...D.r].filter(Boolean), obs = [...mzHudRects(now), mzHud.g, mzMap.arrow, ...demo].filter(Boolean);
 
-      const K = mzBanner.spot, keep = K && K.w === w && K.vh === vh && K.want === want && mzArtFits(w, vh, Math.floor(gap / 2), [rb, ...obs], K.at[0], K.at[1], K.at[2]) ? K.at : null;
+      const K = mzBanner.spot, keep = K && K.w === w && K.vh === vh && K.want === want && mzArtFits(w, vh, 1, [rb, ...obs], K.at[0], K.at[1], K.at[2]) ? K.at : null;
       const lean = demo.length ? (demo[0][0] + demo[0][2]) / 2 : mzMap.arrow ? (mzMap.arrow[0] + mzMap.arrow[2]) / 2 : undefined;
       const at = keep || mzArtSpot(w, vh, rb, gap, want, Math.round(S * 1.5), obs, lean), gz = at ? at[2] : 0;
       if (at && at !== keep) mzBanner.spot = { at, w, vh, want };
       if (gz > 0) ctx.drawImage(gi, at[0], at[1], gz, gz);
     }
     ctx.globalAlpha = 1;
-  } else if (mzBanner.t0) { mzBanner.t0 = 0; mzBanner.gid = ''; mzBanner.spot = null; }
+  } else if (mzBanner.t0) { mzBanner.t0 = 0; mzBanner.gid = ''; mzBanner.spot = null; mzBanner.demo = null; }
   for (let i = mzFx.length - 1; i >= 0; i--) {
     const p = mzFx[i], a = (now - p.t0) / 1000;
     if (a < 0) continue;

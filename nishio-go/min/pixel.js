@@ -12779,20 +12779,35 @@ function mzGoalFx(text) {
 }
 
 
-function mzArtSpot(w, bottom, gap, want, min, obs) {
-  for (let z = want; z >= min; z = Math.floor(z * 0.9)) {
-    const y = bottom - z;
-    if (y < gap) continue;
-    const xs = [w / 2];
-    for (const r of obs) xs.push(r[2] + gap + z / 2, r[0] - gap - z / 2);
-    xs.sort((a, b) => Math.abs(a - w / 2) - Math.abs(b - w / 2));
-    for (const c of xs) {
-      const x = Math.round(c - z / 2);
-      if (x < gap || x + z > w - gap) continue;
-      if (obs.every(r => r[2] + gap <= x || r[0] - gap >= x + z || r[3] + gap <= y || r[1] - gap >= bottom)) return [x, Math.round(y), z];
+
+
+function mzArtSpot(w, vh, rb, gap, want, min, obs) {
+  const all = [rb, ...obs], rx = (rb[0] + rb[2]) / 2, ry = (rb[1] + rb[3]) / 2;
+  const fits = (x, y, z) => x >= gap && y >= gap && x + z <= w - gap && y + z <= vh - gap && all.every(r => r[2] + gap <= x || r[0] - gap >= x + z || r[3] + gap <= y || r[1] - gap >= y + z);
+  const near = (c, v) => (a, b) => Math.abs(a - c) - Math.abs(b - c);
+  const above = z => {
+    const y = Math.floor(rb[1] - gap - z), xs = [Math.round(rx - z / 2)];
+    for (const r of obs) xs.push(Math.ceil(r[2] + gap), Math.floor(r[0] - gap - z));
+    for (const x of xs.sort(near(rx - z / 2))) if (fits(x, y, z)) return [x, y, z];
+    return null;
+  };
+  const sides = [[rb[2] + gap, w - rb[2]], [rb[0] - gap, rb[0]]].sort((a, b) => b[1] - a[1]);
+  const side = z => {
+    const ys = [Math.round(ry - z / 2), Math.ceil(rb[1]), Math.floor(rb[3] - z), gap, Math.floor(vh - gap - z)];
+    for (const r of obs) ys.push(Math.ceil(r[3] + gap), Math.floor(r[1] - gap - z));
+    for (const [edge] of sides) {
+      const right = edge > rx, x0 = right ? Math.ceil(edge) : Math.floor(edge - z), xs = [x0];
+      for (const r of obs) xs.push(right ? Math.ceil(r[2] + gap) : Math.floor(r[0] - gap - z));
+      for (const x of xs.filter(x => (right ? x >= x0 : x <= x0)).sort(near(x0)))
+        for (const y of ys.sort(near(ry - z / 2))) if (fits(x, y, z)) return [x, y, z];
     }
-  }
-  return null;
+    return null;
+  };
+  let up = null, by = null;
+  for (let z = want; z >= min && !up; z = Math.floor(z * 0.95)) up = above(z);
+  if (up && up[2] >= want * 0.75) return up;
+  for (let z = want; z >= min && !by; z = Math.floor(z * 0.95)) by = side(z);
+  return by && (!up || by[2] > up[2]) ? by : up;
 }
 function drawMzFx(w, cy, T, now, S) {
   if (mapCovered()) { if (mzBanner.t0) mzBanner.t0 = now; for (const p of mzFx) p.t0 = now; return; }
@@ -12809,8 +12824,8 @@ function drawMzFx(w, cy, T, now, S) {
 
 
     if (gimg) {
-      const gi = gimg[0], gap = Math.round(S * 0.25), head = (roll.box ? roll.box[1] : cy - S * 2) - gap, want = Math.round(Math.min(S * 5, w * 0.8));
-      const obs = [...mzHudRects(now), mzMap.arrow].filter(Boolean), at = mzArtSpot(w, head, gap, want, Math.round(S * 1.5), obs), gz = at ? at[2] : 0;
+      const gi = gimg[0], gap = Math.round(S * 0.25), rb = roll.box || [w / 2 - S, cy - S * 2, w / 2 + S, cy + S], want = Math.round(Math.min(S * 5, w * 0.8));
+      const obs = [...mzHudRects(now), mzHud.g, mzMap.arrow].filter(Boolean), at = mzArtSpot(w, cy * 2, rb, gap, want, Math.round(S * 1.5), obs), gz = at ? at[2] : 0;
       if (gz > 0) ctx.drawImage(gi, at[0], at[1], gz, gz);
     }
     ctx.globalAlpha = 1;
@@ -12832,16 +12847,18 @@ function drawMzFx(w, cy, T, now, S) {
 function drawMzNext(w, cy, U, now) {
   mzNext.want = false; mzNext.t0 = 0; return;
 }
-const mzHud = { t: -1e9, r: [] };
+const mzHud = { t: -1e9, r: [], g: null };
 function mzHudRects(now) {
   if (now - mzHud.t < 500) return mzHud.r;
   mzHud.t = now;
   const c = cv.getBoundingClientRect(), k = c.width ? cv.width / c.width : 1;
-  mzHud.r = ['.px-zoom', '#pxMeiro', '#koyomi'].map(q => document.querySelector(q)).filter(e => e && !e.hidden && e.getClientRects().length)
-    .map(e => { const b = e.getBoundingClientRect(); return [(b.left - c.left) * k, (b.top - c.top) * k, (b.right - c.left) * k, (b.bottom - c.top) * k]; })
-    .filter(r => r[2] > r[0] && r[3] > r[1]);
+  const box = e => { const b = e.getBoundingClientRect(); return [(b.left - c.left) * k, (b.top - c.top) * k, (b.right - c.left) * k, (b.bottom - c.top) * k]; }, shown = e => e && !e.hidden && e.getClientRects().length;
+  mzHud.r = ['.px-zoom', '#pxMeiro', '#koyomi'].map(q => document.querySelector(q)).filter(shown).map(box).filter(r => r[2] > r[0] && r[3] > r[1]);
+  const gd = $('guide'), gr = shown(gd) ? box(gd) : null;
+  mzHud.g = gr && gr[2] > gr[0] && gr[3] > gr[1] ? gr : null;
   return mzHud.r;
 }
+window.addEventListener('resize', () => { mzHud.t = -1e9; });
 const MZ_TAP_K = 0.5;
 
 

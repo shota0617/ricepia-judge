@@ -12732,7 +12732,7 @@ function mzSnap(now) {
 // ・画面の 中：チェックインの 近さの 光る わ（ふくらんだり ちぢんだり）と、🏁 の 旗、「ゴール」の 文字
 // ・画面の 外：縁に 大きな 矢印と、🏁 と めいろの 道のり（なければ まっすぐの きょり）の 札
 // ゴールに 着いた：お米の まわりに 紙ふぶき（ごはんつぶ・星・桜の 色。盤の めいろと 同じ）
-const mzFx = [], mzBanner = { t0: 0, text: '', gid: '' };
+const mzFx = [], mzBanner = { t0: 0, text: '', gid: '' };   // spot（サイクル226c）：着いた 名所の 絵の 置き場は 描く ときに 入れる
 const mzGoalAsk = { id: '', at: 0 };   // 着いた名所の id（goal(id) が ゴールだと 確かめた 直後の goalFx だけが 使う。サイクル166）
 // ゴールの 区切りは 短く、絵と 動きだけ（サイクル156：紙ふぶき 60→24、バナー 4→1.6秒）
 const MZ_GOAL_FX = { n: 24, bannerSec: 1.6, fadeSec: 0.4, lifeMin: 0.7, lifeVar: 0.4, vMin: 1.2, vVar: 2.4, up: 2.2, happyMs: 1600 };
@@ -12773,9 +12773,79 @@ function mzGoalFx(text) {
     const a = Math.random() * Math.PI * 2, v = MZ_GOAL_FX.vMin + Math.random() * MZ_GOAL_FX.vVar, k = kinds[i % kinds.length];
     mzFx.push({ t0: fxT, vx: Math.cos(a) * v, vy: Math.sin(a) * v - MZ_GOAL_FX.up, k, c: k === 'leaf' ? cols.leaf[i % 2] : cols[k], spin: 4 + Math.random() * 8, ph: Math.random() * 6.3, life: MZ_GOAL_FX.lifeMin + Math.random() * MZ_GOAL_FX.lifeVar });
   }
-  mzBanner.t0 = fxT; mzBanner.text = text || ''; mzBanner.said = false;   // サイクル220b（見直し P1）：紙ふぶき・★は 止めの あと（fxT）。下の 着いた名所の くらべは 着いた 時刻（now）の まま
+  mzBanner.t0 = fxT; mzBanner.text = text || ''; mzBanner.said = false; mzBanner.spot = null; mzBanner.demo = null;   // サイクル220b（見直し P1）：紙ふぶき・★は 止めの あと（fxT）。下の 着いた名所の くらべは 着いた 時刻（now）の まま
   mzBanner.gid = mzGoalAsk.id && now - mzGoalAsk.at < 100 && (G.spots || []).some(s => s.id === mzGoalAsk.id) ? mzGoalAsk.id : ''; mzGoalAsk.id = '';   // 着いた名所（goal(id) で 確かめた 直後だけ。分からなければ 絵は 出さない）
   mzHelpGoal();   // ゴールの 数え上げ（バナーの 文字は 出さない。サイクル146）
+}
+// サイクル226：着いた 名所の 絵の 置き場（左上 x・y・大きさ）。お米（rb）・obs の 四角（gap あける）・画面の 外（はば w・見えて いる 高さ vh）に かからない 所。
+// まず お米の 頭の 上（まん中 → 物の すぐ 横）。上に 入る 大きさが want の 0.75 より 小さく なる とき（よこ長の 画面・お米が 上の はし に 近い とき）は、
+// お米の 横（空きの 広い 側 から）も さがし、大きく 入る ほうに 置く。どちらも min より 小さく しか 入らなければ null（描かない）
+// サイクル226b（見直し P2・P3-1）：よこ長で 上 だけに しぼると 絵が 66〜104（画面で 33〜52点）に なり、何の 絵か 分からなかった
+// サイクル226c（見直し P2）：手本の 指（#tapDemo）の しめる 四角（画面の 点）。q：指先・up：さかさ（手が 上）・side：札が よこ（lr・ll）・first：「タップ！」の 札・big：最初の 大きい 形。
+// 押す 動き（move）と 輪（::before）・札（::after）も 入れて 大きめに とる（style.css の #tapDemo と DEMO_HAND・DEMO_LAB の 大きさ）
+function demoBoxAt(q, up, side, first, big) {
+  const H = big ? DEMO_HAND1 : DEMO_HAND, L = big ? DEMO_LAB1 : DEMO_LAB, ring = Math.ceil(H.w * 0.6), long = H.h + H.move + H.pad;
+  const r = [q.x - Math.max(H.w / 2, ring), q.y - (up ? long : ring) - H.move, q.x + Math.max(H.w / 2, ring), q.y + (up ? ring : long) + H.move];
+  if (!first) return r;
+  if (side === 'lr') r[2] = Math.max(r[2], q.x + H.w / 2 + L.gap + L.w);
+  else if (side === 'll') r[0] = Math.min(r[0], q.x - H.w / 2 - L.gap - L.w);
+  else { r[0] = Math.min(r[0], q.x - L.w / 2); r[2] = Math.max(r[2], q.x + L.w / 2); if (up) r[1] = Math.min(r[1], q.y - L.below - L.h - H.move); else r[3] = Math.max(r[3], q.y + L.below + L.h + H.move); }
+  return r;
+}
+// 着いた ときの 名所の 絵が よける 手本の 指：いま 出て いる 指と、これから 出る 指（tapDemoSpot で さがす 所。指は 絵が 出て 0.9〜1.5秒 あとに 出る ので、置く ときには まだ 無い）。キャンバスの 画素
+// サイクル226d（見直し P3）：これから 出る 指の 場所（tapDemoSpot）は 着いた ときに 1回 だけ さがす（画面の 大きさが かわった ときだけ もう 1回）。
+// 前は 0.25秒ごとに さがして いて、絵が 出て いる 間の こま が 重く なる おそれが あった。「タップ！」の 札は 着いた あとから つく ことも ある ので、
+// 札つき・札なし の 両方の 置き方を さがし、どちらも 札つきの 大きさ（広い ほう）で よける
+function mzArtDemoBox(q, up, side, big) {   // 札なし と 札つき を あわせた 四角（画面の 点）
+  const a = demoBoxAt(q, up, side, false, big), b = demoBoxAt(q, up, side, true, big);
+  return [Math.min(a[0], b[0]), Math.min(a[1], b[1]), Math.max(a[2], b[2]), Math.max(a[3], b[3])];
+}
+function mzArtDemoToCv() { const c = cv.getBoundingClientRect(), k = c.width ? cv.width / c.width : 1; return b => [(b[0] - c.left) * k, (b[1] - c.top) * k, (b[2] - c.left) * k, (b[3] - c.top) * k]; }
+function mzArtDemoAhead() {   // これから 出る 指（キャンバスの 画素）
+  const path = mzRt.path, out = [];
+  if (!path || path.length < 2 || rp.x === null || worldMode) return out;
+  const toCv = mzArtDemoToCv();
+  for (const first of [false, true]) { const sp = tapDemoSpot(path, first); if (sp) out.push(toCv(mzArtDemoBox(sp.q, sp.up, sp.side, !!sp.big))); }
+  return out;
+}
+function mzArtDemoShown() {   // いま 出て いる 指（軽い：置いた 点を 読む だけ）
+  const el = tapDemo.el;
+  if (!el || el.hidden || tapDemo.world) return null;
+  const q = { x: parseFloat(el.style.left), y: parseFloat(el.style.top) };
+  return isFinite(q.x) && isFinite(q.y) ? mzArtDemoToCv()(mzArtDemoBox(q, tapDemo.up, tapDemo.side, el.classList.contains('big'))) : null;
+}
+// サイクル226c（見直し P2）：左右の 空きが ほぼ 同じ（差が want の 半分 より 小さい）ときは、0.4点の 差で 決めず、lean（手本の 指・次の 矢印の x）の ない 側を 先に（名所ごとに ふらつかない）
+function mzArtFits(w, vh, gap, all, x, y, z) {
+  return x >= gap && y >= gap && x + z <= w - gap && y + z <= vh - gap && all.every(r => r[2] + gap <= x || r[0] - gap >= x + z || r[3] + gap <= y || r[1] - gap >= y + z);
+}
+function mzArtSpot(w, vh, rb, gap, want, min, obs, lean) {
+  const all = [rb, ...obs], rx = (rb[0] + rb[2]) / 2, ry = (rb[1] + rb[3]) / 2;
+  const fits = (x, y, z) => mzArtFits(w, vh, gap, all, x, y, z);
+  const near = (c, v) => (a, b) => Math.abs(a - c) - Math.abs(b - c);
+  const above = z => {   // お米の 頭の 上。まん中 から 近い 順
+    const y = Math.floor(rb[1] - gap - z), xs = [Math.round(rx - z / 2)];   // 物の すぐ 横・上は 外がわへ まるめる（まるめて 0.5点 かかると 置けなかった）
+    for (const r of obs) xs.push(Math.ceil(r[2] + gap), Math.floor(r[0] - gap - z));
+    for (const x of xs.sort(near(rx - z / 2))) if (fits(x, y, z)) return [x, y, z];
+    return null;
+  };
+  const sides = [[rb[2] + gap, w - rb[2]], [rb[0] - gap, rb[0]]].sort((a, b) => b[1] - a[1]);   // 空きの 広い 側 から
+  if (Math.abs(sides[0][1] - sides[1][1]) < want / 2 && typeof lean === 'number') sides.sort((a, b) => ((a[0] > rx) === (lean > rx)) - ((b[0] > rx) === (lean > rx)));   // ほぼ 同じ：指・矢印の ない 側 から
+  const side = z => {   // お米の 横。お米の 高さに 近い 順
+    const ys = [Math.round(ry - z / 2), Math.ceil(rb[1]), Math.floor(rb[3] - z), gap, Math.floor(vh - gap - z)];
+    for (const r of obs) ys.push(Math.ceil(r[3] + gap), Math.floor(r[1] - gap - z));
+    for (const [edge] of sides) {
+      const right = edge > rx, x0 = right ? Math.ceil(edge) : Math.floor(edge - z), xs = [x0];
+      for (const r of obs) xs.push(right ? Math.ceil(r[2] + gap) : Math.floor(r[0] - gap - z));
+      for (const x of xs.filter(x => (right ? x >= x0 : x <= x0)).sort(near(x0)))
+        for (const y of ys.sort(near(ry - z / 2))) if (fits(x, y, z)) return [x, y, z];
+    }
+    return null;
+  };
+  let up = null, by = null;
+  for (let z = want; z >= min && !up; z = Math.floor(z * 0.95)) up = above(z);
+  if (up && up[2] >= want * 0.75) return up;
+  for (let z = want; z >= min && !by; z = Math.floor(z * 0.95)) by = side(z);
+  return by && (!up || by[2] > up[2]) ? by : up;
 }
 function drawMzFx(w, cy, T, now, S) {   // 画面の まん中（お米）から はじける。重さで 落ちて うすく なる。S：文字の 大きさの もと（画面の 点）
   if (mapCovered()) { if (mzBanner.t0) mzBanner.t0 = now; for (const p of mzFx) p.t0 = now; return; }   // ごほうびの 窓などが 開いている 間は 待って、とじたら はじめる
@@ -12788,9 +12858,22 @@ function drawMzFx(w, cy, T, now, S) {   // 画面の まん中（お米）から
     if (!mzBanner.said) { mzBanner.said = true; riceSay('ついた〜！', MZ_GOAL_FX.happyMs, 'happy'); }   // 大きな「🏁 ゴール！」の 文字は やめて、お米が 吹き出しで 言う（10/29 店主「文字を 廃止して キャラクターとの 対話」）。窓を とじてから
     if (mzBanner.text) { const sm = Math.round(big * 0.5); ctx.font = `bold ${sm}px "DotGothic16", sans-serif`; ctx.lineWidth = Math.max(3, sm / 4); ctx.fillStyle = '#ffffff'; const ty = cy + T * 1.4; ctx.strokeText(mzBanner.text, w / 2, ty); ctx.fillText(mzBanner.text, w / 2, ty); }
     const gs = mzBanner.gid && (G.spots || []).find(s => s.id === mzBanner.gid), gimg = gs && (giantOf(gs) || spriteOf(gs));   // 着いた名所の 大きな絵（読めて いなければ 描かない）。文字は 足さない
-    if (gimg) { const gi = gimg[0], gz = Math.round(Math.min(S * 5, w * 0.8, Math.max(0, cy) * 1.6)), gy = Math.max(gz / 2, cy - S * 3.2); if (gz > 0) ctx.drawImage(gi, Math.round(w / 2 - gz / 2), Math.round(gy - gz / 2), gz, gz); }
+    // サイクル226：前は 絵の まん中を お米の 少し 上（cy − S×3.2）に 置き、絵の 下の 半分が お米の 玉に 1.6秒 かかって いた（お米の 67〜100%）。
+    // 絵の 下を お米の 頭（roll.box の 上）より 上に。画面の 上の はし・上の 部品（ズームの ボタン・こよみ など）・次の ゴールの 矢印 にも かからない 所へ。
+    // まん中が ふさがって いれば 横へ ずらし、上が せまければ お米の 横へ（mzArtSpot）。どこにも 入らない とき だけ 描かない
+    if (gimg) {
+      const gi = gimg[0], gap = Math.round(S * 0.25), rb = roll.box || [w / 2 - S, cy - S * 2, w / 2 + S, cy + S], want = Math.round(Math.min(S * 5, w * 0.8));
+      const vh = cy * 2, D = mzBanner.demo && mzBanner.demo.w === w && mzBanner.demo.vh === vh ? mzBanner.demo : (mzBanner.demo = { w, vh, r: mzArtDemoAhead() });   // これから 出る 指は 着いた とき（と 大きさが かわった とき）だけ
+      const demo = [mzArtDemoShown(), ...D.r].filter(Boolean), obs = [...mzHudRects(now), mzHud.g, mzMap.arrow, ...demo].filter(Boolean);   // 上の 部品・道しるべ・次の ゴールの 矢印・手本の 指
+      // サイクル226c（見直し P2）：着いた ときに 決めた 場所を 1.6秒 保つ（前は こま ごとに さがし直して 途中で 2回 とんだ）。画面の 大きさが かわった・あとから 何かが かかる ように なった ときだけ 決め直す
+      const K = mzBanner.spot, keep = K && K.w === w && K.vh === vh && K.want === want && mzArtFits(w, vh, 1, [rb, ...obs], K.at[0], K.at[1], K.at[2]) ? K.at : null;   // 保つ ときは あきを 1点まで ゆるす（お米の 息で 頭が 上下して、1点 ずつ とんで いた。サイクル226d：あき 半分 でも 48回に 1回 とんだ）
+      const lean = demo.length ? (demo[0][0] + demo[0][2]) / 2 : mzMap.arrow ? (mzMap.arrow[0] + mzMap.arrow[2]) / 2 : undefined;
+      const at = keep || mzArtSpot(w, vh, rb, gap, want, Math.round(S * 1.5), obs, lean), gz = at ? at[2] : 0;
+      if (at && at !== keep) mzBanner.spot = { at, w, vh, want };
+      if (gz > 0) ctx.drawImage(gi, at[0], at[1], gz, gz);
+    }
     ctx.globalAlpha = 1;
-  } else if (mzBanner.t0) { mzBanner.t0 = 0; mzBanner.gid = ''; }
+  } else if (mzBanner.t0) { mzBanner.t0 = 0; mzBanner.gid = ''; mzBanner.spot = null; mzBanner.demo = null; }
   for (let i = mzFx.length - 1; i >= 0; i--) {
     const p = mzFx[i], a = (now - p.t0) / 1000;
     if (a < 0) continue;   // サイクル220：ゴールの 止めの 間は まだ 出さない
@@ -12808,16 +12891,18 @@ function drawMzFx(w, cy, T, now, S) {   // 画面の まん中（お米）から
 function drawMzNext(w, cy, U, now) {
   mzNext.want = false; mzNext.t0 = 0; return;
 }
-const mzHud = { t: -1e9, r: [] };
+const mzHud = { t: -1e9, r: [], g: null };
 function mzHudRects(now) {   // 地図の 上に 重なる ボタン・札の 四角（キャンバスの 画素。0.5秒ごとに 測りなおす）
   if (now - mzHud.t < 500) return mzHud.r;
   mzHud.t = now;
   const c = cv.getBoundingClientRect(), k = c.width ? cv.width / c.width : 1;
-  mzHud.r = ['.px-zoom', '#pxMeiro', '#koyomi'].map(q => document.querySelector(q)).filter(e => e && !e.hidden && e.getClientRects().length)
-    .map(e => { const b = e.getBoundingClientRect(); return [(b.left - c.left) * k, (b.top - c.top) * k, (b.right - c.left) * k, (b.bottom - c.top) * k]; })
-    .filter(r => r[2] > r[0] && r[3] > r[1]);
+  const box = e => { const b = e.getBoundingClientRect(); return [(b.left - c.left) * k, (b.top - c.top) * k, (b.right - c.left) * k, (b.bottom - c.top) * k]; }, shown = e => e && !e.hidden && e.getClientRects().length;
+  mzHud.r = ['.px-zoom', '#pxMeiro', '#koyomi'].map(q => document.querySelector(q)).filter(shown).map(box).filter(r => r[2] > r[0] && r[3] > r[1]);
+  const gd = $('guide'), gr = shown(gd) ? box(gd) : null;   // 道しるべ の 札（ゴールの 絵 だけが よける。矢印の よけ方は かえない）
+  mzHud.g = gr && gr[2] > gr[0] && gr[3] > gr[1] ? gr : null;
   return mzHud.r;
 }
+window.addEventListener('resize', () => { mzHud.t = -1e9; });   // サイクル226b（見直し P3-2）：回す・大きさが かわったら すぐ 測りなおす（0.5秒 古い 四角で よけて いた）
 const MZ_TAP_K = 0.5;   // 矢印の「🗺 タップ」の 字の 大きさ（矢印の 大きさ U に かける。U は 24点 から なので 12点 より 大きい。0.36 で 9点ほどの 小さい 字 だった。運営者の声「大きい文字シンプルに」）
 // 画面の 外の ゴールへの 矢印が お米に かぶらない ように（にしおサイクル127。自分で 遊んで 分かった：横向き 844×390 では 上の 縁が お米の すぐ 上なので、矢印と 🏁 の 旗が かおりちゃんの 顔に かぶった）：
 //   お米の まん中（w/2, cy）から U×3 より 近ければ、上下の 縁なら 横へ（ゴールの ある がわへ）、左右の 縁なら 縦へ ずらす。向き（a）は かえない。純関数

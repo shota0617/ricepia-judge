@@ -12773,9 +12773,79 @@ function mzGoalFx(text) {
     const a = Math.random() * Math.PI * 2, v = MZ_GOAL_FX.vMin + Math.random() * MZ_GOAL_FX.vVar, k = kinds[i % kinds.length];
     mzFx.push({ t0: fxT, vx: Math.cos(a) * v, vy: Math.sin(a) * v - MZ_GOAL_FX.up, k, c: k === 'leaf' ? cols.leaf[i % 2] : cols[k], spin: 4 + Math.random() * 8, ph: Math.random() * 6.3, life: MZ_GOAL_FX.lifeMin + Math.random() * MZ_GOAL_FX.lifeVar });
   }
-  mzBanner.t0 = fxT; mzBanner.text = text || ''; mzBanner.said = false;
+  mzBanner.t0 = fxT; mzBanner.text = text || ''; mzBanner.said = false; mzBanner.spot = null; mzBanner.demo = null;
   mzBanner.gid = mzGoalAsk.id && now - mzGoalAsk.at < 100 && (G.spots || []).some(s => s.id === mzGoalAsk.id) ? mzGoalAsk.id : ''; mzGoalAsk.id = '';
   mzHelpGoal();
+}
+
+
+
+
+
+
+function demoBoxAt(q, up, side, first, big) {
+  const H = big ? DEMO_HAND1 : DEMO_HAND, L = big ? DEMO_LAB1 : DEMO_LAB, ring = Math.ceil(H.w * 0.6), long = H.h + H.move + H.pad;
+  const r = [q.x - Math.max(H.w / 2, ring), q.y - (up ? long : ring) - H.move, q.x + Math.max(H.w / 2, ring), q.y + (up ? ring : long) + H.move];
+  if (!first) return r;
+  if (side === 'lr') r[2] = Math.max(r[2], q.x + H.w / 2 + L.gap + L.w);
+  else if (side === 'll') r[0] = Math.min(r[0], q.x - H.w / 2 - L.gap - L.w);
+  else { r[0] = Math.min(r[0], q.x - L.w / 2); r[2] = Math.max(r[2], q.x + L.w / 2); if (up) r[1] = Math.min(r[1], q.y - L.below - L.h - H.move); else r[3] = Math.max(r[3], q.y + L.below + L.h + H.move); }
+  return r;
+}
+
+
+
+
+function mzArtDemoBox(q, up, side, big) {
+  const a = demoBoxAt(q, up, side, false, big), b = demoBoxAt(q, up, side, true, big);
+  return [Math.min(a[0], b[0]), Math.min(a[1], b[1]), Math.max(a[2], b[2]), Math.max(a[3], b[3])];
+}
+function mzArtDemoToCv() { const c = cv.getBoundingClientRect(), k = c.width ? cv.width / c.width : 1; return b => [(b[0] - c.left) * k, (b[1] - c.top) * k, (b[2] - c.left) * k, (b[3] - c.top) * k]; }
+function mzArtDemoAhead() {
+  const path = mzRt.path, out = [];
+  if (!path || path.length < 2 || rp.x === null || worldMode) return out;
+  const toCv = mzArtDemoToCv();
+  for (const first of [false, true]) { const sp = tapDemoSpot(path, first); if (sp) out.push(toCv(mzArtDemoBox(sp.q, sp.up, sp.side, !!sp.big))); }
+  return out;
+}
+function mzArtDemoShown() {
+  const el = tapDemo.el;
+  if (!el || el.hidden || tapDemo.world) return null;
+  const q = { x: parseFloat(el.style.left), y: parseFloat(el.style.top) };
+  return isFinite(q.x) && isFinite(q.y) ? mzArtDemoToCv()(mzArtDemoBox(q, tapDemo.up, tapDemo.side, el.classList.contains('big'))) : null;
+}
+
+function mzArtFits(w, vh, gap, all, x, y, z) {
+  return x >= gap && y >= gap && x + z <= w - gap && y + z <= vh - gap && all.every(r => r[2] + gap <= x || r[0] - gap >= x + z || r[3] + gap <= y || r[1] - gap >= y + z);
+}
+function mzArtSpot(w, vh, rb, gap, want, min, obs, lean) {
+  const all = [rb, ...obs], rx = (rb[0] + rb[2]) / 2, ry = (rb[1] + rb[3]) / 2;
+  const fits = (x, y, z) => mzArtFits(w, vh, gap, all, x, y, z);
+  const near = (c, v) => (a, b) => Math.abs(a - c) - Math.abs(b - c);
+  const above = z => {
+    const y = Math.floor(rb[1] - gap - z), xs = [Math.round(rx - z / 2)];
+    for (const r of obs) xs.push(Math.ceil(r[2] + gap), Math.floor(r[0] - gap - z));
+    for (const x of xs.sort(near(rx - z / 2))) if (fits(x, y, z)) return [x, y, z];
+    return null;
+  };
+  const sides = [[rb[2] + gap, w - rb[2]], [rb[0] - gap, rb[0]]].sort((a, b) => b[1] - a[1]);
+  if (Math.abs(sides[0][1] - sides[1][1]) < want / 2 && typeof lean === 'number') sides.sort((a, b) => ((a[0] > rx) === (lean > rx)) - ((b[0] > rx) === (lean > rx)));
+  const side = z => {
+    const ys = [Math.round(ry - z / 2), Math.ceil(rb[1]), Math.floor(rb[3] - z), gap, Math.floor(vh - gap - z)];
+    for (const r of obs) ys.push(Math.ceil(r[3] + gap), Math.floor(r[1] - gap - z));
+    for (const [edge] of sides) {
+      const right = edge > rx, x0 = right ? Math.ceil(edge) : Math.floor(edge - z), xs = [x0];
+      for (const r of obs) xs.push(right ? Math.ceil(r[2] + gap) : Math.floor(r[0] - gap - z));
+      for (const x of xs.filter(x => (right ? x >= x0 : x <= x0)).sort(near(x0)))
+        for (const y of ys.sort(near(ry - z / 2))) if (fits(x, y, z)) return [x, y, z];
+    }
+    return null;
+  };
+  let up = null, by = null;
+  for (let z = want; z >= min && !up; z = Math.floor(z * 0.95)) up = above(z);
+  if (up && up[2] >= want * 0.75) return up;
+  for (let z = want; z >= min && !by; z = Math.floor(z * 0.95)) by = side(z);
+  return by && (!up || by[2] > up[2]) ? by : up;
 }
 function drawMzFx(w, cy, T, now, S) {
   if (mapCovered()) { if (mzBanner.t0) mzBanner.t0 = now; for (const p of mzFx) p.t0 = now; return; }
@@ -12788,9 +12858,22 @@ function drawMzFx(w, cy, T, now, S) {
     if (!mzBanner.said) { mzBanner.said = true; riceSay('ついた〜！', MZ_GOAL_FX.happyMs, 'happy'); }
     if (mzBanner.text) { const sm = Math.round(big * 0.5); ctx.font = `bold ${sm}px "DotGothic16", sans-serif`; ctx.lineWidth = Math.max(3, sm / 4); ctx.fillStyle = '#ffffff'; const ty = cy + T * 1.4; ctx.strokeText(mzBanner.text, w / 2, ty); ctx.fillText(mzBanner.text, w / 2, ty); }
     const gs = mzBanner.gid && (G.spots || []).find(s => s.id === mzBanner.gid), gimg = gs && (giantOf(gs) || spriteOf(gs));
-    if (gimg) { const gi = gimg[0], gz = Math.round(Math.min(S * 5, w * 0.8, Math.max(0, cy) * 1.6)), gy = Math.max(gz / 2, cy - S * 3.2); if (gz > 0) ctx.drawImage(gi, Math.round(w / 2 - gz / 2), Math.round(gy - gz / 2), gz, gz); }
+
+
+
+    if (gimg) {
+      const gi = gimg[0], gap = Math.round(S * 0.25), rb = roll.box || [w / 2 - S, cy - S * 2, w / 2 + S, cy + S], want = Math.round(Math.min(S * 5, w * 0.8));
+      const vh = cy * 2, D = mzBanner.demo && mzBanner.demo.w === w && mzBanner.demo.vh === vh ? mzBanner.demo : (mzBanner.demo = { w, vh, r: mzArtDemoAhead() });
+      const demo = [mzArtDemoShown(), ...D.r].filter(Boolean), obs = [...mzHudRects(now), mzHud.g, mzMap.arrow, ...demo].filter(Boolean);
+
+      const K = mzBanner.spot, keep = K && K.w === w && K.vh === vh && K.want === want && mzArtFits(w, vh, 1, [rb, ...obs], K.at[0], K.at[1], K.at[2]) ? K.at : null;
+      const lean = demo.length ? (demo[0][0] + demo[0][2]) / 2 : mzMap.arrow ? (mzMap.arrow[0] + mzMap.arrow[2]) / 2 : undefined;
+      const at = keep || mzArtSpot(w, vh, rb, gap, want, Math.round(S * 1.5), obs, lean), gz = at ? at[2] : 0;
+      if (at && at !== keep) mzBanner.spot = { at, w, vh, want };
+      if (gz > 0) ctx.drawImage(gi, at[0], at[1], gz, gz);
+    }
     ctx.globalAlpha = 1;
-  } else if (mzBanner.t0) { mzBanner.t0 = 0; mzBanner.gid = ''; }
+  } else if (mzBanner.t0) { mzBanner.t0 = 0; mzBanner.gid = ''; mzBanner.spot = null; mzBanner.demo = null; }
   for (let i = mzFx.length - 1; i >= 0; i--) {
     const p = mzFx[i], a = (now - p.t0) / 1000;
     if (a < 0) continue;
@@ -12808,16 +12891,18 @@ function drawMzFx(w, cy, T, now, S) {
 function drawMzNext(w, cy, U, now) {
   mzNext.want = false; mzNext.t0 = 0; return;
 }
-const mzHud = { t: -1e9, r: [] };
+const mzHud = { t: -1e9, r: [], g: null };
 function mzHudRects(now) {
   if (now - mzHud.t < 500) return mzHud.r;
   mzHud.t = now;
   const c = cv.getBoundingClientRect(), k = c.width ? cv.width / c.width : 1;
-  mzHud.r = ['.px-zoom', '#pxMeiro', '#koyomi'].map(q => document.querySelector(q)).filter(e => e && !e.hidden && e.getClientRects().length)
-    .map(e => { const b = e.getBoundingClientRect(); return [(b.left - c.left) * k, (b.top - c.top) * k, (b.right - c.left) * k, (b.bottom - c.top) * k]; })
-    .filter(r => r[2] > r[0] && r[3] > r[1]);
+  const box = e => { const b = e.getBoundingClientRect(); return [(b.left - c.left) * k, (b.top - c.top) * k, (b.right - c.left) * k, (b.bottom - c.top) * k]; }, shown = e => e && !e.hidden && e.getClientRects().length;
+  mzHud.r = ['.px-zoom', '#pxMeiro', '#koyomi'].map(q => document.querySelector(q)).filter(shown).map(box).filter(r => r[2] > r[0] && r[3] > r[1]);
+  const gd = $('guide'), gr = shown(gd) ? box(gd) : null;
+  mzHud.g = gr && gr[2] > gr[0] && gr[3] > gr[1] ? gr : null;
   return mzHud.r;
 }
+window.addEventListener('resize', () => { mzHud.t = -1e9; });
 const MZ_TAP_K = 0.5;
 
 

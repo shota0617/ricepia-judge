@@ -2151,8 +2151,10 @@ window.addEventListener('three-ready', () => { // 2Dで描いていたキャン�
    (止め方は 3D が こわれた とき(onFail)と 同じ。かかしと 太陽は DOM なので そのまま)。速い 端末では 何も しない。画面が かくれた 間は 数えなおす */
 const SLOW3D_MS = 120;
 function slow3dOff(){ if (!use3d) return; use3d = false; try { window.Field3D.dispose(); } catch (e) {} swapCanvas(); $('fieldTip').classList.add('hidden'); if (f && !f.done) drawField(); window.__slow3d = (window.__slow3d || 0) + 1; }
-function slow3dWatch(){   /* サイクル187c(PR #1215 の 見直し): 平均と 窓の はば を やめ、さいごの 8つの 間隔の 中央値で 見る。
-     1回 だけ の 長い 止まり(重い 1こま・うらに 回して もどる)は 中央値に 効かない ので 速い 端末を 止めない。一定の おそさ(125ms・800ms など)は かならず 中央値に 出る。
+function slow3dWatch(){   /* サイクル187c(PR #1215 の 見直し): 平均と 窓の はば を やめ、さいごの 8つの 間隔で 見る。
+     187d: 8つの うち 6つ 以上 が 120ms より 長い(小さい ほう から 3つめ m[2] が 長い)とき だけ 止める。1回 だけ の 長い 止まり(重い 1こま・うらに 回して もどる)や、
+     つづけて 5つ まで の 重い こま(3D の 最初の 描き など)では 止めない。一定の おそさ(125ms・800ms など)は 8つ とも 長い ので かならず 止まる。
+     速い こま と 重い こま が 交互(16ms・300ms)の ときは 止めない(半分は 速く 描けて いる)。
      かくれる・もどる では ためた 間隔を 空に する。800ms 間隔でも 8つ たまる のは 約 6.4秒 なので、待ち 1.5秒・見はり 30秒 の まま */
   const t0 = performance.now(); let last = 0, gaps = [];
   const reset = () => { last = 0; gaps = []; };
@@ -2160,7 +2162,7 @@ function slow3dWatch(){   /* サイクル187c(PR #1215 の 見直し): 平均と
   const tick = (now) => { if (!use3d || now - t0 > 31500) { document.removeEventListener('visibilitychange', reset); return; }
     if (document.hidden) reset();
     else if (now - t0 >= 1500) { if (last) { gaps.push(now - last); if (gaps.length > 8) gaps.shift(); } last = now;
-      if (gaps.length === 8) { const m = gaps.slice().sort((a, b) => a - b); if ((m[3] + m[4]) / 2 > SLOW3D_MS) { document.removeEventListener('visibilitychange', reset); slow3dOff(); return; } } }
+      if (gaps.length === 8) { const m = gaps.slice().sort((a, b) => a - b); if (m[2] > SLOW3D_MS) {   /* サイクル187d: 8つの うち 6つ 以上 が 120ms より 長い とき だけ(つづけて 5つ まで の 重い こま では 止めない) */ document.removeEventListener('visibilitychange', reset); slow3dOff(); return; } } }
     requestAnimationFrame(tick); };
   requestAnimationFrame(tick);
 }

@@ -2260,8 +2260,13 @@ def ONE_STALL(kind, ms):
     return "js:(setTimeout(() => { window.__paused = true; setTimeout(() => { window.__paused = false; const h = window.__held; window.__held = []; h.forEach(f => f(performance.now())); }, %d); }, 3000), 1)" % ms
 
 
+# サイクル187d: 16ms の こまの 中に、3D が 出来て から at ミリ秒 あとに 重い こま(ms)を n こ つづけて 入れる
+def RAF_HEAVY(at, n, ms):
+    return "js:(window.__hv = %d, window.addEventListener('three-ready', () => { window.__t3 = performance.now(); }), window.requestAnimationFrame = function(f){ let d = 16; if (window.__t3 && performance.now() - window.__t3 >= %d && window.__hv > 0) { window.__hv--; d = %d; } setTimeout(() => f(performance.now()), d); return 1; }, window.cancelAnimationFrame = function(){}, 1)" % (n, at, ms)
+
+
 class TestKome365Slow3D(unittest.TestCase):
-    """サイクル187・187c"""
+    """サイクル187・187c・187d"""
 
     @classmethod
     def setUpClass(cls):
@@ -2279,7 +2284,17 @@ class TestKome365Slow3D(unittest.TestCase):
             {"name": "block18", "acts": [RAF_INT(16), FAKE3D, ONE_STALL("block", 1800), "wait9", SLOW3D_STATE]},
             {"name": "pause18", "acts": [RAF_INT(16), FAKE3D, ONE_STALL("pause", 1800), "wait9", SLOW3D_STATE]},
             {"name": "pause195_66", "acts": [RAF_INT(66), FAKE3D, ONE_STALL("pause", 1950), "wait9", SLOW3D_STATE]},
+            # サイクル187d: つづけて 重い こま(3D の 最初の 描き など)
+            {"name": "heavy4", "acts": [RAF_HEAVY(3000, 4, 300), FAKE3D, "wait9", SLOW3D_STATE]},
+            {"name": "heavyStart5", "acts": [RAF_HEAVY(1500, 5, 250), FAKE3D, "wait9", SLOW3D_STATE]},
         ])
+
+    def test_few_heavy_frames_in_a_row_keep_3d(self):
+        # 速い 端末で 重い こまが つづけて 4つ(300ms)・見はりの はじめの 5こまが 重い(250ms)だけ では 止めない
+        for name in ("heavy4", "heavyStart5"):
+            x = self.r[name]
+            self.assertEqual(x["errs"], [], name)
+            self.assertEqual(x["js"][-1]["off"], 0, "%s: 重い こまが 少し つづいた だけ で 3D を 止めた %r" % (name, x["js"][-1]))
 
     def test_steady_interval_boundary(self):
         # 中央値 120ms が 境: 33・110ms は 止めない、125・250・800ms は 止める

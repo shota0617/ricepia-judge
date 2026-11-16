@@ -2433,5 +2433,40 @@ class TestKome365NarrowChoiceWrap(unittest.TestCase):
         self.check_choice("jan12_320", "1月12日", "株を燃やす", "株を拾ってみる")
 
 
+
+# サイクル189: つづけて ○ の とき、○ の 音が 1音ずつ 上がる(3回めで 止まる・✗ で もどる・🔇 では 鳴らない)
+OK_HZ_REC = "js:(() => { window.__okHz = []; const P = window.AudioContext.prototype, mk = P.createOscillator; P.createOscillator = function(){ const n = mk.call(this); n.frequency.setValueAtTime = (v) => { window.__okHz.push([window.__ks.state().log.length, Math.round(v * 10) / 10]); }; return n; }; return 1; })()"
+OK_HZ_LOG = "js:window.__ks.state().log"
+OK_HZ_GET = "js:(() => { const log = window.__ks.state().log, by = {}; window.__okHz.forEach(([i, v]) => { (by[i] = by[i] || []).push(v); }); return log.map((name, i) => name === 'ok' ? [((by[i] || []).slice(-6)[0] || 0), ((by[i] || []).slice(-6)[3] || 0)] : null).filter(v => v !== null); })()"   # ○ の 音は 2音 × 3つの 重ね = 6つ。その 組の 前に 鳴った ほかの 音(うしろの ふし)は 見ない
+
+
+class TestKome365OkRise(unittest.TestCase):
+    """サイクル189"""
+
+    @classmethod
+    def setUpClass(cls):
+        # 田んぼの たね(s)を 決めた 記録から はじめる(○✗ が 毎回 同じ に なる)。この たねでは LRLLRL で ○ が 6回、LRLLLL で ○○○○✗○
+        sv = '{"v":"kokoro","y":"recent","so":"high","m":"transplant","c":0,"s":1543068361,"fm":"oneshot","yh":0,"ch":""}'
+        cls.r = sound_run([
+            {"name": "up", "save": sv, "acts": [OK_HZ_REC] + list("LRLLRL") + [OK_HZ_GET]},
+            {"name": "reset", "save": sv, "acts": [OK_HZ_REC] + list("LRLLLL") + [OK_HZ_GET]},
+            {"name": "mute", "save": sv, "acts": [OK_HZ_REC, "mute", "L", "R", OK_HZ_GET]},
+        ])
+
+    def test_consecutive_ok_rises_one_step_up_to_three(self):
+        x = self.r["up"]
+        self.assertEqual(x["errs"], [])
+        self.assertEqual(x["js"][-1], [[659.3, 880], [784, 1046.5], [880, 1174.7], [880, 1174.7], [880, 1174.7], [880, 1174.7]], x["js"])   # 1音め と 2音め。3回めで 止まる
+
+    def test_ng_returns_to_first_pitch(self):
+        x = self.r["reset"]
+        self.assertEqual(x["errs"], [])
+        self.assertEqual(x["js"][-1], [[659.3, 880], [784, 1046.5], [880, 1174.7], [880, 1174.7], [659.3, 880]], x["js"])
+
+    def test_muted_plays_no_ok(self):
+        x = self.r["mute"]
+        self.assertEqual(x["errs"], [])
+        self.assertEqual(x["js"][-1], [], x["js"])
+
 if __name__ == "__main__":
     unittest.main()

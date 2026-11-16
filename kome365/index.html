@@ -1903,9 +1903,12 @@ function ksRain(c, out, t){   /* さらさら: しずかな ざわめきを 高�
   g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.05, t + 0.2); g.gain.linearRampToValueAtTime(0.0001, t + 0.65); n.connect(bp); bp.connect(g); g.connect(out); n.start(t); n.stop(t + 0.7);
 }
 /* 音の 一覧(秒・音量は 1つの 音の 山。うしろの ふしは 0.04 より 小さい) */
+/* サイクル189: つづけて ○ の とき、○ の 2音を 1音ずつ(ド レ ミ ソ ラ の 5音の 階段で)上げる。4回め から は 上げない(上の 音は 1318.5Hz まで。高く なりすぎない)。
+   ✗ で 1回めの 高さ(ミ→ラ)に もどる。数えは 今ある streak(つづけて ○ の 数)を 読む だけ(数え方・画面の 表示は さわらない)。長さ・音量・時間は 同じ。🔇 では 鳴らない */
+var KS_OK_UP = [[659.3, 880], [784, 1046.5], [880, 1174.7]];   /* 3回めで 止める(上の 音は 1174.7Hz まで。ほかの 音の 最高 880Hz から はなれ すぎない ように) */
 var KS_FX = {
   pon:   { len: 0.2,  run: function(c, o, t){ ksNote(c, o, t, 587.3, 0.2, 0.10, 'wood'); } },                                              // カードを 決めた: ぽん(レ)
-  ok:    { len: 0.5,  run: function(c, o, t){ ksNote(c, o, t, 659.3, 0.35, 0.08, 'box'); ksNote(c, o, t + 0.12, 880, 0.4, 0.08, 'box'); } },   // ○: ミ→ラ の やさしい 上がり
+  ok:    { len: 0.5,  run: function(c, o, t){ var p = KS_OK_UP[Math.max(0, Math.min(KS_OK_UP.length - 1, (KS.okLv || 1) - 1))]; ksNote(c, o, t, p[0], 0.35, 0.08, 'box'); ksNote(c, o, t + 0.12, p[1], 0.4, 0.08, 'box'); } },   // ○: ミ→ラ の やさしい 上がり。サイクル189: つづけて ○ の とき 1音ずつ 上がる(KS_OK_UP)
   ng:    { len: 0.4,  run: function(c, o, t){ ksNote(c, o, t, 440, 0.4, 0.08, 'soft'); } },                                                 // ✗: 低めの ラ(440Hz) 1音(下がらない・とがらない。小さな スピーカーで 聞こえる 高さ)
   grow:  { len: 0.45, run: function(c, o, t){ ksNote(c, o, t, 880, 0.45, 0.06, 'pure'); } },                                               // 芽・育ちが 進んだ: ラ(880Hz) ひと音(倍音 うすく・とがらせない)
   rain:  { len: 0.7,  run: function(c, o, t){ ksRain(c, o, t); } },                                                                          // 雨が 降りだした: さらさら
@@ -3966,6 +3969,7 @@ renderTitle();
     if (!judged) { render(); if (kLive) ksStep(ks0, 0.15); careSet(careK, careD); rippleSet(careK, chg); pulseBars(chg); busy = false; return; }
     /* 判定カード: ポップ・全画面表示は出さず、確定の瞬間に次のカードへ進む。良し悪しは田んぼ全体の光/影(1.1秒・入力は止めない)とチップの▲▼で見せる */
     var ok = cls === 'vOK', sg2 = $('sGame'), fx = ok ? 'fxGood' : 'fxBad';
+    KS.okLv = ok ? streak : 0;   /* サイクル189: ○ の 音の 高さの 段(つづけて ○ の 数。KS_OK_UP) */
     if (kLive) ksFx(ok ? 'ok' : 'ng'); vibJudge(ok);
     finishFx(); render(); if (kLive) ksStep(ks0, 0.45); careSet(careK, careD); rippleSet(careK, chg); pulseBars(chg);
     sg2.classList.remove('fxGood', 'fxBad'); void sg2.offsetWidth; sg2.classList.add(fx); fieldSide = ok ? 'ok' : 'ng';

@@ -1363,7 +1363,7 @@ function guideAt(kind, el, gx, gy, at) { /* at: 手本の指を置く高さ（el
   if (kind === "circle" && el === $("crank")) crankDemoOn(); /* 指の回り始めをずらすので、動きを付ける前に決める */
   void guideEl.offsetWidth;
   guideEl.className = "on " + kind;
-  if (kind === "press" && el === zoomBtn) {
+  if (kind === "press" && el === zoomBtn && lotIndex > 0) { /* 1ふくろめ は 顔が 出て いる ので、文では 寄らせない（手本と 文を そろえる のは 2ふくろめ から） */
     zoomGuideHint = { previous:hint.textContent, text:hint.textContent };
     syncZoomGuideHint();
   }

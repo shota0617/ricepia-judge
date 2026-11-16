@@ -2047,6 +2047,41 @@ function crashFailures(R, fail) {   // 安全網（guardEvaluate）に かかっ
     } finally { R.errors.push(...v.errors); await v.ctx.close(); }
   })();
   Object.assign(R.checks, await firstMinuteChecks(browser, R));   // サイクル189（はじめの 1分）
+  // サイクル226：名所に 着いた ときの 大きな 絵が、お米の 玉の 上に 1.6秒 かかって いた（お米の 67〜100%）。絵は お米の 頭より 上に、上の 部品・次の ゴールの 矢印・道しるべ にも かからない
+  // （面積 0）。画面の 上で 切れない。ゴールの 数を ふやす ので 別の 窓で
+  {
+    const v = await newPage(browser, { howto: true, auto: true, goals3: true, hasTouch: true, isMobile: true }), p = v.page;
+    try {
+      await p.goto(URL);
+      await p.waitForFunction(() => window.nishioPixel && nishioPixel.maze && nishioPixel.maze.playing && nishioPixel.maze.playing() && window.nishioGo && nishioGo.guide && nishioPixel.riceBox, null, { timeout: 25000 }).catch(() => {});
+      await p.waitForTimeout(1500);
+      R.checks.goalArtClear = await p.evaluate(async () => {
+        const G = nishioGo, P = nishioPixel, M = P.maze, wait = ms => new Promise(r => setTimeout(r, ms)), cv = document.getElementById('pxCanvas');
+        const ov = (a, b) => !a || !b ? 0 : Math.max(0, Math.min(a[2], b[2]) - Math.max(a[0], b[0])) * Math.max(0, Math.min(a[3], b[3]) - Math.max(a[1], b[1]));
+        const toCv = el => { if (!el || el.hidden || !el.getClientRects().length) return null; const c = cv.getBoundingClientRect(), s = cv.width / c.width, e = el.getBoundingClientRect(); return [(e.left - c.left) * s, (e.top - c.top) * s, (e.right - c.left) * s, (e.bottom - c.top) * s]; };
+        const rows = [];
+        for (let k = 0; k < 2; k++) {
+          const s = G.spots.filter(x => x.featured && !x.shop && G.dist(G.me, x) > 300).sort((a, b) => G.dist(G.me, a) - G.dist(G.me, b))[k];
+          if (!s) break;
+          G.setGuide({ kind: 'spot', id: s.id, name: s.name, lat: s.lat, lng: s.lng, why: 'テスト', by: 'テスト' });
+          for (let i = 0; i < 20 && !M.route(); i++) await wait(200);
+          await wait(600);
+          const C = cv.getContext('2d'), keep = C.drawImage; let rect = null;   // 歩く地図の canvas は 自分の drawImage を 持つ（4色の 切りかえ）ので、その 上から 見る
+          let arm = false, many = 0;   // ゴールの 絵（drawMzFx の 中で 描く 四角い 絵）だけ を 見る
+          C.drawImage = function (img, ...a) { if (arm && a.length === 4 && Math.abs(a[2] - a[3]) < 1 && a[2] >= 40 && /drawMzFx/.test(new Error().stack)) { if (rect) many++; rect = [a[0], a[1], a[0] + a[2], a[1] + a[3]]; } return keep.call(this, img, ...a); };
+          await wait(300); arm = true;
+          M.goal(s.id); M.goalFx('');
+          const t0 = performance.now(), o = { spot: s.name, art: M.bannerArt(), frames: 0, rice: 0, arrow: 0, guide: 0, hud: 0, offTop: 0 };
+          await new Promise(res => { const f = () => { try { if (rect) { o.frames++; o.rice = Math.max(o.rice, ov(rect, P.riceBox)); o.arrow = Math.max(o.arrow, ov(rect, M.mapArrow)); o.guide = Math.max(o.guide, ov(rect, toCv(document.getElementById('guide'))));
+              o.hud = Math.max(o.hud, 0, ...M.hudRects().map(h => ov(rect, h))); o.offTop = Math.max(o.offTop, -rect[1]); rect = null; } } catch (e) { o.err = String(e.message || e).slice(0, 120); rect = null; } if (performance.now() - t0 < 1800) requestAnimationFrame(f); else res(); }; requestAnimationFrame(f); });
+          C.drawImage = keep; o.many = many; rows.push(o); await wait(600);
+        }
+        const drawn = rows.filter(r => r.art && r.frames > 0 && !r.err && !r.many);
+        return { rows, ok: drawn.length >= 1 && !rows.some(r => r.err) && drawn.every(r => r.rice === 0 && r.arrow === 0 && r.guide === 0 && r.hud === 0 && r.offTop <= 0) };
+      });
+    } catch (e) { R.checks.goalArtClear = { ok: false, crashed: String(e.message).slice(0, 160) }; }
+    finally { R.errors.push(...v.errors); await v.ctx.close(); }
+  }
   // サイクル224（引き継ぎ：別の 直し役の 下書き #1156・#1204。本物の タップで）
   //  worldNoticeGone：縁の 矢印で 開いた せかいちずを 👣 で とじると、「🌏 ゴールは 🏁 の 所…」の 知らせは 出て いる 分・待って いる 分 とも 消える（ほかの 知らせは のこす）
   //  worldAria：🌏／👣 の ボタンの 読み上げの 名前が いまの 役目（歩く地図にもどる／せかいちず）に かわる
@@ -4983,6 +5018,7 @@ function crashFailures(R, fail) {   // 安全網（guardEvaluate）に かかっ
   need(c.roll && c.roll.ok, 'かたむけて転がす：お米が転がらない（または絵が回らない）');
   need(c.slope && c.slope.ok, '坂：平らな所で動く、または 下り坂で ひとりでに転がらない');
   need(c.guideRecord && c.guideRecord.ok, 'ガイドさんの記録：西尾城跡のガイドさんの話に、つぎのレベルまでの ポイントと しるしの数が出ない');
+  need(c.goalArtClear && c.goalArtClear.ok, `名所の ゴール：大きな 絵が お米・矢印・道しるべ・上の 部品に かかる（${JSON.stringify(c.goalArtClear)}）`);
   need(c.worldNoticeGone && c.worldNoticeGone.ok, `せかいちず：👣 で もどった あとも「🌏 ゴールは 🏁 の 所」の 知らせが のこる（${JSON.stringify(c.worldNoticeGone)}）`);
   need(c.worldAria && c.worldAria.ok, `せかいちず：🌏／👣 の ボタンの 読み上げの 名前が 役目と ちがう（${JSON.stringify(c.worldAria)}）`);
   need(c.guideNameFar && c.guideNameFar.ok, `下の 道しるべ：遠い 人が 行き先の とき 場所が 出ない（${JSON.stringify(c.guideNameFar)}）`);

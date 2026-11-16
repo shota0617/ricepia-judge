@@ -12777,6 +12777,23 @@ function mzGoalFx(text) {
   mzBanner.gid = mzGoalAsk.id && now - mzGoalAsk.at < 100 && (G.spots || []).some(s => s.id === mzGoalAsk.id) ? mzGoalAsk.id : ''; mzGoalAsk.id = '';   // 着いた名所（goal(id) で 確かめた 直後だけ。分からなければ 絵は 出さない）
   mzHelpGoal();   // ゴールの 数え上げ（バナーの 文字は 出さない。サイクル146）
 }
+// サイクル226：着いた 名所の 絵の 置き場（左上 x・y・大きさ）。下は bottom（お米の 頭の 上）に そろえ、obs の 四角（gap あける）と 画面の 外に かからない。
+// まん中を いちばん 先に、だめなら 物の すぐ 横、それでも だめなら 1まわり 小さく。min より 小さく しか 入らなければ null
+function mzArtSpot(w, bottom, gap, want, min, obs) {
+  for (let z = want; z >= min; z = Math.floor(z * 0.9)) {
+    const y = bottom - z;
+    if (y < gap) continue;
+    const xs = [w / 2];
+    for (const r of obs) xs.push(r[2] + gap + z / 2, r[0] - gap - z / 2);
+    xs.sort((a, b) => Math.abs(a - w / 2) - Math.abs(b - w / 2));
+    for (const c of xs) {
+      const x = Math.round(c - z / 2);
+      if (x < gap || x + z > w - gap) continue;
+      if (obs.every(r => r[2] + gap <= x || r[0] - gap >= x + z || r[3] + gap <= y || r[1] - gap >= bottom)) return [x, Math.round(y), z];
+    }
+  }
+  return null;
+}
 function drawMzFx(w, cy, T, now, S) {   // 画面の まん中（お米）から はじける。重さで 落ちて うすく なる。S：文字の 大きさの もと（画面の 点）
   if (mapCovered()) { if (mzBanner.t0) mzBanner.t0 = now; for (const p of mzFx) p.t0 = now; return; }   // ごほうびの 窓などが 開いている 間は 待って、とじたら はじめる
   const ba = (now - mzBanner.t0) / 1000;
@@ -12788,7 +12805,14 @@ function drawMzFx(w, cy, T, now, S) {   // 画面の まん中（お米）から
     if (!mzBanner.said) { mzBanner.said = true; riceSay('ついた〜！', MZ_GOAL_FX.happyMs, 'happy'); }   // 大きな「🏁 ゴール！」の 文字は やめて、お米が 吹き出しで 言う（10/29 店主「文字を 廃止して キャラクターとの 対話」）。窓を とじてから
     if (mzBanner.text) { const sm = Math.round(big * 0.5); ctx.font = `bold ${sm}px "DotGothic16", sans-serif`; ctx.lineWidth = Math.max(3, sm / 4); ctx.fillStyle = '#ffffff'; const ty = cy + T * 1.4; ctx.strokeText(mzBanner.text, w / 2, ty); ctx.fillText(mzBanner.text, w / 2, ty); }
     const gs = mzBanner.gid && (G.spots || []).find(s => s.id === mzBanner.gid), gimg = gs && (giantOf(gs) || spriteOf(gs));   // 着いた名所の 大きな絵（読めて いなければ 描かない）。文字は 足さない
-    if (gimg) { const gi = gimg[0], gz = Math.round(Math.min(S * 5, w * 0.8, Math.max(0, cy) * 1.6)), gy = Math.max(gz / 2, cy - S * 3.2); if (gz > 0) ctx.drawImage(gi, Math.round(w / 2 - gz / 2), Math.round(gy - gz / 2), gz, gz); }
+    // サイクル226：前は 絵の まん中を お米の 少し 上（cy − S×3.2）に 置き、絵の 下の 半分が お米の 玉に 1.6秒 かかって いた（お米の 67〜100%）。
+    // 絵の 下を お米の 頭（roll.box の 上）より 上に。画面の 上の はし・上の 部品（ズームの ボタン・こよみ など）・次の ゴールの 矢印 にも かからない 所へ。
+    // まん中が ふさがって いれば 横へ ずらし、入らなければ 絵を 小さく（小さすぎれば 描かない）
+    if (gimg) {
+      const gi = gimg[0], gap = Math.round(S * 0.25), head = (roll.box ? roll.box[1] : cy - S * 2) - gap, want = Math.round(Math.min(S * 5, w * 0.8));
+      const obs = [...mzHudRects(now), mzMap.arrow].filter(Boolean), at = mzArtSpot(w, head, gap, want, Math.round(S * 1.5), obs), gz = at ? at[2] : 0;
+      if (gz > 0) ctx.drawImage(gi, at[0], at[1], gz, gz);
+    }
     ctx.globalAlpha = 1;
   } else if (mzBanner.t0) { mzBanner.t0 = 0; mzBanner.gid = ''; }
   for (let i = mzFx.length - 1; i >= 0; i--) {

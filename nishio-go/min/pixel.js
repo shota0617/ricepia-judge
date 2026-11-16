@@ -12777,6 +12777,23 @@ function mzGoalFx(text) {
   mzBanner.gid = mzGoalAsk.id && now - mzGoalAsk.at < 100 && (G.spots || []).some(s => s.id === mzGoalAsk.id) ? mzGoalAsk.id : ''; mzGoalAsk.id = '';
   mzHelpGoal();
 }
+
+
+function mzArtSpot(w, bottom, gap, want, min, obs) {
+  for (let z = want; z >= min; z = Math.floor(z * 0.9)) {
+    const y = bottom - z;
+    if (y < gap) continue;
+    const xs = [w / 2];
+    for (const r of obs) xs.push(r[2] + gap + z / 2, r[0] - gap - z / 2);
+    xs.sort((a, b) => Math.abs(a - w / 2) - Math.abs(b - w / 2));
+    for (const c of xs) {
+      const x = Math.round(c - z / 2);
+      if (x < gap || x + z > w - gap) continue;
+      if (obs.every(r => r[2] + gap <= x || r[0] - gap >= x + z || r[3] + gap <= y || r[1] - gap >= bottom)) return [x, Math.round(y), z];
+    }
+  }
+  return null;
+}
 function drawMzFx(w, cy, T, now, S) {
   if (mapCovered()) { if (mzBanner.t0) mzBanner.t0 = now; for (const p of mzFx) p.t0 = now; return; }
   const ba = (now - mzBanner.t0) / 1000;
@@ -12788,7 +12805,14 @@ function drawMzFx(w, cy, T, now, S) {
     if (!mzBanner.said) { mzBanner.said = true; riceSay('ついた〜！', MZ_GOAL_FX.happyMs, 'happy'); }
     if (mzBanner.text) { const sm = Math.round(big * 0.5); ctx.font = `bold ${sm}px "DotGothic16", sans-serif`; ctx.lineWidth = Math.max(3, sm / 4); ctx.fillStyle = '#ffffff'; const ty = cy + T * 1.4; ctx.strokeText(mzBanner.text, w / 2, ty); ctx.fillText(mzBanner.text, w / 2, ty); }
     const gs = mzBanner.gid && (G.spots || []).find(s => s.id === mzBanner.gid), gimg = gs && (giantOf(gs) || spriteOf(gs));
-    if (gimg) { const gi = gimg[0], gz = Math.round(Math.min(S * 5, w * 0.8, Math.max(0, cy) * 1.6)), gy = Math.max(gz / 2, cy - S * 3.2); if (gz > 0) ctx.drawImage(gi, Math.round(w / 2 - gz / 2), Math.round(gy - gz / 2), gz, gz); }
+
+
+
+    if (gimg) {
+      const gi = gimg[0], gap = Math.round(S * 0.25), head = (roll.box ? roll.box[1] : cy - S * 2) - gap, want = Math.round(Math.min(S * 5, w * 0.8));
+      const obs = [...mzHudRects(now), mzMap.arrow].filter(Boolean), at = mzArtSpot(w, head, gap, want, Math.round(S * 1.5), obs), gz = at ? at[2] : 0;
+      if (gz > 0) ctx.drawImage(gi, at[0], at[1], gz, gz);
+    }
     ctx.globalAlpha = 1;
   } else if (mzBanner.t0) { mzBanner.t0 = 0; mzBanner.gid = ''; }
   for (let i = mzFx.length - 1; i >= 0; i--) {

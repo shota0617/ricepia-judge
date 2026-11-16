@@ -3023,6 +3023,16 @@ function toastHold() {
   t.style.transition = 'none'; t.classList.remove('show'); void t.offsetWidth; t.style.transition = ''; clearTimeout(toastTimer);
 }
 
+function toastDismiss(msg) {
+  for (const q of [toastQ, toastAfter.q || []]) {
+    for (let i = q.length - 1; i >= 0; i--) if (q[i] === msg) q.splice(i, 1);
+  }
+  const t = $('toast');
+  if (t.textContent !== msg) return;
+  clearTimeout(toastTimer);
+  t.style.transition = 'none'; t.classList.remove('show'); void t.offsetWidth; t.style.transition = '';
+}
+
 
 function toastDodge() {
   const el = $('toast'), dq = document.querySelector('#pxInfo:not([hidden]) .dq');
@@ -4800,6 +4810,7 @@ window.nishioGo = {
   },
   spotTip, dist, cooldownLeft, inReach, reachOf, guideRadius, renderGuide, checkin, checkinSpot, popupHtml, toast, toastAfter, renderLog, ymd, refreshNearby, reactLine, get npcs() { return placeNpcs(); }, weekTheme, giveBag, talkNpc, callNpc(id) { calledBy = id || null; }, meetCritter, critterLeft, critterFirst: () => !Object.keys(S.critters || {}).length, watchOpen, watchWater, alleyFind, mzGrain, mzFruit, mzPiece, mzView, mzCache, mzQuest, mzDino, mzChase, mzEnergy, mzShoo, mzTorch, mzBrigade, mzPurify, mzRescueJoin, mzRescue, mzCube, mzGrainHas: key => mzGrainGot().includes(key), get mzGrains() { return mzGrainGot().length; }, alleyOpen: (x, y) => (dayState().alleys || 0) < ALLEY.daily && !(S.alleys || []).includes(`${x},${y}`), sealCands, sealPickCheck, clearInfo: () => ({ cleared: !!S.cleared, got: SEAL_MAIN.filter(id => (S.seals || []).includes(id)).length, need: SEAL_MAIN.length }), get rival() { return rivalWhere(); }, rivalSay, RIVAL, areaArt, npcMet, chestOpened: id => dayState().chests.includes(id), liveChests, get welcomeChest() { return welcomeDue(); },
   moveTo(lat, lng, kind) { if (!demo) return; follow = false; stepMove = kind === 'step'; try { onFix(lat, lng, 5, Date.now()); } finally { stepMove = false; } },
+  toastDismiss,
   get driving() { return driving; },
   get guide() { return guideTarget(); }, guideDispName, decideGuide, setGuide, guideNoPath, guideKept: () => !!(S.guide && (S.guide.mine || S.guide.refer || S.guide.byId)),
   autoInterval, autoLearn, idleCheck, buyUp, IDLE,

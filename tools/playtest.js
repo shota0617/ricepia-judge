@@ -2047,6 +2047,37 @@ function crashFailures(R, fail) {   // 安全網（guardEvaluate）に かかっ
     } finally { R.errors.push(...v.errors); await v.ctx.close(); }
   })();
   Object.assign(R.checks, await firstMinuteChecks(browser, R));   // サイクル189（はじめの 1分）
+  // サイクル224（引き継ぎ：別の 直し役の 下書き #1156・#1204。本物の タップで）
+  //  worldNoticeGone：縁の 矢印で 開いた せかいちずを 👣 で とじると、「🌏 ゴールは 🏁 の 所…」の 知らせは 出て いる 分・待って いる 分 とも 消える（ほかの 知らせは のこす）
+  //  worldAria：🌏／👣 の ボタンの 読み上げの 名前が いまの 役目（歩く地図にもどる／せかいちず）に かわる
+  {
+    const v = await newPage(browser, { howto: true, auto: true, goals3: true, hasTouch: true, isMobile: true }), p = v.page;   // ほかの 指の 確かめと 同じ（台本の はじめの 画面は 出さない）
+    try {
+      await p.goto(URL);
+      await p.waitForFunction(() => window.nishioPixel && nishioPixel.maze && nishioPixel.maze.playing && nishioPixel.maze.playing() && window.nishioGo && nishioGo.guide, null, { timeout: 25000 }).catch(() => {});
+      await p.waitForTimeout(1500);
+      const cdp = await v.ctx.newCDPSession(p); await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: true });
+      const tap = async (x, y) => { await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] }); await p.waitForTimeout(70); await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); };
+      const TOAST = '🌏 ゴールは 🏁 の 所（👣 で めいろに もどる）', OTHER = 'テストの ほかの 知らせ';
+      // 遠い 名所を 行き先に して、縁の 矢印を 本物の 指で タップ（せかいちず ＋ 知らせ）
+      const arrow = await p.evaluate(async () => { const G = nishioGo, M = nishioPixel.maze, wait = ms => new Promise(r => setTimeout(r, ms)); const far = G.spots.filter(s => s.featured && G.dist(G.me, s) > 1500).sort((a, b) => G.dist(G.me, a) - G.dist(G.me, b))[0]; if (far) G.setGuide({ kind: 'spot', id: far.id, name: far.name, why: 'テスト', by: 'テスト' }); let a = null; for (let i = 0; i < 30 && !a; i++) { await wait(200); a = M.mapArrow; const rw = document.getElementById('reward'); if (rw.classList.contains('show')) rw.click(); } if (!a) return null; const cv = document.getElementById('pxCanvas'), rc = cv.getBoundingClientRect(), k = cv.width / rc.width; return [rc.left + (a[0] + a[2]) / 2 / k, rc.top + (a[1] + a[3]) / 2 / k]; });
+      if (arrow) await tap(arrow[0], arrow[1]); else await p.evaluate(t => { nishioPixel.setWorld(true); nishioGo.toast(t); }, TOAST);
+      await p.waitForTimeout(800);
+      const opened = await p.evaluate(t => ({ world: nishioPixel.worldMode, toast: document.getElementById('toast').textContent === t, aria: document.getElementById('pxWorld').getAttribute('aria-label') }), TOAST);
+      const btn = async () => p.evaluate(() => { const r = document.getElementById('pxWorld').getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; });
+      let b = await btn(); await tap(b[0], b[1]); await p.waitForTimeout(300);
+      const shown = await p.evaluate(t => { const el = document.getElementById('toast'); return { show: el.classList.contains('show') && el.textContent === t, q: (nishioGo.toastAfter.q || []).includes(t), world: nishioPixel.worldMode, aria: document.getElementById('pxWorld').getAttribute('aria-label') }; }, TOAST);
+      await p.waitForTimeout(4000);
+      // ほかの 知らせが 出て いる 間に 待って いる 分（せかいちずを 本物の タップで 開いて もどる）
+      b = await btn(); await tap(b[0], b[1]); await p.waitForTimeout(500);
+      await p.evaluate(([t, o]) => { nishioGo.toast(o); nishioGo.toastAfter(t); }, [TOAST, OTHER]); await p.waitForTimeout(300);
+      b = await btn(); await tap(b[0], b[1]); await p.waitForTimeout(300);
+      const queued = await p.evaluate(([t, o]) => { const el = document.getElementById('toast'); return { q: (nishioGo.toastAfter.q || []).includes(t), other: el.classList.contains('show') && el.textContent === o, world: nishioPixel.worldMode }; }, [TOAST, OTHER]);
+      R.checks.worldNoticeGone = { arrow: !!arrow, opened, shown, queued, ok: opened.world && opened.toast && !shown.world && !shown.show && !shown.q && !queued.world && !queued.q && queued.other };
+      R.checks.worldAria = { world: opened.aria, walking: shown.aria, ok: opened.aria === '歩く地図にもどる' && shown.aria === 'せかいちず（西尾市と となりの市町）' };
+    } catch (e) { R.checks.worldNoticeGone = R.checks.worldNoticeGone || { ok: false, crashed: String(e.message).slice(0, 160) }; R.checks.worldAria = R.checks.worldAria || { ok: false, crashed: true }; }
+    finally { R.errors.push(...v.errors); await v.ctx.close(); }
+  }
   // （kaoriName は はずした：名前の 札の ある おはなしの 窓が なくなった。kometalk.js・運営者の声 2026-11-02）
   R.checks.smoothRice = await page.evaluate(() => {
     const P = nishioPixel;
@@ -4952,6 +4983,8 @@ function crashFailures(R, fail) {   // 安全網（guardEvaluate）に かかっ
   need(c.roll && c.roll.ok, 'かたむけて転がす：お米が転がらない（または絵が回らない）');
   need(c.slope && c.slope.ok, '坂：平らな所で動く、または 下り坂で ひとりでに転がらない');
   need(c.guideRecord && c.guideRecord.ok, 'ガイドさんの記録：西尾城跡のガイドさんの話に、つぎのレベルまでの ポイントと しるしの数が出ない');
+  need(c.worldNoticeGone && c.worldNoticeGone.ok, `せかいちず：👣 で もどった あとも「🌏 ゴールは 🏁 の 所」の 知らせが のこる（${JSON.stringify(c.worldNoticeGone)}）`);
+  need(c.worldAria && c.worldAria.ok, `せかいちず：🌏／👣 の ボタンの 読み上げの 名前が 役目と ちがう（${JSON.stringify(c.worldAria)}）`);
   need(c.guideNameFar && c.guideNameFar.ok, `下の 道しるべ：遠い 人が 行き先の とき 場所が 出ない（${JSON.stringify(c.guideNameFar)}）`);
   need(c.guidePlaceFirst && c.guidePlaceFirst.ok, `下の 道しるべ：場所の 名前に かっこが ある 人でも 場所が 先に 出ない・390 はばで 西尾城跡が 切れる（${JSON.stringify(c.guidePlaceFirst)}）`);
   need(c.kiraFar && c.kiraFar.ok, '遠いほど めずらしい：西尾城跡から 8km をこえても、キラが出やすい知らせが出ない');

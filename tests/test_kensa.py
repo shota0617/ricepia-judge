@@ -4834,5 +4834,53 @@ down(1, 100, 100); down(2, 160, 100); down(3, 130, 160); cancel(1); up(2, 160, 1
 assert.equal(n('knock'), 0, '取り消しの あった 3本指で 鳴った');
 """)
 
+
+    # ---- サイクル172（168 の あと しまつ：等級の 札で 動かして いる 指を 取りかえない）----
+
+    def test_cycle172_grade_finger_already_pulling_keeps_the_card(self):
+        # きめる で 正しい 札に 指 A を 置いて 上へ 10px、同じ 札に 指 B を 置いて から A を 60px 引き上げても 選ばれなかった（168 の あと 3回中3回）。
+        # もう 動かして いる（6px より 上）指が つかんで いる 間は、あとの 指を 持ち主に しない。1px しか 動いて いない 指の 持ちかえ（168）は 今の まま
+        start = HTML.index("const gradeResets = [];")
+        sec = HTML[start:HTML.index("/* おす: 朱肉に", start)]
+        self._node150("""
+const assert = require('node:assert/strict');
+let step = 3, picks = 0, demos = 0; const motion = 1, LOT = {};
+const btns = [0, 1, 2, 3].map(i => { const h = {}, caps = new Set(); return { dataset:{ i:String(i) }, style:{ transform:'' }, h, caps,
+  addEventListener(t, f) { (h[t] = h[t] || []).push(f); }, animate() {}, hasPointerCapture: id => caps.has(id) }; });
+const document = { querySelectorAll: () => btns };
+const capture = (el, e) => el.caps.add(e.pointerId), guideOff = () => {}, guideAt = () => {}, gradeDemoSound = () => { demos++; }, lotGrade = () => 0;
+const pageFinger = () => false, pageSlid = () => false;
+const pickGrade = btn => { picks++; step = 4; };
+""" + sec + """
+const b = btns[0];
+const send = (type, id, y) => { (b.h[type] || []).forEach(f => f({ type, pointerId:id, clientY:y, clientX:100 })); if (type === 'pointerup' || type === 'pointercancel') b.caps.delete(id); };
+const reset = () => { step = 3; picks = 0; demos = 0; gradeResets.forEach(f => f()); ['pointerup'].forEach(t => [1, 2, 3, 4].forEach(id => send('pointercancel', id, 0))); picks = 0; };
+// 1) 本題: A 10px → B を 置く → A 60px
+reset(); send('pointerdown', 1, 100); send('pointermove', 1, 90); send('pointerdown', 2, 130); send('pointermove', 1, 40);
+assert.equal(picks, 1, '10px 引いた 指 A の 上に B を 置くと、A を 引き上げても 選ばれない');
+send('pointerup', 1, 40); send('pointermove', 2, 60); send('pointerup', 2, 60); assert.equal(picks, 1);   // 2回 決まらない
+// 2) 168 の 形は そのまま: A は 1px だけ → B が 持ち主・A では 決まらない
+reset(); send('pointerdown', 1, 100); send('pointerdown', 2, 130); send('pointermove', 1, 99); send('pointermove', 1, 40);
+assert.equal(picks, 0, '1px しか 動かして いない 指 A で 決まった'); send('pointermove', 2, 106); assert.equal(picks, 1);
+// 3) A 動かし中に B が 引き上げても B では 決まらない・A で 決まる
+reset(); send('pointerdown', 1, 100); send('pointermove', 1, 92); send('pointerdown', 2, 130); send('pointermove', 2, 60);
+assert.equal(picks, 0); send('pointermove', 1, 50); assert.equal(picks, 1);
+// 4) B を 先に はなす → A で 決まる
+reset(); send('pointerdown', 1, 100); send('pointermove', 1, 92); send('pointerdown', 2, 130); send('pointerup', 2, 130);
+assert.equal(demos, 0); send('pointermove', 1, 50); assert.equal(picks, 1);
+// 5) A を 先に はなす（届かず）→ 1回めの 空振り（手本）だけ。B の up は 数えない。次の タップで 2回め
+reset(); send('pointerdown', 1, 100); send('pointermove', 1, 92); send('pointerdown', 2, 130); send('pointerup', 1, 92);
+assert.equal(demos, 1); assert.equal(picks, 0); send('pointermove', 2, 60); send('pointerup', 2, 60); assert.equal(picks, 0);
+send('pointerdown', 3, 100); send('pointerup', 3, 100); assert.equal(picks, 1);
+// 6) 3本め も 取りかえない
+reset(); send('pointerdown', 1, 100); send('pointermove', 1, 92); send('pointerdown', 2, 130); send('pointerdown', 3, 160); send('pointermove', 1, 50);
+assert.equal(picks, 1);
+// 7) A が 取り消された・つかみが 外れた（画面が かくれた など）あとは、新しい 指が 持ち主
+reset(); send('pointerdown', 1, 100); send('pointermove', 1, 92); send('pointercancel', 1, 92); send('pointerdown', 4, 100); send('pointermove', 4, 60);
+assert.equal(picks, 1);
+reset(); send('pointerdown', 1, 100); send('pointermove', 1, 92); b.caps.delete(1); send('pointerdown', 4, 100); send('pointermove', 4, 60);
+assert.equal(picks, 1, 'つかみが 外れた 指 A が 持ち主の まま のこり、新しい 指で 動かせない');
+""")
+
 if __name__ == "__main__":
     unittest.main()

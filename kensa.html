@@ -2457,6 +2457,10 @@ document.querySelectorAll(".gradeBtn").forEach(btn => {
   gradeResets.push(() => { taps = 0; });
   btn.addEventListener("pointerdown", (e) => {
     if (step !== 3) return;
+    /* もう 上へ 動かして いる 指（6px より 上）が この 札を つかんで いる 間は、あとから 置いた 指を 持ち主に しない（サイクル172・168 の あと しまつ）。
+       旧版（168）は あとから 置いた 指で 無条件に 持ち主を 取りかえ、10px 引いた 指 A の 上に 指 B を 置くと、A を 60px 引き上げても 選ばれなかった（3回中3回）。
+       動かす 前の 持ちかえ（1px しか 動いて いない 指 → あとの 指が 持ち主）は 今の まま。A が もう つかんで いない（離した・取り消し・画面が かくれて つかみが 外れた）なら 取りかえる */
+    if (drag && drag.moved && drag.id !== e.pointerId && btn.hasPointerCapture && btn.hasPointerCapture(drag.id)) return;
     capture(btn, e);
     guideOff();
     drag = { id:e.pointerId, y:e.clientY, moved:false };

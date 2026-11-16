@@ -1940,3 +1940,14 @@ main に入れると Vercel で **https://go.ricepia.jp/kome365/** に自動で�
 | 2音め（Hz） | 880 ラ | 1046.5 ド | 1174.7 レ | 1174.7 | 1174.7 | 1174.7 |
 
 - 実機では 未確認：耳で 聞いて やさしいか（この 作業場では 音を 聞けない。周波数だけ たしかめた）。
+
+## サイクル190（3D を わざと 止めた とき の エラーの 文）
+
+- 前：3D を 止める たび に、コンソールに「3Dの田んぼを止めました Error: WebGLのコンテキストが失われました」が 出て いた。
+  - さらに 失敗の 道（onFail）が もう 1回 キャンバスを 入れかえて 描きなおして いた。
+  - わけ：`slow3dOff` → `Field3D.dispose()` → forceContextLoss → webglcontextlost → field3d.js の fail。
+- 直し（field3d.js は 変えない）：
+  - `slow3dOff` で、先に 旗（__slow3d）を 立てる。
+  - 3D の キャンバスに、先に とらえる 受け手（capture）を 付けて、その webglcontextlost を 止めて から dispose する。
+  - onFail は 旗が 立って いれば 何も しない。
+- 本当に 3D が こわれた とき（わざと では ない webglcontextlost）は、今までどおり 失敗の 道で 2D に もどる（エラーの 文も 出る）。

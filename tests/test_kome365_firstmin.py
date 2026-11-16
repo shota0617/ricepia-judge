@@ -2242,5 +2242,97 @@ class TestKome365TapNudge(unittest.TestCase):
         self.assertIsNone(x["js"][0], "指を 置いた だけで 返しが 出た(スワイプの 始まり)")
         self.assertLessEqual(x["js"][1], 2, "つづけて 押すと 返しが ふえる %r" % (x["js"],))
 
+
+# サイクル187: 絵が おそい 端末では 3D の 畑を 止めて 2D(?no3d と 同じ 絵)に もどす。速い 端末では そのまま
+SLOW3D_HOG = "js:(window.addEventListener('three-ready', () => { const hog = () => { const t = performance.now(); while (performance.now() - t < 150) {} requestAnimationFrame(hog); }; requestAnimationFrame(hog); }), 1)"
+# 3D の 絵(three.js・field3d.js)の かわりに、すぐ 描ける 見せかけの 3D を 入れる(この 作業場の ブラウザは 本物の 3D が おそい ので、速い 端末の かわり)
+FAKE3D = "js:(window.THREE = window.THREE || {}, window.Field3D = { init(){ return true; }, update(){}, start(){}, stop(){}, dispose(){ window.__disp = (window.__disp || 0) + 1; }, focus(){ return false; }, canFocus(){ return false; } }, window.dispatchEvent(new Event('three-ready')), 1)"
+SLOW3D_STATE = "js:(() => ({ use3d: typeof use3d === 'undefined' ? 'x' : use3d, off: window.__slow3d || 0, k3d: window.__k3d.state(), canvas2d: !!document.getElementById('field').getContext('2d'), kakashi: getComputedStyle(document.getElementById('swKakashi')).display }))()"
+
+
+# サイクル187c: こまの 間隔を 決めうちに する(rAF を setTimeout で 置きかえ)。__paused の 間は こまを 止めて おく(うらに 回した ときの かわり)
+def RAF_INT(ms):
+    return "js:(window.__rafInt = %d, window.__held = [], window.__paused = false, window.requestAnimationFrame = function(f){ setTimeout(() => { if (window.__paused) { window.__held.push(f); return; } f(performance.now()); }, window.__rafInt); return 1; }, window.cancelAnimationFrame = function(){}, 1)" % ms
+# 3D が 出来て 3秒 あとに 1回 だけ 止まる: 主スレッドを ふさぐ(block)・こまを 止める(pause)
+def ONE_STALL(kind, ms):
+    if kind == "block":
+        return "js:(setTimeout(() => { const t = performance.now(); while (performance.now() - t < %d) {} }, 3000), 1)" % ms
+    return "js:(setTimeout(() => { window.__paused = true; setTimeout(() => { window.__paused = false; const h = window.__held; window.__held = []; h.forEach(f => f(performance.now())); }, %d); }, 3000), 1)" % ms
+
+
+# サイクル187d: 16ms の こまの 中に、3D が 出来て から at ミリ秒 あとに 重い こま(ms)を n こ つづけて 入れる
+def RAF_HEAVY(at, n, ms):
+    return "js:(window.__hv = %d, window.addEventListener('three-ready', () => { window.__t3 = performance.now(); }), window.requestAnimationFrame = function(f){ let d = 16; if (window.__t3 && performance.now() - window.__t3 >= %d && window.__hv > 0) { window.__hv--; d = %d; } setTimeout(() => f(performance.now()), d); return 1; }, window.cancelAnimationFrame = function(){}, 1)" % (n, at, ms)
+
+
+class TestKome365Slow3D(unittest.TestCase):
+    """サイクル187・187c・187d"""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.r = sound_run([
+            {"name": "slow", "acts": [SLOW3D_HOG, FAKE3D, "wait9", SLOW3D_STATE]},
+            {"name": "fast", "acts": [FAKE3D, "wait9", SLOW3D_STATE]},
+            # 本物の 3D(この 作業場では ソフトで 描くので おそい)も 止まる
+            {"name": "real", "three": True, "acts": ["L", "wait9", "wait9", SLOW3D_STATE]},
+            # サイクル187c: 一定の 間隔(境の 前後)と、速い ときの 1回 だけの 止まり
+            {"name": "i33", "acts": [RAF_INT(33), FAKE3D, "wait9", "wait9", SLOW3D_STATE]},
+            {"name": "i110", "acts": [RAF_INT(110), FAKE3D, "wait9", "wait9", SLOW3D_STATE]},
+            {"name": "i125", "acts": [RAF_INT(125), FAKE3D, "wait9", "wait9", SLOW3D_STATE]},
+            {"name": "i250", "acts": [RAF_INT(250), FAKE3D, "wait9", "wait9", SLOW3D_STATE]},
+            {"name": "i800", "acts": [RAF_INT(800), FAKE3D, "wait9", "wait9", SLOW3D_STATE]},
+            {"name": "block18", "acts": [RAF_INT(16), FAKE3D, ONE_STALL("block", 1800), "wait9", SLOW3D_STATE]},
+            {"name": "pause18", "acts": [RAF_INT(16), FAKE3D, ONE_STALL("pause", 1800), "wait9", SLOW3D_STATE]},
+            {"name": "pause195_66", "acts": [RAF_INT(66), FAKE3D, ONE_STALL("pause", 1950), "wait9", SLOW3D_STATE]},
+            # サイクル187d: つづけて 重い こま(3D の 最初の 描き など)
+            {"name": "heavy4", "acts": [RAF_HEAVY(3000, 4, 300), FAKE3D, "wait9", SLOW3D_STATE]},
+            {"name": "heavyStart5", "acts": [RAF_HEAVY(1500, 5, 250), FAKE3D, "wait9", SLOW3D_STATE]},
+        ])
+
+    def test_few_heavy_frames_in_a_row_keep_3d(self):
+        # 速い 端末で 重い こまが つづけて 4つ(300ms)・見はりの はじめの 5こまが 重い(250ms)だけ では 止めない
+        for name in ("heavy4", "heavyStart5"):
+            x = self.r[name]
+            self.assertEqual(x["errs"], [], name)
+            self.assertEqual(x["js"][-1]["off"], 0, "%s: 重い こまが 少し つづいた だけ で 3D を 止めた %r" % (name, x["js"][-1]))
+
+    def test_steady_interval_boundary(self):
+        # 中央値 120ms が 境: 33・110ms は 止めない、125・250・800ms は 止める
+        for name, off in (("i33", 0), ("i110", 0), ("i125", 1), ("i250", 1), ("i800", 1)):
+            x = self.r[name]
+            self.assertEqual(x["errs"], [], name)
+            self.assertEqual(x["js"][-1]["off"], off, "%s: %r" % (name, x["js"][-1]))
+
+    def test_one_long_stall_keeps_3d(self):
+        # 速い 端末で 1回 だけ 長く 止まっても(重い 1こま・うらに 回して もどる)3D は 止めない
+        for name in ("block18", "pause18", "pause195_66"):
+            x = self.r[name]
+            self.assertEqual(x["errs"], [], name)
+            self.assertEqual(x["js"][-1]["off"], 0, "%s: 1回 の 止まりで 3D を 止めた %r" % (name, x["js"][-1]))
+            self.assertIs(x["js"][-1]["use3d"], True, name)
+
+    def test_slow_frames_turn_3d_off(self):
+        x = self.r["slow"]
+        self.assertEqual(x["errs"], [])
+        j = x["js"][-1]
+        self.assertEqual(j["off"], 1, "こまが おそい まま でも 3D が 止まらない %r" % (j,))
+        self.assertIs(j["use3d"], False, j)
+        self.assertTrue(j["canvas2d"], "2D の 絵に もどって いない %r" % (j,))
+        self.assertNotEqual(j["kakashi"], "none", "かかしが 消えた %r" % (j,))
+
+    def test_fast_frames_keep_3d(self):
+        x = self.r["fast"]
+        self.assertEqual(x["errs"], [])
+        self.assertEqual(x["js"][-1]["off"], 0, "速い ときに 3D を 止めた %r" % (x["js"][-1],))
+        self.assertIs(x["js"][-1]["use3d"], True, x["js"][-1])
+
+    def test_real_soft_3d_turns_off(self):
+        x = self.r["real"]
+        self.assertEqual(x["errs"], [])
+        j = x["js"][-1]
+        self.assertEqual(j["k3d"], 2, "3D の したく が 始まって いない %r" % (j,))
+        self.assertEqual(j["off"], 1, "ソフトで 描く 3D でも 止まらない %r" % (j,))
+        self.assertTrue(j["canvas2d"], j)
+
 if __name__ == "__main__":
     unittest.main()

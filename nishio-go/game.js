@@ -2363,7 +2363,9 @@ modeListeners.push(() => { if (KT) KT.clear(); });   // あるいて／操作し
 const guideTarget = () => {
   const g = S.guide;
   if (!g) return null;
-  if (g.kind === 'npc') { const n = placeNpcs().find(x => x.id === g.id); return n ? { ...g, ...npcSpot(n) } : null; }
+  // サイクル225：人の 位置は npcSpot で（ドット絵の 地図の 立つ マス）。その マスの 地図が まだ 読めて いない ときは npcSpot が 人 そのもの を 返し、
+  // 前は それを まるごと かさねて 行き先の 名前が「人（場所）」から 人の 名前 だけ に かわって いた（はじめの 場所から 56人中 22人。道しるべに 場所が 出ない）。位置 だけ を 使う
+  if (g.kind === 'npc') { const n = placeNpcs().find(x => x.id === g.id); if (!n) return null; const p = npcSpot(n); return { ...g, lat: p.lat, lng: p.lng }; }
   // 名所は、いま読み込んでいるスポットの位置で（スポットを読み直すと、OpenStreetMap で位置が補正されることがある）
   const s = spots.find(x => x.id === g.id);
   return s ? { ...g, lat: s.lat, lng: s.lng } : g;

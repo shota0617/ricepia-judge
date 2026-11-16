@@ -966,9 +966,9 @@ window.__k3d = (function(){
      見分けは 名前 だけ(小さな 試しの canvas で 1回。終わったら はなす)。拡張が 無い・名前が 読めない・WebGL が 無い ときは 今までどおり 作って みる */
   var soft = null;
   function softGL(){ if (soft !== null) return soft; soft = false;
-    try { var c = document.createElement('canvas'), gl = c.getContext('webgl') || c.getContext('experimental-webgl'); if (!gl) return soft;
+    try { var c = document.createElement('canvas'), lp = { powerPreference: 'low-power' }, gl = c.getContext('webgl', lp) || c.getContext('experimental-webgl', lp); if (!gl) return soft;
       var ext = gl.getExtension('WEBGL_debug_renderer_info'), name = ext ? String(gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) || '').toLowerCase() : '';
-      soft = /swiftshader|llvmpipe|softpipe|software/.test(name); window.__k3dGL = name;
+      soft = /swiftshader|llvmpipe|softpipe|software (rasterizer|renderer)/.test(name); window.__k3dGL = name;
       var lc = gl.getExtension('WEBGL_lose_context'); if (lc) lc.loseContext(); } catch (e) { soft = false; }
     window.__k3dSoft = soft; return soft; }
   function pre(){

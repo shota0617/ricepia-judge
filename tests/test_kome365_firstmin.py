@@ -2334,5 +2334,104 @@ class TestKome365Slow3D(unittest.TestCase):
         self.assertEqual(j["off"], 1, "ソフトで 描く 3D でも 止まらない %r" % (j,))
         self.assertTrue(j["canvas2d"], j)
 
+# R138: 実カードの札を字ごとのRangeで測る。保存復元の補助レイアウト試験。
+# 音はsound_runのfake、標準no3d。自然な5スワイプ×10回の証拠とは分ける。
+LABEL_WRAP_JS = r"""js:(async () => {
+  await document.fonts.ready;
+  const selectors = ['#swEdge .eL .eLb', '#swEdge .eR .eLb', '#swEdge .eL', '#swEdge .eR', '#swEdge', '#swCard'];
+  const layout = () => Object.fromEntries(selectors.map(sel => {
+    const e = document.querySelector(sel);
+    if (!e) throw new Error('label-layout missing ' + sel);
+    return [sel, [e.offsetLeft, e.offsetTop, e.offsetWidth, e.offsetHeight]];
+  }));
+  let previous = '', stable = 0;
+  for (let frame = 0; frame < 120 && stable < 3; frame++) {
+    await new Promise(requestAnimationFrame);
+    const now = JSON.stringify(layout()); stable = now === previous ? stable + 1 : 0; previous = now;
+  }
+  if (stable < 3) throw new Error('label-layout did not settle');
+  const rect = r => [r.left, r.top, r.right, r.bottom];
+  const measure = sel => {
+    const e = document.querySelector(sel), text = e.textContent, cs = getComputedStyle(e);
+    if (e.childNodes.length !== 1 || e.firstChild.nodeType !== Node.TEXT_NODE) throw new Error('expected original label text node');
+    const node = e.firstChild, lines = [], glyphs = [], clipped = [], hidden = [];
+    const clip = { left: 0, top: 0, right: innerWidth, bottom: innerHeight };
+    for (let p = e; p; p = p.parentElement) {
+      const c = getComputedStyle(p), b = p.getBoundingClientRect();
+      const matrix = new DOMMatrixReadOnly(c.transform === 'none' ? undefined : c.transform);
+      if (Math.abs(matrix.b) > 0.0001 || Math.abs(matrix.c) > 0.0001) throw new Error('rotated label ancestor has not settled');
+      const sx = p.offsetWidth ? b.width / p.offsetWidth : 1, sy = p.offsetHeight ? b.height / p.offsetHeight : 1;
+      const cl = b.left + p.clientLeft * sx, ct = b.top + p.clientTop * sy;
+      if (c.display === 'none' || c.visibility !== 'visible' || +c.opacity === 0) hidden.push(p.id || p.tagName);
+      // 祖先の実際のclip軸だけで調べる。transform/手本のアニメは変更しない。
+      if (/(hidden|clip|scroll|auto)/.test(c.overflowX)) { clip.left = Math.max(clip.left, cl); clip.right = Math.min(clip.right, cl + p.clientWidth * sx); }
+      if (/(hidden|clip|scroll|auto)/.test(c.overflowY)) { clip.top = Math.max(clip.top, ct); clip.bottom = Math.min(clip.bottom, ct + p.clientHeight * sy); }
+    }
+    let offset = 0;
+    for (const char of text) {
+      const rr = document.createRange(); rr.setStart(node, offset); offset += char.length; rr.setEnd(node, offset);
+      const rects = [...rr.getClientRects()].filter(r => r.width > 0 && r.height > 0);
+      if (rects.length !== 1) throw new Error('unmeasurable glyph ' + char);
+      const b = rects[0]; glyphs.push({ char, box: rect(b) });
+      let line = lines.find(l => Math.abs(l.top - b.top) <= 0.75);
+      if (!line) { line = { top: b.top, text: '', count: 0 }; lines.push(line); }
+      line.text += char; line.count++;
+      if (b.left < clip.left - 0.5 || b.right > clip.right + 0.5 || b.top < clip.top - 0.5 || b.bottom > clip.bottom + 0.5) clipped.push(char);
+    }
+    lines.sort((a, b) => a.top - b.top);
+    return { text, lines, glyphs, clipped, hidden, box: rect(e.getBoundingClientRect()),
+      font: { size: cs.fontSize, family: cs.fontFamily, weight: cs.fontWeight, spacing: cs.letterSpacing, height: cs.lineHeight },
+      scroll: [e.scrollWidth, e.clientWidth, e.scrollHeight, e.clientHeight] };
+  };
+  return { date: document.getElementById('swBigDate').textContent, viewport: [innerWidth, innerHeight],
+    layout: layout(), left: measure(selectors[0]), right: measure(selectors[1]) };
+})()"""
+
+
+class TestKome365NarrowChoiceWrap(unittest.TestCase):
+    """R138: primaryで出た1月6日/12日の実札。保存復元の描画補助試験。"""
+
+    @classmethod
+    def setUpClass(cls):
+        # current primary実保存のconfig/seed。Jan12は実保存のch全文、Jan6は観測済み先頭5選択。
+        base = {"v": "kokoro", "y": "recent", "so": "low", "m": "transplant", "c": 0,
+                "s": 1813280426, "fm": "oneshot", "yh": 0}
+        plans = []
+        for name, choices in (("jan6_320", "RLLLL"), ("jan12_320", "RLLLLLLLLLL")):
+            save = json.dumps(dict(base, ch=choices))
+            plans.append({"name": name, "w": 320, "h": 568, "save": save, "acts": [LABEL_WRAP_JS]})
+        cls.r = sound_run(plans)
+        # 旧/新同一試験の箱・fontを比較する観測ログ。記録だけでGREENとはしない。
+        print("R138_LABEL_WRAP " + json.dumps(cls.r, ensure_ascii=False, sort_keys=True))
+
+    def check_choice(self, name, date, left_text, right_text):
+        x = self.r[name]
+        self.assertEqual(x["errs"], [])
+        j = x["js"][-1]
+        self.assertEqual(j["date"], date, j)
+        self.assertEqual(j["viewport"], [320, 568], j)
+        right = j["right"]
+        self.assertEqual(right["text"], right_text, j)
+        self.assertEqual(j["left"]["text"], left_text, j)
+        for label in (j["left"], right):
+            self.assertEqual(label["font"]["size"], "19px", j)
+            self.assertEqual(label["hidden"], [], j)
+            self.assertEqual(label["clipped"], [], j)
+            self.assertEqual(''.join(c["char"] for c in label["glyphs"]), label["text"], j)
+            self.assertLessEqual(label["scroll"][0], label["scroll"][1] + 1, j)
+            self.assertLessEqual(label["scroll"][2], label["scroll"][3] + 1, j)
+        counts = [line["count"] for line in right["lines"]]
+        self.assertEqual(sum(counts), 7, j)
+        self.assertEqual(len(counts), 2, j)
+        # 両場面とも旧実HTMLで[6,1]を記録し、このassertで実際に落ちることを確認する。
+        self.assertGreaterEqual(counts[-1], 2, j)
+
+    def test_jan6_water_choice_has_no_single_last_character(self):
+        self.check_choice("jan6_320", "1月6日", "田を見て回る", "田に水を入れる")
+
+    def test_jan12_stubble_choice_has_no_single_last_character(self):
+        self.check_choice("jan12_320", "1月12日", "株を燃やす", "株を拾ってみる")
+
+
 if __name__ == "__main__":
     unittest.main()

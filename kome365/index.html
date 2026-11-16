@@ -2139,7 +2139,7 @@ function try3d(){
   return true;
 }
 window.addEventListener('three-ready', () => { // 2Dで描いていたキャンバスを新しくして3Dへ
-  if (use3d) return;
+  if (use3d || window.__slow3d) return;   /* サイクル187c: おそくて 止めた あとに three-ready が また 来ても 3D に もどさない */
   let fade = null; try { const o = $('field'), sw = $('swipe'); if (o && sw && !$('sGame').classList.contains('hidden') && !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) { fade = document.createElement('canvas'); fade.width = o.width; fade.height = o.height; fade.getContext('2d').drawImage(o, 0, 0); fade.setAttribute('aria-hidden', 'true'); fade.style.cssText = 'position:absolute;left:50%;top:0;width:100vw;height:100%;margin-left:-50vw;z-index:0;pointer-events:none;opacity:1;transition:opacity .8s ease'; sw.insertBefore(fade, sw.firstChild); } } catch (e) { fade = null; }   /* 周回109: 2Dの絵から3Dへ切りかわるとき、2Dの絵を0.8秒でうすく消す(いきなり絵が入れかわっていた) */
   swapCanvas(); use3d = try3d(); $('fieldTip').classList.toggle('hidden', !use3d);
   if (f && !$('sGame').classList.contains('hidden')) drawField();
@@ -2151,11 +2151,16 @@ window.addEventListener('three-ready', () => { // 2Dで描いていたキャン�
    (止め方は 3D が こわれた とき(onFail)と 同じ。かかしと 太陽は DOM なので そのまま)。速い 端末では 何も しない。画面が かくれた 間は 数えなおす */
 const SLOW3D_MS = 120;
 function slow3dOff(){ if (!use3d) return; use3d = false; try { window.Field3D.dispose(); } catch (e) {} swapCanvas(); $('fieldTip').classList.add('hidden'); if (f && !f.done) drawField(); window.__slow3d = (window.__slow3d || 0) + 1; }
-function slow3dWatch(){
-  const t0 = performance.now(); let ts = [];
-  const tick = (now) => { if (!use3d) return; if (now - t0 > 31500) return;
-    if (document.hidden) { ts = []; requestAnimationFrame(tick); return; }
-    if (now - t0 >= 1500) { ts.push(now); while (ts.length && now - ts[0] > 2000) ts.shift(); if (ts.length >= 3 && now - ts[0] >= 1900 && (now - ts[0]) / (ts.length - 1) > SLOW3D_MS) { slow3dOff(); return; } }
+function slow3dWatch(){   /* サイクル187c(PR #1215 の 見直し): 平均と 窓の はば を やめ、さいごの 8つの 間隔の 中央値で 見る。
+     1回 だけ の 長い 止まり(重い 1こま・うらに 回して もどる)は 中央値に 効かない ので 速い 端末を 止めない。一定の おそさ(125ms・800ms など)は かならず 中央値に 出る。
+     かくれる・もどる では ためた 間隔を 空に する。800ms 間隔でも 8つ たまる のは 約 6.4秒 なので、待ち 1.5秒・見はり 30秒 の まま */
+  const t0 = performance.now(); let last = 0, gaps = [];
+  const reset = () => { last = 0; gaps = []; };
+  document.addEventListener('visibilitychange', reset);
+  const tick = (now) => { if (!use3d || now - t0 > 31500) { document.removeEventListener('visibilitychange', reset); return; }
+    if (document.hidden) reset();
+    else if (now - t0 >= 1500) { if (last) { gaps.push(now - last); if (gaps.length > 8) gaps.shift(); } last = now;
+      if (gaps.length === 8) { const m = gaps.slice().sort((a, b) => a - b); if ((m[3] + m[4]) / 2 > SLOW3D_MS) { document.removeEventListener('visibilitychange', reset); slow3dOff(); return; } } }
     requestAnimationFrame(tick); };
   requestAnimationFrame(tick);
 }

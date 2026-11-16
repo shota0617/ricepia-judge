@@ -2242,5 +2242,48 @@ class TestKome365TapNudge(unittest.TestCase):
         self.assertIsNone(x["js"][0], "指を 置いた だけで 返しが 出た(スワイプの 始まり)")
         self.assertLessEqual(x["js"][1], 2, "つづけて 押すと 返しが ふえる %r" % (x["js"],))
 
+
+# サイクル187: 絵が おそい 端末では 3D の 畑を 止めて 2D(?no3d と 同じ 絵)に もどす。速い 端末では そのまま
+SLOW3D_HOG = "js:(window.addEventListener('three-ready', () => { const hog = () => { const t = performance.now(); while (performance.now() - t < 150) {} requestAnimationFrame(hog); }; requestAnimationFrame(hog); }), 1)"
+# 3D の 絵(three.js・field3d.js)の かわりに、すぐ 描ける 見せかけの 3D を 入れる(この 作業場の ブラウザは 本物の 3D が おそい ので、速い 端末の かわり)
+FAKE3D = "js:(window.THREE = window.THREE || {}, window.Field3D = { init(){ return true; }, update(){}, start(){}, stop(){}, dispose(){ window.__disp = (window.__disp || 0) + 1; }, focus(){ return false; }, canFocus(){ return false; } }, window.dispatchEvent(new Event('three-ready')), 1)"
+SLOW3D_STATE = "js:(() => ({ use3d: typeof use3d === 'undefined' ? 'x' : use3d, off: window.__slow3d || 0, k3d: window.__k3d.state(), canvas2d: !!document.getElementById('field').getContext('2d'), kakashi: getComputedStyle(document.getElementById('swKakashi')).display }))()"
+
+
+class TestKome365Slow3D(unittest.TestCase):
+    """サイクル187"""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.r = sound_run([
+            {"name": "slow", "acts": [SLOW3D_HOG, FAKE3D, "wait9", SLOW3D_STATE]},
+            {"name": "fast", "acts": [FAKE3D, "wait9", SLOW3D_STATE]},
+            # 本物の 3D(この 作業場では ソフトで 描くので おそい)も 止まる
+            {"name": "real", "three": True, "acts": ["L", "wait9", "wait9", SLOW3D_STATE]},
+        ])
+
+    def test_slow_frames_turn_3d_off(self):
+        x = self.r["slow"]
+        self.assertEqual(x["errs"], [])
+        j = x["js"][-1]
+        self.assertEqual(j["off"], 1, "こまが おそい まま でも 3D が 止まらない %r" % (j,))
+        self.assertIs(j["use3d"], False, j)
+        self.assertTrue(j["canvas2d"], "2D の 絵に もどって いない %r" % (j,))
+        self.assertNotEqual(j["kakashi"], "none", "かかしが 消えた %r" % (j,))
+
+    def test_fast_frames_keep_3d(self):
+        x = self.r["fast"]
+        self.assertEqual(x["errs"], [])
+        self.assertEqual(x["js"][-1]["off"], 0, "速い ときに 3D を 止めた %r" % (x["js"][-1],))
+        self.assertIs(x["js"][-1]["use3d"], True, x["js"][-1])
+
+    def test_real_soft_3d_turns_off(self):
+        x = self.r["real"]
+        self.assertEqual(x["errs"], [])
+        j = x["js"][-1]
+        self.assertEqual(j["k3d"], 2, "3D の したく が 始まって いない %r" % (j,))
+        self.assertEqual(j["off"], 1, "ソフトで 描く 3D でも 止まらない %r" % (j,))
+        self.assertTrue(j["canvas2d"], j)
+
 if __name__ == "__main__":
     unittest.main()

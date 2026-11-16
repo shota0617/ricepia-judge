@@ -2144,7 +2144,21 @@ window.addEventListener('three-ready', () => { // 2Dで描いていたキャン�
   swapCanvas(); use3d = try3d(); $('fieldTip').classList.toggle('hidden', !use3d);
   if (f && !$('sGame').classList.contains('hidden')) drawField();
   if (fade) requestAnimationFrame(() => requestAnimationFrame(() => { fade.style.opacity = '0'; setTimeout(() => fade.remove(), 900); }));
+  if (use3d) slow3dWatch();
 });
+/* サイクル187: 絵が おそい 端末(ソフトで 描く 3D)では、3D が 出来た あとも ずっと 1秒に 4〜5こま しか 描けず、○✗ や スワイプが おくれた。
+   3D が 出来て 1.5秒 たってから 30秒の 間、こまの 間隔を 見て、2秒 つづけて 平均 120ms より 長い(3こま 以上 はかって。とても おそい 端末は 2秒に 8こまも 来ない)なら、3D を 止めて ?no3d と 同じ 2D の 絵に もどす
+   (止め方は 3D が こわれた とき(onFail)と 同じ。かかしと 太陽は DOM なので そのまま)。速い 端末では 何も しない。画面が かくれた 間は 数えなおす */
+const SLOW3D_MS = 120;
+function slow3dOff(){ if (!use3d) return; use3d = false; try { window.Field3D.dispose(); } catch (e) {} swapCanvas(); $('fieldTip').classList.add('hidden'); if (f && !f.done) drawField(); window.__slow3d = (window.__slow3d || 0) + 1; }
+function slow3dWatch(){
+  const t0 = performance.now(); let ts = [];
+  const tick = (now) => { if (!use3d) return; if (now - t0 > 31500) return;
+    if (document.hidden) { ts = []; requestAnimationFrame(tick); return; }
+    if (now - t0 >= 1500) { ts.push(now); while (ts.length && now - ts[0] > 2000) ts.shift(); if (ts.length >= 3 && now - ts[0] >= 1900 && (now - ts[0]) / (ts.length - 1) > SLOW3D_MS) { slow3dOff(); return; } }
+    requestAnimationFrame(tick); };
+  requestAnimationFrame(tick);
+}
 /* Field3D には「暦の日と今日の天気」にそろえた見え方を渡す。Field3D は f.doy と「いちばん新しい日の記録(=きのうの天気)」を見るので、
    f は書きかえず、doy と最新の記録だけを今日のものにした子オブジェクトにする(準備・収穫後の季節感も暦どおりになる) */
 function fview(f){

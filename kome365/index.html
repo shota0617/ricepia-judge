@@ -960,14 +960,25 @@ window.__k3d = (function(){
   var no3d = /[?&]no3d\b/.test(location.search), http = /^https?:$/.test(location.protocol);
   var SRI = 'sha512-dLxUelApnYxpLt6K2iomGngnHO83iUvZytA3YjDUCjT0HDOHKXnVYdf3hU4JjM8uEhxf9nD1/ey98U3t2vZ0qQ==';
   var st = 0, down = 0, timer = null, idleMs = 0, idleT = null, tries = 0, answered = false;
+  /* サイクル191(運営者 2026-11-14「判断不要で 進めて」): ソフトで 絵を かく 端末(WebGL の 名前が SwiftShader・llvmpipe・Software・softpipe)では、
+     3D の したく(組み立て＋最初の 描き)で 9〜10秒 画面が 止まり、2〜4枚めの スワイプが 7〜9秒 待たされて いた(そのあと 187 の きまりで 2D に もどる)。
+     そういう 端末では はじめから 3D を 作らず、three も 読まない(?no3d と 同じ 2D の 絵。かかしと 太陽は DOM なので そのまま)。
+     見分けは 名前 だけ(小さな 試しの canvas で 1回。終わったら はなす)。拡張が 無い・名前が 読めない・WebGL が 無い ときは 今までどおり 作って みる */
+  var soft = null;
+  function softGL(){ if (soft !== null) return soft; soft = false;
+    try { var c = document.createElement('canvas'), gl = c.getContext('webgl') || c.getContext('experimental-webgl'); if (!gl) return soft;
+      var ext = gl.getExtension('WEBGL_debug_renderer_info'), name = ext ? String(gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) || '').toLowerCase() : '';
+      soft = /swiftshader|llvmpipe|softpipe|software/.test(name); window.__k3dGL = name;
+      var lc = gl.getExtension('WEBGL_lose_context'); if (lc) lc.loseContext(); } catch (e) { soft = false; }
+    window.__k3dSoft = soft; return soft; }
   function pre(){
     if (st) return; st = 1; if (!http) return;
-    (no3d ? ['field3d.js'] : ['field3d.js', 'vendor/three.min.js']).forEach(function(src){ var l = document.createElement('link'); l.rel = 'preload'; l.as = 'script'; l.href = src; if (/three/.test(src)) l.integrity = SRI; document.head.appendChild(l); });
+    (no3d || softGL() ? ['field3d.js'] : ['field3d.js', 'vendor/three.min.js']).forEach(function(src){ var l = document.createElement('link'); l.rel = 'preload'; l.as = 'script'; l.href = src; if (/three/.test(src)) l.integrity = SRI; document.head.appendChild(l); });
   }
   function add(src, sri, done){ var sc = document.createElement('script'); sc.src = src; sc.async = false; if (sri && http) sc.integrity = sri; if (done) sc.onload = done; document.head.appendChild(sc); }
   function go(){
     if (st === 2) return; st = 2; clearTimeout(timer); clearTimeout(idleT); timer = idleT = null;
-    add('field3d.js');
+    add('field3d.js'); if (!no3d && softGL()) return;   /* サイクル191: ソフトで 絵を かく 端末は three を 読まない(2D の まま) */
     if (!no3d) add('vendor/three.min.js', SRI, function(){ window.dispatchEvent(new Event('three-ready')); });
   }
   function soon(ms){

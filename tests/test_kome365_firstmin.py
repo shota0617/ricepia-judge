@@ -286,6 +286,8 @@ const FAKE = (mode) => {
     await ctx.addInitScript(FAKE, pl.mode || 'ok');
     if (pl.store === 'throw') await ctx.addInitScript(() => { const g = Storage.prototype.getItem, s = Storage.prototype.setItem; Storage.prototype.getItem = function(){ throw new Error('blocked'); }; Storage.prototype.setItem = function(){ throw new Error('blocked'); }; });
     if (pl.save) await ctx.addInitScript(s => { try { if (!sessionStorage.getItem('sv')) { sessionStorage.setItem('sv', '1'); localStorage.setItem('kome365_swipe_save', s); } } catch (e) {} }, pl.save);
+    if (pl.gl) await ctx.addInitScript(name => { const fix = P => { if (!P) return; const gp = P.getParameter, ge = P.getExtension; P.getParameter = function(k){ if (k === 0x9246 && name !== '__none__') return name; return gp.call(this, k); }; P.getExtension = function(n){ if (n === 'WEBGL_debug_renderer_info' && name === '__none__') return null; return ge.call(this, n); }; }; fix(window.WebGLRenderingContext && WebGLRenderingContext.prototype); fix(window.WebGL2RenderingContext && WebGL2RenderingContext.prototype); }, pl.gl);   // サイクル191: WebGL の 名前を 差しかえる
+    await ctx.addInitScript(() => { window.__f3init = 0; let F3; Object.defineProperty(window, 'Field3D', { configurable: true, get(){ return F3; }, set(v){ F3 = v; if (v && v.init && !v.__h) { v.__h = 1; const o = v.init; v.init = function(){ window.__f3init++; return o.apply(this, arguments); }; } } }); });   // サイクル191: Field3D.init の 回数
     if (pl.slowCanvas) await ctx.addInitScript(() => { const o = HTMLCanvasElement.prototype.toDataURL; HTMLCanvasElement.prototype.toDataURL = function(){ const t = performance.now(); while (performance.now() - t < 1500) {} return o.apply(this, arguments); }; });   // サイクル182: GPU を 待つ toDataURL(3D の したくと 重なった とき)を にせる
     if (pl.store === 'junk') await ctx.addInitScript(() => { try { localStorage.setItem('kome365_sound', '{{oops'); localStorage.setItem('kome365_swipe_save', '{"v":'); } catch (e) {} });
     await p.route('http://kome.test/**', r => { const u = new URL(r.request().url()); let f = u.pathname === '/kome365/index.html' ? htmlPath : path.join(root, decodeURIComponent(u.pathname));
@@ -2074,7 +2076,7 @@ class TestKome365MarkClear(unittest.TestCase):
             for ms in (150, 450):
                 plans.append({"name": "c%dx%d_%d" % (w, h, ms), "w": w, "h": h, "acts": [MARK_CLEAR_ON] + ["chain:%d" % ms] * 2 + [MARK_CLEAR_GET]})
         # 3D あり(本物の したく が 入る)の 568×320
-        plans.append({"name": "t568x320", "w": 568, "h": 320, "three": True, "acts": [MARK_CLEAR_ON] + ["keyjs:1", "wait"] * 8 + [MARK_CLEAR_GET]})
+        plans.append({"name": "t568x320", "w": 568, "h": 320, "three": True, "gl": "ANGLE (NVIDIA, NVIDIA GeForce GTX 1050 Direct3D11 vs_5_0 ps_5_0, D3D11)", "acts": [MARK_CLEAR_ON] + ["keyjs:1", "wait"] * 8 + [MARK_CLEAR_GET]})
         # ○✗ が 出て いる 間に 回す(両向き)。回した あとの ○✗ も 字・画面の 外に かからない
         for (w, h, rw, rh) in [(320, 568, 568, 320), (568, 320, 320, 568), (390, 844, 844, 390), (844, 390, 390, 844)]:
             plans.append({"name": "r%dx%d" % (w, h), "w": w, "h": h, "acts": ["keyjs:1", "rotate:%dx%d" % (rw, rh), MARK_NOW_JS]})
@@ -2279,11 +2281,11 @@ class TestKome365Slow3D(unittest.TestCase):
             {"name": "slow", "acts": [SLOW3D_HOG, FAKE3D, "wait9", SLOW3D_STATE]},
             {"name": "fast", "acts": [FAKE3D, "wait9", SLOW3D_STATE]},
             # 本物の 3D(この 作業場では ソフトで 描くので おそい)も 止まる
-            {"name": "real", "three": True, "acts": ["L", "wait9", "wait9", SLOW3D_STATE]},
+            {"name": "real", "three": True, "gl": "ANGLE (NVIDIA, NVIDIA GeForce GTX 1050 Direct3D11 vs_5_0 ps_5_0, D3D11)", "acts": ["L", "wait9", "wait9", SLOW3D_STATE]},
             # サイクル190: わざと 止めた とき エラーが 出ない・入れかえ と 描きなおし が 2回 走らない
-            {"name": "realQuiet", "three": True, "acts": [SLOW3D_SPY, "L", "wait9", "wait9", "wait9", SLOW3D_SPY_GET]},
+            {"name": "realQuiet", "three": True, "gl": "ANGLE (NVIDIA, NVIDIA GeForce GTX 1050 Direct3D11 vs_5_0 ps_5_0, D3D11)", "acts": [SLOW3D_SPY, "L", "wait9", "wait9", "wait9", SLOW3D_SPY_GET]},
             # 本当に 3D が こわれた とき(わざと では ない webglcontextlost)は 今までどおり 失敗の 道で 2D に もどる
-            {"name": "realLost", "three": True, "acts": [SLOW3D_SPY, "L", "js:(async () => { for (let i = 0; i < 120; i++) { if (typeof use3d !== 'undefined' && use3d === true && !window.__slow3d) { document.getElementById('field').dispatchEvent(new Event('webglcontextlost', { cancelable: true })); window.__lostT = 1; return 1; } await new Promise(r => setTimeout(r, 100)); } window.__lostT = 0; return 0; })()", "wait", SLOW3D_SPY_GET]},   # 3D が 出来たら すぐ(おそくて 止まる 前に)
+            {"name": "realLost", "three": True, "gl": "ANGLE (NVIDIA, NVIDIA GeForce GTX 1050 Direct3D11 vs_5_0 ps_5_0, D3D11)", "acts": [SLOW3D_SPY, "L", "js:(async () => { for (let i = 0; i < 120; i++) { if (typeof use3d !== 'undefined' && use3d === true && !window.__slow3d) { document.getElementById('field').dispatchEvent(new Event('webglcontextlost', { cancelable: true })); window.__lostT = 1; return 1; } await new Promise(r => setTimeout(r, 100)); } window.__lostT = 0; return 0; })()", "wait", SLOW3D_SPY_GET]},   # 3D が 出来たら すぐ(おそくて 止まる 前に)
             # サイクル187c: 一定の 間隔(境の 前後)と、速い ときの 1回 だけの 止まり
             {"name": "i33", "acts": [RAF_INT(33), FAKE3D, "wait9", "wait9", SLOW3D_STATE]},
             {"name": "i110", "acts": [RAF_INT(110), FAKE3D, "wait9", "wait9", SLOW3D_STATE]},
@@ -2497,6 +2499,44 @@ class TestKome365OkRise(unittest.TestCase):
         x = self.r["mute"]
         self.assertEqual(x["errs"], [])
         self.assertEqual(x["js"][-1], [], x["js"])
+
+
+# サイクル191: ソフトで 絵を かく 端末(名前で 見分ける)では はじめから 3D を 作らない・three を 読まない。ふつうの 名前・拡張なし は 今までどおり
+SOFTGL_STATE = "js:(() => ({ init: window.__f3init || 0, three: performance.getEntriesByType('resource').filter(e => /three\\.min\\.js/.test(e.name)).length, THREE: !!window.THREE, soft: window.__k3dSoft, name: window.__k3dGL, use3d: typeof use3d === 'undefined' ? 'x' : use3d, canvas2d: !!document.getElementById('field').getContext('2d'), kakashi: getComputedStyle(document.getElementById('swKakashi')).display, k3d: window.__k3d.state() }))()"
+HW_GL = "ANGLE (NVIDIA, NVIDIA GeForce GTX 1050 Direct3D11 vs_5_0 ps_5_0, D3D11)"
+
+
+class TestKome365SoftGL(unittest.TestCase):
+    """サイクル191"""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.r = sound_run([
+            {"name": "swift", "three": True, "gl": "Google SwiftShader", "acts": ["L", "wait9", SOFTGL_STATE]},
+            {"name": "llvm", "three": True, "gl": "llvmpipe (LLVM 15.0.7, 256 bits)", "acts": ["L", "wait9", SOFTGL_STATE]},
+            {"name": "hw", "three": True, "gl": HW_GL, "acts": ["L", "wait9", SOFTGL_STATE]},
+            {"name": "noext", "three": True, "gl": "__none__", "acts": ["L", "wait9", SOFTGL_STATE]},
+        ])
+
+    def test_soft_renderer_stays_2d_without_three(self):
+        for name in ("swift", "llvm"):
+            x = self.r[name]
+            self.assertEqual(x["errs"], [], name)
+            j = x["js"][-1]
+            self.assertEqual(j["k3d"], 2, "%s: 3D の したくの 時に なって いない %r" % (name, j))
+            self.assertEqual(j["init"], 0, "%s: Field3D.init が 呼ばれた %r" % (name, j))
+            self.assertEqual(j["three"], 0, "%s: three を 読んだ %r" % (name, j))
+            self.assertFalse(j["THREE"], name)
+            self.assertTrue(j["canvas2d"], "%s: 2D の 絵で ない %r" % (name, j))
+            self.assertNotEqual(j["kakashi"], "none", name)
+
+    def test_other_renderers_still_build_3d(self):
+        for name in ("hw", "noext"):
+            x = self.r[name]
+            self.assertEqual(x["errs"], [], name)
+            j = x["js"][-1]
+            self.assertGreaterEqual(j["three"], 1, "%s: three を 読まない %r" % (name, j))
+            self.assertEqual(j["init"], 1, "%s: 3D を 作らない %r" % (name, j))
 
 if __name__ == "__main__":
     unittest.main()

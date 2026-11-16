@@ -2312,6 +2312,8 @@ function senseCarried(d) {
 token.addEventListener("pointerdown", (e) => {
   if (senseFly) return;
   capture(token, e);
+  /* 運び始めた指を保つ。6pxを超える前の指の持ち替えは残す。 */
+  if (senseKind !== "nigiru" && senseDrag && senseDrag.moved && senseDrag.id !== e.pointerId) return;
   guideOff();
   if (senseKind === "nigiru") {
     token.classList.add("squeeze");
@@ -2319,10 +2321,10 @@ token.addEventListener("pointerdown", (e) => {
     if (!pageFinger(0, 1, e)) h.timer = setTimeout(() => { if (senseHold === h) { token.classList.remove("squeeze"); senseDone(); } }, NIGIRU_MS); /* 押す長さの しきいは 動きを へらす 設定でも 同じ（READ_MS の きまり・サイクル151） */
     return;
   }
-  senseDrag = { x:e.clientX, y:e.clientY, moved:false };
+  senseDrag = { id:e.pointerId, x:e.clientX, y:e.clientY, moved:false };
 });
 token.addEventListener("pointermove", (e) => {
-  if (!senseDrag) return;
+  if (!senseDrag || senseDrag.id !== e.pointerId) return;
   const dx = e.clientX - senseDrag.x, dy = e.clientY - senseDrag.y;
   if (pageFinger(dx, dy, e)) return; /* ページを動かす指では 🤲 を運ばない */
   if (Math.hypot(dx, dy) > 6) senseDrag.moved = true;
@@ -2344,7 +2346,7 @@ function endToken(e) {
     hint.textContent = "🤲 はなさず にぎる";
     return;
   }
-  if (!senseDrag) return;
+  if (!senseDrag || e && e.pointerId != null && senseDrag.id != null && senseDrag.id !== e.pointerId) return;
   const carry = senseDrag;
   senseDrag = null;
   if (senseFly) return;
@@ -2372,6 +2374,9 @@ document.addEventListener("pointerup", (e) => {
   endToken();
 });
 token.addEventListener("pointercancel", endToken);
+token.addEventListener("lostpointercapture", (e) => {
+  if (senseDrag && senseDrag.id === e.pointerId) endToken({ type:"pointercancel", pointerId:e.pointerId });
+});
 token.addEventListener("click", (e) => { if (e.detail === 0) autoSense(); });
 
 /* きめる: 項目ごとに ● が下の等級の列へ落ちる */
@@ -2434,24 +2439,24 @@ document.querySelectorAll(".gradeBtn").forEach(btn => {
     if (step !== 3) return;
     capture(btn, e);
     guideOff();
-    drag = { y:e.clientY, moved:false };
+    drag = { id:e.pointerId, y:e.clientY, moved:false };
   });
   btn.addEventListener("pointermove", (e) => {
-    if (!drag || pageFinger(0, e.clientY - drag.y, e)) return; /* 説明を読んでいる間の たての指は ページを動かす（サイクル150。触れた指だけ・サイクル151）。タップは数える */
+    if (!drag || e.pointerId !== drag.id || pageFinger(0, e.clientY - drag.y, e)) return; /* 説明を読んでいる間の たての指は ページを動かす（サイクル150。触れた指だけ・サイクル151）。タップは数える */
     const dy = Math.min(0, e.clientY - drag.y);
     if (dy < -6) drag.moved = true;
     btn.style.transform = "translateY(" + dy + "px)";
     if (dy <= -24) { drag = null; btn.style.transform = ""; pickGrade(btn); } /* 上へ引く判定: -24px。-34pxでは-30pxの自然な短い引き上げが届かず戻ってしまった（390×844実測・サイクル70）。手本の-48pxはそのまま目安として残す */
   });
   btn.addEventListener("pointerup", (e) => {
-    if (!drag) return;
+    if (!drag || e.pointerId !== drag.id) return;
     drag = null;
     btn.style.transform = "";
     if (pageSlid(e)) return; /* ページを動かした指は タップに数えない */
     if (++taps >= 2) { taps = 0; pickGrade(btn); } /* 届かなかった引き上げもタップも数える */
     else { if (taps === 1) { gradeDemoSound(); /* 空振り1回目の手本の動きにも音を付ける（サイクル122・差28） */ guideAt("move", document.querySelectorAll(".gradeBtn")[lotGrade(LOT)], 0, -48); /* 空振り1回目: 正解ボタンの手本の指をもう一度出す（サイクル81） */ btn.animate([{ transform:"none" }, { transform:"translateY(-12px)" }, { transform:"none" }], { duration:260 * motion, easing:"ease-out" }); } }
   });
-  btn.addEventListener("pointercancel", () => { drag = null; btn.style.transform = ""; });
+  btn.addEventListener("pointercancel", (e) => { if (!drag || e.pointerId !== drag.id) return; drag = null; btn.style.transform = ""; });
   btn.addEventListener("click", (e) => { if (e.detail === 0) pickGrade(btn); });
 });
 
@@ -2565,6 +2570,9 @@ function dropHanko() {
 }
 $("bagBig").addEventListener("pointerdown", (e) => {
   if (step !== 4 || leaving) return;
+  /* 動かしているはんこの指は、あとから置いた指で取り替えない。静止中の持ち替えはそのまま受ける。 */
+  if (hankoDrag && hankoDrag.moved && otherHankoPointer(e)) return;
+  hankoPointer = e.pointerId;
   capture($("bagBig"), e);
   guideOff();
   if (stamped) { stopSwipeDemo(); bagSwipe = { x:e.clientX, y:e.clientY }; return; } /* 指が触れたら流す手本の動きは止める（サイクル140・差42。ひきぬく手本と同じ） */
@@ -2581,6 +2589,7 @@ $("bagBig").addEventListener("pointerdown", (e) => {
   hankoDrag = { cy:e.clientY, moved:false };
 });
 $("bagBig").addEventListener("pointermove", (e) => {
+  if (otherHankoPointer(e)) return;
   if (bagSwipe) {
     const dx = e.clientX - bagSwipe.x;
     if (pageFinger(dx, e.clientY - bagSwipe.y, e)) return; /* ページを動かす指では流さない（サイクル150） */
@@ -2609,18 +2618,28 @@ $("bagBig").addEventListener("pointermove", (e) => {
    指の残りは捨てられた（390×844実測: はんこの上から 下へ 116px を1本で × 3回とも 押せない。指を離して もう1回が要った）。
    朱肉が付いた所を始まりにして、同じ指で はんこを下ろせる。付けた所で離した指・とちゅうで離した指は、はんこの空振りには数えない（朱肉は付けられたので） */
 var bagPage = false;
+var hankoPointer = null;
+function otherHankoPointer(e) {
+  /* 朱肉からはんこへは同じ指を引き継ぐ。所作が終われば古いIDは次の指を止めない。
+     引数なしの終了・取消しは、画面を離れた時の後片づけや場面外タップからも呼ばれる。 */
+  return !!e && !!(inkHold || inkDrag || hankoDrag || bagSwipe) && e.pointerId !== hankoPointer;
+}
 function inkToHanko(y) {
   stopBob();
   hankoDrag = { cy:y, moved:false, fromInk:true };
 }
 /* 取り消された指（pointercancel）は、元へ戻すだけで 空振りに数えない（サイクル150。旧版は タップと同じに数え、3回で ひとりでに 朱肉が付く・押される・流れる ことがあった） */
 function cancelHanko() {
+  if (otherHankoPointer(arguments[0])) return;
+  hankoPointer = null; bagPage = false;
   if (bagSwipe) { bagSwipe = null; $("bagBig").style.transform = ""; return; }
   const held = inkHold || inkDrag || hankoDrag;
   inkHold = null; inkDrag = null; hankoDrag = null;
   if (held && !stamped) { setHanko(0); if (!hankoBob) bobHanko(); }
 }
 function endHanko() {
+  if (otherHankoPointer(arguments[0])) { bagPage = false; return; } /* 別の指のcaptureで付いたページ移動の印も残さない */
+  hankoPointer = null;
   if (bagPage) { bagPage = false; cancelHanko(); return; } /* ページを動かした指は、取り消しと同じ（数えない） */
   if (bagSwipe) { bagSwipe = null; $("bagBig").style.transform = ""; swipeNudge(); return; } /* 流れなかったタップ・短いなでは、流す所作の空振りとして数える（サイクル140・差42）。朱肉・はんこの空振りと同じ共有の数え方 */
   if (inkHold) {
@@ -2657,6 +2676,13 @@ function endHanko() {
 $("bagBig").addEventListener("pointerup", endHanko);
 $("bagBig").addEventListener("pointerup", (e) => { bagPage = pageSlid(e); }, true); /* endHanko より先に見る（capture） */
 $("bagBig").addEventListener("pointercancel", cancelHanko);
+function cancelUncapturedHanko(e) {
+  const bag = $("bagBig");
+  /* 袋が指を追えている間は続ける。子の追跡終了が伝わっただけでも取り消さない。 */
+  if (!bag.hasPointerCapture || !bag.hasPointerCapture(e.pointerId)) cancelHanko(e);
+}
+$("bagBig").addEventListener("lostpointercapture", cancelUncapturedHanko);
+$("bagBig").addEventListener("pointerleave", cancelUncapturedHanko);
 $("bagBig").addEventListener("click", (e) => { if (e.detail === 0 && step === 4 && !stamped) dropHanko(); });
 function goNext() {
   guideOff();

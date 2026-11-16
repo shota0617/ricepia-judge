@@ -3183,11 +3183,17 @@ renderTitle();
   /* サイクル186(最初の 1分): 押した だけ・長押し・たての なぞり・短すぎる 引き で 決まらずに はなした とき、何も 返らなかった(50ms の タップ 55回 で 音・ゆれ・文 0)。
      はなした その こまで(決まらずに はなした ときの 片づけ ghostBack の 中)、下の 選ぶ 札(◀ ▶)を 外へ 1回 ゆらす(左の 札は 左へ・右の 札は 右へ 10px、0.26秒)。どの カード でも(手本が 出て いない 4枚め から も)同じ。
      つづけて 押しても 前の ゆれを 止めて 頭から やり直す だけ(ふえない)。動きを へらす 設定では 動かさず、札の ふちを 0.5秒 光らせる。文・絵・音は 足さない。カードは 動かさない・選ばない(2026-11-09 の まま) */
-  var nudgeAn = [];
-  function edgeNudge(){ try { nudgeAn.forEach(function(a){ a.cancel(); }); nudgeAn = []; if (document.hidden) return; var calm = calmOn();
-      [].forEach.call(document.querySelectorAll('#swEdge > .eL, #swEdge > .eR'), function(sp){ if (!sp.animate) return; var d = sp.classList.contains('eL') ? '-10px' : '10px';
-        nudgeAn.push(calm ? sp.animate([{ outline: '3px solid #6f9a3f', outlineOffset: '0px' }, { outline: '3px solid #6f9a3f', outlineOffset: '0px' }, { outline: '3px solid rgba(111,154,63,0)', outlineOffset: '0px' }], { duration: 500 })
-          : sp.animate([{ translate: '0px 0px' }, { translate: d + ' 0px', offset: 0.4 }, { translate: '0px 0px' }], { duration: 260, easing: 'ease-out' })); }); } catch (e) {} }
+  var nudgeAn = [], nudgeUp = false;
+  /* サイクル186b(PR #1213 の 見直し): ゆらすのは 指を はなした 道(pointerup)だけ。取り消し(pointercancel)・回した ときの 片づけ(dragStop)では 出さない。
+     ○✗ の しるしが 出て いる 間・30秒の カードが 出て いる 間も 出さない(その タップには もう 返しが ある)。
+     ゆれは 見て 分かる 大きさに(一定の 速さで 外へ 12px → もどる、0.28秒)。動きを へらす ときの ふちは 中立の こい 灰(○ の 緑と まぎれない) */
+  function edgeNudge(){ try { var up = nudgeUp; nudgeUp = false; nudgeAn.forEach(function(a){ a.cancel(); }); nudgeAn = []; if (!up || document.hidden) return;
+      var mk = $('swMark'); if (markRaf || (mk && mk.classList.contains('on'))) return;
+      if (idleInfo.shown || (idleInfo.tapHid && Date.now() - idleInfo.tapHid < 3000)) return;
+      var calm = calmOn();
+      [].forEach.call(document.querySelectorAll('#swEdge > .eL, #swEdge > .eR'), function(sp){ if (!sp.animate) return; var d = sp.classList.contains('eL') ? '-12px' : '12px';
+        nudgeAn.push(calm ? sp.animate([{ outline: '3px solid #55606a', outlineOffset: '0px' }, { outline: '3px solid #55606a', outlineOffset: '0px' }, { outline: '3px solid rgba(85,96,106,0)', outlineOffset: '0px' }], { duration: 500 })
+          : sp.animate([{ translate: '0px 0px' }, { translate: d + ' 0px', offset: 0.45 }, { translate: '0px 0px' }], { duration: 280, easing: 'linear' })); }); } catch (e) {} }
   document.addEventListener('visibilitychange', function(){ if (document.hidden) { nudgeAn.forEach(function(a){ a.cancel(); }); nudgeAn = []; } });
   function ghostPause(){ demoSet(false); demoDisarm(); $('swGhost').classList.remove('on'); $('swGhostArrows').classList.remove('on'); }   /* 周回153(最初の1分): つかんでいる間だけ案内を止める(覚えこまない) */
   function ghostBack(){ demoMiss++; demoArm(); var on = !ghostDone && choices.length === 0 && !calmOn(); edgeNudge(); $('swGhost').classList.toggle('on', on); $('swGhostArrows').classList.toggle('on', on); demoSet(demoWant()); }   /* 周回153(最初の1分): 決めずに離したら、まだ最初の1枚の間は ◀ ▶ の案内をはじめから出し直す。もとは触れた瞬間に ghostOff で二度と出なくなり、札を押して選ぼうとした人は、押しても何も起きず、矢印も消えたまま止まっていた(両端の影だけが残る)。カードは動かさない(店主指示 2026-11-09 のまま) */   /* スワイプ開始/確定で即消え、以降は二度と出さない */
@@ -3534,7 +3540,7 @@ renderTitle();
   function idleFaint(){ try { return +getComputedStyle($('swIdle')).opacity < 0.5; } catch (x) { return false; } }
   function idleEarly(ev){ if (!idleFaint() && performance.now() - (idleInfo.likedAt || -1e9) >= 800) return false; if (ev && ev.preventDefault) ev.preventDefault(); return true; }
   function idleHide(){ idleInfo.shown = false; try { var e = $('swIdle'); e.removeAttribute('data-on'); e.setAttribute('aria-hidden', 'true'); } catch (x) {} }
-  function idleTouch(){ idleInfo.last = Date.now(); if (idleInfo.shown) idleHide(); }
+  function idleTouch(){ idleInfo.last = Date.now(); if (idleInfo.shown) { idleHide(); idleInfo.tapHid = Date.now(); } }   /* サイクル186b: この 指で 30秒の カードを 消した ときは、はなしても 札を ゆらさない(edgeNudge) */
   function idleTick(){ try { if (!idleInfo.last) return; if ($('sGame').classList.contains('hidden')) { if (idleInfo.shown) idleHide(); return; } if (document.hidden) return; if (!idleInfo.shown && Date.now() - idleInfo.last >= IDLE_MS) idleShow(); } catch (e) {} }
   idleCounts(); idleInfo.last = Date.now();
   try { $('swIdleLike').addEventListener('click', function(ev){ if (idleInfo.liked || idleFaint()) return; idleInfo.liked = true; idleInfo.likedAt = performance.now(); idleInfo.like++; idleSave(); idleSend('like'); try { var b = $('swIdleLike'); b.classList.add('liked'); var tx2 = b.querySelector('.idleTx'); if (tx2) tx2.textContent = 'ありがとう'; } catch (e) {} }); } catch (e) {}
@@ -4130,7 +4136,7 @@ renderTitle();
     /* 周回165: 取り消し(pointercancel)は 場所が (0,0) で 届く ことが ある(田んぼから はじめて 縦に 動かし、ブラウザが 縦スクロールと 見た とき)。そのまま 使うと「左へ 大きく 動いた」と 見て 決まって いた(田んぼから 縦に 120px:4/25 決まる)。
        場所が 無い 取り消しは、さいごに 届いた 動きの 場所で 見る */
     if (e && e.type === 'pointercancel' && e.clientX === 0 && e.clientY === 0 && startX != null && e.pointerId === pid) e = { type: 'pointercancel', pointerId: e.pointerId, timeStamp: e.timeStamp, clientX: samples.length ? samples[samples.length - 1][1] : startX, clientY: lastY != null ? lastY : startY };
-    if (startX == null || (e && e.pointerId !== pid)) return; cancelDragFrame(); var sx0 = startX, sy0 = startY, isUp = !!e && e.type === 'pointerup'; startX = null; el.card.classList.remove('drag'); festReset();
+    if (startX == null || (e && e.pointerId !== pid)) return; cancelDragFrame(); var sx0 = startX, sy0 = startY, isUp = !!e && e.type === 'pointerup'; nudgeUp = isUp; startX = null; el.card.classList.remove('drag'); festReset();
     var th = (dragW || el.card.offsetWidth || 320) * 0.22, n = e ? evT(e) : (samples.length ? samples[samples.length - 1][0] : performance.now()), v = 0;   /* 通常判定はカード幅の約22% */
     if (samples.length && n < samples[samples.length - 1][0]) n = samples[samples.length - 1][0];   /* 判定に使う時刻もサンプルと同じ単調な並びにそろえる(Codex再レビューP2への対応) */
     var dyEnd = (e && typeof e.clientY === 'number') ? (e.clientY - sy0) : (lastY != null ? lastY - sy0 : null);   /* ジェスチャ全体の縦移動(指離し・cancel共通の横優勢チェック用) */

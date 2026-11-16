@@ -343,6 +343,15 @@ const FAKE = (mode) => {
           else if (k === 'short') for (let i = 1; i <= 8; i++) { await T('touchMove', [{ x: x - 3 * i, y }]); await p.waitForTimeout(50); }
           else await p.waitForTimeout(50);
           await T('touchEnd', []); await look(); await p.waitForTimeout(350); r.js = r.js || []; r.js.push(await p.evaluate(() => [window.__fb, document.getElementById('swBigDate').textContent])); await p.waitForTimeout(900); } }
+      else if (a.startsWith('tapn:')) {   // サイクル186b: カードの まん中を n 回 タップ(30ms 押して 90ms あける)
+        const n = +a.slice(5), bx = await p.locator('#swCard').boundingBox(), x = bx.x + bx.width / 2, y = bx.y + bx.height * 0.4;
+        for (let i = 0; i < n; i++) { await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] }); await p.waitForTimeout(30); await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); await p.waitForTimeout(90); }
+        await p.waitForTimeout(400); }
+      else if (a.startsWith('holdRot:')) {   // サイクル186b: カードを 持って 少し 動かした まま 回す → はなす
+        const [rw, rh] = a.slice(8).split('x').map(Number), bx = await p.locator('#swCard').boundingBox(), x = bx.x + bx.width / 2, y = bx.y + bx.height * 0.4;
+        await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] }); await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: x + 20, y }] }); await p.waitForTimeout(100);
+        await p.setViewportSize({ width: rw, height: rh }); await p.waitForTimeout(400); r.js = r.js || []; r.js.push(await p.evaluate(() => window.__nud.n));
+        await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); await p.waitForTimeout(400); }
       else if (a === 'wait31') await p.waitForTimeout(31500);   // 30秒の カードが 出る まで
       else if (a === 'keyL') { await p.keyboard.press('ArrowLeft'); r.js = r.js || []; r.js.push(await p.evaluate(() => window.__fa.live(window.__tc, window.__ts))); }   // 決めた すぐ あとに 古い 予約が のこって いるか
       else if (a === 'dailyKey') {   // 3回めの レビュー(P2): ← で 決めて すぐ ⌂ → 今日の 田んぼ(bDaily) → 新しい ゲームで すぐ ←
@@ -2164,6 +2173,11 @@ class TestKome365MarkClear(unittest.TestCase):
 
 
 
+# サイクル186b: 札の ゆれを 数える(札に かけた Web Animations の 数・同時に 動いて いる 数の 最大)
+NUDGE_ON = "js:(() => { window.__nud = { n: 0, max: 0, list: [] }; const ani = Element.prototype.animate; Element.prototype.animate = function(){ const a = ani.apply(this, arguments); if (this.matches && this.matches('#swEdge > .eL, #swEdge > .eR')) { const z = window.__nud; z.n++; z.list.push(a); z.max = Math.max(z.max, z.list.filter(x => x.playState === 'running').length); } return a; }; return 1; })()"
+NUDGE_GET = "js:(() => ({ n: window.__nud.n, max: window.__nud.max, date: document.getElementById('swBigDate').textContent }))()"
+
+
 # サイクル186(最初の 1分): 押した だけ・長押し・たての なぞり・短すぎる 引き・札の 字の タップ で 決まらずに はなした とき、300ms 以内に 札(◀ ▶)が 横へ 1回 ゆれて 返る
 class TestKome365TapNudge(unittest.TestCase):
     """サイクル186"""
@@ -2177,6 +2191,11 @@ class TestKome365TapNudge(unittest.TestCase):
             {"name": "p5", "acts": ["keyjs:1", "wait", "keyjs:1", "wait", "keyjs:1", "wait", "keyjs:1", "wait"] + g},
             {"name": "red", "reduce": True, "acts": ["gest:tap", "gest:long"]},
             {"name": "hold", "acts": ["gest:hold", "gest:taps"]},
+            # サイクル186b
+            {"name": "t20", "acts": [NUDGE_ON, "tapn:20", NUDGE_GET]},
+            {"name": "mark", "acts": [NUDGE_ON, "keyjs:1", "tapn:1", NUDGE_GET]},
+            {"name": "idle", "acts": ["wait31", NUDGE_ON, "tapn:1", NUDGE_GET]},
+            {"name": "rot", "acts": [NUDGE_ON, "holdRot:844x390", NUDGE_GET]},
         ]
         cls.r = sound_run(plans)
 
@@ -2196,6 +2215,26 @@ class TestKome365TapNudge(unittest.TestCase):
             for j in self.r[name]["js"]:
                 if isinstance(j, list):
                     self.assertEqual(j[1], d, name + ": タップで 決まった")
+
+    def test_each_release_nudges_once_without_pileup(self):
+        # サイクル186b: 20回 押すと ゆれは 20回(左右の 札で 40こ)、同時に 動いて いる のは 2つ(左右 1つずつ)まで。カードは 進まない
+        x = self.r["t20"]
+        self.assertEqual(x["errs"], [])
+        j = x["js"][-1]
+        self.assertEqual(j["n"], 40, j)
+        self.assertLessEqual(j["max"], 2, j)
+        self.assertEqual(j["date"], "1月1日", j)
+
+    def test_no_nudge_during_mark_idle_card_or_rotation(self):
+        # サイクル186b: ○✗ の しるしの 間・30秒の カードが 出て いる 間の タップ・持った まま 回す とき は ゆらさない
+        for name in ("mark", "idle"):
+            x = self.r[name]
+            self.assertEqual(x["errs"], [], name)
+            self.assertEqual(x["js"][-1]["n"], 0, "%s: ゆれた %r" % (name, x["js"]))
+        x = self.r["rot"]
+        self.assertEqual(x["errs"], [])
+        self.assertEqual(x["js"][1], 0, "回した とき に ゆれた %r" % (x["js"],))   # js[0] は NUDGE_ON の 1
+        self.assertEqual(x["js"][-1]["n"], 0, "回した あと はなして ゆれた %r" % (x["js"],))
 
     def test_no_nudge_while_finger_down_and_no_pileup(self):
         x = self.r["hold"]

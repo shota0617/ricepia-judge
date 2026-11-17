@@ -2432,37 +2432,46 @@ class TestKome365NarrowChoiceWrap(unittest.TestCase):
         for name, choices in (("jan6_320", "RLLLL"), ("jan12_320", "RLLLLLLLLLL")):
             save = json.dumps(dict(base, ch=choices))
             plans.append({"name": name, "w": 320, "h": 568, "save": save, "acts": [LABEL_WRAP_JS]})
+        # サイクル195: 360・390 はば は 前と 同じ 見え方(19px・1行)
+        for w, h in ((360, 640), (390, 844)):
+            plans.append({"name": "jan12_%d" % w, "w": w, "h": h, "save": json.dumps(dict(base, ch="RLLLLLLLLLL")), "acts": [LABEL_WRAP_JS]})
         cls.r = sound_run(plans)
         # 旧/新同一試験の箱・fontを比較する観測ログ。記録だけでGREENとはしない。
         print("R138_LABEL_WRAP " + json.dumps(cls.r, ensure_ascii=False, sort_keys=True))
 
-    def check_choice(self, name, date, left_text, right_text):
+    def check_choice(self, name, date, left_text, right_text, viewport=(320, 568), size="17px"):
         x = self.r[name]
         self.assertEqual(x["errs"], [])
         j = x["js"][-1]
         self.assertEqual(j["date"], date, j)
-        self.assertEqual(j["viewport"], [320, 568], j)
+        self.assertEqual(j["viewport"], list(viewport), j)
         right = j["right"]
         self.assertEqual(right["text"], right_text, j)
         self.assertEqual(j["left"]["text"], left_text, j)
+        counts = [line["count"] for line in right["lines"]]
+        self.assertEqual(sum(counts), 7, j)
+        # サイクル195 で きまりを 変えた：前は「2行に 折れて、末尾が 2字 以上」(R138)。
+        # 今は 7字の 札が 1行に 入る(320 はば は 17px・内がわの あき 3px)。67a9711a では 2行に 折れて ここで 落ちる。
+        self.assertEqual(len(counts), 1, j)
         for label in (j["left"], right):
-            self.assertEqual(label["font"]["size"], "19px", j)
+            self.assertEqual(label["font"]["size"], size, j)
             self.assertEqual(label["hidden"], [], j)
             self.assertEqual(label["clipped"], [], j)
             self.assertEqual(''.join(c["char"] for c in label["glyphs"]), label["text"], j)
             self.assertLessEqual(label["scroll"][0], label["scroll"][1] + 1, j)
             self.assertLessEqual(label["scroll"][2], label["scroll"][3] + 1, j)
-        counts = [line["count"] for line in right["lines"]]
-        self.assertEqual(sum(counts), 7, j)
-        self.assertEqual(len(counts), 2, j)
-        # 両場面とも旧実HTMLで[6,1]を記録し、このassertで実際に落ちることを確認する。
-        self.assertGreaterEqual(counts[-1], 2, j)
+        for sel in ('#swEdge .eL', '#swEdge .eR'):
+            self.assertGreaterEqual(j["layout"][sel][3], 44, j)   # 押せる 高さ
 
-    def test_jan6_water_choice_has_no_single_last_character(self):
+    def test_jan6_water_choice_fits_one_line(self):
         self.check_choice("jan6_320", "1月6日", "田を見て回る", "田に水を入れる")
 
-    def test_jan12_stubble_choice_has_no_single_last_character(self):
+    def test_jan12_stubble_choice_fits_one_line(self):
         self.check_choice("jan12_320", "1月12日", "株を燃やす", "株を拾ってみる")
+
+    def test_wider_screens_unchanged(self):
+        for w, h in ((360, 640), (390, 844)):
+            self.check_choice("jan12_%d" % w, "1月12日", "株を燃やす", "株を拾ってみる", (w, h), "19px")
 
 
 

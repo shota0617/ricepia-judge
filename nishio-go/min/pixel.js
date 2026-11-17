@@ -3965,7 +3965,7 @@ const riceWake = dt => (dt < 0 || dt > 600 ? 0 : 0.1 * Math.sin(Math.PI * dt / 6
 
 
 
-const RICE_TAP_MS = 200, RICE_TAP_K = 0.08;
+const RICE_TAP_MS = 200, RICE_TAP_K = 0.14;
 const riceTapPre = dt => (dt < 0 || dt > RICE_TAP_MS ? 0 : RICE_TAP_K * Math.sin(Math.PI * (0.25 + 0.75 * dt / RICE_TAP_MS)));
 const drop = { cv: {}, n: 0, at: null };
 function dropSprite(q) {
@@ -8353,7 +8353,8 @@ function frame(now) {
     if ((roll.prevIdle || 0) > 12 && roll.idle < roll.prevIdle && !calmMotion) roll.wakeT = now;
     roll.prevIdle = roll.idle;
     { const ws = riceWake(now - (roll.wakeT || -1e9)); if (ws) { sy *= 1 + ws; sx *= 1 - ws * 0.5; } }
-    if (!calmMotion && typeof tapRing === 'object' && tapRing.t0) { const tp = riceTapPre(Math.max(0, now - tapRing.t0)); if (tp) { sy *= 1 + tp; sx *= 1 - tp * 0.5; } }
+    let tp = 0;
+    if (!calmMotion && typeof tapRing === 'object' && tapRing.t0 && tapRing.still) { tp = riceTapPre(Math.max(0, now - tapRing.t0)); if (tp) { sy *= 1 + tp; sx *= 1 - tp * 0.5; } }
     { const mc = gochisoMunch(now); if (mc) { sy *= 1 - mc; sx *= 1 + mc * 0.5; } }
     const tr = roll.trail, t0 = tr[tr.length - 3], t1 = tr[tr.length - 1];
     if (roll.h > 0) { const st = Math.min(0.12, Math.abs(roll.hv) * 0.035); sy *= 1 + st; sx *= 1 - st * 0.5; }
@@ -8364,7 +8365,8 @@ function frame(now) {
     const by = sy !== 1 ? ground - low * sy - hop : mid;
     roll.by = by;
     const mood = roll.drawn = riceMood(now), asleep = riceAsleep();
-    const sy0 = sy / (1 + br), byB = sy0 !== 1 ? ground - low * sy0 - hop : mid;
+    const sy0 = sy / ((1 + br) * (1 + tp)), byB = sy0 !== 1 ? ground - low * sy0 - hop : mid;
+    roll.tapUp = 2 * low * (sy - sy / (1 + tp));
     roll.box = [hx - 13 * u, byB - 15 * u, hx + 13 * u, byB + 9 * u];
     drawKoroTrail(ox, oy, T, u);
     if (!fpsMeter.slow && riceBall.cv && (KP.ghost && roll.v > 0.8)) {
@@ -11800,11 +11802,12 @@ function mzPulseSignal() {
 
 
 const TAP_RING_MS = 350, TAP_RING_R0 = 26, TAP_RING_R1 = 46, TAP_RING_RCALM = 32, TAP_RING_LINE = 2.75, TAP_RING_MOVE = 5;
-const tapRing = { x: 0, y: 0, t0: 0, id: null, rz: false };
+const tapRing = { x: 0, y: 0, t0: 0, id: null, rz: false, still: false };
 function tapRingStart(e) {
   if (!active || !G.demo || worldMode || !howtoEl.hidden || mapCovered(false, true)) { tapRing.t0 = 0; return; }
   if (!tapRing.rz) { tapRing.rz = true; window.addEventListener('resize', () => { tapRing.t0 = 0; }); }
   tapRing.x = e.clientX; tapRing.y = e.clientY; tapRing.id = e.pointerId; tapRing.t0 = performance.now(); dirty = true;
+  tapRing.still = !tapS.goal && rp.x !== null && Math.hypot(rp.vx, rp.vy) < 0.2;
 }
 function drawTapRing(now) {
   if (!tapRing.t0 || rec) return;
@@ -14311,5 +14314,6 @@ window.nishioPixel = { get houseCut() { return houseCut; }, giantWashLayout, dra
   get hereFresh() { return active && !worldMode && !!G.me && performance.now() - here.at < 2000; }, spotSprites, spriteOf: sp => spriteOf(sp)[0], npcSprite: look => (npcSprites[look] || npcSprites.man)[0], art: { hiCanvas, shopCanvas, tileRoof, spanRows, pix, genSprite, GEN_DRAW }, get towns() { return towns; }, get here() { return here; }, npcTile, rasterize, chunkQuery, chunkBox, chunkInPlay, luReady, luAt, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, centerOnMe, demFor, get worldMode() { return worldMode; }, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; }, get traffic() { return traffic; }, get driving() { return driving; }, toggleCar, floatText, onPaddy, get tapGoal() { return tapS.goal; }, swipeHoldCfg: { ms: SWIPE_HOLD_MS, px: SWIPE_HOLD_PX, min: SWIPE_MIN }, tapStepCfg: { ms: TAP_STEP_MS, min: TAP_STEP_MIN }, trailWalk, trailHas, trailClear, get trailCells() { return TRAIL.world.size; }, get trailWorld() { return [...TRAIL.world]; },
   demoHitAt: (cx, cy) => demoWinAt(cx, cy),
   tileToClient: tileClient, get tapDemo() { return { on: !!tapDemo.el && !tapDemo.el.hidden, world: !!tapDemo.world, worldMs: DEMO_WORLD_MS, n: tapDemo.n, first: !!tapDemo.el && tapDemo.el.classList.contains('first'), side: tapDemo.side, up: tapDemo.up, walked: tapDemo.walked, tapMs: DEMO_TAP_MS, missT: tapDemo.missT || 0, ahead: DEMO_AHEAD, walks: (q, slop = 0) => tapDemoWalks(q, slop), spot: (first = false) => (mzRt.path && mzRt.path.length > 1 ? tapDemoSpot(mzRt.path, first) : null), phone: !!tapDemo.ph && !tapDemo.ph.hidden, idleMs: DEMO_IDLE_MS, fresh: !!tapDemo.fresh, wait: [!active && 'active', rp.x === null && 'rice', !mazeOn() && 'maze', !howtoEl.hidden && 'howto', mapCovered() && 'covered', !!tapS.goal && 'walking', !(mzRt.path && mzRt.path.length > 1) && 'route'].filter(Boolean) }; }, tiltBtnCfg: TILT_BTN, ensureAround(lat, lng) { const q = toTile(lat, lng); ensureChunk(Math.floor(q.x / CHUNK), Math.floor(q.y / CHUNK)); } };
+window.nishioPixel.riceTapUp = () => roll.tapUp || 0;
 { const rollGet = Object.getOwnPropertyDescriptor(window.nishioPixel, 'roll').get; Object.defineProperty(window.nishioPixel, 'roll', { configurable: true, enumerable: true, get() { const r = rollGet(), ra = rp.x === null ? '' : rollAreaAt(rp.x, rp.y), RSg = window.nishioRollSync; return { ...r, area: ra, feel: RSg && RSg.groundFeel ? RSg.groundFeel(ra) : { crr: 1, lin: 1 }, fps: fpsMeter.fps, shadow: RSg && RSg.shadowStretch ? RSg.shadowStretch(r.v) : 1 }; } }); }
 })();

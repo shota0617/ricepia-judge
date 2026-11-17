@@ -2048,8 +2048,9 @@ function crashFailures(R, fail) {   // 安全網（guardEvaluate）に かかっ
   })();
   Object.assign(R.checks, await firstMinuteChecks(browser, R));   // サイクル189（はじめの 1分）
   // サイクル231（PLAN6 案1）：地図に 指が ついた 2こま 以内に、お米 そのもの（riceBox）が 小さく のびて 変わる（前は 指を はなした click の あと、約 5〜8こま 止まって いた）。
-  //  tap：お米が 止まって いる とき 1本指で 押して、pointerdown が 動いた あと 2こま 以内に riceBox が かわる
-  //  drag：なぞって 5px を こえたら、2こま 以内に riceBox が 押す 前の 形に もどる（歩きだす 前）
+  //  tap：お米が 止まって いる とき 1本指で 押して、pointerdown が 動いた あと 2こま 以内に お米の 上が 3 css px 以上 上がる（nishioPixel.riceTapUp。見える 大きさ。サイクル231b）。
+  //       その 間 お米の 箱（riceBox）は 動かない（名所の 絵・町名の 札の 置き場所を とばさない。サイクル231b）
+  //  drag：なぞって 5px を こえたら、2こま 以内に のび が 0 に もどる（のびが あった ことも 見る）
   {
     const v = await newPage(browser, { howto: true, auto: true, goals3: true, hasTouch: true, isMobile: true }), p = v.page;
     try {
@@ -2057,7 +2058,7 @@ function crashFailures(R, fail) {   // 安全網（guardEvaluate）に かかっ
         const R = window.__pre = { on: false, frames: [], downAt: [], moves: [] };
         addEventListener('pointerdown', () => { if (R.on) R.downAt.push(performance.now()); }, true);
         addEventListener('pointermove', e => { if (R.on) R.moves.push([performance.now(), e.clientX]); }, true);
-        const loop = () => { const P = window.nishioPixel; if (R.on && P && P.riceBox) R.frames.push([performance.now(), P.riceBox.map(v => Math.round(v)).join(','), P.roll ? Math.round(P.roll.x * 100) + ',' + Math.round(P.roll.y * 100) : '']); requestAnimationFrame(loop); }; requestAnimationFrame(loop);
+        const loop = () => { const P = window.nishioPixel; if (R.on && P && P.riceBox) { const cv = document.getElementById('pxCanvas'), dpr = cv ? cv.width / cv.getBoundingClientRect().width : 1, r = P.roll; R.frames.push([performance.now(), P.riceBox.map(v => Math.round(v)).join(','), r ? Math.round(r.x * 100) + ',' + Math.round(r.y * 100) : '', P.riceTapUp ? P.riceTapUp() / dpr : null]); } requestAnimationFrame(loop); }; requestAnimationFrame(loop);
       });
       await p.goto(URL);
       await p.waitForFunction(() => window.nishioPixel && nishioPixel.maze && nishioPixel.maze.playing && nishioPixel.maze.playing() && nishioPixel.riceBox, null, { timeout: 25000 }).catch(() => {});
@@ -2068,12 +2069,14 @@ function crashFailures(R, fail) {   // 安全網（guardEvaluate）に かかっ
       const run = async fn => { await p.evaluate(() => { const R = window.__pre; R.frames = []; R.downAt = []; R.moves = []; R.on = true; }); await fn(); await p.waitForTimeout(150); return p.evaluate(() => { const R = window.__pre; R.on = false; return { frames: R.frames, downAt: R.downAt, moves: R.moves }; }); };
       await still();
       const a = await run(async () => { await p.waitForTimeout(200); await touch('touchStart', [[at.x, at.y]]); await p.waitForTimeout(300); await touch('touchEnd', []); });
-      const d0 = a.downAt[0], pre = a.frames.filter(f => f[0] <= d0).pop(), post = a.frames.filter(f => f[0] > d0), i = post.findIndex(f => pre && f[1] !== pre[1]), mv = post.findIndex(f => pre && f[2] !== pre[2]);
-      const tap = { ok: d0 != null && !!pre && i >= 0 && i < 2 && (mv < 0 || i < mv), frames: i < 0 ? null : i + 1, riceMovesAt: mv < 0 ? null : mv + 1 };
+      const d0 = a.downAt[0], pre = a.frames.filter(f => f[0] <= d0).pop(), post = a.frames.filter(f => f[0] > d0), mv = post.findIndex(f => pre && f[2] !== pre[2]), stopped = mv < 0 ? post : post.slice(0, mv);
+      const i = post.findIndex(f => f[3] != null && f[3] > 0.5), peak = Math.max(0, ...stopped.map(f => f[3] || 0)), boxMoved = stopped.some(f => pre && f[1] !== pre[1]);
+      const tap = { ok: d0 != null && !!pre && i >= 0 && i < 2 && (mv < 0 || i < mv) && peak >= 3 && !boxMoved, frames: i < 0 ? null : i + 1, peakCss: +peak.toFixed(1), boxMoved, riceMovesAt: mv < 0 ? null : mv + 1 };
       await still();
       const b = await run(async () => { await p.waitForTimeout(200); await touch('touchStart', [[at.x, at.y]]); for (let k = 1; k <= 6; k++) { await p.waitForTimeout(25); await touch('touchMove', [[at.x + 2 * k, at.y]]); } await p.waitForTimeout(250); await touch('touchEnd', []); });
-      const e0 = b.downAt[0], pre2 = b.frames.filter(f => f[0] <= e0).pop(), m5 = b.moves.find(m => Math.abs(m[1] - at.x) >= 5), back = m5 ? b.frames.filter(f => f[0] > m5[0]) : [], j = back.findIndex(f => pre2 && f[1] === pre2[1]);
-      const drag = { ok: !!pre2 && !!m5 && j >= 0 && j < 2, framesBack: j < 0 ? null : j + 1 };
+      const e0 = b.downAt[0], m5 = b.moves.find(m => Math.abs(m[1] - at.x) >= 5), before5 = m5 ? b.frames.filter(f => f[0] > e0 && f[0] <= m5[0]) : [], back = m5 ? b.frames.filter(f => f[0] > m5[0]) : [], j = back.findIndex(f => f[3] === 0);
+      const grew = before5.some(f => (f[3] || 0) > 0.5);   // 5px まで は のびて いた（のび が ある 版 で だけ 意味を 持つ）
+      const drag = { ok: !!m5 && grew && j >= 0 && j < 2, grew, framesBack: j < 0 ? null : j + 1 };
       R.checks.riceTapPre = { tap, drag, ok: tap.ok && drag.ok };
     } catch (e) { R.checks.riceTapPre = { ok: false, crashed: String(e.message).slice(0, 160) }; }
     finally { R.errors.push(...v.errors); await v.ctx.close(); }

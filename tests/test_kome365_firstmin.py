@@ -2764,8 +2764,8 @@ class TestKome365MarkNo(unittest.TestCase):
                 if k == "ng":
                     # 2d79e14f では ✗ も 1.075倍 まで はずみ・横に 動かない ので ここで 落ちる
                     self.assertLessEqual(m["sc"], 1.001, "%s: ✗ が はずむ %r" % (name, m))
-                    self.assertGreaterEqual(m["x"], 3, "%s: ✗ が 横に ゆれない %r" % (name, m))
-                    self.assertLessEqual(m["x"], 6.5, "%s: ✗ の ゆれが 大きい %r" % (name, m))
+                    self.assertGreaterEqual(m["x"], 7, "%s: ✗ が 横に ゆれない %r" % (name, m))
+                    self.assertLessEqual(m["x"], 10.5, "%s: ✗ の ゆれが 大きい %r" % (name, m))
 
     def test_ok_still_bounces(self):
         for name in ("move", "small"):

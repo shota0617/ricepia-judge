@@ -4970,5 +4970,58 @@ Z.s = 2; assert.deepEqual(drag(bad, 600, 100), []); Z.s = 1;           // 寄っ
 bad.gone = true; assert.deepEqual(drag(bad, 600, 100), []); bad.gone = false;   // もう 取った 粒
 """)
 
+
+    # ---- サイクル177（動きを へらす 設定 では、出て くる 物を こさ だけ で）----
+
+    def test_cycle177_reduced_motion_appears_by_fade_only(self):
+        # 動きを へらす 設定 では「ふわり」（0.7 → 1.05 → 1倍）が 時間に 0.15 を かけた だけ の 39ms の ふくらみ に なり、ぱっと はじけて いた。
+        # 大きさは 変えず こさ だけ、時間は ふつうと 同じ 260ms（証印は 200ms）。ふつうの 設定の ふわり は そのまま
+        node = shutil.which("node")
+        if not node:
+            self.skipTest("node がないので実行の確認は飛ばす")
+        js = r"""
+const fs = require('fs'), path = require('path');
+let chromium; try { ({ chromium } = require('playwright')); } catch (e) { console.log(JSON.stringify({ skip: 'playwright なし' })); process.exit(0); }
+const [root] = process.argv.slice(1, 2);
+const TYPES = { '.html': 'text/html; charset=utf-8', '.webp': 'image/webp', '.png': 'image/png' };
+(async () => {
+  let b; try { b = await chromium.launch(); } catch (e) { console.log(JSON.stringify({ skip: 'chromium が 起動しない' })); return; }
+  const out = [];
+  for (const rm of ['reduce', 'no-preference']) {
+    const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, reducedMotion: rm }); const p = await ctx.newPage();
+    await p.route('http://kensa.test/**', r => { const f = path.join(root, decodeURIComponent(new URL(r.request().url()).pathname));
+      if (!f.startsWith(root) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) return r.fulfill({ status: 404, body: '' });
+      r.fulfill({ status: 200, contentType: TYPES[path.extname(f)] || 'application/octet-stream', body: fs.readFileSync(f) }); });
+    await p.goto('http://kensa.test/kensa.html'); await p.waitForTimeout(600);
+    out.push(await p.evaluate(async (rm) => {
+      const sc = el => { const t = getComputedStyle(el).transform; if (!t || t === 'none') return 1; const v = t.match(/matrix\(([^)]+)\)/)[1].split(',').map(Number); return Math.hypot(v[0], v[1]); };
+      const watch = (el, ms) => new Promise(res => { const t0 = performance.now(), rec = { scaled: 0, frames: 0, op100: null, full: null };
+        const f = () => { const n = performance.now() - t0, s = sc(el), o = +getComputedStyle(el).opacity; rec.frames++; if (Math.abs(s - 1) > 0.01) rec.scaled++;
+          if (rec.op100 === null && n >= 100) rec.op100 = o; if (rec.full === null && o >= 0.99) rec.full = Math.round(n);
+          if (n < ms) requestAnimationFrame(f); else res(rec); }; requestAnimationFrame(f); });
+      const res = { rm };
+      setStep(1, 'ためし'); res.hint = await watch(hint, 420);
+      toOsu(); await new Promise(r => setTimeout(r, 300)); stampNow(); res.mark = await watch(document.getElementById('mark'), 380);
+      return res;
+    }, rm));
+    await ctx.close();
+  }
+  await b.close(); console.log(JSON.stringify(out));
+})();
+"""
+        r = subprocess.run([node, "-e", js, ROOT], capture_output=True, text=True, timeout=300)
+        self.assertEqual(r.returncode, 0, r.stderr[-1500:])
+        res = json.loads(r.stdout.strip().splitlines()[-1])
+        if isinstance(res, dict) and res.get("skip"):
+            self.skipTest(res["skip"])
+        red, norm = res
+        for k in ("hint", "mark"):
+            self.assertEqual(red[k]["scaled"], 0, k + " が 動きを へらす 設定で 大きさを 変えて 出た")
+            self.assertIsNotNone(red[k]["op100"])
+            self.assertLess(red[k]["op100"], 0.95, k + " が 動きを へらす 設定で 0.1秒 たたずに こく なった（時間が 縮んで いる）")
+            self.assertIsNotNone(red[k]["full"], k + " が 出きらない")
+            self.assertGreaterEqual(red[k]["full"], 150, k)
+            self.assertGreater(norm[k]["scaled"], 0, k + " の ふつうの 設定の ふわり が なくなった")
+
 if __name__ == "__main__":
     unittest.main()

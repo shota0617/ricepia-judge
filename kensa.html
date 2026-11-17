@@ -474,6 +474,19 @@ const $ = id => document.getElementById(id);
 const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 let finePointer = window.matchMedia("(hover: hover) and (pointer: fine)").matches; /* マウスの PC。さいごに 押した ものが 指か どうかで 変わる（下の pointerdown・サイクル152。旧版は 読みこみの 時に 決めたまま で、タッチの 画面で マウス・ペンを 使う 人にも 2袋目から「ふたゆびで ズーム」と 出ていた） */
 const motion = reduced ? 0.15 : 1;
+/* 動きを へらす 設定では、出て くる 物（こさ 0 から 大きさを 変えて 出る 動き：ふわり・証印・米の流れの絵・つぎの ふくろ など）を、大きさを 変えず こさ だけ で 出す（サイクル177）。
+   旧版は 時間に motion（0.15）を かけた だけ で、0.7 → 1.05 → 1倍 の ふくらみが 39ms で はじけて いた。時間は ふつうと 同じ（motion を かける 前の 長さ）、
+   形は 止まった 形（さいごの こま）の まま。ふつうの 設定・ほかの 動き（こさ 0 から で ない もの）は 変えない。出し方を 1か所（ここ）で まとめる */
+if (reduced && typeof Element !== "undefined" && Element.prototype.animate) {
+  const plainAnimate = Element.prototype.animate;
+  Element.prototype.animate = function (frames, opt) {
+    if (Array.isArray(frames) && frames.length > 1 && frames[0] && frames[0].opacity === 0 && /scale\(/.test(frames[0].transform || "") && opt && typeof opt === "object" && opt.duration) {
+      const rest = frames[frames.length - 1].transform || "none";
+      return plainAnimate.call(this, [{ opacity:0, transform:rest }, { opacity:1, transform:rest }], Object.assign({}, opt, { duration:opt.duration / motion }));
+    }
+    return plainAnimate.call(this, frames, opt);
+  };
+}
 /* 動きを へらす 設定（prefers-reduced-motion）の きまり（サイクル151・最初の1分）。ここ 1か所で 決める。
    ・「* motion」は 飾りの 動きの 長さ（animate の duration・delay、その 動きに 合わせて 鳴る 小さな 合図）だけに かける。
    ・読む 間・ほめる 間（場面を 進める 前の 待ち）は READ_MS、押す 長さの しきいは INK_MS・NIGIRU_MS。どれも だれにでも 同じ 長さで、motion を かけない。

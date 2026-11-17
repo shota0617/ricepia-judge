@@ -2605,5 +2605,30 @@ class TestKome365WhyLength(unittest.TestCase):
             self.assertTrue(j["at24"], "%s: 2秒で 消えた %r" % (name, j))
             self.assertFalse(j["at37"], "%s: のびすぎ %r" % (name, j))
 
+
+# サイクル194: わけ の 吹き出しが 出て いる 間は 手本の 手を 出さず、消えたら すぐ 出す(かさならない)
+HAND_WHY_JS = "js:(async () => { const w = document.getElementById('swWhy'), wrap = document.getElementById('swWrap'), t0 = performance.now(); let both = 0, whyOff = null, handOn = null, prevWhy = true; while (performance.now() - t0 < 5000) { const wo = w.classList.contains('on'), ho = wrap.classList.contains('demoOn'); if (wo && ho) both++; if (prevWhy && !wo && whyOff === null) whyOff = performance.now() - t0; if (ho && handOn === null) handOn = performance.now() - t0; prevWhy = wo; await new Promise(r => requestAnimationFrame(r)); } return { both: both, whyOff: whyOff === null ? null : Math.round(whyOff), handOn: handOn === null ? null : Math.round(handOn) }; })()"
+
+
+class TestKome365HandAfterWhy(unittest.TestCase):
+    """サイクル194"""
+
+    @classmethod
+    def setUpClass(cls):
+        plans = []
+        for w, h in ((390, 844), (568, 320), (320, 568)):
+            plans.append({"name": "t%dx%d" % (w, h), "w": w, "h": h, "acts": ["L", "L", HAND_WHY_JS]})   # 本物に 近い 指で 2枚
+            plans.append({"name": "k%dx%d" % (w, h), "w": w, "h": h, "acts": ["keyjs:1", "wait", "keyjs:1", HAND_WHY_JS]})   # 矢印キー
+        cls.r = sound_run(plans)
+
+    def test_hand_waits_for_reason_bubble(self):
+        for name, x in self.r.items():
+            self.assertEqual(x["errs"], [], name)
+            j = x["js"][-1]
+            self.assertEqual(j["both"], 0, "%s: 吹き出しと 手本の 手が かさなった %r" % (name, j))
+            self.assertIsNotNone(j["handOn"], "%s: 手本の 手が もどらない %r" % (name, j))
+            if j["whyOff"] is not None:
+                self.assertLessEqual(j["handOn"] - j["whyOff"], 500, "%s: 吹き出しが 消えて から 手本まで おそい %r" % (name, j))
+
 if __name__ == "__main__":
     unittest.main()

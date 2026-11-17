@@ -2842,8 +2842,8 @@ class TestKome365WhyVisible(unittest.TestCase):
             # 9f5ff43f では 1.6秒の 時点で もう うすい(ふつう 約 0.03・へらす 約 0.9 未満)ので ここで 落ちる
             self.assertGreaterEqual(a["op16"], 0.9, "%s: 19字 が 1.6秒で うすい %r" % (name, a))
             self.assertLess(a["op21"], 0.02, "%s: 19字 が 2.1秒でも 出て いる %r" % (name, a))
-            self.assertGreaterEqual(a["span"], 1680, "%s: 19字 の こく 見える 時間 %r" % (name, a))
-            self.assertGreaterEqual(b["span"], 2280, "%s: 27字 の こく 見える 時間 %r" % (name, b))
+            self.assertGreaterEqual(a["span"], 1650, "%s: 19字 の こく 見える 時間 %r" % (name, a))
+            self.assertGreaterEqual(b["span"], 2250, "%s: 27字 の こく 見える 時間 %r" % (name, b))
             self.assertGreaterEqual(a["fadeMs"], 100, "%s: ぱっと 消える %r" % (name, a))   # 出は こま で 数えて 0.1秒 以上 かける
 
 

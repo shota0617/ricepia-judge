@@ -476,7 +476,7 @@ let finePointer = window.matchMedia("(hover: hover) and (pointer: fine)").matche
 const motion = reduced ? 0.15 : 1;
 /* 動きを へらす 設定では、出て くる 物（こさ 0 から 大きさを 変えて 出る 動き：ふわり・証印・米の流れの絵・つぎの ふくろ など）を、大きさを 変えず こさ だけ で 出す（サイクル177）。
    旧版は 時間に motion（0.15）を かけた だけ で、0.7 → 1.05 → 1倍 の ふくらみが 39ms で はじけて いた。時間は ふつうと 同じ（motion を かける 前の 長さ）、
-   形は 止まった 形（さいごの こま）の まま。ふつうの 設定・ほかの 動き（こさ 0 から で ない もの）は 変えない。出し方を 1か所（ここ）で まとめる */
+   形は 止まった 形（さいごの こま）の まま。呼ぶ 側は かならず duration に「* motion」を かけて おく こと（ここで motion で わって もどす。かけて いない 呼び出しを 足すと 長さが 約 6.7倍 に のびる）。ふつうの 設定・ほかの 動き（こさ 0 から で ない もの）は 変えない。出し方を 1か所（ここ）で まとめる */
 if (reduced && typeof Element !== "undefined" && Element.prototype.animate) {
   const plainAnimate = Element.prototype.animate;
   Element.prototype.animate = function (frames, opt) {

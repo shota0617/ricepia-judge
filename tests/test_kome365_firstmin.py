@@ -2620,6 +2620,9 @@ class TestKome365HandAfterWhy(unittest.TestCase):
         for w, h in ((390, 844), (568, 320), (320, 568)):
             plans.append({"name": "t%dx%d" % (w, h), "w": w, "h": h, "acts": [HAND_ON_JS, "L", "R", HAND_GET_JS]})   # 本物に 近い 指で 2枚
             plans.append({"name": "k%dx%d" % (w, h), "w": w, "h": h, "acts": [HAND_ON_JS, "keyjs:1", "wait", "keyjs:1", HAND_GET_JS]})   # 矢印キー
+        # サイクル194c: 動きを へらす 設定(輪・尾が 出ない・指が 動かない)でも 吹き出しは 手本の 手に かぶらない。3〜6枚め まで 見る
+        for w, h in ((390, 844), (320, 568)):
+            plans.append({"name": "rm%dx%d" % (w, h), "w": w, "h": h, "reduce": True, "acts": [HAND_ON_JS, "L", "R", "L", "R", "L", "R", HAND_GET_JS]})
         cls.r = sound_run(plans)
 
     def test_reason_bubble_clear_of_demo_hand(self):

@@ -3945,14 +3945,17 @@ renderTitle();
   function handBox(){ try { var hd = $('swHand'); if (!hd) return null; var on = $('swWrap').classList.contains('demoOn');
       if (!on) { var ic = $('swIc'); if (ic && ic.offsetParent) hd.style.setProperty('--hy', (ic.offsetTop + 4) + 'px'); else hd.style.removeProperty('--hy'); hd.style.display = 'block'; hd.style.visibility = 'hidden'; }
       var p = hd.getBoundingClientRect(), fg = hd.querySelector('.hdFinger'), rg = hd.querySelector('.hdRing'), mv = hd.querySelector('.hdMove'), t = mv ? mv.style.transform : '';
-      if (mv) mv.style.transform = 'none'; var F = fg.getBoundingClientRect(), R = rg ? rg.getBoundingClientRect() : F; if (mv) mv.style.transform = t;
+      if (mv) mv.style.transform = 'none'; var bs = [fg.getBoundingClientRect()]; [].forEach.call(hd.querySelectorAll('.hdRing, .hdTrail'), function(n){ var b = n.getBoundingClientRect(); if (b.width > 0 && b.height > 0) bs.push(b); });   /* サイクル194c: 動きを へらす 設定では 輪・尾が display:none で (0,0) の 空の 箱に なり、箱が 画面の 原点 まで のびて いた。はば 0 の 部品は 入れない */
+      var moving = mv && getComputedStyle(mv).animationName !== 'none'; if (mv) mv.style.transform = t;
       if (!on) { hd.style.display = ''; hd.style.visibility = ''; }
-      var dx = p.width * 0.23; return { left: Math.min(F.left, R.left) - dx, right: Math.max(F.right, R.right) + dx, top: Math.min(F.top, R.top), bottom: Math.max(F.bottom, R.bottom) }; } catch (x) { return null; } }
+      var dx = moving ? p.width * 0.23 : 0, L = Math.min.apply(null, bs.map(function(b){ return b.left; })), R = Math.max.apply(null, bs.map(function(b){ return b.right; }));   /* 指が 左右に 動かない(動きを へらす)ときは 動く はば を 足さない */
+      return { left: L - dx, right: R + dx, top: Math.min.apply(null, bs.map(function(b){ return b.top; })), bottom: Math.max.apply(null, bs.map(function(b){ return b.bottom; })) }; } catch (x) { return null; } }
   var whyHand = null;
-  function whyHits(e, noMark, noHand){ try { var A = e.getBoundingClientRect(), W = window.innerWidth, H = window.innerHeight; if (A.left < 0 || A.top < 0 || A.right > W || A.bottom > H) return true;
+  function whyHits(e, noMark, noHand, noDeco){ try { var A = e.getBoundingClientRect(), W = window.innerWidth, H = window.innerHeight; if (A.left < 0 || A.top < 0 || A.right > W || A.bottom > H) return true;
       var rs = [], rr = document.createRange(), cd = $('swCard'), add = function(n){ if (!n || !n.getClientRects().length) return; rr.selectNodeContents(n); var b = rr.getBoundingClientRect(); if (!b.width) return; rs.push(b); if (cd && cd.contains(n)) rs.push(markSettle(b, cd)); };   /* サイクル185d: 入って くる カードの 落ち着いた あとの 字も よける(出て すぐ とばない) */
       var mk = $('swMark'); if (!noMark && markBox && mk && mk.classList.contains('on')) rs.push(markBox);   /* サイクル185b: ○✗ の 輪にも のらない */
       if (!noHand && whyHand) rs.push(whyHand);   /* サイクル194b: 手本の 手 にも かぶらない(日づけ・選ぶ 文の 次に 守る) */
+      if (!noDeco) ['swHome', 'swSnd', 'swKakashi', 'swSun'].forEach(function(id){ var n = $(id); if (n && n.getClientRects().length && getComputedStyle(n).visibility !== 'hidden' && +getComputedStyle(n).opacity > 0.05) { var b = n.getBoundingClientRect(); if (b.width > 1 && b.height > 1) rs.push(b); } });   /* サイクル194c: ⌂🔊・かかし・太陽 にも なるべく かぶらない(○✗ の しるし より 先に ゆずる) */
       add($('swBigDate')); [].forEach.call(document.querySelectorAll('#swEdge .eLb'), add);
       return rs.some(function(b){ return Math.min(A.right, b.right) - Math.max(A.left, b.left) > 0.5 && Math.min(A.bottom, b.bottom) - Math.max(A.top, b.top) > 0.5; }); } catch (x) { return false; } }
   function whyFit(e){ try { whyHand = handBox(); e.style.top = ''; if (whyNeedPlace()) whyPlace(e);
@@ -3961,12 +3964,13 @@ renderTitle();
       ys.push(wr.top - h - 6); if (dt && dt.offsetParent) { var db = dt.getBoundingClientRect(); ys.push(db.bottom + 4); ys.push(db.top - h - 4); }
       var mk = $('swMark'); if (markBox && mk && mk.classList.contains('on')) { ys.push(markBox.bottom + 4); ys.push(markBox.top - h - 4); }
       for (i = 0; i < ys.length; i++) { e.style.top = Math.round(Math.max(4, ys[i] - sw.top)) + 'px'; if (!whyHits(e)) return; }
-      for (i = 0; i < ys.length; i++) { e.style.top = Math.round(Math.max(4, ys[i] - sw.top)) + 'px'; if (!whyHits(e, true)) return; }   /* ○✗ を よけきれない ときは 字 だけ よける(183 の まま) */
-      for (i = 0; i < ys.length; i++) { e.style.top = Math.round(Math.max(4, ys[i] - sw.top)) + 'px'; if (!whyHits(e, true, true)) return; }   /* サイクル194b: 手本の 手も よけきれない ときは 日づけ・選ぶ 文 だけ よける(ゆずる 順: ○✗ の しるし → 手本の 手。日づけ・選ぶ 文は かくさない) */
+      for (i = 0; i < ys.length; i++) { e.style.top = Math.round(Math.max(4, ys[i] - sw.top)) + 'px'; if (!whyHits(e, false, false, true)) return; }   /* サイクル194c: ⌂🔊・かかし・太陽 を ゆずる */
+      for (i = 0; i < ys.length; i++) { e.style.top = Math.round(Math.max(4, ys[i] - sw.top)) + 'px'; if (!whyHits(e, true, false, true)) return; }   /* ○✗ を よけきれない ときは 字 だけ よける(183 の まま) */
+      for (i = 0; i < ys.length; i++) { e.style.top = Math.round(Math.max(4, ys[i] - sw.top)) + 'px'; if (!whyHits(e, true, true, true)) return; }   /* サイクル194b: 手本の 手も よけきれない ときは 日づけ・選ぶ 文 だけ よける(ゆずる 順: ○✗ の しるし → 手本の 手。日づけ・選ぶ 文は かくさない) */
       e.style.top = Math.round(Math.max(4, ys[0] - sw.top)) + 'px'; } catch (x) {} }
   /* 次の カードは 入って くる 間に 動く ので、出て いる 間は こま ごとに 見て、かかったら その こまで 置きなおす */
   var whyWatch = null;
-  function whyWatchOn(){ cancelAnimationFrame(whyWatch); var f = function(){ var e = $('swWhy'); if (!e || !e.classList.contains('on')) { whyWatch = null; return; } if (whyHits(e, true, true) || (e.__mkV !== markVer && whyHits(e))) { e.__mkV = markVer; whyFit(e); } whyWatch = requestAnimationFrame(f); }; whyWatch = requestAnimationFrame(f); }
+  function whyWatchOn(){ cancelAnimationFrame(whyWatch); var f = function(){ var e = $('swWhy'); if (!e || !e.classList.contains('on')) { whyWatch = null; return; } if (whyHits(e, true, true, true) || (e.__mkV !== markVer && whyHits(e))) { e.__mkV = markVer; whyFit(e); } whyWatch = requestAnimationFrame(f); }; whyWatch = requestAnimationFrame(f); }
   window.addEventListener('resize', function(){ var e = $('swWhy'); if (e && e.classList.contains('on')) requestAnimationFrame(function(){ whyFit(e); }); });
   /* サイクル193b(PR #1226 の 見直し): 画面が かわる とき(⌂・終わりの 画面・新しい ゲーム。show() の 頭)は、前の ゲームの わけ の 吹き出しと ○✗ の しるし・田んぼの 光／影を すぐ 片づける
      (前は のこりの 時間 だけ 新しい ゲームの 1枚めに のって いた。吹き出しが のびた ぶん 長く のこった) */

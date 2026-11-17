@@ -2817,5 +2817,35 @@ class TestKome365EdgeNudgeNoJump(unittest.TestCase):
         self.assertLessEqual(j["maxL"], 12.5, j)
 
 
+# サイクル198 v2: わけ の 吹き出しは、ぜんたいの 長さ(whyMs)は そのまま で、こく(こさ 0.9 以上)見える 時間を のばす(出を さいごの 12%・ease-in)
+WHY_SEE_JS = "js:(async () => { const out = {}; for (const [n, wait] of [[19, 2600], [27, 3300]]) { const w = document.getElementById('swWhy'); window.__swipe.whyShow('❌ ' + 'あ'.repeat(n - 2), 'ng'); const fr = []; let t0 = null; await new Promise(res => { const f = () => { const now = performance.now(); if (w.classList.contains('on') && t0 == null) t0 = now; if (t0 != null) fr.push([now - t0, +getComputedStyle(w).opacity, w.classList.contains('on') ? 1 : 0]); if (t0 != null && now - t0 > wait) return res(); requestAnimationFrame(f); }; requestAnimationFrame(f); }); const v = fr.filter(x => x[1] >= 0.9); const at = ms => { const x = fr.find(y => y[0] >= ms); return x ? x[1] : null; }; out[n] = { n: Array.from(w.textContent).length, dur: getComputedStyle(w).animationDuration, span: v.length ? Math.round(v[v.length - 1][0] - v[0][0]) : 0, op16: at(1600), op21: at(2100), fadeMs: (() => { const a = fr.filter(x => x[0] > 1000 && x[1] < 0.99 && x[1] > 0.01); return a.length ? Math.round(a[a.length - 1][0] - a[0][0]) : 0; })() }; await new Promise(r => setTimeout(r, 300)); } return out; })()"
+
+
+class TestKome365WhyVisible(unittest.TestCase):
+    """サイクル198 v2"""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.r = sound_run([
+            {"name": "see", "acts": [WHY_SEE_JS]},
+            {"name": "seeR", "reduce": True, "acts": [WHY_SEE_JS]},
+        ])
+
+    def test_reason_stays_clear_then_ends_on_time(self):
+        for name in ("see", "seeR"):
+            x = self.r[name]
+            self.assertEqual(x["errs"], [], name)
+            j = x["js"][-1]
+            a, b = j["19"], j["27"]
+            self.assertEqual((a["n"], a["dur"]), (19, "2s"), j)    # ぜんたいの 長さは 変えない
+            self.assertEqual((b["n"], b["dur"]), (27, "2.7s"), j)
+            # 9f5ff43f では 1.6秒の 時点で もう うすい(ふつう 約 0.03・へらす 約 0.9 未満)ので ここで 落ちる
+            self.assertGreaterEqual(a["op16"], 0.9, "%s: 19字 が 1.6秒で うすい %r" % (name, a))
+            self.assertLess(a["op21"], 0.02, "%s: 19字 が 2.1秒でも 出て いる %r" % (name, a))
+            self.assertGreaterEqual(a["span"], 1680, "%s: 19字 の こく 見える 時間 %r" % (name, a))
+            self.assertGreaterEqual(b["span"], 2280, "%s: 27字 の こく 見える 時間 %r" % (name, b))
+            self.assertGreaterEqual(a["fadeMs"], 100, "%s: ぱっと 消える %r" % (name, a))   # 出は こま で 数えて 0.1秒 以上 かける
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -3961,6 +3961,12 @@ function drawBfly(hx, by, u, now, sleepy) {
   ctx.globalAlpha = 1; bfly.drawn++;
 }
 const riceWake = dt => (dt < 0 || dt > 600 ? 0 : 0.1 * Math.sin(Math.PI * dt / 600));
+
+
+
+
+const RICE_TAP_MS = 200, RICE_TAP_K = 0.08;
+const riceTapPre = dt => (dt < 0 || dt > RICE_TAP_MS ? 0 : RICE_TAP_K * Math.sin(Math.PI * (0.25 + 0.75 * dt / RICE_TAP_MS)));
 const drop = { cv: {}, n: 0, at: null };
 function dropSprite(q) {
   if (!drop.cv[q]) {
@@ -8347,6 +8353,7 @@ function frame(now) {
     if ((roll.prevIdle || 0) > 12 && roll.idle < roll.prevIdle && !calmMotion) roll.wakeT = now;
     roll.prevIdle = roll.idle;
     { const ws = riceWake(now - (roll.wakeT || -1e9)); if (ws) { sy *= 1 + ws; sx *= 1 - ws * 0.5; } }
+    if (!calmMotion && typeof tapRing === 'object' && tapRing.t0) { const tp = riceTapPre(Math.max(0, now - tapRing.t0)); if (tp) { sy *= 1 + tp; sx *= 1 - tp * 0.5; } }
     { const mc = gochisoMunch(now); if (mc) { sy *= 1 - mc; sx *= 1 + mc * 0.5; } }
     const tr = roll.trail, t0 = tr[tr.length - 3], t1 = tr[tr.length - 1];
     if (roll.h > 0) { const st = Math.min(0.12, Math.abs(roll.hv) * 0.035); sy *= 1 + st; sx *= 1 - st * 0.5; }

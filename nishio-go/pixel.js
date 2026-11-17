@@ -3961,6 +3961,12 @@ function drawBfly(hx, by, u, now, sleepy) {
   ctx.globalAlpha = 1; bfly.drawn++;
 }
 const riceWake = dt => (dt < 0 || dt > 600 ? 0 : 0.1 * Math.sin(Math.PI * dt / 600));   // おきた ときの のび（0.6秒・いちばん のびて 10%）
+// サイクル231（PLAN6 案1：押した しゅんかんに 主役が 動く）：地図に 指が ついた 次の こまから、お米が 同じ「のび」の 形で 小さく のびる（0.2秒・いちばん のびて 8%）。
+// はかった：指が ついて から お米の 絵（位置・大きさ）が 変わる のは 指を はなした click の あと（pd の 約 5こま あと）で、その 間 お米は 止まって いた。
+// 輪（tapRing）と 同じ 時・同じ 条件で かかる（なぞり 5px・2本め の 指・とりけし・回す では 輪と いっしょに すぐ もどる。せかいちず・ボタン・窓の 下 では かからない）。
+// 最初の こまから のびて（山の 7わり）0.2秒で なめらかに もどる ので、歩きだしても カクッと もどらない。動きを へらす 人には かけない（輪 だけ）。歩きの 速さ・道すじ・着く 時刻は かえない
+const RICE_TAP_MS = 200, RICE_TAP_K = 0.08;
+const riceTapPre = dt => (dt < 0 || dt > RICE_TAP_MS ? 0 : RICE_TAP_K * Math.sin(Math.PI * (0.25 + 0.75 * dt / RICE_TAP_MS)));   // 最初の こまから 7わり の のび（ため なし）→ 0.07秒で 山 → 0.2秒で もとへ
 const drop = { cv: {}, n: 0, at: null };   // ぽちゃん のあとの 水の しずく（5×5 の 点。テスト用に 描いた 数・位置）
 function dropSprite(q) {
   if (!drop.cv[q]) {
@@ -8346,7 +8352,8 @@ function frame(now) {
     if (roll.kind === 'stop' && roll.h <= 0 && roll.v < 0.2 && !calmMotion) { br = riceBreath(now); sy *= 1 + br; sx *= 1 - br * 0.5; }
     if ((roll.prevIdle || 0) > 12 && roll.idle < roll.prevIdle && !calmMotion) roll.wakeT = now;   // ねむって いた お米が おきた
     roll.prevIdle = roll.idle;
-    { const ws = riceWake(now - (roll.wakeT || -1e9)); if (ws) { sy *= 1 + ws; sx *= 1 - ws * 0.5; } }   // おきたら「のびー」と 0.6秒 たてに のびる（赤ちゃんの ような かわいさ）   // 止まっている 間は すう すう 息を する（赤ちゃんの ような かわいさ。足もとは 地面の まま）
+    { const ws = riceWake(now - (roll.wakeT || -1e9)); if (ws) { sy *= 1 + ws; sx *= 1 - ws * 0.5; } }
+    if (!calmMotion && typeof tapRing === 'object' && tapRing.t0) { const tp = riceTapPre(Math.max(0, now - tapRing.t0)); if (tp) { sy *= 1 + tp; sx *= 1 - tp * 0.5; } }   // サイクル231：さわった 次の こまから 小さく のびる   // おきたら「のびー」と 0.6秒 たてに のびる（赤ちゃんの ような かわいさ）   // 止まっている 間は すう すう 息を する（赤ちゃんの ような かわいさ。足もとは 地面の まま）
     { const mc = gochisoMunch(now); if (mc) { sy *= 1 - mc; sx *= 1 + mc * 0.5; } }   // 名物食を もぐもぐ（gochiso.js）
     const tr = roll.trail, t0 = tr[tr.length - 3], t1 = tr[tr.length - 1];
     if (roll.h > 0) { const st = Math.min(0.12, Math.abs(roll.hv) * 0.035); sy *= 1 + st; sx *= 1 - st * 0.5; }   // とんでいる：たてに のびる

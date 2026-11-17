@@ -2047,6 +2047,35 @@ function crashFailures(R, fail) {   // 安全網（guardEvaluate）に かかっ
     } finally { R.errors.push(...v.errors); await v.ctx.close(); }
   })();
   Object.assign(R.checks, await firstMinuteChecks(browser, R));   // サイクル189（はじめの 1分）
+  // サイクル230（PLAN5 案5）：はじめてのさんぽ（ゴール 0）の 間は、上の まん中の ピース棚（3わく。ピースは 湧かない ので ずっと 空）を 描かない。
+  // ゴール 3 の 人（4つめ から）は これまでどおり：ピースが 道に 置かれて 棚が 出て、1枚 取ると 棚の 1わくめが うまる
+  //  fresh：開いて 6秒 の 間、棚（drawMzShelf）を 1こまも 描かない／later：ピースが 置かれ、棚を 描き、お米を ピースの マスに 置くと got 1・棚を 描く
+  for (const fresh of [true, false]) {
+    const v = await newPage(browser, { howto: true, auto: true, goals3: !fresh, hasTouch: true, isMobile: true }), p = v.page;
+    try {
+      await v.ctx.addInitScript(() => { const R = window.__shelf = { n: 0, on: true }, P = CanvasRenderingContext2D.prototype; for (const m of ['fillRect', 'drawImage']) { const o = P[m]; P[m] = function (...a) { if (R.on && /drawMzShelf/.test(new Error().stack)) R.n++; return o.apply(this, a); }; } });
+      await p.goto(URL);
+      await p.waitForFunction(() => window.nishioPixel && nishioPixel.maze && nishioPixel.maze.playing && nishioPixel.maze.playing() && nishioPixel.maze.piece().start, null, { timeout: 25000 }).catch(() => {});
+      if (fresh) {
+        await p.evaluate(() => { window.__shelf.n = 0; }); await p.waitForTimeout(6000);
+        R.checks.shelfFirstWalk = R.checks.shelfFirstWalk || {};
+        R.checks.shelfFirstWalk.fresh = await p.evaluate(() => ({ drawn: window.__shelf.n, piece: nishioPixel.maze.piece(), goals: nishioPixel.maze.help().goals }));
+      } else {
+        await p.waitForFunction(() => nishioPixel.maze.piece().at, null, { timeout: 8000 }).catch(() => {});
+        const o = await p.evaluate(async () => {
+          const M = nishioPixel.maze, wait = ms => new Promise(r => setTimeout(r, ms)), at = M.piece().at;
+          window.__shelf.n = 0; await wait(500); const before = window.__shelf.n;
+          if (at) nishioPixel.rollPut((at[0] + 0.5) * M.K, (at[1] + 0.5) * M.K, 0, 0);
+          for (let i = 0; i < 20 && M.piece().got < 1; i++) await wait(100);
+          window.__shelf.n = 0; await wait(500);
+          return { placed: !!at, before, got: M.piece().got, after: window.__shelf.n };
+        });
+        R.checks.shelfFirstWalk.later = o;
+      }
+    } catch (e) { R.checks.shelfFirstWalk = Object.assign(R.checks.shelfFirstWalk || {}, { crashed: String(e.message).slice(0, 160) }); }
+    finally { R.errors.push(...v.errors); await v.ctx.close(); }
+  }
+  { const c = R.checks.shelfFirstWalk || {}, f = c.fresh, l = c.later; c.ok = !c.crashed && !!f && f.drawn === 0 && !!f.piece.start && !!l && l.placed && l.before > 0 && l.got >= 1 && l.after > 0; R.checks.shelfFirstWalk = c; }
   // サイクル229（はじめの 1分・さわって すぐ の 手ごたえ）：地図に 指が ついた こまの つぎ（2こま まで）に、ついた 所に 小さな 輪（drawTapRing）。
   // 前は 指を はなした click の あと、お米が 歩きだす まで 何も 変わらなかった（点数表 199ms）。本物の タッチで：
   //  tap：1本指の タップで、pointerdown が 動いた こまから 2こま 以内に、ついた 所（canvas の 点 ±6）を まん中に した 円が 描かれる
@@ -5067,6 +5096,7 @@ function crashFailures(R, fail) {   // 安全網（guardEvaluate）に かかっ
   need(c.roll && c.roll.ok, 'かたむけて転がす：お米が転がらない（または絵が回らない）');
   need(c.slope && c.slope.ok, '坂：平らな所で動く、または 下り坂で ひとりでに転がらない');
   need(c.guideRecord && c.guideRecord.ok, 'ガイドさんの記録：西尾城跡のガイドさんの話に、つぎのレベルまでの ポイントと しるしの数が出ない');
+  need(c.shelfFirstWalk && c.shelfFirstWalk.ok, `動かない わく：はじめてのさんぽ で 空の ピース棚を 描く・あとの 人に 棚が 出ない（${JSON.stringify(c.shelfFirstWalk)}）`);
   need(c.tapRing && c.tapRing.ok, `さわって すぐ の 手ごたえ：地図に 指が ついた 2こま 以内に 輪が 出ない・2本指／せかいちず で 出る（${JSON.stringify(c.tapRing)}）`);
   need(c.goalArtClear && c.goalArtClear.ok, `名所の ゴール：大きな 絵が お米・矢印・道しるべ・上の 部品・手本の 指に かかる・小さすぎる・描かれない（${JSON.stringify(c.goalArtClear)}）`);
   need(c.worldNoticeGone && c.worldNoticeGone.ok, `せかいちず：👣 で もどった あとも「🌏 ゴールは 🏁 の 所」の 知らせが のこる（${JSON.stringify(c.worldNoticeGone)}）`);

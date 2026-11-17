@@ -8577,6 +8577,7 @@ function frame(now) {
       ctx.fillStyle = '#7ee0ff'; ctx.beginPath(); ctx.moveTo(ex - T * 0.26, by - T * 0.22); ctx.lineTo(ex + T * 0.26, by - T * 0.22); ctx.lineTo(ex, by + T * 0.08); ctx.fill();
     }
   }
+  drawTapRing(now);
   if (mzFx.length || mzBanner.t0) drawMzFx(w, cy, Math.max(T, Math.round(16 * dpr)), now, Math.round(16 * dpr));
   if (mazeOn() && gt && (mzNext.want || mzNext.t0)) drawMzNext(w, cy, Math.round(16 * dpr), now);
   if (mazeOn() && gt) { drawMzGoal(gt, ox, oy, T, w, vh, cy, dpr, now); drawMzClock(w, dpr, now); drawMzShelf(w, dpr, now); drawMzViewPanorama(w, dpr, now); drawMzEnergyBar(w, dpr, now); drawMzCubeShelf(w, dpr, now); mzToastDodge(now); }
@@ -11779,6 +11780,27 @@ function mzPulseSignal() {
   const d = mzCache.dist;
   return d <= MZ_PULSE.near ? 1 : d <= MZ_PULSE.mid ? 0.66 : d <= MZ_PULSE.far ? 0.33 : 0;
 }
+
+
+
+
+const TAP_RING_MS = 250;
+const tapRing = { x: 0, y: 0, t0: 0, id: null };
+function tapRingStart(e) {
+  if (!active || !G.demo || worldMode || !howtoEl.hidden || mapCovered(false, true)) { tapRing.t0 = 0; return; }
+  tapRing.x = e.clientX; tapRing.y = e.clientY; tapRing.id = e.pointerId; tapRing.t0 = performance.now(); dirty = true;
+}
+function drawTapRing(now) {
+  if (!tapRing.t0 || rec) return;
+  const a = Math.max(0, (now - tapRing.t0) / TAP_RING_MS);
+  if (a >= 1 || worldMode) { tapRing.t0 = 0; return; }
+  const r = cv.getBoundingClientRect(), dpr = cv.width / (r.width || 1), X = (tapRing.x - r.left) * dpr, Y = (tapRing.y - r.top) * dpr, u = 8 * dpr;
+  ctx.save();
+  ctx.lineWidth = Math.max(2, Math.round(dpr * 1.5));
+  ctx.strokeStyle = `rgba(255,246,200,${calmMotion ? 0.85 : 0.85 * (1 - a)})`;
+  ctx.beginPath(); ctx.arc(X, Y, calmMotion ? u * 1.4 : u * (0.8 + 1.4 * a), 0, Math.PI * 2); ctx.stroke();
+  ctx.restore();
+}
 function drawMzPulse(ox, oy, T, now) {
   if (rec || rp.x === null || rp.x === undefined) return;
   const on = mzOn(rp.x, rp.y), X = ox + on[0] * T, Y = oy + on[1] * T, S = MZ_K * T;
@@ -13909,12 +13931,14 @@ function restSync() {
 }
 function swipeBegin(e, second) {
   clearTimeout(swipeS.timer);
+  if (typeof tapRingStart === 'function') tapRingStart(e);
   swipeS.down = { id: e.pointerId, x: e.clientX, y: e.clientY, ax: e.clientX, ay: e.clientY, ex: e.clientX, ey: e.clientY, hx: 0, hy: 0, wx: 0, wy: 0, key: '', goal: null, second };
 }
 function swipeCancel() {
   const d = swipeS.down;
   clearTimeout(swipeS.timer);
   swipeS.down = null;
+  if (typeof tapRing === 'object') tapRing.t0 = 0;
   if (d && d.second && d.goal && tapS.goal === d.goal) tapWalkStop();
 }
 function swipeEats(e) {
@@ -14009,6 +14033,7 @@ cv.addEventListener('pointermove', e => {
   if (!d || e.pointerId !== d.id) return;
   if (e.pointerType === 'mouse' && !e.buttons) { swipeCancel(); return; }
   d.ex = e.clientX; d.ey = e.clientY;
+  if (typeof tapRing === 'object' && tapRing.t0 && tapRing.id === e.pointerId && Math.hypot(d.ex - d.x, d.ey - d.y) >= SWIPE_MIN) tapRing.t0 = 0;
   if (!swipeOn(d, d.ex, d.ey)) { clearTimeout(swipeS.timer); return; }
   if (Math.hypot(d.ex - d.ax, d.ey - d.ay) <= SWIPE_HOLD_PX) return;
   d.ax = d.ex; d.ay = d.ey;

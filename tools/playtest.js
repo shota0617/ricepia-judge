@@ -2047,6 +2047,42 @@ function crashFailures(R, fail) {   // 安全網（guardEvaluate）に かかっ
     } finally { R.errors.push(...v.errors); await v.ctx.close(); }
   })();
   Object.assign(R.checks, await firstMinuteChecks(browser, R));   // サイクル189（はじめの 1分）
+  // サイクル229（はじめの 1分・さわって すぐ の 手ごたえ）：地図に 指が ついた こまの つぎ（2こま まで）に、ついた 所に 小さな 輪（drawTapRing）。
+  // 前は 指を はなした click の あと、お米が 歩きだす まで 何も 変わらなかった（点数表 199ms）。本物の タッチで：
+  //  tap：1本指の タップで、pointerdown が 動いた こまから 2こま 以内に、ついた 所（canvas の 点 ±6）を まん中に した 円が 描かれる
+  //  pinch：2本め の 指が ついたら 輪は 消える（あとの こまで 描かない）／world：せかいちずでは 描かない
+  {
+    const v = await newPage(browser, { howto: true, auto: true, goals3: true, hasTouch: true, isMobile: true }), p = v.page;
+    try {
+      await v.ctx.addInitScript(() => {
+        const R = window.__ring = { arcs: [], frames: [], downAt: [] }, A = CanvasRenderingContext2D.prototype.arc;
+        CanvasRenderingContext2D.prototype.arc = function (x, y, r, ...a) { if (R.on && this.canvas && this.canvas.id === 'pxCanvas') R.arcs.push([performance.now(), x, y, r, /drawTapRing/.test(new Error().stack)]); return A.call(this, x, y, r, ...a); };
+        addEventListener('pointerdown', () => R.downAt.push(performance.now()), true);
+        const loop = () => { if (R.on) R.frames.push(performance.now()); requestAnimationFrame(loop); }; requestAnimationFrame(loop);
+      });
+      await p.goto(URL);
+      await p.waitForFunction(() => window.nishioPixel && nishioPixel.maze && nishioPixel.maze.playing && nishioPixel.maze.playing() && nishioPixel.riceBox, null, { timeout: 25000 }).catch(() => {});
+      await p.waitForTimeout(1500);
+      const cdp = await v.ctx.newCDPSession(p), touch = (type, pts) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: pts.map(([x, y], id) => ({ x, y, id })) });
+      const at = await p.evaluate(() => { const cv = document.getElementById('pxCanvas'), r = cv.getBoundingClientRect(); return { x: Math.round(r.left + r.width * 0.5 + 70), y: Math.round(r.top + r.height * 0.35), dpr: cv.width / r.width, l: r.left, t: r.top }; });
+      const run = async (fn, wait = 450) => { await p.evaluate(() => { const R = window.__ring; R.arcs = []; R.frames = []; R.downAt = []; R.on = true; }); await fn(); await p.waitForTimeout(wait); return p.evaluate(() => { const R = window.__ring; R.on = false; return { arcs: R.arcs, frames: R.frames, downAt: R.downAt }; }); };
+      const near = (q, x, y) => Math.hypot(q[1] - x, q[2] - y) <= 6 * at.dpr;
+      const cx = (at.x - at.l) * at.dpr, cy = (at.y - at.t) * at.dpr;
+      const t1 = await run(async () => { await touch('touchStart', [[at.x, at.y]]); await p.waitForTimeout(80); await touch('touchEnd', []); });
+      const d0 = t1.downAt[0], firstArc = t1.arcs.find(q => q[0] >= d0 && near(q, cx, cy)), framesTo = firstArc ? t1.frames.filter(f => f > d0 && f <= firstArc[0] + 1).length : null;
+      const tap = { ok: d0 != null && !!firstArc && framesTo <= 2, framesTo, ms: firstArc ? Math.round(firstArc[0] - d0) : null };
+      await p.waitForTimeout(1500);
+      const t2 = await run(async () => { await touch('touchStart', [[at.x, at.y]]); await p.waitForTimeout(40); await touch('touchStart', [[at.x, at.y], [at.x - 90, at.y + 60]]); await p.waitForTimeout(250); await touch('touchEnd', []); }, 300);
+      const d2 = t2.downAt[1], late = t2.arcs.filter(q => d2 != null && q[0] > d2 + 80 && q[4] && near(q, cx, cy)).length;
+      const pinch = { ok: t2.downAt.length >= 2 && late === 0, late };
+      await p.evaluate(() => nishioPixel.setWorld(true)); await p.waitForTimeout(500);
+      const t3 = await run(async () => { await touch('touchStart', [[at.x, at.y]]); await p.waitForTimeout(80); await touch('touchEnd', []); });
+      const world = { ok: !t3.arcs.some(q => q[4]), n: t3.arcs.filter(q => q[4]).length };   // せかいちず は もともと 円を 描く ので、輪の 関数から の 円 だけ を 数える
+      await p.evaluate(() => nishioPixel.setWorld(false));
+      R.checks.tapRing = { tap, pinch, world, ok: tap.ok && pinch.ok && world.ok };
+    } catch (e) { R.checks.tapRing = { ok: false, crashed: String(e.message).slice(0, 160) }; }
+    finally { R.errors.push(...v.errors); await v.ctx.close(); }
+  }
   // サイクル226：名所に 着いた ときの 大きな 絵が、お米の 玉の 上に 1.6秒 かかって いた（お米の 67〜100%）。絵は お米の 頭より 上に、上の 部品・次の ゴールの 矢印・道しるべ にも かからない
   // （面積 0）。画面の 上で 切れない。ゴールの 数を ふやす ので 別の 窓で
   // サイクル226b（見直し P2・P3-3）：よこ長（844×390）でも 見る（上 だけ だと 絵が 104 に 小さく なって いた。120 より 小さい と 落とす）。描かれた 名所の 数を 名所の 数と くらべる（描かれない 回を 見のがさない）
@@ -5025,6 +5061,7 @@ function crashFailures(R, fail) {   // 安全網（guardEvaluate）に かかっ
   need(c.roll && c.roll.ok, 'かたむけて転がす：お米が転がらない（または絵が回らない）');
   need(c.slope && c.slope.ok, '坂：平らな所で動く、または 下り坂で ひとりでに転がらない');
   need(c.guideRecord && c.guideRecord.ok, 'ガイドさんの記録：西尾城跡のガイドさんの話に、つぎのレベルまでの ポイントと しるしの数が出ない');
+  need(c.tapRing && c.tapRing.ok, `さわって すぐ の 手ごたえ：地図に 指が ついた 2こま 以内に 輪が 出ない・2本指／せかいちず で 出る（${JSON.stringify(c.tapRing)}）`);
   need(c.goalArtClear && c.goalArtClear.ok, `名所の ゴール：大きな 絵が お米・矢印・道しるべ・上の 部品・手本の 指に かかる・小さすぎる・描かれない（${JSON.stringify(c.goalArtClear)}）`);
   need(c.worldNoticeGone && c.worldNoticeGone.ok, `せかいちず：👣 で もどった あとも「🌏 ゴールは 🏁 の 所」の 知らせが のこる（${JSON.stringify(c.worldNoticeGone)}）`);
   need(c.worldAria && c.worldAria.ok, `せかいちず：🌏／👣 の ボタンの 読み上げの 名前が 役目と ちがう（${JSON.stringify(c.worldAria)}）`);

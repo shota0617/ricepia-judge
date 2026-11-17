@@ -4927,5 +4927,48 @@ grains.forEach(g => g.img.classList.remove('hint')); pickMisses = 0; pickedBare 
 pickMiss(); pickMiss(); run0(); assert.equal(pickedBare, false); assert.equal(sounds, 0);
 """)
 
+
+    # ---- サイクル176（わるい粒を ひきずって はこんでも つまめる）----
+
+    def test_cycle176_slow_drag_from_a_bad_grain_picks_it(self):
+        # つまむ で、わるい粒を 指で ひきずって 小皿へ 運ぼうと しても、はじく（0.4秒 まで）より おそいと 取れず、空振りにも 数えず、
+        # 字も 手本も 変わらなかった（350〜1000ms の ひきずり ぜんぶ）。わるい粒 起点の ひきずりは、たたく・はじく と 同じ tapGrain の 道へ。
+        # 良い粒・粒の 無い 所 起点・広げる 前・寄って いる 間・取り消し・短い ずれ（たたく）は 今までどおり。1回の ひきずりで 1つ だけ
+        fn = HTML[HTML.index("const pts = new Map();"):HTML.index("/* 振る:")]
+        self._node150("""
+const assert = require('node:assert/strict');
+let step = 2, spread = true, badLeft = 2, motion = 1, lastGoodTap = 0, lastGoodX = 0, lastGoodY = 0, now = 0, under = null;
+const Z = { s:1, tx:0, ty:0 }, ZOOM_MAX = 3.4, token = { hidden:true }, performance = { now: () => now };
+const calls = []; const c = k => () => { calls.push(k); };
+const knockSound = c('knock'), pickMiss = c('miss'), nudgeSpread = c('spread'), knockPlate = c('knockPlate'), zoomTo = c('zoom'), resetZoom = c('reset');
+const tapGrain = g => { calls.push('tap:' + g.kind); }, flickGrain = (g) => { calls.push('flick:' + g.kind); };
+const applyZoom = () => { calls.push('pan'); }, stopSmoothZoom = () => {}, capture = () => {}, guideOff = () => {}, twistPlate = () => {}, pageFinger = () => false, pageSlid = () => false;
+const toLocal = (x, y) => ({ x, y }), grainAt = () => under, brush = () => true;   // ひきずる 指は 粒を 押す（d.hit）
+const on = {}; const plate = { clientLeft:0, clientTop:0, getBoundingClientRect: () => ({ left:0, top:0 }), addEventListener(t, f) { on[t] = f; } };
+const zoomBtn = { hidden:false, animate: () => ({}) };
+const mk = kind => ({ kind, gone:false, img:{ offsetWidth:0, classList:{ remove() {}, add() {} } } });
+const bad = mk('shini'), good = mk('seiryu'), grains = [bad, good];
+""" + fn + """
+const drag = (g, ms, dist, cancel) => { under = g; now = 1000; on.pointerdown({ pointerId:1, clientX:100, clientY:100, target:{} }); under = null;
+  for (let k = 1; k <= 10; k++) { now = 1000 + ms * k / 10; on.pointermove({ pointerId:1, clientX:100, clientY:100 - dist * k / 10 }); }
+  endPlatePointer({ pointerId:1, clientX:100, clientY:100 - dist, type: cancel ? 'pointercancel' : 'pointerup' }, !!cancel);
+  return calls.splice(0).filter(x => x !== 'pan'); };
+for (const ms of [450, 600, 1000]) assert.deepEqual(drag(bad, ms, 100), ['tap:shini'], ms + 'ms の わるい粒の ひきずりで つまめない');
+assert.deepEqual(drag(bad, 600, 200), ['tap:shini']);
+assert.deepEqual(drag(bad, 150, 100), ['flick:shini']);                 // はじく は 今までどおり
+assert.deepEqual(drag(good, 600, 100), []);                            // 良い粒の ひきずりは 取らない（粒を 押す だけ）
+assert.deepEqual(drag(null, 600, 100), []);                            // 粒の 無い 所から（粒に 当たった なで）
+assert.deepEqual(drag(bad, 600, 100, true), []);                       // 取り消し
+assert.deepEqual(drag(bad, 600, 20), ['tap:shini']);                   // 24px まで の ずれは たたく（今までどおり）
+spread = false; assert.deepEqual(drag(bad, 600, 100), []); spread = true;   // なでて ひろげる 段では 取らない
+// なでて ひろげる 指が とちゅうで 山を 広げても、その 指では 取らない（置いた とき まだ 広げて いなかった）
+spread = false; under = bad; now = 1000; on.pointerdown({ pointerId:1, clientX:100, clientY:100, target:{} }); under = null;
+for (let k = 1; k <= 10; k++) { now = 1000 + 60 * k; if (k === 5) spread = true; on.pointermove({ pointerId:1, clientX:100, clientY:100 - 10 * k }); }
+endPlatePointer({ pointerId:1, clientX:100, clientY:0, type:'pointerup' }, false);
+assert.deepEqual(calls.splice(0).filter(x => x !== 'pan' && x !== 'knock' && x !== 'spread'), [], 'なでて ひろげる 指で わるい粒が 取れた');
+Z.s = 2; assert.deepEqual(drag(bad, 600, 100), []); Z.s = 1;           // 寄って いる 間は 見る場所が 動く
+bad.gone = true; assert.deepEqual(drag(bad, 600, 100), []); bad.gone = false;   // もう 取った 粒
+""")
+
 if __name__ == "__main__":
     unittest.main()

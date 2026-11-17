@@ -2605,5 +2605,37 @@ class TestKome365WhyLength(unittest.TestCase):
             self.assertTrue(j["at24"], "%s: 2秒で 消えた %r" % (name, j))
             self.assertFalse(j["at37"], "%s: のびすぎ %r" % (name, j))
 
+
+# サイクル194b: 手本の 手は 今までどおり 出す(決めて 1.3秒 以内)。わけ の 吹き出しは 手本の 手の 四角に かぶらない 所に 置く(同時に 出て いても 重ならない)
+HAND_ON_JS = "js:(() => { window.__hw = { ov: 0, last: 0, back: [] }; document.addEventListener('pointerup', () => { window.__hw.last = performance.now(); window.__hw.wait = 1; }, true); document.addEventListener('keydown', () => { window.__hw.last = performance.now(); window.__hw.wait = 1; }, true); const vis = e => { if (!e) return null; const r = e.getBoundingClientRect(), c = getComputedStyle(e); if (r.width < 3 || c.display === 'none' || c.visibility === 'hidden' || +c.opacity < 0.1) return null; for (let a = e.parentElement; a; a = a.parentElement) { const z = getComputedStyle(a); if (z.display === 'none' || z.visibility === 'hidden') return null; } return r; }; const f = () => { const hw = window.__hw, w = document.getElementById('swWhy'), on = document.getElementById('swWrap').classList.contains('demoOn'); if (on && hw.wait) { hw.back.push(Math.round(performance.now() - hw.last)); hw.wait = 0; } if (on && w.classList.contains('on') && +getComputedStyle(w).opacity > 0.05) { const B = w.getBoundingClientRect(); for (const sel of ['#swHand .hdFinger', '#swHand .hdRing']) { const H = vis(document.querySelector(sel)); if (H && Math.min(B.right, H.right) - Math.max(B.left, H.left) > 0.5 && Math.min(B.bottom, H.bottom) - Math.max(B.top, H.top) > 0.5) hw.ov++; } } requestAnimationFrame(f); }; requestAnimationFrame(f); return 1; })()"
+HAND_GET_JS = "js:(async () => { await new Promise(r => setTimeout(r, 4500)); return window.__hw; })()"
+
+
+class TestKome365HandAfterWhy(unittest.TestCase):
+    """サイクル194b"""
+
+    @classmethod
+    def setUpClass(cls):
+        plans = []
+        for w, h in ((390, 844), (568, 320), (320, 568)):
+            plans.append({"name": "t%dx%d" % (w, h), "w": w, "h": h, "acts": [HAND_ON_JS, "L", "R", HAND_GET_JS]})   # 本物に 近い 指で 2枚
+            plans.append({"name": "k%dx%d" % (w, h), "w": w, "h": h, "acts": [HAND_ON_JS, "keyjs:1", "wait", "keyjs:1", HAND_GET_JS]})   # 矢印キー
+        # サイクル194c: 動きを へらす 設定(輪・尾が 出ない・指が 動かない)でも 吹き出しは 手本の 手に かぶらない。3〜6枚め まで 見る
+        for w, h in ((390, 844), (320, 568)):
+            plans.append({"name": "rm%dx%d" % (w, h), "w": w, "h": h, "reduce": True, "acts": [HAND_ON_JS, "L", "R", "L", "R", "L", "R", HAND_GET_JS]})
+        cls.r = sound_run(plans)
+
+    def test_reason_bubble_clear_of_demo_hand(self):
+        for name, x in self.r.items():
+            self.assertEqual(x["errs"], [], name)
+            j = x["js"][-1]
+            self.assertEqual(j["ov"], 0, "%s: 吹き出しが 手本の 手に かさなった %r" % (name, j))
+
+    def test_demo_hand_still_returns_quickly(self):
+        for name, x in self.r.items():
+            j = x["js"][-1]
+            self.assertTrue(j["back"], "%s: 手本の 手が もどらない %r" % (name, j))
+            self.assertLessEqual(max(j["back"]), 1300, "%s: 決めて から 手本 まで おそい %r" % (name, j))
+
 if __name__ == "__main__":
     unittest.main()

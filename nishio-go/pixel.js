@@ -11784,21 +11784,27 @@ function mzPulseSignal() {   // かくし宝箱が ちかいほど 強い 探知
 // はかった（390×844・本物の タッチ）：指が ついて から お米が 動きだす まで 130〜250ms・7〜12こま、その 間 画面に 返事が なかった（歩きは 指を はなした click から）。
 // 輪は 見た目 だけ（お米の 歩き・手本・道すじ・傾きの 許可（click）には さわらない）。とりけし：2本め の 指・なぞって 動いた（SWIPE_MIN）・とりけされた。
 // せかいちず・ボタン（地図の 外）・窓の 下 では 受けない（swipeBegin まで 来ない・下の 条件）。動きを へらす 人は 広げず、同じ 大きさで 出して 消す
-const TAP_RING_MS = 250;
-const tapRing = { x: 0, y: 0, t0: 0, id: null };
+// サイクル229b（見直し）：P2 前の 輪は 画面で 半径 6〜18px・線 1.5px と 小さく、指先（接地 40〜60px）の 下に かくれ、指を はなす 前に 消えて いた →
+// 半径 26 → 46px（画面の 点）に 広がる・線 2.75px・0.35秒（指を はなした 直後も 少し 見える）。P3-1 なぞりは 5px 動いたら すぐ 消す（タップの 手ぶれ 4px は のこす）。
+// P3-2 回した・大きさが かわった ら 消す。P3-3 動きを へらす 人は 同じ 大きさ（半径 32px）の まま、さいごの 3分の1 で うすく して 消す
+const TAP_RING_MS = 350, TAP_RING_R0 = 26, TAP_RING_R1 = 46, TAP_RING_RCALM = 32, TAP_RING_LINE = 2.75, TAP_RING_MOVE = 5;
+const tapRing = { x: 0, y: 0, t0: 0, id: null, rz: false };
 function tapRingStart(e) {
   if (!active || !G.demo || worldMode || !howtoEl.hidden || mapCovered(false, true)) { tapRing.t0 = 0; return; }
+  if (!tapRing.rz) { tapRing.rz = true; window.addEventListener('resize', () => { tapRing.t0 = 0; }); }   // 回した・大きさが かわった：古い 位置の 輪は 消す（はじめて 輪を 出す ときに 1回 だけ 受ける）
   tapRing.x = e.clientX; tapRing.y = e.clientY; tapRing.id = e.pointerId; tapRing.t0 = performance.now(); dirty = true;
 }
 function drawTapRing(now) {
   if (!tapRing.t0 || rec) return;   // Godot で 描く ときは 出さない
   const a = Math.max(0, (now - tapRing.t0) / TAP_RING_MS);   // こまの 時刻は 指が ついた 時刻より 少し 前の ことが ある（同じ こま）
   if (a >= 1 || worldMode) { tapRing.t0 = 0; return; }
-  const r = cv.getBoundingClientRect(), dpr = cv.width / (r.width || 1), X = (tapRing.x - r.left) * dpr, Y = (tapRing.y - r.top) * dpr, u = 8 * dpr;
+  const r = cv.getBoundingClientRect(), dpr = cv.width / (r.width || 1), X = (tapRing.x - r.left) * dpr, Y = (tapRing.y - r.top) * dpr;
+  const grow = 1 - (1 - a) * (1 - a), rad = (calmMotion ? TAP_RING_RCALM : TAP_RING_R0 + (TAP_RING_R1 - TAP_RING_R0) * grow) * dpr;   // はじめ 速く 広がる
+  const alpha = calmMotion ? 0.85 * Math.min(1, (1 - a) * 3) : 0.85 * (1 - a);   // 動きを へらす：さいごの 3分の1 で うすく
   ctx.save();
-  ctx.lineWidth = Math.max(2, Math.round(dpr * 1.5));
-  ctx.strokeStyle = `rgba(255,246,200,${calmMotion ? 0.85 : 0.85 * (1 - a)})`;   // 波紋（drawMzPulse）と 同じ 白金
-  ctx.beginPath(); ctx.arc(X, Y, calmMotion ? u * 1.4 : u * (0.8 + 1.4 * a), 0, Math.PI * 2); ctx.stroke();
+  ctx.lineWidth = Math.max(2, Math.round(dpr * TAP_RING_LINE));
+  ctx.strokeStyle = `rgba(255,246,200,${alpha})`;   // 波紋（drawMzPulse）と 同じ 白金
+  ctx.beginPath(); ctx.arc(X, Y, rad, 0, Math.PI * 2); ctx.stroke();
   ctx.restore();
 }
 function drawMzPulse(ox, oy, T, now) {   // かおりちゃんの まわりに 波紋が 広がって 消える（ふだんは 白金でゆっくり・宝箱に ちかいほど 紫で はやく 3本。時刻だけで 決まる）
@@ -14033,7 +14039,7 @@ cv.addEventListener('pointermove', e => {
   if (!d || e.pointerId !== d.id) return;
   if (e.pointerType === 'mouse' && !e.buttons) { swipeCancel(); return; }   // 地図の 外で ボタンを はなした マウス：押して いない 動きでは 歩きださない
   d.ex = e.clientX; d.ey = e.clientY;
-  if (typeof tapRing === 'object' && tapRing.t0 && tapRing.id === e.pointerId && Math.hypot(d.ex - d.x, d.ey - d.y) >= SWIPE_MIN) tapRing.t0 = 0;   // サイクル229：なぞった（ドラッグ）ら 輪は 消す
+  if (typeof tapRing === 'object' && tapRing.t0 && tapRing.id === e.pointerId && Math.hypot(d.ex - d.x, d.ey - d.y) >= TAP_RING_MOVE) tapRing.t0 = 0;   // サイクル229：なぞった（ドラッグ）ら 輪は 消す
   if (!swipeOn(d, d.ex, d.ey)) { clearTimeout(swipeS.timer); return; }   // 歩きだした あと、止めた 所の そばに いる（もどって きた）間は 待たない
   if (Math.hypot(d.ex - d.ax, d.ey - d.ay) <= SWIPE_HOLD_PX) return;
   d.ax = d.ex; d.ay = d.ey;   // 動いた：止まった 時間を はかりなおす

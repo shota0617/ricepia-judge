@@ -2057,7 +2057,7 @@ function crashFailures(R, fail) {   // 安全網（guardEvaluate）に かかっ
       await v.ctx.addInitScript(() => {
         const R = window.__ring = { arcs: [], frames: [], downAt: [] }, A = CanvasRenderingContext2D.prototype.arc;
         CanvasRenderingContext2D.prototype.arc = function (x, y, r, ...a) { if (R.on && this.canvas && this.canvas.id === 'pxCanvas') R.arcs.push([performance.now(), x, y, r, /drawTapRing/.test(new Error().stack)]); return A.call(this, x, y, r, ...a); };
-        addEventListener('pointerdown', () => R.downAt.push(performance.now()), true);
+        addEventListener('pointerdown', e => R.downAt.push(performance.now()), true); R.moves = []; addEventListener('pointermove', e => { if (R.on) R.moves.push([performance.now(), e.clientX, e.clientY]); }, true);
         const loop = () => { if (R.on) R.frames.push(performance.now()); requestAnimationFrame(loop); }; requestAnimationFrame(loop);
       });
       await p.goto(URL);
@@ -2065,12 +2065,13 @@ function crashFailures(R, fail) {   // 安全網（guardEvaluate）に かかっ
       await p.waitForTimeout(1500);
       const cdp = await v.ctx.newCDPSession(p), touch = (type, pts) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: pts.map(([x, y], id) => ({ x, y, id })) });
       const at = await p.evaluate(() => { const cv = document.getElementById('pxCanvas'), r = cv.getBoundingClientRect(); return { x: Math.round(r.left + r.width * 0.5 + 70), y: Math.round(r.top + r.height * 0.35), dpr: cv.width / r.width, l: r.left, t: r.top }; });
-      const run = async (fn, wait = 450) => { await p.evaluate(() => { const R = window.__ring; R.arcs = []; R.frames = []; R.downAt = []; R.on = true; }); await fn(); await p.waitForTimeout(wait); return p.evaluate(() => { const R = window.__ring; R.on = false; return { arcs: R.arcs, frames: R.frames, downAt: R.downAt }; }); };
+      const run = async (fn, wait = 450) => { await p.evaluate(() => { const R = window.__ring; R.arcs = []; R.frames = []; R.downAt = []; R.moves = []; R.on = true; }); await fn(); await p.waitForTimeout(wait); return p.evaluate(() => { const R = window.__ring; R.on = false; return { arcs: R.arcs, frames: R.frames, downAt: R.downAt, moves: R.moves }; }); };
       const near = (q, x, y) => Math.hypot(q[1] - x, q[2] - y) <= 6 * at.dpr;
       const cx = (at.x - at.l) * at.dpr, cy = (at.y - at.t) * at.dpr;
       const t1 = await run(async () => { await touch('touchStart', [[at.x, at.y]]); await p.waitForTimeout(80); await touch('touchEnd', []); });
       const d0 = t1.downAt[0], firstArc = t1.arcs.find(q => q[0] >= d0 && near(q, cx, cy)), framesTo = firstArc ? t1.frames.filter(f => f > d0 && f <= firstArc[0] + 1).length : null;
-      const tap = { ok: d0 != null && !!firstArc && framesTo <= 2, framesTo, ms: firstArc ? Math.round(firstArc[0] - d0) : null };
+      const rCss = firstArc ? +(firstArc[3] / at.dpr).toFixed(1) : null;   // サイクル229b：画面の 点の 半径（指先の 外に 見える 24px 以上）
+      const tap = { ok: d0 != null && !!firstArc && framesTo <= 2 && rCss >= 24, framesTo, ms: firstArc ? Math.round(firstArc[0] - d0) : null, rCss };
       await p.waitForTimeout(1500);
       const t2 = await run(async () => { await touch('touchStart', [[at.x, at.y]]); await p.waitForTimeout(40); await touch('touchStart', [[at.x, at.y], [at.x - 90, at.y + 60]]); await p.waitForTimeout(250); await touch('touchEnd', []); }, 300);
       const d2 = t2.downAt[1], late = t2.arcs.filter(q => d2 != null && q[0] > d2 + 80 && q[4] && near(q, cx, cy)).length;
@@ -2079,7 +2080,12 @@ function crashFailures(R, fail) {   // 安全網（guardEvaluate）に かかっ
       const t3 = await run(async () => { await touch('touchStart', [[at.x, at.y]]); await p.waitForTimeout(80); await touch('touchEnd', []); });
       const world = { ok: !t3.arcs.some(q => q[4]), n: t3.arcs.filter(q => q[4]).length };   // せかいちず は もともと 円を 描く ので、輪の 関数から の 円 だけ を 数える
       await p.evaluate(() => nishioPixel.setWorld(false));
-      R.checks.tapRing = { tap, pinch, world, ok: tap.ok && pinch.ok && world.ok };
+      // サイクル229b：なぞり（2px ずつ 動かす）で、5px を こえて 動いた あと に 輪を 描く こまは 2 以下（前は 12px まで のこって 7〜8こま）
+      await p.waitForTimeout(1200);
+      const t4 = await run(async () => { await touch('touchStart', [[at.x, at.y]]); for (let i = 1; i <= 12; i++) { await p.waitForTimeout(25); await touch('touchMove', [[at.x + 2 * i, at.y]]); } await touch('touchEnd', []); }, 400);
+      const mv = t4.moves.find(m => Math.abs(m[1] - at.x) >= 5), movedAt = mv ? mv[0] : null, ringT = t4.arcs.filter(q => q[4]).map(q => q[0]);   // 5px 動いた 指の 合図が 動いた 時
+      const drag = { ok: movedAt != null && ringT.filter(x => x > movedAt).length <= 2, frames: ringT.length, after5px: movedAt == null ? null : ringT.filter(x => x > movedAt).length };
+      R.checks.tapRing = { tap, pinch, world, drag, ok: tap.ok && pinch.ok && world.ok && drag.ok };
     } catch (e) { R.checks.tapRing = { ok: false, crashed: String(e.message).slice(0, 160) }; }
     finally { R.errors.push(...v.errors); await v.ctx.close(); }
   }

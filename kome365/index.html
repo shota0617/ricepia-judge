@@ -3608,7 +3608,7 @@ renderTitle();
     if (!calmOn() && px.animate) {
       var from = getComputedStyle(px).transform; if (fingerKkAnim) fingerKkAnim.cancel();
       fingerKkAnim = px.animate([{ transform: from }, { transform: 'rotate(-3deg)', offset: .3 }, { transform: 'rotate(2deg)', offset: .65 }, { transform: 'rotate(0deg)' }], { duration: 600, easing: 'ease-in-out' });
-    }
+    } else if (px.animate) { if (fingerKkAnim) fingerKkAnim.cancel(); fingerKkAnim = px.animate([{ filter: 'brightness(1)' }, { filter: 'brightness(1.3)', offset: .4 }, { filter: 'brightness(1)' }], { duration: 300, easing: 'ease-out' }); }   /* サイクル196: 動きを へらす 人には ゆらさず 1回 明るく(前は 音 だけ で、🔇 だと 何も 返らなかった) */
     fingerSound(440);
   }
   document.addEventListener('pointerdown', function(e){
@@ -3633,6 +3633,26 @@ renderTitle();
     if (g.kind === 'kakashi' && fingerReady() && fingerHit('swKakashi', e) && Math.max(g.max, Math.hypot(e.clientX - g.x, e.clientY - g.y)) < 12 && performance.now() - g.at < 500) { idleTouch(); fingerSway(); }
   }, { capture: true, passive: true });
   document.addEventListener('pointercancel', function(e){ if (finger && e.pointerId === finger.id) fingerClear(); }, { capture: true, passive: true });
+  /* サイクル196(案8): 太陽を つついても 太陽は 何も 返さなかった(下の カードの 札が ゆれる だけ)。タップ だけ に、太陽の 絵が 0.3秒 小さく ゆれる。
+     音・字・点・進み・カードには つなげない。finger は 使わない ので、太陽の 上から 始めた スワイプは 今までどおり カードへ 行く。動きを へらす 人には ゆらさず 1回 明るく する だけ */
+  var sunPoke = null, sunPokeAnim = null;
+  function sunPokeClear(){ sunPoke = null; }
+  document.addEventListener('pointerdown', function(e){
+    sunPoke = null;
+    if (!fingerReady() || !e.isPrimary || e.button > 0 || !fingerHit('swSun', e)) return;
+    var t = e.target; if (t && t.closest && t.closest('#swCard, button, a, input, select, textarea, [role="button"], #swDetail, #swIdle')) return;
+    sunPoke = { id: e.pointerId, x: e.clientX, y: e.clientY, at: performance.now() };
+  }, { capture: true, passive: true });
+  document.addEventListener('pointerup', function(e){
+    var g = sunPoke; sunPoke = null;
+    if (!g || e.pointerId !== g.id || !fingerReady() || !fingerHit('swSun', e) || Math.hypot(e.clientX - g.x, e.clientY - g.y) >= 12 || performance.now() - g.at >= 500) return;
+    var px = $('swSun').querySelector('.sunPix'); if (!px || !px.animate) return;
+    if (sunPokeAnim) sunPokeAnim.cancel();
+    sunPokeAnim = calmOn() ? px.animate([{ filter: 'brightness(1)' }, { filter: 'brightness(1.3)', offset: .4 }, { filter: 'brightness(1)' }], { duration: 300, easing: 'ease-out' })
+      : px.animate([{ transform: 'rotate(0deg)' }, { transform: 'rotate(-8deg)', offset: .3 }, { transform: 'rotate(6deg)', offset: .65 }, { transform: 'rotate(0deg)' }], { duration: 300, easing: 'ease-in-out' });
+  }, { capture: true, passive: true });
+  document.addEventListener('pointercancel', sunPokeClear, { capture: true, passive: true });
+  window.addEventListener('blur', sunPokeClear);
   window.addEventListener('blur', fingerClear);
   document.addEventListener('visibilitychange', function(){ if (document.hidden) fingerClear(); });
   if (window.matchMedia) {

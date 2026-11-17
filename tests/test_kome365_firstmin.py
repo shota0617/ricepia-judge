@@ -375,6 +375,13 @@ const FAKE = (mode) => {
         r.js = r.js || []; r.js.push(await p.evaluate(() => ({ screen: document.getElementById('sTitle').classList.contains('hidden') ? 'game' : 'title', n: window.__ks.state().log.length }))); }
       else if (a === 'home') { await p.tap('#swHome'); r.js = r.js || []; r.js.push(await p.evaluate(() => window.__fa.live(window.__tc || 1e12, window.__ts || 0))); await p.waitForTimeout(150); }
       else if (a === 'tapTgl') { const h = await p.evaluateHandle(() => [...document.querySelectorAll('#swSnd, [data-snd]')].find(x => x.getClientRects().length)); const e = h.asElement(); if (e) await e.tap(); await p.waitForTimeout(300); }
+      else if (a.startsWith('poke:')) {   // サイクル196: 部品の まん中を 本物に 近い 指で タップ(60ms)・横に スワイプ(はじめの 指は その 部品の 上)
+        const [, id, kind] = a.split(':'), bx = await p.locator('#' + id).boundingBox(), x = bx.x + bx.width / 2, y = bx.y + bx.height / 2;
+        await p.evaluate(() => { window.__pk = { up: 0 }; document.addEventListener('pointerup', () => { if (!window.__pk.up) window.__pk.up = performance.now(); }, { capture: true, once: true }); });
+        await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] });
+        if (kind === 'swipe') for (let i = 1; i <= 6; i++) { await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: x + 30 * i, y }] }); await p.waitForTimeout(16); }
+        else await p.waitForTimeout(60);
+        await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); await p.waitForTimeout(kind === 'swipe' ? 1300 : 80); }
       else if (a.startsWith('js:')) { r.js = r.js || []; r.js.push(await p.evaluate(a.slice(3))); }
       else if (a === 'olap') { r.olap = r.olap || []; r.olap.push(await p.evaluate(() => {   // 見えて いる 画面の 字・ボタン・絵と 音の ボタンの 重なり
         const t = [...document.querySelectorAll('#swSnd, [data-snd]')].find(x => x.getClientRects().length); if (!t) return { none: true }; const A = t.getBoundingClientRect(), o = {};
@@ -2645,6 +2652,84 @@ class TestKome365HandAfterWhy(unittest.TestCase):
             j = x["js"][-1]
             self.assertTrue(j["back"], "%s: 手本の 手が もどらない %r" % (name, j))
             self.assertLessEqual(max(j["back"]), 1300, "%s: 決めて から 手本 まで おそい %r" % (name, j))
+
+# サイクル196(案8): 太陽を つつくと 太陽の 絵が 小さく ゆれる(タップ だけ・0.3秒)。音・日づけ・カードは 変えない。太陽の 上から 始めた スワイプは 今までどおり カードを 決める
+POKE_ON = "js:(() => { const px = document.querySelector('#swSun .sunPix'), kp = document.querySelector('#swKakashi .kkPix'); const ang = e => { const m = getComputedStyle(e).transform; if (!m || m === 'none') return 0; const v = new DOMMatrixReadOnly(m); return Math.abs(Math.atan2(v.b, v.a) * 180 / Math.PI); }; const br = e => { const m = /brightness\\(([\\d.]+)\\)/.exec(getComputedStyle(e).filter || ''); return m ? +m[1] : 1; }; const js = e => e.getAnimations().filter(a => !(a instanceof CSSAnimation) && !(a instanceof CSSTransition)); window.__po = { t0: performance.now(), first: null, rot: 0, bright: 1, kk: 0, kb: 1, sunOn: document.getElementById('swSun').hasAttribute('data-on'), date: document.getElementById('swBigDate').textContent, log: window.__ks.state().log.length, osc: window.__fa.osc, ot: [] }; const f = () => { const P = window.__po; if (performance.now() - P.t0 > 2500) return; if (window.__fa.osc !== P.osc + P.ot.length) { for (let i = P.osc + P.ot.length; i < window.__fa.osc; i++) P.ot.push(performance.now()); } if (js(px).length && P.first == null) P.first = performance.now(); P.rot = Math.max(P.rot, ang(px)); P.bright = Math.max(P.bright, br(px)); if (js(kp).length) P.kk++; P.kb = Math.max(P.kb, br(kp)); requestAnimationFrame(f); }; requestAnimationFrame(f); return 1; })()"
+POKE_GET = "js:new Promise(r => setTimeout(() => { const P = window.__po; r({ sunOn: P.sunOn, ms: P.first == null || !window.__pk ? null : Math.round(P.first - window.__pk.up), rot: Math.round(P.rot * 10) / 10, bright: Math.round(P.bright * 100) / 100, kk: P.kk, kb: Math.round(P.kb * 100) / 100, dateSame: P.date === document.getElementById('swBigDate').textContent, logAdd: window.__ks.state().log.length - P.log, oscNear: window.__pk ? P.ot.filter(t => t >= window.__pk.up - 5 && t <= window.__pk.up + 40).length : -1, use3d: typeof use3d === 'undefined' ? 'x' : use3d }); }, 600))"
+
+
+class TestKome365SunPoke(unittest.TestCase):
+    """サイクル196"""
+
+    @classmethod
+    def setUpClass(cls):
+        tap = [POKE_ON, "poke:swSun:tap", POKE_GET]
+        warm = ["L", "wait"]   # 最初の 指で 音が 始まる(ふしの 4音)。その あとで つつく。音は 指を はなした 40ms 以内 だけ 見る(かかしの 音は はなした その 時に 作られる。決めた あとの 音など 遠くの 音は 見ない)
+        cls.r = sound_run([
+            {"name": "t390", "acts": tap},   # 1枚め が 出て いる とき
+            {"name": "t320", "w": 320, "h": 568, "acts": warm + tap},
+            {"name": "t844", "w": 844, "h": 390, "acts": warm + tap},
+            {"name": "after3", "acts": ["L", "R", "L", "wait"] + tap},
+            {"name": "calm", "reduce": True, "acts": warm + tap},
+            {"name": "swipe", "acts": [POKE_ON, "poke:swSun:swipe", POKE_GET]},
+            {"name": "kakashi", "acts": warm + [POKE_ON, "poke:swKakashi:tap", POKE_GET]},
+            {"name": "kkcalm", "reduce": True, "acts": warm + [POKE_ON, "poke:swKakashi:tap", POKE_GET]},
+            {"name": "three", "acts": [FAKE3D] + warm + tap},   # 3D の 畑(この 作業場の 本物の 3D は おそくて 2D に もどる ので、187 と 同じ にせの 3D)
+        ])
+
+    def get(self, name):
+        x = self.r[name]
+        self.assertEqual(x["errs"], [])
+        j = x["js"][-1]
+        self.assertTrue(j["sunOn"], "%s: 太陽が 出て いない %r" % (name, j))
+        return j
+
+    def test_tap_sways_sun_quickly(self):
+        for name in ("t390", "t320", "t844", "after3"):
+            j = self.get(name)
+            # 67a9711a の 後の main では 太陽の 絵は 動かない(ms が None・rot 0)ので ここで 落ちる
+            self.assertIsNotNone(j["ms"], "%s: 太陽を つついても 返事が ない %r" % (name, j))
+            self.assertLessEqual(j["ms"], 100, "%s: 返事が おそい %r" % (name, j))
+            self.assertGreaterEqual(j["rot"], 3, "%s: ゆれが 小さすぎて 見えない %r" % (name, j))
+
+    def test_tap_changes_nothing_else(self):
+        for name in ("t390", "t320", "t844", "after3", "calm", "three"):
+            j = self.get(name)
+            if name != "t390":   # 1枚めの 最初の 指は、ふしが 始まる(前から)
+                self.assertEqual(j["oscNear"], 0, "%s: つついた とき 音が 作られた %r" % (name, j))
+            self.assertTrue(j["dateSame"], "%s: 日づけが 進んだ %r" % (name, j))
+            self.assertEqual(j["logAdd"], 0, "%s: 音の 記録が ふえた %r" % (name, j))
+
+    def test_reduced_motion_only_brightens(self):
+        j = self.get("calm")
+        self.assertIsNotNone(j["ms"], j)
+        self.assertEqual(j["rot"], 0, "動きを へらす のに ゆれた %r" % (j,))
+        self.assertGreater(j["bright"], 1.1, j)
+
+    def test_swipe_from_sun_still_decides_card(self):
+        j = self.get("swipe")
+        self.assertFalse(j["dateSame"], "太陽の 上から 始めた スワイプで カードが 決まらない %r" % (j,))
+        self.assertIsNone(j["ms"], "スワイプ でも 太陽が ゆれた %r" % (j,))
+
+    def test_kakashi_tap_still_sways(self):
+        j = self.get("kakashi")
+        self.assertGreater(j["kk"], 0, j)
+        self.assertGreaterEqual(j["oscNear"], 1, "かかしの 音(周回171)が 数えられて いない %r" % (j,))   # 音の 数え方が 効いて いる 確かめ
+        self.assertIsNone(j["ms"], j)
+        self.assertTrue(j["dateSame"], j)
+
+    def test_reduced_motion_kakashi_brightens(self):
+        # 前は 動きを へらす と 音 だけ(🔇 なら 何も 無い)。67a9711a の 後の main では kb が 1 の まま で 落ちる
+        j = self.get("kkcalm")
+        self.assertGreater(j["kb"], 1.1, j)
+        self.assertTrue(j["dateSame"], j)
+
+    def test_sways_with_3d_field(self):
+        j = self.get("three")
+        self.assertIs(j["use3d"], True, j)
+        self.assertIsNotNone(j["ms"], j)
+        self.assertGreaterEqual(j["rot"], 3, j)
+
 
 if __name__ == "__main__":
     unittest.main()

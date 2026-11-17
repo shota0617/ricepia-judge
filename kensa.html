@@ -2098,6 +2098,11 @@ function nudgeSpread() {
 let pickMisses = 0;
 function pickMiss() {
   if (step !== 2 || !spread || badLeft === 0 || !token.hidden) return;
+  /* 2ふくろめ から、寄らずに 2回 まちがえた 人（良い粒・粒の 無い 所）は、寄らずに つまむ 人と 同じ 道へ（サイクル174・最初の1分）。
+     旧版は 案内が「🔍 ふたゆびで ズーム」の まま で、片手の 人は 良い粒を 12回 たたいても 字が 変わらなかった。
+     今 ある 字「わるい粒を つまむ」に もどし、今 ある ふくらみ（1ふくろめと 同じ 助け・音も 同じ）を すぐ 出す。字・音・絵は 足さない。つまむ のは 遊ぶ 人。
+     寄った 人（everZoomed）・もう 寄らずに つまめた 人（pickedBare）は 今までどおり */
+  if (pickMisses === 1 && lotIndex > 0 && !everZoomed && !pickedBare) { pickMisses++; pickedBare = true; updateSortHint(); armHint(0); demoAt = demoHard = 0; setTimeout(demoTick, 0); return; }
   if (++pickMisses < 3) return;
   pickMisses = 0;
   const bad = grains.filter(g => !g.gone && g.kind !== "seiryu");

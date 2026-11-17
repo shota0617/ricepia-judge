@@ -2731,5 +2731,59 @@ class TestKome365SunPoke(unittest.TestCase):
         self.assertGreaterEqual(j["rot"], 3, j)
 
 
+# サイクル197(PLAN6 案2): ✗ の しるしは はずまない(1倍 を こえない)・出て すぐ 横に 小さく 1往復 ゆれる。○ は 今までどおり はずむ(1.08倍)・横に 動かない
+MARK_MOVE_ON = "js:(() => { window.__mm = []; let cur = null; const m = document.getElementById('swMark'); const f = () => { const on = m.classList.contains('on'), cs = getComputedStyle(m), op = +cs.opacity; if (on && !cur) { cur = { sc: 0, x: 0, n: 0, base: null }; window.__mm.push(cur); } if (cur) { let sc = 1; if (cs.transform && cs.transform !== 'none') { const v = new DOMMatrixReadOnly(cs.transform); sc = Math.hypot(v.a, v.b); } const r = m.getBoundingClientRect(), cx = (r.left + r.right) / 2; if (op > 0.05) { cur.n++; cur.sc = Math.max(cur.sc, sc); if (cur.base == null) cur.base = m.offsetLeft + m.offsetWidth / 2 - cx; cur.x = Math.max(cur.x, Math.abs(m.offsetLeft + m.offsetWidth / 2 - cx - cur.base)); } if (!on && op < 0.01) cur = null; } requestAnimationFrame(f); }; requestAnimationFrame(f); return 1; })()"
+MARK_MOVE_GET = "js:window.__mm.map(e => ({ sc: Math.round(e.sc * 1000) / 1000, x: Math.round(e.x * 10) / 10, n: e.n }))"
+
+
+class TestKome365MarkNo(unittest.TestCase):
+    """サイクル197"""
+
+    @classmethod
+    def setUpClass(cls):
+        # TestKome365OkRise と 同じ たね。LRLLLL で ○○○○✗○
+        sv = '{"v":"kokoro","y":"recent","so":"high","m":"transplant","c":0,"s":1543068361,"fm":"oneshot","yh":0,"ch":""}'
+        cls.r = sound_run([
+            {"name": "move", "save": sv, "acts": [MARK_MOVE_ON] + list("LRLLLL") + [OK_HZ_LOG, MARK_MOVE_GET]},
+            {"name": "calm", "save": sv, "reduce": True, "acts": [MARK_MOVE_ON] + list("LRLLLL") + [OK_HZ_LOG, MARK_MOVE_GET]},
+            {"name": "small", "save": sv, "w": 320, "h": 568, "acts": [MARK_MOVE_ON] + list("LRLLLL") + [OK_HZ_LOG, MARK_MOVE_GET]},
+        ])
+
+    def marks(self, name):
+        x = self.r[name]
+        self.assertEqual(x["errs"], [])
+        log, mm = x["js"][-2], x["js"][-1]
+        kinds = [k for k in log if k in ("ok", "ng")]
+        self.assertEqual(kinds, ["ok", "ok", "ok", "ok", "ng", "ok"], log)
+        self.assertEqual(len(mm), 6, mm)
+        return list(zip(kinds, mm))
+
+    def test_ng_does_not_bounce_and_shakes_sideways(self):
+        for name in ("move", "small"):
+            for k, m in self.marks(name):
+                if k == "ng":
+                    # 2d79e14f では ✗ も 1.075倍 まで はずみ・横に 動かない ので ここで 落ちる
+                    self.assertLessEqual(m["sc"], 1.001, "%s: ✗ が はずむ %r" % (name, m))
+                    self.assertGreaterEqual(m["x"], 7, "%s: ✗ が 横に ゆれない %r" % (name, m))
+                    self.assertLessEqual(m["x"], 10.5, "%s: ✗ の ゆれが 大きい %r" % (name, m))
+
+    def test_ok_still_bounces(self):
+        for name in ("move", "small"):
+            for k, m in self.marks(name):
+                if k == "ok":
+                    self.assertGreaterEqual(m["sc"], 1.05, "%s: ○ が はずまない %r" % (name, m))
+                    self.assertLess(m["x"], 0.5, "%s: ○ が 横に 動いた %r" % (name, m))
+
+    def test_marks_shown_as_long_as_before(self):
+        for name in ("move", "small", "calm"):
+            ns = [m["n"] for k, m in self.marks(name)]
+            self.assertGreaterEqual(min(ns), 30, "%s: しるしの こまが へった %r" % (name, ns))   # 約 0.6秒 + 消える 0.15秒(60こま/秒)
+
+    def test_reduced_motion_neither_moves(self):
+        for k, m in self.marks("calm"):
+            self.assertLessEqual(m["sc"], 1.001, (k, m))
+            self.assertLess(m["x"], 0.5, (k, m))
+
+
 if __name__ == "__main__":
     unittest.main()

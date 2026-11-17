@@ -655,7 +655,10 @@ a{color:var(--acc)}
 #swMark{position:absolute;left:50%;top:40%;width:min(58vw,240px);aspect-ratio:1;margin-left:calc(min(58vw,240px) / -2);margin-top:calc(min(58vw,240px) / -2);z-index:40;pointer-events:none;opacity:0;background-size:100% 100%;image-rendering:pixelated;transition:opacity .15s linear}
 #swMark.on{opacity:1;transition:none;animation:swMarkPop .23s ease-out}   /* サイクル180(運営者の声 2026-11-14「前のように スワイプ すると マルバツが 出る ように」): しるしは 時間で 終わる アニメ 1回 では なく、描かれた こまで 数えて 約0.6秒 見せてから 0.15秒で 消す(markShow・markTick)。重い 端末で 1こまも 描かれずに 終わる ことが ない */
 @keyframes swMarkPop{0%{transform:scale(.55)}78%{transform:scale(1.08)}100%{transform:scale(1)}}
-@media (prefers-reduced-motion:reduce){#swMark.on{animation:none}}
+#swMark.on[data-k="ng"]{animation:swMarkIn .23s ease-out,swMarkNo .22s ease-in-out .23s}   /* サイクル197(PLAN6 案2): ✗ は はずまない(0.55→1倍、行きすぎ なし)。出て すぐ 横に 5px 1往復(0.2秒)ゆれて 止まる「ちがうよ」の 首ふり。○ は 今の はずむ まま。長さ・大きさ・色・場所・0.6秒・音・吹き出しは 変えない */
+@keyframes swMarkIn{0%{transform:scale(.55)}100%{transform:scale(1)}}
+@keyframes swMarkNo{0%,100%{translate:0 0}25%{translate:-9px 0}75%{translate:9px 0}}   /* 見直しの あと: ゆれ は 大きく なり おわって から(0.23秒 あと)・±9px。±5px を 大きく なる とちゅう に 重ねる と 見て 分からなかった */
+@media (prefers-reduced-motion:reduce){#swMark.on,#swMark.on[data-k]{animation:none}}
 /* サイクル185b: 大きな ○✗ の 置き場所と 大きさは markFit(JS)が 出す たびに 決める(この CSS は JS が 動かない ときの もと) */
 #swWhy{position:absolute;left:50%;top:calc(40% + min(29vw,120px) + 10px);transform:translateX(-50%);width:max-content;max-width:88%;z-index:41;pointer-events:none;opacity:0;background:rgba(255,253,247,.94);color:#b4472f;font-size:15px;font-weight:700;line-height:1.4;padding:5px 12px;border-radius:999px;text-align:center;box-shadow:0 2px 8px rgba(60,40,20,.20)}   /* 店主指示 2026-11-08: バツの一言理由。マークの下に浮かせて約2秒で消す。入力はふさがない */
 #swWhy.on{animation:swWhyIn 2s ease-out both}
@@ -3900,7 +3903,7 @@ renderTitle();
   function markOff(){ markStop(); var e = $('swMark'); if (e) e.classList.remove('on'); markBox = null; }   /* サイクル185d: ○✗ が 消えても 吹き出しは 動かさない(読んで いる 途中で とんで いた) */
   function markTick(){ var now = performance.now(); markSeen += Math.min(50, now - markLast); markLast = now; if (markSeen >= MARK_SEEN_MS) { markOff(); return; } markRaf = requestAnimationFrame(markTick); }
   function markGuard(){ markWatch = setTimeout(function(){ if (document.hidden) markOff(); else markGuard(); }, 1000); }
-  function markShow(k){ var e = $('swMark'); if (!e) return; markAt = performance.now(); markStop(); e.classList.remove('on'); e.style.backgroundImage = 'url("' + markURL(k) + '")';
+  function markShow(k){ var e = $('swMark'); if (!e) return; markAt = performance.now(); markStop(); e.classList.remove('on'); e.style.backgroundImage = 'url("' + markURL(k) + '")'; e.setAttribute('data-k', k === 'ng' ? 'ng' : 'ok');
     markRaf = requestAnimationFrame(function(){ markFit(e); void e.offsetWidth; e.classList.add('on'); markSeen = 0; markLast = performance.now(); markRaf = requestAnimationFrame(markTick); }); markGuard(); }
   /* サイクル185c(PR #1196 の 2回めの レビュー): 大きな ○✗ の 置き場所は 出す ときに 1回 だけ 決め、0.6秒の 間 動かさない(こま ごとの 見なおしで 数百px とんで いた)。
      はかるのは、日づけ・題・カードの 字・選ぶ 文・⌂🔊 の 今の 箱と、入って くる 動きを 外した 落ち着いた あとの 箱(transform を 逆に もどす)を 合わせた 範囲。

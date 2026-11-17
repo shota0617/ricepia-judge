@@ -1972,7 +1972,7 @@ plate.addEventListener("pointerdown", (e) => {
   capture(plate, e);
   if (spread === false) guideOff();
   pts.set(e.pointerId, { x:e.clientX, y:e.clientY });
-  if (pts.size === 1) sortDrag = { x:e.clientX, y:e.clientY, lx:e.clientX, ly:e.clientY, moved:false, t0:performance.now(), startG:grainAt(toLocal(e.clientX, e.clientY)) };
+  if (pts.size === 1) sortDrag = { x:e.clientX, y:e.clientY, lx:e.clientX, ly:e.clientY, moved:false, t0:performance.now(), startG:grainAt(toLocal(e.clientX, e.clientY)), picking:spread }; /* picking: 置いた とき もう 広げて あった（つまむ の 段。サイクル176） */
   else if (pts.size === 2) startPinch();
 });
 plate.addEventListener("pointermove", (e) => {
@@ -2035,6 +2035,12 @@ function endPlatePointer(e, cancelled) {
       if (!spread && (!g || g.kind === "seiryu")) nudgeSpread();
     } else if (d.moved && !cancelled && step === 2 && Z.s <= 1.001 && d.startG && performance.now() - d.t0 < 400 && Math.hypot(e.clientX - d.x, e.clientY - d.y) > 24) { /* はじく判定: 400msまで受ける。260msでは約300〜400msのゆっくりした払いが届かず無反応だった（390×844実測・サイクル79）。ゆっくりなでて広げる払い（550ms以上）は従来どおりはじきとしない */
       flickGrain(d.startG, e.clientX - d.x, e.clientY - d.y);
+    } else if (d.moved && !cancelled && step === 2 && d.picking && Z.s <= 1.001 && d.startG && !d.startG.gone && d.startG.kind !== "seiryu" && Math.hypot(e.clientX - d.x, e.clientY - d.y) > 24) {
+      /* わるい粒を 指で ひきずって はこんだ ときも、つまんだ ことに する（サイクル176・最初の1分）。旧版は はじく（0.4秒 まで）より おそい ひきずりは
+         どの 枝にも 入らず（粒を 押した ので d.hit）、取れず・空振りにも 数えず・字も 手本も 変わらなかった（390×844: 350〜1000ms の ひきずり ぜんぶ）。
+         たたく・はじく と 同じ tapGrain の 道（向きは 問わない）。指を 置いた ときに もう 広げて あった とき だけ（なでて ひろげる 指が とちゅうで 山を 広げても 取らない）。広げる 前（なでて ひろげる）・良い粒・粒の 無い 所 から の ひきずり・寄って いる 間（見る場所が 動く）は 今までどおり。
+         取るのは 遊ぶ 人の 操作 なので「つまむ は ひとりでに 進まない」は そのまま */
+      tapGrain(d.startG);
     } else if (d.moved && !d.hit && !d.noTap && !cancelled && step === 2 && !spread && badLeft > 0) {
       /* 山に当たらなかった なで も、広げる空振りに数える（サイクル150）。旧版は 皿の上のほう・下のほうを なでた指は、何回やっても 音も動きも 0 だった
          （390×844実測: 山の外を 横へ 8回 × 3回とも 広がらない・音 0回。山は 皿の高さの まんなか 約1/4 だけ）。

@@ -5023,5 +5023,57 @@ const TYPES = { '.html': 'text/html; charset=utf-8', '.webp': 'image/webp', '.pn
             self.assertGreaterEqual(red[k]["full"], 150, k)
             self.assertGreater(norm[k]["scaled"], 0, k + " の ふつうの 設定の ふわり が なくなった")
 
+
+    # ---- サイクル178（動きを へらす 設定 では、場面の 入れかわり・● を すべらせず はねさせず）----
+
+    def test_cycle178_reduced_motion_scene_change_does_not_slide(self):
+        # 動きを へらす 設定 でも、場面が 右 26px から 0.22秒 すべって 入れかわり、等級の 表の ● が 0 → 1.x 倍に はねて 出て いた（CSS の transition が 打ち消されて いない）。
+        # 位置・大きさ は 動かさず、こさ だけ（長さは ふつうと 同じ）。ふつうの 設定は そのまま
+        node = shutil.which("node")
+        if not node:
+            self.skipTest("node がないので実行の確認は飛ばす")
+        js = r"""
+const fs = require('fs'), path = require('path');
+let chromium; try { ({ chromium } = require('playwright')); } catch (e) { console.log(JSON.stringify({ skip: 'playwright なし' })); process.exit(0); }
+const [root] = process.argv.slice(1, 2);
+const TYPES = { '.html': 'text/html; charset=utf-8', '.webp': 'image/webp', '.png': 'image/png' };
+(async () => {
+  let b; try { b = await chromium.launch(); } catch (e) { console.log(JSON.stringify({ skip: 'chromium が 起動しない' })); return; }
+  const out = [];
+  for (const rm of ['reduce', 'no-preference']) {
+    const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, reducedMotion: rm }); const p = await ctx.newPage();
+    await p.route('http://kensa.test/**', r => { const f = path.join(root, decodeURIComponent(new URL(r.request().url()).pathname));
+      if (!f.startsWith(root) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) return r.fulfill({ status: 404, body: '' });
+      r.fulfill({ status: 200, contentType: TYPES[path.extname(f)] || 'application/octet-stream', body: fs.readFileSync(f) }); });
+    await p.goto('http://kensa.test/kensa.html'); await p.waitForTimeout(600);
+    out.push(await p.evaluate(async (rm) => {
+      const mx = el => { const t = getComputedStyle(el).transform; if (!t || t === 'none') return [1, 0, 0, 1, 0, 0]; return t.match(/matrix\(([^)]+)\)/)[1].split(',').map(Number); };
+      const watch = (fn, ms) => new Promise(res => { const t0 = performance.now(); const f = () => { fn(performance.now() - t0); if (performance.now() - t0 < ms) requestAnimationFrame(f); else res(); }; requestAnimationFrame(f); });
+      const res = { rm, slide: 0, op100: null, full: null, dotBounce: 0, dotShown: 0 };
+      const m = document.getElementById('sceneMeter'); showTop('sceneMeter');
+      await watch(n => { const tx = mx(m)[4], o = +getComputedStyle(m).opacity; if (Math.abs(tx) > 0.5 && o > 0.02) res.slide++; if (res.op100 === null && n >= 100) res.op100 = o; if (res.full === null && o >= 0.99) res.full = Math.round(n); }, 420);
+      toKimeru();
+      await watch(() => { document.querySelectorAll('#rows .dot.on').forEach(d => { const v = mx(d), s = Math.hypot(v[0], v[1]), o = +getComputedStyle(d).opacity; if (o > 0.02) res.dotShown++; if (o > 0.02 && Math.abs(s - 1) > 0.02) res.dotBounce++; }); }, 1500);
+      return res;
+    }, rm));
+    await ctx.close();
+  }
+  await b.close(); console.log(JSON.stringify(out));
+})();
+"""
+        r = subprocess.run([node, "-e", js, ROOT], capture_output=True, text=True, timeout=300)
+        self.assertEqual(r.returncode, 0, r.stderr[-1500:])
+        res = json.loads(r.stdout.strip().splitlines()[-1])
+        if isinstance(res, dict) and res.get("skip"):
+            self.skipTest(res["skip"])
+        red, norm = res
+        self.assertEqual(red["slide"], 0, "動きを へらす 設定で 場面が よこに すべった（%d こま）" % red["slide"])
+        self.assertLess(red["op100"], 0.99, "動きを へらす 設定で 場面の こさが 0.1秒 たたずに 出きった（時間が 縮んで いる）")
+        self.assertIsNotNone(red["full"]); self.assertGreaterEqual(red["full"], 150)
+        self.assertGreater(red["dotShown"], 0)
+        self.assertEqual(red["dotBounce"], 0, "動きを へらす 設定で ● が はねて 出た")
+        self.assertGreater(norm["slide"], 0, "ふつうの 設定の 場面の すべり が なくなった")
+        self.assertGreater(norm["dotBounce"], 0, "ふつうの 設定の ● の 出かた が なくなった")
+
 if __name__ == "__main__":
     unittest.main()

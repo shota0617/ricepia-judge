@@ -2543,15 +2543,43 @@ class TestKome365SoftGL(unittest.TestCase):
 WHY_LIVE_JS = "js:(async () => { const w = document.getElementById('swWhy'), n = Array.from(w.textContent).length, d = getComputedStyle(w).animationDuration; await new Promise(r => setTimeout(r, 2150)); const at24 = w.classList.contains('on') && +getComputedStyle(w).opacity > 0.05; await new Promise(r => setTimeout(r, 1300)); return { n: n, dur: d, at24: at24, at37: w.classList.contains('on') }; })()"
 
 
+# サイクル193b: ⌂ → 新しい ゲーム の 150ms あと に、前の ゲームの 吹き出し・○✗ が のこって いない
+LEAVE_NEW_JS = "js:(async () => { await new Promise(r => setTimeout(r, 150)); document.getElementById('swHome').click(); document.getElementById('bStart').click(); await new Promise(r => setTimeout(r, 150)); const w = document.getElementById('swWhy'), m = document.getElementById('swMark'), g = document.getElementById('sGame'); return { why: w.classList.contains('on') && +getComputedStyle(w).opacity > 0.05, mark: m.classList.contains('on'), date: document.getElementById('swBigDate').textContent, fx: g.classList.contains('fxGood') || g.classList.contains('fxBad') }; })()"
+# サイクル193b: 上限 4秒 を 本物の 吹き出しで 見る(47字 = ○ ＋ 45字)
+WHY_CAP_JS = "js:(async () => { if (!window.__swipe.whyShow) return { missing: 1 }; window.__swipe.whyShow('⭕ ' + 'あ'.repeat(45), 'ok'); const w = document.getElementById('swWhy'), on = () => w.classList.contains('on') && +getComputedStyle(w).opacity > 0.02; await new Promise(r => setTimeout(r, 3800)); const a = on(); await new Promise(r => setTimeout(r, 500)); return { n: Array.from(w.textContent).length, dur: getComputedStyle(w).animationDuration, at38: a, at43: on() }; })()"
+
+
 class TestKome365WhyLength(unittest.TestCase):
-    """サイクル193"""
+    """サイクル193・193b"""
 
     @classmethod
     def setUpClass(cls):
         cls.r = sound_run([
             {"name": "long", "acts": ["keyjs:1", WHY_LIVE_JS]},
             {"name": "longR", "reduce": True, "acts": ["keyjs:1", WHY_LIVE_JS]},
+            # 5枚 答えて、6枚めを 答えた(0.25秒＋0.15秒)あとに ⌂ → 始める
+            {"name": "leave", "acts": ["keyjs:1", "wait", "keyjs:1", "wait", "keyjs:1", "wait", "keyjs:1", "wait", "keyjs:1", "wait", "keyjs:1", LEAVE_NEW_JS]},
+            {"name": "cap", "acts": [WHY_CAP_JS]},
         ])
+
+    def test_leaving_clears_reason_bubble(self):
+        x = self.r["leave"]
+        self.assertEqual(x["errs"], [])
+        j = x["js"][-1]
+        self.assertEqual(j["date"], "1月1日", "新しい ゲームに なって いない %r" % (j,))
+        self.assertFalse(j["why"], "前の ゲームの 吹き出しが のこった %r" % (j,))
+        self.assertFalse(j["mark"], "前の ゲームの ○✗ が のこった %r" % (j,))
+        self.assertFalse(j["fx"], "前の ゲームの 田んぼの 光／影が のこった %r" % (j,))
+
+    def test_cap_four_seconds_on_real_bubble(self):
+        x = self.r["cap"]
+        self.assertEqual(x["errs"], [])
+        j = x["js"][-1]
+        self.assertNotIn("missing", j, "whyShow を 外から 呼べない %r" % (j,))
+        self.assertEqual(j["n"], 47, j)
+        self.assertEqual(j["dur"], "4s", j)
+        self.assertTrue(j["at38"], "3.8秒で もう 消えた %r" % (j,))
+        self.assertFalse(j["at43"], "4.3秒でも 出て いる(上限が 効かない)%r" % (j,))
 
     def why_ms(self, n):
         code = HTML[HTML.index("var WHY_MIN_MS"):HTML.index("function whyShow(fb, k){")]

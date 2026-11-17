@@ -299,6 +299,13 @@
     #guide::after, #poke::after { display:block; } /* 動きを減らす設定では、止まった指の横に向きの矢印を添える（サイクル140） */
     #guideTrail { animation:none; rotate:90deg; }
     #plateInner.smooth { transition:none; } /* 動きを減らす設定では、寄りも滑らかにせずその場で切り替える（サイクル92・類6） */
+    /* 動きを へらす 設定 では、場面の 入れかわり・● の 出かた を 位置・大きさ を 動かさず こさ だけ で（長さは ふつうと 同じ。サイクル178）。
+       旧版は CSS の transition が 打ち消されて おらず、場面が 右 26px から 0.22秒 すべり、● が 0 → 1.x 倍に はねて 出て いた。顔の 形（にこっ・おどろき・答えの 大きい 顔）は
+       動かさず その場で かわる。押した 返事（等級の 札・水分計・🤲 の へこみ・袋の つぶれ）と 手本の 指・はんこの 待ちの ゆれ は、次に する こと を 見せる 動き なので のこす */
+    .topScene { transform:none; transition:opacity .22s ease; }
+    .dot { transform:none; opacity:0; transition:opacity .14s ease; }
+    .dot.on { opacity:1; }
+    #face { transition:none; }
     .grain img.hint { outline:3px solid var(--gold); }
     .dot.ping { outline:3px solid var(--gold); outline-offset:2px; } /* 動きを減らす設定でも、正解の列は静かな輪郭で示す（サイクル90・類4、Codexレビュー反映） */
   }

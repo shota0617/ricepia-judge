@@ -11289,8 +11289,13 @@ function drawMzPiece(ox, oy, T, now) {   // 地図ピース（白い 紙に 折�
   ctx.fillStyle = '#d9cdb0'; ctx.fillRect(X - q, Y - h, q, h * 2); ctx.fillRect(X - h, Y - q, h * 2, q);   // 折れ目（たて・よこ）
   ctx.fillStyle = '#c0583a'; ctx.fillRect(X + q, Y + q, q * 2, q * 2);   // 赤い 印
 }
+// サイクル230（PLAN5 案5：動かない ゲージを 最初に 置かない）：はじめてのさんぽ（3ゴールまで）の 間は 地図ピースが 湧かない（サイクル133）のに、
+// 上の まん中の ピース棚（3わく）だけは 開いて 1.4〜1.8秒 から 出て いて、はかった 最初の ゴール まで 18〜20秒 ずっと 空の まま 動かなかった。
+// 金の キューブ棚（サイクル125）と 同じ 形で、ピースが 1枚も 出て いない・取って いない 間は 描かない（棚の ぶんの すきまも あけない）。
+// ピースが 道に 置かれた・取った・完成の 絵 の ときは これまでどおり（4ゴールめ からは 開いて すぐ ピースが 置かれる ので 今と 同じ）
+function mzShelfHidden() { return cubeFirstGoal() && mzPiece.cx < 0 && !mzPiece.got && !mzPiece.doneAt; }
 function drawMzShelf(w, dpr, now) {   // 迷路の 上の ピース棚（3枠。取った 枠は 色つき・まだは うすい 輪郭）。時間の 札（と かかし・ばねの 札）の 下。完成した ときは 3枚が つながった 地図の 絵を しばらく 出す
-  if (mzPiece.sx < 0 || mapCovered(true) || mzBanner.t0) return;
+  if (mzPiece.sx < 0 || mapCovered(true) || mzBanner.t0 || mzShelfHidden()) return;
   const S = Math.round(MZ_CLOCK_PX * dpr), s = Math.round(S * 0.9), gap = Math.round(s * 0.35), rows = 1 + (mzScare.until > now ? 1 : 0) + (mzSpring.until > now ? 1 : 0);
   const done = mzPiece.doneAt && now - mzPiece.doneAt < MZ_PIECE.showMs, k = done ? 1.8 : 1, ps = Math.round(s * k), tot = ps * 3 + (done ? 0 : gap * 2), x0 = Math.round(w / 2 - tot / 2), y0 = Math.round(S * 1.5 + S * 1.9 * (rows - 1) + S * 1.35);
   if (!done) { ctx.fillStyle = 'rgba(10,20,30,.55)'; ctx.fillRect(x0 - gap, y0 - gap, tot + gap * 2, ps + gap * 2); }
@@ -11357,7 +11362,7 @@ function drawMzView(ox, oy, T, now) {   // 見晴らし台（木の 台と 望�
 function mzCubeShelfH(dpr) { const S = Math.round(MZ_CLOCK_PX * dpr), s = Math.round(S * 0.9); return s + Math.round(s * 0.35) * 2; }   // キューブ棚の 高さ（枠の 上下の すきまを ふくむ）
 function mzViewShelfY(w, dpr, now) {   // ピース棚の 下（パノラマ・見晴らし中の 札を 置く 高さ）。棚の 計算と 同じ 行数・高さ
   const S = Math.round(MZ_CLOCK_PX * dpr), gap = Math.round(Math.round(S * 0.9) * 0.35), rows = 1 + (mzScare.until > now ? 1 : 0) + (mzSpring.until > now ? 1 : 0);
-  const done = mzPiece.doneAt && now - mzPiece.doneAt < MZ_PIECE.showMs, shelfH = Math.round(S * 0.9 * (done ? 1.8 : 1));
+  const done = mzPiece.doneAt && now - mzPiece.doneAt < MZ_PIECE.showMs, shelfH = mzShelfHidden() ? -gap * 2 : Math.round(S * 0.9 * (done ? 1.8 : 1));   // サイクル230：棚を 描かない 間は その ぶんを あけない
   return Math.round(S * 1.5 + S * 1.9 * (rows - 1) + S * 1.35) + shelfH + gap * 2 + (mzCube.sx >= 0 && !cubeFirstGoal() ? mzCubeShelfH(dpr) : 0);   // 金の キューブ棚（ピース棚の すぐ 下）の ぶんも 下げる
 }
 function drawMzViewPanorama(w, dpr, now) {   // パノラマ帯（約6秒。海・田んぼ・町の 3つの 景色が 横に 並び、端に かおりちゃんのお米が 立つ。ピース棚の 下）

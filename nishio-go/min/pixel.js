@@ -11289,8 +11289,13 @@ function drawMzPiece(ox, oy, T, now) {
   ctx.fillStyle = '#d9cdb0'; ctx.fillRect(X - q, Y - h, q, h * 2); ctx.fillRect(X - h, Y - q, h * 2, q);
   ctx.fillStyle = '#c0583a'; ctx.fillRect(X + q, Y + q, q * 2, q * 2);
 }
+
+
+
+
+function mzShelfHidden() { return cubeFirstGoal() && mzPiece.cx < 0 && !mzPiece.got && !mzPiece.doneAt; }
 function drawMzShelf(w, dpr, now) {
-  if (mzPiece.sx < 0 || mapCovered(true) || mzBanner.t0) return;
+  if (mzPiece.sx < 0 || mapCovered(true) || mzBanner.t0 || mzShelfHidden()) return;
   const S = Math.round(MZ_CLOCK_PX * dpr), s = Math.round(S * 0.9), gap = Math.round(s * 0.35), rows = 1 + (mzScare.until > now ? 1 : 0) + (mzSpring.until > now ? 1 : 0);
   const done = mzPiece.doneAt && now - mzPiece.doneAt < MZ_PIECE.showMs, k = done ? 1.8 : 1, ps = Math.round(s * k), tot = ps * 3 + (done ? 0 : gap * 2), x0 = Math.round(w / 2 - tot / 2), y0 = Math.round(S * 1.5 + S * 1.9 * (rows - 1) + S * 1.35);
   if (!done) { ctx.fillStyle = 'rgba(10,20,30,.55)'; ctx.fillRect(x0 - gap, y0 - gap, tot + gap * 2, ps + gap * 2); }
@@ -11357,7 +11362,7 @@ function drawMzView(ox, oy, T, now) {
 function mzCubeShelfH(dpr) { const S = Math.round(MZ_CLOCK_PX * dpr), s = Math.round(S * 0.9); return s + Math.round(s * 0.35) * 2; }
 function mzViewShelfY(w, dpr, now) {
   const S = Math.round(MZ_CLOCK_PX * dpr), gap = Math.round(Math.round(S * 0.9) * 0.35), rows = 1 + (mzScare.until > now ? 1 : 0) + (mzSpring.until > now ? 1 : 0);
-  const done = mzPiece.doneAt && now - mzPiece.doneAt < MZ_PIECE.showMs, shelfH = Math.round(S * 0.9 * (done ? 1.8 : 1));
+  const done = mzPiece.doneAt && now - mzPiece.doneAt < MZ_PIECE.showMs, shelfH = mzShelfHidden() ? -gap * 2 : Math.round(S * 0.9 * (done ? 1.8 : 1));
   return Math.round(S * 1.5 + S * 1.9 * (rows - 1) + S * 1.35) + shelfH + gap * 2 + (mzCube.sx >= 0 && !cubeFirstGoal() ? mzCubeShelfH(dpr) : 0);
 }
 function drawMzViewPanorama(w, dpr, now) {

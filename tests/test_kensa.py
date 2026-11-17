@@ -4191,10 +4191,16 @@ assert.deepEqual(arms.filter(a => a[0] === 0), []);           // 1袋目は 顔�
 // わるい粒を つまむと 数え直し
 demoAt = demoHard = 5000; ticks = 0; now += 800; tapGrain(good); now += 800; tapGrain(good); tapGrain(bad1); now += 800; tapGrain(good); run();
 assert.equal(ticks, 0); assert.notEqual(demoAt, 0);       // つまんだ 後の 2秒（自分の 目で さがす 間）は 今までどおり
-// 2袋目（顔なし・寄って いない）: 先に ふくらませて から 手本
-faces = false; lotIndex = 1; bad1.gone = false; badLeft = 2; demoAt = demoHard = 5000; ticks = 0; arms = [];
-for (let i = 0; i < 3; i++) { now += 800; tapGrain(good); } run();
+// 2袋目（顔なし・寄って いない）: 先に ふくらませて から 手本。サイクル174 から は 2回めの 空振りで（寄らずに つまむ 道へ。下の test_cycle174_... も 見る）
+faces = false; lotIndex = 1; bad1.gone = false; badLeft = 2; pickMisses = 0; demoAt = demoHard = 5000; ticks = 0; arms = [];
+for (let i = 0; i < 2; i++) { now += 800; tapGrain(good); } run();
 assert.deepEqual(arms, [[0, 0]]); assert.equal(ticks, 1);   // ふくらみ（0秒）が 見回りより 先
+// 2袋目で 寄った 人（ふたゆびの 道）は 今までどおり 3回で
+pickedBare = false; everZoomed = true; pickMisses = 0; demoAt = demoHard = 5000; ticks = 0; arms = [];
+for (let i = 0; i < 2; i++) { now += 800; tapGrain(good); } run();
+assert.deepEqual(arms, []); assert.equal(ticks, 0);
+now += 800; tapGrain(good); run();
+assert.deepEqual(arms, [[0, 0]]); assert.equal(ticks, 1);
 """)
 
     def test_cycle160_misses_never_pick_by_themselves(self):
@@ -4339,6 +4345,7 @@ const TYPES = { '.html': 'text/html; charset=utf-8', '.webp': 'image/webp', '.pn
         self._node150("""
 const assert = require('node:assert/strict');
 let step = 2, spread = true, badLeft = 2, lotIndex = 1, isNear = false, demoAt = 5000, demoHard = 5000, ticks = 0, knocks = 0, nudges = 0, arms = [];
+let everZoomed = true, pickedBare = false; const updateSortHint = () => {};   // 寄った 人の 数え（2ふくろめ で 寄って いない 人の 2回めの 切りかえ は test_cycle174_... が 見る）
 const token = { hidden:true }, demoDown = new Set(), q = [];
 const setTimeout = f => { q.push(f); }, demoTick = () => { ticks++; }, armHint = ms => { arms.push(ms); };
 const knockSound = () => { knocks++; }, nudgeSpread = () => { nudges++; }, firstBagFace = () => false;
@@ -4880,6 +4887,44 @@ reset(); send('pointerdown', 1, 100); send('pointermove', 1, 92); send('pointerc
 assert.equal(picks, 1);
 reset(); send('pointerdown', 1, 100); send('pointermove', 1, 92); b.caps.delete(1); send('pointerdown', 4, 100); send('pointermove', 4, 60);
 assert.equal(picks, 1, 'つかみが 外れた 指 A が 持ち主の まま のこり、新しい 指で 動かせない');
+""")
+
+
+    # ---- サイクル174（2ふくろめ の つまむ で、寄らずに まちがえた 人の 案内を もどす）----
+
+    def test_cycle174_two_misses_without_zoom_bring_back_the_pick_hint(self):
+        # 2ふくろめ から 案内が「🔍 ふたゆびで ズーム」に なり、片手の 人は 良い粒を 12回 たたいても 字が 変わらなかった（find_kensa3）。
+        # 寄らずに 2回 まちがえたら、今 ある 字「わるい粒を つまむ」に もどし、今 ある ふくらみ を すぐ 出す。字・音・絵は 足さない。つまむ は ひとりでに 進まない
+        miss = re.search(r"\nlet pickMisses = 0;\nfunction pickMiss\(\) \{[\s\S]*?\n\}", HTML).group(0)
+        sort = HTML[HTML.index("function updateSortHint() {"):HTML.index("function toMiwakeru() {")]
+        self._node150("""
+const assert = require('node:assert/strict');
+let step = 2, lotIndex = 1, spread = true, badLeft = 2, everZoomed = false, pickedBare = false, isNear = false, finePointer = false, hintTimer = null, demoAt = 9e9, demoHard = 9e9, ticks = 0, sounds = 0;
+const token = { hidden:true }, q = [], guides = [];
+const setTimeout = (f, ms) => { q.push([ms, f]); return q.length; }, clearTimeout = () => {};
+const run0 = () => { const due = q.filter(x => x[0] === 0); due.forEach(x => { q.splice(q.indexOf(x), 1); x[1](); }); };
+const hint = { textContent:'わるい粒を つまむ' }, zoomBtn = {}, plate = {};
+const guideAt = (k, el) => { guides.push(k); }, guideOff = () => { guides.push('off'); }, demoTick = () => { ticks++; }, hintSound = () => { sounds++; };
+const firstBagFace = () => false;
+const mk = kind => { const c = new Set(); return { kind, gone:false, img:{ classList:{ add: x => c.add(x), remove: x => c.delete(x), contains: x => c.has(x) } } }; };
+const grains = [mk('seiryu'), mk('shini'), mk('higai')];
+""" + miss + "\n" + sort + """
+updateSortHint(); assert.equal(hint.textContent, '🔍 ふたゆびで ズーム'); assert.deepEqual(guides, ['pinch']);
+pickMiss();                                                     // 1回め: まだ そのまま（1回めの タップでは 何も かえない）
+assert.equal(hint.textContent, '🔍 ふたゆびで ズーム'); assert.equal(pickedBare, false);
+pickMiss(); run0();                                             // 2回め
+assert.equal(hint.textContent, 'わるい粒を つまむ', '寄らずに 2回 まちがえても 案内が もどらない');
+assert.ok(guides.includes('off'));                              // ふたゆびの 手本を 消す
+assert.ok(grains.filter(g => g.kind !== 'seiryu').every(g => g.img.classList.contains('hint')), 'ふくらみが すぐ 出ない');
+assert.equal(sounds, 1); assert.equal(ticks, 1);                // 今 ある ふくらみの 音・手本の 見回り
+assert.equal(badLeft, 2); assert.equal(step, 2);               // ひとりでには つままない
+pickMiss(); run0(); assert.equal(sounds, 1);                    // 3回めで 2回 鳴らない
+// 寄った 人（ふたゆびの 道）は 今までどおり
+grains.forEach(g => g.img.classList.remove('hint')); pickMisses = 0; pickedBare = false; everZoomed = true; sounds = 0; q.length = 0;
+updateSortHint(); assert.equal(hint.textContent, 'わるい粒を つまむ'); pickMiss(); pickMiss(); run0(); assert.equal(sounds, 0);
+// 1ふくろめ は 今までどおり（2回では かえない）
+grains.forEach(g => g.img.classList.remove('hint')); pickMisses = 0; pickedBare = false; everZoomed = false; lotIndex = 0; sounds = 0; q.length = 0;
+pickMiss(); pickMiss(); run0(); assert.equal(pickedBare, false); assert.equal(sounds, 0);
 """)
 
 if __name__ == "__main__":

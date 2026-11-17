@@ -3233,13 +3233,15 @@ renderTitle();
   /* サイクル186b(PR #1213 の 見直し): ゆらすのは 指を はなした 道(pointerup)だけ。取り消し(pointercancel)・回した ときの 片づけ(dragStop)では 出さない。
      ○✗ の しるしが 出て いる 間・30秒の カードが 出て いる 間も 出さない(その タップには もう 返しが ある)。
      ゆれは 見て 分かる 大きさに(一定の 速さで 外へ 12px → もどる、0.28秒)。動きを へらす ときの ふちは 中立の こい 灰(○ の 緑と まぎれない) */
-  function edgeNudge(){ try { var up = nudgeUp; nudgeUp = false; nudgeAn.forEach(function(a){ a.cancel(); }); nudgeAn = []; if (!up || document.hidden) return;
+  function edgeNudge(){ try { var up = nudgeUp; nudgeUp = false;
+      var cur = [].map.call(document.querySelectorAll('#swEdge > .eL, #swEdge > .eR'), function(sp){ var t = getComputedStyle(sp).translate; return t && t !== 'none' ? parseFloat(t) || 0 : 0; });   /* サイクル197b: 取り消す 前の 今の 位置(ゆれの とちゅう) */
+      nudgeAn.forEach(function(a){ a.cancel(); }); nudgeAn = []; if (!up || document.hidden) return;
       var mk = $('swMark'); if (markRaf || (mk && mk.classList.contains('on'))) return;
       if (idleInfo.shown || (idleInfo.tapHid && Date.now() - idleInfo.tapHid < 3000)) return;
       var calm = calmOn();
-      [].forEach.call(document.querySelectorAll('#swEdge > .eL, #swEdge > .eR'), function(sp){ if (!sp.animate) return; var d = sp.classList.contains('eL') ? '-12px' : '12px';
+      [].forEach.call(document.querySelectorAll('#swEdge > .eL, #swEdge > .eR'), function(sp, i){ if (!sp.animate) return; var d = sp.classList.contains('eL') ? '-12px' : '12px';
         nudgeAn.push(calm ? sp.animate([{ outline: '3px solid #55606a', outlineOffset: '0px' }, { outline: '3px solid #55606a', outlineOffset: '0px' }, { outline: '3px solid rgba(85,96,106,0)', outlineOffset: '0px' }], { duration: 500 })
-          : sp.animate([{ translate: '0px 0px' }, { translate: d + ' 0px', offset: 0.45 }, { translate: '0px 0px' }], { duration: 280, easing: 'linear' })); }); } catch (e) {} }
+          : sp.animate([{ translate: (cur[i] || 0) + 'px 0px' }, { translate: d + ' 0px', offset: 0.45 }, { translate: '0px 0px' }], { duration: 280, easing: 'linear' })); }); } catch (e) {} }   /* サイクル197b: ゆれの とちゅうで もう 1回 はなしても、0 へ とばずに 今の 位置から 外へ(12px)・もどる。大きさ・長さは 同じ */
   document.addEventListener('visibilitychange', function(){ if (document.hidden) { nudgeAn.forEach(function(a){ a.cancel(); }); nudgeAn = []; } });
   function ghostPause(){ demoSet(false); demoDisarm(); $('swGhost').classList.remove('on'); $('swGhostArrows').classList.remove('on'); }   /* 周回153(最初の1分): つかんでいる間だけ案内を止める(覚えこまない) */
   function ghostBack(){ demoMiss++; demoArm(); var on = !ghostDone && choices.length === 0 && !calmOn(); edgeNudge(); $('swGhost').classList.toggle('on', on); $('swGhostArrows').classList.toggle('on', on); demoSet(demoWant()); }   /* 周回153(最初の1分): 決めずに離したら、まだ最初の1枚の間は ◀ ▶ の案内をはじめから出し直す。もとは触れた瞬間に ghostOff で二度と出なくなり、札を押して選ぼうとした人は、押しても何も起きず、矢印も消えたまま止まっていた(両端の影だけが残る)。カードは動かさない(店主指示 2026-11-09 のまま) */   /* スワイプ開始/確定で即消え、以降は二度と出さない */

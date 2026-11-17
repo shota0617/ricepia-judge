@@ -2785,5 +2785,37 @@ class TestKome365MarkNo(unittest.TestCase):
             self.assertLess(m["x"], 0.5, (k, m))
 
 
+# サイクル197b(PLAN6 案3): 札の ゆれ(186) の とちゅうで もう 1回 はなしても、札が もとの 場所へ とばない(1こまで 2px 以上 もどらない)。ゆれの 大きさ 12px は 同じ
+EDGE_JUMP_ON = "js:(() => { window.__ej = { fr: [] }; const L = document.querySelector('#swEdge > .eL'), R = document.querySelector('#swEdge > .eR'); const tx = e => { const t = getComputedStyle(e).translate; return t && t !== 'none' ? parseFloat(t) || 0 : 0; }; const t0 = performance.now(); const f = () => { if (performance.now() - t0 > 3000) return; window.__ej.fr.push([performance.now(), tx(L), tx(R)]); requestAnimationFrame(f); }; requestAnimationFrame(f); return 1; })()"
+EDGE_JUMP_GET = "js:(() => { const F = window.__ej.fr; let jump = 0, maxL = 0, n = 0; for (let i = 1; i < F.length; i++) { const dt = Math.max(1, F[i][0] - F[i - 1][0]); for (const k of [1, 2]) { const back = Math.abs(F[i - 1][k]) - Math.abs(F[i][k]); if (back >= 2 && back / dt > 0.2) jump = Math.max(jump, back); } maxL = Math.max(maxL, Math.abs(F[i][1])); if (Math.abs(F[i][1]) > 0.3) n++; } return { jump: Math.round(jump * 10) / 10, maxL: Math.round(maxL * 10) / 10, moving: n, frames: F.length, date: document.getElementById('swBigDate').textContent }; })()"
+
+
+class TestKome365EdgeNudgeNoJump(unittest.TestCase):
+    """サイクル197b"""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.r = sound_run([
+            {"name": "t5", "acts": [EDGE_JUMP_ON, "tapn:5", EDGE_JUMP_GET]},   # 30ms 押して 90ms あける を 5回(ゆれ 0.28秒 の とちゅうで はなす)
+            {"name": "t1", "acts": [EDGE_JUMP_ON, "tapn:1", EDGE_JUMP_GET]},
+        ])
+
+    def test_no_jump_when_released_again_mid_nudge(self):
+        x = self.r["t5"]
+        self.assertEqual(x["errs"], [])
+        j = x["js"][-1]
+        # 2d79e14f(と 197)では 札が 1こまで 約 9〜11px もとへ とぶ ので ここで 落ちる
+        self.assertLess(j["jump"], 2, "札が とんだ %r" % (j,))
+        self.assertGreaterEqual(j["maxL"], 10, "ゆれが 小さく なった %r" % (j,))
+
+    def test_single_nudge_unchanged(self):
+        x = self.r["t1"]
+        self.assertEqual(x["errs"], [])
+        j = x["js"][-1]
+        self.assertEqual(j["jump"], 0, j)
+        self.assertGreaterEqual(j["maxL"], 10, j)
+        self.assertLessEqual(j["maxL"], 12.5, j)
+
+
 if __name__ == "__main__":
     unittest.main()

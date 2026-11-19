@@ -1,0 +1,802 @@
+{
+  "round": 92,
+  "draftCreatedAtUTC": "2026-11-13T21:04:13.555163+00:00",
+  "status": "record complete; draft PR held for failing full suite and qualified layout verification",
+  "mergeStatus": "hold",
+  "source": {
+    "atUTC": "2026-11-13T20:46:21.948872+00:00",
+    "head": "8eee1f6c259a1a41ebae6af992ff4b9970b35421",
+    "branch": "codex/kensa-visible-face-guide",
+    "base": "823a532cf9f237582d7d12d4e0289658e2207b5b",
+    "htmlSHA256": "8a5cb02c1e74b43b0c4b72bb227f8e9a0d024854080def3ac919594d9de1cc97",
+    "newTestSHA256": "37227361366471eb72ab5982ae73701504f533955990ac47036eadf6834dec59",
+    "existingTestSHA256": "c83846f9bcf5c4f34e1f2f3dc93f49c372aa256eb3b8de89d33d1478d82e3208",
+    "scope": [
+      "kensa.html",
+      "tests/test_kensa_partial_pick_guide.py"
+    ],
+    "clean": true,
+    "published": false,
+    "baseHtmlSHA256": "c06a0873cd3b9102357996a6826d93763900aab78ef2f6beeaaa76462b280136"
+  },
+  "problem": "Visible recognizable bad-grain face may be bypassed by the pick guide when the whole grain element is clipped; guide can return to zoom control.",
+  "change": {
+    "helper": "kensa.html:2648",
+    "existingWholePriorityThenFallback": "kensa.html:2689",
+    "test": "tests/test_kensa_partial_pick_guide.py:153",
+    "scope": "Existing whole-grain candidate remains first. Only otherwise consider normal untransformed face box and center inside plate/viewport with same-grain hit checks.",
+    "excludedFromNewFallback": [
+      "image transform",
+      "first-bag enlarged face",
+      "hint swelling",
+      "unrecognized bad grain",
+      "simulation or smooth transition"
+    ],
+    "visibilityLimit": "Center and four face-box corner checks do not guarantee occlusion-free pixels between them, or visibility of an entire crack or stain."
+  },
+  "conditions": {
+    "viewport": [
+      844,
+      390
+    ],
+    "cpuRate": 1,
+    "isMobile": true,
+    "hasTouch": true,
+    "input": "CDP Input.dispatchTouchEvent following visible guide",
+    "observeSeconds": 10,
+    "playSeconds": 60,
+    "primaryRequestedTapMs": 40,
+    "fixed10RequestedTapMs": [
+      40,
+      250
+    ],
+    "slotsPerSpeed": 5,
+    "seedOrGameStateForced": false,
+    "network": "local only"
+  },
+  "before10": {
+    "fixedSlots": 10,
+    "classification": {
+      "positiveTrials": [
+        1,
+        2,
+        4
+      ],
+      "candidateNegativeOnlyTrials": [],
+      "unestablishedTrials": [
+        3,
+        5,
+        6,
+        8,
+        9,
+        10
+      ],
+      "notReachedTrials": [
+        7
+      ],
+      "conditionalEligibleCandidateTrials": 3,
+      "conditionedPositiveCount": 3,
+      "groups": {
+        "40": {
+          "fixedSlots": 5,
+          "positive": [
+            1
+          ],
+          "candidateNegativeOnly": [],
+          "unestablished": [
+            3,
+            5,
+            9
+          ],
+          "notReached": [
+            7
+          ]
+        },
+        "250": {
+          "fixedSlots": 5,
+          "positive": [
+            2,
+            4
+          ],
+          "candidateNegativeOnly": [],
+          "unestablished": [
+            6,
+            8,
+            10
+          ],
+          "notReached": []
+        }
+      },
+      "meaning": "Three observed eligible positive candidates across ten fixed slots; six unestablished and one not reached. 3/3 is conditional on strict prior visibility/identity/safety/window requirements, not a general reproduction or retention rate; do not silently use10 as a binary denominator."
+    },
+    "commonFaceBoxExpectedRescueTrials": [
+      1,
+      2
+    ],
+    "originalCauseTrial4RemainsPositive": true,
+    "faceGeometryIsNotNaturalAfterProof": true,
+    "actualChildrenExit0": true,
+    "counts": {
+      "actions": 350,
+      "responses": 350,
+      "matchedResponses": 350,
+      "noRecordedResponse": 0,
+      "unmatchedResponsePredicates": 0,
+      "commands": 4900,
+      "ACK": 4900,
+      "events": 5020,
+      "trustedTouch": 5020,
+      "pointerCancel": 0,
+      "startPoints": 360,
+      "startPointsMatched": 360,
+      "taps": 100,
+      "guideTargetMatches": 100,
+      "zoomOutInPairs": 10,
+      "errors": 0,
+      "driverErrors": 0
+    }
+  },
+  "after10": {
+    "status": "complete and independently audited",
+    "fixedSlots": 10,
+    "completedSlots": 10,
+    "actualRootExit": 0,
+    "actualChildrenExit0": true,
+    "actualCompletedAtUTC": "2026-11-13T21:08:19.637016+00:00",
+    "classification": {
+      "positiveTrials": [],
+      "candidateNegativeOnlyTrials": [],
+      "unestablishedTrials": [
+        1,
+        3,
+        4,
+        7,
+        9,
+        10
+      ],
+      "notReachedTrials": [
+        2,
+        5,
+        6,
+        8
+      ],
+      "conditionalEligibleCandidateTrials": 0,
+      "conditionedPositiveCount": 0,
+      "groups": {
+        "40": {
+          "fixedSlots": 5,
+          "positive": [],
+          "candidateNegativeOnly": [],
+          "unestablished": [
+            1,
+            3,
+            7,
+            9
+          ],
+          "notReached": [
+            5
+          ]
+        },
+        "250": {
+          "fixedSlots": 5,
+          "positive": [],
+          "candidateNegativeOnly": [],
+          "unestablished": [
+            4,
+            10
+          ],
+          "notReached": [
+            2,
+            6,
+            8
+          ]
+        }
+      },
+      "meaning": "Keep ten fixed slots and conditional eligible candidates separate. Unestablished and not-reached slots are not negative or improved cases; a zero eligible denominator gives no before/after effectiveness estimate."
+    },
+    "counts": {
+      "actions": 354,
+      "responses": 354,
+      "matchedResponses": 354,
+      "noRecordedResponse": 0,
+      "unmatchedResponsePredicates": 0,
+      "commands": 4908,
+      "ACK": 4908,
+      "events": 5032,
+      "trustedTouch": 5032,
+      "pointerCancel": 0,
+      "startPoints": 364,
+      "startPointsMatched": 364,
+      "taps": 104,
+      "guideTargetMatches": 104,
+      "zoomOutInPairs": 6,
+      "errors": 0,
+      "driverErrors": 0
+    },
+    "eligibleDenominator": 0,
+    "effectivenessRate": null,
+    "lateNewInputs": 0,
+    "unfinishedTouches": 0,
+    "stampResponsesEachTrial": [
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2
+    ],
+    "photoAudit": {
+      "normal": 40,
+      "cause": 6,
+      "actuallyViewed": 46,
+      "allSavedOriginalsViewed": true
+    },
+    "cpuAndClose": {
+      "cpu1AcknowledgedBeforeNavigation": 10,
+      "reset1Acknowledged": 10,
+      "browserCloseAcknowledged": 10,
+      "contextCloseLimit": "Normal cleanup has no independent context.close acknowledgement; browser.close is recorded. No separate context-close record invented."
+    },
+    "noReplacement": true,
+    "newHelperInvocationDirectlyRecorded": false,
+    "interpretation": "No eligible after denominator. Unestablished and not-reached are not negative or rescued cases. Cause observer starts only at the first zoom-out; grain-directed success is not observed by this cause measurement."
+  },
+  "primary": {
+    "before": {
+      "counts": {
+        "actions": 36,
+        "recordedResponses": 36,
+        "actionsWithoutRecordedResponse": 0,
+        "tapZoomOnlyResponses": 3,
+        "confirmedBagTransitions": 2,
+        "observedLotAt60": 3,
+        "pageOrConsoleErrors": 0,
+        "driverErrors": 0
+      },
+      "actualExit": 0,
+      "firstPositiveVisibleResponsePlaySeconds": 3.348,
+      "firstInputToPostGestureResponseUpperBoundSeconds": 0.406,
+      "firstStampResponsePlayUpperBoundSeconds": 15.3
+    },
+    "after": {
+      "counts": {
+        "actions": 35,
+        "recordedResponses": 35,
+        "actionsWithoutRecordedResponse": 0,
+        "tapZoomOnlyResponses": 1,
+        "confirmedBagTransitions": 2,
+        "observedLotAt60": 3,
+        "pageOrConsoleErrors": 0,
+        "driverErrors": 0
+      },
+      "actualExit": 0,
+      "firstPositiveVisibleResponsePlaySeconds": 3.376,
+      "firstInputToPostGestureResponseUpperBoundSeconds": 0.412,
+      "firstStampResponsePlayUpperBoundSeconds": 15.449
+    },
+    "newFallbackUsed": null,
+    "limits": [
+      "One natural run each, different random layouts; no causal speed or retention claim.",
+      "No internal guide-anchor/branch observation proves new fallback was used.",
+      "DOM response upper bounds are not physical finger or exact paint timings.",
+      "Natural guided inputs were performed. The cause diagnosis did not add a separate direct tap at the candidate center to establish pick success."
+    ]
+  },
+  "validation": {
+    "newRegression": {
+      "command": "python3 -m unittest discover -s tests -p test_kensa_partial_pick_guide.py -v",
+      "methodsRun": 1,
+      "subcases": 24,
+      "redFailed": [
+        "observed01",
+        "observed02"
+      ],
+      "redActualExit": 1,
+      "greenPassedSubcases": 24,
+      "greenActualExit": 0,
+      "testSHA256": "37227361366471eb72ab5982ae73701504f533955990ac47036eadf6834dec59",
+      "sameTestBothRuns": true,
+      "greenTiming": "Before candidate commit; exact product/test hashes match commit.",
+      "limit": "Node executes extracted real demoShow/toLocal/grainAt against modeled DOM/one candidate fixtures. Not full-scene CDP or painted-image verification. Only method status printed for successful subcases;22 RED subcase passes are inferred from fixed24 cases and only2 failures, no errors."
+    },
+    "existingKensa": {
+      "command": "python3 -m unittest discover -s tests -p test_kensa.py -v",
+      "run": 191,
+      "passed": 189,
+      "skipped": 2,
+      "actualExit": 0,
+      "existingTestsChanged": false,
+      "skipReasons": [
+        "chromium が 起動しない",
+        "chromium が 起動しない"
+      ]
+    },
+    "pytest": {
+      "command": "pytest tests/",
+      "actualExit": 127,
+      "stderr": "bash: line 1: pytest: command not found\n",
+      "status": "blocked; no external acquisition"
+    },
+    "fullUnittest": {
+      "status": "completed and independently audited; failing",
+      "command": "python3 -m unittest discover -s tests -v",
+      "head": "8eee1f6c259a1a41ebae6af992ff4b9970b35421",
+      "base": "823a532cf9f237582d7d12d4e0289658e2207b5b",
+      "actualExit": 1,
+      "startedAtUTC": "2026-11-13T21:08:47.784839+00:00",
+      "completedAtUTC": "2026-11-13T21:16:37.137251+00:00",
+      "methodsRun": 2570,
+      "methodsPassed": 2500,
+      "methodsFailed": 68,
+      "methodsError": 1,
+      "methodsSkipped": 1,
+      "seconds": 463.566,
+      "existingKensa": {
+        "methods": 191,
+        "passed": 191,
+        "skipped": 0,
+        "previousPlainTwoSkipsNowPassed": true
+      },
+      "newRegression": {
+        "methods": 1,
+        "passed": 1,
+        "subcases": 24,
+        "subcasesNotAddedToMethodTotal": true
+      },
+      "failureClassifications": {
+        "tractor progress regex match is None before group access": 1,
+        "literal tractor progress string assertion": 1,
+        "changed-file allowlist assertion": 65,
+        "literal pixel export string assertion": 2
+      },
+      "skip": [
+        {
+          "name": "test_ruler_defined_in_design (test_maze_loop4_149.TestFirstMinuteRuler.test_ruler_defined_in_design)",
+          "kind": "method",
+          "result": "skipped '設計書がこの環境に無い'"
+        }
+      ],
+      "existingBaselineTests": 304,
+      "newTests": 1,
+      "trackedTestFiles": 305,
+      "snapshottedFilesPerRoot": 310,
+      "existingBaselineTestsPreserved": true,
+      "sourceAndCloneEndpointHashesAndRefsMatch": true,
+      "privateMainAndOriginMain": "823a532cf9f237582d7d12d4e0289658e2207b5b",
+      "logSHA256": "f7e72fd676ec55e1aee9520e5ed5206dcaba3e27c34d9d80925a4123127c51fc",
+      "environment": {
+        "NODE_OPTIONS": "--require=/workspace/scratch/first-minute/offline.cjs",
+        "NODE_PATH": "/workspace/ricepia-judge/node_modules",
+        "CHROMIUM": "/usr/bin/chromium",
+        "KENSA_SOURCE_ROOT": "/workspace/scratch/first-minute/round-92/validation/committed-checkout"
+      },
+      "limits": [
+        "Matching round89 historical failure names/types/order is not a current823a baseline test or causal equivalence.",
+        "Endpoint file/ref equality is not continuous monitoring.",
+        "Earlier189success2skip is a separate plain existing-kensa execution.",
+        "Mandatory pytest127 remains unresolved; unittest does not replace pytest success."
+      ]
+    },
+    "fiveSizes": {
+      "status": "completed and independently audited; qualified result with existing zoom-transition finding",
+      "sizes": [
+        [
+          320,
+          568
+        ],
+        [
+          390,
+          844
+        ],
+        [
+          568,
+          320
+        ],
+        [
+          844,
+          390
+        ],
+        [
+          820,
+          1180
+        ]
+      ],
+      "supersededPlan": {
+        "name": "first-bag54-images",
+        "executed": false,
+        "reason": "First-bag coverage does not exercise the new fallback; retained unexecuted, not counted as validation."
+      },
+      "result": {
+        "conditions": {
+          "viewports": [
+            "320x568",
+            "390x844",
+            "568x320",
+            "844x390",
+            "820x1180"
+          ],
+          "cpuRate": 1,
+          "tapDurationMs": 40,
+          "observeSeconds": 10,
+          "playSeconds": 60,
+          "input": "CDP Input.dispatchTouchEvent",
+          "mobile": true,
+          "touch": true,
+          "normalPhotosPerTrial": 4,
+          "extraSecondBagPhotosPerTrial": 1
+        },
+        "phases": [
+          {
+            "phase": "before",
+            "sourceHead": "823a532cf9f237582d7d12d4e0289658e2207b5b",
+            "sourceSHA256": "c06a0873cd3b9102357996a6826d93763900aab78ef2f6beeaaa76462b280136",
+            "actualOuterExit": 0,
+            "startedAtUTC": "2026-11-13T21:19:47.438675+00:00",
+            "completedAtUTC": "2026-11-13T21:25:48.164890+00:00",
+            "closedTrials": 5,
+            "sourceBeforeAfterAllVerified": true,
+            "totals": {
+              "actions": 177,
+              "responses": 177,
+              "acknowledgedCommands": 2454,
+              "trustedEvents": 2516,
+              "errors": 0,
+              "driverErrors": 0,
+              "lateInputs": 0,
+              "unfinishedTouchActions": 0
+            },
+            "layoutCounts": {
+              "trials": 5,
+              "normalSamples": 40,
+              "targetEndpointSamples": 10,
+              "horizontalOverflowSamples": 0,
+              "majorBoxOverlapSamples": 0,
+              "badActiveControlSamples": 0,
+              "uncontainedInnerSamples": 2
+            },
+            "imagesViewed": 25,
+            "imageAndRuntimeAuditSHA256": "e3f9f9e3f1be0794cb7060d8bf2210e312c31097e4cdab1daadf715ead96f201",
+            "batchSHA256": "041efea5e92b0bde676f216b823814d6f2a75069b32baf3f51b064e53c19526f",
+            "executionSHA256": "ff4087eafc9e1ea6ed1b1aa8e25bd087b4d2b098579556d52bb0f3fc1908f6da",
+            "targetAddedAwaitMs": [
+              102,
+              243,
+              126,
+              169,
+              131
+            ]
+          },
+          {
+            "phase": "after",
+            "sourceHead": "8eee1f6c259a1a41ebae6af992ff4b9970b35421",
+            "sourceSHA256": "8a5cb02c1e74b43b0c4b72bb227f8e9a0d024854080def3ac919594d9de1cc97",
+            "actualOuterExit": 0,
+            "startedAtUTC": "2026-11-13T21:28:27.821270+00:00",
+            "completedAtUTC": "2026-11-13T21:34:29.022284+00:00",
+            "closedTrials": 5,
+            "sourceBeforeAfterAllVerified": true,
+            "totals": {
+              "actions": 175,
+              "responses": 175,
+              "acknowledgedCommands": 2450,
+              "trustedEvents": 2511,
+              "errors": 0,
+              "driverErrors": 0,
+              "lateInputs": 0,
+              "unfinishedTouchActions": 0
+            },
+            "layoutCounts": {
+              "trials": 5,
+              "normalSamples": 40,
+              "targetEndpointSamples": 10,
+              "horizontalOverflowSamples": 0,
+              "majorBoxOverlapSamples": 0,
+              "badActiveControlSamples": 1,
+              "uncontainedInnerSamples": 4
+            },
+            "imagesViewed": 25,
+            "imageAndRuntimeAuditSHA256": "46122a952c884a3545a1f60df2cb2155d20fe458d403cc9a3b5d3969422f2186",
+            "batchSHA256": "07ead6344a010025e936a8466713c0e2a1a03021ca605b7bacb87d4a8dc8d1e9",
+            "executionSHA256": "7c13b3e236480b06e15f8ec57ce6989b690f4e16d8b4bfffa2af02036c928267",
+            "targetAddedAwaitMs": [
+              175,
+              117,
+              139,
+              158,
+              138
+            ]
+          }
+        ],
+        "all50OriginalImagesViewed": true,
+        "targetCoverage": {
+          "attempts": 10,
+          "endpoints": 20,
+          "allFreshVisibleSecondBag": true,
+          "allAnchorMatchesRealGrainAt": true,
+          "allWholeInside": true,
+          "allImgTransformNone": true,
+          "allSmoothFalse": true,
+          "allSimOnFalse": true,
+          "newFallbackInvocation": "not established",
+          "meaning": "The ten saved target encounters all show whole-inside grains. They verify ordinary second-bag control/layout only, not geometry of the new partial-grain fallback."
+        },
+        "findings": [
+          {
+            "priority": "P2",
+            "classification": "observed existing zoom transition issue; regression causality unestablished",
+            "summary": "Smooth zoom-out can paint outside the plate and temporarily obstruct the notes link. Do not certify no increased overlap or unpressable controls from these samples.",
+            "evidence": [
+              {
+                "phase": "after",
+                "viewport": "320x568",
+                "sample": "play-30s/request and completed",
+                "innerHintBboxOverlapArea": [
+                  6433.96875,
+                  2900.056644
+                ],
+                "note": "Both samples lack plate in clippedBy. Parent original-image audit confirms hint dark spill."
+              },
+              {
+                "phase": "after",
+                "viewport": "844x390",
+                "sample": "play-30s/request",
+                "control": "notesLink",
+                "centerHit": false,
+                "hit": "plateInner.smooth",
+                "nextCompletedCenterHit": true
+              },
+              {
+                "phase": "before",
+                "viewport": "844x390",
+                "sample": "play-30s/request and completed",
+                "note": "Same unclipped smooth inner extends past plate, but no hint bbox overlap and no sampled active control obstruction."
+              }
+            ],
+            "source": [
+              "kensa.html:120",
+              "kensa.html:124",
+              "kensa.html:1658",
+              "kensa.html:1671"
+            ],
+            "limit": "Relevant CSS/applyZoom/resetZoom regions are byte-identical on base and candidate. Separate random layouts and transition timing prevent causal frequency/severity comparison. No new helper invocation was observed."
+          }
+        ],
+        "noIncreasedOverlapOrObstructionCertified": false,
+        "codeRegressionCausality": "Unestablished. The zoom-transition mechanism is byte-identical in the pinned before and candidate sources; separate random placements and sampled transition timings differ.",
+        "newCurrentPatchDefectEstablished": false,
+        "additionalExistingVisualObservations": [
+          "568x320 before play10 smell hand overlaps subtitle partly; after play10 also approaches the subtitle. This is a pre-existing phase-specific guide placement candidate, not proof of a new fallback regression.",
+          "Flying removed grains cross the plate boundary in before/after568 play30. Treat these as removal animation, not static controls overflowing."
+        ],
+        "limits": [
+          "Center-hit sampling is not a full control-area or all-time guarantee.",
+          "DOM sampling times do not coincide exactly with screenshots.",
+          "Horizontal document overflow and main-box overlap zero do not rule out paint from uncontained descendants.",
+          "First-bag behavior cannot exercise this new fallback because transformed grain images are excluded.",
+          "No device sensor, physical finger or real network measurements.",
+          "These layout-only runs add read/photo/read observation overhead (before102–243ms, after117–175ms). Do not combine with primary/cause-trial timing or claim retention-rate improvement.",
+          "The ten extra target photographs all selected whole-inside grains. Partial-grain fallback layout behavior was not directly identified by this sample.",
+          "Existing zoom-out issue has not undergone its own ten-attempt reproduction here; defer repair to a later round.",
+          "Pinned before823a/candidate8eee are not asserted to be the current remote main."
+        ]
+      },
+      "beforeExecution": {
+        "actualExit": 0,
+        "completedAtUTC": "2026-11-13T21:25:48.164890+00:00",
+        "trials": 5,
+        "allChildrenExit0": true,
+        "allBrowserClosed": true,
+        "sourceHead": "823a532cf9f237582d7d12d4e0289658e2207b5b",
+        "directRemoteMainAtLaunch": "2e560433535ff5096a310651ca07bf0725dea395",
+        "limit": "Tested baseline823a differs from remote main at layout-before launch; no current-main validation claim."
+      }
+    },
+    "independentPublicationReview": {
+      "status": "completed; no new factual P0-P3 findings",
+      "reviewSHA256": "7a5eb8763b7c82d3332537646f0e1cde3dcf0b87f27f0718cec89f9bc763488d",
+      "reviewedResultsSHA256": "a3413f2ddaf7dd3f5f7866b9f385cfffa6675ed7401734557e914d9aa94d9d6a",
+      "reviewedReadmeSHA256": "2606d887440a289eab6bb8cbe8e159cefdfcc3c1465e0d9f78a1361b36d7dd6a",
+      "reviewedPRBodySHA256": "277af60c5b7bbd4524053cec8496c120bb7486050ce31fd0983c9e0853a3c78f",
+      "followingChange": "Only completion/review metadata added to this JSON; reviewed evidence and report text unchanged.",
+      "remoteLinks": "Static path correctness checked; root publication and remote read-back are separate."
+    },
+    "independentCodeReview": {
+      "status": "complete",
+      "reviewedAtUTC": "2026-11-13T21:29:57.444647+00:00",
+      "base": "823a532cf9f237582d7d12d4e0289658e2207b5b",
+      "head": "8eee1f6c259a1a41ebae6af992ff4b9970b35421",
+      "findingsP0P1P2P3": [],
+      "secondReader": {
+        "task": "test_evidence",
+        "scope": "Independent static test and recorded RED/GREEN/full-log audit",
+        "findingsP0P1P2P3": []
+      },
+      "confirmed": [
+        "Original recognized bad-grain filter and full-bounding-box candidate priority are preserved; new callback is lazy and only runs if no whole candidate was found.",
+        "Normal four-kind face pixel bounds match grainSprite, with center taken from the actual element rectangle and local offsets rotated once and transformed by the actual inner CSS matrix linear part. No duplicate translation.",
+        "Scaled/animated image transforms, far mood, active simulation, smooth zoom, hidden/nonopaque ancestors, out-of-content/viewport points, controls, or mismatching real grainAt result reject the extra candidate.",
+        "Actual grain buttons have pointer-events:none at kensa.html:126; elementFromPoint normally reaches plateInner/plate. Rejecting button controls does not automatically reject every grain.",
+        "Existing guideAt element anchor, demoDown gating, demoTick movement/hidden-anchor cleanup, manual pick/grade advancement, first tap, 45-second card, and demonstration mode remain unchanged.",
+        "No additional flags, timers, event listeners, pointer records, storage operations, loading promises, or reduced-motion durations. Existing single/multiple pointer, cancellation, blur, hidden-page, rotation, keyboard and hybrid-input ownership remains with the unchanged handlers.",
+        "Same test bytes actually failed in original HTML and passed in patched HTML before commit; both patched source/test SHAs match the committed candidate.",
+        "All base tracked test files are byte-identical; protected Kome files are byte-identical."
+      ],
+      "limits": [
+        "Static review does not establish that the new fallback was executed in random full-scene browser trials. After fixed10 had zero eligible cause endpoints; no fixed-target browser success rate is claimed.",
+        "Five sampled points do not prove every intervening face pixel remains unoccluded, continuous visibility, or physical-finger success. Common face box does not require every crack or stain pixel and conservatively excludes observed04.",
+        "Model DOM test covers the stated24cases, not full browser rendering/all randomized grains. closest fixture omits role=button; DOMMatrix fixture only models2D and getComputedStyle visibility is simplified.",
+        "First bag enlarged images and transformed hint/wig images remain on original selection behavior; no claim that all zoom round-trips are eliminated.",
+        "Main has advanced beyond the pinned base. This report covers the named base/head only; current-main integration/merge fitness is not established.",
+        "pytest unavailable and full unittest failed. This code-review result is not permission to merge or a passing full-suite verdict.",
+        "Five-viewport layout is a separate root-run audit; not claimed complete here. Device sensors, real fingers and real network speed remain unverified."
+      ]
+    }
+  },
+  "photos": [
+    {
+      "file": "before-primary-play30.png",
+      "originalRelativeToRound92": "preparation/strict/play-30s.png",
+      "sha256": "283890be41a59f4edafcf94c5cbbbc7dc81999457686871d991706eea08026b0",
+      "bytes": 67695,
+      "copiedByteIdentically": true,
+      "actuallyViewedDuringDrafting": true,
+      "viewport": [
+        844,
+        390
+      ],
+      "nominalPlaySeconds": 30
+    },
+    {
+      "file": "after-primary-play30.png",
+      "originalRelativeToRound92": "after-preparation/strict/play-30s.png",
+      "sha256": "e9c34f52caa30a1bb78795607bfbf3fff95e9e39ec0597679d97ec8d8329af82",
+      "bytes": 68350,
+      "copiedByteIdentically": true,
+      "actuallyViewedDuringDrafting": true,
+      "viewport": [
+        844,
+        390
+      ],
+      "nominalPlaySeconds": 30
+    }
+  ],
+  "photosComparableSameLayout": false,
+  "operatorJudgmentUnchanged": [
+    "first single-tap progression",
+    "manual pick/grade",
+    "45-second card",
+    "show-only play format"
+  ],
+  "realDeviceUnverified": [
+    "real fingers",
+    "tilt sensors",
+    "network speed",
+    "rendering performance",
+    "human face recognition",
+    "first-minute abandonment"
+  ],
+  "mustUpdateBeforePublication": [],
+  "evidenceSHA256": {
+    "review/independent-summary.json": "52b0a0d56cefa0893571808f27c22a105da4abc373c5d3ebeae6ca6074e66c3b",
+    "first60-cause-before-audit/summary.json": "f36ef1ff932d25128a6f966e23d4fc5fd829ac81ab8760f9e7c85a3b3f72df3a",
+    "test-draft/face-region-analysis.json": "9bebc739f16cf2b1ee9811e8e26aede91bbb80bed976f35716c0144cfa9d1317",
+    "regression-audit/summary.json": "5b9e020a55b8c9ecee1f748d91a01229650acad76875986238f24edcfcaf68d7",
+    "existing-kensa-tests/execution.json": "9e6420b4e66cdd93d0f7d74ce9372c310e43cbaa405527f0b5f09efeeb430f8c",
+    "existing-kensa-tests/run.log": "a06609701abdb6c07d441f79e63c4f9f5102680f8d957b3aea3a04ba8747038b",
+    "after-primary-audit/summary.json": "b08fdc0bf5d1afb4e95190d50002970213f524f89ff4cf7e60d115ce30159301",
+    "pytest-attempt/execution.json": "80d0b0d0efad8c147d45969ca6598c9971f665e52f6f2693e511d6627856bfdd",
+    "pytest-attempt/run.log": "b6fe94a4971280b69606b3ad6039ae9ed0e48557776ea68f678174b6c8da879a",
+    "local-pytest-availability.json": "53c26fadd087fa882abce529423b7a9e8fd1592cab2b365281c5fce1a44fc874",
+    "first60-cause-after-audit/summary.json": "2983e0ebdad4c7b729616a8b83e38165a782e72adcabd5bdbf501f45caaac1b7",
+    "first60-cause-after-audit/frozen.json": "25d0c5bf5d7aee3c220b6591fe19921c8f81f9419095591af9a0d33979a4bb8d",
+    "first60-cause-after-audit/README.md": "e61d8e428e8f9d2dc5ff68e7b013504031256c3a8926d0eb412d93e4a9ee1c8b",
+    "full-unittest-audit/summary.json": "0bbe6cd1dea953d2d44f89775b87f09b30ded08a0e524e60fdb243934dd92474",
+    "full-unittest-audit/README.md": "3612d9c1aae8e00bab707e0af10a4dae4ae8c3d1aceb42b13b4e01db96bb5277",
+    "full-unittest-audit/failures.json": "697125b95b6e548efede73d2f29b4651e42b51b4617d8cb9394937590dcfc2c8",
+    "full-unittest-audit/frozen.json": "d3cdcc4a52c2ff3511ce63cca3c4616dcc8731a1969828e049d1e7d160cb3f5d",
+    "full-unittest-audit/second-reader.json": "ad6855fa515a861d51386d0881795670085f90ceb18eaa1c570516d1ca868645",
+    "validation/full-unittest.log": "f7e72fd676ec55e1aee9520e5ed5206dcaba3e27c34d9d80925a4123127c51fc",
+    "layout-primary-v2-final/before/execution.json": "ff4087eafc9e1ea6ed1b1aa8e25bd087b4d2b098579556d52bb0f3fc1908f6da",
+    "layout-primary-v2-final/before/batch-result.json": "041efea5e92b0bde676f216b823814d6f2a75069b32baf3f51b064e53c19526f",
+    "final-code-review/review.json": "c3bbdeca41d5d582184b7a13bac192447cbd67134fe68cf883ed428bc0b11bd4",
+    "final-code-review/frozen.json": "915dce15c5ddf283c9ec301d75c2d19ad4483593d5e6698faeed546c557744b3",
+    "final-code-review/README.md": "1e0b9226628451541ba24340c911fa9a0327d2d6e2852fe99a0c52fffcba32b3",
+    "layout-primary-v2-final-audit/summary.json": "9264248ee94956aaea0ac321abef2b80d42edff959a546350f07f271d21bf392",
+    "layout-primary-v2-final-audit/README.md": "d9cf72385cf21ec1a11c587a0ae7f8d56039e59082189a21eeaf3424459cf6ba",
+    "layout-primary-v2-final-audit/frozen.json": "143ea71febe32a291e7634dbce9717b50518577057063304169834ed82bc9fba",
+    "layout-primary-v2-final-audit/geometry-findings.json": "7d8681ef46d0ee789baf6e30f0715dab50952b8c89c43cff16b6899ad7dd973d",
+    "layout-primary-v2-final-audit/geometry-frozen.json": "a36fa220e8618cfa9d2534fecdc33faa37a43009cc9be2f578d8c6598655746c",
+    "layout-primary-v2-final-audit/before-image-and-runtime-audit.json": "e3f9f9e3f1be0794cb7060d8bf2210e312c31097e4cdab1daadf715ead96f201",
+    "layout-primary-v2-final-audit/after-image-and-runtime-audit.json": "46122a952c884a3545a1f60df2cb2155d20fe458d403cc9a3b5d3969422f2186",
+    "layout-primary-v2-final-audit/existing-zoom-out-readability.json": "065200892a7096fa6333347c164e139786840cd259ef55342b871824bfeda533",
+    "layout-primary-v2-final-audit/zoom-transition-source.json": "6d742554f6853eebd39df75a01531e6d63a4f4412336c8692257a0d6ac825463",
+    "layout-primary-v2-final/after/execution.json": "7c13b3e236480b06e15f8ec57ce6989b690f4e16d8b4bfffa2af02036c928267",
+    "layout-primary-v2-final/after/batch-result.json": "07ead6344a010025e936a8466713c0e2a1a03021ca605b7bacb87d4a8dc8d1e9",
+    "publication-fact-review/review.json": "7a5eb8763b7c82d3332537646f0e1cde3dcf0b87f27f0718cec89f9bc763488d"
+  },
+  "draftingActions": "Read-only source/evidence and actual view of two original PNGs; wrote only this scratch directory and byte-identical image copies. No Git/network/browser/test execution.",
+  "draftUpdatedAtUTC": "2026-11-13T21:37:35.959481+00:00",
+  "fixed10DescriptiveComparison": {
+    "beforeZoomOutInPairs": 10,
+    "afterZoomOutInPairs": 6,
+    "beforeTrialsWithZoomPairs": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      8,
+      9,
+      10
+    ],
+    "afterTrialsWithZoomPairs": [
+      1,
+      3,
+      4,
+      7,
+      9,
+      10
+    ],
+    "beforeTrialCountWithPairs": 9,
+    "afterTrialCountWithPairs": 6,
+    "causalImprovementEstablished": false,
+    "sameRandomLayoutsReplayed": false
+  },
+  "mergeHoldReason": {
+    "rule": "Tests failing: report without merging.",
+    "skillURL": "https://github.com/shota0617/ricepia-judge/blob/823a532cf9f237582d7d12d4e0289658e2207b5b/.claude/skills/ricepia-flow/SKILL.md#L212",
+    "fullUnittestActualExit": 1,
+    "pytestActualExit": 127
+  },
+  "publicationTarget": {
+    "repositoryDirectory": "docs/first-minute/round-92-kensa-visible-face-guide/",
+    "branch": "codex/kensa-visible-face-guide",
+    "readmeURL": "https://github.com/shota0617/ricepia-judge/blob/codex/kensa-visible-face-guide/docs/first-minute/round-92-kensa-visible-face-guide/README.md",
+    "PRBodyLocalFile": "PR-body-draft.md",
+    "published": false
+  },
+  "evidenceAvailability": {
+    "publishedFilesPlanned": [
+      "README.md",
+      "results.json",
+      "before-primary-play30.png",
+      "after-primary-play30.png"
+    ],
+    "localOnly": "Other raw logs, original PNG sets, and detailed audit files remain in the execution workspace. Evidence SHA256 entries identify local records; they are not public download links.",
+    "aggregates": "Final counts are summarized in this JSON; no claim all raw evidence is published."
+  },
+  "nextKensaCandidates": [
+    {
+      "priority": "P2",
+      "candidate": "Zoom-out transition paints beyond plate and can reduce hint contrast or temporarily obstruct notes link.",
+      "source": [
+        "kensa.html:120",
+        "kensa.html:124",
+        "kensa.html:1658",
+        "kensa.html:1671"
+      ],
+      "changedInThisPR": false,
+      "tenAttemptReproductionDone": false,
+      "causalRegressionEstablished": false
+    },
+    {
+      "candidate": "568x320 smell guide overlaps or approaches subtitle in before/after captures.",
+      "changedInThisPR": false,
+      "tenAttemptReproductionDone": false
+    }
+  ],
+  "publicationPreparedAtUTC": "2026-11-13T21:39:15.383880+00:00",
+  "publicationSourceHashVerification": {
+    "verifiedAtUTC": "2026-11-13T21:39:15.383880+00:00",
+    "htmlSHA256": "8a5cb02c1e74b43b0c4b72bb227f8e9a0d024854080def3ac919594d9de1cc97",
+    "newTestSHA256": "37227361366471eb72ab5982ae73701504f533955990ac47036eadf6834dec59",
+    "existingTestSHA256": "c83846f9bcf5c4f34e1f2f3dc93f49c372aa256eb3b8de89d33d1478d82e3208",
+    "matchesTestedCandidate": true,
+    "scope": "Read file bytes only; root owns final Git commit/push verification."
+  }
+}

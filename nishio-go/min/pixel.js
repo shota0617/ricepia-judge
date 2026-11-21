@@ -14133,7 +14133,7 @@ cv.addEventListener('click', e => {
   }
 
 
-  if (!$('pxInfo').hidden) $('pxInfo').click();
+  if (!$('pxInfo').hidden && pxInfoReadOnly()) $('pxInfo').click();
   if (G.demo) tapWalk(Math.floor(c.x + (x - cv.width / 2) / T), Math.floor(c.y + (y - fieldCy) / T));
 });
 function mzGoalOnCanvas(r, dpr) {
@@ -14265,6 +14265,19 @@ const pxInfoResize = { raf: 0 };
 function pxInfoReplace() {
   if (pxInfoResize.raf || !$('pxInfo') || $('pxInfo').hidden) return;
   pxInfoResize.raf = requestAnimationFrame(() => { pxInfoResize.raf = 0; pxInfoPlace('resize'); });
+}
+
+
+
+
+const pxInfoEdit = { t: -1e9 };
+document.addEventListener('pointerdown', e => { const a = document.activeElement; if (e.target === cv && a && $('pxInfo').contains(a) && a.matches('input, textarea, select, [contenteditable]')) pxInfoEdit.t = performance.now(); }, true);
+function pxInfoReadOnly() {
+  const b = $('pxInfoBody');
+  if (!b || npcSend) return false;
+  if (b.querySelector('.pick-first, [data-pick-dot]')) return false;
+  if (performance.now() - pxInfoEdit.t < 1500) return false;
+  return ![...$('pxInfo').querySelectorAll('input, textarea')].some(f => (f.type === 'checkbox' || f.type === 'radio') ? f.checked !== f.defaultChecked : f.type !== 'hidden' && f.value !== '');
 }
 document.addEventListener('click', e => { if (e.target === cv) { pxInfoTap.x = e.clientX; pxInfoTap.y = e.clientY; pxInfoTap.t = performance.now(); } }, true);
 if (window.MutationObserver && $('pxInfo')) new MutationObserver(() => pxInfoPlace()).observe($('pxInfo'), { attributes: true, attributeFilter: ['hidden'], childList: true, subtree: true });

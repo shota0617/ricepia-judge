@@ -2926,5 +2926,33 @@ class TestKome365HomeResume(unittest.TestCase):
         self.assertEqual(nxt["date"], "1月2日", x["js"])
 
 
+# サイクル202: 七十二候 の カード は 題を 候の 名前 に・下に 本文 に ある 言いかえ を 1行(前は どれも「七十二候」)
+KOU_ST = "js:(() => { const q = document.getElementById('swKou'), c = window.__swipe.card(); return { key: c.key, title: document.getElementById('swTitle').textContent, sub: q && q.getClientRects().length && getComputedStyle(q).display !== 'none' ? q.textContent : null, over: q ? q.scrollWidth > q.clientWidth + 1 : null, text: c.text }; })()"
+
+
+class TestKome365KouTitle(unittest.TestCase):
+    """サイクル202"""
+
+    @classmethod
+    def setUpClass(cls):
+        acts = [KOU_ST, "L", "R", "L", "R", "L", KOU_ST, "R", "L", "R", "L", KOU_ST]
+        cls.r = sound_run([{"name": "v", "acts": acts}, {"name": "s", "w": 320, "h": 568, "acts": acts}, {"name": "l", "w": 844, "h": 390, "acts": acts}])
+
+    def test_kou_cards_show_their_own_name_and_meaning(self):
+        for name in ("v", "s", "l"):
+            x = self.r[name]
+            self.assertEqual(x["errs"], [], name)
+            first, k0, k1 = x["js"]
+            self.assertIsNone(first["sub"], "%s: ふつう の カード に 1行 が 出た %r" % (name, first))
+            for k in (k0, k1):
+                self.assertTrue(k["key"].startswith("kou_"), "%s: 七十二候 の 日 で ない %r" % (name, k))
+                # 98a34997 では 題が どれも「七十二候」で 1行 も 無い ので ここで 落ちる
+                self.assertNotEqual(k["title"], "七十二候", "%s: 題が 七十二候 の まま %r" % (name, k))
+                self.assertIn("いまは「" + k["title"] + "」", k["text"], k)        # 名前は 本文 に ある もの
+                self.assertTrue(k["sub"] and (k["sub"] + "です。") in k["text"], "%s: 1行 が 本文 の 文 で ない %r" % (name, k))
+                self.assertFalse(k["over"], "%s: 1行 が はみ出した %r" % (name, k))
+            self.assertNotEqual(k0["title"], k1["title"], x["js"])   # 毎回 ちがう
+
+
 if __name__ == "__main__":
     unittest.main()

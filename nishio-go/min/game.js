@@ -1983,7 +1983,9 @@ function decideGuide0(from, wide, tooNearOk) {
   c = c || cands[0];
 
 
-  const rest = cands.filter(x => x.id !== c.id).filter((x, i, a) => a.findIndex(y => y.id === x.id) === i);
+
+  const gp = typeof guidePlace === 'function' ? guidePlace : x => x.id;
+  const rest = cands.filter(x => gp(x) !== gp(c)).filter((x, i, a) => a.findIndex(y => gp(y) === gp(x)) === i);
   const alts = (mazeVert ? rest.sort(first1 ? (a, b) => dist(me, a) - dist(me, b) : goalSort) : rest).slice(0, 2)
     .map(x => ({ kind: x.kind, id: x.id, name: x.name, lat: x.lat, lng: x.lng, why: x.why, by: x.by || by, refer: x.refer, weather: x.weather }));
   return { ...c, by: c.by || by, alts };
@@ -2507,6 +2509,13 @@ function spotThumb(sp) {
 
 
 
+
+function guidePlace(g) {
+  if (!g) return '';
+  if (g.kind !== 'npc') return g.id;
+  const n = typeof placeNpcs === 'function' ? placeNpcs().find(x => x.id === g.id) : null;
+  return n && n.spot ? 'f-' + n.spot : g.id;
+}
 function guideDispName(g) {
   if (!g || !g.name) return '';
   if (g.kind !== 'npc') return g.name;
@@ -2522,13 +2531,13 @@ function renderGuide() {
   el.hidden = false;
   if (!glow.armed) glowArm(S.guide);
 
-  const alts = (S.guide && S.guide.alts) || [];
+  const alts = ((S.guide && S.guide.alts) || []).map((a, i) => ({ a, i })).filter(x => guidePlace(x.a) !== guidePlace(g));
   const mr = demo && window.nishioPixel && nishioPixel.maze && nishioPixel.maze.route ? nishioPixel.maze.route() : null;
   const far = fmtM(mr ? mr.m : dist(me, g));
   const gname = `<em class="gn">${mr ? '🏁 ' : ''}${esc(guideDispName(g))}</em>`;
   const head = simple() && window.NSG_ICONS ? `${NSG_ICONS.arrow(bearing(me, g))}${guideThumb(g)}${g.byId ? PIA('scroll', 'イベント') : ''} ${gname}<span>　${far}</span>` : `${g.byId ? '📜' : '🧭'} ${gname}<span>　${far}</span>`;
   el.innerHTML = `<b>${head}</b>`
-    + (alts.length ? `<span class="alts"><em>ほかの行き先：</em>${alts.map((a, i) => `<button type="button" class="btn mini" data-alt="${i}">↪ ${esc(guideDispName(a))}${me ? `（${fmtM(dist(me, a))}）` : ''}</button>`).join('')}</span>` : '');
+    + (alts.length ? `<span class="alts"><em>ほかの行き先：</em>${alts.map(({ a, i }) => `<button type="button" class="btn mini" data-alt="${i}">↪ ${esc(guideDispName(a))}${me ? `（${fmtM(dist(me, a))}）` : ''}</button>`).join('')}</span>` : '');
   el.title = `${g.by}「${g.why}」`;
 
   el.classList.remove('hasChips');

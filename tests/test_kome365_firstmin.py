@@ -382,6 +382,12 @@ const FAKE = (mode) => {
         if (kind === 'swipe') for (let i = 1; i <= 6; i++) { await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: x + 30 * i, y }] }); await p.waitForTimeout(16); }
         else await p.waitForTimeout(60);
         await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); await p.waitForTimeout(kind === 'swipe' ? 1300 : 80); }
+      else if (a.startsWith('tap2:')) {   // サイクル199b: 同じ 部品を すぐ 2回(40ms 押して 60ms あけて)
+        const sel = a.slice(5); const bx = await p.evaluate(s => { const e = document.querySelector(s); if (!e || !e.getClientRects().length) return null; e.scrollIntoView({ block: 'center' }); const b = e.getBoundingClientRect(); return { x: b.x + b.width / 2, y: b.y + b.height / 2 }; }, sel);
+        if (bx) { await p.waitForTimeout(200); for (let i = 0; i < 2; i++) { await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: bx.x, y: bx.y }] }); await p.waitForTimeout(40); await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); if (!i) await p.waitForTimeout(60); } } await p.waitForTimeout(700); }
+      else if (a.startsWith('enterHold:')) {   // サイクル199b: 部品に フォーカス して Enter を 0.8秒 押しっぱなし(キーの くり返し)
+        await p.focus(a.slice(10)).catch(() => {}); const K = (type, rep) => cdp.send('Input.dispatchKeyEvent', { type, key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13, nativeVirtualKeyCode: 13, autoRepeat: !!rep, text: type === 'keyDown' ? '\r' : undefined });
+        await K('keyDown', false); for (let i = 0; i < 16; i++) { await p.waitForTimeout(50); await K('keyDown', true); } await K('keyUp', false); await p.waitForTimeout(700); }
       else if (a.startsWith('tapel:')) {   // サイクル199: 本物に 近い 指で 部品を タップ(画面に 入れて から。無い ときは 何も しない)
         const sel = a.slice(6); const bx = await p.evaluate(s => { const e = document.querySelector(s); if (!e || !e.getClientRects().length) return null; e.scrollIntoView({ block: 'center' }); const b = e.getBoundingClientRect(); return { x: b.x + b.width / 2, y: b.y + b.height / 2 }; }, sel);
         r.taps = r.taps || []; r.taps.push(!!bx); if (bx) { await p.waitForTimeout(200); await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: bx.x, y: bx.y }] }); await p.waitForTimeout(60); await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); } await p.waitForTimeout(700); }
@@ -2863,6 +2869,9 @@ class TestKome365HomeResume(unittest.TestCase):
             # もどった あと の 1枚は ← キーで 決める(題の 画面の まま でも 止まらずに 数を 取れる)
             {"name": "resume", "acts": ["L", "R", "L", HOME_ST, "tapel:#swHome", HOME_ST, "tapel:#bResume", HOME_ST, "keyjs:" + HOME_ST[3:], "wait", HOME_ST]},
             {"name": "daily", "acts": ["L", "R", "L", "tapel:#swHome", "tapel:#bDaily", HOME_ST, "tapel:#bDaily", HOME_ST]},
+            # サイクル199b: すぐの 2回め(100ms)・Enter の 押しっぱなし では 始まらない(読む 前に すりぬけない)
+            {"name": "dbl", "acts": ["L", "R", "L", "tapel:#swHome", "tap2:#bDaily", HOME_ST, "wait", "tapel:#bDaily", HOME_ST]},
+            {"name": "enter", "acts": ["L", "R", "L", "tapel:#swHome", "enterHold:#bDaily", HOME_ST]},
             {"name": "wide", "w": 844, "h": 390, "acts": ["L", "R", HOME_ST, "tapel:#swHome", "tapel:#bResume", HOME_ST]},
             {"name": "junk", "store": "junk", "acts": [HOME_ST, "tapel:#swHome", HOME_ST, "tapel:#bResume", HOME_ST, "keyjs:" + HOME_ST[3:], "wait", HOME_ST]},
         ])
@@ -2885,6 +2894,21 @@ class TestKome365HomeResume(unittest.TestCase):
         # e220c631 では 1回め で もう 1月1日 に なり、保存が 消える ので ここで 落ちる
         self.assertEqual((first["screen"], first["save"]), ("sTitle", "LRL"), "だまって 新しく 始めた %r" % (x["js"],))
         self.assertEqual((second["screen"], second["date"]), ("sGame", "1月1日"), "2回め で 始まらない %r" % (x["js"],))
+
+    def test_quick_second_press_does_not_skip_check(self):
+        x = self.r["dbl"]
+        self.assertEqual(x["errs"], [])
+        first, later = x["js"]
+        # fe8d80b8 では 100ms の 2回めで 新しい ゲームが 始まり 保存が 消える ので ここで 落ちる
+        self.assertEqual((first["screen"], first["save"]), ("sTitle", "LRL"), "すぐの 2回め で 始まった %r" % (x["js"],))
+        # 確かめ は のこって いて、0.5秒 より あと(ここ では 約 3秒 あと・6秒 より 前)の 2回めで 始まる
+        self.assertEqual((later["screen"], later["date"]), ("sGame", "1月1日"), x["js"])
+
+    def test_enter_hold_does_not_skip_check(self):
+        x = self.r["enter"]
+        self.assertEqual(x["errs"], [])
+        st = x["js"][-1]
+        self.assertEqual((st["screen"], st["save"]), ("sTitle", "LRL"), "Enter の 押しっぱなし で 始まった %r" % (x["js"],))
 
     def test_wide_screen_resume(self):
         x = self.r["wide"]

@@ -2527,13 +2527,14 @@ function guideDispName(g) {
 
 
 
-const glamp = { id: '', m0: 0, n: 0, at: 0, t0: 0 };
+const glamp = { id: '', m0: 0, n: 0, at: 0 };
 function guideLamps(g, mr) {
   if (!g || !mr) return '';
   const now = performance.now();
-  if (glamp.id !== g.id) Object.assign(glamp, { id: g.id, m0: 0, n: 0, at: 0, t0: now });
+  if (glamp.id !== g.id) Object.assign(glamp, { id: g.id, m0: 0, n: 0, at: 0 });
 
-  if (now - glamp.t0 < 3000) glamp.m0 = Math.max(glamp.m0, mr.m);
+
+  if (!glamp.m0) { if ((window.nishioPixel && nishioPixel.routeOf ? nishioPixel.routeOf() : '') !== (g.id || g.name)) return ''; glamp.m0 = mr.m; }
   if (glamp.m0 < 300) return '';
   const n = Math.min(3, Math.floor((1 - mr.m / glamp.m0) * 4 + 1e-9));
   if (n > glamp.n) { glamp.n = n; glamp.at = now; }

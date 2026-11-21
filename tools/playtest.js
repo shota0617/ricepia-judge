@@ -2106,7 +2106,31 @@ function crashFailures(R, fail) {   // 安全網（guardEvaluate）に かかっ
     };
     const main = await run(390, 844, +(process.env.SECS236 || 62)), s320 = await run(320, 568, 30), s844 = await run(844, 390, 30);
     const placeOk = x => !x.crashed && x.seen > 0 && x.overlap.length === 0;
-    R.checks.guideLamps = { main, s320, s844, ok: !main.crashed && main.at60 >= 1 && placeOk(main) && placeOk(s320) && placeOk(s844) };
+    // サイクル236b（見直し P2）：行き先を かえた すぐ あとの 古い 道すじ で 灯りの もとの 道のりを 決めない
+    //  farNear：遠い 名所（めいろの 道のり 2km 以上）→ 4秒 → 近い 名所（はじめの 行き先。300m 以上）に かえて 6秒、帯を 0.5秒 ごとに 書きなおしても 灯り 0（前は いきなり 3）
+    //  nearFar：近い → 遠い に かえて 6秒 も 0 から（0 の まま）
+    const swap = async () => {
+      const v = await newPage(browser, { howto: true, auto: true, hasTouch: true, isMobile: true }), p = v.page, o = {};
+      try {
+        await p.goto(URL);
+        await p.waitForFunction(() => window.nishioPixel && nishioPixel.maze && nishioPixel.maze.playing && nishioPixel.maze.playing() && nishioGo.state.guide && nishioPixel.maze.route && nishioPixel.maze.route(), null, { timeout: 25000 }).catch(() => {});
+        await p.waitForTimeout(1500);
+        const pick = await p.evaluate(() => { const g = nishioGo, me = g.me, near = g.state.guide, far = g.spots.filter(s => !s.shop).map(s => ({ s, d: g.dist(me, s) })).filter(x => x.d > 1100 && x.d < 1600).sort((a, b) => a.d - b.d)[0];
+          window.__near = { ...near, alts: [] }; window.__far = far && { kind: 'spot', id: far.s.id, name: far.s.name, lat: far.s.lat, lng: far.s.lng, why: 'テスト', by: 'テスト', alts: [] };
+          return { near: near.name, far: far && far.s.name }; });
+        if (!pick.far) return { why: 'no-far' };
+        const watch = async (to, ms) => { await p.evaluate(to => { nishioGo.setGuide(window[to]); }, to); let mx = 0, m = null; for (let t = 0; t < ms; t += 500) { await p.waitForTimeout(500); const r = await p.evaluate(() => { nishioGo.renderGuide(); const rt = nishioPixel.maze.route(); return { lit: document.querySelectorAll('#guide .glamp.on').length, m: rt ? Math.round(rt.m) : null }; }); mx = Math.max(mx, r.lit); m = r.m; } return { max: mx, m }; };
+        o.pick = pick;
+        await watch('__far', 4000);
+        o.farNear = await watch('__near', 6000);
+        o.nearFar = await watch('__far', 6000);
+      } catch (e) { o.crashed = String(e.message).slice(0, 160); }
+      finally { R.errors.push(...v.errors); await v.ctx.close(); }
+      return o;
+    };
+    const sw = await swap();
+    const farLit = (main.litT || []).filter(t => t > 30);   // 3つめ（遠い 行き先）でも 灯る（はかった：54.5〜54.9秒）
+    R.checks.guideLamps = { main, s320, s844, sw, farLit, ok: !main.crashed && main.at60 >= 1 && farLit.length >= 1 && placeOk(main) && placeOk(s320) && placeOk(s844) && !sw.why && !sw.crashed && sw.farNear.max === 0 && sw.nearFar.max === 0 };
   }
   // サイクル233（ほかの 行き先 に 同じ 名所 を 出さない）：
   //  init：はじめの 行き先の 帯を 本物の タッチで ひらき、「ほかの行き先」の ボタンが 行き先と 同じ 名所（その 名所に 立つ 人 も）を ささない（前は「🏁 名鉄 西尾駅」に「↪ 名鉄 西尾駅（駅前の学生）」）

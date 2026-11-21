@@ -2991,30 +2991,55 @@ function showIdleCard() {
   if (!cookedReturns.length) return;
   if (liked()) { likeBtn.disabled = true; likeBtn.textContent = "ありがとう 🌾"; }
   const wasOn = idleCard.classList.contains("on");
+  if (!placeIdleCard()) { hideIdleCard(); idleWant = true; return; } /* 置き場が 無い 時は 出さない（サイクル180）。回して 置ける ように なったら 出す */
   idleCard.inert = false;
-  placeIdleCard();
   idleCard.classList.add("on");
   if (!wasOn) idleSound(); /* 終了カードが現れる合図は固有の音にする（サイクル108・差14）。すでに現れている時には鳴らさない */
 }
 /* カードは 下の 案内の 文（はんこの あとは「つぎの ふくろ」）の すぐ 上に 置く（サイクル159）。旧版は 枠の 下はしに 置いて、案内の 文を 100% かくして いた
    （390×844: 6310px²・844×390: 3460px²）。その 置き場所で 袋・はんこ・点線の 丸・手本の 指・押す 物・米の 流れの 絵に かかる 時は、今までどおり 下はし に 置く */
+/* 「つぎの ふくろ」（nextBtn）が 出て いる 時は、カードで それを おおわない（サイクル180・運営者 2026-11-14「判断不要で 進めて」）。
+   旧版は 置き場で ほかの 物に かかると 下はし に もどし、不透明な カードが nextBtn を 丸ごと おおって いた。その 場所を たたくと
+   320×568・390×844・820×1180 では「サイトへ もどる」、568×320・844×390 では「いいね」に 当たった（5画面 5/5）。
+   nextBtn が 出て いる 時は ① nextBtn の すぐ 上 ② 米の 流れの 絵の すぐ 上 の 順に ためし、どちらも かかる なら 出さない（false）。
+   カードの 中身・45秒・1ふくろめの はんこ までは 出さない 決まり・見せる だけの 形 は 変えない */
+let idleWant = false;
 function placeIdleCard() {
   idleCard.style.bottom = "";
   const shown = e => !!e && getComputedStyle(e).display !== "none" && e.offsetHeight > 0;
+  const next = shown(nextBtn);
   const low = [hint, nextBtn].filter(shown).map(e => e.getBoundingClientRect().top);
-  if (!low.length) return;
-  const stage = (idleCard.offsetParent || document.body).getBoundingClientRect(); /* カードの 位置の もと（#app） */
-  const bottom = Math.max(5, Math.round(stage.bottom - Math.min(...low) + 6)), top = stage.bottom - bottom - idleCard.offsetHeight;
+  if (!low.length) return true;
+  const stage = (idleCard.offsetParent || document.body).getBoundingClientRect(); /* カードの 位置の もと（#foot） */
   const seen = e => { for (let n = e; n && n.nodeType === 1 && n !== document.body; n = n.parentElement) { const cs = getComputedStyle(n); if (n.hidden || cs.display === "none" || cs.visibility === "hidden" || +cs.opacity < 0.5) return false; } return true; };
-  /* かぶっては いけない 物: 袋・はんこ・点線の 丸・手本の 指 と、押す 物（等級の ボタン・水分計・粒・🔍・🤲）、米の 流れの 絵 */
-  const hits = ["#bagBig", "#bagBtn", "#hanko", ".markSpot", "#guide", ".gradeBtn", "#meterBtn", "#crank", ".grain", "#zoomBtn", "#senseToken", "#journey"].some(q => [...document.querySelectorAll(q)].some(e => {
-    if (!seen(e) || e.closest("[inert]")) return false;
-    const r = e.getBoundingClientRect(); return r.width > 0 && r.bottom > top && r.top < stage.bottom - bottom;
-  }));
-  if (!hits) idleCard.style.bottom = bottom + "px";
+  /* かぶっては いけない 物: 袋・はんこ・点線の 丸・手本の 指 と、押す 物（等級の ボタン・水分計・粒・🔍・🤲）、米の 流れの 絵、つぎの ふくろ、上の 棒 */
+  const osu = $("osu"), under = e => osu.classList.contains("on") && !!e.closest("#stage") && !e.closest("#osu"); /* おすの 層（不透明）の 下に かくれた 皿・粒・上の 場面は 見えないので 数えない */
+  /* 米の 流れの 絵は 出て くる 動き（大きさ 0.94→1.02）の 途中でも、動き おわった 大きさで 見る（中心から ふくらむ） */
+  const box = e => { const r = e.getBoundingClientRect(); if (e.id !== "journey") return r; const h = e.offsetHeight, t = r.top + (r.height - h) / 2; return { width:r.width, top:t, bottom:t + h }; };
+  const fits = bottom => {
+    const top = stage.bottom - bottom - idleCard.offsetHeight;
+    if (top < 0) return false; /* 画面の 上に はみ出す 置き場は 使わない */
+    return !["#bagBig", "#bagBtn", "#hanko", ".markSpot", "#guide", ".gradeBtn", "#meterBtn", "#crank", ".grain", "#zoomBtn", "#senseToken", "#journey", "#nextBtn", "#head"].some(q => [...document.querySelectorAll(q)].some(e => {
+      if (!(e.id === "journey" || e.id === "nextBtn" ? !e.hidden && getComputedStyle(e).display !== "none" : seen(e)) || e.closest("[inert]") || under(e)) return false; /* 米の 流れの 絵と nextBtn は 出て くる 動きの 途中（こさ 0）でも かかる 物と して 見る */
+      const r = box(e); return r.width > 0 && r.bottom > top && r.top < stage.bottom - bottom;
+    }));
+  };
+  const spots = [Math.max(5, Math.round(stage.bottom - Math.min(...low) + 6))];
+  const jn = $("journey"), jr = box(jn);
+  if (next && !jn.hidden && jr.bottom > jr.top) spots.push(Math.round(stage.bottom - jr.top));
+  for (const bottom of spots) if (fits(bottom)) { idleCard.style.bottom = bottom + "px"; return true; }
+  return !next; /* nextBtn が 無い 時は 今までどおり 下はし（案内の 文の 上） */
 }
-window.addEventListener("resize", () => { if (idleCard.classList.contains("on")) placeIdleCard(); });
+window.addEventListener("resize", () => {
+  if (idleCard.classList.contains("on")) { if (!placeIdleCard()) { hideIdleCard(); idleWant = true; } }
+  else if (idleWant) showIdleCard();
+});
+/* カードが 先に 出て いて あとから nextBtn が 出る 時も、置き直して nextBtn を おおわない（置けなければ しまう） */
+if (window.MutationObserver) new MutationObserver(() => {
+  if (nextBtn.classList.contains("on") && idleCard.classList.contains("on") && !placeIdleCard()) { hideIdleCard(); idleWant = true; }
+}).observe(nextBtn, { attributes:true, attributeFilter:["class"] });
 function hideIdleCard() {
+  idleWant = false;
   idleCard.classList.remove("on");
   idleCard.inert = true;
 }
@@ -3024,6 +3049,7 @@ function dismissIdleCard() { /* 自分で閉じる合図も固有の音にする
   idleOutSound();
 }
 function armIdle() {
+  idleWant = false;
   idleIn(IDLE_MS);
 }
 /* 画面が かくれて いる 間は、手が 止まった 時計も 止める（サイクル153・最初の1分）。旧版は かくれて いる 間も 45秒を 数え、

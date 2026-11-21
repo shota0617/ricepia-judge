@@ -2524,6 +2524,22 @@ function guideDispName(g) {
   const n = g.id && typeof placeNpcs === 'function' ? placeNpcs().find(x => x.id === g.id) : null;
   return n && n.name && n.spotName && g.name === `${n.name}（${n.spotName}）` ? `${n.spotName}（${n.name}）` : g.name;
 }
+
+
+
+const glamp = { id: '', m0: 0, n: 0, at: 0, t0: 0 };
+function guideLamps(g, mr) {
+  if (!g || !mr) return '';
+  const now = performance.now();
+  if (glamp.id !== g.id) Object.assign(glamp, { id: g.id, m0: 0, n: 0, at: 0, t0: now });
+
+  if (now - glamp.t0 < 3000) glamp.m0 = Math.max(glamp.m0, mr.m);
+  if (glamp.m0 < 300) return '';
+  const n = Math.min(3, Math.floor((1 - mr.m / glamp.m0) * 4 + 1e-9));
+  if (n > glamp.n) { glamp.n = n; glamp.at = now; }
+  const age = now - glamp.at;
+  return `<span class="glamps" aria-hidden="true">${[0, 1, 2, 3].map(k => `<i class="glamp${k < glamp.n ? ' on' : ''}"${k === glamp.n - 1 && age < 400 ? ` style="animation-delay:-${Math.round(age)}ms"` : ''}></i>`).join('')}</span>`;
+}
 function renderGuide() {
   const el = $('guide');
   const g = guideTarget();
@@ -2536,7 +2552,7 @@ function renderGuide() {
   const far = fmtM(mr ? mr.m : dist(me, g));
   const gname = `<em class="gn">${mr ? '🏁 ' : ''}${esc(guideDispName(g))}</em>`;
   const head = simple() && window.NSG_ICONS ? `${NSG_ICONS.arrow(bearing(me, g))}${guideThumb(g)}${g.byId ? PIA('scroll', 'イベント') : ''} ${gname}<span>　${far}</span>` : `${g.byId ? '📜' : '🧭'} ${gname}<span>　${far}</span>`;
-  el.innerHTML = `<b>${head}</b>`
+  el.innerHTML = `<b>${head}</b>${guideLamps(g, mr)}`
     + (alts.length ? `<span class="alts"><em>ほかの行き先：</em>${alts.map(({ a, i }) => `<button type="button" class="btn mini" data-alt="${i}">↪ ${esc(guideDispName(a))}${me ? `（${fmtM(dist(me, a))}）` : ''}</button>`).join('')}</span>` : '');
   el.title = `${g.by}「${g.why}」`;
 

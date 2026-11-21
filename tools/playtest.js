@@ -2047,6 +2047,91 @@ function crashFailures(R, fail) {   // 安全網（guardEvaluate）に かかっ
     } finally { R.errors.push(...v.errors); await v.ctx.close(); }
   })();
   Object.assign(R.checks, await firstMinuteChecks(browser, R));   // サイクル189（はじめの 1分）
+  // サイクル236（PLAN7 A1：帯の 灯り）：はじめての 人が 手本の 指先を タップ して 歩く（find_nishio5 の やり方）
+  //  lit：390×844 で 60秒 までに 灯りが 1つ 以上 灯る（前は 帯は へる 数 だけ。康全寺 2016m の 4分の1 は 41〜42秒）
+  //  place：320×568・390×844・844×390 で、灯りが 帯の 名前・数字・ほかの 行き先（ひらいた とき）・縁の 矢印・手本の 手（「タップ！」の 札 ふくむ）に かからず、画面と 下の 欄の 中
+  {
+    const run = async (W, H, secs) => {
+      const v = await newPage(browser, { howto: true, auto: true, hasTouch: true, isMobile: true, viewport: { width: W, height: H } }), p = v.page;
+      const o = { size: `${W}x${H}`, taps: 0, first: null, at60: null, overlap: [], seen: 0, far: null };
+      try {
+        const T0 = Date.now(), T = () => (Date.now() - T0) / 1000;
+        await p.goto(URL);
+        await p.waitForFunction(() => window.nishioPixel && nishioPixel.roll && nishioPixel.roll.x !== null, null, { timeout: 30000 }).catch(() => {});
+        const cdp = await v.ctx.newCDPSession(p), touch = (type, pts) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: pts.map(([x, y], id) => ({ x, y, id })) });
+        const look = () => p.evaluate(() => {
+          const d = document.getElementById('tapDemo'), R = e => { if (!e) return null; const r = e.getBoundingClientRect(); return r.width && r.height ? [r.left, r.top, r.right, r.bottom] : null; };
+          const lamps = [...document.querySelectorAll('#guide .glamp')].map(R).filter(Boolean), lit = document.querySelectorAll('#guide .glamp.on').length;
+          const hit = (a, b) => a && b && a[0] < b[2] && b[0] < a[2] && a[1] < b[3] && b[1] < a[3];
+          const ov = [];
+          if (lamps.length) {
+            const box = [Math.min(...lamps.map(r => r[0])), Math.min(...lamps.map(r => r[1])), Math.max(...lamps.map(r => r[2])), Math.max(...lamps.map(r => r[3]))];
+            const parts = { name: R(document.querySelector('#guide b .gn')), num: R(document.querySelector('#guide b > span')), thumb: R(document.querySelector('#guide b img')), arrow: nishioPixel.goalArrowRect || null };
+            if (d && !d.hidden) { parts.hand = R(d); [...d.querySelectorAll('*')].forEach((c, k) => { parts['hand' + k] = R(c); }); }
+            for (const [k, r] of Object.entries(parts)) if (hit(box, r)) { ov.push(k); window.__ovd = window.__ovd || {}; window.__ovd[k] = { box: box.map(Math.round), r: r.map(Math.round) }; }
+            const sh = R(document.getElementById('sheet'));
+            if (!(box[0] >= 0 && box[2] <= innerWidth && box[1] >= 0 && box[3] <= innerHeight)) ov.push('screen');
+            if (sh && !(box[1] >= sh[1] - 1)) ov.push('above-sheet');
+            const g = document.getElementById('guide'); g.classList.add('open');
+            const lb = [...document.querySelectorAll('#guide .glamp')].map(R).filter(Boolean), box2 = lb.length ? [Math.min(...lb.map(r => r[0])), Math.min(...lb.map(r => r[1])), Math.max(...lb.map(r => r[2])), Math.max(...lb.map(r => r[3]))] : box;   // ひらくと 帯が 上へ のびる ので 灯りの 場所も はかり なおす
+            [...g.querySelectorAll('.alts .btn, .alts em, b .gn, b > span')].map(R).forEach((r, k) => { if (hit(box2, r)) ov.push('open' + k); });
+            g.classList.remove('open');
+          }
+          const di = d && !d.hidden ? [parseFloat(d.style.left), parseFloat(d.style.top)] : null;
+          return { n: lamps.length, lit, ov, demo: di, info: !document.getElementById('pxInfo').hidden };
+        });
+        let lastTap = -9;
+        while (T() < secs) {
+          const i = await look();
+          if (i.info) await p.evaluate(() => { document.getElementById('pxInfo').hidden = true; });
+          if (i.n) { o.seen++; for (const k of i.ov) if (!o.overlap.includes(k)) o.overlap.push(k); if (o.far === null) o.far = +T().toFixed(1); }
+          if (i.lit && o.first === null) { o.first = +T().toFixed(1); if (process.env.SHOT236) await p.screenshot({ path: `${process.env.SHOT236}_${W}_lit1.png` }); }
+          if (i.lit >= 2 && !o.two) { o.two = +T().toFixed(1); if (process.env.SHOT236) await p.screenshot({ path: `${process.env.SHOT236}_${W}_lit2.png` }); }
+          if (i.n && !o.pre && process.env.SHOT236) { o.pre = 1; await p.screenshot({ path: `${process.env.SHOT236}_${W}_pre.png` }); }
+          if (i.lit > (o.litNow || 0)) { o.litTotal = (o.litTotal || 0) + (i.lit - (o.litNow || 0)); (o.litT = o.litT || []).push(+T().toFixed(1)); }
+          o.litNow = i.lit;
+          if (o.at60 === null && T() >= 60) o.at60 = o.litTotal || 0;
+          if (o.at120 === undefined && T() >= 120) o.at120 = o.litTotal || 0;
+          if (i.demo && T() - lastTap > 0.8) {
+            await p.waitForTimeout(350);
+            const j = await look(); if (!j.demo) continue;
+            await touch('touchStart', [j.demo]); await p.waitForTimeout(70); await touch('touchEnd', []); lastTap = T(); o.taps++;
+            await p.waitForTimeout(1200);
+          } else await p.waitForTimeout(150);
+        }
+        o.ovd = await p.evaluate(() => window.__ovd || null);
+      } catch (e) { o.crashed = String(e.message).slice(0, 160); }
+      finally { R.errors.push(...v.errors); await v.ctx.close(); }
+      return o;
+    };
+    const main = await run(390, 844, +(process.env.SECS236 || 62)), s320 = await run(320, 568, 30), s844 = await run(844, 390, 30);
+    const placeOk = x => !x.crashed && x.seen > 0 && x.overlap.length === 0;
+    // サイクル236b（見直し P2）：行き先を かえた すぐ あとの 古い 道すじ で 灯りの もとの 道のりを 決めない
+    //  farNear：遠い 名所（めいろの 道のり 2km 以上）→ 4秒 → 近い 名所（はじめの 行き先。300m 以上）に かえて 6秒、帯を 0.5秒 ごとに 書きなおしても 灯り 0（前は いきなり 3）
+    //  nearFar：近い → 遠い に かえて 6秒 も 0 から（0 の まま）
+    const swap = async () => {
+      const v = await newPage(browser, { howto: true, auto: true, hasTouch: true, isMobile: true }), p = v.page, o = {};
+      try {
+        await p.goto(URL);
+        await p.waitForFunction(() => window.nishioPixel && nishioPixel.maze && nishioPixel.maze.playing && nishioPixel.maze.playing() && nishioGo.state.guide && nishioPixel.maze.route && nishioPixel.maze.route(), null, { timeout: 25000 }).catch(() => {});
+        await p.waitForTimeout(1500);
+        const pick = await p.evaluate(() => { const g = nishioGo, me = g.me, near = g.state.guide, far = g.spots.filter(s => !s.shop).map(s => ({ s, d: g.dist(me, s) })).filter(x => x.d > 1100 && x.d < 1600).sort((a, b) => a.d - b.d)[0];
+          window.__near = { ...near, alts: [] }; window.__far = far && { kind: 'spot', id: far.s.id, name: far.s.name, lat: far.s.lat, lng: far.s.lng, why: 'テスト', by: 'テスト', alts: [] };
+          return { near: near.name, far: far && far.s.name }; });
+        if (!pick.far) return { why: 'no-far' };
+        const watch = async (to, ms) => { await p.evaluate(to => { nishioGo.setGuide(window[to]); }, to); let mx = 0, m = null; for (let t = 0; t < ms; t += 500) { await p.waitForTimeout(500); const r = await p.evaluate(() => { nishioGo.renderGuide(); const rt = nishioPixel.maze.route(); return { lit: document.querySelectorAll('#guide .glamp.on').length, m: rt ? Math.round(rt.m) : null }; }); mx = Math.max(mx, r.lit); m = r.m; } return { max: mx, m }; };
+        o.pick = pick;
+        await watch('__far', 4000);
+        o.farNear = await watch('__near', 6000);
+        o.nearFar = await watch('__far', 6000);
+      } catch (e) { o.crashed = String(e.message).slice(0, 160); }
+      finally { R.errors.push(...v.errors); await v.ctx.close(); }
+      return o;
+    };
+    const sw = await swap();
+    const farLit = (main.litT || []).filter(t => t > 30);   // 3つめ（遠い 行き先）でも 灯る（はかった：54.5〜54.9秒）
+    R.checks.guideLamps = { main, s320, s844, sw, farLit, ok: !main.crashed && main.at60 >= 1 && farLit.length >= 1 && placeOk(main) && placeOk(s320) && placeOk(s844) && !sw.why && !sw.crashed && sw.farNear.max === 0 && sw.nearFar.max === 0 };
+  }
   // サイクル233（ほかの 行き先 に 同じ 名所 を 出さない）：
   //  init：はじめの 行き先の 帯を 本物の タッチで ひらき、「ほかの行き先」の ボタンが 行き先と 同じ 名所（その 名所に 立つ 人 も）を ささない（前は「🏁 名鉄 西尾駅」に「↪ 名鉄 西尾駅（駅前の学生）」）
   //  sweep：はじめの 場所から 2.5km の 名所 55か所 × はじめて／2つめ 以降 × 回 2とおり × 人の 話の あと、decideGuide の ほかの 行き先 に 行き先と 同じ 名所・2つが 同じ 名所 が 0
@@ -5262,6 +5347,7 @@ function crashFailures(R, fail) {   // 安全網（guardEvaluate）に かかっ
   need(c.roll && c.roll.ok, 'かたむけて転がす：お米が転がらない（または絵が回らない）');
   need(c.slope && c.slope.ok, '坂：平らな所で動く、または 下り坂で ひとりでに転がらない');
   need(c.guideRecord && c.guideRecord.ok, 'ガイドさんの記録：西尾城跡のガイドさんの話に、つぎのレベルまでの ポイントと しるしの数が出ない');
+  need(c.guideLamps && c.guideLamps.ok, `帯の 灯り：60秒で 1つも 灯らない・名前・数字・矢印・手本 に かかる（${JSON.stringify(c.guideLamps).slice(0, 600)}）`);
   need(c.altSamePlace && c.altSamePlace.ok, `ほかの 行き先：行き先と 同じ 名所（その 名所の 人）が 並ぶ・空の「ほかの行き先：」が のこる（${JSON.stringify(c.altSamePlace)}）`);
   need(c.infoWindowTap && c.infoWindowTap.ok, `名所の 窓：みんなの声 が 読めない・窓の 外の 地図を タップ しても 窓が とじない（${JSON.stringify(c.infoWindowTap)}）`);
   need(c.riceTapPre && c.riceTapPre.ok, `押した しゅんかん：指が ついて 2こま 以内に お米が かわらない・なぞりで もどらない（${JSON.stringify(c.riceTapPre)}）`);

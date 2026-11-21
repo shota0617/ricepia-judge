@@ -2524,6 +2524,23 @@ function guideDispName(g) {
   const n = g.id && typeof placeNpcs === 'function' ? placeNpcs().find(x => x.id === g.id) : null;   // typeof：guideDispName だけを 取りだす テストでも 止まらない
   return n && n.name && n.spotName && g.name === `${n.name}（${n.spotName}）` ? `${n.spotName}（${n.name}）` : g.name;
 }
+// サイクル236（PLAN7 A1）：遠い 行き先（めいろの 道のり 300m 以上）は、決まった ときの 道のりを 4つに 分け、のこりが 4分の3・2分の1・4分の1 を 切る たびに 帯の 上の へりの 小さな 灯りが 1つ 灯る（ふえる もの）。
+// 行き先が かわったら 0 から。逆へ 歩いて のこりが ふえても 消さない。字・音は 足さない。灯った しゅんかんは 0.4秒 光る（動きを へらす 設定では 色 だけ。style.css の .glamp）。
+// はかった（main 49b284c2・手本の 指先を タップ・390×844 × 3回）：3つめの 行き先 ガイドさん（西尾城跡。道のり 2328m）は 25秒に 決まり、4分の1 53.6〜53.9秒・2分の1 80.1〜80.5秒・4分の3 106.2〜106.6秒・着く 130秒。帯は へる 数 だけ だった
+const glamp = { id: '', m0: 0, n: 0, at: 0 };
+function guideLamps(g, mr) {
+  if (!g || !mr) return '';
+  const now = performance.now();
+  if (glamp.id !== g.id) Object.assign(glamp, { id: g.id, m0: 0, n: 0, at: 0 });
+  // サイクル236b（見直し P2）：m0 は めいろの 道すじが 新しい 行き先の ものに なって から 決める（pixel.js の routeOf＝道すじの 持ち主。ちがう 間は 灯り なし）。
+  // 前は「はじめの 3秒の いちばん 長い 道のり」で、遠い 行き先から 近い 行き先に かえた すぐ あと、前の 長い 道すじで m0 が 決まり、いきなり 3つ 灯った。古い 道すじ（のこり 24m）で 3つめに 灯りが 出ない のも 同じ 直しで おきない
+  if (!glamp.m0) { if ((window.nishioPixel && nishioPixel.routeOf ? nishioPixel.routeOf() : '') !== (g.id || g.name)) return ''; glamp.m0 = mr.m; }
+  if (glamp.m0 < 300) return '';
+  const n = Math.min(3, Math.floor((1 - mr.m / glamp.m0) * 4 + 1e-9));
+  if (n > glamp.n) { glamp.n = n; glamp.at = now; }
+  const age = now - glamp.at;   // 帯は 何度も 書きなおす ので、光りは 灯った 時から の つづき（animation-delay を 負に）
+  return `<span class="glamps" aria-hidden="true">${[0, 1, 2, 3].map(k => `<i class="glamp${k < glamp.n ? ' on' : ''}"${k === glamp.n - 1 && age < 400 ? ` style="animation-delay:-${Math.round(age)}ms"` : ''}></i>`).join('')}</span>`;
+}
 function renderGuide() {
   const el = $('guide');
   const g = guideTarget();
@@ -2536,7 +2553,7 @@ function renderGuide() {
   const far = fmtM(mr ? mr.m : dist(me, g));   // 道のりは 数字だけ（めいろの ときは めいろの 道のり。しるしは 名前の 🏁 に まかせる）
   const gname = `<em class="gn">${mr ? '🏁 ' : ''}${esc(guideDispName(g))}</em>`;   // めいろの ときは 行き先が ゴール（地図の 🏁 と おなじ しるし）。長い 名前は こちらを「…」に して 道のりは のこす
   const head = simple() && window.NSG_ICONS ? `${NSG_ICONS.arrow(bearing(me, g))}${guideThumb(g)}${g.byId ? PIA('scroll', 'イベント') : ''} ${gname}<span>　${far}</span>` : `${g.byId ? '📜' : '🧭'} ${gname}<span>　${far}</span>`;   // 1行だけ：目的地の名前と 距離（運営者の声 2026-11-03「文字が多すぎる」）
-  el.innerHTML = `<b>${head}</b>`
+  el.innerHTML = `<b>${head}</b>${guideLamps(g, mr)}`
     + (alts.length ? `<span class="alts"><em>ほかの行き先：</em>${alts.map(({ a, i }) => `<button type="button" class="btn mini" data-alt="${i}">↪ ${esc(guideDispName(a))}${me ? `（${fmtM(dist(me, a))}）` : ''}</button>`).join('')}</span>` : '');
   el.title = `${g.by}「${g.why}」`;
   // glowHtml / treasureHtml は 文字を 減らすため ここでは 呼ばない（サイクル25。関数は 残す）

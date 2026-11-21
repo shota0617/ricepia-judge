@@ -514,6 +514,13 @@ body:has(#panel-log:not([hidden])) .toast,body:has(#panel-voice:not([hidden])) .
 .guide{margin:0 0 6px;padding:6px 10px;border-left:4px solid #3aa7d6;background:#eef8fc;border-radius:8px;font-size:13px;line-height:1.5}
 .guide b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .guide b span{font-weight:400;font-size:12px}
+.guide{position:relative}   /* サイクル236：灯り（.glamps）の 置き場 */
+.guide .glamps{position:absolute;top:-5px;left:50%;transform:translateX(-50%);display:flex;gap:4px;pointer-events:none}   /* 帯の 上の へりの まん中（縁の 矢印は 画面の はし に 出る）。名前・数字・ほかの 行き先 の 行には かからない */
+.guide .glamp{display:block;width:8px;height:8px;border-radius:50%;background:#2c4a55;box-shadow:0 0 0 1px #7ee0ff}
+.guide .glamp.on{background:#ffe680;box-shadow:0 0 0 1px #ffe680,0 0 4px #ffd54f}
+.guide .glamp[style]{animation:glampOn .4s ease-out both}
+@keyframes glampOn{0%{transform:scale(1.9);background:#fff}100%{transform:none}}
+@media (prefers-reduced-motion:reduce){@keyframes glampOn{0%{transform:none;background:#fff}100%{transform:none}}}
 .guide b{display:flex;align-items:center}.guide b .gn{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-style:normal;margin-left:3px}.guide b>span{flex:none}   /* 名前が 長いと 名前を「…」に（道のりは かくさない） */
 .guide small{display:block;color:var(--sub);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .guide.open b,.guide.open small{white-space:normal}

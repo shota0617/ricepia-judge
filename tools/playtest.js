@@ -2047,6 +2047,51 @@ function crashFailures(R, fail) {   // 安全網（guardEvaluate）に かかっ
     } finally { R.errors.push(...v.errors); await v.ctx.close(); }
   })();
   Object.assign(R.checks, await firstMinuteChecks(browser, R));   // サイクル189（はじめの 1分）
+  // サイクル233（ほかの 行き先 に 同じ 名所 を 出さない）：
+  //  init：はじめの 行き先の 帯を 本物の タッチで ひらき、「ほかの行き先」の ボタンが 行き先と 同じ 名所（その 名所に 立つ 人 も）を ささない（前は「🏁 名鉄 西尾駅」に「↪ 名鉄 西尾駅（駅前の学生）」）
+  //  sweep：はじめの 場所から 2.5km の 名所 55か所 × はじめて／2つめ 以降 × 回 2とおり × 人の 話の あと、decideGuide の ほかの 行き先 に 行き先と 同じ 名所・2つが 同じ 名所 が 0
+  //  keep：記録に のこった 前の 行き先（同じ 名所 だけ の ほかの 行き先）でも、帯に 空の「ほかの行き先：」も 同じ 名所 も 出ない
+  {
+    const v = await newPage(browser, { howto: true, auto: true, hasTouch: true, isMobile: true }), p = v.page;
+    try {
+      await p.goto(URL);
+      await p.waitForFunction(() => window.nishioPixel && nishioPixel.maze && nishioPixel.maze.playing && nishioPixel.maze.playing() && nishioGo.state.guide && !document.getElementById('guide').hidden, null, { timeout: 25000 }).catch(() => {});
+      await p.waitForTimeout(1500);
+      const PL = `const g = nishioGo, npcs = g.npcs, place = x => x.kind === 'npc' ? 'f-' + ((npcs.find(n => n.id === x.id) || {}).spot || x.id) : x.id;`;
+      const cdp = await v.ctx.newCDPSession(p), touch = (type, pts) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: pts.map(([x, y], id) => ({ x, y, id })) });
+      const gb = await p.evaluate(() => { const r = document.getElementById('guide').getBoundingClientRect(); return [r.left + Math.min(40, r.width / 4), r.top + r.height / 2]; });
+      await touch('touchStart', [gb]); await p.waitForTimeout(70); await touch('touchEnd', []); await p.waitForTimeout(500);
+      const init = await p.evaluate(new Function(PL + `const gd = g.state.guide, bs = [...document.querySelectorAll('#guide [data-alt]')];
+        return { main: gd.name, open: document.getElementById('guide').classList.contains('open'), btns: bs.map(b => b.textContent), same: bs.filter(b => place(gd.alts[+b.dataset.alt]) === place(gd)).length,
+          emptyLabel: !!document.querySelector('#guide .alts') && !bs.length };`));
+      init.ok = init.same === 0 && !init.emptyLabel;
+      const sweep = await p.evaluate(new Function(PL + `const S = g.state, me0 = g.me, k0 = S.guides, mz0 = localStorage.getItem('nsg_mzgoals'), gd0 = S.guide;
+        const pos = g.spots.filter(s => Math.hypot((s.lat - me0.lat) * 111320, (s.lng - me0.lng) * 91000) < 2500 && !s.shop).slice(0, 60);
+        const o = { pos: pos.length, n: 0, dupMain: 0, dupAlt: 0, zero: 0, ex: [] };
+        for (const s of pos) { g.moveTo(s.lat + 0.0004, s.lng + 0.0004);
+          const near = npcs.filter(n => Math.hypot((n.lat - s.lat) * 111320, (n.lng - s.lng) * 91000) < 300)[0];
+          for (const mz of [0, 3]) { localStorage.setItem('nsg_mzgoals', String(mz));
+            for (const k of [0, 1]) { S.guides = k;
+              for (const from of near ? [null, near] : [null]) { const d = g.decideGuide(from); o.n++; if (!d) continue;
+                if (!d.alts.length) o.zero++;
+                if (d.alts.some(a => place(a) === place(d))) { o.dupMain++; if (o.ex.length < 3) o.ex.push(d.name + ' ⇢ ' + d.alts.map(a => a.name).join(' / ')); }
+                if (d.alts.length === 2 && place(d.alts[0]) === place(d.alts[1])) o.dupAlt++; } } } }
+        S.guides = k0; if (mz0 === null) localStorage.removeItem('nsg_mzgoals'); else localStorage.setItem('nsg_mzgoals', mz0); S.guide = gd0; g.renderGuide();
+        return o;`));
+      sweep.ok = sweep.n > 100 && sweep.dupMain === 0 && sweep.dupAlt === 0;
+      const keep = await p.evaluate(new Function(PL + `const S = g.state, gd0 = S.guide, n = npcs.find(x => x.spot && g.spots.some(s => s.id === 'f-' + x.spot));
+        if (!n) return { why: 'no-npc' };
+        const sp = g.spots.find(s => s.id === 'f-' + n.spot);
+        S.guide = { kind: 'spot', id: sp.id, name: sp.name, lat: sp.lat, lng: sp.lng, why: 'テスト', by: 'テスト', alts: [{ kind: 'npc', id: n.id, name: n.name + '（' + n.spotName + '）', lat: n.lat, lng: n.lng, why: 'テスト', by: 'テスト' }], t: Date.now() };
+        g.renderGuide(); document.getElementById('guide').classList.add('open');
+        const t = document.getElementById('guide').innerText, r = { text: t.replace(/\s+/g, ' ').slice(0, 80), label: /ほかの行き先/.test(t), btns: document.querySelectorAll('#guide [data-alt]').length };
+        document.getElementById('guide').classList.remove('open'); S.guide = gd0; g.renderGuide();
+        return r;`));
+      keep.ok = !keep.why && !keep.label && keep.btns === 0;
+      R.checks.altSamePlace = { init, sweep, keep, ok: init.ok && sweep.ok && keep.ok };
+    } catch (e) { R.checks.altSamePlace = { ok: false, crashed: String(e.message).slice(0, 160) }; }
+    finally { R.errors.push(...v.errors); await v.ctx.close(); }
+  }
   // サイクル232（名所の 窓 で 迷わない）：
   //  react：窓の「みんなの声」の 札（.react-line span）の 字と 地の こさ の 比が 4.5 以上（前は 黒い 窓の 白い 字を 引きつぎ 1.08 で 読めなかった）
   //  close：窓を 開いた まま 窓の 外の 地図（道すじの 先の マス）を 本物の タッチで タップ すると、窓が とじて お米が 歩く（前は 窓が 開いた まま、手本も 出なかった）
@@ -5217,6 +5262,7 @@ function crashFailures(R, fail) {   // 安全網（guardEvaluate）に かかっ
   need(c.roll && c.roll.ok, 'かたむけて転がす：お米が転がらない（または絵が回らない）');
   need(c.slope && c.slope.ok, '坂：平らな所で動く、または 下り坂で ひとりでに転がらない');
   need(c.guideRecord && c.guideRecord.ok, 'ガイドさんの記録：西尾城跡のガイドさんの話に、つぎのレベルまでの ポイントと しるしの数が出ない');
+  need(c.altSamePlace && c.altSamePlace.ok, `ほかの 行き先：行き先と 同じ 名所（その 名所の 人）が 並ぶ・空の「ほかの行き先：」が のこる（${JSON.stringify(c.altSamePlace)}）`);
   need(c.infoWindowTap && c.infoWindowTap.ok, `名所の 窓：みんなの声 が 読めない・窓の 外の 地図を タップ しても 窓が とじない（${JSON.stringify(c.infoWindowTap)}）`);
   need(c.riceTapPre && c.riceTapPre.ok, `押した しゅんかん：指が ついて 2こま 以内に お米が かわらない・なぞりで もどらない（${JSON.stringify(c.riceTapPre)}）`);
   need(c.shelfFirstWalk && c.shelfFirstWalk.ok, `動かない わく：はじめてのさんぽ で 空の ピース棚を 描く・あとの 人に 棚が 出ない（${JSON.stringify(c.shelfFirstWalk)}）`);

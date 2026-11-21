@@ -1983,7 +1983,9 @@ function decideGuide0(from, wide, tooNearOk) {
   c = c || cands[0];
   // ほかの候補（行き先がちがうものを2つまで）。札をひらくと選べる
   // めいろでは ほかの候補も 縦（南北）が 先、同じ 向きの 中では 近い順（並びだけ。主行き先は 上で 決まっている）
-  const rest = cands.filter(x => x.id !== c.id).filter((x, i, a) => a.findIndex(y => y.id === x.id) === i);
+  // サイクル233：同じ 名所（その 名所 に 立つ 人 も）は 1つ だけ・行き先 と 同じ 名所は 出さない（前は「🏁 名鉄 西尾駅」の 下に「↪ 名鉄 西尾駅（駅前の学生）」が 並んだ）
+  const gp = typeof guidePlace === 'function' ? guidePlace : x => x.id;   // typeof：decideGuide0 だけを 取りだす テストでも 止まらない
+  const rest = cands.filter(x => gp(x) !== gp(c)).filter((x, i, a) => a.findIndex(y => gp(y) === gp(x)) === i);
   const alts = (mazeVert ? rest.sort(first1 ? (a, b) => dist(me, a) - dist(me, b) : goalSort) : rest).slice(0, 2)
     .map(x => ({ kind: x.kind, id: x.id, name: x.name, lat: x.lat, lng: x.lng, why: x.why, by: x.by || by, refer: x.refer, weather: x.weather }));
   return { ...c, by: c.by || by, alts };
@@ -2507,6 +2509,13 @@ function spotThumb(sp) {
 // 3つめの 道しるべが「観光ボランティアガイドさん（…」で 切れて 行き先が 見えなかった。
 // サイクル222b：入れ子の かっこ の 名前を 並べかえるのは、行き先の id が 知って いる 人で、名前が その 人の「名前（場所）」と ぴったり 同じ とき だけ
 // （別の 直し役の PR #1208 の やり方。知らない 入れ子・こわれた 形は そのまま。サイクル205 の 境目の きまり）。かっこが 1組 の 名前は これまで どおり
+// サイクル233：行き先の 場所の しるし。人は 立って いる 名所（'f-' + spot）、名所は その id。同じ 名所の 人と 名所を「同じ 行き先」と 見る
+function guidePlace(g) {
+  if (!g) return '';
+  if (g.kind !== 'npc') return g.id;
+  const n = typeof placeNpcs === 'function' ? placeNpcs().find(x => x.id === g.id) : null;   // typeof：取りだす テストでも 止まらない
+  return n && n.spot ? 'f-' + n.spot : g.id;
+}
 function guideDispName(g) {
   if (!g || !g.name) return '';
   if (g.kind !== 'npc') return g.name;
@@ -2522,13 +2531,13 @@ function renderGuide() {
   el.hidden = false;
   if (!glow.armed) glowArm(S.guide);   // めいろが はじまった とき（行き先は もう 決まっている）に 一度だけ
   // 2行に収める（1行目：行き先と方角・距離、2行目：だれの話か。長い話は「…」。タップで全文）
-  const alts = (S.guide && S.guide.alts) || [];
+  const alts = ((S.guide && S.guide.alts) || []).map((a, i) => ({ a, i })).filter(x => guidePlace(x.a) !== guidePlace(g));   // サイクル233：前に 決めて のこって いる 行き先（記録）でも、同じ 名所は 出さない（番号 i は pickAlt の まま）
   const mr = demo && window.nishioPixel && nishioPixel.maze && nishioPixel.maze.route ? nishioPixel.maze.route() : null;   // 地図の めいろ：まっすぐ ではなく めいろの 道のり
   const far = fmtM(mr ? mr.m : dist(me, g));   // 道のりは 数字だけ（めいろの ときは めいろの 道のり。しるしは 名前の 🏁 に まかせる）
   const gname = `<em class="gn">${mr ? '🏁 ' : ''}${esc(guideDispName(g))}</em>`;   // めいろの ときは 行き先が ゴール（地図の 🏁 と おなじ しるし）。長い 名前は こちらを「…」に して 道のりは のこす
   const head = simple() && window.NSG_ICONS ? `${NSG_ICONS.arrow(bearing(me, g))}${guideThumb(g)}${g.byId ? PIA('scroll', 'イベント') : ''} ${gname}<span>　${far}</span>` : `${g.byId ? '📜' : '🧭'} ${gname}<span>　${far}</span>`;   // 1行だけ：目的地の名前と 距離（運営者の声 2026-11-03「文字が多すぎる」）
   el.innerHTML = `<b>${head}</b>`
-    + (alts.length ? `<span class="alts"><em>ほかの行き先：</em>${alts.map((a, i) => `<button type="button" class="btn mini" data-alt="${i}">↪ ${esc(guideDispName(a))}${me ? `（${fmtM(dist(me, a))}）` : ''}</button>`).join('')}</span>` : '');
+    + (alts.length ? `<span class="alts"><em>ほかの行き先：</em>${alts.map(({ a, i }) => `<button type="button" class="btn mini" data-alt="${i}">↪ ${esc(guideDispName(a))}${me ? `（${fmtM(dist(me, a))}）` : ''}</button>`).join('')}</span>` : '');
   el.title = `${g.by}「${g.why}」`;
   // glowHtml / treasureHtml は 文字を 減らすため ここでは 呼ばない（サイクル25。関数は 残す）
   el.classList.remove('hasChips');   // 距離順チップは 出さない（guideChips は 純関数として 残す）

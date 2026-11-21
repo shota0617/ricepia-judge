@@ -237,7 +237,7 @@
   @keyframes gPress { 0%,100% { translate:0 -10px; } 50% { translate:0 8px; } }
   #idleSay { flex:0 0 100%; margin:0; text-align:center; font-size:16px; font-weight:800; line-height:1; }
   /* 手が止まったカードは枠の下端に合わせる。文字を大きくして背が高くなっても画面の外に出ず、上へ伸びる */
-  #idleCard { position:absolute; left:0; right:0; bottom:calc(5px + env(safe-area-inset-bottom)); display:flex; flex-wrap:wrap; gap:5px 8px; opacity:0; pointer-events:none; transition:opacity .4s ease; background:var(--bg); }
+  #idleCard { position:absolute; left:0; right:0; bottom:calc(5px + env(safe-area-inset-bottom)); display:flex; flex-wrap:wrap; gap:5px 8px; opacity:0; pointer-events:none; transition:opacity .4s ease; background:var(--bg); z-index:5; } /* 米の 流れの 絵・はんこ（z-index 2）より 手前（サイクル180 の 見直し: 3つめの 置き場で 絵の 下に かくれて いた） */
   #idleCard.on { opacity:1; pointer-events:auto; }
   #likeBtn,#returnLink { flex:1 1 auto; white-space:nowrap; height:48px; border-radius:30px; display:flex; align-items:center; justify-content:center; font-size:17px; font-weight:800; text-decoration:none; } /* 文字の幅で分け合い、320px幅でも折れない */
   #likeBtn { background:#f1dfb0; color:var(--ink); }
@@ -3001,7 +3001,7 @@ function showIdleCard() {
 /* 「つぎの ふくろ」（nextBtn）が 出て いる 時は、カードで それを おおわない（サイクル180・運営者 2026-11-14「判断不要で 進めて」）。
    旧版は 置き場で ほかの 物に かかると 下はし に もどし、不透明な カードが nextBtn を 丸ごと おおって いた。その 場所を たたくと
    320×568・390×844・820×1180 では「サイトへ もどる」、568×320・844×390 では「いいね」に 当たった（5画面 5/5）。
-   nextBtn が 出て いる 時は ① nextBtn の すぐ 上 ② 米の 流れの 絵の すぐ 上 の 順に ためし、どちらも かかる なら 出さない（false）。
+   nextBtn が 出て いる 時は ① nextBtn の すぐ 上 ② 米の 流れの 絵の すぐ 上 ③ nextBtn の すぐ 上（見る だけの 物には かかって よい）の 順に ためし、③ でも nextBtn・押せる 物・上の 棒・案内に かかる なら 出さない（false）。
    カードの 中身・45秒・1ふくろめの はんこ までは 出さない 決まり・見せる だけの 形 は 変えない */
 let idleWant = false;
 function placeIdleCard() {
@@ -3016,10 +3016,14 @@ function placeIdleCard() {
   const osu = $("osu"), under = e => osu.classList.contains("on") && !!e.closest("#stage") && !e.closest("#osu"); /* おすの 層（不透明）の 下に かくれた 皿・粒・上の 場面は 見えないので 数えない */
   /* 米の 流れの 絵は 出て くる 動き（大きさ 0.94→1.02）の 途中でも、動き おわった 大きさで 見る（中心から ふくらむ） */
   const box = e => { const r = e.getBoundingClientRect(); if (e.id !== "journey") return r; const h = e.offsetHeight, t = r.top + (r.height - h) / 2; return { width:r.width, top:t, bottom:t + h }; };
-  const fits = bottom => {
+  const ALL = ["#bagBig", "#bagBtn", "#hanko", ".markSpot", "#guide", ".gradeBtn", "#meterBtn", "#crank", ".grain", "#zoomBtn", "#senseToken", "#journey", "#nextBtn", "#head"];
+  /* 3つめの 置き場で かかっては いけない 物: 押せる 物（nextBtn・等級の ボタン・水分計・粒・🔍・🤲・小さい 袋）と 上の 棒・案内。
+     押し おわった 袋・はんこ・点線の 丸・手本の 指・米の 流れの 絵 の ような 見る だけの 物には かかって よい（45秒 見た あと なので） */
+  const PRESS = ["#bagBtn", ".gradeBtn", "#meterBtn", "#crank", ".grain", "#zoomBtn", "#senseToken", "#nextBtn", "#head", "#hint"];
+  const fits = (bottom, list = ALL) => {
     const top = stage.bottom - bottom - idleCard.offsetHeight;
     if (top < 0) return false; /* 画面の 上に はみ出す 置き場は 使わない */
-    return !["#bagBig", "#bagBtn", "#hanko", ".markSpot", "#guide", ".gradeBtn", "#meterBtn", "#crank", ".grain", "#zoomBtn", "#senseToken", "#journey", "#nextBtn", "#head"].some(q => [...document.querySelectorAll(q)].some(e => {
+    return !list.some(q => [...document.querySelectorAll(q)].some(e => {
       if (!(e.id === "journey" || e.id === "nextBtn" ? !e.hidden && getComputedStyle(e).display !== "none" : seen(e)) || e.closest("[inert]") || under(e)) return false; /* 米の 流れの 絵と nextBtn は 出て くる 動きの 途中（こさ 0）でも かかる 物と して 見る */
       const r = box(e); return r.width > 0 && r.bottom > top && r.top < stage.bottom - bottom;
     }));
@@ -3028,6 +3032,9 @@ function placeIdleCard() {
   const jn = $("journey"), jr = box(jn);
   if (next && !jn.hidden && jr.bottom > jr.top) spots.push(Math.round(stage.bottom - jr.top));
   for (const bottom of spots) if (fits(bottom)) { idleCard.style.bottom = bottom + "px"; return true; }
+  /* ③ どこにも かからない 置き場が 無い 画面（320×568・568×320・844×390 など）では、nextBtn の すぐ 上 に 置き、見る だけの 物には かかって よい
+     （サイクル180 の 見直し。①② だけ だと この 3画面で 45秒 たっても カードが ずっと 出なかった）。それでも nextBtn・押せる 物・上の 棒・案内に かかる なら 出さない */
+  if (next && fits(spots[0], PRESS)) { idleCard.style.bottom = spots[0] + "px"; return true; }
   return !next; /* nextBtn が 無い 時は 今までどおり 下はし（案内の 文の 上） */
 }
 window.addEventListener("resize", () => {

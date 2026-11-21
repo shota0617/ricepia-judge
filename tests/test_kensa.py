@@ -4157,7 +4157,9 @@ const TYPES = { '.html': 'text/html; charset=utf-8', '.webp': 'image/webp', '.pn
     def test_cycle180_idle_card_never_covers_the_next_bag_button(self):
         # 旧版は はんこの あと 45秒 で 出る カードが「つぎの ふくろ」を 丸ごと おおい、その 場所を たたくと
         # 320×568・390×844・820×1180 では「サイトへ もどる」、568×320・844×390 では「いいね」に 当たった（5画面 5/5）。
-        # カードは nextBtn に かからない（置き場が 無い 画面では 出さない）。カードが 先に 出て いて あとから nextBtn が 出る 順も、回しても 同じ
+        # カードは nextBtn・上の 棒・案内・押せる 物に かからず、どの 画面でも 出る。どこにも かからない 置き場（①② nextBtn の 上・米の 流れの 絵の 上）が
+        # ある 画面（390×844・820×1180）では 袋にも かからない。無い 画面では ③ nextBtn の すぐ 上 に 置き、押し おわった 袋・米の 流れの 絵 には かかって よい
+        # （サイクル180 の 見直し。①② だけ だと 320×568・568×320・844×390 で 45秒 たっても カードが 出なかった）。カードが 先に 出て いて あとから nextBtn が 出る 順も、回しても 同じ
         node = shutil.which("node")
         if not node:
             self.skipTest("node がないので実行の確認は飛ばす")
@@ -4170,8 +4172,17 @@ const look = p => p.evaluate(() => {
   const c = idleCard.getBoundingClientRect(), nb = nextBtn.getBoundingClientRect(), on = idleCard.classList.contains('on');
   const ov = (a, b) => Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left)) * Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
   const hit = document.elementFromPoint(nb.left + nb.width / 2, nb.top + nb.height / 2);
-  const bag = $('bagBig').getBoundingClientRect(), head = $('head').getBoundingClientRect();
-  return { on, next: nextBtn.classList.contains('on'), over: on ? Math.round(ov(c, nb)) : 0, bag: on ? Math.round(ov(c, bag)) : 0, head: on ? Math.round(ov(c, head)) : 0, at: hit ? (hit.closest('[id]') || hit).id : null };
+  const bag = $('bagBig').getBoundingClientRect(), head = $('head').getBoundingClientRect(), hn = hint.getBoundingClientRect();
+  const press = [...document.querySelectorAll('.gradeBtn, #meterBtn, #crank, #zoomBtn, #senseToken, #bagBtn')].filter(e => !e.closest('[inert]') && !(e.closest('#stage') && !e.closest('#osu') && $('osu').classList.contains('on'))).reduce((t, e) => t + ov(c, e.getBoundingClientRect()), 0);
+  /* 見る だけの 物（pointer-events なし）も 一時 さわれる ように して、カードが その 手前に かかれて いるか も 見る */
+  const lookOnly = [...document.querySelectorAll('#journey, #journey *, #hanko, #hanko *, #mark, #guide, #pad')], keep = lookOnly.map(e => e.style.pointerEvents);
+  lookOnly.forEach(e => { e.style.pointerEvents = 'auto'; });
+  const tapOk = id => { const r = $(id).getBoundingClientRect(), e = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return !!e && !!e.closest('#' + id); };
+  const like = on && tapOk('likeBtn'), ret = on && tapOk('returnLink');
+  lookOnly.forEach((e, i) => { e.style.pointerEvents = keep[i]; });
+  return { on, next: nextBtn.classList.contains('on'), over: on ? Math.round(ov(c, nb)) : 0, bag: on ? Math.round(ov(c, bag)) : 0, head: on ? Math.round(ov(c, head)) : 0,
+    hint: on && getComputedStyle(hint).display !== 'none' ? Math.round(ov(c, hn)) : 0, press: on ? Math.round(press) : 0, inView: c.top >= 0,
+    like, ret, at: hit ? (hit.closest('[id]') || hit).id : null };
 });
 (async () => {
   let b; try { b = await chromium.launch(); } catch (e) { console.log(JSON.stringify({ skip: 'chromium が 起動しない' })); return; }
@@ -4202,12 +4213,15 @@ const look = p => p.evaluate(() => {
             self.assertTrue(c["next"], c["tag"] + " で つぎの ふくろ が 出て いない")
             self.assertEqual(c["over"], 0, c["tag"] + " で カードが つぎの ふくろ に %dpx² かかる" % c["over"])
             self.assertEqual(c["at"], "nextBtn", c["tag"] + " で つぎの ふくろ の 中心を たたくと %s に 当たる" % c["at"])
-            self.assertEqual(c["bag"], 0, c["tag"] + " で カードが 袋に かかる")
+            self.assertTrue(c["on"], c["tag"] + " で 45秒の カードが 出ない")
             self.assertEqual(c["head"], 0, c["tag"] + " で カードが 上の 棒に かかる")
-        # 置き場が ある 画面（390×844・820×1180 たて）では 今までどおり カードは 出る
-        shown = {c["tag"] for c in res if c["on"]}
-        self.assertIn("390x844 stampFirst", shown)
-        self.assertIn("820x1180 stampFirst", shown)
+            self.assertEqual(c["hint"], 0, c["tag"] + " で カードが 案内に かかる")
+            self.assertEqual(c["press"], 0, c["tag"] + " で カードが 押せる 物に %dpx² かかる" % c["press"])
+            self.assertTrue(c["inView"], c["tag"] + " で カードが 画面の 上に はみ出す")
+            self.assertTrue(c["like"] and c["ret"], c["tag"] + " で カードの いいね・サイトへ もどる が 押せない（ほかの 物の 下に かくれて いる）")
+            # どこにも かからない 置き場の ある 画面（たて 390×844・820×1180）では 袋にも かからない
+            if c["tag"].split(" ")[0] in ("390x844", "820x1180"):
+                self.assertEqual(c["bag"], 0, c["tag"] + " で カードが 袋に かかる")
 
 
     # ---- サイクル160（つまむ で たたき続ける 人にも 手本）----

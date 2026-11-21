@@ -819,6 +819,7 @@ html:has(#sGame.swipeMode:not(.hidden)),body:has(#sGame.swipeMode:not(.hidden)){
   <button type="button" class="sndTgl" data-snd aria-pressed="true" aria-label="音を 切る">🔊</button>
   <h1>米づくり365</h1>
   <p class="sub">ちびの農家さんと、西尾の田んぼを見回る1年。</p>
+  <button class="btn hidden" id="bResume" type="button" style="margin-top:10px;font-size:22px;padding:16px"></button>   <!-- サイクル199: ⌂ で 出た とき だけ、いま 遊んで いた 田んぼに もどる(保存は 消さない) -->
 
   <div class="card hint" id="chBox" style="display:none;margin-top:12px"></div>
   <p class="sub" style="font-size:12px;margin-top:6px" id="quickNote"></p>
@@ -4265,11 +4266,28 @@ renderTitle();
   });
   /* キーボードの左右キーはスワイプの代替ではなく補助(PC用)。判定・結果はスワイプと同じ choose を通る */
   document.addEventListener('keydown', function(e){ if ($('sGame').classList.contains('hidden') || !$('sheetBg').classList.contains('hidden')) return; if (e.key === 'ArrowLeft') { e.preventDefault(); choose('left'); } else if (e.key === 'ArrowRight') { e.preventDefault(); choose('right'); } });
-  $('swHome').onclick = function(){ careClear(); sunHide(); show('sTitle'); renderTitle(); };
+  /* サイクル199: ⌂ で 題の 画面に 出ても、いま 遊んで いた 田んぼへ 1回の タップで もどれる(前は「つづきから」が 無く、リロード しか 手が なかった)。
+     日づけは その 田んぼ(f)から 出す。新しく 始める ボタン(今日の田んぼ・⚙ の はじめる)は、もどれる 田んぼが ある とき だけ 1回 確かめる
+     (前は だまって 1月1日 から に なり、保存も 消えて いた)。開いた とき の 流れ(題を 通らず カード から)は 変えない */
+  var homeKeep = null, newArmT = null, newArmAt = 0;
+  document.addEventListener('keydown', function(e){ if (e.repeat && e.target && e.target.closest && e.target.closest('#bDaily, #bStart') && !$('sTitle').classList.contains('hidden') && homeCan()) e.preventDefault(); }, true);   /* サイクル199b: キーの 押しっぱなし(くり返し)では 新しく 始めない */
+  function homeCan(){ return !!(homeKeep && homeKeep === f && !KomeCards.over(f)); }
+  function homeDay(){ try { var x = K.dateOf(KomeCards.day(f)); return x.m + '月' + x.d + '日'; } catch (e) { return ''; } }
+  function resumeSet(){ var b = $('bResume'); if (!b) return; var lbl = homeCan() ? homeDay() : ''; b.classList.toggle('hidden', !lbl); b.textContent = lbl ? '▶ つづきから(' + lbl + ')' : ''; }
+  function newArmClear(){ clearTimeout(newArmT); newArmT = null; [].forEach.call(document.querySelectorAll('#bDaily[data-arm], #bStart[data-arm]'), function(b){ if (b.dataset.html != null) b.innerHTML = b.dataset.html; delete b.dataset.arm; delete b.dataset.html; }); }
+  $('swHome').onclick = function(){ careClear(); sunHide(); homeKeep = f && !KomeCards.over(f) ? f : null; newArmClear(); show('sTitle'); renderTitle(); resumeSet(); };
+  $('bResume').addEventListener('click', function(){ newArmClear(); if (!homeCan()) { homeKeep = null; resumeSet(); return; } homeKeep = null; resumeSet(); show('sGame'); render(); try { drawField(); } catch (e) { console.error(e); } idleTouch(); });
+  document.addEventListener('click', function(e){   /* 人の 指の タップ だけ(ゲームの 中から 呼ぶ click は 通す) */
+    if (!e.isTrusted || !e.target.closest) return; var b = e.target.closest('#bDaily, #bStart'); if (!b || $('sTitle').classList.contains('hidden') || !homeCan()) return;
+    if (b.dataset.arm === '1') { if (performance.now() - newArmAt < 500) { e.preventDefault(); e.stopImmediatePropagation(); return; } newArmClear(); return; }   /* サイクル199b: 確かめ を 出して 0.5秒 は 2回め を 無視(二度押し・Enter の 押しっぱなし で 読む 前に すりぬけない。確かめ は のこす) */
+    e.preventDefault(); e.stopImmediatePropagation(); newArmClear(); b.dataset.arm = '1'; b.dataset.html = b.innerHTML; newArmAt = performance.now();
+    b.innerHTML = 'いまの 田んぼ(' + esc(homeDay()) + ')は 消えて、はじめから に なります。<br>もう 1回 押すと 始まります'; newArmT = setTimeout(newArmClear, 6000);
+  }, true);
   $('swHelp').onclick = function(){ $('sheet').innerHTML = '<h3 id="sheetTitle">あそびかた</h3><p class="sub" style="font-size:14px">毎日1枚のカードが出ます。カードを<b>左か右にスワイプ</b>(←→キーでもOK)して、どうするかを選びます。選んだ結果で田んぼが変わり、次の日へ進みます。田んぼの状態(天気・季節・稲の様子)を読んで正しく選ぶと田んぼが良くなり、まちがえると悪くなります。左と右では、することと結果がちがいます。ドラッグすると変わるステータスの印が予告になります。結果は田んぼとステータスの変化で分かります。1月1日から12月31日までの365日、毎日1枚。冬は準備、春から稲刈りまでが本番、収穫のあとは出荷や冬じたくの日々です。お米の等級と収量は稲刈りで決まり、結果は365日目のあとに出ます。</p><button class="btn sec" data-cancel>とじる</button>'; openBg(); $('sheet').onclick = function(e){ if (e.target.closest('[data-cancel]')) closeSheet(); }; };
   // はじめる: 既存の bStart の処理(Farm生成・設定)のあと、カード生活に入る
   $('bStart').addEventListener('click', function(){
     if (!f) return; pend = null; pendQ.length = 0;   /* サイクル178 の 直し: 古い ゲームで 置いた 指を 新しい ゲームに 流さない */
+    homeKeep = null; try { newArmClear(); resumeSet(); } catch (e) {}   /* サイクル199: 新しい 田んぼ では もどる 先を 消す */
     careClear(); traceClear(); f._fert = fertMode; store.set(RW, ''); choices = ''; goldSeen = {}; bannerDone = false; tally = {}; seenCards = {}; streak = 0; recDone = false; store.set('kome365_streak', '0'); lifeDay = {}; lifeSync(); busy = false; $('swLog').innerHTML = '';
     var intro = f.msgs.slice(-3).map(function(m){ return m.t; }); if (intro.length) $('swLog').innerHTML = intro.map(esc).join('<br>');
     save(); render(); try { drawField(); } catch (e) { console.error(e); } idleTouch();

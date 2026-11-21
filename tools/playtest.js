@@ -2047,6 +2047,55 @@ function crashFailures(R, fail) {   // 安全網（guardEvaluate）に かかっ
     } finally { R.errors.push(...v.errors); await v.ctx.close(); }
   })();
   Object.assign(R.checks, await firstMinuteChecks(browser, R));   // サイクル189（はじめの 1分）
+  // サイクル232（名所の 窓 で 迷わない）：
+  //  react：窓の「みんなの声」の 札（.react-line span）の 字と 地の こさ の 比が 4.5 以上（前は 黒い 窓の 白い 字を 引きつぎ 1.08 で 読めなかった）
+  //  close：窓を 開いた まま 窓の 外の 地図（道すじの 先の マス）を 本物の タッチで タップ すると、窓が とじて お米が 歩く（前は 窓が 開いた まま、手本も 出なかった）
+  {
+    const v = await newPage(browser, { howto: true, auto: true, goals3: true, hasTouch: true, isMobile: true }), p = v.page;
+    try {
+      await p.goto(URL);
+      await p.waitForFunction(() => window.nishioPixel && nishioPixel.maze && nishioPixel.maze.playing && nishioPixel.maze.playing() && nishioPixel.maze.routePath && nishioPixel.maze.routePath(), null, { timeout: 25000 }).catch(() => {});
+      await p.waitForTimeout(1500);
+      const cdp = await v.ctx.newCDPSession(p), touch = (type, pts) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: pts.map(([x, y], id) => ({ x, y, id })) });
+      const findTgt = () => p.evaluate(() => {   // 窓の 外の、道すじの 先の マス（何も ない 所）
+        const P = nishioPixel, M = P.maze, path = M.routePath(), cv = document.getElementById('pxCanvas'), r = cv.getBoundingClientRect(), rb = P.riceBox, dpr = cv.width / r.width, w = (document.querySelector('#pxInfo .dq') || document.getElementById('pxInfo')).getBoundingClientRect();   // 窓の 黒い 箱（#pxInfo は 地図 いっぱいで、箱の 外は 地図に とおる）
+        const cx = (rb[0] + rb[2]) / 2 / dpr + r.left, cy = (rb[1] + rb[3]) / 2 / dpr + r.top, T = (rb[2] - rb[0]) / dpr, K = M.K, ro = P.roll;
+        for (const i of [3, 2, 4, 5, 1, 6, 7, 8, 9, 10, 12, 14, 16]) { const a = path[Math.min(i, path.length - 1)], x = cx + ((a[0] + 0.5) * K - ro.x) * T * 0.62, y = cy + ((a[1] + 0.5) * K - ro.y) * T * 0.62;
+          if (x > r.left + 8 && x < r.right - 8 && y > r.top + 8 && y < r.bottom - 8 && !(x >= w.left && x <= w.right && y >= w.top && y <= w.bottom) && document.elementFromPoint(x, y) === cv) return { x, y }; }
+        return { none: [w.left, w.top, w.right, w.bottom, r.left, r.top, r.right, r.bottom].map(Math.round), n: path.length };
+      });
+      // 先に 道を 少し 歩いて おく（はじめの たからばこ を 開けると はじめの 1枚 の 流れで 窓が とじる ので、それと 分ける。遊び直しでも 窓は 歩いた あとで 開いた）
+      const t0 = await findTgt();
+      if (t0 && !t0.none) { await touch('touchStart', [[t0.x, t0.y]]); await p.waitForTimeout(70); await touch('touchEnd', []); }
+      await p.waitForTimeout(4000);
+      const open = await p.evaluate(() => {   // 声の ある 名所の 窓を、地図の タップと 同じ 形で 開く（中身 popupHtml・$('pxInfo').hidden = false）
+        const g = nishioGo, s = g.spots.find(x => /react-line/.test(g.popupHtml(x)));
+        if (!s) return { why: 'no-react-spot' };
+        document.getElementById('pxInfoBody').innerHTML = g.popupHtml(s); document.getElementById('pxInfo').hidden = false;
+        return { spot: s.name };
+      });
+      await p.waitForTimeout(300);
+      const react = await p.evaluate(() => {
+        const L = c => { const m = c.match(/\d+(\.\d+)?/g).map(Number); const f = v => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }; return 0.2126 * f(m[0]) + 0.7152 * f(m[1]) + 0.0722 * f(m[2]); };
+        const sp = [...document.querySelectorAll('#pxInfo .react-line span')];
+        const rows = sp.map(e => { const cs = getComputedStyle(e), a = L(cs.color), b = L(cs.backgroundColor); return +((Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05)).toFixed(2); });
+        return { n: rows.length, ratios: rows, ok: rows.length > 0 && rows.every(r => r >= 4.5) };
+      });
+      const tgt = await findTgt();
+      let close = { ok: false, why: 'no-target', diag: tgt && tgt.none, n: tgt && tgt.n };
+      if (tgt && !tgt.none) {
+        const r0 = await p.evaluate(() => { const r = nishioPixel.roll; return [r.x, r.y]; });
+        await touch('touchStart', [[tgt.x, tgt.y]]); await p.waitForTimeout(70); await touch('touchEnd', []);
+        await p.waitForTimeout(250);   // タップの すぐ あと（歩いて 何かに 着いて とじる のと 分ける）
+        const h1 = await p.evaluate(() => document.getElementById('pxInfo').hidden);
+        await p.waitForTimeout(950);
+        close = await p.evaluate(r0 => { const r = nishioPixel.roll; return { hidden: document.getElementById('pxInfo').hidden, moved: Math.hypot(r.x - r0[0], r.y - r0[1]) > 0.5 }; }, r0);
+        close.hiddenAt250 = h1; close.ok = h1 && close.moved;
+      }
+      R.checks.infoWindowTap = { open, react, close, ok: !open.why && react.ok && close.ok };
+    } catch (e) { R.checks.infoWindowTap = { ok: false, crashed: String(e.message).slice(0, 160) }; }
+    finally { R.errors.push(...v.errors); await v.ctx.close(); }
+  }
   // サイクル231（PLAN6 案1）：地図に 指が ついた 2こま 以内に、お米 そのもの（riceBox）が 小さく のびて 変わる（前は 指を はなした click の あと、約 5〜8こま 止まって いた）。
   //  tap：お米が 止まって いる とき 1本指で 押して、pointerdown が 動いた あと 2こま 以内に お米の 上が 3 css px 以上 上がる（nishioPixel.riceTapUp。見える 大きさ。サイクル231b）。
   //       その 間 お米の 箱（riceBox）は 動かない（名所の 絵・町名の 札の 置き場所を とばさない。サイクル231b）
@@ -5130,6 +5179,7 @@ function crashFailures(R, fail) {   // 安全網（guardEvaluate）に かかっ
   need(c.roll && c.roll.ok, 'かたむけて転がす：お米が転がらない（または絵が回らない）');
   need(c.slope && c.slope.ok, '坂：平らな所で動く、または 下り坂で ひとりでに転がらない');
   need(c.guideRecord && c.guideRecord.ok, 'ガイドさんの記録：西尾城跡のガイドさんの話に、つぎのレベルまでの ポイントと しるしの数が出ない');
+  need(c.infoWindowTap && c.infoWindowTap.ok, `名所の 窓：みんなの声 が 読めない・窓の 外の 地図を タップ しても 窓が とじない（${JSON.stringify(c.infoWindowTap)}）`);
   need(c.riceTapPre && c.riceTapPre.ok, `押した しゅんかん：指が ついて 2こま 以内に お米が かわらない・なぞりで もどらない（${JSON.stringify(c.riceTapPre)}）`);
   need(c.shelfFirstWalk && c.shelfFirstWalk.ok, `動かない わく：はじめてのさんぽ で 空の ピース棚を 描く・あとの 人に 棚が 出ない（${JSON.stringify(c.shelfFirstWalk)}）`);
   need(c.tapRing && c.tapRing.ok, `さわって すぐ の 手ごたえ：地図に 指が ついた 2こま 以内に 輪が 出ない・2本指／せかいちず で 出る（${JSON.stringify(c.tapRing)}）`);

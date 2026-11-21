@@ -218,7 +218,7 @@ label.row{min-height:44px;cursor:pointer}
 .play-more input{flex:1 1 12em;min-width:0;font-size:16px;padding:8px;border:1px solid var(--line);border-radius:8px}
 .react-x{position:absolute;top:4px;right:6px;border:0;background:none;font-size:20px;color:var(--sub);width:28px;height:28px}
 .react-line{font-size:13px}
-.react-line span{display:inline-block;background:#fff6d6;border-radius:8px;padding:0 6px;margin-right:2px}
+.react-line span{display:inline-block;background:#fff6d6;color:#3a2a00;border-radius:8px;padding:0 6px;margin-right:2px}
 
 .fb-form{display:flex;flex-direction:column;gap:10px;margin-top:10px}
 .fb-form label{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:700}

@@ -14131,6 +14131,9 @@ cv.addEventListener('click', e => {
     else { $('pxInfoBody').innerHTML = h.spot ? G.popupHtml(h.spot) : poiHtml(h.poi); $('pxInfo').hidden = false; }
     return;
   }
+  // サイクル232（名所の 窓 で 迷わない）：窓を 開いた まま 窓の 外の 地図を タップ すると、お米は 歩くのに 窓は 開いた まま（12秒 以上）で、手本の 指も 出なかった。
+  // 何も ない 所の タップでは、窓の まわりを タップ した ときと 同じ 形で 窓を とじてから（下の #pxInfo の click）、これまでどおり 歩く。名所・人・当店の 札の タップは その 窓に かわる（上で return）
+  if (!$('pxInfo').hidden) $('pxInfo').click();
   if (G.demo) tapWalk(Math.floor(c.x + (x - cv.width / 2) / T), Math.floor(c.y + (y - fieldCy) / T));   // 何もない所：そこまで歩く
 });
 function mzGoalOnCanvas(r, dpr) {   // サイクル208：ゴール（道すじの さいご の マス）の キャンバスの 点。キャンバスの 中に 無ければ null

@@ -14131,6 +14131,9 @@ cv.addEventListener('click', e => {
     else { $('pxInfoBody').innerHTML = h.spot ? G.popupHtml(h.spot) : poiHtml(h.poi); $('pxInfo').hidden = false; }
     return;
   }
+
+
+  if (!$('pxInfo').hidden) $('pxInfo').click();
   if (G.demo) tapWalk(Math.floor(c.x + (x - cv.width / 2) / T), Math.floor(c.y + (y - fieldCy) / T));
 });
 function mzGoalOnCanvas(r, dpr) {

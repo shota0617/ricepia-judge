@@ -4154,6 +4154,75 @@ const TYPES = { '.html': 'text/html; charset=utf-8', '.webp': 'image/webp', '.pn
             self.assertEqual(c["bag"], 0, tag + " で カードが 袋に かかる")
             self.assertTrue(c["inView"], tag)
 
+    def test_cycle180_idle_card_never_covers_the_next_bag_button(self):
+        # 旧版は はんこの あと 45秒 で 出る カードが「つぎの ふくろ」を 丸ごと おおい、その 場所を たたくと
+        # 320×568・390×844・820×1180 では「サイトへ もどる」、568×320・844×390 では「いいね」に 当たった（5画面 5/5）。
+        # カードは nextBtn・上の 棒・案内・押せる 物に かからず、どの 画面でも 出る。どこにも かからない 置き場（①② nextBtn の 上・米の 流れの 絵の 上）が
+        # ある 画面（390×844・820×1180）では 袋にも かからない。無い 画面では ③ nextBtn の すぐ 上 に 置き、押し おわった 袋・米の 流れの 絵 には かかって よい
+        # （サイクル180 の 見直し。①② だけ だと 320×568・568×320・844×390 で 45秒 たっても カードが 出なかった）。カードが 先に 出て いて あとから nextBtn が 出る 順も、回しても 同じ
+        node = shutil.which("node")
+        if not node:
+            self.skipTest("node がないので実行の確認は飛ばす")
+        js = r"""
+const fs = require('fs'), path = require('path');
+let chromium; try { ({ chromium } = require('playwright')); } catch (e) { console.log(JSON.stringify({ skip: 'playwright なし' })); process.exit(0); }
+const [root] = process.argv.slice(1, 2);
+const TYPES = { '.html': 'text/html; charset=utf-8', '.webp': 'image/webp', '.png': 'image/png' };
+const look = p => p.evaluate(() => {
+  const c = idleCard.getBoundingClientRect(), nb = nextBtn.getBoundingClientRect(), on = idleCard.classList.contains('on');
+  const ov = (a, b) => Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left)) * Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
+  const hit = document.elementFromPoint(nb.left + nb.width / 2, nb.top + nb.height / 2);
+  const bag = $('bagBig').getBoundingClientRect(), head = $('head').getBoundingClientRect(), hn = hint.getBoundingClientRect();
+  const press = [...document.querySelectorAll('.gradeBtn, #meterBtn, #crank, #zoomBtn, #senseToken, #bagBtn')].filter(e => !e.closest('[inert]') && !(e.closest('#stage') && !e.closest('#osu') && $('osu').classList.contains('on'))).reduce((t, e) => t + ov(c, e.getBoundingClientRect()), 0);
+  /* 見る だけの 物（pointer-events なし）も 一時 さわれる ように して、カードが その 手前に かかれて いるか も 見る */
+  const lookOnly = [...document.querySelectorAll('#journey, #journey *, #hanko, #hanko *, #mark, #guide, #pad')], keep = lookOnly.map(e => e.style.pointerEvents);
+  lookOnly.forEach(e => { e.style.pointerEvents = 'auto'; });
+  const tapOk = id => { const r = $(id).getBoundingClientRect(), e = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return !!e && !!e.closest('#' + id); };
+  const like = on && tapOk('likeBtn'), ret = on && tapOk('returnLink');
+  lookOnly.forEach((e, i) => { e.style.pointerEvents = keep[i]; });
+  return { on, next: nextBtn.classList.contains('on'), over: on ? Math.round(ov(c, nb)) : 0, bag: on ? Math.round(ov(c, bag)) : 0, head: on ? Math.round(ov(c, head)) : 0,
+    hint: on && getComputedStyle(hint).display !== 'none' ? Math.round(ov(c, hn)) : 0, press: on ? Math.round(press) : 0, inView: c.top >= 0,
+    like, ret, at: hit ? (hit.closest('[id]') || hit).id : null };
+});
+(async () => {
+  let b; try { b = await chromium.launch(); } catch (e) { console.log(JSON.stringify({ skip: 'chromium が 起動しない' })); return; }
+  const out = [];
+  for (const [w, h] of [[320, 568], [390, 844], [568, 320], [844, 390], [820, 1180]]) for (const order of ['stampFirst', 'cardFirst']) {
+    const ctx = await b.newContext({ viewport: { width: w, height: h }, isMobile: true, hasTouch: true }); const p = await ctx.newPage();
+    await p.route('http://kensa.test/**', r => { const f = path.join(root, decodeURIComponent(new URL(r.request().url()).pathname));
+      if (!f.startsWith(root) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) return r.fulfill({ status: 404, body: '' });
+      r.fulfill({ status: 200, contentType: TYPES[path.extname(f)] || 'application/octet-stream', body: fs.readFileSync(f) }); });
+    await p.goto('http://kensa.test/kensa.html'); await p.waitForTimeout(600);
+    await p.evaluate(order => { toOsu(); inkDone(); if (order === 'cardFirst') { cookedReturns.push('1等'); showIdleCard(); } stampNow(); }, order);
+    await p.waitForTimeout(700);
+    await p.evaluate(() => showIdleCard()); await p.waitForTimeout(500); /* はんこの あと 45秒 */
+    const r = await look(p); r.tag = w + 'x' + h + ' ' + order; out.push(r);
+    await p.setViewportSize({ width: h, height: w }); await p.waitForTimeout(500);   /* 回す */
+    const q = await look(p); q.tag = h + 'x' + w + ' 回した あと (' + w + 'x' + h + ' ' + order + ')'; out.push(q);
+    await ctx.close();
+  }
+  await b.close(); console.log(JSON.stringify(out));
+})();
+"""
+        r = subprocess.run([node, "-e", js, ROOT], capture_output=True, text=True, timeout=300)
+        self.assertEqual(r.returncode, 0, r.stderr[-1500:])
+        res = json.loads(r.stdout.strip().splitlines()[-1])
+        if isinstance(res, dict) and res.get("skip"):
+            self.skipTest(res["skip"])
+        for c in res:
+            self.assertTrue(c["next"], c["tag"] + " で つぎの ふくろ が 出て いない")
+            self.assertEqual(c["over"], 0, c["tag"] + " で カードが つぎの ふくろ に %dpx² かかる" % c["over"])
+            self.assertEqual(c["at"], "nextBtn", c["tag"] + " で つぎの ふくろ の 中心を たたくと %s に 当たる" % c["at"])
+            self.assertTrue(c["on"], c["tag"] + " で 45秒の カードが 出ない")
+            self.assertEqual(c["head"], 0, c["tag"] + " で カードが 上の 棒に かかる")
+            self.assertEqual(c["hint"], 0, c["tag"] + " で カードが 案内に かかる")
+            self.assertEqual(c["press"], 0, c["tag"] + " で カードが 押せる 物に %dpx² かかる" % c["press"])
+            self.assertTrue(c["inView"], c["tag"] + " で カードが 画面の 上に はみ出す")
+            self.assertTrue(c["like"] and c["ret"], c["tag"] + " で カードの いいね・サイトへ もどる が 押せない（ほかの 物の 下に かくれて いる）")
+            # どこにも かからない 置き場の ある 画面（たて 390×844・820×1180）では 袋にも かからない
+            if c["tag"].split(" ")[0] in ("390x844", "820x1180"):
+                self.assertEqual(c["bag"], 0, c["tag"] + " で カードが 袋に かかる")
+
 
     # ---- サイクル160（つまむ で たたき続ける 人にも 手本）----
 

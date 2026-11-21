@@ -14131,6 +14131,9 @@ cv.addEventListener('click', e => {
     else { $('pxInfoBody').innerHTML = h.spot ? G.popupHtml(h.spot) : poiHtml(h.poi); $('pxInfo').hidden = false; }
     return;
   }
+  // サイクル232（名所の 窓 で 迷わない）：窓を 開いた まま 窓の 外の 地図を タップ すると、お米は 歩くのに 窓は 開いた まま（12秒 以上）で、手本の 指も 出なかった。
+  // 何も ない 所の タップでは、窓の まわりを タップ した ときと 同じ 形で 窓を とじてから（下の #pxInfo の click）、これまでどおり 歩く。名所・人・当店の 札の タップは その 窓に かわる（上で return）
+  if (!$('pxInfo').hidden && pxInfoReadOnly()) $('pxInfo').click();   // サイクル232b：読む だけ の 窓 だけ（下の pxInfoReadOnly）
   if (G.demo) tapWalk(Math.floor(c.x + (x - cv.width / 2) / T), Math.floor(c.y + (y - fieldCy) / T));   // 何もない所：そこまで歩く
 });
 function mzGoalOnCanvas(r, dpr) {   // サイクル208：ゴール（道すじの さいご の マス）の キャンバスの 点。キャンバスの 中に 無ければ null
@@ -14262,6 +14265,19 @@ const pxInfoResize = { raf: 0 };
 function pxInfoReplace() {   // 画面の 大きさ などが かわった：次の こまで 1回だけ 計算しなおす
   if (pxInfoResize.raf || !$('pxInfo') || $('pxInfo').hidden) return;
   pxInfoResize.raf = requestAnimationFrame(() => { pxInfoResize.raf = 0; pxInfoPlace('resize'); });
+}
+// サイクル232b（見直し P1・P2）：地図の タップで とじて よいのは 読む だけ の 窓。とじると 何かが 決まる 窓・書きかけ の 窓は とじない（前と 同じ：窓は 開いた まま 歩く）
+//  ・えらぶ 窓（はじめの 1枚・しるしの 2枚 から 1枚。.pick-first・[data-pick-dot]）：とじると game.js の 見はり が 左の 1枚（cands[0]）に 決めて、えらびなおせなかった
+//  ・字の 入った 入力欄（input・textarea）・入力欄に フォーカス（地図を さわる 前の pointerdown で 見る。地図を さわると フォーカスは はずれる）：書きかけ が 消えた
+//  ・とじると 人が お米を 行き先へ 押す 話（npcSend）：タップ した 所へ 歩く のと けんか する
+const pxInfoEdit = { t: -1e9 };
+document.addEventListener('pointerdown', e => { const a = document.activeElement; if (e.target === cv && a && $('pxInfo').contains(a) && a.matches('input, textarea, select, [contenteditable]')) pxInfoEdit.t = performance.now(); }, true);
+function pxInfoReadOnly() {
+  const b = $('pxInfoBody');
+  if (!b || npcSend) return false;
+  if (b.querySelector('.pick-first, [data-pick-dot]')) return false;
+  if (performance.now() - pxInfoEdit.t < 1500) return false;
+  return ![...$('pxInfo').querySelectorAll('input, textarea')].some(f => (f.type === 'checkbox' || f.type === 'radio') ? f.checked !== f.defaultChecked : f.type !== 'hidden' && f.value !== '');
 }
 document.addEventListener('click', e => { if (e.target === cv) { pxInfoTap.x = e.clientX; pxInfoTap.y = e.clientY; pxInfoTap.t = performance.now(); } }, true);   // 地図の タップの 点（地図の click より 先に 見る）
 if (window.MutationObserver && $('pxInfo')) new MutationObserver(() => pxInfoPlace()).observe($('pxInfo'), { attributes: true, attributeFilter: ['hidden'], childList: true, subtree: true });   // 開いた・閉じた・中身が かわった

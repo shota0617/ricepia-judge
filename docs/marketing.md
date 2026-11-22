@@ -68,6 +68,7 @@
 | `line_add` | 当店の LINE の友だち追加を押した（from：game-card 当店の窓／game-ending 殿堂入り（ここまで 常連さまポイントの リンク `uPhkiiv`）／mishin-coin ミシン糸の れんしゅうの まとめ／mishin-result ミシン糸の 結果（この 2つは 価格表・売り出し情報の リンク `AULbClm`。129周目から））。Google 広告の「LINE友だち追加クリック」の成果にも数え、Meta では「Lead」 |
 | `mishin_practice_start`・`mishin_coin_done`・`mishin_game_start`・`mishin_game_end` | ミシン糸 一本どり（`mishin.html`）の れんしゅうを 始めた・まとめを 見た（skipped：1 は 途中で やめて まとめへ）・タイムアタックを 始めた・結果を 見た（bags：あけた 袋）。via：coin（コイン精米機の QR `#coin`）／title。`mishin_coin_done` と `line_add`（from=mishin-coin）の 数を くらべると、れんしゅうを 終えた 人の うち LINE を 押した 割合が わかる |
 | `shop_link`（ミシン糸） | ミシン糸の まとめの「コイン精米所の 案内」（ricepia.jp/#coin-seimai）を 押した（link：site）。ricepia.jp の 側では `utm_source=mishin&utm_medium=game&utm_campaign=coin-done` で 来た 人と わかる（119周目） |
+| `play_open`・`play_first_touch`・`play_first_reward`・`play_minute`・`play_end`（検査ゲーム） | 農産物検査ゲーム（`kensa.html`）の 遊びの 数（サイクル187・運営者 2026-11-22）。どれにも game：kensa。開いた／最初に ゲームの 画面を さわった（secs：開いてから の 秒）／最初の ごほうび＝最初の 段を 終えた ✓（secs）／見えて いる 時間の 合計が 60秒／ページを 離れた・かくれた（secs：見えて いた 秒・bags：はんこを 押した 袋の 数・step：今の 段 0〜4。同じ 中身は 2秒 以内に 2回 送らない）。名前・位置・粒の 場所は 送らない。📖 の いちばん 下の 1行で 切れる（`nsg_noanalytics`。にしお の せってい と 同じ 鍵） |
 | `shop_stamp` | 当店に来た日の来店スタンプ（n：何こめ。3・5・10こで +100・+200・+500pt） |
 | `coupon_get`・`coupon_use` | とくてん（クーポン）と交換した・お店で使用済みにした |
 | `code_make`・`code_load` | ひきつぎの あいことばを出した・あいことばで続けた（機種変更などで遊び続けた人の数） |

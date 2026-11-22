@@ -11,6 +11,7 @@
 <meta property="og:image" content="https://go.ricepia.jp/kensa/kv.webp"/>
 <meta name="twitter:card" content="summary_large_image"/>
 <link rel="preload" as="image" href="kensa/face_dot.webp" fetchpriority="high"/><!-- 物差しの顔を写真より先に -->
+<script src="nishio-go/analytics.js" defer></script><!-- 遊びの 数（サイクル187。にしおさんぽGO・ミシン糸 と 同じ。公開の ドメインで だけ 動く。📖 の いちばん 下で 切れる） -->
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8C%BE%3C/text%3E%3C/svg%3E"/>
 <style>
   :root { --ink:#1a1814; --paper:#fbf8f0; --bg:#e9e2d2; --green:#1f4d2b; --gold:#b8893a; --stamp:#b3261e; }
@@ -255,6 +256,8 @@
   #notes h2 { font-size:15px; margin:0 0 6px; }
   #notes a { color:var(--green); }
   #notes p { margin:0 0 10px; }
+  #anaLine { font-size:12px; color:#7a705f; } /* 遊びの 数を 送るか（サイクル187）。説明の いちばん 下の 小さな 1行。ゲームの 画面には 字を 足さない */
+  #anaLine button { font:inherit; color:var(--green); background:none; border:1px solid currentColor; border-radius:12px; padding:0 8px; margin-left:4px; cursor:pointer; }
 
   /* 幅の狭いスマホ: きめるの「規格外」が2行に折れないよう、項目の列を少し狭め字を小さく */
   @media (max-width:340px) {
@@ -436,6 +439,7 @@
   <p>出典: <a class="sourceLink" href="https://www.maff.go.jp/j/seisan/syoryu/kensa/kome/k_kikaku/" target="_blank" rel="noopener">農林水産省「玄米の検査規格」</a>／<a class="sourceLink" href="https://www.maff.go.jp/j/seisan/syoryu/kensa/hourei.html" target="_blank" rel="noopener">農産物検査法及び関係通知等</a>／<a class="sourceLink" href="https://www.maff.go.jp/j/seisan/syoryu/kensa/attach/pdf/index-25.pdf" target="_blank" rel="noopener">農林水産省「コメの農産物検査」</a></p>
   <p><a id="notesReturnLink" href="https://ricepia.jp/">らいすぴあ（近藤米穀店）のサイトへ</a></p>
   <p><a id="gameReturnLink" href="#app">🎮 ゲームへ もどる</a></p>
+  <p id="anaLine"><span id="anaText">📊 遊びの 数（どこまで 進んだか）を Google・LINEヤフー に 送って います（アクセスと 広告の 効果の 計測。名前・場所・粒の 位置は 送りません）。</span><button type="button" id="anaBtn">送らない</button></p>
 </section>
 <script>
 "use strict";
@@ -3331,6 +3335,62 @@ window.addEventListener("resize", () => {
   /* 回した すぐ あとは 手本の 指が 前の 場所に のこって いて 置けない ことが ある（568×320 で 回して もどした あと 1/1）。指が 落ち着いた 1秒 あとに もう 1回 */
   if (!peek.classList.contains("on")) peekRetry = setTimeout(() => { if (nextBtn.classList.contains("on") && !idleCard.classList.contains("on") && peekTimer === null && !peek.classList.contains("on")) peekShow(); }, 1000);
 });
+/* 遊びの 数（サイクル187・運営者 2026-11-22「入れて」）。にしおさんぽGO と 同じ 仕組み（nishio-go/analytics.js の window.nsgTrack）で、5つ だけ 送る。
+   play_open（開いた）・play_first_touch（最初に ゲームの 画面を さわった 秒）・play_first_reward（最初の ごほうび＝最初の 段を 終えた ✓ の 秒。サイクル166 の 決め）・
+   play_minute（見えて いる 時間の 合計が 60秒）・play_end（ページを 離れる／かくれる。見えて いた 秒・終えた 袋の 数・今の 段の 番号）。どれにも game:"kensa"。
+   送るのは 数と 段の 番号 だけ（名前・位置・字・粒の 場所は 送らない）。公開の ドメインで だけ 動き、localStorage の nsg_noanalytics="1" で 切れる（にしお の「せってい」と 同じ 鍵）。
+   analytics.js が 来ない・おそい ときも ゲームは 何も 変わらない（nsgTrack が 無ければ 20件まで ためて、来たら 送る）。ゲームの 時計・動き・音には 相乗り しない */
+(function playStats() {
+  const GAME = "kensa", t0 = performance.now(), queue = [];
+  let offMem = null; /* localStorage が 使えない とき の この ページ だけの 切りかえ */
+  const isOff = () => { if (offMem !== null) return offMem; try { return localStorage.getItem("nsg_noanalytics") === "1"; } catch (e) { return false; } };
+  const flush = () => { if (typeof window.nsgTrack !== "function") return; for (const a of queue.splice(0)) { if (isOff()) break; try { window.nsgTrack(a[0], a[1]); } catch (e) { /* 送れなくても 遊びは 続く */ } } };
+  const send = (name, params) => {
+    if (isOff()) return;
+    const a = [name, Object.assign({ game:GAME }, params || {})];
+    if (typeof window.nsgTrack === "function") { flush(); try { window.nsgTrack(a[0], a[1]); } catch (e) { /* noop */ } }
+    else if (queue.length < 20) queue.push(a);
+  };
+  document.addEventListener("DOMContentLoaded", flush); window.addEventListener("load", flush);
+  const since = () => Math.round((performance.now() - t0) / 100) / 10;
+  /* 見えて いる 秒（かくれて いる 間は 数えない）。送る ため だけの 数え */
+  let visMs = 0, visFrom = document.hidden ? null : performance.now(), minuteTimer = null, minuteSent = false;
+  const visibleMs = () => visMs + (visFrom === null ? 0 : performance.now() - visFrom);
+  const armMinute = () => { clearTimeout(minuteTimer); minuteTimer = null; if (minuteSent || visFrom === null) return;
+    minuteTimer = setTimeout(() => { minuteTimer = null; if (visibleMs() >= 60000 - 50) { minuteSent = true; send("play_minute"); } else armMinute(); }, Math.max(0, 60000 - visibleMs())); };
+  let lastEnd = null;
+  const end = () => {
+    const p = { secs:Math.round(visibleMs() / 1000), bags:cookedReturns.length, step, transport_type:"beacon" }, key = p.secs + "/" + p.bags + "/" + p.step, now = performance.now();
+    if (lastEnd && lastEnd.key === key && now - lastEnd.at < 2000) return; /* 同じ 中身を 2秒 以内に 2回 送らない（かくれる → pagehide） */
+    lastEnd = { key, at:now }; send("play_end", p);
+  };
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) { if (visFrom !== null) { visMs += performance.now() - visFrom; visFrom = null; } armMinute(); end(); }
+    else { if (visFrom === null) visFrom = performance.now(); armMinute(); }
+  });
+  window.addEventListener("pagehide", end);
+  send("play_open"); armMinute();
+  /* 最初に ゲームの 画面（#app）を さわった */
+  const firstTouch = () => { $("app").removeEventListener("pointerdown", firstTouch, true); $("app").removeEventListener("keydown", firstTouch, true); send("play_first_touch", { secs:since() }); };
+  $("app").addEventListener("pointerdown", firstTouch, { capture:true, passive:true }); $("app").addEventListener("keydown", firstTouch, true);
+  /* 最初の ごほうび: 最初の 段を 終えて ✓ が 出た とき（setStep が html の data-step を 2つめ 以降の 段に した とき） */
+  if (window.MutationObserver) {
+    const mo = new MutationObserver(() => { if (step > 0) { mo.disconnect(); send("play_first_reward", { secs:since() }); } });
+    mo.observe(document.documentElement, { attributes:true, attributeFilter:["data-step"] });
+  }
+  /* 📖 の いちばん 下の 切りかえ */
+  const text = $("anaText"), btn = $("anaBtn");
+  /* 解析の 部品（analytics.js）は 開いた ときに 切れて いたら 読みこみ なおす まで 動かない ので、ここで 入れなおした ときは「次に 開いた ときから」（にしお の せってい と 同じ 言い方） */
+  const loadedOff = isOff();
+  const show = () => { const o = isOff(); text.textContent = o ? "📊 遊びの 数は 送って いません。" : loadedOff ? "📊 遊びの 数を Google・LINEヤフー に 送ります（次に 開いた ときから。名前・場所・粒の 位置は 送りません）。" : "📊 遊びの 数（どこまで 進んだか）を Google・LINEヤフー に 送って います（アクセスと 広告の 効果の 計測。名前・場所・粒の 位置は 送りません）。"; btn.textContent = o ? "送る" : "送らない"; };
+  btn.addEventListener("click", () => {
+    const o = !isOff();
+    try { localStorage.setItem("nsg_noanalytics", o ? "1" : "0"); offMem = null; if (isOff() !== o) offMem = o; } catch (e) { offMem = o; }
+    if (o) queue.length = 0;
+    show();
+  });
+  show();
+})();
 </script>
 </body>
 </html>

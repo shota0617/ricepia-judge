@@ -3688,7 +3688,7 @@ renderTitle();
        雨 … 今日の 天気が 雨・台風(KomeCards.weather の 読み skyWxInfo)。土の 色が しめり、水たまり・雨の すじ
      トラクター・コンバインは 自分で 描いた 小さな 形(色は 青みの 緑・ロゴ なし)。走ると うしろに 耕した あと・刈った あとが のこる(のぞき窓を transform で ずらす)。
      ふえた 印は 0.3秒 ふくらむ(周回170 の きまり: 同じ 判定の 中の 描きなおしでは 引きつぐ・保存から もどる ときは ふくらまない) */
-  var PDPAL = { a: '#9c7a45', A: '#7e6136', q: '#5f4528', n: '#b9a27a', g: '#8fd45a', G: '#4e9b3a', '0': '#8f6236', '1': '#82552d', '2': '#744a26', '3': '#673f20', '4': '#5a361b', '5': '#7d5530', '6': '#704826', '7': '#633f21', '8': '#56361b', '9': '#4a2d16',
+  var PDPAL = { a: '#9c7a45', A: '#7e6136', q: '#5f4528', n: '#b9a27a', g: '#8fd45a', G: '#4e9b3a', '0': '#9b6a3a', '1': '#83552c', '2': '#6b4322', '3': '#55341a', '4': '#422813', '5': '#7d5530', '6': '#704826', '7': '#633f21', '8': '#56361b', '9': '#4a2d16',
     h: '#e3c38e', k: '#3a2413', w: '#ffffff', b: '#57b6f2', B: '#2f7fd0', c: '#dff3ff', m: '#7d6a4e', y: '#ffe27a', Y: '#f5a623', u: '#d8a12f', o: '#b8823f', O: '#8a5a2b',
     r: '#e0959a', R: '#a06c3a', F: '#6c4423', s: '#c9b07a', S: '#a88b55', t: '#5f9ea0', T: '#3f7476', K: '#7d6a4e', W: '#2f5e22', j: '#d9b46a', L: '#c8d94a' };
   /* 周回172(運営者の声「茶色い四角では田んぼだとわかりにくいのでわかりやすく」): ななめ上から 見た 田んぼ。奥が せまい 台形(奥の 畦 y=3・手前の 畦 y=14〜15・手前の 土手の 面 y=16〜17)、
@@ -3733,15 +3733,13 @@ renderTitle();
     if (wat === 'crack') return function(x, y){ return (x + y * 2) % 9 === 0 || (x * 2 + 40 - y) % 11 === 0 ? 'k' : 'R'; };
     return pdWater; }
   function pdWet(wat){ return !wat || wat === 'water' || wat === 'deep' || wat === 'inter' || wat === 'puddle'; }
-  function pdMarks(ok){   /* ○ の 数 → 土の 段と 印(並び順に 1つずつ ふえる) */
-    var n = Math.max(0, ok | 0), lv, list = [], newest = null, i, m;
-    if (n < 24) { lv = Math.floor(n / 6); for (i = 0; i < n % 6; i++) list.push({ t: 'c', x: PD_CRUMB[i][0], y: PD_CRUMB[i][1] }); if (n % 6) newest = list[list.length - 1]; return { lv: lv, list: list, newest: newest }; }
-    m = n - 24; lv = 4;
-    for (i = 0; i < Math.min(6, m); i++) list.push({ t: 'c', x: PD_CRUMB[i][0], y: PD_CRUMB[i][1] });
-    for (i = 0; i < Math.min(12, Math.max(0, m - 6)); i++) list.push({ t: 's', x: PD_SHINE[i][0], y: PD_SHINE[i][1] });
-    for (i = 0; i < Math.min(8, Math.max(0, m - 18)); i++) list.push({ t: 'w', x: PD_WORM[i][0], y: PD_WORM[i][1], alt: 0 });
-    if (m > 26) { var step = m - 26; list.forEach(function(k){ if (k.t === 'w') { var wi = PD_WORM.findIndex(function(p){ return p[0] === k.x && p[1] === k.y; }); k.alt = (step > wi ? Math.floor((step - 1 - wi) / 8) + 1 : 0) % 2; if (wi === (step - 1) % 8) newest = k; } }); }   /* 印が そろった あとも、○ の たびに みみずが 1匹ずつ 向きを かえる */
-    else if (m > 0) newest = list[list.length - 1];
+  function pdMarks(ok){   /* ○ の 数 → 土の 段と 印(並び順に 1つずつ ふえる)。サイクル205: 印は 段が 上がっても 消さない(前は 6回め の ○ で 5つ の 印が 0 に もどり、へった ように 見えた)。だんご 6つ → つや 12 → みみず 8 の 順に ふえつづけ、段(土の 色)は ○ 6回 ごと */
+    var n = Math.max(0, ok | 0), lv = Math.min(4, Math.floor(n / 6)), list = [], newest = null, i;
+    for (i = 0; i < Math.min(6, n); i++) list.push({ t: 'c', x: PD_CRUMB[i][0], y: PD_CRUMB[i][1] });
+    for (i = 0; i < Math.min(12, Math.max(0, n - 6)); i++) list.push({ t: 's', x: PD_SHINE[i][0], y: PD_SHINE[i][1] });
+    for (i = 0; i < Math.min(8, Math.max(0, n - 18)); i++) list.push({ t: 'w', x: PD_WORM[i][0], y: PD_WORM[i][1], alt: 0 });
+    if (n > 26) { var step = n - 26; list.forEach(function(k){ if (k.t === 'w') { var wi = PD_WORM.findIndex(function(p){ return p[0] === k.x && p[1] === k.y; }); k.alt = (step > wi ? Math.floor((step - 1 - wi) / 8) + 1 : 0) % 2; if (wi === (step - 1) % 8) newest = k; } }); }   /* 印が そろった あとも、○ の たびに みみずが 1匹ずつ 向きを かえる */
+    else if (n > 0) newest = list[list.length - 1];
     return { lv: lv, list: list, newest: newest }; }
   function pdMarkPix(k){ return k.t === 'c' ? [[0, 0, 'h'], [1, 0, 'h'], [0, 1, 'k']] : k.t === 's' ? [[0, 0, 'w'], [1, 0, 'h']] : k.alt ? [[0, 1, 'r'], [1, 0, 'r'], [2, 1, 'r']] : [[0, 0, 'r'], [1, 1, 'r'], [2, 0, 'r']]; }
   /* 稲(と 直播の 種・芽・刈り株)の 層。地面の 上に 重ねる。どの 段階も すきま(地面が 見える ドット)を 残す ので、水の 状態の ちがいが 見える */
@@ -3760,7 +3758,7 @@ renderTitle();
     if (kind === 'soil') g = pdFrame(function(x, y){ return PD_LV[lv]; });   /* サイクル174: 冬の 土は 1つの 色の 面(○ で 段が かわる)。細かい 点は やめた */
     else g = pdFrame(pdGround(o.wat || (kind === 'till' || kind === 'dseed' || kind === 'dsprout' ? 'till' : kind === 'puddle' ? 'puddle' : kind === 'stubble' ? 'stub' : 'water')));
     pdPlants(g, kind);
-    if (kind === 'soil' && mk) mk.list.forEach(function(k){ pdMarkPix(k).forEach(function(p){ var X = k.x + p[0], Y = k.y + p[1]; if (pdIn(X, Y)) g[Y][X] = p[2]; }); });   /* ○ の 印は 刈り株の 上に のせる */
+    if (kind === 'soil' && mk) mk.list.forEach(function(k){ pdMarkPix(k).forEach(function(p){ var X = k.x + p[0], Y = k.y + p[1]; if (pdIn(X, Y) && (lv < 4 && mk.list.length <= 6 || (g[Y][X] !== 'j' && g[Y][X] !== 'S'))) g[Y][X] = p[2]; }); });   /* ○ の 印は 刈り株の 上に のせる。サイクル205: 印が 7つ 以上(段 1 から の つや・みみず)の ときは 刈り株の 列を 消さない(株の ドットは よける) */
     /* 田んぼの ようす(見回りの 発見・エンジンの 状態。field3d.js が 描く ものと 同じ 見分け): 草・いもち病の 斑点・ウンカの 坪枯れ・倒伏 */
     var put = function(x, y, c){ if (pdIn(x, y)) g[y][x] = c; };
     if (o.weed) pdFrac([[8, 10], [26, 8], [35, 12]]).forEach(function(p){ put(p[0], p[1], 'W'); put(p[0], p[1] - 1, 'W'); put(p[0] - 1, p[1] - 2, 'W'); put(p[0] + 1, p[1] - 2, 'W'); });

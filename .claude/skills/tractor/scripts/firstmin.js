@@ -1,4 +1,4 @@
-// 最初の1分の確かめ（サイクル259〜285）：node firstmin.js [tractor.html のパス]
+// 最初の1分の確かめ（サイクル259〜291）：node firstmin.js [tractor.html のパス]
 //  1) 知らせの文：吹き出し（speakText）・短い文（shortText）で かっこが合わなくならない（「…見ます）」のような切れ方をしない）
 //  3) 畦の手前で止まった人：「横へ なぞる」見本が出て、見本どおりで向きが変わる。自動で下ろす知らせは 1 回だけ（サイクル260）
 //  2) のんびりの大きな数字：スマホ縦で 1 回なぞって耕したら 0% のままにならない。田んぼアートでは地図の「でき」と同じ数、お題なしでは小数 1 けた
@@ -1474,6 +1474,48 @@ const srv = http.createServer((r, s) => { const u = decodeURIComponent(r.url.spl
       const d2 = await p.evaluate(() => ({ fixing: game.HERI.fixing || game.HERI.fixed || game.GREASE.fixing || game.GREASE.fixed, need: game.HERI.need, rot: game.S.rotDown, rotPos: +game.S.rotPos.toFixed(2), rotorW: +(game.S.rotorW || 0).toFixed(2), stalled: !!game.S.stalled, crank: game.S.crank || 0 }));
       ok('白線の 外で 止まって いる 間は 手入れ（爪の 交換・グリース）を 始めない・中に もどって 止まると 始める（直す前：外でも 始まる）', d0.need && !d1.fixing && !d1.parked && d2.fixing, [d0, d1, d2]);
       await ctx.close();
+    }
+    // ---- 26) サイクル291（運営者 2026-11-22）：遊びの 数を 5 つ（＋読みこみ）だけ 送る。nishio-go/analytics.js の nsgTrack を 記録する 作り物に かえて 見る ----
+    //       直す前：tractor.html は 何も 送らない（nsgTrack を 呼ばない）
+    {
+      const FAKE = "window.__ev = window.__ev || []; window.nsgTrack = (n, p) => window.__ev.push([n, JSON.parse(JSON.stringify(p))]); window.nsgAnalytics = { on: true };";
+      const fakeAna = q => q.route('**/nishio-go/analytics.js', r => r.fulfill({ body: FAKE, contentType: 'text/javascript' }));
+      const hideAPI = q => q.addInitScript(() => { let hid = false; Object.defineProperty(document, 'hidden', { get: () => hid, configurable: true }); window.__hide = v => { hid = v; document.dispatchEvent(new Event('visibilitychange')); }; });
+      // 26-1) 出る 順・1 回ずつ・中身。play_minute は かくれて いる 間 進まない
+      { let down26 = false;
+        const { ctx, p, cdp } = await open14('', async q => { await fakeAna(q); await hideAPI(q); }); await fake14(p); const adv = s => p.evaluate(x => window.__adv(x), s);
+        const T = async (type, pts) => { if (type === 'touchEnd' && !down26) return; down26 = type !== 'touchEnd'; await cdp.send('Input.dispatchTouchEvent', { type, touchPoints: pts }); };
+        const ev = () => p.evaluate(() => (window.__ev || []).map(e => [e[0], e[1]]));
+        await adv(1); const e0 = await ev();
+        await T('touchStart', [{ x: 195, y: 481, id: 1 }]); for (let i = 1; i <= 10; i++) { await T('touchMove', [{ x: 195, y: 481 - 8.4 * i, id: 1 }]); await p.waitForTimeout(12); await adv(0.05); }
+        await adv(4); await T('touchEnd', []); await adv(1); const e1 = await ev();
+        // かくれる：play_end が 出る。かくれて いる 間に 100 秒 たっても play_minute は 出ない
+        await p.evaluate(() => { window.__hide(true); dispatchEvent(new Event('pagehide')); }); const e2a = await ev();   // かくれて すぐ ページを 閉じる：同じ 中身を 2 秒 以内に 2 回 送らない
+        await p.evaluate(() => window.__adv(100)); await p.waitForTimeout(1500); const e2 = await ev(); const e2b = await ev();
+        await p.evaluate(() => window.__hide(false)); await adv(62); await p.waitForTimeout(1500); const e3 = await ev();
+        await p.evaluate(() => window.__hide(true)); const e4 = await ev();
+        const names = e => e.map(x => x[0]), cnt = (e, n) => names(e).filter(x => x === n).length;
+        const r26 = { e0: names(e0), e1: names(e1), e2: names(e2), e2b: e2a.filter(x => x[0] === 'play_end').length - 1, e3: names(e3), end: e4.filter(x => x[0] === 'play_end').map(x => x[1]), ready: (e0.find(x => x[0] === 'play_ready') || [])[1], reward: (e1.find(x => x[0] === 'play_first_reward') || [])[1], keys: [...new Set(e4.flatMap(x => Object.keys(x[1])))] };
+        ok('送る 順と 1 回ずつ：play_open → play_ready（ok: true）→ play_first_touch → play_first_reward。どれも game: tractor（直す前：何も 送らない）',
+          JSON.stringify(r26.e0.slice(0, 2)) === '["play_open","play_ready"]' && r26.ready && r26.ready.ok === true && r26.ready.game === 'tractor' && r26.e1.indexOf('play_first_touch') > 1 && r26.e1.indexOf('play_first_reward') > r26.e1.indexOf('play_first_touch')
+          && ['play_open', 'play_ready', 'play_first_touch', 'play_first_reward'].every(n => cnt(e4, n) === 1) && e4.every(x => x[1].game === 'tractor') && r26.reward && r26.reward.secs > 0, r26);
+        ok('かくれると play_end（見えて いた 秒・耕し率・beacon）。かくれて いる 100 秒は play_minute に 数えない・見えて 60 秒で 1 回。同じ 中身の play_end は 2 秒 以内に 2 回 送らない',
+          cnt(e2, 'play_end') === 1 && cnt(e2, 'play_minute') === 0 && r26.e2b === 0 && cnt(e3, 'play_minute') === 1 && r26.end.length === 2 && r26.end.every(x => x.transport_type === 'beacon' && Number.isInteger(x.pct) && Number.isInteger(x.secs)) && Math.abs(r26.end[1].secs - r26.end[0].secs - 62) <= 2 && r26.end[1].secs >= 60
+          && r26.keys.every(k => ['game', 'secs', 'ok', 'pct', 'transport_type'].includes(k)), r26);
+        await ctx.close(); }
+      // 26-2) 読めなかった（田んぼの 絵 glb が 404。14-4 と 同じ 道）：play_ready は ok: false
+      { const { ctx, p } = await open14('', async q => { await fakeAna(q); await q.route('**/field_tanbo*.glb', r => r.fulfill({ status: 404, body: '' })); }, true);
+        await p.waitForFunction(() => (window.__ev || []).some(e => e[0] === 'play_ready'), null, { timeout: 30000, polling: 200 }).catch(() => {});
+        const r = await p.evaluate(() => (window.__ev || []).filter(e => e[0] === 'play_ready').map(e => e[1]));
+        ok('読めなかった（田んぼの 絵が 404）ときは play_ready が ok: false で 1 回', r.length === 1 && r[0].ok === false && r[0].game === 'tractor', r); await ctx.close(); }
+      // 26-3) nsg_noanalytics＝1：呼ばない。26-4) 作り物 なし（手元の ドメイン）：外へ の 通信 0・今までどおり 始まる。26-5) analytics.js が 404：遊べる
+      { const { ctx, p } = await open14('', async q => { await fakeAna(q); await q.addInitScript(() => { try { localStorage.setItem('nsg_noanalytics', '1'); } catch (e) {} }); }); await fake14(p); await p.evaluate(() => window.__adv(2));
+        const n = await p.evaluate(() => (window.__ev || []).length); ok('nsg_noanalytics＝1 なら nsgTrack を 呼ばない', n === 0, n); await ctx.close(); }
+      { const hosts = new Set(); const { ctx, p } = await open14('', q => { q.on('request', r => { const h = new URL(r.url()).hostname; if (h !== 'localhost') hosts.add(h); }); }); await fake14(p); await p.evaluate(() => window.__adv(2));
+        const st = await p.evaluate(() => ({ started: !!game.S.started, on: !!(window.nsgAnalytics && window.nsgAnalytics.on), line: [...document.querySelectorAll('.anaLine')].every(e => e.classList.contains('hidden')) }));
+        ok('手元の ドメインでは 外へ 送らない（jsDelivr の three だけ）・始まる・切る 1 行は 出さない', st.started && !st.on && st.line && [...hosts].every(h => h === 'cdn.jsdelivr.net'), [st, [...hosts]]); await ctx.close(); }
+      { const { ctx, p } = await open14('', q => q.route('**/nishio-go/analytics.js', r => r.fulfill({ status: 404, body: '' })), true); await fake14(p); await p.evaluate(() => window.__adv(2));
+        const st = await p.evaluate(() => ({ started: !!game.S.started, ns: typeof window.nsgTrack })); ok('analytics.js が 404 でも 遊べる（nsgTrack が 無くても 何も 起きない）', st.started && st.ns === 'undefined', st); await ctx.close(); }
     }
   }
   ok('エラーなし', errs.length === 0, errs.slice(0, 3));

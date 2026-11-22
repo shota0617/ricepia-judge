@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
+<script src="nishio-go/analytics.js" defer></script><!-- サイクル291（運営者 2026-11-22）: 遊びの 数（どこまで 進んだか）だけ 送る（にしおさんぽGO・ミシン糸と 同じ しくみ。公開の ドメインで だけ 動く・nsg_noanalytics＝1 で 切れる。送る 中身は docs/tractor-analytics.md）。defer なので 3D の 読みこみを 待たせない -->
 <title>トラクターで田んぼを耕そう（試作版） - らいすぴあ（近藤米穀店）</title>
 <meta name="description" content="60馬力のキャビン付きトラクターの運転席に座って、ロータリーで田んぼを耕し、田んぼに絵を描く（田んぼアート）ブラウザのゲーム。春の田んぼ・秋の稲刈りあと・水を張った代かきの3つの季節。らいすぴあ（近藤米穀店）の試作版です。"/>
 <meta name="theme-color" content="#2d2d1e"/>
@@ -131,6 +132,10 @@
   .keys tr.main td { background: #fff7e0; font-weight: 700; }
   body.touch .keys .pc, body.touch .steps .pc, body:not(.touch) .steps .sp { display: none; }   /* スマホではパソコンのキーを、パソコンではスマホのボタンをかくす */
   #help .card { text-align: left; }
+  /* サイクル291: 遊びの 数を 送って いる ことと、切る ボタン（読む ための 所＝操作の 表・終わりの 画面の いちばん 下に 小さく。公開の ドメインで 送って いる ときだけ 見える） */
+  .anaLine { margin: 10px 0 0; font-size: 11px; line-height: 1.5; color: #6b6355; text-align: center; }
+  .anaLine button { margin-left: 6px; padding: 2px 8px; font-size: 11px; border-radius: 999px; border: 1px solid #b9ae98; background: #fbf8f0; color: #4a3d2c; }
+  .anaLine.hidden { display: none; }
   #keyHint { position: fixed; left: 12px; bottom: 12px; padding: 6px 10px; border-radius: 10px; background: rgba(20,20,20,.62); color: #fff; font-size: 12.5px; line-height: 1.6; pointer-events: none; transition: opacity .8s; }
   /* 案内（コーチ）：いま何をすればよいかを 1 行で。はじめの 2 回の旋回までと、エンストのとき */
   #coach { position: fixed; left: 50%; bottom: 64px; transform: translateX(-50%); max-width: min(560px, calc(100vw - 32px)); padding: 8px 16px; border: 2px solid #ffd84a; border-radius: 999px; background: rgba(20,18,14,.8); color: #fff; font-size: 15px; font-weight: 700; line-height: 1.5; text-align: center; pointer-events: none; transition: opacity .3s; }
@@ -267,6 +272,38 @@
 })();
 </script>
 <script>
+// サイクル291（運営者 2026-11-22「入れて」）: 遊びの 数を 5 つ（＋読みこみ）だけ 送る。名前・位置・なぞった 道の 形は 送らない。
+// 送る：play_open（開いた）・play_ready（おおいが 取れて 遊べる／読めなかった）・play_first_touch（最初に さわった）・play_first_reward（大きな 数字が はじめて 0 から 動いた）・
+// play_minute（画面が 見えて いる 時間の 合計が 60 秒）・play_end（ページを 閉じる／かくれる：見えて いた 秒・耕し率）。どれも game:'tractor' つき・1 回ずつ（play_end は 同じ 中身を 2 秒 以内に 2 回 送らない）。
+// window.nsgTrack（nishio-go/analytics.js。defer）が まだ 無い 間は ためて おき、来たら 送る。来なければ（404・手元の 確かめ）何も しない。nsg_noanalytics＝1 なら 送らない。ゲームの 動き・時間・絵・音は 変えない
+window.PLAYT = (function () {
+  var T0 = performance.now(), once = {}, q = [], visMs = 0, visT = document.hidden ? null : T0, lastEnd = null, iv = null;
+  function off() { try { return localStorage.getItem('nsg_noanalytics') === '1'; } catch (e) { return false; } }
+  function flush() { if (!window.nsgTrack) return; var a; while ((a = q.shift())) { try { window.nsgTrack(a[0], a[1]); } catch (e) { /* noop */ } } }
+  function send(name, p) { if (off()) return; var o = { game: 'tractor' }; for (var k in p || {}) o[k] = p[k]; q.push([name, o]); flush(); }
+  function one(name, p) { if (once[name]) return; once[name] = true; send(name, p); }
+  function secs() { return Math.round((performance.now() - T0) / 100) / 10; }
+  function vis() { return visMs + (visT === null ? 0 : performance.now() - visT); }
+  function end() { var pct = 0; try { pct = Math.max(0, Math.min(100, Math.floor(calmPct))); } catch (e) { /* noop */ }
+    var p = { secs: Math.round(vis() / 1000), pct: pct, transport_type: 'beacon' }, key = p.secs + '|' + p.pct, now = Date.now();   // 2 秒は 本物の 時計で（かくれて いる 間も 進む）
+    if (lastEnd && lastEnd.key === key && now - lastEnd.t < 2000) return; lastEnd = { key: key, t: now }; send('play_end', p); }
+  document.addEventListener('visibilitychange', function () { var now = performance.now();
+    if (document.hidden) { if (visT !== null) { visMs += now - visT; visT = null; } end(); } else if (visT === null) visT = now; });
+  addEventListener('pagehide', end);
+  addEventListener('pointerdown', function () { one('play_first_touch', { secs: secs() }); }, { capture: true, passive: true });
+  iv = setInterval(function () { if (vis() >= 60000) { one('play_minute', {}); clearInterval(iv); } }, 1000);   // 見えて いる 時間（かくれて いる 間は 数えない）。毎こまの 仕事は ふやさない
+  document.addEventListener('DOMContentLoaded', flush); addEventListener('load', flush);
+  one('play_open', {});
+  function lines() { var on = !!(window.nsgAnalytics && window.nsgAnalytics.on) && !off(), ls = document.querySelectorAll('.anaLine');
+    for (var i = 0; i < ls.length; i++) ls[i].classList.toggle('hidden', !on); }
+  addEventListener('load', lines);
+  document.addEventListener('click', function (e) { var b = e.target && e.target.closest && e.target.closest('.anaOff'); if (!b) return;
+    try { localStorage.setItem('nsg_noanalytics', '1'); } catch (err) { /* noop */ }
+    var ls = document.querySelectorAll('.anaLine'); for (var i = 0; i < ls.length; i++) ls[i].textContent = '遊びの 数は 送らない ように しました（アクセスの 計測は 次に 開いた ときから 止まります）'; });
+  return { ready: function (ok) { one('play_ready', { secs: secs(), ok: !!ok }); }, reward: function () { one('play_first_reward', { secs: secs() }); }, get rewarded() { return !!once.play_first_reward; }, off: off };
+})();
+</script>
+<script>
 // サイクル275・最初の1分: 読みこみが とちゅうで 止まった（エラーに ならず、返事が 来ない）ときの 見はり。three の 3 本より 前に置く（three が 来ないと、あとの スクリプトは 1 つも 動かない）。
 // それまでは 車体・田んぼ・作業機・復号器・three の どれかが 返事を しないと、おおいは「指で なぞると 進みます」と 止まった線の まま ずっと 出ていた。さわっても 黄色い点が 出るだけで 始まらない
 // （見つけ役の 実測: 6 とおりの 止まり方の 6 とおりとも 30 秒たっても 文字は 同じ。three が 来ない ときは 60 秒）。
@@ -327,6 +364,7 @@ if (window.LW_GO) LW_GO();   // サイクル276: three の 3 本が そろった
     // タップしても 始まった あとなので 読みこみ直さず、なぞっても 0m（実測 2 回のうち 2 回。サイクル274 より前は 1.0〜1.1m 進んでいた）
     if (started()) return;
     w.classList.add('off');
+    if (window.PLAYT) PLAYT.ready(false);   // サイクル291: 読めなかった（1 回。このあと 始まっても 送り直さない）
     // サイクル274・最初の1分: この知らせは のんびり（body.calm）でも 見えるようにする（#toast.err）。画面を タップすると 読みこみ直す。
     // それまでは 車体・田んぼ・作業機の どれかが届かないと、おおいが消えて、知らせは のんびりでは かくれている #toast に入り、
     // 灰色と茶色の三角だけの画面に 文字もボタンも なかった（実測 4 回のうち 4 回。さわっても何も起きない）。こわれた景色（canvas）は かくす（body.loadng）
@@ -378,7 +416,7 @@ if (window.LW_GO) LW_GO();   // サイクル276: three の 3 本が そろった
 <div id="artBox" class="hidden"><canvas id="artMap" width="250" height="196"></canvas><span id="artPop"></span></div>
 <div id="coach" class="hidden"></div>
 <div id="keyHint" class="hidden"><kbd>↑</kbd><kbd>↓</kbd> 前・うしろ　<kbd>←</kbd><kbd>→</kbd> ハンドル　<kbd>スペース</kbd> ロータリー上げ下げ　<kbd>H</kbd> 操作の表</div>
-<div class="sheet hidden" id="help"><div class="card"><div id="helpBody"></div><button class="go" id="bHelpClose">とじる（H）</button></div></div>
+<div class="sheet hidden" id="help"><div class="card"><div id="helpBody"></div><button class="go" id="bHelpClose">とじる（H）</button><p class="anaLine hidden">遊びの 数（どこまで 進んだか）を Google・LINEヤフー に 送っています（アクセスと 広告の 効果の 計測。名前・場所は 送りません）。<button type="button" class="anaOff">送らない</button></p></div></div>
 
 <div id="keysSrc" style="display:none">  <!-- サイクル263: 操作の表（？・H）の写し元。はじめの画面は全廃したので、表だけを隠し置き場へ移した -->
     <div class="how" id="keysBox">
@@ -440,6 +478,7 @@ if (window.LW_GO) LW_GO();   // サイクル276: three の 3 本が そろった
     <button class="go sub" id="bWash">🚿 洗車して しまう</button>
     <button class="go" id="bAgain">もう一度</button>
     <p class="small"><a href="https://ricepia.jp/?utm_source=tractor&amp;utm_medium=game&amp;utm_campaign=done" target="_blank" rel="noopener">らいすぴあ（近藤米穀店）のお米を見る</a></p>
+    <p class="anaLine hidden">遊びの 数（どこまで 進んだか）を Google・LINEヤフー に 送っています（アクセスと 広告の 効果の 計測。名前・場所は 送りません）。<button type="button" class="anaOff">送らない</button></p>
   </div>
 </div>
 
@@ -10511,7 +10550,7 @@ function startGame() {
   if (camMode !== 0) { camMode = 0; look.yaw = look.pitch = 0; $('bCam').textContent = '👁 ' + CAMS[0]; }   // サイクル118: 始まりは運転席視点（洗車などで外から見た後でも）
   for (const id of MOBILE || params.has('pad') ? ['hud', 'bar', 'badge', 'padC', 'padB', 'padD', 'bigPct'] : ['hud', 'bar', 'badge', 'bigPct']) $(id).classList.remove('hidden');   // サイクル217・類1: 大きな％数字も出す（店主指示 2026-11-11 で DETAIL でも常時表示に変更）   // サイクル98: 運転パッドは全廃済み（DOMなし）。運転はなぞり操作のみ（キーボードは予備として残す）
   if (!MOBILE && !params.has('pad')) $('keyHint').classList.remove('hidden');   // パソコン：はじめのうちは 画面の左下に いちばん使うキー
-  S.started = true; $('loadWait').classList.add('off'); $('toast').classList.remove('err'); document.body.classList.remove('loadng');   // サイクル269: 読みこみを待つ間の おおいを消す
+  S.started = true; $('loadWait').classList.add('off'); $('toast').classList.remove('err'); document.body.classList.remove('loadng'); if (window.PLAYT) PLAYT.ready(true);   // サイクル291: 遊べる ように なった（開いて からの 秒。1 回）   // サイクル269: 読みこみを待つ間の おおいを消す
   PRE.go = PRE.id !== null;   // サイクル271: 置いたままの指の なぞりは、はじめの 1 こまの あとで使う
     FIRSTMIN.start();   // サイクル159：のんびりでは 開始直後の表示を軽くする（DETAIL では何もしない）
     if (LOOP.friend !== null) setTimeout(() => { if (DETAIL) toast('🏁 友だちは ' + LOOP.friend + ' 点。きみは何点とれる？', 5); }, 6000);   // サイクル171・最初の1分: のんびりでは友だちの点数で挑戦しない（サイクル117）。共有リンクから開いても開始6秒の吹き出し・声で競わせず、まずなぞって耕す楽しさに集中させる。くわしい説明では従来どおり知らせる
@@ -11319,6 +11358,7 @@ function frame(now) {
     const fill = tilledCount / workCount;
     calmPct = Math.min(100, Math.floor(fill * 100 + 1e-9));
     $('bigPct').textContent = (fill < 0.1 ? (Math.floor(fill * 1000 + 1e-9) / 10).toFixed(1) : calmPct) + '%';
+    if (fill >= 0.001 && window.PLAYT && !PLAYT.rewarded) PLAYT.reward();   // サイクル291: 最初の ごほうび＝大きな 数字が はじめて 0.0% から 動いた（firstmin.js の 2 と 同じ 見かた）
     COACH.update(running && !INTRO.on);
     if (pct >= 3 && !S.hintGone) { S.hintGone = true; $('keyHint').style.opacity = 0; }
     $('time').textContent = fmtTime(S.elapsed);

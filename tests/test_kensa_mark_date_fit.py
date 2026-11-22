@@ -29,7 +29,7 @@ const types = {'.html':'text/html; charset=utf-8','.webp':'image/webp','.png':'i
     try { browser = await chromium.launch({executablePath:executable || undefined, timeout:20000, headless:true,
       args:['--no-sandbox','--disable-background-networking']}); }
     catch (e) { console.log(JSON.stringify({skip:'Chromium unavailable', detail:String(e)})); return; }
-    const cases = [];
+    const cases = []; let fallback = null;
     for (const [w, h] of [[320,568],[390,844],[568,320],[844,390],[820,1180]]) {
       const context = await browser.newContext({viewport:{width:w,height:h}, isMobile:true, hasTouch:true, serviceWorkers:'block'});
       const errors = [];
@@ -40,7 +40,9 @@ const types = {'.html':'text/html; charset=utf-8','.webp':'image/webp','.png':'i
           const file = u.pathname === '/kensa.html' ? html : path.resolve(root, '.' + decodeURIComponent(u.pathname));
           if ((file !== html && !file.startsWith(root + path.sep)) || !fs.existsSync(file) || !fs.statSync(file).isFile())
             return route.fulfill({status:404, body:''});
-          return route.fulfill({status:200, contentType:types[path.extname(file)] || 'application/octet-stream', body:fs.readFileSync(file)});
+          // ?nocq=1 serves the page as a browser without container units would read it (the cqw declaration is dropped as invalid)
+          const body = file === html && u.searchParams.get('nocq') ? fs.readFileSync(file, 'utf8').split('cqw').join('zzq') : fs.readFileSync(file);
+          return route.fulfill({status:200, contentType:types[path.extname(file)] || 'application/octet-stream', body});
         });
         const page = await context.newPage();
         page.on('pageerror', e => errors.push(String(e)));
@@ -64,10 +66,19 @@ const types = {'.html':'text/html; charset=utf-8','.webp':'image/webp','.png':'i
             }, [w, h, phase, grade]));
           }
         }
+        if (w === 390) {
+          const old = await context.newPage();
+          await old.goto('http://kensa.test/kensa.html?nocq=1', {waitUntil:'load', timeout:20000});
+          await old.evaluate(() => { toOsu(); inkDone(); stampNow(); });
+          await old.waitForTimeout(800);
+          fallback = await old.evaluate(() => { const m = document.getElementById('mark'); m.innerHTML = '1等<small>2026.12.30</small>'; m.className = 'on';
+            return parseFloat(getComputedStyle(m.querySelector('small')).fontSize); });
+          await old.close();
+        }
         cases.forEach(c => { if (c.size === w + 'x' + h) c.errors = errors.slice(); });
       } finally { await context.close(); }
     }
-    console.log(JSON.stringify({cases}));
+    console.log(JSON.stringify({cases, fallback}));
   } finally { if (browser) await browser.close(); }
 })().catch(e => { console.error(String(e.stack || e)); process.exitCode = 1; });
 """
@@ -99,6 +110,8 @@ class MarkDateFitTests(unittest.TestCase):
             self.skipTest(data['skip'])
         print('mark-date diagnostics: ' + json.dumps(data, ensure_ascii=False))
         self.assertEqual(len(data['cases']), 20)
+        # A browser without container units must fall back to the old 11px, not inherit the big grade size
+        self.assertEqual(data['fallback'], 11, 'Without container units the date is not 11px: ' + str(data['fallback']))
         for c in data['cases']:
             with self.subTest(size=c['size'], phase=c['phase'], grade=c['grade']):
                 why = json.dumps(c, ensure_ascii=False)

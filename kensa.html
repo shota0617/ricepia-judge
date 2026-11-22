@@ -3018,6 +3018,7 @@ function liked() {
    止まって いる 間は 今の 手本の 指・案内が そのまま 出つづける。押した 記録は この 回の 中 だけ（cookedReturns。保存は 見ない）。押した あとは 今までどおり 45秒 */
 function showIdleCard() {
   if (!cookedReturns.length) return;
+  if (idleReadingNow()) { idleParked = true; return; } /* 📖 を 読んで いる 間は 出さない・鳴らさない（サイクル186）。戻って から 数え直す */
   if (liked()) { likeBtn.disabled = true; likeBtn.textContent = "ありがとう 🌾"; }
   const wasOn = idleCard.classList.contains("on");
   if (!placeIdleCard()) { hideIdleCard(); idleWant = true; return; } /* 置き場が 無い 時は 出さない（サイクル180）。回して 置ける ように なったら 出す */
@@ -3098,8 +3099,16 @@ function armIdle() {
    ・見えたら のこりから 走らせる。もどる ボタンの キャッシュ（pagehide／pageshow）でも、かくれる・見える の 知らせが 来るので 同じ 道を 通る
    45秒と カードそのもの・いいねの 0.9秒は 変えない */
 let idleLeft = null, idleDue = 0;
+/* 📖 で 下の 説明を 読んで いる 間（html.scrolled）も、手が 止まった 時計は 走らせない（サイクル186・運営者 2026-11-14「判断不要で 進めて」）。
+   旧版は 2ふくろめの はじめ に 📖 を 開いて 読むと、約44秒で 見えない 所に カードが 出て、わけの 分からない 音（idleSound）が 1回 鳴った（390×844）。
+   読んで いる 間の 予約は「止めて いる」（idleParked）と して 覚える だけ。ゲームへ 戻ったら そこから あらためて 45秒（戻った しゅんかんには 出さない）。
+   画面が かくれる 時（下の idleVisibility）と 同じく 時計は 1つ だけ（idleIn が いつも 前の 予約を 消す）。カードの 中身・45秒・置き場・1ふくろめ の きまり は 変えない */
+let idleParked = false;
+const idleReadingNow = () => !!document.documentElement && document.documentElement.classList.contains("scrolled");
 function idleIn(ms) {
   clearTimeout(idleTimer); idleTimer = null;
+  if (idleReadingNow()) { idleLeft = null; idleParked = true; return; }
+  idleParked = false;
   if (document.hidden) { idleLeft = ms; return; }
   idleLeft = null;
   idleDue = performance.now() + ms;
@@ -3111,6 +3120,10 @@ function idleVisibility() {
   } else if (idleLeft !== null) idleIn(idleLeft);
 }
 document.addEventListener("visibilitychange", idleVisibility);
+window.addEventListener("scroll", () => { /* syncScrolled（先に 登録）が html.scrolled を 合わせた あと */
+  if (idleReadingNow()) { if (idleTimer !== null || idleLeft !== null) { clearTimeout(idleTimer); idleTimer = null; idleLeft = null; idleParked = true; } }
+  else if (idleParked && !idleCard.classList.contains("on")) idleIn(IDLE_MS);
+}, { passive:true });
 document.addEventListener("pointerdown", (e) => {
   if (!e.target.closest || !e.target.closest("#idleCard")) dismissIdleCard();
   armIdle();

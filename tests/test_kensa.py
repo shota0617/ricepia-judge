@@ -4224,6 +4224,68 @@ const look = p => p.evaluate(() => {
                 self.assertEqual(c["bag"], 0, c["tag"] + " で カードが 袋に かかる")
 
 
+    def test_cycle183_next_bag_waits_beside_the_stamped_bag(self):
+        # 旧版は はんこの あと、つぎの 袋が ある・ちがう 色 だと 分かる 絵が 無く、「つぎの ふくろ」ボタン だけ だった（181 の 案は 右はしの すき間 だけ で 21×48px）。
+        # はんこを 見せた あと、押した 袋を 少し 小さく 左へ よせ、うしろ から つぎの 袋（帯の 色）を 60px 以上 の 幅で のぞかせる。見せる だけ（押せない・字なし）。
+        # つぎの 袋の 切り口は 押した 袋の 絵の うしろに もぐらせ（すき間 0）、見える 幅は 押した 袋の 絵の ふち から はかる。証印は ぜんぶ 見える まま。上の 棒・米の 流れの 絵・つぎの ふくろ・案内・手本の 指 に かからず、画面から はみ出さない。45秒の カードが 出たら しまう。本物の ブラウザで はかる
+        node = shutil.which("node")
+        if not node:
+            self.skipTest("node がないので実行の確認は飛ばす")
+        js = r"""
+const fs = require('fs'), path = require('path');
+let chromium; try { ({ chromium } = require('playwright')); } catch (e) { console.log(JSON.stringify({ skip: 'playwright なし' })); process.exit(0); }
+const [root] = process.argv.slice(1, 2);
+const TYPES = { '.html': 'text/html; charset=utf-8', '.webp': 'image/webp', '.png': 'image/png' };
+(async () => {
+  let b; try { b = await chromium.launch(); } catch (e) { console.log(JSON.stringify({ skip: 'chromium が 起動しない' })); return; }
+  const out = [];
+  for (const [w, h, reduced] of [[320, 568], [390, 844], [568, 320], [844, 390], [820, 1180], [390, 844, true]]) {
+    const ctx = await b.newContext({ viewport: { width: w, height: h }, isMobile: true, hasTouch: true, reducedMotion: reduced ? 'reduce' : 'no-preference' }); const p = await ctx.newPage();
+    await p.route('http://kensa.test/**', r => { const f = path.join(root, decodeURIComponent(new URL(r.request().url()).pathname));
+      if (!f.startsWith(root) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) return r.fulfill({ status: 404, body: '' });
+      r.fulfill({ status: 200, contentType: TYPES[path.extname(f)] || 'application/octet-stream', body: fs.readFileSync(f) }); });
+    await p.goto('http://kensa.test/kensa.html'); await p.waitForTimeout(600);
+    await p.evaluate(() => { toOsu(); inkDone(); stampNow(); });
+    await p.waitForTimeout(2300); /* はんこの 1.5秒 あと ＋ よせる 0.35秒 */
+    const r = await p.evaluate(() => {
+      const pk = document.getElementById('nextPeek');
+      if (!pk) return { on: false, missing: true };
+      const on = pk.classList.contains('on') && +getComputedStyle(pk).opacity > 0.5, pr = pk.getBoundingClientRect();
+      const ov = (a, b) => Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left)) * Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
+      const hits = {}; for (const id of ['head', 'mark', 'journey', 'nextBtn', 'hint', 'guide']) { const e = document.getElementById(id), cs = getComputedStyle(e);
+        if (e.hidden || cs.display === 'none' || +cs.opacity < 0.05) continue; const a = Math.round(ov(pr, e.getBoundingClientRect())); if (a) hits[id] = a; }
+      const cv = pk.querySelector('canvas'), px = cv.getContext('2d').getImageData(13, 13, 1, 1).data;
+      const hex = '#' + [px[0], px[1], px[2]].map(v => v.toString(16).padStart(2, '0')).join('');
+      const want = LOT_LOOKS[LOTS[(lotIndex + 1) % LOTS.length].look].stripe, now = LOT_LOOKS[LOT.look].stripe;
+      const mk = document.getElementById('mark').getBoundingClientRect(), bg = document.getElementById('bagBig').getBoundingClientRect();
+      const edge = bg.right - bg.width * 2 / 48; /* 押した 袋の 絵の 右の ふち（canvas の 右 2/48 は すきとおり） */
+      return { w: Math.round(pr.right - edge), cutIn: pr.left > bg.left && pr.left < edge, markIn: mk.left >= bg.left && mk.right <= bg.right && mk.top >= bg.top && mk.bottom <= bg.bottom && mk.left >= 0 && mk.right <= innerWidth, on, hits, inView: pr.left >= 0 && pr.right <= innerWidth + 0.5 && pr.top >= 0 && pr.bottom <= innerHeight + 0.5, area: Math.round(pr.width * pr.height),
+        band: hex, want, now, inert: getComputedStyle(pk).pointerEvents === 'none' && pk.getAttribute('aria-hidden') === 'true' && !pk.textContent.trim() };
+    });
+    r.tag = w + 'x' + h + (reduced ? ' reduced' : '');
+    if (r.on) { await p.evaluate(() => showIdleCard()); await p.waitForTimeout(500); r.withCard = await p.evaluate(() => document.getElementById('nextPeek').classList.contains('on')); }
+    out.push(r); await ctx.close();
+  }
+  await b.close(); console.log(JSON.stringify(out));
+})();
+"""
+        r = subprocess.run([node, "-e", js, ROOT], capture_output=True, text=True, timeout=300)
+        self.assertEqual(r.returncode, 0, r.stderr[-1500:])
+        res = json.loads(r.stdout.strip().splitlines()[-1])
+        if isinstance(res, dict) and res.get("skip"):
+            self.skipTest(res["skip"])
+        for c in res:
+            self.assertTrue(c["on"], c["tag"] + " で はんこの あと つぎの 袋の 角が 出ない")
+            self.assertEqual(c["hits"], {}, c["tag"] + " で つぎの 袋の 角が ほかの 物に かかる")
+            self.assertTrue(c["inView"], c["tag"] + " で つぎの 袋の 角が 画面から はみ出す")
+            self.assertGreaterEqual(c["w"], 60, c["tag"] + " で つぎの 袋の 見える 幅が 60px に とどかない（%dpx）" % c["w"])
+            self.assertTrue(c["cutIn"], c["tag"] + " で つぎの 袋の 切り口が 押した 袋の うしろに かくれて いない（すき間に 見える）")
+            self.assertTrue(c["markIn"], c["tag"] + " で 証印が 袋から・画面から はみ出す")
+            self.assertEqual(c["band"], c["want"], c["tag"] + " で 角の 帯が つぎの 袋の 色で ない")
+            self.assertNotEqual(c["band"], c["now"], c["tag"] + " で 角の 帯が 今の 袋と 同じ 色")
+            self.assertTrue(c["inert"], c["tag"] + " で 角が 押せる・字が ある")
+            self.assertFalse(c["withCard"], c["tag"] + " で 45秒の カードと 角が いっしょに 出る")
+
     # ---- サイクル160（つまむ で たたき続ける 人にも 手本）----
 
     def _pick160(self, body):

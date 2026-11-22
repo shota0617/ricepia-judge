@@ -2281,7 +2281,7 @@ function tapGrain(g) {
     clearTimeout(hintTimer);
     grains.forEach(o => { o.el.disabled = true; });
     hint.textContent = "きれいに なった！";
-    pts.clear(); sortDrag = null; pinch = null;
+    pts.clear(); downAt.clear(); pend = null; sortDrag = null; pinch = null;
     zoomBtn.hidden = true;
     setTimeout(() => {
       resetZoomForSmiles();

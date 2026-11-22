@@ -784,9 +784,11 @@ function onFix(lat, lng, acc, t) {
 
 
 
-const posKey = () => stateKey() + '_at', posSaved = { t: 0 };
+
+
+const posKey = () => stateKey() + '_at', posSaved = { t: 0, off: false };
 function demoPosSave(force) {
-  if (!demo || !me || !store.get('nsg_started', false)) return;
+  if (posSaved.off || !demo || !me || !store.get('nsg_started', false)) return;
   const now = Date.now();
   if (!force && now - posSaved.t < 2000) return;
   posSaved.t = now;
@@ -3795,6 +3797,7 @@ function setMode(isDemo) {
   if (demo) {
     stopGps();
     const mc = map.getCenter(), c = here || (inside(mc) ? mc : { lat: CFG.center[0], lng: CFG.center[1] });
+    if (here) { posSaved.off = true; store.del(posKey()); }
     const at = (!here && demoPosLoad()) || c;
     onFix(at.lat, at.lng, 5, Date.now());
   } else {
@@ -3843,7 +3846,7 @@ $('reloadSpots').addEventListener('click', async e => {
 $('resetBtn').addEventListener('click', () => {
   if (!confirm(`「${demo ? '操作して移動' : 'あるいて移動'}」のポイントと記録をすべて削除します。よろしいですか？`)) return;
   S = freshState(); save(); renderHeader(); renderLog(); renderMarkers(); refreshNearby(); closeCoupon();
-  store.del(posKey());
+  store.del(posKey()); posSaved.off = true;
   if (window.nishioPixel && nishioPixel.trailClear) nishioPixel.trailClear();
   toast('記録を削除しました');
 });

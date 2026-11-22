@@ -2066,6 +2066,14 @@ function crashFailures(R, fail) {   // 安全網（guardEvaluate）に かかっ
       o.before = await st();
       await p.reload(); await ready();
       o.after = await st();
+      // サイクル238b（見直し P3）：「記録を消す」（confirm は 承諾）→ 2.6秒（2秒 おきの 保存）→ pagehide → 位置の かぎ が 無い → 読みなおすと スタート
+      p.on('dialog', d => d.accept().catch(() => {}));
+      await p.evaluate(() => document.getElementById('resetBtn').click());
+      await p.waitForTimeout(2600);
+      await p.evaluate(() => { dispatchEvent(new Event('pagehide')); });
+      o.resetKey = await p.evaluate(() => Object.keys(localStorage).filter(k => /^nsg_state_demo.*_at$/.test(k)));
+      await p.reload(); await ready();
+      o.resetAfter = await st();
       const key = o.after.key || o.before.key || 'nsg_state_demo_at';
       for (const [name, val] of [['broken', '{bad'], ['outside', JSON.stringify({ v: 1, lat: 10, lng: 10, g: o.after.g })], ['otherGoal', null]]) {
         // こわれた 保存を 書いて、その まま 読みなおす（ゲームの 2秒 おき・画面を はなれる ときの 保存で 上書き されない ように、この ページの 間 だけ その かぎ への 書きこみを 止める）
@@ -2081,7 +2089,25 @@ function crashFailures(R, fail) {   // 安全網（guardEvaluate）に かかっ
     const start = o.fresh && o.fresh.at;
     o.keepOk = !!o.before && !!o.after && near(o.after.at, o.before.at, 2) && o.after.cells !== null && o.after.cells <= o.before.cells + 2 && !near(o.before.at, start, 3);
     o.badOk = ['broken', 'outside', 'otherGoal'].every(k => o.bad[k] && near(o.bad[k].at, start, 2));
-    R.checks.reloadPos = { ...o, ok: !o.crashed && o.keepOk && o.badOk };
+    o.resetOk = !!o.resetKey && o.resetKey.length === 0 && !!o.resetAfter && near(o.resetAfter.at, start, 2);
+    // サイクル238b（見直し P2）：あるいて移動（にせの 位置・遊べる 範囲の 中）→ 操作して移動 に 切りかえ → 3秒 → pagehide：本物の 位置 は おぼえない（前に おぼえた 位置 も 消える）
+    {
+      const w = await newPage(browser, { howto: true, auto: true, hasTouch: true, isMobile: true, geolocation: { latitude: 34.8660, longitude: 137.0620, accuracy: 5 }, permissions: ['geolocation'] }), q = w.page;
+      try {
+        await w.ctx.addInitScript(() => { if (!sessionStorage.getItem('pt238b')) { sessionStorage.setItem('pt238b', '1'); localStorage.setItem('nsg_started', 'true'); localStorage.setItem('nsg_mode', JSON.stringify('real')); localStorage.setItem('nsg_keep_walk', '1');
+          localStorage.setItem('nsg_state_demo_at', JSON.stringify({ v: 1, lat: 34.8630, lng: 137.0580, g: '' })); } });
+        await q.goto(URL);
+        await q.waitForTimeout(4000);
+        o.real = await q.evaluate(() => ({ mode: localStorage.getItem('nsg_mode'), me: nishioGo.me && [nishioGo.me.lat, nishioGo.me.lng] }));
+        await q.evaluate(() => document.querySelector('.mode-sw [data-mode="demo"]').click());
+        await q.waitForTimeout(3000);
+        await q.evaluate(() => { dispatchEvent(new Event('pagehide')); });
+        o.realSwitch = await q.evaluate(() => ({ mode: localStorage.getItem('nsg_mode'), keys: Object.keys(localStorage).filter(k => /^nsg_state_demo.*_at$/.test(k)), at: localStorage.getItem('nsg_state_demo_at') }));
+      } catch (e) { o.realCrashed = String(e.message).slice(0, 160); }
+      finally { R.errors.push(...w.errors); await w.ctx.close(); }
+    }
+    o.realOk = !o.realCrashed && !!o.realSwitch && /demo/.test(o.realSwitch.mode || '') && o.realSwitch.keys.length === 0;
+    R.checks.reloadPos = { ...o, ok: !o.crashed && o.keepOk && o.badOk && o.resetOk && o.realOk };
   }
   // サイクル236（PLAN7 A1：帯の 灯り）：はじめての 人が 手本の 指先を タップ して 歩く（find_nishio5 の やり方）
   //  lit：390×844 で 60秒 までに 灯りが 1つ 以上 灯る（前は 帯は へる 数 だけ。康全寺 2016m の 4分の1 は 41〜42秒）

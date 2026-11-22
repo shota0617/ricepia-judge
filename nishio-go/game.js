@@ -778,7 +778,29 @@ function onFix(lat, lng, acc, t) {
   tryChest();
   welcomeWalk();
   farNotice();
+  demoPosSave(false);
 }
+// サイクル238：操作して移動 の お米の 位置を おぼえて、読みなおしても そこから はじめる（前は ゴールの 数・次の 行き先・あしあと は のこる のに、
+// お米 だけ スタートへ もどった。たて：のこり 24m → 504m。LINE などの アプリの 中の ブラウザは もどった とき 読みなおす ことが ある）。
+// おぼえる のは 2秒 おき（onFix）と 画面を はなれる とき（pagehide・visibilitychange hidden）。行き先（S.guide）の id も いっしょに おぼえ、
+// 読みこみ の とき 行き先が ちがう・遊べる 範囲の 外・こわれて いる ときは 使わない（これまでどおり スタートから）。日を こえても 使う（ゴールの 数・行き先 と 同じ）
+// サイクル238b（見直し P2・P3）：off＝この ページ の 間 は 保存 しない。あるいて移動（本物の 位置）から 切りかえた 回（歩いた あとも 本物の 位置の 近く）と、
+// 「記録を消す」の あと（すぐ 書き直すと 消す 前の 場所に もどる）。読みなおせば ふつうに もどる
+const posKey = () => stateKey() + '_at', posSaved = { t: 0, off: false };
+function demoPosSave(force) {
+  if (posSaved.off || !demo || !me || !store.get('nsg_started', false)) return;
+  const now = Date.now();
+  if (!force && now - posSaved.t < 2000) return;
+  posSaved.t = now;
+  store.set(posKey(), { v: 1, lat: +me.lat.toFixed(6), lng: +me.lng.toFixed(6), g: (S.guide && S.guide.id) || '' });
+}
+function demoPosLoad() {
+  const p = store.get(posKey(), null);
+  if (!p || typeof p !== 'object' || p.v !== 1 || !Number.isFinite(p.lat) || !Number.isFinite(p.lng) || !inPlay(p.lat, p.lng)) return null;
+  return p.g === ((S.guide && S.guide.id) || '') ? p : null;   // 別の 行き先の ときの 位置は 使わない
+}
+window.addEventListener('pagehide', () => demoPosSave(true));
+document.addEventListener('visibilitychange', () => { if (document.hidden) demoPosSave(true); });
 // 遠いほど めずらしい（昔のドット絵RPGの「城から遠いほど 強い敵・よい宝」）：西尾城跡のあたり（CFG.center）から 4km で 1.5倍・8km で 2倍
 // （一色・吉良・幡豆・佐久島まで足をのばすと 出やすい）。キラの時間とは かけあわせる
 const KIRA_FAR = [[8000, 2], [4000, 1.5]];
@@ -3775,7 +3797,9 @@ function setMode(isDemo) {
   if (demo) {
     stopGps();
     const mc = map.getCenter(), c = here || (inside(mc) ? mc : { lat: CFG.center[0], lng: CFG.center[1] });
-    onFix(c.lat, c.lng, 5, Date.now());
+    if (here) { posSaved.off = true; store.del(posKey()); }   // サイクル238b：本物の 位置 から はじめた 回は おぼえない（前に おぼえた 位置 も 消す）
+    const at = (!here && demoPosLoad()) || c;   // サイクル238：読みなおしたら おぼえた 位置から（あるいて移動 から 切りかえた ときは これまでどおり いまの 場所）
+    onFix(at.lat, at.lng, 5, Date.now());
   } else {
     startGps();
   }
@@ -3822,6 +3846,7 @@ $('reloadSpots').addEventListener('click', async e => {
 $('resetBtn').addEventListener('click', () => {
   if (!confirm(`「${demo ? '操作して移動' : 'あるいて移動'}」のポイントと記録をすべて削除します。よろしいですか？`)) return;
   S = freshState(); save(); renderHeader(); renderLog(); renderMarkers(); refreshNearby(); closeCoupon();
+  store.del(posKey()); posSaved.off = true;   // サイクル238：おぼえた お米の 位置も 消す（次は スタートから。238b：この ページ の 間 は 書き直さない）
   if (window.nishioPixel && nishioPixel.trailClear) nishioPixel.trailClear();   // あしあと（別のかぎに保存）も消す
   toast('記録を削除しました');
 });

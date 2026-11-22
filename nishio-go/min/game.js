@@ -778,7 +778,29 @@ function onFix(lat, lng, acc, t) {
   tryChest();
   welcomeWalk();
   farNotice();
+  demoPosSave(false);
 }
+
+
+
+
+
+
+const posKey = () => stateKey() + '_at', posSaved = { t: 0, off: false };
+function demoPosSave(force) {
+  if (posSaved.off || !demo || !me || !store.get('nsg_started', false)) return;
+  const now = Date.now();
+  if (!force && now - posSaved.t < 2000) return;
+  posSaved.t = now;
+  store.set(posKey(), { v: 1, lat: +me.lat.toFixed(6), lng: +me.lng.toFixed(6), g: (S.guide && S.guide.id) || '' });
+}
+function demoPosLoad() {
+  const p = store.get(posKey(), null);
+  if (!p || typeof p !== 'object' || p.v !== 1 || !Number.isFinite(p.lat) || !Number.isFinite(p.lng) || !inPlay(p.lat, p.lng)) return null;
+  return p.g === ((S.guide && S.guide.id) || '') ? p : null;
+}
+window.addEventListener('pagehide', () => demoPosSave(true));
+document.addEventListener('visibilitychange', () => { if (document.hidden) demoPosSave(true); });
 
 
 const KIRA_FAR = [[8000, 2], [4000, 1.5]];
@@ -3775,7 +3797,9 @@ function setMode(isDemo) {
   if (demo) {
     stopGps();
     const mc = map.getCenter(), c = here || (inside(mc) ? mc : { lat: CFG.center[0], lng: CFG.center[1] });
-    onFix(c.lat, c.lng, 5, Date.now());
+    if (here) { posSaved.off = true; store.del(posKey()); }
+    const at = (!here && demoPosLoad()) || c;
+    onFix(at.lat, at.lng, 5, Date.now());
   } else {
     startGps();
   }
@@ -3822,6 +3846,7 @@ $('reloadSpots').addEventListener('click', async e => {
 $('resetBtn').addEventListener('click', () => {
   if (!confirm(`「${demo ? '操作して移動' : 'あるいて移動'}」のポイントと記録をすべて削除します。よろしいですか？`)) return;
   S = freshState(); save(); renderHeader(); renderLog(); renderMarkers(); refreshNearby(); closeCoupon();
+  store.del(posKey()); posSaved.off = true;
   if (window.nishioPixel && nishioPixel.trailClear) nishioPixel.trailClear();
   toast('記録を削除しました');
 });

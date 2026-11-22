@@ -1985,6 +1985,13 @@ function grainOpaque(g, u, v) { /* u, v は 1倍に もどした 粒の 中の �
 }
 const pts = new Map();
 let sortDrag = null, pinch = null;
+/* 置いた まま の 指（サイクル185・最初の1分）。旧版は 皿に 2本めが おりた しゅんかん ピンチに 決めて いた ため、親指を 皿の はしに のせた まま
+   人さし指で わるい粒を たたくと 皿の 音と ゆれ だけ だった（取れず・空振りにも 数えず。390×844・844×390・320×568 5回中5回）。
+   1本めが REST_MS 以上 前から 12px 以内に 置かれて いる ところへ 2本めが おりたら、ピンチの はじまりは 作って おく だけ（pend）に して、2本めは まず 1本指の たたきの 候補。
+   2本めか 置いた 指が 12px より 動いた・3本めが おりた ときは、作って おいた はじまり から ピンチ（寄り方は 今までと 同じ）。動かずに 離れた 2本めは 1本指の たたきと 同じ 道。
+   置いた まま なでる（ピンチに なる）・ほぼ 同時に おりた 2本指 は 今までどおり */
+const REST_MS = 60, downAt = new Map();
+let pend = null;
 function plateXY(cx, cy) {
   const rect = plate.getBoundingClientRect();
   return { x:cx - rect.left - plate.clientLeft, y:cy - rect.top - plate.clientTop };
@@ -2000,13 +2007,24 @@ plate.addEventListener("pointerdown", (e) => {
   stopSmoothZoom(); /* 寄りの途中で触れたら、今見えている所から指の操作を始める */
   capture(plate, e);
   if (spread === false) guideOff();
-  pts.set(e.pointerId, { x:e.clientX, y:e.clientY });
-  if (pts.size === 1) sortDrag = { x:e.clientX, y:e.clientY, lx:e.clientX, ly:e.clientY, moved:false, t0:performance.now(), startG:grainAt(toLocal(e.clientX, e.clientY)), picking:spread }; /* picking: 置いた とき もう 広げて あった（つまむ の 段。サイクル176） */
-  else if (pts.size === 2) startPinch();
+  pts.set(e.pointerId, { x:e.clientX, y:e.clientY }); downAt.set(e.pointerId, { x:e.clientX, y:e.clientY, t:performance.now() });
+  if (pend) { pinch = pend.pinch; pend = null; sortDrag = null; return; } /* 3本め: 作って おいた ピンチへ（今までと 同じ） */
+  if (pts.size === 1) sortDrag = { id:e.pointerId, x:e.clientX, y:e.clientY, lx:e.clientX, ly:e.clientY, moved:false, t0:performance.now(), startG:grainAt(toLocal(e.clientX, e.clientY)), picking:spread }; /* picking: 置いた とき もう 広げて あった（つまむ の 段。サイクル176） */
+  else if (pts.size === 2) {
+    const first = [...pts.keys()].find(id => id !== e.pointerId), f0 = downAt.get(first), f1 = pts.get(first);
+    const resting = !pinch && f0 && performance.now() - f0.t >= REST_MS && Math.hypot(f1.x - f0.x, f1.y - f0.y) <= 12;
+    startPinch();
+    if (resting) { pend = { rest:first, active:e.pointerId, pinch }; pinch = null; sortDrag = { id:e.pointerId, x:e.clientX, y:e.clientY, lx:e.clientX, ly:e.clientY, moved:false, t0:performance.now(), startG:grainAt(toLocal(e.clientX, e.clientY)), picking:spread }; }
+  }
 });
 plate.addEventListener("pointermove", (e) => {
   if (!pts.has(e.pointerId)) return;
   pts.set(e.pointerId, { x:e.clientX, y:e.clientY });
+  if (pend) { /* 2本めか 置いた 指が 12px より 動いたら、作って おいた はじまり から ピンチ。それまでは 何も しない */
+    const o = downAt.get(e.pointerId);
+    if (!o || Math.hypot(e.clientX - o.x, e.clientY - o.y) <= 12) return;
+    pinch = pend.pinch; pend = null; sortDrag = null;
+  }
   if (pts.size >= 2 && pinch) {
     const [a, b] = [...pts.values()];
     const mid = plateXY((a.x + b.x) / 2, (a.y + b.y) / 2);
@@ -2024,7 +2042,7 @@ plate.addEventListener("pointermove", (e) => {
     if (turn) twistPlate(turn);
     return;
   }
-  if (!sortDrag) return;
+  if (!sortDrag || (sortDrag.id != null && sortDrag.id !== e.pointerId)) return;
   if (Math.hypot(e.clientX - sortDrag.x, e.clientY - sortDrag.y) > 12) sortDrag.moved = true; /* 指が少しずれてもタップ（Chrome のタップのゆるさ 15px に近づける） */
   if (sortDrag.moved && !pageFinger(e.clientX - sortDrag.x, e.clientY - sortDrag.y, e)) { /* ページを動かす指では なでない・見る場所も動かさない（サイクル150） */
     /* 広げる前は、寄っていても なでれば粒を押す（サイクル150）。旧版は 広げる前に ふたゆびで寄ってしまうと、手本どおりに なでても 見る場所が動くだけで、
@@ -2039,14 +2057,16 @@ plate.addEventListener("pointermove", (e) => {
 function endPlatePointer(e, cancelled) {
   if (!pts.has(e.pointerId)) return;
   if (pageSlid(e)) cancelled = true; /* ページを動かした指は、取り消しと同じ（タップ・はじき・空振りに数えない） */
-  pts.delete(e.pointerId);
+  pts.delete(e.pointerId); downAt.delete(e.pointerId);
+  const tapped = !!pend && pend.active === e.pointerId; /* 動かずに 離れた 2本め: 置いた 指が のこって いても 1本指の たたきと 同じに 終える */
+  if (pend && (tapped || pend.rest === e.pointerId)) pend = null; /* 置いた 指が 先に 離れた ときは、のこりの 指が その まま 1本指 */
   if (cancelled && pinch) pinch.moved = true; /* 3本指の とちゅうで 取り消された 指が あった ピンチは、のこりを ふつうに はなしても 鳴らさない */
   if (pts.size < 2 && pinch) { const p = pinch; pinch = null; if (!cancelled && step === 2 && !p.moved && Math.abs(Z.s - p.s0) < 0.01 && Math.abs(p.twist) < 2) stillPinch(); }
   if (pts.size === 1 && !sortDrag) { /* ズームのあと片方を離しても、残った指で見る場所を動かせる */
     const [p] = pts.values();
     sortDrag = { x:p.x, y:p.y, lx:p.x, ly:p.y, moved:true, t0:0, startG:null, noTap:true }; /* 見る場所を動かすための残り指は、離した時にタップとしない */
   }
-  if (pts.size === 0 && sortDrag) {
+  if ((pts.size === 0 || tapped) && sortDrag) {
     const d = sortDrag;
     sortDrag = null;
     if (!cancelled && step === 2 && !d.noTap && Math.hypot(e.clientX - d.x, e.clientY - d.y) <= 24) { /* ずれ24pxまではタップとして受ける。12pxを超えたずれはドラッグ扱いになり、はじくの境目（24px）までの13〜24pxはずれたタップが何も起こさなかった（390×844実測・サイクル76） */

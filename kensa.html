@@ -178,6 +178,11 @@
   /* 米の流れの絵（サイクル132・店主指示2026-11-09「この感じでゲーム修正」）: 押印した玄米が
      精米されて白米になり、ごはんになるまでを、水彩の手描き風の大きな絵で下にそっと見せる。
      副産物のもみがら・ぬかも添える。操作は妨げない（pointer-events:none） */
+  /* つぎの 袋（サイクル183）: はんこの あと、押した 袋を 少し 小さく 左へ よせ、その うしろ から つぎの 袋（帯の 色が 見える 所）を のぞかせる。見せる だけ（押せない・字・音なし）。
+     #osu の いちばん 前の 子で z-index なし ＝ 押した 袋・はんこ・米の 流れの 絵 より 奥（流れて いく 袋が 上を 通る） */
+  #nextPeek { position:absolute; right:0; top:0; overflow:hidden; pointer-events:none; opacity:0; transition:opacity .35s ease; }
+  #nextPeek.on { opacity:1; }
+  #nextPeek canvas { display:block; image-rendering:pixelated; }
   #journey { position:absolute; left:8px; right:8px; bottom:6px; z-index:2; pointer-events:none;
     background:rgba(251,248,240,.94); border:2px solid #d8c9a3; border-radius:14px; padding:5px 10px 3px;
     box-shadow:0 2px 8px rgba(26,24,20,.18); }
@@ -351,6 +356,7 @@
       </div>
     </div>
     <div id="osu" inert>
+      <div id="nextPeek" aria-hidden="true"><canvas width="48" height="60"></canvas></div>
       <button id="bagBig" aria-label="ふくろに おす"><canvas id="bagBigCanvas" width="48" height="60"></canvas>
         <div id="mark"></div>
         <span class="markSpot" aria-hidden="true"></span>
@@ -3214,6 +3220,81 @@ document.addEventListener("visibilitychange", () => { if (document.hidden) dropF
 /* 読みこみの とちゅうに 📖 を押して 下へ行っていたら、ここで「説明を読んでいる」印を合わせる（サイクル150）。印は scroll の知らせでしか付かなかったので、
    スクリプトが届く前に とんだ人は 印が付かず、上へも下へも 指で 1px も動かせなかった（おそい 3G の実測 3回中3回・5本なぞっても scrollY 844 のまま） */
 syncScrolled();
+/* つぎの 袋が 待って いる 絵（サイクル183・運営者 2026-11-14「判断不要で 進めて」・181 の 作りかえ）。はんこの あと「もう 1回」と 思わせる 物が
+   「つぎの ふくろ」ボタン だけ で、つぎの 袋が ちがう 物だと 分かる 絵が 無かった。181 は 右はしの すき間 だけ に 置いた ので、スマホ たて では
+   21×48px しか 見えず「つぎの 袋」と 読めなかった。
+   はんこを 見せた あと（PEEK_AT 1.5秒）、押し おわった 袋を 少し 小さく（0.86。入らない 画面は 0.8）して 左へ よせ、あいた 右に つぎの 袋（帯は その 袋の 色）を
+   押した 袋の うしろ から のぞかせる（高さは 押した 袋の 55%・下を そろえる。流す 手本の 指が 通る 袋の 上の ほう（24%）には とどかない）。証印は 袋と いっしょに 動き ぜんぶ 見える まま。字・音・数字なし。押せない（pointer-events:none）・タップで 進まない。
+   よせ方は transform では なく translate／scale（流す 手本・流れる 動き の transform と かさなる）。かからない 物: 上の 棒・米の 流れの 絵・つぎの ふくろ・
+   案内・手本の 指・45秒の カード。見える 幅が 60px に とどかない 画面では よせず 出さない。45秒の カードが 出たら しまう（袋は よせた まま）。
+   「動きを へらす」人は 袋は その場で かわり（すべらせない）、つぎの 袋は こさ だけ で 出る */
+const PEEK_AT = 1500, PEEK_K = [0.86, 0.8], peek = $("nextPeek"), peekCv = peek.querySelector("canvas");
+let peekTimer = null;
+function peekHide(keepBag) {
+  clearTimeout(peekTimer); peekTimer = null; peek.classList.remove("on");
+  if (!keepBag) { const b = $("bagBig"); b.style.translate = b.style.scale = b.style.transition = ""; }
+}
+function peekPlace() {
+  const osu = $("osu"), bagEl = $("bagBig");
+  if (!osu.classList.contains("on")) return null;
+  const was = [bagEl.style.translate, bagEl.style.scale, bagEl.style.transition];
+  bagEl.style.transition = "none"; bagEl.style.translate = bagEl.style.scale = "";
+  const o = osu.getBoundingClientRect(), b = bagEl.getBoundingClientRect();
+  bagEl.style.translate = was[0]; bagEl.style.scale = was[1]; void bagEl.offsetWidth; bagEl.style.transition = was[2];
+  if (!b.height) return null;
+  const seen = e => { for (let n = e; n && n.nodeType === 1 && n !== document.body; n = n.parentElement) { const cs = getComputedStyle(n); if (n.hidden || cs.display === "none" || cs.visibility === "hidden" || +cs.opacity < 0.05) return false; } return true; };
+  const keep = ["head", "journey", "nextBtn", "hint", "guide", "idleCard"].map($).filter(e => e && (e.id === "journey" || e.id === "nextBtn" ? !e.hidden && getComputedStyle(e).display !== "none" : e.id === "idleCard" ? e.classList.contains("on") : seen(e))) /* カードは 消える 動きの 途中（こさ 1→0）でも もう 無い ものと して 見る */.map(e => e.getBoundingClientRect()).filter(r => r.width > 0);
+  for (const k of PEEK_K) { /* まず 0.86。見える 幅が 60px に とどかない 画面（390×844 など）は 0.8 */
+    /* 袋の 絵（drawBag）は canvas の 右 2/48・下 2/60 が すきとおり。つぎの 袋の 切り口は 押した 袋の 絵の 中（右の ふち から 4/48 内・角の 切り欠き より 内）に
+       もぐらせ、押した 袋が 手前で かくす（すき間 0）。つぎの 袋の 絵の 下は 押した 袋の 絵の 下に そろえる */
+    const sh = (1 - k) * b.width / 2, sv = (1 - k) * b.height / 2, ws = b.width * k, hs = b.height * k;
+    const h = Math.round(hs * 0.55), w = Math.round(h * 0.8), bot = b.bottom - sv - hs * 2 / 60 + h * 2 / 60, top = bot - h;
+    let limit = o.right - 4;
+    keep.forEach(r => { if (r.top < bot + 6 && r.bottom > top - 6 && r.left > b.left + b.width / 2) limit = Math.min(limit, r.left - 6); }); /* 横に ならぶ 物（よこ の 米の 流れの 絵）の 手前 まで */
+    const edgeNow = b.right - sh - ws * 2 / 48, tMax = Math.max(0, b.left + sh - (o.left + 8)), want = Math.min(96, Math.round(w * 0.7));
+    const t = Math.min(tMax, Math.max(0, want - (limit - edgeNow)));
+    const edge = edgeNow - t, vis = Math.floor(Math.min(limit - edge, w * 0.7));
+    if (vis < 60) continue;
+    const box = { left:edge - ws * 4 / 48, right:edge + vis, top, bottom:bot };
+    if (keep.some(r => r.left < box.right + 6 && r.right > box.left - 6 && r.top < box.bottom + 6 && r.bottom > box.top - 6)) continue;
+    return { k, t, box, vis, w, h, o };
+  }
+  return null;
+}
+function peekShow() {
+  peekHide(true);
+  if (!nextBtn.classList.contains("on") || idleCard.classList.contains("on")) return;
+  const at = peekPlace();
+  if (!at) { peekHide(); return; }
+  const next = LOTS[(lotIndex + 1) % LOTS.length]; /* 袋は 6しゅるいを くり返し、さいごの 袋は 無い */
+  peekCv.getContext("2d").clearRect(0, 0, peekCv.width, peekCv.height);
+  drawBag(peekCv, LOT_LOOKS[next.look].stripe);
+  const bagEl = $("bagBig");
+  bagEl.style.transition = reduced ? "none" : "translate .35s ease, scale .35s ease";
+  bagEl.style.translate = (-at.t) + "px 0"; bagEl.style.scale = String(at.k);
+  Object.assign(peek.style, { left:(at.box.left - at.o.left) + "px", right:"auto", top:(at.box.top - at.o.top) + "px", width:(at.box.right - at.box.left) + "px", height:at.h + "px" });
+  Object.assign(peekCv.style, { width:at.w + "px", height:at.h + "px", marginLeft:Math.round(at.box.right - at.box.left - at.w) + "px" }); /* 右の ふちを 見せ、左は 押した 袋の うしろ（見える のは 右の 3〜7割。帯の 右と ラベルの ふちが 入る） */
+  peek.classList.add("on");
+  if (!reduced) peekCv.animate([{ transform:"translateX(-24px)" }, { transform:"none" }], { duration:350, easing:"ease-out" }); /* 押した 袋の うしろ から 出て くる */
+}
+if (window.MutationObserver) {
+  new MutationObserver(() => {
+    if (!nextBtn.classList.contains("on")) peekHide();
+    else if (!peek.classList.contains("on") && peekTimer === null) peekTimer = setTimeout(() => { peekTimer = null; peekShow(); }, PEEK_AT);
+  }).observe(nextBtn, { attributes:true, attributeFilter:["class"] });
+  new MutationObserver(() => {
+    if (idleCard.classList.contains("on")) peekHide(true);
+    else if (nextBtn.classList.contains("on") && !peek.classList.contains("on") && peekTimer === null) peekShow();
+  }).observe(idleCard, { attributes:true, attributeFilter:["class"] });
+}
+let peekRetry = null;
+window.addEventListener("resize", () => {
+  clearTimeout(peekRetry);
+  if (!nextBtn.classList.contains("on") || idleCard.classList.contains("on") || peekTimer !== null) return;
+  peekShow(); /* 回して 置けなく なった・置ける ように なった どちらも 置き直す */
+  /* 回した すぐ あとは 手本の 指が 前の 場所に のこって いて 置けない ことが ある（568×320 で 回して もどした あと 1/1）。指が 落ち着いた 1秒 あとに もう 1回 */
+  if (!peek.classList.contains("on")) peekRetry = setTimeout(() => { if (nextBtn.classList.contains("on") && !idleCard.classList.contains("on") && peekTimer === null && !peek.classList.contains("on")) peekShow(); }, 1000);
+});
 </script>
 </body>
 </html>

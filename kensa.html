@@ -3382,7 +3382,7 @@ window.addEventListener("resize", () => {
   const text = $("anaText"), btn = $("anaBtn");
   /* 解析の 部品（analytics.js）は 開いた ときに 切れて いたら 読みこみ なおす まで 動かない ので、ここで 入れなおした ときは「次に 開いた ときから」（にしお の せってい と 同じ 言い方） */
   const loadedOff = isOff();
-  const show = () => { const o = isOff(); text.textContent = o ? "📊 遊びの 数は 送って いません。" : loadedOff ? "📊 遊びの 数を Google・LINEヤフー に 送ります（次に 開いた ときから。名前・場所・粒の 位置は 送りません）。" : "📊 遊びの 数（どこまで 進んだか）を Google・LINEヤフー に 送って います（アクセスと 広告の 効果の 計測。名前・場所・粒の 位置は 送りません）。"; btn.textContent = o ? "送る" : "送らない"; };
+  const show = () => { const o = isOff(); text.textContent = o ? "📊 遊びの 数は 送って いません（アクセスの 計測は 次に 開いた ときから 止まります）。" : loadedOff ? "📊 遊びの 数を Google・LINEヤフー に 送ります（次に 開いた ときから。名前・場所・粒の 位置は 送りません）。" : "📊 遊びの 数（どこまで 進んだか）を Google・LINEヤフー に 送って います（アクセスと 広告の 効果の 計測。名前・場所・粒の 位置は 送りません）。"; btn.textContent = o ? "送る" : "送らない"; };
   btn.addEventListener("click", () => {
     const o = !isOff();
     try { localStorage.setItem("nsg_noanalytics", o ? "1" : "0"); offMem = null; if (isOff() !== o) offMem = o; } catch (e) { offMem = o; }

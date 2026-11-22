@@ -59,8 +59,18 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
       // Screen point of a grain from the game's own plate coordinates (the inverse of toLocal).
       const bad = () => page.evaluate(() => { const g = grains.find(g => !g.gone && g.kind !== 'seiryu'), r = plate.getBoundingClientRect();
         return [r.left + plate.clientLeft + Z.tx + g.x * Z.s, r.top + plate.clientTop + Z.ty + g.y * Z.s]; });
-      const empty = () => page.evaluate(([x0, y0, w, h]) => { for (let i = 0; i < 500; i++) { const x = x0 - w * 0.42 + Math.random() * w * 0.84, y = y0 - h * 0.42 + Math.random() * h * 0.84;
-        if (!grainAt(toLocal(x, y)) && !grains.some(g => { const r = plate.getBoundingClientRect(); return Math.hypot(r.left + plate.clientLeft + Z.tx + g.x * Z.s - x, r.top + plate.clientTop + Z.ty + g.y * Z.s - y) < 40; })) return [x, y]; } return null; }, [plate.cx, plate.cy, plate.w, plate.h]);
+      // An empty spot of the plate itself: no grain within 40px, and the point really lands on the plate (not the 🔍 button
+      // in its corner, not outside its edge). With dx, the second point (x + dx, y) must be such a spot too, so that a
+      // "two fingers on the plate" case really puts both fingers on the plate (cycle 185b: the old search let the second
+      // finger fall outside the plate or on 🔍 in 6 of 30 runs, which is one finger's tap and rightly a miss).
+      const empty = (dx = 0) => page.evaluate(([x0, y0, w, h, dx]) => {
+        const r = plate.getBoundingClientRect();
+        const free = (x, y) => { const e = document.elementFromPoint(x, y);
+          return !!e && (e.id === 'plateInner' || e.id === 'plate') && !grainAt(toLocal(x, y)) &&
+            !grains.some(g => Math.hypot(r.left + plate.clientLeft + Z.tx + g.x * Z.s - x, r.top + plate.clientTop + Z.ty + g.y * Z.s - y) < 40); };
+        for (let i = 0; i < 1000; i++) { const x = x0 - w * 0.42 + Math.random() * w * 0.84, y = y0 - h * 0.42 + Math.random() * h * 0.84;
+          if (free(x, y) && (!dx || free(x + dx, y))) return [x, y]; }
+        return null; }, [plate.cx, plate.cy, plate.w, plate.h, dx]);
       const thumb = [plate.cx - plate.w * 0.45, plate.cy + plate.h * 0.42, 0];
       return {context, page, errors, tp, st, plate, bad, empty, thumb};
     };
@@ -113,7 +123,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
       const fingers = await f.page.evaluate(() => ({pts:pts.size, sortDrag:!!sortDrag, pinch:!!pinch, pend:typeof pend !== 'undefined' && !!pend}));
       out.three = {before, after:await f.st(), fingers, errors:f.errors}; await f.context.close(); }
     // Still pinch: two fingers land together on empty spots and lift -> no pick, no miss, no zoom
-    { const f = await fresh(true); const e1 = await f.empty(), before = await f.st();
+    { const f = await fresh(true); const e1 = await f.empty(50), before = await f.st();
       await f.tp('touchStart', [[e1[0], e1[1], 0], [e1[0] + 50, e1[1], 1]]); await sleep(80);
       await f.tp('touchEnd', [[e1[0] + 50, e1[1], 1]]); await sleep(40); await f.tp('touchEnd', []); await sleep(300);
       out.stillPinch = {before, after:await f.st(), errors:f.errors}; await f.context.close(); }

@@ -1149,10 +1149,24 @@ console.log(JSON.stringify(out));
         self.assertEqual(r[71]["key"], r[70]["key"])   # ✗(○ の 数は 同じ)
         self.assertFalse(r[71]["pop"])
         self.assertEqual([r[i]["lv"] for i in (0, 5, 6, 12, 18, 23, 24, 70)], [0, 0, 1, 2, 3, 3, 4, 4])
-        # ふえた 印は ふくらむ(段が 上がった ○ は 色が かわる だけ)
+        # ふえた 印は ふくらむ。サイクル205 で 書き直し：前は 段が 上がった ○ は 印が 0 に もどって ふくらまなかった(i % 6 == 0 を のぞく)。今は 印を 消さない ので どの ○ でも ふくらむ
         for i in range(1, 71):
-            self.assertEqual(r[i]["pop"], not (i < 25 and i % 6 == 0), i)
+            self.assertTrue(r[i]["pop"], i)
         self.assertTrue(all(x["bg"] for x in r))
+
+    def test_paddy_marks_never_drop_and_levels_differ(self):
+        # サイクル205: 段が 上がっても 印は へらない(前は 6回め の ○ で 5つ → 0)。段の 土の 色は 1段 ごと に はっきり ちがう(前は 1段 で 13)
+        steps = [{"ok": 0, "len": 0}] + [{"ok": i, "len": i} for i in range(1, 31)]
+        r = paddy_run(steps)
+        marks = [x["marks"] for x in r]
+        for i in range(1, 31):
+            # c31f0e68 では 6回め の ○ で 0 に もどる ので ここで 落ちる
+            self.assertGreaterEqual(marks[i], marks[i - 1], "印が へった %r" % (marks,))
+        self.assertEqual(marks[6], 6, marks)
+        pal = dict(re.findall(r"'([0-4])': '#([0-9a-f]{6})'", HTML[HTML.index("var PDPAL = {"):HTML.index("var PDPAL = {") + 400]))
+        rgb = [tuple(int(pal[str(i)][j:j + 2], 16) for j in (0, 2, 4)) for i in range(5)]
+        for i in range(4):
+            self.assertGreaterEqual(max(a - b for a, b in zip(rgb[i], rgb[i + 1])), 18, "段 %d と %d の 色が 近い %r" % (i, i + 1, rgb))
 
     def test_paddy_pop_rules_follow_cycle170(self):
         # 周回170 の きまりを 引きつぐ: 同じ 判定の 中の 描きなおしでは ふくらみを 引きつぐ・手が 終わった あと(保存から もどる・あとの 描きなおし)では ふくらまない

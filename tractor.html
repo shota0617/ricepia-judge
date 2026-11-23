@@ -231,9 +231,33 @@
     body.calm #say::before { top: -6px; right: 20px; left: auto; border: 6px solid transparent; border-top: 0; border-bottom-color: rgba(251,248,240,.97); }
   }
   @media (max-width: 640px) and (orientation: portrait) {
-    body.touch #artBox { bottom: calc(max(14px, env(safe-area-inset-bottom)) + 204px); width: 120px; }
+    /* サイクル292（見た目）: お題の 地図は ハンドルの まん中・メーターに のせない。たての スマホは 大きな 耕し率の 数字の すぐ 下（左上。屋根と ミラーの 所）。
+       それまでは 下から 218px の まん中で、ハンドルの 中心と メーターに かぶって いた（390×844：地図 135〜255×531〜626・ハンドルの 中心 192,593） */
+    body.touch #artBox { top: calc(max(8px, env(safe-area-inset-top)) + 114px); bottom: auto; left: 8px; width: 120px; transform: none; }
     body.touch #coach { top: auto; bottom: calc(max(14px, env(safe-area-inset-bottom)) + 312px); max-width: calc(100vw - 24px); }
     #toast { bottom: 430px; }
+  }
+  /* サイクル292: せまい たて画面（幅 363px まで）は 数字の 下に 吹き出しが 横長に 出る ので、地図は 左の 下（👀・📣 と 浅く／深く の 上。ハンドルの 中心・メーターより 左）。
+     320×568：地図 8〜88×300〜364・メーター 119〜・ハンドルの 中心 134〜。
+     サイクル292b（見直し P3-1）: 高さが 800px より 低い たてでは「横へ（左）」の 手本の 指が 地図の 下の ふちに かかった（375×667 で 1508px²）。
+     手本の 高さは 画面の 高さに つれて 上がる（左の 手本の 上はし：844→259・716→212・667→195・553→154px）ので、800px より 低いと 地図を 100px に、700px より 低いと 左の 下へ、600px より 低いと 80px に する */
+  @media (max-width: 640px) and (orientation: portrait) and (max-height: 799px) {
+    body.touch #artBox { width: 100px; }
+  }
+  @media (max-width: 363px) and (orientation: portrait), (max-width: 640px) and (orientation: portrait) and (max-height: 699px) {
+    body.touch #artBox { top: auto; bottom: calc(max(14px, env(safe-area-inset-bottom)) + 190px); width: 100px; }
+  }
+  @media (max-width: 640px) and (orientation: portrait) and (max-height: 599px) {
+    body.touch #artBox { width: 80px; }
+  }
+  /* サイクル292: よこの スマホは 左の いちばん 下（👀・📣 の 下）。それまでは 下の まん中で ボンネット・前への 手本・メーターに かぶって いた（844×390：地図 347〜497×258〜376）。
+     サイクル292b（見直し P2-1）: 高さ 501px 以上の よこ（900×501・1024×600 など）は 下の まん中の まま で メーターに 10000px² ほど かかって いた。
+     よこは 高さに かぎらず：600px より 低い ときは 左の いちばん 下（はば 110px）、600px 以上は 大きな 数字の すぐ 下（左上・もとの はば 150px） */
+  @media (orientation: landscape) and (max-height: 599px) {
+    body.touch #artBox { top: auto; bottom: max(6px, env(safe-area-inset-bottom)); left: 8px; width: 110px; transform: none; }
+  }
+  @media (orientation: landscape) and (min-height: 600px) {
+    body.touch #artBox { top: calc(max(8px, env(safe-area-inset-top)) + 114px); bottom: auto; left: 8px; width: 150px; transform: none; }
   }
 </style>
 </head>

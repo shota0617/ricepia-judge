@@ -1528,7 +1528,8 @@ const srv = http.createServer((r, s) => { const u = decodeURIComponent(r.url.spl
     //       直す前（たての スマホ）：地図は 下から 218px の まん中で ハンドルの 中心と メーターに かぶる（390×844：ハンドルの 中心に 3136px²）
     {
       const r27 = {};
-      for (const vp of [[320, 568], [390, 844], [568, 320], [844, 390], [820, 1180]]) {
+      // サイクル292b（見直し P2-1・P3-1）: 高さ 501px 以上の よこ（900×501・1024×768・1180×820）と、高さが 800px より 低い たて（375×667・364×700）・414×896 を 足した
+      for (const vp of [[320, 568], [390, 844], [568, 320], [844, 390], [820, 1180], [375, 667], [364, 700], [414, 896], [900, 501], [1024, 768], [1180, 820]]) {
         const { ctx, p } = await open14('', null, false, vp); await fake14(p);
         r27[vp.join('x')] = await p.evaluate(() => {
           const R = e => { const q = e.getBoundingClientRect(); return [q.left, q.top, q.right, q.bottom]; }, area = (a, b) => Math.max(0, Math.min(a[2], b[2]) - Math.max(a[0], b[0])) * Math.max(0, Math.min(a[3], b[3]) - Math.max(a[1], b[1]));
@@ -1549,7 +1550,7 @@ const srv = http.createServer((r, s) => { const u = decodeURIComponent(r.url.spl
           return { vis: vis(art), art: a.map(Math.round), out: a[0] < 0 || a[1] < 0 || a[2] > innerWidth || a[3] > innerHeight, ov, hints: hints.length }; });
         await ctx.close();
       }
-      ok('お題の 地図は ハンドルの 中心・メーター・数字・ボタン・吹き出し・手本に かからない・画面の 中（320×568・390×844・568×320・844×390・820×1180。直す前：たてで ハンドルの 中心と メーターに かぶる）', Object.values(r27).every(r => r.vis && !r.out && r.hints > 0 && !Object.keys(r.ov).length), r27);
+      ok('お題の 地図は ハンドルの 中心・メーター・数字・ボタン・吹き出し・手本に かからない・画面の 中（320×568・390×844・568×320・844×390・820×1180・375×667・364×700・414×896・900×501・1024×768・1180×820。直す前：たてで ハンドルの 中心と メーターに かぶる。サイクル292 の 形では 高い よこで メーター・低い たてで 横への 手本に かかる）', Object.values(r27).every(r => r.vis && !r.out && r.hints > 0 && !Object.keys(r.ov).length), r27);
     }
   }
   ok('エラーなし', errs.length === 0, errs.slice(0, 3));

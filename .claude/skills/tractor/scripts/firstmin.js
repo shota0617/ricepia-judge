@@ -1511,6 +1511,12 @@ const srv = http.createServer((r, s) => { const u = decodeURIComponent(r.url.spl
       // 26-3) nsg_noanalytics＝1：呼ばない。26-4) 作り物 なし（手元の ドメイン）：外へ の 通信 0・今までどおり 始まる。26-5) analytics.js が 404：遊べる
       { const { ctx, p } = await open14('', async q => { await fakeAna(q); await q.addInitScript(() => { try { localStorage.setItem('nsg_noanalytics', '1'); } catch (e) {} }); }); await fake14(p); await p.evaluate(() => window.__adv(2));
         const n = await p.evaluate(() => (window.__ev || []).length); ok('nsg_noanalytics＝1 なら nsgTrack を 呼ばない', n === 0, n); await ctx.close(); }
+      // 26-6) 保存（localStorage）が 使えない 端末で「送らない」を 押す：文が 変わる だけで なく、その 回は 本当に 送らない（見直し P2：前は 送りつづけた）
+      { const { ctx, p } = await open14('', async q => { await fakeAna(q); await q.addInitScript(() => { try { Object.defineProperty(window, 'localStorage', { configurable: true, get() { throw new Error('blocked'); } }); } catch (e) {} }); }); await fake14(p); await p.evaluate(() => window.__adv(2));
+        const r = await p.evaluate(() => { const b = document.querySelector('.anaOff'); const n0 = (window.__ev || []).length; b.click();
+          window.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })); document.dispatchEvent(new Event('visibilitychange')); window.dispatchEvent(new Event('pagehide'));
+          return { n0, n1: (window.__ev || []).length, off: window.PLAYT.off(), text: document.querySelector('.anaLine').textContent }; });
+        ok('保存が 使えなくても「送らない」を 押した 回は 送らない（直す前：play_first_touch・play_end が 出た）', r.n0 > 0 && r.n1 === r.n0 && r.off === true && /送らない ように しました/.test(r.text), r); await ctx.close(); }
       { const hosts = new Set(); const { ctx, p } = await open14('', q => { q.on('request', r => { const h = new URL(r.url()).hostname; if (h !== 'localhost') hosts.add(h); }); }); await fake14(p); await p.evaluate(() => window.__adv(2));
         const st = await p.evaluate(() => ({ started: !!game.S.started, on: !!(window.nsgAnalytics && window.nsgAnalytics.on), line: [...document.querySelectorAll('.anaLine')].every(e => e.classList.contains('hidden')) }));
         ok('手元の ドメインでは 外へ 送らない（jsDelivr の three だけ）・始まる・切る 1 行は 出さない', st.started && !st.on && st.line && [...hosts].every(h => h === 'cdn.jsdelivr.net'), [st, [...hosts]]); await ctx.close(); }

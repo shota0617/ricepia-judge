@@ -396,5 +396,22 @@
     if (ageMs < BLOOM_STAGE2_MS) return { stage: 1, scale: 1 };
     return { stage: 2, scale: 1.25 };
   }
-  root.nishioRollTrail = { BLOOM_STAGE1_MS, BLOOM_STAGE2_MS, bloomStage, BLOOM_GAP, BLOOM_MAX, BLOOM_LIFE_MS, BLOOM_ALPHA, BLOOM_FADE_MS, bloomAlphaAt, bloomPush, bloomAlive, bloomAlpha, bloomPetal, MAX, GAP, LIFE_MS, STEP, push, alive, alphaFor, segments, colorFor, mixRgb, smoothColors, ribbon, dedupe, dedupeNear, dedupeSplit, AREA_COLORS };
+  // 転がった道のまん中へ寄る小さな光の点々：進み具合が進むほど、進む向きの直角方向のずれが消えて一本にそろう。純関数だけ
+  function lineDots(list, prog) {
+    try {
+      if (!Array.isArray(list) || !num(prog)) return [];
+      const pts = list.filter(p => p && num(p.x) && num(p.y));
+      if (pts.length < 2) return [];
+      const pr = Math.min(1, Math.max(0, prog));
+      const a = 0.55 * pr;
+      return pts.map((p, i) => {
+        const prev = pts[Math.max(0, i - 1)], next = pts[Math.min(pts.length - 1, i + 1)];
+        const dx = next.x - prev.x, dy = next.y - prev.y, len = Math.hypot(dx, dy);
+        const nx = len > 0 ? -dy / len : 0, ny = len > 0 ? dx / len : 0;
+        const off = Math.sin(i * 1.7) * 0.16 * (1 - pr);
+        return { x: p.x + nx * off, y: p.y + ny * off, a };
+      });
+    } catch (e) { return []; }
+  }
+  root.nishioRollTrail = { BLOOM_STAGE1_MS, BLOOM_STAGE2_MS, bloomStage, BLOOM_GAP, BLOOM_MAX, BLOOM_LIFE_MS, BLOOM_ALPHA, BLOOM_FADE_MS, bloomAlphaAt, bloomPush, bloomAlive, bloomAlpha, bloomPetal, MAX, GAP, LIFE_MS, STEP, push, alive, alphaFor, segments, colorFor, mixRgb, smoothColors, ribbon, dedupe, dedupeNear, dedupeSplit, AREA_COLORS, lineDots };
 })(typeof window !== 'undefined' ? window : globalThis);

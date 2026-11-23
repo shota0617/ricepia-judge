@@ -48,6 +48,12 @@ img.pi{width:16px;height:16px;image-rendering:pixelated;vertical-align:-3px;flex
 .tabs button img.pi{width:24px;height:24px}
 .simple .tx{display:none}
 .simple .brand{flex:1}
+.simple .brand .tx{display:inline}
+.simple .home-btn small.tx{display:block}
+@media (max-width:430px){header.bar .brand{font-size:13px}header.bar{gap:6px;padding:0 10px}}
+.simple .brand{display:flex;flex-wrap:wrap;align-items:center;align-content:flex-start;height:28px;overflow:hidden}
+.simple .brand .tx{flex:none;white-space:nowrap;line-height:28px}
+@media (max-width:374px){header.bar .lv{width:48px}header.bar .pts{padding:4px 6px}}
 .simple .tabs button span{display:none}
 .simple .tabs button img.pi{width:30px;height:30px}
 .simple .tabs button.on img.pi{filter:drop-shadow(0 2px 0 var(--green))}

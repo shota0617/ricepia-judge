@@ -133,6 +133,12 @@
   #dish { flex:1; align-self:stretch; max-height:112px; margin:auto 0; border-radius:50px; background:#f4eee0; border:3px solid #cdbf9f;
     display:flex; flex-wrap:wrap; align-items:center; justify-content:center; align-content:center; padding:8px 14px; gap:2px; }
   #dish img { width:36px; height:20px; }
+  /* よけた 粒の 受け皿が 空の 間（サイクル189・運営者「見た目を 改善ループ」「判断不要で 進めて」）。旧版は 白い ベタの 角丸の 箱 で、
+     押せる 空の ボタンに 見えた（844×390 で 約250×110）。空の 間は 点線の 枠と すける 地、まんなかに 粒の 形の うすい かげ（字は 足さない）。
+     粒が 1つ 入ったら（:empty で なくなる）今までの はっきり した 受け皿。枠の 太さ・大きさ・場所・当たりは 変えない。色 だけ 0.3秒（動きを へらす でも 同じ） */
+  #dish { transition:background-color .3s ease, border-color .3s ease; }
+  #dish:empty { background:rgba(244,238,224,.25); border-style:dashed; border-color:#b9aa86; }
+  #dish:empty::before { content:""; width:36px; height:20px; border-radius:10px; border:2px dashed rgba(122,106,74,.45); box-sizing:border-box; }
 
   /* 鑑定皿: 白と黒の2つで同じ試料を見る */
   #plate { flex:1; min-height:0; position:relative; border-radius:18px; border:4px solid #4a4136; touch-action:none; background:#1c1a16; }

@@ -3232,26 +3232,37 @@ const ART = (() => {
       g.beginPath(); g.moveTo(0, -13); g.lineTo(9, 9); g.lineTo(-9, 9); g.closePath(); g.stroke(); g.fill();
       g.restore();
     }
-    g.fillStyle = 'rgba(20,18,14,.6)'; g.fillRect(0, 0, 96, 24);
-    g.fillStyle = '#fff'; g.font = 'bold 15px sans-serif'; g.textBaseline = 'middle'; g.textAlign = 'left'; g.fillText('お題 ' + name, 6, 13);
-    live(g);
+    // サイクル293（見た目）: 地図は 画面では 80〜220px に 縮めて 見せる（canvas は 250px）。字は 画面の 上で 9px 以上（点数は 12px 以上）に なる 大きさで 描く
+    const k = miniK(), tf = Math.max(15, Math.ceil(9 / k)), tw = (g.font = 'bold ' + tf + 'px sans-serif', g.measureText('お題 ' + name).width);
+    g.fillStyle = 'rgba(20,18,14,.6)'; g.fillRect(0, 0, Math.max(96, Math.ceil(tw) + 12), Math.max(24, tf + 9));
+    g.fillStyle = '#fff'; g.textBaseline = 'middle'; g.textAlign = 'left'; g.fillText('お題 ' + name, 6, Math.max(13, tf / 2 + 5));
+    live(g, k);
   }
   // リアルタイムの点数：地図の下に 上手さの点数と、でき（絵の中を耕せた割合）・はみ出した広さ。上がると緑、はみ出すと赤
-  let ref = null, refT = 0, lastOver = 0, flashT = 0;
-  function live(g) {
+  let ref = null, refT = 0, lastOver = 0, flashT = 0, miniW = 0;
+  // サイクル293: 地図の 画面での はば（CSS px）と canvas（250px）の 比。はばは 大きさが 変わった とき だけ 読み直す（毎回 読まない）
+  addEventListener('resize', () => { miniW = 0; });
+  function miniK() { if (!miniW) { const c = $('artMap'); miniW = c ? c.clientWidth : 0; } return miniW > 0 ? miniW / 250 : 0.6; }
+  function live(g, k = 0.6) {
     const r = score(), now = performance.now() / 1000, H = 150;
     g.fillStyle = '#14120e'; g.fillRect(0, H, 250, 46);
     g.fillStyle = r.skill === null ? '#d8d2c4' : r.skill >= 80 ? '#8af27a' : r.skill >= 55 ? '#ffd84a' : '#ff7a5c';
-    g.font = 'bold 28px sans-serif'; g.textAlign = 'left'; g.textBaseline = 'middle';
-    g.fillText(r.skill === null ? '—' : r.skill + '点', 8, H + 30);
-    g.fillStyle = '#d8d2c4'; g.font = 'bold 11px sans-serif'; g.fillText('上手さ', 8, H + 8);
+    // サイクル293: 細かい 字（上手さ・でき・はみ出し）は 画面で 9px 以上に できる はば（地図 150px 以上。枠を のぞいた 中身が 138px 以上）の ときだけ 出す。せまい ときは 点数（12px 以上）と 2 本の 棒 だけ（読めない 字は 出さない）。
+    // 字の 大きさ（canvas の px）＝ 画面で ほしい px ÷ 縮み。150px（中身 146px）では 字 16・点数 21。棒の 左はしは 点数と 字の 幅を はかって 決める（「100点」と「はみ出し 100m²」でも かさならない。前は マウスの 220px で「100点」が「はみ出し」に かかって いた）
+    const full = k >= 0.55, lf = Math.max(12, Math.ceil(9 / k)), sf = full ? (k >= 0.85 ? 28 : Math.max(20, Math.ceil(12 / k))) : Math.min(44, Math.max(28, Math.ceil(12 / k)));
+    const st = r.skill === null ? '—' : r.skill + '点', l1 = 'でき ' + Math.round(r.fill * 100) + '%', l2 = 'はみ出し ' + Math.round(r.over) + 'm²';
+    g.font = 'bold ' + sf + 'px sans-serif'; g.textAlign = 'left'; g.textBaseline = 'middle';
+    let bx = 150; if (full) { const sw = g.measureText(st).width; g.font = 'bold ' + lf + 'px sans-serif'; bx = Math.min(196, Math.max(150, Math.ceil(8 + sw + 6 + Math.max(g.measureText(l1).width, g.measureText(l2).width) + 5))); g.font = 'bold ' + sf + 'px sans-serif'; }
+    const bw = 242 - bx;
+    g.fillText(st, 8, full ? H + 30 : H + 24);
+    if (full) { g.fillStyle = '#d8d2c4'; g.font = 'bold ' + Math.max(11, Math.ceil(9 / k)) + 'px sans-serif'; g.fillText('上手さ', 8, H + 8); }
     const bar = (y, f, col, label) => {
-      g.fillStyle = '#3a352c'; g.fillRect(150, y, 92, 9);
-      g.fillStyle = col; g.fillRect(150, y, 92 * Math.max(0, Math.min(1, f)), 9);
-      g.fillStyle = '#eee'; g.font = 'bold 12px sans-serif'; g.textAlign = 'right'; g.fillText(label, 145, y + 5);
+      g.fillStyle = '#3a352c'; g.fillRect(bx, y, bw, 9);
+      g.fillStyle = col; g.fillRect(bx, y, bw * Math.max(0, Math.min(1, f)), 9);
+      if (full) { g.fillStyle = '#eee'; g.font = 'bold ' + lf + 'px sans-serif'; g.textAlign = 'right'; g.fillText(label, bx - 5, y + 5); }
     };
-    bar(H + 10, r.fill, '#6fd05e', 'でき ' + Math.round(r.fill * 100) + '%');
-    bar(H + 29, r.over / 100, '#ff5a3c', 'はみ出し ' + Math.round(r.over) + 'm²');   // 100m² で いっぱい
+    bar(H + 10, r.fill, '#6fd05e', l1);
+    bar(H + 29, r.over / 100, '#ff5a3c', l2);   // 100m² で いっぱい
     const box = $('artBox');
     if (r.over > lastOver + 0.05 && r.over > 3 && S.started) voice('stopLine');
     if (r.over > lastOver + 0.05) { flashT = now + 0.8; box.classList.add('bad'); box.classList.remove('good'); $('artChip').classList.add('bad'); }

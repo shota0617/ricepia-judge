@@ -3356,6 +3356,7 @@ const HAMON_MS = 900, HAMON_GAP = 350;
 const hamon = { list: [], last: 0 };
 const rollBloom = { list: [] };
 const rollPath = { list: [] };
+let rollLineT0 = 0;
 function hamonStep(now, ox, oy, T, w, h, dpr) {
   if (worldMode || driving || rp.x === null) { hamon.list.length = 0; return; }
   const sp = Math.hypot(rp.vx || 0, rp.vy || 0);
@@ -8169,6 +8170,7 @@ function frame(now) {
   roll.lastK = { x: kp.x, y: kp.y };
   roll.last = hp;
   roll.trail.push({ x: hp.x, y: hp.y, th: roll.ang }); if (roll.trail.length > 8) roll.trail.shift();
+  if (rolling && !rollLineT0) rollLineT0 = now;
   { const RT = window.nishioRollTrail; if (RT && rolling) { if (!fpsMeter.slow) { rollPath.list = RT.push(rollPath.list, hp.x, hp.y, now); rollPath.list = RT.alive(rollPath.list, now); } if (RT.bloomPush && RT.bloomAlive) { rollBloom.list = RT.bloomPush(rollBloom.list, hp.x, hp.y, now); rollBloom.list = RT.bloomAlive(rollBloom.list, now); } } }
 
   if (now - lastEnsure > 500) { lastEnsure = now; ensureVisible(w, h, T); snapDemoStart(); updateChests(); checkCar(); sightCheck(); updateCover(); loadTowns(); updateHere(); updateHarvestBtn(); updateDankyuBtn(); updateHiryoBtn(); }
@@ -8184,8 +8186,8 @@ function frame(now) {
 
   drawWaterCorners(tx0, ty0, tx1, ty1, ox, oy, T, f);
   if (!gbOn) drawContours(tx0, ty0, tx1, ty1, ox, oy, T);
-  if (mazeOn()) { drawMzFogTint(tx0, ty0, tx1, ty1, ox, oy, T); drawMzPebs(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTiles(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTerritory(tx0, ty0, tx1, ty1, ox, oy, T); drawMzTrail(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMaze(tx0, ty0, tx1, ty1, ox, oy, T); drawRollPath(ox, oy, T, now); drawRollBloom(ox, oy, T, now); drawMzGates(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzHalf(ox, oy, T, now); drawMzPads(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzGrains(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzFruit(ox, oy, T, now); drawMzPiece(ox, oy, T, now); drawMzView(ox, oy, T, now); drawMzCache(ox, oy, T, now); drawMzQuest(ox, oy, T, now); drawMzDino(ox, oy, T, now); drawMzDinoSonar(ox, oy, T, now); if (mzHelpOn()) drawMzDeadEnds(tx0, ty0, tx1, ty1, ox, oy, T); else mzHelp.dead = 0; drawMzHint(ox, oy, T, now); drawMzDots(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzCrows(ox, oy, T, now); drawMzSpring(ox, oy, T, now); drawMzCritters(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTorch(ox, oy, T, now); drawMzBrigade(ox, oy, T, now); drawMzPurify(ox, oy, T, now); drawMzRescue(ox, oy, T, now); drawMzCube(ox, oy, T, now); drawMzFogVeil(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTorchLight(ox, oy, T, now); drawMzSightRing(ox, oy, T, now); drawMzPulse(ox, oy, T, now); drawMzCacheGlow(ox, oy, T, now); drawMzGlide(ox, oy, T, now); drawMzChase(ox, oy, T, now); drawMzEnergyRing(ox, oy, T, now); drawMzEnergyAura(ox, oy, T, now); drawMzEnergyStars(ox, oy, T, now); drawMzTorchFlame(ox, oy, T, now); drawMzBrigadeMates(ox, oy, T, now); drawMzQuestCarry(ox, oy, T, now); drawMzPurifyPetals(ox, oy, T, now); drawMzRescueMate(ox, oy, T, now); drawMzRescueRing(ox, oy, T, now); drawMzCubeBig(ox, oy, T, now); }
-  if (!mazeOn()) drawRollPath(ox, oy, T, now); if (!mazeOn()) drawRollBloom(ox, oy, T, now);
+  if (mazeOn()) { drawMzFogTint(tx0, ty0, tx1, ty1, ox, oy, T); drawMzPebs(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTiles(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTerritory(tx0, ty0, tx1, ty1, ox, oy, T); drawMzTrail(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMaze(tx0, ty0, tx1, ty1, ox, oy, T); drawRollPath(ox, oy, T, now); drawRollBloom(ox, oy, T, now); drawRollLine(ox, oy, T, now); drawMzGates(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzHalf(ox, oy, T, now); drawMzPads(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzGrains(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzFruit(ox, oy, T, now); drawMzPiece(ox, oy, T, now); drawMzView(ox, oy, T, now); drawMzCache(ox, oy, T, now); drawMzQuest(ox, oy, T, now); drawMzDino(ox, oy, T, now); drawMzDinoSonar(ox, oy, T, now); if (mzHelpOn()) drawMzDeadEnds(tx0, ty0, tx1, ty1, ox, oy, T); else mzHelp.dead = 0; drawMzHint(ox, oy, T, now); drawMzDots(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzCrows(ox, oy, T, now); drawMzSpring(ox, oy, T, now); drawMzCritters(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTorch(ox, oy, T, now); drawMzBrigade(ox, oy, T, now); drawMzPurify(ox, oy, T, now); drawMzRescue(ox, oy, T, now); drawMzCube(ox, oy, T, now); drawMzFogVeil(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTorchLight(ox, oy, T, now); drawMzSightRing(ox, oy, T, now); drawMzPulse(ox, oy, T, now); drawMzCacheGlow(ox, oy, T, now); drawMzGlide(ox, oy, T, now); drawMzChase(ox, oy, T, now); drawMzEnergyRing(ox, oy, T, now); drawMzEnergyAura(ox, oy, T, now); drawMzEnergyStars(ox, oy, T, now); drawMzTorchFlame(ox, oy, T, now); drawMzBrigadeMates(ox, oy, T, now); drawMzQuestCarry(ox, oy, T, now); drawMzPurifyPetals(ox, oy, T, now); drawMzRescueMate(ox, oy, T, now); drawMzRescueRing(ox, oy, T, now); drawMzCubeBig(ox, oy, T, now); }
+  if (!mazeOn()) drawRollPath(ox, oy, T, now); if (!mazeOn()) drawRollBloom(ox, oy, T, now); if (!mazeOn()) drawRollLine(ox, oy, T, now);
   updateTraffic(dt, now, tx0, ty0, tx1, ty1);
   drawTraffic(ox, oy, T, w, h);
 
@@ -8787,6 +8789,27 @@ function drawRollBloom(ox, oy, T, now) {
     } }
     if (!fpsMeter.slow) ctx.fillStyle = 'rgba(240,200,80,' + a.toFixed(3) + ')';
     ctx.beginPath(); ctx.arc(cx, cy, T * 0.06 * sc, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.restore();
+}
+
+function drawRollLine(ox, oy, T, now) {
+  const RT = window.nishioRollTrail;
+  if (!RT || !RT.lineDots || fpsMeter.slow || !rollPath.list || rollPath.list.length < 2) return;
+  const prog = calmMotion ? 0.4 : (rollLineT0 ? Math.min(1, Math.max(0, (now - rollLineT0) / 45000)) : 0);
+  const dots = RT.lineDots(rollPath.list, calmMotion ? 1 : prog);
+  if (!dots || dots.length < 2) return;
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,214,120,' + (0.28 * prog).toFixed(3) + ')';
+  ctx.lineWidth = T * 0.03;
+  ctx.beginPath();
+  dots.forEach((d, i) => { const X = ox + d.x * T, Y = oy + d.y * T; if (i === 0) ctx.moveTo(X, Y); else ctx.lineTo(X, Y); });
+  ctx.stroke();
+  for (const d of dots) {
+    const a = calmMotion ? Math.min(d.a, 0.55 * prog) : d.a;
+    if (!(a > 0)) continue;
+    ctx.fillStyle = 'rgba(255,236,170,' + a.toFixed(3) + ')';
+    ctx.beginPath(); ctx.arc(ox + d.x * T, oy + d.y * T, T * 0.05, 0, Math.PI * 2); ctx.fill();
   }
   ctx.restore();
 }

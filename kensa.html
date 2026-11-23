@@ -1253,7 +1253,7 @@ function startLot() {
   hint.style.display = "";
   showTop("sceneBag");
   $("dish").textContent = "";
-  measured = 0; meterTaps = 0; crankTurned = 0; bagTaps = 0; spreadTaps = 0; hankoTaps = 0; swipeTaps = 0; spread = false; pickedBare = false; stamped = false; inked = false; twistDone = false; pickMisses = 0; /* つまむの 空振りは 袋ごとに 数え直す（サイクル160） */
+  measured = 0; meterTaps = 0; crankTurned = 0; bagTaps = 0; spreadTaps = 0; hankoTaps = 0; swipeTaps = 0; spread = false; linePull = 0; pickedBare = false; stamped = false; inked = false; twistDone = false; pickMisses = 0; /* つまむの 空振りは 袋ごとに 数え直す（サイクル160） */
   token.hidden = true;
   $("lcd").textContent = "--.-";
   $("meterBtn").classList.remove("high");
@@ -1767,6 +1767,7 @@ function showAverage() {
 const Z = { s:1, tx:0, ty:0 };
 const ZOOM_MAX = 3.4, FACE_AT = 1.2; /* 顔が出る倍率: 1.2倍から。1.5倍では指を少し開く自然なピンチ（1.2〜1.35倍）で寄っても顔が出ず、寄れていないように見えた（390×844実測・サイクル85）。ごく小さなピンチ（1.1倍以下）では顔を出さない範囲に留める */
 let isNear = false, everZoomed = false, spread = false;
+let linePull = 0; /* 最初の袋だけ、粒を扱うほど中央の横一線へ寄る強さ。袋ごとに 0 へ戻す */
 /* 2袋目から、寄らずに わるい粒を つまめた 人（サイクル153・最初の1分）。旧版は つまめた 後も 案内が「🔍 ふたゆびで ズーム」の まま で、
    ふたゆびの 手本も 出つづけ、して いる ことと 案内が 合わなかった（390×844実測: つまんだ 後の 4秒 3回中3回 案内が ズームの まま・ふたゆびの 手本 27回中14回 見えた）。
    寄らずに 1粒 つまめたら、案内を 今 ある「わるい粒を つまむ」に かえ、ふたゆびの 手本を 出さない。止まれば 今の しくみ（6秒後に わるい粒が ふくらみ、その 粒を さす 手本）が 出る。袋ごとに 数え直す */
@@ -1877,6 +1878,7 @@ function checkSpread() {
   }
   const now = overlaps <= 4;
   if (now !== spread && now) { spread = true; spreadSound(); if (lotIndex === 0) refreshBadFaces(); updateSortHint(); } /* 広がった合図は固有の音にする（サイクル105・差11）。なでる tick とは分ける */
+  if (now && lotIndex === 0) linePull = Math.max(linePull, 0.4); /* 最初の袋で広がった瞬間から、中央へ寄る強さを 0.4 まで上げる（広がった後も同じ値で止まる） */
 }
 /* なでる: 指先で粒を押し、押された粒がとなりの粒も押す */
 let simOn = false, lastBrushSound = 0;
@@ -1939,6 +1941,7 @@ function simStep() { /* 1/60秒 ぶん。まだ 起きている 粒が あれば
     if (push > 0.6) { a.awake = Math.max(a.awake, 6); b.awake = Math.max(b.awake, 6); }
   }
   live.forEach(g => {
+    if (typeof linePull === "number" && linePull > 0 && (typeof reduced === "undefined" || !reduced)) { g.y += (PH / 2 - g.y) * 0.012 * linePull; g.r *= (1 - 0.03 * linePull); } /* 最初の袋だけ、粒を扱うほど皿の中央の横一線へ少しずつ寄せ、向きも少しずつ揃える。寄せる力は弱く、押し合いを妨げない。広がり判定は false→true の一方通行なので、寄せても広がり判定は壊れない */
     g.x = Math.min(PW - GW * 0.55, Math.max(GW * 0.55, g.x));
     g.y = Math.min(PH - GW * 0.4, Math.max(GW * 0.4, g.y));
     renderGrain(g);
@@ -2244,6 +2247,7 @@ function tapGrain(g) {
     return;
   }
   g.gone = true; badLeft--; pickMisses = 0;
+  if (lotIndex === 0) linePull = Math.min(1, (typeof linePull === "number" ? linePull : 0) + 0.3); /* 最初の袋で粒を取るほど、中央へ寄る強さが上がる */
   /* 取った粒を指していた手本は消し、手が止まれば 残りの粒を選び直して出す（Codex指摘 PR #1076: キーボードで取ると pointerdown を通らず、手本が消えた粒の場所を指し続けた） */
   demoHide(); demoAt = demoHard = performance.now() + DEMO_LOOK; /* つまむの手本は わるい粒を指すので、探す間を残す（サイクル142でも2秒のまま） */
   pickedKinds[g.kind]++; updateGrainRecord(); /* みわけた粒の種類を静かなきろくへ残す（サイクル93・類7） */

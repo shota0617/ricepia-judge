@@ -2958,12 +2958,16 @@ function cornerAvg(gx, gz, self, selfClod) {      // 角（格子点 gx, gz）�
 function setCell(c, wv, clod = 0) {               // ます目の四隅の高さ・UV・法線（wv：波うち。clod：水分が多くて 大きな土塊が残る 0〜1）
   const i = Math.floor(c / NZ), j = c % NZ, x0 = -HX + i * CELL, z0 = -HZ + j * CELL, x1 = x0 + CELL, z1 = z0 + CELL;
   const g = tilled.geometry, pos = g.attributes.position.array, uv = g.attributes.uv.array, nor = g.attributes.normal.array;
+  // 耕したます目が増えるほど、角の横ずれと土の高さのゆがみを少しずつ弱める係数（1 で従来どおり、最小 0.4）。
+  // lineSettle は新しいます目 1 つごとに 1/1500 ずつしか変わらないので、描き直されていない隣のます目との角のずれは無視できる大きさになる。
+  const sf = 1 - 0.6 * lineSettle;
   [[x0, z0], [x1, z0], [x1, z1], [x0, z1]].forEach(([x0_, z0_], k) => {
-    const [x, z] = warp(x0_, z0_);
+    const [wx, wz] = warp(x0_, z0_);
+    const x = x0_ + (wx - x0_) * sf, z = z0_ + (wz - z0_) * sf;   // sf が下がるほど角が本来の格子に揃う
     const hx = Math.sin(x * 41.3 + z * 17.1), hz = Math.sin(x * 13.7 - z * 29.3);   // 土塊の面の向き（場所で決まる）
     const v = (i + (k === 1 || k === 2 ? 1 : 0)) * (NZ + 1) + j + (k >= 2 ? 1 : 0);   // 格子の角（二山盛りの山）
     const ca = cornerAvg(i + (k === 1 || k === 2 ? 1 : 0), j + (k >= 2 ? 1 : 0), c, clod);   // サイクル220・類4: 角に接する耕したます目の平均（境目をなめらかに）
-    pos.set([x, TILL_Y + (SHIRO ? 0.004 * Math.sin(x * 3 + z * 2) : jitter(x, z) * ca.scale + ca.hclod * 0.02 * (1 + hx * hz)) + (wv ? wv.y(x, z) : 0) + ca.off + (YAMA.on ? YAMA.h[v] : 0) + T6.h[v], z], c * 12 + k * 3);
+    pos.set([x, TILL_Y + (SHIRO ? 0.004 * Math.sin(x * 3 + z * 2) : jitter(x, z) * ca.scale * sf + ca.hclod * 0.02 * (1 + hx * hz)) + (wv ? wv.y(x, z) : 0) + ca.off + (YAMA.on ? YAMA.h[v] : 0) + T6.h[v], z], c * 12 + k * 3);
     uv.set([x / 2, -z / 2], c * 8 + k * 2);
     const n = wv ? wv.n(x, z) : [0, 1, 0];
     if (YAMA.on && (YAMA.gx[v] || YAMA.gz[v])) { const l = Math.hypot(n[0], n[1], n[2]); n[0] = n[0] / l - YAMA.gx[v]; n[1] /= l; n[2] = n[2] / l - YAMA.gz[v]; const m = Math.hypot(n[0], n[1], n[2]); n[0] /= m; n[1] /= m; n[2] /= m; }   // 山の斜面に 陰がつく
@@ -2982,6 +2986,7 @@ function refreshNeighbors(i, j, c) {              // サイクル220・類4: 隣
     if (a >= 0 && b >= 0 && a < NX && b < NZ && c2 !== c && tilledMask[c2]) setCell(c2, cellWave(c2), CLOD[c2]);
   }
 }
+let lineSettle = 0;   // 初めて耕したます目の数に応じて 0 から 1 へ進む、土のゆがみをならす進み具合
 function tillCell(i, j, lx = 0) {               // lx：作業機のまん中から 左へ何 m の所か
   if (i < 0 || j < 0 || i >= NX || j >= NZ) return;
   const c = i * NZ + j;
@@ -3012,6 +3017,7 @@ function tillCell(i, j, lx = 0) {               // lx：作業機のまん中か
   CORNER.tilled(-HX + (i + 0.5) * CELL, -HZ + (j + 0.5) * CELL);
   const x0 = -HX + i * CELL, z0 = -HZ + j * CELL;
   if (Math.abs(x0 + CELL / 2) < HX - 0.5 && Math.abs(z0 + CELL / 2) < HZ - 0.5) tilledCount++;
+  lineSettle = Math.min(1, tilledCount / 1500);
   const wv = COVER.stuck ? COVER.wave() : null;  // リヤカバーが固まっていると 波うつ
   TILTY[c] = KATA.y(lx);                          // ハローが傾いていると 片側が浅い
   if (YAMA.on && YAMA.till(i, j)) YAMA.refresh(i, j, c);
@@ -11390,7 +11396,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { FIXBAR, HERI, GASU, get ECO() { return ECO; }, set ECO(v) { ECO = v; }, get ECO_RPM() { return ECO_RPM; }, cycleEco, setRpm, WORK_RPM, DIFF, SAGE, WARAYAMA, FENCE, RENGE, SHIHATSU, DIP, YAMA, MARKS, CLAW, USHI, UZURA, soilY, soilCell, WAVD, CLOD, GREASE, squeak, SCRAPE, BELT, COVER, KATA, RAMPDMG, CORNER, TILTY, WAVY, STONES, HAMARU, WASH, squeeze, moistAt, clodH, ROUGHA: () => ROUGH, engineLoad, engineRpm, WALK, walkField, TILLN, T2, T3, T4, T5, T6, BLOCKS, GROW, SEASONCOL, get overTilled() { return overTilled; }, AKIAKANE, BUTTERFLIES, LEAK, INAGO, ROADSIDE, TOBI, KABASHIRA, LEVEE_FLOWERS, KERI, SNAILS, WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, AMENBO, KERA, KAMO, ZARI, GENGO, KANA, KABU, DOJO, HACHI, MEDAKA, HOTARU, KAWASEMI, IMORI, KIJI, TONOSAMA, MOGURA, TSUBAME, KABUTO, HIGAN, HIBARI, PLAY, INTRO, MAEUKI, OSHI, MUKU, DRY, MAKURA, DEEP, softAt, OCHI, PANKU, AIRCL, OMO, KEIKAL, DANKI, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, TRACE, HINT, AUTO, SOILPOP, updateCamera, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, BADGE, SAY, sim: sec => { for (let t = 0; t < sec; t += 0.05) { lastPct = step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); MUKU.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); USHI.update(0.05); UZURA.update(0.05); AMENBO.update(0.05); KERA.update(0.05); KAMO.update(0.05); ZARI.update(0.05); GENGO.update(0.05); KANA.update(0.05); KABU.update(0.05); DOJO.update(0.05); HACHI.update(0.05); MEDAKA.update(0.05); HOTARU.update(0.05); KAWASEMI.update(0.05); IMORI.update(0.05); KIJI.update(0.05); TONOSAMA.update(0.05); MOGURA.update(0.05); TSUBAME.update(0.05); KABUTO.update(0.05); HIGAN.update(0.05); HIBARI.update(0.05); INTRO.update(0.05); DRY.update(0.05); GROW.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); FARMER.update(0.05, S.started && !S.done); } buildHills(); } };
+window.game = { FIXBAR, HERI, GASU, get ECO() { return ECO; }, set ECO(v) { ECO = v; }, get ECO_RPM() { return ECO_RPM; }, cycleEco, setRpm, WORK_RPM, DIFF, SAGE, WARAYAMA, FENCE, RENGE, SHIHATSU, DIP, YAMA, MARKS, CLAW, USHI, UZURA, soilY, soilCell, WAVD, CLOD, GREASE, squeak, SCRAPE, BELT, COVER, KATA, RAMPDMG, CORNER, TILTY, WAVY, STONES, HAMARU, WASH, squeeze, moistAt, clodH, ROUGHA: () => ROUGH, engineLoad, engineRpm, WALK, walkField, TILLN, T2, T3, T4, T5, T6, BLOCKS, GROW, SEASONCOL, get overTilled() { return overTilled; }, get lineSettle() { return lineSettle; }, AKIAKANE, BUTTERFLIES, LEAK, INAGO, ROADSIDE, TOBI, KABASHIRA, LEVEE_FLOWERS, KERI, SNAILS, WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, AMENBO, KERA, KAMO, ZARI, GENGO, KANA, KABU, DOJO, HACHI, MEDAKA, HOTARU, KAWASEMI, IMORI, KIJI, TONOSAMA, MOGURA, TSUBAME, KABUTO, HIGAN, HIBARI, PLAY, INTRO, MAEUKI, OSHI, MUKU, DRY, MAKURA, DEEP, softAt, OCHI, PANKU, AIRCL, OMO, KEIKAL, DANKI, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, TRACE, HINT, AUTO, SOILPOP, updateCamera, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, BADGE, SAY, sim: sec => { for (let t = 0; t < sec; t += 0.05) { lastPct = step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); MUKU.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); USHI.update(0.05); UZURA.update(0.05); AMENBO.update(0.05); KERA.update(0.05); KAMO.update(0.05); ZARI.update(0.05); GENGO.update(0.05); KANA.update(0.05); KABU.update(0.05); DOJO.update(0.05); HACHI.update(0.05); MEDAKA.update(0.05); HOTARU.update(0.05); KAWASEMI.update(0.05); IMORI.update(0.05); KIJI.update(0.05); TONOSAMA.update(0.05); MOGURA.update(0.05); TSUBAME.update(0.05); KABUTO.update(0.05); HIGAN.update(0.05); HIBARI.update(0.05); INTRO.update(0.05); DRY.update(0.05); GROW.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); FARMER.update(0.05, S.started && !S.done); } buildHills(); } };
 </script>
 </body>
 </html>

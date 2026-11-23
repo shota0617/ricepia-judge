@@ -1431,7 +1431,7 @@ function crashFailures(R, fail) {   // 安全網（guardEvaluate）に かかっ
   await page.evaluate(() => document.getElementById('demoBtn').click());
   await page.waitForTimeout(2500);
   // 文字を少なく（ふだん）：上のバーは文字を出さず、ドット絵だけ。下のタブは 絵と 小さな 名前（絵だけだと 分かりにくい）
-  R.checks.simpleDefault = await page.evaluate(() => document.body.classList.contains('simple') && !!document.querySelector('.tabs img.pi') && getComputedStyle(document.querySelector('.tabs button span')).display !== 'none' && getComputedStyle(document.querySelector('.brand .tx')).display === 'none');
+  R.checks.simpleDefault = await page.evaluate(() => document.body.classList.contains('simple') && !!document.querySelector('.tabs img.pi') && getComputedStyle(document.querySelector('.tabs button span')).display !== 'none' && getComputedStyle(document.querySelector('.brand .tx')).display !== 'none' && getComputedStyle(document.querySelector('.pts small.tx')).display === 'none' && getComputedStyle(document.querySelector('.lv-num .tx')).display === 'none');   // サイクル240（見た目。運営者 2026-11-23「判断不要で 進めて」）：文字を 少なく でも 上の 帯の ゲームの 名前 だけは 出す に 変えた（前は 名前も 消える のを 見て いた）。ほかの 字（pt・Lv）は 消えた まま を 見る
   R.checks.firstOnField = await page.evaluate(() => nishioGo.demo && !nishioPixel.worldMode && !document.getElementById('pxPad').hidden);
   R.checks.welcomeChestM = await page.evaluate(() => { const c = nishioGo.liveChests().find(x => x.id.endsWith(':welcome')); return c ? Math.round(nishioGo.dist(nishioGo.me, c)) : null; });
   // せかいちずでもスティックが出て、動かすと歩く地図にもどる

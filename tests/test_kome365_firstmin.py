@@ -2968,5 +2968,30 @@ class TestKome365KouTitle(unittest.TestCase):
             self.assertNotEqual(k0["title"], k1["title"], x["js"])   # 毎回 ちがう
 
 
+# サイクル207: ○✗ の しるしは、入る ところが あれば 田んぼの 絵 と かかし を よける(前は 390×844 で 田んぼの 絵に かかって いた)
+MARK_DECO_JS = "(() => { const m = document.getElementById('swMark'), A = m.getBoundingClientRect(); const ov = id => { const e = document.getElementById(id); if (!e || !e.getClientRects().length) return 0; const B = e.getBoundingClientRect(); const ix = Math.min(A.right, B.right) - Math.max(A.left, B.left), iy = Math.min(A.bottom, B.bottom) - Math.max(A.top, B.top); return ix > 0.5 && iy > 0.5 ? Math.round(ix * iy) : 0; }; return { on: m.classList.contains('on'), fit: m.getAttribute('data-fit'), w: m.offsetWidth, paddy: ov('swPaddy'), kakashi: ov('swKakashi'), inView: A.left >= 0 && A.top >= 0 && A.right <= innerWidth && A.bottom <= innerHeight }; })()"
+
+
+class TestKome365MarkKeepsPaddy(unittest.TestCase):
+    """サイクル207"""
+
+    @classmethod
+    def setUpClass(cls):
+        acts = ["keyjs:" + MARK_DECO_JS, "wait", "keyjs:" + MARK_DECO_JS]
+        cls.r = sound_run([{"name": "v", "acts": acts}, {"name": "t", "w": 820, "h": 1180, "acts": acts}, {"name": "l", "w": 844, "h": 390, "acts": acts}])
+
+    def test_mark_leaves_paddy_and_kakashi_visible(self):
+        for name in ("v", "t", "l"):
+            x = self.r[name]
+            self.assertEqual(x["errs"], [], name)
+            for j in x["js"]:
+                self.assertTrue(j["on"], "%s: ○✗ が 出て いない %r" % (name, j))
+                # e0c68ec8 では 390×844・820×1180 で 田んぼの 絵に かかる ので ここで 落ちる
+                self.assertEqual((j["paddy"], j["kakashi"]), (0, 0), "%s: ○✗ が 田んぼの 絵・かかし に かかる %r" % (name, j))
+                self.assertIn(j["fit"], ("1", "2", "3"), j)
+                self.assertGreaterEqual(j["w"], 150, j)
+                self.assertTrue(j["inView"], j)
+
+
 if __name__ == "__main__":
     unittest.main()

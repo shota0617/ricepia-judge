@@ -3941,12 +3941,15 @@ renderTitle();
     [].forEach.call(document.querySelectorAll('#swEdge .eLb'), function(n){ tx(hard, n); });
     ['swHome', 'swSnd', 'swVib'].forEach(function(id){ var n = $(id); if (vis(n)) both(hard, n.getBoundingClientRect(), false); });
     return { soft: txt, hard: hard }; }
+  /* サイクル207: ○✗ の しるしは、入る ところが あれば 田んぼの 絵(#swPaddy)と かかし も よける(前は 田んぼの 絵の ほとんどを かくして いた)。
+     入らない 画面では 今までどおり(字・ボタン・吹き出し を よける 順は 変えない)。大きさの 下限(150px)・出る 長さ・音・吹き出しは 変えない */
+  function markDeco(){ var out = []; ['swPaddy', 'swKakashi'].forEach(function(id){ var n = $(id); if (!n || !n.getClientRects().length || getComputedStyle(n).visibility === 'hidden' || getComputedStyle(n).display === 'none') return; var b = n.getBoundingClientRect(); if (b.width > 1 && b.height > 1) out.push({ left: b.left - 4, top: b.top - 4, right: b.right + 4, bottom: b.bottom + 4 }); }); return out; }
   function markFit(e){ try {
     e.style.width = e.style.left = e.style.top = e.style.margin = ''; e.removeAttribute('data-fit'); markBox = null; markVer++;
     var W = window.innerWidth, H = window.innerHeight, par = (e.offsetParent || $('swipe')).getBoundingClientRect(), sw = $('swipe').getBoundingClientRect();
     var px = sw.left + sw.width / 2, py = sw.top + Math.min(sw.height, H) * 0.4, s0 = Math.min(240, Math.round(W * 0.58)), ob = markObs();
     var wy = $('swWhy'), wb = null; if (wy && (whyPend || wy.classList.contains('on'))) { whyFit(wy); var b0 = wy.getBoundingClientRect(); if (b0.width > 1) wb = { left: b0.left - 2, top: b0.top - 2, right: b0.right + 2, bottom: b0.bottom + 2 }; }   /* 吹き出しを 先に 字だけ よけて 置き、○✗ は その 吹き出しも よける */
-    var key = [W, H, Math.round(px), Math.round(py)].concat(ob.hard.concat(ob.soft, wb ? [wb] : []).map(function(b){ return [b.left, b.top, b.right, b.bottom].map(Math.round).join(','); })).join('|');
+    var deco = markDeco(), key = [W, H, Math.round(px), Math.round(py)].concat(ob.hard.concat(ob.soft, wb ? [wb] : [], deco).map(function(b){ return [b.left, b.top, b.right, b.bottom].map(Math.round).join(','); })).join('|');
     var r = markMemo[key];
     if (!r) {
       var free = function(cx, cy, sz, list){ var q = sz * 0.54 + 2; if (cx - q < 2 || cy - q < 2 || cx + q > W - 2 || cy + q > H - 2) return false;
@@ -3954,7 +3957,7 @@ renderTitle();
       var find = function(list, hi, lo){ for (var sz = hi; sz >= lo; sz -= 6) { if (free(px, py, sz, list)) return [px, py, sz]; var best = null, bd = 1e12, q = sz * 0.54 + 2;
           for (var y = q; y <= H - q; y += 12) for (var x = q; x <= W - q; x += 12) { var dd = (x - px) * (x - px) + (y - py) * (y - py); if (dd < bd && free(x, y, sz, list)) { bd = dd; best = [x, y, sz]; } }
           if (best) return best; } return null; };
-      var all = ob.hard.concat(ob.soft), lo2 = Math.min(MARK_MIN, s0) - 6, steps = [[wb ? all.concat([wb]) : null, s0, MARK_MIN, 1], [all, s0, MARK_MIN, 2], [wb ? all.concat([wb]) : null, lo2, MARK_MIN2, 3], [all, lo2, MARK_MIN2, 3], [ob.hard, s0, MARK_MIN2, 4]];
+      var all = ob.hard.concat(ob.soft), lo2 = Math.min(MARK_MIN, s0) - 6, steps = [[deco.length ? all.concat(wb ? [wb] : [], deco) : null, s0, MARK_MIN, 1], [wb ? all.concat([wb]) : null, s0, MARK_MIN, 1], [all, s0, MARK_MIN, 2], [wb ? all.concat([wb]) : null, lo2, MARK_MIN2, 3], [all, lo2, MARK_MIN2, 3], [ob.hard, s0, MARK_MIN2, 4]];
       for (var k = 0; k < steps.length && !r; k++) if (steps[k][0]) { var f0 = find(steps[k][0], steps[k][1], steps[k][2]); if (f0) r = f0.concat([steps[k][3]]); }
       r = r || [0, 0, 0, 5]; markMemo[key] = r;
     }

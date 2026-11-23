@@ -136,6 +136,12 @@
 
   /* 鑑定皿: 白と黒の2つで同じ試料を見る */
   #plate { flex:1; min-height:0; position:relative; border-radius:18px; border:4px solid #4a4136; touch-action:none; background:#1c1a16; }
+  /* 粒が まだ 皿に 出て いない 間（ぬく の はじめ）は 皿を ひかえめに（サイクル188・運営者「見た目を 改善ループ」「判断不要で 進めて」）。
+     旧版は 開いた 直後から 真っ白と 真っ黒の 大きな 面が 画面で いちばん 目立ち（390×844 で 画面の 半分 以上）、本当に さわる 袋・穀刺し・手本の 指が 負けて いた。
+     皿の 形と 白・黒の 2つの 面は 見えた まま（ここに 粒が 出ると 分かる）、こさ だけ 下げる。最初の 粒が 注がれたら 0.3秒で ふつうに もどる。
+     大きさ・場所・当たり判定は 変えない（こさ だけ）。「動きを へらす」でも 同じ こさ・同じ 長さ。みわける 以降は 今までと 同じ 見え方 */
+  #plate { transition:opacity .3s ease; }
+  #plate.calm { opacity:.35; }
   #plate.zoomed { overflow:hidden; }
   #plate:has(#plateInner.smooth) { overflow:hidden; } /* 縮小中も、描画が皿へ戻りきるまで中身を枠内に収める */
   #plateInner { position:absolute; inset:0; border-radius:14px; transform-origin:0 0;
@@ -3394,6 +3400,17 @@ window.addEventListener("resize", () => {
     show();
   });
   show();
+})();
+/* 皿の ひかえめ（サイクル188）: ぬく の 段で、皿に 見えて いる 粒が 1つも 無い 間 だけ #plate.calm。粒が 注がれる（pourOne が hidden を はずす）・段が 進む と もどる。
+   ゲームの 関数には 手を 入れず、粒の 出入りと 段（html の data-step）を 見る だけ */
+(function plateCalm() {
+  const plateEl = $("plate"), innerEl = $("plateInner");
+  const sync = () => plateEl.classList.toggle("calm", step === 0 && !grains.some(g => !g.gone && !g.el.hidden));
+  if (window.MutationObserver) {
+    new MutationObserver(sync).observe(innerEl, { childList:true, subtree:true, attributes:true, attributeFilter:["hidden"] });
+    new MutationObserver(sync).observe(document.documentElement, { attributes:true, attributeFilter:["data-step"] });
+  }
+  sync();
 })();
 </script>
 </body>

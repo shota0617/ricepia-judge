@@ -48,6 +48,9 @@ img.pi{width:16px;height:16px;image-rendering:pixelated;vertical-align:-3px;flex
 .tabs button img.pi{width:24px;height:24px}
 .simple .tx{display:none}
 .simple .brand{flex:1}
+.simple .brand .tx{display:inline}   /* サイクル240（見た目）：上の 帯に ゲームの 名前を 出す（文字を少なく でも。前は お城の 絵 だけで 帯が 空っぽに 見えた）。ほかの .tx は 消した まま */
+.simple .home-btn small.tx{display:block}   /* サイクル240：茶わんの ボタンの 下に 小さく「当店HP」（aria-label・title の「当店（らいすぴあ）の ホームページ」と 同じ。ボタンの 大きさ 44×40 は そのまま） */
+@media (max-width:360px){header.bar .brand{font-size:13px}header.bar{gap:6px;padding:0 10px}}   /* サイクル240（下の 420px の きまり より 強く）。ポイント・レベル の 札が 出ても 入る ように すき間を 少し つめる（帯の 高さは そのまま）：320 幅でも 名前が 1行に 入る ように */
 .simple .tabs button span{display:none}
 .simple .tabs button img.pi{width:30px;height:30px}
 .simple .tabs button.on img.pi{filter:drop-shadow(0 2px 0 var(--green))}

@@ -2047,6 +2047,40 @@ function crashFailures(R, fail) {   // 安全網（guardEvaluate）に かかっ
     } finally { R.errors.push(...v.errors); await v.ctx.close(); }
   })();
   Object.assign(R.checks, await firstMinuteChecks(browser, R));   // サイクル189（はじめの 1分）
+  // サイクル240（見た目：上の 緑の 帯）：5つの 大きさで、帯に「にしおさんぽGO」の 名前が 見えて いて、1行で 切れず、右の ボタン（ポイント・レベル・茶わん）に かからない。
+  //  茶わんの ボタンの 下に 小さく「当店HP」が ボタンの 中に 見える（ボタン 44×40 以上・帯の 高さ 52px は かわらない）。ポイント・レベル の 札が 出た とき も 同じ に 見る
+  //  前は「文字を少なく」（ふだん）で .tx を ぜんぶ 消して いて、帯は お城の 絵 だけ だった
+  {
+    const out = [];
+    for (const [W, H] of [[320, 568], [390, 844], [568, 320], [844, 390], [820, 1180]]) {
+      const v = await newPage(browser, { howto: true, auto: true, hasTouch: true, isMobile: true, viewport: { width: W, height: H } }), p = v.page;
+      try {
+        await p.goto(URL);
+        await p.waitForFunction(() => window.nishioPixel && nishioPixel.roll && nishioPixel.roll.x !== null, null, { timeout: 30000 }).catch(() => {});
+        await p.waitForTimeout(1200);
+        const look = () => p.evaluate(() => {
+          const R = e => { const r = e.getBoundingClientRect(); return [r.left, r.top, r.right, r.bottom].map(v => Math.round(v * 10) / 10); };
+          const bar = document.querySelector('header.bar'), brand = bar.querySelector('.brand'), tx = brand.querySelector('.tx'), home = bar.querySelector('.home-btn'), hs = home.querySelector('small');
+          const vis = e => !!e && getComputedStyle(e).display !== 'none' && !e.hidden && e.getBoundingClientRect().width > 0;
+          const t = R(tx), b = R(brand), fs = parseFloat(getComputedStyle(tx).fontSize);
+          const next = [...bar.children].filter(e => e !== brand && vis(e)).map(R).sort((a, c) => a[0] - c[0])[0];
+          const h = R(home), s = vis(hs) ? R(hs) : null;
+          return { txShown: vis(tx), text: tx.textContent, w: Math.round(t[2] - t[0]), fs, oneLine: t[3] - t[1] <= fs * 1.7, cut: brand.scrollWidth > brand.clientWidth + 1 || t[2] > b[2] + 0.5,
+            gap: next ? Math.round((next[0] - t[2]) * 10) / 10 : null, barH: Math.round(bar.getBoundingClientRect().height), home: [Math.round(h[2] - h[0]), Math.round(h[3] - h[1])],
+            homeLabel: s ? { text: hs.textContent, inside: s[0] >= h[0] - 0.5 && s[2] <= h[2] + 0.5 && s[1] >= h[1] - 0.5 && s[3] <= h[3] + 0.5 } : null };
+        });
+        const a = await look();
+        if (process.env.SHOT240) await p.screenshot({ path: `${process.env.SHOT240}_${W}x${H}.png` });
+        await p.evaluate(() => { document.querySelector('header.bar .pts').hidden = false; document.getElementById('lvBtn').hidden = false; });   // ポイント・レベル の 札が 出た とき
+        await p.waitForTimeout(200);
+        const b = await look();
+        const ok = x => x.txShown && x.text === 'にしおさんぽGO' && x.oneLine && !x.cut && x.gap !== null && x.gap >= 4 && x.fs >= 13 && x.barH === 52 && x.home[0] >= 44 && x.home[1] >= 40 && !!x.homeLabel && x.homeLabel.inside;
+        out.push({ size: `${W}x${H}`, a, b, ok: ok(a) && ok(b) });
+      } catch (e) { out.push({ size: `${W}x${H}`, crashed: String(e.message).slice(0, 160), ok: false }); }
+      finally { R.errors.push(...v.errors); await v.ctx.close(); }
+    }
+    R.checks.barBrand = { sizes: out, ok: out.length === 5 && out.every(x => x.ok) };
+  }
   // サイクル238（読みなおしても お米の 位置が のこる）：
   //  keep：手本の 指先を 本物の タッチで 20秒 タップ して 歩く → 読みなおす → お米の マスが 2マス 以内・行き先 まで の のこりが 2マス より ふえない（前は スタートへ もどり、のこり 1 → 21マス）
   //  bad：おぼえた 位置が こわれて いる（JSON で ない）・遊べる 範囲の 外・別の 行き先 の とき → 読みなおすと スタート の マス から（止まらない・エラー なし）
@@ -5409,6 +5443,7 @@ function crashFailures(R, fail) {   // 安全網（guardEvaluate）に かかっ
   need(c.roll && c.roll.ok, 'かたむけて転がす：お米が転がらない（または絵が回らない）');
   need(c.slope && c.slope.ok, '坂：平らな所で動く、または 下り坂で ひとりでに転がらない');
   need(c.guideRecord && c.guideRecord.ok, 'ガイドさんの記録：西尾城跡のガイドさんの話に、つぎのレベルまでの ポイントと しるしの数が出ない');
+  need(c.barBrand && c.barBrand.ok, `上の 帯：ゲームの 名前が 見えない・切れる・2行・ボタンに かかる／茶わんの ボタンの「当店HP」が 見えない（${JSON.stringify(c.barBrand).slice(0, 700)}）`);
   need(c.reloadPos && c.reloadPos.ok, `読みなおし：お米が スタートへ もどる・こわれた 保存で スタートに ならない（${JSON.stringify(c.reloadPos).slice(0, 600)}）`);
   need(c.guideLamps && c.guideLamps.ok, `帯の 灯り：60秒で 1つも 灯らない・名前・数字・矢印・手本 に かかる（${JSON.stringify(c.guideLamps).slice(0, 600)}）`);
   need(c.altSamePlace && c.altSamePlace.ok, `ほかの 行き先：行き先と 同じ 名所（その 名所の 人）が 並ぶ・空の「ほかの行き先：」が のこる（${JSON.stringify(c.altSamePlace)}）`);

@@ -2050,9 +2050,11 @@ function crashFailures(R, fail) {   // 安全網（guardEvaluate）に かかっ
   // サイクル240（見た目：上の 緑の 帯）：5つの 大きさで、帯に「にしおさんぽGO」の 名前が 見えて いて、1行で 切れず、右の ボタン（ポイント・レベル・茶わん）に かからない。
   //  茶わんの ボタンの 下に 小さく「当店HP」が ボタンの 中に 見える（ボタン 44×40 以上・帯の 高さ 52px は かわらない）。ポイント・レベル の 札が 出た とき も 同じ に 見る
   //  前は「文字を少なく」（ふだん）で .tx を ぜんぶ 消して いて、帯は お城の 絵 だけ だった
+  //  サイクル240b（見直し P2・P3）：幅 361・375・421 も 見る。ポイント・レベル の 札に 数（Lv 1／0pt・Lv 5／250pt・Lv 12／1500pt・Lv 99／99999pt）を 入れて、
+  //   名前は「ぜんぶ 見える」か「出さない（2行めへ おちて 帯の 外）」の どちらか。「…」で 切れた 名前・とちゅうで 切れた 名前 が 出て いたら 落ちる。はじめ（札 なし）は どの 幅 でも ぜんぶ 見える
   {
     const out = [];
-    for (const [W, H] of [[320, 568], [390, 844], [568, 320], [844, 390], [820, 1180]]) {
+    for (const [W, H] of [[320, 568], [361, 780], [375, 812], [390, 844], [421, 900], [568, 320], [844, 390], [820, 1180]]) {
       const v = await newPage(browser, { howto: true, auto: true, hasTouch: true, isMobile: true, viewport: { width: W, height: H } }), p = v.page;
       try {
         await p.goto(URL);
@@ -2062,24 +2064,33 @@ function crashFailures(R, fail) {   // 安全網（guardEvaluate）に かかっ
           const R = e => { const r = e.getBoundingClientRect(); return [r.left, r.top, r.right, r.bottom].map(v => Math.round(v * 10) / 10); };
           const bar = document.querySelector('header.bar'), brand = bar.querySelector('.brand'), tx = brand.querySelector('.tx'), home = bar.querySelector('.home-btn'), hs = home.querySelector('small');
           const vis = e => !!e && getComputedStyle(e).display !== 'none' && !e.hidden && e.getBoundingClientRect().width > 0;
-          const t = R(tx), b = R(brand), fs = parseFloat(getComputedStyle(tx).fontSize);
+          const t = R(tx), b = R(brand), fs = parseFloat(getComputedStyle(tx).fontSize), cs = getComputedStyle(tx);
+          const inside = t[0] >= b[0] - 0.5 && t[2] <= b[2] + 0.5 && t[1] >= b[1] - 0.5 && t[3] <= b[3] + 0.5 && cs.textOverflow !== 'ellipsis' && tx.scrollWidth <= tx.clientWidth + 1;
+          const gone = t[1] >= b[3] - 0.5 || t[2] <= b[0] + 0.5 || getComputedStyle(brand).overflow === 'hidden' && t[0] >= b[2] - 0.5;   // 帯の 名前の 箱の 外（2行めへ おちた）
+          const name = !vis(tx) || gone ? 'hidden' : inside && !(brand.scrollWidth > brand.clientWidth + 1 && getComputedStyle(brand).textOverflow === 'ellipsis' && t[2] > b[2] - 0.5) ? 'shown' : 'cut';
           const next = [...bar.children].filter(e => e !== brand && vis(e)).map(R).sort((a, c) => a[0] - c[0])[0];
           const h = R(home), s = vis(hs) ? R(hs) : null;
-          return { txShown: vis(tx), text: tx.textContent, w: Math.round(t[2] - t[0]), fs, oneLine: t[3] - t[1] <= fs * 1.7, cut: brand.scrollWidth > brand.clientWidth + 1 || t[2] > b[2] + 0.5,
+          return { name, lv: (document.getElementById('lvNum') || {}).textContent, pt: (document.getElementById('ptsNum') || {}).textContent, txShown: vis(tx), text: tx.textContent, w: Math.round(t[2] - t[0]), fs, oneLine: t[3] - t[1] <= Math.max(fs * 1.7, (parseFloat(cs.lineHeight) || 0) * 1.2), cut: brand.scrollWidth > brand.clientWidth + 1 || t[2] > b[2] + 0.5,
             gap: next ? Math.round((next[0] - t[2]) * 10) / 10 : null, barH: Math.round(bar.getBoundingClientRect().height), home: [Math.round(h[2] - h[0]), Math.round(h[3] - h[1])],
             homeLabel: s ? { text: hs.textContent, inside: s[0] >= h[0] - 0.5 && s[2] <= h[2] + 0.5 && s[1] >= h[1] - 0.5 && s[3] <= h[3] + 0.5 } : null };
         });
         const a = await look();
         if (process.env.SHOT240) await p.screenshot({ path: `${process.env.SHOT240}_${W}x${H}.png` });
         await p.evaluate(() => { document.querySelector('header.bar .pts').hidden = false; document.getElementById('lvBtn').hidden = false; });   // ポイント・レベル の 札が 出た とき
-        await p.waitForTimeout(200);
-        const b = await look();
-        const ok = x => x.txShown && x.text === 'にしおさんぽGO' && x.oneLine && !x.cut && x.gap !== null && x.gap >= 4 && x.fs >= 13 && x.barH === 52 && x.home[0] >= 44 && x.home[1] >= 40 && !!x.homeLabel && x.homeLabel.inside;
-        out.push({ size: `${W}x${H}`, a, b, ok: ok(a) && ok(b) });
+        const vals = [];
+        for (const [lv, pt] of [[1, 0], [5, 250], [12, 1500], [99, 99999]]) {
+          await p.evaluate(([lv, pt]) => { document.getElementById('lvNum').textContent = String(lv); document.getElementById('ptsNum').textContent = pt.toLocaleString(); }, [lv, pt]);
+          await p.waitForTimeout(120);
+          vals.push(await look());
+        }
+        const base = x => x.barH === 52 && x.home[0] >= 44 && x.home[1] >= 40 && !!x.homeLabel && x.homeLabel.inside;
+        const shownOk = x => x.name === 'shown' && x.txShown && x.text === 'にしおさんぽGO' && x.oneLine && !x.cut && x.gap !== null && x.gap >= 4 && x.fs >= 13;
+        const ok = shownOk(a) && base(a) && vals.every(x => base(x) && (x.name === 'hidden' || shownOk(x)));
+        out.push({ size: `${W}x${H}`, a, vals: vals.map(x => ({ lv: x.lv, pt: x.pt, name: x.name, gap: x.gap, fs: x.fs, w: x.w })), ok });
       } catch (e) { out.push({ size: `${W}x${H}`, crashed: String(e.message).slice(0, 160), ok: false }); }
       finally { R.errors.push(...v.errors); await v.ctx.close(); }
     }
-    R.checks.barBrand = { sizes: out, ok: out.length === 5 && out.every(x => x.ok) };
+    R.checks.barBrand = { sizes: out, ok: out.length === 8 && out.every(x => x.ok) };
   }
   // サイクル238（読みなおしても お米の 位置が のこる）：
   //  keep：手本の 指先を 本物の タッチで 20秒 タップ して 歩く → 読みなおす → お米の マスが 2マス 以内・行き先 まで の のこりが 2マス より ふえない（前は スタートへ もどり、のこり 1 → 21マス）

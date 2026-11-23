@@ -1,4 +1,4 @@
-// 最初の1分の確かめ（サイクル259〜291）：node firstmin.js [tractor.html のパス]
+// 最初の1分の確かめ（サイクル259〜292）：node firstmin.js [tractor.html のパス]
 //  1) 知らせの文：吹き出し（speakText）・短い文（shortText）で かっこが合わなくならない（「…見ます）」のような切れ方をしない）
 //  3) 畦の手前で止まった人：「横へ なぞる」見本が出て、見本どおりで向きが変わる。自動で下ろす知らせは 1 回だけ（サイクル260）
 //  2) のんびりの大きな数字：スマホ縦で 1 回なぞって耕したら 0% のままにならない。田んぼアートでは地図の「でき」と同じ数、お題なしでは小数 1 けた
@@ -1522,6 +1522,34 @@ const srv = http.createServer((r, s) => { const u = decodeURIComponent(r.url.spl
         ok('手元の ドメインでは 外へ 送らない（jsDelivr の three だけ）・始まる・切る 1 行は 出さない', st.started && !st.on && st.line && [...hosts].every(h => h === 'cdn.jsdelivr.net'), [st, [...hosts]]); await ctx.close(); }
       { const { ctx, p } = await open14('', q => q.route('**/nishio-go/analytics.js', r => r.fulfill({ status: 404, body: '' })), true); await fake14(p); await p.evaluate(() => window.__adv(2));
         const st = await p.evaluate(() => ({ started: !!game.S.started, ns: typeof window.nsgTrack })); ok('analytics.js が 404 でも 遊べる（nsgTrack が 無くても 何も 起きない）', st.started && st.ns === 'undefined', st); await ctx.close(); }
+    }
+    // ---- 27) サイクル292（見た目）：お題の 地図（#artBox）は ハンドルの 中心・メーター・ほかの ボタン・数字・吹き出し・手本に かからない（5 つの 大きさ）----
+    //       ハンドルの 中心＝P.SteeringWheel の 箱の まん中を 画面に うつした 点の ±28px、メーター＝P.MeterScreen の 箱を うつした 四角。手本は はじめの「前へ」と「横へ」（左右）を 本当に 出して 指と 点を 集める。
+    //       直す前（たての スマホ）：地図は 下から 218px の まん中で ハンドルの 中心と メーターに かぶる（390×844：ハンドルの 中心に 3136px²）
+    {
+      const r27 = {};
+      for (const vp of [[320, 568], [390, 844], [568, 320], [844, 390], [820, 1180]]) {
+        const { ctx, p } = await open14('', null, false, vp); await fake14(p);
+        r27[vp.join('x')] = await p.evaluate(() => {
+          const R = e => { const q = e.getBoundingClientRect(); return [q.left, q.top, q.right, q.bottom]; }, area = (a, b) => Math.max(0, Math.min(a[2], b[2]) - Math.max(a[0], b[0])) * Math.max(0, Math.min(a[3], b[3]) - Math.max(a[1], b[1]));
+          const vis = e => { if (!e) return false; const cs = getComputedStyle(e), q = e.getBoundingClientRect(); return cs.display !== 'none' && cs.visibility !== 'hidden' && !e.closest('.hidden') && q.width > 0; };
+          const box = document.getElementById('hintSwipe'), hints = [], take = () => { if (box.classList.contains('hidden')) return; for (const e of [document.getElementById('hintFinger'), ...box.querySelectorAll('.hDot')]) if (e.style.display !== 'none') { const q = R(e); if (q[2] > q[0]) hints.push(q); } };
+          for (let i = 0; i < 60; i++) { window.__adv(0.05); take(); }
+          HINT.done = true; for (const sd of [-1, 1]) for (let i = 0; i < 60; i++) { HINT.turn = { yaw: game.S.yaw, x: game.S.x, z: game.S.z, side: sd, ck: 0 }; window.__adv(0.05); take(); }
+          HINT.turn = null; FIRSTMIN.finish(); window.__adv(2);
+          const art = document.getElementById('artBox'), a = R(art), bl = {};
+          for (const id of ['bigPct', 'badgeCv', 'padB', 'padC', 'padD']) { const e = document.getElementById(id); if (vis(e)) bl[id] = R(e); }
+          [...document.querySelectorAll('#bar > button')].filter(vis).forEach((e, i) => { bl['bar' + i] = R(e); });
+          SAY.say('右はしの爪を とりかえているよ。終わったら ▲ で エンジンをかけて 続けよう', 30); SAY.coach('止まって ロータリーを上げると 見ます'); window.__adv(0.05); bl.say = R(document.getElementById('say'));
+          const box3 = o => { const b = new THREE.Box3().setFromObject(o), v = new THREE.Vector3(); let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+            for (let i = 0; i < 8; i++) { v.set(i & 1 ? b.max.x : b.min.x, i & 2 ? b.max.y : b.min.y, i & 4 ? b.max.z : b.min.z).project(camera); const sx = (v.x + 1) / 2 * innerWidth, sy = (1 - v.y) / 2 * innerHeight; x0 = Math.min(x0, sx); y0 = Math.min(y0, sy); x1 = Math.max(x1, sx); y1 = Math.max(y1, sy); }
+            return [x0, y0, x1, y1]; };
+          camera.updateMatrixWorld(true); const sw = box3(P.SteeringWheel), c = [(sw[0] + sw[2]) / 2, (sw[1] + sw[3]) / 2]; bl.hub = [c[0] - 28, c[1] - 28, c[0] + 28, c[1] + 28]; bl.meter = box3(P.MeterScreen);
+          const ov = {}; for (const k in bl) { const x = area(a, bl[k]); if (x > 0) ov[k] = Math.round(x); } const hx = Math.max(0, ...hints.map(q => area(a, q))); if (hx > 0) ov.hint = Math.round(hx);
+          return { vis: vis(art), art: a.map(Math.round), out: a[0] < 0 || a[1] < 0 || a[2] > innerWidth || a[3] > innerHeight, ov, hints: hints.length }; });
+        await ctx.close();
+      }
+      ok('お題の 地図は ハンドルの 中心・メーター・数字・ボタン・吹き出し・手本に かからない・画面の 中（320×568・390×844・568×320・844×390・820×1180。直す前：たてで ハンドルの 中心と メーターに かぶる）', Object.values(r27).every(r => r.vis && !r.out && r.hints > 0 && !Object.keys(r.ov).length), r27);
     }
   }
   ok('エラーなし', errs.length === 0, errs.slice(0, 3));

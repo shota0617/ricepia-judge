@@ -231,9 +231,20 @@
     body.calm #say::before { top: -6px; right: 20px; left: auto; border: 6px solid transparent; border-top: 0; border-bottom-color: rgba(251,248,240,.97); }
   }
   @media (max-width: 640px) and (orientation: portrait) {
-    body.touch #artBox { bottom: calc(max(14px, env(safe-area-inset-bottom)) + 204px); width: 120px; }
+    /* サイクル292（見た目）: お題の 地図は ハンドルの まん中・メーターに のせない。たての スマホは 大きな 耕し率の 数字の すぐ 下（左上。屋根と ミラーの 所）。
+       それまでは 下から 218px の まん中で、ハンドルの 中心と メーターに かぶって いた（390×844：地図 135〜255×531〜626・ハンドルの 中心 192,593） */
+    body.touch #artBox { top: calc(max(8px, env(safe-area-inset-top)) + 114px); bottom: auto; left: 8px; width: 120px; transform: none; }
     body.touch #coach { top: auto; bottom: calc(max(14px, env(safe-area-inset-bottom)) + 312px); max-width: calc(100vw - 24px); }
     #toast { bottom: 430px; }
+  }
+  /* サイクル292: せまい たて画面（幅 363px まで）は 数字の 下に 吹き出しが 横長に 出る ので、地図は 左の 下（👀・📣 と 浅く／深く の 上。ハンドルの 中心・メーターより 左）。
+     320×568：地図 8〜108×286〜364・メーター 119〜・ハンドルの 中心 134〜 */
+  @media (max-width: 363px) and (orientation: portrait) {
+    body.touch #artBox { top: auto; bottom: calc(max(14px, env(safe-area-inset-bottom)) + 190px); width: 100px; }
+  }
+  /* サイクル292: よこの スマホは 左の いちばん 下（👀・📣 の 下）。それまでは 下の まん中で ボンネット・前への 手本・メーターに かぶって いた（844×390：地図 347〜497×258〜376） */
+  @media (orientation: landscape) and (max-height: 500px) {
+    body.touch #artBox { top: auto; bottom: max(6px, env(safe-area-inset-bottom)); left: 8px; width: 110px; transform: none; }
   }
 </style>
 </head>

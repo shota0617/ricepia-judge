@@ -2993,5 +2993,35 @@ class TestKome365MarkKeepsPaddy(unittest.TestCase):
                 self.assertTrue(j["inView"], j)
 
 
+# サイクル208: わけ の 吹き出し の 文は、語の とちゅう・助詞 や 句読点 から の 行・1〜3字 だけ の 行 で 折れない(balance・auto-phrase・strict)
+WHY_WRAP_TEXTS = ["標準の量で苗立ちが足り、穂数がそろいます", "浅い耕起は土に空気が入らず、いもち病が出やすくなります", "目安の量で、稲が育つ肥料がそろいました", "強風の日を避けて、浮き苗をふせぎました", "植えどきをのがすと、苗が老化して穂が出るのも遅れます", "塩水選をしなかったので、苗の立ちが落ち、いもち病にも弱くなります", "苗立ちが足りず、穂数が不足しがちです", "肥料が足りず、茎が少なく実りが減りやすくなります", "強い風の日に植えたので、苗が浮いて欠株が出ました"]
+WHY_WRAP_JS = "js:(async () => { const out = { sup: { balance: CSS.supports('text-wrap', 'balance'), phrase: CSS.supports('word-break', 'auto-phrase') }, rows: [] }; for (const t of %s) { window.__swipe.whyShow('❌ ' + t + '。', 'ng'); await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))); const e = document.getElementById('swWhy'), tn = e.firstChild, s = e.textContent, rr = document.createRange(), lines = []; for (let j = 0; j < s.length; j++) { rr.setStart(tn, j); rr.setEnd(tn, j + 1); const r = [...rr.getClientRects()].find(q => q.width > 0); if (!r) continue; const top = Math.round(r.top); let L = lines.find(l => Math.abs(l.t - top) < 6); if (!L) lines.push(L = { t: top, s: '' }); L.s += s[j]; } const b = e.getBoundingClientRect(); out.rows.push({ lines: lines.map(l => l.s), inView: b.left >= 0 && b.right <= innerWidth && b.top >= 0 && b.bottom <= innerHeight }); } return out; })()" % json.dumps(WHY_WRAP_TEXTS, ensure_ascii=False)
+
+
+class TestKome365WhyWrap(unittest.TestCase):
+    """サイクル208"""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.r = sound_run([{"name": "v", "acts": [WHY_WRAP_JS]}, {"name": "s", "w": 320, "h": 568, "acts": [WHY_WRAP_JS]}])
+
+    def test_reason_lines_do_not_break_badly(self):
+        head = set("をがはにでのもへや、。っゃゅょーぁぃぅぇぉ）」")
+        for name in ("v", "s"):
+            x = self.r[name]
+            self.assertEqual(x["errs"], [], name)
+            j = x["js"][-1]
+            self.assertTrue(j["sup"]["balance"] and j["sup"]["phrase"], "この Chromium は balance／auto-phrase を 知らない %r" % (j["sup"],))
+            for t, row in zip(WHY_WRAP_TEXTS, j["rows"]):
+                L = row["lines"]
+                self.assertTrue(row["inView"], (name, t, L))
+                if len(L) < 2:
+                    continue
+                # 91164585 では「…足り、穂数がそろい / ます」の ように 1〜3字 だけ の 行・助詞 から の 行 が 出て ここで 落ちる
+                self.assertGreater(len(L[-1]), 3, "%s: さいご の 行 が 短い %r" % (name, L))
+                for line in L[1:]:
+                    self.assertNotIn(line[:1], head, "%s: 行 が 助詞・句読点 から 始まる %r" % (name, L))
+
+
 if __name__ == "__main__":
     unittest.main()

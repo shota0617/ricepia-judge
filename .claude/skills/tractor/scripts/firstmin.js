@@ -1,4 +1,4 @@
-// 最初の1分の確かめ（サイクル259〜293）：node firstmin.js [tractor.html のパス]
+// 最初の1分の確かめ（サイクル259〜294）：node firstmin.js [tractor.html のパス]
 //  1) 知らせの文：吹き出し（speakText）・短い文（shortText）で かっこが合わなくならない（「…見ます）」のような切れ方をしない）
 //  3) 畦の手前で止まった人：「横へ なぞる」見本が出て、見本どおりで向きが変わる。自動で下ろす知らせは 1 回だけ（サイクル260）
 //  2) のんびりの大きな数字：スマホ縦で 1 回なぞって耕したら 0% のままにならない。田んぼアートでは地図の「でき」と同じ数、お題なしでは小数 1 けた
@@ -1574,6 +1574,37 @@ const srv = http.createServer((r, s) => { const u = decodeURIComponent(r.url.spl
       ok('お題の 地図の 字は 画面の 上で 9px 以上・点数は 12px 以上。お題と 点数は いつも 出し、150px 以上 では 上手さ・でき・はみ出し も 出す。字どうしは かさならない（80・100・110・120・150・220px。直す前：80px で お題 4.6px・点数 8.5px、220px で「100点」が「はみ出し」に かかる）',
         [80, 100, 110, 120, 150, 220].every(w => widths.has(w)) && Object.values(r28).every(r => r.txt.length && r.txt.every(([t, s]) => s >= (/点$/.test(t) ? 12 : 9)) && !r.hit.length && r.txt.some(([t]) => /^お題 /.test(t)) && r.txt.some(([t]) => /点$/.test(t))
           && (r.w < 150 || ['上手さ', 'でき', 'はみ出し'].every(n => r.txt.some(([t]) => t.startsWith(n))))), r28);
+    }
+    // ---- 29) サイクル294（見た目）：言う ことが 無く なった 吹き出し（#say）は、字の 無い 箱 だけを 見せない。消える .3 秒の 間も 字ごと うすく なる ----
+    //       直す前：字を 先に 消してから .3 秒 かけて うすく して いた ので、その 間 字の 無い 箱（320×568 では 横いっぱいの 帯）が 見えた。
+    //       見る こと：消えはじめ から 0.5 秒（本物の 時計）、30ms ごとに こさ（opacity）と 中の 字を 読み、「こさ 0.05 より 上 なのに 字が 無い」こまが 0。字が ある 間は 見える（こさ 0.9 以上）。
+    //       あわせて 地図（#artBox）が かくれて いる 10 秒の 間、地図の はば（clientWidth）を 読む 回数が 2 回 以下（直す前：描く たびに 読み直した）
+    {
+      const r29 = {};
+      for (const vp of [[320, 568], [568, 320], [390, 844]]) {
+        const { ctx, p } = await open14('', null, false, vp); await fake14(p);
+        r29[vp.join('x')] = await p.evaluate(async () => {
+          const el = document.getElementById('say'), wait = ms => new Promise(r => setTimeout(r, ms)), op = () => { let o = 1; for (let e = el; e; e = e.parentElement) o *= +getComputedStyle(e).opacity; return o; };
+          const fade = async () => { const bad = []; for (let i = 0; i < 17; i++) { const o = op(), t = el.innerText.trim(); if (o > 0.05 && !t) bad.push(+o.toFixed(2)); await wait(30); } return bad; };
+          const out = {};
+          SAY.coach(''); window.__adv(0.1); SAY.say('いい ちょうし！', 1); window.__adv(0.1); await wait(450); out.shown = [+op().toFixed(2), el.innerText.trim()];
+          window.__adv(1.2); out.sayEnd = await fade();                                  // 知らせが 時間で 消える
+          SAY.coach('田んぼを ゆびで なぞる'); window.__adv(0.1); await wait(450); out.coach = [+op().toFixed(2), el.innerText.trim()];
+          SAY.coach(''); window.__adv(0.05); out.coachEnd = await fade();                 // 案内が 無く なる
+          await wait(200); out.after = +op().toFixed(2);
+          return out; });
+        await ctx.close();
+      }
+      ok('吹き出しは 字が ある 間は 見え（こさ 0.9 以上）、言う ことが 無く なると 字ごと うすく なる（字の 無い 箱の こまが 0。320×568・568×320・390×844。直す前：消える .3 秒の 間 字の 無い 箱が 見えた）',
+        Object.values(r29).every(r => r.shown[0] >= 0.9 && r.shown[1] && r.coach[0] >= 0.9 && r.coach[1] && !r.sayEnd.length && !r.coachEnd.length && r.after <= 0.05), r29);
+      const { ctx, p } = await open14('', null, false, [390, 844]); await fake14(p);
+      const r29b = await p.evaluate(() => { const c = document.getElementById('artMap'), d = Object.getOwnPropertyDescriptor(Element.prototype, 'clientWidth'); let n = 0, draws = 0;
+        Object.defineProperty(c, 'clientWidth', { configurable: true, get() { n++; return d.get.call(this); } });
+        const dm = ART.drawMini; ART.drawMini = function () { draws++; return dm.apply(this, arguments); };
+        const hid0 = document.getElementById('artBox').classList.contains('hidden'); window.__adv(10); const hid1 = document.getElementById('artBox').classList.contains('hidden');
+        ART.drawMini = dm; delete c.clientWidth; return { hid0, hid1, draws, reads: n, on: ART.on }; });
+      ok('地図が かくれて いる 10 秒の 間、地図の はばを 読むのは 2 回 以下（直す前：描く たびに 読み直した）', r29b.hid0 && r29b.hid1 && r29b.draws >= 10 && r29b.reads <= 2, r29b);
+      await ctx.close();
     }
   }
   ok('エラーなし', errs.length === 0, errs.slice(0, 3));

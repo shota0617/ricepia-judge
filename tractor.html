@@ -3239,10 +3239,15 @@ const ART = (() => {
     live(g, k);
   }
   // リアルタイムの点数：地図の下に 上手さの点数と、でき（絵の中を耕せた割合）・はみ出した広さ。上がると緑、はみ出すと赤
-  let ref = null, refT = 0, lastOver = 0, flashT = 0, miniW = 0;
+  let ref = null, refT = 0, lastOver = 0, flashT = 0, miniW = 0, miniK0 = 0.6, miniNext = 0;
   // サイクル293: 地図の 画面での はば（CSS px）と canvas（250px）の 比。はばは 大きさが 変わった とき だけ 読み直す（毎回 読まない）
-  addEventListener('resize', () => { miniW = 0; });
-  function miniK() { if (!miniW) { const c = $('artMap'); miniW = c ? c.clientWidth : 0; } return miniW > 0 ? miniW / 250 : 0.6; }
+  addEventListener('resize', () => { miniW = 0; miniNext = 0; });
+  // サイクル294: 地図が かくれて いる 間は はばを 読まない（前は 幅が 0 の まま 描く たびに＝0.25 秒ごとに 読み直して いた）。読めた はばが 0 なら 5 秒 待って から 読み直す。読めない 間は 前の 値（はじめは 0.6）
+  function miniK() {
+    if (!miniW) { const c = $('artMap'), box = $('artBox'), now = performance.now();
+      if (c && box && !box.classList.contains('hidden') && now >= miniNext) { const w = c.clientWidth; if (w > 0) { miniW = w; miniK0 = w / 250; } else miniNext = now + 5000; } }
+    return miniK0;
+  }
   function live(g, k = 0.6) {
     const r = score(), now = performance.now() / 1000, H = 150;
     g.fillStyle = '#14120e'; g.fillRect(0, H, 250, 46);
@@ -10343,11 +10348,27 @@ const SAY = (() => {
     SHIRO ? 'カエルさん いるかな' : season === 'aki' ? 'トンボが とんでるね' : 'ひばりが ないてるね', 'ゆっくりで いいよ', 'とりさんが きてるね'];
   const STEPS = [[10, 'いい ちょうし！'], [50, 'はんぶん できたね'], [80, 'もう すこし！']];
   const busy = () => t > 0 && kind === 'toast';    // 知らせを 話している とちゅう
+  // サイクル294（見た目）: 言う ことが 無く なった ときは、字を 消さずに 箱ごと うすく して（opacity .3 秒。長さは 今までどおり）、消えきって から 字を 外す。
+  // 前は 字を 先に 消して いた ので、消える .3 秒の 間 字の 無い 箱（320×568 では 横いっぱいの 灰色の 帯）が 見えて いた
+  // 字を 外すのは、こさが 本当に 0 に なって から（おそい 端末では うすく なりはじめが おくれる ので、時間 だけで 決めない。まだ 見えて いれば 0.4 秒 あとに もう一度 見る）
+  let clearId = 0;
+  function clearOff() {
+    clearTimeout(clearId); if (!el.classList.contains('off')) return;
+    if (+getComputedStyle(el).opacity > 0.02) { clearId = setTimeout(clearOff, 400); return; }
+    mainEl.textContent = ''; mainEl.style.display = 'none'; coachEl.textContent = ''; coachEl.style.display = 'none';
+  }
+  el.addEventListener('transitionend', e => { if (e.target === el && e.propertyName === 'opacity') clearOff(); });
   function render() {
     const m = !DETAIL && t > 0, c = !DETAIL && !!coachLine;
+    clearTimeout(clearId);
+    if (!m && !c) {
+      el.classList.add('off');
+      clearId = setTimeout(clearOff, 400);
+      return;
+    }
     mainEl.textContent = m ? mainText : ''; mainEl.style.display = m ? '' : 'none';
     coachEl.textContent = c ? coachLine : ''; coachEl.style.display = c ? '' : 'none'; coachEl.style.marginTop = m ? '4px' : '0';
-    el.classList.toggle('off', !m && !c);
+    el.classList.remove('off');
   }
   const voiceTalk = x => {
     if (!soundOn || DETAIL || !('speechSynthesis' in window)) return;

@@ -1,4 +1,4 @@
-// 最初の1分の確かめ（サイクル259〜292）：node firstmin.js [tractor.html のパス]
+// 最初の1分の確かめ（サイクル259〜293）：node firstmin.js [tractor.html のパス]
 //  1) 知らせの文：吹き出し（speakText）・短い文（shortText）で かっこが合わなくならない（「…見ます）」のような切れ方をしない）
 //  3) 畦の手前で止まった人：「横へ なぞる」見本が出て、見本どおりで向きが変わる。自動で下ろす知らせは 1 回だけ（サイクル260）
 //  2) のんびりの大きな数字：スマホ縦で 1 回なぞって耕したら 0% のままにならない。田んぼアートでは地図の「でき」と同じ数、お題なしでは小数 1 けた
@@ -1551,6 +1551,29 @@ const srv = http.createServer((r, s) => { const u = decodeURIComponent(r.url.spl
         await ctx.close();
       }
       ok('お題の 地図は ハンドルの 中心・メーター・数字・ボタン・吹き出し・手本に かからない・画面の 中（320×568・390×844・568×320・844×390・820×1180・375×667・364×700・414×896・900×501・1024×768・1180×820。直す前：たてで ハンドルの 中心と メーターに かぶる。サイクル292 の 形では 高い よこで メーター・低い たてで 横への 手本に かかる）', Object.values(r27).every(r => r.vis && !r.out && r.hints > 0 && !Object.keys(r.ov).length), r27);
+    }
+    // ---- 28) サイクル293（見た目）：お題の 地図の 字は 画面の 上で 9px 以上（点数は 12px 以上）。地図の 幅 80・100・110・120・150px（スマホ）と 220px（マウス）----
+    //       #artMap に 描いた fillText を ぜんぶ 拾い、字の px × 地図の 画面の 幅（clientWidth）÷ 250 を 見る。お題の 名前と 点数は どの 幅でも 出す。150px 以上 では「上手さ」「でき」「はみ出し」も 出す
+    //       字どうしの かさなり（measureText の 字の 外わく）も 見る。直す前（80px）：お題 4.6px・点数 8.5px・上手さ 3.3px。220px（マウス）で「100点」と「はみ出し」が かさなる
+    {
+      const r28 = {}, probe = () => { const R = e => { const q = e.getBoundingClientRect(); return [q.left, q.top, q.right, q.bottom]; };
+        HINT.turn = null; FIRSTMIN.finish(); window.__adv(1); if (!game.S.rotDown) game.toggleRotary(); game.key.fwd = 1; window.__adv(10); game.key.fwd = 0; window.__adv(1);
+        const c = document.getElementById('artMap'), g = c.getContext('2d'), of = g.fillText, got = {}, bx = {};
+        g.fillText = function (t, x, y) { const key = String(t).replace(/[\d.]+/g, '#'), m = this.measureText(t); got[key] = parseFloat((this.font.match(/([\d.]+)px/) || [])[1]);
+          bx[key] = [x - m.actualBoundingBoxLeft, y - m.actualBoundingBoxAscent, x + m.actualBoundingBoxRight, y + m.actualBoundingBoxDescent]; return of.apply(this, arguments); };
+        window.__adv(1.2); g.fillText = of; const k = c.clientWidth / 250, txt = Object.entries(got).map(([t, px]) => [t, +(px * k).toFixed(1)]);
+        const ks = Object.keys(bx), hit = []; for (let i = 0; i < ks.length; i++) for (let j = i + 1; j < ks.length; j++) { const a = bx[ks[i]], b = bx[ks[j]]; if (Math.min(a[2], b[2]) - Math.max(a[0], b[0]) > 0.5 && Math.min(a[3], b[3]) - Math.max(a[1], b[1]) > 0.5) hit.push(ks[i] + '×' + ks[j]); }
+        return { w: Math.round(R(document.getElementById('artBox'))[2] - R(document.getElementById('artBox'))[0]), txt, hit }; };
+      for (const vp of [[320, 568], [390, 844], [568, 320], [844, 390], [820, 1180], [375, 667], [1024, 768]]) {
+        const { ctx, p } = await open14('', null, false, vp); await fake14(p); r28[vp.join('x')] = await p.evaluate(probe); await ctx.close(); }
+      { const ctx = await b.newContext({ viewport: { width: 1280, height: 800 } }), p = await ctx.newPage(); p.setDefaultTimeout(180000);   // マウスの 端末（地図 220px）
+        p.on('pageerror', e => errs.push('pageerror ' + e.message)); p.on('console', m => { if (m.type() === 'error') errs.push('console ' + m.text()); });
+        await p.route('https://cdn.jsdelivr.net/**', r => r.fulfill({ path: TN + r.request().url().split('/three@0.128.0')[1], contentType: 'text/javascript' }));
+        await p.goto(`http://localhost:${PORT}/tractor.html`); await fake14(p); r28['1280x800 マウス'] = await p.evaluate(probe); await ctx.close(); }
+      const widths = new Set(Object.values(r28).map(r => r.w));
+      ok('お題の 地図の 字は 画面の 上で 9px 以上・点数は 12px 以上。お題と 点数は いつも 出し、150px 以上 では 上手さ・でき・はみ出し も 出す。字どうしは かさならない（80・100・110・120・150・220px。直す前：80px で お題 4.6px・点数 8.5px、220px で「100点」が「はみ出し」に かかる）',
+        [80, 100, 110, 120, 150, 220].every(w => widths.has(w)) && Object.values(r28).every(r => r.txt.length && r.txt.every(([t, s]) => s >= (/点$/.test(t) ? 12 : 9)) && !r.hit.length && r.txt.some(([t]) => /^お題 /.test(t)) && r.txt.some(([t]) => /点$/.test(t))
+          && (r.w < 150 || ['上手さ', 'でき', 'はみ出し'].every(n => r.txt.some(([t]) => t.startsWith(n))))), r28);
     }
   }
   ok('エラーなし', errs.length === 0, errs.slice(0, 3));

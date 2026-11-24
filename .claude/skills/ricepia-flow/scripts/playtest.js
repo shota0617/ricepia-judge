@@ -26,7 +26,9 @@ function run(cwd, port, label) {
   // サイクル200：時間切れは 20分（前は 15分）。通しは 14〜15分 かかる ように なり、ほかの 仕事で おそい 回は 15分で 止められて いた。止められると ブラウザが 先に 閉じ、
   // 台本は「Target page, context or browser has been closed」で とちゅうで 止まった ように 見える（今日の 通し 36回の うち 10回。毎回 ちがう 所）。時間切れは そうと 分かる ように 知らせる
   // サイクル214：時間切れは 26分（前は 20分）。確かめが 253項目に ふえて 通しが 19.7〜19.9分 かかる ように なり、20分 ちょうどで 止められた（245項目で 台本が 止まった ように 見えた）
-  const LIMIT_MIN = 26, t0 = Date.now();
+  // サイクル241b：時間切れは 32分（前は 26分）。確かめが 267項目に ふえ（上の 帯 barBrand・下の 帯 bandLite など）、通しが 25.2〜25.7分 だった 所へ 足されて 26分 ちょうどで
+  // 止められた（259項目で 台本が 止まり、scriptStopped・crash_floatToast）。barBrand・bandLite は 1つの ページで 大きさ だけ かえる 形に して 速く した うえで、余裕を 足す
+  const LIMIT_MIN = 32, t0 = Date.now();
   const r = spawnSync(process.execPath, [path.join(cwd, 'tools', 'playtest.js'), out], { cwd, env: playEnv({ PLAYTEST_PORT: String(port) }), encoding: 'utf8', maxBuffer: 1 << 28, timeout: LIMIT_MIN * 60 * 1000 });
   const timedOut = !!(r.error && r.error.code === 'ETIMEDOUT') || (r.signal === 'SIGTERM' && Date.now() - t0 >= LIMIT_MIN * 60 * 1000 - 2000);
   console.error(`[${label}] ${((Date.now() - t0) / 60000).toFixed(1)}分${timedOut ? `（時間切れ：${LIMIT_MIN}分で 止めました。「browser has been closed」で 止まった 項目は ゲームの せいでは ありません。ほかの ブラウザの テストと 重ねずに もう1回）` : ''}`);

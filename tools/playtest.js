@@ -946,10 +946,15 @@ async function cycle208Checks(browser, R) {
     }
     return until();
   };
-  {   // ② はじめての ゴールへ 歩いて いる 間に ゴールを もう 1回 タップ（0.8・1.2秒 あけて）：せかいちずに 切りかわらない・道のりが のびない
+  // ② はじめての ゴールへ 歩いて いる 間に ゴールを もう 1回 タップ（0.8・1.2秒 あけて）：せかいちずに 切りかわらない・道のりが のびない
+  // サイクル241b：下の 案内の 帯が 24px 低く なり（74→50px）、390×844 では 地図の まん中（お米）が 12px 下がって、ゴールが 上の 帯の すぐ 下（縁の 矢印の 当たり）まで 来なく なった
+  // （はかった：ゴールの いちばん 上 105px → 117px。矢印が 出る のは 109px より 上）。ゲームは 正しい（お米は 見える 地図の まん中）ので、その 場面が 作れる まで 画面の 高さを かえて ためす（844 → 820 → 796）。
+  // ためせなければ これまでどおり 落とす（inArrow >= 1・!world は そのまま）
+  for (const view of [null, { width: 390, height: 820 }, { width: 390, height: 796 }]) {
+    if (out.goalTapNoWorld && (out.goalTapNoWorld.inArrow >= 1 || out.goalTapNoWorld.world)) break;
     let v = null;
     try {
-      v = await open();
+      v = await open(view);
       const p = v.page, log = [];
       await p.waitForFunction(() => nishioPixel.tapDemo.on, null, { timeout: 9000 }).catch(() => {});
       // ゴールが 上の 帯の すぐ 下に 来て 縁の 矢印の 当たりに 入った しゅんかんに ゴールを タップする（さがし役の 再現：0.8〜1.5秒 あけて 3回 タップすると 3回とも そう なった）。
@@ -968,7 +973,7 @@ async function cycle208Checks(browser, R) {
           if (await inArrowNow(q)) { await v.tap(q.x, q.y); inArrow++; await p.waitForTimeout(900); world = await isWorld(); log.push({ g: [q.x, q.y], len: q.len, inArrow: true, world }); if (world) break; }
         }
       }
-      out.goalTapNoWorld = { log, inArrow, ok: inArrow >= 1 && !world };
+      out.goalTapNoWorld = { view: view ? `${view.width}x${view.height}` : '390x844', log, inArrow, world, ok: inArrow >= 1 && !world };
     } catch (e) { fail(['goalTapNoWorld'], e); }
     finally { if (v) { R.errors.push(...v.errors); await v.ctx.close(); } }
   }
@@ -2052,12 +2057,16 @@ function crashFailures(R, fail) {   // 安全網（guardEvaluate）に かかっ
   //  前は 白い 太い 枠・黒・水色の 枠の 三重で 高さ 74px、距離は 12px の 水色
   {
     const out = [];
+    const v = await newPage(browser, { howto: true, auto: true, hasTouch: true, isMobile: true, viewport: { width: 320, height: 568 } }), p = v.page;   // サイクル241b：1つの ページを 読みこみ、大きさ だけ かえて 見る（通しの 時間を へらす。見る 中身は 同じ）
+    await p.goto(URL).catch(() => {});
+    await p.waitForFunction(() => window.nishioPixel && nishioPixel.roll && nishioPixel.roll.x !== null && !document.getElementById('guide').hidden, null, { timeout: 30000 }).catch(() => {});
+    await p.waitForTimeout(1500);
+    await p.evaluate(() => { window.__g0 = nishioGo.state.guide; }).catch(() => {});
     for (const [W, H] of [[320, 568], [390, 844], [568, 320], [844, 390], [820, 1180]]) {
-      const v = await newPage(browser, { howto: true, auto: true, hasTouch: true, isMobile: true, viewport: { width: W, height: H } }), p = v.page;
       try {
-        await p.goto(URL);
-        await p.waitForFunction(() => window.nishioPixel && nishioPixel.roll && nishioPixel.roll.x !== null && !document.getElementById('guide').hidden, null, { timeout: 30000 }).catch(() => {});
-        await p.waitForTimeout(1500);
+        await p.setViewportSize({ width: W, height: H });
+        await p.evaluate(() => { nishioGo.state.guide = window.__g0; nishioGo.renderGuide(); });   // はじめの 行き先に もどす
+        await p.waitForTimeout(500);
         const look = () => p.evaluate(() => {
           const R = e => { if (!e) return null; const r = e.getBoundingClientRect(); return r.width && r.height ? [r.left, r.top, r.right, r.bottom] : null; };
           const hit = (a, b) => !!a && !!b && a[0] < b[2] - 0.5 && b[0] < a[2] - 0.5 && a[1] < b[3] - 0.5 && b[1] < a[3] - 0.5;
@@ -2081,8 +2090,8 @@ function crashFailures(R, fail) {   // 安全網（guardEvaluate）に かかっ
         const ok = x => x.h <= 56 && x.distFs >= 14 && x.contrast >= 4.5 && x.over === 0 && x.out === 0 && x.hits.length === 0 && !x.nameOverDist;
         out.push({ size: `${W}x${H}`, a, b, ok: ok(a) && ok(b) });
       } catch (e) { out.push({ size: `${W}x${H}`, crashed: String(e.message).slice(0, 160), ok: false }); }
-      finally { R.errors.push(...v.errors); await v.ctx.close(); }
     }
+    R.errors.push(...v.errors); await v.ctx.close();
     R.checks.bandLite = { sizes: out, ok: out.length === 5 && out.every(x => x.ok) };
   }
   // サイクル240（見た目：上の 緑の 帯）：5つの 大きさで、帯に「にしおさんぽGO」の 名前が 見えて いて、1行で 切れず、右の ボタン（ポイント・レベル・茶わん）に かからない。
@@ -2092,12 +2101,16 @@ function crashFailures(R, fail) {   // 安全網（guardEvaluate）に かかっ
   //   名前は「ぜんぶ 見える」か「出さない（2行めへ おちて 帯の 外）」の どちらか。「…」で 切れた 名前・とちゅうで 切れた 名前 が 出て いたら 落ちる。はじめ（札 なし）は どの 幅 でも ぜんぶ 見える
   {
     const out = [];
+    const v = await newPage(browser, { howto: true, auto: true, hasTouch: true, isMobile: true, viewport: { width: 320, height: 568 } }), p = v.page;   // サイクル241b：1つの ページを 読みこみ、大きさ だけ かえて 見る（通しの 時間を へらす。見る 中身は 同じ）
+    await p.goto(URL).catch(() => {});
+    await p.waitForFunction(() => window.nishioPixel && nishioPixel.roll && nishioPixel.roll.x !== null, null, { timeout: 30000 }).catch(() => {});
+    await p.waitForTimeout(1200);
+    const st0 = await p.evaluate(() => ({ pts: document.querySelector('header.bar .pts').hidden, lv: document.getElementById('lvBtn').hidden, lvNum: document.getElementById('lvNum').textContent, ptsNum: document.getElementById('ptsNum').textContent })).catch(() => null);
     for (const [W, H] of [[320, 568], [361, 780], [375, 812], [390, 844], [421, 900], [568, 320], [844, 390], [820, 1180]]) {
-      const v = await newPage(browser, { howto: true, auto: true, hasTouch: true, isMobile: true, viewport: { width: W, height: H } }), p = v.page;
       try {
-        await p.goto(URL);
-        await p.waitForFunction(() => window.nishioPixel && nishioPixel.roll && nishioPixel.roll.x !== null, null, { timeout: 30000 }).catch(() => {});
-        await p.waitForTimeout(1200);
+        await p.setViewportSize({ width: W, height: H });
+        if (st0) await p.evaluate(s => { document.querySelector('header.bar .pts').hidden = s.pts; document.getElementById('lvBtn').hidden = s.lv; document.getElementById('lvNum').textContent = s.lvNum; document.getElementById('ptsNum').textContent = s.ptsNum; }, st0);   // はじめの 帯に もどす
+        await p.waitForTimeout(300);
         const look = () => p.evaluate(() => {
           const R = e => { const r = e.getBoundingClientRect(); return [r.left, r.top, r.right, r.bottom].map(v => Math.round(v * 10) / 10); };
           const bar = document.querySelector('header.bar'), brand = bar.querySelector('.brand'), tx = brand.querySelector('.tx'), home = bar.querySelector('.home-btn'), hs = home.querySelector('small');
@@ -2126,8 +2139,8 @@ function crashFailures(R, fail) {   // 安全網（guardEvaluate）に かかっ
         const ok = shownOk(a) && base(a) && vals.every(x => base(x) && (x.name === 'hidden' || shownOk(x)));
         out.push({ size: `${W}x${H}`, a, vals: vals.map(x => ({ lv: x.lv, pt: x.pt, name: x.name, gap: x.gap, fs: x.fs, w: x.w })), ok });
       } catch (e) { out.push({ size: `${W}x${H}`, crashed: String(e.message).slice(0, 160), ok: false }); }
-      finally { R.errors.push(...v.errors); await v.ctx.close(); }
     }
+    R.errors.push(...v.errors); await v.ctx.close();
     R.checks.barBrand = { sizes: out, ok: out.length === 8 && out.every(x => x.ok) };
   }
   // サイクル238（読みなおしても お米の 位置が のこる）：

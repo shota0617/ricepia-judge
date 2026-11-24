@@ -673,6 +673,7 @@ a{color:var(--acc)}
 @media (prefers-reduced-motion:reduce){#swMark.on,#swMark.on[data-k]{animation:none}}
 /* サイクル185b: 大きな ○✗ の 置き場所と 大きさは markFit(JS)が 出す たびに 決める(この CSS は JS が 動かない ときの もと) */
 #swWhy{position:absolute;left:50%;top:calc(40% + min(29vw,120px) + 10px);transform:translateX(-50%);width:max-content;max-width:88%;z-index:41;pointer-events:none;opacity:0;background:rgba(255,253,247,.94);color:#b4472f;font-size:15px;font-weight:700;line-height:1.4;padding:5px 12px;border-radius:999px;text-align:center;box-shadow:0 2px 8px rgba(60,40,20,.20)}   /* 店主指示 2026-11-08: バツの一言理由。マークの下に浮かせて約2秒で消す。入力はふさがない */
+#swWhy{text-wrap:balance;word-break:auto-phrase;line-break:strict}   /* サイクル208: 2行の ときは 行の 長さを そろえ(balance)、語の とちゅう で 折らない(auto-phrase・日本語の 文節)。助詞・句読点・小さい かな で 行を 始めない(strict)。知らない ブラウザ では 今までどおり 折る。字の 大きさ・置き場・時間は 変えない */
 #swWhy.on{animation:swWhyIn 2s ease-out both}
 #swWhy[data-k="ok"]{color:#2e7d32}   /* サイクル177: ○ の わけは 緑(✗ は 今の 赤茶の まま)。場所・2秒・入力を ふさがない のは 同じ */
 @keyframes swWhyIn{0%{opacity:0}10%{opacity:1}88%{opacity:1;animation-timing-function:cubic-bezier(.75,0,.85,.6)}100%{opacity:0}}   /* サイクル198 v2: ぜんたいの 長さ(whyMs)は そのまま。出を さいごの 12%(2秒で 0.24秒)に して、はじめ ゆっくり・おわりで 速く 消える 形に(前は 76% から ease-out で すぐ うすく なり、こく(0.9 以上)見える のは 2秒の 文で 1.38秒 だけ だった)。入りは そのまま */

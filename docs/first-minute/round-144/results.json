@@ -1,0 +1,1135 @@
+{
+  "status": "DRAFT_COMPLETE_PRODUCTION_HOLD",
+  "updatedUTC": "2026-11-15T18:36:47.986281+00:00",
+  "game": "検査ゲーム",
+  "issue": "same-grade-button concurrent contacts overwrite drag origin and advance before release",
+  "source": {
+    "baselineHEAD": "71bd05c991ba0e2715f687393081b997e3259648",
+    "oldHTMLSHA256": "4f5f049307d327cab68ac9aabf81749b5dae2c41b54bdce7e6a13b60fcb04741",
+    "baselineCodeLines": {
+      "drag": 2381,
+      "downOrigin": 2387,
+      "moveDelta": 2391,
+      "commitThreshold": 2394,
+      "tapCounter": 2401,
+      "cancel": 2404,
+      "keyboardClick": 2405
+    },
+    "finalHTMLSHA256": "ad937d37b1cf653854de0592439ef5d2499e5f953823011f1f83fc6760d1da44",
+    "finalCodeLines": [
+      2387,
+      2390,
+      2397,
+      2404
+    ],
+    "finalTestSHA256": "ece15e09f2d57df5f228b0943db7bc21d94ea45a3a1eeb0c1a0bfb1b3fb0499e",
+    "finalTestLines": 164,
+    "finalExistingTestSHA256": "c5617303c695c0159563cea0fee5c4d4c521ef19d3d9b0b91171c8a201ff43df",
+    "existingTestExactAssertionChangedLines": 1,
+    "runtimeEvidenceExistingTestSHA256": "af6916ae41464ca8f6bd95cf027ac0835cb86af7281756925800668597a4790d",
+    "runtimeEvidenceFrozenBeforeAssertionSync": true
+  },
+  "primary": {
+    "observeSeconds": 10,
+    "playSeconds": 60,
+    "viewport": [
+      320,
+      568
+    ],
+    "actions": 34,
+    "contacts": 35,
+    "CDPCommandsAndACKs": 488,
+    "recordedResponses": 34,
+    "noRecordedResponse": 0,
+    "errors": 0,
+    "consoleMessages": 0,
+    "actualExit": 0,
+    "firstPostGestureResponseSeconds": 0.424,
+    "firstPositiveVisiblePollSeconds": 3.357,
+    "firstBagNextPollSeconds": 17.761,
+    "secondBagNextPollSeconds": 40.449,
+    "finalScene": "third bag / sort",
+    "timingScope": "style/DOM polling upper bounds, not first physical onset or human perception",
+    "twoPointerPinchActions": 1,
+    "sameGradeTwoContactTrial": false,
+    "originalPhotos": [
+      {
+        "path": "/workspace/scratch/first-minute/round-144/preparation-bound144/strict/observe-10s.png",
+        "SHA256": "a48e0564e1b7c0099b335f7d4bd86ca514a81db77941a260697fc9f37d75781b"
+      },
+      {
+        "path": "/workspace/scratch/first-minute/round-144/preparation-bound144/strict/play-10s.png",
+        "SHA256": "91a6c63d4da438c096dabfa23356a0b6fc550f07e2264fb6aeaf474d25a7869c"
+      },
+      {
+        "path": "/workspace/scratch/first-minute/round-144/preparation-bound144/strict/play-30s.png",
+        "SHA256": "8d05c4ecb44308c3164c533077e05f58fb648955a826a33da08d3202ac09a8c9"
+      },
+      {
+        "path": "/workspace/scratch/first-minute/round-144/preparation-bound144/strict/play-60s.png",
+        "SHA256": "3e87cee92d965919bfcf9780ea908988877948bf69c6c673a39c2464e9cec6b7"
+      }
+    ]
+  },
+  "pilot": {
+    "countedSeparately": true,
+    "planned": 1,
+    "attempted": 1,
+    "reached": 1,
+    "valid": 1,
+    "prematureBeforeRelease": 1,
+    "retained": 0,
+    "unknown": 0,
+    "actualExit": 1,
+    "errors": 0,
+    "consoleErrors": 0,
+    "pageErrors": 0,
+    "requestFailures": 0,
+    "httpErrors": 0,
+    "browserClosed": true,
+    "liveBrowsersAfter": [],
+    "requestedGapMs": 120,
+    "nativeABms": 119.10000000149012,
+    "nativeBMoveMs": 120,
+    "listenerABms": 115.10000000149012,
+    "listenerBMoveMs": 115.79999999701977,
+    "AId": 9,
+    "BId": 10,
+    "AMaxMovePx": 1,
+    "BMaxMovePx": 0,
+    "bothActiveAtMove": true,
+    "upsBeforeCleanup": 0,
+    "cancelsBeforeCleanup": 0,
+    "before": {
+      "phase": "きめる",
+      "hint": "● の下を 上へ ↑"
+    },
+    "afterHeld": {
+      "phase": "おす",
+      "hint": "朱肉に ぎゅっと",
+      "activePointerIds": [
+        9,
+        10
+      ]
+    },
+    "protocol": {
+      "viewport": {
+        "width": 320,
+        "height": 568
+      },
+      "initialObserveMs": 10000,
+      "nominalIntervalsMs": [
+        120,
+        600
+      ],
+      "AUpPx": 1,
+      "BOffsetDownPx": 30,
+      "BMovePx": 0,
+      "heldObservationMs": 750,
+      "activeCaseLimitMs": 80000,
+      "setupDeadlineFromCaseMs": 75000,
+      "caseWithCleanupTargetMs": 90000,
+      "firstPhoto": "before any measurement contacts",
+      "freshContextPerCase": true,
+      "noFixture": true
+    },
+    "photos": [
+      {
+        "name": "observe-10s",
+        "requestedAt": 1794766263292,
+        "file": "/workspace/scratch/first-minute/round-144/grade-pointer-prep/old-pilot1/case-01/observe-10s.png",
+        "completedAt": 1794766263364
+      },
+      {
+        "name": "before-contacts",
+        "requestedAt": 1794766274777,
+        "file": "/workspace/scratch/first-minute/round-144/grade-pointer-prep/old-pilot1/case-01/before-contacts.png",
+        "completedAt": 1794766274839
+      },
+      {
+        "name": "after-move-held",
+        "requestedAt": 1794766275914,
+        "file": "/workspace/scratch/first-minute/round-144/grade-pointer-prep/old-pilot1/case-01/after-move-held.png",
+        "completedAt": 1794766275977
+      }
+    ],
+    "mainPublicationPair": false
+  },
+  "repeat10": {
+    "before": {
+      "counts": {
+        "planned": 10,
+        "attempted": 10,
+        "notAttempted": 0,
+        "reached": 10,
+        "valid": 10,
+        "premature": 10,
+        "retained": 0,
+        "unknown": 0,
+        "caseErrors": 0,
+        "consoleErrors": 0,
+        "pageErrors": 0,
+        "requestFailures": 0,
+        "httpErrors": 0
+      },
+      "actualExit": 1,
+      "browserClosed": true,
+      "liveBrowsersAfter": []
+    },
+    "beforeStatus": "complete",
+    "after": {
+      "counts": {
+        "planned": 10,
+        "attempted": 10,
+        "notAttempted": 0,
+        "reached": 10,
+        "valid": 10,
+        "premature": 0,
+        "retained": 10,
+        "unknown": 0,
+        "caseErrors": 0,
+        "consoleErrors": 0,
+        "pageErrors": 0,
+        "requestFailures": 0,
+        "httpErrors": 0
+      },
+      "actualExit": 0,
+      "browserClosed": true,
+      "liveBrowsersAfter": []
+    },
+    "afterStatus": "complete",
+    "paired": {
+      "prematureBefore": 10,
+      "prematureAfter": 0,
+      "validEach": 10,
+      "heldStageAfter": 10,
+      "upsBeforeCleanupEachTrial": 0,
+      "cancelsBeforeCleanupEachTrial": 0,
+      "AMaxPxEach": 1,
+      "BMaxPxEach": 0,
+      "auditScope": "Reporter static count extraction from fixed raw reports and root execution receipts; main case01 original held pair viewed separately."
+    },
+    "requestedGapMs": [
+      120,
+      600
+    ],
+    "eachGapCount": 5,
+    "contextPerCase": true,
+    "naturalVisibleSetup": true,
+    "noStateFixture": true,
+    "releaseBeforeMeasurement": false,
+    "trials": {
+      "before": [
+        {
+          "case": 1,
+          "requestedGapMs": 120,
+          "nativeABms": 122,
+          "nativeBMoveMs": 119,
+          "AMaxPx": 1,
+          "BMaxPx": 0,
+          "valid": true,
+          "prematureBeforeRelease": true,
+          "heldPhase": "おす",
+          "heldHint": "朱肉に ぎゅっと"
+        },
+        {
+          "case": 2,
+          "requestedGapMs": 600,
+          "nativeABms": 600,
+          "nativeBMoveMs": 600.1000000014901,
+          "AMaxPx": 1,
+          "BMaxPx": 0,
+          "valid": true,
+          "prematureBeforeRelease": true,
+          "heldPhase": "おす",
+          "heldHint": "朱肉に ぎゅっと"
+        },
+        {
+          "case": 3,
+          "requestedGapMs": 120,
+          "nativeABms": 119,
+          "nativeBMoveMs": 119.89999999850988,
+          "AMaxPx": 1,
+          "BMaxPx": 0,
+          "valid": true,
+          "prematureBeforeRelease": true,
+          "heldPhase": "おす",
+          "heldHint": "朱肉に ぎゅっと"
+        },
+        {
+          "case": 4,
+          "requestedGapMs": 600,
+          "nativeABms": 599.1000000014901,
+          "nativeBMoveMs": 600,
+          "AMaxPx": 1,
+          "BMaxPx": 0,
+          "valid": true,
+          "prematureBeforeRelease": true,
+          "heldPhase": "おす",
+          "heldHint": "朱肉に ぎゅっと"
+        },
+        {
+          "case": 5,
+          "requestedGapMs": 120,
+          "nativeABms": 120,
+          "nativeBMoveMs": 119.89999999850988,
+          "AMaxPx": 1,
+          "BMaxPx": 0,
+          "valid": true,
+          "prematureBeforeRelease": true,
+          "heldPhase": "おす",
+          "heldHint": "朱肉に ぎゅっと"
+        },
+        {
+          "case": 6,
+          "requestedGapMs": 600,
+          "nativeABms": 601,
+          "nativeBMoveMs": 599,
+          "AMaxPx": 1,
+          "BMaxPx": 0,
+          "valid": true,
+          "prematureBeforeRelease": true,
+          "heldPhase": "おす",
+          "heldHint": "朱肉に ぎゅっと"
+        },
+        {
+          "case": 7,
+          "requestedGapMs": 120,
+          "nativeABms": 120,
+          "nativeBMoveMs": 120,
+          "AMaxPx": 1,
+          "BMaxPx": 0,
+          "valid": true,
+          "prematureBeforeRelease": true,
+          "heldPhase": "おす",
+          "heldHint": "朱肉に ぎゅっと"
+        },
+        {
+          "case": 8,
+          "requestedGapMs": 600,
+          "nativeABms": 600,
+          "nativeBMoveMs": 599.8999999985099,
+          "AMaxPx": 1,
+          "BMaxPx": 0,
+          "valid": true,
+          "prematureBeforeRelease": true,
+          "heldPhase": "おす",
+          "heldHint": "朱肉に ぎゅっと"
+        },
+        {
+          "case": 9,
+          "requestedGapMs": 120,
+          "nativeABms": 120.10000000149012,
+          "nativeBMoveMs": 120,
+          "AMaxPx": 1,
+          "BMaxPx": 0,
+          "valid": true,
+          "prematureBeforeRelease": true,
+          "heldPhase": "おす",
+          "heldHint": "朱肉に ぎゅっと"
+        },
+        {
+          "case": 10,
+          "requestedGapMs": 600,
+          "nativeABms": 600,
+          "nativeBMoveMs": 604.8999999985099,
+          "AMaxPx": 1,
+          "BMaxPx": 0,
+          "valid": true,
+          "prematureBeforeRelease": true,
+          "heldPhase": "おす",
+          "heldHint": "朱肉に ぎゅっと"
+        }
+      ],
+      "after": [
+        {
+          "case": 1,
+          "requestedGapMs": 120,
+          "nativeABms": 120,
+          "nativeBMoveMs": 120,
+          "AMaxPx": 1,
+          "BMaxPx": 0,
+          "valid": true,
+          "prematureBeforeRelease": false,
+          "heldPhase": "きめる",
+          "heldHint": "● の下を 上へ ↑"
+        },
+        {
+          "case": 2,
+          "requestedGapMs": 600,
+          "nativeABms": 600,
+          "nativeBMoveMs": 600,
+          "AMaxPx": 1,
+          "BMaxPx": 0,
+          "valid": true,
+          "prematureBeforeRelease": false,
+          "heldPhase": "きめる",
+          "heldHint": "● の下を 上へ ↑"
+        },
+        {
+          "case": 3,
+          "requestedGapMs": 120,
+          "nativeABms": 120,
+          "nativeBMoveMs": 120.10000000149012,
+          "AMaxPx": 1,
+          "BMaxPx": 0,
+          "valid": true,
+          "prematureBeforeRelease": false,
+          "heldPhase": "きめる",
+          "heldHint": "● の下を 上へ ↑"
+        },
+        {
+          "case": 4,
+          "requestedGapMs": 600,
+          "nativeABms": 604,
+          "nativeBMoveMs": 596,
+          "AMaxPx": 1,
+          "BMaxPx": 0,
+          "valid": true,
+          "prematureBeforeRelease": false,
+          "heldPhase": "きめる",
+          "heldHint": "● の下を 上へ ↑"
+        },
+        {
+          "case": 5,
+          "requestedGapMs": 120,
+          "nativeABms": 121,
+          "nativeBMoveMs": 120,
+          "AMaxPx": 1,
+          "BMaxPx": 0,
+          "valid": true,
+          "prematureBeforeRelease": false,
+          "heldPhase": "きめる",
+          "heldHint": "● の下を 上へ ↑"
+        },
+        {
+          "case": 6,
+          "requestedGapMs": 600,
+          "nativeABms": 600,
+          "nativeBMoveMs": 601,
+          "AMaxPx": 1,
+          "BMaxPx": 0,
+          "valid": true,
+          "prematureBeforeRelease": false,
+          "heldPhase": "きめる",
+          "heldHint": "● の下を 上へ ↑"
+        },
+        {
+          "case": 7,
+          "requestedGapMs": 120,
+          "nativeABms": 121.10000000149012,
+          "nativeBMoveMs": 119,
+          "AMaxPx": 1,
+          "BMaxPx": 0,
+          "valid": true,
+          "prematureBeforeRelease": false,
+          "heldPhase": "きめる",
+          "heldHint": "● の下を 上へ ↑"
+        },
+        {
+          "case": 8,
+          "requestedGapMs": 600,
+          "nativeABms": 601,
+          "nativeBMoveMs": 598.8999999985099,
+          "AMaxPx": 1,
+          "BMaxPx": 0,
+          "valid": true,
+          "prematureBeforeRelease": false,
+          "heldPhase": "きめる",
+          "heldHint": "● の下を 上へ ↑"
+        },
+        {
+          "case": 9,
+          "requestedGapMs": 120,
+          "nativeABms": 121,
+          "nativeBMoveMs": 119,
+          "AMaxPx": 1,
+          "BMaxPx": 0,
+          "valid": true,
+          "prematureBeforeRelease": false,
+          "heldPhase": "きめる",
+          "heldHint": "● の下を 上へ ↑"
+        },
+        {
+          "case": 10,
+          "requestedGapMs": 600,
+          "nativeABms": 600,
+          "nativeBMoveMs": 600,
+          "AMaxPx": 1,
+          "BMaxPx": 0,
+          "valid": true,
+          "prematureBeforeRelease": false,
+          "heldPhase": "きめる",
+          "heldHint": "● の下を 上へ ↑"
+        }
+      ]
+    }
+  },
+  "newRegression": {
+    "status": "complete with identical test bytes",
+    "methods": 1,
+    "scenarios": 15,
+    "checkpointSubtests": 31,
+    "testSHA256": "ece15e09f2d57df5f228b0943db7bc21d94ea45a3a1eeb0c1a0bfb1b3fb0499e",
+    "before": {
+      "actualExit": 1,
+      "failureEntries": 5,
+      "checkpointsMatched": 26,
+      "checkpointsMismatched": 5,
+      "seconds": 0.129
+    },
+    "after": {
+      "actualExit": 0,
+      "passedMethods": 1,
+      "checkpointsMatched": 31,
+      "checkpointsMismatched": 0,
+      "seconds": 0.128
+    },
+    "fixture": "actual production listeners extracted into NodeVM; DOM/audio/capture/event delivery stubbed",
+    "scopeLimits": [
+      "not browser/trusted input/physical blur evidence",
+      "same-owner missing-up hover not covered",
+      "active drag clearing on real blur/hidden not changed"
+    ]
+  },
+  "existingTests": {
+    "before": {
+      "tests": 206,
+      "passed": 205,
+      "failed": 1,
+      "skipped": 0,
+      "actualExit": 1,
+      "failure": "test_cycle163_last_step_dot_is_a_stamp_ring:320x568 no-preference glyph8!=0 tests/test_kensa.py:4326",
+      "liveBrowsersAfter": [],
+      "stderrSHA256": "9be39b9ab1d8c9462ca2f97ca7c82d9e4ed5a6cf63edc61d81396e8797b830ee",
+      "sameProductAndTestBytesAsR140": true,
+      "notPytestSuite": true
+    },
+    "after": {
+      "tests": 206,
+      "passed": 205,
+      "failed": 1,
+      "skipped": 0,
+      "actualExit": 1,
+      "elapsedSeconds": 37.775,
+      "failure": "test_cycle163_last_step_dot_is_a_stamp_ring:320x568 no-preference glyph8!=0 tests/test_kensa.py:4326",
+      "liveBrowsersAfter": [],
+      "stderrSHA256": "c02f40d21111af79822e46837b5725abd56a48f4db8571efbae9cb2dd8bc5b75",
+      "sourceUnchangedDuringRun": true,
+      "testUnchangedDuringRun": true,
+      "notPytestSuite": true
+    },
+    "afterStatus": "complete",
+    "initialAfter": {
+      "tests": 206,
+      "passed": 204,
+      "failed": 2,
+      "skipped": 0,
+      "actualExit": 1,
+      "elapsedSeconds": 38.81,
+      "failures": [
+        "test_cycle151_mouse_and_pen_are_never_page_fingers (test_kensa.FlowTests.test_cycle151_mouse_and_pen_are_never_page_fingers)",
+        "test_cycle163_last_step_dot_is_a_stamp_ring (test_kensa.FlowTests.test_cycle163_last_step_dot_is_a_stamp_ring)"
+      ],
+      "resolution": "Only the full exact guard expectation at tests/test_kensa.py:3244 was synchronized to include pointer ownership; original !drag/pageFinger checks and all other assertions remain. Final206 rerun is separate; initial result retained."
+    },
+    "finalRelatedMethods": {
+      "total": 207,
+      "passed": 206,
+      "failed": 1,
+      "skipped": 0,
+      "composition": "existing206 methods plus one new fixture method;15 scenarios/31 checkpoints are not extra methods",
+      "notFullPytest": true
+    }
+  },
+  "requiredPytest": {
+    "before": {
+      "command": "pytest tests/",
+      "cwd": "/workspace/ricepia-firstminute-round144",
+      "actualExit": 127,
+      "executedTests": 0,
+      "error": "/bin/bash: line 1: pytest: command not found",
+      "toolChunk": "dc94bb"
+    },
+    "after": {
+      "command": "pytest tests/",
+      "cwd": "/workspace/ricepia-firstminute-round144",
+      "actualExit": 127,
+      "executedTests": 0,
+      "error": "/bin/bash: line 1: pytest: command not found",
+      "toolChunk": "684d83"
+    },
+    "wholeSuitePassed": false
+  },
+  "implementation": {
+    "completed": true,
+    "productChangedLines": 4,
+    "finalChange": "last pointerdown owns per-button drag; guard move/up/cancel by pointerId",
+    "newSharedGlobalState": false,
+    "autoHandoffAfterOwnerEnd": false,
+    "productChangesByReporter": 0
+  },
+  "images": {
+    "mainBefore": {
+      "file": "images/grade-held-before.png",
+      "source": "/workspace/scratch/first-minute/round-144/grade-pointer-prep/old-repeat10/case-01/after-move-held.png",
+      "SHA256": "22e049078a830d9dded115b4270cbd4dc254e4265dc6e5252c0a52c49f610f92",
+      "group": "same-two-contact-operation",
+      "unmodified": true
+    },
+    "mainAfter": {
+      "file": "images/grade-held-after.png",
+      "source": "/workspace/scratch/first-minute/round-144/grade-pointer-prep/new-repeat10/case-01/after-move-held.png",
+      "SHA256": "0bd390faabdcb9596ae6436f1760e5f228e92aa0d4f31208f5fab4290d841715",
+      "group": "same-two-contact-operation",
+      "unmodified": true
+    },
+    "status": "20 original byte-identical PNGs copied; main pair changes phase, layout pairs use same grade phase",
+    "primaryCopies": [
+      {
+        "file": "images/primary-observe-10s.png",
+        "source": "/workspace/scratch/first-minute/round-144/preparation-bound144/strict/observe-10s.png",
+        "SHA256": "a48e0564e1b7c0099b335f7d4bd86ca514a81db77941a260697fc9f37d75781b"
+      },
+      {
+        "file": "images/primary-play-10s.png",
+        "source": "/workspace/scratch/first-minute/round-144/preparation-bound144/strict/play-10s.png",
+        "SHA256": "91a6c63d4da438c096dabfa23356a0b6fc550f07e2264fb6aeaf474d25a7869c"
+      },
+      {
+        "file": "images/primary-play-30s.png",
+        "source": "/workspace/scratch/first-minute/round-144/preparation-bound144/strict/play-30s.png",
+        "SHA256": "8d05c4ecb44308c3164c533077e05f58fb648955a826a33da08d3202ac09a8c9"
+      },
+      {
+        "file": "images/primary-play-60s.png",
+        "source": "/workspace/scratch/first-minute/round-144/preparation-bound144/strict/play-60s.png",
+        "SHA256": "3e87cee92d965919bfcf9780ea908988877948bf69c6c673a39c2464e9cec6b7"
+      }
+    ],
+    "copiesMade": 20,
+    "primaryAfterCopies": [
+      {
+        "file": "images/after-primary-observe-10s.png",
+        "source": "/workspace/scratch/first-minute/round-144/preparation-after/strict/observe-10s.png",
+        "SHA256": "09ee5206396a07a5c79932efe8c039c1e4fe36609df826c12af2d4c177b7d3c2",
+        "group": "primary-after",
+        "unmodified": true
+      },
+      {
+        "file": "images/after-primary-play-10s.png",
+        "source": "/workspace/scratch/first-minute/round-144/preparation-after/strict/play-10s.png",
+        "SHA256": "04176fdcb0a51ea0dea551dc0951ce38580efafbb596b711e205a9f43d41481b",
+        "group": "primary-after",
+        "unmodified": true
+      },
+      {
+        "file": "images/after-primary-play-30s.png",
+        "source": "/workspace/scratch/first-minute/round-144/preparation-after/strict/play-30s.png",
+        "SHA256": "148c37c8d9c832a06007012cc81495ffa13b3a4e888a5993d8854e9b89a98a35",
+        "group": "primary-after",
+        "unmodified": true
+      },
+      {
+        "file": "images/after-primary-play-60s.png",
+        "source": "/workspace/scratch/first-minute/round-144/preparation-after/strict/play-60s.png",
+        "SHA256": "671e9da5522682d74469fbfa31563ad2a590a6c95a84c522b4f21d164079328d",
+        "group": "primary-after",
+        "unmodified": true
+      }
+    ],
+    "layoutSamePhaseCopies": [
+      {
+        "file": "images/layout-before-320x568.png",
+        "source": "/workspace/scratch/first-minute/round-144/grade-pointer-layout-prep/old-layout5/case-01/before-contacts.png",
+        "SHA256": "d5087b968214cb7f0853888a0338aeff382321ff0da1abd1dfcbed72f204c25f",
+        "group": "same-grade-before-contacts",
+        "unmodified": true
+      },
+      {
+        "file": "images/layout-after-320x568.png",
+        "source": "/workspace/scratch/first-minute/round-144/grade-pointer-layout-prep/new-layout5/case-01/before-contacts.png",
+        "SHA256": "ac4aa29ff0024a82ac8266fa0f7d85a8925dabcb3913e8643893910498752175",
+        "group": "same-grade-before-contacts",
+        "unmodified": true
+      },
+      {
+        "file": "images/layout-before-390x844.png",
+        "source": "/workspace/scratch/first-minute/round-144/grade-pointer-layout-prep/old-layout5/case-02/before-contacts.png",
+        "SHA256": "57c058f0a80200f725ada2c9aa913ddf4776608186857bc44fef62487c6256c6",
+        "group": "same-grade-before-contacts",
+        "unmodified": true
+      },
+      {
+        "file": "images/layout-after-390x844.png",
+        "source": "/workspace/scratch/first-minute/round-144/grade-pointer-layout-prep/new-layout5/case-02/before-contacts.png",
+        "SHA256": "4a12f7bb5271f12afca61dfb347db3fa93b2059c2aeec40f028482013bf40c2f",
+        "group": "same-grade-before-contacts",
+        "unmodified": true
+      },
+      {
+        "file": "images/layout-before-568x320.png",
+        "source": "/workspace/scratch/first-minute/round-144/grade-pointer-layout-prep/old-layout5/case-03/before-contacts.png",
+        "SHA256": "7774c01c7104287c94733a4996dc04cb2c7e1a5c6b686cc8052448143392a856",
+        "group": "same-grade-before-contacts",
+        "unmodified": true
+      },
+      {
+        "file": "images/layout-after-568x320.png",
+        "source": "/workspace/scratch/first-minute/round-144/grade-pointer-layout-prep/new-layout5/case-03/before-contacts.png",
+        "SHA256": "785183988e9cbb57e7b8617de84e11a487bfed5c714a48903055c34e0642f342",
+        "group": "same-grade-before-contacts",
+        "unmodified": true
+      },
+      {
+        "file": "images/layout-before-844x390.png",
+        "source": "/workspace/scratch/first-minute/round-144/grade-pointer-layout-prep/old-layout5/case-04/before-contacts.png",
+        "SHA256": "85f302441d061b3dc9cb9fdb2dc2b0ffdd77ab408c98000283b9b29bb84afb30",
+        "group": "same-grade-before-contacts",
+        "unmodified": true
+      },
+      {
+        "file": "images/layout-after-844x390.png",
+        "source": "/workspace/scratch/first-minute/round-144/grade-pointer-layout-prep/new-layout5/case-04/before-contacts.png",
+        "SHA256": "408c96c265e2245dee17bea40708948e0e902696030e8a57596ed7aefeba3248",
+        "group": "same-grade-before-contacts",
+        "unmodified": true
+      },
+      {
+        "file": "images/layout-before-820x1180.png",
+        "source": "/workspace/scratch/first-minute/round-144/grade-pointer-layout-prep/old-layout5/case-05/before-contacts.png",
+        "SHA256": "2a633278855a26c383012ac30d2621a3b09ac14b75c9d01ebf8004fb46c8fe39",
+        "group": "same-grade-before-contacts",
+        "unmodified": true
+      },
+      {
+        "file": "images/layout-after-820x1180.png",
+        "source": "/workspace/scratch/first-minute/round-144/grade-pointer-layout-prep/new-layout5/case-05/before-contacts.png",
+        "SHA256": "70cfbe465953fc28df0f9e670f4e72276ddd1e18a39ecd36695a29080afe739b",
+        "group": "same-grade-before-contacts",
+        "unmodified": true
+      }
+    ],
+    "mainPairScope": "Case01, both contacts held after A1px/B0px; old stamp versus new grade is the outcome, not a same-state pixel comparison.",
+    "layoutScope": "Five old/new before-contacts grade states. Grade box/textBox/font compare20 pairs; animation frames and seeds are not matched."
+  },
+  "providedMaterial": {
+    "chapters": [
+      {
+        "id": 78,
+        "title": "How Accessible Were 2021's Games?",
+        "url": "https://www.youtube.com/watch?v=-IhQl1CBj9U",
+        "startChar": 909440,
+        "endChar": 919298,
+        "startLine": 831,
+        "endLine": 836,
+        "bodyChars": 9769,
+        "sectionSHA256": "6009d6037b5391a312071b653e3bf699e1f2b962dfe4d267c4704fd8cab4d263",
+        "endsWithSentencePunctuation": false
+      },
+      {
+        "id": 104,
+        "title": "Commanding Shepard",
+        "url": "https://www.youtube.com/watch?v=bm0S4cn_rfw",
+        "startChar": 1168296,
+        "endChar": 1197952,
+        "startLine": 1005,
+        "endLine": 1016,
+        "bodyChars": 29582,
+        "sectionSHA256": "9d1723bf11efd37745d4f160c082d2a9eda525796e6e90d8a24bbec25be8a9f3",
+        "endsWithSentencePunctuation": false
+      }
+    ],
+    "providedSourceSHA256": "1db50be2482094c159f4fd276ab0e11443f8532e6dfe0ccecc8dddda834ff70a",
+    "principles": [
+      "Input mechanism and accessible control should be checked separately",
+      "A chosen action and its result should correspond; preserve agency"
+    ],
+    "originalVideoViewed": false,
+    "newChaptersRead": 0,
+    "coverageModified": false,
+    "noClaimOfSpecificPointerImplementationFromVideo": true
+  },
+  "protected": [
+    "pending first-tap nonprogression",
+    "pending pick/decide nonautomatic progression",
+    "pending45second card design",
+    "pending presentation-only play form",
+    "no45second card before first bag completion",
+    "existing first-bag2miss scope",
+    "stampHold250ms",
+    "physical-device decisions"
+  ],
+  "excludedDuplicate": "PR1203 plate clipping",
+  "humanEffect": {
+    "confusionMeasured": false,
+    "retentionMeasured": false,
+    "retentionImprovement": null
+  },
+  "hold": [
+    "pytest tests/ unavailable: exit127 and0tests in both phases",
+    "existing206 retains1 baseline glyph8 failure; no whole-suite pass claim"
+  ],
+  "evidence": {
+    "primaryRaw": {
+      "path": "/workspace/scratch/first-minute/round-144/preparation-bound144/strict/play.json",
+      "SHA256": "6fcdef71a72747540a1e566c9aa7b79d7f92d1369b17711053e6c98ea9deaa3b"
+    },
+    "primaryClosure": {
+      "path": "/workspace/scratch/first-minute/round-144/preparation-bound144/root-gate-after.json",
+      "SHA256": "6d586f6a7e1da3550bb465319110f33290af50c7587a4398e27f88ed6a8d6386"
+    },
+    "primaryTimingNotes": {
+      "path": "/workspace/scratch/first-minute/round-144/discovery-timing/notes.md",
+      "SHA256": "720db5bd3f5a9537f33984f94e43a293f0cf52f59a7c8bcc57462630897e8833"
+    },
+    "pilotRaw": {
+      "path": "/workspace/scratch/first-minute/round-144/grade-pointer-prep/old-pilot1/report.json",
+      "SHA256": "6b43d8a34220af2159df12e842203574887331ae148fab8162c75bdcc6098a27"
+    },
+    "pilotExecution": {
+      "path": "/workspace/scratch/first-minute/round-144/grade-pointer-prep/old-pilot1/root-execution.json",
+      "SHA256": "35cd262aadd8972aa5341d4b1e265c48ee38f096b0dff057c822a6b40e14c96d"
+    },
+    "reproductionProtocol": {
+      "path": "/workspace/scratch/first-minute/round-144/grade-pointer-prep/README.md",
+      "SHA256": "83f63932dbfcd1cc7b962d3e7d1980ceb418c00db64c4b53675e0447f9da3958"
+    },
+    "existingBefore": {
+      "path": "/workspace/scratch/first-minute/round-144/existing-before/execution.json",
+      "SHA256": "403f5bdbb57d66d97526d8c9edde2c4892d1a19dcd67dae8f9abbcd4134366b2"
+    },
+    "existingBeforeSummary": {
+      "path": "/workspace/scratch/first-minute/round-144/existing-before/summary.json",
+      "SHA256": "c14e6d2e7b96c7b6417f165691726fde49be2b8d35a5a9b442ede8ec14203ff9"
+    },
+    "pytestBefore": {
+      "path": "/workspace/scratch/first-minute/round-144/pytest-before.json",
+      "SHA256": "009ed39eed6b4f72840068ceae7b2d70087fd8c7f96a4bc99b6dd48964c1287d"
+    },
+    "repeatOldRaw": {
+      "path": "/workspace/scratch/first-minute/round-144/grade-pointer-prep/old-repeat10/report.json",
+      "SHA256": "71107eac73b7e3821b085dafadf76fe4445f38a78a4f67a77e8103028c53806d"
+    },
+    "repeatOldExecution": {
+      "path": "/workspace/scratch/first-minute/round-144/grade-pointer-prep/old-repeat10/root-execution.json",
+      "SHA256": "d6a9684c9e9fd0815809d8d41bf285dcd5e9328d6b45bf01949877775edab8f8"
+    },
+    "repeatNewRaw": {
+      "path": "/workspace/scratch/first-minute/round-144/grade-pointer-prep/new-repeat10/report.json",
+      "SHA256": "787a419e13eeae4df9abc9c344d90532521a5b643a4b953feeb32920373fab6c"
+    },
+    "repeatNewExecution": {
+      "path": "/workspace/scratch/first-minute/round-144/grade-pointer-prep/new-repeat10/root-execution.json",
+      "SHA256": "1dd315d916605a51895d1076cb7dc120b36dcf8eb055aea3312fa1f746ed82c8"
+    },
+    "layoutOldRaw": {
+      "path": "/workspace/scratch/first-minute/round-144/grade-pointer-layout-prep/old-layout5/report.json",
+      "SHA256": "aab9af1a5320e36d23ae366b168aab592920b719463eb633ef9878966160600a"
+    },
+    "layoutOldExecution": {
+      "path": "/workspace/scratch/first-minute/round-144/grade-pointer-layout-prep/old-layout5/root-execution.json",
+      "SHA256": "3240f2bb91123b1a02fa5c7ec76116631e000908b6c34133e2261eca8ce40263"
+    },
+    "regressionBeforeExecution": {
+      "path": "/workspace/scratch/first-minute/round-144/regression-before/execution.json",
+      "SHA256": "0aa24e5e4f40bbcc1438f9e008ccb23a347722efb7b02054e8792616b2cd2b3f"
+    },
+    "regressionBeforeStderr": {
+      "path": "/workspace/scratch/first-minute/round-144/regression-before/stderr.log",
+      "SHA256": "a3fe25407a8ad321251f699a5259043195964c2efc3386dedcfaf6b68603adee"
+    },
+    "regressionBeforeStdout": {
+      "path": "/workspace/scratch/first-minute/round-144/regression-before/stdout.log",
+      "SHA256": "df9ba420df9d2fb367c45c7c135198b6accb9153e44dcb7af29d5bd5b8fc7023"
+    },
+    "regressionAfterExecution": {
+      "path": "/workspace/scratch/first-minute/round-144/regression-after/execution.json",
+      "SHA256": "0ba7b28ec9a44c688adab421cd2ea884c4792731676d63f27265acf806a614d2"
+    },
+    "regressionAfterStderr": {
+      "path": "/workspace/scratch/first-minute/round-144/regression-after/stderr.log",
+      "SHA256": "a1f923979e2a549e0f2d92bb0b0f40d7232d2738763428e38e401dee7641ba87"
+    },
+    "regressionAfterStdout": {
+      "path": "/workspace/scratch/first-minute/round-144/regression-after/stdout.log",
+      "SHA256": "7a0cf4388b52604ff99e4befb80e858dee4a3a6f21d5ff3d88d5baa8ed5ff5c9"
+    },
+    "layoutNewRaw": {
+      "path": "/workspace/scratch/first-minute/round-144/grade-pointer-layout-prep/new-layout5/report.json",
+      "SHA256": "96cbd7cca1c592b730384718b4576a5c122d5d445993c9b27a8fb2a25cb1c4ee"
+    },
+    "layoutNewExecution": {
+      "path": "/workspace/scratch/first-minute/round-144/grade-pointer-layout-prep/new-layout5/root-execution.json",
+      "SHA256": "66b50be80bda7e68280e09de7f76f47b4fc45fd1eabcdd79b300ad6aa44687b3"
+    },
+    "primaryAfterRaw": {
+      "path": "/workspace/scratch/first-minute/round-144/preparation-after/strict/play.json",
+      "SHA256": "818e6668187d19bf61becf9e52868e246e053e7b3ae39ef9586d3e12e01b1e40"
+    },
+    "primaryAfterExecution": {
+      "path": "/workspace/scratch/first-minute/round-144/preparation-after/root-execution.json",
+      "SHA256": "43a958dd7d921c032cea65aca91e167a342e6b3033150a5b9ff67d2fcf410636"
+    },
+    "primaryAfterGateBefore": {
+      "path": "/workspace/scratch/first-minute/round-144/preparation-after/root-gate-before.json",
+      "SHA256": "6e06db21ff3ced8af6bcc653c4608ecd6ec16513cacd55d85901b923ad8965a3"
+    },
+    "primaryAfterGateAfter": {
+      "path": "/workspace/scratch/first-minute/round-144/preparation-after/root-gate-after.json",
+      "SHA256": "b4e7be513c9806c64af2cee52bdf0a09e0ffdf39bd58a994ad7e28991e2021a6"
+    },
+    "primaryAfterTimingNotes": {
+      "path": "/workspace/scratch/first-minute/round-144/discovery-timing-after/notes.md",
+      "SHA256": "247b78276e936ae245971a2b738243446966d5b858b41a310ec44c0c4c77b894"
+    },
+    "primaryAfterTimingAudit": {
+      "path": "/workspace/scratch/first-minute/round-144/discovery-timing-after/audit.json",
+      "SHA256": "983174cb683fe9e188fe2d771cc756605268d9f895503d034529d66b5122fa8e"
+    },
+    "primaryAfterTimingReceipt": {
+      "path": "/workspace/scratch/first-minute/round-144/discovery-timing-after/receipt.json",
+      "SHA256": "8f506d24f692eaaa82cb6d2de65c898fbb50880bb043654841cb1fff3abc1033"
+    },
+    "primaryAfterTimingSupplement": {
+      "path": "/workspace/scratch/first-minute/round-144/discovery-timing-after/supplement.json",
+      "SHA256": "eac1ea64865e05c09a81216d36659cc9dddc818d4cb1d272e4c4d219918eabdf"
+    },
+    "layoutPairedAudit": {
+      "path": "/workspace/scratch/first-minute/round-144/grade-pointer-layout-image-review/paired-review.json",
+      "SHA256": "4fa0d4ee0b3bad8d872e846febe5cc1c338d35163b1804b71241fa79d2b48a29"
+    },
+    "layoutPairedNotes": {
+      "path": "/workspace/scratch/first-minute/round-144/grade-pointer-layout-image-review/paired-notes.md",
+      "SHA256": "6a8c560da0021ea9cc2cb7660ac49809984a3c28462c53935fe282d3d693513c"
+    },
+    "existingInitialAfterSummary": {
+      "path": "/workspace/scratch/first-minute/round-144/existing-after/root-summary.json",
+      "SHA256": "05dbad2883cfb8d4b70ae81017d84888fa5838879c93b9bc9d625f66858bb388"
+    },
+    "existingInitialAfterExecution": {
+      "path": "/workspace/scratch/first-minute/round-144/existing-after/execution.json",
+      "SHA256": "2a5d54e33be4f286abab26fd38466b2eab9c39eca0433a827f78dc0487dcc00e"
+    },
+    "existingFinalAfterSummary": {
+      "path": "/workspace/scratch/first-minute/round-144/existing-final-after/root-summary.json",
+      "SHA256": "093ebe15a927915e61d0137c2ff68b4e0f3215bc1bbcb6c8b758e64dc911d9d3"
+    },
+    "existingFinalAfterExecution": {
+      "path": "/workspace/scratch/first-minute/round-144/existing-final-after/execution.json",
+      "SHA256": "517a8ffa3cac8a43586fad8e5a1ea9ad87dd294c028db3aa462fea9e9550e8b4"
+    },
+    "existingFinalAfterStderr": {
+      "path": "/workspace/scratch/first-minute/round-144/existing-final-after/stderr.log",
+      "SHA256": "c02f40d21111af79822e46837b5725abd56a48f4db8571efbae9cb2dd8bc5b75"
+    },
+    "existingAssertionUpdate": {
+      "path": "/workspace/scratch/first-minute/round-144/existing-assertion-update.json",
+      "SHA256": "6b0aa5dc457f17ba21a4adc656d974518e9ff44e0a8ebd2d493cbe1dd4ccb744"
+    },
+    "existingAssertionIndependentReview": {
+      "path": "/workspace/scratch/first-minute/round-144/grade-owner-fix-review/existing-assert-sync.json",
+      "SHA256": "4f498d373285c3eed12ee58e6f3d7e92b1809cc644bd650884299d28750211b4"
+    },
+    "pytestAfter": {
+      "path": "/workspace/scratch/first-minute/round-144/pytest-after.json",
+      "SHA256": "6022a3d5867b6da76e5aacddebb79e6a3d1433073b2d62d4ce3f0d5123ca9c0d"
+    }
+  },
+  "reporterActivity": {
+    "productEdits": 0,
+    "workingTreeEdits": 0,
+    "Git": 0,
+    "browser": 0,
+    "testRuns": 0,
+    "externalWrites": 0
+  },
+  "layout5": {
+    "before": {
+      "counts": {
+        "planned": 5,
+        "attempted": 5,
+        "notAttempted": 0,
+        "reached": 5,
+        "valid": 5,
+        "premature": 5,
+        "retained": 0,
+        "unknown": 0,
+        "caseErrors": 0,
+        "consoleErrors": 0,
+        "pageErrors": 0,
+        "requestFailures": 0,
+        "httpErrors": 0
+      },
+      "actualExit": 1,
+      "browserClosed": true
+    },
+    "after": {
+      "counts": {
+        "planned": 5,
+        "attempted": 5,
+        "notAttempted": 0,
+        "reached": 5,
+        "valid": 5,
+        "premature": 0,
+        "retained": 5,
+        "unknown": 0,
+        "caseErrors": 0,
+        "consoleErrors": 0,
+        "pageErrors": 0,
+        "requestFailures": 0,
+        "httpErrors": 0
+      },
+      "actualExit": 0,
+      "browserClosed": true,
+      "liveBrowsersAfter": []
+    },
+    "afterStatus": "complete",
+    "protocol": {
+      "viewports": [
+        {
+          "width": 320,
+          "height": 568
+        },
+        {
+          "width": 390,
+          "height": 844
+        },
+        {
+          "width": 568,
+          "height": 320
+        },
+        {
+          "width": 844,
+          "height": 390
+        },
+        {
+          "width": 820,
+          "height": 1180
+        }
+      ],
+      "initialObserveMs": 10000,
+      "nominalIntervalsMs": [
+        120
+      ],
+      "AUpPx": 1,
+      "BOffsetDownPx": 30,
+      "BMovePx": 0,
+      "heldObservationMs": 750,
+      "activeCaseLimitMs": 80000,
+      "setupDeadlineFromCaseMs": 75000,
+      "caseWithCleanupTargetMs": 90000,
+      "firstPhoto": "before any measurement contacts",
+      "freshContextPerCase": true,
+      "noFixture": true
+    },
+    "paired": {
+      "validEach": 5,
+      "prematureBefore": 5,
+      "prematureAfter": 0,
+      "retainedAfter": 5,
+      "unknownEach": 0,
+      "samePhaseGeometryAudit": {
+        "evidence": "layoutPairedAudit",
+        "gradePairsEqual": 20,
+        "properties": [
+          "box",
+          "textBox",
+          "font"
+        ],
+        "newBeforeFullyInsideAndCenterHit": 20,
+        "newHeldFullyInsideAndCenterHit": 20
+      },
+      "independentImageAudit": {
+        "evidence": "layoutPairedAudit",
+        "originalPNGsViewed": 15,
+        "oldBefore": 5,
+        "newBefore": 5,
+        "newHeld": 5,
+        "unviewed": {
+          "oldObserve": 5,
+          "oldHeldDifferentPhase": 5,
+          "newObserve": 5
+        },
+        "newVisualFindingsInReviewedImages": 0,
+        "sameFrameComparison": false
+      },
+      "populationDistinctFromRepeat10": true
+    }
+  },
+  "primaryAfter": {
+    "observeSeconds": 10,
+    "playSeconds": 60,
+    "viewport": [
+      320,
+      568
+    ],
+    "actions": 34,
+    "contacts": 35,
+    "CDPCommandsAndACKs": 488,
+    "recordedResponses": 34,
+    "noRecordedResponse": 0,
+    "nativeEvents": {
+      "down": 35,
+      "move": 429,
+      "up": 35,
+      "cancel": 0,
+      "allTrustedTouch": true
+    },
+    "errors": 0,
+    "consoleMessages": 0,
+    "driverErrors": 0,
+    "lateInputs": 0,
+    "unfinishedContacts": 0,
+    "actualExit": 0,
+    "firstPostGestureResponseSeconds": 0.425,
+    "firstPositiveVisiblePollSeconds": 3.41,
+    "gradeActions": [
+      {
+        "index": 8,
+        "inputSeconds": 11.457,
+        "pollSeconds": 11.933,
+        "grade": "1等",
+        "commandUpPx": 48
+      },
+      {
+        "index": 21,
+        "inputSeconds": 34.178,
+        "pollSeconds": 34.642,
+        "grade": "規格外",
+        "commandUpPx": 48
+      }
+    ],
+    "firstBagNextPollSeconds": 17.728,
+    "secondBagNextPollSeconds": 40.509,
+    "finalScene": "third bag / sort",
+    "timingScope": "style/DOM polling upper bounds, not first physical onset or human perception",
+    "twoPointerPinchActions": 1,
+    "sameGradeTwoContactTrial": false,
+    "originalPhotos": [
+      {
+        "path": "/workspace/scratch/first-minute/round-144/preparation-after/strict/observe-10s.png",
+        "SHA256": "09ee5206396a07a5c79932efe8c039c1e4fe36609df826c12af2d4c177b7d3c2"
+      },
+      {
+        "path": "/workspace/scratch/first-minute/round-144/preparation-after/strict/play-10s.png",
+        "SHA256": "04176fdcb0a51ea0dea551dc0951ce38580efafbb596b711e205a9f43d41481b"
+      },
+      {
+        "path": "/workspace/scratch/first-minute/round-144/preparation-after/strict/play-30s.png",
+        "SHA256": "148c37c8d9c832a06007012cc81495ffa13b3a4e888a5993d8854e9b89a98a35"
+      },
+      {
+        "path": "/workspace/scratch/first-minute/round-144/preparation-after/strict/play-60s.png",
+        "SHA256": "671e9da5522682d74469fbfa31563ad2a590a6c95a84c522b4f21d164079328d"
+      }
+    ],
+    "independentAudit": "evidence.primaryAfterTimingAudit",
+    "inputTypeAndCoordinateSequenceEqualToBefore": {
+      "actions": 18,
+      "denominator": 34
+    },
+    "causalSpeedOrRewardImprovementClaim": false
+  },
+  "primaryAfterStatus": "complete"
+}

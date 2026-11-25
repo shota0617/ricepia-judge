@@ -1,0 +1,105 @@
+{
+  "images": [
+    {
+      "path": "images/zoom-out-before.png",
+      "sourcePath": "/workspace/scratch/first-minute/round-140/zoom-clip-repeat10/before/output/out-02-early-after.png",
+      "sourceSHA256": "237f3e0a0bdae03299ce23502fa1a78eb2a304ceb76ec9e73fc1cacdd06e2d64",
+      "sha256": "237f3e0a0bdae03299ce23502fa1a78eb2a304ceb76ec9e73fc1cacdd06e2d64",
+      "bytes": 74444,
+      "exactCopy": true,
+      "scope": "paired out02 early, BEFORE;600ms"
+    },
+    {
+      "path": "images/zoom-out-after.png",
+      "sourcePath": "/workspace/scratch/first-minute/round-140/zoom-clip-repeat10/after/output/out-02-early-after.png",
+      "sourceSHA256": "07d1ba00b2f2df27c682b2b931f4c17e4c24a7b778f5f1596a8ad13a622e4604",
+      "sha256": "07d1ba00b2f2df27c682b2b931f4c17e4c24a7b778f5f1596a8ad13a622e4604",
+      "bytes": 94964,
+      "exactCopy": true,
+      "scope": "paired out02 early, AFTER;600ms"
+    },
+    {
+      "path": "images/primary-observe-10s.png",
+      "sourcePath": "/workspace/scratch/first-minute/round-140/preparation/strict/observe-10s.png",
+      "sourceSHA256": "6c582fe8a28d0c4c9cf447b73d6c1d3009a32b56495d589a868e03c5620ad2e4",
+      "sha256": "6c582fe8a28d0c4c9cf447b73d6c1d3009a32b56495d589a868e03c5620ad2e4",
+      "bytes": 41525,
+      "exactCopy": true,
+      "scope": "Original baseline primary; no fix applied"
+    },
+    {
+      "path": "images/primary-play-10s.png",
+      "sourcePath": "/workspace/scratch/first-minute/round-140/preparation/strict/play-10s.png",
+      "sourceSHA256": "b1448dd717b041c63ce400e15affdb12a4418ed385621e4dbb73e96c9dc99970",
+      "sha256": "b1448dd717b041c63ce400e15affdb12a4418ed385621e4dbb73e96c9dc99970",
+      "bytes": 71417,
+      "exactCopy": true,
+      "scope": "Original baseline primary; no fix applied"
+    },
+    {
+      "path": "images/primary-play-30s.png",
+      "sourcePath": "/workspace/scratch/first-minute/round-140/preparation/strict/play-30s.png",
+      "sourceSHA256": "3aa296f0426956cdd3d7caf2477d49b98fc7487572bf8313aeaa9b6c0e051c3b",
+      "sha256": "3aa296f0426956cdd3d7caf2477d49b98fc7487572bf8313aeaa9b6c0e051c3b",
+      "bytes": 70893,
+      "exactCopy": true,
+      "scope": "Original baseline primary; no fix applied"
+    },
+    {
+      "path": "images/primary-play-60s.png",
+      "sourcePath": "/workspace/scratch/first-minute/round-140/preparation/strict/play-60s.png",
+      "sourceSHA256": "b6cc892a72db0ef8358c378122c1c2616646618cf75431f161a203986a067326",
+      "sha256": "b6cc892a72db0ef8358c378122c1c2616646618cf75431f161a203986a067326",
+      "bytes": 80496,
+      "exactCopy": true,
+      "scope": "Original baseline primary; no fix applied"
+    },
+    {
+      "path": "images/layout-after-320x568.png",
+      "sourcePath": "/workspace/scratch/first-minute/round-140/zoom-clip-matrix/after-output/01-320x568/settled.png",
+      "sourceSHA256": "6f48e9d28f4d902759d8824921d2a713da904bb4e9ef13fd9e4bcc19640240de",
+      "sha256": "6f48e9d28f4d902759d8824921d2a713da904bb4e9ef13fd9e4bcc19640240de",
+      "bytes": 59706,
+      "exactCopy": true,
+      "scope": "AFTER settled stage2 fixture; grains hidden; not natural play"
+    },
+    {
+      "path": "images/layout-after-390x844.png",
+      "sourcePath": "/workspace/scratch/first-minute/round-140/zoom-clip-matrix/after-output/02-390x844/settled.png",
+      "sourceSHA256": "8718388805a0379a268c8671c1d96ad11cb02e2c9d59cf0790b4bbeea5ff0be0",
+      "sha256": "8718388805a0379a268c8671c1d96ad11cb02e2c9d59cf0790b4bbeea5ff0be0",
+      "bytes": 61967,
+      "exactCopy": true,
+      "scope": "AFTER settled stage2 fixture; grains hidden; not natural play"
+    },
+    {
+      "path": "images/layout-after-568x320.png",
+      "sourcePath": "/workspace/scratch/first-minute/round-140/zoom-clip-matrix/after-output/03-568x320/settled.png",
+      "sourceSHA256": "2eb0639b22e439a521ecf7c94ec346aa3b6704cf71f97dee9f3aa822a8148da4",
+      "sha256": "2eb0639b22e439a521ecf7c94ec346aa3b6704cf71f97dee9f3aa822a8148da4",
+      "bytes": 47692,
+      "exactCopy": true,
+      "scope": "AFTER settled stage2 fixture; grains hidden; not natural play"
+    },
+    {
+      "path": "images/layout-after-844x390.png",
+      "sourcePath": "/workspace/scratch/first-minute/round-140/zoom-clip-matrix/after-output/04-844x390/settled.png",
+      "sourceSHA256": "6e3568a39418f91187d70c4a629dbd1114c941ff39f631290e6be391505fd23c",
+      "sha256": "6e3568a39418f91187d70c4a629dbd1114c941ff39f631290e6be391505fd23c",
+      "bytes": 55375,
+      "exactCopy": true,
+      "scope": "AFTER settled stage2 fixture; grains hidden; not natural play"
+    },
+    {
+      "path": "images/layout-after-820x1180.png",
+      "sourcePath": "/workspace/scratch/first-minute/round-140/zoom-clip-matrix/after-output/05-820x1180/settled.png",
+      "sourceSHA256": "6a504e873539fc01f061c35115e7b6ac9ddb92b781e0abceb377131a41fb8dd0",
+      "sha256": "6a504e873539fc01f061c35115e7b6ac9ddb92b781e0abceb377131a41fb8dd0",
+      "bytes": 67204,
+      "exactCopy": true,
+      "scope": "AFTER settled stage2 fixture; grains hidden; not natural play"
+    }
+  ],
+  "count": 11,
+  "processing": "Exact byte copies; no crop, resize, annotations or re-encoding."
+}
